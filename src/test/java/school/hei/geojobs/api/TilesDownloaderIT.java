@@ -12,17 +12,16 @@ import java.net.URL;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import school.hei.geojobs.service.geo.TilesDownloader;
 import school.hei.geojobs.conf.FacadeIT;
 import school.hei.geojobs.endpoint.rest.model.Feature;
 import school.hei.geojobs.endpoint.rest.model.GeoServerParameter;
 import school.hei.geojobs.file.BucketComponent;
 import school.hei.geojobs.repository.model.geo.Parcel;
+import school.hei.geojobs.service.geo.TilesDownloader;
 
 public class TilesDownloaderIT extends FacadeIT {
   @MockBean BucketComponent bucketComponent;
-  @Autowired
-  TilesDownloader tilesDownloader;
+  @Autowired TilesDownloader tilesDownloader;
   @Autowired ObjectMapper om;
 
   private Parcel a_parcel_from_lyon(int zoom)

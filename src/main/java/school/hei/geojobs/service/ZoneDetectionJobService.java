@@ -7,9 +7,9 @@ import static school.hei.geojobs.repository.model.Status.ProgressionStatus.PROCE
 
 import java.util.List;
 import org.springframework.stereotype.Service;
+import school.hei.geojobs.endpoint.event.EventProducer;
 import school.hei.geojobs.endpoint.event.gen.ZoneDetectionJobStatusChanged;
 import school.hei.geojobs.endpoint.event.gen.ZoneDetectionTaskCreated;
-import school.hei.geojobs.endpoint.event.EventProducer;
 import school.hei.geojobs.repository.ZoneDetectionJobRepository;
 import school.hei.geojobs.repository.model.DetectionJobStatus;
 import school.hei.geojobs.repository.model.Status;

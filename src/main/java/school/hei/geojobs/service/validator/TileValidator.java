@@ -1,7 +1,6 @@
 package school.hei.geojobs.service.validator;
 
 import java.util.function.Consumer;
-
 import school.hei.geojobs.model.exception.BadRequestException;
 import school.hei.geojobs.repository.model.Tile;
 

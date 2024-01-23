@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import school.hei.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMapper;
-import school.hei.geojobs.service.ZoneDetectionJobService;
 import school.hei.geojobs.endpoint.rest.model.DetectableObjectType;
 import school.hei.geojobs.endpoint.rest.model.ZoneDetectionJob;
+import school.hei.geojobs.service.ZoneDetectionJobService;
 
 @RestController
 @AllArgsConstructor

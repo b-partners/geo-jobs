@@ -14,6 +14,8 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import school.hei.geojobs.conf.FacadeIT;
+import school.hei.geojobs.endpoint.event.EventProducer;
 import school.hei.geojobs.endpoint.event.gen.ZoneDetectionJobCreated;
 import school.hei.geojobs.repository.ZoneDetectionJobRepository;
 import school.hei.geojobs.repository.model.DetectionJobStatus;
@@ -21,16 +23,12 @@ import school.hei.geojobs.repository.model.DetectionTaskStatus;
 import school.hei.geojobs.repository.model.ZoneDetectionJob;
 import school.hei.geojobs.repository.model.ZoneDetectionTask;
 import school.hei.geojobs.service.ZoneDetectionJobService;
-import school.hei.geojobs.conf.FacadeIT;
-import school.hei.geojobs.endpoint.event.EventProducer;
 
 class ZoneDetectionJobCreatedServiceIT extends FacadeIT {
   @Autowired ZoneDetectionJobCreatedService subject;
-  @Autowired
-  ZoneDetectionJobService zoneDetectionJobService;
+  @Autowired ZoneDetectionJobService zoneDetectionJobService;
   @MockBean EventProducer eventProducer;
-  @Autowired
-  ZoneDetectionJobRepository repository;
+  @Autowired ZoneDetectionJobRepository repository;
 
   @Test
   void accept() {

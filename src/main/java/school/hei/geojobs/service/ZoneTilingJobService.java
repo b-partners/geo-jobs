@@ -14,17 +14,17 @@ import school.hei.geojobs.endpoint.event.gen.ZoneTilingJobCreated;
 import school.hei.geojobs.endpoint.event.gen.ZoneTilingJobStatusChanged;
 import school.hei.geojobs.endpoint.event.gen.ZoneTilingTaskCreated;
 import school.hei.geojobs.model.exception.NotFoundException;
-import school.hei.geojobs.repository.model.TilingJobStatus;
-import school.hei.geojobs.repository.model.ZoneTilingTask;
-import school.hei.geojobs.repository.model.geo.Parcel;
 import school.hei.geojobs.repository.ZoneTilingJobRepository;
 import school.hei.geojobs.repository.model.Status;
+import school.hei.geojobs.repository.model.TilingJobStatus;
 import school.hei.geojobs.repository.model.ZoneTilingJob;
+import school.hei.geojobs.repository.model.ZoneTilingTask;
+import school.hei.geojobs.repository.model.geo.Parcel;
 
 @Service
 public class ZoneTilingJobService
     extends AbstractZoneJobService<
-    TilingJobStatus, ZoneTilingTask, ZoneTilingJob, ZoneTilingJobRepository> {
+        TilingJobStatus, ZoneTilingTask, ZoneTilingJob, ZoneTilingJobRepository> {
 
   public ZoneTilingJobService(EventProducer eventProducer, ZoneTilingJobRepository repository) {
     super(eventProducer, repository);

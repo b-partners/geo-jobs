@@ -21,7 +21,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import school.hei.geojobs.conf.FacadeIT;
 import school.hei.geojobs.endpoint.event.gen.ZoneDetectionTaskCreated;
+import school.hei.geojobs.endpoint.rest.model.TileCoordinates;
+import school.hei.geojobs.file.BucketComponent;
 import school.hei.geojobs.repository.DetectedTileRepository;
 import school.hei.geojobs.repository.ZoneDetectionTaskRepository;
 import school.hei.geojobs.repository.model.DetectedTile;
@@ -33,9 +36,6 @@ import school.hei.geojobs.repository.model.ZoneDetectionTask;
 import school.hei.geojobs.service.ZoneDetectionJobService;
 import school.hei.geojobs.service.geo.TilesDetectionApi;
 import school.hei.geojobs.service.geo.response.DetectionResponse;
-import school.hei.geojobs.conf.FacadeIT;
-import school.hei.geojobs.endpoint.rest.model.TileCoordinates;
-import school.hei.geojobs.file.BucketComponent;
 
 @Slf4j
 class ZoneDetectionTaskCreatedServiceIT extends FacadeIT {
@@ -52,19 +52,15 @@ class ZoneDetectionTaskCreatedServiceIT extends FacadeIT {
 
   @Autowired ZoneDetectionTaskCreatedService subject;
 
-  @MockBean
-  TilesDetectionApi tilesDetectionApi;
+  @MockBean TilesDetectionApi tilesDetectionApi;
 
   @MockBean BucketComponent bucketComponent;
 
-  @MockBean
-  DetectedTileRepository detectedTileRepository;
+  @MockBean DetectedTileRepository detectedTileRepository;
 
-  @MockBean
-  ZoneDetectionTaskRepository zoneDetectionTaskRepository;
+  @MockBean ZoneDetectionTaskRepository zoneDetectionTaskRepository;
 
-  @MockBean
-  ZoneDetectionJobService zoneDetectionJobService;
+  @MockBean ZoneDetectionJobService zoneDetectionJobService;
 
   @Captor ArgumentCaptor<DetectedTile> detectedTileCaptor;
 

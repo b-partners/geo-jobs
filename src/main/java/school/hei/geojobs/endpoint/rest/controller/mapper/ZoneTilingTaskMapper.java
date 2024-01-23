@@ -10,15 +10,15 @@ import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
-import school.hei.geojobs.repository.ZoneTilingJobRepository;
-import school.hei.geojobs.repository.model.TilingTaskStatus;
-import school.hei.geojobs.repository.model.ZoneTilingJob;
-import school.hei.geojobs.repository.model.ZoneTilingTask;
 import school.hei.geojobs.endpoint.rest.model.Feature;
 import school.hei.geojobs.endpoint.rest.model.GeoServerParameter;
 import school.hei.geojobs.endpoint.rest.model.Parcel;
 import school.hei.geojobs.endpoint.rest.model.Status;
 import school.hei.geojobs.endpoint.rest.model.Tile;
+import school.hei.geojobs.repository.ZoneTilingJobRepository;
+import school.hei.geojobs.repository.model.TilingTaskStatus;
+import school.hei.geojobs.repository.model.ZoneTilingJob;
+import school.hei.geojobs.repository.model.ZoneTilingTask;
 
 @Component
 @AllArgsConstructor
@@ -36,7 +36,8 @@ public class ZoneTilingTaskMapper {
             List.of(
                 TilingTaskStatus.builder()
                     .health(school.hei.geojobs.repository.model.Status.HealthStatus.UNKNOWN)
-                    .progression(school.hei.geojobs.repository.model.Status.ProgressionStatus.PENDING)
+                    .progression(
+                        school.hei.geojobs.repository.model.Status.ProgressionStatus.PENDING)
                     .creationDatetime(now())
                     .taskId(generatedId)
                     .build()))

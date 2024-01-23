@@ -39,7 +39,6 @@ public class ZoneTilingJobMapper {
             rest.getFeatures().stream()
                 .map(
                     feature -> {
-                      feature.setId(randomUUID().toString());
                       try {
                         return taskMapper.from(
                             feature,

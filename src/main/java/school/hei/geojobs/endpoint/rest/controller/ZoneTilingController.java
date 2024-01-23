@@ -10,13 +10,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import school.hei.geojobs.endpoint.rest.controller.mapper.ZoneTilingJobMapper;
-import school.hei.geojobs.model.BoundedPageSize;
-import school.hei.geojobs.model.PageFromOne;
-import school.hei.geojobs.service.ZoneTilingJobService;
 import school.hei.geojobs.endpoint.rest.controller.mapper.ZoneTilingTaskMapper;
 import school.hei.geojobs.endpoint.rest.model.CreateZoneTilingJob;
 import school.hei.geojobs.endpoint.rest.model.Parcel;
 import school.hei.geojobs.endpoint.rest.model.ZoneTilingJob;
+import school.hei.geojobs.model.BoundedPageSize;
+import school.hei.geojobs.model.PageFromOne;
+import school.hei.geojobs.service.ZoneTilingJobService;
 
 @RestController
 @AllArgsConstructor

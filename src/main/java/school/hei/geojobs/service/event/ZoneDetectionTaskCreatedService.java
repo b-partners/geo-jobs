@@ -6,11 +6,11 @@ import org.springframework.stereotype.Service;
 import school.hei.geojobs.endpoint.event.gen.ZoneDetectionTaskCreated;
 import school.hei.geojobs.model.exception.ApiException;
 import school.hei.geojobs.repository.DetectedTileRepository;
+import school.hei.geojobs.repository.model.DetectedTile;
 import school.hei.geojobs.service.ZoneDetectionTaskStatusService;
 import school.hei.geojobs.service.geo.TilesDetectionApi;
 import school.hei.geojobs.service.geo.response.DetectionResponse;
 import school.hei.geojobs.service.mapper.DetectionMapper;
-import school.hei.geojobs.repository.model.DetectedTile;
 
 @Service
 @AllArgsConstructor

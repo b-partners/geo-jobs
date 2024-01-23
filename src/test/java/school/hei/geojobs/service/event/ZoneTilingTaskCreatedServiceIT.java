@@ -121,6 +121,7 @@ class ZoneTilingTaskCreatedServiceIT extends FacadeIT {
   private school.hei.geojobs.endpoint.rest.model.Parcel ignoreIds(school.hei.geojobs.endpoint.rest.model.Parcel parcel){
     Status status = parcel.getTilingStatus();
     parcel.setId(null);
+    parcel.setCreationDatetime(null);
     assert status != null;
     parcel.setTilingStatus(new Status()
         .creationDatetime(null)
@@ -163,6 +164,7 @@ class ZoneTilingTaskCreatedServiceIT extends FacadeIT {
         .parcel(
             Parcel.builder()
                 .id(randomUUID().toString())
+                .creationDatetime(String.valueOf(Instant.now()))
                 .geoServerParameter(new GeoServerParameter().layers("grand-lyon"))
                 .feature(
                     om.readValue(

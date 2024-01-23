@@ -21,8 +21,8 @@ import lombok.ToString;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
-import school.hei.geojobs.repository.model.types.PostgresTypes;
 import school.hei.geojobs.endpoint.rest.model.Feature;
+import school.hei.geojobs.repository.model.types.PostgresTypes;
 
 @Entity
 @AllArgsConstructor

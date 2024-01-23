@@ -13,12 +13,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 import org.springframework.stereotype.Component;
-import school.hei.geojobs.repository.model.Tile;
 import school.hei.geojobs.endpoint.rest.model.Feature;
 import school.hei.geojobs.endpoint.rest.model.MultiPolygon;
 import school.hei.geojobs.repository.model.DetectableObjectType;
 import school.hei.geojobs.repository.model.DetectedObject;
 import school.hei.geojobs.repository.model.DetectedTile;
+import school.hei.geojobs.repository.model.Tile;
 import school.hei.geojobs.service.geo.response.DetectionResponse;
 import school.hei.geojobs.service.validator.TileValidator;
 

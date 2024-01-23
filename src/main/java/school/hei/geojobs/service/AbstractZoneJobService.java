@@ -6,10 +6,10 @@ import lombok.Data;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import school.hei.geojobs.endpoint.event.EventProducer;
 import school.hei.geojobs.model.BoundedPageSize;
 import school.hei.geojobs.model.PageFromOne;
 import school.hei.geojobs.model.exception.NotFoundException;
-import school.hei.geojobs.endpoint.event.EventProducer;
 import school.hei.geojobs.repository.model.AbstractZoneJob;
 import school.hei.geojobs.repository.model.Status;
 
