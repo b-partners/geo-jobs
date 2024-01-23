@@ -39,6 +39,7 @@ public class ZoneTilingJobMapper {
             rest.getFeatures().stream()
                 .map(
                     feature -> {
+                      feature.setId(randomUUID().toString());
                       try {
                         return taskMapper.from(
                             feature,
@@ -59,6 +60,7 @@ public class ZoneTilingJobMapper {
     return new ZoneTilingJob()
         .id(domain.getId())
         .zoneName(domain.getZoneName())
+        .creationDatetime(domain.getSubmissionInstant())
 
         // All parcels of the same job have same geoServer url and parameter
         .geoServerUrl(parcel0.getGeoServerUrl().toString())

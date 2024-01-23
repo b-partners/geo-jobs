@@ -49,6 +49,7 @@ public class ZoneTilingTaskMapper {
     ZoneTilingJob zoneTilingJob = zoneTilingJobRepository.findById(jobId).get();
     return new Parcel()
         .id(UUID.randomUUID().toString())
+        .creationDatetime(Instant.parse(model.getCreationDatetime()))
         .tiles(
             ofNullable(model.getTiles())
                 .map(tiles -> tiles.stream().map(this::toRest).toList())

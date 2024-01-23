@@ -2,6 +2,7 @@ package school.hei.geojobs.repository.model.geo;
 
 import java.io.Serializable;
 import java.net.URL;
+import java.time.Instant;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -27,4 +28,5 @@ public class Parcel implements Serializable {
   private GeoServerParameter geoServerParameter;
   private List<Tile> tiles;
   private Status tilingStatus;
+  private String creationDatetime;
 }
