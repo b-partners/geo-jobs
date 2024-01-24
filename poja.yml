@@ -7,7 +7,7 @@ frontal_memory: 512
 jacoco_min_coverage: '0.7'
 package_full_name: app.bpartners.geojobs
 region: eu-west-3
-ses_source: noreply@nowhere.com
+ses_source: lou@bpartners.app
 ssm_sg_id: /bpartners-imagery/sg/id
 ssm_subnet1_id: /bpartners-imagery/private/subnet1/id
 ssm_subnet2_id: /bpartners-imagery/private/subnet2/id
