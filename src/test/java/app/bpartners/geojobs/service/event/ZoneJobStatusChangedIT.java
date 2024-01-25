@@ -10,7 +10,7 @@ import static org.mockito.Mockito.verify;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneTilingJobStatusChanged;
-import app.bpartners.geojobs.repository.model.TilingJobStatus;
+import app.bpartners.geojobs.repository.model.JobStatus;
 import app.bpartners.geojobs.repository.model.TilingTaskStatus;
 import app.bpartners.geojobs.repository.model.ZoneTilingJob;
 import app.bpartners.geojobs.repository.model.ZoneTilingTask;
@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-public class ZoneTilingJobStatusChangedIT extends FacadeIT {
+public class ZoneJobStatusChangedIT extends FacadeIT {
   @Autowired private ZoneTilingJobStatusChangedService subject;
   @MockBean private EmailService emailService;
 
@@ -53,7 +53,7 @@ public class ZoneTilingJobStatusChangedIT extends FacadeIT {
                         .build()))
             .statusHistory(
                 List.of(
-                    TilingJobStatus.builder()
+                    JobStatus.builder()
                         .id(randomUUID().toString())
                         .jobId(jobId)
                         .progression(FINISHED)

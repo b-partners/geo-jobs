@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service;
 
+import static app.bpartners.geojobs.repository.model.JobStatus.JobType.DETECTION;
 import static app.bpartners.geojobs.repository.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.repository.model.Status.ProgressionStatus.PENDING;
 import static java.util.UUID.randomUUID;
@@ -13,8 +14,8 @@ import static org.mockito.Mockito.when;
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
-import app.bpartners.geojobs.repository.model.DetectionJobStatus;
 import app.bpartners.geojobs.repository.model.DetectionTaskStatus;
+import app.bpartners.geojobs.repository.model.JobStatus;
 import app.bpartners.geojobs.repository.model.Tile;
 import app.bpartners.geojobs.repository.model.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.ZoneDetectionTask;
@@ -38,9 +39,10 @@ class ZoneDetectionJobServiceIT extends FacadeIT {
             new ArrayList<>() {
               {
                 add(
-                    DetectionJobStatus.builder()
+                    JobStatus.builder()
                         .id(randomUUID().toString())
                         .jobId(randomUUID().toString())
+                        .jobType(DETECTION)
                         .progression(PENDING)
                         .health(UNKNOWN)
                         .build());

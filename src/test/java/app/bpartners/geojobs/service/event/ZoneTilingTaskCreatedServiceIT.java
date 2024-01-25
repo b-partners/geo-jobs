@@ -14,7 +14,7 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneTilingTaskCreated;
-import app.bpartners.geojobs.repository.model.TilingJobStatus;
+import app.bpartners.geojobs.repository.model.JobStatus;
 import app.bpartners.geojobs.repository.model.TilingTaskStatus;
 import app.bpartners.geojobs.service.geo.TilesDownloader;
 import app.bpartners.geojobs.conf.FacadeIT;
@@ -37,6 +37,7 @@ import java.util.List;
 
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.naturalOrder;
+import static app.bpartners.geojobs.repository.model.JobStatus.JobType.TILING;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -150,9 +151,10 @@ class ZoneTilingTaskCreatedServiceIT extends FacadeIT {
         .id(jobId)
         .statusHistory(
             (List.of(
-                TilingJobStatus.builder()
+                JobStatus.builder()
                     .id(randomUUID().toString())
                     .jobId(jobId)
+                    .jobType(TILING)
                     .progression(PENDING)
                     .health(UNKNOWN)
                     .build())))
@@ -261,10 +263,11 @@ class ZoneTilingTaskCreatedServiceIT extends FacadeIT {
                 .id(jobId)
                 .statusHistory(
                     (List.of(
-                        TilingJobStatus.builder()
+                        JobStatus.builder()
                             .id(randomUUID().toString())
                             .jobId(jobId)
                             .progression(PENDING)
+                            .jobType(TILING)
                             .health(UNKNOWN)
                             .build())))
                 .zoneName("mock")
