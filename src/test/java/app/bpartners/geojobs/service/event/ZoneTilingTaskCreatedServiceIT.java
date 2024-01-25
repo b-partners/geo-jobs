@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service.event;
 import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.file.FileHash;
 import app.bpartners.geojobs.file.FileHashAlgorithm;
+import app.bpartners.geojobs.service.ZoneTilingTaskStatusService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import lombok.SneakyThrows;
@@ -34,8 +35,11 @@ import app.bpartners.geojobs.repository.model.geo.Parcel;
 import java.nio.file.Paths;
 import java.util.List;
 
+import static java.util.Comparator.comparing;
+import static java.util.Comparator.naturalOrder;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
@@ -60,6 +64,8 @@ class ZoneTilingTaskCreatedServiceIT extends FacadeIT {
   @Autowired ZoneTilingJobRepository zoneTilingJobRepository;
   @MockBean EventProducer eventProducer;
   @Autowired ObjectMapper om;
+  @Autowired
+  ZoneTilingTaskStatusService zoneTilingTaskStatusService;
 
   @BeforeEach
   void setUp() {
@@ -105,8 +111,7 @@ class ZoneTilingTaskCreatedServiceIT extends FacadeIT {
             .x(123132)
             .y(456)
             .z(20))
-        .bucketPath(null);
-  }
+        .bucketPath("dummy-bucket/lyon/20/123132/456.png");  }
 
   public Tile tile2 (){
     return new Tile()
@@ -116,7 +121,7 @@ class ZoneTilingTaskCreatedServiceIT extends FacadeIT {
             .x(123132)
             .y(123)
             .z(20))
-        .bucketPath(null);
+        .bucketPath("dummy-bucket/lyon/20/123132/123.png");
   }
 
   private app.bpartners.geojobs.endpoint.rest.model.Parcel ignoreIds(app.bpartners.geojobs.endpoint.rest.model.Parcel parcel){
@@ -136,7 +141,6 @@ class ZoneTilingTaskCreatedServiceIT extends FacadeIT {
     for (Tile tile1 : tile) {
       tile1.setId(null);
       tile1.setCreationDatetime(null);
-      tile1.setBucketPath(null);
     }
     return tile;
   }
@@ -198,6 +202,51 @@ class ZoneTilingTaskCreatedServiceIT extends FacadeIT {
                     .id(randomUUID().toString())
                     .taskId(taskId)
                     .progression(PENDING)
+                    .health(UNKNOWN)
+                    .build()))
+        .build();
+  }
+
+  @SneakyThrows
+  private ZoneTilingTask aZTT_processing(String jobId, String taskId){
+    return  ZoneTilingTask.builder()
+        .id(taskId)
+        .jobId(jobId)
+        .parcel(
+            Parcel.builder()
+                .id(randomUUID().toString())
+                .geoServerParameter(new GeoServerParameter().layers("grand-lyon"))
+                .feature(
+                    om.readValue(
+                            """
+                { "type": "Feature",
+                  "properties": {
+                    "code": "69",
+                    "nom": "Rhône",
+                    "id": 30251921,
+                    "CLUSTER_ID": 99520,
+                    "CLUSTER_SIZE": 386884 },
+                  "geometry": {
+                    "type": "MultiPolygon",
+                    "coordinates": [ [ [
+                      [ 4.459648282829194, 45.904988912620688 ],
+                      [ 4.464709510872551, 45.928950368349426 ],
+                      [ 4.490816965688656, 45.941784543770964 ],
+                      [ 4.510354299995861, 45.933697132664598 ],
+                      [ 4.518386257467152, 45.912888345521047 ],
+                      [ 4.496344031095243, 45.883438201401809 ],
+                      [ 4.479593950305621, 45.882900828315755 ],
+                      [ 4.459648282829194, 45.904988912620688 ] ] ] ] } }""",
+                            Feature.class)
+                        .zoom(10)
+                        .id("feature_1_id"))
+                .build())
+        .statusHistory(
+            List.of(
+                TilingTaskStatus.builder()
+                    .id(randomUUID().toString())
+                    .taskId(taskId)
+                    .progression(PROCESSING)
                     .health(UNKNOWN)
                     .build()))
         .build();
@@ -284,11 +333,32 @@ class ZoneTilingTaskCreatedServiceIT extends FacadeIT {
 
     subject.accept(createdEventPayload);
     toCreate.setSubmissionInstant(Instant.now());
-    ZoneTilingTask taskCreated = repository.save(toCreate);
-    ZoneTilingTaskCreated taskEvent =
-        ZoneTilingTaskCreated.builder().task(taskCreated).build();
+    ZoneTilingTask task1 = repository.findById(taskId).get();
+    var sortedStatuses =
+        task1.getStatusHistory().stream().sorted(comparing(app.bpartners.geojobs.repository.model.Status::getCreationDatetime, naturalOrder())).toList();
+    assertThrows(IllegalArgumentException.class , () -> subject.accept(createdEventPayload));
+    ZoneTilingTask task2 = repository.findById(taskId).get();
+    var expectedStatuses =
+        task2.getStatusHistory().stream().sorted(comparing(app.bpartners.geojobs.repository.model.Status::getCreationDatetime, naturalOrder())).toList();
 
-    assertThrows(IllegalArgumentException.class , () -> subject.accept(taskEvent));
+    assertEquals(sortedStatuses, expectedStatuses);
+  }
+
+  @Test
+  void task_processing_to_pending_ko(){
+    String jobId = randomUUID().toString();
+    zoneTilingJobRepository.save(aZTJ(jobId));
+    String taskId = randomUUID().toString();
+    ZoneTilingTask toCreate = aZTT_processing(jobId, taskId);
+    ZoneTilingTask created = repository.save(toCreate);
+    List<TilingTaskStatus> statuses = repository.findById(created.getId()).orElseThrow().getStatusHistory().stream().toList();
+
+    assertThrows(IllegalArgumentException.class, () -> zoneTilingTaskStatusService.pending(created));
+    List<TilingTaskStatus> statusesAfterFailedStatusTransition = repository.findById(created.getId()).orElseThrow().getStatusHistory().stream().toList();
+
+    assertEquals(statusesAfterFailedStatusTransition, statuses);
+    assertFalse(statuses.isEmpty());
+    assertFalse(statusesAfterFailedStatusTransition.isEmpty());
   }
 
   @Test

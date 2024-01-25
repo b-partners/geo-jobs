@@ -1,5 +1,11 @@
 package app.bpartners.geojobs.service;
 
+import static app.bpartners.geojobs.repository.model.Status.HealthStatus.FAILED;
+import static app.bpartners.geojobs.repository.model.Status.HealthStatus.SUCCEEDED;
+import static app.bpartners.geojobs.repository.model.Status.HealthStatus.UNKNOWN;
+import static app.bpartners.geojobs.repository.model.Status.ProgressionStatus.FINISHED;
+import static app.bpartners.geojobs.repository.model.Status.ProgressionStatus.PENDING;
+import static app.bpartners.geojobs.repository.model.Status.ProgressionStatus.PROCESSING;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
@@ -12,7 +18,6 @@ import app.bpartners.geojobs.repository.model.TilingJobStatus;
 import app.bpartners.geojobs.repository.model.TilingTaskStatus;
 import app.bpartners.geojobs.repository.model.ZoneTilingJob;
 import app.bpartners.geojobs.repository.model.ZoneTilingTask;
-import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,28 +40,27 @@ public class ZoneTilingTaskStatusService
   }
 
   @Transactional(rollbackFor = IllegalArgumentException.class)
+  public ZoneTilingTask pending(ZoneTilingTask task) {
+    return updateStatus(task, PENDING, UNKNOWN);
+  }
+
+  @Transactional(rollbackFor = IllegalArgumentException.class)
   public ZoneTilingTask process(ZoneTilingTask task) {
-    return updateStatus(task, Status.ProgressionStatus.PROCESSING, Status.HealthStatus.UNKNOWN);
+    return updateStatus(task, PROCESSING, UNKNOWN);
   }
 
   @Transactional(rollbackFor = IllegalArgumentException.class)
   public ZoneTilingTask succeed(ZoneTilingTask task) {
-    return updateStatus(task, Status.ProgressionStatus.FINISHED, Status.HealthStatus.SUCCEEDED);
+    return updateStatus(task, FINISHED, SUCCEEDED);
   }
 
   @Transactional(rollbackFor = IllegalArgumentException.class)
   public ZoneTilingTask fail(ZoneTilingTask task) {
-    return updateStatus(task, Status.ProgressionStatus.FINISHED, Status.HealthStatus.FAILED);
+    return updateStatus(task, FINISHED, FAILED);
   }
 
   private ZoneTilingTask updateStatus(
       ZoneTilingTask task, Status.ProgressionStatus progression, Status.HealthStatus health) {
-    var job = findById(task.getJobId());
-    Status.reduce(
-        job.getTasks().stream()
-            .map(ZoneTilingTask::getStatus)
-            .map(status -> (Status) status)
-            .collect(Collectors.toUnmodifiableList()));
     task.addStatus(
         TilingTaskStatus.builder()
             .id(randomUUID().toString())
