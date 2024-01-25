@@ -90,7 +90,7 @@ class DetectionTaskCreatedServiceIT extends FacadeIT {
                                                 new BigDecimal("195.38624338624336"),
                                                 new BigDecimal("210.6243386243386")))
                                         .build())
-                                .regionAttributes(Map.of("label", "roof"))
+                                .regionAttributes(Map.of("label", "roof","confidence","0.8436"))
                                 .build(),
                             "1",
                             DetectionResponse.ImageData.Region.builder()
@@ -107,7 +107,7 @@ class DetectionTaskCreatedServiceIT extends FacadeIT {
                                                 new BigDecimal("195.38624338624336"),
                                                 new BigDecimal("210.6243386243386")))
                                         .build())
-                                .regionAttributes(Map.of("label", "roof"))
+                                .regionAttributes(Map.of("label", "roof","confidence","0.9612"))
                                 .build()))
                     .build()))
         .build();

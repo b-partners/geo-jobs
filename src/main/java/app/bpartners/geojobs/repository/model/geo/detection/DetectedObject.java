@@ -46,4 +46,6 @@ public class DetectedObject implements Serializable {
   @OneToMany(cascade = ALL, mappedBy = "objectId")
   @Fetch(SELECT)
   private List<DetectableObjectType> detectedObjectTypes;
+
+  private Double confidence;
 }
