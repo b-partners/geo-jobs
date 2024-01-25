@@ -10,6 +10,6 @@ public class EnvConf {
         () -> "https://hds4hpeacrrder7h32qy4lmy4a0wrewx.lambda-url.eu-west-3.on.aws");
     registry.add(
         "tile.detection.api.url",
-        () -> "https://parjrau5niz7tsnr5v6mqayjty0avzco.lambda-url.eu-west-3.on.aws");
+        () -> "https://3gl56b3gqs6cfynuzqkte2rthm0onaoh.lambda-url.eu-west-3.on.aws");
   }
 }
