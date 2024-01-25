@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.repository.model;
 
+import static app.bpartners.geojobs.repository.model.JobStatus.JobType.TILING;
 import static java.util.stream.Collectors.toList;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -16,17 +17,17 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @ToString
 @JsonIgnoreProperties({"status", "done"})
-public class ZoneTilingJob extends AbstractZoneJob<TilingJobStatus, ZoneTilingTask>
-    implements Serializable {
+public class ZoneTilingJob extends AbstractZoneJob<ZoneTilingTask> implements Serializable {
 
-  public TilingJobStatus getStatus() {
-    return TilingJobStatus.from(
+  public JobStatus getStatus() {
+    return JobStatus.from(
         this.getId(),
         Status.reduce(
-            this.getStatusHistory().stream().map(status -> (Status) status).collect(toList())));
+            this.getStatusHistory().stream().map(status -> (Status) status).collect(toList())),
+        TILING);
   }
 
-  public void addStatus(TilingJobStatus status) {
+  public void addStatus(JobStatus status) {
     this.getStatusHistory().add(status);
   }
 }

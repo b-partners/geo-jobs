@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.endpoint.rest.controller.mapper;
 
 import app.bpartners.geojobs.endpoint.rest.model.ZoneDetectionJob;
-import app.bpartners.geojobs.repository.model.DetectionJobStatus;
+import app.bpartners.geojobs.repository.model.JobStatus;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 @Component
 @AllArgsConstructor
 public class ZoneDetectionJobMapper {
-  private final StatusMapper<DetectionJobStatus> statusMapper;
+  private final StatusMapper<JobStatus> statusMapper;
 
   public ZoneDetectionJob toRest(
       app.bpartners.geojobs.repository.model.ZoneDetectionJob domain,

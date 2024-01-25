@@ -5,8 +5,8 @@ import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.model.CreateZoneTilingJob;
 import app.bpartners.geojobs.endpoint.rest.model.ZoneTilingJob;
+import app.bpartners.geojobs.repository.model.JobStatus;
 import app.bpartners.geojobs.repository.model.Status;
-import app.bpartners.geojobs.repository.model.TilingJobStatus;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 public class ZoneTilingJobMapper {
   private final ZoneTilingTaskMapper taskMapper;
   private final FeatureMapper featureMapper;
-  private final StatusMapper<TilingJobStatus> statusMapper;
+  private final StatusMapper<JobStatus> statusMapper;
 
   public app.bpartners.geojobs.repository.model.ZoneTilingJob toDomain(CreateZoneTilingJob rest) {
     var generatedId = randomUUID();
@@ -26,7 +26,7 @@ public class ZoneTilingJobMapper {
         .id(generatedId.toString())
         .statusHistory(
             List.of(
-                TilingJobStatus.builder()
+                JobStatus.builder()
                     .health(Status.HealthStatus.UNKNOWN)
                     .progression(Status.ProgressionStatus.PENDING)
                     .creationDatetime(now())

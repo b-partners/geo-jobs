@@ -5,7 +5,7 @@ import app.bpartners.geojobs.model.BoundedPageSize;
 import app.bpartners.geojobs.model.PageFromOne;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.model.AbstractZoneJob;
-import app.bpartners.geojobs.repository.model.Status;
+import app.bpartners.geojobs.repository.model.JobStatus;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -17,7 +17,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 @AllArgsConstructor
 @Data
 public class AbstractZoneJobService<
-    S extends Status, T, J extends AbstractZoneJob<S, T>, R extends JpaRepository<J, String>> {
+    T, J extends AbstractZoneJob<T>, R extends JpaRepository<J, String>> {
   private final EventProducer eventProducer;
   private final R repository;
 
@@ -32,7 +32,7 @@ public class AbstractZoneJobService<
         .orElseThrow(() -> new NotFoundException("ZoneJob.Id " + id + " not found"));
   }
 
-  public J updateStatus(J job, S status) {
+  public J updateStatus(J job, JobStatus status) {
     job.addStatus(status);
     return getRepository().save(job);
   }

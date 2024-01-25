@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service;
 
+import static app.bpartners.geojobs.repository.model.JobStatus.JobType.DETECTION;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
@@ -7,7 +8,7 @@ import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneDetectionJobStatusChanged;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneDetectionTaskCreated;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
-import app.bpartners.geojobs.repository.model.DetectionJobStatus;
+import app.bpartners.geojobs.repository.model.JobStatus;
 import app.bpartners.geojobs.repository.model.Status;
 import app.bpartners.geojobs.repository.model.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.ZoneDetectionTask;
@@ -17,7 +18,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class ZoneDetectionJobService
     extends AbstractZoneJobService<
-        DetectionJobStatus, ZoneDetectionTask, ZoneDetectionJob, ZoneDetectionJobRepository> {
+        ZoneDetectionTask, ZoneDetectionJob, ZoneDetectionJobRepository> {
 
   public ZoneDetectionJobService(
       EventProducer eventProducer, ZoneDetectionJobRepository repository) {
@@ -27,9 +28,10 @@ public class ZoneDetectionJobService
   public List<ZoneDetectionJob> process(String jobId) {
     var optionalZDJ = findById(jobId);
     var jobStatus =
-        DetectionJobStatus.builder()
+        JobStatus.builder()
             .id(randomUUID().toString())
             .jobId(optionalZDJ.getId())
+            .jobType(DETECTION)
             .progression(Status.ProgressionStatus.PROCESSING)
             .health(Status.HealthStatus.UNKNOWN)
             .creationDatetime(now())
@@ -54,7 +56,7 @@ public class ZoneDetectionJobService
       return oldJob;
     }
 
-    var jobStatus = DetectionJobStatus.from(oldJob.getId(), newStatus);
+    var jobStatus = JobStatus.from(oldJob.getId(), newStatus, DETECTION);
     var refreshed = updateStatus(oldJob, jobStatus);
 
     getEventProducer()

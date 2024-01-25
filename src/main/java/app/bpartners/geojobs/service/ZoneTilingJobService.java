@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service;
 
+import static app.bpartners.geojobs.repository.model.JobStatus.JobType.TILING;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
@@ -9,8 +10,8 @@ import app.bpartners.geojobs.endpoint.event.gen.ZoneTilingJobStatusChanged;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneTilingTaskCreated;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
+import app.bpartners.geojobs.repository.model.JobStatus;
 import app.bpartners.geojobs.repository.model.Status;
-import app.bpartners.geojobs.repository.model.TilingJobStatus;
 import app.bpartners.geojobs.repository.model.ZoneTilingJob;
 import app.bpartners.geojobs.repository.model.ZoneTilingTask;
 import app.bpartners.geojobs.repository.model.geo.Parcel;
@@ -20,8 +21,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class ZoneTilingJobService
-    extends AbstractZoneJobService<
-        TilingJobStatus, ZoneTilingTask, ZoneTilingJob, ZoneTilingJobRepository> {
+    extends AbstractZoneJobService<ZoneTilingTask, ZoneTilingJob, ZoneTilingJobRepository> {
 
   public ZoneTilingJobService(EventProducer eventProducer, ZoneTilingJobRepository repository) {
     super(eventProducer, repository);
@@ -55,7 +55,7 @@ public class ZoneTilingJobService
 
   public ZoneTilingJob process(ZoneTilingJob job) {
     var status =
-        TilingJobStatus.builder()
+        JobStatus.builder()
             .id(randomUUID().toString())
             .jobId(job.getId())
             .progression(Status.ProgressionStatus.PROCESSING)
@@ -80,7 +80,7 @@ public class ZoneTilingJobService
     if (oldStatus.equals(newStatus)) {
       return oldJob;
     }
-    var jobStatus = TilingJobStatus.from(oldJob.getId(), newStatus);
+    var jobStatus = JobStatus.from(oldJob.getId(), newStatus, TILING);
     var refreshed = updateStatus(oldJob, jobStatus);
 
     getEventProducer()

@@ -30,7 +30,7 @@ import org.hibernate.annotations.TypeDef;
 @ToString
 @MappedSuperclass
 @TypeDef(name = PostgresEnumType.PGSQL_ENUM_NAME, typeClass = PostgresEnumType.class)
-public class AbstractZoneJob<S extends Status, T> implements Serializable {
+public class AbstractZoneJob<T> implements Serializable {
   @Id private String id;
   private String zoneName;
   private String emailReceiver;
@@ -39,16 +39,16 @@ public class AbstractZoneJob<S extends Status, T> implements Serializable {
   // note(LazyInitializationException): thrown when fetch type is LAZY, hence using EAGER
   @OneToMany(cascade = ALL, mappedBy = "jobId", fetch = EAGER)
   @Fetch(SELECT)
-  private List<S> statusHistory;
+  private List<JobStatus> statusHistory;
 
   // note(LazyInitializationException)
   @OneToMany(mappedBy = "jobId", cascade = ALL, fetch = EAGER)
   @Fetch(SELECT)
   private List<T> tasks = new ArrayList<>();
 
-  public S getStatus() {
+  public JobStatus getStatus() {
     return null;
   }
 
-  public void addStatus(S status) {}
+  public void addStatus(JobStatus status) {}
 }

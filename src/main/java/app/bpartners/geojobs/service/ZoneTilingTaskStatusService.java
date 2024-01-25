@@ -14,7 +14,6 @@ import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
 import app.bpartners.geojobs.repository.ZoneTilingTaskRepository;
 import app.bpartners.geojobs.repository.model.Status;
-import app.bpartners.geojobs.repository.model.TilingJobStatus;
 import app.bpartners.geojobs.repository.model.TilingTaskStatus;
 import app.bpartners.geojobs.repository.model.ZoneTilingJob;
 import app.bpartners.geojobs.repository.model.ZoneTilingTask;
@@ -23,8 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ZoneTilingTaskStatusService
-    extends AbstractZoneJobService<
-        TilingJobStatus, ZoneTilingTask, ZoneTilingJob, ZoneTilingJobRepository> {
+    extends AbstractZoneJobService<ZoneTilingTask, ZoneTilingJob, ZoneTilingJobRepository> {
 
   private final ZoneTilingTaskRepository repository;
   private final ZoneTilingJobService zoneTilingJobService;
