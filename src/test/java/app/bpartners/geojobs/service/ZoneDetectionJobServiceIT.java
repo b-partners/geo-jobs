@@ -14,8 +14,8 @@ import static org.mockito.Mockito.when;
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
-import app.bpartners.geojobs.repository.model.DetectionTaskStatus;
 import app.bpartners.geojobs.repository.model.JobStatus;
+import app.bpartners.geojobs.repository.model.TaskStatus;
 import app.bpartners.geojobs.repository.model.Tile;
 import app.bpartners.geojobs.repository.model.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.ZoneDetectionTask;
@@ -63,9 +63,10 @@ class ZoneDetectionJobServiceIT extends FacadeIT {
                         new ArrayList<>() {
                           {
                             add(
-                                DetectionTaskStatus.builder()
+                                TaskStatus.builder()
                                     .id(randomUUID().toString())
                                     .progression(PENDING)
+                                    .jobType(DETECTION)
                                     .health(UNKNOWN)
                                     .build());
                           }

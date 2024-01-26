@@ -16,7 +16,7 @@ import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneTilingJobCreated;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
 import app.bpartners.geojobs.repository.model.JobStatus;
-import app.bpartners.geojobs.repository.model.TilingTaskStatus;
+import app.bpartners.geojobs.repository.model.TaskStatus;
 import app.bpartners.geojobs.repository.model.ZoneTilingJob;
 import app.bpartners.geojobs.repository.model.ZoneTilingTask;
 import app.bpartners.geojobs.repository.model.geo.Parcel;
@@ -50,7 +50,7 @@ class ZoneTilingJobCreatedServiceIT extends FacadeIT {
                         .parcel(Parcel.builder().id(randomUUID().toString()).build())
                         .statusHistory(
                             List.of(
-                                TilingTaskStatus.builder()
+                                TaskStatus.builder()
                                     .id(randomUUID().toString())
                                     .progression(PENDING)
                                     .health(UNKNOWN)

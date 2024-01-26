@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.repository.model;
 
+import static app.bpartners.geojobs.repository.model.JobStatus.JobType.DETECTION;
 import static java.util.stream.Collectors.toList;
 import static javax.persistence.CascadeType.ALL;
 
@@ -40,18 +41,18 @@ public class ZoneDetectionTask implements Serializable {
   @Getter @CreationTimestamp private Instant submissionInstant;
 
   @OneToMany(cascade = ALL, mappedBy = "taskId")
-  private List<DetectionTaskStatus> statusHistory = new ArrayList<>();
+  private List<TaskStatus> statusHistory = new ArrayList<>();
 
   @Type(type = PostgresTypes.JSONB)
   @Column(columnDefinition = PostgresTypes.JSONB)
   private Tile tile;
 
-  public void addStatus(DetectionTaskStatus status) {
+  public void addStatus(TaskStatus status) {
     statusHistory.add(status);
   }
 
-  public DetectionTaskStatus getStatus() {
-    return DetectionTaskStatus.from(
-        id, Status.reduce(statusHistory.stream().map(status -> (Status) status).collect(toList())));
+  public TaskStatus getStatus() {
+    return TaskStatus.from(
+        id, Status.reduce(statusHistory.stream().map(status -> (Status) status).collect(toList())), DETECTION);
   }
 }

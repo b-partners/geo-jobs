@@ -14,7 +14,7 @@ import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
 import app.bpartners.geojobs.repository.ZoneTilingTaskRepository;
 import app.bpartners.geojobs.repository.model.Status;
-import app.bpartners.geojobs.repository.model.TilingTaskStatus;
+import app.bpartners.geojobs.repository.model.TaskStatus;
 import app.bpartners.geojobs.repository.model.ZoneTilingJob;
 import app.bpartners.geojobs.repository.model.ZoneTilingTask;
 import org.springframework.stereotype.Service;
@@ -60,7 +60,7 @@ public class ZoneTilingTaskStatusService
   private ZoneTilingTask updateStatus(
       ZoneTilingTask task, Status.ProgressionStatus progression, Status.HealthStatus health) {
     task.addStatus(
-        TilingTaskStatus.builder()
+        TaskStatus.builder()
             .id(randomUUID().toString())
             .creationDatetime(now())
             .progression(progression)

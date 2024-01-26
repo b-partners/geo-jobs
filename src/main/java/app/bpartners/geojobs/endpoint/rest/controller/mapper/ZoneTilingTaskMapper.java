@@ -10,7 +10,7 @@ import app.bpartners.geojobs.endpoint.rest.model.Parcel;
 import app.bpartners.geojobs.endpoint.rest.model.Status;
 import app.bpartners.geojobs.endpoint.rest.model.Tile;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
-import app.bpartners.geojobs.repository.model.TilingTaskStatus;
+import app.bpartners.geojobs.repository.model.TaskStatus;
 import app.bpartners.geojobs.repository.model.ZoneTilingJob;
 import app.bpartners.geojobs.repository.model.ZoneTilingTask;
 import java.net.URL;
@@ -34,7 +34,7 @@ public class ZoneTilingTaskMapper {
         .jobId(jobId.toString())
         .statusHistory(
             List.of(
-                TilingTaskStatus.builder()
+                TaskStatus.builder()
                     .health(app.bpartners.geojobs.repository.model.Status.HealthStatus.UNKNOWN)
                     .progression(
                         app.bpartners.geojobs.repository.model.Status.ProgressionStatus.PENDING)

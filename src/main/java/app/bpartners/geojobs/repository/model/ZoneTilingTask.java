@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.repository.model;
 
+import static app.bpartners.geojobs.repository.model.JobStatus.JobType.TILING;
 import static java.util.stream.Collectors.toList;
 
 import app.bpartners.geojobs.repository.model.geo.Parcel;
@@ -42,18 +43,18 @@ public class ZoneTilingTask implements Serializable {
   @Getter @CreationTimestamp private Instant submissionInstant;
 
   @OneToMany(cascade = CascadeType.ALL, mappedBy = "taskId", fetch = FetchType.EAGER)
-  private List<TilingTaskStatus> statusHistory = new ArrayList<>();
+  private List<TaskStatus> statusHistory = new ArrayList<>();
 
   @Type(type = PostgresTypes.JSONB)
   @Column(columnDefinition = PostgresTypes.JSONB)
   private Parcel parcel;
 
-  public TilingTaskStatus getStatus() {
-    return TilingTaskStatus.from(
-        id, Status.reduce(statusHistory.stream().map(status -> (Status) status).collect(toList())));
+  public TaskStatus getStatus() {
+    return TaskStatus.from(
+        id, Status.reduce(statusHistory.stream().map(status -> (Status) status).collect(toList())), TILING);
   }
 
-  public void addStatus(TilingTaskStatus status) {
+  public void addStatus(TaskStatus status) {
     statusHistory.add(status);
   }
 }

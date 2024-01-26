@@ -5,8 +5,8 @@ import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.ZoneDetectionTaskRepository;
-import app.bpartners.geojobs.repository.model.DetectionTaskStatus;
 import app.bpartners.geojobs.repository.model.Status;
+import app.bpartners.geojobs.repository.model.TaskStatus;
 import app.bpartners.geojobs.repository.model.ZoneDetectionTask;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,7 +32,7 @@ public class ZoneDetectionTaskStatusService {
   private ZoneDetectionTask updateStatus(
       ZoneDetectionTask task, Status.ProgressionStatus progression, Status.HealthStatus health) {
     task.addStatus(
-        DetectionTaskStatus.builder()
+        TaskStatus.builder()
             .id(randomUUID().toString())
             .creationDatetime(now())
             .progression(progression)

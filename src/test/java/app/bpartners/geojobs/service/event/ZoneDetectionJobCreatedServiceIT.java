@@ -15,8 +15,8 @@ import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneDetectionJobCreated;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
-import app.bpartners.geojobs.repository.model.DetectionTaskStatus;
 import app.bpartners.geojobs.repository.model.JobStatus;
+import app.bpartners.geojobs.repository.model.TaskStatus;
 import app.bpartners.geojobs.repository.model.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.ZoneDetectionTask;
 import app.bpartners.geojobs.service.ZoneDetectionJobService;
@@ -48,10 +48,11 @@ class ZoneDetectionJobCreatedServiceIT extends FacadeIT {
                         .submissionInstant(now())
                         .statusHistory(
                             List.of(
-                                DetectionTaskStatus.builder()
+                                TaskStatus.builder()
                                     .id(randomUUID().toString())
                                     .progression(PENDING)
                                     .health(UNKNOWN)
+                                    .jobType(DETECTION)
                                     .taskId(taskId)
                                     .creationDatetime(now())
                                     .build()))

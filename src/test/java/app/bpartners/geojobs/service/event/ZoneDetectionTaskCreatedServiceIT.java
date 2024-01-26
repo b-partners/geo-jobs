@@ -18,8 +18,8 @@ import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.repository.DetectedTileRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionTaskRepository;
 import app.bpartners.geojobs.repository.model.DetectedTile;
-import app.bpartners.geojobs.repository.model.DetectionTaskStatus;
 import app.bpartners.geojobs.repository.model.JobStatus;
+import app.bpartners.geojobs.repository.model.TaskStatus;
 import app.bpartners.geojobs.repository.model.Tile;
 import app.bpartners.geojobs.repository.model.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.ZoneDetectionTask;
@@ -131,10 +131,11 @@ class ZoneDetectionTaskCreatedServiceIT extends FacadeIT {
                 .statusHistory(
                     new ArrayList<>() {
                       {
-                        DetectionTaskStatus.builder()
+                        TaskStatus.builder()
                             .id(randomUUID().toString())
                             .progression(PENDING)
                             .health(UNKNOWN)
+                            .jobType(DETECTION)
                             .taskId(taskId)
                             .creationDatetime(now())
                             .build();
