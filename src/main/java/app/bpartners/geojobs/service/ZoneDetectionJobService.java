@@ -1,10 +1,7 @@
 package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.repository.model.JobStatus.JobType.DETECTION;
-import static java.time.Instant.now;
-import static java.util.UUID.randomUUID;
 
-import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneDetectionJobStatusChanged;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneDetectionTaskCreated;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
@@ -13,38 +10,30 @@ import app.bpartners.geojobs.repository.model.Status;
 import app.bpartners.geojobs.repository.model.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.ZoneDetectionTask;
 import java.util.List;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
-public class ZoneDetectionJobService
-    extends AbstractZoneJobService<
-        ZoneDetectionTask, ZoneDetectionJob, ZoneDetectionJobRepository> {
-
-  public ZoneDetectionJobService(
-      EventProducer eventProducer, ZoneDetectionJobRepository repository) {
-    super(eventProducer, repository);
-  }
+@AllArgsConstructor
+public class ZoneDetectionJobService {
+  private final ZoneDetectionJobRepository repository;
+  private final ZoneJobService<ZoneDetectionTask, ZoneDetectionJob> zoneJobService;
 
   public List<ZoneDetectionJob> process(String jobId) {
-    var optionalZDJ = findById(jobId);
-    var jobStatus =
-        JobStatus.builder()
-            .id(randomUUID().toString())
-            .jobId(optionalZDJ.getId())
-            .jobType(DETECTION)
-            .progression(Status.ProgressionStatus.PROCESSING)
-            .health(Status.HealthStatus.UNKNOWN)
-            .creationDatetime(now())
-            .build();
-    var toProcess = updateStatus(optionalZDJ, jobStatus);
+    var optionalZDJ = zoneJobService.findById(jobId, repository);
+    var toProcess = zoneJobService.process(optionalZDJ, DETECTION, repository);
     toProcess
         .getTasks()
-        .forEach(task -> getEventProducer().accept(List.of(new ZoneDetectionTaskCreated(task))));
+        .forEach(
+            task ->
+                zoneJobService
+                    .getEventProducer()
+                    .accept(List.of(new ZoneDetectionTaskCreated(task))));
     return List.of(optionalZDJ);
   }
 
   public ZoneDetectionJob refreshStatus(String jobId) {
-    var oldJob = findById(jobId);
+    var oldJob = zoneJobService.findById(jobId, repository);
     Status oldStatus = oldJob.getStatus();
     Status newStatus =
         Status.reduce(
@@ -57,12 +46,17 @@ public class ZoneDetectionJobService
     }
 
     var jobStatus = JobStatus.from(oldJob.getId(), newStatus, DETECTION);
-    var refreshed = updateStatus(oldJob, jobStatus);
+    var refreshed = zoneJobService.updateStatus(oldJob, jobStatus, repository);
 
-    getEventProducer()
+    zoneJobService
+        .getEventProducer()
         .accept(
             List.of(
                 ZoneDetectionJobStatusChanged.builder().oldJob(oldJob).newJob(refreshed).build()));
     return refreshed;
+  }
+
+  public ZoneDetectionJob findById(String id) {
+    return zoneJobService.findById(id, repository);
   }
 }
