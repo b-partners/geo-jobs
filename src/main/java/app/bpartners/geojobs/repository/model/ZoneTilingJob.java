@@ -17,7 +17,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @ToString
 @JsonIgnoreProperties({"status", "done"})
-public class ZoneTilingJob extends AbstractZoneJob<ZoneTilingTask> implements Serializable {
+public class ZoneTilingJob extends ZoneJob<ZoneTilingTask> implements Serializable {
 
   public JobStatus getStatus() {
     return JobStatus.from(

@@ -4,8 +4,8 @@ import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.model.BoundedPageSize;
 import app.bpartners.geojobs.model.PageFromOne;
 import app.bpartners.geojobs.model.exception.NotFoundException;
-import app.bpartners.geojobs.repository.model.AbstractZoneJob;
 import app.bpartners.geojobs.repository.model.JobStatus;
+import app.bpartners.geojobs.repository.model.ZoneJob;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -16,8 +16,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 // TODO: Consider refactoring for better abstraction - warrants discussion
 @AllArgsConstructor
 @Data
-public class AbstractZoneJobService<
-    T, J extends AbstractZoneJob<T>, R extends JpaRepository<J, String>> {
+public class AbstractZoneJobService<T, J extends ZoneJob<T>, R extends JpaRepository<J, String>> {
   private final EventProducer eventProducer;
   private final R repository;
 

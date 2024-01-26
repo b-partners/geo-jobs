@@ -19,7 +19,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-public class ZoneDetectionJob extends AbstractZoneJob<ZoneDetectionTask> implements Serializable {
+public class ZoneDetectionJob extends ZoneJob<ZoneDetectionTask> implements Serializable {
   @OneToOne(cascade = ALL)
   private ZoneTilingJob zoneTilingJob;
 

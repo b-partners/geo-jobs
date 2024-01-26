@@ -9,30 +9,23 @@ import static app.bpartners.geojobs.repository.model.Status.ProgressionStatus.PR
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
-import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.model.exception.NotFoundException;
-import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
 import app.bpartners.geojobs.repository.ZoneTilingTaskRepository;
 import app.bpartners.geojobs.repository.model.Status;
 import app.bpartners.geojobs.repository.model.TaskStatus;
-import app.bpartners.geojobs.repository.model.ZoneTilingJob;
 import app.bpartners.geojobs.repository.model.ZoneTilingTask;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class ZoneTilingTaskStatusService
-    extends AbstractZoneJobService<ZoneTilingTask, ZoneTilingJob, ZoneTilingJobRepository> {
+public class ZoneTilingTaskStatusService {
 
   private final ZoneTilingTaskRepository repository;
   private final ZoneTilingJobService zoneTilingJobService;
 
   public ZoneTilingTaskStatusService(
-      EventProducer eventProducer,
-      ZoneTilingJobRepository repository,
       ZoneTilingTaskRepository zoneTilingTaskRepository,
       ZoneTilingJobService zoneTilingJobService) {
-    super(eventProducer, repository);
     this.repository = zoneTilingTaskRepository;
     this.zoneTilingJobService = zoneTilingJobService;
   }

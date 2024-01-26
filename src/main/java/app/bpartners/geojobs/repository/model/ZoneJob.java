@@ -30,7 +30,7 @@ import org.hibernate.annotations.TypeDef;
 @ToString
 @MappedSuperclass
 @TypeDef(name = PostgresEnumType.PGSQL_ENUM_NAME, typeClass = PostgresEnumType.class)
-public class AbstractZoneJob<T> implements Serializable {
+public class ZoneJob<T> implements Serializable {
   @Id private String id;
   private String zoneName;
   private String emailReceiver;
