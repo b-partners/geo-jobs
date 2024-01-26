@@ -15,7 +15,7 @@ import org.thymeleaf.context.Context;
 @AllArgsConstructor
 public class EmailService {
   private final Mailer mailer;
-  public static final String EMAIL_OBJECT = "Résultat du pavage de la zone";
+  public static final String EMAIL_OBJECT = "Résultat du pavage";
   public static final String ZONE_TILING_TEMPLATE_NAME = "zone_tiling";
   private HTMLTemplateParser htmlTemplateParser;
 
