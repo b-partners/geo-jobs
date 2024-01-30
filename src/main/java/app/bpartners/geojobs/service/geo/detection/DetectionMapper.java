@@ -1,16 +1,20 @@
 package app.bpartners.geojobs.service.geo.detection;
 
+import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
+import app.bpartners.geojobs.repository.model.Status;
+import app.bpartners.geojobs.repository.model.TaskStatus;
+import app.bpartners.geojobs.repository.model.geo.JobType;
 import app.bpartners.geojobs.repository.model.geo.detection.DetectableObjectType;
 import app.bpartners.geojobs.repository.model.geo.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.geo.detection.DetectedTile;
+import app.bpartners.geojobs.repository.model.geo.detection.DetectionTask;
 import app.bpartners.geojobs.repository.model.geo.tiling.Tile;
 import app.bpartners.geojobs.service.geo.tiling.TileValidator;
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
@@ -38,7 +42,7 @@ public class DetectionMapper {
         .id(detectedTileId)
         .tile(tile)
         .detectedObjects(detectedObjects)
-        .creationDatetime(Instant.now())
+        .creationDatetime(now())
         .build();
   }
 
@@ -94,5 +98,24 @@ public class DetectionMapper {
             new MultiPolygon()
                 .type(MultiPolygon.TypeEnum.POLYGON)
                 .coordinates(List.of(List.of(coordinates))));
+  }
+
+  public DetectionTask toDomain(Tile tile, String zoneDetectionJobId) {
+    String taskId = randomUUID().toString();
+    return DetectionTask.builder()
+        .id(taskId)
+        .jobId(zoneDetectionJobId)
+        .tile(tile)
+        .statusHistory(
+            List.of(
+                TaskStatus.builder()
+                    .health(Status.HealthStatus.UNKNOWN)
+                    .progression(Status.ProgressionStatus.PENDING)
+                    .jobType(JobType.DETECTION)
+                    .creationDatetime(now())
+                    .taskId(taskId)
+                    .build()))
+        .submissionInstant(now())
+        .build();
   }
 }

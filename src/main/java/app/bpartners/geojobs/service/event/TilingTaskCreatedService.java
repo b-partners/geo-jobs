@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service.event;
 
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
+import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.gen.TilingTaskCreated;
@@ -9,13 +10,22 @@ import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.file.BucketConf;
 import app.bpartners.geojobs.file.FileUnzipper;
 import app.bpartners.geojobs.model.exception.ApiException;
+import app.bpartners.geojobs.model.exception.NotFoundException;
+import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
+import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
+import app.bpartners.geojobs.repository.model.JobStatus;
+import app.bpartners.geojobs.repository.model.Status;
+import app.bpartners.geojobs.repository.model.geo.JobType;
 import app.bpartners.geojobs.repository.model.geo.Parcel;
+import app.bpartners.geojobs.repository.model.geo.detection.DetectionTask;
+import app.bpartners.geojobs.repository.model.geo.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.geo.tiling.Tile;
 import app.bpartners.geojobs.repository.model.geo.tiling.TilingTask;
+import app.bpartners.geojobs.repository.model.geo.tiling.ZoneTilingJob;
+import app.bpartners.geojobs.service.geo.detection.DetectionMapper;
 import app.bpartners.geojobs.service.geo.tiling.TilesDownloader;
 import app.bpartners.geojobs.service.geo.tiling.TilingTaskStatusService;
 import java.io.File;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -31,6 +41,9 @@ public class TilingTaskCreatedService implements Consumer<TilingTaskCreated> {
   private final BucketComponent bucketComponent;
   private final BucketConf bucketConf;
   private final TilingTaskStatusService tilingTaskStatusService;
+  private final ZoneDetectionJobRepository zoneDetectionJobRepository;
+  private final DetectionMapper zoneDetectionJobMapper;
+  private final ZoneTilingJobRepository zoneTilingJobRepository;
 
   @Override
   public void accept(TilingTaskCreated tilingTaskCreated) {
@@ -47,6 +60,39 @@ public class TilingTaskCreatedService implements Consumer<TilingTaskCreated> {
       throw new ApiException(SERVER_EXCEPTION, e);
     }
 
+    String zoneDetectionJobId = randomUUID().toString();
+    List<Tile> tiles = task.getParcel().getTiles();
+    List<DetectionTask> zoneDetectionTasks =
+        tiles.stream()
+            .map(tile -> zoneDetectionJobMapper.toDomain(tile, zoneDetectionJobId))
+            .toList();
+
+    ZoneTilingJob job =
+        zoneTilingJobRepository
+            .findById(task.getJobId())
+            .orElseThrow(() -> new NotFoundException("Job not found"));
+
+    ZoneDetectionJob zoneDetectionJob =
+        ZoneDetectionJob.builder()
+            .id(zoneDetectionJobId)
+            .zoneTilingJob(job)
+            .tasks(zoneDetectionTasks)
+            .zoneName(job.getZoneName())
+            .emailReceiver(job.getEmailReceiver())
+            .submissionInstant(now())
+            .statusHistory(
+                List.of(
+                    JobStatus.builder()
+                        .jobId(zoneDetectionJobId)
+                        .id(randomUUID().toString())
+                        .creationDatetime(now())
+                        .jobType(JobType.DETECTION)
+                        .progression(Status.ProgressionStatus.PENDING)
+                        .health(Status.HealthStatus.UNKNOWN)
+                        .build()))
+            .build();
+
+    zoneDetectionJobRepository.save(zoneDetectionJob);
     tilingTaskStatusService.succeed(task);
   }
 
@@ -81,7 +127,7 @@ public class TilingTaskCreatedService implements Consumer<TilingTaskCreated> {
       enrichedAccumulator.add(
           Tile.builder()
               .id(randomUUID().toString())
-              .creationDatetime(Instant.now().toString())
+              .creationDatetime(now().toString())
               .coordinates(new TileCoordinates().x(x).y(y).z(z))
               .bucketPath(bucketName + "/" + bucketKey + filePath)
               .build());
