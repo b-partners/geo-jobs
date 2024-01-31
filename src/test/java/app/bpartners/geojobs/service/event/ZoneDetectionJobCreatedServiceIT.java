@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service.event;
 import static app.bpartners.geojobs.repository.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.repository.model.Status.ProgressionStatus.PENDING;
 import static app.bpartners.geojobs.repository.model.geo.JobType.DETECTION;
+import static app.bpartners.geojobs.repository.model.geo.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -38,6 +39,7 @@ class ZoneDetectionJobCreatedServiceIT extends FacadeIT {
         ZoneDetectionJob.builder()
             .id(jobId)
             .zoneName("mock")
+            .type(MACHINE)
             .emailReceiver("mock@gmail.com")
             .tasks(
                 List.of(

@@ -10,9 +10,7 @@ import static app.bpartners.geojobs.repository.model.geo.JobType.TILING;
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.naturalOrder;
 import static java.util.UUID.randomUUID;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -20,23 +18,22 @@ import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.gen.DetectionJobCreated;
 import app.bpartners.geojobs.endpoint.event.gen.TilingTaskCreated;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneTilingJobStatusChanged;
 import app.bpartners.geojobs.endpoint.rest.controller.ZoneTilingController;
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
-import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
-import app.bpartners.geojobs.endpoint.rest.model.Status;
-import app.bpartners.geojobs.endpoint.rest.model.Tile;
-import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
+import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.file.FileHash;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
+import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
 import app.bpartners.geojobs.repository.model.JobStatus;
 import app.bpartners.geojobs.repository.model.TaskStatus;
 import app.bpartners.geojobs.repository.model.geo.Parcel;
 import app.bpartners.geojobs.repository.model.geo.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.geo.tiling.ZoneTilingJob;
+import app.bpartners.geojobs.service.geo.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geo.tiling.TilesDownloader;
 import app.bpartners.geojobs.service.geo.tiling.TilingTaskStatusService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -55,6 +52,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 @Slf4j
 class TilingTaskCreatedServiceIT extends FacadeIT {
   @Autowired TilingTaskCreatedService subject;
+  @Autowired DetectionJobCreatedService detectionJobCreatedService;
   @Autowired ZoneTilingController zoneTilingController;
   @MockBean BucketComponent bucketComponent;
   @MockBean TilesDownloader tilesDownloader;
@@ -63,6 +61,8 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
   @MockBean EventProducer eventProducer;
   @Autowired ObjectMapper om;
   @Autowired TilingTaskStatusService tilingTaskStatusService;
+  @Autowired ZoneDetectionJobRepository zoneDetectionJobRepository;
+  @MockBean ZoneDetectionJobService zoneDetectionJobService;
 
   private Feature lyonFeature;
 
@@ -297,13 +297,20 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
     subject.accept(createdEventPayload);
 
     var eventCaptor = ArgumentCaptor.forClass(List.class);
-    verify(eventProducer, times(2)).accept(eventCaptor.capture());
+    verify(eventProducer, times(3)).accept(eventCaptor.capture());
     var sentEvents = eventCaptor.getAllValues().stream().flatMap(List::stream).toList();
-    assertEquals(2, sentEvents.size());
+    assertEquals(3, sentEvents.size());
+    var detectionJobToCreate = sentEvents.get(1);
     var changedToProcessing = (ZoneTilingJobStatusChanged) sentEvents.get(0);
     assertEquals(PROCESSING, changedToProcessing.getNewJob().getStatus().getProgression());
-    var changedToFinished = (ZoneTilingJobStatusChanged) sentEvents.get(1);
+    var changedToFinished = (ZoneTilingJobStatusChanged) sentEvents.get(2);
     assertEquals(FINISHED, changedToFinished.getNewJob().getStatus().getProgression());
+
+    detectionJobCreatedService.accept((DetectionJobCreated) detectionJobToCreate);
+    verify(zoneDetectionJobService, times(1))
+        .saveDetectionJobFromTilingTask(
+            ((DetectionJobCreated) detectionJobToCreate).getTilingTask());
+    assertNotNull(zoneDetectionJobRepository.findAll());
   }
 
   @Test

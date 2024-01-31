@@ -1,27 +1,39 @@
 package app.bpartners.geojobs.service.geo.detection;
 
+import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.POLYGON;
+import static app.bpartners.geojobs.repository.model.Status.HealthStatus.UNKNOWN;
+import static app.bpartners.geojobs.repository.model.Status.ProgressionStatus.PENDING;
+import static app.bpartners.geojobs.repository.model.geo.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
-import app.bpartners.geojobs.repository.model.Status;
+import app.bpartners.geojobs.model.exception.NotFoundException;
+import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
+import app.bpartners.geojobs.repository.model.JobStatus;
 import app.bpartners.geojobs.repository.model.TaskStatus;
 import app.bpartners.geojobs.repository.model.geo.JobType;
 import app.bpartners.geojobs.repository.model.geo.detection.DetectableObjectType;
 import app.bpartners.geojobs.repository.model.geo.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.geo.detection.DetectedTile;
 import app.bpartners.geojobs.repository.model.geo.detection.DetectionTask;
+import app.bpartners.geojobs.repository.model.geo.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.geo.tiling.Tile;
+import app.bpartners.geojobs.repository.model.geo.tiling.TilingTask;
+import app.bpartners.geojobs.repository.model.geo.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.geo.tiling.TileValidator;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
+@AllArgsConstructor
 public class DetectionMapper {
+  private final ZoneTilingJobRepository zoneTilingJobRepository;
   private static final TileValidator tileValidator = new TileValidator();
 
   public static DetectedTile toDetectedTile(DetectionResponse detectionResponse, Tile tile) {
@@ -96,7 +108,7 @@ public class DetectionMapper {
         .zoom(zoom)
         .geometry(
             new MultiPolygon()
-                .type(MultiPolygon.TypeEnum.POLYGON)
+                .type(POLYGON)
                 .coordinates(List.of(List.of(coordinates))));
   }
 
@@ -109,13 +121,44 @@ public class DetectionMapper {
         .statusHistory(
             List.of(
                 TaskStatus.builder()
-                    .health(Status.HealthStatus.UNKNOWN)
-                    .progression(Status.ProgressionStatus.PENDING)
+                    .health(UNKNOWN)
+                    .progression(PENDING)
                     .jobType(JobType.DETECTION)
                     .creationDatetime(now())
                     .taskId(taskId)
                     .build()))
         .submissionInstant(now())
+        .build();
+  }
+
+  public ZoneDetectionJob fromTilingTask(TilingTask task) {
+    String zoneDetectionJobId = randomUUID().toString();
+    List<Tile> tiles = task.getParcel().getTiles();
+    List<DetectionTask> zoneDetectionTasks =
+        tiles.stream().map(tile -> toDomain(tile, zoneDetectionJobId)).toList();
+    ZoneTilingJob job =
+        zoneTilingJobRepository
+            .findById(task.getJobId())
+            .orElseThrow(() -> new NotFoundException("Job not found"));
+
+    return ZoneDetectionJob.builder()
+        .id(zoneDetectionJobId)
+        .zoneTilingJob(job)
+        .tasks(zoneDetectionTasks)
+        .type(MACHINE)
+        .zoneName(job.getZoneName())
+        .emailReceiver(job.getEmailReceiver())
+        .submissionInstant(now())
+        .statusHistory(
+            List.of(
+                JobStatus.builder()
+                    .jobId(zoneDetectionJobId)
+                    .id(randomUUID().toString())
+                    .creationDatetime(now())
+                    .jobType(JobType.DETECTION)
+                    .progression(PENDING)
+                    .health(UNKNOWN)
+                    .build()))
         .build();
   }
 }
