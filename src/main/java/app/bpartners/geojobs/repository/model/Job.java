@@ -1,20 +1,18 @@
 package app.bpartners.geojobs.repository.model;
 
 import static app.bpartners.geojobs.repository.model.Status.ProgressionStatus.PENDING;
-import static app.bpartners.geojobs.repository.model.types.PostgresEnumType.PGSQL_ENUM_NAME;
-import static javax.persistence.CascadeType.ALL;
-import static javax.persistence.FetchType.EAGER;
+import static jakarta.persistence.CascadeType.ALL;
+import static jakarta.persistence.FetchType.EAGER;
 import static org.hibernate.annotations.FetchMode.SELECT;
 
 import app.bpartners.geojobs.repository.model.geo.JobType;
-import app.bpartners.geojobs.repository.model.types.PostgresEnumType;
+import jakarta.persistence.Id;
+import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.OneToMany;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import javax.persistence.Id;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.OneToMany;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,7 +21,6 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.TypeDef;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -32,7 +29,6 @@ import org.hibernate.annotations.TypeDef;
 @Setter
 @ToString
 @MappedSuperclass
-@TypeDef(name = PGSQL_ENUM_NAME, typeClass = PostgresEnumType.class)
 public abstract class Job<T extends Task> implements Serializable {
   @Id protected String id;
   protected String zoneName;

@@ -1,14 +1,14 @@
 package app.bpartners.geojobs.repository.model.geo.detection;
 
 import static app.bpartners.geojobs.repository.model.geo.JobType.DETECTION;
-import static javax.persistence.CascadeType.ALL;
+import static jakarta.persistence.CascadeType.ALL;
 
 import app.bpartners.geojobs.repository.model.Job;
 import app.bpartners.geojobs.repository.model.geo.JobType;
 import app.bpartners.geojobs.repository.model.geo.tiling.ZoneTilingJob;
+import jakarta.persistence.Entity;
+import jakarta.persistence.OneToOne;
 import java.io.Serializable;
-import javax.persistence.Entity;
-import javax.persistence.OneToOne;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

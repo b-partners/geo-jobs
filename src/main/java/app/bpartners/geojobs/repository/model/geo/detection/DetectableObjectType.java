@@ -1,12 +1,13 @@
 package app.bpartners.geojobs.repository.model.geo.detection;
 
-import app.bpartners.geojobs.repository.model.types.PostgresEnumType;
+import static jakarta.persistence.EnumType.STRING;
+import static org.hibernate.type.SqlTypes.NAMED_ENUM;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import java.io.Serializable;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -14,8 +15,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
+import org.hibernate.annotations.JdbcTypeCode;
 
 @Entity
 @AllArgsConstructor
@@ -25,15 +25,14 @@ import org.hibernate.annotations.TypeDef;
 @Builder
 @ToString
 @EqualsAndHashCode
-@TypeDef(name = PostgresEnumType.PGSQL_ENUM_NAME, typeClass = PostgresEnumType.class)
 public class DetectableObjectType implements Serializable {
   @Id private String id;
 
   @JoinColumn(referencedColumnName = "id")
   private String objectId;
 
-  @Enumerated(EnumType.STRING)
-  @Type(type = PostgresEnumType.PGSQL_ENUM_NAME)
+  @Enumerated(STRING)
+  @JdbcTypeCode(NAMED_ENUM)
   private DetectableType detectableType;
 
   public enum DetectableType {

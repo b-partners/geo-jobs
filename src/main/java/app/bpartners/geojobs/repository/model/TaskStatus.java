@@ -1,22 +1,20 @@
 package app.bpartners.geojobs.repository.model;
 
-import static app.bpartners.geojobs.repository.model.types.PostgresEnumType.PGSQL_ENUM_NAME;
+import static jakarta.persistence.EnumType.STRING;
 import static java.util.UUID.randomUUID;
-import static javax.persistence.EnumType.STRING;
+import static org.hibernate.type.SqlTypes.NAMED_ENUM;
 
 import app.bpartners.geojobs.repository.model.geo.JobType;
-import app.bpartners.geojobs.repository.model.types.PostgresEnumType;
-import javax.persistence.Entity;
-import javax.persistence.Enumerated;
-import javax.persistence.JoinColumn;
-import javax.persistence.PrimaryKeyJoinColumn;
-import javax.persistence.Table;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.PrimaryKeyJoinColumn;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
+import org.hibernate.annotations.JdbcTypeCode;
 
 @PrimaryKeyJoinColumn(name = "id")
 @Entity
@@ -25,12 +23,11 @@ import org.hibernate.annotations.TypeDef;
 @Setter
 @SuperBuilder
 @Table(name = "task_status")
-@TypeDef(name = PGSQL_ENUM_NAME, typeClass = PostgresEnumType.class)
 public class TaskStatus extends Status {
   @JoinColumn private String taskId;
 
   @Enumerated(STRING)
-  @Type(type = PGSQL_ENUM_NAME)
+  @JdbcTypeCode(NAMED_ENUM)
   private JobType jobType;
 
   public static TaskStatus from(String id, Status status, JobType jobType) {

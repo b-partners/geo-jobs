@@ -13,13 +13,14 @@ public class ZoneDetectionJobMapper {
 
   public app.bpartners.geojobs.endpoint.rest.model.ZoneDetectionJob toRest(
       ZoneDetectionJob domain,
-      List<app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType> objectTypesToDetect) {
+      List<app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration>
+          detectableObjectConfigurations) {
     return new app.bpartners.geojobs.endpoint.rest.model.ZoneDetectionJob()
         .id(domain.getId())
         .zoneName(domain.getZoneName())
         .emailReceiver(domain.getEmailReceiver())
         .zoneTilingJobId(domain.getZoneTilingJob().getId())
-        .objectTypesToDetect(objectTypesToDetect)
+        .objectsToDetect(detectableObjectConfigurations)
         .creationDatetime(domain.getSubmissionInstant())
         .status(statusMapper.statusConverter(domain.getStatus()));
   }

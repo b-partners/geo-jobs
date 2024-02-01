@@ -1,17 +1,17 @@
 package app.bpartners.geojobs.repository.model;
 
+import static jakarta.persistence.EnumType.STRING;
+import static jakarta.persistence.GenerationType.IDENTITY;
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.naturalOrder;
-import static javax.persistence.EnumType.STRING;
-import static javax.persistence.GenerationType.IDENTITY;
+import static org.hibernate.type.SqlTypes.NAMED_ENUM;
 
-import app.bpartners.geojobs.repository.model.types.PostgresEnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.MappedSuperclass;
 import java.time.Instant;
 import java.util.List;
-import javax.persistence.Enumerated;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.MappedSuperclass;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -20,8 +20,7 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
+import org.hibernate.annotations.JdbcTypeCode;
 
 @MappedSuperclass
 @Getter
@@ -30,7 +29,6 @@ import org.hibernate.annotations.TypeDef;
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode
-@TypeDef(name = PostgresEnumType.PGSQL_ENUM_NAME, typeClass = PostgresEnumType.class)
 @ToString
 public class Status {
   @Id
@@ -38,11 +36,11 @@ public class Status {
   private String id;
 
   @Enumerated(STRING)
-  @Type(type = PostgresEnumType.PGSQL_ENUM_NAME)
+  @JdbcTypeCode(NAMED_ENUM)
   private ProgressionStatus progression;
 
   @Enumerated(STRING)
-  @Type(type = PostgresEnumType.PGSQL_ENUM_NAME)
+  @JdbcTypeCode(NAMED_ENUM)
   private HealthStatus health;
 
   @CreationTimestamp private Instant creationDatetime;

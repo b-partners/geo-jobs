@@ -1,8 +1,8 @@
 package app.bpartners.geojobs.repository.model;
 
 import app.bpartners.geojobs.PojaGenerated;
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.Setter;
 

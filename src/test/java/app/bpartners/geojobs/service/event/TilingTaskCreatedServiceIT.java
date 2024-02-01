@@ -1,44 +1,14 @@
 package app.bpartners.geojobs.service.event;
 
-import app.bpartners.geojobs.file.BucketComponent;
-import app.bpartners.geojobs.file.FileHash;
-import app.bpartners.geojobs.file.FileHashAlgorithm;
-import app.bpartners.geojobs.service.geo.tiling.TilingTaskStatusService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.time.Instant;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import app.bpartners.geojobs.endpoint.event.gen.TilingTaskCreated;
-import app.bpartners.geojobs.repository.model.JobStatus;
-import app.bpartners.geojobs.repository.model.TaskStatus;
-import app.bpartners.geojobs.service.geo.tiling.TilesDownloader;
-import app.bpartners.geojobs.conf.FacadeIT;
-import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.gen.ZoneTilingJobStatusChanged;
-import app.bpartners.geojobs.endpoint.rest.controller.ZoneTilingController;
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
-import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
-import app.bpartners.geojobs.endpoint.rest.model.Status;
-import app.bpartners.geojobs.endpoint.rest.model.Tile;
-import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
-import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
-import app.bpartners.geojobs.repository.TilingTaskRepository;
-import app.bpartners.geojobs.repository.model.geo.tiling.ZoneTilingJob;
-import app.bpartners.geojobs.repository.model.geo.tiling.TilingTask;
-import app.bpartners.geojobs.repository.model.geo.Parcel;
-
-import java.nio.file.Paths;
-import java.util.List;
-
+import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.SUCCEEDED;
+import static app.bpartners.geojobs.file.FileHashAlgorithm.SHA256;
+import static app.bpartners.geojobs.repository.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.repository.model.Status.ProgressionStatus.FINISHED;
+import static app.bpartners.geojobs.repository.model.Status.ProgressionStatus.PENDING;
+import static app.bpartners.geojobs.repository.model.Status.ProgressionStatus.PROCESSING;
+import static app.bpartners.geojobs.repository.model.geo.JobType.TILING;
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.naturalOrder;
-import static app.bpartners.geojobs.repository.model.geo.JobType.TILING;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -47,100 +17,135 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.SUCCEEDED;
-import static app.bpartners.geojobs.repository.model.Status.HealthStatus.UNKNOWN;
-import static app.bpartners.geojobs.repository.model.Status.ProgressionStatus.PENDING;
-import static app.bpartners.geojobs.repository.model.Status.ProgressionStatus.PROCESSING;
+
+import app.bpartners.geojobs.conf.FacadeIT;
+import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.gen.TilingTaskCreated;
+import app.bpartners.geojobs.endpoint.event.gen.ZoneTilingJobStatusChanged;
+import app.bpartners.geojobs.endpoint.rest.controller.ZoneTilingController;
+import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
+import app.bpartners.geojobs.endpoint.rest.model.Status;
+import app.bpartners.geojobs.endpoint.rest.model.Tile;
+import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
+import app.bpartners.geojobs.file.BucketComponent;
+import app.bpartners.geojobs.file.FileHash;
+import app.bpartners.geojobs.repository.TilingTaskRepository;
+import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
+import app.bpartners.geojobs.repository.model.JobStatus;
+import app.bpartners.geojobs.repository.model.TaskStatus;
+import app.bpartners.geojobs.repository.model.geo.Parcel;
+import app.bpartners.geojobs.repository.model.geo.tiling.TilingTask;
+import app.bpartners.geojobs.repository.model.geo.tiling.ZoneTilingJob;
+import app.bpartners.geojobs.service.geo.tiling.TilesDownloader;
+import app.bpartners.geojobs.service.geo.tiling.TilingTaskStatusService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.nio.file.Paths;
+import java.time.Instant;
+import java.util.List;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
 @Slf4j
 class TilingTaskCreatedServiceIT extends FacadeIT {
-  @Autowired
-  TilingTaskCreatedService subject;
-  @Autowired
-  ZoneTilingController zoneTilingController;
-  @MockBean
-  BucketComponent bucketComponent;
-  @MockBean
-  TilesDownloader tilesDownloader;
-  @Autowired
-  TilingTaskRepository repository;
+  @Autowired TilingTaskCreatedService subject;
+  @Autowired ZoneTilingController zoneTilingController;
+  @MockBean BucketComponent bucketComponent;
+  @MockBean TilesDownloader tilesDownloader;
+  @Autowired TilingTaskRepository repository;
   @Autowired ZoneTilingJobRepository zoneTilingJobRepository;
   @MockBean EventProducer eventProducer;
   @Autowired ObjectMapper om;
-  @Autowired
-  TilingTaskStatusService tilingTaskStatusService;
+  @Autowired TilingTaskStatusService tilingTaskStatusService;
+
+  private Feature lyonFeature;
 
   @BeforeEach
-  void setUp() {
+  void setUp() throws JsonProcessingException {
     when(tilesDownloader.apply(any()))
         .thenAnswer(
-            i -> Paths.get(this.getClass().getClassLoader().getResource("mockData/lyon").toURI()).toFile()
-            );
-    when(bucketComponent.upload(any(), any())).thenReturn(new FileHash(FileHashAlgorithm.SHA256, "mock"));
+            i ->
+                Paths.get(this.getClass().getClassLoader().getResource("mockData/lyon").toURI())
+                    .toFile());
+    when(bucketComponent.upload(any(), any())).thenReturn(new FileHash(SHA256, "mock"));
+
+    lyonFeature =
+        om.readValue(
+                """
+                { "type": "Feature",
+                  "properties": {
+                    "code": "69",
+                    "nom": "Rhône",
+                    "id": 30251921,
+                    "CLUSTER_ID": 99520,
+                    "CLUSTER_SIZE": 386884 },
+                  "geometry": {
+                    "type": "MultiPolygon",
+                    "coordinates": [ [ [
+                        [ 4.459648282829194, 45.904988912620688 ],
+                        [ 4.464709510872551, 45.928950368349426 ],
+                        [ 4.490816965688656, 45.941784543770964 ],
+                        [ 4.510354299995861, 45.933697132664598 ],
+                        [ 4.518386257467152, 45.912888345521047 ],
+                        [ 4.496344031095243, 45.883438201401809 ],
+                        [ 4.479593950305621, 45.882900828315755 ],
+                        [ 4.459648282829194, 45.904988912620688 ] ] ] ] } }""",
+                Feature.class)
+            .zoom(10)
+            .id("feature_1_id");
   }
 
   @SneakyThrows
-  private app.bpartners.geojobs.endpoint.rest.model.Parcel parcel1(){
+  private app.bpartners.geojobs.endpoint.rest.model.Parcel parcel1() {
     return new app.bpartners.geojobs.endpoint.rest.model.Parcel()
         .creationDatetime(null)
         .id(null)
         .tiles(List.of(tile1(), tile2()))
-        .feature(
-            om.readValue(
-                    """
-              { "type": "Feature",
-                "properties": {
-                  "code": "69",
-                  "nom": "Rhône",
-                  "id": 30251921,
-                  "CLUSTER_ID": 99520,
-                  "CLUSTER_SIZE": 386884 },
-                "geometry": {
-                  "type": "MultiPolygon",
-                  "coordinates": [[[[4.459648282829194, 45.90498891262069], [4.464709510872551, 45.928950368349426], [4.490816965688656, 45.941784543770964], [4.510354299995861, 45.9336971326646], [4.518386257467152, 45.91288834552105], [4.496344031095243, 45.88343820140181], [4.479593950305621, 45.882900828315755], [4.459648282829194, 45.90498891262069]]]] } }""",
-                    Feature.class)
-                .zoom(10)
-                .id("feature_1_id"))
-        .tilingStatus(new Status().creationDatetime(null)
-            .progression(Status.ProgressionEnum.FINISHED)
-            .health(SUCCEEDED));
+        .feature(lyonFeature)
+        .tilingStatus(
+            new Status()
+                .creationDatetime(null)
+                .progression(Status.ProgressionEnum.FINISHED)
+                .health(SUCCEEDED));
   }
 
-  public Tile tile1 (){
+  public Tile tile1() {
     return new Tile()
         .creationDatetime(null)
         .id(null)
-        .coordinates(new TileCoordinates()
-            .x(123132)
-            .y(456)
-            .z(20))
-        .bucketPath("dummy-bucket/lyon/20/123132/456.png");  }
+        .coordinates(new TileCoordinates().x(123132).y(456).z(20))
+        .bucketPath("dummy-bucket/lyon/20/123132/456.png");
+  }
 
-  public Tile tile2 (){
+  public Tile tile2() {
     return new Tile()
         .creationDatetime(null)
         .id(null)
-        .coordinates(new TileCoordinates()
-            .x(123132)
-            .y(123)
-            .z(20))
+        .coordinates(new TileCoordinates().x(123132).y(123).z(20))
         .bucketPath("dummy-bucket/lyon/20/123132/123.png");
   }
 
-  private app.bpartners.geojobs.endpoint.rest.model.Parcel ignoreIds(app.bpartners.geojobs.endpoint.rest.model.Parcel parcel){
+  private app.bpartners.geojobs.endpoint.rest.model.Parcel ignoreIds(
+      app.bpartners.geojobs.endpoint.rest.model.Parcel parcel) {
     Status status = parcel.getTilingStatus();
     parcel.setId(null);
     parcel.setCreationDatetime(null);
     assert status != null;
-    parcel.setTilingStatus(new Status()
-        .creationDatetime(null)
-        .health(status.getHealth())
-        .progression(status.getProgression())
-    );
+    parcel.setTilingStatus(
+        new Status()
+            .creationDatetime(null)
+            .health(status.getHealth())
+            .progression(status.getProgression()));
     return parcel;
   }
 
-  private List<Tile> ignoreIds(List<Tile> tile){
+  private List<Tile> ignoreIds(List<Tile> tile) {
     for (Tile tile1 : tile) {
       tile1.setId(null);
       tile1.setCreationDatetime(null);
@@ -148,7 +153,7 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
     return tile;
   }
 
-  private ZoneTilingJob aZTJ(String jobId){
+  private ZoneTilingJob aZTJ(String jobId) {
     return ZoneTilingJob.builder()
         .id(jobId)
         .statusHistory(
@@ -166,8 +171,8 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
   }
 
   @SneakyThrows
-  private TilingTask aZTT(String jobId, String taskId){
-    return  TilingTask.builder()
+  private TilingTask aZTT(String jobId, String taskId) {
+    return TilingTask.builder()
         .id(taskId)
         .jobId(jobId)
         .parcel(
@@ -175,30 +180,7 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
                 .id(randomUUID().toString())
                 .creationDatetime(String.valueOf(Instant.now()))
                 .geoServerParameter(new GeoServerParameter().layers("grand-lyon"))
-                .feature(
-                    om.readValue(
-                            """
-                { "type": "Feature",
-                  "properties": {
-                    "code": "69",
-                    "nom": "Rhône",
-                    "id": 30251921,
-                    "CLUSTER_ID": 99520,
-                    "CLUSTER_SIZE": 386884 },
-                  "geometry": {
-                    "type": "MultiPolygon",
-                    "coordinates": [ [ [
-                      [ 4.459648282829194, 45.904988912620688 ],
-                      [ 4.464709510872551, 45.928950368349426 ],
-                      [ 4.490816965688656, 45.941784543770964 ],
-                      [ 4.510354299995861, 45.933697132664598 ],
-                      [ 4.518386257467152, 45.912888345521047 ],
-                      [ 4.496344031095243, 45.883438201401809 ],
-                      [ 4.479593950305621, 45.882900828315755 ],
-                      [ 4.459648282829194, 45.904988912620688 ] ] ] ] } }""",
-                            Feature.class)
-                        .zoom(10)
-                        .id("feature_1_id"))
+                .feature(lyonFeature)
                 .build())
         .statusHistory(
             List.of(
@@ -212,8 +194,8 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
   }
 
   @SneakyThrows
-  private TilingTask aZTT_processing(String jobId, String taskId){
-    return  TilingTask.builder()
+  private TilingTask aZTT_processing(String jobId, String taskId) {
+    return TilingTask.builder()
         .id(taskId)
         .jobId(jobId)
         .parcel(
@@ -223,24 +205,24 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
                 .feature(
                     om.readValue(
                             """
-                { "type": "Feature",
-                  "properties": {
-                    "code": "69",
-                    "nom": "Rhône",
-                    "id": 30251921,
-                    "CLUSTER_ID": 99520,
-                    "CLUSTER_SIZE": 386884 },
-                  "geometry": {
-                    "type": "MultiPolygon",
-                    "coordinates": [ [ [
-                      [ 4.459648282829194, 45.904988912620688 ],
-                      [ 4.464709510872551, 45.928950368349426 ],
-                      [ 4.490816965688656, 45.941784543770964 ],
-                      [ 4.510354299995861, 45.933697132664598 ],
-                      [ 4.518386257467152, 45.912888345521047 ],
-                      [ 4.496344031095243, 45.883438201401809 ],
-                      [ 4.479593950305621, 45.882900828315755 ],
-                      [ 4.459648282829194, 45.904988912620688 ] ] ] ] } }""",
+                                { "type": "Feature",
+                                  "properties": {
+                                    "code": "69",
+                                    "nom": "Rhône",
+                                    "id": 30251921,
+                                    "CLUSTER_ID": 99520,
+                                    "CLUSTER_SIZE": 386884 },
+                                  "geometry": {
+                                    "type": "MultiPolygon",
+                                    "coordinates": [ [ [
+                                      [ 4.459648282829194, 45.904988912620688 ],
+                                      [ 4.464709510872551, 45.928950368349426 ],
+                                      [ 4.490816965688656, 45.941784543770964 ],
+                                      [ 4.510354299995861, 45.933697132664598 ],
+                                      [ 4.518386257467152, 45.912888345521047 ],
+                                      [ 4.496344031095243, 45.883438201401809 ],
+                                      [ 4.479593950305621, 45.882900828315755 ],
+                                      [ 4.459648282829194, 45.904988912620688 ] ] ] ] } }""",
                             Feature.class)
                         .zoom(10)
                         .id("feature_1_id"))
@@ -295,8 +277,7 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
                         .build()))
             .build();
     TilingTask created = repository.save(toCreate);
-    TilingTaskCreated createdEventPayload =
-        TilingTaskCreated.builder().task(created).build();
+    TilingTaskCreated createdEventPayload = TilingTaskCreated.builder().task(created).build();
 
     subject.accept(createdEventPayload);
 
@@ -311,8 +292,7 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
     String taskId = randomUUID().toString();
     TilingTask toCreate = aZTT(jobId, taskId);
     TilingTask created = repository.save(toCreate);
-    TilingTaskCreated createdEventPayload =
-        TilingTaskCreated.builder().task(created).build();
+    TilingTaskCreated createdEventPayload = TilingTaskCreated.builder().task(created).build();
 
     subject.accept(createdEventPayload);
 
@@ -327,40 +307,49 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
   }
 
   @Test
-  void task_finished_to_processing_ko(){
+  void task_finished_to_processing_ko() {
     String jobId = randomUUID().toString();
     zoneTilingJobRepository.save(aZTJ(jobId));
     String taskId = randomUUID().toString();
     TilingTask toCreate = aZTT(jobId, taskId);
     TilingTask created = repository.save(toCreate);
-    TilingTaskCreated createdEventPayload =
-        TilingTaskCreated.builder().task(created).build();
+    TilingTaskCreated createdEventPayload = TilingTaskCreated.builder().task(created).build();
 
     subject.accept(createdEventPayload);
     toCreate.setSubmissionInstant(Instant.now());
     TilingTask task1 = repository.findById(taskId).get();
     var sortedStatuses =
-        task1.getStatusHistory().stream().sorted(comparing(app.bpartners.geojobs.repository.model.Status::getCreationDatetime, naturalOrder())).toList();
-    assertThrows(IllegalArgumentException.class , () -> subject.accept(createdEventPayload));
+        task1.getStatusHistory().stream()
+            .sorted(
+                comparing(
+                    app.bpartners.geojobs.repository.model.Status::getCreationDatetime,
+                    naturalOrder()))
+            .toList();
+    assertThrows(IllegalArgumentException.class, () -> subject.accept(createdEventPayload));
     TilingTask task2 = repository.findById(taskId).get();
     var expectedStatuses =
-        task2.getStatusHistory().stream().sorted(comparing(app.bpartners.geojobs.repository.model.Status::getCreationDatetime, naturalOrder())).toList();
+        task2.getStatusHistory().stream()
+            .sorted(
+                comparing(
+                    app.bpartners.geojobs.repository.model.Status::getCreationDatetime,
+                    naturalOrder()))
+            .toList();
 
     assertEquals(sortedStatuses, expectedStatuses);
   }
 
   @Test
-  void task_processing_to_pending_ko(){
+  void task_processing_to_pending_ko() {
     String jobId = randomUUID().toString();
     zoneTilingJobRepository.save(aZTJ(jobId));
     String taskId = randomUUID().toString();
     TilingTask toCreate = aZTT_processing(jobId, taskId);
     TilingTask created = repository.save(toCreate);
-    List<TaskStatus> statuses = repository.findById(created.getId())
-        .orElseThrow().getStatusHistory().stream().toList();
+    List<TaskStatus> statuses =
+        repository.findById(created.getId()).orElseThrow().getStatusHistory().stream().toList();
 
-    List<TaskStatus> statusesAfterFailedStatusTransition = repository.findById(created.getId())
-        .orElseThrow().getStatusHistory().stream().toList();
+    List<TaskStatus> statusesAfterFailedStatusTransition =
+        repository.findById(created.getId()).orElseThrow().getStatusHistory().stream().toList();
 
     assertEquals(statusesAfterFailedStatusTransition, statuses);
     assertFalse(statuses.isEmpty());
@@ -373,11 +362,11 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
     zoneTilingJobRepository.save(aZTJ(jobId));
     TilingTask toCreate = aZTT(jobId, randomUUID().toString());
     TilingTask created = repository.save(toCreate);
-    TilingTaskCreated ztjCreated =
-        TilingTaskCreated.builder().task(created).build();
+    TilingTaskCreated ztjCreated = TilingTaskCreated.builder().task(created).build();
 
     subject.accept(ztjCreated);
-    List<app.bpartners.geojobs.endpoint.rest.model.Parcel> actual = zoneTilingController.getZTJParcels(jobId);
+    List<app.bpartners.geojobs.endpoint.rest.model.Parcel> actual =
+        zoneTilingController.getZTJParcels(jobId);
 
     actual.forEach(this::ignoreIds);
     actual.forEach(parcel -> ignoreIds(parcel.getTiles()));
