@@ -15,7 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import org.junit.jupiter.api.Disabled;
+import java.util.Objects;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -71,13 +71,15 @@ public class TilesDownloaderIT extends FacadeIT {
         .build();
   }
 
-  @Disabled
   @Test
   public void download_tiles_ok() throws IOException {
     var zoom = 20;
 
     var tilesDir = tilesDownloader.apply(a_parcel_from_lyon(zoom));
 
-    assertEquals(4, new File(tilesDir.getAbsolutePath() + "/" + zoom).listFiles().length);
+    assertEquals(
+        4,
+        Objects.requireNonNull(new File(tilesDir.getAbsolutePath() + "/" + zoom).listFiles())
+            .length);
   }
 }
