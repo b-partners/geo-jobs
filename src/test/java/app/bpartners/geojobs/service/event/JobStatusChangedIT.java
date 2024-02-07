@@ -24,14 +24,14 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 
 public class JobStatusChangedIT extends FacadeIT {
   @Autowired private ZoneTilingJobStatusChangedService subject;
-  @MockBean private TilingFinishedMailer tilingFinishedMailer;
-  @MockBean private ZoneDetectionJobService zoneDetectionJobService;
+  @MockBean private TilingFinishedMailer mailer;
+  @MockBean private ZoneDetectionJobService zdjService;
 
   @Test
   void send_email_ok() {
-    String jobId = randomUUID().toString();
-    String taskId = randomUUID().toString();
-    ZoneTilingJob toCreate =
+    var jobId = randomUUID().toString();
+    var taskId = randomUUID().toString();
+    var newZtj =
         ZoneTilingJob.builder()
             .id(jobId)
             .zoneName("mock")
@@ -62,13 +62,12 @@ public class JobStatusChangedIT extends FacadeIT {
                         .health(SUCCEEDED)
                         .build()))
             .build();
-    ZoneTilingJobStatusChanged zoneTilingJobStatusChanged =
-        ZoneTilingJobStatusChanged.builder().newJob(toCreate).build();
+    var zoneTilingJobStatusChanged =
+        ZoneTilingJobStatusChanged.builder().oldJob(new ZoneTilingJob()).newJob(newZtj).build();
 
     subject.accept(zoneTilingJobStatusChanged);
 
-    verify(zoneDetectionJobService, times(1))
-        .saveZDJFromZTJ(zoneTilingJobStatusChanged.getNewJob());
-    verify(tilingFinishedMailer, times(1)).accept(any());
+    verify(zdjService, times(1)).saveZDJFromZTJ(zoneTilingJobStatusChanged.getNewJob());
+    verify(mailer, times(1)).accept(any());
   }
 }

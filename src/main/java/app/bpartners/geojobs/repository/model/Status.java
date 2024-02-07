@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.repository.model;
 
+import static app.bpartners.geojobs.repository.model.Status.HealthStatus.UNKNOWN;
+import static app.bpartners.geojobs.repository.model.Status.ProgressionStatus.PENDING;
 import static jakarta.persistence.EnumType.STRING;
 import static jakarta.persistence.GenerationType.IDENTITY;
 import static java.util.Comparator.comparing;
@@ -49,7 +51,8 @@ public class Status {
   public static Status reduce(List<Status> statuses) {
     var sortedStatuses =
         statuses.stream().sorted(comparing(Status::getCreationDatetime, naturalOrder())).toList();
-    return sortedStatuses.stream().reduce(sortedStatuses.get(0), Status::reduce);
+    return sortedStatuses.stream()
+        .reduce(Status.builder().progression(PENDING).health(UNKNOWN).build(), Status::reduce);
   }
 
   private static Status reduce(Status oldStatus, Status newStatus) {
