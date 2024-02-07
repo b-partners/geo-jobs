@@ -4,8 +4,6 @@ import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.S
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
-import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.gen.DetectionJobCreated;
 import app.bpartners.geojobs.endpoint.event.gen.TilingTaskCreated;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.file.BucketComponent;
@@ -33,7 +31,6 @@ public class TilingTaskCreatedService implements Consumer<TilingTaskCreated> {
   private final BucketComponent bucketComponent;
   private final BucketConf bucketConf;
   private final TilingTaskStatusService tilingTaskStatusService;
-  private final EventProducer eventProducer;
 
   @Override
   public void accept(TilingTaskCreated tilingTaskCreated) {
@@ -50,7 +47,6 @@ public class TilingTaskCreatedService implements Consumer<TilingTaskCreated> {
       throw new ApiException(SERVER_EXCEPTION, e);
     }
 
-    eventProducer.accept(List.of(new DetectionJobCreated(task)));
     tilingTaskStatusService.succeed(task);
   }
 

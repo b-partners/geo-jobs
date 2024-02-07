@@ -3,17 +3,15 @@ package app.bpartners.geojobs.service.geo.detection;
 import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.POLYGON;
 import static app.bpartners.geojobs.repository.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.repository.model.Status.ProgressionStatus.PENDING;
+import static app.bpartners.geojobs.repository.model.geo.JobType.DETECTION;
 import static app.bpartners.geojobs.repository.model.geo.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
-import app.bpartners.geojobs.model.exception.NotFoundException;
-import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
 import app.bpartners.geojobs.repository.model.JobStatus;
 import app.bpartners.geojobs.repository.model.TaskStatus;
-import app.bpartners.geojobs.repository.model.geo.JobType;
 import app.bpartners.geojobs.repository.model.geo.detection.DetectableObjectType;
 import app.bpartners.geojobs.repository.model.geo.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.geo.detection.DetectedTile;
@@ -33,7 +31,6 @@ import org.springframework.stereotype.Component;
 @Component
 @AllArgsConstructor
 public class DetectionMapper {
-  private final ZoneTilingJobRepository zoneTilingJobRepository;
   private static final TileValidator tileValidator = new TileValidator();
 
   public static DetectedTile toDetectedTile(DetectionResponse detectionResponse, Tile tile) {
@@ -106,10 +103,7 @@ public class DetectionMapper {
     return new Feature()
         .id(randomUUID().toString())
         .zoom(zoom)
-        .geometry(
-            new MultiPolygon()
-                .type(POLYGON)
-                .coordinates(List.of(List.of(coordinates))));
+        .geometry(new MultiPolygon().type(POLYGON).coordinates(List.of(List.of(coordinates))));
   }
 
   public DetectionTask toDomain(Tile tile, String zoneDetectionJobId) {
@@ -123,7 +117,7 @@ public class DetectionMapper {
                 TaskStatus.builder()
                     .health(UNKNOWN)
                     .progression(PENDING)
-                    .jobType(JobType.DETECTION)
+                    .jobType(DETECTION)
                     .creationDatetime(now())
                     .taskId(taskId)
                     .build()))
@@ -131,15 +125,16 @@ public class DetectionMapper {
         .build();
   }
 
-  public ZoneDetectionJob fromTilingTask(TilingTask task) {
+  public ZoneDetectionJob fromTilingJob(ZoneTilingJob job) {
     String zoneDetectionJobId = randomUUID().toString();
-    List<Tile> tiles = task.getParcel().getTiles();
+    List<Tile> tiles = new ArrayList<>();
+    List<TilingTask> tasks = job.getTasks();
+    tasks.stream()
+        .map(task -> task.getParcel().getTiles())
+        .flatMap(List::stream)
+        .forEach(tiles::add);
     List<DetectionTask> zoneDetectionTasks =
         tiles.stream().map(tile -> toDomain(tile, zoneDetectionJobId)).toList();
-    ZoneTilingJob job =
-        zoneTilingJobRepository
-            .findById(task.getJobId())
-            .orElseThrow(() -> new NotFoundException("Job not found"));
 
     return ZoneDetectionJob.builder()
         .id(zoneDetectionJobId)
@@ -155,7 +150,7 @@ public class DetectionMapper {
                     .jobId(zoneDetectionJobId)
                     .id(randomUUID().toString())
                     .creationDatetime(now())
-                    .jobType(JobType.DETECTION)
+                    .jobType(DETECTION)
                     .progression(PENDING)
                     .health(UNKNOWN)
                     .build()))

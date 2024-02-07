@@ -1,8 +1,10 @@
 package app.bpartners.geojobs.service.event;
 
+import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneTilingJobStatusChanged;
 import app.bpartners.geojobs.repository.model.JobStatus;
 import app.bpartners.geojobs.repository.model.geo.tiling.ZoneTilingJob;
+import app.bpartners.geojobs.service.geo.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geo.tiling.TilingFinishedMailer;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
@@ -15,6 +17,8 @@ import org.springframework.stereotype.Service;
 public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJobStatusChanged> {
 
   private TilingFinishedMailer tilingFinishedMailer;
+  private EventProducer eventProducer;
+  private ZoneDetectionJobService zoneDetectionJobService;
 
   @Override
   public void accept(ZoneTilingJobStatusChanged event) {
@@ -29,16 +33,17 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
         switch (progression) {
           case FINISHED -> switch (health) {
             case UNKNOWN -> throw new IllegalStateException(illegalFinishedMessage);
-            case SUCCEEDED, FAILED -> sendFinishedEmail(newJob);
+            case SUCCEEDED, FAILED -> processFinishedJob(newJob);
           };
           case PENDING, PROCESSING -> notFinishedMessage;
         };
     log.info(message);
   }
 
-  private String sendFinishedEmail(ZoneTilingJob job) {
+  private String processFinishedJob(ZoneTilingJob job) {
     // TODO: we surely would like to receive email only _once_ on finished,
     //  especially in case of failure.
+    zoneDetectionJobService.saveZoneDetectionJobFromZTJ(job);
     tilingFinishedMailer.accept(job);
     return "Finished, mail sent, job=" + job;
   }

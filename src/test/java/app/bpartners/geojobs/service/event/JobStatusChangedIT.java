@@ -15,6 +15,7 @@ import app.bpartners.geojobs.repository.model.TaskStatus;
 import app.bpartners.geojobs.repository.model.geo.Parcel;
 import app.bpartners.geojobs.repository.model.geo.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.geo.tiling.ZoneTilingJob;
+import app.bpartners.geojobs.service.geo.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geo.tiling.TilingFinishedMailer;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -24,6 +25,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 public class JobStatusChangedIT extends FacadeIT {
   @Autowired private ZoneTilingJobStatusChangedService subject;
   @MockBean private TilingFinishedMailer tilingFinishedMailer;
+  @MockBean private ZoneDetectionJobService zoneDetectionJobService;
 
   @Test
   void send_email_ok() {
@@ -65,6 +67,8 @@ public class JobStatusChangedIT extends FacadeIT {
 
     subject.accept(zoneTilingJobStatusChanged);
 
+    verify(zoneDetectionJobService, times(1))
+        .saveZoneDetectionJobFromZTJ(zoneTilingJobStatusChanged.getNewJob());
     verify(tilingFinishedMailer, times(1)).accept(any());
   }
 }

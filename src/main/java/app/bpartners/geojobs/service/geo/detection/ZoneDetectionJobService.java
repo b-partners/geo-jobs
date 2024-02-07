@@ -6,7 +6,7 @@ import app.bpartners.geojobs.endpoint.event.gen.ZoneDetectionJobStatusChanged;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.geo.detection.DetectionTask;
 import app.bpartners.geojobs.repository.model.geo.detection.ZoneDetectionJob;
-import app.bpartners.geojobs.repository.model.geo.tiling.TilingTask;
+import app.bpartners.geojobs.repository.model.geo.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.JobService;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -20,10 +20,9 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
   public ZoneDetectionJobService(
       JpaRepository<ZoneDetectionJob, String> repository,
       EventProducer eventProducer,
-      ZoneDetectionJobRepository zoneDetectionJobRepository,
       DetectionMapper detectionMapper) {
     super(repository, eventProducer);
-    this.zoneDetectionJobRepository = zoneDetectionJobRepository;
+    this.zoneDetectionJobRepository = (ZoneDetectionJobRepository) repository;
     this.detectionMapper = detectionMapper;
   }
 
@@ -39,8 +38,8 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
         List.of(ZoneDetectionJobStatusChanged.builder().oldJob(oldJob).newJob(newJob).build()));
   }
 
-  public void saveDetectionJobFromTilingTask(TilingTask task) {
-    ZoneDetectionJob zoneDetectionJob = detectionMapper.fromTilingTask(task);
+  public void saveZoneDetectionJobFromZTJ(ZoneTilingJob job) {
+    ZoneDetectionJob zoneDetectionJob = detectionMapper.fromTilingJob(job);
     zoneDetectionJobRepository.save(zoneDetectionJob);
   }
 }
