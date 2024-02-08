@@ -40,4 +40,6 @@ public class DetectedTile implements Serializable {
   private List<DetectedObject> detectedObjects;
 
   private String bucketPath;
+
+  private String jobId;
 }

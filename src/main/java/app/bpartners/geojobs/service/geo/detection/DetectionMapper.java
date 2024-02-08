@@ -33,7 +33,8 @@ import org.springframework.stereotype.Component;
 public class DetectionMapper {
   private static final TileValidator tileValidator = new TileValidator();
 
-  public static DetectedTile toDetectedTile(DetectionResponse detectionResponse, Tile tile) {
+  public static DetectedTile toDetectedTile(
+      DetectionResponse detectionResponse, Tile tile, String jobId) {
     String detectedTileId = randomUUID().toString();
     var tileCoordinates = tile.getCoordinates();
     tileValidator.accept(tile);
@@ -49,6 +50,7 @@ public class DetectionMapper {
 
     return DetectedTile.builder()
         .id(detectedTileId)
+        .jobId(jobId)
         .tile(tile)
         .detectedObjects(detectedObjects)
         .creationDatetime(now())

@@ -30,6 +30,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 @EqualsAndHashCode
 @ToString
 public class DetectedObject implements Serializable {
+  public static final double DEFAULT_MIN_CONFIDENCE = 0.8;
   @Id private String id;
 
   @JdbcTypeCode(JSON)
@@ -42,5 +43,11 @@ public class DetectedObject implements Serializable {
   @Fetch(SELECT)
   private List<DetectableObjectType> detectedObjectTypes;
 
-  private Double confidence;
+  private Double computedConfidence;
+
+  private Double minConfidence = DEFAULT_MIN_CONFIDENCE;
+
+  public boolean isInDoubt() {
+    return computedConfidence < minConfidence;
+  }
 }

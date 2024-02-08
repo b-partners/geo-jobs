@@ -25,7 +25,8 @@ public class DetectionTaskCreatedService implements Consumer<DetectionTaskCreate
     detectionTaskStatusService.process(task);
     try {
       DetectionResponse response = objectsDetector.apply(task);
-      DetectedTile detectedTile = DetectionMapper.toDetectedTile(response, task.getTile());
+      DetectedTile detectedTile =
+          DetectionMapper.toDetectedTile(response, task.getTile(), task.getJobId());
       detectedTileRepository.save(detectedTile);
       detectionTaskStatusService.succeed(task);
     } catch (RuntimeException e) {

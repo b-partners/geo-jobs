@@ -2,8 +2,12 @@ package app.bpartners.geojobs.service.geo.detection;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.gen.DetectionTaskCreated;
+import app.bpartners.geojobs.endpoint.event.gen.InDoubtTileDetected;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneDetectionJobStatusChanged;
+import app.bpartners.geojobs.repository.DetectedTileRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
+import app.bpartners.geojobs.repository.model.geo.detection.DetectedObject;
+import app.bpartners.geojobs.repository.model.geo.detection.DetectedTile;
 import app.bpartners.geojobs.repository.model.geo.detection.DetectionTask;
 import app.bpartners.geojobs.repository.model.geo.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.geo.tiling.ZoneTilingJob;
@@ -16,14 +20,17 @@ import org.springframework.stereotype.Service;
 public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetectionJob> {
   private final ZoneDetectionJobRepository zoneDetectionJobRepository;
   private final DetectionMapper detectionMapper;
+  private final DetectedTileRepository detectedTileRepository;
 
   public ZoneDetectionJobService(
       JpaRepository<ZoneDetectionJob, String> repository,
       EventProducer eventProducer,
-      DetectionMapper detectionMapper) {
+      DetectionMapper detectionMapper,
+      DetectedTileRepository detectedTileRepository) {
     super(repository, eventProducer);
     this.zoneDetectionJobRepository = (ZoneDetectionJobRepository) repository;
     this.detectionMapper = detectionMapper;
+    this.detectedTileRepository = detectedTileRepository;
   }
 
   public ZoneDetectionJob fireTasks(String jobId) {
@@ -45,5 +52,20 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
 
   public ZoneDetectionJob save(ZoneDetectionJob job) {
     return zoneDetectionJobRepository.save(job);
+  }
+
+  public void handleInDoubtObjects(ZoneDetectionJob newJob) {
+    List<DetectedTile> detectedTiles = detectedTileRepository.findAllByJobId(newJob.getId());
+    List<DetectedTile> detectedTilesInDoubt =
+        detectedTiles.stream()
+            .filter(
+                detectedTile ->
+                    detectedTile.getDetectedObjects().stream().anyMatch(DetectedObject::isInDoubt))
+            .toList();
+
+    detectedTilesInDoubt.forEach(
+        detectedTile -> {
+          eventProducer.accept(List.of(InDoubtTileDetected.builder().tile(detectedTile).build()));
+        });
   }
 }
