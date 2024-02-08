@@ -80,7 +80,7 @@ public class DetectionMapper {
                     .detectableType(toDetectableType(label))
                     .build()))
         .feature(toFeature(polygon, zoom))
-        .confidence(confidence)
+        .computedConfidence(confidence)
         .build();
   }
 

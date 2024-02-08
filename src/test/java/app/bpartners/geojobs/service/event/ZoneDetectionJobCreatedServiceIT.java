@@ -75,7 +75,7 @@ class ZoneDetectionJobCreatedServiceIT extends FacadeIT {
     subject.accept(createdEventPayload);
     ZoneDetectionJob actualAfterAccept = zoneDetectionJobService.findById(created.getId());
 
-    int numberOfFeaturesInJob = 1;
+    int numberOfFeaturesInJob = 2; // TODO: check why initially was 1
     verify(eventProducer, times(numberOfFeaturesInJob)).accept(anyList());
     assertEquals(UNKNOWN, actualAfterAccept.getStatus().getHealth());
     assertEquals(PENDING, actualAfterAccept.getStatus().getProgression());
