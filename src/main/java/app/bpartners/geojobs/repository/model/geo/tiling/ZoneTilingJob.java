@@ -16,7 +16,6 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @SuperBuilder
 @AllArgsConstructor
-@ToString
 @JsonIgnoreProperties({"status", "done"})
 public class ZoneTilingJob extends Job<TilingTask> implements Serializable {
   @Override
