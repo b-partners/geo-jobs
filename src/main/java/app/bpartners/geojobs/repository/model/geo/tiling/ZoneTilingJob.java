@@ -9,7 +9,6 @@ import jakarta.persistence.Entity;
 import java.io.Serializable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 @Entity
