@@ -190,7 +190,8 @@ class DetectionTaskCreatedServiceIT extends FacadeIT {
         actualObjects.stream()
             .allMatch(
                 detectedObject ->
-                    detectedObject.getConfidence() != null && detectedObject.getConfidence() > 0));
+                    detectedObject.getComputedConfidence() != null
+                        && detectedObject.getComputedConfidence() > 0));
     assertFalse(actualObjects.get(0).getFeature().getGeometry().getCoordinates().isEmpty());
   }
 }
