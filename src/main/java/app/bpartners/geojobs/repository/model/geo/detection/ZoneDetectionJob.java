@@ -21,7 +21,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 
 @Entity
 @Getter
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
