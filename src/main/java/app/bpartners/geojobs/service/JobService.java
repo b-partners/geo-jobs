@@ -26,13 +26,17 @@ public class JobService<T extends Task, J extends Job<T>> {
     return repository.findById(id).orElseThrow(() -> new NotFoundException("job.id=" + id));
   }
 
-  public J refreshStatus(J job) {
-    job.refreshStatusHistory();
-    var refreshed = repository.save(job);
-    if (!refreshed.getStatus().equals(job.getStatus())) {
-      onStatusChanged(job, refreshed);
+  public J refreshStatus(J oldJob) {
+    var newJob = repository.findById(oldJob.getId()).orElseThrow();
+    newJob.refreshStatusHistory();
+    repository.save(newJob);
+
+    var oldStatus = oldJob.getStatus();
+    var newStatus = newJob.getStatus();
+    if (!oldStatus.equals(newStatus)) {
+      onStatusChanged(oldJob, newJob);
     }
-    return refreshed;
+    return newJob;
   }
 
   protected void onStatusChanged(J oldJob, J newJob) {}

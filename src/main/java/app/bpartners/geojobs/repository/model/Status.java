@@ -14,8 +14,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -30,7 +30,6 @@ import org.hibernate.annotations.JdbcTypeCode;
 @SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
-@EqualsAndHashCode
 @ToString
 public class Status {
   @Id
@@ -52,6 +51,7 @@ public class Status {
     var sortedStatuses =
         statuses.stream().sorted(comparing(Status::getCreationDatetime, naturalOrder())).toList();
     return sortedStatuses.stream()
+        // TODO(invalid-history)? may be should give no default value like this...
         .reduce(Status.builder().progression(PENDING).health(UNKNOWN).build(), Status::reduce);
   }
 
@@ -81,7 +81,8 @@ public class Status {
         case PROCESSING, FINISHED -> newProgression;
       };
       case FINISHED -> switch (newProgression) {
-        case PENDING, PROCESSING -> throw new IllegalArgumentException(errorMessage);
+        case PENDING, PROCESSING -> throw new IllegalArgumentException(
+            errorMessage); // TODO(invalid-history): test using detected invalid history
         case FINISHED -> newProgression;
       };
     };
@@ -112,5 +113,23 @@ public class Status {
     UNKNOWN,
     SUCCEEDED,
     FAILED
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Status status = (Status) o;
+    // /!\ Do NOT include id, as we want status with same (progression,health,time,message)
+    // but with different id to still be equal
+    return progression == status.progression
+        && health == status.health
+        && Objects.equals(creationDatetime, status.creationDatetime)
+        && Objects.equals(message, status.message);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(progression, health, creationDatetime, message);
   }
 }

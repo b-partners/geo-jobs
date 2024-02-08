@@ -296,9 +296,9 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
 
     subject.accept(createdEventPayload);
 
-    var eventCaptor = ArgumentCaptor.forClass(List.class);
-    verify(eventProducer, times(2)).accept(eventCaptor.capture());
-    var sentEvents = eventCaptor.getAllValues().stream().flatMap(List::stream).toList();
+    var eventsCaptor = ArgumentCaptor.forClass(List.class);
+    verify(eventProducer, times(2)).accept(eventsCaptor.capture());
+    var sentEvents = eventsCaptor.getAllValues().stream().flatMap(List::stream).toList();
     assertEquals(2, sentEvents.size());
     var changedToProcessing = (ZoneTilingJobStatusChanged) sentEvents.get(0);
     assertEquals(PROCESSING, changedToProcessing.getNewJob().getStatus().getProgression());

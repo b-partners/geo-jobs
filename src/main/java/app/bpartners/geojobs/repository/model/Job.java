@@ -45,6 +45,24 @@ public abstract class Job<T extends Task> implements Serializable {
   @Fetch(SELECT)
   protected List<T> tasks = new ArrayList<>();
 
+  // TODO(1M-task.statuses): if there are 1M statuses, this will NOT do! Instead:
+  //  1. Rm job.tasks and retrieve only paginated tasks per job as needed (and make it LAZY!)
+  //  2. Do not rely on full knowledge of task.statuses to compute job.status, instead:
+  //     2.1. When task is finished:
+  //          2.1.1. If failed and retry.max NOT reached:
+  //                  2.1.1.1 Let persisted task.status remain processing (and NOT failed)
+  //                  2.1.1.2 Just retry (actually do nothing and wait for visibility timeout)
+  //          2.1.2. If failed and retry.max reached:
+  //                 Reduce task.status with the current job.statusHistory persisted in db
+  //                 /!\ Mind status.creationDatetime for both task and job
+  //                     Indeed task.statuses might arrive in any possible order
+  //                 Note that job.statusHistory is updated by a comparison to ONLY ONE task.status
+  // at a time,
+  //                 In particular, it is NEVER computed by loading 1M task.statuses all at the same
+  // time
+  //          2.1.3. If succeeded: same as 2.1.2
+  //     2.2. If persisted job status changed, then send JobStatusChanged (as before)
+
   public void refreshStatusHistory() {
     statusHistory.add(getStatus());
   }

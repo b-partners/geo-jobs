@@ -19,14 +19,19 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
 
   @Override
   public void accept(ZoneTilingJobStatusChanged event) {
+    var oldJob = event.getOldJob();
+    var oldStatus = oldJob.getStatus();
+    var oldProgression = oldStatus.getProgression();
+
     var newJob = event.getNewJob();
     var newStatus = newJob.getStatus();
     var newProgression = newStatus.getProgression();
     var newHealth = newStatus.getHealth();
 
-    var oldJob = event.getOldJob();
-    var oldStatus = oldJob.getStatus();
-    var oldProgression = oldStatus.getProgression();
+    if (oldStatus.equals(newStatus)) {
+      log.warn("Status did not change, yet change event received: event=" + event);
+      return;
+    }
 
     var illegalFinishedMessage = "Cannot finish as unknown, event=" + event;
     var notFinishedMessage = "Not finished yet, nothing to do, event=" + event;

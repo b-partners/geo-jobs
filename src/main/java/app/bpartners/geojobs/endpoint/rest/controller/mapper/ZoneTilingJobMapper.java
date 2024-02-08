@@ -63,6 +63,7 @@ public class ZoneTilingJobMapper {
         .id(domain.getId())
         .zoneName(domain.getZoneName())
         .creationDatetime(domain.getSubmissionInstant())
+        // .zoomLevel() //TODO
 
         // All parcels of the same job have same geoServer url and parameter
         .geoServerUrl(parcel0.getGeoServerUrl().toString())

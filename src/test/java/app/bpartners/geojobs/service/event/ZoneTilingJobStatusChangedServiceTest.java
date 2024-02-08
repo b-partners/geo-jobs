@@ -22,9 +22,10 @@ import org.junit.jupiter.api.Test;
 
 class ZoneTilingJobStatusChangedServiceTest {
 
-  TilingFinishedMailer mailer = mock(TilingFinishedMailer.class);
+  TilingFinishedMailer mailer = mock();
+  ZoneDetectionJobService jobService = mock();
   ZoneTilingJobStatusChangedService subject =
-      new ZoneTilingJobStatusChangedService(mailer, mock(ZoneDetectionJobService.class));
+      new ZoneTilingJobStatusChangedService(mailer, jobService);
 
   @Test
   void do_not_mail_if_old_fails_and_new_fails() {
@@ -46,6 +47,18 @@ class ZoneTilingJobStatusChangedServiceTest {
     subject.accept(ztjStatusChanged);
 
     verify(mailer, times(1)).accept(any());
+  }
+
+  @Test
+  void do_nothing_if_old_equals_new() {
+    var ztjStatusChanged = new ZoneTilingJobStatusChanged();
+    ztjStatusChanged.setOldJob(aZTJ(PROCESSING, UNKNOWN));
+    ztjStatusChanged.setNewJob(aZTJ(PROCESSING, UNKNOWN));
+
+    subject.accept(ztjStatusChanged);
+
+    verify(jobService, times(0)).saveZDJFromZTJ(any());
+    verify(mailer, times(0)).accept(any());
   }
 
   private static ZoneTilingJob aZTJ(ProgressionStatus progression, HealthStatus health) {

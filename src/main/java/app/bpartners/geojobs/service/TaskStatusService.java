@@ -14,32 +14,48 @@ import app.bpartners.geojobs.repository.model.Status.HealthStatus;
 import app.bpartners.geojobs.repository.model.Status.ProgressionStatus;
 import app.bpartners.geojobs.repository.model.Task;
 import app.bpartners.geojobs.repository.model.TaskStatus;
-import lombok.AllArgsConstructor;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import lombok.Setter;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.transaction.annotation.Transactional;
 
-@AllArgsConstructor
 public class TaskStatusService<T extends Task, J extends Job<T>> {
 
   protected final JpaRepository<T, String> repository;
   protected final JobService<T, J> jobService;
 
+  public TaskStatusService(JpaRepository<T, String> repository, JobService<T, J> jobService) {
+    this.repository = repository;
+    this.jobService = jobService;
+  }
+
   @Transactional
   public T process(T task) {
-    return updateStatus(task, PROCESSING, UNKNOWN);
+    return update(task, PROCESSING, UNKNOWN);
   }
 
   @Transactional
   public T succeed(T task) {
-    return updateStatus(task, FINISHED, SUCCEEDED);
+    return update(task, FINISHED, SUCCEEDED);
   }
 
   @Transactional
   public T fail(T task) {
-    return updateStatus(task, FINISHED, FAILED);
+    return update(task, FINISHED, FAILED);
   }
 
-  private T updateStatus(T task, ProgressionStatus progression, HealthStatus health) {
+  @Setter @PersistenceContext EntityManager em;
+
+  private T update(T task, ProgressionStatus progression, HealthStatus health) {
+    var taskId = task.getId();
+    if (!repository.existsById(taskId)) {
+      throw new NotFoundException("task.id=" + taskId);
+    }
+    var jobIb = task.getJobId();
+    var oldJob = jobService.findById(jobIb);
+    em.detach(oldJob); // else future getXxx will still retrieve latest version from db
+
     task.addStatus(
         TaskStatus.builder()
             .id(randomUUID().toString())
@@ -48,18 +64,9 @@ public class TaskStatusService<T extends Task, J extends Job<T>> {
             .health(health)
             .taskId(task.getId())
             .build());
-    return update(task);
-  }
+    var updatedTask = repository.save(task);
+    jobService.refreshStatus(oldJob);
 
-  private T update(T task) {
-    var taskId = task.getId();
-    if (!repository.existsById(taskId)) {
-      throw new NotFoundException("task.id=" + taskId);
-    }
-
-    var updated = repository.save(task);
-    var job = jobService.findById(task.getJobId());
-    jobService.refreshStatus(job);
-    return updated;
+    return updatedTask;
   }
 }
