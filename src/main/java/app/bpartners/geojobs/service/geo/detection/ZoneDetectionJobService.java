@@ -42,4 +42,8 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
     ZoneDetectionJob zoneDetectionJob = detectionMapper.fromTilingJob(job);
     zoneDetectionJobRepository.save(zoneDetectionJob);
   }
+
+  public ZoneDetectionJob save(ZoneDetectionJob job) {
+    return zoneDetectionJobRepository.save(job);
+  }
 }
