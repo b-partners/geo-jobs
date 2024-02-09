@@ -10,7 +10,7 @@ import lombok.ToString;
 @EqualsAndHashCode
 @ToString
 public class Label {
-    private String id;
-    private String name;
-    private String color;
+  private String id;
+  private String name;
+  private String color;
 }

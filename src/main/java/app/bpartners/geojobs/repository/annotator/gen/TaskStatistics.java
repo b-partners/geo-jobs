@@ -10,8 +10,8 @@ import lombok.ToString;
 @EqualsAndHashCode
 @ToString
 public class TaskStatistics {
-    private Integer remainingTasksForUserId;
-    private Integer remainingTasks;
-    private Integer completedTasksByUserId;
-    private Integer totalTasks;
+  private Integer remainingTasksForUserId;
+  private Integer remainingTasks;
+  private Integer completedTasksByUserId;
+  private Integer totalTasks;
 }

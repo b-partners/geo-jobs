@@ -10,9 +10,9 @@ import lombok.ToString;
 @EqualsAndHashCode
 @ToString
 public class Task {
-    private String id;
-    private String userId;
-    private TaskStatus status;
-    private String imageUri;
-    private String filename;
+  private String id;
+  private String userId;
+  private TaskStatus status;
+  private String imageUri;
+  private String filename;
 }

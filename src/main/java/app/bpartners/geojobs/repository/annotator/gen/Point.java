@@ -10,6 +10,6 @@ import lombok.ToString;
 @EqualsAndHashCode
 @ToString
 public class Point {
-    private Double x;
-    private Double y;
+  private Double x;
+  private Double y;
 }

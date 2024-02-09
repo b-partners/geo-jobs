@@ -10,9 +10,9 @@ import lombok.ToString;
 @EqualsAndHashCode
 @ToString
 public class Annotation {
-    private String id;
-    private String taskId;
-    private String userId;
-    private Label label;
-    private Polygon polygon;
+  private String id;
+  private String taskId;
+  private String userId;
+  private Label label;
+  private Polygon polygon;
 }

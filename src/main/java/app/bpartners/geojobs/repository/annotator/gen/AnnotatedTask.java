@@ -10,8 +10,8 @@ import lombok.ToString;
 @EqualsAndHashCode
 @ToString
 public class AnnotatedTask {
-    private String id;
-    private String annotatorId;
-    private String filename;
-    private AnnotationBatch annotationBatch;
+  private String id;
+  private String annotatorId;
+  private String filename;
+  private AnnotationBatch annotationBatch;
 }
