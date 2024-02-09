@@ -36,6 +36,7 @@ public class FacadeIT {
     new EventConf().configureProperties(registry);
     new BucketConf().configureProperties(registry);
     new EmailConf().configureProperties(registry);
+    new AnnotatorApiConf().configureProperties(registry);
 
     try {
       var envConfClazz = Class.forName("app.bpartners.geojobs.conf.EnvConf");
