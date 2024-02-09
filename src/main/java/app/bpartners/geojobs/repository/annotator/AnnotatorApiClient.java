@@ -16,17 +16,27 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import lombok.Getter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
 public class AnnotatorApiClient {
   private final ObjectMapper om = new ObjectMapper().findAndRegisterModules();
-  private final String annotatorApiUrl;
-  private final HttpClient httpClient = HttpClient.newBuilder().build();
+  @Getter private final String annotatorApiUrl;
+  private final HttpClient httpClient;
 
+  public AnnotatorApiClient(
+      @Value("${annotator.api.url}") String annotatorApiUrl, HttpClient httpClient) {
+    this.annotatorApiUrl = annotatorApiUrl;
+    this.httpClient = httpClient;
+  }
+
+  @Autowired
   public AnnotatorApiClient(@Value("${annotator.api.url}") String annotatorApiUrl) {
     this.annotatorApiUrl = annotatorApiUrl;
+    httpClient = HttpClient.newBuilder().build();
   }
 
   public Job crupdateAnnotatedJob(CrupdateAnnotatedJob job) {

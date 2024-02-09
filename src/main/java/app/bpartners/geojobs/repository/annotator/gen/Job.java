@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.repository.annotator.gen;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import java.util.List;
 import lombok.Builder;
 import lombok.Data;
@@ -10,6 +11,7 @@ import lombok.ToString;
 @Data
 @EqualsAndHashCode
 @ToString
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class Job {
   private String id;
   private JobType type;
