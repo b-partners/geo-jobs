@@ -2,7 +2,7 @@ package app.bpartners.geojobs.service.geo.detection;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.gen.DetectionTaskCreated;
-import app.bpartners.geojobs.endpoint.event.gen.InDoubtTileDetected;
+import app.bpartners.geojobs.endpoint.event.gen.InDoubtTilesDetected;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneDetectionJobStatusChanged;
 import app.bpartners.geojobs.repository.DetectedTileRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
@@ -63,9 +63,7 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
                     detectedTile.getDetectedObjects().stream().anyMatch(DetectedObject::isInDoubt))
             .toList();
 
-    detectedTilesInDoubt.forEach(
-        detectedTile -> {
-          eventProducer.accept(List.of(InDoubtTileDetected.builder().tile(detectedTile).build()));
-        });
+    eventProducer.accept(
+        List.of(InDoubtTilesDetected.builder().indoubtTiles(detectedTilesInDoubt).build()));
   }
 }

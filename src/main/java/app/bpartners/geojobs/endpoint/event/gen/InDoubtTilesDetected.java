@@ -2,6 +2,7 @@ package app.bpartners.geojobs.endpoint.event.gen;
 
 import app.bpartners.geojobs.repository.model.geo.detection.DetectedTile;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
 import javax.annotation.processing.Generated;
 import lombok.*;
 
@@ -12,7 +13,7 @@ import lombok.*;
 @Data
 @EqualsAndHashCode
 @ToString
-public class InDoubtTileDetected {
-  @JsonProperty("detectedTile")
-  private DetectedTile tile;
+public class InDoubtTilesDetected {
+  @JsonProperty("indoubtTiles")
+  private List<DetectedTile> indoubtTiles;
 }
