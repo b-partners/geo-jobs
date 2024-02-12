@@ -20,7 +20,7 @@ import lombok.Setter;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.transaction.annotation.Transactional;
 
-public class TaskStatusService<T extends Task, J extends Job<T>> {
+public class TaskStatusService<T extends Task, J extends Job> {
 
   protected final JpaRepository<T, String> repository;
   protected final JobService<T, J> jobService;
@@ -56,16 +56,17 @@ public class TaskStatusService<T extends Task, J extends Job<T>> {
     var oldJob = jobService.findById(jobIb);
     em.detach(oldJob); // else future getXxx will still retrieve latest version from db
 
-    task.addStatus(
+    TaskStatus taskStatus =
         TaskStatus.builder()
             .id(randomUUID().toString())
             .creationDatetime(now())
             .progression(progression)
             .health(health)
             .taskId(task.getId())
-            .build());
+            .build();
+    task.hasNewStatus(taskStatus);
     var updatedTask = repository.save(task);
-    jobService.refreshStatus(oldJob);
+    jobService.hasNewTaskStatus(oldJob, taskStatus);
 
     return updatedTask;
   }

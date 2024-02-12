@@ -6,7 +6,6 @@ import static app.bpartners.geojobs.repository.model.Status.HealthStatus.UNKNOWN
 import static app.bpartners.geojobs.repository.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.repository.model.Status.ProgressionStatus.PENDING;
 import static app.bpartners.geojobs.repository.model.Status.ProgressionStatus.PROCESSING;
-import static app.bpartners.geojobs.repository.model.geo.GeoJobType.TILING;
 import static java.time.Instant.now;
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.naturalOrder;
@@ -33,7 +32,6 @@ import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.file.FileHash;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
-import app.bpartners.geojobs.repository.model.JobStatus;
 import app.bpartners.geojobs.repository.model.TaskStatus;
 import app.bpartners.geojobs.repository.model.geo.Parcel;
 import app.bpartners.geojobs.repository.model.geo.tiling.TilingTask;
@@ -78,24 +76,24 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
     lyonFeature =
         om.readValue(
                 """
-                { "type": "Feature",
-                  "properties": {
-                    "code": "69",
-                    "nom": "Rhône",
-                    "id": 30251921,
-                    "CLUSTER_ID": 99520,
-                    "CLUSTER_SIZE": 386884 },
-                  "geometry": {
-                    "type": "MultiPolygon",
-                    "coordinates": [ [ [
-                        [ 4.459648282829194, 45.904988912620688 ],
-                        [ 4.464709510872551, 45.928950368349426 ],
-                        [ 4.490816965688656, 45.941784543770964 ],
-                        [ 4.510354299995861, 45.933697132664598 ],
-                        [ 4.518386257467152, 45.912888345521047 ],
-                        [ 4.496344031095243, 45.883438201401809 ],
-                        [ 4.479593950305621, 45.882900828315755 ],
-                        [ 4.459648282829194, 45.904988912620688 ] ] ] ] } }""",
+                    { "type": "Feature",
+                      "properties": {
+                        "code": "69",
+                        "nom": "Rhône",
+                        "id": 30251921,
+                        "CLUSTER_ID": 99520,
+                        "CLUSTER_SIZE": 386884 },
+                      "geometry": {
+                        "type": "MultiPolygon",
+                        "coordinates": [ [ [
+                            [ 4.459648282829194, 45.904988912620688 ],
+                            [ 4.464709510872551, 45.928950368349426 ],
+                            [ 4.490816965688656, 45.941784543770964 ],
+                            [ 4.510354299995861, 45.933697132664598 ],
+                            [ 4.518386257467152, 45.912888345521047 ],
+                            [ 4.496344031095243, 45.883438201401809 ],
+                            [ 4.479593950305621, 45.882900828315755 ],
+                            [ 4.459648282829194, 45.904988912620688 ] ] ] ] } }""",
                 Feature.class)
             .zoom(10)
             .id("feature_1_id");
@@ -156,15 +154,6 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
   private ZoneTilingJob aZTJ(String jobId) {
     return ZoneTilingJob.builder()
         .id(jobId)
-        .statusHistory(
-            (List.of(
-                JobStatus.builder()
-                    .id(randomUUID().toString())
-                    .jobId(jobId)
-                    .jobType(TILING)
-                    .progression(PENDING)
-                    .health(UNKNOWN)
-                    .build())))
         .zoneName("mock")
         .emailReceiver("mock@hotmail.com")
         .build();
@@ -245,15 +234,6 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
         zoneTilingJobRepository.save(
             ZoneTilingJob.builder()
                 .id(jobId)
-                .statusHistory(
-                    (List.of(
-                        JobStatus.builder()
-                            .id(randomUUID().toString())
-                            .jobId(jobId)
-                            .progression(PENDING)
-                            .jobType(TILING)
-                            .health(UNKNOWN)
-                            .build())))
                 .zoneName("mock")
                 .emailReceiver("mock@hotmail.com")
                 .build());
@@ -286,7 +266,7 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
   }
 
   @Test
-  void send_statusChanged_event_on_each_status_change() {
+  void send_statusChanged_event_on_each_change() {
     String jobId = randomUUID().toString();
     zoneTilingJobRepository.save(aZTJ(jobId));
     String taskId = randomUUID().toString();
@@ -297,12 +277,10 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
     subject.accept(createdEventPayload);
 
     var eventsCaptor = ArgumentCaptor.forClass(List.class);
-    verify(eventProducer, times(2)).accept(eventsCaptor.capture());
+    verify(eventProducer, times(1)).accept(eventsCaptor.capture());
     var sentEvents = eventsCaptor.getAllValues().stream().flatMap(List::stream).toList();
-    assertEquals(2, sentEvents.size());
-    var changedToProcessing = (ZoneTilingJobStatusChanged) sentEvents.get(0);
-    assertEquals(PROCESSING, changedToProcessing.getNewJob().getStatus().getProgression());
-    var changedToFinished = (ZoneTilingJobStatusChanged) sentEvents.get(1);
+    assertEquals(1, sentEvents.size());
+    var changedToFinished = (ZoneTilingJobStatusChanged) sentEvents.get(0);
     assertEquals(FINISHED, changedToFinished.getNewJob().getStatus().getProgression());
   }
 
@@ -365,12 +343,10 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
     TilingTaskCreated ztjCreated = TilingTaskCreated.builder().task(created).build();
 
     subject.accept(ztjCreated);
-    List<app.bpartners.geojobs.endpoint.rest.model.Parcel> actual =
+    List<app.bpartners.geojobs.endpoint.rest.model.Parcel> parcels =
         zoneTilingController.getZTJParcels(jobId);
 
-    actual.forEach(this::ignoreIds);
-    actual.forEach(parcel -> ignoreIds(parcel.getTiles()));
-    // TODO: fail
-    // assertEquals(List.of(parcel1()), actual);
+    assertEquals(1, parcels.size());
+    assertEquals(2, parcels.get(0).getTiles().size());
   }
 }

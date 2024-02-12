@@ -5,7 +5,9 @@ import static app.bpartners.geojobs.repository.model.Status.ProgressionStatus.PE
 import static app.bpartners.geojobs.repository.model.geo.GeoJobType.DETECTION;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -16,7 +18,6 @@ import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.repository.DetectedTileRepository;
 import app.bpartners.geojobs.repository.DetectionTaskRepository;
-import app.bpartners.geojobs.repository.model.JobStatus;
 import app.bpartners.geojobs.repository.model.TaskStatus;
 import app.bpartners.geojobs.repository.model.geo.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.geo.detection.DetectedTile;
@@ -152,19 +153,6 @@ class DetectionTaskCreatedServiceIT extends FacadeIT {
         .id(jobId)
         .zoneName("mock")
         .emailReceiver("mock@gmail.com")
-        .tasks(List.of(task))
-        .statusHistory(
-            new ArrayList<>() {
-              {
-                JobStatus.builder()
-                    .id(randomUUID().toString())
-                    .jobId(jobId)
-                    .progression(PENDING)
-                    .jobType(DETECTION)
-                    .health(UNKNOWN)
-                    .build();
-              }
-            })
         .build();
   }
 

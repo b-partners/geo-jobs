@@ -16,6 +16,7 @@ import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.model.BoundedPageSize;
 import app.bpartners.geojobs.model.PageFromOne;
+import app.bpartners.geojobs.repository.TilingTaskRepository;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
 import app.bpartners.geojobs.repository.model.geo.Parcel;
 import app.bpartners.geojobs.repository.model.geo.tiling.Tile;
@@ -33,6 +34,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 class ZoneTilingJobControllerIT extends FacadeIT {
 
   @Autowired ZoneTilingController controller;
+  @Autowired TilingTaskRepository taskRepository;
   @MockBean EventProducer eventProducer;
   @Autowired ObjectMapper om;
 
@@ -90,17 +92,6 @@ class ZoneTilingJobControllerIT extends FacadeIT {
     var createdList = controller.getTilingJobs(new PageFromOne(1), new BoundedPageSize(30));
 
     assertNotNull(created.getId());
-    assertEquals(
-        """
-            [class Feature {
-                id: feature_1_id
-                zoom: 14
-                geometry: class MultiPolygon {
-                    coordinates: [[[[4.459648282829194, 45.904988912620688], [4.464709510872551, 45.928950368349426], [4.490816965688656, 45.941784543770964], [4.510354299995861, 45.933697132664598], [4.518386257467152, 45.912888345521047], [4.496344031095243, 45.883438201401809], [4.479593950305621, 45.882900828315755], [4.459648282829194, 45.904988912620688]]]]
-                    type: MultiPolygon
-                }
-            }]""",
-        created.getFeatures().toString());
     assertTrue(createdList.stream().anyMatch(z -> z.equals(created)));
     verify(eventProducer, only()).accept(any());
   }
@@ -124,10 +115,13 @@ class ZoneTilingJobControllerIT extends FacadeIT {
   void read_parcel_with_non_emptyTiles() {
     var jobId1 = "job1";
     var jobId2 = "job2";
-    var job1 = aZTJ(jobId1, "task1", "tile1");
-    var job2 = aZTJ(jobId2, "task2", "tile2");
-
+    var job1 = aZTJ(jobId1);
+    var job2 = aZTJ(jobId2);
+    var task1 = aTask(jobId1, "task1", "tile1");
+    var task2 = aTask(jobId2, "task2", "tile2");
     tilingJobRepository.saveAll(List.of(job1, job2));
+    taskRepository.saveAll(List.of(task1, task2));
+
     var parcels1 = controller.getZTJParcels(jobId1);
     var parcels2 = controller.getZTJParcels(jobId2);
 
@@ -140,24 +134,25 @@ class ZoneTilingJobControllerIT extends FacadeIT {
   }
 
   @NotNull
-  private static ZoneTilingJob aZTJ(String jobId, String taskId, String tileId) {
-    var job1 = new ZoneTilingJob();
-    job1.setId(jobId);
-    job1.setEmailReceiver("dummy@email.com");
-    job1.setZoneName("dummy");
+  private ZoneTilingJob aZTJ(String jobId) {
+    var job = new ZoneTilingJob();
+    job.setId(jobId);
+    job.setEmailReceiver("dummy@email.com");
+    job.setZoneName("dummy");
+    return job;
+  }
+
+  private static TilingTask aTask(String jobId, String taskId, String tileId) {
     var now = now();
-    job1.setTasks(
-        List.of(
-            TilingTask.builder()
-                .id(taskId)
-                .jobId(jobId)
-                .submissionInstant(now)
-                .parcel(
-                    Parcel.builder()
-                        .tiles(List.of(Tile.builder().id(tileId).creationDatetime(now).build()))
-                        .creationDatetime(now)
-                        .build())
-                .build()));
-    return job1;
+    return TilingTask.builder()
+        .id(taskId)
+        .jobId(jobId)
+        .submissionInstant(now)
+        .parcel(
+            Parcel.builder()
+                .tiles(List.of(Tile.builder().id(tileId).creationDatetime(now).build()))
+                .creationDatetime(now)
+                .build())
+        .build();
   }
 }

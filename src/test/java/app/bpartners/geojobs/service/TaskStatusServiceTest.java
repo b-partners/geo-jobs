@@ -5,6 +5,7 @@ import static app.bpartners.geojobs.repository.model.Status.HealthStatus.UNKNOWN
 import static app.bpartners.geojobs.repository.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.repository.model.Status.ProgressionStatus.PENDING;
 import static app.bpartners.geojobs.repository.model.Status.ProgressionStatus.PROCESSING;
+import static java.time.Instant.now;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -13,6 +14,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.repository.TaskRepository;
 import app.bpartners.geojobs.repository.model.Job;
 import app.bpartners.geojobs.repository.model.JobStatus;
 import app.bpartners.geojobs.repository.model.JobType;
@@ -31,14 +33,16 @@ import org.springframework.data.jpa.repository.JpaRepository;
 class TaskStatusServiceTest {
   JpaRepository<TestJob, String> jobRepository = mock();
   EventProducer eventProducer = mock();
-  JobService<TestTask, TestJob> jobService = new TestJobService(jobRepository, eventProducer);
-  JpaRepository<TestTask, String> taskRepository = mock();
+  TaskRepository<TestTask> taskRepository = mock();
+  JobService<TestTask, TestJob> jobService =
+      new TestJobService(jobRepository, taskRepository, eventProducer);
   TaskStatusService<TestTask, TestJob> subject =
       new TaskStatusService<>(taskRepository, jobService);
 
   @BeforeEach
   void setUp() {
     subject.setEm(mock());
+    when(jobRepository.save(any())).thenAnswer(invocation -> invocation.getArguments()[0]);
   }
 
   @Test
@@ -47,8 +51,8 @@ class TaskStatusServiceTest {
     var jobId = "jobId";
     var oldTask = aTestTask(taskId, jobId, PENDING, UNKNOWN);
     when(taskRepository.existsById(taskId)).thenReturn(true);
-    var oldJob = aTestJob(jobId, aTestTask(taskId, jobId, PENDING, UNKNOWN));
-    var newJob = aTestJob(jobId, aTestTask(taskId, jobId, FINISHED, FAILED));
+    var oldJob = aTestJob(jobId, PENDING, UNKNOWN);
+    var newJob = aTestJob(jobId, FINISHED, FAILED);
     when(jobRepository.findById(jobId))
         .thenReturn(Optional.of(oldJob))
         .thenReturn(Optional.of(newJob));
@@ -70,13 +74,13 @@ class TaskStatusServiceTest {
     var jobId = "jobId";
     var oldTask = aTestTask(taskId, jobId, PROCESSING, UNKNOWN);
     when(taskRepository.existsById(taskId)).thenReturn(true);
-    var oldJob = aTestJob(jobId, aTestTask(taskId, jobId, PROCESSING, UNKNOWN));
-    var newJob = aTestJob(jobId, aTestTask(taskId, jobId, PROCESSING, UNKNOWN));
+    var oldJob = aTestJob(jobId, PROCESSING, UNKNOWN);
+    var newJob = aTestJob(jobId, PROCESSING, UNKNOWN);
     when(jobRepository.findById(jobId))
         .thenReturn(Optional.of(oldJob))
         .thenReturn(Optional.of(newJob));
 
-    subject.fail(oldTask);
+    subject.process(oldTask);
 
     verify(eventProducer, times(0)).accept(any());
   }
@@ -87,18 +91,28 @@ class TaskStatusServiceTest {
     task.setId(taskId);
     task.setJobId(jobId);
     var statusHistory = new ArrayList<TaskStatus>();
-    statusHistory.add(TaskStatus.builder().progression(progression).health(health).build());
+    statusHistory.add(
+        TaskStatus.builder()
+            .progression(progression)
+            .health(health)
+            .creationDatetime(now())
+            .build());
     task.setStatusHistory(statusHistory);
     return task;
   }
 
-  private static TestJob aTestJob(String jobId, TestTask task) {
+  private static TestJob aTestJob(
+      String jobId, ProgressionStatus progression, HealthStatus health) {
     var job = new TestJob();
     job.setId(jobId);
-    job.setStatusHistory(new ArrayList<>());
-    var tasks = new ArrayList<TestTask>();
-    tasks.add(task);
-    job.setTasks(tasks);
+    var statusHistory = new ArrayList<JobStatus>();
+    statusHistory.add(
+        JobStatus.builder()
+            .progression(progression)
+            .health(health)
+            .creationDatetime(now())
+            .build());
+    job.setStatusHistory(statusHistory);
     return job;
   }
 
@@ -109,16 +123,19 @@ class TaskStatusServiceTest {
     }
   }
 
-  static class TestJob extends Job<TestTask> {
+  static class TestJob extends Job {
     @Override
-    public JobType getJobType() {
+    protected JobType getType() {
       return null;
     }
   }
 
   static class TestJobService extends JobService<TestTask, TestJob> {
-    public TestJobService(JpaRepository<TestJob, String> repository, EventProducer eventProducer) {
-      super(repository, eventProducer);
+    public TestJobService(
+        JpaRepository<TestJob, String> repository,
+        TaskRepository<TestTask> taskRepository,
+        EventProducer eventProducer) {
+      super(repository, taskRepository, eventProducer);
     }
 
     @Override

@@ -10,10 +10,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneDetectionJobCreated;
+import app.bpartners.geojobs.repository.DetectionTaskRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.JobStatus;
 import app.bpartners.geojobs.repository.model.TaskStatus;
@@ -22,12 +24,14 @@ import app.bpartners.geojobs.repository.model.geo.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.service.geo.detection.ZoneDetectionJobService;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 class ZoneDetectionJobCreatedServiceIT extends FacadeIT {
   @Autowired ZoneDetectionJobCreatedService subject;
   @Autowired ZoneDetectionJobService zoneDetectionJobService;
+  @Mock DetectionTaskRepository taskRepository;
   @MockBean EventProducer eventProducer;
   @Autowired ZoneDetectionJobRepository repository;
 
@@ -39,25 +43,8 @@ class ZoneDetectionJobCreatedServiceIT extends FacadeIT {
         ZoneDetectionJob.builder()
             .id(jobId)
             .zoneName("mock")
-            .type(MACHINE)
+            .detectionType(MACHINE)
             .emailReceiver("mock@gmail.com")
-            .tasks(
-                List.of(
-                    DetectionTask.builder()
-                        .id(taskId)
-                        .jobId(jobId)
-                        .submissionInstant(now())
-                        .statusHistory(
-                            List.of(
-                                TaskStatus.builder()
-                                    .id(randomUUID().toString())
-                                    .progression(PENDING)
-                                    .health(UNKNOWN)
-                                    .jobType(DETECTION)
-                                    .taskId(taskId)
-                                    .creationDatetime(now())
-                                    .build()))
-                        .build()))
             .statusHistory(
                 List.of(
                     JobStatus.builder()
@@ -71,12 +58,29 @@ class ZoneDetectionJobCreatedServiceIT extends FacadeIT {
     ZoneDetectionJob created = repository.save(toCreate);
     ZoneDetectionJobCreated createdEventPayload =
         ZoneDetectionJobCreated.builder().zoneDetectionJob(created).build();
+    when(taskRepository.findAllByJobId(jobId))
+        .thenReturn(
+            List.of(
+                DetectionTask.builder()
+                    .id(taskId)
+                    .jobId(jobId)
+                    .submissionInstant(now())
+                    .statusHistory(
+                        List.of(
+                            TaskStatus.builder()
+                                .id(randomUUID().toString())
+                                .progression(PENDING)
+                                .health(UNKNOWN)
+                                .jobType(DETECTION)
+                                .taskId(taskId)
+                                .creationDatetime(now())
+                                .build()))
+                    .build()));
 
     subject.accept(createdEventPayload);
     ZoneDetectionJob actualAfterAccept = zoneDetectionJobService.findById(created.getId());
 
-    int numberOfFeaturesInJob = 2; // TODO: check why initially was 1
-    verify(eventProducer, times(numberOfFeaturesInJob)).accept(anyList());
+    verify(eventProducer, times(1)).accept(anyList());
     assertEquals(UNKNOWN, actualAfterAccept.getStatus().getHealth());
     assertEquals(PENDING, actualAfterAccept.getStatus().getProgression());
   }

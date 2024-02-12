@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.repository.model.geo.detection.ZoneDetectionJob.DetectionType.HUMAN;
+
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneDetectionJobCreated;
 import app.bpartners.geojobs.repository.model.geo.detection.ZoneDetectionJob;
@@ -18,11 +20,10 @@ public class ZoneDetectionJobCreatedService implements Consumer<ZoneDetectionJob
   @Override
   public void accept(ZoneDetectionJobCreated zoneDetectionJobCreated) {
     var zoneDetectionJob = zoneDetectionJobCreated.getZoneDetectionJob();
-    var detectionType = zoneDetectionJob.getType();
+    var detectionType = zoneDetectionJob.getDetectionType();
     switch (detectionType) {
       case MACHINE -> {
-        ZoneDetectionJob humanZDJ =
-            zoneDetectionJob.toBuilder().type(ZoneDetectionJob.DetectionType.HUMAN).build();
+        ZoneDetectionJob humanZDJ = zoneDetectionJob.toBuilder().detectionType(HUMAN).build();
         eventProducer.accept(
             List.of(ZoneDetectionJobCreated.builder().zoneDetectionJob(humanZDJ).build()));
         zoneDetectionJobService.fireTasks(zoneDetectionJob.getId());

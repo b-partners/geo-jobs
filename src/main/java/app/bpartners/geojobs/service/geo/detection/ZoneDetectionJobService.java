@@ -5,7 +5,7 @@ import app.bpartners.geojobs.endpoint.event.gen.DetectionTaskCreated;
 import app.bpartners.geojobs.endpoint.event.gen.InDoubtTilesDetected;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneDetectionJobStatusChanged;
 import app.bpartners.geojobs.repository.DetectedTileRepository;
-import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
+import app.bpartners.geojobs.repository.DetectionTaskRepository;
 import app.bpartners.geojobs.repository.model.geo.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.geo.detection.DetectedTile;
 import app.bpartners.geojobs.repository.model.geo.detection.DetectionTask;
@@ -18,24 +18,24 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetectionJob> {
-  private final ZoneDetectionJobRepository zoneDetectionJobRepository;
   private final DetectionMapper detectionMapper;
   private final DetectedTileRepository detectedTileRepository;
 
   public ZoneDetectionJobService(
       JpaRepository<ZoneDetectionJob, String> repository,
+      DetectionTaskRepository taskRepository,
+      DetectedTileRepository detectedTileRepository,
       EventProducer eventProducer,
-      DetectionMapper detectionMapper,
-      DetectedTileRepository detectedTileRepository) {
-    super(repository, eventProducer);
-    this.zoneDetectionJobRepository = (ZoneDetectionJobRepository) repository;
+      DetectionMapper detectionMapper) {
+    super(repository, taskRepository, eventProducer);
     this.detectionMapper = detectionMapper;
     this.detectedTileRepository = detectedTileRepository;
   }
 
   public ZoneDetectionJob fireTasks(String jobId) {
     var job = findById(jobId);
-    job.getTasks().forEach(task -> eventProducer.accept(List.of(new DetectionTaskCreated(task))));
+    var tasks = getTasks(job);
+    getTasks(job).forEach(task -> eventProducer.accept(List.of(new DetectionTaskCreated(task))));
     return job;
   }
 
@@ -47,11 +47,11 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
 
   public void saveZDJFromZTJ(ZoneTilingJob job) {
     ZoneDetectionJob zoneDetectionJob = detectionMapper.fromTilingJob(job);
-    zoneDetectionJobRepository.save(zoneDetectionJob);
+    repository.save(zoneDetectionJob);
   }
 
   public ZoneDetectionJob save(ZoneDetectionJob job) {
-    return zoneDetectionJobRepository.save(job);
+    return repository.save(job);
   }
 
   public void handleInDoubtObjects(ZoneDetectionJob newJob) {

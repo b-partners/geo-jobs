@@ -10,14 +10,13 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import app.bpartners.geojobs.endpoint.event.gen.ZoneTilingJobStatusChanged;
+import app.bpartners.geojobs.repository.model.JobStatus;
 import app.bpartners.geojobs.repository.model.Status.HealthStatus;
 import app.bpartners.geojobs.repository.model.Status.ProgressionStatus;
-import app.bpartners.geojobs.repository.model.TaskStatus;
-import app.bpartners.geojobs.repository.model.geo.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.geo.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.geo.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geo.tiling.TilingFinishedMailer;
-import java.util.List;
+import java.util.ArrayList;
 import org.junit.jupiter.api.Test;
 
 class ZoneTilingJobStatusChangedServiceTest {
@@ -62,14 +61,8 @@ class ZoneTilingJobStatusChangedServiceTest {
   }
 
   private static ZoneTilingJob aZTJ(ProgressionStatus progression, HealthStatus health) {
-    return ZoneTilingJob.builder()
-        .tasks(
-            List.of(
-                TilingTask.builder()
-                    .statusHistory(
-                        List.of(
-                            TaskStatus.builder().progression(progression).health(health).build()))
-                    .build()))
-        .build();
+    var statusHistory = new ArrayList<JobStatus>();
+    statusHistory.add(JobStatus.builder().progression(progression).health(health).build());
+    return ZoneTilingJob.builder().statusHistory(statusHistory).build();
   }
 }

@@ -11,7 +11,6 @@ import app.bpartners.geojobs.repository.model.geo.tiling.ZoneTilingJob;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.OneToOne;
-import java.io.Serializable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,21 +24,21 @@ import org.hibernate.annotations.JdbcTypeCode;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-public class ZoneDetectionJob extends Job<DetectionTask> implements Serializable {
+public class ZoneDetectionJob extends Job {
   @OneToOne(cascade = ALL)
   private ZoneTilingJob zoneTilingJob;
 
   @Enumerated(STRING)
   @JdbcTypeCode(NAMED_ENUM)
-  private DetectionType type;
+  private DetectionType detectionType;
+
+  @Override
+  protected JobType getType() {
+    return DETECTION;
+  }
 
   public enum DetectionType {
     MACHINE,
     HUMAN
-  }
-
-  @Override
-  public JobType getJobType() {
-    return DETECTION;
   }
 }

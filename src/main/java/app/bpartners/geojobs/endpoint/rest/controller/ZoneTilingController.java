@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.endpoint.rest.controller;
 
+import static java.util.stream.Collectors.toList;
+
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.TilingTaskMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneTilingJobMapper;
 import app.bpartners.geojobs.endpoint.rest.model.CreateZoneTilingJob;
@@ -7,10 +9,13 @@ import app.bpartners.geojobs.endpoint.rest.model.Parcel;
 import app.bpartners.geojobs.endpoint.rest.model.ZoneTilingJob;
 import app.bpartners.geojobs.model.BoundedPageSize;
 import app.bpartners.geojobs.model.PageFromOne;
+import app.bpartners.geojobs.repository.model.geo.tiling.TilingTask;
 import app.bpartners.geojobs.service.geo.ParcelService;
 import app.bpartners.geojobs.service.geo.tiling.ZoneTilingJobService;
+import java.net.URL;
 import java.util.List;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,14 +28,25 @@ import org.springframework.web.bind.annotation.RestController;
 @AllArgsConstructor
 @Slf4j
 public class ZoneTilingController {
-  private final ZoneTilingJobMapper mapper;
   private final ZoneTilingJobService service;
   private final ParcelService parcelService;
+  private final ZoneTilingJobMapper mapper;
   private final TilingTaskMapper tilingTaskMapper;
 
   @PostMapping("/tilingJobs")
-  public ZoneTilingJob tileZone(@RequestBody CreateZoneTilingJob job) {
-    return mapper.toRest(service.create(mapper.toDomain(job)));
+  public ZoneTilingJob tileZone(@RequestBody CreateZoneTilingJob createJob) {
+    var job = mapper.toDomain(createJob);
+    return mapper.toRest(service.create(job, getTilingTasks(createJob, job.getId())));
+  }
+
+  @SneakyThrows
+  private List<TilingTask> getTilingTasks(CreateZoneTilingJob job, String jobId) {
+    var serverUrl = new URL(job.getGeoServerUrl());
+    return job.getFeatures().stream()
+        .map(
+            feature ->
+                tilingTaskMapper.from(feature, serverUrl, job.getGeoServerParameter(), jobId))
+        .collect(toList());
   }
 
   @GetMapping("/tilingJobs")

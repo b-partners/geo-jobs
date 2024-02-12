@@ -20,7 +20,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @Getter
 @Setter
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @Table(name = "job_status")
 public class JobStatus extends Status {
   @JoinColumn(referencedColumnName = "id")

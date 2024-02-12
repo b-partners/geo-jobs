@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.repository;
 
 import app.bpartners.geojobs.repository.model.geo.detection.DetectionTask;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-public interface DetectionTaskRepository extends JpaRepository<DetectionTask, String> {}
+@Repository
+public interface DetectionTaskRepository extends TaskRepository<DetectionTask> {}

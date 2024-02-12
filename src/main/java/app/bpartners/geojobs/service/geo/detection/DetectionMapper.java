@@ -18,7 +18,6 @@ import app.bpartners.geojobs.repository.model.geo.detection.DetectedTile;
 import app.bpartners.geojobs.repository.model.geo.detection.DetectionTask;
 import app.bpartners.geojobs.repository.model.geo.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.geo.tiling.Tile;
-import app.bpartners.geojobs.repository.model.geo.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.geo.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.geo.tiling.TileValidator;
 import java.math.BigDecimal;
@@ -127,35 +126,26 @@ public class DetectionMapper {
         .build();
   }
 
-  public ZoneDetectionJob fromTilingJob(ZoneTilingJob job) {
+  public ZoneDetectionJob fromTilingJob(ZoneTilingJob tilingJob) {
     String zoneDetectionJobId = randomUUID().toString();
-    List<Tile> tiles = new ArrayList<>();
-    List<TilingTask> tasks = job.getTasks();
-    tasks.stream()
-        .map(task -> task.getParcel().getTiles())
-        .flatMap(List::stream)
-        .forEach(tiles::add);
-    List<DetectionTask> zoneDetectionTasks =
-        tiles.stream().map(tile -> toDomain(tile, zoneDetectionJobId)).toList();
-
-    return ZoneDetectionJob.builder()
-        .id(zoneDetectionJobId)
-        .zoneTilingJob(job)
-        .tasks(zoneDetectionTasks)
-        .type(MACHINE)
-        .zoneName(job.getZoneName())
-        .emailReceiver(job.getEmailReceiver())
-        .submissionInstant(now())
-        .statusHistory(
-            List.of(
-                JobStatus.builder()
-                    .jobId(zoneDetectionJobId)
-                    .id(randomUUID().toString())
-                    .creationDatetime(now())
-                    .jobType(DETECTION)
-                    .progression(PENDING)
-                    .health(UNKNOWN)
-                    .build()))
-        .build();
+    var detectionJob =
+        ZoneDetectionJob.builder()
+            .id(zoneDetectionJobId)
+            .zoneTilingJob(tilingJob)
+            .detectionType(MACHINE)
+            .zoneName(tilingJob.getZoneName())
+            .emailReceiver(tilingJob.getEmailReceiver())
+            .submissionInstant(now())
+            .build();
+    detectionJob.hasNewStatus(
+        JobStatus.builder()
+            .jobId(zoneDetectionJobId)
+            .id(randomUUID().toString())
+            .creationDatetime(now())
+            .jobType(DETECTION)
+            .progression(PENDING)
+            .health(UNKNOWN)
+            .build());
+    return detectionJob;
   }
 }

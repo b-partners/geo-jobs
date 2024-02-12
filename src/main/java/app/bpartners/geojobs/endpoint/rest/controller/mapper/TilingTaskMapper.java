@@ -17,7 +17,6 @@ import app.bpartners.geojobs.repository.model.geo.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.geo.tiling.ZoneTilingJob;
 import java.net.URL;
 import java.util.List;
-import java.util.UUID;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -28,11 +27,14 @@ public class TilingTaskMapper {
   private final ZoneTilingJobRepository zoneTilingJobRepository;
 
   public TilingTask from(
-      Feature createFeature, URL geoServerUrl, GeoServerParameter geoServerParameter, UUID jobId) {
+      Feature createFeature,
+      URL geoServerUrl,
+      GeoServerParameter geoServerParameter,
+      String jobId) {
     String generatedId = randomUUID().toString();
     return TilingTask.builder()
         .id(generatedId)
-        .jobId(jobId.toString())
+        .jobId(jobId)
         .statusHistory(
             List.of(
                 TaskStatus.builder()
