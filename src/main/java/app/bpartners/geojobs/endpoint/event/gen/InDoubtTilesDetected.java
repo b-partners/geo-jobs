@@ -14,6 +14,6 @@ import lombok.*;
 @EqualsAndHashCode
 @ToString
 public class InDoubtTilesDetected {
-  @JsonProperty("indoubtTiles")
-  private List<DetectedTile> indoubtTiles;
+  @JsonProperty("jobId")
+  private String jobId;
 }
