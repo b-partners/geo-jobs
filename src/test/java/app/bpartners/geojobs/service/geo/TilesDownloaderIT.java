@@ -16,8 +16,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Objects;
-import org.junit.jupiter.api.Disabled;
-import org.junitpioneer.jupiter.RetryingTest;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
@@ -50,30 +49,29 @@ public class TilesDownloaderIT extends FacadeIT {
             om.readValue(
                     """
                         { "type": "Feature",
-                        "properties": {
-                          "code": "69",
-                          "nom": "Rhône - 1 sur 1000x100",
-                          "id": 30251921,
-                          "CLUSTER_ID": 99520,
-                          "CLUSTER_SIZE": 386884 },
-                        "geometry": {
-                          "type": "MultiPolygon",
-                          "coordinates": [ [ [
-                            [ 4.803193184300449, 45.732156868763205 ],
-                            [ 4.802538245115325, 45.732990634128193 ],
-                            [ 4.80264872650989, 45.733263461411831 ],
-                            [ 4.803125193613379, 45.733382317920366 ],
-                            [ 4.803576766482497, 45.73258632485657 ],
-                            [ 4.803576472461046, 45.73258224786219 ],
-                            [ 4.803193184300449, 45.732156868763205 ] ] ] ] } }""",
+                          "properties": {
+                            "code": "69",
+                            "nom": "Rhône - 1 sur 1000x100",
+                            "id": 30251921,
+                            "CLUSTER_ID": 99520,
+                            "CLUSTER_SIZE": 386884 },
+                          "geometry": {
+                            "type": "MultiPolygon",
+                            "coordinates": [ [ [
+                              [ 4.803193184300449, 45.732156868763205 ],
+                              [ 4.802538245115325, 45.732990634128193 ],
+                              [ 4.80264872650989, 45.733263461411831 ],
+                              [ 4.803125193613379, 45.733382317920366 ],
+                              [ 4.803576766482497, 45.73258632485657 ],
+                              [ 4.803576472461046, 45.73258224786219 ],
+                              [ 4.803193184300449, 45.732156868763205 ] ] ] ] } }""",
                     Feature.class)
                 .zoom(zoom)
                 .id("feature_1_id"))
         .build();
   }
 
-  @Disabled("TODO: Did URL change?")
-  @RetryingTest(4)
+  @Test
   public void download_tiles_ok() throws IOException {
     var zoom = 20;
 
