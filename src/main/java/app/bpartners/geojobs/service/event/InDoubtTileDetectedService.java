@@ -1,20 +1,22 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.repository.annotator.gen.JobStatus.PENDING;
+import static app.bpartners.geojobs.service.annotator.TaskExtractor.formatToAnnotatorFilePath;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.gen.InDoubtTilesDetected;
+import app.bpartners.geojobs.file.annotator.AnnotatorBucketComponent;
+import app.bpartners.geojobs.file.self.BucketComponent;
 import app.bpartners.geojobs.repository.DetectedTileRepository;
 import app.bpartners.geojobs.repository.annotator.AnnotatorApiClient;
 import app.bpartners.geojobs.repository.annotator.gen.AnnotatedTask;
-import app.bpartners.geojobs.repository.annotator.gen.Annotation;
-import app.bpartners.geojobs.repository.annotator.gen.AnnotationBatch;
 import app.bpartners.geojobs.repository.annotator.gen.CrupdateAnnotatedJob;
-import app.bpartners.geojobs.repository.annotator.gen.JobStatus;
 import app.bpartners.geojobs.repository.annotator.gen.Label;
-import app.bpartners.geojobs.repository.annotator.gen.Point;
-import app.bpartners.geojobs.repository.annotator.gen.Polygon;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.detection.DetectedTile;
+import app.bpartners.geojobs.service.annotator.AnnotatorUserInfoGetter;
+import app.bpartners.geojobs.service.annotator.LabelExtractor;
+import app.bpartners.geojobs.service.annotator.TaskExtractor;
 import java.time.Instant;
 import java.util.List;
 import java.util.function.Consumer;
@@ -26,11 +28,15 @@ import org.springframework.stereotype.Service;
 public class InDoubtTileDetectedService implements Consumer<InDoubtTilesDetected> {
   private final DetectedTileRepository detectedTileRepository;
   private final AnnotatorApiClient annotatorApiClient;
+  private final TaskExtractor taskExtractor;
+  private final LabelExtractor labelExtractor;
+  private final AnnotatorUserInfoGetter annotatorUserInfoGetter;
+  private final BucketComponent selfBucket;
+  private final AnnotatorBucketComponent annotatorBucketComponent;
 
   @Override
   public void accept(InDoubtTilesDetected event) {
     String jobId = event.getJobId();
-    Instant updatedAt = Instant.now();
     List<DetectedTile> detectedTiles = detectedTileRepository.findAllByJobId(jobId);
     List<DetectedTile> detectedInDoubtTiles =
         detectedTiles.stream()
@@ -38,49 +44,30 @@ public class InDoubtTileDetectedService implements Consumer<InDoubtTilesDetected
                 detectedTile ->
                     detectedTile.getDetectedObjects().stream().anyMatch(DetectedObject::isInDoubt))
             .toList();
-    // /!\ TODO: complete TODO by converting detected in-doubt tiles
-
-    Label label = Label.builder().id(randomUUID().toString()).name("TODO").color("TODO").build();
-
+    String crupdateAnnotatedJobId = randomUUID().toString();
+    String crupdateAnnotatedJobFolderPath = crupdateAnnotatedJobId + "/";
+    detectedInDoubtTiles.forEach(
+        tile -> {
+          selfBucket.copyTo(
+              tile.getBucketPath(),
+              annotatorBucketComponent.getBucketName(),
+              crupdateAnnotatedJobFolderPath + formatToAnnotatorFilePath(tile.getBucketPath()));
+        });
+    List<AnnotatedTask> annotatedTasks =
+        taskExtractor.apply(detectedInDoubtTiles, annotatorUserInfoGetter.getUserId());
+    List<Label> labels = labelExtractor.extractLabelsFromTasks(annotatedTasks);
+    Instant now = Instant.now();
     annotatorApiClient.crupdateAnnotatedJob(
         CrupdateAnnotatedJob.builder()
-            .id(randomUUID().toString())
-            .name("TODO")
-            .bucketName("TODO")
-            .folderPath("TODO")
-            .labels(List.of(label))
-            .ownerEmail(null)
-            .status(JobStatus.TO_REVIEW)
-            .annotatedTasks(
-                List.of(
-                    AnnotatedTask.builder()
-                        .id(randomUUID().toString())
-                        .annotatorId("TODO")
-                        .filename("TODO")
-                        .annotationBatch(
-                            AnnotationBatch.builder()
-                                .id(randomUUID().toString())
-                                .creationDatetime(updatedAt)
-                                .annotations(
-                                    List.of(
-                                        Annotation.builder()
-                                            .id(randomUUID().toString())
-                                            .userId("TODO")
-                                            .taskId("TODO")
-                                            .label(label)
-                                            .polygon(
-                                                Polygon.builder()
-                                                    .points(
-                                                        List.of(
-                                                            Point.builder()
-                                                                .y(0.0) // TODO
-                                                                .y(0.0) // TODO
-                                                                .build()))
-                                                    .build())
-                                            .build()))
-                                .build())
-                        .build()))
-            .teamId("TODO")
+            .id(crupdateAnnotatedJobId)
+            .name("geo-jobs" + now)
+            .bucketName(annotatorBucketComponent.getBucketName())
+            .folderPath(crupdateAnnotatedJobFolderPath)
+            .labels(labels)
+            .ownerEmail("tech@bpartners.app")
+            .status(PENDING)
+            .annotatedTasks(annotatedTasks)
+            .teamId(annotatorUserInfoGetter.getTeamId())
             .build());
   }
 }
