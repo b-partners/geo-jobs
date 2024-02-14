@@ -42,23 +42,24 @@ public class ZoneDetectionJobStatusChangedService
     var notFinishedMessage = "Not finished yet, nothing to do, event=" + event;
     var doNothingMessage = "Old job already finished, do nothing";
     var message =
-            switch (oldProgression) {
-              case PENDING, PROCESSING -> switch (newProgression) {
-                case FINISHED -> switch (newHealth) {
-                  case UNKNOWN -> throw new IllegalStateException(illegalFinishedMessage);
-                  case SUCCEEDED -> handleFinishedJob(newJob);
-                  case FAILED -> throw new ApiException(SERVER_EXCEPTION, "Failed to process zdj=" + newJob);
-                };
-                case PENDING, PROCESSING -> notFinishedMessage;
-              };
-              case FINISHED -> doNothingMessage;
+        switch (oldProgression) {
+          case PENDING, PROCESSING -> switch (newProgression) {
+            case FINISHED -> switch (newHealth) {
+              case UNKNOWN -> throw new IllegalStateException(illegalFinishedMessage);
+              case SUCCEEDED -> handleFinishedJob(newJob);
+              case FAILED -> throw new ApiException(
+                  SERVER_EXCEPTION, "Failed to process zdj=" + newJob);
             };
+            case PENDING, PROCESSING -> notFinishedMessage;
+          };
+          case FINISHED -> doNothingMessage;
+        };
     log.info(message);
   }
+
   private String handleFinishedJob(ZoneDetectionJob zdj) {
     mailer.accept(zdj);
-    eventProducer.accept(
-            List.of(InDoubtTilesDetected.builder().jobId(zdj.getId()).build()));
-    return "Finished, mail sent, zdj=" + zdj;
+    eventProducer.accept(List.of(InDoubtTilesDetected.builder().jobId(zdj.getId()).build()));
+    return "Finished, mail sent, ztj=" + zdj;
   }
 }

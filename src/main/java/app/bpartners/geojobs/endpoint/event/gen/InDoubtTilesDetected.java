@@ -1,10 +1,13 @@
 package app.bpartners.geojobs.endpoint.event.gen;
 
-import app.bpartners.geojobs.repository.model.detection.DetectedTile;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.List;
 import javax.annotation.processing.Generated;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Generated("EventBridge")
 @NoArgsConstructor
