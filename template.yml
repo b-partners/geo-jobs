@@ -34,6 +34,8 @@ Globals:
         TILE_DETECTION_API_URL: https://3gl56b3gqs6cfynuzqkte2rthm0onaoh.lambda-url.eu-west-3.on.aws
         ADMIN_API_KEY: !Sub '{{resolve:ssm:/bpartners-geo-jobs/${Env}/admin/api-key}}'
         ANNOTATOR_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/annotator/url}}'
+        ANNOTATOR_API_KEY: !Sub '{{resolve:ssm/geo-jobs/${Env}/annotator/api/key}}'
+        ANNOTATOR_GEOJOBS_USER_INFO: !Sub '{{resolve:ssm/geo-jobs/${Env}/annotator/user/info}}'
 
         
 

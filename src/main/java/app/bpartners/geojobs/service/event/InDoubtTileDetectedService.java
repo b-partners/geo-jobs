@@ -6,18 +6,18 @@ import static java.util.UUID.randomUUID;
 
 import app.bpartners.annotator.endpoint.rest.api.AnnotatedJobsApi;
 import app.bpartners.annotator.endpoint.rest.model.AnnotatedTask;
-import app.bpartners.annotator.endpoint.rest.model.Annotation;
-import app.bpartners.annotator.endpoint.rest.model.AnnotationBatch;
 import app.bpartners.annotator.endpoint.rest.model.CrupdateAnnotatedJob;
 import app.bpartners.annotator.endpoint.rest.model.Label;
-import app.bpartners.annotator.endpoint.rest.model.Point;
-import app.bpartners.annotator.endpoint.rest.model.Polygon;
 import app.bpartners.geojobs.endpoint.event.gen.InDoubtTilesDetected;
+import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.DetectedTileRepository;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.detection.DetectedTile;
 import app.bpartners.geojobs.service.annotator.AnnotatorApiConf;
+import app.bpartners.geojobs.service.annotator.AnnotatorUserInfoGetter;
+import app.bpartners.geojobs.service.annotator.LabelExtractor;
+import app.bpartners.geojobs.service.annotator.TaskExtractor;
 import java.time.Instant;
 import java.util.List;
 import java.util.function.Consumer;
@@ -26,18 +26,35 @@ import org.springframework.stereotype.Service;
 @Service
 public class InDoubtTileDetectedService implements Consumer<InDoubtTilesDetected> {
   private final DetectedTileRepository detectedTileRepository;
-  private final AnnotatedJobsApi annotatedJobsApi;
+  private AnnotatedJobsApi annotatedJobsApi;
+  private final TaskExtractor taskExtractor;
+  private final LabelExtractor labelExtractor;
+  private final AnnotatorUserInfoGetter annotatorUserInfoGetter;
+  private final BucketComponent bucketComponent;
 
   public InDoubtTileDetectedService(
-      DetectedTileRepository detectedTileRepository, AnnotatorApiConf annotatorApiConf) {
+      DetectedTileRepository detectedTileRepository,
+      AnnotatorApiConf annotatorApiConf,
+      TaskExtractor taskExtractor,
+      LabelExtractor labelExtractor,
+      AnnotatorUserInfoGetter annotatorUserInfoGetter,
+      BucketComponent bucketComponent) {
     this.detectedTileRepository = detectedTileRepository;
     this.annotatedJobsApi = new AnnotatedJobsApi(annotatorApiConf.newApiClientWithApiKey());
+    this.taskExtractor = taskExtractor;
+    this.labelExtractor = labelExtractor;
+    this.annotatorUserInfoGetter = annotatorUserInfoGetter;
+    this.bucketComponent = bucketComponent;
+  }
+
+  public InDoubtTileDetectedService annotatedJobsApi(AnnotatedJobsApi annotatedJobsApi) {
+    this.annotatedJobsApi = annotatedJobsApi;
+    return this;
   }
 
   @Override
   public void accept(InDoubtTilesDetected event) {
     String jobId = event.getJobId();
-    Instant updatedAt = Instant.now();
     List<DetectedTile> detectedTiles = detectedTileRepository.findAllByJobId(jobId);
     List<DetectedTile> detectedInDoubtTiles =
         detectedTiles.stream()
@@ -45,48 +62,26 @@ public class InDoubtTileDetectedService implements Consumer<InDoubtTilesDetected
                 detectedTile ->
                     detectedTile.getDetectedObjects().stream().anyMatch(DetectedObject::isInDoubt))
             .toList();
-    // /!\ TODO: complete TODO by converting detected in-doubt tiles
-
-    Label label = new Label().id(randomUUID().toString()).name("TODO").color("TODO");
-
+    String crupdateAnnotatedJobId = randomUUID().toString();
+    String crupdateAnnotatedJobFolderPath = "/"; // TODO: can this be null ?
+    List<AnnotatedTask> annotatedTasks =
+        taskExtractor.apply(detectedInDoubtTiles, annotatorUserInfoGetter.getUserId());
+    List<Label> labels = labelExtractor.extractLabelsFromTasks(annotatedTasks);
     String crupdateJobId = randomUUID().toString();
+    Instant now = Instant.now();
     try {
       annotatedJobsApi.crupdateAnnotatedJob(
           crupdateJobId,
           new CrupdateAnnotatedJob()
-              .id(crupdateJobId)
-              .name("TODO")
-              .bucketName("TODO")
-              .folderPath("TODO")
-              .labels(List.of(label))
-              .ownerEmail(null)
+              .id(crupdateAnnotatedJobId)
+              .name("geo-jobs" + now)
+              .bucketName(bucketComponent.getBucketName())
+              .folderPath(crupdateAnnotatedJobFolderPath)
+              .labels(labels)
+              .ownerEmail("tech@bpartners.app")
               .status(TO_REVIEW)
-              .annotatedTasks(
-                  List.of(
-                      new AnnotatedTask()
-                          .id(randomUUID().toString())
-                          .annotatorId("TODO")
-                          .filename("TODO")
-                          .annotationBatch(
-                              new AnnotationBatch()
-                                  .id(randomUUID().toString())
-                                  .creationDatetime(updatedAt)
-                                  .annotations(
-                                      List.of(
-                                          new Annotation()
-                                              .id(randomUUID().toString())
-                                              .userId("TODO")
-                                              .taskId("TODO")
-                                              .label(label)
-                                              .polygon(
-                                                  new Polygon()
-                                                      .points(
-                                                          List.of(
-                                                              new Point()
-                                                                  .y(0.0) // TODO
-                                                                  .y(0.0) // TODO
-                                                              ))))))))
-              .teamId("TODO"));
+              .annotatedTasks(annotatedTasks)
+              .teamId(annotatorUserInfoGetter.getTeamId()));
     } catch (app.bpartners.annotator.endpoint.rest.client.ApiException e) {
       throw new ApiException(SERVER_EXCEPTION, e);
     }

@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Primary;
 @PojaGenerated
 @Configuration
 public class DatasourceConf {
+
   private final String driverClassName;
   private final String appPropDbUrl;
   private final String appProdDbUsername;

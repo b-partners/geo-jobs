@@ -57,6 +57,26 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 
 @Slf4j
 class TilingTaskCreatedServiceIT extends FacadeIT {
+  public static final String MOCK_FEATURE_AS_STRING =
+      """
+          { "type": "Feature",
+            "properties": {
+              "code": "69",
+              "nom": "Rhône",
+              "id": 30251921,
+              "CLUSTER_ID": 99520,
+              "CLUSTER_SIZE": 386884 },
+            "geometry": {
+              "type": "MultiPolygon",
+              "coordinates": [ [ [
+                [ 4.459648282829194, 45.904988912620688 ],
+                [ 4.464709510872551, 45.928950368349426 ],
+                [ 4.490816965688656, 45.941784543770964 ],
+                [ 4.510354299995861, 45.933697132664598 ],
+                [ 4.518386257467152, 45.912888345521047 ],
+                [ 4.496344031095243, 45.883438201401809 ],
+                [ 4.479593950305621, 45.882900828315755 ],
+                [ 4.459648282829194, 45.904988912620688 ] ] ] ] } }""";
   @Autowired TilingTaskCreatedService subject;
   @Autowired ZoneTilingController zoneTilingController;
   @MockBean BucketComponent bucketComponent;
@@ -155,29 +175,7 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
                 .id(randomUUID().toString())
                 .geoServerParameter(new GeoServerParameter().layers("grand-lyon"))
                 .feature(
-                    om.readValue(
-                            """
-                                { "type": "Feature",
-                                  "properties": {
-                                    "code": "69",
-                                    "nom": "Rhône",
-                                    "id": 30251921,
-                                    "CLUSTER_ID": 99520,
-                                    "CLUSTER_SIZE": 386884 },
-                                  "geometry": {
-                                    "type": "MultiPolygon",
-                                    "coordinates": [ [ [
-                                      [ 4.459648282829194, 45.904988912620688 ],
-                                      [ 4.464709510872551, 45.928950368349426 ],
-                                      [ 4.490816965688656, 45.941784543770964 ],
-                                      [ 4.510354299995861, 45.933697132664598 ],
-                                      [ 4.518386257467152, 45.912888345521047 ],
-                                      [ 4.496344031095243, 45.883438201401809 ],
-                                      [ 4.479593950305621, 45.882900828315755 ],
-                                      [ 4.459648282829194, 45.904988912620688 ] ] ] ] } }""",
-                            Feature.class)
-                        .zoom(10)
-                        .id("feature_1_id"))
+                    om.readValue(MOCK_FEATURE_AS_STRING, Feature.class).zoom(10).id("feature_1_id"))
                 .build())
         .statusHistory(
             List.of(
