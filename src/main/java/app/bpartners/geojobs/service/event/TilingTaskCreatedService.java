@@ -74,7 +74,6 @@ public class TilingTaskCreatedService implements Consumer<TilingTaskCreated> {
       var x = Integer.valueOf(dir[dir.length - 2]);
       var z = Integer.valueOf(dir[dir.length - 3]);
       var y = Integer.valueOf(FileUnzipper.stripExtension(tilesFile.getName()));
-      String bucketName = bucketConf.getBucketName();
       String[] segments = entryParentPath.split("/");
       String filePath = "";
 
@@ -93,7 +92,7 @@ public class TilingTaskCreatedService implements Consumer<TilingTaskCreated> {
               .id(randomUUID().toString())
               .creationDatetime(now())
               .coordinates(new TileCoordinates().x(x).y(y).z(z))
-              .bucketPath(bucketName + "/" + bucketKey + filePath)
+              .bucketPath(bucketKey + filePath)
               .build());
 
       return enrichedAccumulator;
