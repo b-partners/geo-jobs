@@ -9,9 +9,11 @@ import java.time.Duration;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.services.s3.model.CopyObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
+import software.amazon.awssdk.transfer.s3.model.CopyRequest;
 import software.amazon.awssdk.transfer.s3.model.DownloadFileRequest;
 import software.amazon.awssdk.transfer.s3.model.FileDownload;
 import software.amazon.awssdk.transfer.s3.model.UploadDirectoryRequest;
@@ -107,5 +109,24 @@ public abstract class AbstractBucketComponent {
 
   public String getBucketName() {
     return bucketConf.getBucketName();
+  }
+
+  public FileHash copyTo(String sourceKey, String destinationBucket, String destinationKey) {
+    var res =
+        bucketConf
+            .getS3TransferManager()
+            .copy(
+                CopyRequest.builder()
+                    .copyObjectRequest(
+                        CopyObjectRequest.builder()
+                            .sourceBucket(bucketConf.getBucketName())
+                            .sourceKey(sourceKey)
+                            .destinationBucket(destinationBucket)
+                            .destinationKey(destinationKey)
+                            .build())
+                    .build());
+    var copied = res.completionFuture().join();
+    return new FileHash(
+        FileHashAlgorithm.SHA256, copied.response().copyObjectResult().checksumSHA256());
   }
 }
