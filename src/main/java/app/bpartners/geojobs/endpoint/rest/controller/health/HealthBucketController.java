@@ -6,8 +6,8 @@ import static java.nio.file.Files.createTempDirectory;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.PojaGenerated;
-import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.file.FileHash;
+import app.bpartners.geojobs.file.self.BucketComponent;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;

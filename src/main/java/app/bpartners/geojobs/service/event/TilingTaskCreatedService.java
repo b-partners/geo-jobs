@@ -11,8 +11,8 @@ import app.bpartners.geojobs.endpoint.event.gen.TilingTaskCreated;
 import app.bpartners.geojobs.endpoint.event.gen.TilingTaskFailed;
 import app.bpartners.geojobs.endpoint.event.gen.TilingTaskSucceeded;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
-import app.bpartners.geojobs.file.BucketComponent;
-import app.bpartners.geojobs.file.BucketConf;
+import app.bpartners.geojobs.file.self.BucketComponent;
+import app.bpartners.geojobs.file.BucketConfiguration;
 import app.bpartners.geojobs.file.FileUnzipper;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.service.RetryableTaskStatusService;
@@ -35,7 +35,7 @@ import org.springframework.stereotype.Service;
 public class TilingTaskCreatedService implements Consumer<TilingTaskCreated> {
   private final TilesDownloader tilesDownloader;
   private final BucketComponent bucketComponent;
-  private final BucketConf bucketConf;
+  private final BucketConfiguration bucketConf;
   private final RetryableTaskStatusService<TilingTask, ZoneTilingJob> tilingTaskStatusService;
   private final EventProducer eventProducer;
 

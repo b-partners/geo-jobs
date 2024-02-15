@@ -1,0 +1,32 @@
+package app.bpartners.geojobs.file.self;
+
+import lombok.Getter;
+import lombok.SneakyThrows;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3AsyncClient;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.transfer.s3.S3TransferManager;
+
+@Configuration
+@Primary
+public class BucketConfiguration implements app.bpartners.geojobs.file.BucketConfiguration {
+
+  @Getter private final String bucketName;
+  @Getter private final S3TransferManager s3TransferManager;
+  @Getter private final S3Presigner s3Presigner;
+
+  @SneakyThrows
+  public BucketConfiguration(
+      @Value("${aws.region}") String regionString, @Value("${aws.s3.bucket}") String bucketName) {
+    this.bucketName = bucketName;
+    var region = Region.of(regionString);
+    this.s3TransferManager =
+        S3TransferManager.builder()
+            .s3Client(S3AsyncClient.crtBuilder().region(region).build())
+            .build();
+    this.s3Presigner = S3Presigner.builder().region(region).build();
+  }
+}

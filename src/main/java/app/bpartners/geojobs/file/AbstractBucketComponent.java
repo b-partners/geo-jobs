@@ -21,9 +21,9 @@ import software.amazon.awssdk.transfer.s3.progress.LoggingTransferListener;
 @PojaGenerated
 @Component
 @AllArgsConstructor
-public class BucketComponent {
+public abstract class AbstractBucketComponent {
 
-  private final BucketConf bucketConf;
+  private final BucketConfiguration bucketConf;
 
   public FileHash upload(File file, String bucketKey) {
     return file.isDirectory() ? uploadDirectory(file, bucketKey) : uploadFile(file, bucketKey);

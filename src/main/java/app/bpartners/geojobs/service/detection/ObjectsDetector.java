@@ -3,7 +3,7 @@ package app.bpartners.geojobs.service.detection;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
-import app.bpartners.geojobs.file.BucketComponent;
+import app.bpartners.geojobs.file.self.BucketComponent;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.model.detection.DetectionTask;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
