@@ -51,6 +51,7 @@ public class DetectionMapper {
         .id(detectedTileId)
         .jobId(jobId)
         .tile(tile)
+        .bucketPath(tile.getBucketPath())
         .detectedObjects(detectedObjects)
         .creationDatetime(now())
         .build();
