@@ -1,20 +1,26 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.FAILED;
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
+import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.gen.TilingTaskCreated;
+import app.bpartners.geojobs.endpoint.event.gen.TilingTaskFailed;
+import app.bpartners.geojobs.endpoint.event.gen.TilingTaskSucceeded;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.file.BucketConf;
 import app.bpartners.geojobs.file.FileUnzipper;
-import app.bpartners.geojobs.model.exception.ApiException;
+import app.bpartners.geojobs.job.model.Status;
+import app.bpartners.geojobs.job.service.RetryableTaskStatusService;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
+import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.tiling.TilesDownloader;
-import app.bpartners.geojobs.service.tiling.TilingTaskStatusService;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,7 +36,8 @@ public class TilingTaskCreatedService implements Consumer<TilingTaskCreated> {
   private final TilesDownloader tilesDownloader;
   private final BucketComponent bucketComponent;
   private final BucketConf bucketConf;
-  private final TilingTaskStatusService tilingTaskStatusService;
+  private final RetryableTaskStatusService<TilingTask, ZoneTilingJob> tilingTaskStatusService;
+  private final EventProducer eventProducer;
 
   @Override
   public void accept(TilingTaskCreated tilingTaskCreated) {
@@ -43,19 +50,22 @@ public class TilingTaskCreatedService implements Consumer<TilingTaskCreated> {
       bucketComponent.upload(downloadedTiles, bucketKey);
       setParcelTiles(downloadedTiles, task.getParcel(), bucketKey);
     } catch (Exception e) {
-      tilingTaskStatusService.fail(task);
-      throw new ApiException(SERVER_EXCEPTION, e);
+      task.hasNewStatus(
+          Status.builder().progression(FINISHED).health(FAILED).creationDatetime(now()).build());
+      eventProducer.accept(List.of(new TilingTaskFailed(task, 1)));
+      return;
     }
 
-    tilingTaskStatusService.succeed(task);
+    task.hasNewStatus(
+        Status.builder().progression(FINISHED).health(SUCCEEDED).creationDatetime(now()).build());
+    eventProducer.accept(List.of(new TilingTaskSucceeded(task)));
   }
 
   private void setParcelTiles(File tilesDir, Parcel parcel, String bucketKey) {
-    parcel.setTiles(getParcelTiles(new ArrayList<>(), tilesDir, parcel, bucketKey));
+    parcel.setTiles(getParcelTiles(new ArrayList<>(), tilesDir, bucketKey));
   }
 
-  private List<Tile> getParcelTiles(
-      List<Tile> accumulator, File tilesFile, Parcel parcel, String bucketKey) {
+  private List<Tile> getParcelTiles(List<Tile> accumulator, File tilesFile, String bucketKey) {
     if (!tilesFile.isDirectory()) {
       var enrichedAccumulator = new ArrayList<>(accumulator);
 
@@ -90,7 +100,7 @@ public class TilingTaskCreatedService implements Consumer<TilingTaskCreated> {
     }
 
     return Arrays.stream(tilesFile.listFiles())
-        .flatMap(subFile -> getParcelTiles(accumulator, subFile, parcel, bucketKey).stream())
+        .flatMap(subFile -> getParcelTiles(accumulator, subFile, bucketKey).stream())
         .collect(Collectors.toList());
   }
 }

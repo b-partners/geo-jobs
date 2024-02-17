@@ -6,6 +6,7 @@ import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
+import static jakarta.persistence.LockModeType.PESSIMISTIC_WRITE;
 import static java.time.Instant.now;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -25,6 +26,7 @@ import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.job.repository.TaskRepository;
 import app.bpartners.geojobs.job.service.JobService;
 import app.bpartners.geojobs.job.service.TaskStatusService;
+import jakarta.persistence.EntityManager;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -41,19 +43,21 @@ class TaskStatusServiceTest {
       new TestJobService(jobRepository, taskRepository, eventProducer);
   TaskStatusService<TestTask, TestJob> subject =
       new TaskStatusService<>(taskRepository, jobService);
+  EntityManager em = mock();
 
   @BeforeEach
   void setUp() {
-    subject.setEm(mock());
+    subject.setEm(em);
+    jobService.setEm(em);
     when(jobRepository.save(any())).thenAnswer(invocation -> invocation.getArguments()[0]);
   }
 
   @Test
   void invoke_jobService_onStatusChange_when_status_changes() {
     var jobId = "jobId";
-    when(jobRepository.findById(jobId))
-        .thenReturn(Optional.of(aTestJob(jobId, PENDING, UNKNOWN)))
-        .thenReturn(Optional.of(aTestJob(jobId, PENDING, UNKNOWN)));
+    when(jobRepository.findById(jobId)).thenReturn(Optional.of(aTestJob(jobId, PENDING, UNKNOWN)));
+    when(em.find(TestJob.class, jobId, PESSIMISTIC_WRITE))
+        .thenReturn(aTestJob(jobId, PENDING, UNKNOWN));
     var taskId = "taskId";
     var oldTask = aTestTask(taskId, jobId, PENDING, UNKNOWN);
     when(taskRepository.existsById(taskId)).thenReturn(true);
@@ -77,9 +81,9 @@ class TaskStatusServiceTest {
   @Test
   void aTaskFails_then_job_fails_while_remaining_processing() {
     var jobId = "jobId";
-    when(jobRepository.findById(jobId))
-        .thenReturn(Optional.of(aTestJob(jobId, PENDING, UNKNOWN)))
-        .thenReturn(Optional.of(aTestJob(jobId, PENDING, UNKNOWN)));
+    when(jobRepository.findById(jobId)).thenReturn(Optional.of(aTestJob(jobId, PENDING, UNKNOWN)));
+    when(em.find(TestJob.class, jobId, PESSIMISTIC_WRITE))
+        .thenReturn(aTestJob(jobId, PENDING, UNKNOWN));
     var taskId = "taskId";
     var oldTask = aTestTask(taskId, jobId, PENDING, UNKNOWN);
     when(taskRepository.existsById(taskId)).thenReturn(true);
@@ -103,9 +107,9 @@ class TaskStatusServiceTest {
   @Test
   void aTaskSucceeds_then_job_remains_processing_if_other_tasks_are_still_processing() {
     var jobId = "jobId";
-    when(jobRepository.findById(jobId))
-        .thenReturn(Optional.of(aTestJob(jobId, PENDING, UNKNOWN)))
-        .thenReturn(Optional.of(aTestJob(jobId, PENDING, UNKNOWN)));
+    when(jobRepository.findById(jobId)).thenReturn(Optional.of(aTestJob(jobId, PENDING, UNKNOWN)));
+    when(em.find(TestJob.class, jobId, PESSIMISTIC_WRITE))
+        .thenReturn(aTestJob(jobId, PENDING, UNKNOWN));
     var taskId = "taskId";
     var oldTask = aTestTask(taskId, jobId, PENDING, UNKNOWN);
     when(taskRepository.existsById(taskId)).thenReturn(true);
@@ -130,8 +134,9 @@ class TaskStatusServiceTest {
   void do_NOT_invoke_jobService_onStatusChange_when_status_does_NOT_changes() {
     var jobId = "jobId";
     when(jobRepository.findById(jobId))
-        .thenReturn(Optional.of(aTestJob(jobId, PROCESSING, UNKNOWN)))
         .thenReturn(Optional.of(aTestJob(jobId, PROCESSING, UNKNOWN)));
+    when(em.find(TestJob.class, jobId, PESSIMISTIC_WRITE))
+        .thenReturn(aTestJob(jobId, PROCESSING, UNKNOWN));
     var taskId = "taskId";
     var oldTask = aTestTask(taskId, jobId, PENDING, UNKNOWN);
     when(taskRepository.existsById(taskId)).thenReturn(true);
@@ -196,7 +201,7 @@ class TaskStatusServiceTest {
         JpaRepository<TestJob, String> repository,
         TaskRepository<TestTask> taskRepository,
         EventProducer eventProducer) {
-      super(repository, taskRepository, eventProducer);
+      super(repository, taskRepository, eventProducer, TestJob.class);
     }
 
     @Override

@@ -5,6 +5,7 @@ import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
+import static jakarta.persistence.LockModeType.PESSIMISTIC_WRITE;
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.naturalOrder;
 
@@ -17,18 +18,32 @@ import app.bpartners.geojobs.job.repository.TaskRepository;
 import app.bpartners.geojobs.model.BoundedPageSize;
 import app.bpartners.geojobs.model.PageFromOne;
 import app.bpartners.geojobs.model.exception.NotFoundException;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import java.time.Instant;
 import java.util.List;
-import lombok.AllArgsConstructor;
+import lombok.Setter;
+import lombok.SneakyThrows;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-@AllArgsConstructor
 public abstract class JobService<T extends Task, J extends Job> {
   protected final JpaRepository<J, String> repository;
   protected final TaskRepository<T> taskRepository;
   protected final EventProducer eventProducer;
+  private final Class<J> jobClazz;
+
+  protected JobService(
+      JpaRepository<J, String> repository,
+      TaskRepository<T> taskRepository,
+      EventProducer eventProducer,
+      Class<J> jobClazz) {
+    this.repository = repository;
+    this.taskRepository = taskRepository;
+    this.eventProducer = eventProducer;
+    this.jobClazz = jobClazz;
+  }
 
   public List<J> findAll(PageFromOne page, BoundedPageSize pageSize) {
     Pageable pageable = PageRequest.of(page.getValue() - 1, pageSize.getValue());
@@ -109,5 +124,12 @@ public abstract class JobService<T extends Task, J extends Job> {
 
   protected List<T> getTasks(J job) {
     return taskRepository.findAllByJobId(job.getId());
+  }
+
+  @Setter @PersistenceContext EntityManager em;
+
+  @SneakyThrows
+  public J pwFindById(String id) {
+    return em.find(jobClazz, id, PESSIMISTIC_WRITE);
   }
 }

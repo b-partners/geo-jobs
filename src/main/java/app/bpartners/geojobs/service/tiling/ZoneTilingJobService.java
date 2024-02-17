@@ -19,7 +19,7 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
       JpaRepository<ZoneTilingJob, String> repository,
       TaskRepository<TilingTask> taskRepository,
       EventProducer eventProducer) {
-    super(repository, taskRepository, eventProducer);
+    super(repository, taskRepository, eventProducer, ZoneTilingJob.class);
   }
 
   @Override

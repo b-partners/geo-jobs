@@ -18,6 +18,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.Setter;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 public class TaskStatusService<T extends Task, J extends Job> {
@@ -30,7 +31,7 @@ public class TaskStatusService<T extends Task, J extends Job> {
     this.jobService = jobService;
   }
 
-  @Transactional
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   public T process(T task) {
     return update(task, PROCESSING, UNKNOWN);
   }
@@ -53,7 +54,7 @@ public class TaskStatusService<T extends Task, J extends Job> {
       throw new NotFoundException("task.id=" + taskId);
     }
     var jobIb = task.getJobId();
-    var oldJob = jobService.findById(jobIb);
+    var oldJob = jobService.pwFindById(jobIb);
     em.detach(oldJob); // else future getXxx will still retrieve latest version from db
 
     TaskStatus taskStatus =

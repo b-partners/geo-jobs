@@ -162,6 +162,7 @@ class DetectionTaskCreatedServiceIT extends FacadeIT {
     when(objectsDetector.apply(any())).thenReturn(detectionResponse());
     when(detectionTaskRepository.existsById(any())).thenReturn(true);
     when(zoneDetectionJobService.findById(any())).thenReturn(zoneDetectionJob());
+    when(zoneDetectionJobService.pwFindById(any())).thenReturn(zoneDetectionJob());
 
     subject.accept(detectionTaskCreated());
 

@@ -27,7 +27,7 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
       DetectedTileRepository detectedTileRepository,
       EventProducer eventProducer,
       DetectionMapper detectionMapper) {
-    super(repository, taskRepository, eventProducer);
+    super(repository, taskRepository, eventProducer, ZoneDetectionJob.class);
     this.detectionMapper = detectionMapper;
     this.detectedTileRepository = detectedTileRepository;
   }

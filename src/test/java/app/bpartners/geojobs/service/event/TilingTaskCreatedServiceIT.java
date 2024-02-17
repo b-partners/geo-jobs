@@ -1,18 +1,16 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.SUCCEEDED;
 import static app.bpartners.geojobs.file.FileHashAlgorithm.SHA256;
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
 import static java.time.Instant.now;
-import static java.util.Comparator.comparing;
-import static java.util.Comparator.naturalOrder;
 import static java.util.UUID.randomUUID;
+import static java.util.concurrent.Executors.newFixedThreadPool;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -21,13 +19,11 @@ import static org.mockito.Mockito.when;
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.gen.TilingTaskCreated;
+import app.bpartners.geojobs.endpoint.event.gen.TilingTaskSucceeded;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneTilingJobStatusChanged;
 import app.bpartners.geojobs.endpoint.rest.controller.ZoneTilingController;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
-import app.bpartners.geojobs.endpoint.rest.model.Status;
-import app.bpartners.geojobs.endpoint.rest.model.Tile;
-import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.file.FileHash;
 import app.bpartners.geojobs.job.model.TaskStatus;
@@ -41,7 +37,10 @@ import app.bpartners.geojobs.service.tiling.TilingTaskStatusService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,6 +60,7 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
   @MockBean EventProducer eventProducer;
   @Autowired ObjectMapper om;
   @Autowired TilingTaskStatusService tilingTaskStatusService;
+  @Autowired TilingTaskSucceededService tilingTaskSucceededService;
 
   private Feature lyonFeature;
 
@@ -97,58 +97,6 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
                 Feature.class)
             .zoom(10)
             .id("feature_1_id");
-  }
-
-  @SneakyThrows
-  private app.bpartners.geojobs.endpoint.rest.model.Parcel parcel1() {
-    return new app.bpartners.geojobs.endpoint.rest.model.Parcel()
-        .creationDatetime(null)
-        .id(null)
-        .tiles(List.of(tile1(), tile2()))
-        .feature(lyonFeature)
-        .tilingStatus(
-            new Status()
-                .creationDatetime(null)
-                .progression(Status.ProgressionEnum.FINISHED)
-                .health(SUCCEEDED));
-  }
-
-  public Tile tile1() {
-    return new Tile()
-        .creationDatetime(null)
-        .id(null)
-        .coordinates(new TileCoordinates().x(123132).y(456).z(20))
-        .bucketPath("dummy-bucket/lyon/20/123132/456.png");
-  }
-
-  public Tile tile2() {
-    return new Tile()
-        .creationDatetime(null)
-        .id(null)
-        .coordinates(new TileCoordinates().x(123132).y(123).z(20))
-        .bucketPath("dummy-bucket/lyon/20/123132/123.png");
-  }
-
-  private app.bpartners.geojobs.endpoint.rest.model.Parcel ignoreIds(
-      app.bpartners.geojobs.endpoint.rest.model.Parcel parcel) {
-    Status status = parcel.getTilingStatus();
-    parcel.setId(null);
-    parcel.setCreationDatetime(null);
-    assert status != null;
-    parcel.setTilingStatus(
-        new Status()
-            .creationDatetime(null)
-            .health(status.getHealth())
-            .progression(status.getProgression()));
-    return parcel;
-  }
-
-  private List<Tile> ignoreIds(List<Tile> tile) {
-    for (Tile tile1 : tile) {
-      tile1.setId(null);
-      tile1.setCreationDatetime(null);
-    }
-    return tile;
   }
 
   private ZoneTilingJob aZTJ(String jobId) {
@@ -266,7 +214,7 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
   }
 
   @Test
-  void send_statusChanged_event_on_each_change() {
+  void send_tilingSucceed_on_success() {
     String jobId = randomUUID().toString();
     zoneTilingJobRepository.save(aZTJ(jobId));
     String taskId = randomUUID().toString();
@@ -277,15 +225,55 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
     subject.accept(createdEventPayload);
 
     var eventsCaptor = ArgumentCaptor.forClass(List.class);
-    verify(eventProducer, times(1)).accept(eventsCaptor.capture());
+    verify(eventProducer, times(2)).accept(eventsCaptor.capture());
     var sentEvents = eventsCaptor.getAllValues().stream().flatMap(List::stream).toList();
-    assertEquals(1, sentEvents.size());
-    var changedToFinished = (ZoneTilingJobStatusChanged) sentEvents.get(0);
-    assertEquals(FINISHED, changedToFinished.getNewJob().getStatus().getProgression());
+    assertEquals(2, sentEvents.size());
+    var tilingTaskSucceeded = (TilingTaskSucceeded) sentEvents.get(1);
+    assertEquals(2, tilingTaskSucceeded.getTask().getParcel().getTiles().size());
+  }
+
+  @SneakyThrows
+  @Test
+  void concurrently_tile() {
+    var callersNb = 40;
+    var executorService = newFixedThreadPool(callersNb);
+    var tasks = new ArrayList<Callable<Boolean>>();
+    String jobId = randomUUID().toString();
+    zoneTilingJobRepository.save(aZTJ(jobId));
+    for (int i = 0; i < callersNb; i++) {
+      String taskId = randomUUID().toString();
+      TilingTask toCreate = aZTT(jobId, taskId);
+      TilingTask created = repository.save(toCreate);
+      TilingTaskCreated createdEventPayload = TilingTaskCreated.builder().task(created).build();
+      tasks.add(() -> isTilingEventHandledSuccessfully(createdEventPayload));
+    }
+
+    var futures = executorService.invokeAll(tasks);
+
+    var succeeded =
+        futures.stream()
+            .map(TilingTaskCreatedServiceIT::getFutureBoolean)
+            .filter(result -> result)
+            .count();
+    assertEquals(callersNb, succeeded);
+  }
+
+  private Boolean isTilingEventHandledSuccessfully(TilingTaskCreated createdEventPayload) {
+    try {
+      subject.accept(createdEventPayload);
+      return true;
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
+  @SneakyThrows
+  private static Boolean getFutureBoolean(Future<Boolean> future) {
+    return future.get();
   }
 
   @Test
-  void task_finished_to_processing_ko() {
+  void send_tilingTaskSucceeded_and_jobStatusChanged_after_task_is_processed_successfully() {
     String jobId = randomUUID().toString();
     zoneTilingJobRepository.save(aZTJ(jobId));
     String taskId = randomUUID().toString();
@@ -294,24 +282,25 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
     TilingTaskCreated createdEventPayload = TilingTaskCreated.builder().task(created).build();
 
     subject.accept(createdEventPayload);
-    toCreate.setSubmissionInstant(now());
-    TilingTask task1 = repository.findById(taskId).get();
-    var sortedStatuses =
-        task1.getStatusHistory().stream()
-            .sorted(
-                comparing(
-                    app.bpartners.geojobs.job.model.Status::getCreationDatetime, naturalOrder()))
-            .toList();
-    assertThrows(IllegalArgumentException.class, () -> subject.accept(createdEventPayload));
-    TilingTask task2 = repository.findById(taskId).get();
-    var expectedStatuses =
-        task2.getStatusHistory().stream()
-            .sorted(
-                comparing(
-                    app.bpartners.geojobs.job.model.Status::getCreationDatetime, naturalOrder()))
-            .toList();
 
-    assertEquals(sortedStatuses, expectedStatuses);
+    var eventsCaptor = ArgumentCaptor.forClass(List.class);
+    verify(eventProducer, times(2)).accept(eventsCaptor.capture());
+    var events = eventsCaptor.getAllValues();
+    assertEquals(2, events.size());
+    // Job status changed
+    var jobStatusChanged = ((ZoneTilingJobStatusChanged) events.get(0).get(0));
+    assertEquals(PENDING, jobStatusChanged.getOldJob().getStatus().getProgression());
+    assertEquals(UNKNOWN, jobStatusChanged.getOldJob().getStatus().getHealth());
+    assertEquals(PROCESSING, jobStatusChanged.getNewJob().getStatus().getProgression());
+    assertEquals(UNKNOWN, jobStatusChanged.getNewJob().getStatus().getHealth());
+    // Task is notified as finished in event...
+    var taskStatusInEvent = ((TilingTaskSucceeded) events.get(1).get(0)).getTask().getStatus();
+    assertEquals(FINISHED, taskStatusInEvent.getProgression());
+    assertEquals(SUCCEEDED, taskStatusInEvent.getHealth());
+    // ... but job remains processing in db
+    var jobStatusInDb = zoneTilingJobRepository.findById(jobId).get().getStatus();
+    assertEquals(PROCESSING, jobStatusInDb.getProgression());
+    assertEquals(UNKNOWN, jobStatusInDb.getHealth());
   }
 
   @Test
@@ -341,6 +330,11 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
     TilingTaskCreated ztjCreated = TilingTaskCreated.builder().task(created).build();
 
     subject.accept(ztjCreated);
+    var eventsCaptor = ArgumentCaptor.forClass(List.class);
+    verify(eventProducer, times(2)).accept(eventsCaptor.capture());
+    var events = eventsCaptor.getAllValues();
+    var taskSucceeded = (TilingTaskSucceeded) events.get(1).get(0);
+    tilingTaskSucceededService.accept(taskSucceeded);
     List<app.bpartners.geojobs.endpoint.rest.model.Parcel> parcels =
         zoneTilingController.getZTJParcels(jobId);
 

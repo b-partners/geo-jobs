@@ -182,6 +182,4 @@ dependencies {
 implementation 'org.springframework.boot:spring-boot-starter-security'
 implementation 'app.bpartners:geo-jobs-gen:latest'
 implementation 'org.thymeleaf:thymeleaf:3.1.1.RELEASE'
-implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.1'
-
 }
