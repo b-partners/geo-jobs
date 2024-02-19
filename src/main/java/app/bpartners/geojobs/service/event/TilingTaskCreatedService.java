@@ -1,8 +1,9 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.job.model.Status.HealthStatus.FAILED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
 import static app.bpartners.geojobs.service.event.TilingTaskConsumer.withNewStatus;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
@@ -32,7 +33,8 @@ public class TilingTaskCreatedService implements Consumer<TilingTaskCreated> {
     try {
       tilingTaskConsumer.accept(task);
     } catch (Exception e) {
-      eventProducer.accept(List.of(new TilingTaskFailed(withNewStatus(task, FINISHED, FAILED), 1)));
+      eventProducer.accept(
+          List.of(new TilingTaskFailed(withNewStatus(task, PROCESSING, UNKNOWN), 1)));
       return;
     }
 

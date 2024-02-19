@@ -12,6 +12,7 @@ import static java.util.concurrent.Executors.newFixedThreadPool;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -19,6 +20,7 @@ import static org.mockito.Mockito.when;
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.gen.TilingTaskCreated;
+import app.bpartners.geojobs.endpoint.event.gen.TilingTaskFailed;
 import app.bpartners.geojobs.endpoint.event.gen.TilingTaskSucceeded;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneTilingJobStatusChanged;
 import app.bpartners.geojobs.endpoint.rest.controller.ZoneTilingController;
@@ -61,6 +63,7 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
   @Autowired ObjectMapper om;
   @Autowired TilingTaskStatusService tilingTaskStatusService;
   @Autowired TilingTaskSucceededService tilingTaskSucceededService;
+  @Autowired TilingTaskFailedService tilingTaskFailedService;
 
   private Feature lyonFeature;
 
@@ -322,7 +325,7 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
   }
 
   @Test
-  void get_ztj_tiles() {
+  void get_ztj_tiles_after_successful_first_attempt() {
     String jobId = randomUUID().toString();
     zoneTilingJobRepository.save(aZTJ(jobId));
     TilingTask toCreate = aZTT(jobId, randomUUID().toString());
@@ -334,6 +337,44 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
     verify(eventProducer, times(2)).accept(eventsCaptor.capture());
     var events = eventsCaptor.getAllValues();
     var taskSucceeded = (TilingTaskSucceeded) events.get(1).get(0);
+    tilingTaskSucceededService.accept(taskSucceeded);
+    List<app.bpartners.geojobs.endpoint.rest.model.Parcel> parcels =
+        zoneTilingController.getZTJParcels(jobId);
+
+    assertEquals(1, parcels.size());
+    assertEquals(2, parcels.get(0).getTiles().size());
+  }
+
+  @Test
+  void get_ztj_tiles_after_successful_second_attempt() {
+    String jobId = randomUUID().toString();
+    zoneTilingJobRepository.save(aZTJ(jobId));
+    TilingTask toCreate = aZTT(jobId, randomUUID().toString());
+    TilingTask created = repository.save(toCreate);
+    TilingTaskCreated ztjCreated = TilingTaskCreated.builder().task(created).build();
+
+    // first attempt
+    reset(tilesDownloader);
+    when(tilesDownloader.apply(any())).thenThrow(new RuntimeException());
+    subject.accept(ztjCreated);
+    var eventsCaptor = ArgumentCaptor.forClass(List.class);
+    verify(eventProducer, times(2)).accept(eventsCaptor.capture());
+    var events = eventsCaptor.getAllValues();
+    var taskFailed = (TilingTaskFailed) events.get(1).get(0);
+
+    // second attempt
+    reset(tilesDownloader);
+    when(tilesDownloader.apply(any()))
+        .thenAnswer(
+            i ->
+                Paths.get(this.getClass().getClassLoader().getResource("mockData/lyon").toURI())
+                    .toFile());
+    reset(eventProducer);
+    tilingTaskFailedService.accept(taskFailed);
+    eventsCaptor = ArgumentCaptor.forClass(List.class);
+    verify(eventProducer, times(1)).accept(eventsCaptor.capture());
+    events = eventsCaptor.getAllValues();
+    var taskSucceeded = (TilingTaskSucceeded) events.get(0).get(0);
     tilingTaskSucceededService.accept(taskSucceeded);
     List<app.bpartners.geojobs.endpoint.rest.model.Parcel> parcels =
         zoneTilingController.getZTJParcels(jobId);

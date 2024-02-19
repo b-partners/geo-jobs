@@ -1,8 +1,9 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.job.model.Status.HealthStatus.FAILED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -59,8 +60,8 @@ class TilingTaskFailedServiceTest {
     var event = (TilingTaskFailed) eventsCaptor.getValue().get(0);
     assertEquals(3, event.getAttemptNb());
     var statusInEvent = event.getTask().getStatus();
-    assertEquals(FINISHED, statusInEvent.getProgression());
-    assertEquals(FAILED, statusInEvent.getHealth());
+    assertEquals(PROCESSING, statusInEvent.getProgression());
+    assertEquals(UNKNOWN, statusInEvent.getHealth());
   }
 
   @Test
