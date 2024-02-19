@@ -38,10 +38,38 @@ repositories {
     mavenCentral()
 }
 
+task generateAnnotatorClient(type: GenerateTask) {
+    generatorName = "java"
+    inputSpec = "$rootDir/doc/annotator-api.yml".toString()
+    outputDir = "$buildDir/gen/annotator".toString()
+    apiPackage = "app.bpartners.annotator.endpoint.rest.api"
+    invokerPackage = "app.bpartners.annotator.endpoint.rest.client"
+    modelPackage = "app.bpartners.annotator.endpoint.rest.model"
+
+    configOptions = [
+            serializableModel: "true",
+            serializationLibrary: "jackson",
+            dateLibrary: "custom"
+    ]
+    typeMappings = [
+            // What date-time type to use when? https://i.stack.imgur.com/QPhGW.png
+            Date: "java.time.LocalDate",
+            DateTime: "java.time.Instant",
+    ]
+    library = "native"
+
+    groupId = 'app.bpartners'
+    id = 'annotator-gen'
+    skipValidateSpec = false
+    logToStderr = true
+    generateAliasAsModel = false
+    enablePostProcessFile = false
+}
+
 task generateJavaClient(type: GenerateTask) {
     generatorName = "java"
     inputSpec = "$rootDir/doc/api.yml".toString()
-    outputDir = "$buildDir/gen".toString()
+    outputDir = "$buildDir/gen/geo-jobs".toString()
     apiPackage = "app.bpartners.geojobs.endpoint.rest.api"
     invokerPackage = "app.bpartners.geojobs.endpoint.rest.client"
     modelPackage = "app.bpartners.geojobs.endpoint.rest.model"
@@ -65,6 +93,7 @@ task generateJavaClient(type: GenerateTask) {
     generateAliasAsModel = false
     enablePostProcessFile = false
 }
+
 task generateTsClient(type: org.openapitools.generator.gradle.plugin.tasks.GenerateTask) {
     generatorName = "typescript-axios"
     inputSpec = "$rootDir/doc/api.yml".toString()
@@ -79,7 +108,7 @@ task generateTsClient(type: org.openapitools.generator.gradle.plugin.tasks.Gener
             npmVersion        : project.properties["args"] ?: "latest"
     ]
 }
-task publishJavaClientToMavenLocal(type: Exec, dependsOn: generateJavaClient) {
+task publishJavaClientToMavenLocal(type: Exec, dependsOn: [generateJavaClient, generateAnnotatorClient]) {
     if (Os.isFamily(Os.FAMILY_WINDOWS)){
         commandLine './.shell/publish_gen_to_maven_local.bat'
     } else {
@@ -179,7 +208,9 @@ dependencies {
     testImplementation 'org.testcontainers:junit-jupiter:1.19.1'
     testImplementation 'org.junit-pioneer:junit-pioneer:2.2.0'
 
-implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'app.bpartners:annotator-gen:latest'
+
+    implementation 'org.springframework.boot:spring-boot-starter-security'
 implementation 'app.bpartners:geo-jobs-gen:latest'
 implementation 'org.thymeleaf:thymeleaf:3.1.1.RELEASE'
 }

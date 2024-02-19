@@ -1,0 +1,1232 @@
+openapi: 3.0.3
+info:
+  version: 'latest'
+  title: Image Annotation API
+
+servers:
+  - url: 'https://annotator-api.preprod.bpartners.app'
+security:
+  - BearerAuth: [ ]
+  - apiKeyHeader: [ ]
+paths:
+  '/ping':
+    get:
+      security: [ ]
+      tags:
+        - Security
+      summary: Check server health
+      operationId: checkHealth
+      responses:
+        '200':
+          description: pong
+          content:
+            application/json:
+              schema:
+                type: string
+                example: pong
+        500:
+          $ref: './api.yml#/components/responses/500'
+  '/dummy-table':
+    get:
+      security: [ ]
+      tags:
+        - Security
+      summary: Check serverless database health
+      operationId: checkDbHealth
+      responses:
+        '200':
+          description: Dummy table data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DummyComponent'
+        500:
+          $ref: '#/components/responses/500'
+
+  '/jobs':
+    get:
+      tags:
+        - Jobs
+        - Admin
+      summary: Get all jobs
+      security: [ apiKeyHeader: [ ] ]
+      operationId: getJobs
+      parameters:
+        - in: query
+          name: page
+          schema:
+            $ref: "#/components/schemas/Page"
+        - in: query
+          name: pageSize
+          schema:
+            $ref: "#/components/schemas/PageSize"
+        - in: query
+          name: status
+          schema:
+            $ref: "#/components/schemas/JobStatus"
+      responses:
+        '200':
+          description: List of all jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Job'
+        '500':
+          $ref: '#/components/responses/500'
+  '/whoami':
+    get:
+      tags:
+        - Security
+      description: tells you who you are
+      operationId: whoami
+      responses:
+        "200":
+          description: your identity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Whoami"
+  '/annotated-jobs/{jobId}':
+    put:
+      tags:
+        - Jobs
+        - Admin
+        - AnnotatedJobs
+      security:
+        - apiKeyHeader: [ ]
+      summary: create or update an annotated job
+      operationId: crupdateAnnotatedJob
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CrupdateAnnotatedJob"
+      responses:
+        '200':
+          description: the job created with the givenId
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        '500':
+          $ref: '#/components/responses/500'
+  '/jobs/{jobId}':
+    get:
+      tags:
+        - Jobs
+        - Admin
+      security: [ apiKeyHeader: [ ] ]
+      summary: get a job specified by its id
+      operationId: getJob
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: the job with the given id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+    put:
+      tags:
+        - Jobs
+        - Admin
+      security: [ apiKeyHeader: [ ] ]
+      summary: Create or update a job
+      operationId: saveJob
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CrupdateJob'
+      responses:
+        '200':
+          description: The created or updated job
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '500':
+          $ref: '#/components/responses/500'
+  '/jobs/{jobId}/export':
+    get:
+      tags:
+        - Jobs
+        - Admin
+      operationId: exportJob
+      description: exports a job to COCO or VGG format
+      parameters:
+        - name: jobId
+          required: true
+          in: path
+          content:
+            application/json:
+              schema:
+                type: string
+        - name: format
+          required: true
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExportFormat"
+      responses:
+        "200":
+          description: OK response for mail sending initiation
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "OK"
+
+  '/teams/{teamId}/jobs':
+    get:
+      tags:
+        - TeamJobs
+      operationId: getAnnotatorReadableTeamJobs
+      summary: get started team jobs
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: get all jobs of a team
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Job"
+        '500':
+          $ref: '#/components/responses/500'
+
+  '/teams/{teamId}/jobs/{jobId}':
+    get:
+      tags:
+        - TeamJobs
+      summary: get a job specified by its id and the team owner
+      operationId: getAnnotatorReadableTeamJobById
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: the job identified by its id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '500':
+          $ref: '#/components/responses/500'
+
+  '/teams/{teamId}/jobs/{jobId}/task':
+    get:
+      security: [ BearerAuth: [ ] ]
+      tags:
+        - UserTasks
+      summary: get a job task
+      operationId: getUserTaskByJob
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: the first available task from the job
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '500':
+          $ref: '#/components/responses/500'
+  '/teams/{teamId}/jobs/{jobId}/tasks/{taskId}':
+    put:
+      tags:
+        - UserTasks
+      summary: updates a task
+      description: |
+        
+        Updatable fields are status and userId
+        
+        when updated task status is under completion or completed then there must be an userId
+        
+        when updated task status is pending, userId must be null
+      operationId: updateTask
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTask"
+      responses:
+        '200':
+          description: the updated task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        '500':
+          $ref: '#/components/responses/500'
+
+  '/jobs/{jobId}/tasks':
+    get:
+      tags:
+        - Tasks
+        - Admin
+      security: [ apiKeyHeader: [ ] ]
+      summary: gets information about a task
+      operationId: getJobTasks
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            $ref: '#/components/schemas/Page'
+        - in: query
+          name: pageSize
+          schema:
+            $ref: '#/components/schemas/PageSize'
+        - in: query
+          name: status
+          schema:
+            $ref: "#/components/schemas/TaskStatus"
+        - in: query
+          name: userId
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A task
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+        '500':
+          $ref: '#/components/responses/500'
+
+  '/jobs/{jobId}/tasks/{taskId}':
+    get:
+      tags:
+        - Tasks
+        - Admin
+      security: [ apiKeyHeader: [ ] ]
+      summary: gets information about a task
+      operationId: getJobTaskById
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '500':
+          $ref: '#/components/responses/500'
+  '/jobs/{jobId}/tasks/{taskId}/annotations':
+    get:
+      tags:
+        - Annotations
+        - Admin
+      security: [ apiKeyHeader: [ ] ]
+      summary: gets annotations made on a task
+      operationId: getAnnotationBatchesByJobTask
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            $ref: '#/components/schemas/Page'
+        - in: query
+          name: pageSize
+          schema:
+            $ref: '#/components/schemas/PageSize'
+      responses:
+        '200':
+          description: List of annotation batches
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AnnotationBatch'
+        '500':
+          $ref: '#/components/responses/500'
+  '/jobs/{jobId}/tasks/{taskId}/annotations/{annotationBatchId}':
+    get:
+      tags:
+        - Annotations
+        - Admin
+      security: [ apiKeyHeader: [ ] ]
+      summary: get annotationBatch made on a task
+      operationId: getAnnotationBatchByJobTaskAndId
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: annotationBatchId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: the annotation batch
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnotationBatch'
+        '500':
+          $ref: '#/components/responses/500'
+  '/jobs/{jobId}/tasks/{taskId}/annotations/{annotationBatchId}/reviews':
+    get:
+      security: [ apiKeyHeader: [ ] ]
+      tags:
+        - Annotations
+        - Admin
+      description: get all reviews of an annotation batch
+      operationId: getJobTaskAnnotationBatchReviews
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: annotationBatchId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description:
+            Reviews of the task
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AnnotationBatchReview'
+        '500':
+          $ref: '#/components/responses/500'
+  '/jobs/{jobId}/tasks/{taskId}/annotations/{annotationBatchId}/reviews/{reviewId}':
+    get:
+      security: [ apiKeyHeader: [ ] ]
+      tags:
+        - Annotations
+        - Admin
+      description: get a specific review
+      operationId: getJobTaskAnnotationBatchReview
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: annotationBatchId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: reviewId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description:
+            the specified review of the task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnotationBatchReview'
+        '500':
+          $ref: '#/components/responses/500'
+    put:
+      security: [ apiKeyHeader: [ ] ]
+      tags:
+        - Annotations
+        - Admin
+      description: create or update(if id is given) review concerning an annotation
+      operationId: crupdateJobTaskAnnotationReview
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: annotationBatchId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: reviewId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        description: a review
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnnotationBatchReview"
+      responses:
+        '200':
+          description:
+            Crupdated review of the task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnotationBatchReview'
+        '500':
+          $ref: '#/components/responses/500'
+  '/users/{userId}/tasks/{taskId}/annotations':
+    get:
+      security: [ BearerAuth: [ ] ]
+      tags:
+        - UserAnnotations
+      summary: gets annotations made on a task
+      operationId: getUserTaskAnnotationBatches
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            $ref: '#/components/schemas/Page'
+        - in: query
+          name: pageSize
+          schema:
+            $ref: '#/components/schemas/PageSize'
+      responses:
+        '200':
+          description: List of annotation batches
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AnnotationBatch'
+        '500':
+          $ref: '#/components/responses/500'
+  '/users/{userId}/tasks/{taskId}/annotations/{annotationBatchId}':
+    put:
+      security: [ BearerAuth: [ ] ]
+      tags:
+        - UserAnnotations
+        - UserTasks # deprecated
+      summary: annotates a task and sets the task status to COMPLETED
+      operationId: annotateAndCompleteTask
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: annotationBatchId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnnotationBatch'
+      responses:
+        '200':
+          description:
+            Annotations on the task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnotationBatch'
+        '500':
+          $ref: '#/components/responses/500'
+    get:
+      tags:
+        - UserAnnotations
+      summary: get annotationBatch made on a task
+      operationId: getUserTaskAnnotationBatchById
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: annotationBatchId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: the annotation batch
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnotationBatch'
+        '500':
+          $ref: '#/components/responses/500'
+  '/users/{userId}/tasks/{taskId}/annotations/{annotationBatchId}/reviews':
+    get:
+      tags:
+        - UserAnnotations
+      operationId: getAnnotationReviewsByUserTaskAnnotationBatch
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: annotationBatchId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description:
+            Reviews of the annotations on the task
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AnnotationBatchReview'
+        '500':
+          $ref: '#/components/responses/500'
+  '/users/{userId}/tasks/{taskId}/annotations/{annotationBatchId}/reviews/{reviewId}':
+    get:
+      tags:
+        - UserAnnotations
+      operationId: getAnnotationReviewByUserTaskAnnotationBatch
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: annotationBatchId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: reviewId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description:
+            A specific Review of the annotations on the task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnotationBatchReview'
+        '500':
+          $ref: '#/components/responses/500'
+  '/teams':
+    get:
+      tags:
+        - Admin
+        - Teams
+      security: [ apiKeyHeader: [ ] ]
+      summary: Get the list of existing teams
+      operationId: getTeams
+      parameters:
+        - in: query
+          name: page
+          schema:
+            $ref: '#/components/schemas/Page'
+        - in: query
+          name: pageSize
+          schema:
+            $ref: '#/components/schemas/PageSize'
+      responses:
+        '200':
+          description: List of all existing teams
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Team'
+        '500':
+          $ref: '#/components/responses/500'
+    post:
+      tags:
+        - Admin
+        - Teams
+      security: [ apiKeyHeader: [ ] ]
+      summary: Create teams
+      operationId: createTeams
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/CreateTeam'
+      responses:
+        '200':
+          description: The created teams
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Team'
+        '400':
+          $ref: '#/components/responses/400'
+        403:
+          $ref: '#/components/responses/403'
+        '500':
+          $ref: '#/components/responses/500'
+  '/users/{userId}/team':
+    put:
+      tags:
+        - Admin
+        - Users
+      security: [ apiKeyHeader: [ ] ]
+      operationId: updateUserTeam
+      summary: Update team of an user
+      description: update user's team
+      parameters:
+        - name: userId
+          schema:
+            type: string
+          required: true
+          in: path
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TeamUser"
+      responses:
+        '200':
+          description: The user with updated team
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/400'
+        403:
+          $ref: '#/components/responses/403'
+        '500':
+          $ref: '#/components/responses/500'
+  '/users':
+    get:
+      tags:
+        - Users
+        - Admin
+      security: [ apiKeyHeader: [ ] ]
+      description: get all users.
+      operationId: getUsers
+      parameters:
+        - in: query
+          name: page
+          schema:
+            $ref: '#/components/schemas/Page'
+        - in: query
+          name: pageSize
+          schema:
+            $ref: '#/components/schemas/PageSize'
+      responses:
+        "200":
+          description: paginated list of all existing users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      tags:
+        - Users
+        - Admin
+      security: [ apiKeyHeader: [ ] ]
+      description: create users
+      operationId: create users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/CreateUser"
+      responses:
+        "200":
+          description: successfully created users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+    apiKeyHeader:
+      type: apiKey
+      in: header
+      name: x-api-key
+  responses:
+    400:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BadRequestException'
+    403:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NotAuthorizedException'
+    404:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ResourceNotFoundException'
+    429:
+      description: Too many requests to the API
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TooManyRequestsException'
+    '500':
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/InternalServerException'
+  schemas:
+    TeamUser:
+      type: object
+      properties:
+        userId:
+          type: string
+        teamId:
+          type: string
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        role:
+          $ref: "#/components/schemas/UserRole"
+        team:
+          $ref: "#/components/schemas/Team"
+        email:
+          type: string
+          format: email
+    CreateUser:
+      type: object
+      properties:
+        role:
+          $ref: "#/components/schemas/UserRole"
+        teamId:
+          type: string
+        email:
+          type: string
+          format: email
+    UserRole:
+      type: string
+      enum:
+        - ANNOTATOR
+        - ADMIN
+    Whoami:
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+    Page:
+      type: integer
+      description: Start at `1`
+    PageSize:
+      type: integer
+      description: Cannot exceed `500`
+    DummyComponent:
+      type: object
+      properties:
+        id:
+          type: string
+    CreateTeam:
+      type: object
+      properties:
+        name:
+          type: string
+    Team:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/CreateTeam'
+      properties:
+        id:
+          type: string
+    CrupdateJob:
+      type: object
+      properties:
+        type:
+          $ref: "#/components/schemas/JobType"
+        id:
+          type: string
+        name:
+          type: string
+        bucketName:
+          type: string
+        folderPath:
+          type: string
+        ownerEmail:
+          type: string
+          format: email
+        status:
+          $ref: '#/components/schemas/JobStatus'
+        teamId:
+          type: string
+        labels:
+          type: array
+          items:
+            $ref: "#/components/schemas/Label"
+    JobType:
+      type: string
+      enum:
+        - LABELLING
+        - REVIEWING
+    CrupdateAnnotatedJob:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/CrupdateJob"
+      properties:
+        annotatedTasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnnotatedTask"
+    AnnotatedTask:
+      type: object
+      properties:
+        id:
+          type: string
+        annotatorId:
+          type: string
+        filename:
+          type: string
+          pattern: "^[^/]"
+        annotationBatch:
+          $ref: "#/components/schemas/AnnotationBatch"
+    Job:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/CrupdateJob"
+      properties:
+        taskStatistics:
+          $ref: "#/components/schemas/TaskStatistics"
+    JobStatus:
+      type: string
+      enum:
+        - PENDING
+        - READY
+        - STARTED
+        - TO_REVIEW
+        - TO_CORRECT
+        - FAILED
+        - COMPLETED
+    UpdateTask:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        status:
+          $ref: "#/components/schemas/TaskStatus"
+    TaskStatistics:
+      type: object
+      properties:
+        remainingTasksForUserId:
+          type: integer
+          format: int64
+        remainingTasks:
+          type: integer
+          format: int64
+        completedTasksByUserId:
+          type: integer
+          format: int64
+        totalTasks:
+          type: integer
+          format: int64
+    Task:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/UpdateTask"
+      properties:
+        imageUri:
+          type: string
+        filename:
+          type: string
+    TaskStatus:
+      type: string
+      enum:
+        - PENDING
+        - UNDER_COMPLETION
+        - TO_CORRECT
+        - TO_REVIEW
+        - COMPLETED
+    Annotation:
+      type: object
+      properties:
+        id:
+          type: string
+        taskId:
+          type: string
+        userId:
+          type: string
+        label:
+          $ref: '#/components/schemas/Label'
+        polygon:
+          $ref: '#/components/schemas/Polygon'
+    AnnotationBatch:
+      type: object
+      properties:
+        id:
+          type: string
+        annotations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Annotation"
+        creationDatetime:
+          description: ignored in requestBody
+          type: string
+          format: date-time
+    Polygon:
+      type: object
+      properties:
+        points:
+          type: array
+          items:
+            $ref: '#/components/schemas/Point'
+    Point:
+      type: object
+      properties:
+        x:
+          type: number
+          format: double
+        y:
+          type: number
+          format: double
+    Label:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        color:
+          type: string
+          description: The color to assign to the label into hexadecimal form
+          example: "#40D399"
+    ReviewStatus:
+      type: string
+      default: ACCEPTED
+      enum:
+        - ACCEPTED
+        - REJECTED
+    AnnotationReview:
+      type: object
+      properties:
+        id:
+          type: string
+        comment:
+          description: optional if status is ACCEPTED
+          type: string
+        annotationId:
+          type: string
+          description: optional parameter if you want to add a review for a specific annotation and not for the whole batch
+    AnnotationBatchReview:
+      type: object
+      properties:
+        id:
+          type: string
+        annotationBatchId:
+          type: string
+        reviews:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnnotationReview"
+        status:
+          $ref: "#/components/schemas/ReviewStatus"
+    ExportFormat:
+      type: string
+      enum:
+        - COCO
+        - VGG
+    Exception:
+      type: object
+      properties:
+        type:
+          type: string
+        message:
+          type: string
+    InternalServerException:
+      allOf:
+        - $ref: '#/components/schemas/Exception'
+      example:
+        type: InternalServerException
+        message: Unexpected error
+    BadRequestException:
+      allOf:
+        - $ref: '#/components/schemas/Exception'
+      example:
+        type: BadRequestException
+        message: Bad request
+    NotAuthorizedException:
+      allOf:
+        - $ref: '#/components/schemas/Exception'
+      example:
+        type: NotAuthorizedException
+        message: Not authorized
+    ResourceNotFoundException:
+      allOf:
+        - $ref: '#/components/schemas/Exception'
+      example:
+        type: ResourceNotFoundException
+        message: Resource of type <T> identified by <I> not found
+    TooManyRequestsException:
+      allOf:
+        - $ref: '#/components/schemas/Exception'
+      example:
+        type: TooManyRequestsException
+        message: Too many requests
