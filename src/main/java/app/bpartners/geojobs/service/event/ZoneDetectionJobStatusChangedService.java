@@ -3,7 +3,7 @@ package app.bpartners.geojobs.service.event;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.gen.InDoubtTilesDetected;
+import app.bpartners.geojobs.endpoint.event.gen.ZoneDetectionJobSucceeded;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneDetectionJobStatusChanged;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
@@ -59,7 +59,7 @@ public class ZoneDetectionJobStatusChangedService
 
   private String handleFinishedJob(ZoneDetectionJob zdj) {
     mailer.accept(zdj);
-    eventProducer.accept(List.of(InDoubtTilesDetected.builder().jobId(zdj.getId()).build()));
+    eventProducer.accept(List.of(ZoneDetectionJobSucceeded.builder().jobId(zdj.getId()).build()));
     return "Finished, mail sent, ztj=" + zdj;
   }
 }

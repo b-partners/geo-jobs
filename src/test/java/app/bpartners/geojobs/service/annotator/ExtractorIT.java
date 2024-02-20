@@ -2,8 +2,8 @@ package app.bpartners.geojobs.service.annotator;
 
 import static app.bpartners.geojobs.repository.model.detection.DetectableObjectType.DetectableType.ROOF;
 import static app.bpartners.geojobs.repository.model.detection.DetectableObjectType.DetectableType.SOLAR_PANEL;
-import static app.bpartners.geojobs.service.event.InDoubtTileDetectedServiceIT.LAYER_20_10_1_PNG;
-import static app.bpartners.geojobs.service.event.InDoubtTileDetectedServiceIT.MOCK_JOB_ID;
+import static app.bpartners.geojobs.service.event.ZoneDetectionJobSucceededServiceIT.LAYER_20_10_1_PNG;
+import static app.bpartners.geojobs.service.event.ZoneDetectionJobSucceededServiceIT.MOCK_JOB_ID;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;

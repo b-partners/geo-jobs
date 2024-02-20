@@ -14,7 +14,7 @@ import static org.mockito.Mockito.when;
 
 import app.bpartners.annotator.endpoint.rest.api.AnnotatedJobsApi;
 import app.bpartners.geojobs.conf.FacadeIT;
-import app.bpartners.geojobs.endpoint.event.gen.InDoubtTilesDetected;
+import app.bpartners.geojobs.endpoint.event.gen.ZoneDetectionJobSucceeded;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.repository.DetectedTileRepository;
@@ -34,9 +34,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-public class InDoubtTileDetectedServiceIT extends FacadeIT {
+public class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
   public static final String LAYER_20_10_1_PNG = "layer/20/10/1.png";
-  @Autowired InDoubtTileDetectedService subject;
+  @Autowired
+  ZoneDetectionJobSucceededService subject;
   @Autowired private ObjectMapper om;
   @MockBean DetectedTileRepository detectedTileRepositoryMock;
   AnnotatedJobsApi annotatorApiClientMock = mock(AnnotatedJobsApi.class);
@@ -103,7 +104,7 @@ public class InDoubtTileDetectedServiceIT extends FacadeIT {
 
   @Test
   void accept_event_ok() {
-    subject.accept(InDoubtTilesDetected.builder().jobId(MOCK_JOB_ID).build());
+    subject.accept(ZoneDetectionJobSucceeded.builder().jobId(MOCK_JOB_ID).build());
 
     verify(taskExtractorMock, times(1)).apply(detectedTiles, ANNOTATOR_USER_ID_FOR_GEOJOBS);
     verify(labelExtractorMock, times(1)).extractLabelsFromTasks(anyList());

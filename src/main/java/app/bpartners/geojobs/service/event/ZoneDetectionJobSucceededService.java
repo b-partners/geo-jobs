@@ -8,7 +8,7 @@ import app.bpartners.annotator.endpoint.rest.api.AnnotatedJobsApi;
 import app.bpartners.annotator.endpoint.rest.model.AnnotatedTask;
 import app.bpartners.annotator.endpoint.rest.model.CrupdateAnnotatedJob;
 import app.bpartners.annotator.endpoint.rest.model.Label;
-import app.bpartners.geojobs.endpoint.event.gen.InDoubtTilesDetected;
+import app.bpartners.geojobs.endpoint.event.gen.ZoneDetectionJobSucceeded;
 import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.DetectedTileRepository;
@@ -24,7 +24,7 @@ import java.util.function.Consumer;
 import org.springframework.stereotype.Service;
 
 @Service
-public class InDoubtTileDetectedService implements Consumer<InDoubtTilesDetected> {
+public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJobSucceeded> {
   private final DetectedTileRepository detectedTileRepository;
   private AnnotatedJobsApi annotatedJobsApi;
   private final TaskExtractor taskExtractor;
@@ -32,7 +32,7 @@ public class InDoubtTileDetectedService implements Consumer<InDoubtTilesDetected
   private final AnnotatorUserInfoGetter annotatorUserInfoGetter;
   private final BucketComponent bucketComponent;
 
-  public InDoubtTileDetectedService(
+  public ZoneDetectionJobSucceededService(
       DetectedTileRepository detectedTileRepository,
       AnnotatorApiConf annotatorApiConf,
       TaskExtractor taskExtractor,
@@ -47,13 +47,13 @@ public class InDoubtTileDetectedService implements Consumer<InDoubtTilesDetected
     this.bucketComponent = bucketComponent;
   }
 
-  public InDoubtTileDetectedService annotatedJobsApi(AnnotatedJobsApi annotatedJobsApi) {
+  public ZoneDetectionJobSucceededService annotatedJobsApi(AnnotatedJobsApi annotatedJobsApi) {
     this.annotatedJobsApi = annotatedJobsApi;
     return this;
   }
 
   @Override
-  public void accept(InDoubtTilesDetected event) {
+  public void accept(ZoneDetectionJobSucceeded event) {
     String jobId = event.getJobId();
     List<DetectedTile> detectedTiles = detectedTileRepository.findAllByJobId(jobId);
     List<DetectedTile> detectedInDoubtTiles =
