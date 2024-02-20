@@ -34,12 +34,4 @@ public class DetectableObjectType implements Serializable {
   @Enumerated(STRING)
   @JdbcTypeCode(NAMED_ENUM)
   private DetectableType detectableType;
-
-  public enum DetectableType {
-    ROOF,
-    SOLAR_PANEL,
-    POOL,
-    PATHWAY,
-    TREE
-  }
 }

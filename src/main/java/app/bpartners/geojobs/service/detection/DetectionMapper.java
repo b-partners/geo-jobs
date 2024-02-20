@@ -12,11 +12,7 @@ import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.TaskStatus;
-import app.bpartners.geojobs.repository.model.detection.DetectableObjectType;
-import app.bpartners.geojobs.repository.model.detection.DetectedObject;
-import app.bpartners.geojobs.repository.model.detection.DetectedTile;
-import app.bpartners.geojobs.repository.model.detection.DetectionTask;
-import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
+import app.bpartners.geojobs.repository.model.detection.*;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.tiling.TileValidator;
@@ -84,13 +80,13 @@ public class DetectionMapper {
         .build();
   }
 
-  private static DetectableObjectType.DetectableType toDetectableType(String label) {
+  private static DetectableType toDetectableType(String label) {
     return switch (label.toUpperCase()) {
-      case "ROOF" -> DetectableObjectType.DetectableType.ROOF;
-      case "SOLAR_PANEL" -> DetectableObjectType.DetectableType.SOLAR_PANEL;
-      case "TREE" -> DetectableObjectType.DetectableType.TREE;
-      case "PATHWAY" -> DetectableObjectType.DetectableType.PATHWAY;
-      case "POOL" -> DetectableObjectType.DetectableType.POOL;
+      case "ROOF" -> DetectableType.ROOF;
+      case "SOLAR_PANEL" -> DetectableType.SOLAR_PANEL;
+      case "TREE" -> DetectableType.TREE;
+      case "PATHWAY" -> DetectableType.PATHWAY;
+      case "POOL" -> DetectableType.POOL;
       default -> throw new IllegalStateException("Unexpected value: " + label.toLowerCase());
     };
   }

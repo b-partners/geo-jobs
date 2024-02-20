@@ -5,7 +5,9 @@ import app.bpartners.geojobs.endpoint.event.gen.DetectionTaskCreated;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneDetectionJobStatusChanged;
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.job.service.JobService;
+import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.DetectionTaskRepository;
+import app.bpartners.geojobs.repository.model.detection.*;
 import app.bpartners.geojobs.repository.model.detection.DetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
@@ -16,19 +18,29 @@ import org.springframework.stereotype.Service;
 @Service
 public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetectionJob> {
   private final DetectionMapper detectionMapper;
+  private final DetectableObjectConfigurationRepository objectConfigurationRepository;
 
   public ZoneDetectionJobService(
       JpaRepository<ZoneDetectionJob, String> repository,
       JobStatusRepository jobStatusRepository,
       DetectionTaskRepository taskRepository,
       EventProducer eventProducer,
-      DetectionMapper detectionMapper) {
+      DetectionMapper detectionMapper,
+      DetectableObjectConfigurationRepository objectConfigurationRepository) {
     super(repository, jobStatusRepository, taskRepository, eventProducer, ZoneDetectionJob.class);
     this.detectionMapper = detectionMapper;
+    this.objectConfigurationRepository = objectConfigurationRepository;
   }
 
   public ZoneDetectionJob fireTasks(String jobId) {
     var job = findById(jobId);
+    getTasks(job).forEach(task -> eventProducer.accept(List.of(new DetectionTaskCreated(task))));
+    return job;
+  }
+
+  public ZoneDetectionJob fireTasks(String jobId, List<DetectableObjectConfiguration> objectConfigurations) {
+    var job = findById(jobId);
+    objectConfigurationRepository.saveAll(objectConfigurations);
     getTasks(job).forEach(task -> eventProducer.accept(List.of(new DetectionTaskCreated(task))));
     return job;
   }
