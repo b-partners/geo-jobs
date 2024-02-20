@@ -25,7 +25,11 @@ public class ZoneDetectionController {
   public app.bpartners.geojobs.endpoint.rest.model.ZoneDetectionJob processZDJ(
       @PathVariable("id") String jobId,
       @RequestBody List<DetectableObjectConfiguration> detectableObjectConfigurations) {
-    List<app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration> configurations = detectableObjectConfigurations.stream().map(objectConf -> objectConfigurationMapper.toDomain(jobId, objectConf)).toList();
+    List<app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration>
+        configurations =
+            detectableObjectConfigurations.stream()
+                .map(objectConf -> objectConfigurationMapper.toDomain(jobId, objectConf))
+                .toList();
     ZoneDetectionJob processedZDJ = service.fireTasks(jobId, configurations);
     return mapper.toRest(processedZDJ, detectableObjectConfigurations);
   }

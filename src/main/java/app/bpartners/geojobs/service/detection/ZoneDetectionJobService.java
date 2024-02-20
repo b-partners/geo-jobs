@@ -38,7 +38,8 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
     return job;
   }
 
-  public ZoneDetectionJob fireTasks(String jobId, List<DetectableObjectConfiguration> objectConfigurations) {
+  public ZoneDetectionJob fireTasks(
+      String jobId, List<DetectableObjectConfiguration> objectConfigurations) {
     var job = findById(jobId);
     objectConfigurationRepository.saveAll(objectConfigurations);
     getTasks(job).forEach(task -> eventProducer.accept(List.of(new DetectionTaskCreated(task))));

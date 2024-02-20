@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.service.annotator;
 
-import static app.bpartners.geojobs.repository.model.detection.DetectableObjectType.DetectableType.ROOF;
-import static app.bpartners.geojobs.repository.model.detection.DetectableObjectType.DetectableType.SOLAR_PANEL;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.ROOF;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.SOLAR_PANEL;
 import static app.bpartners.geojobs.service.event.ZoneDetectionJobSucceededServiceIT.LAYER_20_10_1_PNG;
 import static app.bpartners.geojobs.service.event.ZoneDetectionJobSucceededServiceIT.MOCK_JOB_ID;
 import static java.util.UUID.randomUUID;
@@ -17,6 +17,7 @@ import app.bpartners.annotator.endpoint.rest.model.Polygon;
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectType;
+import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.detection.DetectedTile;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
@@ -63,19 +64,17 @@ public class ExtractorIT extends FacadeIT {
   }
 
   @SneakyThrows
-  DetectedObject inDoubtDetectedObject(DetectableObjectType.DetectableType type) {
+  DetectedObject inDoubtDetectedObject(DetectableType type) {
     String id = randomUUID().toString();
     return DetectedObject.builder()
         .id(id)
         .detectedObjectTypes(detectedObjectType(id, type))
         .feature(feature)
         .computedConfidence(1.0)
-        .minConfidence(2.0)
         .build();
   }
 
-  private static List<DetectableObjectType> detectedObjectType(
-      String id, DetectableObjectType.DetectableType type) {
+  private static List<DetectableObjectType> detectedObjectType(String id, DetectableType type) {
     return List.of(DetectableObjectType.builder().objectId(id).detectableType(type).build());
   }
 
@@ -86,7 +85,7 @@ public class ExtractorIT extends FacadeIT {
 
   @Test
   void extract_label_ok() {
-    DetectableObjectType.DetectableType roof = ROOF;
+    DetectableType roof = ROOF;
     String roofColor = "#DFFF00";
     Label expected = new Label().id(null).name(roof.name()).color(roofColor);
 

@@ -1,5 +1,8 @@
 package app.bpartners.geojobs.repository.model.detection;
 
+import static jakarta.persistence.EnumType.STRING;
+import static org.hibernate.type.SqlTypes.NAMED_ENUM;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
@@ -11,9 +14,6 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.JdbcTypeCode;
 
-import static jakarta.persistence.EnumType.STRING;
-import static org.hibernate.type.SqlTypes.NAMED_ENUM;
-
 @Entity
 @Getter
 @SuperBuilder(toBuilder = true)
@@ -21,15 +21,14 @@ import static org.hibernate.type.SqlTypes.NAMED_ENUM;
 @NoArgsConstructor
 @ToString
 public class DetectableObjectConfiguration {
-    @Id
-    private String id;
+  @Id private String id;
 
-    @JoinColumn(referencedColumnName = "id")
-    private String detectionJobId;
+  @JoinColumn(referencedColumnName = "id")
+  private String detectionJobId;
 
-    @Enumerated(STRING)
-    @JdbcTypeCode(NAMED_ENUM)
-    private DetectableType objectType;
+  @Enumerated(STRING)
+  @JdbcTypeCode(NAMED_ENUM)
+  private DetectableType objectType;
 
-    private Double confidence;
+  private Double confidence;
 }

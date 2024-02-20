@@ -11,8 +11,9 @@ import app.bpartners.annotator.endpoint.rest.model.Label;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneDetectionJobSucceeded;
 import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.model.exception.ApiException;
+import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.DetectedTileRepository;
-import app.bpartners.geojobs.repository.model.detection.DetectedObject;
+import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.DetectedTile;
 import app.bpartners.geojobs.service.annotator.AnnotatorApiConf;
 import app.bpartners.geojobs.service.annotator.AnnotatorUserInfoGetter;
@@ -31,6 +32,7 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
   private final LabelExtractor labelExtractor;
   private final AnnotatorUserInfoGetter annotatorUserInfoGetter;
   private final BucketComponent bucketComponent;
+  private final DetectableObjectConfigurationRepository objectConfigurationRepository;
 
   public ZoneDetectionJobSucceededService(
       DetectedTileRepository detectedTileRepository,
@@ -38,13 +40,15 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
       TaskExtractor taskExtractor,
       LabelExtractor labelExtractor,
       AnnotatorUserInfoGetter annotatorUserInfoGetter,
-      BucketComponent bucketComponent) {
+      BucketComponent bucketComponent,
+      DetectableObjectConfigurationRepository objectConfigurationRepository) {
     this.detectedTileRepository = detectedTileRepository;
     this.annotatedJobsApi = new AnnotatedJobsApi(annotatorApiConf.newApiClientWithApiKey());
     this.taskExtractor = taskExtractor;
     this.labelExtractor = labelExtractor;
     this.annotatorUserInfoGetter = annotatorUserInfoGetter;
     this.bucketComponent = bucketComponent;
+    this.objectConfigurationRepository = objectConfigurationRepository;
   }
 
   public ZoneDetectionJobSucceededService annotatedJobsApi(AnnotatedJobsApi annotatedJobsApi) {
@@ -56,11 +60,16 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
   public void accept(ZoneDetectionJobSucceeded event) {
     String jobId = event.getJobId();
     List<DetectedTile> detectedTiles = detectedTileRepository.findAllByJobId(jobId);
+    List<DetectableObjectConfiguration> detectableObjectConfigurations =
+        objectConfigurationRepository.findAllByDetectionJobId(jobId);
     List<DetectedTile> detectedInDoubtTiles =
         detectedTiles.stream()
             .filter(
                 detectedTile ->
-                    detectedTile.getDetectedObjects().stream().anyMatch(DetectedObject::isInDoubt))
+                    detectedTile.getDetectedObjects().stream()
+                        .anyMatch(
+                            detectedObject ->
+                                detectedObject.isInDoubt(detectableObjectConfigurations)))
             .toList();
     String crupdateAnnotatedJobId = randomUUID().toString();
     String crupdateAnnotatedJobFolderPath = "/"; // TODO: can this be null ?
