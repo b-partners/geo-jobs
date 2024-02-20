@@ -342,9 +342,7 @@ components:
         zoneTilingJobId:
           type: string
         type:
-          enum:
-            - MACHINE
-            - HUMAN
+          $ref: '#/components/schemas/ZoneDetectionType'
         objectsToDetect:
           type: array
           items:
@@ -360,6 +358,10 @@ components:
           format: date-time
         status:
           $ref: "#/components/schemas/Status"
+    ZoneDetectionType:
+      enum:
+        - MACHINE
+        - HUMAN
     DetectableObjectConfiguration:
       type: object
       properties:
