@@ -3,6 +3,7 @@ package app.bpartners.geojobs.endpoint.rest.controller.mapper;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
+import java.math.BigDecimal;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -17,8 +18,18 @@ public class DetectableObjectConfigurationMapper {
     return DetectableObjectConfiguration.builder()
         .id(randomUUID().toString())
         .detectionJobId(jobId)
-        .objectType(typeMapper.toDomain(rest.getType()))
+        .objectType(typeMapper.toDomain(Objects.requireNonNull(rest.getType())))
         .confidence(Objects.requireNonNull(rest.getConfidence()).doubleValue())
         .build();
+  }
+
+  public app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration toRest(
+      DetectableObjectConfiguration domain) {
+    return new app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration()
+        .confidence(
+            domain.getConfidence() == null
+                ? null
+                : BigDecimal.valueOf(domain.getConfidence())) // TODO: Unknown default value
+        .type(typeMapper.toRest(domain.getObjectType()));
   }
 }
