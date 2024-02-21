@@ -15,6 +15,8 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
+import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
+
 @Service
 public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetectionJob> {
   private final DetectionMapper detectionMapper;
@@ -54,7 +56,8 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
 
   public void saveZDJFromZTJ(ZoneTilingJob job) {
     ZoneDetectionJob zoneDetectionJob = detectionMapper.fromTilingJob(job);
-    repository.save(zoneDetectionJob);
+    ZoneDetectionJob savedZDJ = repository.save(zoneDetectionJob);
+    repository.save(savedZDJ.toBuilder().detectionType(HUMAN).build());
   }
 
   public ZoneDetectionJob save(ZoneDetectionJob job) {
