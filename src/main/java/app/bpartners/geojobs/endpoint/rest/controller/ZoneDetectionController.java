@@ -1,12 +1,15 @@
 package app.bpartners.geojobs.endpoint.rest.controller;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectConfigurationMapper;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionTaskMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMapper;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration;
+import app.bpartners.geojobs.endpoint.rest.model.DetectedParcel;
 import app.bpartners.geojobs.model.BoundedPageSize;
 import app.bpartners.geojobs.model.PageFromOne;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
+import app.bpartners.geojobs.service.ParcelService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -17,10 +20,19 @@ import org.springframework.web.bind.annotation.*;
 @AllArgsConstructor
 @Slf4j
 public class ZoneDetectionController {
+  private final ParcelService parcelService;
   private final DetectableObjectConfigurationRepository objectConfigurationRepository;
   private final ZoneDetectionJobService service;
   private final ZoneDetectionJobMapper mapper;
   private final DetectableObjectConfigurationMapper objectConfigurationMapper;
+  private final DetectionTaskMapper taskMapper;
+
+  @GetMapping("/detectionJobs/{id}/detectedParcels")
+  public List<DetectedParcel> getZDJParcels(@PathVariable(name = "id") String detectionJobId) {
+    return parcelService.getParcelsByJobId(detectionJobId).stream()
+        .map(parcel -> taskMapper.toRest(detectionJobId, parcel))
+        .toList();
+  }
 
   @GetMapping("/detectionJobs")
   public List<app.bpartners.geojobs.endpoint.rest.model.ZoneDetectionJob> getDetectionJobs(

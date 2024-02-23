@@ -61,7 +61,7 @@ public class DetectedObject implements Serializable {
         && optionalConfiguration.get().getConfidence() > computedConfidence;
   }
 
-  private DetectableType getDetectableObjectType() {
+  public DetectableType getDetectableObjectType() {
     if (detectedObjectTypes.isEmpty()) {
       return null;
     }

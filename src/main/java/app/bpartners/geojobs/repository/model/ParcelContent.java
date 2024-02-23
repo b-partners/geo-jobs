@@ -34,7 +34,10 @@ public class ParcelContent implements Serializable {
 
   @Builder.Default private List<Tile> tiles = new ArrayList<>();
 
+  // TODO !!! VERY BAD ! Statuses must be separated from Parcel
   private Status tilingStatus;
+  private Status detectionStatus;
+
   private Instant creationDatetime;
 
   public void setTiles(List<Tile> tiles) {
