@@ -60,6 +60,17 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
   @Override
   public void accept(ZoneDetectionJobSucceeded event) {
     String jobId = event.getJobId();
+    // TODO: process human ZDJ here and update status
+
+    try {
+      sendAnnotations(jobId);
+    } catch (Exception e) {
+      throw new ApiException(SERVER_EXCEPTION, e); // TODO: retry with some attempts ?
+    }
+  }
+
+  private void sendAnnotations(String jobId)
+      throws app.bpartners.annotator.endpoint.rest.client.ApiException {
     List<DetectedTile> detectedTiles = detectedTileRepository.findAllByJobId(jobId);
     List<DetectableObjectConfiguration> detectableObjectConfigurations =
         objectConfigurationRepository.findAllByDetectionJobId(jobId);
@@ -79,22 +90,19 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
     List<Label> labels = labelExtractor.extractLabelsFromTasks(annotatedTasks);
     String crupdateJobId = randomUUID().toString();
     Instant now = Instant.now();
-    try {
-      annotatedJobsApi.crupdateAnnotatedJob(
-          crupdateJobId,
-          new CrupdateAnnotatedJob()
-              .id(crupdateAnnotatedJobId)
-              .name("geo-jobs" + now)
-              .bucketName(bucketComponent.getBucketName())
-              .folderPath(crupdateAnnotatedJobFolderPath)
-              .labels(labels)
-              .ownerEmail("tech@bpartners.app")
-              .status(TO_REVIEW)
-              .type(REVIEWING)
-              .annotatedTasks(annotatedTasks)
-              .teamId(annotatorUserInfoGetter.getTeamId()));
-    } catch (app.bpartners.annotator.endpoint.rest.client.ApiException e) {
-      throw new ApiException(SERVER_EXCEPTION, e);
-    }
+
+    annotatedJobsApi.crupdateAnnotatedJob(
+        crupdateJobId,
+        new CrupdateAnnotatedJob()
+            .id(crupdateAnnotatedJobId)
+            .name("geo-jobs" + now)
+            .bucketName(bucketComponent.getBucketName())
+            .folderPath(crupdateAnnotatedJobFolderPath)
+            .labels(labels)
+            .ownerEmail("tech@bpartners.app")
+            .status(TO_REVIEW)
+            .type(REVIEWING)
+            .annotatedTasks(annotatedTasks)
+            .teamId(annotatorUserInfoGetter.getTeamId()));
   }
 }
