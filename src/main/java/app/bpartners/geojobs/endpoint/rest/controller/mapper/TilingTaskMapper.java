@@ -28,9 +28,10 @@ public class TilingTaskMapper {
       URL geoServerUrl,
       GeoServerParameter geoServerParameter,
       String jobId) {
-    String generatedId = randomUUID().toString();
+    String generatedTaskId = randomUUID().toString();
+    String generatedParcelId = randomUUID().toString();
     return TilingTask.builder()
-        .id(generatedId)
+        .id(generatedTaskId)
         .jobId(jobId)
         .statusHistory(
             List.of(
@@ -38,20 +39,27 @@ public class TilingTaskMapper {
                     .health(UNKNOWN)
                     .progression(PENDING)
                     .creationDatetime(now())
-                    .taskId(generatedId)
+                    .taskId(generatedTaskId)
                     .build()))
         .submissionInstant(now())
-        .parcel(featureMapper.toDomain(createFeature, geoServerUrl, geoServerParameter))
+        .parcels(
+            List.of(
+                featureMapper.toDomain(
+                    generatedParcelId,
+                    createFeature,
+                    geoServerUrl,
+                    geoServerParameter))) // TODO: check when multiple parcels for tiling task
         .build();
   }
 
   public Parcel toRest(app.bpartners.geojobs.repository.model.Parcel model) {
+    var parcelContent = model.getParcelContent();
     return new Parcel()
-        .id(randomUUID().toString())
-        .creationDatetime(model.getCreationDatetime())
-        .tiles(model.getTiles().stream().map(this::toRest).toList())
+        .id(model.getId())
+        .creationDatetime(parcelContent.getCreationDatetime())
+        .tiles(parcelContent.getTiles().stream().map(this::toRest).toList())
         .tilingStatus(
-            ofNullable(model.getTilingStatus())
+            ofNullable(parcelContent.getTilingStatus())
                 .map(
                     status ->
                         new Status()
@@ -59,7 +67,7 @@ public class TilingTaskMapper {
                             .progression(StatusMapper.toProgressionEnum(status.getProgression()))
                             .creationDatetime(status.getCreationDatetime()))
                 .orElse(null))
-        .feature(model.getFeature());
+        .feature(parcelContent.getFeature());
   }
 
   public Tile toRest(app.bpartners.geojobs.repository.model.tiling.Tile model) {

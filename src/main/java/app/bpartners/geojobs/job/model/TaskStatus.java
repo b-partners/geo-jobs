@@ -7,6 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.PrimaryKeyJoinColumn;
 import jakarta.persistence.Table;
+import java.io.Serializable;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -19,7 +20,7 @@ import lombok.experimental.SuperBuilder;
 @Setter
 @SuperBuilder
 @Table(name = "task_status")
-public class TaskStatus extends Status {
+public class TaskStatus extends Status implements Serializable {
   @JoinColumn private String taskId;
 
   @JsonIgnore // TODO(status.jobType-serialization)

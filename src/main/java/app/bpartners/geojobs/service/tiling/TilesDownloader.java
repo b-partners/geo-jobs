@@ -6,7 +6,7 @@ import static java.nio.file.Files.createTempFile;
 import app.bpartners.geojobs.file.FileUnzipper;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.model.exception.ApiException;
-import app.bpartners.geojobs.repository.model.Parcel;
+import app.bpartners.geojobs.repository.model.ParcelContent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
@@ -28,7 +28,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
-public class TilesDownloader implements Function<Parcel, File> {
+public class TilesDownloader implements Function<ParcelContent, File> {
   private final ObjectMapper om;
   private final String tilesDownloaderApiURl;
   private final FileWriter fileWriter;
@@ -46,16 +46,16 @@ public class TilesDownloader implements Function<Parcel, File> {
   }
 
   @Override
-  public File apply(Parcel parcel) {
+  public File apply(ParcelContent parcelContent) {
     RestTemplate restTemplate = new RestTemplate();
     MultipartBodyBuilder bodies = new MultipartBodyBuilder();
-    bodies.part("server", new FileSystemResource(getServerInfoFile(parcel)));
-    bodies.part("geojson", getGeojson(parcel));
+    bodies.part("server", new FileSystemResource(getServerInfoFile(parcelContent)));
+    bodies.part("geojson", getGeojson(parcelContent));
     MultiValueMap<String, HttpEntity<?>> multipartBody = bodies.build();
     HttpEntity<MultiValueMap<String, HttpEntity<?>>> request = new HttpEntity<>(multipartBody);
     UriComponentsBuilder builder =
         UriComponentsBuilder.fromHttpUrl(tilesDownloaderApiURl)
-            .queryParam("zoom_size", parcel.getFeature().getZoom());
+            .queryParam("zoom_size", parcelContent.getFeature().getZoom());
 
     ResponseEntity<byte[]> responseEntity =
         restTemplate.postForEntity(builder.toUriString(), request, byte[].class);
@@ -64,7 +64,7 @@ public class TilesDownloader implements Function<Parcel, File> {
       try {
         var zip = fileWriter.apply(responseEntity.getBody(), null);
 
-        var unzipped = unzip(zip, parcel);
+        var unzipped = unzip(zip, parcelContent);
         zip.delete();
 
         return unzipped;
@@ -75,17 +75,17 @@ public class TilesDownloader implements Function<Parcel, File> {
     throw new ApiException(SERVER_EXCEPTION, "Server error");
   }
 
-  private File unzip(File downloadedTiles, Parcel parcel) throws IOException {
+  private File unzip(File downloadedTiles, ParcelContent parcelContent) throws IOException {
     ZipFile asZipFile = new ZipFile(downloadedTiles);
-    String layer = parcel.getGeoServerParameter().getLayers();
+    String layer = parcelContent.getGeoServerParameter().getLayers();
     Path unzippedPath = fileUnzipper.apply(asZipFile, layer);
     return unzippedPath.toFile();
   }
 
   @SneakyThrows
-  private File getServerInfoFile(Parcel parcel) {
-    var geoServerParameter = parcel.getGeoServerParameter();
-    String geoServerUrl = String.valueOf(parcel.getGeoServerUrl());
+  private File getServerInfoFile(ParcelContent parcelContent) {
+    var geoServerParameter = parcelContent.getGeoServerParameter();
+    String geoServerUrl = String.valueOf(parcelContent.getGeoServerUrl());
     String service = geoServerParameter.getService();
     String request = geoServerParameter.getRequest();
     String layers = geoServerParameter.getLayers();
@@ -115,7 +115,7 @@ public class TilesDownloader implements Function<Parcel, File> {
     serverInfo.put("parameter", serverParameter);
     serverInfo.put("concurrency", 1);
 
-    Path serverInfoPath = createTempFile(tempFileParcelPrefix(parcel) + "_server", "json");
+    Path serverInfoPath = createTempFile(tempFileParcelPrefix(parcelContent) + "_server", "json");
     File file = serverInfoPath.toFile();
     om.writeValue(file, serverInfo);
 
@@ -123,10 +123,10 @@ public class TilesDownloader implements Function<Parcel, File> {
   }
 
   @SneakyThrows
-  private FileSystemResource getGeojson(Parcel parcel) {
+  private FileSystemResource getGeojson(ParcelContent parcelContent) {
     Map<String, Object> feature = new HashMap<>();
     feature.put("type", "Feature");
-    feature.put("geometry", parcel.getFeature().getGeometry());
+    feature.put("geometry", parcelContent.getFeature().getGeometry());
 
     var featuresList = new ArrayList<>();
     featuresList.add(feature);
@@ -135,14 +135,14 @@ public class TilesDownloader implements Function<Parcel, File> {
     featureCollection.put("type", "FeatureCollection");
     featureCollection.put("features", featuresList);
 
-    Path geojsonPath = createTempFile(tempFileParcelPrefix(parcel), "geojson");
+    Path geojsonPath = createTempFile(tempFileParcelPrefix(parcelContent), "geojson");
     File geojsonFile = geojsonPath.toFile();
     om.writeValue(geojsonFile, featureCollection);
 
     return new FileSystemResource(geojsonFile);
   }
 
-  private static String tempFileParcelPrefix(Parcel parcel) {
-    return "parcel_" + parcel.getId();
+  private static String tempFileParcelPrefix(ParcelContent parcelContent) {
+    return "parcel_" + parcelContent.getId();
   }
 }

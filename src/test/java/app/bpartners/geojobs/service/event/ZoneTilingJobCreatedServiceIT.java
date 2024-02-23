@@ -19,6 +19,7 @@ import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
 import app.bpartners.geojobs.repository.model.Parcel;
+import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
@@ -65,7 +66,12 @@ class ZoneTilingJobCreatedServiceIT extends FacadeIT {
                     .id(taskId)
                     .jobId(jobId)
                     .submissionInstant(now())
-                    .parcel(Parcel.builder().id(randomUUID().toString()).build())
+                    .parcels(
+                        List.of(
+                            Parcel.builder()
+                                .parcelContent(
+                                    ParcelContent.builder().id(randomUUID().toString()).build())
+                                .build()))
                     .statusHistory(
                         List.of(
                             TaskStatus.builder()

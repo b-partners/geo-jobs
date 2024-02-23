@@ -1,21 +1,25 @@
 package app.bpartners.geojobs.repository.model.tiling;
 
 import static app.bpartners.geojobs.repository.model.GeoJobType.TILING;
-import static org.hibernate.type.SqlTypes.JSON;
+import static jakarta.persistence.CascadeType.ALL;
+import static jakarta.persistence.FetchType.LAZY;
 
 import app.bpartners.geojobs.job.model.Task;
 import app.bpartners.geojobs.repository.model.GeoJobType;
 import app.bpartners.geojobs.repository.model.Parcel;
+import app.bpartners.geojobs.repository.model.ParcelContent;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import jakarta.persistence.Entity;
+import jakarta.persistence.*;
 import java.io.Serializable;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import org.hibernate.annotations.JdbcTypeCode;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
@@ -24,8 +28,12 @@ import org.hibernate.annotations.JdbcTypeCode;
 @Setter
 @JsonIgnoreProperties({"status"})
 public class TilingTask extends Task implements Serializable {
-  @JdbcTypeCode(JSON)
-  private Parcel parcel;
+  @ManyToMany(cascade = ALL, fetch = LAZY)
+  @JoinTable(
+      name = "parcel_tiling_task",
+      joinColumns = @JoinColumn(name = "id_tiling_task"),
+      inverseJoinColumns = @JoinColumn(name = "id_parcel"))
+  private List<Parcel> parcels;
 
   @Override
   public GeoJobType getJobType() {
@@ -34,6 +42,23 @@ public class TilingTask extends Task implements Serializable {
 
   @Override
   public String toString() {
-    return "TilingTask{" + "parcel=" + parcel + ", status=" + getStatus() + '}';
+    return "TilingTask{" + "parcel=" + getParcel() + ", status=" + getStatus() + '}';
+  }
+
+  public ParcelContent getParcelContent() {
+    return getParcel().getParcelContent();
+  }
+
+  public Parcel getParcel() {
+    if (parcels.isEmpty()) return null;
+    var chosenParcel = parcels.get(0);
+    if (parcels.size() > 1) {
+      log.warn(
+          "TilingTask(id={}) contains multiple parcels but only one Parcel(id={}) is handle for"
+              + " now",
+          getId(),
+          chosenParcel.getId());
+    }
+    return chosenParcel;
   }
 }

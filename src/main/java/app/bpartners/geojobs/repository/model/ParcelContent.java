@@ -4,6 +4,7 @@ import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.io.Serializable;
 import java.net.URL;
 import java.time.Instant;
@@ -22,7 +23,8 @@ import lombok.ToString;
 @AllArgsConstructor
 @Getter
 @Setter
-public class Parcel implements Serializable {
+@JsonIgnoreProperties({"tilingStatus"})
+public class ParcelContent implements Serializable {
   private String id;
   private Feature feature;
   private URL geoServerUrl;

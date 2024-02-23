@@ -7,7 +7,7 @@ import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.file.FileUnzipper;
 import app.bpartners.geojobs.job.model.Status;
-import app.bpartners.geojobs.repository.model.Parcel;
+import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.service.tiling.TilesDownloader;
@@ -28,7 +28,7 @@ public class TilingTaskConsumer implements Consumer<TilingTask> {
 
   @Override
   public void accept(TilingTask tilingTask) {
-    var parcel = tilingTask.getParcel();
+    var parcel = tilingTask.getParcelContent();
     File downloadedTiles = tilesDownloader.apply(parcel);
     String bucketKey = downloadedTiles.getName();
 
@@ -38,8 +38,8 @@ public class TilingTaskConsumer implements Consumer<TilingTask> {
     setParcelTiles(downloadedTiles, parcel, bucketKey);
   }
 
-  private void setParcelTiles(File tilesDir, Parcel parcel, String bucketKey) {
-    parcel.setTiles(getParcelTiles(new ArrayList<>(), tilesDir, bucketKey));
+  private void setParcelTiles(File tilesDir, ParcelContent parcelContent, String bucketKey) {
+    parcelContent.setTiles(getParcelTiles(new ArrayList<>(), tilesDir, bucketKey));
   }
 
   private List<Tile> getParcelTiles(List<Tile> accumulator, File tilesFile, String bucketKey) {

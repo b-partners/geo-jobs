@@ -45,16 +45,18 @@ public class ZoneTilingJobMapper {
             .getParcelsByJobId(domain.getId())
             // TODO: only need one
             .get(0);
+    var parcelContent = parcel0.getParcelContent();
 
     return new app.bpartners.geojobs.endpoint.rest.model.ZoneTilingJob()
         .id(domain.getId())
         .zoneName(domain.getZoneName())
         .creationDatetime(domain.getSubmissionInstant())
-        .zoomLevel(zoomMapper.toRest(ArcgisImageZoom.fromZoomLevel(parcel0.getFeature().getZoom())))
+        .zoomLevel(
+            zoomMapper.toRest(ArcgisImageZoom.fromZoomLevel(parcelContent.getFeature().getZoom())))
 
         // All parcels of the same job have same geoServer url and parameter
-        .geoServerUrl(parcel0.getGeoServerUrl().toString())
-        .geoServerParameter(parcel0.getGeoServerParameter())
+        .geoServerUrl(parcelContent.getGeoServerUrl().toString())
+        .geoServerParameter(parcelContent.getGeoServerParameter())
         .emailReceiver(domain.getEmailReceiver())
         .status(statusMapper.statusConverter(domain.getStatus()));
   }

@@ -7,7 +7,7 @@ import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.file.BucketComponent;
-import app.bpartners.geojobs.repository.model.Parcel;
+import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.service.tiling.TilesDownloader;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,9 +25,9 @@ public class TilesDownloaderIT extends FacadeIT {
   @Autowired TilesDownloader tilesDownloader;
   @Autowired ObjectMapper om;
 
-  private Parcel a_parcel_from_lyon(int zoom)
+  private ParcelContent a_parcel_from_lyon(int zoom)
       throws MalformedURLException, JsonProcessingException {
-    return Parcel.builder()
+    return ParcelContent.builder()
         .id(randomUUID().toString())
         .geoServerUrl(new URL("https://data.grandlyon.com/fr/geoserv/grandlyon/ows"))
         .geoServerParameter(

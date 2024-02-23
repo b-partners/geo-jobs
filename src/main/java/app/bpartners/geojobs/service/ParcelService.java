@@ -9,6 +9,7 @@ import app.bpartners.geojobs.repository.model.Parcel;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @AllArgsConstructor
@@ -18,6 +19,7 @@ public class ParcelService {
   private final ZoneTilingJobRepository tilingJobRepository;
   private final ZoneDetectionJobRepository detectionJobRepository;
 
+  @Transactional
   public List<Parcel> getParcelsByJobId(String jobId) {
     var zoneTilingJob = tilingJobRepository.findById(jobId);
     if (zoneTilingJob.isPresent()) {
@@ -25,7 +27,8 @@ public class ParcelService {
           .map(
               tilingTask -> {
                 var parcel = tilingTask.getParcel();
-                parcel.setTilingStatus(tilingTask.getStatus());
+                var parcelContent = parcel.getParcelContent();
+                parcelContent.setTilingStatus(tilingTask.getStatus());
                 return parcel;
               })
           .toList();
