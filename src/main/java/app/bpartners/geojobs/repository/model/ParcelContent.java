@@ -16,14 +16,16 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Builder
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
-@JsonIgnoreProperties({"tilingStatus"})
+@JsonIgnoreProperties({"tilingStatus", "firstTile"})
 public class ParcelContent implements Serializable {
   private String id;
   private Feature feature;
@@ -41,5 +43,18 @@ public class ParcelContent implements Serializable {
       return;
     }
     this.tiles = tiles;
+  }
+
+  public Tile getFirstTile() {
+    if (tiles.isEmpty()) return null;
+    var chosenTile = tiles.get(0);
+    if (tiles.size() > 1) {
+      log.warn(
+          "ParcelContent(id={}) contains multiple tiles but only one Tile(id={}) is handle for"
+              + " now",
+          getId(),
+          chosenTile.getId());
+    }
+    return chosenTile;
   }
 }

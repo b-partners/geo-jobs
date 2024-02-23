@@ -19,6 +19,8 @@ import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.repository.DetectedTileRepository;
 import app.bpartners.geojobs.repository.DetectionTaskRepository;
+import app.bpartners.geojobs.repository.model.Parcel;
+import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.detection.DetectedTile;
 import app.bpartners.geojobs.repository.model.detection.DetectionTask;
@@ -123,12 +125,23 @@ class DetectionTaskCreatedServiceIT extends FacadeIT {
             DetectionTask.builder()
                 .id(taskId)
                 .jobId(jobId)
-                .tile(
-                    Tile.builder()
-                        .id(randomUUID().toString())
-                        .coordinates(new TileCoordinates().x(25659).y(15466).z(20))
-                        .bucketPath("mock-bucket-key")
-                        .build())
+                .parcels(
+                    List.of(
+                        Parcel.builder()
+                            .id(randomUUID().toString())
+                            .parcelContent(
+                                ParcelContent.builder()
+                                    .id(randomUUID().toString())
+                                    .tiles(
+                                        List.of(
+                                            Tile.builder()
+                                                .id(randomUUID().toString())
+                                                .coordinates(
+                                                    new TileCoordinates().x(25659).y(15466).z(20))
+                                                .bucketPath("mock-bucket-key")
+                                                .build()))
+                                    .build())
+                            .build()))
                 .statusHistory(
                     new ArrayList<>() {
                       {

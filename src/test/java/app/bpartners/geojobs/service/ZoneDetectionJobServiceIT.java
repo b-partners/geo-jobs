@@ -17,6 +17,8 @@ import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.repository.DetectionTaskRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
+import app.bpartners.geojobs.repository.model.Parcel;
+import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.detection.DetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
@@ -68,11 +70,21 @@ class ZoneDetectionJobServiceIT extends FacadeIT {
                     .id(randomUUID().toString())
                     .jobId(jobId)
                     .submissionInstant(now())
-                    .tile(
-                        Tile.builder()
-                            .id(randomUUID().toString())
-                            .bucketPath(randomUUID().toString())
-                            .build())
+                    .parcels(
+                        List.of(
+                            Parcel.builder()
+                                .id(randomUUID().toString())
+                                .parcelContent(
+                                    ParcelContent.builder()
+                                        .id(randomUUID().toString())
+                                        .tiles(
+                                            List.of(
+                                                Tile.builder()
+                                                    .id(randomUUID().toString())
+                                                    .bucketPath(randomUUID().toString())
+                                                    .build()))
+                                        .build())
+                                .build()))
                     .statusHistory(taskStatusHistory)
                     .build()));
 

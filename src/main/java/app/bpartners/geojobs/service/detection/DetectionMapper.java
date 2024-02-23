@@ -11,7 +11,6 @@ import static java.util.UUID.randomUUID;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.job.model.JobStatus;
-import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.repository.model.detection.*;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
@@ -104,6 +103,8 @@ public class DetectionMapper {
         .geometry(new MultiPolygon().type(POLYGON).coordinates(List.of(List.of(coordinates))));
   }
 
+  /*
+  TODO: custom for saving detection task
   public DetectionTask toDomain(Tile tile, String zoneDetectionJobId) {
     String taskId = randomUUID().toString();
     return DetectionTask.builder()
@@ -121,7 +122,7 @@ public class DetectionMapper {
                     .build()))
         .submissionInstant(now())
         .build();
-  }
+  }*/
 
   public ZoneDetectionJob fromTilingJob(ZoneTilingJob tilingJob) {
     String zoneDetectionJobId = randomUUID().toString();

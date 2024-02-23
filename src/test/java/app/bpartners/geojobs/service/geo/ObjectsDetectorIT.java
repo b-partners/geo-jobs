@@ -7,11 +7,14 @@ import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.file.BucketComponent;
+import app.bpartners.geojobs.repository.model.Parcel;
+import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.detection.DetectionTask;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.detection.ObjectsDetector;
 import java.io.File;
 import java.time.Instant;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -47,11 +50,21 @@ public class ObjectsDetectorIT extends FacadeIT {
         .id(String.valueOf(randomUUID()))
         .jobId(String.valueOf(randomUUID()))
         .submissionInstant(Instant.now())
-        .tile(
-            Tile.builder()
-                .id(String.valueOf(randomUUID()))
-                .bucketPath(String.valueOf(randomUUID()))
-                .build())
+        .parcels(
+            List.of(
+                Parcel.builder()
+                    .id(randomUUID().toString())
+                    .parcelContent(
+                        ParcelContent.builder()
+                            .id(randomUUID().toString())
+                            .tiles(
+                                List.of(
+                                    Tile.builder()
+                                        .id(randomUUID().toString())
+                                        .bucketPath(randomUUID().toString())
+                                        .build()))
+                            .build())
+                    .build()))
         .build();
   }
 }
