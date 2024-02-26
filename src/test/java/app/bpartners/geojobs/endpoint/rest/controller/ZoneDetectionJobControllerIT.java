@@ -14,8 +14,7 @@ import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.gen.DetectionTaskCreated;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMapper;
-import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration;
-import app.bpartners.geojobs.endpoint.rest.model.ZoneDetectionJob;
+import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.model.BoundedPageSize;
@@ -76,25 +75,12 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
     return List.of(aZDJ(JOB1_ID), aZDJ(JOB2_ID));
   }
 
-  private static DetectionTask someDetectionTask(String jobId, String taskId) {
+  private static DetectionTask someDetectionTask(
+      String jobId, String taskId, String parcelId, String parcelContentId, String tileId) {
     return DetectionTask.builder()
         .id(taskId)
         .jobId(jobId)
-        .parcels(
-            List.of(
-                Parcel.builder()
-                    .id(randomUUID().toString())
-                    .parcelContent(
-                        ParcelContent.builder()
-                            .id(randomUUID().toString())
-                            .tiles(
-                                List.of(
-                                    Tile.builder()
-                                        .id(randomUUID().toString())
-                                        .bucketPath(randomUUID().toString())
-                                        .build()))
-                            .build())
-                    .build()))
+        .parcels(List.of(someParcel(parcelId, parcelContentId, tileId)))
         .statusHistory(
             List.of(
                 TaskStatus.builder()
@@ -103,6 +89,36 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
                     .jobType(DETECTION)
                     .health(UNKNOWN)
                     .build()))
+        .build();
+  }
+
+  private static DetectionTask someDetectionTask(String jobId, String taskId) {
+    return DetectionTask.builder()
+        .id(taskId)
+        .jobId(jobId)
+        .parcels(
+            List.of(
+                someParcel(
+                    randomUUID().toString(), randomUUID().toString(), randomUUID().toString())))
+        .statusHistory(
+            List.of(
+                TaskStatus.builder()
+                    .id(randomUUID().toString())
+                    .progression(PENDING)
+                    .jobType(DETECTION)
+                    .health(UNKNOWN)
+                    .build()))
+        .build();
+  }
+
+  private static Parcel someParcel(String parcelId, String parcelContentId, String tileId) {
+    return Parcel.builder()
+        .id(parcelId)
+        .parcelContent(
+            ParcelContent.builder()
+                .id(parcelContentId)
+                .tiles(List.of(Tile.builder().id(tileId).bucketPath("dummyBucketPath").build()))
+                .build())
         .build();
   }
 
@@ -159,5 +175,40 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
     var capturedEvent2 = events.get(1).get(0);
     assertEquals(new DetectionTaskCreated(configuredTasks.get(0)), capturedEvent1);
     assertEquals(new DetectionTaskCreated(configuredTasks.get(1)), capturedEvent2);
+  }
+
+  @Test
+  @Transactional
+  void read_zdj_parcels() {
+    jobRepository.saveAll(someDetectionJobs());
+    var savedTask =
+        detectionTaskRepository.save(
+            someDetectionTask(JOB1_ID, "task1", "parcel1", "parcelContent1", "tile1"));
+    var status =
+        new Status().progression(Status.ProgressionEnum.PENDING).health(Status.HealthEnum.UNKNOWN);
+    var expected =
+        new DetectedParcel()
+            .id(null) // TODO: actually randomly computed
+            .detectionJobIb(JOB1_ID)
+            .parcelId("parcel1")
+            // .detectedTiles(List.of(new
+            // DetectedTile().tileId("tile1").bucketPath("dummyBucketPath"))) TODO: link to Parcel
+            // Detection Task
+            .detectedTiles(List.of())
+            .status(status);
+
+    List<DetectedParcel> actual = subject.getZDJParcels(JOB1_ID);
+
+    assertNotNull(actual);
+    assertEquals(
+        expected
+            .status(
+                status.creationDatetime(actual.get(0).getStatus().getCreationDatetime())) // ignore
+            .creationDatetime(actual.get(0).getCreationDatetime()), // ignore
+        actual.get(0).id(expected.getId()) // TODO: actually randomly computed
+        );
+
+    // TODO: reset database correctly
+    detectionTaskRepository.delete(savedTask);
   }
 }
