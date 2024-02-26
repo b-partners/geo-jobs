@@ -8,7 +8,7 @@ import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.repository.model.ParcelContent;
-import app.bpartners.geojobs.service.tiling.downloader.HttpApiTilesDownloader;
+import app.bpartners.geojobs.service.tiling.TilesDownloader;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
@@ -20,10 +20,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-public class HttpApiTilesDownloaderIT extends FacadeIT {
+public class TilesDownloaderIT extends FacadeIT {
   @MockBean BucketComponent bucketComponent;
   @Autowired
-  HttpApiTilesDownloader httpApiTilesDownloader;
+  TilesDownloader httpApiTilesDownloader;
   @Autowired ObjectMapper om;
 
   private ParcelContent a_parcel_from_lyon(int zoom)

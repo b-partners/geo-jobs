@@ -19,6 +19,7 @@ import java.util.function.Function;
 import java.util.zip.ZipFile;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +30,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
+@Conditional(IsNotPreprodEnvCondition.class)
 public class HttpApiTilesDownloader implements TilesDownloader {
   private final ObjectMapper om;
   private final String tilesDownloaderApiURl;

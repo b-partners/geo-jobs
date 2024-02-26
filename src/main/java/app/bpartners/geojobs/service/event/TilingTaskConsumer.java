@@ -10,7 +10,7 @@ import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
-import app.bpartners.geojobs.service.tiling.downloader.HttpApiTilesDownloader;
+import app.bpartners.geojobs.service.tiling.TilesDownloader;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,13 +23,13 @@ import org.springframework.stereotype.Component;
 @AllArgsConstructor
 @Component
 public class TilingTaskConsumer implements Consumer<TilingTask> {
-  private final HttpApiTilesDownloader httpApiTilesDownloader;
+  private final TilesDownloader tilesDownloader;
   private final BucketComponent bucketComponent;
 
   @Override
   public void accept(TilingTask tilingTask) {
     var parcel = tilingTask.getParcelContent();
-    File downloadedTiles = httpApiTilesDownloader.apply(parcel);
+    File downloadedTiles = tilesDownloader.apply(parcel);
     String bucketKey = downloadedTiles.getName();
 
     bucketComponent.upload(downloadedTiles, bucketKey);

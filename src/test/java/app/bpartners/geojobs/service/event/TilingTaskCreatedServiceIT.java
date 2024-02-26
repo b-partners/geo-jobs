@@ -39,7 +39,7 @@ import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
-import app.bpartners.geojobs.service.tiling.downloader.HttpApiTilesDownloader;
+import app.bpartners.geojobs.service.tiling.TilesDownloader;
 import app.bpartners.geojobs.service.tiling.TilingTaskStatusService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -87,7 +87,7 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
     @MockBean
     BucketComponent bucketComponent;
     @MockBean
-    HttpApiTilesDownloader httpApiTilesDownloader;
+    TilesDownloader tilesDownloader;
     @Autowired
     TilingTaskRepository tilingTaskRepository;
     @Autowired
@@ -107,7 +107,7 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
 
     @BeforeEach
     void setUp() throws JsonProcessingException {
-        when(httpApiTilesDownloader.apply(any()))
+        when(tilesDownloader.apply(any()))
                 .thenAnswer(
                         i ->
                                 Paths.get(this.getClass().getClassLoader().getResource("mockData/lyon").toURI())
@@ -462,8 +462,8 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
         TilingTaskCreated ztjCreated = TilingTaskCreated.builder().task(created).build();
 
         // first attempt
-        reset(httpApiTilesDownloader);
-        when(httpApiTilesDownloader.apply(any())).thenThrow(new RuntimeException());
+        reset(tilesDownloader);
+        when(tilesDownloader.apply(any())).thenThrow(new RuntimeException());
         subject.accept(ztjCreated);
         var eventsCaptor = ArgumentCaptor.forClass(List.class);
         verify(eventProducer, times(2)).accept(eventsCaptor.capture());
@@ -471,8 +471,8 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
         var taskFailed = (TilingTaskFailed) events.get(1).get(0);
 
         // second attempt
-        reset(httpApiTilesDownloader);
-        when(httpApiTilesDownloader.apply(any()))
+        reset(tilesDownloader);
+        when(tilesDownloader.apply(any()))
                 .thenAnswer(
                         i ->
                                 Paths.get(this.getClass().getClassLoader().getResource("mockData/lyon").toURI())
