@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ZoneDetectionTypeMapper {
   public ZoneDetectionType toRest(ZoneDetectionJob.DetectionType domain) {
+    if (domain == null) return null;
     switch (domain) {
       case HUMAN -> {
         return ZoneDetectionType.HUMAN;
