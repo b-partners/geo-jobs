@@ -8,7 +8,7 @@ import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.repository.model.ParcelContent;
-import app.bpartners.geojobs.service.tiling.TilesDownloader;
+import app.bpartners.geojobs.service.tiling.HttpApiTilesDownloader;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
@@ -20,9 +20,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-public class TilesDownloaderIT extends FacadeIT {
+public class HttpApiTilesDownloaderIT extends FacadeIT {
   @MockBean BucketComponent bucketComponent;
-  @Autowired TilesDownloader tilesDownloader;
+  @Autowired
+  HttpApiTilesDownloader httpApiTilesDownloader;
   @Autowired ObjectMapper om;
 
   private ParcelContent a_parcel_from_lyon(int zoom)
@@ -75,7 +76,7 @@ public class TilesDownloaderIT extends FacadeIT {
   public void download_tiles_ok() throws IOException {
     var zoom = 20;
 
-    var tilesDir = tilesDownloader.apply(a_parcel_from_lyon(zoom));
+    var tilesDir = httpApiTilesDownloader.apply(a_parcel_from_lyon(zoom));
 
     assertEquals(
         4,

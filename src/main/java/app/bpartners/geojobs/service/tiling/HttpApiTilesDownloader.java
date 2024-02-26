@@ -28,13 +28,13 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
-public class TilesDownloader implements Function<ParcelContent, File> {
+public class HttpApiTilesDownloader implements Function<ParcelContent, File> {
   private final ObjectMapper om;
   private final String tilesDownloaderApiURl;
   private final FileWriter fileWriter;
   private final FileUnzipper fileUnzipper;
 
-  public TilesDownloader(
+  public HttpApiTilesDownloader(
       @Value("${tiles.downloader.api.url}") String tilesDownloaderApiURl,
       ObjectMapper om,
       FileWriter fileWriter,
