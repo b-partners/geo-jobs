@@ -1,10 +1,11 @@
 package app.bpartners.geojobs.service.tiling.downloader;
 
-import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.service.tiling.TilesDownloader;
 import java.io.File;
+import java.nio.file.Path;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -12,6 +13,8 @@ import org.springframework.stereotype.Component;
 public class MockedTilesDownloader implements TilesDownloader {
   @Override
   public File apply(ParcelContent parcelContent) {
-    throw new NotImplementedException("TODO: return mocked unzipped file");
+    Path mockFilePath =
+        Path.of(new ClassPathResource("mock/tile-downloader-mock-result").getPath());
+    return mockFilePath.toFile();
   }
 }
