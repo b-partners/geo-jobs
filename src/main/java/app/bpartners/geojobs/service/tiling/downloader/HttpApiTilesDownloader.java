@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.service.tiling;
+package app.bpartners.geojobs.service.tiling.downloader;
 
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static java.nio.file.Files.createTempFile;
@@ -7,6 +7,7 @@ import app.bpartners.geojobs.file.FileUnzipper;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.model.ParcelContent;
+import app.bpartners.geojobs.service.tiling.TilesDownloader;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
@@ -28,7 +29,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
-public class HttpApiTilesDownloader implements Function<ParcelContent, File> {
+public class HttpApiTilesDownloader implements TilesDownloader {
   private final ObjectMapper om;
   private final String tilesDownloaderApiURl;
   private final FileWriter fileWriter;

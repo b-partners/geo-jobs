@@ -39,7 +39,7 @@ import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
-import app.bpartners.geojobs.service.tiling.HttpApiTilesDownloader;
+import app.bpartners.geojobs.service.tiling.downloader.HttpApiTilesDownloader;
 import app.bpartners.geojobs.service.tiling.TilingTaskStatusService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

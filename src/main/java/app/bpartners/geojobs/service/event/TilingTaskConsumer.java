@@ -10,7 +10,7 @@ import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
-import app.bpartners.geojobs.service.tiling.HttpApiTilesDownloader;
+import app.bpartners.geojobs.service.tiling.downloader.HttpApiTilesDownloader;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;

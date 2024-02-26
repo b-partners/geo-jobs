@@ -8,7 +8,7 @@ import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.repository.model.ParcelContent;
-import app.bpartners.geojobs.service.tiling.HttpApiTilesDownloader;
+import app.bpartners.geojobs.service.tiling.downloader.HttpApiTilesDownloader;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
