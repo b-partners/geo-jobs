@@ -22,8 +22,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 
 public class TilesDownloaderIT extends FacadeIT {
   @MockBean BucketComponent bucketComponent;
-  @Autowired
-  TilesDownloader httpApiTilesDownloader;
+  @Autowired TilesDownloader httpApiTilesDownloader;
   @Autowired ObjectMapper om;
 
   private ParcelContent a_parcel_from_lyon(int zoom)
