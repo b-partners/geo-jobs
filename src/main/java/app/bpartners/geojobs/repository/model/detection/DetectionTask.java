@@ -27,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @Getter
 @Setter
 @ToString
