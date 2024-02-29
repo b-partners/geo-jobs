@@ -1,7 +1,10 @@
 app_name: geo-jobs
+aurora_auto_pause: 'true'
 aurora_max_capacity: 32
 aurora_min_capacity: 16
-cli_version: 11.7.1
+aurora_scale_point: 60
+aurora_sleep: 900
+cli_version: 11.9.0
 custom_java_deps: poja-custom-java-deps.txt
 custom_java_env_vars: poja-custom-java-env-vars.txt
 custom_java_repositories: poja-custom-java-repositories.txt
@@ -12,6 +15,8 @@ jacoco_min_coverage: '0.7'
 java_facade_it: FacadeIT
 package_full_name: app.bpartners.geojobs
 region: eu-west-3
+reserved_concurrent_executions_nb: 250
+sentry_dsn: 'null'
 ses_source: lou@bpartners.app
 ssm_sg_id: /bpartners-imagery/sg/id
 ssm_subnet1_id: /bpartners-imagery/private/subnet1/id
@@ -23,6 +28,7 @@ with_database: postgres
 with_gen_clients: 'true'
 with_own_vpc: 'true'
 with_publish_to_npm_registry: 'false'
+with_sentry: 'false'
 with_snapstart: 'true'
 with_swagger_ui: 'false'
 worker_batch: 1

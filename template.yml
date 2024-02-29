@@ -10,8 +10,6 @@ Globals:
     Architectures:
       - x86_64
     Timeout: 600
-    EventInvokeConfig:
-      MaximumRetryAttempts: 0
     AutoPublishAlias: live
     SnapStart:
       ApplyOn: PublishedVersions
@@ -68,6 +66,7 @@ Resources:
             Method: ANY
             RestApiId:
               Ref: FrontalServerlessRestApi
+      ReservedConcurrentExecutions: 250
 
   WorkerFunction:
     Type: AWS::Serverless::Function
