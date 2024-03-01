@@ -10,6 +10,8 @@ Globals:
     Architectures:
       - x86_64
     Timeout: 600
+    EventInvokeConfig:
+      MaximumRetryAttempts: 0
     AutoPublishAlias: live
     SnapStart:
       ApplyOn: PublishedVersions
@@ -36,7 +38,8 @@ Globals:
         ANNOTATOR_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/annotator/url}}'
         ANNOTATOR_API_KEY: !Sub '{{resolve:ssm:/geo-jobs/${Env}/annotator/api/key}}'
         ANNOTATOR_GEOJOBS_USER_INFO: !Sub '{{resolve:ssm:/geo-jobs/${Env}/annotator/user/info}}'
-
+        TILES_DOWNLOADER_MOCK_ACTIVATED: !Sub '{{resolve:ssm:/geo-jobs/${Env}/tiles-downloader-activated}}'
+        OBJECTS_DETECTOR_MOCK_ACTIVATED: !Sub '{{resolve:ssm:/geo-jobs/${Env}/objects-detector-activated}}'
         
 
 Parameters:
