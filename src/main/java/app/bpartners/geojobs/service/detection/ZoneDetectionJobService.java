@@ -18,6 +18,7 @@ import app.bpartners.geojobs.repository.TilingTaskRepository;
 import app.bpartners.geojobs.repository.model.detection.*;
 import app.bpartners.geojobs.repository.model.detection.DetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
+import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -70,9 +71,14 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
   @Transactional
   public void saveZDJFromZTJ(ZoneTilingJob job) {
     var zoneDetectionJob = detectionMapper.fromTilingJob(job);
-    var detectionJobId = zoneDetectionJob.getId();
     var tilingTasks = tilingTaskRepository.findAllByJobId(job.getId());
 
+    var savedZDJ = saveWithTasks(tilingTasks, zoneDetectionJob);
+    repository.save(savedZDJ.toBuilder().id(randomUUID().toString()).detectionType(HUMAN).build());
+  }
+
+  public ZoneDetectionJob saveWithTasks(
+      List<TilingTask> tilingTasks, ZoneDetectionJob zoneDetectionJob) {
     List<DetectionTask> detectionTasks =
         tilingTasks.stream()
             .map(
@@ -81,7 +87,7 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
                   var generatedTaskId = randomUUID().toString();
                   DetectionTask detectionTask = new DetectionTask();
                   detectionTask.setId(generatedTaskId);
-                  detectionTask.setJobId(detectionJobId);
+                  detectionTask.setJobId(zoneDetectionJob.getId());
                   detectionTask.setParcels(parcels);
                   detectionTask.setStatusHistory(
                       List.of(
@@ -96,8 +102,7 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
                 })
             .toList();
 
-    var savedZDJ = super.create(zoneDetectionJob, detectionTasks);
-    repository.save(savedZDJ.toBuilder().id(randomUUID().toString()).detectionType(HUMAN).build());
+    return super.create(zoneDetectionJob, detectionTasks);
   }
 
   public ZoneDetectionJob save(ZoneDetectionJob job) {

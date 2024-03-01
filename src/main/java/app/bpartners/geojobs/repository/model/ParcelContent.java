@@ -10,12 +10,7 @@ import java.net.URL;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -25,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 @AllArgsConstructor
 @Getter
 @Setter
+@EqualsAndHashCode
 @JsonIgnoreProperties({"tilingStatus", "firstTile"})
 public class ParcelContent implements Serializable {
   private String id;

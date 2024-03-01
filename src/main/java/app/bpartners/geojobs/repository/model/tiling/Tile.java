@@ -3,12 +3,7 @@ package app.bpartners.geojobs.repository.model.tiling;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import java.io.Serializable;
 import java.time.Instant;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 
 @Builder
 @ToString
@@ -16,6 +11,7 @@ import lombok.ToString;
 @AllArgsConstructor
 @Getter
 @Setter
+@EqualsAndHashCode
 public class Tile implements Serializable {
   private String id;
   private Instant creationDatetime;
