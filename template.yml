@@ -32,6 +32,9 @@ Globals:
         DATABASE_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/db/url}}'
         DATABASE_USERNAME: !Sub '{{resolve:ssm:/geo-jobs/${Env}/db/user/username}}'
         DATABASE_PASSWORD: !Sub '{{resolve:ssm:/geo-jobs/${Env}/db/user/password}}'
+        
+        SENTRY_DSN: !Sub '{{resolve:ssm:/geo-jobs/sentry/dsn}}'
+        SENTRY_ENVIRONMENT: !Ref Env
         TILES_DOWNLOADER_API_URL: https://p36gjgisjpttscydepu3suuupi0wkute.lambda-url.eu-west-3.on.aws
         TILE_DETECTION_API_URL: https://3gl56b3gqs6cfynuzqkte2rthm0onaoh.lambda-url.eu-west-3.on.aws
         ADMIN_API_KEY: !Sub '{{resolve:ssm:/bpartners-geo-jobs/${Env}/admin/api-key}}'
@@ -40,6 +43,7 @@ Globals:
         ANNOTATOR_GEOJOBS_USER_INFO: !Sub '{{resolve:ssm:/geo-jobs/${Env}/annotator/user/info}}'
         TILES_DOWNLOADER_MOCK_ACTIVATED: !Sub '{{resolve:ssm:/geo-jobs/${Env}/tiles-downloader-activated}}'
         OBJECTS_DETECTOR_MOCK_ACTIVATED: !Sub '{{resolve:ssm:/geo-jobs/${Env}/objects-detector-activated}}'
+    
         
 
 Parameters:

@@ -195,9 +195,12 @@ dependencies {
     testImplementation 'org.testcontainers:junit-jupiter:1.19.1'
     testImplementation 'org.junit-pioneer:junit-pioneer:2.2.0'
 
-implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    implementation 'io.sentry:sentry-spring-boot-starter-jakarta:7.4.0'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
 implementation 'app.bpartners:geo-jobs-gen:latest'
 implementation 'org.thymeleaf:thymeleaf:3.1.1.RELEASE'
 implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.1'
+    
 
 }

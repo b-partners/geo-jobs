@@ -27,7 +27,7 @@ with_database: postgres
 with_gen_clients: 'true'
 with_own_vpc: 'true'
 with_publish_to_npm_registry: 'false'
-with_sentry: 'false'
+with_sentry: 'true'
 with_snapstart: 'true'
 with_swagger_ui: 'false'
 worker_batch: 1
