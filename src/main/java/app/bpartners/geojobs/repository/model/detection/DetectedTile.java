@@ -42,4 +42,7 @@ public class DetectedTile implements Serializable {
   private String parcelId;
 
   private String jobId;
+
+  @Column(name = "human_detection_job_id")
+  private String humanDetectionJobId;
 }

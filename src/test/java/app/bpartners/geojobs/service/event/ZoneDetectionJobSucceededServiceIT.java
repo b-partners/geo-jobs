@@ -1,25 +1,25 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.conf.EnvConf.ANNOTATOR_USER_ID_FOR_GEOJOBS;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 import static app.bpartners.geojobs.service.annotator.ExtractorIT.PARCEL_MOCK_ID;
 import static app.bpartners.geojobs.service.event.TilingTaskCreatedServiceIT.MOCK_FEATURE_AS_STRING;
 import static java.util.UUID.randomUUID;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Mockito.mock;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import app.bpartners.gen.annotator.endpoint.rest.api.AnnotatedJobsApi;
+import app.bpartners.gen.annotator.endpoint.rest.client.ApiException;
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneDetectionJobSucceeded;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.DetectedTileRepository;
+import app.bpartners.geojobs.repository.HumanDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.detection.*;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
+import app.bpartners.geojobs.service.annotator.AnnotationService;
 import app.bpartners.geojobs.service.annotator.LabelExtractor;
 import app.bpartners.geojobs.service.annotator.TaskExtractor;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -38,11 +38,13 @@ public class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
   @Autowired private ObjectMapper om;
   @MockBean DetectedTileRepository detectedTileRepositoryMock;
   @MockBean DetectableObjectConfigurationRepository objectConfigurationRepositoryMock;
-  AnnotatedJobsApi annotatorApiClientMock = mock(AnnotatedJobsApi.class);
+  @MockBean AnnotationService annotationServiceMock;
   @MockBean BucketComponent selfBucketComponentMock;
   @MockBean TaskExtractor taskExtractorMock;
   @MockBean LabelExtractor labelExtractorMock;
+  @MockBean HumanDetectionJobRepository humanDetectionJobRepositoryMock;
   public static final String MOCK_JOB_ID = "mock_job_id";
+  public static final String MOCK_HUMAN_JOB_ID = "mock_human_job_id";
   private Feature feature;
   private final List<DetectedTile> detectedTiles =
       List.of(
@@ -85,7 +87,7 @@ public class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
   }
 
   private static List<DetectableObjectType> detectedObjectType(String id, DetectableType type) {
-    return List.of(DetectableObjectType.builder().objectId(id).detectableType(type).build());
+    return List.of(DetectableObjectType.builder().id(id).objectId(id).detectableType(type).build());
   }
 
   void setupDetectedTileRepository(DetectedTileRepository detectedTileRepository) {
@@ -110,14 +112,16 @@ public class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
     setupDetectedTileRepository(detectedTileRepositoryMock);
     setUpObjectConfigurationRepository(objectConfigurationRepositoryMock);
     feature = om.readValue(MOCK_FEATURE_AS_STRING, Feature.class);
-    subject = subject.annotatedJobsApi(annotatorApiClientMock);
   }
 
   @Test
-  void accept_event_ok() {
-    subject.accept(ZoneDetectionJobSucceeded.builder().jobId(MOCK_JOB_ID).build());
+  void accept_event_ok() throws ApiException {
+    subject.accept(
+        ZoneDetectionJobSucceeded.builder()
+            .succeededJobId(MOCK_JOB_ID)
+            .humanZdjId(MOCK_HUMAN_JOB_ID)
+            .build());
 
-    verify(taskExtractorMock, times(1)).apply(detectedTiles, ANNOTATOR_USER_ID_FOR_GEOJOBS);
-    verify(labelExtractorMock, times(1)).extractLabelsFromTasks(anyList());
+    verify(annotationServiceMock, times(1)).sendAnnotationsFromHumanZDJ(any());
   }
 }

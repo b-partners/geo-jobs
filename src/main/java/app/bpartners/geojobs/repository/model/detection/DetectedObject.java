@@ -33,7 +33,6 @@ import org.hibernate.annotations.JdbcTypeCode;
 @ToString
 @Slf4j
 public class DetectedObject implements Serializable {
-  public static final double DEFAULT_MIN_CONFIDENCE = 0.8;
   @Id private String id;
 
   @JdbcTypeCode(JSON)

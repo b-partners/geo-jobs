@@ -6,6 +6,7 @@ import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneDetectionJobStatusChanged;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneDetectionJobSucceeded;
 import app.bpartners.geojobs.model.exception.ApiException;
+import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.service.detection.DetectionFinishedMailer;
 import java.util.List;
@@ -21,6 +22,7 @@ public class ZoneDetectionJobStatusChangedService
     implements Consumer<ZoneDetectionJobStatusChanged> {
   private final DetectionFinishedMailer mailer;
   private final EventProducer eventProducer;
+  private final ZoneDetectionJobRepository zoneDetectionJobRepository;
 
   @Override
   public void accept(ZoneDetectionJobStatusChanged event) {
@@ -59,7 +61,24 @@ public class ZoneDetectionJobStatusChangedService
 
   private String handleFinishedJob(ZoneDetectionJob zdj) {
     mailer.accept(zdj);
-    eventProducer.accept(List.of(ZoneDetectionJobSucceeded.builder().jobId(zdj.getId()).build()));
+
+    var detectionJobs =
+        zoneDetectionJobRepository.findAllByZoneTilingJob_Id(zdj.getZoneTilingJob().getId());
+    var humanZDJ =
+        detectionJobs.stream()
+            .filter(
+                zoneDetectionJob ->
+                    zoneDetectionJob.getDetectionType() == ZoneDetectionJob.DetectionType.HUMAN)
+            .findAny();
+    humanZDJ.ifPresent(
+        humanJob ->
+            eventProducer.accept(
+                List.of(
+                    ZoneDetectionJobSucceeded.builder()
+                        .succeededJobId(zdj.getId())
+                        .humanZdjId(humanJob.getId())
+                        .build())));
+
     return "Finished, mail sent, ztj=" + zdj;
   }
 }

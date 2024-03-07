@@ -17,6 +17,9 @@ import lombok.ToString;
 @EqualsAndHashCode
 @ToString
 public class ZoneDetectionJobSucceeded {
-  @JsonProperty("jobId")
-  private String jobId;
+  @JsonProperty("succeededJobId")
+  private String succeededJobId;
+
+  @JsonProperty("humanZdjId")
+  private String humanZdjId;
 }
