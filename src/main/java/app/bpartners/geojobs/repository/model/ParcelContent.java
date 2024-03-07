@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.repository.model;
 
+import static org.hibernate.type.SqlTypes.JSON;
+
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.job.model.Status;
@@ -12,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.annotations.JdbcTypeCode;
 
 @Slf4j
 @Builder
@@ -28,7 +31,9 @@ public class ParcelContent implements Serializable {
   private URL geoServerUrl;
   private GeoServerParameter geoServerParameter;
 
-  @Builder.Default private List<Tile> tiles = new ArrayList<>();
+  @Builder.Default
+  @JdbcTypeCode(JSON)
+  private List<Tile> tiles = new ArrayList<>();
 
   // TODO !!! VERY BAD ! Statuses must be separated from Parcel
   private Status tilingStatus;
