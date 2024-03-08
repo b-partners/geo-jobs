@@ -39,6 +39,9 @@ public class AnnotationService {
 
   public void sendAnnotationsFromHumanZDJ(HumanDetectionJob humanDetectionJob)
       throws app.bpartners.gen.annotator.endpoint.rest.client.ApiException {
+    log.warn(
+        "Sending annotations to bpartners-annotation-api with annotationId={}",
+        humanDetectionJob.getAnnotationJobId());
     String crupdateAnnotatedJobFolderPath = "/"; // TODO: can this be null ?
     List<DetectedTile> inDoubtTiles = humanDetectionJob.getInDoubtTiles();
     String annotationJobId = humanDetectionJob.getAnnotationJobId();

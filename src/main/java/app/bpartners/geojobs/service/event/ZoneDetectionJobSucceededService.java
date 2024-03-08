@@ -6,7 +6,6 @@ import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.gen.HumanDetectionJobCreatedFailed;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneDetectionJobSucceeded;
 import app.bpartners.geojobs.repository.HumanDetectionJobRepository;
-import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.detection.DetectedTile;
 import app.bpartners.geojobs.repository.model.detection.HumanDetectionJob;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
@@ -22,7 +21,6 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJobSucceeded> {
   private final AnnotationService annotationService;
-  private final ZoneDetectionJobRepository jobRepository;
   private final DetectionTaskService detectionTaskService;
   private final HumanDetectionJobRepository humanDetectionJobRepository;
   private final EventProducer eventProducer;
@@ -45,6 +43,9 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
                 .inDoubtTiles(inDoubtTiles)
                 .zoneDetectionJobId(humanZDJId)
                 .build());
+    log.warn(
+        "HumanDetectionJob {} created, sending annotations to bpartners-annotation-api",
+        savedHumanDetectionJob);
     try {
       annotationService.sendAnnotationsFromHumanZDJ(savedHumanDetectionJob);
     } catch (Exception e) {
@@ -55,7 +56,7 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
                   .attemptNb(1)
                   .build()));
     }
-    log.info(
+    log.warn(
         "HumanDetectionJob {} created, annotations sent to bpartners-annotation-api",
         savedHumanDetectionJob);
   }
