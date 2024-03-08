@@ -25,12 +25,10 @@ import jakarta.persistence.PersistenceContext;
 import java.time.Instant;
 import java.util.List;
 import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-@Slf4j
 public abstract class JobService<T extends Task, J extends Job> {
   protected final JpaRepository<J, String> repository;
   protected final JobStatusRepository jobStatusRepository;
@@ -134,9 +132,7 @@ public abstract class JobService<T extends Task, J extends Job> {
     }
 
     var saved = repository.save(job);
-    log.info("[DEBUG] Tasks to save {}", tasks);
-    List<T> savedTasks = taskRepository.saveAll(tasks);
-    log.info("[DEBUG] Saved Tasks {}", savedTasks);
+    taskRepository.saveAll(tasks);
     return saved;
   }
 

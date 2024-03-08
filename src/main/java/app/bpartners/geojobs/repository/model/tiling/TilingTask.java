@@ -12,7 +12,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.List;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 
@@ -24,7 +27,6 @@ import lombok.extern.slf4j.Slf4j;
 @Getter
 @Setter
 @JsonIgnoreProperties({"status"})
-@EqualsAndHashCode(callSuper = false)
 public class TilingTask extends Task implements Serializable {
   @ManyToMany(cascade = ALL, fetch = LAZY)
   @JoinTable(
