@@ -15,6 +15,7 @@ import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @AllArgsConstructor
@@ -26,6 +27,7 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
   private final EventProducer eventProducer;
 
   @Override
+  @Transactional
   public void accept(ZoneDetectionJobSucceeded event) {
     log.warn("ZoneDetectionJobSucceeded {}, now handling human detection job", event);
     String humanZDJId = event.getHumanZdjId();

@@ -12,7 +12,8 @@ import org.springframework.stereotype.Service;
 @Service
 @AllArgsConstructor
 @Slf4j
-public class HumanDetectionJobFailedService implements Consumer<HumanDetectionJobCreatedFailed> {
+public class HumanDetectionJobCreatedFailedService
+    implements Consumer<HumanDetectionJobCreatedFailed> {
   private final AnnotationService annotationService;
   private final EventProducer eventProducer;
   private static final int MAX_ATTEMPT = 3;
