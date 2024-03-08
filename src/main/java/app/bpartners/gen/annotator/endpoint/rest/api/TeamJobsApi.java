@@ -16,6 +16,7 @@ import app.bpartners.gen.annotator.endpoint.rest.OpenapiGenerated;
 import app.bpartners.gen.annotator.endpoint.rest.client.ApiClient;
 import app.bpartners.gen.annotator.endpoint.rest.client.ApiException;
 import app.bpartners.gen.annotator.endpoint.rest.client.ApiResponse;
+import app.bpartners.gen.annotator.endpoint.rest.client.Pair;
 import app.bpartners.gen.annotator.endpoint.rest.model.Job;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -26,7 +27,9 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.StringJoiner;
 import java.util.function.Consumer;
 
 @OpenapiGenerated
@@ -154,11 +157,16 @@ public class TeamJobsApi {
    * get started team jobs
    *
    * @param teamId (required)
+   * @param page (optional)
+   * @param pageSize (optional)
+   * @param name filters jobs by name (optional)
    * @return List&lt;Job&gt;
    * @throws ApiException if fails to make API call
    */
-  public List<Job> getAnnotatorReadableTeamJobs(String teamId) throws ApiException {
-    ApiResponse<List<Job>> localVarResponse = getAnnotatorReadableTeamJobsWithHttpInfo(teamId);
+  public List<Job> getAnnotatorReadableTeamJobs(
+      String teamId, Integer page, Integer pageSize, String name) throws ApiException {
+    ApiResponse<List<Job>> localVarResponse =
+        getAnnotatorReadableTeamJobsWithHttpInfo(teamId, page, pageSize, name);
     return localVarResponse.getData();
   }
 
@@ -166,12 +174,16 @@ public class TeamJobsApi {
    * get started team jobs
    *
    * @param teamId (required)
+   * @param page (optional)
+   * @param pageSize (optional)
+   * @param name filters jobs by name (optional)
    * @return ApiResponse&lt;List&lt;Job&gt;&gt;
    * @throws ApiException if fails to make API call
    */
-  public ApiResponse<List<Job>> getAnnotatorReadableTeamJobsWithHttpInfo(String teamId)
-      throws ApiException {
-    HttpRequest.Builder localVarRequestBuilder = getAnnotatorReadableTeamJobsRequestBuilder(teamId);
+  public ApiResponse<List<Job>> getAnnotatorReadableTeamJobsWithHttpInfo(
+      String teamId, Integer page, Integer pageSize, String name) throws ApiException {
+    HttpRequest.Builder localVarRequestBuilder =
+        getAnnotatorReadableTeamJobsRequestBuilder(teamId, page, pageSize, name);
     try {
       HttpResponse<InputStream> localVarResponse =
           memberVarHttpClient.send(
@@ -195,8 +207,8 @@ public class TeamJobsApi {
     }
   }
 
-  private HttpRequest.Builder getAnnotatorReadableTeamJobsRequestBuilder(String teamId)
-      throws ApiException {
+  private HttpRequest.Builder getAnnotatorReadableTeamJobsRequestBuilder(
+      String teamId, Integer page, Integer pageSize, String name) throws ApiException {
     // verify the required parameter 'teamId' is set
     if (teamId == null) {
       throw new ApiException(
@@ -208,7 +220,19 @@ public class TeamJobsApi {
     String localVarPath =
         "/teams/{teamId}/jobs".replace("{teamId}", ApiClient.urlEncode(teamId.toString()));
 
-    localVarRequestBuilder.uri(URI.create(memberVarBaseUri + localVarPath));
+    List<Pair> localVarQueryParams = new ArrayList<>();
+    localVarQueryParams.addAll(ApiClient.parameterToPairs("page", page));
+    localVarQueryParams.addAll(ApiClient.parameterToPairs("pageSize", pageSize));
+    localVarQueryParams.addAll(ApiClient.parameterToPairs("name", name));
+
+    if (!localVarQueryParams.isEmpty()) {
+      StringJoiner queryJoiner = new StringJoiner("&");
+      localVarQueryParams.forEach(p -> queryJoiner.add(p.getName() + '=' + p.getValue()));
+      localVarRequestBuilder.uri(
+          URI.create(memberVarBaseUri + localVarPath + '?' + queryJoiner.toString()));
+    } else {
+      localVarRequestBuilder.uri(URI.create(memberVarBaseUri + localVarPath));
+    }
 
     localVarRequestBuilder.header("Accept", "application/json");
 

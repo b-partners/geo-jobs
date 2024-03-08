@@ -22,6 +22,7 @@ import app.bpartners.gen.annotator.endpoint.rest.model.CrupdateJob;
 import app.bpartners.gen.annotator.endpoint.rest.model.ExportFormat;
 import app.bpartners.gen.annotator.endpoint.rest.model.Job;
 import app.bpartners.gen.annotator.endpoint.rest.model.JobStatus;
+import app.bpartners.gen.annotator.endpoint.rest.model.JobType;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
@@ -316,11 +317,16 @@ public class JobsApi {
    * @param page (optional)
    * @param pageSize (optional)
    * @param status (optional)
+   * @param name filters jobs by name (optional)
+   * @param type filters by job type (optional)
    * @return List&lt;Job&gt;
    * @throws ApiException if fails to make API call
    */
-  public List<Job> getJobs(Integer page, Integer pageSize, JobStatus status) throws ApiException {
-    ApiResponse<List<Job>> localVarResponse = getJobsWithHttpInfo(page, pageSize, status);
+  public List<Job> getJobs(
+      Integer page, Integer pageSize, JobStatus status, String name, JobType type)
+      throws ApiException {
+    ApiResponse<List<Job>> localVarResponse =
+        getJobsWithHttpInfo(page, pageSize, status, name, type);
     return localVarResponse.getData();
   }
 
@@ -330,12 +336,16 @@ public class JobsApi {
    * @param page (optional)
    * @param pageSize (optional)
    * @param status (optional)
+   * @param name filters jobs by name (optional)
+   * @param type filters by job type (optional)
    * @return ApiResponse&lt;List&lt;Job&gt;&gt;
    * @throws ApiException if fails to make API call
    */
   public ApiResponse<List<Job>> getJobsWithHttpInfo(
-      Integer page, Integer pageSize, JobStatus status) throws ApiException {
-    HttpRequest.Builder localVarRequestBuilder = getJobsRequestBuilder(page, pageSize, status);
+      Integer page, Integer pageSize, JobStatus status, String name, JobType type)
+      throws ApiException {
+    HttpRequest.Builder localVarRequestBuilder =
+        getJobsRequestBuilder(page, pageSize, status, name, type);
     try {
       HttpResponse<InputStream> localVarResponse =
           memberVarHttpClient.send(
@@ -360,7 +370,8 @@ public class JobsApi {
   }
 
   private HttpRequest.Builder getJobsRequestBuilder(
-      Integer page, Integer pageSize, JobStatus status) throws ApiException {
+      Integer page, Integer pageSize, JobStatus status, String name, JobType type)
+      throws ApiException {
 
     HttpRequest.Builder localVarRequestBuilder = HttpRequest.newBuilder();
 
@@ -370,6 +381,8 @@ public class JobsApi {
     localVarQueryParams.addAll(ApiClient.parameterToPairs("page", page));
     localVarQueryParams.addAll(ApiClient.parameterToPairs("pageSize", pageSize));
     localVarQueryParams.addAll(ApiClient.parameterToPairs("status", status));
+    localVarQueryParams.addAll(ApiClient.parameterToPairs("name", name));
+    localVarQueryParams.addAll(ApiClient.parameterToPairs("type", type));
 
     if (!localVarQueryParams.isEmpty()) {
       StringJoiner queryJoiner = new StringJoiner("&");
