@@ -27,6 +27,7 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
 
   @Override
   public void accept(ZoneDetectionJobSucceeded event) {
+    log.warn("ZoneDetectionJobSucceeded {}, now handling human detection job", event);
     String humanZDJId = event.getHumanZdjId();
     String succeededJobId = event.getSucceededJobId();
     String humanDetectionJobId = randomUUID().toString();
