@@ -42,7 +42,7 @@ public class AnnotationService {
     log.warn(
         "[DEBUG] Sending annotations to bpartners-annotation-api with annotationId={}",
         humanDetectionJob.getAnnotationJobId());
-    String crupdateAnnotatedJobFolderPath = "/"; // TODO: can this be null ?
+    String crupdateAnnotatedJobFolderPath = null;
     List<DetectedTile> inDoubtTiles = humanDetectionJob.getInDoubtTiles();
     String annotationJobId = humanDetectionJob.getAnnotationJobId();
     List<AnnotatedTask> annotatedTasks =
