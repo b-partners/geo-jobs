@@ -7,10 +7,12 @@ import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @AllArgsConstructor
 @Service
+@Slf4j
 public class TilingTaskSucceededService implements Consumer<TilingTaskSucceeded> {
 
   private final TilingTaskRepository taskRepository;
@@ -19,7 +21,8 @@ public class TilingTaskSucceededService implements Consumer<TilingTaskSucceeded>
   @Override
   public void accept(TilingTaskSucceeded tilingTaskSucceeded) {
     var task = tilingTaskSucceeded.getTask();
-    taskRepository.save(task);
+    TilingTask savedTask = taskRepository.save(task);
+    log.info("[DEBUG] Saved Tile {}", savedTask.getParcel().getParcelContent().getFirstTile());
     taskStatusService.succeed(task);
   }
 }
