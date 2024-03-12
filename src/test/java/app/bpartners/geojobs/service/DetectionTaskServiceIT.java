@@ -12,13 +12,11 @@ import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.detection.*;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.detection.DetectionTaskService;
-import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 
 public class DetectionTaskServiceIT extends FacadeIT {
   public static final String JOB_ID = "jobId";
@@ -27,6 +25,33 @@ public class DetectionTaskServiceIT extends FacadeIT {
   @Autowired private DetectedTileRepository detectedTileRepository;
   @Autowired private DetectableObjectConfigurationRepository objectConfigurationRepository;
   @Autowired private DetectionTaskRepository detectionTaskRepository;
+  private static final double CONFIDENCE = 0.67;
+
+  private static DetectedTile detectedTile(double confidence) {
+    return DetectedTile.builder()
+        .id("detectedTileId")
+        .jobId(JOB_ID)
+        .parcelId("parcelId")
+        .detectedObjects(
+            List.of(
+                DetectedObject.builder()
+                    .id("detectedObjectId")
+                    .computedConfidence(confidence)
+                    .detectedTileId("detectedTileId")
+                    .feature(new Feature().id("featureId"))
+                    .detectedObjectTypes(
+                        List.of(
+                            DetectableObjectType.builder()
+                                .id("detectableObjectTypeId")
+                                .detectableType(DetectableType.ROOF)
+                                .objectId("detectedObjectId")
+                                .build()))
+                    .build()))
+        .bucketPath("dummyPath")
+        .creationDatetime(null)
+        .tile(new Tile())
+        .build();
+  }
 
   @BeforeEach
   void setUp() {
@@ -36,30 +61,7 @@ public class DetectionTaskServiceIT extends FacadeIT {
             .id("detectionTaskId")
             .parcels(List.of(Parcel.builder().id("parcelId").build()))
             .build());
-    detectedTileRepository.save(
-        DetectedTile.builder()
-            .id("detectedTileId")
-            .jobId(JOB_ID)
-            .parcelId("parcelId")
-            .detectedObjects(
-                List.of(
-                    DetectedObject.builder()
-                        .id("detectedObjectId")
-                        .computedConfidence(Math.random())
-                        .detectedTileId("detectedTileId")
-                        .feature(new Feature().id("featureId"))
-                        .detectedObjectTypes(
-                            List.of(
-                                DetectableObjectType.builder()
-                                    .id("detectableObjectTypeId")
-                                    .detectableType(DetectableType.ROOF)
-                                    .objectId("detectedObjectId")
-                                    .build()))
-                        .build()))
-            .bucketPath("dummyPath")
-            .creationDatetime(Instant.now())
-            .tile(new Tile())
-            .build());
+    detectedTileRepository.save(detectedTile(CONFIDENCE));
     objectConfigurationRepository.save(
         DetectableObjectConfiguration.builder()
             .id("detectableObjectConfigurationId")
@@ -78,12 +80,11 @@ public class DetectionTaskServiceIT extends FacadeIT {
   }
 
   @Test
-  @Transactional
   void read_in_doubt_tiles() {
-    List<DetectedTile> expected = detectedTileRepository.findAllByJobId(JOB_ID);
+    List<DetectedTile> expected = List.of(detectedTile(CONFIDENCE));
 
     List<DetectedTile> actual = subject.findInDoubtTilesByJobId(JOB_ID);
 
-    assertEquals(expected, actual);
+    assertEquals(expected, actual.stream().peek(tile -> tile.setCreationDatetime(null)).toList());
   }
 }

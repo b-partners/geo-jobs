@@ -7,6 +7,7 @@ import app.bpartners.geojobs.repository.model.detection.DetectedTile;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @AllArgsConstructor
@@ -14,6 +15,7 @@ public class DetectionTaskService {
   private final DetectedTileRepository detectedTileRepository;
   private final DetectableObjectConfigurationRepository objectConfigurationRepository;
 
+  @Transactional
   public List<DetectedTile> findInDoubtTilesByJobId(String jobId) {
     List<DetectedTile> detectedTiles = detectedTileRepository.findAllByJobId(jobId);
     List<DetectableObjectConfiguration> detectableObjectConfigurations =
