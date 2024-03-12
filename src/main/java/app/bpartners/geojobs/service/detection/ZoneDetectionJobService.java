@@ -21,10 +21,12 @@ import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetectionJob> {
   private final DetectionMapper detectionMapper;
@@ -84,6 +86,7 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
             .map(
                 tilingTask -> {
                   var parcels = tilingTask.getParcels();
+                  log.info("[DEBUG] TilingTask Parcels {}", parcels);
                   var generatedTaskId = randomUUID().toString();
                   DetectionTask detectionTask = new DetectionTask();
                   detectionTask.setId(generatedTaskId);
@@ -98,6 +101,7 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
                               .taskId(generatedTaskId)
                               .build()));
                   detectionTask.setSubmissionInstant(now());
+                  log.info("[DEBUG] DetectionTask Parcels {}", detectionTask.getParcels());
                   return detectionTask;
                 })
             .toList();
