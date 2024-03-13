@@ -1,5 +1,5 @@
-TILES_DOWNLOADER_API_URL: https://p36gjgisjpttscydepu3suuupi0wkute.lambda-url.eu-west-3.on.aws
-TILE_DETECTION_API_URL: https://3gl56b3gqs6cfynuzqkte2rthm0onaoh.lambda-url.eu-west-3.on.aws
+TILES_DOWNLOADER_API_URL: https://tile-downloader.azurewebsites.net/api
+TILE_DETECTION_API_URL: https://tile-detector-api.azurewebsites.net/api
 ADMIN_API_KEY: !Sub '{{resolve:ssm:/bpartners-geo-jobs/${Env}/admin/api-key}}'
 ANNOTATOR_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/annotator/url}}'
 ANNOTATOR_API_KEY: !Sub '{{resolve:ssm:/geo-jobs/${Env}/annotator/api/key}}'
