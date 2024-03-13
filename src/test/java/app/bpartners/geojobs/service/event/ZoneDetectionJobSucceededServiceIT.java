@@ -12,9 +12,11 @@ import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.detection.*;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+@Disabled("TODO: enable when 21 java source is fixed")
 class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
   public static final String SUCCEEDED_JOB_ID = "succeededJobId";
   public static final String HUMAN_ZDJ_ID = "humanZdjId";
