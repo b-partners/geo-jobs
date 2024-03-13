@@ -29,10 +29,10 @@ public class DetectionTaskServiceIT extends FacadeIT {
   @Autowired private DetectionTaskRepository detectionTaskRepository;
   private static final double CONFIDENCE = 0.67;
 
-  private static DetectedTile detectedTile(double confidence) {
+  public static DetectedTile detectedTile(String jobId, double confidence) {
     return DetectedTile.builder()
         .id("detectedTileId")
-        .jobId(JOB_ID)
+        .jobId(jobId)
         .parcelId("parcelId")
         .detectedObjects(
             List.of(
@@ -63,7 +63,7 @@ public class DetectionTaskServiceIT extends FacadeIT {
             .id("detectionTaskId")
             .parcels(List.of(Parcel.builder().id("parcelId").build()))
             .build());
-    detectedTileRepository.save(detectedTile(CONFIDENCE));
+    detectedTileRepository.save(detectedTile(JOB_ID, CONFIDENCE));
     objectConfigurationRepository.save(
         DetectableObjectConfiguration.builder()
             .id("detectableObjectConfigurationId")
@@ -83,7 +83,7 @@ public class DetectionTaskServiceIT extends FacadeIT {
 
   @Test
   void read_in_doubt_tiles() {
-    List<DetectedTile> expected = List.of(detectedTile(CONFIDENCE));
+    List<DetectedTile> expected = List.of(detectedTile(JOB_ID, CONFIDENCE));
 
     List<DetectedTile> actual = subject.findInDoubtTilesByJobId(JOB_ID);
 

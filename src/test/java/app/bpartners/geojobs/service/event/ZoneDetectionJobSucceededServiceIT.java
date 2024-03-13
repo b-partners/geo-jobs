@@ -1,127 +1,63 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
-import static app.bpartners.geojobs.service.annotator.ExtractorIT.PARCEL_MOCK_ID;
-import static app.bpartners.geojobs.service.event.TilingTaskCreatedServiceIT.MOCK_FEATURE_AS_STRING;
-import static java.util.UUID.randomUUID;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static app.bpartners.geojobs.service.DetectionTaskServiceIT.detectedTile;
+import static org.junit.jupiter.api.Assertions.*;
 
-import app.bpartners.gen.annotator.endpoint.rest.client.ApiException;
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneDetectionJobSucceeded;
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
-import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.DetectedTileRepository;
 import app.bpartners.geojobs.repository.HumanDetectionJobRepository;
+import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.detection.*;
-import app.bpartners.geojobs.repository.model.tiling.Tile;
-import app.bpartners.geojobs.service.annotator.AnnotationService;
-import app.bpartners.geojobs.service.annotator.LabelExtractor;
-import app.bpartners.geojobs.service.annotator.TaskExtractor;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.time.Instant;
 import java.util.List;
-import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 
-public class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
-  public static final String LAYER_20_10_1_PNG = "layer/20/10/1.png";
+class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
+  public static final String SUCCEEDED_JOB_ID = "succeededJobId";
+  public static final String HUMAN_ZDJ_ID = "humanZdjId";
   @Autowired ZoneDetectionJobSucceededService subject;
-  @Autowired private ObjectMapper om;
-  @MockBean DetectedTileRepository detectedTileRepositoryMock;
-  @MockBean DetectableObjectConfigurationRepository objectConfigurationRepositoryMock;
-  @MockBean AnnotationService annotationServiceMock;
-  @MockBean BucketComponent selfBucketComponentMock;
-  @MockBean TaskExtractor taskExtractorMock;
-  @MockBean LabelExtractor labelExtractorMock;
-  @MockBean HumanDetectionJobRepository humanDetectionJobRepositoryMock;
-  public static final String MOCK_JOB_ID = "mock_job_id";
-  public static final String MOCK_HUMAN_JOB_ID = "mock_human_job_id";
-  private Feature feature;
-  private final List<DetectedTile> detectedTiles =
-      List.of(
-          detectedTile(
-              List.of(
-                  inDoubtDetectedObject(TREE),
-                  inDoubtDetectedObject(TREE),
-                  inDoubtDetectedObject(ROOF),
-                  inDoubtDetectedObject(ROOF),
-                  inDoubtDetectedObject(SOLAR_PANEL))),
-          detectedTile(
-              List.of(
-                  inDoubtDetectedObject(TREE),
-                  inDoubtDetectedObject(TREE),
-                  inDoubtDetectedObject(ROOF),
-                  inDoubtDetectedObject(ROOF),
-                  inDoubtDetectedObject(SOLAR_PANEL))));
-
-  public static DetectedTile detectedTile(List<DetectedObject> detectedObjects) {
-    return DetectedTile.builder()
-        .id(randomUUID().toString())
-        .bucketPath(LAYER_20_10_1_PNG)
-        .tile(Tile.builder().build())
-        .jobId(MOCK_JOB_ID)
-        .parcelId(PARCEL_MOCK_ID)
-        .creationDatetime(Instant.now())
-        .detectedObjects(detectedObjects)
-        .build();
-  }
-
-  @SneakyThrows
-  DetectedObject inDoubtDetectedObject(DetectableType type) {
-    String id = randomUUID().toString();
-    return DetectedObject.builder()
-        .id(id)
-        .detectedObjectTypes(detectedObjectType(id, type))
-        .feature(feature)
-        .computedConfidence(0.75)
-        .build();
-  }
-
-  private static List<DetectableObjectType> detectedObjectType(String id, DetectableType type) {
-    return List.of(DetectableObjectType.builder().id(id).objectId(id).detectableType(type).build());
-  }
-
-  void setupDetectedTileRepository(DetectedTileRepository detectedTileRepository) {
-    when(detectedTileRepository.findAllByJobId(MOCK_JOB_ID)).thenReturn(detectedTiles);
-  }
-
-  void setUpObjectConfigurationRepository(
-      DetectableObjectConfigurationRepository objectConfigurationRepositoryMock) {
-    when(objectConfigurationRepositoryMock.findAllByDetectionJobId(MOCK_JOB_ID))
-        .thenReturn(
-            List.of(
-                DetectableObjectConfiguration.builder().objectType(ROOF).confidence(0.8).build(),
-                DetectableObjectConfiguration.builder().objectType(TREE).confidence(0.8).build(),
-                DetectableObjectConfiguration.builder()
-                    .objectType(SOLAR_PANEL)
-                    .confidence(0.8)
-                    .build()));
-  }
+  @Autowired private ZoneDetectionJobRepository jobRepository;
+  @Autowired private DetectedTileRepository detectedTileRepository;
+  @Autowired private DetectableObjectConfigurationRepository objectConfigurationRepository;
+  @Autowired private HumanDetectionJobRepository humanDetectionJobRepository;
 
   @BeforeEach
-  void setup() throws JsonProcessingException {
-    setupDetectedTileRepository(detectedTileRepositoryMock);
-    setUpObjectConfigurationRepository(objectConfigurationRepositoryMock);
-    feature = om.readValue(MOCK_FEATURE_AS_STRING, Feature.class);
+  void setUp() {
+    jobRepository.save(
+        ZoneDetectionJob.builder()
+            .id(SUCCEEDED_JOB_ID)
+            .detectionType(ZoneDetectionJob.DetectionType.MACHINE)
+            .build());
+    jobRepository.save(
+        ZoneDetectionJob.builder()
+            .id(HUMAN_ZDJ_ID)
+            .detectionType(ZoneDetectionJob.DetectionType.HUMAN)
+            .build());
+
+    detectedTileRepository.saveAll(
+        List.of(detectedTile(SUCCEEDED_JOB_ID, 0.8), detectedTile(SUCCEEDED_JOB_ID, 0.5)));
+    objectConfigurationRepository.save(
+        DetectableObjectConfiguration.builder()
+            .id("detectableObjectConfigurationId")
+            .confidence(0.7)
+            .objectType(DetectableType.ROOF)
+            .detectionJobId(SUCCEEDED_JOB_ID)
+            .build());
   }
 
   @Test
-  void accept_event_ok() throws ApiException {
-    subject.accept(
-        ZoneDetectionJobSucceeded.builder()
-            .succeededJobId(MOCK_JOB_ID)
-            .humanZdjId(MOCK_HUMAN_JOB_ID)
-            .build());
+  void handle_human_detection_job() {
+    List<HumanDetectionJob> before = humanDetectionJobRepository.findAll();
 
-    verify(annotationServiceMock, times(1)).sendAnnotationsFromHumanZDJ(any());
+    subject.accept(new ZoneDetectionJobSucceeded(SUCCEEDED_JOB_ID, HUMAN_ZDJ_ID));
+
+    List<HumanDetectionJob> after = humanDetectionJobRepository.findAll();
+    assertTrue(before.isEmpty());
+    assertEquals(1, after.size());
+    assertEquals(HUMAN_ZDJ_ID, after.get(0).getZoneDetectionJobId());
+    assertFalse(after.get(0).getInDoubtTiles().isEmpty());
   }
 }
