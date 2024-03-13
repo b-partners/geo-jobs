@@ -111,6 +111,8 @@ public class ZoneDetectionJobSucceededServiceTest extends FacadeIT {
   void setup() throws JsonProcessingException {
     setupDetectedTileRepository(detectedTileRepositoryMock);
     setUpObjectConfigurationRepository(objectConfigurationRepositoryMock);
+    when(humanDetectionJobRepositoryMock.save(any()))
+        .thenReturn(HumanDetectionJob.builder().build());
     feature = om.readValue(MOCK_FEATURE_AS_STRING, Feature.class);
   }
 
