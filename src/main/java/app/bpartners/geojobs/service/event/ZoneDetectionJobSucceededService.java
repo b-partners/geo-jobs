@@ -5,6 +5,7 @@ import static java.util.UUID.randomUUID;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.gen.HumanDetectionJobCreatedFailed;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneDetectionJobSucceeded;
+import app.bpartners.geojobs.repository.DetectedTileRepository;
 import app.bpartners.geojobs.repository.HumanDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.detection.DetectedTile;
 import app.bpartners.geojobs.repository.model.detection.HumanDetectionJob;
@@ -23,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJobSucceeded> {
   private final AnnotationService annotationService;
   private final DetectionTaskService detectionTaskService;
+  private final DetectedTileRepository detectedTileRepository;
   private final HumanDetectionJobRepository humanDetectionJobRepository;
   private final EventProducer eventProducer;
 
@@ -46,6 +48,11 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
                 .inDoubtTiles(inDoubtTiles)
                 .zoneDetectionJobId(humanZDJId)
                 .build());
+
+    savedHumanDetectionJob.setInDoubtTiles(inDoubtTiles); // TODO: force in doubt tiles attribution
+    detectedTileRepository.saveAll(
+        inDoubtTiles); // TODO: force in doubt tiles association to human job detection
+
     log.warn(
         "HumanDetectionJob {} created, sending annotations to bpartners-annotation-api",
         savedHumanDetectionJob);
