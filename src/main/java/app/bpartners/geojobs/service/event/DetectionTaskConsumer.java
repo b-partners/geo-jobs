@@ -26,8 +26,12 @@ public class DetectionTaskConsumer implements Consumer<DetectionTask> {
     var detectedParcel = task.getParcel();
     var associatedTile = task.getTile();
     if (detectedParcel == null || associatedTile == null) {
-      log.info("ERROR: {} has any parcel and tile", task);
-      return;
+      throw new IllegalArgumentException(
+          "DetectionTask(id="
+              + task.getId()
+              + ", jobId="
+              + task.getJobId()
+              + ") does not have parcel or tile");
     }
     DetectionResponse response = objectsDetector.apply(task);
     DetectedTile detectedTile =
