@@ -55,6 +55,8 @@ public class SecurityConf {
                     .hasAuthority(ROLE_ADMIN.name())
                     .requestMatchers(GET, "/detectionJobs/*/detectedParcels")
                     .hasAuthority(ROLE_ADMIN.name())
+                    .requestMatchers(GET, "/detectionJobs/*/geojsonsUrl")
+                    .hasAuthority(ROLE_ADMIN.name())
                     .anyRequest()
                     .denyAll())
         .csrf(AbstractHttpConfigurer::disable)

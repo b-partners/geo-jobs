@@ -5,6 +5,7 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionTaskMapper
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMapper;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration;
 import app.bpartners.geojobs.endpoint.rest.model.DetectedParcel;
+import app.bpartners.geojobs.endpoint.rest.model.GeoJsonsUrl;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.model.BoundedPageSize;
 import app.bpartners.geojobs.model.PageFromOne;
@@ -64,5 +65,10 @@ public class ZoneDetectionController {
                 .toList();
     ZoneDetectionJob processedZDJ = service.fireTasks(jobId, configurations);
     return mapper.toRest(processedZDJ, detectableObjectConfigurations);
+  }
+
+  @GetMapping("/detectionJobs/{id}/geojsonsUrl")
+  public GeoJsonsUrl getZDJGeojsonsUrl(@PathVariable(value = "id") String detectionJobId) {
+    return service.getGeoJsonsUrl(detectionJobId);
   }
 }

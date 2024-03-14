@@ -164,12 +164,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  url:
-                    type: string
-                  status:
-                    $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/GeoJsonsUrl'
         '500':
           $ref: '#/components/responses/500'
   '/detectionJobs/{id}/process':
@@ -566,3 +561,10 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/Point2D'
+    GeoJsonsUrl:
+      type: object
+      properties:
+        url:
+          type: string
+        status:
+          $ref: "#/components/schemas/Status"

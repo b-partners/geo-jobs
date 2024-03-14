@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service.detection;
 
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static java.time.Instant.now;
@@ -9,9 +10,14 @@ import static java.util.UUID.randomUUID;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.gen.DetectionTaskCreated;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneDetectionJobStatusChanged;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
+import app.bpartners.geojobs.endpoint.rest.model.GeoJsonsUrl;
+import app.bpartners.geojobs.job.model.JobStatus;
+import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.job.service.JobService;
+import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.DetectionTaskRepository;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
@@ -32,7 +38,7 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
   private final DetectionMapper detectionMapper;
   private final DetectableObjectConfigurationRepository objectConfigurationRepository;
   private final TilingTaskRepository tilingTaskRepository;
-  ;
+  private final StatusMapper<JobStatus> statusMapper;
 
   public ZoneDetectionJobService(
       JpaRepository<ZoneDetectionJob, String> repository,
@@ -41,11 +47,37 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
       DetectionTaskRepository taskRepository,
       EventProducer eventProducer,
       DetectionMapper detectionMapper,
-      DetectableObjectConfigurationRepository objectConfigurationRepository) {
+      DetectableObjectConfigurationRepository objectConfigurationRepository,
+      StatusMapper<JobStatus> statusMapper) {
     super(repository, jobStatusRepository, taskRepository, eventProducer, ZoneDetectionJob.class);
     this.tilingTaskRepository = tilingTaskRepository;
     this.detectionMapper = detectionMapper;
     this.objectConfigurationRepository = objectConfigurationRepository;
+    this.statusMapper = statusMapper;
+  }
+
+  public GeoJsonsUrl getGeoJsonsUrl(String jobId) {
+    var optionalZoneDetectionJob = repository.findById(jobId);
+    if (optionalZoneDetectionJob.isEmpty()) {
+      throw new NotFoundException("ZoneDetectionJob(id=" + jobId + ") is not found");
+    }
+    var zoneDetectionJob = optionalZoneDetectionJob.get();
+    var jobStatus = zoneDetectionJob.getStatus();
+
+    return new GeoJsonsUrl()
+        .url(generateGeoJsonsUrl(jobStatus))
+        .status(statusMapper.statusConverter(jobStatus));
+  }
+
+  private String generateGeoJsonsUrl(JobStatus jobStatus) {
+    if (!jobStatus.getProgression().equals(FINISHED)
+        && !jobStatus.getHealth().equals(Status.HealthStatus.SUCCEEDED)) {
+      log.warn(
+          "Unable to generate geoJsons Url to unfinished succeeded job. Actual status is "
+              + jobStatus);
+      return null;
+    }
+    return "NotImplemented: finished human detection job without url";
   }
 
   @Transactional
