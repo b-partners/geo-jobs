@@ -5,6 +5,7 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionTaskMapper
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMapper;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration;
 import app.bpartners.geojobs.endpoint.rest.model.DetectedParcel;
+import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.model.BoundedPageSize;
 import app.bpartners.geojobs.model.PageFromOne;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
@@ -26,6 +27,7 @@ public class ZoneDetectionController {
   private final ZoneDetectionJobMapper mapper;
   private final DetectableObjectConfigurationMapper objectConfigurationMapper;
   private final DetectionTaskMapper taskMapper;
+  private final ZoneDetectionJobValidator jobValidator;
 
   @GetMapping("/detectionJobs/{id}/detectedParcels")
   public List<DetectedParcel> getZDJParcels(@PathVariable(name = "id") String detectionJobId) {
@@ -54,6 +56,7 @@ public class ZoneDetectionController {
   public app.bpartners.geojobs.endpoint.rest.model.ZoneDetectionJob processZDJ(
       @PathVariable("id") String jobId,
       @RequestBody List<DetectableObjectConfiguration> detectableObjectConfigurations) {
+    jobValidator.accept(jobId);
     List<app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration>
         configurations =
             detectableObjectConfigurations.stream()
