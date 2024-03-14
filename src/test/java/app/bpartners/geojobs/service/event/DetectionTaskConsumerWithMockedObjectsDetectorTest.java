@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service.event;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 
+import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.detection.DetectionTask;
@@ -20,7 +21,19 @@ class DetectionTaskConsumerWithMockedObjectsDetectorTest {
         new DetectionTask()
             .toBuilder()
                 .parcels(
-                    List.of(new Parcel().toBuilder().parcelContent(new ParcelContent()).build()))
+                    List.of(
+                        new Parcel()
+                            .toBuilder()
+                                .parcelContent(
+                                    ParcelContent.builder()
+                                        .tiles(
+                                            List.of(
+                                                Tile.builder()
+                                                    .coordinates(
+                                                        new TileCoordinates().z(20).x(0).y(0))
+                                                    .build()))
+                                        .build())
+                                .build()))
                 .build());
   }
 
