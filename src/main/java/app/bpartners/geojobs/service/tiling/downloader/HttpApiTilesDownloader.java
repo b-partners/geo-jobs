@@ -56,6 +56,7 @@ public class HttpApiTilesDownloader implements TilesDownloader {
     HttpEntity<MultiValueMap<String, HttpEntity<?>>> request = new HttpEntity<>(multipartBody);
     UriComponentsBuilder builder =
         UriComponentsBuilder.fromHttpUrl(tilesDownloaderApiURl)
+            .path("/geo-tiles")
             .queryParam("zoom_size", parcelContent.getFeature().getZoom());
 
     ResponseEntity<byte[]> responseEntity =
