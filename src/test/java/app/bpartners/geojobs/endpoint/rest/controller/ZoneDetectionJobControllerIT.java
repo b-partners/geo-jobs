@@ -1,7 +1,9 @@
 package app.bpartners.geojobs.endpoint.rest.controller;
 
 import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.ROOF;
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
 import static java.time.Instant.now;
@@ -17,6 +19,7 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMap
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.TaskStatus;
+import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.model.BoundedPageSize;
 import app.bpartners.geojobs.model.PageFromOne;
 import app.bpartners.geojobs.repository.DetectionTaskRepository;
@@ -42,6 +45,7 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
   public static final String JOB2_ID = "job2";
   @Autowired ZoneDetectionController subject;
   @Autowired ZoneDetectionJobRepository jobRepository;
+  @Autowired JobStatusRepository jobStatusRepository;
   @Autowired DetectionTaskRepository detectionTaskRepository;
   @Autowired ZoneDetectionJobMapper detectionJobMapper;
   @MockBean EventProducer eventProducer;
@@ -139,6 +143,42 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
   void tearDown() {
     jobRepository.deleteAll(someDetectionJobs());
     detectionTaskRepository.deleteAll(randomDetectionTasks(JOB1_ID));
+    jobRepository.deleteById("random_job_status2");
+  }
+
+  @Test
+  void read_zdj_geo_jobs_url() {
+    jobRepository.saveAll(List.of(aZDJ(JOB1_ID), aZDJ(JOB2_ID)));
+    jobStatusRepository.save(
+        JobStatus.builder()
+            .id("random_job_status2")
+            .jobId(JOB2_ID)
+            .jobType(DETECTION)
+            .progression(FINISHED)
+            .health(SUCCEEDED)
+            .build());
+
+    GeoJsonsUrl actual1 = subject.getZDJGeojsonsUrl(JOB1_ID);
+    GeoJsonsUrl actual2 = subject.getZDJGeojsonsUrl(JOB2_ID);
+
+    assertEquals(
+        new GeoJsonsUrl()
+            .url(null)
+            .status(
+                new Status()
+                    .progression(Status.ProgressionEnum.PENDING)
+                    .health(Status.HealthEnum.UNKNOWN)
+                    .creationDatetime(null)),
+        actual1.status(actual1.getStatus().creationDatetime(null)));
+    assertEquals(
+        new GeoJsonsUrl()
+            .url("NotImplemented: finished human detection job without url")
+            .status(
+                new Status()
+                    .progression(Status.ProgressionEnum.FINISHED)
+                    .health(Status.HealthEnum.SUCCEEDED)
+                    .creationDatetime(null)),
+        actual2.status(actual2.getStatus().creationDatetime(null)));
   }
 
   @Test
