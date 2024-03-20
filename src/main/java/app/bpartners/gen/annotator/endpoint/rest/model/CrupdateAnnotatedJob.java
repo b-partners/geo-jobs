@@ -12,7 +12,6 @@
 
 package app.bpartners.gen.annotator.endpoint.rest.model;
 
-import app.bpartners.gen.annotator.endpoint.rest.OpenapiGenerated;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -31,11 +30,15 @@ import java.util.Objects;
   CrupdateAnnotatedJob.JSON_PROPERTY_BUCKET_NAME,
   CrupdateAnnotatedJob.JSON_PROPERTY_FOLDER_PATH,
   CrupdateAnnotatedJob.JSON_PROPERTY_OWNER_EMAIL,
+  CrupdateAnnotatedJob.JSON_PROPERTY_IMAGES_HEIGHT,
+  CrupdateAnnotatedJob.JSON_PROPERTY_IMAGES_WIDTH,
   CrupdateAnnotatedJob.JSON_PROPERTY_STATUS,
   CrupdateAnnotatedJob.JSON_PROPERTY_TEAM_ID,
   CrupdateAnnotatedJob.JSON_PROPERTY_LABELS
 })
-@OpenapiGenerated
+@javax.annotation.processing.Generated(
+    value = "org.openapitools.codegen.languages.JavaClientCodegen",
+    date = "2024-03-20T11:16:20.230359+03:00[Indian/Antananarivo]")
 public class CrupdateAnnotatedJob implements Serializable {
   private static final long serialVersionUID = 1L;
 
@@ -59,6 +62,12 @@ public class CrupdateAnnotatedJob implements Serializable {
 
   public static final String JSON_PROPERTY_OWNER_EMAIL = "ownerEmail";
   private String ownerEmail;
+
+  public static final String JSON_PROPERTY_IMAGES_HEIGHT = "imagesHeight";
+  private Integer imagesHeight;
+
+  public static final String JSON_PROPERTY_IMAGES_WIDTH = "imagesWidth";
+  private Integer imagesWidth;
 
   public static final String JSON_PROPERTY_STATUS = "status";
   private JobStatus status;
@@ -245,6 +254,54 @@ public class CrupdateAnnotatedJob implements Serializable {
     this.ownerEmail = ownerEmail;
   }
 
+  public CrupdateAnnotatedJob imagesHeight(Integer imagesHeight) {
+    this.imagesHeight = imagesHeight;
+    return this;
+  }
+
+  /**
+   * Get imagesHeight
+   *
+   * @return imagesHeight
+   */
+  @javax.annotation.Nullable
+  @ApiModelProperty(value = "")
+  @JsonProperty(JSON_PROPERTY_IMAGES_HEIGHT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public Integer getImagesHeight() {
+    return imagesHeight;
+  }
+
+  @JsonProperty(JSON_PROPERTY_IMAGES_HEIGHT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setImagesHeight(Integer imagesHeight) {
+    this.imagesHeight = imagesHeight;
+  }
+
+  public CrupdateAnnotatedJob imagesWidth(Integer imagesWidth) {
+    this.imagesWidth = imagesWidth;
+    return this;
+  }
+
+  /**
+   * Get imagesWidth
+   *
+   * @return imagesWidth
+   */
+  @javax.annotation.Nullable
+  @ApiModelProperty(value = "")
+  @JsonProperty(JSON_PROPERTY_IMAGES_WIDTH)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public Integer getImagesWidth() {
+    return imagesWidth;
+  }
+
+  @JsonProperty(JSON_PROPERTY_IMAGES_WIDTH)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setImagesWidth(Integer imagesWidth) {
+    this.imagesWidth = imagesWidth;
+  }
+
   public CrupdateAnnotatedJob status(JobStatus status) {
     this.status = status;
     return this;
@@ -342,6 +399,8 @@ public class CrupdateAnnotatedJob implements Serializable {
         && Objects.equals(this.bucketName, crupdateAnnotatedJob.bucketName)
         && Objects.equals(this.folderPath, crupdateAnnotatedJob.folderPath)
         && Objects.equals(this.ownerEmail, crupdateAnnotatedJob.ownerEmail)
+        && Objects.equals(this.imagesHeight, crupdateAnnotatedJob.imagesHeight)
+        && Objects.equals(this.imagesWidth, crupdateAnnotatedJob.imagesWidth)
         && Objects.equals(this.status, crupdateAnnotatedJob.status)
         && Objects.equals(this.teamId, crupdateAnnotatedJob.teamId)
         && Objects.equals(this.labels, crupdateAnnotatedJob.labels);
@@ -350,7 +409,18 @@ public class CrupdateAnnotatedJob implements Serializable {
   @Override
   public int hashCode() {
     return Objects.hash(
-        annotatedTasks, type, id, name, bucketName, folderPath, ownerEmail, status, teamId, labels);
+        annotatedTasks,
+        type,
+        id,
+        name,
+        bucketName,
+        folderPath,
+        ownerEmail,
+        imagesHeight,
+        imagesWidth,
+        status,
+        teamId,
+        labels);
   }
 
   @Override
@@ -364,6 +434,8 @@ public class CrupdateAnnotatedJob implements Serializable {
     sb.append("    bucketName: ").append(toIndentedString(bucketName)).append("\n");
     sb.append("    folderPath: ").append(toIndentedString(folderPath)).append("\n");
     sb.append("    ownerEmail: ").append(toIndentedString(ownerEmail)).append("\n");
+    sb.append("    imagesHeight: ").append(toIndentedString(imagesHeight)).append("\n");
+    sb.append("    imagesWidth: ").append(toIndentedString(imagesWidth)).append("\n");
     sb.append("    status: ").append(toIndentedString(status)).append("\n");
     sb.append("    teamId: ").append(toIndentedString(teamId)).append("\n");
     sb.append("    labels: ").append(toIndentedString(labels)).append("\n");
