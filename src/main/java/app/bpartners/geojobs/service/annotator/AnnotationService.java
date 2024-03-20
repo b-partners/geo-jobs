@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 public class AnnotationService {
+  public static final int DEFAULT_IMAGES_HEIGHT = 1024;
+  public static final int DEFAULT_IMAGES_WIDTH = 1024;
   private final AnnotatedJobsApi annotatedJobsApi;
   private final TaskExtractor taskExtractor;
   private final LabelExtractor labelExtractor;
@@ -62,6 +64,8 @@ public class AnnotationService {
             .status(TO_REVIEW)
             .type(REVIEWING)
             .annotatedTasks(annotatedTasks)
+            .imagesHeight(DEFAULT_IMAGES_HEIGHT)
+            .imagesWidth(DEFAULT_IMAGES_WIDTH)
             .teamId(annotatorUserInfoGetter.getTeamId()));
   }
 }
