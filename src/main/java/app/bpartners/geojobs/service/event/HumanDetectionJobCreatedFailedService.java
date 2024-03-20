@@ -35,6 +35,12 @@ public class HumanDetectionJobCreatedFailedService
                   .humanDetectionJob(humanZdj)
                   .attemptNb(attemptNb + 1)
                   .build()));
+      log.error(
+          "Processing humanDetectionJob(id={}) failed with attemptNb = {} and exception message ="
+              + " {}",
+          humanZdj.getId(),
+          attemptNb,
+          e.getMessage());
     }
   }
 }
