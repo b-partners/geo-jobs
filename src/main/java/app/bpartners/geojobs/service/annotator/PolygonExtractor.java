@@ -6,16 +6,24 @@ import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.function.Function;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 @Component
+@Slf4j
 public class PolygonExtractor implements Function<DetectedObject, Polygon> {
   @Override
   public Polygon apply(DetectedObject detectedObject) {
     return detectedObject.getFeature().getGeometry().getCoordinates().stream()
         .map(
-            multipolygonCoordinates ->
-                new Polygon().points(extractMultipolygonPoints(multipolygonCoordinates).get(0)))
+            multipolygonCoordinates -> {
+              log.warn(
+                  "[DEBUG] PolygonExtractor multipolygonCoordinates {}", multipolygonCoordinates);
+              Polygon polygon =
+                  new Polygon().points(extractMultipolygonPoints(multipolygonCoordinates).get(0));
+              log.warn("[DEBUG] PolygonExtractor polygon {}", polygon);
+              return polygon;
+            })
         .toList()
         .get(0);
   }

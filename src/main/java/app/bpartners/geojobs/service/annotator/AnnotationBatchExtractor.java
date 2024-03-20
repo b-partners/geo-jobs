@@ -8,15 +8,18 @@ import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.detection.DetectedTile;
 import java.time.Instant;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 @Component
 @AllArgsConstructor
+@Slf4j
 public class AnnotationBatchExtractor {
   private final LabelExtractor labelExtractor;
   private final PolygonExtractor polygonExtractor;
 
   public AnnotationBatch apply(DetectedTile detectedTile, String annotatorId, String taskId) {
+    log.warn("[DEBUG] AnnotationBatchExtractor {}", detectedTile);
     return new AnnotationBatch()
         .id(randomUUID().toString())
         .creationDatetime(Instant.now())
@@ -28,6 +31,7 @@ public class AnnotationBatchExtractor {
 
   private Annotation extractAnnotation(
       DetectedObject detectedObject, String annotatorId, String taskId) {
+    log.warn("[DEBUG] AnnotationBatchExtractor {}", detectedObject);
     return new Annotation()
         .id(randomUUID().toString())
         .userId(annotatorId)

@@ -11,16 +11,21 @@ import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import java.util.HashSet;
 import java.util.List;
 import java.util.function.Function;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 @Component
+@Slf4j
 public class LabelExtractor implements Function<DetectableType, Label> {
   @Override
   public Label apply(DetectableType detectableType) {
-    return new Label()
-        .id(randomUUID().toString())
-        .color(getColorFromDetectedType(detectableType))
-        .name(detectableType.name());
+    Label label =
+        new Label()
+            .id(randomUUID().toString())
+            .color(getColorFromDetectedType(detectableType))
+            .name(detectableType.name());
+    log.warn("[DEBUG] DetectableType {} and LabelExtractor Label {}", detectableType, label);
+    return label;
   }
 
   private static String getColorFromDetectedType(DetectableType detectableType) {
@@ -35,6 +40,7 @@ public class LabelExtractor implements Function<DetectableType, Label> {
   }
 
   public List<Label> extractLabelsFromTasks(List<AnnotatedTask> annotatedTasks) {
+    log.warn("[DEBUG] LabelExtractor {}", annotatedTasks);
     return annotatedTasks.stream()
         .map(AnnotatedTask::getAnnotationBatch)
         .map(AnnotationBatch::getAnnotations)

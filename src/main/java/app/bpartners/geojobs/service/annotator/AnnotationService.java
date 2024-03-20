@@ -2,12 +2,14 @@ package app.bpartners.geojobs.service.annotator;
 
 import static app.bpartners.gen.annotator.endpoint.rest.model.JobStatus.TO_REVIEW;
 import static app.bpartners.gen.annotator.endpoint.rest.model.JobType.REVIEWING;
+import static java.util.UUID.randomUUID;
 
 import app.bpartners.gen.annotator.endpoint.rest.api.AnnotatedJobsApi;
 import app.bpartners.gen.annotator.endpoint.rest.model.AnnotatedTask;
 import app.bpartners.gen.annotator.endpoint.rest.model.CrupdateAnnotatedJob;
 import app.bpartners.gen.annotator.endpoint.rest.model.Label;
 import app.bpartners.geojobs.file.BucketComponent;
+import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.DetectedTile;
 import app.bpartners.geojobs.repository.model.detection.HumanDetectionJob;
 import java.time.Instant;
@@ -49,7 +51,15 @@ public class AnnotationService {
     String annotationJobId = humanDetectionJob.getAnnotationJobId();
     List<AnnotatedTask> annotatedTasks =
         taskExtractor.apply(inDoubtTiles, annotatorUserInfoGetter.getUserId());
-    List<Label> labels = labelExtractor.extractLabelsFromTasks(annotatedTasks);
+    List<Label> extractLabelsFromTasks = labelExtractor.extractLabelsFromTasks(annotatedTasks);
+    List<Label> labels =
+        extractLabelsFromTasks.isEmpty() // TODO: remove after debug
+            ? List.of(
+                new Label()
+                    .id(randomUUID().toString())
+                    .name(DetectableType.ROOF.name())
+                    .color("#DFFF00"))
+            : extractLabelsFromTasks;
     Instant now = Instant.now();
 
     annotatedJobsApi.crupdateAnnotatedJob(
