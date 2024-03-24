@@ -8,24 +8,29 @@ import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import java.net.URL;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 @Component
+@Slf4j
 public class FeatureMapper {
 
   public Parcel toDomain(
       String parcelId, Feature rest, URL geoServerUrl, GeoServerParameter GeoServerParameter) {
-    return Parcel.builder()
-        .id(parcelId)
-        .parcelContent(
-            ParcelContent.builder()
-                .id(rest.getId())
-                .feature(rest)
-                .geoServerUrl(geoServerUrl)
-                .geoServerParameter(GeoServerParameter)
-                .creationDatetime(now())
-                .build())
-        .build();
+    Parcel extractedParcel =
+        Parcel.builder()
+            .id(parcelId)
+            .parcelContent(
+                ParcelContent.builder()
+                    .id(rest.getId())
+                    .feature(rest)
+                    .geoServerUrl(geoServerUrl)
+                    .geoServerParameter(GeoServerParameter)
+                    .creationDatetime(now())
+                    .build())
+            .build();
+    log.warn("[DEBUG] FeatureMapper for extracted TilingTask : {}", extractedParcel);
+    return extractedParcel;
   }
 
   public Feature from(TilingTask domainTask) {

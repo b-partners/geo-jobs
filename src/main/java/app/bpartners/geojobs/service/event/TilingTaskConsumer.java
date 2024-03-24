@@ -18,10 +18,12 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 @AllArgsConstructor
 @Component
+@Slf4j
 public class TilingTaskConsumer implements Consumer<TilingTask> {
   private final TilesDownloader tilesDownloader;
   private final BucketComponent bucketComponent;
@@ -39,7 +41,9 @@ public class TilingTaskConsumer implements Consumer<TilingTask> {
   }
 
   private void setParcelTiles(File tilesDir, ParcelContent parcelContent, String bucketKey) {
-    parcelContent.setTiles(getParcelTiles(new ArrayList<>(), tilesDir, bucketKey));
+    List<Tile> extractedTiles = getParcelTiles(new ArrayList<>(), tilesDir, bucketKey);
+    log.warn("[DEBUG] TilingTaskConsumer extracted : {}", extractedTiles);
+    parcelContent.setTiles(extractedTiles);
   }
 
   private List<Tile> getParcelTiles(List<Tile> accumulator, File tilesFile, String bucketKey) {
@@ -64,13 +68,14 @@ public class TilingTaskConsumer implements Consumer<TilingTask> {
                 + segments[segments.length - 1];
       }
 
-      enrichedAccumulator.add(
+      Tile extractedTile =
           Tile.builder()
               .id(randomUUID().toString())
               .creationDatetime(now())
               .coordinates(new TileCoordinates().x(x).y(y).z(z))
               .bucketPath(bucketKey + filePath)
-              .build());
+              .build();
+      enrichedAccumulator.add(extractedTile);
 
       return enrichedAccumulator;
     }
