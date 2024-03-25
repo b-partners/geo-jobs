@@ -9,6 +9,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
+
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
@@ -28,7 +30,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 @NoArgsConstructor
 @ToString
 @JsonIgnoreProperties({"taskId"})
-public class Status {
+public class Status implements Serializable {
   @Id
   @GeneratedValue(strategy = IDENTITY)
   private String id;
