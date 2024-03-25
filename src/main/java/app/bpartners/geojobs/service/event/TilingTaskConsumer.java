@@ -42,7 +42,7 @@ public class TilingTaskConsumer implements Consumer<TilingTask> {
 
   private void setParcelTiles(File tilesDir, ParcelContent parcelContent, String bucketKey) {
     List<Tile> extractedTiles = getParcelTiles(new ArrayList<>(), tilesDir, bucketKey);
-    log.warn("[DEBUG] TilingTaskConsumer extracted : {}", extractedTiles);
+    log.error("[DEBUG] TilingTaskConsumer extracted : {}", extractedTiles);
     parcelContent.setTiles(extractedTiles);
   }
 

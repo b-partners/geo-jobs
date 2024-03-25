@@ -24,7 +24,7 @@ public class LabelExtractor implements Function<DetectableType, Label> {
             .id(randomUUID().toString())
             .color(getColorFromDetectedType(detectableType))
             .name(detectableType.name());
-    log.warn("[DEBUG] DetectableType {} and LabelExtractor Label {}", detectableType, label);
+    log.error("[DEBUG] DetectableType {} and LabelExtractor Label {}", detectableType, label);
     return label;
   }
 
@@ -40,7 +40,7 @@ public class LabelExtractor implements Function<DetectableType, Label> {
   }
 
   public List<Label> extractLabelsFromTasks(List<AnnotatedTask> annotatedTasks) {
-    log.warn("[DEBUG] LabelExtractor {}", annotatedTasks);
+    log.error("[DEBUG] LabelExtractor {}", annotatedTasks);
     return annotatedTasks.stream()
         .map(AnnotatedTask::getAnnotationBatch)
         .map(AnnotationBatch::getAnnotations)

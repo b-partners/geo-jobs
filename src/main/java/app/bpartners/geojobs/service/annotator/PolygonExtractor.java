@@ -21,7 +21,7 @@ public class PolygonExtractor implements Function<DetectedObject, Polygon> {
                   "[DEBUG] PolygonExtractor multipolygonCoordinates {}", multipolygonCoordinates);
               Polygon polygon =
                   new Polygon().points(extractMultipolygonPoints(multipolygonCoordinates).get(0));
-              log.warn("[DEBUG] PolygonExtractor polygon {}", polygon);
+              log.error("[DEBUG] PolygonExtractor polygon {}", polygon);
               return polygon;
             })
         .toList()

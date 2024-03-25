@@ -29,7 +29,7 @@ public class FeatureMapper {
                     .creationDatetime(now())
                     .build())
             .build();
-    log.warn("[DEBUG] FeatureMapper for extracted TilingTask : {}", extractedParcel);
+    log.error("[DEBUG] FeatureMapper for extracted TilingTask : {}", extractedParcel);
     return extractedParcel;
   }
 
