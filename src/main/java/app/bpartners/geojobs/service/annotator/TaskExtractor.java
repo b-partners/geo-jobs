@@ -18,6 +18,7 @@ public class TaskExtractor implements BiFunction<List<DetectedTile>, String, Lis
     String taskId = randomUUID().toString();
     return new AnnotatedTask()
         .id(taskId)
+        .annotatorId(annotatorId)
         .filename(detectedTile.getBucketPath())
         .annotationBatch(annotationBatchExtractor.apply(detectedTile, annotatorId, taskId));
   }
