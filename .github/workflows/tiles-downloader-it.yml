@@ -1,0 +1,16 @@
+name: Tiles Downloader IT
+
+on:
+  schedule:
+    - cron: '0 8 * * 1-5'
+    - cron: '0 17 * * 1-5'
+
+jobs:
+  test-tiles-downloader-api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4.1.1
+
+      - name: Test api
+        run: sh ./.shell/check-tiles-downloader.sh ${{ vars.TILES_DOWNLOADER_API_URL }} ${{ vars.ZOOM_SIZE }} ${{ vars.SERVER }} ${{ vars.GEOJSON }}
