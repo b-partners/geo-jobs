@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.ZipFile;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.FileSystemResource;
@@ -24,11 +25,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
 @ConditionalOnProperty(value = "tiles.downloader.mock.activated", havingValue = "false")
+@Slf4j
 public class HttpApiTilesDownloader implements TilesDownloader {
   private final ObjectMapper om;
   private final String tilesDownloaderApiURl;
@@ -59,9 +62,12 @@ public class HttpApiTilesDownloader implements TilesDownloader {
             .path("/geo-tiles")
             .queryParam("zoom_size", parcelContent.getFeature().getZoom());
 
-    ResponseEntity<byte[]> responseEntity =
-        restTemplate.postForEntity(builder.toUriString(), request, byte[].class);
-
+    ResponseEntity<byte[]> responseEntity;
+    try {
+      responseEntity = restTemplate.postForEntity(builder.toUriString(), request, byte[].class);
+    } catch (RestClientException e) {
+      throw new ApiException(SERVER_EXCEPTION, "[DEBUG] TilesDownloader " + e.getMessage());
+    }
     if (responseEntity.getStatusCode().value() == 200) {
       try {
         var zip = fileWriter.apply(responseEntity.getBody(), null);
