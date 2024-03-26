@@ -11,12 +11,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 import java.io.Serializable;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Objects;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -42,11 +39,18 @@ public class Status implements Serializable {
   @JdbcTypeCode(NAMED_ENUM)
   private HealthStatus health;
 
-  @CreationTimestamp private Instant creationDatetime;
+  @CreationTimestamp
+  @Getter(AccessLevel.NONE)
+  private Instant creationDatetime;
+
   private String message;
 
+  public Instant getCreationDatetime() {
+    return creationDatetime.truncatedTo(ChronoUnit.MILLIS);
+  }
+
   public Status to(Status newStatus) {
-    if (newStatus.creationDatetime.isBefore(creationDatetime)) {
+    if (newStatus.getCreationDatetime().isBefore(getCreationDatetime())) {
       return this;
     }
 
@@ -112,12 +116,12 @@ public class Status implements Serializable {
     // but with different id to still be equal
     return progression == status.progression
         && health == status.health
-        && Objects.equals(creationDatetime, status.creationDatetime)
+        && Objects.equals(getCreationDatetime(), status.getCreationDatetime())
         && Objects.equals(message, status.message);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(progression, health, creationDatetime, message);
+    return Objects.hash(progression, health, getCreationDatetime(), message);
   }
 }

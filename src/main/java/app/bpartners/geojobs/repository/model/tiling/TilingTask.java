@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 @Getter
 @Setter
 @JsonIgnoreProperties({"status"})
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(callSuper = true)
 public class TilingTask extends Task implements Serializable {
   @ManyToMany(cascade = ALL, fetch = LAZY)
   @JoinTable(
@@ -58,5 +58,17 @@ public class TilingTask extends Task implements Serializable {
           chosenParcel.getId());
     }
     return chosenParcel;
+  }
+
+  public TilingTask duplicate(
+      String taskId, String jobId, String parcelId, String parcelContentId) {
+    return TilingTask.builder()
+        .id(taskId)
+        .jobId(jobId)
+        .parcels(
+            parcels.stream().map(parcel -> parcel.duplicate(parcelId, parcelContentId)).toList())
+        .statusHistory(this.getStatusHistory())
+        .submissionInstant(this.getSubmissionInstant())
+        .build();
   }
 }

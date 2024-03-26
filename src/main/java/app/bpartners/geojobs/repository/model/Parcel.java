@@ -10,7 +10,7 @@ import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.JdbcTypeCode;
 
 @Entity
-@Getter
+@Data
 @SuperBuilder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
@@ -21,4 +21,11 @@ public class Parcel implements Serializable {
 
   @JdbcTypeCode(JSON)
   private ParcelContent parcelContent;
+
+  public Parcel duplicate(String parcelId, String parcelContentId) {
+    return Parcel.builder()
+        .id(parcelId)
+        .parcelContent(parcelContent.duplicate(parcelContentId))
+        .build();
+  }
 }
