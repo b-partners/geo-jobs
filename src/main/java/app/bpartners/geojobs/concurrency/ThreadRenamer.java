@@ -1,8 +1,10 @@
 package app.bpartners.geojobs.concurrency;
 
+import app.bpartners.geojobs.PojaGenerated;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 
+@PojaGenerated
 @Slf4j
 public class ThreadRenamer {
   public static void renameWorkerThread(Thread thread) {
