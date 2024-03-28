@@ -92,7 +92,28 @@ paths:
                   $ref: "#/components/schemas/Parcel"
         '500':
           $ref: '#/components/responses/500'
-
+  '/tilingJobs/{id}/duplications':
+    post:
+      tags:
+        - Tiling
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: ZTJ identifier
+          schema:
+            type: string
+      operationId: duplicateTilingJob
+      description: Duplicate existing Zone Tiling Job with its Tiling Tasks
+      responses:
+        200:
+          description: Duplicated Tiling Job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ZoneTilingJob"
+        '500':
+          $ref: '#/components/responses/500'
   '/detectionJobs':
     get:
       tags:
