@@ -3,6 +3,7 @@ package app.bpartners.geojobs.endpoint.rest.controller;
 import static app.bpartners.geojobs.endpoint.rest.model.CreateZoneTilingJob.ZoomLevelEnum.TOWN;
 import static app.bpartners.geojobs.endpoint.rest.model.ZoneTilingJob.ZoomLevelEnum;
 import static java.time.Instant.now;
+import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -16,6 +17,8 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneTilingJobMapper
 import app.bpartners.geojobs.endpoint.rest.model.CreateZoneTilingJob;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
+import app.bpartners.geojobs.job.model.Status;
+import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.model.BoundedPageSize;
 import app.bpartners.geojobs.model.PageFromOne;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
@@ -112,11 +115,31 @@ class ZoneTilingJobControllerIT extends FacadeIT {
                         .zoneName("dummyZoneName")
                         .build());
         TilingTask taskWithoutParcel =
-                TilingTask.builder().id(TILING_TASK1_ID).jobId(JOB_ID).parcels(List.of()).build();
+                TilingTask.builder()
+                        .id(TILING_TASK1_ID)
+                        .jobId(JOB_ID)
+                        .parcels(List.of())
+                        .statusHistory(List.of(
+                                TaskStatus.builder()
+                                        .id("taskStatus1_id")
+                                        .taskId(TILING_TASK2_ID)
+                                        .progression(Status.ProgressionStatus.PENDING)
+                                        .health(Status.HealthStatus.UNKNOWN)
+                                        .creationDatetime(now())
+                                        .build()))
+                        .build();
         TilingTask taskWithParcel =
                 TilingTask.builder()
                         .id(TILING_TASK2_ID)
                         .jobId(JOB_ID)
+                        .statusHistory(List.of(
+                                TaskStatus.builder()
+                                        .id("taskStatus1_id")
+                                        .taskId(TILING_TASK2_ID)
+                                        .progression(Status.ProgressionStatus.PENDING)
+                                        .health(Status.HealthStatus.UNKNOWN)
+                                        .creationDatetime(now())
+                                        .build()))
                         .parcels(
                                 List.of(
                                         Parcel.builder()
@@ -142,18 +165,21 @@ class ZoneTilingJobControllerIT extends FacadeIT {
     @Test
     void duplicate_tiling_job_ok() {
         var ztj = zoneTilingJobRepository.getById(JOB_ID);
-        var existingTasks = tilingTaskRepository.findAllByJobId(ztj.getId());
+        var existingTasks = tilingTaskRepository.findAllByJobId(JOB_ID);
 
         var actual = controller.duplicateTilingJob(JOB_ID);
 
+        app.bpartners.geojobs.endpoint.rest.model.ZoneTilingJob expectedJob = tilingJobMapper.toRest(ztj.toBuilder().id(actual.getId()).build());
         var duplicatedTasks = tilingTaskRepository.findAllByJobId(actual.getId());
-        assertEquals(tilingJobMapper.toRest(ztj.toBuilder().id(actual.getId()).build()), actual);
+        assertEquals(expectedJob
+                .creationDatetime(actual.getCreationDatetime())
+                        .status(expectedJob.getStatus().creationDatetime(actual.getStatus().getCreationDatetime()))
+                , actual);
 
-
-    TODO: check why even contents are identical, test does not pass !
-    assertEquals(
-        existingTasks.stream().map(ZoneTilingJobServiceIT::ignoreGeneratedIds).toList(),
-        duplicatedTasks.stream().map(ZoneTilingJobServiceIT::ignoreGeneratedIds).toList());
+        //TODO: check why existing tasks does not have the same statuses
+        assertEquals(
+            existingTasks.stream().map(ZoneTilingJobControllerIT::ignoreGeneratedIds).toList(),
+            duplicatedTasks.stream().map(ZoneTilingJobControllerIT::ignoreGeneratedIds).toList());
     }*/
 
     private static TilingTask ignoreGeneratedIds(TilingTask task) {

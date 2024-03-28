@@ -46,7 +46,7 @@ public class Status implements Serializable {
   private String message;
 
   public Instant getCreationDatetime() {
-    return creationDatetime.truncatedTo(ChronoUnit.MILLIS);
+    return creationDatetime == null ? null : creationDatetime.truncatedTo(ChronoUnit.MILLIS);
   }
 
   public Status to(Status newStatus) {
