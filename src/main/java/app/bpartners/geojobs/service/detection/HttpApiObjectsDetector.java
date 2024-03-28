@@ -69,9 +69,13 @@ public class HttpApiObjectsDetector implements ObjectsDetector {
         restTemplate.postForEntity(builder.toUriString(), request, DetectionResponse.class);
 
     if (responseEntity.getStatusCode().value() == 200) {
-      log.info("Response data {}", responseEntity.getBody());
+      log.error("[DEBUG] Response data {}", responseEntity.getBody());
       return responseEntity.getBody();
     }
+    log.error(
+        "[DEBUG] Error when retrieving objects detector response, code={}, body={}",
+        responseEntity.getStatusCode().value(),
+        responseEntity.getBody());
     throw new ApiException(SERVER_EXCEPTION, "Server error");
   }
 }
