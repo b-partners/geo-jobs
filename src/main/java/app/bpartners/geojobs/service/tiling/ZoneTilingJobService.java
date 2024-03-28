@@ -29,12 +29,12 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
   }
 
   @Transactional
-  public ZoneTilingJob duplicate(ZoneTilingJob job) {
-    String jobId = job.getId();
+  public ZoneTilingJob duplicate(String jobId) {
     var optionalZoneTilingJob = repository.findById(jobId);
     if (optionalZoneTilingJob.isEmpty()) {
       throw new BadRequestException("ZoneTilingJob(id=" + jobId + ") not found");
     }
+    var job = optionalZoneTilingJob.get();
     var duplicatedJobId = randomUUID().toString();
     var tilingTasks = taskRepository.findAllByJobId(jobId);
     var duplicatedTasks =

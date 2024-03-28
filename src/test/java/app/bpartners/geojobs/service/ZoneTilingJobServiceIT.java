@@ -66,7 +66,7 @@ class ZoneTilingJobServiceIT extends FacadeIT {
     var ztj = zoneTilingJobRepository.getById(JOB_ID);
     var existingTasks = tilingTaskRepository.findAllByJobId(ztj.getId());
 
-    var actual = subject.duplicate(ztj);
+    var actual = subject.duplicate(JOB_ID);
 
     var duplicatedTasks = tilingTaskRepository.findAllByJobId(actual.getId());
     assertEquals(ztj.toBuilder().id(actual.getId()).build(), actual);
