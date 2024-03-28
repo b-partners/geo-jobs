@@ -16,7 +16,7 @@ public class HumanDetectionJobCreatedFailedService
     implements Consumer<HumanDetectionJobCreatedFailed> {
   private final AnnotationService annotationService;
   private final EventProducer eventProducer;
-  private static final int MAX_ATTEMPT = 3;
+  private static final int MAX_ATTEMPT = 50;
 
   @Override
   public void accept(HumanDetectionJobCreatedFailed event) {
@@ -29,18 +29,18 @@ public class HumanDetectionJobCreatedFailedService
     try {
       annotationService.sendAnnotationsFromHumanZDJ(humanZdj);
     } catch (Exception e) {
-      eventProducer.accept(
-          List.of(
-              HumanDetectionJobCreatedFailed.builder()
-                  .humanDetectionJob(humanZdj)
-                  .attemptNb(attemptNb + 1)
-                  .build()));
       log.error(
           "Processing humanDetectionJob(id={}) failed with attemptNb = {} and exception message ="
               + " {}",
           humanZdj.getId(),
           attemptNb,
           e.getMessage());
+      eventProducer.accept(
+          List.of(
+              HumanDetectionJobCreatedFailed.builder()
+                  .humanDetectionJob(humanZdj)
+                  .attemptNb(attemptNb + 1)
+                  .build()));
     }
   }
 }
