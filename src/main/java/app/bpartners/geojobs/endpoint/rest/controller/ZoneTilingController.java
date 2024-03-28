@@ -41,6 +41,11 @@ public class ZoneTilingController {
     return mapper.toRest(service.create(job, getTilingTasks(createJob, job.getId())));
   }
 
+  @PostMapping("/tilingJobs/{id}/duplications")
+  public ZoneTilingJob duplicateTilingJob(@PathVariable String id) {
+    return mapper.toRest(service.duplicate(id));
+  }
+
   @SneakyThrows
   private List<TilingTask> getTilingTasks(CreateZoneTilingJob job, String jobId) {
     var serverUrl = new URL(job.getGeoServerUrl());

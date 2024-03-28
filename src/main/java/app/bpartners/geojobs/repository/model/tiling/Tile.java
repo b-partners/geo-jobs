@@ -17,4 +17,13 @@ public class Tile implements Serializable {
   private Instant creationDatetime;
   private TileCoordinates coordinates;
   private String bucketPath;
+
+  public Tile duplicate(String tileId) {
+    return Tile.builder()
+        .id(tileId)
+        .creationDatetime(this.creationDatetime)
+        .coordinates(this.coordinates)
+        .bucketPath(this.bucketPath)
+        .build();
+  }
 }

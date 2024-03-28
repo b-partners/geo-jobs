@@ -8,9 +8,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.PrimaryKeyJoinColumn;
 import jakarta.persistence.Table;
 import java.io.Serializable;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import java.util.Objects;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 @PrimaryKeyJoinColumn(name = "id")
@@ -37,5 +36,19 @@ public class TaskStatus extends Status implements Serializable {
         .message(status.getMessage())
         .creationDatetime(status.getCreationDatetime())
         .build();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+    TaskStatus that = (TaskStatus) o;
+    return Objects.equals(taskId, that.taskId);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(super.hashCode(), taskId);
   }
 }
