@@ -1,5 +1,5 @@
 TILES_DOWNLOADER_API_URL: https://tile-downloader.azurewebsites.net/api
-TILE_DETECTION_API_URL: https://tile-detector-api.azurewebsites.net/api
+TILE_DETECTION_API_URLS: TODO
 ADMIN_API_KEY: !Sub '{{resolve:ssm:/bpartners-geo-jobs/${Env}/admin/api-key}}'
 ANNOTATOR_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/annotator/url}}'
 ANNOTATOR_API_KEY: !Sub '{{resolve:ssm:/geo-jobs/${Env}/annotator/api/key}}'

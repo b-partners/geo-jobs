@@ -16,7 +16,7 @@ class DetectionTaskConsumerWithMockedObjectsDetectorTest {
 
   @Test
   void can_consume_with_no_error() {
-    var subject = new DetectionTaskConsumer(mock(), new MockedObjectsDetector(5_000, 0));
+    var subject = new DetectionTaskConsumer(mock(), new MockedObjectsDetector(5_000, 0), mock());
     subject.accept(
         new DetectionTask()
             .toBuilder()
@@ -39,7 +39,7 @@ class DetectionTaskConsumerWithMockedObjectsDetectorTest {
 
   @Test
   void can_consume_with_some_errors() {
-    var subject = new DetectionTaskConsumer(mock(), new MockedObjectsDetector(2_000, 50));
+    var subject = new DetectionTaskConsumer(mock(), new MockedObjectsDetector(2_000, 50), mock());
 
     try {
       for (int i = 0; i < 10; i++) {

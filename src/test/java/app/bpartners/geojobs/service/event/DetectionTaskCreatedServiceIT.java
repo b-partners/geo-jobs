@@ -172,7 +172,7 @@ class DetectionTaskCreatedServiceIT extends FacadeIT {
   @Test
   void process_detection() {
     when(bucketComponent.download(any())).thenReturn(new File(FILE_NAME));
-    when(objectsDetector.apply(any())).thenReturn(detectionResponse());
+    when(objectsDetector.apply(any(), any())).thenReturn(detectionResponse());
     when(zoneDetectionJobService.findById(any())).thenReturn(zoneDetectionJob());
 
     subject.accept(detectionTaskCreated());

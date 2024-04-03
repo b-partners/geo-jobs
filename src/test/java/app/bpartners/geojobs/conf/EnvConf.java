@@ -13,9 +13,7 @@ public class EnvConf {
     registry.add(
         "tiles.downloader.api.url",
         () -> "https://p36gjgisjpttscydepu3suuupi0wkute.lambda-url.eu-west-3.on.aws/");
-    registry.add(
-        "tile.detection.api.url",
-        () -> "https://3gl56b3gqs6cfynuzqkte2rthm0onaoh.lambda-url.eu-west-3.on.aws/");
+    registry.add("tile.detection.api.urls", () -> "TODO: set urls as env list");
     registry.add("admin.api.key", () -> "the-admin-api-key");
     registry.add("annotator.api.key", () -> "the-admin-api-key");
     registry.add(

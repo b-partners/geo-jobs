@@ -5,9 +5,7 @@ import static app.bpartners.geojobs.service.detection.DetectionResponse.REGION_L
 
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.DetectionTask;
-import app.bpartners.geojobs.service.FalliblyDurableMockedFunction;
 import java.math.BigDecimal;
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,20 +14,10 @@ import org.springframework.stereotype.Component;
 
 @Component
 @ConditionalOnProperty(value = "objects.detector.mock.activated", havingValue = "true")
-public class MockedObjectsDetector
-    extends FalliblyDurableMockedFunction<DetectionTask, DetectionResponse>
-    implements ObjectsDetector {
+public class MockedObjectsDetector implements ObjectsDetector {
   public MockedObjectsDetector(
       @Value("${objects.detector.mock.maxCallDuration}") long maxCallDurationInMillis,
-      @Value("${objects.detector.mock.failureRate}") double failureRate) {
-    super(Duration.ofMillis(maxCallDurationInMillis), failureRate);
-  }
-
-  @Override
-  protected DetectionResponse successfulMockedApply(DetectionTask task) {
-    double randomConfidence = Math.random();
-    return aMockedDetectionResponse(randomConfidence, DetectableType.ROOF);
-  }
+      @Value("${objects.detector.mock.failureRate}") double failureRate) {}
 
   private DetectionResponse aMockedDetectionResponse(
       Double confidence, DetectableType detectableType) {
@@ -60,5 +48,11 @@ public class MockedObjectsDetector
                                 .build()))
                     .build()))
         .build();
+  }
+
+  @Override
+  public DetectionResponse apply(DetectionTask task, List<DetectableType> detectableTypes) {
+    double randomConfidence = Math.random();
+    return aMockedDetectionResponse(randomConfidence, DetectableType.ROOF);
   }
 }

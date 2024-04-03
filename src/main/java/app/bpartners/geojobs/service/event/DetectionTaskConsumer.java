@@ -3,7 +3,9 @@ package app.bpartners.geojobs.service.event;
 import static java.time.Instant.now;
 
 import app.bpartners.geojobs.job.model.Status;
+import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.DetectedTileRepository;
+import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.DetectedTile;
 import app.bpartners.geojobs.repository.model.detection.DetectionTask;
 import app.bpartners.geojobs.service.detection.DetectionMapper;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Component;
 public class DetectionTaskConsumer implements Consumer<DetectionTask> {
   private final DetectedTileRepository detectedTileRepository;
   private final ObjectsDetector objectsDetector;
+  private final DetectableObjectConfigurationRepository objectConfigurationRepository;
 
   @Override
   public void accept(DetectionTask task) {
@@ -33,7 +36,11 @@ public class DetectionTaskConsumer implements Consumer<DetectionTask> {
               + task.getJobId()
               + ") does not have parcel or tile");
     }
-    DetectionResponse response = objectsDetector.apply(task);
+    var detectableObjectConf =
+        objectConfigurationRepository.findAllByDetectionJobId(task.getJobId());
+    var detectableTypes =
+        detectableObjectConf.stream().map(DetectableObjectConfiguration::getObjectType).toList();
+    DetectionResponse response = objectsDetector.apply(task, detectableTypes);
     DetectedTile detectedTile =
         DetectionMapper.toDetectedTile(
             response, associatedTile, detectedParcel.getId(), task.getJobId());
