@@ -43,9 +43,6 @@ public class AnnotationService {
 
   public void sendAnnotationsFromHumanZDJ(HumanDetectionJob humanDetectionJob)
       throws app.bpartners.gen.annotator.endpoint.rest.client.ApiException {
-    log.warn(
-        "[DEBUG] Sending annotations to bpartners-annotation-api with annotationId={}",
-        humanDetectionJob.getAnnotationJobId());
     String crupdateAnnotatedJobFolderPath = null;
     List<DetectedTile> inDoubtTiles = humanDetectionJob.getInDoubtTiles();
     String annotationJobId = humanDetectionJob.getAnnotationJobId();
@@ -61,6 +58,14 @@ public class AnnotationService {
                     .color("#DFFF00"))
             : extractLabelsFromTasks;
     Instant now = Instant.now();
+    log.error(
+        "[DEBUG] AnnotationService : AnnotationJob(id={}) with labels (count={}, values={}) and"
+            + " tasks (count={}, values={})",
+        annotationJobId,
+        labels.size(),
+        labels,
+        annotatedTasks.size(),
+        annotatedTasks);
     annotatedJobsApi.crupdateAnnotatedJob(
         annotationJobId,
         new CrupdateAnnotatedJob()
