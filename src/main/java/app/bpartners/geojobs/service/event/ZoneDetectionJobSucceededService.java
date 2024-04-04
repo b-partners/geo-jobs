@@ -49,20 +49,15 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
                 .zoneDetectionJobId(humanZDJId)
                 .build());
 
-    savedHumanDetectionJob.setInDoubtTiles(inDoubtTiles); // TODO: force in doubt tiles attribution
-    detectedTileRepository.saveAll(
-        inDoubtTiles); // TODO: force in doubt tiles association to human job detection
-
-    log.warn(
-        "HumanDetectionJob {} created, sending annotations to bpartners-annotation-api",
-        savedHumanDetectionJob);
+    savedHumanDetectionJob.setInDoubtTiles(inDoubtTiles); // TODO: check if still necessary
+    detectedTileRepository.saveAll(inDoubtTiles); // TODO: check if still necessary
     try {
       annotationService.sendAnnotationsFromHumanZDJ(savedHumanDetectionJob);
     } catch (Exception e) {
       eventProducer.accept(
           List.of(
               HumanDetectionJobCreatedFailed.builder()
-                  .humanDetectionJob(savedHumanDetectionJob)
+                  .humanDetectionJobId(savedHumanDetectionJob.getId())
                   .attemptNb(1)
                   .build()));
     }

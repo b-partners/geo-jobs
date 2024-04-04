@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service.event;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.gen.HumanDetectionJobCreatedFailed;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
+import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
@@ -16,14 +17,19 @@ public class HumanDetectionJobCreatedFailedService
     implements Consumer<HumanDetectionJobCreatedFailed> {
   private final AnnotationService annotationService;
   private final EventProducer eventProducer;
+  private final ZoneDetectionJobService zoneDetectionJobService;
   private static final int MAX_ATTEMPT = 50;
 
   @Override
   public void accept(HumanDetectionJobCreatedFailed event) {
-    var humanZdj = event.getHumanDetectionJob();
-    var attemptNb = event.getAttemptNb();
+    int attemptNb = event.getAttemptNb();
+    if (attemptNb > 3) {
+      log.error("[DEBUG] HumanDetectionJobCreatedFailedService attempt {}", attemptNb);
+    }
+    var humanZdjId = event.getHumanDetectionJobId();
+    var humanZdj = zoneDetectionJobService.getHumanDetectionJobById(event.getHumanDetectionJobId());
     if (attemptNb > MAX_ATTEMPT) {
-      log.error("Max attempt reached for humanDetectionJobFailed={}", humanZdj);
+      log.error("Max attempt {} reached for humanDetectionJobFailed={}", attemptNb, humanZdj);
       return;
     }
     try {
@@ -38,7 +44,7 @@ public class HumanDetectionJobCreatedFailedService
       eventProducer.accept(
           List.of(
               HumanDetectionJobCreatedFailed.builder()
-                  .humanDetectionJob(humanZdj)
+                  .humanDetectionJobId(humanZdjId)
                   .attemptNb(attemptNb + 1)
                   .build()));
     }
