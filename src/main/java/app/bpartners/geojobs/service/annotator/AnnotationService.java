@@ -61,7 +61,6 @@ public class AnnotationService {
                     .color("#DFFF00"))
             : extractLabelsFromTasks;
     Instant now = Instant.now();
-
     annotatedJobsApi.crupdateAnnotatedJob(
         annotationJobId,
         new CrupdateAnnotatedJob()
