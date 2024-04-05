@@ -38,7 +38,8 @@ public class ZoneTilingController {
   @PostMapping("/tilingJobs")
   public ZoneTilingJob tileZone(@RequestBody CreateZoneTilingJob createJob) {
     var job = mapper.toDomain(createJob);
-    return mapper.toRest(service.create(job, getTilingTasks(createJob, job.getId())));
+    var tilingTasks = getTilingTasks(createJob, job.getId());
+    return mapper.toRest(service.create(job, tilingTasks), tilingTasks);
   }
 
   @SneakyThrows
@@ -57,7 +58,9 @@ public class ZoneTilingController {
   public List<ZoneTilingJob> getTilingJobs(
       @RequestParam(required = false, defaultValue = "1") PageFromOne page,
       @RequestParam(required = false, defaultValue = "30") BoundedPageSize pageSize) {
-    return service.findAll(page, pageSize).stream().map(mapper::toRest).toList();
+    return service.findAll(page, pageSize).stream()
+        .map(job -> mapper.toRest(job, List.of())) // Features ignored when listing tiling jobs
+        .toList();
   }
 
   @GetMapping("/tilingJobs/{id}/parcels")

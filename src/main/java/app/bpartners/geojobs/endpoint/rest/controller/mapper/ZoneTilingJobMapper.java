@@ -8,8 +8,10 @@ import static java.util.UUID.randomUUID;
 import app.bpartners.geojobs.endpoint.rest.model.CreateZoneTilingJob;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.repository.model.ArcgisImageZoom;
+import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.ParcelService;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -39,7 +41,8 @@ public class ZoneTilingJobMapper {
     return job;
   }
 
-  public app.bpartners.geojobs.endpoint.rest.model.ZoneTilingJob toRest(ZoneTilingJob domain) {
+  public app.bpartners.geojobs.endpoint.rest.model.ZoneTilingJob toRest(
+      ZoneTilingJob domain, List<TilingTask> tilingTaskList) {
     var parcel0 =
         parcelService
             .getParcelsByJobId(domain.getId())
@@ -63,6 +66,7 @@ public class ZoneTilingJobMapper {
         .geoServerUrl(parcel0 == null ? null : parcelContent.getGeoServerUrl().toString())
         .geoServerParameter(parcel0 == null ? null : parcelContent.getGeoServerParameter())
         .emailReceiver(domain.getEmailReceiver())
+        .features(tilingTaskList.stream().map(FeatureMapper::from).toList())
         .status(statusMapper.statusConverter(domain.getStatus()));
   }
 }

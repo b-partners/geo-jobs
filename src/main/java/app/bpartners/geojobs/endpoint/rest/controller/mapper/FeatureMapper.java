@@ -32,7 +32,7 @@ public class FeatureMapper {
     return extractedParcel;
   }
 
-  public Feature from(TilingTask domainTask) {
+  public static Feature from(TilingTask domainTask) {
     return domainTask.getParcelContent().getFeature();
   }
 }
