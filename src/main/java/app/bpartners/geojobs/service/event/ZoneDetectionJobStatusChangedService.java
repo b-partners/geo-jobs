@@ -6,9 +6,9 @@ import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneDetectionJobStatusChanged;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneDetectionJobSucceeded;
 import app.bpartners.geojobs.model.exception.ApiException;
-import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.service.detection.DetectionFinishedMailer;
+import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
@@ -22,7 +22,7 @@ public class ZoneDetectionJobStatusChangedService
     implements Consumer<ZoneDetectionJobStatusChanged> {
   private final DetectionFinishedMailer mailer;
   private final EventProducer eventProducer;
-  private final ZoneDetectionJobRepository zoneDetectionJobRepository;
+  private final ZoneDetectionJobService zoneDetectionJobService;
 
   @Override
   public void accept(ZoneDetectionJobStatusChanged event) {
@@ -62,22 +62,13 @@ public class ZoneDetectionJobStatusChangedService
   private String handleFinishedJob(ZoneDetectionJob zdj) {
     mailer.accept(zdj);
 
-    var detectionJobs =
-        zoneDetectionJobRepository.findAllByZoneTilingJob_Id(zdj.getZoneTilingJob().getId());
-    var humanZDJ =
-        detectionJobs.stream()
-            .filter(
-                zoneDetectionJob ->
-                    zoneDetectionJob.getDetectionType() == ZoneDetectionJob.DetectionType.HUMAN)
-            .findAny();
-    humanZDJ.ifPresent(
-        humanJob ->
-            eventProducer.accept(
-                List.of(
-                    ZoneDetectionJobSucceeded.builder()
-                        .succeededJobId(zdj.getId())
-                        .humanZdjId(humanJob.getId())
-                        .build())));
+    var humanJob = zoneDetectionJobService.getHumanZdjFromZdjId(zdj.getId());
+    eventProducer.accept(
+        List.of(
+            ZoneDetectionJobSucceeded.builder()
+                .succeededJobId(zdj.getId())
+                .humanZdjId(humanJob.getId())
+                .build()));
 
     return "Finished, mail sent, ztj=" + zdj;
   }

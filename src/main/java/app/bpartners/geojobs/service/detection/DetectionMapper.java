@@ -1,8 +1,9 @@
 package app.bpartners.geojobs.service.detection;
 
 import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.POLYGON;
-import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
-import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.*;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
+import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static app.bpartners.geojobs.service.detection.DetectionResponse.REGION_CONFIDENCE_PROPERTY;
@@ -13,6 +14,8 @@ import static java.util.UUID.randomUUID;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.job.model.JobStatus;
+import app.bpartners.geojobs.job.model.Status;
+import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.model.detection.*;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
@@ -148,5 +151,27 @@ public class DetectionMapper {
             .health(UNKNOWN)
             .build());
     return detectionJob;
+  }
+
+  public Status.ProgressionStatus getProgressionStatus(
+      app.bpartners.gen.annotator.endpoint.rest.model.JobStatus annotationJobStatus) {
+    if (annotationJobStatus == null) return null;
+    return switch (annotationJobStatus.getValue()) {
+      case "COMPLETED", "FAILED" -> FINISHED;
+      case "STARTED" -> PROCESSING;
+      case "PENDING", "READY", "TO_REVIEW", "TO_CORRECT" -> PENDING;
+      default -> throw new ApiException(
+          SERVER_EXCEPTION, "Unknown annotationJobStatus " + annotationJobStatus.getValue());
+    };
+  }
+
+  public Status.HealthStatus getHealthStatus(
+      app.bpartners.gen.annotator.endpoint.rest.model.JobStatus annotationJobStatus) {
+    if (annotationJobStatus == null) return null;
+    return switch (annotationJobStatus.getValue()) {
+      case "COMPLETED" -> SUCCEEDED;
+      case "FAILED" -> FAILED;
+      default -> UNKNOWN;
+    };
   }
 }

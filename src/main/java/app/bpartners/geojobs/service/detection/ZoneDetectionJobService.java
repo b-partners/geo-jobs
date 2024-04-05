@@ -1,8 +1,7 @@
 package app.bpartners.geojobs.service.detection;
 
-import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
-import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
-import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.*;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
@@ -18,15 +17,13 @@ import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.job.service.JobService;
 import app.bpartners.geojobs.model.exception.NotFoundException;
-import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
-import app.bpartners.geojobs.repository.DetectionTaskRepository;
-import app.bpartners.geojobs.repository.HumanDetectionJobRepository;
-import app.bpartners.geojobs.repository.TilingTaskRepository;
+import app.bpartners.geojobs.repository.*;
 import app.bpartners.geojobs.repository.model.detection.*;
 import app.bpartners.geojobs.repository.model.detection.DetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
+import app.bpartners.geojobs.service.annotator.AnnotationService;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -41,6 +38,8 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
   private final TilingTaskRepository tilingTaskRepository;
   private final StatusMapper<JobStatus> statusMapper;
   private final HumanDetectionJobRepository humanDetectionJobRepository;
+  private final AnnotationService annotationService;
+  private final ZoneDetectionJobRepository zoneDetectionJobRepository;
 
   public ZoneDetectionJobService(
       JpaRepository<ZoneDetectionJob, String> repository,
@@ -51,22 +50,23 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
       DetectionMapper detectionMapper,
       DetectableObjectConfigurationRepository objectConfigurationRepository,
       StatusMapper<JobStatus> statusMapper,
-      HumanDetectionJobRepository humanDetectionJobRepository) {
+      HumanDetectionJobRepository humanDetectionJobRepository,
+      AnnotationService annotationService,
+      ZoneTilingJobRepository tilingJobRepository,
+      ZoneDetectionJobRepository zoneDetectionJobRepository) {
     super(repository, jobStatusRepository, taskRepository, eventProducer, ZoneDetectionJob.class);
     this.tilingTaskRepository = tilingTaskRepository;
     this.detectionMapper = detectionMapper;
     this.objectConfigurationRepository = objectConfigurationRepository;
     this.statusMapper = statusMapper;
     this.humanDetectionJobRepository = humanDetectionJobRepository;
+    this.annotationService = annotationService;
+    this.zoneDetectionJobRepository = zoneDetectionJobRepository;
   }
 
   public GeoJsonsUrl getGeoJsonsUrl(String jobId) {
-    var optionalZoneDetectionJob = repository.findById(jobId);
-    if (optionalZoneDetectionJob.isEmpty()) {
-      throw new NotFoundException("ZoneDetectionJob(id=" + jobId + ") is not found");
-    }
-    var zoneDetectionJob = optionalZoneDetectionJob.get();
-    var jobStatus = zoneDetectionJob.getStatus();
+    var humanZDJ = getHumanZdjFromZdjId(jobId);
+    var jobStatus = humanZDJ.getStatus();
 
     return new GeoJsonsUrl()
         .url(generateGeoJsonsUrl(jobStatus))
@@ -76,12 +76,60 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
   private String generateGeoJsonsUrl(JobStatus jobStatus) {
     if (!jobStatus.getProgression().equals(FINISHED)
         && !jobStatus.getHealth().equals(Status.HealthStatus.SUCCEEDED)) {
-      log.warn(
+      log.error(
           "Unable to generate geoJsons Url to unfinished succeeded job. Actual status is "
               + jobStatus);
       return null;
     }
     return "NotImplemented: finished human detection job without url";
+  }
+
+  public ZoneDetectionJob checkHumanDetectionJobStatus(String jobId) {
+    var humanZDJ = getHumanZdjFromZdjId(jobId);
+    var humanDetectionJob =
+        humanDetectionJobRepository
+            .findByZoneDetectionJobId(humanZDJ.getId())
+            .orElseThrow(
+                () ->
+                    new NotFoundException(
+                        "ZoneDetectionJob(id="
+                            + humanZDJ.getId()
+                            + ", type=HUMAN) does not have HumanDetectionJob"));
+    var annotationJobStatus =
+        annotationService.getAnnotationJobById(humanDetectionJob.getAnnotationJobId()).getStatus();
+
+    humanZDJ.hasNewStatus(
+        Status.builder()
+            .id(randomUUID().toString())
+            .progression(detectionMapper.getProgressionStatus(annotationJobStatus))
+            .health(detectionMapper.getHealthStatus(annotationJobStatus))
+            .creationDatetime(now())
+            .build());
+    return repository.save(humanZDJ);
+  }
+
+  public ZoneDetectionJob getHumanZdjFromZdjId(String jobId) {
+    var zoneDetectionJob =
+        repository
+            .findById(jobId)
+            .orElseThrow(
+                () -> new NotFoundException("ZoneDetectionJob(id=" + jobId + ") not found"));
+    if (zoneDetectionJob.getDetectionType() == HUMAN) {
+      return zoneDetectionJob;
+    }
+    var associatedZdj =
+        zoneDetectionJobRepository.findAllByZoneTilingJob_Id(
+            zoneDetectionJob.getZoneTilingJob().getId());
+    return associatedZdj.stream()
+        .filter(job -> job.getDetectionType() == ZoneDetectionJob.DetectionType.HUMAN)
+        .findAny()
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    "ZoneDetectionJob(id="
+                        + jobId
+                        + ", type=MACHINE) is not associated to any"
+                        + " ZoneDetectionJob.type=HUMAN"));
   }
 
   @Transactional

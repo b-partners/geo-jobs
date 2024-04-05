@@ -30,6 +30,16 @@ public class ZoneDetectionController {
   private final DetectionTaskMapper taskMapper;
   private final ZoneDetectionJobValidator jobValidator;
 
+  @PostMapping("/detectionJobs/{id}/humanVerificationStatus")
+  public app.bpartners.geojobs.endpoint.rest.model.ZoneDetectionJob checkHumanDetectionJobStatus(
+      @PathVariable String id) {
+    var objectConfigurations =
+        objectConfigurationRepository.findAllByDetectionJobId(id).stream()
+            .map(objectConfigurationMapper::toRest)
+            .toList();
+    return mapper.toRest(service.checkHumanDetectionJobStatus(id), objectConfigurations);
+  }
+
   @GetMapping("/detectionJobs/{id}/detectedParcels")
   public List<DetectedParcel> getZDJParcels(@PathVariable(name = "id") String detectionJobId) {
     return parcelService.getParcelsByJobId(detectionJobId).stream()

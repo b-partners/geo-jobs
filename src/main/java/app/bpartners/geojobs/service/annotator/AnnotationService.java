@@ -2,11 +2,15 @@ package app.bpartners.geojobs.service.annotator;
 
 import static app.bpartners.gen.annotator.endpoint.rest.model.JobStatus.TO_REVIEW;
 import static app.bpartners.gen.annotator.endpoint.rest.model.JobType.REVIEWING;
+import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.gen.annotator.endpoint.rest.api.AnnotatedJobsApi;
+import app.bpartners.gen.annotator.endpoint.rest.api.JobsApi;
+import app.bpartners.gen.annotator.endpoint.rest.client.ApiException;
 import app.bpartners.gen.annotator.endpoint.rest.model.AnnotatedTask;
 import app.bpartners.gen.annotator.endpoint.rest.model.CrupdateAnnotatedJob;
+import app.bpartners.gen.annotator.endpoint.rest.model.Job;
 import app.bpartners.gen.annotator.endpoint.rest.model.Label;
 import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
@@ -23,6 +27,7 @@ public class AnnotationService {
   public static final int DEFAULT_IMAGES_HEIGHT = 1024;
   public static final int DEFAULT_IMAGES_WIDTH = 1024;
   private final AnnotatedJobsApi annotatedJobsApi;
+  private final JobsApi jobsApi;
   private final TaskExtractor taskExtractor;
   private final LabelExtractor labelExtractor;
   private final AnnotatorUserInfoGetter annotatorUserInfoGetter;
@@ -35,10 +40,19 @@ public class AnnotationService {
       AnnotatorUserInfoGetter annotatorUserInfoGetter,
       BucketComponent bucketComponent) {
     this.annotatedJobsApi = new AnnotatedJobsApi(annotatorApiConf.newApiClientWithApiKey());
+    this.jobsApi = new JobsApi(annotatorApiConf.newApiClientWithApiKey());
     this.taskExtractor = taskExtractor;
     this.labelExtractor = labelExtractor;
     this.annotatorUserInfoGetter = annotatorUserInfoGetter;
     this.bucketComponent = bucketComponent;
+  }
+
+  public Job getAnnotationJobById(String annotationJobId) {
+    try {
+      return jobsApi.getJob(annotationJobId);
+    } catch (ApiException e) {
+      throw new app.bpartners.geojobs.model.exception.ApiException(SERVER_EXCEPTION, e);
+    }
   }
 
   public void sendAnnotationsFromHumanZDJ(HumanDetectionJob humanDetectionJob)

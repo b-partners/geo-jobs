@@ -6,12 +6,14 @@ import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
+import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
+import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import app.bpartners.gen.annotator.endpoint.rest.model.Job;
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.gen.DetectionTaskCreated;
@@ -23,15 +25,19 @@ import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.model.BoundedPageSize;
 import app.bpartners.geojobs.model.PageFromOne;
 import app.bpartners.geojobs.repository.DetectionTaskRepository;
+import app.bpartners.geojobs.repository.HumanDetectionJobRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.detection.DetectionTask;
+import app.bpartners.geojobs.repository.model.detection.HumanDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
+import app.bpartners.geojobs.service.annotator.AnnotationService;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -43,14 +49,20 @@ import org.springframework.transaction.annotation.Transactional;
 public class ZoneDetectionJobControllerIT extends FacadeIT {
   public static final String JOB1_ID = "job1";
   public static final String JOB2_ID = "job2";
+  public static final String JOB3_ID = "job3";
+  public static final String JOB4_ID = "job4";
+  public static final String ANNOTATION_JOB_ID = "annotationJobId";
   @Autowired ZoneDetectionController subject;
   @Autowired ZoneDetectionJobRepository jobRepository;
   @Autowired JobStatusRepository jobStatusRepository;
   @Autowired DetectionTaskRepository detectionTaskRepository;
   @Autowired ZoneDetectionJobMapper detectionJobMapper;
   @MockBean EventProducer eventProducer;
+  @MockBean AnnotationService annotationServiceMock;
+  @MockBean HumanDetectionJobRepository humanDetectionJobRepositoryMock;
 
-  static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob aZDJ(String jobId) {
+  static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob aZDJ(
+      String jobId, String tilingJobId) {
     var statusHistory = new ArrayList<JobStatus>();
     statusHistory.add(
         JobStatus.builder()
@@ -65,7 +77,7 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
         .statusHistory(statusHistory)
         .zoneTilingJob(
             ZoneTilingJob.builder()
-                .id(randomUUID().toString())
+                .id(tilingJobId)
                 .emailReceiver("dummy@email.com")
                 .zoneName("dummyZoneName")
                 .submissionInstant(now())
@@ -76,7 +88,7 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
   @NotNull
   private static List<app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob>
       someDetectionJobs() {
-    return List.of(aZDJ(JOB1_ID), aZDJ(JOB2_ID));
+    return List.of(aZDJ(JOB1_ID, randomUUID().toString()), aZDJ(JOB2_ID, randomUUID().toString()));
   }
 
   private static DetectionTask someDetectionTask(
@@ -147,8 +159,119 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
   }
 
   @Test
+  void check_annotation_job_status_completed() {
+    var tilingJobId = randomUUID().toString();
+    jobRepository.saveAll(
+        List.of(
+            aZDJ(JOB3_ID, tilingJobId).toBuilder().detectionType(MACHINE).build(),
+            aZDJ(JOB1_ID, tilingJobId).toBuilder().detectionType(HUMAN).build()));
+    when(humanDetectionJobRepositoryMock.findByZoneDetectionJobId(JOB1_ID))
+        .thenReturn(
+            Optional.of(HumanDetectionJob.builder().annotationJobId(ANNOTATION_JOB_ID).build()));
+    when(annotationServiceMock.getAnnotationJobById(ANNOTATION_JOB_ID))
+        .thenReturn(
+            new Job().status(app.bpartners.gen.annotator.endpoint.rest.model.JobStatus.COMPLETED));
+    ZoneDetectionJob actual = subject.checkHumanDetectionJobStatus(JOB3_ID);
+
+    assertEquals(JOB1_ID, actual.getId());
+    assertEquals(
+        new Status()
+            .progression(Status.ProgressionEnum.FINISHED)
+            .health(Status.HealthEnum.SUCCEEDED)
+            .creationDatetime(actual.getStatus().getCreationDatetime()),
+        actual.getStatus());
+
+    jobRepository.deleteAllById(List.of(JOB1_ID, JOB3_ID));
+  }
+
+  @Test
+  void check_annotation_job_status_failed() {
+    var tilingJobId = randomUUID().toString();
+    jobRepository.saveAll(
+        List.of(
+            aZDJ(JOB3_ID, tilingJobId).toBuilder().detectionType(MACHINE).build(),
+            aZDJ(JOB1_ID, tilingJobId).toBuilder().detectionType(HUMAN).build()));
+    when(humanDetectionJobRepositoryMock.findByZoneDetectionJobId(JOB1_ID))
+        .thenReturn(
+            Optional.of(HumanDetectionJob.builder().annotationJobId(ANNOTATION_JOB_ID).build()));
+    when(annotationServiceMock.getAnnotationJobById(ANNOTATION_JOB_ID))
+        .thenReturn(
+            new Job().status(app.bpartners.gen.annotator.endpoint.rest.model.JobStatus.FAILED));
+    ZoneDetectionJob actual = subject.checkHumanDetectionJobStatus(JOB3_ID);
+
+    assertEquals(JOB1_ID, actual.getId());
+    assertEquals(
+        new Status()
+            .progression(Status.ProgressionEnum.FINISHED)
+            .health(Status.HealthEnum.FAILED)
+            .creationDatetime(actual.getStatus().getCreationDatetime()),
+        actual.getStatus());
+
+    jobRepository.deleteAllById(List.of(JOB1_ID, JOB3_ID));
+  }
+
+  @Test
+  void check_annotation_job_status_processing() {
+    var tilingJobId = randomUUID().toString();
+    jobRepository.saveAll(
+        List.of(
+            aZDJ(JOB3_ID, tilingJobId).toBuilder().detectionType(MACHINE).build(),
+            aZDJ(JOB1_ID, tilingJobId).toBuilder().detectionType(HUMAN).build()));
+    when(humanDetectionJobRepositoryMock.findByZoneDetectionJobId(JOB1_ID))
+        .thenReturn(
+            Optional.of(HumanDetectionJob.builder().annotationJobId(ANNOTATION_JOB_ID).build()));
+    when(annotationServiceMock.getAnnotationJobById(ANNOTATION_JOB_ID))
+        .thenReturn(
+            new Job().status(app.bpartners.gen.annotator.endpoint.rest.model.JobStatus.STARTED));
+    ZoneDetectionJob actual = subject.checkHumanDetectionJobStatus(JOB3_ID);
+
+    assertEquals(JOB1_ID, actual.getId());
+    assertEquals(
+        new Status()
+            .progression(Status.ProgressionEnum.PROCESSING)
+            .health(Status.HealthEnum.UNKNOWN)
+            .creationDatetime(actual.getStatus().getCreationDatetime()),
+        actual.getStatus());
+
+    jobRepository.deleteAllById(List.of(JOB1_ID, JOB3_ID));
+  }
+
+  @Test
+  void check_annotation_job_status_pending() {
+    var tilingJobId = randomUUID().toString();
+    jobRepository.saveAll(
+        List.of(
+            aZDJ(JOB3_ID, tilingJobId).toBuilder().detectionType(MACHINE).build(),
+            aZDJ(JOB1_ID, tilingJobId).toBuilder().detectionType(HUMAN).build()));
+    when(humanDetectionJobRepositoryMock.findByZoneDetectionJobId(JOB1_ID))
+        .thenReturn(
+            Optional.of(HumanDetectionJob.builder().annotationJobId(ANNOTATION_JOB_ID).build()));
+    when(annotationServiceMock.getAnnotationJobById(ANNOTATION_JOB_ID))
+        .thenReturn(
+            new Job().status(app.bpartners.gen.annotator.endpoint.rest.model.JobStatus.TO_REVIEW));
+    ZoneDetectionJob actual = subject.checkHumanDetectionJobStatus(JOB3_ID);
+
+    assertEquals(JOB1_ID, actual.getId());
+    assertEquals(
+        new Status()
+            .progression(Status.ProgressionEnum.PENDING)
+            .health(Status.HealthEnum.UNKNOWN)
+            .creationDatetime(actual.getStatus().getCreationDatetime()),
+        actual.getStatus());
+
+    jobRepository.deleteAllById(List.of(JOB1_ID, JOB3_ID));
+  }
+
+  @Test
   void read_zdj_geo_jobs_url() {
-    jobRepository.saveAll(List.of(aZDJ(JOB1_ID), aZDJ(JOB2_ID)));
+    var tilingJobId1 = randomUUID().toString();
+    var tilingJobId2 = randomUUID().toString();
+    jobRepository.saveAll(
+        List.of(
+            aZDJ(JOB3_ID, tilingJobId1).toBuilder().detectionType(MACHINE).build(),
+            aZDJ(JOB1_ID, tilingJobId1).toBuilder().detectionType(HUMAN).build(),
+            aZDJ(JOB4_ID, tilingJobId2).toBuilder().detectionType(MACHINE).build(),
+            aZDJ(JOB2_ID, tilingJobId2).toBuilder().detectionType(HUMAN).build()));
     jobStatusRepository.save(
         JobStatus.builder()
             .id("random_job_status2")
@@ -179,6 +302,8 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
                     .health(Status.HealthEnum.SUCCEEDED)
                     .creationDatetime(null)),
         actual2.status(actual2.getStatus().creationDatetime(null)));
+
+    jobRepository.deleteAllById(List.of(JOB1_ID, JOB2_ID, JOB3_ID, JOB4_ID));
   }
 
   @Test
