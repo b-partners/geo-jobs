@@ -36,7 +36,7 @@ Globals:
         SENTRY_DSN: !Sub '{{resolve:ssm:/geo-jobs/sentry/dsn}}'
         SENTRY_ENVIRONMENT: !Ref Env
         TILES_DOWNLOADER_API_URL: https://tile-downloader.azurewebsites.net/api
-        TILE_DETECTION_API_URL: https://tile-detector-api.azurewebsites.net/api
+        TILE_DETECTION_API_URLS: TODO
         ADMIN_API_KEY: !Sub '{{resolve:ssm:/bpartners-geo-jobs/${Env}/admin/api-key}}'
         ANNOTATOR_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/annotator/url}}'
         ANNOTATOR_API_KEY: !Sub '{{resolve:ssm:/geo-jobs/${Env}/annotator/api/key}}'
@@ -73,7 +73,6 @@ Resources:
             Method: ANY
             RestApiId:
               Ref: FrontalServerlessRestApi
-      ReservedConcurrentExecutions: 250
 
   WorkerFunction:
     Type: AWS::Serverless::Function
@@ -88,6 +87,7 @@ Resources:
           Properties:
             Queue: !Sub '{{resolve:ssm:/geo-jobs/${Env}/sqs/mailbox-queue-arn}}'
             BatchSize: 1
+      ReservedConcurrentExecutions: 250
 
   ApplicationResourceGroup:
     Type: AWS::ResourceGroups::Group
