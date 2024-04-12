@@ -1,8 +1,6 @@
 package app.bpartners.geojobs.service.detection;
 
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
-import static app.bpartners.geojobs.service.detection.HttpApiObjectsDetector.TileDetectorUrl.getDetectorUrls;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 import app.bpartners.geojobs.file.BucketComponent;
@@ -12,6 +10,8 @@ import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.DetectionTask;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.Serializable;
@@ -20,6 +20,7 @@ import java.util.List;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -30,12 +31,28 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
 @ConditionalOnProperty(value = "objects.detector.mock.activated", havingValue = "false")
-@AllArgsConstructor
 @Slf4j
 public class HttpApiObjectsDetector implements ObjectsDetector {
   private final ObjectMapper om;
   private final BucketComponent bucketComponent;
-  private final List<TileDetectorUrl> tileDetectionBaseUrls = getDetectorUrls();
+  private final String tileDetectionRawBaseUrls;
+
+  public HttpApiObjectsDetector(
+      ObjectMapper om,
+      BucketComponent bucketComponent,
+      @Value("${tile.detection.api.urls}") String tileDetectionRawBaseUrls) {
+    this.om = om;
+    this.bucketComponent = bucketComponent;
+    this.tileDetectionRawBaseUrls = tileDetectionRawBaseUrls;
+  }
+
+  private List<TileDetectorUrl> getDetectorUrls() {
+    try {
+      return om.readValue(tileDetectionRawBaseUrls, new TypeReference<>() {});
+    } catch (JsonProcessingException e) {
+      throw new ApiException(SERVER_EXCEPTION, e.getMessage());
+    }
+  }
 
   private String retrieveBaseUrl(List<DetectableType> types) {
     if (types.size() != 1) {
@@ -45,6 +62,7 @@ public class HttpApiObjectsDetector implements ObjectsDetector {
               + types.size());
     }
     var type = types.getFirst();
+    List<TileDetectorUrl> tileDetectionBaseUrls = getDetectorUrls();
     var optionalBaseUrl =
         tileDetectionBaseUrls.stream()
             .filter(
@@ -112,36 +130,5 @@ public class HttpApiObjectsDetector implements ObjectsDetector {
 
     @JsonProperty("url")
     private String url;
-
-    // TODO: set it as env variables
-    static List<TileDetectorUrl> getDetectorUrls() {
-      return List.of(
-          TileDetectorUrl.builder()
-              .objectType(ROOF)
-              .url("https://roof-api.azurewebsites.net/api")
-              .build(),
-          TileDetectorUrl.builder()
-              .objectType(DetectableType.PATHWAY)
-              .url("https://pathway-api.azurewebsites.net/api")
-              .build(),
-          TileDetectorUrl.builder()
-              .objectType(SOLAR_PANEL)
-              .url("https://solarpanel-api.azurewebsites.net/api")
-              .build(),
-          TileDetectorUrl.builder()
-              .objectType(POOL)
-              .url("https://pool-api.azurewebsites.net/api")
-              .build(),
-          TileDetectorUrl.builder()
-              .objectType(TREE)
-              .url("https://trees-api.azurewebsites.net/api")
-              .build()
-          /*
-          TODO: add missing detectable types
-          TileDetectorUrl.builder().objectType(SIDEWALK).url("https://sidewalk-api.azurewebsites.net/api").build(),
-          TileDetectorUrl.builder().objectType(LINE).url("https://line-api.azurewebsites.net/api").build(),
-          TileDetectorUrl.builder().objectType(GREEN_SPACE).url("https://greenspace-api.azurewebsites.net/api").build()*/
-          );
-    }
   }
 }
