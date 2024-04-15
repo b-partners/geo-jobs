@@ -91,7 +91,7 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
     return List.of(aZDJ(JOB1_ID, randomUUID().toString()), aZDJ(JOB2_ID, randomUUID().toString()));
   }
 
-  private static DetectionTask someDetectionTask(
+  public static DetectionTask someDetectionTask(
       String jobId, String taskId, String parcelId, String parcelContentId, String tileId) {
     return DetectionTask.builder()
         .id(taskId)
@@ -108,7 +108,7 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
         .build();
   }
 
-  private static DetectionTask someDetectionTask(String jobId, String taskId) {
+  public static DetectionTask someDetectionTask(String jobId, String taskId) {
     return DetectionTask.builder()
         .id(taskId)
         .jobId(jobId)
