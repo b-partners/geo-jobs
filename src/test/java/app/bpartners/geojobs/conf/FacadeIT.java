@@ -10,9 +10,11 @@ import org.junit.jupiter.api.BeforeAll;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @PojaGenerated
 @SpringBootTest(webEnvironment = RANDOM_PORT)
+@EnableTransactionManagement
 @Slf4j
 public class FacadeIT {
 

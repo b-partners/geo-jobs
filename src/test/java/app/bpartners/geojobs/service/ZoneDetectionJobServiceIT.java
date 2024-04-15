@@ -21,18 +21,17 @@ import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import java.util.List;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
-@Disabled("TODO: fail to create JPA transaction")
+@Transactional(isolation = Isolation.SERIALIZABLE)
 class ZoneDetectionJobServiceIT extends FacadeIT {
   @Autowired ZoneDetectionJobService service;
   @Autowired DetectionTaskRepository taskRepository;
 
   @Test
-  @Transactional
   void save_and_read_zdj_with_tasks() {
     List<Parcel> parcels =
         List.of(
