@@ -4,27 +4,29 @@ import static app.bpartners.geojobs.service.DetectionTaskServiceIT.detectedTile;
 import static org.junit.jupiter.api.Assertions.*;
 
 import app.bpartners.geojobs.conf.FacadeIT;
+import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneDetectionJobSucceeded;
-import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
-import app.bpartners.geojobs.repository.DetectedTileRepository;
-import app.bpartners.geojobs.repository.HumanDetectionJobRepository;
-import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
+import app.bpartners.geojobs.repository.*;
+import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.detection.*;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.transaction.annotation.Transactional;
 
-@Disabled("TODO: enable when 21 java source is fixed")
+@Transactional
 class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
   public static final String SUCCEEDED_JOB_ID = "succeededJobId";
   public static final String HUMAN_ZDJ_ID = "humanZdjId";
+  @MockBean EventProducer eventProducer;
   @Autowired ZoneDetectionJobSucceededService subject;
   @Autowired private ZoneDetectionJobRepository jobRepository;
   @Autowired private DetectedTileRepository detectedTileRepository;
   @Autowired private DetectableObjectConfigurationRepository objectConfigurationRepository;
   @Autowired private HumanDetectionJobRepository humanDetectionJobRepository;
+  @Autowired private DetectionTaskRepository detectionTaskRepository;
 
   @BeforeEach
   void setUp() {
@@ -38,9 +40,18 @@ class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
             .id(HUMAN_ZDJ_ID)
             .detectionType(ZoneDetectionJob.DetectionType.HUMAN)
             .build());
-
+    detectionTaskRepository.save(
+        DetectionTask.builder()
+            .id("detectionTaskId")
+            .parcels(
+                List.of(
+                    Parcel.builder().id("parcel1Id").build(),
+                    Parcel.builder().id("parcel2Id").build()))
+            .build());
     detectedTileRepository.saveAll(
-        List.of(detectedTile(SUCCEEDED_JOB_ID, 0.8), detectedTile(SUCCEEDED_JOB_ID, 0.5)));
+        List.of(
+            detectedTile(SUCCEEDED_JOB_ID, "tile1Id", "parcel1Id", "detectedObjectId1", 0.8),
+            detectedTile(SUCCEEDED_JOB_ID, "tile2Id", "parcel2Id", "detectedObjectId2", 0.5)));
     objectConfigurationRepository.save(
         DetectableObjectConfiguration.builder()
             .id("detectableObjectConfigurationId")

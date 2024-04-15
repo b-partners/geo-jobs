@@ -30,7 +30,7 @@ public class DetectionTaskServiceIT extends FacadeIT {
   @Autowired private DetectionTaskRepository detectionTaskRepository;
   private static final double CONFIDENCE = 0.67;
 
-  private static DetectedTile detectedTile(
+  public static DetectedTile detectedTile(
       String jobId, String tileId, String parcelId, String detectedObjectId, double confidence) {
     return DetectedTile.builder()
         .id(tileId)
@@ -55,10 +55,6 @@ public class DetectionTaskServiceIT extends FacadeIT {
         .creationDatetime(null)
         .tile(new Tile())
         .build();
-  }
-
-  public static DetectedTile detectedTile(String jobId, double confidence) {
-    return detectedTile(jobId, "detectedTileId", "parcelId", "detectableObjectTypeId", confidence);
   }
 
   @BeforeEach
