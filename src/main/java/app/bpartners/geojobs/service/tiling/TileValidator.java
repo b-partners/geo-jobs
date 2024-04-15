@@ -3,7 +3,9 @@ package app.bpartners.geojobs.service.tiling;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import java.util.function.Consumer;
+import org.springframework.stereotype.Component;
 
+@Component
 public class TileValidator implements Consumer<Tile> {
 
   @Override

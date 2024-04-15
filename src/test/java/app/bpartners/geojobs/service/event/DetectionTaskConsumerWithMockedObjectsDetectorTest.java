@@ -24,7 +24,7 @@ class DetectionTaskConsumerWithMockedObjectsDetectorTest {
     when(detectedTileRepositoryMock.save(any())).thenReturn(new DetectedTile());
     var subject =
         new DetectionTaskConsumer(
-            detectedTileRepositoryMock, new MockedTileObjectDetector(), mock());
+            detectedTileRepositoryMock, new MockedTileObjectDetector(), mock(), mock());
     subject.accept(
         new DetectionTask()
             .toBuilder()
@@ -51,7 +51,7 @@ class DetectionTaskConsumerWithMockedObjectsDetectorTest {
     when(detectedTileRepositoryMock.save(any())).thenReturn(new DetectedTile());
     var subject =
         new DetectionTaskConsumer(
-            detectedTileRepositoryMock, new MockedTileObjectDetector(), mock());
+            detectedTileRepositoryMock, new MockedTileObjectDetector(), mock(), mock());
 
     try {
       for (int i = 0; i < 10; i++) {

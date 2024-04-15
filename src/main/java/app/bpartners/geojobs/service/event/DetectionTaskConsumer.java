@@ -24,6 +24,7 @@ public class DetectionTaskConsumer implements Consumer<DetectionTask> {
   private final DetectedTileRepository detectedTileRepository;
   private final TileObjectDetector objectsDetector;
   private final DetectableObjectConfigurationRepository objectConfigurationRepository;
+  private final DetectionMapper detectionMapper;
 
   @Override
   public void accept(DetectionTask task) {
@@ -44,7 +45,7 @@ public class DetectionTaskConsumer implements Consumer<DetectionTask> {
               DetectionResponse response =
                   objectsDetector.apply(new TileTask(taskId, jobId, tile), detectableTypes);
               DetectedTile detectedTile =
-                  DetectionMapper.toDetectedTile(
+                  detectionMapper.toDetectedTile(
                       response, associatedTile, detectedParcel.getId(), jobId);
               log.error("[DEBUG] DetectionTaskConsumer to save tile {}", detectedTile.describe());
               var savedDetectedTile = detectedTileRepository.save(detectedTile);

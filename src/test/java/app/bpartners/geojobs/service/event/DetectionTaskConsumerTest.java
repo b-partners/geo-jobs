@@ -10,7 +10,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class DetectionTaskConsumerTest {
-  DetectionTaskConsumer subject = new DetectionTaskConsumer(mock(), mock(), mock());
+  DetectionTaskConsumer subject = new DetectionTaskConsumer(mock(), mock(), mock(), mock());
 
   @Test
   void consumes_task_without_parcels_ko() {

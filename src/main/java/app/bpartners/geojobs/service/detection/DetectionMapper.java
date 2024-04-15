@@ -30,9 +30,9 @@ import org.springframework.stereotype.Component;
 @Component
 @AllArgsConstructor
 public class DetectionMapper {
-  private static final TileValidator tileValidator = new TileValidator();
+  private final TileValidator tileValidator;
 
-  public static DetectedTile toDetectedTile(
+  public DetectedTile toDetectedTile(
       DetectionResponse detectionResponse, Tile tile, String parcelId, String jobId) {
     String detectedTileId = randomUUID().toString();
     var tileCoordinates = tile.getCoordinates();
@@ -58,7 +58,7 @@ public class DetectionMapper {
         .build();
   }
 
-  public static DetectedObject toDetectedObject(
+  public DetectedObject toDetectedObject(
       DetectionResponse.ImageData.Region region, String detectedTileId, Integer zoom) {
     var regionAttributes = region.getRegionAttributes();
     var label = regionAttributes.get(REGION_LABEL_PROPERTY);
