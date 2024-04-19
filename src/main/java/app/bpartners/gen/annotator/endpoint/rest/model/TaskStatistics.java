@@ -16,9 +16,11 @@ import app.bpartners.gen.annotator.endpoint.rest.OpenapiGenerated;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModelProperty;
 import java.io.Serializable;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.StringJoiner;
 
 /** TaskStatistics */
 @JsonPropertyOrder({
@@ -43,6 +45,8 @@ public class TaskStatistics implements Serializable {
   public static final String JSON_PROPERTY_TOTAL_TASKS = "totalTasks";
   private Long totalTasks;
 
+  public TaskStatistics() {}
+
   public TaskStatistics remainingTasksForUserId(Long remainingTasksForUserId) {
     this.remainingTasksForUserId = remainingTasksForUserId;
     return this;
@@ -54,7 +58,6 @@ public class TaskStatistics implements Serializable {
    * @return remainingTasksForUserId
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "")
   @JsonProperty(JSON_PROPERTY_REMAINING_TASKS_FOR_USER_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public Long getRemainingTasksForUserId() {
@@ -78,7 +81,6 @@ public class TaskStatistics implements Serializable {
    * @return remainingTasks
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "")
   @JsonProperty(JSON_PROPERTY_REMAINING_TASKS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public Long getRemainingTasks() {
@@ -102,7 +104,6 @@ public class TaskStatistics implements Serializable {
    * @return completedTasksByUserId
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "")
   @JsonProperty(JSON_PROPERTY_COMPLETED_TASKS_BY_USER_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public Long getCompletedTasksByUserId() {
@@ -126,7 +127,6 @@ public class TaskStatistics implements Serializable {
    * @return totalTasks
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "")
   @JsonProperty(JSON_PROPERTY_TOTAL_TASKS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public Long getTotalTasks() {
@@ -185,5 +185,85 @@ public class TaskStatistics implements Serializable {
       return "null";
     }
     return o.toString().replace("\n", "\n    ");
+  }
+
+  /**
+   * Convert the instance into URL query string.
+   *
+   * @return URL query string
+   */
+  public String toUrlQueryString() {
+    return toUrlQueryString(null);
+  }
+
+  /**
+   * Convert the instance into URL query string.
+   *
+   * @param prefix prefix of the query string
+   * @return URL query string
+   */
+  public String toUrlQueryString(String prefix) {
+    String suffix = "";
+    String containerSuffix = "";
+    String containerPrefix = "";
+    if (prefix == null) {
+      // style=form, explode=true, e.g. /pet?name=cat&type=manx
+      prefix = "";
+    } else {
+      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
+      prefix = prefix + "[";
+      suffix = "]";
+      containerSuffix = "]";
+      containerPrefix = "[";
+    }
+
+    StringJoiner joiner = new StringJoiner("&");
+
+    // add `remainingTasksForUserId` to the URL query string
+    if (getRemainingTasksForUserId() != null) {
+      joiner.add(
+          String.format(
+              "%sremainingTasksForUserId%s=%s",
+              prefix,
+              suffix,
+              URLEncoder.encode(
+                      String.valueOf(getRemainingTasksForUserId()), StandardCharsets.UTF_8)
+                  .replaceAll("\\+", "%20")));
+    }
+
+    // add `remainingTasks` to the URL query string
+    if (getRemainingTasks() != null) {
+      joiner.add(
+          String.format(
+              "%sremainingTasks%s=%s",
+              prefix,
+              suffix,
+              URLEncoder.encode(String.valueOf(getRemainingTasks()), StandardCharsets.UTF_8)
+                  .replaceAll("\\+", "%20")));
+    }
+
+    // add `completedTasksByUserId` to the URL query string
+    if (getCompletedTasksByUserId() != null) {
+      joiner.add(
+          String.format(
+              "%scompletedTasksByUserId%s=%s",
+              prefix,
+              suffix,
+              URLEncoder.encode(String.valueOf(getCompletedTasksByUserId()), StandardCharsets.UTF_8)
+                  .replaceAll("\\+", "%20")));
+    }
+
+    // add `totalTasks` to the URL query string
+    if (getTotalTasks() != null) {
+      joiner.add(
+          String.format(
+              "%stotalTasks%s=%s",
+              prefix,
+              suffix,
+              URLEncoder.encode(String.valueOf(getTotalTasks()), StandardCharsets.UTF_8)
+                  .replaceAll("\\+", "%20")));
+    }
+
+    return joiner.toString();
   }
 }

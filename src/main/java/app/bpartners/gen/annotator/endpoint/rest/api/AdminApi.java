@@ -17,21 +17,7 @@ import app.bpartners.gen.annotator.endpoint.rest.client.ApiClient;
 import app.bpartners.gen.annotator.endpoint.rest.client.ApiException;
 import app.bpartners.gen.annotator.endpoint.rest.client.ApiResponse;
 import app.bpartners.gen.annotator.endpoint.rest.client.Pair;
-import app.bpartners.gen.annotator.endpoint.rest.model.AnnotationBatch;
-import app.bpartners.gen.annotator.endpoint.rest.model.AnnotationBatchReview;
-import app.bpartners.gen.annotator.endpoint.rest.model.CreateTeam;
-import app.bpartners.gen.annotator.endpoint.rest.model.CreateUser;
-import app.bpartners.gen.annotator.endpoint.rest.model.CrupdateAnnotatedJob;
-import app.bpartners.gen.annotator.endpoint.rest.model.CrupdateJob;
-import app.bpartners.gen.annotator.endpoint.rest.model.ExportFormat;
-import app.bpartners.gen.annotator.endpoint.rest.model.Job;
-import app.bpartners.gen.annotator.endpoint.rest.model.JobStatus;
-import app.bpartners.gen.annotator.endpoint.rest.model.JobType;
-import app.bpartners.gen.annotator.endpoint.rest.model.Task;
-import app.bpartners.gen.annotator.endpoint.rest.model.TaskStatus;
-import app.bpartners.gen.annotator.endpoint.rest.model.Team;
-import app.bpartners.gen.annotator.endpoint.rest.model.TeamUser;
-import app.bpartners.gen.annotator.endpoint.rest.model.User;
+import app.bpartners.gen.annotator.endpoint.rest.model.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
@@ -85,9 +71,101 @@ public class AdminApi {
   }
 
   /**
+   * add tasks to a job only supports REVIEWING jobs for now
+   *
+   * @param jobId (required)
+   * @param createAnnotatedTask (optional)
+   * @return List&lt;Task&gt;
+   * @throws ApiException if fails to make API call
+   */
+  public List<Task> addAnnotatedTasksToAnnotatedJob(
+      String jobId, List<CreateAnnotatedTask> createAnnotatedTask) throws ApiException {
+    ApiResponse<List<Task>> localVarResponse =
+        addAnnotatedTasksToAnnotatedJobWithHttpInfo(jobId, createAnnotatedTask);
+    return localVarResponse.getData();
+  }
+
+  /**
+   * add tasks to a job only supports REVIEWING jobs for now
+   *
+   * @param jobId (required)
+   * @param createAnnotatedTask (optional)
+   * @return ApiResponse&lt;List&lt;Task&gt;&gt;
+   * @throws ApiException if fails to make API call
+   */
+  public ApiResponse<List<Task>> addAnnotatedTasksToAnnotatedJobWithHttpInfo(
+      String jobId, List<CreateAnnotatedTask> createAnnotatedTask) throws ApiException {
+    HttpRequest.Builder localVarRequestBuilder =
+        addAnnotatedTasksToAnnotatedJobRequestBuilder(jobId, createAnnotatedTask);
+    try {
+      HttpResponse<InputStream> localVarResponse =
+          memberVarHttpClient.send(
+              localVarRequestBuilder.build(), HttpResponse.BodyHandlers.ofInputStream());
+      if (memberVarResponseInterceptor != null) {
+        memberVarResponseInterceptor.accept(localVarResponse);
+      }
+      try {
+        if (localVarResponse.statusCode() / 100 != 2) {
+          throw getApiException("addAnnotatedTasksToAnnotatedJob", localVarResponse);
+        }
+        return new ApiResponse<List<Task>>(
+            localVarResponse.statusCode(),
+            localVarResponse.headers().map(),
+            localVarResponse.body() == null
+                ? null
+                : memberVarObjectMapper.readValue(
+                    localVarResponse.body(),
+                    new TypeReference<List<Task>>() {}) // closes the InputStream
+            );
+      } finally {
+      }
+    } catch (IOException e) {
+      throw new ApiException(e);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new ApiException(e);
+    }
+  }
+
+  private HttpRequest.Builder addAnnotatedTasksToAnnotatedJobRequestBuilder(
+      String jobId, List<CreateAnnotatedTask> createAnnotatedTask) throws ApiException {
+    // verify the required parameter 'jobId' is set
+    if (jobId == null) {
+      throw new ApiException(
+          400,
+          "Missing the required parameter 'jobId' when calling addAnnotatedTasksToAnnotatedJob");
+    }
+
+    HttpRequest.Builder localVarRequestBuilder = HttpRequest.newBuilder();
+
+    String localVarPath =
+        "/jobs/{jobId}/tasks".replace("{jobId}", ApiClient.urlEncode(jobId.toString()));
+
+    localVarRequestBuilder.uri(URI.create(memberVarBaseUri + localVarPath));
+
+    localVarRequestBuilder.header("Content-Type", "application/json");
+    localVarRequestBuilder.header("Accept", "application/json");
+
+    try {
+      byte[] localVarPostBody = memberVarObjectMapper.writeValueAsBytes(createAnnotatedTask);
+      localVarRequestBuilder.method(
+          "PUT", HttpRequest.BodyPublishers.ofByteArray(localVarPostBody));
+    } catch (IOException e) {
+      throw new ApiException(e);
+    }
+    if (memberVarReadTimeout != null) {
+      localVarRequestBuilder.timeout(memberVarReadTimeout);
+    }
+    if (memberVarInterceptor != null) {
+      memberVarInterceptor.accept(localVarRequestBuilder);
+    }
+    return localVarRequestBuilder;
+  }
+
+  /**
    * Create teams
    *
-   * @param createTeam (optional
+   * @param createTeam (optional)
    * @return List&lt;Team&gt;
    * @throws ApiException if fails to make API call
    */
@@ -99,7 +177,7 @@ public class AdminApi {
   /**
    * Create teams
    *
-   * @param createTeam (optional
+   * @param createTeam (optional)
    * @return ApiResponse&lt;List&lt;Team&gt;&gt;
    * @throws ApiException if fails to make API call
    */
@@ -113,14 +191,21 @@ public class AdminApi {
       if (memberVarResponseInterceptor != null) {
         memberVarResponseInterceptor.accept(localVarResponse);
       }
-      if (localVarResponse.statusCode() / 100 != 2) {
-        throw getApiException("createTeams", localVarResponse);
+      try {
+        if (localVarResponse.statusCode() / 100 != 2) {
+          throw getApiException("createTeams", localVarResponse);
+        }
+        return new ApiResponse<List<Team>>(
+            localVarResponse.statusCode(),
+            localVarResponse.headers().map(),
+            localVarResponse.body() == null
+                ? null
+                : memberVarObjectMapper.readValue(
+                    localVarResponse.body(),
+                    new TypeReference<List<Team>>() {}) // closes the InputStream
+            );
+      } finally {
       }
-      return new ApiResponse<List<Team>>(
-          localVarResponse.statusCode(),
-          localVarResponse.headers().map(),
-          memberVarObjectMapper.readValue(
-              localVarResponse.body(), new TypeReference<List<Team>>() {}));
     } catch (IOException e) {
       throw new ApiException(e);
     } catch (InterruptedException e) {
@@ -160,7 +245,7 @@ public class AdminApi {
   /**
    * create users
    *
-   * @param createUser (optional
+   * @param createUser (optional)
    * @return List&lt;User&gt;
    * @throws ApiException if fails to make API call
    */
@@ -172,7 +257,7 @@ public class AdminApi {
   /**
    * create users
    *
-   * @param createUser (optional
+   * @param createUser (optional)
    * @return ApiResponse&lt;List&lt;User&gt;&gt;
    * @throws ApiException if fails to make API call
    */
@@ -186,14 +271,21 @@ public class AdminApi {
       if (memberVarResponseInterceptor != null) {
         memberVarResponseInterceptor.accept(localVarResponse);
       }
-      if (localVarResponse.statusCode() / 100 != 2) {
-        throw getApiException("createUsers", localVarResponse);
+      try {
+        if (localVarResponse.statusCode() / 100 != 2) {
+          throw getApiException("createUsers", localVarResponse);
+        }
+        return new ApiResponse<List<User>>(
+            localVarResponse.statusCode(),
+            localVarResponse.headers().map(),
+            localVarResponse.body() == null
+                ? null
+                : memberVarObjectMapper.readValue(
+                    localVarResponse.body(),
+                    new TypeReference<List<User>>() {}) // closes the InputStream
+            );
+      } finally {
       }
-      return new ApiResponse<List<User>>(
-          localVarResponse.statusCode(),
-          localVarResponse.headers().map(),
-          memberVarObjectMapper.readValue(
-              localVarResponse.body(), new TypeReference<List<User>>() {}));
     } catch (IOException e) {
       throw new ApiException(e);
     } catch (InterruptedException e) {
@@ -218,89 +310,6 @@ public class AdminApi {
       byte[] localVarPostBody = memberVarObjectMapper.writeValueAsBytes(createUser);
       localVarRequestBuilder.method(
           "POST", HttpRequest.BodyPublishers.ofByteArray(localVarPostBody));
-    } catch (IOException e) {
-      throw new ApiException(e);
-    }
-    if (memberVarReadTimeout != null) {
-      localVarRequestBuilder.timeout(memberVarReadTimeout);
-    }
-    if (memberVarInterceptor != null) {
-      memberVarInterceptor.accept(localVarRequestBuilder);
-    }
-    return localVarRequestBuilder;
-  }
-
-  /**
-   * create or update an annotated job
-   *
-   * @param jobId (required)
-   * @param crupdateAnnotatedJob (optional)
-   * @return Job
-   * @throws ApiException if fails to make API call
-   */
-  public Job crupdateAnnotatedJob(String jobId, CrupdateAnnotatedJob crupdateAnnotatedJob)
-      throws ApiException {
-    ApiResponse<Job> localVarResponse =
-        crupdateAnnotatedJobWithHttpInfo(jobId, crupdateAnnotatedJob);
-    return localVarResponse.getData();
-  }
-
-  /**
-   * create or update an annotated job
-   *
-   * @param jobId (required)
-   * @param crupdateAnnotatedJob (optional)
-   * @return ApiResponse&lt;Job&gt;
-   * @throws ApiException if fails to make API call
-   */
-  public ApiResponse<Job> crupdateAnnotatedJobWithHttpInfo(
-      String jobId, CrupdateAnnotatedJob crupdateAnnotatedJob) throws ApiException {
-    HttpRequest.Builder localVarRequestBuilder =
-        crupdateAnnotatedJobRequestBuilder(jobId, crupdateAnnotatedJob);
-    try {
-      HttpResponse<InputStream> localVarResponse =
-          memberVarHttpClient.send(
-              localVarRequestBuilder.build(), HttpResponse.BodyHandlers.ofInputStream());
-      if (memberVarResponseInterceptor != null) {
-        memberVarResponseInterceptor.accept(localVarResponse);
-      }
-      if (localVarResponse.statusCode() / 100 != 2) {
-        throw getApiException("crupdateAnnotatedJob", localVarResponse);
-      }
-      return new ApiResponse<Job>(
-          localVarResponse.statusCode(),
-          localVarResponse.headers().map(),
-          memberVarObjectMapper.readValue(localVarResponse.body(), new TypeReference<Job>() {}));
-    } catch (IOException e) {
-      throw new ApiException(e);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new ApiException(e);
-    }
-  }
-
-  private HttpRequest.Builder crupdateAnnotatedJobRequestBuilder(
-      String jobId, CrupdateAnnotatedJob crupdateAnnotatedJob) throws ApiException {
-    // verify the required parameter 'jobId' is set
-    if (jobId == null) {
-      throw new ApiException(
-          400, "Missing the required parameter 'jobId' when calling crupdateAnnotatedJob");
-    }
-
-    HttpRequest.Builder localVarRequestBuilder = HttpRequest.newBuilder();
-
-    String localVarPath =
-        "/annotated-jobs/{jobId}".replace("{jobId}", ApiClient.urlEncode(jobId.toString()));
-
-    localVarRequestBuilder.uri(URI.create(memberVarBaseUri + localVarPath));
-
-    localVarRequestBuilder.header("Content-Type", "application/json");
-    localVarRequestBuilder.header("Accept", "application/json");
-
-    try {
-      byte[] localVarPostBody = memberVarObjectMapper.writeValueAsBytes(crupdateAnnotatedJob);
-      localVarRequestBuilder.method(
-          "PUT", HttpRequest.BodyPublishers.ofByteArray(localVarPostBody));
     } catch (IOException e) {
       throw new ApiException(e);
     }
@@ -365,14 +374,21 @@ public class AdminApi {
       if (memberVarResponseInterceptor != null) {
         memberVarResponseInterceptor.accept(localVarResponse);
       }
-      if (localVarResponse.statusCode() / 100 != 2) {
-        throw getApiException("crupdateJobTaskAnnotationReview", localVarResponse);
+      try {
+        if (localVarResponse.statusCode() / 100 != 2) {
+          throw getApiException("crupdateJobTaskAnnotationReview", localVarResponse);
+        }
+        return new ApiResponse<AnnotationBatchReview>(
+            localVarResponse.statusCode(),
+            localVarResponse.headers().map(),
+            localVarResponse.body() == null
+                ? null
+                : memberVarObjectMapper.readValue(
+                    localVarResponse.body(),
+                    new TypeReference<AnnotationBatchReview>() {}) // closes the InputStream
+            );
+      } finally {
       }
-      return new ApiResponse<AnnotationBatchReview>(
-          localVarResponse.statusCode(),
-          localVarResponse.headers().map(),
-          memberVarObjectMapper.readValue(
-              localVarResponse.body(), new TypeReference<AnnotationBatchReview>() {}));
     } catch (IOException e) {
       throw new ApiException(e);
     } catch (InterruptedException e) {
@@ -456,11 +472,13 @@ public class AdminApi {
    *
    * @param jobId (required)
    * @param format (required)
+   * @param emailCC one email address which will receive the exported job other than the ownerEmail,
+   *     will default to none (optional)
    * @return String
    * @throws ApiException if fails to make API call
    */
-  public String exportJob(String jobId, ExportFormat format) throws ApiException {
-    ApiResponse<String> localVarResponse = exportJobWithHttpInfo(jobId, format);
+  public String exportJob(String jobId, ExportFormat format, String emailCC) throws ApiException {
+    ApiResponse<String> localVarResponse = exportJobWithHttpInfo(jobId, format, emailCC);
     return localVarResponse.getData();
   }
 
@@ -469,12 +487,14 @@ public class AdminApi {
    *
    * @param jobId (required)
    * @param format (required)
+   * @param emailCC one email address which will receive the exported job other than the ownerEmail,
+   *     will default to none (optional)
    * @return ApiResponse&lt;String&gt;
    * @throws ApiException if fails to make API call
    */
-  public ApiResponse<String> exportJobWithHttpInfo(String jobId, ExportFormat format)
-      throws ApiException {
-    HttpRequest.Builder localVarRequestBuilder = exportJobRequestBuilder(jobId, format);
+  public ApiResponse<String> exportJobWithHttpInfo(
+      String jobId, ExportFormat format, String emailCC) throws ApiException {
+    HttpRequest.Builder localVarRequestBuilder = exportJobRequestBuilder(jobId, format, emailCC);
     try {
       HttpResponse<InputStream> localVarResponse =
           memberVarHttpClient.send(
@@ -482,13 +502,32 @@ public class AdminApi {
       if (memberVarResponseInterceptor != null) {
         memberVarResponseInterceptor.accept(localVarResponse);
       }
-      if (localVarResponse.statusCode() / 100 != 2) {
-        throw getApiException("exportJob", localVarResponse);
+      try {
+        if (localVarResponse.statusCode() / 100 != 2) {
+          throw getApiException("exportJob", localVarResponse);
+        }
+        // for plain text response
+        if (localVarResponse.headers().map().containsKey("Content-Type")
+            && "text/plain"
+                .equalsIgnoreCase(
+                    localVarResponse
+                        .headers()
+                        .map()
+                        .get("Content-Type")
+                        .get(0)
+                        .split(";")[0]
+                        .trim())) {
+          java.util.Scanner s = new java.util.Scanner(localVarResponse.body()).useDelimiter("\\A");
+          String responseBodyText = s.hasNext() ? s.next() : "";
+          return new ApiResponse<String>(
+              localVarResponse.statusCode(), localVarResponse.headers().map(), responseBodyText);
+        } else {
+          throw new RuntimeException(
+              "Error! The response Content-Type is supposed to be `text/plain` but it's not: "
+                  + localVarResponse);
+        }
+      } finally {
       }
-      return new ApiResponse<String>(
-          localVarResponse.statusCode(),
-          localVarResponse.headers().map(),
-          memberVarObjectMapper.readValue(localVarResponse.body(), new TypeReference<String>() {}));
     } catch (IOException e) {
       throw new ApiException(e);
     } catch (InterruptedException e) {
@@ -497,8 +536,8 @@ public class AdminApi {
     }
   }
 
-  private HttpRequest.Builder exportJobRequestBuilder(String jobId, ExportFormat format)
-      throws ApiException {
+  private HttpRequest.Builder exportJobRequestBuilder(
+      String jobId, ExportFormat format, String emailCC) throws ApiException {
     // verify the required parameter 'jobId' is set
     if (jobId == null) {
       throw new ApiException(400, "Missing the required parameter 'jobId' when calling exportJob");
@@ -514,18 +553,26 @@ public class AdminApi {
         "/jobs/{jobId}/export".replace("{jobId}", ApiClient.urlEncode(jobId.toString()));
 
     List<Pair> localVarQueryParams = new ArrayList<>();
+    StringJoiner localVarQueryStringJoiner = new StringJoiner("&");
+    String localVarQueryParameterBaseName;
+    localVarQueryParameterBaseName = "format";
     localVarQueryParams.addAll(ApiClient.parameterToPairs("format", format));
+    localVarQueryParameterBaseName = "emailCC";
+    localVarQueryParams.addAll(ApiClient.parameterToPairs("emailCC", emailCC));
 
-    if (!localVarQueryParams.isEmpty()) {
+    if (!localVarQueryParams.isEmpty() || localVarQueryStringJoiner.length() != 0) {
       StringJoiner queryJoiner = new StringJoiner("&");
       localVarQueryParams.forEach(p -> queryJoiner.add(p.getName() + '=' + p.getValue()));
+      if (localVarQueryStringJoiner.length() != 0) {
+        queryJoiner.add(localVarQueryStringJoiner.toString());
+      }
       localVarRequestBuilder.uri(
           URI.create(memberVarBaseUri + localVarPath + '?' + queryJoiner.toString()));
     } else {
       localVarRequestBuilder.uri(URI.create(memberVarBaseUri + localVarPath));
     }
 
-    localVarRequestBuilder.header("Accept", "application/json");
+    localVarRequestBuilder.header("Accept", "text/plain");
 
     localVarRequestBuilder.method("GET", HttpRequest.BodyPublishers.noBody());
     if (memberVarReadTimeout != null) {
@@ -573,14 +620,21 @@ public class AdminApi {
       if (memberVarResponseInterceptor != null) {
         memberVarResponseInterceptor.accept(localVarResponse);
       }
-      if (localVarResponse.statusCode() / 100 != 2) {
-        throw getApiException("getAnnotationBatchByJobTaskAndId", localVarResponse);
+      try {
+        if (localVarResponse.statusCode() / 100 != 2) {
+          throw getApiException("getAnnotationBatchByJobTaskAndId", localVarResponse);
+        }
+        return new ApiResponse<AnnotationBatch>(
+            localVarResponse.statusCode(),
+            localVarResponse.headers().map(),
+            localVarResponse.body() == null
+                ? null
+                : memberVarObjectMapper.readValue(
+                    localVarResponse.body(),
+                    new TypeReference<AnnotationBatch>() {}) // closes the InputStream
+            );
+      } finally {
       }
-      return new ApiResponse<AnnotationBatch>(
-          localVarResponse.statusCode(),
-          localVarResponse.headers().map(),
-          memberVarObjectMapper.readValue(
-              localVarResponse.body(), new TypeReference<AnnotationBatch>() {}));
     } catch (IOException e) {
       throw new ApiException(e);
     } catch (InterruptedException e) {
@@ -671,14 +725,21 @@ public class AdminApi {
       if (memberVarResponseInterceptor != null) {
         memberVarResponseInterceptor.accept(localVarResponse);
       }
-      if (localVarResponse.statusCode() / 100 != 2) {
-        throw getApiException("getAnnotationBatchesByJobTask", localVarResponse);
+      try {
+        if (localVarResponse.statusCode() / 100 != 2) {
+          throw getApiException("getAnnotationBatchesByJobTask", localVarResponse);
+        }
+        return new ApiResponse<List<AnnotationBatch>>(
+            localVarResponse.statusCode(),
+            localVarResponse.headers().map(),
+            localVarResponse.body() == null
+                ? null
+                : memberVarObjectMapper.readValue(
+                    localVarResponse.body(),
+                    new TypeReference<List<AnnotationBatch>>() {}) // closes the InputStream
+            );
+      } finally {
       }
-      return new ApiResponse<List<AnnotationBatch>>(
-          localVarResponse.statusCode(),
-          localVarResponse.headers().map(),
-          memberVarObjectMapper.readValue(
-              localVarResponse.body(), new TypeReference<List<AnnotationBatch>>() {}));
     } catch (IOException e) {
       throw new ApiException(e);
     } catch (InterruptedException e) {
@@ -709,12 +770,19 @@ public class AdminApi {
             .replace("{taskId}", ApiClient.urlEncode(taskId.toString()));
 
     List<Pair> localVarQueryParams = new ArrayList<>();
+    StringJoiner localVarQueryStringJoiner = new StringJoiner("&");
+    String localVarQueryParameterBaseName;
+    localVarQueryParameterBaseName = "page";
     localVarQueryParams.addAll(ApiClient.parameterToPairs("page", page));
+    localVarQueryParameterBaseName = "pageSize";
     localVarQueryParams.addAll(ApiClient.parameterToPairs("pageSize", pageSize));
 
-    if (!localVarQueryParams.isEmpty()) {
+    if (!localVarQueryParams.isEmpty() || localVarQueryStringJoiner.length() != 0) {
       StringJoiner queryJoiner = new StringJoiner("&");
       localVarQueryParams.forEach(p -> queryJoiner.add(p.getName() + '=' + p.getValue()));
+      if (localVarQueryStringJoiner.length() != 0) {
+        queryJoiner.add(localVarQueryStringJoiner.toString());
+      }
       localVarRequestBuilder.uri(
           URI.create(memberVarBaseUri + localVarPath + '?' + queryJoiner.toString()));
     } else {
@@ -761,13 +829,20 @@ public class AdminApi {
       if (memberVarResponseInterceptor != null) {
         memberVarResponseInterceptor.accept(localVarResponse);
       }
-      if (localVarResponse.statusCode() / 100 != 2) {
-        throw getApiException("getJob", localVarResponse);
+      try {
+        if (localVarResponse.statusCode() / 100 != 2) {
+          throw getApiException("getJob", localVarResponse);
+        }
+        return new ApiResponse<Job>(
+            localVarResponse.statusCode(),
+            localVarResponse.headers().map(),
+            localVarResponse.body() == null
+                ? null
+                : memberVarObjectMapper.readValue(
+                    localVarResponse.body(), new TypeReference<Job>() {}) // closes the InputStream
+            );
+      } finally {
       }
-      return new ApiResponse<Job>(
-          localVarResponse.statusCode(),
-          localVarResponse.headers().map(),
-          memberVarObjectMapper.readValue(localVarResponse.body(), new TypeReference<Job>() {}));
     } catch (IOException e) {
       throw new ApiException(e);
     } catch (InterruptedException e) {
@@ -838,14 +913,21 @@ public class AdminApi {
       if (memberVarResponseInterceptor != null) {
         memberVarResponseInterceptor.accept(localVarResponse);
       }
-      if (localVarResponse.statusCode() / 100 != 2) {
-        throw getApiException("getJobTaskAnnotationBatchReview", localVarResponse);
+      try {
+        if (localVarResponse.statusCode() / 100 != 2) {
+          throw getApiException("getJobTaskAnnotationBatchReview", localVarResponse);
+        }
+        return new ApiResponse<AnnotationBatchReview>(
+            localVarResponse.statusCode(),
+            localVarResponse.headers().map(),
+            localVarResponse.body() == null
+                ? null
+                : memberVarObjectMapper.readValue(
+                    localVarResponse.body(),
+                    new TypeReference<AnnotationBatchReview>() {}) // closes the InputStream
+            );
+      } finally {
       }
-      return new ApiResponse<AnnotationBatchReview>(
-          localVarResponse.statusCode(),
-          localVarResponse.headers().map(),
-          memberVarObjectMapper.readValue(
-              localVarResponse.body(), new TypeReference<AnnotationBatchReview>() {}));
     } catch (IOException e) {
       throw new ApiException(e);
     } catch (InterruptedException e) {
@@ -941,14 +1023,21 @@ public class AdminApi {
       if (memberVarResponseInterceptor != null) {
         memberVarResponseInterceptor.accept(localVarResponse);
       }
-      if (localVarResponse.statusCode() / 100 != 2) {
-        throw getApiException("getJobTaskAnnotationBatchReviews", localVarResponse);
+      try {
+        if (localVarResponse.statusCode() / 100 != 2) {
+          throw getApiException("getJobTaskAnnotationBatchReviews", localVarResponse);
+        }
+        return new ApiResponse<List<AnnotationBatchReview>>(
+            localVarResponse.statusCode(),
+            localVarResponse.headers().map(),
+            localVarResponse.body() == null
+                ? null
+                : memberVarObjectMapper.readValue(
+                    localVarResponse.body(),
+                    new TypeReference<List<AnnotationBatchReview>>() {}) // closes the InputStream
+            );
+      } finally {
       }
-      return new ApiResponse<List<AnnotationBatchReview>>(
-          localVarResponse.statusCode(),
-          localVarResponse.headers().map(),
-          memberVarObjectMapper.readValue(
-              localVarResponse.body(), new TypeReference<List<AnnotationBatchReview>>() {}));
     } catch (IOException e) {
       throw new ApiException(e);
     } catch (InterruptedException e) {
@@ -1032,13 +1121,20 @@ public class AdminApi {
       if (memberVarResponseInterceptor != null) {
         memberVarResponseInterceptor.accept(localVarResponse);
       }
-      if (localVarResponse.statusCode() / 100 != 2) {
-        throw getApiException("getJobTaskById", localVarResponse);
+      try {
+        if (localVarResponse.statusCode() / 100 != 2) {
+          throw getApiException("getJobTaskById", localVarResponse);
+        }
+        return new ApiResponse<Task>(
+            localVarResponse.statusCode(),
+            localVarResponse.headers().map(),
+            localVarResponse.body() == null
+                ? null
+                : memberVarObjectMapper.readValue(
+                    localVarResponse.body(), new TypeReference<Task>() {}) // closes the InputStream
+            );
+      } finally {
       }
-      return new ApiResponse<Task>(
-          localVarResponse.statusCode(),
-          localVarResponse.headers().map(),
-          memberVarObjectMapper.readValue(localVarResponse.body(), new TypeReference<Task>() {}));
     } catch (IOException e) {
       throw new ApiException(e);
     } catch (InterruptedException e) {
@@ -1123,14 +1219,21 @@ public class AdminApi {
       if (memberVarResponseInterceptor != null) {
         memberVarResponseInterceptor.accept(localVarResponse);
       }
-      if (localVarResponse.statusCode() / 100 != 2) {
-        throw getApiException("getJobTasks", localVarResponse);
+      try {
+        if (localVarResponse.statusCode() / 100 != 2) {
+          throw getApiException("getJobTasks", localVarResponse);
+        }
+        return new ApiResponse<List<Task>>(
+            localVarResponse.statusCode(),
+            localVarResponse.headers().map(),
+            localVarResponse.body() == null
+                ? null
+                : memberVarObjectMapper.readValue(
+                    localVarResponse.body(),
+                    new TypeReference<List<Task>>() {}) // closes the InputStream
+            );
+      } finally {
       }
-      return new ApiResponse<List<Task>>(
-          localVarResponse.statusCode(),
-          localVarResponse.headers().map(),
-          memberVarObjectMapper.readValue(
-              localVarResponse.body(), new TypeReference<List<Task>>() {}));
     } catch (IOException e) {
       throw new ApiException(e);
     } catch (InterruptedException e) {
@@ -1154,14 +1257,23 @@ public class AdminApi {
         "/jobs/{jobId}/tasks".replace("{jobId}", ApiClient.urlEncode(jobId.toString()));
 
     List<Pair> localVarQueryParams = new ArrayList<>();
+    StringJoiner localVarQueryStringJoiner = new StringJoiner("&");
+    String localVarQueryParameterBaseName;
+    localVarQueryParameterBaseName = "page";
     localVarQueryParams.addAll(ApiClient.parameterToPairs("page", page));
+    localVarQueryParameterBaseName = "pageSize";
     localVarQueryParams.addAll(ApiClient.parameterToPairs("pageSize", pageSize));
+    localVarQueryParameterBaseName = "status";
     localVarQueryParams.addAll(ApiClient.parameterToPairs("status", status));
+    localVarQueryParameterBaseName = "userId";
     localVarQueryParams.addAll(ApiClient.parameterToPairs("userId", userId));
 
-    if (!localVarQueryParams.isEmpty()) {
+    if (!localVarQueryParams.isEmpty() || localVarQueryStringJoiner.length() != 0) {
       StringJoiner queryJoiner = new StringJoiner("&");
       localVarQueryParams.forEach(p -> queryJoiner.add(p.getName() + '=' + p.getValue()));
+      if (localVarQueryStringJoiner.length() != 0) {
+        queryJoiner.add(localVarQueryStringJoiner.toString());
+      }
       localVarRequestBuilder.uri(
           URI.create(memberVarBaseUri + localVarPath + '?' + queryJoiner.toString()));
     } else {
@@ -1222,14 +1334,21 @@ public class AdminApi {
       if (memberVarResponseInterceptor != null) {
         memberVarResponseInterceptor.accept(localVarResponse);
       }
-      if (localVarResponse.statusCode() / 100 != 2) {
-        throw getApiException("getJobs", localVarResponse);
+      try {
+        if (localVarResponse.statusCode() / 100 != 2) {
+          throw getApiException("getJobs", localVarResponse);
+        }
+        return new ApiResponse<List<Job>>(
+            localVarResponse.statusCode(),
+            localVarResponse.headers().map(),
+            localVarResponse.body() == null
+                ? null
+                : memberVarObjectMapper.readValue(
+                    localVarResponse.body(),
+                    new TypeReference<List<Job>>() {}) // closes the InputStream
+            );
+      } finally {
       }
-      return new ApiResponse<List<Job>>(
-          localVarResponse.statusCode(),
-          localVarResponse.headers().map(),
-          memberVarObjectMapper.readValue(
-              localVarResponse.body(), new TypeReference<List<Job>>() {}));
     } catch (IOException e) {
       throw new ApiException(e);
     } catch (InterruptedException e) {
@@ -1247,15 +1366,25 @@ public class AdminApi {
     String localVarPath = "/jobs";
 
     List<Pair> localVarQueryParams = new ArrayList<>();
+    StringJoiner localVarQueryStringJoiner = new StringJoiner("&");
+    String localVarQueryParameterBaseName;
+    localVarQueryParameterBaseName = "page";
     localVarQueryParams.addAll(ApiClient.parameterToPairs("page", page));
+    localVarQueryParameterBaseName = "pageSize";
     localVarQueryParams.addAll(ApiClient.parameterToPairs("pageSize", pageSize));
+    localVarQueryParameterBaseName = "status";
     localVarQueryParams.addAll(ApiClient.parameterToPairs("status", status));
+    localVarQueryParameterBaseName = "name";
     localVarQueryParams.addAll(ApiClient.parameterToPairs("name", name));
+    localVarQueryParameterBaseName = "type";
     localVarQueryParams.addAll(ApiClient.parameterToPairs("type", type));
 
-    if (!localVarQueryParams.isEmpty()) {
+    if (!localVarQueryParams.isEmpty() || localVarQueryStringJoiner.length() != 0) {
       StringJoiner queryJoiner = new StringJoiner("&");
       localVarQueryParams.forEach(p -> queryJoiner.add(p.getName() + '=' + p.getValue()));
+      if (localVarQueryStringJoiner.length() != 0) {
+        queryJoiner.add(localVarQueryStringJoiner.toString());
+      }
       localVarRequestBuilder.uri(
           URI.create(memberVarBaseUri + localVarPath + '?' + queryJoiner.toString()));
     } else {
@@ -1305,14 +1434,21 @@ public class AdminApi {
       if (memberVarResponseInterceptor != null) {
         memberVarResponseInterceptor.accept(localVarResponse);
       }
-      if (localVarResponse.statusCode() / 100 != 2) {
-        throw getApiException("getTeams", localVarResponse);
+      try {
+        if (localVarResponse.statusCode() / 100 != 2) {
+          throw getApiException("getTeams", localVarResponse);
+        }
+        return new ApiResponse<List<Team>>(
+            localVarResponse.statusCode(),
+            localVarResponse.headers().map(),
+            localVarResponse.body() == null
+                ? null
+                : memberVarObjectMapper.readValue(
+                    localVarResponse.body(),
+                    new TypeReference<List<Team>>() {}) // closes the InputStream
+            );
+      } finally {
       }
-      return new ApiResponse<List<Team>>(
-          localVarResponse.statusCode(),
-          localVarResponse.headers().map(),
-          memberVarObjectMapper.readValue(
-              localVarResponse.body(), new TypeReference<List<Team>>() {}));
     } catch (IOException e) {
       throw new ApiException(e);
     } catch (InterruptedException e) {
@@ -1329,12 +1465,19 @@ public class AdminApi {
     String localVarPath = "/teams";
 
     List<Pair> localVarQueryParams = new ArrayList<>();
+    StringJoiner localVarQueryStringJoiner = new StringJoiner("&");
+    String localVarQueryParameterBaseName;
+    localVarQueryParameterBaseName = "page";
     localVarQueryParams.addAll(ApiClient.parameterToPairs("page", page));
+    localVarQueryParameterBaseName = "pageSize";
     localVarQueryParams.addAll(ApiClient.parameterToPairs("pageSize", pageSize));
 
-    if (!localVarQueryParams.isEmpty()) {
+    if (!localVarQueryParams.isEmpty() || localVarQueryStringJoiner.length() != 0) {
       StringJoiner queryJoiner = new StringJoiner("&");
       localVarQueryParams.forEach(p -> queryJoiner.add(p.getName() + '=' + p.getValue()));
+      if (localVarQueryStringJoiner.length() != 0) {
+        queryJoiner.add(localVarQueryStringJoiner.toString());
+      }
       localVarRequestBuilder.uri(
           URI.create(memberVarBaseUri + localVarPath + '?' + queryJoiner.toString()));
     } else {
@@ -1384,14 +1527,21 @@ public class AdminApi {
       if (memberVarResponseInterceptor != null) {
         memberVarResponseInterceptor.accept(localVarResponse);
       }
-      if (localVarResponse.statusCode() / 100 != 2) {
-        throw getApiException("getUsers", localVarResponse);
+      try {
+        if (localVarResponse.statusCode() / 100 != 2) {
+          throw getApiException("getUsers", localVarResponse);
+        }
+        return new ApiResponse<List<User>>(
+            localVarResponse.statusCode(),
+            localVarResponse.headers().map(),
+            localVarResponse.body() == null
+                ? null
+                : memberVarObjectMapper.readValue(
+                    localVarResponse.body(),
+                    new TypeReference<List<User>>() {}) // closes the InputStream
+            );
+      } finally {
       }
-      return new ApiResponse<List<User>>(
-          localVarResponse.statusCode(),
-          localVarResponse.headers().map(),
-          memberVarObjectMapper.readValue(
-              localVarResponse.body(), new TypeReference<List<User>>() {}));
     } catch (IOException e) {
       throw new ApiException(e);
     } catch (InterruptedException e) {
@@ -1408,12 +1558,19 @@ public class AdminApi {
     String localVarPath = "/users";
 
     List<Pair> localVarQueryParams = new ArrayList<>();
+    StringJoiner localVarQueryStringJoiner = new StringJoiner("&");
+    String localVarQueryParameterBaseName;
+    localVarQueryParameterBaseName = "page";
     localVarQueryParams.addAll(ApiClient.parameterToPairs("page", page));
+    localVarQueryParameterBaseName = "pageSize";
     localVarQueryParams.addAll(ApiClient.parameterToPairs("pageSize", pageSize));
 
-    if (!localVarQueryParams.isEmpty()) {
+    if (!localVarQueryParams.isEmpty() || localVarQueryStringJoiner.length() != 0) {
       StringJoiner queryJoiner = new StringJoiner("&");
       localVarQueryParams.forEach(p -> queryJoiner.add(p.getName() + '=' + p.getValue()));
+      if (localVarQueryStringJoiner.length() != 0) {
+        queryJoiner.add(localVarQueryStringJoiner.toString());
+      }
       localVarRequestBuilder.uri(
           URI.create(memberVarBaseUri + localVarPath + '?' + queryJoiner.toString()));
     } else {
@@ -1463,13 +1620,20 @@ public class AdminApi {
       if (memberVarResponseInterceptor != null) {
         memberVarResponseInterceptor.accept(localVarResponse);
       }
-      if (localVarResponse.statusCode() / 100 != 2) {
-        throw getApiException("saveJob", localVarResponse);
+      try {
+        if (localVarResponse.statusCode() / 100 != 2) {
+          throw getApiException("saveJob", localVarResponse);
+        }
+        return new ApiResponse<Job>(
+            localVarResponse.statusCode(),
+            localVarResponse.headers().map(),
+            localVarResponse.body() == null
+                ? null
+                : memberVarObjectMapper.readValue(
+                    localVarResponse.body(), new TypeReference<Job>() {}) // closes the InputStream
+            );
+      } finally {
       }
-      return new ApiResponse<Job>(
-          localVarResponse.statusCode(),
-          localVarResponse.headers().map(),
-          memberVarObjectMapper.readValue(localVarResponse.body(), new TypeReference<Job>() {}));
     } catch (IOException e) {
       throw new ApiException(e);
     } catch (InterruptedException e) {
@@ -1541,13 +1705,20 @@ public class AdminApi {
       if (memberVarResponseInterceptor != null) {
         memberVarResponseInterceptor.accept(localVarResponse);
       }
-      if (localVarResponse.statusCode() / 100 != 2) {
-        throw getApiException("updateUserTeam", localVarResponse);
+      try {
+        if (localVarResponse.statusCode() / 100 != 2) {
+          throw getApiException("updateUserTeam", localVarResponse);
+        }
+        return new ApiResponse<User>(
+            localVarResponse.statusCode(),
+            localVarResponse.headers().map(),
+            localVarResponse.body() == null
+                ? null
+                : memberVarObjectMapper.readValue(
+                    localVarResponse.body(), new TypeReference<User>() {}) // closes the InputStream
+            );
+      } finally {
       }
-      return new ApiResponse<User>(
-          localVarResponse.statusCode(),
-          localVarResponse.headers().map(),
-          memberVarObjectMapper.readValue(localVarResponse.body(), new TypeReference<User>() {}));
     } catch (IOException e) {
       throw new ApiException(e);
     } catch (InterruptedException e) {

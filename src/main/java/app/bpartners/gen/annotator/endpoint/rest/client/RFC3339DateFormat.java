@@ -12,16 +12,15 @@
 
 package app.bpartners.gen.annotator.endpoint.rest.client;
 
-import app.bpartners.gen.annotator.endpoint.rest.OpenapiGenerated;
 import com.fasterxml.jackson.databind.util.StdDateFormat;
 import java.text.DateFormat;
+import java.text.DecimalFormat;
 import java.text.FieldPosition;
 import java.text.ParsePosition;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
 
-@OpenapiGenerated
 public class RFC3339DateFormat extends DateFormat {
   private static final long serialVersionUID = 1L;
   private static final TimeZone TIMEZONE_Z = TimeZone.getTimeZone("UTC");
@@ -31,6 +30,7 @@ public class RFC3339DateFormat extends DateFormat {
 
   public RFC3339DateFormat() {
     this.calendar = new GregorianCalendar();
+    this.numberFormat = new DecimalFormat();
   }
 
   @Override
@@ -50,6 +50,6 @@ public class RFC3339DateFormat extends DateFormat {
 
   @Override
   public Object clone() {
-    return this;
+    return super.clone();
   }
 }

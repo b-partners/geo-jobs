@@ -22,14 +22,15 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.StringJoiner;
 
-/** UpdateTask */
+/** AnnotationBaseFields */
 @JsonPropertyOrder({
-  UpdateTask.JSON_PROPERTY_ID,
-  UpdateTask.JSON_PROPERTY_USER_ID,
-  UpdateTask.JSON_PROPERTY_STATUS
+  AnnotationBaseFields.JSON_PROPERTY_ID,
+  AnnotationBaseFields.JSON_PROPERTY_USER_ID,
+  AnnotationBaseFields.JSON_PROPERTY_LABEL,
+  AnnotationBaseFields.JSON_PROPERTY_POLYGON
 })
 @OpenapiGenerated
-public class UpdateTask implements Serializable {
+public class AnnotationBaseFields implements Serializable {
   private static final long serialVersionUID = 1L;
 
   public static final String JSON_PROPERTY_ID = "id";
@@ -38,12 +39,15 @@ public class UpdateTask implements Serializable {
   public static final String JSON_PROPERTY_USER_ID = "userId";
   private String userId;
 
-  public static final String JSON_PROPERTY_STATUS = "status";
-  private TaskStatus status;
+  public static final String JSON_PROPERTY_LABEL = "label";
+  private Label label;
 
-  public UpdateTask() {}
+  public static final String JSON_PROPERTY_POLYGON = "polygon";
+  private Polygon polygon;
 
-  public UpdateTask id(String id) {
+  public AnnotationBaseFields() {}
+
+  public AnnotationBaseFields id(String id) {
     this.id = id;
     return this;
   }
@@ -66,7 +70,7 @@ public class UpdateTask implements Serializable {
     this.id = id;
   }
 
-  public UpdateTask userId(String userId) {
+  public AnnotationBaseFields userId(String userId) {
     this.userId = userId;
     return this;
   }
@@ -89,30 +93,53 @@ public class UpdateTask implements Serializable {
     this.userId = userId;
   }
 
-  public UpdateTask status(TaskStatus status) {
-    this.status = status;
+  public AnnotationBaseFields label(Label label) {
+    this.label = label;
     return this;
   }
 
   /**
-   * Get status
+   * Get label
    *
-   * @return status
+   * @return label
    */
   @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_STATUS)
+  @JsonProperty(JSON_PROPERTY_LABEL)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public TaskStatus getStatus() {
-    return status;
+  public Label getLabel() {
+    return label;
   }
 
-  @JsonProperty(JSON_PROPERTY_STATUS)
+  @JsonProperty(JSON_PROPERTY_LABEL)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setStatus(TaskStatus status) {
-    this.status = status;
+  public void setLabel(Label label) {
+    this.label = label;
   }
 
-  /** Return true if this UpdateTask object is equal to o. */
+  public AnnotationBaseFields polygon(Polygon polygon) {
+    this.polygon = polygon;
+    return this;
+  }
+
+  /**
+   * Get polygon
+   *
+   * @return polygon
+   */
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_POLYGON)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public Polygon getPolygon() {
+    return polygon;
+  }
+
+  @JsonProperty(JSON_PROPERTY_POLYGON)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setPolygon(Polygon polygon) {
+    this.polygon = polygon;
+  }
+
+  /** Return true if this AnnotationBaseFields object is equal to o. */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -121,24 +148,26 @@ public class UpdateTask implements Serializable {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    UpdateTask updateTask = (UpdateTask) o;
-    return Objects.equals(this.id, updateTask.id)
-        && Objects.equals(this.userId, updateTask.userId)
-        && Objects.equals(this.status, updateTask.status);
+    AnnotationBaseFields annotationBaseFields = (AnnotationBaseFields) o;
+    return Objects.equals(this.id, annotationBaseFields.id)
+        && Objects.equals(this.userId, annotationBaseFields.userId)
+        && Objects.equals(this.label, annotationBaseFields.label)
+        && Objects.equals(this.polygon, annotationBaseFields.polygon);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, userId, status);
+    return Objects.hash(id, userId, label, polygon);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class UpdateTask {\n");
+    sb.append("class AnnotationBaseFields {\n");
     sb.append("    id: ").append(toIndentedString(id)).append("\n");
     sb.append("    userId: ").append(toIndentedString(userId)).append("\n");
-    sb.append("    status: ").append(toIndentedString(status)).append("\n");
+    sb.append("    label: ").append(toIndentedString(label)).append("\n");
+    sb.append("    polygon: ").append(toIndentedString(polygon)).append("\n");
     sb.append("}");
     return sb.toString();
   }
@@ -207,15 +236,14 @@ public class UpdateTask implements Serializable {
                   .replaceAll("\\+", "%20")));
     }
 
-    // add `status` to the URL query string
-    if (getStatus() != null) {
-      joiner.add(
-          String.format(
-              "%sstatus%s=%s",
-              prefix,
-              suffix,
-              URLEncoder.encode(String.valueOf(getStatus()), StandardCharsets.UTF_8)
-                  .replaceAll("\\+", "%20")));
+    // add `label` to the URL query string
+    if (getLabel() != null) {
+      joiner.add(getLabel().toUrlQueryString(prefix + "label" + suffix));
+    }
+
+    // add `polygon` to the URL query string
+    if (getPolygon() != null) {
+      joiner.add(getPolygon().toUrlQueryString(prefix + "polygon" + suffix));
     }
 
     return joiner.toString();

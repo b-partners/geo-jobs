@@ -16,9 +16,11 @@ import app.bpartners.gen.annotator.endpoint.rest.OpenapiGenerated;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModelProperty;
 import java.io.Serializable;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.StringJoiner;
 
 /** Exception */
 @JsonPropertyOrder({Exception.JSON_PROPERTY_TYPE, Exception.JSON_PROPERTY_MESSAGE})
@@ -32,6 +34,8 @@ public class Exception implements Serializable {
   public static final String JSON_PROPERTY_MESSAGE = "message";
   private String message;
 
+  public Exception() {}
+
   public Exception type(String type) {
     this.type = type;
     return this;
@@ -43,7 +47,6 @@ public class Exception implements Serializable {
    * @return type
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "")
   @JsonProperty(JSON_PROPERTY_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public String getType() {
@@ -67,7 +70,6 @@ public class Exception implements Serializable {
    * @return message
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "")
   @JsonProperty(JSON_PROPERTY_MESSAGE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public String getMessage() {
@@ -117,5 +119,62 @@ public class Exception implements Serializable {
       return "null";
     }
     return o.toString().replace("\n", "\n    ");
+  }
+
+  /**
+   * Convert the instance into URL query string.
+   *
+   * @return URL query string
+   */
+  public String toUrlQueryString() {
+    return toUrlQueryString(null);
+  }
+
+  /**
+   * Convert the instance into URL query string.
+   *
+   * @param prefix prefix of the query string
+   * @return URL query string
+   */
+  public String toUrlQueryString(String prefix) {
+    String suffix = "";
+    String containerSuffix = "";
+    String containerPrefix = "";
+    if (prefix == null) {
+      // style=form, explode=true, e.g. /pet?name=cat&type=manx
+      prefix = "";
+    } else {
+      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
+      prefix = prefix + "[";
+      suffix = "]";
+      containerSuffix = "]";
+      containerPrefix = "[";
+    }
+
+    StringJoiner joiner = new StringJoiner("&");
+
+    // add `type` to the URL query string
+    if (getType() != null) {
+      joiner.add(
+          String.format(
+              "%stype%s=%s",
+              prefix,
+              suffix,
+              URLEncoder.encode(String.valueOf(getType()), StandardCharsets.UTF_8)
+                  .replaceAll("\\+", "%20")));
+    }
+
+    // add `message` to the URL query string
+    if (getMessage() != null) {
+      joiner.add(
+          String.format(
+              "%smessage%s=%s",
+              prefix,
+              suffix,
+              URLEncoder.encode(String.valueOf(getMessage()), StandardCharsets.UTF_8)
+                  .replaceAll("\\+", "%20")));
+    }
+
+    return joiner.toString();
   }
 }

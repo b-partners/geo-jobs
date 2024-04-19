@@ -1,10 +1,8 @@
 package app.bpartners.gen.annotator.endpoint.rest.client;
 
-import app.bpartners.gen.annotator.endpoint.rest.OpenapiGenerated;
 import java.util.Map;
 
 /** Representing a Server configuration. */
-@OpenapiGenerated
 public class ServerConfiguration {
   public String URL;
   public String description;
@@ -41,11 +39,11 @@ public class ServerConfiguration {
       if (variables != null && variables.containsKey(name)) {
         value = variables.get(name);
         if (serverVariable.enumValues.size() > 0 && !serverVariable.enumValues.contains(value)) {
-          throw new RuntimeException(
+          throw new IllegalArgumentException(
               "The variable " + name + " in the server URL has invalid value " + value + ".");
         }
       }
-      url = url.replaceAll("\\{" + name + "\\}", value);
+      url = url.replace("{" + name + "}", value);
     }
     return url;
   }

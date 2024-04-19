@@ -16,11 +16,13 @@ import app.bpartners.gen.annotator.endpoint.rest.OpenapiGenerated;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModelProperty;
 import java.io.Serializable;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.StringJoiner;
 
 /** CrupdateJob */
 @JsonPropertyOrder({
@@ -30,6 +32,8 @@ import java.util.Objects;
   CrupdateJob.JSON_PROPERTY_BUCKET_NAME,
   CrupdateJob.JSON_PROPERTY_FOLDER_PATH,
   CrupdateJob.JSON_PROPERTY_OWNER_EMAIL,
+  CrupdateJob.JSON_PROPERTY_IMAGES_HEIGHT,
+  CrupdateJob.JSON_PROPERTY_IMAGES_WIDTH,
   CrupdateJob.JSON_PROPERTY_STATUS,
   CrupdateJob.JSON_PROPERTY_TEAM_ID,
   CrupdateJob.JSON_PROPERTY_LABELS
@@ -56,6 +60,12 @@ public class CrupdateJob implements Serializable {
   public static final String JSON_PROPERTY_OWNER_EMAIL = "ownerEmail";
   private String ownerEmail;
 
+  public static final String JSON_PROPERTY_IMAGES_HEIGHT = "imagesHeight";
+  private Integer imagesHeight;
+
+  public static final String JSON_PROPERTY_IMAGES_WIDTH = "imagesWidth";
+  private Integer imagesWidth;
+
   public static final String JSON_PROPERTY_STATUS = "status";
   private JobStatus status;
 
@@ -63,7 +73,9 @@ public class CrupdateJob implements Serializable {
   private String teamId;
 
   public static final String JSON_PROPERTY_LABELS = "labels";
-  private List<Label> labels = null;
+  private List<Label> labels;
+
+  public CrupdateJob() {}
 
   public CrupdateJob type(JobType type) {
     this.type = type;
@@ -76,7 +88,6 @@ public class CrupdateJob implements Serializable {
    * @return type
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "")
   @JsonProperty(JSON_PROPERTY_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public JobType getType() {
@@ -100,7 +111,6 @@ public class CrupdateJob implements Serializable {
    * @return id
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "")
   @JsonProperty(JSON_PROPERTY_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public String getId() {
@@ -124,7 +134,6 @@ public class CrupdateJob implements Serializable {
    * @return name
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "")
   @JsonProperty(JSON_PROPERTY_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public String getName() {
@@ -148,7 +157,6 @@ public class CrupdateJob implements Serializable {
    * @return bucketName
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "")
   @JsonProperty(JSON_PROPERTY_BUCKET_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public String getBucketName() {
@@ -172,7 +180,6 @@ public class CrupdateJob implements Serializable {
    * @return folderPath
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "")
   @JsonProperty(JSON_PROPERTY_FOLDER_PATH)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public String getFolderPath() {
@@ -196,7 +203,6 @@ public class CrupdateJob implements Serializable {
    * @return ownerEmail
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "")
   @JsonProperty(JSON_PROPERTY_OWNER_EMAIL)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public String getOwnerEmail() {
@@ -207,6 +213,52 @@ public class CrupdateJob implements Serializable {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setOwnerEmail(String ownerEmail) {
     this.ownerEmail = ownerEmail;
+  }
+
+  public CrupdateJob imagesHeight(Integer imagesHeight) {
+    this.imagesHeight = imagesHeight;
+    return this;
+  }
+
+  /**
+   * Get imagesHeight
+   *
+   * @return imagesHeight
+   */
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_IMAGES_HEIGHT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public Integer getImagesHeight() {
+    return imagesHeight;
+  }
+
+  @JsonProperty(JSON_PROPERTY_IMAGES_HEIGHT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setImagesHeight(Integer imagesHeight) {
+    this.imagesHeight = imagesHeight;
+  }
+
+  public CrupdateJob imagesWidth(Integer imagesWidth) {
+    this.imagesWidth = imagesWidth;
+    return this;
+  }
+
+  /**
+   * Get imagesWidth
+   *
+   * @return imagesWidth
+   */
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_IMAGES_WIDTH)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public Integer getImagesWidth() {
+    return imagesWidth;
+  }
+
+  @JsonProperty(JSON_PROPERTY_IMAGES_WIDTH)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setImagesWidth(Integer imagesWidth) {
+    this.imagesWidth = imagesWidth;
   }
 
   public CrupdateJob status(JobStatus status) {
@@ -220,7 +272,6 @@ public class CrupdateJob implements Serializable {
    * @return status
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "")
   @JsonProperty(JSON_PROPERTY_STATUS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public JobStatus getStatus() {
@@ -244,7 +295,6 @@ public class CrupdateJob implements Serializable {
    * @return teamId
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "")
   @JsonProperty(JSON_PROPERTY_TEAM_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public String getTeamId() {
@@ -276,7 +326,6 @@ public class CrupdateJob implements Serializable {
    * @return labels
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "")
   @JsonProperty(JSON_PROPERTY_LABELS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public List<Label> getLabels() {
@@ -305,6 +354,8 @@ public class CrupdateJob implements Serializable {
         && Objects.equals(this.bucketName, crupdateJob.bucketName)
         && Objects.equals(this.folderPath, crupdateJob.folderPath)
         && Objects.equals(this.ownerEmail, crupdateJob.ownerEmail)
+        && Objects.equals(this.imagesHeight, crupdateJob.imagesHeight)
+        && Objects.equals(this.imagesWidth, crupdateJob.imagesWidth)
         && Objects.equals(this.status, crupdateJob.status)
         && Objects.equals(this.teamId, crupdateJob.teamId)
         && Objects.equals(this.labels, crupdateJob.labels);
@@ -312,7 +363,18 @@ public class CrupdateJob implements Serializable {
 
   @Override
   public int hashCode() {
-    return Objects.hash(type, id, name, bucketName, folderPath, ownerEmail, status, teamId, labels);
+    return Objects.hash(
+        type,
+        id,
+        name,
+        bucketName,
+        folderPath,
+        ownerEmail,
+        imagesHeight,
+        imagesWidth,
+        status,
+        teamId,
+        labels);
   }
 
   @Override
@@ -325,6 +387,8 @@ public class CrupdateJob implements Serializable {
     sb.append("    bucketName: ").append(toIndentedString(bucketName)).append("\n");
     sb.append("    folderPath: ").append(toIndentedString(folderPath)).append("\n");
     sb.append("    ownerEmail: ").append(toIndentedString(ownerEmail)).append("\n");
+    sb.append("    imagesHeight: ").append(toIndentedString(imagesHeight)).append("\n");
+    sb.append("    imagesWidth: ").append(toIndentedString(imagesWidth)).append("\n");
     sb.append("    status: ").append(toIndentedString(status)).append("\n");
     sb.append("    teamId: ").append(toIndentedString(teamId)).append("\n");
     sb.append("    labels: ").append(toIndentedString(labels)).append("\n");
@@ -340,5 +404,169 @@ public class CrupdateJob implements Serializable {
       return "null";
     }
     return o.toString().replace("\n", "\n    ");
+  }
+
+  /**
+   * Convert the instance into URL query string.
+   *
+   * @return URL query string
+   */
+  public String toUrlQueryString() {
+    return toUrlQueryString(null);
+  }
+
+  /**
+   * Convert the instance into URL query string.
+   *
+   * @param prefix prefix of the query string
+   * @return URL query string
+   */
+  public String toUrlQueryString(String prefix) {
+    String suffix = "";
+    String containerSuffix = "";
+    String containerPrefix = "";
+    if (prefix == null) {
+      // style=form, explode=true, e.g. /pet?name=cat&type=manx
+      prefix = "";
+    } else {
+      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
+      prefix = prefix + "[";
+      suffix = "]";
+      containerSuffix = "]";
+      containerPrefix = "[";
+    }
+
+    StringJoiner joiner = new StringJoiner("&");
+
+    // add `type` to the URL query string
+    if (getType() != null) {
+      joiner.add(
+          String.format(
+              "%stype%s=%s",
+              prefix,
+              suffix,
+              URLEncoder.encode(String.valueOf(getType()), StandardCharsets.UTF_8)
+                  .replaceAll("\\+", "%20")));
+    }
+
+    // add `id` to the URL query string
+    if (getId() != null) {
+      joiner.add(
+          String.format(
+              "%sid%s=%s",
+              prefix,
+              suffix,
+              URLEncoder.encode(String.valueOf(getId()), StandardCharsets.UTF_8)
+                  .replaceAll("\\+", "%20")));
+    }
+
+    // add `name` to the URL query string
+    if (getName() != null) {
+      joiner.add(
+          String.format(
+              "%sname%s=%s",
+              prefix,
+              suffix,
+              URLEncoder.encode(String.valueOf(getName()), StandardCharsets.UTF_8)
+                  .replaceAll("\\+", "%20")));
+    }
+
+    // add `bucketName` to the URL query string
+    if (getBucketName() != null) {
+      joiner.add(
+          String.format(
+              "%sbucketName%s=%s",
+              prefix,
+              suffix,
+              URLEncoder.encode(String.valueOf(getBucketName()), StandardCharsets.UTF_8)
+                  .replaceAll("\\+", "%20")));
+    }
+
+    // add `folderPath` to the URL query string
+    if (getFolderPath() != null) {
+      joiner.add(
+          String.format(
+              "%sfolderPath%s=%s",
+              prefix,
+              suffix,
+              URLEncoder.encode(String.valueOf(getFolderPath()), StandardCharsets.UTF_8)
+                  .replaceAll("\\+", "%20")));
+    }
+
+    // add `ownerEmail` to the URL query string
+    if (getOwnerEmail() != null) {
+      joiner.add(
+          String.format(
+              "%sownerEmail%s=%s",
+              prefix,
+              suffix,
+              URLEncoder.encode(String.valueOf(getOwnerEmail()), StandardCharsets.UTF_8)
+                  .replaceAll("\\+", "%20")));
+    }
+
+    // add `imagesHeight` to the URL query string
+    if (getImagesHeight() != null) {
+      joiner.add(
+          String.format(
+              "%simagesHeight%s=%s",
+              prefix,
+              suffix,
+              URLEncoder.encode(String.valueOf(getImagesHeight()), StandardCharsets.UTF_8)
+                  .replaceAll("\\+", "%20")));
+    }
+
+    // add `imagesWidth` to the URL query string
+    if (getImagesWidth() != null) {
+      joiner.add(
+          String.format(
+              "%simagesWidth%s=%s",
+              prefix,
+              suffix,
+              URLEncoder.encode(String.valueOf(getImagesWidth()), StandardCharsets.UTF_8)
+                  .replaceAll("\\+", "%20")));
+    }
+
+    // add `status` to the URL query string
+    if (getStatus() != null) {
+      joiner.add(
+          String.format(
+              "%sstatus%s=%s",
+              prefix,
+              suffix,
+              URLEncoder.encode(String.valueOf(getStatus()), StandardCharsets.UTF_8)
+                  .replaceAll("\\+", "%20")));
+    }
+
+    // add `teamId` to the URL query string
+    if (getTeamId() != null) {
+      joiner.add(
+          String.format(
+              "%steamId%s=%s",
+              prefix,
+              suffix,
+              URLEncoder.encode(String.valueOf(getTeamId()), StandardCharsets.UTF_8)
+                  .replaceAll("\\+", "%20")));
+    }
+
+    // add `labels` to the URL query string
+    if (getLabels() != null) {
+      for (int i = 0; i < getLabels().size(); i++) {
+        if (getLabels().get(i) != null) {
+          joiner.add(
+              getLabels()
+                  .get(i)
+                  .toUrlQueryString(
+                      String.format(
+                          "%slabels%s%s",
+                          prefix,
+                          suffix,
+                          "".equals(suffix)
+                              ? ""
+                              : String.format("%s%d%s", containerPrefix, i, containerSuffix))));
+        }
+      }
+    }
+
+    return joiner.toString();
   }
 }

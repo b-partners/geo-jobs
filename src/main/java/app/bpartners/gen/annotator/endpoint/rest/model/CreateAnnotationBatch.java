@@ -19,31 +19,33 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.io.Serializable;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
 
-/** UpdateTask */
+/** CreateAnnotationBatch */
 @JsonPropertyOrder({
-  UpdateTask.JSON_PROPERTY_ID,
-  UpdateTask.JSON_PROPERTY_USER_ID,
-  UpdateTask.JSON_PROPERTY_STATUS
+  CreateAnnotationBatch.JSON_PROPERTY_ID,
+  CreateAnnotationBatch.JSON_PROPERTY_ANNOTATIONS,
+  CreateAnnotationBatch.JSON_PROPERTY_CREATION_DATETIME
 })
 @OpenapiGenerated
-public class UpdateTask implements Serializable {
+public class CreateAnnotationBatch implements Serializable {
   private static final long serialVersionUID = 1L;
 
   public static final String JSON_PROPERTY_ID = "id";
   private String id;
 
-  public static final String JSON_PROPERTY_USER_ID = "userId";
-  private String userId;
+  public static final String JSON_PROPERTY_ANNOTATIONS = "annotations";
+  private List<AnnotationBaseFields> annotations;
 
-  public static final String JSON_PROPERTY_STATUS = "status";
-  private TaskStatus status;
+  public static final String JSON_PROPERTY_CREATION_DATETIME = "creationDatetime";
+  private java.time.Instant creationDatetime;
 
-  public UpdateTask() {}
+  public CreateAnnotationBatch() {}
 
-  public UpdateTask id(String id) {
+  public CreateAnnotationBatch id(String id) {
     this.id = id;
     return this;
   }
@@ -66,53 +68,61 @@ public class UpdateTask implements Serializable {
     this.id = id;
   }
 
-  public UpdateTask userId(String userId) {
-    this.userId = userId;
+  public CreateAnnotationBatch annotations(List<AnnotationBaseFields> annotations) {
+    this.annotations = annotations;
+    return this;
+  }
+
+  public CreateAnnotationBatch addAnnotationsItem(AnnotationBaseFields annotationsItem) {
+    if (this.annotations == null) {
+      this.annotations = new ArrayList<>();
+    }
+    this.annotations.add(annotationsItem);
     return this;
   }
 
   /**
-   * Get userId
+   * Get annotations
    *
-   * @return userId
+   * @return annotations
    */
   @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_USER_ID)
+  @JsonProperty(JSON_PROPERTY_ANNOTATIONS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public String getUserId() {
-    return userId;
+  public List<AnnotationBaseFields> getAnnotations() {
+    return annotations;
   }
 
-  @JsonProperty(JSON_PROPERTY_USER_ID)
+  @JsonProperty(JSON_PROPERTY_ANNOTATIONS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setUserId(String userId) {
-    this.userId = userId;
+  public void setAnnotations(List<AnnotationBaseFields> annotations) {
+    this.annotations = annotations;
   }
 
-  public UpdateTask status(TaskStatus status) {
-    this.status = status;
+  public CreateAnnotationBatch creationDatetime(java.time.Instant creationDatetime) {
+    this.creationDatetime = creationDatetime;
     return this;
   }
 
   /**
-   * Get status
+   * ignored in requestBody
    *
-   * @return status
+   * @return creationDatetime
    */
   @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_STATUS)
+  @JsonProperty(JSON_PROPERTY_CREATION_DATETIME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public TaskStatus getStatus() {
-    return status;
+  public java.time.Instant getCreationDatetime() {
+    return creationDatetime;
   }
 
-  @JsonProperty(JSON_PROPERTY_STATUS)
+  @JsonProperty(JSON_PROPERTY_CREATION_DATETIME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setStatus(TaskStatus status) {
-    this.status = status;
+  public void setCreationDatetime(java.time.Instant creationDatetime) {
+    this.creationDatetime = creationDatetime;
   }
 
-  /** Return true if this UpdateTask object is equal to o. */
+  /** Return true if this CreateAnnotationBatch object is equal to o. */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -121,24 +131,24 @@ public class UpdateTask implements Serializable {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    UpdateTask updateTask = (UpdateTask) o;
-    return Objects.equals(this.id, updateTask.id)
-        && Objects.equals(this.userId, updateTask.userId)
-        && Objects.equals(this.status, updateTask.status);
+    CreateAnnotationBatch createAnnotationBatch = (CreateAnnotationBatch) o;
+    return Objects.equals(this.id, createAnnotationBatch.id)
+        && Objects.equals(this.annotations, createAnnotationBatch.annotations)
+        && Objects.equals(this.creationDatetime, createAnnotationBatch.creationDatetime);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, userId, status);
+    return Objects.hash(id, annotations, creationDatetime);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class UpdateTask {\n");
+    sb.append("class CreateAnnotationBatch {\n");
     sb.append("    id: ").append(toIndentedString(id)).append("\n");
-    sb.append("    userId: ").append(toIndentedString(userId)).append("\n");
-    sb.append("    status: ").append(toIndentedString(status)).append("\n");
+    sb.append("    annotations: ").append(toIndentedString(annotations)).append("\n");
+    sb.append("    creationDatetime: ").append(toIndentedString(creationDatetime)).append("\n");
     sb.append("}");
     return sb.toString();
   }
@@ -196,25 +206,33 @@ public class UpdateTask implements Serializable {
                   .replaceAll("\\+", "%20")));
     }
 
-    // add `userId` to the URL query string
-    if (getUserId() != null) {
-      joiner.add(
-          String.format(
-              "%suserId%s=%s",
-              prefix,
-              suffix,
-              URLEncoder.encode(String.valueOf(getUserId()), StandardCharsets.UTF_8)
-                  .replaceAll("\\+", "%20")));
+    // add `annotations` to the URL query string
+    if (getAnnotations() != null) {
+      for (int i = 0; i < getAnnotations().size(); i++) {
+        if (getAnnotations().get(i) != null) {
+          joiner.add(
+              getAnnotations()
+                  .get(i)
+                  .toUrlQueryString(
+                      String.format(
+                          "%sannotations%s%s",
+                          prefix,
+                          suffix,
+                          "".equals(suffix)
+                              ? ""
+                              : String.format("%s%d%s", containerPrefix, i, containerSuffix))));
+        }
+      }
     }
 
-    // add `status` to the URL query string
-    if (getStatus() != null) {
+    // add `creationDatetime` to the URL query string
+    if (getCreationDatetime() != null) {
       joiner.add(
           String.format(
-              "%sstatus%s=%s",
+              "%screationDatetime%s=%s",
               prefix,
               suffix,
-              URLEncoder.encode(String.valueOf(getStatus()), StandardCharsets.UTF_8)
+              URLEncoder.encode(String.valueOf(getCreationDatetime()), StandardCharsets.UTF_8)
                   .replaceAll("\\+", "%20")));
     }
 

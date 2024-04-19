@@ -16,6 +16,8 @@ import app.bpartners.gen.annotator.endpoint.rest.OpenapiGenerated;
 
 @OpenapiGenerated
 public class Configuration {
+  public static final String VERSION = "latest";
+
   private static ApiClient defaultApiClient = new ApiClient();
 
   /**

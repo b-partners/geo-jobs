@@ -22,28 +22,32 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.StringJoiner;
 
-/** UpdateTask */
+/** CreateAnnotatedTask */
 @JsonPropertyOrder({
-  UpdateTask.JSON_PROPERTY_ID,
-  UpdateTask.JSON_PROPERTY_USER_ID,
-  UpdateTask.JSON_PROPERTY_STATUS
+  CreateAnnotatedTask.JSON_PROPERTY_ID,
+  CreateAnnotatedTask.JSON_PROPERTY_ANNOTATOR_ID,
+  CreateAnnotatedTask.JSON_PROPERTY_FILENAME,
+  CreateAnnotatedTask.JSON_PROPERTY_ANNOTATION_BATCH
 })
 @OpenapiGenerated
-public class UpdateTask implements Serializable {
+public class CreateAnnotatedTask implements Serializable {
   private static final long serialVersionUID = 1L;
 
   public static final String JSON_PROPERTY_ID = "id";
   private String id;
 
-  public static final String JSON_PROPERTY_USER_ID = "userId";
-  private String userId;
+  public static final String JSON_PROPERTY_ANNOTATOR_ID = "annotatorId";
+  private String annotatorId;
 
-  public static final String JSON_PROPERTY_STATUS = "status";
-  private TaskStatus status;
+  public static final String JSON_PROPERTY_FILENAME = "filename";
+  private String filename;
 
-  public UpdateTask() {}
+  public static final String JSON_PROPERTY_ANNOTATION_BATCH = "annotationBatch";
+  private CreateAnnotationBatch annotationBatch;
 
-  public UpdateTask id(String id) {
+  public CreateAnnotatedTask() {}
+
+  public CreateAnnotatedTask id(String id) {
     this.id = id;
     return this;
   }
@@ -66,53 +70,76 @@ public class UpdateTask implements Serializable {
     this.id = id;
   }
 
-  public UpdateTask userId(String userId) {
-    this.userId = userId;
+  public CreateAnnotatedTask annotatorId(String annotatorId) {
+    this.annotatorId = annotatorId;
     return this;
   }
 
   /**
-   * Get userId
+   * Get annotatorId
    *
-   * @return userId
+   * @return annotatorId
    */
   @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_USER_ID)
+  @JsonProperty(JSON_PROPERTY_ANNOTATOR_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public String getUserId() {
-    return userId;
+  public String getAnnotatorId() {
+    return annotatorId;
   }
 
-  @JsonProperty(JSON_PROPERTY_USER_ID)
+  @JsonProperty(JSON_PROPERTY_ANNOTATOR_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setUserId(String userId) {
-    this.userId = userId;
+  public void setAnnotatorId(String annotatorId) {
+    this.annotatorId = annotatorId;
   }
 
-  public UpdateTask status(TaskStatus status) {
-    this.status = status;
+  public CreateAnnotatedTask filename(String filename) {
+    this.filename = filename;
     return this;
   }
 
   /**
-   * Get status
+   * Get filename
    *
-   * @return status
+   * @return filename
    */
   @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_STATUS)
+  @JsonProperty(JSON_PROPERTY_FILENAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public TaskStatus getStatus() {
-    return status;
+  public String getFilename() {
+    return filename;
   }
 
-  @JsonProperty(JSON_PROPERTY_STATUS)
+  @JsonProperty(JSON_PROPERTY_FILENAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setStatus(TaskStatus status) {
-    this.status = status;
+  public void setFilename(String filename) {
+    this.filename = filename;
   }
 
-  /** Return true if this UpdateTask object is equal to o. */
+  public CreateAnnotatedTask annotationBatch(CreateAnnotationBatch annotationBatch) {
+    this.annotationBatch = annotationBatch;
+    return this;
+  }
+
+  /**
+   * Get annotationBatch
+   *
+   * @return annotationBatch
+   */
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_ANNOTATION_BATCH)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public CreateAnnotationBatch getAnnotationBatch() {
+    return annotationBatch;
+  }
+
+  @JsonProperty(JSON_PROPERTY_ANNOTATION_BATCH)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setAnnotationBatch(CreateAnnotationBatch annotationBatch) {
+    this.annotationBatch = annotationBatch;
+  }
+
+  /** Return true if this CreateAnnotatedTask object is equal to o. */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -121,24 +148,26 @@ public class UpdateTask implements Serializable {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    UpdateTask updateTask = (UpdateTask) o;
-    return Objects.equals(this.id, updateTask.id)
-        && Objects.equals(this.userId, updateTask.userId)
-        && Objects.equals(this.status, updateTask.status);
+    CreateAnnotatedTask createAnnotatedTask = (CreateAnnotatedTask) o;
+    return Objects.equals(this.id, createAnnotatedTask.id)
+        && Objects.equals(this.annotatorId, createAnnotatedTask.annotatorId)
+        && Objects.equals(this.filename, createAnnotatedTask.filename)
+        && Objects.equals(this.annotationBatch, createAnnotatedTask.annotationBatch);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, userId, status);
+    return Objects.hash(id, annotatorId, filename, annotationBatch);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class UpdateTask {\n");
+    sb.append("class CreateAnnotatedTask {\n");
     sb.append("    id: ").append(toIndentedString(id)).append("\n");
-    sb.append("    userId: ").append(toIndentedString(userId)).append("\n");
-    sb.append("    status: ").append(toIndentedString(status)).append("\n");
+    sb.append("    annotatorId: ").append(toIndentedString(annotatorId)).append("\n");
+    sb.append("    filename: ").append(toIndentedString(filename)).append("\n");
+    sb.append("    annotationBatch: ").append(toIndentedString(annotationBatch)).append("\n");
     sb.append("}");
     return sb.toString();
   }
@@ -196,26 +225,31 @@ public class UpdateTask implements Serializable {
                   .replaceAll("\\+", "%20")));
     }
 
-    // add `userId` to the URL query string
-    if (getUserId() != null) {
+    // add `annotatorId` to the URL query string
+    if (getAnnotatorId() != null) {
       joiner.add(
           String.format(
-              "%suserId%s=%s",
+              "%sannotatorId%s=%s",
               prefix,
               suffix,
-              URLEncoder.encode(String.valueOf(getUserId()), StandardCharsets.UTF_8)
+              URLEncoder.encode(String.valueOf(getAnnotatorId()), StandardCharsets.UTF_8)
                   .replaceAll("\\+", "%20")));
     }
 
-    // add `status` to the URL query string
-    if (getStatus() != null) {
+    // add `filename` to the URL query string
+    if (getFilename() != null) {
       joiner.add(
           String.format(
-              "%sstatus%s=%s",
+              "%sfilename%s=%s",
               prefix,
               suffix,
-              URLEncoder.encode(String.valueOf(getStatus()), StandardCharsets.UTF_8)
+              URLEncoder.encode(String.valueOf(getFilename()), StandardCharsets.UTF_8)
                   .replaceAll("\\+", "%20")));
+    }
+
+    // add `annotationBatch` to the URL query string
+    if (getAnnotationBatch() != null) {
+      joiner.add(getAnnotationBatch().toUrlQueryString(prefix + "annotationBatch" + suffix));
     }
 
     return joiner.toString();

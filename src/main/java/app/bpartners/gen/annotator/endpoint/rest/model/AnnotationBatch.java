@@ -16,11 +16,13 @@ import app.bpartners.gen.annotator.endpoint.rest.OpenapiGenerated;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModelProperty;
 import java.io.Serializable;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.StringJoiner;
 
 /** AnnotationBatch */
 @JsonPropertyOrder({
@@ -36,10 +38,12 @@ public class AnnotationBatch implements Serializable {
   private String id;
 
   public static final String JSON_PROPERTY_ANNOTATIONS = "annotations";
-  private List<Annotation> annotations = null;
+  private List<Annotation> annotations;
 
   public static final String JSON_PROPERTY_CREATION_DATETIME = "creationDatetime";
   private java.time.Instant creationDatetime;
+
+  public AnnotationBatch() {}
 
   public AnnotationBatch id(String id) {
     this.id = id;
@@ -52,7 +56,6 @@ public class AnnotationBatch implements Serializable {
    * @return id
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "")
   @JsonProperty(JSON_PROPERTY_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public String getId() {
@@ -84,7 +87,6 @@ public class AnnotationBatch implements Serializable {
    * @return annotations
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "")
   @JsonProperty(JSON_PROPERTY_ANNOTATIONS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public List<Annotation> getAnnotations() {
@@ -108,7 +110,6 @@ public class AnnotationBatch implements Serializable {
    * @return creationDatetime
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "ignored in requestBody")
   @JsonProperty(JSON_PROPERTY_CREATION_DATETIME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public java.time.Instant getCreationDatetime() {
@@ -160,5 +161,81 @@ public class AnnotationBatch implements Serializable {
       return "null";
     }
     return o.toString().replace("\n", "\n    ");
+  }
+
+  /**
+   * Convert the instance into URL query string.
+   *
+   * @return URL query string
+   */
+  public String toUrlQueryString() {
+    return toUrlQueryString(null);
+  }
+
+  /**
+   * Convert the instance into URL query string.
+   *
+   * @param prefix prefix of the query string
+   * @return URL query string
+   */
+  public String toUrlQueryString(String prefix) {
+    String suffix = "";
+    String containerSuffix = "";
+    String containerPrefix = "";
+    if (prefix == null) {
+      // style=form, explode=true, e.g. /pet?name=cat&type=manx
+      prefix = "";
+    } else {
+      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
+      prefix = prefix + "[";
+      suffix = "]";
+      containerSuffix = "]";
+      containerPrefix = "[";
+    }
+
+    StringJoiner joiner = new StringJoiner("&");
+
+    // add `id` to the URL query string
+    if (getId() != null) {
+      joiner.add(
+          String.format(
+              "%sid%s=%s",
+              prefix,
+              suffix,
+              URLEncoder.encode(String.valueOf(getId()), StandardCharsets.UTF_8)
+                  .replaceAll("\\+", "%20")));
+    }
+
+    // add `annotations` to the URL query string
+    if (getAnnotations() != null) {
+      for (int i = 0; i < getAnnotations().size(); i++) {
+        if (getAnnotations().get(i) != null) {
+          joiner.add(
+              getAnnotations()
+                  .get(i)
+                  .toUrlQueryString(
+                      String.format(
+                          "%sannotations%s%s",
+                          prefix,
+                          suffix,
+                          "".equals(suffix)
+                              ? ""
+                              : String.format("%s%d%s", containerPrefix, i, containerSuffix))));
+        }
+      }
+    }
+
+    // add `creationDatetime` to the URL query string
+    if (getCreationDatetime() != null) {
+      joiner.add(
+          String.format(
+              "%screationDatetime%s=%s",
+              prefix,
+              suffix,
+              URLEncoder.encode(String.valueOf(getCreationDatetime()), StandardCharsets.UTF_8)
+                  .replaceAll("\\+", "%20")));
+    }
+
+    return joiner.toString();
   }
 }

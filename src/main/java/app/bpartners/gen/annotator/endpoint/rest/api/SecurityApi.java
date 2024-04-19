@@ -93,14 +93,21 @@ public class SecurityApi {
       if (memberVarResponseInterceptor != null) {
         memberVarResponseInterceptor.accept(localVarResponse);
       }
-      if (localVarResponse.statusCode() / 100 != 2) {
-        throw getApiException("checkDbHealth", localVarResponse);
+      try {
+        if (localVarResponse.statusCode() / 100 != 2) {
+          throw getApiException("checkDbHealth", localVarResponse);
+        }
+        return new ApiResponse<DummyComponent>(
+            localVarResponse.statusCode(),
+            localVarResponse.headers().map(),
+            localVarResponse.body() == null
+                ? null
+                : memberVarObjectMapper.readValue(
+                    localVarResponse.body(),
+                    new TypeReference<DummyComponent>() {}) // closes the InputStream
+            );
+      } finally {
       }
-      return new ApiResponse<DummyComponent>(
-          localVarResponse.statusCode(),
-          localVarResponse.headers().map(),
-          memberVarObjectMapper.readValue(
-              localVarResponse.body(), new TypeReference<DummyComponent>() {}));
     } catch (IOException e) {
       throw new ApiException(e);
     } catch (InterruptedException e) {
@@ -155,13 +162,21 @@ public class SecurityApi {
       if (memberVarResponseInterceptor != null) {
         memberVarResponseInterceptor.accept(localVarResponse);
       }
-      if (localVarResponse.statusCode() / 100 != 2) {
-        throw getApiException("checkHealth", localVarResponse);
+      try {
+        if (localVarResponse.statusCode() / 100 != 2) {
+          throw getApiException("checkHealth", localVarResponse);
+        }
+        return new ApiResponse<String>(
+            localVarResponse.statusCode(),
+            localVarResponse.headers().map(),
+            localVarResponse.body() == null
+                ? null
+                : memberVarObjectMapper.readValue(
+                    localVarResponse.body(),
+                    new TypeReference<String>() {}) // closes the InputStream
+            );
+      } finally {
       }
-      return new ApiResponse<String>(
-          localVarResponse.statusCode(),
-          localVarResponse.headers().map(),
-          memberVarObjectMapper.readValue(localVarResponse.body(), new TypeReference<String>() {}));
     } catch (IOException e) {
       throw new ApiException(e);
     } catch (InterruptedException e) {
@@ -216,13 +231,21 @@ public class SecurityApi {
       if (memberVarResponseInterceptor != null) {
         memberVarResponseInterceptor.accept(localVarResponse);
       }
-      if (localVarResponse.statusCode() / 100 != 2) {
-        throw getApiException("whoami", localVarResponse);
+      try {
+        if (localVarResponse.statusCode() / 100 != 2) {
+          throw getApiException("whoami", localVarResponse);
+        }
+        return new ApiResponse<Whoami>(
+            localVarResponse.statusCode(),
+            localVarResponse.headers().map(),
+            localVarResponse.body() == null
+                ? null
+                : memberVarObjectMapper.readValue(
+                    localVarResponse.body(),
+                    new TypeReference<Whoami>() {}) // closes the InputStream
+            );
+      } finally {
       }
-      return new ApiResponse<Whoami>(
-          localVarResponse.statusCode(),
-          localVarResponse.headers().map(),
-          memberVarObjectMapper.readValue(localVarResponse.body(), new TypeReference<Whoami>() {}));
     } catch (IOException e) {
       throw new ApiException(e);
     } catch (InterruptedException e) {

@@ -108,14 +108,21 @@ public class UserTasksApi {
       if (memberVarResponseInterceptor != null) {
         memberVarResponseInterceptor.accept(localVarResponse);
       }
-      if (localVarResponse.statusCode() / 100 != 2) {
-        throw getApiException("annotateAndCompleteTask", localVarResponse);
+      try {
+        if (localVarResponse.statusCode() / 100 != 2) {
+          throw getApiException("annotateAndCompleteTask", localVarResponse);
+        }
+        return new ApiResponse<AnnotationBatch>(
+            localVarResponse.statusCode(),
+            localVarResponse.headers().map(),
+            localVarResponse.body() == null
+                ? null
+                : memberVarObjectMapper.readValue(
+                    localVarResponse.body(),
+                    new TypeReference<AnnotationBatch>() {}) // closes the InputStream
+            );
+      } finally {
       }
-      return new ApiResponse<AnnotationBatch>(
-          localVarResponse.statusCode(),
-          localVarResponse.headers().map(),
-          memberVarObjectMapper.readValue(
-              localVarResponse.body(), new TypeReference<AnnotationBatch>() {}));
     } catch (IOException e) {
       throw new ApiException(e);
     } catch (InterruptedException e) {
@@ -205,13 +212,20 @@ public class UserTasksApi {
       if (memberVarResponseInterceptor != null) {
         memberVarResponseInterceptor.accept(localVarResponse);
       }
-      if (localVarResponse.statusCode() / 100 != 2) {
-        throw getApiException("getUserTaskByJob", localVarResponse);
+      try {
+        if (localVarResponse.statusCode() / 100 != 2) {
+          throw getApiException("getUserTaskByJob", localVarResponse);
+        }
+        return new ApiResponse<Task>(
+            localVarResponse.statusCode(),
+            localVarResponse.headers().map(),
+            localVarResponse.body() == null
+                ? null
+                : memberVarObjectMapper.readValue(
+                    localVarResponse.body(), new TypeReference<Task>() {}) // closes the InputStream
+            );
+      } finally {
       }
-      return new ApiResponse<Task>(
-          localVarResponse.statusCode(),
-          localVarResponse.headers().map(),
-          memberVarObjectMapper.readValue(localVarResponse.body(), new TypeReference<Task>() {}));
     } catch (IOException e) {
       throw new ApiException(e);
     } catch (InterruptedException e) {
@@ -295,13 +309,20 @@ public class UserTasksApi {
       if (memberVarResponseInterceptor != null) {
         memberVarResponseInterceptor.accept(localVarResponse);
       }
-      if (localVarResponse.statusCode() / 100 != 2) {
-        throw getApiException("updateTask", localVarResponse);
+      try {
+        if (localVarResponse.statusCode() / 100 != 2) {
+          throw getApiException("updateTask", localVarResponse);
+        }
+        return new ApiResponse<Task>(
+            localVarResponse.statusCode(),
+            localVarResponse.headers().map(),
+            localVarResponse.body() == null
+                ? null
+                : memberVarObjectMapper.readValue(
+                    localVarResponse.body(), new TypeReference<Task>() {}) // closes the InputStream
+            );
+      } finally {
       }
-      return new ApiResponse<Task>(
-          localVarResponse.statusCode(),
-          localVarResponse.headers().map(),
-          memberVarObjectMapper.readValue(localVarResponse.body(), new TypeReference<Task>() {}));
     } catch (IOException e) {
       throw new ApiException(e);
     } catch (InterruptedException e) {

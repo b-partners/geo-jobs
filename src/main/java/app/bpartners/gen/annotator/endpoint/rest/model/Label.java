@@ -16,9 +16,11 @@ import app.bpartners.gen.annotator.endpoint.rest.OpenapiGenerated;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModelProperty;
 import java.io.Serializable;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.StringJoiner;
 
 /** Label */
 @JsonPropertyOrder({Label.JSON_PROPERTY_ID, Label.JSON_PROPERTY_NAME, Label.JSON_PROPERTY_COLOR})
@@ -35,6 +37,8 @@ public class Label implements Serializable {
   public static final String JSON_PROPERTY_COLOR = "color";
   private String color;
 
+  public Label() {}
+
   public Label id(String id) {
     this.id = id;
     return this;
@@ -46,7 +50,6 @@ public class Label implements Serializable {
    * @return id
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "")
   @JsonProperty(JSON_PROPERTY_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public String getId() {
@@ -70,7 +73,6 @@ public class Label implements Serializable {
    * @return name
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "")
   @JsonProperty(JSON_PROPERTY_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public String getName() {
@@ -94,9 +96,6 @@ public class Label implements Serializable {
    * @return color
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(
-      example = "#40D399",
-      value = "The color to assign to the label into hexadecimal form")
   @JsonProperty(JSON_PROPERTY_COLOR)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public String getColor() {
@@ -148,5 +147,73 @@ public class Label implements Serializable {
       return "null";
     }
     return o.toString().replace("\n", "\n    ");
+  }
+
+  /**
+   * Convert the instance into URL query string.
+   *
+   * @return URL query string
+   */
+  public String toUrlQueryString() {
+    return toUrlQueryString(null);
+  }
+
+  /**
+   * Convert the instance into URL query string.
+   *
+   * @param prefix prefix of the query string
+   * @return URL query string
+   */
+  public String toUrlQueryString(String prefix) {
+    String suffix = "";
+    String containerSuffix = "";
+    String containerPrefix = "";
+    if (prefix == null) {
+      // style=form, explode=true, e.g. /pet?name=cat&type=manx
+      prefix = "";
+    } else {
+      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
+      prefix = prefix + "[";
+      suffix = "]";
+      containerSuffix = "]";
+      containerPrefix = "[";
+    }
+
+    StringJoiner joiner = new StringJoiner("&");
+
+    // add `id` to the URL query string
+    if (getId() != null) {
+      joiner.add(
+          String.format(
+              "%sid%s=%s",
+              prefix,
+              suffix,
+              URLEncoder.encode(String.valueOf(getId()), StandardCharsets.UTF_8)
+                  .replaceAll("\\+", "%20")));
+    }
+
+    // add `name` to the URL query string
+    if (getName() != null) {
+      joiner.add(
+          String.format(
+              "%sname%s=%s",
+              prefix,
+              suffix,
+              URLEncoder.encode(String.valueOf(getName()), StandardCharsets.UTF_8)
+                  .replaceAll("\\+", "%20")));
+    }
+
+    // add `color` to the URL query string
+    if (getColor() != null) {
+      joiner.add(
+          String.format(
+              "%scolor%s=%s",
+              prefix,
+              suffix,
+              URLEncoder.encode(String.valueOf(getColor()), StandardCharsets.UTF_8)
+                  .replaceAll("\\+", "%20")));
+    }
+
+    return joiner.toString();
   }
 }

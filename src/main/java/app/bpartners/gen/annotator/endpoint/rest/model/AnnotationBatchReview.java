@@ -16,11 +16,13 @@ import app.bpartners.gen.annotator.endpoint.rest.OpenapiGenerated;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModelProperty;
 import java.io.Serializable;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.StringJoiner;
 
 /** AnnotationBatchReview */
 @JsonPropertyOrder({
@@ -40,10 +42,12 @@ public class AnnotationBatchReview implements Serializable {
   private String annotationBatchId;
 
   public static final String JSON_PROPERTY_REVIEWS = "reviews";
-  private List<AnnotationReview> reviews = null;
+  private List<AnnotationReview> reviews;
 
   public static final String JSON_PROPERTY_STATUS = "status";
   private ReviewStatus status = ReviewStatus.ACCEPTED;
+
+  public AnnotationBatchReview() {}
 
   public AnnotationBatchReview id(String id) {
     this.id = id;
@@ -56,7 +60,6 @@ public class AnnotationBatchReview implements Serializable {
    * @return id
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "")
   @JsonProperty(JSON_PROPERTY_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public String getId() {
@@ -80,7 +83,6 @@ public class AnnotationBatchReview implements Serializable {
    * @return annotationBatchId
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "")
   @JsonProperty(JSON_PROPERTY_ANNOTATION_BATCH_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public String getAnnotationBatchId() {
@@ -112,7 +114,6 @@ public class AnnotationBatchReview implements Serializable {
    * @return reviews
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "")
   @JsonProperty(JSON_PROPERTY_REVIEWS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public List<AnnotationReview> getReviews() {
@@ -136,7 +137,6 @@ public class AnnotationBatchReview implements Serializable {
    * @return status
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "")
   @JsonProperty(JSON_PROPERTY_STATUS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public ReviewStatus getStatus() {
@@ -190,5 +190,92 @@ public class AnnotationBatchReview implements Serializable {
       return "null";
     }
     return o.toString().replace("\n", "\n    ");
+  }
+
+  /**
+   * Convert the instance into URL query string.
+   *
+   * @return URL query string
+   */
+  public String toUrlQueryString() {
+    return toUrlQueryString(null);
+  }
+
+  /**
+   * Convert the instance into URL query string.
+   *
+   * @param prefix prefix of the query string
+   * @return URL query string
+   */
+  public String toUrlQueryString(String prefix) {
+    String suffix = "";
+    String containerSuffix = "";
+    String containerPrefix = "";
+    if (prefix == null) {
+      // style=form, explode=true, e.g. /pet?name=cat&type=manx
+      prefix = "";
+    } else {
+      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
+      prefix = prefix + "[";
+      suffix = "]";
+      containerSuffix = "]";
+      containerPrefix = "[";
+    }
+
+    StringJoiner joiner = new StringJoiner("&");
+
+    // add `id` to the URL query string
+    if (getId() != null) {
+      joiner.add(
+          String.format(
+              "%sid%s=%s",
+              prefix,
+              suffix,
+              URLEncoder.encode(String.valueOf(getId()), StandardCharsets.UTF_8)
+                  .replaceAll("\\+", "%20")));
+    }
+
+    // add `annotationBatchId` to the URL query string
+    if (getAnnotationBatchId() != null) {
+      joiner.add(
+          String.format(
+              "%sannotationBatchId%s=%s",
+              prefix,
+              suffix,
+              URLEncoder.encode(String.valueOf(getAnnotationBatchId()), StandardCharsets.UTF_8)
+                  .replaceAll("\\+", "%20")));
+    }
+
+    // add `reviews` to the URL query string
+    if (getReviews() != null) {
+      for (int i = 0; i < getReviews().size(); i++) {
+        if (getReviews().get(i) != null) {
+          joiner.add(
+              getReviews()
+                  .get(i)
+                  .toUrlQueryString(
+                      String.format(
+                          "%sreviews%s%s",
+                          prefix,
+                          suffix,
+                          "".equals(suffix)
+                              ? ""
+                              : String.format("%s%d%s", containerPrefix, i, containerSuffix))));
+        }
+      }
+    }
+
+    // add `status` to the URL query string
+    if (getStatus() != null) {
+      joiner.add(
+          String.format(
+              "%sstatus%s=%s",
+              prefix,
+              suffix,
+              URLEncoder.encode(String.valueOf(getStatus()), StandardCharsets.UTF_8)
+                  .replaceAll("\\+", "%20")));
+    }
+
+    return joiner.toString();
   }
 }

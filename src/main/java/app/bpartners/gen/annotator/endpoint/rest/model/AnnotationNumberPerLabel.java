@@ -22,70 +22,70 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.StringJoiner;
 
-/** TooManyRequestsException */
+/** AnnotationNumberPerLabel */
 @JsonPropertyOrder({
-  TooManyRequestsException.JSON_PROPERTY_TYPE,
-  TooManyRequestsException.JSON_PROPERTY_MESSAGE
+  AnnotationNumberPerLabel.JSON_PROPERTY_LABEL_NAME,
+  AnnotationNumberPerLabel.JSON_PROPERTY_NUMBER_OF_ANNOTATIONS
 })
 @OpenapiGenerated
-public class TooManyRequestsException implements Serializable {
+public class AnnotationNumberPerLabel implements Serializable {
   private static final long serialVersionUID = 1L;
 
-  public static final String JSON_PROPERTY_TYPE = "type";
-  private String type;
+  public static final String JSON_PROPERTY_LABEL_NAME = "labelName";
+  private String labelName;
 
-  public static final String JSON_PROPERTY_MESSAGE = "message";
-  private String message;
+  public static final String JSON_PROPERTY_NUMBER_OF_ANNOTATIONS = "numberOfAnnotations";
+  private Long numberOfAnnotations;
 
-  public TooManyRequestsException() {}
+  public AnnotationNumberPerLabel() {}
 
-  public TooManyRequestsException type(String type) {
-    this.type = type;
+  public AnnotationNumberPerLabel labelName(String labelName) {
+    this.labelName = labelName;
     return this;
   }
 
   /**
-   * Get type
+   * Get labelName
    *
-   * @return type
+   * @return labelName
    */
   @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_TYPE)
+  @JsonProperty(JSON_PROPERTY_LABEL_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public String getType() {
-    return type;
+  public String getLabelName() {
+    return labelName;
   }
 
-  @JsonProperty(JSON_PROPERTY_TYPE)
+  @JsonProperty(JSON_PROPERTY_LABEL_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setType(String type) {
-    this.type = type;
+  public void setLabelName(String labelName) {
+    this.labelName = labelName;
   }
 
-  public TooManyRequestsException message(String message) {
-    this.message = message;
+  public AnnotationNumberPerLabel numberOfAnnotations(Long numberOfAnnotations) {
+    this.numberOfAnnotations = numberOfAnnotations;
     return this;
   }
 
   /**
-   * Get message
+   * Get numberOfAnnotations
    *
-   * @return message
+   * @return numberOfAnnotations
    */
   @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MESSAGE)
+  @JsonProperty(JSON_PROPERTY_NUMBER_OF_ANNOTATIONS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public String getMessage() {
-    return message;
+  public Long getNumberOfAnnotations() {
+    return numberOfAnnotations;
   }
 
-  @JsonProperty(JSON_PROPERTY_MESSAGE)
+  @JsonProperty(JSON_PROPERTY_NUMBER_OF_ANNOTATIONS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMessage(String message) {
-    this.message = message;
+  public void setNumberOfAnnotations(Long numberOfAnnotations) {
+    this.numberOfAnnotations = numberOfAnnotations;
   }
 
-  /** Return true if this TooManyRequestsException object is equal to o. */
+  /** Return true if this AnnotationNumberPerLabel object is equal to o. */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -94,22 +94,24 @@ public class TooManyRequestsException implements Serializable {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    TooManyRequestsException tooManyRequestsException = (TooManyRequestsException) o;
-    return Objects.equals(this.type, tooManyRequestsException.type)
-        && Objects.equals(this.message, tooManyRequestsException.message);
+    AnnotationNumberPerLabel annotationNumberPerLabel = (AnnotationNumberPerLabel) o;
+    return Objects.equals(this.labelName, annotationNumberPerLabel.labelName)
+        && Objects.equals(this.numberOfAnnotations, annotationNumberPerLabel.numberOfAnnotations);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(type, message);
+    return Objects.hash(labelName, numberOfAnnotations);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class TooManyRequestsException {\n");
-    sb.append("    type: ").append(toIndentedString(type)).append("\n");
-    sb.append("    message: ").append(toIndentedString(message)).append("\n");
+    sb.append("class AnnotationNumberPerLabel {\n");
+    sb.append("    labelName: ").append(toIndentedString(labelName)).append("\n");
+    sb.append("    numberOfAnnotations: ")
+        .append(toIndentedString(numberOfAnnotations))
+        .append("\n");
     sb.append("}");
     return sb.toString();
   }
@@ -156,25 +158,25 @@ public class TooManyRequestsException implements Serializable {
 
     StringJoiner joiner = new StringJoiner("&");
 
-    // add `type` to the URL query string
-    if (getType() != null) {
+    // add `labelName` to the URL query string
+    if (getLabelName() != null) {
       joiner.add(
           String.format(
-              "%stype%s=%s",
+              "%slabelName%s=%s",
               prefix,
               suffix,
-              URLEncoder.encode(String.valueOf(getType()), StandardCharsets.UTF_8)
+              URLEncoder.encode(String.valueOf(getLabelName()), StandardCharsets.UTF_8)
                   .replaceAll("\\+", "%20")));
     }
 
-    // add `message` to the URL query string
-    if (getMessage() != null) {
+    // add `numberOfAnnotations` to the URL query string
+    if (getNumberOfAnnotations() != null) {
       joiner.add(
           String.format(
-              "%smessage%s=%s",
+              "%snumberOfAnnotations%s=%s",
               prefix,
               suffix,
-              URLEncoder.encode(String.valueOf(getMessage()), StandardCharsets.UTF_8)
+              URLEncoder.encode(String.valueOf(getNumberOfAnnotations()), StandardCharsets.UTF_8)
                   .replaceAll("\\+", "%20")));
     }
 

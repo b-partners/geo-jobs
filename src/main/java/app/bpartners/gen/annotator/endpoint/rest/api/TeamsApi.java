@@ -74,7 +74,7 @@ public class TeamsApi {
   /**
    * Create teams
    *
-   * @param createTeam (optional
+   * @param createTeam (optional)
    * @return List&lt;Team&gt;
    * @throws ApiException if fails to make API call
    */
@@ -86,7 +86,7 @@ public class TeamsApi {
   /**
    * Create teams
    *
-   * @param createTeam (optional
+   * @param createTeam (optional)
    * @return ApiResponse&lt;List&lt;Team&gt;&gt;
    * @throws ApiException if fails to make API call
    */
@@ -100,14 +100,21 @@ public class TeamsApi {
       if (memberVarResponseInterceptor != null) {
         memberVarResponseInterceptor.accept(localVarResponse);
       }
-      if (localVarResponse.statusCode() / 100 != 2) {
-        throw getApiException("createTeams", localVarResponse);
+      try {
+        if (localVarResponse.statusCode() / 100 != 2) {
+          throw getApiException("createTeams", localVarResponse);
+        }
+        return new ApiResponse<List<Team>>(
+            localVarResponse.statusCode(),
+            localVarResponse.headers().map(),
+            localVarResponse.body() == null
+                ? null
+                : memberVarObjectMapper.readValue(
+                    localVarResponse.body(),
+                    new TypeReference<List<Team>>() {}) // closes the InputStream
+            );
+      } finally {
       }
-      return new ApiResponse<List<Team>>(
-          localVarResponse.statusCode(),
-          localVarResponse.headers().map(),
-          memberVarObjectMapper.readValue(
-              localVarResponse.body(), new TypeReference<List<Team>>() {}));
     } catch (IOException e) {
       throw new ApiException(e);
     } catch (InterruptedException e) {
@@ -175,14 +182,21 @@ public class TeamsApi {
       if (memberVarResponseInterceptor != null) {
         memberVarResponseInterceptor.accept(localVarResponse);
       }
-      if (localVarResponse.statusCode() / 100 != 2) {
-        throw getApiException("getTeams", localVarResponse);
+      try {
+        if (localVarResponse.statusCode() / 100 != 2) {
+          throw getApiException("getTeams", localVarResponse);
+        }
+        return new ApiResponse<List<Team>>(
+            localVarResponse.statusCode(),
+            localVarResponse.headers().map(),
+            localVarResponse.body() == null
+                ? null
+                : memberVarObjectMapper.readValue(
+                    localVarResponse.body(),
+                    new TypeReference<List<Team>>() {}) // closes the InputStream
+            );
+      } finally {
       }
-      return new ApiResponse<List<Team>>(
-          localVarResponse.statusCode(),
-          localVarResponse.headers().map(),
-          memberVarObjectMapper.readValue(
-              localVarResponse.body(), new TypeReference<List<Team>>() {}));
     } catch (IOException e) {
       throw new ApiException(e);
     } catch (InterruptedException e) {
@@ -199,12 +213,19 @@ public class TeamsApi {
     String localVarPath = "/teams";
 
     List<Pair> localVarQueryParams = new ArrayList<>();
+    StringJoiner localVarQueryStringJoiner = new StringJoiner("&");
+    String localVarQueryParameterBaseName;
+    localVarQueryParameterBaseName = "page";
     localVarQueryParams.addAll(ApiClient.parameterToPairs("page", page));
+    localVarQueryParameterBaseName = "pageSize";
     localVarQueryParams.addAll(ApiClient.parameterToPairs("pageSize", pageSize));
 
-    if (!localVarQueryParams.isEmpty()) {
+    if (!localVarQueryParams.isEmpty() || localVarQueryStringJoiner.length() != 0) {
       StringJoiner queryJoiner = new StringJoiner("&");
       localVarQueryParams.forEach(p -> queryJoiner.add(p.getName() + '=' + p.getValue()));
+      if (localVarQueryStringJoiner.length() != 0) {
+        queryJoiner.add(localVarQueryStringJoiner.toString());
+      }
       localVarRequestBuilder.uri(
           URI.create(memberVarBaseUri + localVarPath + '?' + queryJoiner.toString()));
     } else {

@@ -16,11 +16,11 @@ import app.bpartners.gen.annotator.endpoint.rest.OpenapiGenerated;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModelProperty;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.StringJoiner;
 
 /** Polygon */
 @JsonPropertyOrder({Polygon.JSON_PROPERTY_POINTS})
@@ -29,7 +29,9 @@ public class Polygon implements Serializable {
   private static final long serialVersionUID = 1L;
 
   public static final String JSON_PROPERTY_POINTS = "points";
-  private List<Point> points = null;
+  private List<Point> points;
+
+  public Polygon() {}
 
   public Polygon points(List<Point> points) {
     this.points = points;
@@ -50,7 +52,6 @@ public class Polygon implements Serializable {
    * @return points
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "")
   @JsonProperty(JSON_PROPERTY_POINTS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public List<Point> getPoints() {
@@ -98,5 +99,59 @@ public class Polygon implements Serializable {
       return "null";
     }
     return o.toString().replace("\n", "\n    ");
+  }
+
+  /**
+   * Convert the instance into URL query string.
+   *
+   * @return URL query string
+   */
+  public String toUrlQueryString() {
+    return toUrlQueryString(null);
+  }
+
+  /**
+   * Convert the instance into URL query string.
+   *
+   * @param prefix prefix of the query string
+   * @return URL query string
+   */
+  public String toUrlQueryString(String prefix) {
+    String suffix = "";
+    String containerSuffix = "";
+    String containerPrefix = "";
+    if (prefix == null) {
+      // style=form, explode=true, e.g. /pet?name=cat&type=manx
+      prefix = "";
+    } else {
+      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
+      prefix = prefix + "[";
+      suffix = "]";
+      containerSuffix = "]";
+      containerPrefix = "[";
+    }
+
+    StringJoiner joiner = new StringJoiner("&");
+
+    // add `points` to the URL query string
+    if (getPoints() != null) {
+      for (int i = 0; i < getPoints().size(); i++) {
+        if (getPoints().get(i) != null) {
+          joiner.add(
+              getPoints()
+                  .get(i)
+                  .toUrlQueryString(
+                      String.format(
+                          "%spoints%s%s",
+                          prefix,
+                          suffix,
+                          "".equals(suffix)
+                              ? ""
+                              : String.format("%s%d%s", containerPrefix, i, containerSuffix))));
+        }
+      }
+    }
+
+    return joiner.toString();
   }
 }

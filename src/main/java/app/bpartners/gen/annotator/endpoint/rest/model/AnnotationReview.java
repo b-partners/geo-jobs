@@ -16,9 +16,11 @@ import app.bpartners.gen.annotator.endpoint.rest.OpenapiGenerated;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModelProperty;
 import java.io.Serializable;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.StringJoiner;
 
 /** AnnotationReview */
 @JsonPropertyOrder({
@@ -39,6 +41,8 @@ public class AnnotationReview implements Serializable {
   public static final String JSON_PROPERTY_ANNOTATION_ID = "annotationId";
   private String annotationId;
 
+  public AnnotationReview() {}
+
   public AnnotationReview id(String id) {
     this.id = id;
     return this;
@@ -50,7 +54,6 @@ public class AnnotationReview implements Serializable {
    * @return id
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "")
   @JsonProperty(JSON_PROPERTY_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public String getId() {
@@ -74,7 +77,6 @@ public class AnnotationReview implements Serializable {
    * @return comment
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "optional if status is ACCEPTED")
   @JsonProperty(JSON_PROPERTY_COMMENT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public String getComment() {
@@ -99,10 +101,6 @@ public class AnnotationReview implements Serializable {
    * @return annotationId
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(
-      value =
-          "optional parameter if you want to add a review for a specific annotation and not for the"
-              + " whole batch")
   @JsonProperty(JSON_PROPERTY_ANNOTATION_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public String getAnnotationId() {
@@ -154,5 +152,73 @@ public class AnnotationReview implements Serializable {
       return "null";
     }
     return o.toString().replace("\n", "\n    ");
+  }
+
+  /**
+   * Convert the instance into URL query string.
+   *
+   * @return URL query string
+   */
+  public String toUrlQueryString() {
+    return toUrlQueryString(null);
+  }
+
+  /**
+   * Convert the instance into URL query string.
+   *
+   * @param prefix prefix of the query string
+   * @return URL query string
+   */
+  public String toUrlQueryString(String prefix) {
+    String suffix = "";
+    String containerSuffix = "";
+    String containerPrefix = "";
+    if (prefix == null) {
+      // style=form, explode=true, e.g. /pet?name=cat&type=manx
+      prefix = "";
+    } else {
+      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
+      prefix = prefix + "[";
+      suffix = "]";
+      containerSuffix = "]";
+      containerPrefix = "[";
+    }
+
+    StringJoiner joiner = new StringJoiner("&");
+
+    // add `id` to the URL query string
+    if (getId() != null) {
+      joiner.add(
+          String.format(
+              "%sid%s=%s",
+              prefix,
+              suffix,
+              URLEncoder.encode(String.valueOf(getId()), StandardCharsets.UTF_8)
+                  .replaceAll("\\+", "%20")));
+    }
+
+    // add `comment` to the URL query string
+    if (getComment() != null) {
+      joiner.add(
+          String.format(
+              "%scomment%s=%s",
+              prefix,
+              suffix,
+              URLEncoder.encode(String.valueOf(getComment()), StandardCharsets.UTF_8)
+                  .replaceAll("\\+", "%20")));
+    }
+
+    // add `annotationId` to the URL query string
+    if (getAnnotationId() != null) {
+      joiner.add(
+          String.format(
+              "%sannotationId%s=%s",
+              prefix,
+              suffix,
+              URLEncoder.encode(String.valueOf(getAnnotationId()), StandardCharsets.UTF_8)
+                  .replaceAll("\\+", "%20")));
+    }
+
+    return joiner.toString();
   }
 }

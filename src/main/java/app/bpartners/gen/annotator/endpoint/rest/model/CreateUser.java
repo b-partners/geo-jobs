@@ -16,9 +16,11 @@ import app.bpartners.gen.annotator.endpoint.rest.OpenapiGenerated;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModelProperty;
 import java.io.Serializable;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.StringJoiner;
 
 /** CreateUser */
 @JsonPropertyOrder({
@@ -39,6 +41,8 @@ public class CreateUser implements Serializable {
   public static final String JSON_PROPERTY_EMAIL = "email";
   private String email;
 
+  public CreateUser() {}
+
   public CreateUser role(UserRole role) {
     this.role = role;
     return this;
@@ -50,7 +54,6 @@ public class CreateUser implements Serializable {
    * @return role
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "")
   @JsonProperty(JSON_PROPERTY_ROLE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public UserRole getRole() {
@@ -74,7 +77,6 @@ public class CreateUser implements Serializable {
    * @return teamId
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "")
   @JsonProperty(JSON_PROPERTY_TEAM_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public String getTeamId() {
@@ -98,7 +100,6 @@ public class CreateUser implements Serializable {
    * @return email
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "")
   @JsonProperty(JSON_PROPERTY_EMAIL)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public String getEmail() {
@@ -150,5 +151,73 @@ public class CreateUser implements Serializable {
       return "null";
     }
     return o.toString().replace("\n", "\n    ");
+  }
+
+  /**
+   * Convert the instance into URL query string.
+   *
+   * @return URL query string
+   */
+  public String toUrlQueryString() {
+    return toUrlQueryString(null);
+  }
+
+  /**
+   * Convert the instance into URL query string.
+   *
+   * @param prefix prefix of the query string
+   * @return URL query string
+   */
+  public String toUrlQueryString(String prefix) {
+    String suffix = "";
+    String containerSuffix = "";
+    String containerPrefix = "";
+    if (prefix == null) {
+      // style=form, explode=true, e.g. /pet?name=cat&type=manx
+      prefix = "";
+    } else {
+      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
+      prefix = prefix + "[";
+      suffix = "]";
+      containerSuffix = "]";
+      containerPrefix = "[";
+    }
+
+    StringJoiner joiner = new StringJoiner("&");
+
+    // add `role` to the URL query string
+    if (getRole() != null) {
+      joiner.add(
+          String.format(
+              "%srole%s=%s",
+              prefix,
+              suffix,
+              URLEncoder.encode(String.valueOf(getRole()), StandardCharsets.UTF_8)
+                  .replaceAll("\\+", "%20")));
+    }
+
+    // add `teamId` to the URL query string
+    if (getTeamId() != null) {
+      joiner.add(
+          String.format(
+              "%steamId%s=%s",
+              prefix,
+              suffix,
+              URLEncoder.encode(String.valueOf(getTeamId()), StandardCharsets.UTF_8)
+                  .replaceAll("\\+", "%20")));
+    }
+
+    // add `email` to the URL query string
+    if (getEmail() != null) {
+      joiner.add(
+          String.format(
+              "%semail%s=%s",
+              prefix,
+              suffix,
+              URLEncoder.encode(String.valueOf(getEmail()), StandardCharsets.UTF_8)
+                  .replaceAll("\\+", "%20")));
+    }
+
+    return joiner.toString();
   }
 }

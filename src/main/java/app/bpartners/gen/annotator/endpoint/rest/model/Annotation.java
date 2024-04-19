@@ -16,9 +16,11 @@ import app.bpartners.gen.annotator.endpoint.rest.OpenapiGenerated;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModelProperty;
 import java.io.Serializable;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.StringJoiner;
 
 /** Annotation */
 @JsonPropertyOrder({
@@ -47,6 +49,8 @@ public class Annotation implements Serializable {
   public static final String JSON_PROPERTY_POLYGON = "polygon";
   private Polygon polygon;
 
+  public Annotation() {}
+
   public Annotation id(String id) {
     this.id = id;
     return this;
@@ -58,7 +62,6 @@ public class Annotation implements Serializable {
    * @return id
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "")
   @JsonProperty(JSON_PROPERTY_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public String getId() {
@@ -82,7 +85,6 @@ public class Annotation implements Serializable {
    * @return taskId
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "")
   @JsonProperty(JSON_PROPERTY_TASK_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public String getTaskId() {
@@ -106,7 +108,6 @@ public class Annotation implements Serializable {
    * @return userId
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "")
   @JsonProperty(JSON_PROPERTY_USER_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public String getUserId() {
@@ -130,7 +131,6 @@ public class Annotation implements Serializable {
    * @return label
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "")
   @JsonProperty(JSON_PROPERTY_LABEL)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public Label getLabel() {
@@ -154,7 +154,6 @@ public class Annotation implements Serializable {
    * @return polygon
    */
   @javax.annotation.Nullable
-  @ApiModelProperty(value = "")
   @JsonProperty(JSON_PROPERTY_POLYGON)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public Polygon getPolygon() {
@@ -210,5 +209,72 @@ public class Annotation implements Serializable {
       return "null";
     }
     return o.toString().replace("\n", "\n    ");
+  }
+
+  /**
+   * Convert the instance into URL query string.
+   *
+   * @return URL query string
+   */
+  public String toUrlQueryString() {
+    return toUrlQueryString(null);
+  }
+
+  /**
+   * Convert the instance into URL query string.
+   *
+   * @param prefix prefix of the query string
+   * @return URL query string
+   */
+  public String toUrlQueryString(String prefix) {
+    String suffix = "";
+    String containerSuffix = "";
+    String containerPrefix = "";
+    if (prefix == null) {
+      // style=form, explode=true, e.g. /pet?name=cat&type=manx
+      prefix = "";
+    } else {
+      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
+      prefix = prefix + "[";
+      suffix = "]";
+      containerSuffix = "]";
+      containerPrefix = "[";
+    }
+
+    StringJoiner joiner = new StringJoiner("&");
+
+    // add `id` to the URL query string
+    if (getId() != null) {
+      joiner.add(
+          String.format(
+              "%sid%s=%s",
+              prefix,
+              suffix,
+              URLEncoder.encode(String.valueOf(getId()), StandardCharsets.UTF_8)
+                  .replaceAll("\\+", "%20")));
+    }
+
+    // add `userId` to the URL query string
+    if (getUserId() != null) {
+      joiner.add(
+          String.format(
+              "%suserId%s=%s",
+              prefix,
+              suffix,
+              URLEncoder.encode(String.valueOf(getUserId()), StandardCharsets.UTF_8)
+                  .replaceAll("\\+", "%20")));
+    }
+
+    // add `label` to the URL query string
+    if (getLabel() != null) {
+      joiner.add(getLabel().toUrlQueryString(prefix + "label" + suffix));
+    }
+
+    // add `polygon` to the URL query string
+    if (getPolygon() != null) {
+      joiner.add(getPolygon().toUrlQueryString(prefix + "polygon" + suffix));
+    }
+
+    return joiner.toString();
   }
 }
