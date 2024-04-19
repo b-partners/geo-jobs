@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.service.annotator;
 
-import static app.bpartners.gen.annotator.endpoint.rest.model.JobStatus.TO_REVIEW;
+import static app.bpartners.gen.annotator.endpoint.rest.model.JobStatus.*;
 import static app.bpartners.gen.annotator.endpoint.rest.model.JobType.REVIEWING;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static java.util.UUID.randomUUID;
@@ -93,7 +93,7 @@ public class AnnotationService {
             .folderPath(crupdateAnnotatedJobFolderPath)
             .labels(labels)
             .ownerEmail("tech@bpartners.app")
-            .status(TO_REVIEW)
+            .status(PENDING)
             .type(REVIEWING)
             .annotatedTasks(annotatedTasks)
             .imagesHeight(DEFAULT_IMAGES_HEIGHT)
