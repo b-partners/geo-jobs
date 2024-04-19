@@ -52,7 +52,6 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
       StatusMapper<JobStatus> statusMapper,
       HumanDetectionJobRepository humanDetectionJobRepository,
       AnnotationService annotationService,
-      ZoneTilingJobRepository tilingJobRepository,
       ZoneDetectionJobRepository zoneDetectionJobRepository) {
     super(repository, jobStatusRepository, taskRepository, eventProducer, ZoneDetectionJob.class);
     this.tilingTaskRepository = tilingTaskRepository;
