@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneDetectionJobSucceeded;
+import app.bpartners.geojobs.job.model.JobStatus;
+import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.repository.*;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.detection.*;
@@ -20,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
   public static final String SUCCEEDED_JOB_ID = "succeededJobId";
   public static final String HUMAN_ZDJ_ID = "humanZdjId";
+  public static final String SUCCEEDED_JOB_ID_2 = "succeededJobId2";
+  public static final String HUMAN_ZDJ_ID_2 = "humanZdjId2";
   @MockBean EventProducer eventProducer;
   @Autowired ZoneDetectionJobSucceededService subject;
   @Autowired private ZoneDetectionJobRepository jobRepository;
@@ -30,47 +34,93 @@ class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
 
   @BeforeEach
   void setUp() {
-    jobRepository.save(
-        ZoneDetectionJob.builder()
-            .id(SUCCEEDED_JOB_ID)
-            .detectionType(ZoneDetectionJob.DetectionType.MACHINE)
-            .build());
-    jobRepository.save(
-        ZoneDetectionJob.builder()
-            .id(HUMAN_ZDJ_ID)
-            .detectionType(ZoneDetectionJob.DetectionType.HUMAN)
-            .build());
-    detectionTaskRepository.save(
-        DetectionTask.builder()
-            .id("detectionTaskId")
-            .parcels(
-                List.of(
-                    Parcel.builder().id("parcel1Id").build(),
-                    Parcel.builder().id("parcel2Id").build()))
-            .build());
+    jobRepository.saveAll(
+        List.of(
+            ZoneDetectionJob.builder()
+                .id(SUCCEEDED_JOB_ID)
+                .detectionType(ZoneDetectionJob.DetectionType.MACHINE)
+                .build(),
+            ZoneDetectionJob.builder()
+                .id(SUCCEEDED_JOB_ID_2)
+                .detectionType(ZoneDetectionJob.DetectionType.MACHINE)
+                .build(),
+            ZoneDetectionJob.builder()
+                .id(HUMAN_ZDJ_ID)
+                .detectionType(ZoneDetectionJob.DetectionType.HUMAN)
+                .build(),
+            ZoneDetectionJob.builder()
+                .id(HUMAN_ZDJ_ID_2)
+                .detectionType(ZoneDetectionJob.DetectionType.HUMAN)
+                .build()));
+    detectionTaskRepository.saveAll(
+        List.of(
+            DetectionTask.builder()
+                .id("detectionTaskId")
+                .jobId(SUCCEEDED_JOB_ID)
+                .parcels(
+                    List.of(
+                        Parcel.builder().id("parcel1Id").build(),
+                        Parcel.builder().id("parcel2Id").build()))
+                .build(),
+            DetectionTask.builder()
+                .id("detectionTaskId2")
+                .jobId(SUCCEEDED_JOB_ID_2)
+                .parcels(List.of(Parcel.builder().id("parcel3Id").build()))
+                .build()));
     detectedTileRepository.saveAll(
         List.of(
+            detectedTile(SUCCEEDED_JOB_ID, "tile2Id", "parcel2Id", "detectedObjectId2", 0.5),
             detectedTile(SUCCEEDED_JOB_ID, "tile1Id", "parcel1Id", "detectedObjectId1", 0.8),
-            detectedTile(SUCCEEDED_JOB_ID, "tile2Id", "parcel2Id", "detectedObjectId2", 0.5)));
-    objectConfigurationRepository.save(
-        DetectableObjectConfiguration.builder()
-            .id("detectableObjectConfigurationId")
-            .confidence(0.7)
-            .objectType(DetectableType.ROOF)
-            .detectionJobId(SUCCEEDED_JOB_ID)
-            .build());
+            detectedTile(SUCCEEDED_JOB_ID_2, "tile3Id", "parcel3Id", "detectedObjectId3", 0.8)));
+    objectConfigurationRepository.saveAll(
+        List.of(
+            DetectableObjectConfiguration.builder()
+                .id("detectableObjectConfigurationId")
+                .confidence(0.7)
+                .objectType(DetectableType.ROOF)
+                .detectionJobId(SUCCEEDED_JOB_ID)
+                .build(),
+            DetectableObjectConfiguration.builder()
+                .id("detectableObjectConfigurationId2")
+                .confidence(0.7)
+                .objectType(DetectableType.ROOF)
+                .detectionJobId(SUCCEEDED_JOB_ID_2)
+                .build()));
   }
 
   @Test
   void handle_human_detection_job() {
-    List<HumanDetectionJob> before = humanDetectionJobRepository.findAll();
+    var humanDetectionBefore = humanDetectionJobRepository.findAll();
+    var humanZDJ1Before = jobRepository.findById(HUMAN_ZDJ_ID).orElseThrow();
 
     subject.accept(new ZoneDetectionJobSucceeded(SUCCEEDED_JOB_ID, HUMAN_ZDJ_ID));
+    subject.accept(new ZoneDetectionJobSucceeded(SUCCEEDED_JOB_ID_2, HUMAN_ZDJ_ID_2));
 
-    List<HumanDetectionJob> after = humanDetectionJobRepository.findAll();
-    assertTrue(before.isEmpty());
-    assertEquals(1, after.size());
-    assertEquals(HUMAN_ZDJ_ID, after.get(0).getZoneDetectionJobId());
-    assertFalse(after.get(0).getInDoubtTiles().isEmpty());
+    var humanZDJ1After = jobRepository.findById(HUMAN_ZDJ_ID).orElseThrow();
+    var humanZDJ2After = jobRepository.findById(HUMAN_ZDJ_ID_2).orElseThrow();
+    var humanDetectionAfter = humanDetectionJobRepository.findByZoneDetectionJobId(HUMAN_ZDJ_ID);
+    var humanZDJ1BeforeStatus = humanZDJ1Before.getStatus();
+    var humanZDJ2AfterStatus = humanZDJ2After.getStatus();
+    assertTrue(humanDetectionBefore.isEmpty());
+    assertTrue(humanDetectionAfter.isPresent());
+    assertEquals(humanZDJ1Before, humanZDJ1After);
+    assertEquals(
+        JobStatus.builder()
+            .id(humanZDJ1BeforeStatus.getId())
+            .progression(Status.ProgressionStatus.PENDING)
+            .health(Status.HealthStatus.UNKNOWN)
+            .creationDatetime(humanZDJ1BeforeStatus.getCreationDatetime())
+            .build(),
+        humanZDJ1BeforeStatus);
+    assertEquals(
+        JobStatus.builder()
+            .id(humanZDJ2AfterStatus.getId())
+            .progression(Status.ProgressionStatus.FINISHED)
+            .health(Status.HealthStatus.SUCCEEDED)
+            .creationDatetime(humanZDJ2AfterStatus.getCreationDatetime())
+            .build(),
+        humanZDJ2AfterStatus);
+    assertEquals(HUMAN_ZDJ_ID, humanDetectionAfter.get().getZoneDetectionJobId());
+    assertFalse(humanDetectionAfter.get().getInDoubtTiles().isEmpty());
   }
 }

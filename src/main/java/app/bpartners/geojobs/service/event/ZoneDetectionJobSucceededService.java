@@ -1,12 +1,16 @@
 package app.bpartners.geojobs.service.event;
 
+import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.gen.HumanDetectionJobCreatedFailed;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneDetectionJobSucceeded;
+import app.bpartners.geojobs.job.model.Status;
+import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.DetectedTileRepository;
 import app.bpartners.geojobs.repository.HumanDetectionJobRepository;
+import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.detection.DetectedTile;
 import app.bpartners.geojobs.repository.model.detection.HumanDetectionJob;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
@@ -27,6 +31,7 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
   private final DetectedTileRepository detectedTileRepository;
   private final HumanDetectionJobRepository humanDetectionJobRepository;
   private final EventProducer eventProducer;
+  private final ZoneDetectionJobRepository jobRepository;
 
   @Override
   @Transactional
@@ -44,6 +49,22 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
         "[DEBUG] ZoneDetectionJobSucceeded InDoubtTiles [size={}, tiles={}]",
         inDoubtTiles.size(),
         inDoubtTiles.stream().map(DetectedTile::describe).toList());
+    if (inDoubtTiles.isEmpty()) {
+      var zoneDetectionJob =
+          jobRepository
+              .findById(humanZDJId)
+              .orElseThrow(
+                  () -> new NotFoundException("ZoneDetectionJob(id=" + humanZDJId + ") not found"));
+      zoneDetectionJob.hasNewStatus(
+          Status.builder()
+              .id(randomUUID().toString())
+              .progression(Status.ProgressionStatus.FINISHED)
+              .health(Status.HealthStatus.SUCCEEDED)
+              .creationDatetime(now())
+              .build());
+      jobRepository.save(zoneDetectionJob);
+      return;
+    }
     HumanDetectionJob savedHumanDetectionJob =
         humanDetectionJobRepository.save(
             HumanDetectionJob.builder()
