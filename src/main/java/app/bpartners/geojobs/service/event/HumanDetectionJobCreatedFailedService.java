@@ -35,7 +35,7 @@ public class HumanDetectionJobCreatedFailedService
       return;
     }
     try {
-      annotationService.sendAnnotationsFromHumanZDJ(humanZdj);
+      annotationService.createAnnotationJob(humanZdj);
     } catch (Exception e) {
       log.error(
           "Processing humanDetectionJob(id={}) failed with attemptNb = {} and exception message ="

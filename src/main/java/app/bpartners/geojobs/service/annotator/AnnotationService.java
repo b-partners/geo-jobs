@@ -5,13 +5,13 @@ import static app.bpartners.gen.annotator.endpoint.rest.model.JobType.REVIEWING;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static java.util.UUID.randomUUID;
 
+import app.bpartners.gen.annotator.endpoint.rest.api.AdminApi;
 import app.bpartners.gen.annotator.endpoint.rest.api.AnnotatedJobsApi;
 import app.bpartners.gen.annotator.endpoint.rest.api.JobsApi;
 import app.bpartners.gen.annotator.endpoint.rest.client.ApiException;
-import app.bpartners.gen.annotator.endpoint.rest.model.AnnotatedTask;
-import app.bpartners.gen.annotator.endpoint.rest.model.CrupdateAnnotatedJob;
-import app.bpartners.gen.annotator.endpoint.rest.model.Job;
-import app.bpartners.gen.annotator.endpoint.rest.model.Label;
+import app.bpartners.gen.annotator.endpoint.rest.model.*;
+import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.gen.CreateAnnotatedTaskExtracted;
 import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.DetectedTile;
@@ -32,19 +32,24 @@ public class AnnotationService {
   private final LabelExtractor labelExtractor;
   private final AnnotatorUserInfoGetter annotatorUserInfoGetter;
   private final BucketComponent bucketComponent;
+  private final EventProducer eventProducer;
+  private final AdminApi adminApi;
 
   public AnnotationService(
       AnnotatorApiConf annotatorApiConf,
       TaskExtractor taskExtractor,
       LabelExtractor labelExtractor,
       AnnotatorUserInfoGetter annotatorUserInfoGetter,
-      BucketComponent bucketComponent) {
+      BucketComponent bucketComponent,
+      EventProducer eventProducer) {
     this.annotatedJobsApi = new AnnotatedJobsApi(annotatorApiConf.newApiClientWithApiKey());
     this.jobsApi = new JobsApi(annotatorApiConf.newApiClientWithApiKey());
+    this.adminApi = new AdminApi(annotatorApiConf.newApiClientWithApiKey());
     this.taskExtractor = taskExtractor;
     this.labelExtractor = labelExtractor;
     this.annotatorUserInfoGetter = annotatorUserInfoGetter;
     this.bucketComponent = bucketComponent;
+    this.eventProducer = eventProducer;
   }
 
   public Job getAnnotationJobById(String annotationJobId) {
@@ -55,7 +60,7 @@ public class AnnotationService {
     }
   }
 
-  public void sendAnnotationsFromHumanZDJ(HumanDetectionJob humanDetectionJob)
+  public void createAnnotationJob(HumanDetectionJob humanDetectionJob)
       throws app.bpartners.gen.annotator.endpoint.rest.client.ApiException {
     String crupdateAnnotatedJobFolderPath = null;
     List<DetectedTile> inDoubtTiles = humanDetectionJob.getInDoubtTiles();
@@ -64,7 +69,7 @@ public class AnnotationService {
         inDoubtTiles.size(),
         inDoubtTiles.stream().map(DetectedTile::describe).toList());
     String annotationJobId = humanDetectionJob.getAnnotationJobId();
-    List<AnnotatedTask> annotatedTasks =
+    List<CreateAnnotatedTask> annotatedTasks =
         taskExtractor.apply(inDoubtTiles, annotatorUserInfoGetter.getUserId());
     List<Label> extractLabelsFromTasks = labelExtractor.extractLabelsFromTasks(annotatedTasks);
     List<Label> labels =
@@ -84,20 +89,34 @@ public class AnnotationService {
         labels,
         annotatedTasks.size(),
         annotatedTasks);
-    annotatedJobsApi.crupdateAnnotatedJob(
-        annotationJobId,
-        new CrupdateAnnotatedJob()
-            .id(annotationJobId)
-            .name("geo-jobs" + now)
-            .bucketName(bucketComponent.getBucketName())
-            .folderPath(crupdateAnnotatedJobFolderPath)
-            .labels(labels)
-            .ownerEmail("tech@bpartners.app")
-            .status(PENDING)
-            .type(REVIEWING)
-            .annotatedTasks(annotatedTasks)
-            .imagesHeight(DEFAULT_IMAGES_HEIGHT)
-            .imagesWidth(DEFAULT_IMAGES_WIDTH)
-            .teamId(annotatorUserInfoGetter.getTeamId()));
+    Job createdAnnotationJob =
+        annotatedJobsApi.crupdateAnnotatedJob(
+            annotationJobId,
+            new CrupdateAnnotatedJob()
+                .id(annotationJobId)
+                .name("geo-jobs" + now)
+                .bucketName(bucketComponent.getBucketName())
+                .folderPath(crupdateAnnotatedJobFolderPath)
+                .labels(labels)
+                .ownerEmail("tech@bpartners.app")
+                .status(PENDING)
+                .type(REVIEWING)
+                .imagesHeight(DEFAULT_IMAGES_HEIGHT)
+                .imagesWidth(DEFAULT_IMAGES_WIDTH)
+                .teamId(annotatorUserInfoGetter.getTeamId()));
+
+    annotatedTasks.forEach(
+        task -> {
+          eventProducer.accept(
+              List.of(new CreateAnnotatedTaskExtracted(createdAnnotationJob.getId(), task)));
+        });
+  }
+
+  public void addAnnotationTask(String jobId, CreateAnnotatedTask annotatedTask) {
+    try {
+      adminApi.addAnnotatedTasksToAnnotatedJob(jobId, List.of(annotatedTask));
+    } catch (ApiException e) {
+      throw new app.bpartners.geojobs.model.exception.ApiException(SERVER_EXCEPTION, e);
+    }
   }
 }

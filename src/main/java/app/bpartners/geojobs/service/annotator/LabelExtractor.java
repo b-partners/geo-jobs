@@ -3,10 +3,7 @@ package app.bpartners.geojobs.service.annotator;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toSet;
 
-import app.bpartners.gen.annotator.endpoint.rest.model.AnnotatedTask;
-import app.bpartners.gen.annotator.endpoint.rest.model.Annotation;
-import app.bpartners.gen.annotator.endpoint.rest.model.AnnotationBatch;
-import app.bpartners.gen.annotator.endpoint.rest.model.Label;
+import app.bpartners.gen.annotator.endpoint.rest.model.*;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -39,11 +36,11 @@ public class LabelExtractor implements Function<DetectableType, Label> {
     };
   }
 
-  public List<Label> extractLabelsFromTasks(List<AnnotatedTask> annotatedTasks) {
+  public List<Label> extractLabelsFromTasks(List<CreateAnnotatedTask> annotatedTasks) {
     return annotatedTasks.stream()
-        .map(AnnotatedTask::getAnnotationBatch)
-        .map(AnnotationBatch::getAnnotations)
-        .map(a -> a.stream().map(Annotation::getLabel).collect(toSet()))
+        .map(CreateAnnotatedTask::getAnnotationBatch)
+        .map(CreateAnnotationBatch::getAnnotations)
+        .map(a -> a.stream().map(AnnotationBaseFields::getLabel).collect(toSet()))
         .reduce(
             new HashSet<>(),
             (acc, val) -> {

@@ -8,12 +8,7 @@ import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import app.bpartners.gen.annotator.endpoint.rest.model.AnnotatedTask;
-import app.bpartners.gen.annotator.endpoint.rest.model.Annotation;
-import app.bpartners.gen.annotator.endpoint.rest.model.AnnotationBatch;
-import app.bpartners.gen.annotator.endpoint.rest.model.Label;
-import app.bpartners.gen.annotator.endpoint.rest.model.Point;
-import app.bpartners.gen.annotator.endpoint.rest.model.Polygon;
+import app.bpartners.gen.annotator.endpoint.rest.model.*;
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectType;
@@ -49,7 +44,7 @@ public class ExtractorIT extends FacadeIT {
   @Autowired private ObjectMapper om;
   @Autowired private LabelExtractor labelExtractor;
   @Autowired PolygonExtractor polygonExtractor;
-  @Autowired AnnotationBatchExtractor annotationBatchExtractor;
+  @Autowired CreateAnnotationBatchExtractor createAnnotationBatchExtractor;
 
   private Feature feature;
 
@@ -100,15 +95,15 @@ public class ExtractorIT extends FacadeIT {
   @Test
   void extract_labels_from_task_ok() {
     List<Label> expected = List.of(roof(), solarPanel());
-    AnnotatedTask annotatedTask =
-        new AnnotatedTask()
+    CreateAnnotatedTask annotatedTask =
+        new CreateAnnotatedTask()
             .annotationBatch(
-                new AnnotationBatch()
+                new CreateAnnotationBatch()
                     .annotations(
                         List.of(
-                            new Annotation().label(roof()),
-                            new Annotation().label(roof()),
-                            new Annotation().label(solarPanel()))));
+                            new AnnotationBaseFields().label(roof()),
+                            new AnnotationBaseFields().label(roof()),
+                            new AnnotationBaseFields().label(solarPanel()))));
 
     List<Label> actual = labelExtractor.extractLabelsFromTasks(List.of(annotatedTask));
 
@@ -137,18 +132,17 @@ public class ExtractorIT extends FacadeIT {
 
   @Test
   void extract_annotation_batch_ok() {
-    AnnotationBatch expected =
-        new AnnotationBatch()
+    CreateAnnotationBatch expected =
+        new CreateAnnotationBatch()
             .annotations(
                 List.of(
-                    new Annotation()
+                    new AnnotationBaseFields()
                         .userId("dummy")
-                        .taskId("dummy")
                         .label(labelExtractor.apply(ROOF))
                         .polygon(getFeaturePolygon())));
 
-    AnnotationBatch actual =
-        annotationBatchExtractor.apply(
+    CreateAnnotationBatch actual =
+        createAnnotationBatchExtractor.apply(
             detectedTile(List.of(inDoubtDetectedObject(ROOF))), "dummy", "dummy");
 
     assertEquals(ignoreGeneratedValues(expected), ignoreGeneratedValues(actual));
@@ -162,8 +156,8 @@ public class ExtractorIT extends FacadeIT {
     return new Label().name(SOLAR_PANEL.name());
   }
 
-  AnnotationBatch ignoreGeneratedValues(AnnotationBatch annotationBatch) {
-    List<Annotation> annotations = annotationBatch.getAnnotations();
+  CreateAnnotationBatch ignoreGeneratedValues(CreateAnnotationBatch annotationBatch) {
+    List<AnnotationBaseFields> annotations = annotationBatch.getAnnotations();
     annotations.forEach(
         a -> {
           a.setId(null);

@@ -77,7 +77,7 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
     savedHumanDetectionJob.setInDoubtTiles(inDoubtTiles); // TODO: check if still necessary
     detectedTileRepository.saveAll(inDoubtTiles); // TODO: check if still necessary
     try {
-      annotationService.sendAnnotationsFromHumanZDJ(savedHumanDetectionJob);
+      annotationService.createAnnotationJob(savedHumanDetectionJob);
     } catch (Exception e) {
       eventProducer.accept(
           List.of(
