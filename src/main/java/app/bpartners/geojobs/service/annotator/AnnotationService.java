@@ -6,7 +6,6 @@ import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.S
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.gen.annotator.endpoint.rest.api.AdminApi;
-import app.bpartners.gen.annotator.endpoint.rest.api.AnnotatedJobsApi;
 import app.bpartners.gen.annotator.endpoint.rest.api.JobsApi;
 import app.bpartners.gen.annotator.endpoint.rest.client.ApiException;
 import app.bpartners.gen.annotator.endpoint.rest.model.*;
@@ -26,7 +25,6 @@ import org.springframework.stereotype.Service;
 public class AnnotationService {
   public static final int DEFAULT_IMAGES_HEIGHT = 1024;
   public static final int DEFAULT_IMAGES_WIDTH = 1024;
-  private final AnnotatedJobsApi annotatedJobsApi;
   private final JobsApi jobsApi;
   private final TaskExtractor taskExtractor;
   private final LabelExtractor labelExtractor;
@@ -42,7 +40,6 @@ public class AnnotationService {
       AnnotatorUserInfoGetter annotatorUserInfoGetter,
       BucketComponent bucketComponent,
       EventProducer eventProducer) {
-    this.annotatedJobsApi = new AnnotatedJobsApi(annotatorApiConf.newApiClientWithApiKey());
     this.jobsApi = new JobsApi(annotatorApiConf.newApiClientWithApiKey());
     this.adminApi = new AdminApi(annotatorApiConf.newApiClientWithApiKey());
     this.taskExtractor = taskExtractor;
@@ -90,9 +87,9 @@ public class AnnotationService {
         annotatedTasks.size(),
         annotatedTasks);
     Job createdAnnotationJob =
-        annotatedJobsApi.crupdateAnnotatedJob(
+        jobsApi.saveJob(
             annotationJobId,
-            new CrupdateAnnotatedJob()
+            new CrupdateJob()
                 .id(annotationJobId)
                 .name("geo-jobs" + now)
                 .bucketName(bucketComponent.getBucketName())
