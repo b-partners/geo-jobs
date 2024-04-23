@@ -23,14 +23,14 @@ public class DetectionTaskService {
     List<DetectedTile> detectedTiles = detectedTileRepository.findAllByJobId(jobId);
     List<DetectableObjectConfiguration> detectableObjectConfigurations =
         objectConfigurationRepository.findAllByDetectionJobId(jobId);
-    log.error(
+    log.info(
         "[DEBUG] DetectionTaskService all detected tiles {}",
         detectedTiles.stream().map(DetectedTile::describe).toList());
     return detectedTiles.stream()
         .filter(
             detectedTile -> {
               DetectedObject firstObject = detectedTile.getFirstObject();
-              log.error("[DEBUG] First {}", firstObject);
+              log.info("[DEBUG] First {}", firstObject);
               return firstObject != null && firstObject.isInDoubt(detectableObjectConfigurations);
             })
         .toList();

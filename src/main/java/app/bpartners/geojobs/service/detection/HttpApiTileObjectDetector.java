@@ -67,7 +67,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
                 tileDetectorUrl -> {
                   boolean isTileDetector = tileDetectorUrl.getObjectType().equals(type);
                   if (isTileDetector) {
-                    log.error("[DEBUG] Objects detector chosen {}", tileDetectorUrl);
+                    log.info("[DEBUG] Objects detector chosen {}", tileDetectorUrl);
                   }
                   return isTileDetector;
                 })
@@ -108,10 +108,10 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
         restTemplate.postForEntity(builder.toUriString(), request, DetectionResponse.class);
 
     if (responseEntity.getStatusCode().value() == 200) {
-      log.error("[DEBUG] Response data {}", responseEntity.getBody());
+      log.info("[DEBUG] Response data {}", responseEntity.getBody());
       return responseEntity.getBody();
     }
-    log.error(
+    log.info(
         "[DEBUG] Error when retrieving objects detector response, code={}, body={}",
         responseEntity.getStatusCode().value(),
         responseEntity.getBody());

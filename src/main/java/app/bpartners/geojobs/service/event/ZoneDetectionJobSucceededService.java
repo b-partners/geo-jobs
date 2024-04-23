@@ -36,7 +36,7 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
   @Override
   @Transactional
   public void accept(ZoneDetectionJobSucceeded event) {
-    log.warn("ZoneDetectionJobSucceeded {}, now handling human detection job", event);
+    log.info("ZoneDetectionJobSucceeded {}, now handling human detection job", event);
     String humanZDJId = event.getHumanZdjId();
     String succeededJobId = event.getSucceededJobId();
     String humanDetectionJobId = randomUUID().toString();
@@ -45,7 +45,7 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
         detectionTaskService.findInDoubtTilesByJobId(succeededJobId).stream()
             .peek(detectedTile -> detectedTile.setHumanDetectionJobId(humanDetectionJobId))
             .toList();
-    log.error(
+    log.info(
         "[DEBUG] ZoneDetectionJobSucceeded InDoubtTiles [size={}, tiles={}]",
         inDoubtTiles.size(),
         inDoubtTiles.stream().map(DetectedTile::describe).toList());
@@ -86,7 +86,7 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
                   .attemptNb(1)
                   .build()));
     }
-    log.warn(
+    log.info(
         "HumanDetectionJob {} created, annotations sent to bpartners-annotation-api",
         savedHumanDetectionJob);
   }

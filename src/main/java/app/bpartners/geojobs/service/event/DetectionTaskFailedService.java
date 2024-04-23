@@ -36,7 +36,7 @@ public class DetectionTaskFailedService implements Consumer<DetectionTaskFailed>
     var attemptNb = detectionTaskFailed.getAttemptNb();
     if (attemptNb > MAX_ATTEMPT) {
       taskStatusService.fail(task);
-      log.error("Max attempt reached for detectionTaskFailed={}", detectionTaskFailed);
+      log.info("Max attempt reached for detectionTaskFailed={}", detectionTaskFailed);
       return;
     }
 

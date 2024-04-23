@@ -75,7 +75,7 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
   private String generateGeoJsonsUrl(JobStatus jobStatus) {
     if (!jobStatus.getProgression().equals(FINISHED)
         && !jobStatus.getHealth().equals(Status.HealthStatus.SUCCEEDED)) {
-      log.error(
+      log.info(
           "Unable to generate geoJsons Url to unfinished succeeded job. Actual status is "
               + jobStatus);
       return null;

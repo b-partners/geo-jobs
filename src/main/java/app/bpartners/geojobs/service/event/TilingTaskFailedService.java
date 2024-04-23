@@ -36,7 +36,7 @@ public class TilingTaskFailedService implements Consumer<TilingTaskFailed> {
     var attemptNb = tilingTaskFailed.getAttemptNb();
     if (attemptNb > MAX_ATTEMPT) {
       taskStatusService.fail(task);
-      log.error("Max attempt reached for tilingTaskFailed={}", tilingTaskFailed);
+      log.info("Max attempt reached for tilingTaskFailed={}", tilingTaskFailed);
       return;
     }
 

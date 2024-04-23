@@ -61,7 +61,7 @@ public class AnnotationService {
       throws app.bpartners.gen.annotator.endpoint.rest.client.ApiException {
     String crupdateAnnotatedJobFolderPath = null;
     List<DetectedTile> inDoubtTiles = humanDetectionJob.getInDoubtTiles();
-    log.error(
+    log.info(
         "[DEBUG] AnnotationService InDoubtTiles [size={}, tiles={}]",
         inDoubtTiles.size(),
         inDoubtTiles.stream().map(DetectedTile::describe).toList());
@@ -78,7 +78,7 @@ public class AnnotationService {
                     .color("#DFFF00"))
             : extractLabelsFromTasks;
     Instant now = Instant.now();
-    log.error(
+    log.info(
         "[DEBUG] AnnotationService : AnnotationJob(id={}) with labels (count={}, values={}) and"
             + " tasks (count={})",
         annotationJobId,

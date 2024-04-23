@@ -26,18 +26,18 @@ public class HumanDetectionJobCreatedFailedService
   public void accept(HumanDetectionJobCreatedFailed event) {
     int attemptNb = event.getAttemptNb();
     if (attemptNb > 3) {
-      log.error("[DEBUG] HumanDetectionJobCreatedFailedService attempt {}", attemptNb);
+      log.info("[DEBUG] HumanDetectionJobCreatedFailedService attempt {}", attemptNb);
     }
     var humanZdjId = event.getHumanDetectionJobId();
     var humanZdj = zoneDetectionJobService.getHumanDetectionJobById(event.getHumanDetectionJobId());
     if (attemptNb > MAX_ATTEMPT) {
-      log.error("Max attempt {} reached for humanDetectionJobFailed={}", attemptNb, humanZdj);
+      log.info("Max attempt {} reached for humanDetectionJobFailed={}", attemptNb, humanZdj);
       return;
     }
     try {
       annotationService.createAnnotationJob(humanZdj);
     } catch (Exception e) {
-      log.error(
+      log.info(
           "Processing humanDetectionJob(id={}) failed with attemptNb = {} and exception message ="
               + " {}",
           humanZdj.getId(),

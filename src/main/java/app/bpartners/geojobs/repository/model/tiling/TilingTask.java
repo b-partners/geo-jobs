@@ -51,7 +51,7 @@ public class TilingTask extends Task implements Serializable {
     if (parcels.isEmpty()) return null;
     var chosenParcel = parcels.get(0);
     if (parcels.size() > 1) {
-      log.warn(
+      log.info(
           "TilingTask(id={}) contains multiple parcels but only one Parcel(id={}) is handle for"
               + " now",
           getId(),

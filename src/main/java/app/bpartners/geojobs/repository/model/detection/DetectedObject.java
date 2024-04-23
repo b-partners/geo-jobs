@@ -68,7 +68,7 @@ public class DetectedObject implements Serializable {
     int detectableObjectsSize = detectedObjectTypes.size();
     DetectableObjectType firstObjectType = detectedObjectTypes.get(0);
     if (detectableObjectsSize > 1) {
-      log.warn(
+      log.info(
           "Detectable objects for detected object is "
               + detectableObjectsSize
               + "("

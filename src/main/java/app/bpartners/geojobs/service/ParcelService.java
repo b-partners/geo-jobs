@@ -30,7 +30,7 @@ public class ParcelService {
       return tilingTaskRepository.findAllByJobId(jobId).stream()
           .map(
               tilingTask -> {
-                log.error("[DEBUG] ParcelService : {}", tilingTask);
+                log.info("[DEBUG] ParcelService : {}", tilingTask);
                 var parcel = tilingTask.getParcel();
                 if (parcel != null) {
                   var parcelContent = parcel.getParcelContent();

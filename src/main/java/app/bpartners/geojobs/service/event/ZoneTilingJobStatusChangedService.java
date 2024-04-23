@@ -29,7 +29,7 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
     var newHealth = newStatus.getHealth();
 
     if (oldStatus.equals(newStatus)) {
-      log.warn("Status did not change, yet change event received: event=" + event);
+      log.info("Status did not change, yet change event received: event=" + event);
       return;
     }
 

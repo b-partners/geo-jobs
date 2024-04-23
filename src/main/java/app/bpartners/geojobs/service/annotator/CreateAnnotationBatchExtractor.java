@@ -27,7 +27,7 @@ public class CreateAnnotationBatchExtractor {
                 detectedTile.getDetectedObjects().stream()
                     .map(detectedObject -> extractAnnotation(detectedObject, annotatorId))
                     .toList());
-    log.error(
+    log.info(
         "[DEBUG] CreateAnnotationBatchExtractor Annotations [{}]",
         annotations.getAnnotations().stream()
             .map(
