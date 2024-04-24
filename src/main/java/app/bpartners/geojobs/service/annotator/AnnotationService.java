@@ -61,31 +61,14 @@ public class AnnotationService {
       throws app.bpartners.gen.annotator.endpoint.rest.client.ApiException {
     String crupdateAnnotatedJobFolderPath = null;
     List<DetectedTile> inDoubtTiles = humanDetectionJob.getInDoubtTiles();
+    List<CreateAnnotatedTask> annotatedTasks =
+        taskExtractor.apply(inDoubtTiles, annotatorUserInfoGetter.getUserId());
+    List<Label> extractLabelsFromTasks = labelExtractor.extractLabelsFromTasks(annotatedTasks);
     log.info(
         "[DEBUG] AnnotationService InDoubtTiles [size={}, tiles={}]",
         inDoubtTiles.size(),
         inDoubtTiles.stream().map(DetectedTile::describe).toList());
     String annotationJobId = humanDetectionJob.getAnnotationJobId();
-    List<CreateAnnotatedTask> annotatedTasks =
-        taskExtractor.apply(inDoubtTiles, annotatorUserInfoGetter.getUserId());
-    List<Label> extractLabelsFromTasks = labelExtractor.extractLabelsFromTasks(annotatedTasks);
-
-    // TODO: improve performance
-    extractLabelsFromTasks.forEach(
-        label ->
-            annotatedTasks.forEach(
-                annotatedTask ->
-                    annotatedTask
-                        .getAnnotationBatch()
-                        .getAnnotations()
-                        .forEach(
-                            annotationBaseFields -> {
-                              Label annotationLabel = annotationBaseFields.getLabel();
-                              assert annotationLabel != null;
-                              if (annotationLabel.equals(label)) {
-                                annotationLabel.setId(label.getId());
-                              }
-                            })));
 
     List<Label> labels =
         extractLabelsFromTasks.isEmpty() // TODO: remove after debug

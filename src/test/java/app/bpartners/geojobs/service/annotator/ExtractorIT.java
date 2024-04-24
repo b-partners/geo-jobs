@@ -132,18 +132,19 @@ public class ExtractorIT extends FacadeIT {
 
   @Test
   void extract_annotation_batch_ok() {
+    Label label = labelExtractor.apply(ROOF);
     CreateAnnotationBatch expected =
         new CreateAnnotationBatch()
             .annotations(
                 List.of(
                     new AnnotationBaseFields()
                         .userId("dummy")
-                        .label(labelExtractor.apply(ROOF))
+                        .label(label)
                         .polygon(getFeaturePolygon())));
 
     CreateAnnotationBatch actual =
         createAnnotationBatchExtractor.apply(
-            detectedTile(List.of(inDoubtDetectedObject(ROOF))), "dummy", "dummy");
+            detectedTile(List.of(inDoubtDetectedObject(ROOF))), "dummy", "dummy", List.of(label));
 
     assertEquals(ignoreGeneratedValues(expected), ignoreGeneratedValues(actual));
   }
