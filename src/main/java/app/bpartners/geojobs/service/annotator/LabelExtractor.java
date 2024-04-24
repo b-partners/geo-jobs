@@ -1,11 +1,16 @@
 package app.bpartners.geojobs.service.annotator;
 
+import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.gen.annotator.endpoint.rest.model.*;
+import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
+import app.bpartners.geojobs.repository.model.detection.DetectedObject;
+import app.bpartners.geojobs.repository.model.detection.DetectedTile;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +28,31 @@ public class LabelExtractor implements Function<DetectableType, Label> {
         .id(randomUUID().toString())
         .color(getColorFromDetectedType(detectableType))
         .name(detectableType.name());
+  }
+
+  public List<Label> createUniqueLabelListFrom(List<DetectedTile> tiles) {
+    return tiles.stream()
+        .map(DetectedTile::getDetectedObjects)
+        .flatMap(Collection::stream)
+        .map(DetectedObject::getDetectableObjectType)
+        .distinct()
+        .map(this)
+        .toList();
+  }
+
+  public Label findLabelByNameFromList(List<Label> source, String labelName) {
+    return source.stream()
+        .filter(
+            label -> {
+              assert label.getName() != null;
+              return label.getName().equals(labelName);
+            })
+        .findFirst()
+        .orElseThrow(
+            () ->
+                new ApiException(
+                    SERVER_EXCEPTION,
+                    "could not find label " + labelName + " for the current job."));
   }
 
   private static String getColorFromDetectedType(DetectableType detectableType) {
