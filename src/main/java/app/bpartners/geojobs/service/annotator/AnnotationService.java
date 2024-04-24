@@ -69,6 +69,24 @@ public class AnnotationService {
     List<CreateAnnotatedTask> annotatedTasks =
         taskExtractor.apply(inDoubtTiles, annotatorUserInfoGetter.getUserId());
     List<Label> extractLabelsFromTasks = labelExtractor.extractLabelsFromTasks(annotatedTasks);
+
+    // TODO: improve performance
+    extractLabelsFromTasks.forEach(
+        label ->
+            annotatedTasks.forEach(
+                annotatedTask ->
+                    annotatedTask
+                        .getAnnotationBatch()
+                        .getAnnotations()
+                        .forEach(
+                            annotationBaseFields -> {
+                              Label annotationLabel = annotationBaseFields.getLabel();
+                              assert annotationLabel != null;
+                              if (annotationLabel.equals(label)) {
+                                annotationLabel.setId(label.getId());
+                              }
+                            })));
+
     List<Label> labels =
         extractLabelsFromTasks.isEmpty() // TODO: remove after debug
             ? List.of(
