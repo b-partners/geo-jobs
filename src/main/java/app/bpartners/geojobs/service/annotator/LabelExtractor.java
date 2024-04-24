@@ -2,22 +2,15 @@ package app.bpartners.geojobs.service.annotator;
 
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static java.util.UUID.randomUUID;
-import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.gen.annotator.endpoint.rest.model.*;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.detection.DetectedTile;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -70,26 +63,9 @@ public class LabelExtractor implements Function<DetectableType, Label> {
     return annotatedTasks.stream()
         .map(CreateAnnotatedTask::getAnnotationBatch)
         .map(CreateAnnotationBatch::getAnnotations)
-        .map(a -> a.stream().map(AnnotationBaseFields::getLabel).collect(toSet()))
-        .reduce(
-            new HashSet<>(),
-            (acc, val) -> {
-              acc.addAll(val);
-              return acc;
-            })
-        .stream()
-        .filter(distinctByKeys(Label::getName))
+        .flatMap(Collection::stream)
+        .map(AnnotationBaseFields::getLabel)
+        .distinct()
         .toList();
-  }
-
-  // TODO: set it into a specific function
-  @SafeVarargs
-  private static <T> Predicate<T> distinctByKeys(final Function<? super T, ?>... keyExtractors) {
-    final Map<List<?>, Boolean> seen = new ConcurrentHashMap<>();
-    return elt -> {
-      final List<?> keys =
-          Arrays.stream(keyExtractors).map(key -> key.apply(elt)).collect(Collectors.toList());
-      return seen.putIfAbsent(keys, Boolean.TRUE) == null;
-    };
   }
 }
