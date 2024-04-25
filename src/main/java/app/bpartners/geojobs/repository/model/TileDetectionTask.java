@@ -10,8 +10,9 @@ import lombok.*;
 @Getter
 @Setter
 @EqualsAndHashCode
-public class TileTask {
+public class TileDetectionTask {
   private String taskId;
+  private String parcelId;
   private String jobId;
   private Tile tile;
 }

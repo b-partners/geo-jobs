@@ -25,6 +25,7 @@ public class DetectionTaskCreatedService implements Consumer<DetectionTaskCreate
   private final DetectionTaskConsumer detectionTaskConsumer;
   private final EventProducer eventProducer;
 
+  // TODO: the TileDetectionTask must be the one that update detection task status
   @Override
   public void accept(DetectionTaskCreated detectionTaskCreated) {
     var task = detectionTaskCreated.getTask();

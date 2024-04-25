@@ -6,7 +6,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
-import app.bpartners.geojobs.repository.model.TileTask;
+import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -80,8 +80,9 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
 
   @SneakyThrows
   @Override
-  public DetectionResponse apply(TileTask tileTask, List<DetectableType> detectableTypes) {
-    Tile tile = tileTask.getTile();
+  public DetectionResponse apply(
+      TileDetectionTask tileDetectionTask, List<DetectableType> detectableTypes) {
+    Tile tile = tileDetectionTask.getTile();
     if (tile == null) {
       return null;
     }
@@ -94,7 +95,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
 
     var payload =
         DetectionPayload.builder()
-            .projectName(tileTask.getJobId())
+            .projectName(tileDetectionTask.getJobId())
             .fileName(file.getName())
             .base64ImgData(base64ImgData)
             .build();

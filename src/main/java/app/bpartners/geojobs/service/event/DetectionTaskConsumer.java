@@ -2,18 +2,16 @@ package app.bpartners.geojobs.service.event;
 
 import static java.time.Instant.now;
 
+import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.gen.TileDetectionTaskCreated;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
-import app.bpartners.geojobs.repository.DetectedTileRepository;
-import app.bpartners.geojobs.repository.model.TileTask;
+import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
-import app.bpartners.geojobs.repository.model.detection.DetectedTile;
 import app.bpartners.geojobs.repository.model.detection.DetectionTask;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.KeyPredicateFunction;
-import app.bpartners.geojobs.service.detection.DetectionMapper;
-import app.bpartners.geojobs.service.detection.DetectionResponse;
-import app.bpartners.geojobs.service.detection.TileObjectDetector;
+import java.util.List;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,21 +21,21 @@ import org.springframework.stereotype.Component;
 @Component
 @Slf4j
 public class DetectionTaskConsumer implements Consumer<DetectionTask> {
-  private final DetectedTileRepository detectedTileRepository;
-  private final TileObjectDetector objectsDetector;
   private final DetectableObjectConfigurationRepository objectConfigurationRepository;
-  private final DetectionMapper detectionMapper;
   private final KeyPredicateFunction keyPredicateFunction;
+  private final EventProducer eventProducer;
 
   @Override
   public void accept(DetectionTask task) {
-    var detectedParcel = task.getParcel();
-    var associatedTile = task.getTile();
     String taskId = task.getId();
     String jobId = task.getJobId();
-    if (detectedParcel == null || associatedTile == null) {
+    if (task.getParcels().isEmpty()) {
       throw new IllegalArgumentException(
-          "DetectionTask(id=" + taskId + ", jobId=" + jobId + ") does not have parcel or tile");
+          "DetectionTask(id=" + taskId + ", jobId=" + jobId + ") does not have parcel");
+    } else if (task.getParcels().stream()
+        .anyMatch(parcel -> parcel.getParcelContent().getTiles().isEmpty())) {
+      throw new IllegalArgumentException(
+          "DetectionTask(id=" + taskId + ", jobId=" + jobId + ") has parcel without tiles");
     }
     var detectableObjectConf = objectConfigurationRepository.findAllByDetectionJobId(jobId);
     var detectableTypes =
@@ -46,15 +44,12 @@ public class DetectionTaskConsumer implements Consumer<DetectionTask> {
         .filter(keyPredicateFunction.apply(Tile::getBucketPath))
         .toList()
         .forEach(
-            tile -> {
-              DetectionResponse response =
-                  objectsDetector.apply(new TileTask(taskId, jobId, tile), detectableTypes);
-              DetectedTile detectedTile =
-                  detectionMapper.toDetectedTile(response, tile, detectedParcel.getId(), jobId);
-              log.info("[DEBUG] DetectionTaskConsumer to save tile {}", detectedTile.describe());
-              var savedDetectedTile = detectedTileRepository.save(detectedTile);
-              log.info("[DEBUG] DetectionTaskConsumer saved tile {}", savedDetectedTile.describe());
-            });
+            tile ->
+                eventProducer.accept(
+                    List.of(
+                        new TileDetectionTaskCreated(
+                            new TileDetectionTask(taskId, task.getParcel().getId(), jobId, tile),
+                            detectableTypes))));
   }
 
   public static DetectionTask withNewStatus(

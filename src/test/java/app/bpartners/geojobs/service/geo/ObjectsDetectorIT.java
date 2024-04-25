@@ -11,7 +11,7 @@ import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
-import app.bpartners.geojobs.repository.model.TileTask;
+import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.DetectionTask;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
@@ -56,7 +56,7 @@ public class ObjectsDetectorIT extends FacadeIT {
                 detectionTask(), List.of(DetectableType.ROOF, DetectableType.PATHWAY)));
   }
 
-  public TileTask detectionTask() {
+  public TileDetectionTask detectionTask() {
     when(bucketComponent.download(any())).thenReturn(new File(FILE_NAME));
 
     var task =
@@ -81,6 +81,7 @@ public class ObjectsDetectorIT extends FacadeIT {
                         .build()))
             .build();
 
-    return new TileTask(task.getId(), task.getJobId(), task.getTile());
+    return new TileDetectionTask(
+        task.getId(), task.getParcel().getId(), task.getJobId(), task.getTile());
   }
 }

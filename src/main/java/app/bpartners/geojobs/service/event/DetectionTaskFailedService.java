@@ -30,6 +30,7 @@ public class DetectionTaskFailedService implements Consumer<DetectionTaskFailed>
 
   private static final int MAX_ATTEMPT = 3;
 
+  // TODO: the TileDetectionTask must be the one that update detection task status
   @Override
   public void accept(DetectionTaskFailed detectionTaskFailed) {
     var task = detectionTaskFailed.getTask();
@@ -51,6 +52,7 @@ public class DetectionTaskFailedService implements Consumer<DetectionTaskFailed>
       return;
     }
 
+    // TODO: must be _ONLY_ set into TileDetectionTaskSucceeded
     eventProducer.accept(
         List.of(new DetectionTaskSucceeded(withNewStatus(task, FINISHED, SUCCEEDED, null))));
   }

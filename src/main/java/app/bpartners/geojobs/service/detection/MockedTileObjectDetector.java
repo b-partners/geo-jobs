@@ -3,7 +3,7 @@ package app.bpartners.geojobs.service.detection;
 import static app.bpartners.geojobs.service.detection.DetectionResponse.REGION_CONFIDENCE_PROPERTY;
 import static app.bpartners.geojobs.service.detection.DetectionResponse.REGION_LABEL_PROPERTY;
 
-import app.bpartners.geojobs.repository.model.TileTask;
+import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import java.math.BigDecimal;
 import java.util.List;
@@ -15,7 +15,8 @@ import org.springframework.stereotype.Component;
 @ConditionalOnProperty(value = "objects.detector.mock.activated", havingValue = "true")
 public class MockedTileObjectDetector implements TileObjectDetector {
   @Override
-  public DetectionResponse apply(TileTask tileTask, List<DetectableType> detectableTypes) {
+  public DetectionResponse apply(
+      TileDetectionTask tileDetectionTask, List<DetectableType> detectableTypes) {
     double randomConfidence = Math.random();
     return aMockedDetectionResponse(
         randomConfidence,
