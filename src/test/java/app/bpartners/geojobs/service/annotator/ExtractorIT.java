@@ -1,7 +1,10 @@
 package app.bpartners.geojobs.service.annotator;
 
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.PATHWAY;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.POOL;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.ROOF;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.SOLAR_PANEL;
+import static app.bpartners.geojobs.service.AnnotationServiceIT.inDoubtTile;
 import static app.bpartners.geojobs.service.event.ZoneDetectionJobSucceededServiceTest.LAYER_20_10_1_PNG;
 import static app.bpartners.geojobs.service.event.ZoneDetectionJobSucceededServiceTest.MOCK_JOB_ID;
 import static java.util.UUID.randomUUID;
@@ -126,6 +129,41 @@ public class ExtractorIT extends FacadeIT {
     assertEquals(expected, actual);
   }
 
+  @Test
+  void get_unique_labels_from_detected_tiles() {
+    var messyListOfTiles =
+        List.of(
+            inDoubtTile(null, null, null, null, PATHWAY),
+            inDoubtTile(null, null, null, null, POOL),
+            inDoubtTile(null, null, null, null, POOL),
+            inDoubtTile(null, null, null, null, PATHWAY),
+            inDoubtTile(null, null, null, null, POOL),
+            inDoubtTile(null, null, null, null, POOL),
+            inDoubtTile(null, null, null, null, ROOF),
+            inDoubtTile(null, null, null, null, ROOF),
+            inDoubtTile(null, null, null, null, ROOF),
+            inDoubtTile(null, null, null, null, PATHWAY),
+            inDoubtTile(null, null, null, null, ROOF),
+            inDoubtTile(null, null, null, null, ROOF),
+            inDoubtTile(null, null, null, null, ROOF),
+            inDoubtTile(null, null, null, null, PATHWAY),
+            inDoubtTile(null, null, null, null, PATHWAY),
+            inDoubtTile(null, null, null, null, PATHWAY),
+            inDoubtTile(null, null, null, null, PATHWAY),
+            inDoubtTile(null, null, null, null, ROOF));
+    var expected = List.of(pathWay(), roof(), pool());
+
+    List<Label> actual = labelExtractor.createUniqueLabelListFrom(messyListOfTiles);
+
+    assertEquals(expected.size(), actual.size());
+    assertTrue(
+        expected.containsAll(actual.stream().map(ExtractorIT::ignoreGeneratedValuesOf).toList()));
+  }
+
+  private static Label ignoreGeneratedValuesOf(Label label) {
+    return label.id(null).color(null);
+  }
+
   private static Polygon getFeaturePolygon() {
     return new Polygon().points(List.of(new Point().x(45.904988912620688).y(4.459648282829194)));
   }
@@ -155,6 +193,14 @@ public class ExtractorIT extends FacadeIT {
 
   Label solarPanel() {
     return new Label().name(SOLAR_PANEL.name());
+  }
+
+  Label pathWay() {
+    return new Label().name(PATHWAY.name());
+  }
+
+  Label pool() {
+    return new Label().name(POOL.name());
   }
 
   CreateAnnotationBatch ignoreGeneratedValues(CreateAnnotationBatch annotationBatch) {
