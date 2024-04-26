@@ -20,11 +20,16 @@ public class CreateAnnotatedTaskExtractedService implements Consumer<CreateAnnot
     var annotatedTask = createAnnotatedTaskExtracted.getCreateAnnotatedTask();
     try {
       annotationService.addAnnotationTask(jobId, annotatedTask);
-      log.error("[DEBUG] AnnotatedTask(id={}) sent to annotator with jobId = {}", annotatedTask.getId(), jobId);
+      log.error(
+          "[DEBUG] AnnotatedTask(id={}) sent to annotator with jobId = {}",
+          annotatedTask.getId(),
+          jobId);
     } catch (Exception e) {
       log.error(
-          "[DEBUG] Error when adding annotation task CreateAnnotatedTask(id={}) with Exception = {}",
-          annotatedTask.getId(), e.getMessage());
+          "[DEBUG] Error when adding annotation task CreateAnnotatedTask(id={}) with Exception ="
+              + " {}",
+          annotatedTask.getId(),
+          e.getMessage());
       // TODO: add retryer CreateAnnotatedTaskExtractedFailed
       throw new ApiException(ApiException.ExceptionType.SERVER_EXCEPTION, e);
     }

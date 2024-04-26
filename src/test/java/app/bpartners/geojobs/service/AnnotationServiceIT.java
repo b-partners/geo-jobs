@@ -28,7 +28,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-@Disabled("warm annotator db then change geo-jobs teamId and change annotator-api-key before running")
+@Disabled(
+    "warm annotator db then change geo-jobs teamId and change annotator-api-key before running")
 @Slf4j
 public class AnnotationServiceIT extends FacadeIT {
   @Autowired AnnotationService annotationService;
