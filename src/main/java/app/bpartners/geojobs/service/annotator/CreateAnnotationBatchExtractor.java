@@ -57,6 +57,7 @@ public class CreateAnnotationBatchExtractor {
         .id(randomUUID().toString())
         .userId(annotatorId)
         .label(label)
+        .comment("confidence=" + detectedObject.getComputedConfidence() * 100)
         .polygon(polygonExtractor.apply(detectedObject));
   }
 }
