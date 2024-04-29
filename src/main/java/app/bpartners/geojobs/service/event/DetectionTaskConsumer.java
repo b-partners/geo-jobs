@@ -9,6 +9,8 @@ import app.bpartners.geojobs.repository.model.TileTask;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.DetectedTile;
 import app.bpartners.geojobs.repository.model.detection.DetectionTask;
+import app.bpartners.geojobs.repository.model.tiling.Tile;
+import app.bpartners.geojobs.service.KeyPredicateFunction;
 import app.bpartners.geojobs.service.detection.DetectionMapper;
 import app.bpartners.geojobs.service.detection.DetectionResponse;
 import app.bpartners.geojobs.service.detection.TileObjectDetector;
@@ -25,6 +27,7 @@ public class DetectionTaskConsumer implements Consumer<DetectionTask> {
   private final TileObjectDetector objectsDetector;
   private final DetectableObjectConfigurationRepository objectConfigurationRepository;
   private final DetectionMapper detectionMapper;
+  private final KeyPredicateFunction keyPredicateFunction;
 
   @Override
   public void accept(DetectionTask task) {
@@ -39,7 +42,9 @@ public class DetectionTaskConsumer implements Consumer<DetectionTask> {
     var detectableObjectConf = objectConfigurationRepository.findAllByDetectionJobId(jobId);
     var detectableTypes =
         detectableObjectConf.stream().map(DetectableObjectConfiguration::getObjectType).toList();
-    task.getTiles()
+    task.getTiles().stream()
+        .filter(keyPredicateFunction.apply(Tile::getBucketPath))
+        .toList()
         .forEach(
             tile -> {
               DetectionResponse response =
