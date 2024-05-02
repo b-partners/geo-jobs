@@ -12,6 +12,7 @@ import app.bpartners.geojobs.repository.*;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.detection.*;
 import java.util.List;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,7 @@ class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
   @Autowired private DetectableObjectConfigurationRepository objectConfigurationRepository;
   @Autowired private HumanDetectionJobRepository humanDetectionJobRepository;
   @Autowired private DetectionTaskRepository detectionTaskRepository;
+  @Autowired private ParcelRepository parcelRepository;
 
   @BeforeEach
   void setUp() {
@@ -52,20 +54,19 @@ class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
                 .id(HUMAN_ZDJ_ID_2)
                 .detectionType(ZoneDetectionJob.DetectionType.HUMAN)
                 .build()));
+    parcelRepository.saveAll(getJob1Parcels());
+    parcelRepository.saveAll(getJob2Parcels());
     detectionTaskRepository.saveAll(
         List.of(
             DetectionTask.builder()
                 .id("detectionTaskId")
                 .jobId(SUCCEEDED_JOB_ID)
-                .parcels(
-                    List.of(
-                        Parcel.builder().id("parcel1Id").build(),
-                        Parcel.builder().id("parcel2Id").build()))
+                .parcels(getJob1Parcels())
                 .build(),
             DetectionTask.builder()
                 .id("detectionTaskId2")
                 .jobId(SUCCEEDED_JOB_ID_2)
-                .parcels(List.of(Parcel.builder().id("parcel3Id").build()))
+                .parcels(getJob2Parcels())
                 .build()));
     detectedTileRepository.saveAll(
         List.of(
@@ -86,6 +87,17 @@ class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
                 .objectType(DetectableType.ROOF)
                 .detectionJobId(SUCCEEDED_JOB_ID_2)
                 .build()));
+  }
+
+  @NotNull
+  private static List<Parcel> getJob2Parcels() {
+    return List.of(Parcel.builder().id("parcel3Id").build());
+  }
+
+  @NotNull
+  private static List<Parcel> getJob1Parcels() {
+    return List.of(
+        Parcel.builder().id("parcel1Id").build(), Parcel.builder().id("parcel2Id").build());
   }
 
   @Test

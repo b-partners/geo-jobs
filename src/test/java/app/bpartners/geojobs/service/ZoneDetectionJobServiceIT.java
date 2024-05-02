@@ -13,6 +13,7 @@ import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.repository.DetectionTaskRepository;
+import app.bpartners.geojobs.repository.ParcelRepository;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.detection.DetectionTask;
@@ -30,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 class ZoneDetectionJobServiceIT extends FacadeIT {
   @Autowired ZoneDetectionJobService service;
   @Autowired DetectionTaskRepository taskRepository;
+  @Autowired ParcelRepository parcelRepository;
 
   @Test
   void save_and_read_zdj_with_tasks() {
@@ -50,6 +52,7 @@ class ZoneDetectionJobServiceIT extends FacadeIT {
                                     .build()))
                         .build())
                 .build());
+    parcelRepository.saveAll(parcels);
     List<TilingTask> tilingTasks = List.of(new TilingTask().toBuilder().parcels(parcels).build());
 
     ZoneDetectionJob jobToSave =
@@ -77,6 +80,6 @@ class ZoneDetectionJobServiceIT extends FacadeIT {
     assertNotNull(actual);
     assertEquals(1, savedTasks.size());
     assertEquals(parcels, savedTasks.get(0).getParcels());
-    assertNotNull(savedTasks.get(0).getTile());
+    assertNotNull(savedTasks.get(0).getParcel().getParcelContent().getFirstTile());
   }
 }

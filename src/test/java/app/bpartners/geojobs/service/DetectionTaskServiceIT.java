@@ -4,15 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
-import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
-import app.bpartners.geojobs.repository.DetectedTileRepository;
-import app.bpartners.geojobs.repository.DetectionTaskRepository;
-import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
+import app.bpartners.geojobs.repository.*;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.detection.*;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.detection.DetectionTaskService;
 import java.util.List;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +26,7 @@ public class DetectionTaskServiceIT extends FacadeIT {
   @Autowired private DetectedTileRepository detectedTileRepository;
   @Autowired private DetectableObjectConfigurationRepository objectConfigurationRepository;
   @Autowired private DetectionTaskRepository detectionTaskRepository;
+  @Autowired private ParcelRepository parcelRepository;
   private static final double CONFIDENCE = 0.67;
 
   public static DetectedTile detectedTile(
@@ -60,15 +59,10 @@ public class DetectionTaskServiceIT extends FacadeIT {
   @BeforeEach
   void setUp() {
     jobRepository.save(ZoneDetectionJob.builder().id(JOB_ID).build());
+    List<Parcel> parcels = getParcels();
+    parcelRepository.saveAll(parcels);
     detectionTaskRepository.save(
-        DetectionTask.builder()
-            .id("detectionTaskId")
-            .parcels(
-                List.of(
-                    Parcel.builder().id("parcel1Id").build(),
-                    Parcel.builder().id("parcel2Id").build(),
-                    Parcel.builder().id("parcel3Id").build()))
-            .build());
+        DetectionTask.builder().id("detectionTaskId").parcels(parcels).build());
     detectedTileRepository.saveAll(
         List.of(
             detectedTile(JOB_ID, "tile1Id", "parcel1Id", "detectedObjectId1", CONFIDENCE),
@@ -83,12 +77,21 @@ public class DetectionTaskServiceIT extends FacadeIT {
             .build());
   }
 
+  @NotNull
+  private static List<Parcel> getParcels() {
+    return List.of(
+        Parcel.builder().id("parcel1Id").build(),
+        Parcel.builder().id("parcel2Id").build(),
+        Parcel.builder().id("parcel3Id").build());
+  }
+
   @AfterEach
   void tearDown() {
     objectConfigurationRepository.deleteById("detectableObjectConfigurationId");
     detectedTileRepository.deleteById("detectedTileId");
     detectionTaskRepository.deleteById("detectionTaskId");
     jobRepository.deleteById(JOB_ID);
+    parcelRepository.deleteAllById(getParcels().stream().map(Parcel::getId).toList());
   }
 
   @Test

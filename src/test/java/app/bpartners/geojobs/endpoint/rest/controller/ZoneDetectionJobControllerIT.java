@@ -26,6 +26,7 @@ import app.bpartners.geojobs.model.BoundedPageSize;
 import app.bpartners.geojobs.model.PageFromOne;
 import app.bpartners.geojobs.repository.DetectionTaskRepository;
 import app.bpartners.geojobs.repository.HumanDetectionJobRepository;
+import app.bpartners.geojobs.repository.ParcelRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
@@ -38,6 +39,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -57,6 +59,7 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
   @Autowired JobStatusRepository jobStatusRepository;
   @Autowired DetectionTaskRepository detectionTaskRepository;
   @Autowired ZoneDetectionJobMapper detectionJobMapper;
+  @Autowired ParcelRepository parcelRepository;
   @MockBean EventProducer eventProducer;
   @MockBean AnnotationService annotationServiceMock;
   @MockBean HumanDetectionJobRepository humanDetectionJobRepositoryMock;
@@ -154,7 +157,6 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
   @AfterEach
   void tearDown() {
     jobRepository.deleteAll(someDetectionJobs());
-    detectionTaskRepository.deleteAll(randomDetectionTasks(JOB1_ID));
     jobRepository.deleteById("random_job_status2");
   }
 
@@ -324,7 +326,13 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
   @Transactional
   void process_zdj() {
     var job1 = jobRepository.saveAll(someDetectionJobs()).get(0);
-    var configuredTasks = detectionTaskRepository.saveAll(randomDetectionTasks(job1.getId()));
+    List<DetectionTask> detectionTasks = randomDetectionTasks(job1.getId());
+    List<Parcel> parcels =
+        detectionTasks.stream()
+            .flatMap(task -> task.getParcels().stream())
+            .collect(Collectors.toList());
+    parcelRepository.saveAll(parcels);
+    var configuredTasks = detectionTaskRepository.saveAll(detectionTasks);
     var detectableObjectConfig =
         List.of(new DetectableObjectConfiguration().type(ROOF).confidence(new BigDecimal("0.75")));
     var expected =
@@ -346,9 +354,10 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
   @Transactional
   void read_zdj_parcels() {
     jobRepository.saveAll(someDetectionJobs());
-    var savedTask =
-        detectionTaskRepository.save(
-            someDetectionTask(JOB1_ID, "task1", "parcel1", "parcelContent1", "tile1"));
+    DetectionTask detectionTask =
+        someDetectionTask(JOB1_ID, "task1", "parcel1", "parcelContent1", "tile1");
+    parcelRepository.saveAll(detectionTask.getParcels());
+    var savedTask = detectionTaskRepository.save(detectionTask);
     var status =
         new Status().progression(Status.ProgressionEnum.PENDING).health(Status.HealthEnum.UNKNOWN);
     var expected =

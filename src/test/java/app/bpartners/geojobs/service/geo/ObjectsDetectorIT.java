@@ -82,6 +82,9 @@ public class ObjectsDetectorIT extends FacadeIT {
             .build();
 
     return new TileDetectionTask(
-        task.getId(), task.getParcel().getId(), task.getJobId(), task.getTile());
+        task.getId(),
+        task.getParcel().getId(),
+        task.getJobId(),
+        task.getParcel().getParcelContent().getFirstTile());
   }
 }

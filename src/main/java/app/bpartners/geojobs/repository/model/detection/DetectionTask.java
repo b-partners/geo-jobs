@@ -1,7 +1,6 @@
 package app.bpartners.geojobs.repository.model.detection;
 
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
-import static jakarta.persistence.CascadeType.ALL;
 import static jakarta.persistence.FetchType.LAZY;
 
 import app.bpartners.geojobs.job.model.Task;
@@ -33,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 @ToString
 @JsonIgnoreProperties({"status"})
 public class DetectionTask extends Task implements Serializable {
-  @ManyToMany(cascade = ALL, fetch = LAZY)
+  @ManyToMany(fetch = LAZY)
   @JoinTable(
       name = "parcel_detection_task",
       joinColumns = @JoinColumn(name = "id_detection_task"),
