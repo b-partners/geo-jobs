@@ -130,9 +130,7 @@ public abstract class TaskToTaskService<T_CHILD extends Task, T_PARENT extends T
     }
 
     var saved = parentRepository.save(job);
-    log.info("[DEBUG] Tasks to save {}", tasks);
-    List<T_CHILD> savedTasks = childTaskRepository.saveAll(tasks);
-    log.info("[DEBUG] Saved Tasks {}", savedTasks);
+    childTaskRepository.saveAll(tasks);
     return saved;
   }
 

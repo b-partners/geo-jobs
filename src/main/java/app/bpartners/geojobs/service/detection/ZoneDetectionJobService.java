@@ -171,7 +171,6 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
             .map(
                 tilingTask -> {
                   var parcels = tilingTask.getParcels();
-                  log.info("[DEBUG] TilingTask Parcels {}", parcels);
                   var generatedTaskId = randomUUID().toString();
                   DetectionTask detectionTask = new DetectionTask();
                   detectionTask.setId(generatedTaskId);
@@ -186,7 +185,6 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
                               .taskId(generatedTaskId)
                               .build()));
                   detectionTask.setSubmissionInstant(now());
-                  log.info("[DEBUG] DetectionTask Parcels {}", detectionTask.getParcels());
                   return detectionTask;
                 })
             .toList();

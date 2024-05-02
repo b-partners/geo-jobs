@@ -63,14 +63,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
     List<TileDetectorUrl> tileDetectionBaseUrls = getDetectorUrls();
     var optionalBaseUrl =
         tileDetectionBaseUrls.stream()
-            .filter(
-                tileDetectorUrl -> {
-                  boolean isTileDetector = tileDetectorUrl.getObjectType().equals(type);
-                  if (isTileDetector) {
-                    log.info("[DEBUG] Objects detector chosen {}", tileDetectorUrl);
-                  }
-                  return isTileDetector;
-                })
+            .filter(tileDetectorUrl -> tileDetectorUrl.getObjectType().equals(type))
             .findAny();
     if (optionalBaseUrl.isEmpty()) {
       throw new ApiException(SERVER_EXCEPTION, "Unknown DetectableType " + type);
@@ -109,13 +102,8 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
         restTemplate.postForEntity(builder.toUriString(), request, DetectionResponse.class);
 
     if (responseEntity.getStatusCode().value() == 200) {
-      log.info("[DEBUG] Response data {}", responseEntity.getBody());
       return responseEntity.getBody();
     }
-    log.info(
-        "[DEBUG] Error when retrieving objects detector response, code={}, body={}",
-        responseEntity.getStatusCode().value(),
-        responseEntity.getBody());
     throw new ApiException(SERVER_EXCEPTION, "Server error");
   }
 }

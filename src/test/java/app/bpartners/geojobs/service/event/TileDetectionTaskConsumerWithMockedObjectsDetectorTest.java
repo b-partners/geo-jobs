@@ -44,10 +44,11 @@ class TileDetectionTaskConsumerWithMockedObjectsDetectorTest {
   @Test
   void can_consume_with_some_errors() {
     DetectedTileRepository detectedTileRepositoryMock = mock();
+    DetectionMapper detectionMapperMock = mock();
     when(detectedTileRepositoryMock.save(any())).thenReturn(new DetectedTile());
     var subject =
         new TileDetectionTaskCreatedConsumer(
-            detectedTileRepositoryMock, new MockedTileObjectDetector(), mock());
+            detectedTileRepositoryMock, new MockedTileObjectDetector(), detectionMapperMock);
 
     try {
       for (int i = 0; i < 10; i++) {

@@ -45,10 +45,6 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
         detectionTaskService.findInDoubtTilesByJobId(succeededJobId).stream()
             .peek(detectedTile -> detectedTile.setHumanDetectionJobId(humanDetectionJobId))
             .toList();
-    log.info(
-        "[DEBUG] ZoneDetectionJobSucceeded InDoubtTiles [size={}, tiles={}]",
-        inDoubtTiles.size(),
-        inDoubtTiles.stream().map(DetectedTile::describe).toList());
     if (inDoubtTiles.isEmpty()) {
       var zoneDetectionJob =
           jobRepository

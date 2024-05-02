@@ -6,7 +6,6 @@ import static org.hibernate.type.SqlTypes.JSON;
 
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import jakarta.persistence.*;
-
 import java.io.Serializable;
 import java.util.List;
 import java.util.Optional;

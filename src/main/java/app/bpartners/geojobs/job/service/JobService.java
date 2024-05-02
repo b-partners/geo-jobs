@@ -134,9 +134,7 @@ public abstract class JobService<T extends Task, J extends Job> {
     }
 
     var saved = repository.save(job);
-    log.info("[DEBUG] Tasks to save {}", tasks);
-    List<T> savedTasks = taskRepository.saveAll(tasks);
-    log.info("[DEBUG] Saved Tasks {}", savedTasks);
+    taskRepository.saveAll(tasks);
     return saved;
   }
 

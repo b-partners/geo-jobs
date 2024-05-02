@@ -29,7 +29,6 @@ public class FeatureMapper {
                     .creationDatetime(now())
                     .build())
             .build();
-    log.info("[DEBUG] FeatureMapper for extracted TilingTask : {}", extractedParcel);
     return extractedParcel;
   }
 

@@ -66,7 +66,7 @@ public class HttpApiTilesDownloader implements TilesDownloader {
     try {
       responseEntity = restTemplate.postForEntity(builder.toUriString(), request, byte[].class);
     } catch (RestClientException e) {
-      throw new ApiException(SERVER_EXCEPTION, "[DEBUG] TilesDownloader " + e.getMessage());
+      throw new ApiException(SERVER_EXCEPTION, e);
     }
     if (responseEntity.getStatusCode().value() == 200) {
       try {
