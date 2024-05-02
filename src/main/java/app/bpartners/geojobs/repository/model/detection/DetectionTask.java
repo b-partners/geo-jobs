@@ -40,10 +40,6 @@ public class DetectionTask extends Task implements Serializable {
       inverseJoinColumns = @JoinColumn(name = "id_parcel"))
   private List<Parcel> parcels;
 
-  public Tile getTile() {
-    return getParcel() == null ? null : getParcel().getParcelContent().getFirstTile();
-  }
-
   public List<Tile> getTiles() {
     return getParcel() == null ? null : getParcel().getParcelContent().getTiles();
   }
@@ -52,7 +48,7 @@ public class DetectionTask extends Task implements Serializable {
     if (parcels.isEmpty()) return null;
     var chosenParcel = parcels.get(0);
     if (parcels.size() > 1) {
-      log.info(
+      log.error(
           "DetectionTask(id={}) contains multiple parcels but only one Parcel(id={}) is handle for"
               + " now",
           getId(),

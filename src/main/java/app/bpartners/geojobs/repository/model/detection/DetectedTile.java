@@ -48,20 +48,7 @@ public class DetectedTile implements Serializable {
   private String humanDetectionJobId;
 
   public String describe() {
-    /*String detectedObject =
-        getFirstObject() == null ? null : getFirstObject().getDetectableObjectType().toString();
-    Double confidence = getFirstObject() == null ? null : getFirstObject().getComputedConfidence();*/
-    return "DetectedTile(id="
-        + id
-        /*+ ",detectedObject="
-        + detectedObject
-        + ","
-        + "confidence="
-        + confidence*/
-        + ","
-        + "jobId="
-        + jobId
-        + ")";
+    return "DetectedTile(id=" + id + ",tile=" + tile + "," + "jobId=" + jobId + ")";
   }
 
   public DetectedObject getFirstObject() {

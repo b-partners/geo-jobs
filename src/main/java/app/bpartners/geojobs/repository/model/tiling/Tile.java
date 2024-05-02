@@ -6,7 +6,6 @@ import java.time.Instant;
 import lombok.*;
 
 @Builder
-@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -17,4 +16,20 @@ public class Tile implements Serializable {
   private Instant creationDatetime;
   private TileCoordinates coordinates;
   private String bucketPath;
+
+  @Override
+  public String toString() {
+    return "Tile{"
+        + "id='"
+        + id
+        + '\''
+        + ", creationDatetime="
+        + creationDatetime
+        + ", coordinates="
+        + coordinates
+        + ", bucketPath='"
+        + bucketPath
+        + '\''
+        + '}';
+  }
 }

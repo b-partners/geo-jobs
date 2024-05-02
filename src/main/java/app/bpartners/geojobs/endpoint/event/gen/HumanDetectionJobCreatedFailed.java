@@ -11,6 +11,6 @@ import lombok.*;
 @EqualsAndHashCode
 @ToString
 public class HumanDetectionJobCreatedFailed {
-  private String humanDetectionJobId; // TODO: send ID so detected tiles are not sent here
+  private String humanDetectionJobId;
   private int attemptNb;
 }

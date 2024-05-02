@@ -12,13 +12,12 @@ import org.springframework.stereotype.Service;
 @AllArgsConstructor
 @Service
 public class DetectionTaskSucceededService implements Consumer<DetectionTaskSucceeded> {
-
   private final DetectionTaskRepository taskRepository;
   private final RetryableTaskStatusService<DetectionTask, ZoneDetectionJob> taskStatusService;
 
   @Override
-  public void accept(DetectionTaskSucceeded tilingTaskSucceeded) {
-    var task = tilingTaskSucceeded.getTask();
+  public void accept(DetectionTaskSucceeded detectionTaskSucceeded) {
+    var task = detectionTaskSucceeded.getTask();
     taskRepository.save(task);
     taskStatusService.succeed(task);
   }
