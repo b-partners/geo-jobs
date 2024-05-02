@@ -10,6 +10,8 @@ import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.gen.TileDetectionTaskCreated;
+import app.bpartners.geojobs.endpoint.event.gen.TileDetectionTaskCreatedFailed;
+import app.bpartners.geojobs.endpoint.event.gen.TileDetectionTaskSucceeded;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.job.service.RetryableTaskToTaskStatusService;
 import app.bpartners.geojobs.model.exception.ApiException;
@@ -59,11 +61,13 @@ public class TileDetectionTaskCreatedServiceTest {
                                     .build()))
                         .build(),
                     List.of(DetectableType.PATHWAY))));
-    var tileDetectionTaskCaptor = ArgumentCaptor.forClass(TileDetectionTask.class);
-    verify(taskToTaskStatusServiceMock, times(1)).succeed(tileDetectionTaskCaptor.capture());
-    TileDetectionTask capturedTileDetectionTask = tileDetectionTaskCaptor.getValue();
-    assertEquals(FINISHED, capturedTileDetectionTask.getStatus().getProgression());
-    assertEquals(SUCCEEDED, capturedTileDetectionTask.getStatus().getHealth());
+    var eventCaptor = ArgumentCaptor.forClass(List.class);
+    verify(eventProducerMock, times(1)).accept(eventCaptor.capture());
+    TileDetectionTaskSucceeded capturedTileDetectionTaskSucceeded =
+        (TileDetectionTaskSucceeded) eventCaptor.getValue().getFirst();
+    TileDetectionTask tileDetectionTask = capturedTileDetectionTaskSucceeded.getTileDetectionTask();
+    assertEquals(FINISHED, tileDetectionTask.getStatus().getProgression());
+    assertEquals(SUCCEEDED, tileDetectionTask.getStatus().getHealth());
   }
 
   @Test
@@ -81,15 +85,16 @@ public class TileDetectionTaskCreatedServiceTest {
                 .statusHistory(
                     List.of(TaskStatus.builder().progression(FINISHED).health(SUCCEEDED).build()))
                 .build());
-
-    assertDoesNotThrow(
-        () ->
-            subject.accept(
-                new TileDetectionTaskCreated(
-                    TileDetectionTask.builder().build(), List.of(DetectableType.PATHWAY))));
+    TileDetectionTaskCreated expectedTileDetectionTaskCreated =
+        new TileDetectionTaskCreated(
+            TileDetectionTask.builder().build(), List.of(DetectableType.PATHWAY));
+    assertDoesNotThrow(() -> subject.accept(expectedTileDetectionTaskCreated));
     var eventCaptor = ArgumentCaptor.forClass(List.class);
-    var tileDetectionTaskCaptor = ArgumentCaptor.forClass(TileDetectionTask.class);
-    verify(taskToTaskStatusServiceMock, times(0)).succeed(tileDetectionTaskCaptor.capture());
     verify(eventProducerMock, times(1)).accept(eventCaptor.capture());
+    TileDetectionTaskCreatedFailed capturedTileDetectionTaskCreatedFailed =
+        (TileDetectionTaskCreatedFailed) eventCaptor.getValue().getFirst();
+    TileDetectionTaskCreated capturedTileDetectionTaskCreated =
+        capturedTileDetectionTaskCreatedFailed.getTileDetectionTaskCreated();
+    assertEquals(expectedTileDetectionTaskCreated, capturedTileDetectionTaskCreated);
   }
 }

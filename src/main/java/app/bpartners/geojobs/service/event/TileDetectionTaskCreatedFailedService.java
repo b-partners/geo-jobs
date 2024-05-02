@@ -7,6 +7,7 @@ import static app.bpartners.geojobs.service.event.TileDetectionTaskCreatedConsum
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.gen.TileDetectionTaskCreated;
 import app.bpartners.geojobs.endpoint.event.gen.TileDetectionTaskCreatedFailed;
+import app.bpartners.geojobs.endpoint.event.gen.TileDetectionTaskSucceeded;
 import app.bpartners.geojobs.job.service.RetryableTaskToTaskStatusService;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.DetectionTask;
@@ -53,6 +54,6 @@ public class TileDetectionTaskCreatedFailedService
                   attemptNb + 1)));
       return;
     }
-    taskToTaskStatusService.succeed(tileDetectionTask);
+    eventProducer.accept(List.of(new TileDetectionTaskSucceeded(tileDetectionTask)));
   }
 }
