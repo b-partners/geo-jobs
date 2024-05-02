@@ -11,6 +11,7 @@ import app.bpartners.geojobs.repository.model.ParcelContent;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -36,6 +37,11 @@ public class TilingTask extends Task implements Serializable {
   @Override
   public GeoJobType getJobType() {
     return TILING;
+  }
+
+  @Override
+  public Task semanticClone() {
+    return this.toBuilder().statusHistory(new ArrayList<>(getStatusHistory())).build();
   }
 
   @Override

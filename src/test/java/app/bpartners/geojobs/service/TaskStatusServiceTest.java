@@ -179,6 +179,11 @@ class TaskStatusServiceTest {
     public JobType getJobType() {
       return null;
     }
+
+    @Override
+    public Task semanticClone() {
+      return null;
+    }
   }
 
   @SuperBuilder(toBuilder = true)

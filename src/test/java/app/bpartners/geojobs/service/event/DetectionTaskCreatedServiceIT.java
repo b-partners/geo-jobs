@@ -175,7 +175,7 @@ class DetectionTaskCreatedServiceIT extends FacadeIT {
     subject.accept(detectionTaskCreated());
 
     var eventsCaptor = ArgumentCaptor.forClass(List.class);
-    verify(eventProducer, times(2)).accept(eventsCaptor.capture());
+    verify(eventProducer, times(1)).accept(eventsCaptor.capture());
 
     /*
     TODO: must be inside TileDetectionTaskCreatedServiceTest

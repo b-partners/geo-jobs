@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.job.model;
 
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static jakarta.persistence.CascadeType.ALL;
 import static jakarta.persistence.FetchType.EAGER;
 
@@ -11,12 +12,7 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -32,6 +28,7 @@ public abstract class Task implements Serializable, Statusable<TaskStatus> {
   @Id private String id;
 
   private String jobId;
+  private String parentTaskId;
   @Getter @CreationTimestamp private Instant submissionInstant;
 
   @OneToMany(cascade = ALL, mappedBy = "taskId", fetch = EAGER)
@@ -39,6 +36,12 @@ public abstract class Task implements Serializable, Statusable<TaskStatus> {
   private List<TaskStatus> statusHistory = new ArrayList<>();
 
   public abstract JobType getJobType();
+
+  public boolean isPending() {
+    return PENDING.equals(getStatus().getProgression());
+  }
+
+  public abstract Task semanticClone();
 
   @Override
   public TaskStatus from(Status status) {

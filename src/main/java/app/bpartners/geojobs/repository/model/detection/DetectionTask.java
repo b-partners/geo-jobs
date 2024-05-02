@@ -13,6 +13,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -59,5 +60,10 @@ public class DetectionTask extends Task implements Serializable {
   @Override
   public GeoJobType getJobType() {
     return DETECTION;
+  }
+
+  @Override
+  public DetectionTask semanticClone() {
+    return this.toBuilder().statusHistory(new ArrayList<>(getStatusHistory())).build();
   }
 }

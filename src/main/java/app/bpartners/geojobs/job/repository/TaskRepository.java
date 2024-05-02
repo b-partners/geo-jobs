@@ -7,4 +7,6 @@ import org.springframework.data.repository.NoRepositoryBean;
 @NoRepositoryBean
 public interface TaskRepository<T> extends JpaRepository<T, String> {
   List<T> findAllByJobId(String id);
+
+  List<T> findAllByParentTaskId(String parentTaskId);
 }

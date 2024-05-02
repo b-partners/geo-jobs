@@ -11,6 +11,7 @@ import lombok.*;
 @Data
 @EqualsAndHashCode
 @ToString
+// TODO: delete because now detectionTask status is computed by tileDetectionTasks statuses
 public class DetectionTaskSucceeded {
   private DetectionTask task;
 }

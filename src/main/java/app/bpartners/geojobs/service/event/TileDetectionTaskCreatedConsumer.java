@@ -34,9 +34,10 @@ public class TileDetectionTaskCreatedConsumer implements Consumer<TileDetectionT
             tileDetectionTask.getTile(),
             tileDetectionTask.getParcelId(),
             tileDetectionTask.getJobId());
-    log.info("[DEBUG] DetectionTaskConsumer to save tile {}", detectedTile.describe());
+    log.info("[DEBUG] TileDetectionTaskCreatedConsumer to save tile {}", detectedTile.describe());
     var savedDetectedTile = detectedTileRepository.save(detectedTile);
-    log.info("[DEBUG] DetectionTaskConsumer saved tile {}", savedDetectedTile.describe());
+    log.info(
+        "[DEBUG] TileDetectionTaskCreatedConsumer saved tile {}", savedDetectedTile.describe());
   }
 
   public static TileDetectionTask withNewStatus(

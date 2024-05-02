@@ -1,8 +1,17 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
+import static app.bpartners.geojobs.service.event.TileDetectionTaskCreatedConsumer.withNewStatus;
+
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.gen.TileDetectionTaskCreated;
 import app.bpartners.geojobs.endpoint.event.gen.TileDetectionTaskCreatedFailed;
+import app.bpartners.geojobs.job.service.RetryableTaskToTaskStatusService;
+import app.bpartners.geojobs.repository.model.TileDetectionTask;
+import app.bpartners.geojobs.repository.model.detection.DetectableType;
+import app.bpartners.geojobs.repository.model.detection.DetectionTask;
+import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
@@ -13,21 +22,29 @@ import org.springframework.stereotype.Service;
 @AllArgsConstructor
 @Slf4j
 public class TileDetectionTaskCreatedService implements Consumer<TileDetectionTaskCreated> {
+  private final RetryableTaskToTaskStatusService<TileDetectionTask, DetectionTask, ZoneDetectionJob>
+      taskToTaskStatusService;
   private final TileDetectionTaskCreatedConsumer tileDetectionTaskConsumer;
   private final EventProducer eventProducer;
 
   @Override
   public void accept(TileDetectionTaskCreated tileDetectionTaskCreated) {
-    // TODO: set status progression update here
+    TileDetectionTask tileDetectionTask = tileDetectionTaskCreated.getTileDetectionTask();
+    List<DetectableType> detectableTypes = tileDetectionTaskCreated.getDetectableTypes();
+    taskToTaskStatusService.process(tileDetectionTask);
+
     try {
       tileDetectionTaskConsumer.accept(tileDetectionTaskCreated);
     } catch (Exception e) {
       eventProducer.accept(
           List.of(
-              // TODO: must be with new status PROCESSING
-              new TileDetectionTaskCreatedFailed(tileDetectionTaskCreated, 1)));
+              new TileDetectionTaskCreatedFailed(
+                  new TileDetectionTaskCreated(
+                      withNewStatus(tileDetectionTask, PROCESSING, UNKNOWN, e.getMessage()),
+                      detectableTypes),
+                  1)));
+      return;
     }
-    // TODO: succeed TileDetectionTask here
-    // /!\ When all TileDetectionTask are succeeded, only there detectionTask is succeeded
+    taskToTaskStatusService.succeed(tileDetectionTask);
   }
 }
