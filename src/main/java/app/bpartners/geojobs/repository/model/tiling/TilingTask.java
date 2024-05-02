@@ -2,7 +2,7 @@ package app.bpartners.geojobs.repository.model.tiling;
 
 import static app.bpartners.geojobs.repository.model.GeoJobType.TILING;
 import static jakarta.persistence.CascadeType.ALL;
-import static jakarta.persistence.FetchType.LAZY;
+import static jakarta.persistence.FetchType.EAGER;
 
 import app.bpartners.geojobs.job.model.Task;
 import app.bpartners.geojobs.repository.model.GeoJobType;
@@ -27,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 @JsonIgnoreProperties({"status"})
 @EqualsAndHashCode(callSuper = false)
 public class TilingTask extends Task implements Serializable {
-  @ManyToMany(cascade = ALL, fetch = LAZY)
+  @ManyToMany(cascade = ALL, fetch = EAGER)
   @JoinTable(
       name = "parcel_tiling_task",
       joinColumns = @JoinColumn(name = "id_tiling_task"),

@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.repository.model.detection;
 
 import static jakarta.persistence.CascadeType.ALL;
+import static jakarta.persistence.FetchType.EAGER;
 import static org.hibernate.type.SqlTypes.JSON;
 
 import app.bpartners.geojobs.repository.model.tiling.Tile;
@@ -35,7 +36,7 @@ public class DetectedTile implements Serializable {
 
   @CreationTimestamp private Instant creationDatetime;
 
-  @OneToMany(cascade = ALL, mappedBy = "detectedTileId")
+  @OneToMany(cascade = ALL, fetch = EAGER, mappedBy = "detectedTileId")
   private List<DetectedObject> detectedObjects;
 
   private String bucketPath;

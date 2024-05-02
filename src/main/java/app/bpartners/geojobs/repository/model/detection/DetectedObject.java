@@ -5,10 +5,8 @@ import static org.hibernate.annotations.FetchMode.SELECT;
 import static org.hibernate.type.SqlTypes.JSON;
 
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
+
 import java.io.Serializable;
 import java.util.List;
 import java.util.Optional;

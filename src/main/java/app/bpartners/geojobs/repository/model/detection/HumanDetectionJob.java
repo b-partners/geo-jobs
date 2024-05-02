@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.repository.model.detection;
 
+import static jakarta.persistence.FetchType.EAGER;
+
 import jakarta.persistence.*;
 import java.util.List;
 import lombok.*;
@@ -18,7 +20,7 @@ public class HumanDetectionJob {
   @JoinColumn(referencedColumnName = "id")
   private String zoneDetectionJobId;
 
-  @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  @OneToMany(cascade = CascadeType.ALL, fetch = EAGER)
   @JoinColumn(name = "human_detection_job_id")
   private List<DetectedTile> inDoubtTiles;
 }
