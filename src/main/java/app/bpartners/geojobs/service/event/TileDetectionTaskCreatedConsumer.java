@@ -1,7 +1,11 @@
 package app.bpartners.geojobs.service.event;
 
+import static java.time.Instant.now;
+
 import app.bpartners.geojobs.endpoint.event.gen.TileDetectionTaskCreated;
+import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.repository.DetectedTileRepository;
+import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.DetectedTile;
 import app.bpartners.geojobs.service.detection.DetectionMapper;
 import app.bpartners.geojobs.service.detection.DetectionResponse;
@@ -33,5 +37,20 @@ public class TileDetectionTaskCreatedConsumer implements Consumer<TileDetectionT
     log.info("[DEBUG] DetectionTaskConsumer to save tile {}", detectedTile.describe());
     var savedDetectedTile = detectedTileRepository.save(detectedTile);
     log.info("[DEBUG] DetectionTaskConsumer saved tile {}", savedDetectedTile.describe());
+  }
+
+  public static TileDetectionTask withNewStatus(
+      TileDetectionTask task,
+      Status.ProgressionStatus progression,
+      Status.HealthStatus health,
+      String message) {
+    return (TileDetectionTask)
+        task.hasNewStatus(
+            Status.builder()
+                .progression(progression)
+                .health(health)
+                .creationDatetime(now())
+                .message(message)
+                .build());
   }
 }

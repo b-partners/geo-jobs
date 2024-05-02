@@ -32,10 +32,12 @@ class TileDetectionTaskConsumerWithMockedObjectsDetectorTest {
     subject.accept(
         new TileDetectionTaskCreated(
             new TileDetectionTask(
-                "taskId",
+                "tileDetectionTaskId",
+                "detectionTaskId",
                 "parcelId",
                 "jobId",
-                Tile.builder().coordinates(new TileCoordinates().z(20).x(0).y(0)).build()),
+                Tile.builder().coordinates(new TileCoordinates().z(20).x(0).y(0)).build(),
+                List.of()),
             List.of()));
   }
 
@@ -51,7 +53,9 @@ class TileDetectionTaskConsumerWithMockedObjectsDetectorTest {
       for (int i = 0; i < 10; i++) {
         subject.accept(
             new TileDetectionTaskCreated(
-                new TileDetectionTask("taskId", "parcelId", "jobId", new Tile()), List.of()));
+                new TileDetectionTask(
+                    "tileDetectionTaskId", "taskId", "parcelId", "jobId", new Tile(), List.of()),
+                List.of()));
       }
     } catch (Exception e) {
       return;

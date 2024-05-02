@@ -25,7 +25,7 @@ public class TileDetectionTaskCreatedFailedService
       // TODO: taskStatusService.fail(task);
       log.error(
           "Max attempt reached for TileDetectionTask(taskId={})",
-          tileDetectionTaskCreated.getTileDetectionTask().getTaskId());
+          tileDetectionTaskCreated.getTileDetectionTask().getDetectionTaskId());
       return;
     }
     try {
