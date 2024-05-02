@@ -57,14 +57,8 @@ public class TaskToTaskStatusService<T_CHILD extends Task, T_PARENT extends Task
             .build();
     childTask.hasNewStatus(taskStatus);
     taskStatusRepository.save(taskStatus);
-    T_PARENT taskParent = taskToTaskService.recomputeStatus(oldParentTask);
-    if (taskParent.getStatus().getProgression().equals(FINISHED)) {
-      if (taskParent.getStatus().getHealth().equals(SUCCEEDED)) {
-        parentTaskStatusService.succeed(taskParent);
-      } else {
-        parentTaskStatusService.fail(taskParent);
-      }
-    }
+    taskToTaskService.recomputeStatus(oldParentTask);
+
     return childTask;
   }
 }

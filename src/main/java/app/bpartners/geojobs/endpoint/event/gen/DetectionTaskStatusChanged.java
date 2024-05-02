@@ -1,6 +1,8 @@
 package app.bpartners.geojobs.endpoint.event.gen;
 
 import app.bpartners.geojobs.repository.model.detection.DetectionTask;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.io.Serializable;
 import javax.annotation.processing.Generated;
 import lombok.*;
 
@@ -11,6 +13,10 @@ import lombok.*;
 @Data
 @EqualsAndHashCode
 @ToString
-public class DetectionTaskSucceeded {
-  private DetectionTask task;
+public class DetectionTaskStatusChanged implements Serializable {
+  @JsonProperty("oldTask")
+  private DetectionTask oldTask;
+
+  @JsonProperty("newTask")
+  private DetectionTask newTask;
 }

@@ -4,7 +4,6 @@ import static java.time.temporal.ChronoUnit.MINUTES;
 
 import app.bpartners.geojobs.job.repository.TaskStatusRepository;
 import app.bpartners.geojobs.job.service.RetryableTaskToTaskStatusService;
-import app.bpartners.geojobs.job.service.TaskToTaskService;
 import app.bpartners.geojobs.job.service.TaskToTaskStatusService;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.DetectionTask;
@@ -20,7 +19,7 @@ public class TileDetectionTaskStatusService
   public TileDetectionTaskStatusService(
       DetectionTaskStatusService detectionTaskStatusService,
       TaskStatusRepository taskStatusRepository,
-      TaskToTaskService<TileDetectionTask, DetectionTask> taskToTaskService) {
+      TileDetectionTaskService taskToTaskService) {
     super(detectionTaskStatusService, taskStatusRepository, taskToTaskService);
   }
 
