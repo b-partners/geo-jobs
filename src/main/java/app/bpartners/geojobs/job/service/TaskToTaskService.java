@@ -66,9 +66,9 @@ public abstract class TaskToTaskService<T_CHILD extends Task, T_PARENT extends T
     var childTasks = childTaskRepository.findAllByParentTaskId(parentTaskId);
     childTasks.forEach(
         em::detach); // else maintaining task <--> taskStatus will result in SQL updates
-    var newParentTaskStatuses = childTasks.stream().map(Task::getStatus).collect(toList());
+    var allChildTaskStatuses = childTasks.stream().map(Task::getStatus).collect(toList());
     newParentTask.hasNewStatus(
-        jobStatusFromTaskStatuses(parentTaskId, oldStatus, newParentTaskStatuses));
+        parentStatusFromChildStatuses(parentTaskId, oldStatus, allChildTaskStatuses));
 
     var newStatus = newParentTask.getStatus();
     if (!oldStatus.getProgression().equals(newStatus.getProgression())
@@ -79,13 +79,13 @@ public abstract class TaskToTaskService<T_CHILD extends Task, T_PARENT extends T
     return newParentTask;
   }
 
-  private TaskStatus jobStatusFromTaskStatuses(
+  private TaskStatus parentStatusFromChildStatuses(
       String jobId, TaskStatus oldStatus, List<TaskStatus> taskStatuses) {
     return TaskStatus.from(
         jobId,
         Status.builder()
             .progression(progressionFromTaskStatus(oldStatus, taskStatuses))
-            .health(healthFromTaskStatuses(oldStatus, taskStatuses))
+            .health(parentHealthFromChildStatuses(oldStatus, taskStatuses))
             .creationDatetime(
                 latestInstantFromTaskStatuses(taskStatuses, oldStatus.getCreationDatetime()))
             .build(),
@@ -101,7 +101,7 @@ public abstract class TaskToTaskService<T_CHILD extends Task, T_PARENT extends T
     return sortedInstants.isEmpty() ? defaultInstant : sortedInstants.get(0).getCreationDatetime();
   }
 
-  private Status.HealthStatus healthFromTaskStatuses(
+  private Status.HealthStatus parentHealthFromChildStatuses(
       TaskStatus oldStatus, List<TaskStatus> newTaskStatuses) {
     var newHealths = newTaskStatuses.stream().map(Status::getHealth).toList();
     return newHealths.stream().anyMatch(FAILED::equals)
