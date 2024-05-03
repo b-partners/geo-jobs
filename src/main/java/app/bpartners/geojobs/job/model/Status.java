@@ -50,13 +50,13 @@ public class Status implements Serializable {
 
     var errorMessage = String.format("Illegal status transition: old=%s, new=%s", this, newStatus);
 
-    var oldProgression = progression;
-    var newProgression = newStatus.getProgression();
-    var checkedNewProgression = oldProgression.to(newProgression, errorMessage);
-
     var oldHealth = health;
     var newHealth = newStatus.getHealth();
     var checkedNewHealth = oldHealth.to(newHealth, errorMessage);
+
+    var oldProgression = progression;
+    var newProgression = newStatus.getProgression();
+    var checkedNewProgression = oldProgression.to(newProgression, newHealth, errorMessage);
 
     return newStatus;
   }
@@ -81,7 +81,8 @@ public class Status implements Serializable {
     PROCESSING,
     FINISHED;
 
-    private ProgressionStatus to(ProgressionStatus newProgression, String errorMessage) {
+    private ProgressionStatus to(
+        ProgressionStatus newProgression, HealthStatus newHealth, String errorMessage) {
       return switch (this) {
         case PENDING -> newProgression;
         case PROCESSING -> switch (newProgression) {
@@ -89,8 +90,12 @@ public class Status implements Serializable {
           case PROCESSING, FINISHED -> newProgression;
         };
         case FINISHED -> switch (newProgression) {
-          case PENDING, PROCESSING -> throw new IllegalArgumentException(errorMessage);
+          case PROCESSING -> throw new IllegalArgumentException(errorMessage);
           case FINISHED -> newProgression;
+          case PENDING -> switch (newHealth) {
+            case RETRYING -> newProgression;
+            case FAILED, SUCCEEDED, UNKNOWN -> throw new IllegalArgumentException(errorMessage);
+          };
         };
       };
     }
@@ -98,18 +103,23 @@ public class Status implements Serializable {
 
   public enum HealthStatus {
     UNKNOWN,
+    RETRYING,
     SUCCEEDED,
     FAILED;
 
     private HealthStatus to(HealthStatus newHealth, String errorMessage) {
       return switch (this) {
         case UNKNOWN -> newHealth;
+        case RETRYING -> switch (newHealth) {
+          case UNKNOWN -> newHealth;
+          case RETRYING, SUCCEEDED, FAILED -> throw new IllegalArgumentException(errorMessage);
+        };
         case SUCCEEDED -> switch (newHealth) {
           case SUCCEEDED -> newHealth;
-          case UNKNOWN, FAILED -> throw new IllegalArgumentException(errorMessage);
+          case UNKNOWN, FAILED, RETRYING -> throw new IllegalArgumentException(errorMessage);
         };
         case FAILED -> switch (newHealth) {
-          case FAILED -> newHealth;
+          case FAILED, RETRYING -> newHealth;
           case UNKNOWN, SUCCEEDED -> throw new IllegalArgumentException(errorMessage);
         };
       };

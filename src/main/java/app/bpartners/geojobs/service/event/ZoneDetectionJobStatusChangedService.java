@@ -40,14 +40,14 @@ public class ZoneDetectionJobStatusChangedService
       return;
     }
 
-    var illegalFinishedMessage = "Cannot finish as unknown, event=" + event;
+    var illegalFinishedMessage = "Cannot finish as unknown or retrying, event=" + event;
     var notFinishedMessage = "Not finished yet, nothing to do, event=" + event;
     var doNothingMessage = "Old job already finished, do nothing";
     var message =
         switch (oldProgression) {
           case PENDING, PROCESSING -> switch (newProgression) {
             case FINISHED -> switch (newHealth) {
-              case UNKNOWN -> throw new IllegalStateException(illegalFinishedMessage);
+              case UNKNOWN, RETRYING -> throw new IllegalStateException(illegalFinishedMessage);
               case SUCCEEDED -> handleFinishedJob(newJob);
               case FAILED -> throw new ApiException(
                   SERVER_EXCEPTION, "Failed to process zdj=" + newJob);

@@ -23,6 +23,7 @@ public class StatusMapper<T extends app.bpartners.geojobs.job.model.Status> {
       case SUCCEEDED -> Status.HealthEnum.SUCCEEDED;
       case FAILED -> Status.HealthEnum.FAILED;
       case UNKNOWN -> Status.HealthEnum.UNKNOWN;
+      case RETRYING -> Status.HealthEnum.RETRYING;
     };
   }
 

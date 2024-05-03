@@ -68,6 +68,30 @@ paths:
                   $ref: "#/components/schemas/ZoneTilingJob"
         '500':
           $ref: '#/components/responses/500'
+  '/tilingJobs/{id}/retry':
+    put:
+      tags:
+        - Tiling
+      operationId: processFailedTilingJob
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          description: ZTJ Identifier
+          required: true
+      description: Retry failed tasks for a tiling job
+      responses:
+        200:
+          description: The ZTJ with RETRYING health and PROCESSING progression status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ZoneTilingJob"
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
   '/tilingJobs/{id}/parcels':
     get:
       tags:
@@ -469,6 +493,7 @@ components:
             - SUCCEEDED
             - FAILED
             - UNKNOWN
+            - RETRYING
         creationDatetime:
           type: string
           format: date-time

@@ -1,9 +1,7 @@
 package app.bpartners.geojobs.endpoint.rest.security;
 
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
-import static org.springframework.http.HttpMethod.GET;
-import static org.springframework.http.HttpMethod.OPTIONS;
-import static org.springframework.http.HttpMethod.POST;
+import static org.springframework.http.HttpMethod.*;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
 import app.bpartners.geojobs.endpoint.rest.security.authentication.apikey.ApiKeyAuthenticationFilter;
@@ -48,6 +46,8 @@ public class SecurityConf {
                     .requestMatchers(GET, "/tilingJobs", "/tilingJobs/**")
                     .hasAuthority(ROLE_ADMIN.name())
                     .requestMatchers(POST, "/tilingJobs")
+                    .hasAuthority(ROLE_ADMIN.name())
+                    .requestMatchers(PUT, "/tilingJobs/*/retry")
                     .hasAuthority(ROLE_ADMIN.name())
                     .requestMatchers(GET, "/detectionJobs", "/detectionJobs/**")
                     .hasAuthority(ROLE_ADMIN.name())

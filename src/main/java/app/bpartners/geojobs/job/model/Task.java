@@ -12,6 +12,7 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.CreationTimestamp;
@@ -28,7 +29,7 @@ public abstract class Task implements Serializable, Statusable<TaskStatus> {
   @Id private String id;
 
   private String jobId;
-  private String parentTaskId;
+  @Nullable private String parentTaskId;
   @Getter @CreationTimestamp private Instant submissionInstant;
 
   @OneToMany(cascade = ALL, mappedBy = "taskId", fetch = EAGER)
