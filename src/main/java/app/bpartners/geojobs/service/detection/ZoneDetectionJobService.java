@@ -2,6 +2,7 @@ package app.bpartners.geojobs.service.detection;
 
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.*;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
+import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
@@ -16,6 +17,7 @@ import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.job.service.JobService;
+import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.*;
 import app.bpartners.geojobs.repository.model.detection.*;
@@ -24,6 +26,7 @@ import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -61,6 +64,58 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
     this.humanDetectionJobRepository = humanDetectionJobRepository;
     this.annotationService = annotationService;
     this.zoneDetectionJobRepository = zoneDetectionJobRepository;
+  }
+
+  @Transactional
+  public ZoneDetectionJob retryFailedTask(String jobId) {
+    ZoneDetectionJob job =
+        repository
+            .findById(jobId)
+            .orElseThrow(
+                () -> new NotFoundException("ZoneDetectionJob(id=" + jobId + ") not found"));
+    List<DetectionTask> detectionTasks = taskRepository.findAllByJobId(jobId);
+    if (!detectionTasks.stream()
+        .allMatch(task -> task.getStatus().getProgression().equals(FINISHED))) {
+      throw new BadRequestException("Only job with all finished tasks can be retry");
+    }
+    List<DetectionTask> failedTasks =
+        detectionTasks.stream()
+            .filter(task -> task.getStatus().getHealth().equals(FAILED))
+            .toList();
+    if (failedTasks.isEmpty()) {
+      throw new BadRequestException(
+          "All tilling tasks of job(id=" + jobId + ") are already SUCCEEDED");
+    }
+    List<DetectionTask> savedFailedTasks =
+        taskRepository.saveAll(
+            failedTasks.stream()
+                .peek(
+                    failedTask -> {
+                      List<TaskStatus> newStatus = new ArrayList<>(failedTask.getStatusHistory());
+                      newStatus.add(
+                          TaskStatus.builder()
+                              .id(randomUUID().toString())
+                              .taskId(failedTask.getId())
+                              .jobType(DETECTION)
+                              .progression(PENDING)
+                              .health(RETRYING)
+                              .creationDatetime(now())
+                              .build());
+                      failedTask.setStatusHistory(newStatus);
+                    })
+                .toList());
+    savedFailedTasks.forEach(task -> eventProducer.accept(List.of(new DetectionTaskCreated(task))));
+    // /!\ Force job status to status PROCESSING again
+    job.hasNewStatus(
+        JobStatus.builder()
+            .id(randomUUID().toString())
+            .jobId(jobId)
+            .jobType(DETECTION)
+            .progression(PROCESSING)
+            .health(RETRYING)
+            .creationDatetime(now())
+            .build());
+    return repository.save(job);
   }
 
   public GeoJsonsUrl getGeoJsonsUrl(String jobId) {

@@ -30,6 +30,13 @@ public class ZoneDetectionController {
   private final DetectionTaskMapper taskMapper;
   private final ZoneDetectionJobValidator jobValidator;
 
+  @PutMapping("/detectionJobs/{id}/retry")
+  public app.bpartners.geojobs.endpoint.rest.model.ZoneDetectionJob processFailedDetectionJob(
+      @PathVariable String id) {
+    return mapper.toRest(
+        service.retryFailedTask(id), List.of()); // TODO: check if features must be returned
+  }
+
   @PostMapping("/detectionJobs/{id}/humanVerificationStatus")
   public app.bpartners.geojobs.endpoint.rest.model.ZoneDetectionJob checkHumanDetectionJobStatus(
       @PathVariable String id) {

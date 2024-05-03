@@ -143,6 +143,30 @@ paths:
                   $ref: "#/components/schemas/ZoneDetectionJob"
         '500':
           $ref: '#/components/responses/500'
+  '/detectionJobs/{id}/retry':
+    put:
+      tags:
+        - Tiling
+      operationId: processFailedDetectionJob
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          description: ZDJ Identifier
+          required: true
+      description: Retry failed tasks for a detection job
+      responses:
+        200:
+          description: The ZDJ with RETRYING health and PROCESSING progression status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ZoneDetectionJob"
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
   '/detectionJobs/{id}/detectedParcels':
     get:
       tags:
