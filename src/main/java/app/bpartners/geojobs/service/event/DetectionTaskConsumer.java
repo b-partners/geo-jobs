@@ -1,12 +1,15 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.FAILED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.gen.TileDetectionTaskCreated;
+import app.bpartners.geojobs.endpoint.event.gen.TileDetectionTaskCreatedFailed;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
@@ -50,30 +53,48 @@ public class DetectionTaskConsumer implements Consumer<DetectionTask> {
     var detectableObjectConf = objectConfigurationRepository.findAllByDetectionJobId(jobId);
     var detectableTypes =
         detectableObjectConf.stream().map(DetectableObjectConfiguration::getObjectType).toList();
-    var savedTileDetectionTasks =
-        tileDetectionTaskRepository.saveAll(
-            task.getTiles().stream()
-                .filter(keyPredicateFunction.apply(Tile::getBucketPath))
-                .map(
-                    tile -> {
-                      String tileDetectionTaskId = randomUUID().toString();
-                      String parcelId = task.getParcel().getId();
-                      List<TaskStatus> status =
-                          List.of(
-                              TaskStatus.builder()
-                                  .health(UNKNOWN)
-                                  .progression(PENDING)
-                                  .creationDatetime(now())
-                                  .taskId(tileDetectionTaskId)
-                                  .build());
-                      return new TileDetectionTask(
-                          tileDetectionTaskId, detectionTaskId, parcelId, jobId, tile, status);
-                    })
-                .toList());
-    savedTileDetectionTasks.forEach(
+    var existingTileDetections = tileDetectionTaskRepository.findAllByParentTaskId(task.getId());
+    if (existingTileDetections.isEmpty()) {
+      var tileDetectionTasks =
+          task.getTiles().stream()
+              .filter(keyPredicateFunction.apply(Tile::getBucketPath))
+              .map(
+                  tile -> {
+                    String tileDetectionTaskId = randomUUID().toString();
+                    String parcelId = task.getParcel().getId();
+                    List<TaskStatus> status =
+                        List.of(
+                            TaskStatus.builder()
+                                .health(UNKNOWN)
+                                .progression(PENDING)
+                                .creationDatetime(now())
+                                .taskId(tileDetectionTaskId)
+                                .build());
+                    return new TileDetectionTask(
+                        tileDetectionTaskId, detectionTaskId, parcelId, jobId, tile, status);
+                  })
+              .toList();
+      var savedTileDetectionTasks = tileDetectionTaskRepository.saveAll(tileDetectionTasks);
+      savedTileDetectionTasks.forEach(
+          tileDetectionTask -> {
+            eventProducer.accept(
+                List.of(new TileDetectionTaskCreated(tileDetectionTask, detectableTypes)));
+          });
+      return;
+    }
+    var failedDetectionTasks =
+        existingTileDetections.stream()
+            .filter(
+                tileDetectionTask ->
+                    tileDetectionTask.getStatus().getProgression().equals(FINISHED)
+                        && tileDetectionTask.getStatus().getHealth().equals(FAILED))
+            .toList();
+    failedDetectionTasks.forEach(
         tileDetectionTask -> {
           eventProducer.accept(
-              List.of(new TileDetectionTaskCreated(tileDetectionTask, detectableTypes)));
+              List.of(
+                  new TileDetectionTaskCreatedFailed(
+                      new TileDetectionTaskCreated(tileDetectionTask, detectableTypes), 0)));
         });
   }
 
