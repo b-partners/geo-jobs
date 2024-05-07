@@ -6,14 +6,13 @@ import app.bpartners.gen.annotator.endpoint.rest.model.CreateAnnotatedTask;
 import app.bpartners.gen.annotator.endpoint.rest.model.Label;
 import app.bpartners.geojobs.repository.model.detection.DetectedTile;
 import java.util.List;
-import java.util.function.BiFunction;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @AllArgsConstructor
-public class TaskExtractor
-    implements BiFunction<List<DetectedTile>, String, List<CreateAnnotatedTask>> {
+// TODO: check the appropriate Java function to implement
+public class TaskExtractor {
   private final CreateAnnotationBatchExtractor createAnnotationBatchExtractor;
   private final LabelExtractor labelExtractor;
 
@@ -29,11 +28,14 @@ public class TaskExtractor
                 detectedTile, annotatorId, taskId, existingLabels));
   }
 
-  @Override
-  public List<CreateAnnotatedTask> apply(List<DetectedTile> detectedTiles, String annotatorId) {
+  public List<CreateAnnotatedTask> apply(
+      List<DetectedTile> detectedTiles, String annotatorId, List<Label> expectedLabels) {
     var existingLabels = labelExtractor.createUniqueLabelListFrom(detectedTiles);
     return detectedTiles.stream()
-        .map(tile -> extractTask(tile, annotatorId, existingLabels))
+        .map(
+            tile ->
+                extractTask(
+                    tile, annotatorId, existingLabels.isEmpty() ? expectedLabels : existingLabels))
         .toList();
   }
 }

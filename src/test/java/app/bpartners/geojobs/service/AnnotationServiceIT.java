@@ -51,7 +51,7 @@ public class AnnotationServiceIT extends FacadeIT {
     annotationService.createAnnotationJob(
         HumanDetectionJob.builder()
             .annotationJobId(CURRENT_ANNOTATION_JOB_ID)
-            .inDoubtTiles(inDoubtTiles)
+            .detectedTiles(inDoubtTiles)
             .build());
     Job createdJob = annotationService.getAnnotationJobById(CURRENT_ANNOTATION_JOB_ID);
 

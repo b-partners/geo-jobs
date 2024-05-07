@@ -111,6 +111,7 @@ class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
     var humanZDJ1After = jobRepository.findById(HUMAN_ZDJ_ID).orElseThrow();
     var humanZDJ2After = jobRepository.findById(HUMAN_ZDJ_ID_2).orElseThrow();
     var humanDetectionAfter = humanDetectionJobRepository.findByZoneDetectionJobId(HUMAN_ZDJ_ID);
+    var humanDetectionAfter2 = humanDetectionJobRepository.findByZoneDetectionJobId(HUMAN_ZDJ_ID_2);
     var humanZDJ1BeforeStatus = humanZDJ1Before.getStatus();
     var humanZDJ2AfterStatus = humanZDJ2After.getStatus();
     assertTrue(humanDetectionBefore.isEmpty());
@@ -127,12 +128,13 @@ class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
     assertEquals(
         JobStatus.builder()
             .id(humanZDJ2AfterStatus.getId())
-            .progression(Status.ProgressionStatus.FINISHED)
-            .health(Status.HealthStatus.SUCCEEDED)
+            .progression(Status.ProgressionStatus.PENDING)
+            .health(Status.HealthStatus.UNKNOWN)
             .creationDatetime(humanZDJ2AfterStatus.getCreationDatetime())
             .build(),
         humanZDJ2AfterStatus);
     assertEquals(HUMAN_ZDJ_ID, humanDetectionAfter.get().getZoneDetectionJobId());
-    assertFalse(humanDetectionAfter.get().getInDoubtTiles().isEmpty());
+    assertFalse(humanDetectionAfter.get().getDetectedTiles().isEmpty());
+    assertFalse(humanDetectionAfter2.get().getDetectedTiles().isEmpty());
   }
 }

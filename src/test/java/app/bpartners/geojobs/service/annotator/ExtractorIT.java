@@ -44,8 +44,9 @@ public class ExtractorIT extends FacadeIT {
                 [ 4.459648282829194, 45.904988912620688 ]
                 ] ] ] } }""";
   public static final String PARCEL_MOCK_ID = "parcel1";
-  @Autowired private ObjectMapper om;
-  @Autowired private LabelExtractor labelExtractor;
+  @Autowired ObjectMapper om;
+  @Autowired LabelConverter labelConverter;
+  @Autowired LabelExtractor labelExtractor;
   @Autowired PolygonExtractor polygonExtractor;
   @Autowired CreateAnnotationBatchExtractor createAnnotationBatchExtractor;
 
@@ -89,7 +90,7 @@ public class ExtractorIT extends FacadeIT {
     String roofColor = "#DFFF00";
     Label expected = new Label().id(null).name(roof.name()).color(roofColor);
 
-    Label actual = labelExtractor.apply(roof);
+    Label actual = labelConverter.apply(roof);
     actual.setId(null);
 
     assertEquals(expected, actual);
@@ -170,7 +171,7 @@ public class ExtractorIT extends FacadeIT {
 
   @Test
   void extract_annotation_batch_ok() {
-    Label label = labelExtractor.apply(ROOF);
+    Label label = labelConverter.apply(ROOF);
     DetectedObject detectedObject = inDoubtDetectedObject(ROOF);
     CreateAnnotationBatch expected =
         new CreateAnnotationBatch()

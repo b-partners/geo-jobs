@@ -3,7 +3,6 @@ package app.bpartners.geojobs.service.annotator;
 import static app.bpartners.gen.annotator.endpoint.rest.model.JobStatus.*;
 import static app.bpartners.gen.annotator.endpoint.rest.model.JobType.REVIEWING;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
-import static java.util.UUID.randomUUID;
 
 import app.bpartners.gen.annotator.endpoint.rest.api.AdminApi;
 import app.bpartners.gen.annotator.endpoint.rest.api.JobsApi;
@@ -12,7 +11,8 @@ import app.bpartners.gen.annotator.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.gen.CreateAnnotatedTaskExtracted;
 import app.bpartners.geojobs.file.BucketComponent;
-import app.bpartners.geojobs.repository.model.detection.DetectableType;
+import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
+import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.DetectedTile;
 import app.bpartners.geojobs.repository.model.detection.HumanDetectionJob;
 import java.time.Instant;
@@ -27,8 +27,10 @@ public class AnnotationService {
   public static final int DEFAULT_IMAGES_WIDTH = 1024;
   private final JobsApi jobsApi;
   private final TaskExtractor taskExtractor;
+  private final LabelConverter labelConverter;
   private final LabelExtractor labelExtractor;
   private final AnnotatorUserInfoGetter annotatorUserInfoGetter;
+  private final DetectableObjectConfigurationRepository detectableObjectRepository;
   private final BucketComponent bucketComponent;
   private final EventProducer eventProducer;
   private final AdminApi adminApi;
@@ -36,15 +38,19 @@ public class AnnotationService {
   public AnnotationService(
       AnnotatorApiConf annotatorApiConf,
       TaskExtractor taskExtractor,
+      LabelConverter labelConverter,
       LabelExtractor labelExtractor,
       AnnotatorUserInfoGetter annotatorUserInfoGetter,
+      DetectableObjectConfigurationRepository detectableObjectRepository,
       BucketComponent bucketComponent,
       EventProducer eventProducer) {
     this.jobsApi = new JobsApi(annotatorApiConf.newApiClientWithApiKey());
     this.adminApi = new AdminApi(annotatorApiConf.newApiClientWithApiKey());
     this.taskExtractor = taskExtractor;
+    this.labelConverter = labelConverter;
     this.labelExtractor = labelExtractor;
     this.annotatorUserInfoGetter = annotatorUserInfoGetter;
+    this.detectableObjectRepository = detectableObjectRepository;
     this.bucketComponent = bucketComponent;
     this.eventProducer = eventProducer;
   }
@@ -60,23 +66,23 @@ public class AnnotationService {
   public void createAnnotationJob(HumanDetectionJob humanDetectionJob)
       throws app.bpartners.gen.annotator.endpoint.rest.client.ApiException {
     String crupdateAnnotatedJobFolderPath = null;
-    List<DetectedTile> inDoubtTiles = humanDetectionJob.getInDoubtTiles();
+    List<DetectedTile> inDoubtTiles = humanDetectionJob.getDetectedTiles();
     log.info(
         "[DEBUG] AnnotationService InDoubtTiles [size={}, tiles={}]",
         inDoubtTiles.size(),
         inDoubtTiles.stream().map(DetectedTile::describe).toList());
     String annotationJobId = humanDetectionJob.getAnnotationJobId();
+    List<DetectableObjectConfiguration> detectableObjects =
+        detectableObjectRepository.findAllByDetectionJobId(
+            humanDetectionJob.getZoneDetectionJobId());
+    List<Label> expectedLabels =
+        detectableObjects.stream()
+            .map(object -> labelConverter.apply(object.getObjectType()))
+            .toList();
     List<CreateAnnotatedTask> annotatedTasks =
-        taskExtractor.apply(inDoubtTiles, annotatorUserInfoGetter.getUserId());
+        taskExtractor.apply(inDoubtTiles, annotatorUserInfoGetter.getUserId(), expectedLabels);
     List<Label> extractLabelsFromTasks = labelExtractor.extractLabelsFromTasks(annotatedTasks);
-    List<Label> labels =
-        extractLabelsFromTasks.isEmpty() // TODO: remove after debug
-            ? List.of(
-                new Label()
-                    .id(randomUUID().toString())
-                    .name(DetectableType.ROOF.name())
-                    .color("#DFFF00"))
-            : extractLabelsFromTasks;
+    List<Label> labels = extractLabelsFromTasks.isEmpty() ? expectedLabels : extractLabelsFromTasks;
     Instant now = Instant.now();
     log.error(
         "[DEBUG] AnnotationService : AnnotationJob(id={}) with labels (count={}, values={}) and"

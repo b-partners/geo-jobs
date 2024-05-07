@@ -41,11 +41,12 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
     String succeededJobId = event.getSucceededJobId();
     String humanDetectionJobId = randomUUID().toString();
     String annotationJobId = randomUUID().toString();
-    List<DetectedTile> inDoubtTiles =
-        detectionTaskService.findInDoubtTilesByJobId(succeededJobId).stream()
+    // Note that only SUCCEEDED TileDetectionTask become DetectedTile
+    List<DetectedTile> detectedTiles =
+        detectedTileRepository.findAllByJobId(succeededJobId).stream()
             .peek(detectedTile -> detectedTile.setHumanDetectionJobId(humanDetectionJobId))
             .toList();
-    if (inDoubtTiles.isEmpty()) {
+    if (detectedTiles.isEmpty()) {
       var zoneDetectionJob =
           jobRepository
               .findById(humanZDJId)
@@ -66,12 +67,12 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
             HumanDetectionJob.builder()
                 .id(humanDetectionJobId)
                 .annotationJobId(annotationJobId)
-                .inDoubtTiles(inDoubtTiles)
+                .detectedTiles(detectedTiles)
                 .zoneDetectionJobId(humanZDJId)
                 .build());
 
-    savedHumanDetectionJob.setInDoubtTiles(inDoubtTiles); // TODO: check if still necessary
-    detectedTileRepository.saveAll(inDoubtTiles); // TODO: check if still necessary
+    savedHumanDetectionJob.setDetectedTiles(detectedTiles); // TODO: check if still necessary
+    detectedTileRepository.saveAll(detectedTiles); // TODO: check if still necessary
     try {
       annotationService.createAnnotationJob(savedHumanDetectionJob);
     } catch (Exception e) {
@@ -81,6 +82,7 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
                   .humanDetectionJobId(savedHumanDetectionJob.getId())
                   .attemptNb(1)
                   .build()));
+      return;
     }
     log.info(
         "HumanDetectionJob {} created, annotations sent to bpartners-annotation-api",

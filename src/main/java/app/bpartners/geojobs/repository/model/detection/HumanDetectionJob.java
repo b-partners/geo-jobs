@@ -22,5 +22,5 @@ public class HumanDetectionJob {
 
   @OneToMany(cascade = CascadeType.ALL, fetch = EAGER)
   @JoinColumn(name = "human_detection_job_id")
-  private List<DetectedTile> inDoubtTiles;
+  private List<DetectedTile> detectedTiles;
 }
