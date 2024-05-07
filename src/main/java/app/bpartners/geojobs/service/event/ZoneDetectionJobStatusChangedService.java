@@ -50,7 +50,11 @@ public class ZoneDetectionJobStatusChangedService
               case UNKNOWN, RETRYING -> throw new IllegalStateException(illegalFinishedMessage);
               case SUCCEEDED -> handleFinishedJob(newJob);
               case FAILED -> throw new ApiException(
-                  SERVER_EXCEPTION, "Failed to process zdj=" + newJob);
+                  SERVER_EXCEPTION,
+                  "Failed to process zdj="
+                      + newJob.getId()
+                      + ", otherwise :"
+                      + handleFinishedJob(newJob));
             };
             case PENDING, PROCESSING -> notFinishedMessage;
           };
