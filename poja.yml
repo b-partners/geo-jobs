@@ -14,7 +14,7 @@ custom_java_repositories: poja-custom-java-repositories.txt
 database_non_root_password: /geo-jobs/${Env}/db/user/password
 database_non_root_username: /geo-jobs/${Env}/db/user/username
 frontal_memory: 512
-frontal_reserved_concurrent_executions_nb: 250
+frontal_reserved_concurrent_executions_nb: null
 jacoco_min_coverage: '0.7'
 java_facade_it: FacadeIT
 package_full_name: app.bpartners.geojobs
@@ -40,4 +40,4 @@ with_sonar: 'false'
 with_swagger_ui: 'false'
 worker_batch: 1
 worker_memory: 512
-worker_reserved_concurrent_executions_nb: null
+worker_reserved_concurrent_executions_nb: 250
