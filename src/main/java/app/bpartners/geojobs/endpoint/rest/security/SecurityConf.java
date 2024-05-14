@@ -47,6 +47,8 @@ public class SecurityConf {
                     .hasAuthority(ROLE_ADMIN.name())
                     .requestMatchers(POST, "/tilingJobs")
                     .hasAuthority(ROLE_ADMIN.name())
+                    .requestMatchers(POST, "/tilingJobs/*/duplications")
+                    .hasAuthority(ROLE_ADMIN.name())
                     .requestMatchers(PUT, "/tilingJobs/*/retry")
                     .hasAuthority(ROLE_ADMIN.name())
                     .requestMatchers(GET, "/detectionJobs", "/detectionJobs/**")

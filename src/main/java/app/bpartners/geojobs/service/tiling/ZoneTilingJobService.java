@@ -19,6 +19,7 @@ import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
+import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -27,13 +28,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> {
+  private final ZoneDetectionJobService detectionJobService;
 
   public ZoneTilingJobService(
       JpaRepository<ZoneTilingJob, String> repository,
       JobStatusRepository jobStatusRepository,
       TaskRepository<TilingTask> taskRepository,
-      EventProducer eventProducer) {
+      EventProducer eventProducer,
+      ZoneDetectionJobService detectionJobService) {
     super(repository, jobStatusRepository, taskRepository, eventProducer, ZoneTilingJob.class);
+    this.detectionJobService = detectionJobService;
   }
 
   @Transactional
@@ -102,5 +106,31 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
   protected void onStatusChanged(ZoneTilingJob oldJob, ZoneTilingJob newJob) {
     eventProducer.accept(
         List.of(ZoneTilingJobStatusChanged.builder().oldJob(oldJob).newJob(newJob).build()));
+  }
+
+  @Transactional
+  public ZoneTilingJob duplicate(String jobId) {
+    var optionalZoneTilingJob = repository.findById(jobId);
+    if (optionalZoneTilingJob.isEmpty()) {
+      throw new BadRequestException("ZoneTilingJob(id=" + jobId + ") not found");
+    }
+    var job = optionalZoneTilingJob.get();
+    var duplicatedJobId = randomUUID().toString();
+    var tilingTasks = taskRepository.findAllByJobId(jobId);
+    List<TilingTask> duplicatedTasks =
+        tilingTasks.stream()
+            .map(
+                task -> {
+                  var newTaskId = randomUUID().toString();
+                  var newParcelId = randomUUID().toString();
+                  var newParcelContentId = randomUUID().toString();
+                  return task.duplicate(
+                      newTaskId, duplicatedJobId, newParcelId, newParcelContentId);
+                })
+            .toList();
+    ZoneTilingJob duplicatedJob = repository.save(job.duplicate(duplicatedJobId));
+    taskRepository.saveAll(duplicatedTasks);
+    detectionJobService.saveZDJFromZTJ(duplicatedJob);
+    return duplicatedJob;
   }
 }

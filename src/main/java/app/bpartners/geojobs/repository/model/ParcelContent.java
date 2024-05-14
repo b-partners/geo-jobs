@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.repository.model;
 
+import static java.time.Instant.now;
+import static java.util.UUID.randomUUID;
 import static org.hibernate.type.SqlTypes.JSON;
 
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
@@ -36,8 +38,8 @@ public class ParcelContent implements Serializable {
   private List<Tile> tiles = new ArrayList<>();
 
   // TODO !!! VERY BAD ! Statuses must be separated from Parcel
-  private Status tilingStatus;
-  private Status detectionStatus;
+  private Status tilingStatus; // computed value only
+  private Status detectionStatus; // computed value only
 
   private Instant creationDatetime;
 
@@ -60,5 +62,18 @@ public class ParcelContent implements Serializable {
           chosenTile.getId());
     }
     return chosenTile;
+  }
+
+  public ParcelContent duplicate(String parcelContentId) {
+    return ParcelContent.builder()
+        .id(parcelContentId)
+        .tiles(tiles.stream().map(tile -> tile.duplicate(randomUUID().toString())).toList())
+        .feature(feature)
+        .creationDatetime(now())
+        .geoServerParameter(geoServerParameter)
+        .geoServerUrl(geoServerUrl)
+        .tilingStatus(null)
+        .detectionStatus(null)
+        .build();
   }
 }

@@ -37,6 +37,11 @@ public class ZoneTilingController {
     return mapper.toRest(service.create(job, tilingTasks), tilingTasks);
   }
 
+  @PostMapping("/tilingJobs/{id}/duplications")
+  public ZoneTilingJob duplicateTilingJob(@PathVariable String id) {
+    return mapper.toRest(service.duplicate(id), List.of());
+  }
+
   @PutMapping("/tilingJobs/{id}/retry")
   public ZoneTilingJob processFailedTilingJob(@PathVariable String id) {
     return mapper.toRest(

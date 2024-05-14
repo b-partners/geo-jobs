@@ -32,4 +32,13 @@ public class Tile implements Serializable {
         + '\''
         + '}';
   }
+
+  public Tile duplicate(String tileId) {
+    return Tile.builder()
+        .id(tileId)
+        .creationDatetime(this.creationDatetime)
+        .coordinates(this.coordinates)
+        .bucketPath(this.bucketPath)
+        .build();
+  }
 }

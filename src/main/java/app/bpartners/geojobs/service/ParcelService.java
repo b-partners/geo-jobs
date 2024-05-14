@@ -6,6 +6,7 @@ import app.bpartners.geojobs.repository.TilingTaskRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
 import app.bpartners.geojobs.repository.model.Parcel;
+import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +28,17 @@ public class ParcelService {
     // TODO: refactor duplicated computing
     var zoneTilingJob = tilingJobRepository.findById(jobId);
     if (zoneTilingJob.isPresent()) {
-      return tilingTaskRepository.findAllByJobId(jobId).stream()
+      List<TilingTask> duplicatedTilingTasks =
+          tilingTaskRepository.findAllByJobId(jobId).stream()
+              .map(
+                  task ->
+                      task.duplicate(
+                          task.getId(),
+                          task.getJobId(),
+                          task.getParcelId(),
+                          task.getParcelContentId()))
+              .toList();
+      return duplicatedTilingTasks.stream()
           .map(
               tilingTask -> {
                 var parcel = tilingTask.getParcel();

@@ -18,6 +18,7 @@ import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
+import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import java.util.List;
 import java.util.Optional;
@@ -35,9 +36,14 @@ public class ZoneTilingJobServiceTest {
   JobStatusRepository jobStatusRepositoryMock = mock();
   TaskRepository<TilingTask> taskRepositoryMock = mock();
   EventProducer eventProducerMock = mock();
+  ZoneDetectionJobService detectionJobServiceMock = mock();
   ZoneTilingJobService subject =
       new ZoneTilingJobService(
-          jobRepositoryMock, jobStatusRepositoryMock, taskRepositoryMock, eventProducerMock);
+          jobRepositoryMock,
+          jobStatusRepositoryMock,
+          taskRepositoryMock,
+          eventProducerMock,
+          detectionJobServiceMock);
 
   @Test
   void retry_failed_tasks_not_found_ko() {

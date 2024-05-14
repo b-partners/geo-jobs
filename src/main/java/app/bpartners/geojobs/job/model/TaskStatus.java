@@ -8,6 +8,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.PrimaryKeyJoinColumn;
 import jakarta.persistence.Table;
 import java.io.Serializable;
+import java.time.Instant;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -36,6 +37,18 @@ public class TaskStatus extends Status implements Serializable {
         .health(status.getHealth())
         .message(status.getMessage())
         .creationDatetime(status.getCreationDatetime())
+        .build();
+  }
+
+  public TaskStatus duplicate(String id, String taskId) {
+    return TaskStatus.builder()
+        .id(id)
+        .taskId(taskId)
+        .jobType(this.getJobType())
+        .progression(this.getProgression())
+        .health(this.getHealth())
+        .message(this.getMessage())
+        .creationDatetime(Instant.now())
         .build();
   }
 }
