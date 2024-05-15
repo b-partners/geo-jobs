@@ -90,6 +90,34 @@ paths:
                   $ref: "#/components/schemas/TaskStatistic"
         '500':
           $ref: '#/components/responses/500'
+  '/tilingJobs/{id}/taskFiltering':
+    post:
+      tags:
+        - Tiling
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: ZTJ identifier
+          schema:
+            type: string
+      operationId: filterTilingTasks
+      description: | 
+        Separate SUCCEEDED tasks into new tiling job from not SUCCEEDED tasks inside another tiling job, for the given ZTJ
+      responses:
+        200:
+          description: | 
+            List of new tiling jobs with its tasks statuses.
+            SUCCEEDED status value means the job contains only SUCCEEDED tasks.
+            NOT_SUCCEEDED status value means the job contains only not SUCCEEDED tasks, i.e FAILED or UNKNOWN
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FilteredTilingJob"
+        '500':
+          $ref: '#/components/responses/500'
   '/tilingJobs/{id}/duplications':
     post:
       tags:
@@ -407,6 +435,13 @@ components:
             - HOUSES_1
             - HOUSES_2
             - HOUSE_PROPERTY
+    FilteredTilingJob:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/SuccessStatus'
+        job:
+          $ref: '#/components/schemas/ZoneTilingJob'
     ZoneTilingJob:
       allOf:
         - $ref: "#/components/schemas/CreateZoneTilingJob"
@@ -533,6 +568,11 @@ components:
           $ref: '#/components/schemas/HealthStatus'
         count:
           type: number
+    SuccessStatus:
+      type: string
+      enum:
+        - SUCCEEDED
+        - NOT_SUCCEEDED
     Tile:
       properties:
         id:
