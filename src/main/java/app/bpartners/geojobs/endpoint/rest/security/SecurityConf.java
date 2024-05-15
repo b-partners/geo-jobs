@@ -45,6 +45,8 @@ public class SecurityConf {
                     .anonymous()
                     .requestMatchers(GET, "/tilingJobs", "/tilingJobs/**")
                     .hasAuthority(ROLE_ADMIN.name())
+                    .requestMatchers(GET, "/tilingJobs/*/taskStatistics")
+                    .hasAuthority(ROLE_ADMIN.name())
                     .requestMatchers(POST, "/tilingJobs")
                     .hasAuthority(ROLE_ADMIN.name())
                     .requestMatchers(POST, "/tilingJobs/*/duplications")

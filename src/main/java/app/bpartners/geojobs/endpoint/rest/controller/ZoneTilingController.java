@@ -2,11 +2,13 @@ package app.bpartners.geojobs.endpoint.rest.controller;
 
 import static java.util.stream.Collectors.toList;
 
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.TaskStatisticMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.TilingTaskMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneTilingJobMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoomMapper;
 import app.bpartners.geojobs.endpoint.rest.model.CreateZoneTilingJob;
 import app.bpartners.geojobs.endpoint.rest.model.Parcel;
+import app.bpartners.geojobs.endpoint.rest.model.TaskStatistic;
 import app.bpartners.geojobs.endpoint.rest.model.ZoneTilingJob;
 import app.bpartners.geojobs.model.BoundedPageSize;
 import app.bpartners.geojobs.model.PageFromOne;
@@ -29,6 +31,12 @@ public class ZoneTilingController {
   private final ZoneTilingJobMapper mapper;
   private final ZoomMapper zoomMapper;
   private final TilingTaskMapper tilingTaskMapper;
+  private final TaskStatisticMapper taskStatisticMapper;
+
+  @GetMapping("/tilingJobs/{id}/taskStatistics")
+  public TaskStatistic getTilingTaskStatistics(@PathVariable String id) {
+    return taskStatisticMapper.toRest(service.computeTaskStatistics(id));
+  }
 
   @PostMapping("/tilingJobs")
   public ZoneTilingJob tileZone(@RequestBody CreateZoneTilingJob createJob) {

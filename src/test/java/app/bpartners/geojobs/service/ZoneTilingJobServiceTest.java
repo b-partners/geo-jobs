@@ -11,7 +11,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.job.model.JobStatus;
+import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.TaskStatus;
+import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
+import app.bpartners.geojobs.job.model.statistic.TaskStatusStatistic;
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.job.repository.TaskRepository;
 import app.bpartners.geojobs.model.exception.BadRequestException;
@@ -22,6 +26,7 @@ import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import java.util.List;
 import java.util.Optional;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
@@ -32,6 +37,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public class ZoneTilingJobServiceTest {
   public static final String JOB_ID = "jobId";
   public static final String JOB2_ID = "job2Id";
+  public static final String JOB_3_ID = "job3_id";
   JpaRepository<ZoneTilingJob, String> jobRepositoryMock = mock();
   JobStatusRepository jobStatusRepositoryMock = mock();
   TaskRepository<TilingTask> taskRepositoryMock = mock();
@@ -44,6 +50,38 @@ public class ZoneTilingJobServiceTest {
           taskRepositoryMock,
           eventProducerMock,
           detectionJobServiceMock);
+
+  @Test
+  void read_task_statistics_ok() {
+    when(jobRepositoryMock.findById(JOB_3_ID))
+        .thenReturn(
+            Optional.of(
+                ZoneTilingJob.builder()
+                    .statusHistory(
+                        List.of(JobStatus.builder().progression(PROCESSING).health(FAILED).build()))
+                    .build()));
+    when(taskRepositoryMock.findAllByJobId(JOB_3_ID))
+        .thenReturn(
+            List.of(
+                taskWithStatus(FINISHED, SUCCEEDED),
+                taskWithStatus(FINISHED, SUCCEEDED),
+                taskWithStatus(PENDING, UNKNOWN),
+                taskWithStatus(PENDING, UNKNOWN),
+                taskWithStatus(FINISHED, FAILED),
+                taskWithStatus(PROCESSING, UNKNOWN)));
+
+    TaskStatistic actual = subject.computeTaskStatistics(JOB_3_ID);
+
+    assertEquals(JOB_3_ID, actual.getJobId());
+    assertEquals(FAILED, actual.getActualJobStatus().getHealth());
+    assertEquals(PROCESSING, actual.getActualJobStatus().getProgression());
+    StatisticResult statisticResult = getResult(actual);
+    assertEquals(2, statisticResult.unknownPendingTask().getCount());
+    assertEquals(1, statisticResult.unknownProcessingTask().getCount());
+    assertEquals(1, statisticResult.failedFinishedTask().getCount());
+    assertEquals(2, statisticResult.succeededFinishedTask().getCount());
+    assertEquals(0, statisticResult.unknownFinishedTask().getCount());
+  }
 
   @Test
   void retry_failed_tasks_not_found_ko() {
@@ -60,53 +98,27 @@ public class ZoneTilingJobServiceTest {
         .thenReturn(Optional.of(ZoneTilingJob.builder().build()));
     when(taskRepositoryMock.findAllByJobId(JOB_ID))
         .thenReturn(
-            List.of(
-                TilingTask.builder()
-                    .statusHistory(
-                        List.of(
-                            TaskStatus.builder()
-                                .id(randomUUID().toString())
-                                .progression(FINISHED)
-                                .jobType(DETECTION)
-                                .health(SUCCEEDED)
-                                .build()))
-                    .build(),
-                TilingTask.builder()
-                    .statusHistory(
-                        List.of(
-                            TaskStatus.builder()
-                                .id(randomUUID().toString())
-                                .progression(PROCESSING)
-                                .jobType(DETECTION)
-                                .health(UNKNOWN)
-                                .build()))
-                    .build()));
+            List.of(taskWithStatus(FINISHED, SUCCEEDED), taskWithStatus(PROCESSING, UNKNOWN)));
     when(taskRepositoryMock.findAllByJobId(JOB2_ID))
         .thenReturn(
-            List.of(
-                TilingTask.builder()
-                    .statusHistory(
-                        List.of(
-                            TaskStatus.builder()
-                                .id(randomUUID().toString())
-                                .progression(FINISHED)
-                                .jobType(DETECTION)
-                                .health(SUCCEEDED)
-                                .build()))
-                    .build(),
-                TilingTask.builder()
-                    .statusHistory(
-                        List.of(
-                            TaskStatus.builder()
-                                .id(randomUUID().toString())
-                                .progression(FINISHED)
-                                .jobType(DETECTION)
-                                .health(SUCCEEDED)
-                                .build()))
-                    .build()));
+            List.of(taskWithStatus(FINISHED, SUCCEEDED), taskWithStatus(FINISHED, SUCCEEDED)));
 
     assertThrows(BadRequestException.class, () -> subject.retryFailedTask(JOB_ID));
     assertThrows(BadRequestException.class, () -> subject.retryFailedTask(JOB2_ID));
+  }
+
+  private static TilingTask taskWithStatus(
+      Status.ProgressionStatus progressionStatus, Status.HealthStatus healthStatus) {
+    return TilingTask.builder()
+        .statusHistory(
+            List.of(
+                TaskStatus.builder()
+                    .id(randomUUID().toString())
+                    .progression(progressionStatus)
+                    .jobType(DETECTION)
+                    .health(healthStatus)
+                    .build()))
+        .build();
   }
 
   @Test
@@ -167,5 +179,62 @@ public class ZoneTilingJobServiceTest {
 
     assertEquals(PROCESSING, actual.getStatus().getProgression());
     assertEquals(RETRYING, actual.getStatus().getHealth());
+  }
+
+  private record StatisticResult(
+      TaskStatusStatistic.HealthStatusStatistic unknownPendingTask,
+      TaskStatusStatistic.HealthStatusStatistic unknownProcessingTask,
+      TaskStatusStatistic.HealthStatusStatistic succeededFinishedTask,
+      TaskStatusStatistic.HealthStatusStatistic failedFinishedTask,
+      TaskStatusStatistic.HealthStatusStatistic unknownFinishedTask) {}
+
+  @NonNull
+  private ZoneTilingJobServiceTest.StatisticResult getResult(TaskStatistic actual) {
+    var pendingTaskStatistic =
+        actual.getTaskStatusStatistics().stream()
+            .filter(statistic -> statistic.getProgressionStatus().equals(PENDING))
+            .findFirst()
+            .orElseThrow();
+    var processingTaskStatistic =
+        actual.getTaskStatusStatistics().stream()
+            .filter(statistic -> statistic.getProgressionStatus().equals(PROCESSING))
+            .findFirst()
+            .orElseThrow();
+    var finishedTaskStatistic =
+        actual.getTaskStatusStatistics().stream()
+            .filter(statistic -> statistic.getProgressionStatus().equals(FINISHED))
+            .findFirst()
+            .orElseThrow();
+    var unknownPendingTask =
+        pendingTaskStatistic.getHealthStatusStatistics().stream()
+            .filter(healthStatistic -> healthStatistic.getHealthStatus().equals(UNKNOWN))
+            .findFirst()
+            .orElseThrow();
+    var unknownProcessingTask =
+        processingTaskStatistic.getHealthStatusStatistics().stream()
+            .filter(healthStatistic -> healthStatistic.getHealthStatus().equals(UNKNOWN))
+            .findFirst()
+            .orElseThrow();
+    var succeededFinishedTask =
+        finishedTaskStatistic.getHealthStatusStatistics().stream()
+            .filter(healthStatistic -> healthStatistic.getHealthStatus().equals(SUCCEEDED))
+            .findFirst()
+            .orElseThrow();
+    var failedFinishedTask =
+        finishedTaskStatistic.getHealthStatusStatistics().stream()
+            .filter(healthStatistic -> healthStatistic.getHealthStatus().equals(FAILED))
+            .findFirst()
+            .orElseThrow();
+    var unknownFinishedTask =
+        finishedTaskStatistic.getHealthStatusStatistics().stream()
+            .filter(healthStatistic -> healthStatistic.getHealthStatus().equals(UNKNOWN))
+            .findFirst()
+            .orElseThrow();
+    return new StatisticResult(
+        unknownPendingTask,
+        unknownProcessingTask,
+        succeededFinishedTask,
+        failedFinishedTask,
+        unknownFinishedTask);
   }
 }
