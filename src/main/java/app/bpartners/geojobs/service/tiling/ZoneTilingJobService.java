@@ -13,6 +13,7 @@ import app.bpartners.geojobs.endpoint.event.gen.ZoneTilingJobCreated;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneTilingJobStatusChanged;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
+import app.bpartners.geojobs.job.model.Task;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.job.model.statistic.TaskStatusStatistic;
@@ -48,11 +49,51 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
   }
 
   @Transactional
+  public List<ZoneTilingJob> dispatchTasksBySuccessStatus(String jobId) {
+    ZoneTilingJob job = getZoneTilingJob(jobId);
+    if (job.isSucceeded()) {
+      throw new BadRequestException(
+          "All job(id="
+              + jobId
+              + ") tasks are SUCCEEDED. "
+              + "Use POST /tiling/id/duplications to duplicate job instead");
+    }
+    List<TilingTask> tilingTasks = taskRepository.findAllByJobId(jobId);
+    List<TilingTask> succeededTasks = tilingTasks.stream().filter(Task::isSucceeded).toList();
+    List<TilingTask> notSucceededTasks =
+        tilingTasks.stream().filter(task -> !task.isSucceeded()).toList();
+    String succeededJobId = randomUUID().toString();
+    String notSucceededJobId = randomUUID().toString();
+    var succeededJob =
+        duplicateWithNewStatus(
+            succeededJobId,
+            job,
+            succeededTasks,
+            true,
+            JobStatus.builder()
+                .jobId(succeededJobId)
+                .progression(FINISHED)
+                .health(SUCCEEDED)
+                .creationDatetime(now())
+                .build());
+    var notSucceededJob =
+        duplicateWithNewStatus(
+            notSucceededJobId,
+            job,
+            notSucceededTasks,
+            false,
+            JobStatus.builder()
+                .jobId(notSucceededJobId)
+                .progression(PENDING)
+                .health(UNKNOWN)
+                .creationDatetime(now())
+                .build());
+    return List.of(succeededJob, notSucceededJob);
+  }
+
+  @Transactional
   public TaskStatistic computeTaskStatistics(String jobId) {
-    ZoneTilingJob job =
-        repository
-            .findById(jobId)
-            .orElseThrow(() -> new NotFoundException("ZoneTilingJob(id=" + jobId + ") not found"));
+    ZoneTilingJob job = getZoneTilingJob(jobId);
     List<TilingTask> tilingTasks = taskRepository.findAllByJobId(jobId);
 
     List<TaskStatusStatistic> taskStatusStatistics = getTaskStatusStatistics(tilingTasks);
@@ -63,6 +104,14 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
         .taskStatusStatistics(taskStatusStatistics)
         .updatedAt(job.getStatus().getCreationDatetime())
         .build();
+  }
+
+  private ZoneTilingJob getZoneTilingJob(String jobId) {
+    ZoneTilingJob job =
+        repository
+            .findById(jobId)
+            .orElseThrow(() -> new NotFoundException("ZoneTilingJob(id=" + jobId + ") not found"));
+    return job;
   }
 
   @NonNull
@@ -106,10 +155,7 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
 
   @Transactional
   public ZoneTilingJob retryFailedTask(String jobId) {
-    ZoneTilingJob job =
-        repository
-            .findById(jobId)
-            .orElseThrow(() -> new NotFoundException("ZoneTilingJob(id=" + jobId + ") not found"));
+    ZoneTilingJob job = getZoneTilingJob(jobId);
     List<TilingTask> tilingTasks = taskRepository.findAllByJobId(jobId);
     if (!tilingTasks.stream()
         .allMatch(task -> task.getStatus().getProgression().equals(FINISHED))) {
@@ -174,15 +220,22 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
 
   @Transactional
   public ZoneTilingJob duplicate(String jobId) {
-    var optionalZoneTilingJob = repository.findById(jobId);
-    if (optionalZoneTilingJob.isEmpty()) {
-      throw new BadRequestException("ZoneTilingJob(id=" + jobId + ") not found");
-    }
-    var job = optionalZoneTilingJob.get();
-    var duplicatedJobId = randomUUID().toString();
-    var tilingTasks = taskRepository.findAllByJobId(jobId);
+    String duplicatedJobId = randomUUID().toString();
+    ZoneTilingJob zoneTilingJob = getZoneTilingJob(jobId);
+    List<TilingTask> tilingTasks = taskRepository.findAllByJobId(jobId);
+    boolean saveZDJ = true;
+    JobStatus newStatus = null;
+    return duplicateWithNewStatus(duplicatedJobId, zoneTilingJob, tilingTasks, saveZDJ, newStatus);
+  }
+
+  public ZoneTilingJob duplicateWithNewStatus(
+      String duplicatedJobId,
+      ZoneTilingJob job,
+      List<TilingTask> tasks,
+      boolean saveZDJ,
+      JobStatus newStatus) {
     List<TilingTask> duplicatedTasks =
-        tilingTasks.stream()
+        tasks.stream()
             .map(
                 task -> {
                   var newTaskId = randomUUID().toString();
@@ -192,9 +245,17 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
                       newTaskId, duplicatedJobId, newParcelId, newParcelContentId);
                 })
             .toList();
-    ZoneTilingJob duplicatedJob = repository.save(job.duplicate(duplicatedJobId));
+    ZoneTilingJob jobToDuplicate = job.duplicate(duplicatedJobId);
+    if (newStatus != null) {
+      List<JobStatus> statusHistory = new ArrayList<>(jobToDuplicate.getStatusHistory());
+      statusHistory.add(newStatus);
+      jobToDuplicate.setStatusHistory(statusHistory);
+    }
+    ZoneTilingJob duplicatedJob = repository.save(jobToDuplicate);
     taskRepository.saveAll(duplicatedTasks);
-    detectionJobService.saveZDJFromZTJ(duplicatedJob);
+    if (saveZDJ) {
+      detectionJobService.saveZDJFromZTJ(duplicatedJob);
+    }
     return duplicatedJob;
   }
 }

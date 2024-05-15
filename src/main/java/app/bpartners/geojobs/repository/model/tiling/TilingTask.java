@@ -78,7 +78,11 @@ public class TilingTask extends Task implements Serializable {
         .id(taskId)
         .jobId(jobId)
         .parcels(
-            parcels.stream().map(parcel -> parcel.duplicate(parcelId, parcelContentId)).toList())
+            parcels == null
+                ? null
+                : parcels.stream()
+                    .map(parcel -> parcel.duplicate(parcelId, parcelContentId))
+                    .toList())
         .statusHistory(
             this.getStatusHistory().stream()
                 .map(status -> status.duplicate(randomUUID().toString(), taskId))

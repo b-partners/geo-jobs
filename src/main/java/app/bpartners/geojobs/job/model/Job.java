@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.job.model;
 
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static jakarta.persistence.CascadeType.ALL;
 import static jakarta.persistence.FetchType.EAGER;
@@ -41,6 +43,11 @@ public abstract class Job implements Serializable, Statusable<JobStatus> {
 
   public boolean isPending() {
     return PENDING.equals(getStatus().getProgression());
+  }
+
+  public boolean isSucceeded() {
+    return FINISHED.equals(getStatus().getProgression())
+        && SUCCEEDED.equals(getStatus().getHealth());
   }
 
   @Override
