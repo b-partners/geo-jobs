@@ -68,6 +68,30 @@ paths:
                   $ref: "#/components/schemas/ZoneTilingJob"
         '500':
           $ref: '#/components/responses/500'
+  '/tilingJobs/{id}/taskStatistics':
+    get:
+      tags:
+        - Tiling
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: ZTJ identifier
+          schema:
+            type: string
+      operationId: getTilingTaskStatistics
+      description: Get tiling task statistics for a given ZTJ
+      responses:
+        200:
+          description: List of tiling task statistics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TaskStatistic"
+        '500':
+          $ref: '#/components/responses/500'
   '/tilingJobs/{id}/duplications':
     post:
       tags:
@@ -479,7 +503,38 @@ components:
             $ref: "#/components/schemas/DetectedTile"
         status:
           $ref: "#/components/schemas/Status"
-
+    TaskStatistic:
+      type: object
+      properties:
+        jobId:
+          type: string
+        jobType:
+          $ref: '#/components/schemas/JobType'
+        actualJobStatus:
+          $ref: '#/components/schemas/Status'
+        taskStatusStatistics:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskStatusStatistic'
+        updatedAt:
+          type: string
+          format: date-time
+    TaskStatusStatistic:
+      type: object
+      properties:
+        progression:
+          $ref: '#/components/schemas/ProgressionStatus'
+        healthStatistics:
+          type: array
+          items:
+            $ref: '#/components/schemas/HealthStatusStatistic'
+    HealthStatusStatistic:
+      type: object
+      properties:
+        health:
+          $ref: '#/components/schemas/HealthStatus'
+        count:
+          type: number
     Tile:
       properties:
         id:
@@ -523,7 +578,24 @@ components:
             type: number
           detectorVersion:
             type: string
-
+    JobType:
+      type: string
+      enum:
+        - DETECTION
+        - TILING
+    ProgressionStatus:
+      type: string
+      enum:
+        - PENDING
+        - PROCESSING
+        - FINISHED
+    HealthStatus:
+      type: string
+      enum:
+        - SUCCEEDED
+        - FAILED
+        - UNKNOWN
+        - RETRYING
     Status:
       type: object
       properties:
