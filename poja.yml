@@ -5,7 +5,7 @@ aurora_min_capacity: 16
 aurora_scale_point: 60
 aurora_sleep: 900
 aws_account_id: 'null'
-cli_version: 12.7.1
+cli_version: 12.8.1
 codeartifact_domain_name: 'null'
 codeartifact_repository_name: 'null'
 custom_java_deps: poja-custom-java-deps.txt
@@ -30,7 +30,7 @@ ssm_subnet2_id: /bpartners-imagery/private/subnet2/id
 ts_client_api_url_env_var_name: ''
 ts_client_default_openapi_server_url: ''
 with_codeql: 'true'
-with_database: postgres
+with_database: aurora-postgres
 with_gen_clients: 'true'
 with_own_vpc: 'true'
 with_publish_to_npm_registry: 'false'

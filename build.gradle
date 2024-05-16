@@ -20,7 +20,7 @@ jacoco {
 
 
 repositories {
-
+mavenLocal()
     mavenCentral()
 }
 
@@ -34,11 +34,6 @@ configurations {
     compileOnly {
         extendsFrom annotationProcessor
     }
-}
-
-repositories {
-    mavenLocal()
-    mavenCentral()
 }
 
 task generateJavaClient(type: GenerateTask) {
