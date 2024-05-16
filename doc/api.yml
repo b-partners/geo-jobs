@@ -23,6 +23,32 @@ paths:
               schema:
                 type: string
                 example: pong
+  '/jobs/{id}/annotationProcessing':
+    post:
+      tags:
+        - Tiling
+        - Detection
+      operationId: processAnnotationJob
+      description: | 
+        Send jobs tiles to bpartners-annotator.
+        In case of ZDJ, detected objects are sent with all images.
+        In case of ZTJ, only images are sent with empty detected objects.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: ZTJ or ZDJ identifier
+          schema:
+            type: string
+      responses:
+        200:
+          description: The created ZTJ
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnnotationJobProcessing"
+        '500':
+          $ref: '#/components/responses/500'
   '/tilingJobs':
     post:
       tags:
@@ -435,6 +461,18 @@ components:
             - HOUSES_1
             - HOUSES_2
             - HOUSE_PROPERTY
+    AnnotationJobProcessing:
+      type: object
+      properties:
+        jobId:
+          type: string
+        jobType:
+          $ref: '#/components/schemas/JobType'
+        annotationJobId:
+          type: string
+        creationDatetime:
+          type: string
+          format: date-time
     FilteredTilingJob:
       type: object
       properties:
