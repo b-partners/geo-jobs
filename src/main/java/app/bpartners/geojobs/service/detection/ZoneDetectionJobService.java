@@ -308,10 +308,11 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
                   detectionTask.setStatusHistory(
                       List.of(
                           TaskStatus.builder()
+                              .id(randomUUID().toString())
+                              .taskId(generatedTaskId)
                               .health(UNKNOWN)
                               .progression(PENDING)
                               .creationDatetime(now())
-                              .taskId(generatedTaskId)
                               .build()));
                   detectionTask.setSubmissionInstant(now());
                   return detectionTask;
