@@ -18,8 +18,8 @@ public class DetectionTaskService {
   private final DetectableObjectConfigurationRepository objectConfigurationRepository;
 
   @Transactional
-  public List<DetectedTile> findInDoubtTilesByJobId(String jobId) {
-    List<DetectedTile> detectedTiles = detectedTileRepository.findAllByJobId(jobId);
+  public List<DetectedTile> findInDoubtTilesByJobId(
+      String jobId, List<DetectedTile> detectedTiles) {
     List<DetectableObjectConfiguration> detectableObjectConfigurations =
         objectConfigurationRepository.findAllByDetectionJobId(jobId);
     return detectedTiles.stream()

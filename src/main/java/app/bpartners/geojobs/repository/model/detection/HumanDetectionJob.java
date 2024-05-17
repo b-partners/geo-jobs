@@ -23,4 +23,9 @@ public class HumanDetectionJob {
   @OneToMany(cascade = CascadeType.ALL, fetch = EAGER)
   @JoinColumn(name = "human_detection_job_id")
   private List<DetectedTile> detectedTiles;
+
+  public boolean hasInDoubtTiles() {
+    return !detectedTiles.stream()
+        .allMatch(detectedTile -> detectedTile.getDetectedObjects().isEmpty());
+  }
 }

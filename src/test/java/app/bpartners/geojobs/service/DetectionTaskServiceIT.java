@@ -97,12 +97,13 @@ public class DetectionTaskServiceIT extends FacadeIT {
 
   @Test
   void read_in_doubt_tiles() {
+    List<DetectedTile> detectedTiles = detectedTileRepository.findAllByJobId(JOB_ID);
     List<DetectedTile> expected =
         List.of(
             detectedTile(JOB_ID, "tile1Id", "parcel1Id", "detectedObjectId1", UNDER_MIN_CONFIDENCE),
             detectedTile(JOB_ID, "tile2Id", "parcel2Id", "detectedObjectId2", MIN_CONFIDENCE));
 
-    List<DetectedTile> actual = subject.findInDoubtTilesByJobId(JOB_ID);
+    List<DetectedTile> actual = subject.findInDoubtTilesByJobId(JOB_ID, detectedTiles);
 
     assertEquals(expected, actual.stream().peek(tile -> tile.setCreationDatetime(null)).toList());
   }

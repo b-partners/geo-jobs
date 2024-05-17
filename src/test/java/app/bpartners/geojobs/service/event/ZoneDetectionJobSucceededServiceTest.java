@@ -124,6 +124,6 @@ public class ZoneDetectionJobSucceededServiceTest extends FacadeIT {
             .humanZdjId(MOCK_HUMAN_JOB_ID)
             .build());
 
-    verify(annotationServiceMock, times(1)).createAnnotationJob(any());
+    verify(annotationServiceMock, times(2)).createAnnotationJob(any());
   }
 }

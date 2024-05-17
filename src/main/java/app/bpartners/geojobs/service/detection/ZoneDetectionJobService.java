@@ -188,17 +188,43 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
 
   public ZoneDetectionJob checkHumanDetectionJobStatus(String jobId) {
     var humanZDJ = getHumanZdjFromZdjId(jobId);
-    var humanDetectionJob =
-        humanDetectionJobRepository.findByZoneDetectionJobId(humanZDJ.getId()).orElse(null);
-    if (humanDetectionJob == null) return humanZDJ;
-    var annotationJobStatus =
-        annotationService.getAnnotationJobById(humanDetectionJob.getAnnotationJobId()).getStatus();
+    var humanDetectionJobs = humanDetectionJobRepository.findByZoneDetectionJobId(humanZDJ.getId());
+    if (humanDetectionJobs.isEmpty()) return humanZDJ;
+
+    var firstHumanDetectionJob = humanDetectionJobs.getFirst();
+    var lastHumanDetectionJob = humanDetectionJobs.getLast();
+    var firstAnnotationJobStatus =
+        annotationService
+            .getAnnotationJobById(firstHumanDetectionJob.getAnnotationJobId())
+            .getStatus();
+    Status.ProgressionStatus firstProgressionStatus =
+        detectionMapper.getProgressionStatus(firstAnnotationJobStatus);
+    Status.HealthStatus firstHealthStatus =
+        detectionMapper.getHealthStatus(firstAnnotationJobStatus);
+    var lastAnnotationJobStatus =
+        annotationService
+            .getAnnotationJobById(lastHumanDetectionJob.getAnnotationJobId())
+            .getStatus();
+    Status.ProgressionStatus lastProgressionStatus =
+        detectionMapper.getProgressionStatus(lastAnnotationJobStatus);
+    Status.HealthStatus lastHealthStatus = detectionMapper.getHealthStatus(lastAnnotationJobStatus);
+
+    Status.ProgressionStatus humanZDJProgression;
+    Status.HealthStatus humanZDJHealth;
+    if (firstProgressionStatus.equals(lastProgressionStatus)
+        && firstHealthStatus.equals(lastHealthStatus)) {
+      humanZDJProgression = firstProgressionStatus;
+      humanZDJHealth = firstHealthStatus;
+    } else {
+      humanZDJProgression = PENDING; // TODO: check when processing
+      humanZDJHealth = UNKNOWN;
+    }
 
     humanZDJ.hasNewStatus(
         Status.builder()
             .id(randomUUID().toString())
-            .progression(detectionMapper.getProgressionStatus(annotationJobStatus))
-            .health(detectionMapper.getHealthStatus(annotationJobStatus))
+            .progression(humanZDJProgression)
+            .health(humanZDJHealth)
             .creationDatetime(now())
             .build());
     return repository.save(humanZDJ);

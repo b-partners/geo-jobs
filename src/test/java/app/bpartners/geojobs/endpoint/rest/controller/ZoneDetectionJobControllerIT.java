@@ -38,7 +38,6 @@ import app.bpartners.geojobs.service.annotator.AnnotationService;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
@@ -169,7 +168,7 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
             aZDJ(JOB1_ID, tilingJobId).toBuilder().detectionType(HUMAN).build()));
     when(humanDetectionJobRepositoryMock.findByZoneDetectionJobId(JOB1_ID))
         .thenReturn(
-            Optional.of(HumanDetectionJob.builder().annotationJobId(ANNOTATION_JOB_ID).build()));
+            List.of(HumanDetectionJob.builder().annotationJobId(ANNOTATION_JOB_ID).build()));
     when(annotationServiceMock.getAnnotationJobById(ANNOTATION_JOB_ID))
         .thenReturn(
             new Job().status(app.bpartners.gen.annotator.endpoint.rest.model.JobStatus.COMPLETED));
@@ -195,7 +194,7 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
             aZDJ(JOB1_ID, tilingJobId).toBuilder().detectionType(HUMAN).build()));
     when(humanDetectionJobRepositoryMock.findByZoneDetectionJobId(JOB1_ID))
         .thenReturn(
-            Optional.of(HumanDetectionJob.builder().annotationJobId(ANNOTATION_JOB_ID).build()));
+            List.of(HumanDetectionJob.builder().annotationJobId(ANNOTATION_JOB_ID).build()));
     when(annotationServiceMock.getAnnotationJobById(ANNOTATION_JOB_ID))
         .thenReturn(
             new Job().status(app.bpartners.gen.annotator.endpoint.rest.model.JobStatus.FAILED));
@@ -221,7 +220,7 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
             aZDJ(JOB1_ID, tilingJobId).toBuilder().detectionType(HUMAN).build()));
     when(humanDetectionJobRepositoryMock.findByZoneDetectionJobId(JOB1_ID))
         .thenReturn(
-            Optional.of(HumanDetectionJob.builder().annotationJobId(ANNOTATION_JOB_ID).build()));
+            List.of(HumanDetectionJob.builder().annotationJobId(ANNOTATION_JOB_ID).build()));
     when(annotationServiceMock.getAnnotationJobById(ANNOTATION_JOB_ID))
         .thenReturn(
             new Job().status(app.bpartners.gen.annotator.endpoint.rest.model.JobStatus.STARTED));
@@ -247,7 +246,7 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
             aZDJ(JOB1_ID, tilingJobId).toBuilder().detectionType(HUMAN).build()));
     when(humanDetectionJobRepositoryMock.findByZoneDetectionJobId(JOB1_ID))
         .thenReturn(
-            Optional.of(HumanDetectionJob.builder().annotationJobId(ANNOTATION_JOB_ID).build()));
+            List.of(HumanDetectionJob.builder().annotationJobId(ANNOTATION_JOB_ID).build()));
     when(annotationServiceMock.getAnnotationJobById(ANNOTATION_JOB_ID))
         .thenReturn(
             new Job().status(app.bpartners.gen.annotator.endpoint.rest.model.JobStatus.TO_REVIEW));
