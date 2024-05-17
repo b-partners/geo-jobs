@@ -62,13 +62,8 @@ public class ZoneDetectionJobStatusChangedService
   private String handleFinishedJob(ZoneDetectionJob zdj) {
     mailer.accept(zdj);
 
-    var humanJob = zoneDetectionJobService.getHumanZdjFromZdjId(zdj.getId());
     eventProducer.accept(
-        List.of(
-            ZoneDetectionJobSucceeded.builder()
-                .succeededJobId(zdj.getId())
-                .humanZdjId(humanJob.getId())
-                .build()));
+        List.of(ZoneDetectionJobSucceeded.builder().succeededJobId(zdj.getId()).build()));
 
     return "Finished, mail sent, ztj=" + zdj;
   }

@@ -11,6 +11,7 @@ import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.repository.*;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.detection.*;
+import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,6 +26,8 @@ class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
   public static final String HUMAN_ZDJ_ID = "humanZdjId";
   public static final String SUCCEEDED_JOB_ID_2 = "succeededJobId2";
   public static final String HUMAN_ZDJ_ID_2 = "humanZdjId2";
+  public static final String ZONE_TILING_JOB_ID = "zoneTilingJobId";
+  public static final String ZONE_TILING_JOB_ID_2 = "zoneTilingJobId2";
   @MockBean EventProducer eventProducer;
   @Autowired ZoneDetectionJobSucceededService subject;
   @Autowired private ZoneDetectionJobRepository jobRepository;
@@ -41,17 +44,41 @@ class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
             ZoneDetectionJob.builder()
                 .id(SUCCEEDED_JOB_ID)
                 .detectionType(ZoneDetectionJob.DetectionType.MACHINE)
+                .zoneTilingJob(
+                    ZoneTilingJob.builder()
+                        .id(ZONE_TILING_JOB_ID)
+                        .zoneName("dummy")
+                        .emailReceiver("dummy")
+                        .build())
                 .build(),
             ZoneDetectionJob.builder()
                 .id(SUCCEEDED_JOB_ID_2)
                 .detectionType(ZoneDetectionJob.DetectionType.MACHINE)
+                .zoneTilingJob(
+                    ZoneTilingJob.builder()
+                        .id(ZONE_TILING_JOB_ID_2)
+                        .zoneName("dummy")
+                        .emailReceiver("dummy")
+                        .build())
                 .build(),
             ZoneDetectionJob.builder()
                 .id(HUMAN_ZDJ_ID)
                 .detectionType(ZoneDetectionJob.DetectionType.HUMAN)
+                .zoneTilingJob(
+                    ZoneTilingJob.builder()
+                        .id(ZONE_TILING_JOB_ID)
+                        .zoneName("dummy")
+                        .emailReceiver("dummy")
+                        .build())
                 .build(),
             ZoneDetectionJob.builder()
                 .id(HUMAN_ZDJ_ID_2)
+                .zoneTilingJob(
+                    ZoneTilingJob.builder()
+                        .id(ZONE_TILING_JOB_ID_2)
+                        .zoneName("dummy")
+                        .emailReceiver("dummy")
+                        .build())
                 .detectionType(ZoneDetectionJob.DetectionType.HUMAN)
                 .build()));
     parcelRepository.saveAll(getJob1Parcels());

@@ -5,8 +5,8 @@ import static app.bpartners.geojobs.repository.model.detection.DetectableType.PO
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.ROOF;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.SOLAR_PANEL;
 import static app.bpartners.geojobs.service.AnnotationServiceIT.inDoubtTile;
-import static app.bpartners.geojobs.service.event.ZoneDetectionJobSucceededServiceTest.LAYER_20_10_1_PNG;
-import static app.bpartners.geojobs.service.event.ZoneDetectionJobSucceededServiceTest.MOCK_JOB_ID;
+import static app.bpartners.geojobs.service.event.ZoneDetectionAnnotationProcessorTest.LAYER_20_10_1_PNG;
+import static app.bpartners.geojobs.service.event.ZoneDetectionAnnotationProcessorTest.MOCK_JOB_ID;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
