@@ -31,6 +31,7 @@ class EventConsumerIT extends FacadeIT {
             new EventConsumer.AcknowledgeableTypedEvent(
                 new EventConsumer.TypedEvent(
                     "app.bpartners.geojobs.endpoint.event.gen.UuidCreated", payloadReceived),
+                () -> {},
                 () -> {})));
 
     Thread.sleep(2_000);

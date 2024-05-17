@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.endpoint.event;
 
+import static java.lang.Math.random;
 import static java.util.stream.Collectors.toList;
 
 import app.bpartners.geojobs.PojaGenerated;
@@ -7,6 +8,7 @@ import app.bpartners.geojobs.concurrency.Workers;
 import com.amazonaws.services.lambda.runtime.events.SQSEvent;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +21,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.sqs.SqsClient;
+import software.amazon.awssdk.services.sqs.model.ChangeMessageVisibilityRequest;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
 
 @PojaGenerated
@@ -42,9 +45,14 @@ public class EventConsumer implements Consumer<List<EventConsumer.Acknowledgeabl
 
   private Callable<Void> toCallable(AcknowledgeableTypedEvent ackEvent) {
     return () -> {
-      eventServiceInvoker.accept(ackEvent.getEvent());
-      ackEvent.ack();
-      return null;
+      try {
+        eventServiceInvoker.accept(ackEvent.getEvent());
+        ackEvent.ack();
+        return null;
+      } catch (Exception e) {
+        ackEvent.fail(); // TODO: unit test
+        throw e;
+      }
     };
   }
 
@@ -52,9 +60,14 @@ public class EventConsumer implements Consumer<List<EventConsumer.Acknowledgeabl
   public static class AcknowledgeableTypedEvent {
     @Getter private final TypedEvent event;
     private final Runnable acknowledger;
+    private final Runnable failureHandler;
 
     public void ack() {
       acknowledger.run();
+    }
+
+    public void fail() {
+      failureHandler.run();
     }
   }
 
@@ -93,6 +106,21 @@ public class EventConsumer implements Consumer<List<EventConsumer.Acknowledgeabl
                           .receiptHandle(message.getReceiptHandle())
                           .build());
                   log.info("deleted message: {}", message);
+                },
+                () -> {
+                  // TODO: variabilize
+                  var minVisibility = Duration.ofMinutes(5);
+                  var maxVisibility = Duration.ofMinutes(10);
+                  sqsClient.changeMessageVisibility(
+                      ChangeMessageVisibilityRequest.builder()
+                          .queueUrl(eventConf.getSqsQueue())
+                          .receiptHandle(message.getReceiptHandle())
+                          .visibilityTimeout(
+                              (int)
+                                  (minVisibility.toSeconds()
+                                      + random() * maxVisibility.minus(minVisibility).toSeconds()))
+                          .build());
+                  log.info("message visibility changed: {}", message);
                 });
         res.add(acknowledgeableTypedEvent);
       }

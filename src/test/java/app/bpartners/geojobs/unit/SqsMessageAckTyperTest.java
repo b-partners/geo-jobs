@@ -42,7 +42,7 @@ public class SqsMessageAckTyperTest extends FacadeIT {
 
   private EventConsumer.AcknowledgeableTypedEvent ackTypedEventfrom(
       EventConsumer.TypedEvent typedEvent) {
-    return new EventConsumer.AcknowledgeableTypedEvent(typedEvent, () -> {});
+    return new EventConsumer.AcknowledgeableTypedEvent(typedEvent, () -> {}, () -> {});
   }
 
   @Test
