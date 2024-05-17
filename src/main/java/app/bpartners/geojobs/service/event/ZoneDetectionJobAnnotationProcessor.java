@@ -12,16 +12,16 @@ import app.bpartners.geojobs.service.annotator.AnnotationService;
 import app.bpartners.geojobs.service.detection.DetectionTaskService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
 @Slf4j
-public class ZoneDetectionJobAnnotationProcessor implements Consumer<String> {
+public class ZoneDetectionJobAnnotationProcessor {
   private final AnnotationService annotationService;
   private final DetectionTaskService detectionTaskService;
   private final DetectedTileRepository detectedTileRepository;
@@ -29,12 +29,11 @@ public class ZoneDetectionJobAnnotationProcessor implements Consumer<String> {
   private final EventProducer eventProducer;
   private final ZoneDetectionJobService zoneDetectionJobService;
 
-  @Override
-  public void accept(String zoneDetectionJobId) {
+  public AnnotationJobIds accept(String zoneDetectionJobId) {
     String humanDetectionJobId = randomUUID().toString();
     String inDoubtHumanDetectionJobId = randomUUID().toString();
-    String annotationJobId = randomUUID().toString();
-    String inDoubtAnnotationJobId = randomUUID().toString();
+    String annotationJobWithoutObjectsId = randomUUID().toString();
+    String annotationJobWithObjectsId = randomUUID().toString();
 
     var humanJob = zoneDetectionJobService.getHumanZdjFromZdjId(zoneDetectionJobId);
     var humanZDJId = humanJob.getId();
@@ -59,7 +58,7 @@ public class ZoneDetectionJobAnnotationProcessor implements Consumer<String> {
         humanDetectionJobRepository.save(
             HumanDetectionJob.builder()
                 .id(humanDetectionJobId)
-                .annotationJobId(annotationJobId)
+                .annotationJobId(annotationJobWithObjectsId)
                 .detectedTiles(inDoubtTiles)
                 .zoneDetectionJobId(humanZDJId)
                 .build());
@@ -67,7 +66,7 @@ public class ZoneDetectionJobAnnotationProcessor implements Consumer<String> {
         humanDetectionJobRepository.save(
             HumanDetectionJob.builder()
                 .id(inDoubtHumanDetectionJobId)
-                .annotationJobId(inDoubtAnnotationJobId)
+                .annotationJobId(annotationJobWithoutObjectsId)
                 .detectedTiles(tilesWithoutObject)
                 .zoneDetectionJobId(humanZDJId)
                 .build());
@@ -88,7 +87,7 @@ public class ZoneDetectionJobAnnotationProcessor implements Consumer<String> {
                   .humanDetectionJobId(savedHumanDetectionJob.getId())
                   .attemptNb(1)
                   .build()));
-      return;
+      return null;
     }
     try {
       annotationService.createAnnotationJob(savedHumanDetectionJobWithoutTile);
@@ -99,10 +98,18 @@ public class ZoneDetectionJobAnnotationProcessor implements Consumer<String> {
                   .humanDetectionJobId(savedHumanDetectionJobWithoutTile.getId())
                   .attemptNb(1)
                   .build()));
-      return;
+      return null;
     }
     log.info(
         "HumanDetectionJob {} created, annotations sent to bpartners-annotation-api",
         savedHumanDetectionJob);
+    return new AnnotationJobIds(annotationJobWithObjectsId, annotationJobWithoutObjectsId);
+  }
+
+  @AllArgsConstructor
+  @Data
+  public static class AnnotationJobIds {
+    private String jobWithDetectedObjectsId;
+    private String jobWithoutDetectedObjectsId;
   }
 }

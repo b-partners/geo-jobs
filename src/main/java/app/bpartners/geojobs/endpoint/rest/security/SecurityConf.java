@@ -43,6 +43,8 @@ public class SecurityConf {
                 authorizationManagerRequestMatcherRegistry
                     .requestMatchers(anonymousPath)
                     .anonymous()
+                    .requestMatchers("/jobs/*/annotationProcessing")
+                    .hasAuthority(ROLE_ADMIN.name())
                     .requestMatchers(GET, "/tilingJobs", "/tilingJobs/**")
                     .hasAuthority(ROLE_ADMIN.name())
                     .requestMatchers(GET, "/tilingJobs/*/taskStatistics")

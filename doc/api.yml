@@ -468,7 +468,9 @@ components:
           type: string
         jobType:
           $ref: '#/components/schemas/JobType'
-        annotationJobId:
+        annotationWithObjectJobId:
+          type: string
+        annotationWithoutObjectJobId:
           type: string
         creationDatetime:
           type: string
