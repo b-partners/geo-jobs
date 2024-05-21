@@ -11,6 +11,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.gen.ImportedZoneTilingJobSaved;
+import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.TaskStatus;
@@ -56,6 +58,49 @@ public class ZoneTilingJobServiceTest {
           eventProducerMock,
           detectionJobServiceMock,
           mock());
+
+  @Test
+  void import_from_bucket_ok() {
+    when(jobRepositoryMock.save(ArgumentMatchers.any()))
+        .thenAnswer(
+            (Answer<ZoneTilingJob>)
+                invocationOnMock -> {
+                  Object[] args = invocationOnMock.getArguments();
+                  return (ZoneTilingJob) args[0];
+                });
+    String importedJobId = "importedJobId";
+    String bucketPathDummy = "bucketPathDummy";
+    String geoServerUrlDummy = "geoServerUrlDummy";
+    GeoServerParameter geoServerParameter = new GeoServerParameter();
+    ZoneTilingJob job =
+        ZoneTilingJob.builder()
+            .id(importedJobId)
+            .zoneName("dummyZoneName")
+            .emailReceiver("dummyEmailReceiver")
+            .statusHistory(
+                List.of(
+                    JobStatus.builder()
+                        .health(UNKNOWN)
+                        .progression(PENDING)
+                        .creationDatetime(now())
+                        .jobId(importedJobId)
+                        .build()))
+            .build();
+
+    ZoneTilingJob actual =
+        subject.importFromBucket(job, bucketPathDummy, geoServerParameter, geoServerUrlDummy);
+
+    var eventCaptor = ArgumentCaptor.forClass(List.class);
+    verify(eventProducerMock, times(1)).accept(eventCaptor.capture());
+    List<ImportedZoneTilingJobSaved> events =
+        (List<ImportedZoneTilingJobSaved>) eventCaptor.getValue();
+    var importedZoneTilingJobSaved = events.get(0);
+    assertEquals(importedJobId, importedZoneTilingJobSaved.getJobId());
+    assertEquals(geoServerParameter, importedZoneTilingJobSaved.getGeoServerParameter());
+    assertEquals(geoServerUrlDummy, importedZoneTilingJobSaved.getGeoServerUrl());
+    assertEquals(bucketPathDummy, importedZoneTilingJobSaved.getBucketPathKey());
+    assertEquals(job, actual);
+  }
 
   @Test
   void dispatch_task_by_success_status_ko() {
