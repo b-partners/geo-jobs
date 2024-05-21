@@ -98,7 +98,7 @@ public class ImportedZoneTilingJobSavedService implements Consumer<ImportedZoneT
         .build();
   }
 
-  private TileCoordinates fromBucketPathKey(String bucketPathKey) {
+  public TileCoordinates fromBucketPathKey(String bucketPathKey) {
     String[] bucketPathValues = bucketPathKey.split("/");
     if (bucketPathValues.length != 4) {
       throw new ApiException(
