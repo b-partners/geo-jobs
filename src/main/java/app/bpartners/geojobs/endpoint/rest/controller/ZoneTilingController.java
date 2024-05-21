@@ -9,6 +9,7 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.TilingTaskMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneTilingJobMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoomMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
+import app.bpartners.geojobs.endpoint.rest.validator.ZoneTilingJobValidator;
 import app.bpartners.geojobs.model.BoundedPageSize;
 import app.bpartners.geojobs.model.PageFromOne;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
@@ -31,6 +32,18 @@ public class ZoneTilingController {
   private final ZoomMapper zoomMapper;
   private final TilingTaskMapper tilingTaskMapper;
   private final TaskStatisticMapper taskStatisticMapper;
+  private final ZoneTilingJobValidator zoneTilingJobValidator;
+
+  @PostMapping("/tilingJobs/import")
+  public ZoneTilingJob importZTJ(@RequestBody ImportZoneTilingJob importZoneTilingJob) {
+    zoneTilingJobValidator.accept(importZoneTilingJob);
+    var job = mapper.toDomain(importZoneTilingJob.getCreateZoneTilingJob());
+    var bucketPath = importZoneTilingJob.getS3BucketPath();
+    var geoServerParameter = importZoneTilingJob.getCreateZoneTilingJob().getGeoServerParameter();
+    var geoServerUrl = importZoneTilingJob.getCreateZoneTilingJob().getGeoServerUrl();
+    return mapper.toRest(
+        service.importFromBucket(job, bucketPath, geoServerParameter, geoServerUrl), List.of());
+  }
 
   @GetMapping("/tilingJobs/{id}/taskStatistics")
   public TaskStatistic getTilingTaskStatistics(@PathVariable String id) {

@@ -8,9 +8,11 @@ import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.gen.ImportedZoneTilingJobSaved;
 import app.bpartners.geojobs.endpoint.event.gen.TilingTaskCreated;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneTilingJobCreated;
 import app.bpartners.geojobs.endpoint.event.gen.ZoneTilingJobStatusChanged;
+import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.Task;
@@ -50,6 +52,23 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
     super(repository, jobStatusRepository, taskRepository, eventProducer, ZoneTilingJob.class);
     this.detectionJobService = detectionJobService;
     this.tilingFilteredMailer = tilingFilteredMailer;
+  }
+
+  public ZoneTilingJob importFromBucket(
+      ZoneTilingJob job,
+      String bucketPath,
+      GeoServerParameter geoServerParameter,
+      String geoServerUrl) {
+    var createdJob = repository.save(job);
+    eventProducer.accept(
+        List.of(
+            ImportedZoneTilingJobSaved.builder()
+                .jobId(createdJob.getId())
+                .bucketPathKey(bucketPath)
+                .geoServerParameter(geoServerParameter)
+                .geoServerUrl(geoServerUrl)
+                .build()));
+    return createdJob;
   }
 
   @Transactional

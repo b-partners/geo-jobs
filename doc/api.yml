@@ -49,6 +49,26 @@ paths:
                 $ref: "#/components/schemas/AnnotationJobProcessing"
         '500':
           $ref: '#/components/responses/500'
+  '/tilingJobs/import':
+    post:
+      tags:
+        - Tiling
+      operationId: importZTJ
+      description: Creates a ZTJ from an external source
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImportZoneTilingJob"
+      responses:
+        200:
+          description: The created ZTJ
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ZoneTilingJob"
+        '500':
+          $ref: '#/components/responses/500'
   '/tilingJobs':
     post:
       tags:
@@ -482,6 +502,14 @@ components:
           $ref: '#/components/schemas/SuccessStatus'
         job:
           $ref: '#/components/schemas/ZoneTilingJob'
+    ImportZoneTilingJob:
+      type: object
+      properties:
+        createZoneTilingJob:
+          $ref: '#/components/schemas/CreateZoneTilingJob'
+        #TODO: must be oneOf but for now, only from S3 bucket is implemented
+        s3BucketPath:
+          type: string
     ZoneTilingJob:
       allOf:
         - $ref: "#/components/schemas/CreateZoneTilingJob"
