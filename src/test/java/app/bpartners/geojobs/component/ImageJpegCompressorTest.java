@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.component;
 
+import static app.bpartners.geojobs.service.detection.HttpApiTileObjectDetector.IMAGE_QUALITY;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import app.bpartners.geojobs.file.ImageJpegCompressor;
@@ -19,7 +20,7 @@ public class ImageJpegCompressorTest {
     ClassPathResource resource2 = new ClassPathResource("images/tile-2.jpg");
     File file1 = resource1.getFile();
     File file2 = resource2.getFile();
-    float quality = 0.8f;
+    float quality = IMAGE_QUALITY;
 
     File actual1 = subject.apply(file1, quality);
     File actual2 = subject.apply(file2, quality);
