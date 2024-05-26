@@ -15,6 +15,8 @@ import app.bpartners.geojobs.endpoint.rest.model.GeoJsonsUrl;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.TaskStatus;
+import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
+import app.bpartners.geojobs.job.model.statistic.TaskStatusStatistic;
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.job.service.JobService;
 import app.bpartners.geojobs.model.exception.BadRequestException;
@@ -27,9 +29,11 @@ import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -334,5 +338,58 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
 
   public ZoneDetectionJob save(ZoneDetectionJob job) {
     return repository.save(job);
+  }
+
+  public TaskStatistic computeTaskStatistics(String jobId) {
+    ZoneDetectionJob job = findById(jobId);
+    List<DetectionTask> detectionTasks = taskRepository.findAllByJobId(jobId);
+
+    List<TaskStatusStatistic> taskStatusStatistics = getTaskStatusStatistics(detectionTasks);
+    return TaskStatistic.builder()
+        .jobId(jobId)
+        .jobType(DETECTION)
+        .actualJobStatus(job.getStatus())
+        .taskStatusStatistics(taskStatusStatistics)
+        .updatedAt(job.getStatus().getCreationDatetime())
+        .build();
+  }
+
+  @NonNull
+  private List<TaskStatusStatistic> getTaskStatusStatistics(List<DetectionTask> tilingTasks) {
+    List<TaskStatusStatistic> taskStatusStatistics = new ArrayList<>();
+    Stream<Status.ProgressionStatus> progressionStatuses =
+        Arrays.stream(Status.ProgressionStatus.values());
+    progressionStatuses.forEach(
+        progressionStatus -> {
+          var healthStatistics = new ArrayList<TaskStatusStatistic.HealthStatusStatistic>();
+          Arrays.stream(Status.HealthStatus.values())
+              .forEach(
+                  healthStatus ->
+                      healthStatistics.add(
+                          computeHealthStatistics(tilingTasks, progressionStatus, healthStatus)));
+          taskStatusStatistics.add(
+              TaskStatusStatistic.builder()
+                  .progressionStatus(progressionStatus)
+                  .healthStatusStatistics(healthStatistics)
+                  .build());
+        });
+    return taskStatusStatistics;
+  }
+
+  @NonNull
+  private TaskStatusStatistic.HealthStatusStatistic computeHealthStatistics(
+      List<DetectionTask> tilingTasks,
+      Status.ProgressionStatus progressionStatus,
+      Status.HealthStatus healthStatus) {
+    return TaskStatusStatistic.HealthStatusStatistic.builder()
+        .healthStatus(healthStatus)
+        .count(
+            tilingTasks.stream()
+                .filter(
+                    task ->
+                        task.getStatus().getProgression().equals(progressionStatus)
+                            && task.getStatus().getHealth().equals(healthStatus))
+                .count())
+        .build();
   }
 }

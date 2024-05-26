@@ -338,7 +338,7 @@ public class ZoneTilingJobServiceTest {
     assertEquals(RETRYING, actual.getStatus().getHealth());
   }
 
-  private record StatisticResult(
+  public record StatisticResult(
       TaskStatusStatistic.HealthStatusStatistic unknownPendingTask,
       TaskStatusStatistic.HealthStatusStatistic unknownProcessingTask,
       TaskStatusStatistic.HealthStatusStatistic succeededFinishedTask,
@@ -346,7 +346,7 @@ public class ZoneTilingJobServiceTest {
       TaskStatusStatistic.HealthStatusStatistic unknownFinishedTask) {}
 
   @NonNull
-  private ZoneTilingJobServiceTest.StatisticResult getResult(TaskStatistic actual) {
+  public static ZoneTilingJobServiceTest.StatisticResult getResult(TaskStatistic actual) {
     var pendingTaskStatistic =
         actual.getTaskStatusStatistics().stream()
             .filter(statistic -> statistic.getProgressionStatus().equals(PENDING))

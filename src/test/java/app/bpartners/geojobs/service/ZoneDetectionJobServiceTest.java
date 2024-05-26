@@ -10,7 +10,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.job.model.JobStatus;
+import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.TaskStatus;
+import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.exception.NotFoundException;
@@ -36,6 +39,7 @@ public class ZoneDetectionJobServiceTest {
   public static final String JOB2_ID = "job2Id";
   public static final String TASK_PARENT_ID_2 = "taskParentId2";
   public static final String PARENT_TASK_ID_1 = "parentTaskId1";
+  public static final String JOB_3_ID = "job3_id";
   JpaRepository<ZoneDetectionJob, String> jobRepositoryMock = mock();
   JobStatusRepository jobStatusRepositoryMock = mock();
   DetectionTaskRepository taskRepositoryMock = mock();
@@ -194,5 +198,52 @@ public class ZoneDetectionJobServiceTest {
 
     assertEquals(PROCESSING, actual.getStatus().getProgression());
     assertEquals(RETRYING, actual.getStatus().getHealth());
+  }
+
+  @Test
+  void read_task_statistics_ok() {
+    when(jobRepositoryMock.findById(JOB_3_ID))
+        .thenReturn(
+            Optional.of(
+                ZoneDetectionJob.builder()
+                    .statusHistory(
+                        List.of(JobStatus.builder().progression(PROCESSING).health(FAILED).build()))
+                    .build()));
+    when(taskRepositoryMock.findAllByJobId(JOB_3_ID))
+        .thenReturn(
+            List.of(
+                taskWithStatus(FINISHED, SUCCEEDED),
+                taskWithStatus(FINISHED, SUCCEEDED),
+                taskWithStatus(PENDING, UNKNOWN),
+                taskWithStatus(PENDING, UNKNOWN),
+                taskWithStatus(FINISHED, FAILED),
+                taskWithStatus(PROCESSING, UNKNOWN)));
+
+    TaskStatistic actual = subject.computeTaskStatistics(JOB_3_ID);
+
+    assertEquals(JOB_3_ID, actual.getJobId());
+    assertEquals(FAILED, actual.getActualJobStatus().getHealth());
+    assertEquals(PROCESSING, actual.getActualJobStatus().getProgression());
+    ZoneTilingJobServiceTest.StatisticResult statisticResult =
+        ZoneTilingJobServiceTest.getResult(actual);
+    assertEquals(2, statisticResult.unknownPendingTask().getCount());
+    assertEquals(1, statisticResult.unknownProcessingTask().getCount());
+    assertEquals(1, statisticResult.failedFinishedTask().getCount());
+    assertEquals(2, statisticResult.succeededFinishedTask().getCount());
+    assertEquals(0, statisticResult.unknownFinishedTask().getCount());
+  }
+
+  private static DetectionTask taskWithStatus(
+      Status.ProgressionStatus progressionStatus, Status.HealthStatus healthStatus) {
+    return DetectionTask.builder()
+        .statusHistory(
+            List.of(
+                TaskStatus.builder()
+                    .id(randomUUID().toString())
+                    .progression(progressionStatus)
+                    .jobType(DETECTION)
+                    .health(healthStatus)
+                    .build()))
+        .build();
   }
 }

@@ -2,10 +2,12 @@ package app.bpartners.geojobs.endpoint.rest.controller;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectConfigurationMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionTaskMapper;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.TaskStatisticMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMapper;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration;
 import app.bpartners.geojobs.endpoint.rest.model.DetectedParcel;
 import app.bpartners.geojobs.endpoint.rest.model.GeoJsonsUrl;
+import app.bpartners.geojobs.endpoint.rest.model.TaskStatistic;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.model.BoundedPageSize;
 import app.bpartners.geojobs.model.PageFromOne;
@@ -29,6 +31,12 @@ public class ZoneDetectionController {
   private final DetectableObjectConfigurationMapper objectConfigurationMapper;
   private final DetectionTaskMapper taskMapper;
   private final ZoneDetectionJobValidator jobValidator;
+  private final TaskStatisticMapper taskStatisticMapper;
+
+  @GetMapping("/detectionJobs/{id}/taskStatistics")
+  public TaskStatistic getDetectionTaskStatistics(@PathVariable String id) {
+    return taskStatisticMapper.toRest(service.computeTaskStatistics(id));
+  }
 
   @PutMapping("/detectionJobs/{id}/retry")
   public app.bpartners.geojobs.endpoint.rest.model.ZoneDetectionJob processFailedDetectionJob(

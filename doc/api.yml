@@ -261,10 +261,32 @@ paths:
                   $ref: "#/components/schemas/ZoneDetectionJob"
         '500':
           $ref: '#/components/responses/500'
+  '/detectionJobs/{id}/taskStatistics':
+    get:
+      tags:
+        - Detection
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: ZDJ identifier
+          schema:
+            type: string
+      operationId: getDetectionTaskStatistics
+      description: Get detection task statistics for a given ZDJ
+      responses:
+        200:
+          description: List of detection task statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskStatistic"
+        '500':
+          $ref: '#/components/responses/500'
   '/detectionJobs/{id}/retry':
     put:
       tags:
-        - Tiling
+        - Detection
       operationId: processFailedDetectionJob
       parameters:
         - in: path
