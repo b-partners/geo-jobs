@@ -1,8 +1,8 @@
-package app.bpartners.geojobs.service.tiling;
+package app.bpartners.geojobs.service.detection;
 
 import app.bpartners.geojobs.mail.Email;
 import app.bpartners.geojobs.mail.Mailer;
-import app.bpartners.geojobs.repository.model.FilteredTilingJob;
+import app.bpartners.geojobs.repository.model.FilteredDetectionJob;
 import app.bpartners.geojobs.template.HTMLTemplateParser;
 import jakarta.mail.internet.InternetAddress;
 import java.util.List;
@@ -14,7 +14,7 @@ import org.thymeleaf.context.Context;
 
 @Service
 @AllArgsConstructor
-public class TilingFilteredMailer implements Consumer<FilteredTilingJob> {
+public class DetectionFilteredMailer implements Consumer<FilteredDetectionJob> {
   private final Mailer mailer;
   private static final String TEMPLATE_NAME = "job_filtering";
   private final HTMLTemplateParser htmlTemplateParser;
@@ -22,10 +22,10 @@ public class TilingFilteredMailer implements Consumer<FilteredTilingJob> {
 
   @SneakyThrows
   @Override
-  public void accept(FilteredTilingJob filteredTilingJob) {
-    var initialJobId = filteredTilingJob.getInitialJobId();
-    var succeededJob = filteredTilingJob.getSucceededJob();
-    var notSucceededJob = filteredTilingJob.getNotSucceededJob();
+  public void accept(FilteredDetectionJob filteredDetectionJob) {
+    var initialJobId = filteredDetectionJob.getInitialJobId();
+    var succeededJob = filteredDetectionJob.getSucceededJob();
+    var notSucceededJob = filteredDetectionJob.getNotSucceededJob();
     Context context = new Context();
     context.setVariable("initialJobId", initialJobId);
     context.setVariable("succeededJob", succeededJob);
@@ -37,7 +37,11 @@ public class TilingFilteredMailer implements Consumer<FilteredTilingJob> {
             new InternetAddress(succeededJob.getEmailReceiver()),
             List.of(),
             List.of(),
-            "[geo-jobs/" + env + "] Séparation des tâches du job [ID=" + initialJobId + " términée",
+            "[geo-jobs/"
+                + env
+                + "] Séparation des tâches du job de détection [ID="
+                + initialJobId
+                + "] términée",
             emailBody,
             List.of()));
   }

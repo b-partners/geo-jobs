@@ -78,4 +78,17 @@ public class ParcelContent implements Serializable {
         .detectionStatus(null)
         .build();
   }
+
+  public ParcelContent duplicate(String parcelContentId, List<Tile> newTiles) {
+    return ParcelContent.builder()
+        .id(parcelContentId)
+        .tiles(newTiles)
+        .feature(feature)
+        .creationDatetime(this.creationDatetime)
+        .geoServerParameter(geoServerParameter)
+        .geoServerUrl(geoServerUrl)
+        .tilingStatus(null)
+        .detectionStatus(null)
+        .build();
+  }
 }

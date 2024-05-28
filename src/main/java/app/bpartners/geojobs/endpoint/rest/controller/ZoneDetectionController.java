@@ -1,13 +1,13 @@
 package app.bpartners.geojobs.endpoint.rest.controller;
 
+import static app.bpartners.geojobs.endpoint.rest.model.SuccessStatus.NOT_SUCCEEDED;
+import static app.bpartners.geojobs.endpoint.rest.model.SuccessStatus.SUCCEEDED;
+
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectConfigurationMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionTaskMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.TaskStatisticMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMapper;
-import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration;
-import app.bpartners.geojobs.endpoint.rest.model.DetectedParcel;
-import app.bpartners.geojobs.endpoint.rest.model.GeoJsonsUrl;
-import app.bpartners.geojobs.endpoint.rest.model.TaskStatistic;
+import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.model.BoundedPageSize;
 import app.bpartners.geojobs.model.PageFromOne;
@@ -32,6 +32,18 @@ public class ZoneDetectionController {
   private final DetectionTaskMapper taskMapper;
   private final ZoneDetectionJobValidator jobValidator;
   private final TaskStatisticMapper taskStatisticMapper;
+
+  @PutMapping("/detectionJobs/{id}/taskFiltering")
+  public List<FilteredDetectionJob> filteredDetectionJobs(@PathVariable String id) {
+    var filteredTilingJob = service.dispatchTasksBySucceededStatus(id);
+    return List.of(
+        new FilteredDetectionJob()
+            .status(SUCCEEDED)
+            .job(mapper.toRest(filteredTilingJob.getSucceededJob(), List.of())),
+        new FilteredDetectionJob()
+            .status(NOT_SUCCEEDED)
+            .job(mapper.toRest(filteredTilingJob.getNotSucceededJob(), List.of())));
+  }
 
   @GetMapping("/detectionJobs/{id}/taskStatistics")
   public TaskStatistic getDetectionTaskStatistics(@PathVariable String id) {

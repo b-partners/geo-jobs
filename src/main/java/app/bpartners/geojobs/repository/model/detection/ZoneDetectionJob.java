@@ -47,4 +47,16 @@ public class ZoneDetectionJob extends Job {
     MACHINE,
     HUMAN
   }
+
+  public ZoneDetectionJob duplicate(String jobId) {
+    return ZoneDetectionJob.builder()
+        .id(jobId)
+        .zoneName(this.zoneName)
+        .zoneTilingJob(this.zoneTilingJob)
+        .emailReceiver(this.emailReceiver)
+        .detectionType(this.getDetectionType())
+        .statusHistory(this.getStatusHistory())
+        .submissionInstant(this.getSubmissionInstant())
+        .build();
+  }
 }
