@@ -307,6 +307,36 @@ paths:
           $ref: '#/components/responses/400'
         '500':
           $ref: '#/components/responses/500'
+  '/detectionJobs/{id}/taskFiltering':
+    put:
+      tags:
+        - Detection
+      operationId: filterDetectionTasks
+      description: |
+        Separate SUCCEEDED tasks into new detection job from not SUCCEEDED tile detection tasks inside another detection job, for the given ZDJ
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          description: ZDJ Identifier
+          required: true
+      responses:
+        200:
+          description: |
+            List of new detection jobs with its tasks statuses.
+            SUCCEEDED status value means the job contains only SUCCEEDED tasks.
+            NOT_SUCCEEDED status value means the job contains only not SUCCEEDED tasks, i.e FAILED or UNKNOWN
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FilteredDetectionJob"
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
   '/detectionJobs/{id}/detectedParcels':
     get:
       tags:
@@ -519,6 +549,13 @@ components:
         creationDatetime:
           type: string
           format: date-time
+    FilteredDetectionJob:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/SuccessStatus'
+        job:
+          $ref: '#/components/schemas/ZoneDetectionJob'
     FilteredTilingJob:
       type: object
       properties:
