@@ -2,7 +2,7 @@ package app.bpartners.geojobs.endpoint.event.model;
 
 import app.bpartners.gen.annotator.endpoint.rest.model.CreateAnnotatedTask;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.io.Serializable;
+import java.time.Duration;
 import javax.annotation.processing.Generated;
 import lombok.*;
 
@@ -13,10 +13,20 @@ import lombok.*;
 @Data
 @EqualsAndHashCode
 @ToString
-public class CreateAnnotatedTaskExtracted implements Serializable {
+public class CreateAnnotatedTaskExtracted extends PojaEvent {
   @JsonProperty("annotationJobId")
   private String annotationJobId;
 
   @JsonProperty("createAnnotatedTask")
   private CreateAnnotatedTask createAnnotatedTask;
+
+  @Override
+  public Duration maxDuration() {
+    return Duration.ofMinutes(10);
+  }
+
+  @Override
+  public Duration maxBackoffBetweenRetries() {
+    return Duration.ofMinutes(1);
+  }
 }

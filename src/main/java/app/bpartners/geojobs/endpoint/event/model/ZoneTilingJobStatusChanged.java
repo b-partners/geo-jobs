@@ -2,7 +2,7 @@ package app.bpartners.geojobs.endpoint.event.model;
 
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.io.Serializable;
+import java.time.Duration;
 import javax.annotation.processing.Generated;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,10 +18,20 @@ import lombok.ToString;
 @Data
 @EqualsAndHashCode
 @ToString
-public class ZoneTilingJobStatusChanged implements Serializable {
+public class ZoneTilingJobStatusChanged extends PojaEvent {
   @JsonProperty("oldJob")
   private ZoneTilingJob oldJob;
 
   @JsonProperty("newJob")
   private ZoneTilingJob newJob;
+
+  @Override
+  public Duration maxDuration() {
+    return Duration.ofMinutes(1);
+  }
+
+  @Override
+  public Duration maxBackoffBetweenRetries() {
+    return Duration.ofMinutes(1);
+  }
 }

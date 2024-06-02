@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.endpoint.event.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.time.Duration;
 import javax.annotation.processing.Generated;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,10 +17,20 @@ import lombok.ToString;
 @Data
 @EqualsAndHashCode
 @ToString
-public class ZoneDetectionJobSucceeded {
+public class ZoneDetectionJobSucceeded extends PojaEvent {
   @JsonProperty("succeededJobId")
   private String succeededJobId;
 
   @JsonProperty("humanZdjId")
   private String humanZdjId;
+
+  @Override
+  public Duration maxDuration() {
+    return Duration.ofMinutes(1);
+  }
+
+  @Override
+  public Duration maxBackoffBetweenRetries() {
+    return Duration.ofMinutes(1);
+  }
 }

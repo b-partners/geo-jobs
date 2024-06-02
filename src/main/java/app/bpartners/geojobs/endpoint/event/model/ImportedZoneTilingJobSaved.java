@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.endpoint.event.model;
 
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
+import java.time.Duration;
 import javax.annotation.processing.Generated;
 import lombok.*;
 
@@ -11,7 +12,7 @@ import lombok.*;
 @Data
 @EqualsAndHashCode
 @ToString
-public class ImportedZoneTilingJobSaved {
+public class ImportedZoneTilingJobSaved extends PojaEvent {
   private Long startFrom;
   private Long endAt;
   private String jobId;
@@ -19,4 +20,14 @@ public class ImportedZoneTilingJobSaved {
   private String bucketPathPrefix;
   private GeoServerParameter geoServerParameter;
   private String geoServerUrl;
+
+  @Override
+  public Duration maxDuration() {
+    return Duration.ofMinutes(10);
+  }
+
+  @Override
+  public Duration maxBackoffBetweenRetries() {
+    return Duration.ofMinutes(1);
+  }
 }
