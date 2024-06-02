@@ -1,5 +1,6 @@
-package app.bpartners.geojobs.endpoint.event.gen;
+package app.bpartners.geojobs.endpoint.event.model;
 
+import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import javax.annotation.processing.Generated;
 import lombok.*;
@@ -11,10 +12,7 @@ import lombok.*;
 @Data
 @EqualsAndHashCode
 @ToString
-public class TileDetectionTaskCreatedFailed {
+public class TileDetectionTaskSucceeded {
   @JsonProperty("tileDetectionTask")
-  private TileDetectionTaskCreated tileDetectionTaskCreated;
-
-  @JsonProperty("attemptNb")
-  private int attemptNb;
+  private TileDetectionTask tileDetectionTask;
 }

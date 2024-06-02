@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
-import app.bpartners.geojobs.endpoint.event.gen.TileDetectionTaskSucceeded;
+import app.bpartners.geojobs.endpoint.event.model.TileDetectionTaskSucceeded;
 import app.bpartners.geojobs.job.service.RetryableTaskToTaskStatusService;
 import app.bpartners.geojobs.repository.TileDetectionTaskRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;

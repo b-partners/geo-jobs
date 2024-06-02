@@ -5,7 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import app.bpartners.geojobs.PojaGenerated;
 import app.bpartners.geojobs.conf.FacadeIT;
-import app.bpartners.geojobs.endpoint.event.gen.UuidCreated;
+import app.bpartners.geojobs.endpoint.event.consumer.EventConsumer;
+import app.bpartners.geojobs.endpoint.event.consumer.model.ConsumableEvent;
+import app.bpartners.geojobs.endpoint.event.consumer.model.TypedEvent;
+import app.bpartners.geojobs.endpoint.event.model.UuidCreated;
 import app.bpartners.geojobs.repository.DummyUuidRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,9 +31,9 @@ class EventConsumerIT extends FacadeIT {
 
     subject.accept(
         List.of(
-            new EventConsumer.AcknowledgeableTypedEvent(
-                new EventConsumer.TypedEvent(
-                    "app.bpartners.geojobs.endpoint.event.gen.UuidCreated", payloadReceived),
+            new ConsumableEvent(
+                new TypedEvent(
+                    "app.bpartners.geojobs.endpoint.event.model.UuidCreated", payloadReceived),
                 () -> {},
                 () -> {})));
 

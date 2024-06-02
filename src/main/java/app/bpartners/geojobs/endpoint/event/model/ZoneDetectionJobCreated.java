@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.endpoint.event.gen;
+package app.bpartners.geojobs.endpoint.event.model;
 
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -18,10 +18,7 @@ import lombok.ToString;
 @Data
 @EqualsAndHashCode
 @ToString
-public class ZoneDetectionJobStatusChanged implements Serializable {
-  @JsonProperty("oldJob")
-  private ZoneDetectionJob oldJob;
-
-  @JsonProperty("newJob")
-  private ZoneDetectionJob newJob;
+public class ZoneDetectionJobCreated implements Serializable {
+  @JsonProperty("zoneDetectionJob")
+  private ZoneDetectionJob zoneDetectionJob;
 }

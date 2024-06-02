@@ -5,8 +5,8 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSIN
 import static app.bpartners.geojobs.service.event.DetectionTaskConsumer.withNewStatus;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.gen.DetectionTaskCreated;
-import app.bpartners.geojobs.endpoint.event.gen.DetectionTaskFailed;
+import app.bpartners.geojobs.endpoint.event.model.DetectionTaskCreated;
+import app.bpartners.geojobs.endpoint.event.model.DetectionTaskFailed;
 import app.bpartners.geojobs.job.service.RetryableTaskStatusService;
 import app.bpartners.geojobs.repository.model.detection.DetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;

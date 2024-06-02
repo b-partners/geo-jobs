@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
-import app.bpartners.geojobs.endpoint.event.gen.TilingTaskSucceeded;
+import app.bpartners.geojobs.endpoint.event.model.TilingTaskSucceeded;
 import app.bpartners.geojobs.job.service.RetryableTaskStatusService;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;

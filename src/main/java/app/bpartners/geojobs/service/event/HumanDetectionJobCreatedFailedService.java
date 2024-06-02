@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.service.event;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.gen.HumanDetectionJobCreatedFailed;
+import app.bpartners.geojobs.endpoint.event.model.HumanDetectionJobCreatedFailed;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import java.util.List;

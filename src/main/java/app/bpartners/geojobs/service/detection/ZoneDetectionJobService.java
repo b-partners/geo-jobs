@@ -8,8 +8,8 @@ import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.gen.DetectionTaskCreated;
-import app.bpartners.geojobs.endpoint.event.gen.ZoneDetectionJobStatusChanged;
+import app.bpartners.geojobs.endpoint.event.model.DetectionTaskCreated;
+import app.bpartners.geojobs.endpoint.event.model.ZoneDetectionJobStatusChanged;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
 import app.bpartners.geojobs.endpoint.rest.model.GeoJsonsUrl;
 import app.bpartners.geojobs.job.model.JobStatus;

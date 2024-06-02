@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.service.detection;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.gen.DetectionTaskStatusChanged;
+import app.bpartners.geojobs.endpoint.event.model.DetectionTaskStatusChanged;
 import app.bpartners.geojobs.job.repository.TaskRepository;
 import app.bpartners.geojobs.job.repository.TaskStatusRepository;
 import app.bpartners.geojobs.job.service.TaskToTaskService;

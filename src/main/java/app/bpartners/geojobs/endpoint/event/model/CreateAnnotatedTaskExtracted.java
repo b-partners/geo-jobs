@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.endpoint.event.gen;
+package app.bpartners.geojobs.endpoint.event.model;
 
 import app.bpartners.gen.annotator.endpoint.rest.model.CreateAnnotatedTask;
 import com.fasterxml.jackson.annotation.JsonProperty;

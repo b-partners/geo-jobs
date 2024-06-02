@@ -1,8 +1,6 @@
-package app.bpartners.geojobs.endpoint.event.gen;
+package app.bpartners.geojobs.endpoint.event.model;
 
-import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.io.Serializable;
 import javax.annotation.processing.Generated;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,10 +16,10 @@ import lombok.ToString;
 @Data
 @EqualsAndHashCode
 @ToString
-public class ZoneTilingJobStatusChanged implements Serializable {
-  @JsonProperty("oldJob")
-  private ZoneTilingJob oldJob;
+public class ZoneDetectionJobSucceeded {
+  @JsonProperty("succeededJobId")
+  private String succeededJobId;
 
-  @JsonProperty("newJob")
-  private ZoneTilingJob newJob;
+  @JsonProperty("humanZdjId")
+  private String humanZdjId;
 }

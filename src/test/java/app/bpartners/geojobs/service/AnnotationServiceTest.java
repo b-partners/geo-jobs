@@ -10,7 +10,7 @@ import app.bpartners.gen.annotator.endpoint.rest.client.ApiClient;
 import app.bpartners.gen.annotator.endpoint.rest.model.Job;
 import app.bpartners.gen.annotator.endpoint.rest.model.Label;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.gen.CreateAnnotatedTaskExtracted;
+import app.bpartners.geojobs.endpoint.event.model.CreateAnnotatedTaskExtracted;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;

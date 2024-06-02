@@ -9,7 +9,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import app.bpartners.geojobs.endpoint.event.gen.ZoneTilingJobStatusChanged;
+import app.bpartners.geojobs.endpoint.event.model.ZoneTilingJobStatusChanged;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status.HealthStatus;
 import app.bpartners.geojobs.job.model.Status.ProgressionStatus;

@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import app.bpartners.geojobs.conf.FacadeIT;
-import app.bpartners.geojobs.endpoint.event.gen.ImportedZoneTilingJobSaved;
+import app.bpartners.geojobs.endpoint.event.model.ImportedZoneTilingJobSaved;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.repository.TilingTaskRepository;

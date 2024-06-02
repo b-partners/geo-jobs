@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
-import app.bpartners.geojobs.endpoint.event.gen.CreateAnnotatedTaskExtracted;
+import app.bpartners.geojobs.endpoint.event.model.CreateAnnotatedTaskExtracted;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
 import java.util.function.Consumer;

@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.endpoint.event.gen;
+package app.bpartners.geojobs.endpoint.event.model;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

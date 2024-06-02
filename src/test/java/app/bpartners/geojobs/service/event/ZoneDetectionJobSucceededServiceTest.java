@@ -4,7 +4,7 @@ import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import app.bpartners.geojobs.endpoint.event.gen.ZoneDetectionJobSucceeded;
+import app.bpartners.geojobs.endpoint.event.model.ZoneDetectionJobSucceeded;
 import app.bpartners.geojobs.repository.model.detection.*;
 import org.junit.jupiter.api.Test;
 

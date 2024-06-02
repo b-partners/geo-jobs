@@ -1,6 +1,6 @@
-package app.bpartners.geojobs.endpoint.event.gen;
+package app.bpartners.geojobs.endpoint.event.model;
 
-import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
+import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serializable;
 import javax.annotation.processing.Generated;
@@ -18,7 +18,7 @@ import lombok.ToString;
 @Data
 @EqualsAndHashCode
 @ToString
-public class ZoneDetectionJobCreated implements Serializable {
-  @JsonProperty("zoneDetectionJob")
-  private ZoneDetectionJob zoneDetectionJob;
+public class TilingTaskCreated implements Serializable {
+  @JsonProperty("tilingTask")
+  private TilingTask task;
 }

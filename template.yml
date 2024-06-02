@@ -9,7 +9,6 @@ Globals:
     Tracing: Active
     Architectures:
       - x86_64
-    Timeout: 600
     EventInvokeConfig:
       MaximumRetryAttempts: 0
     AutoPublishAlias: live
@@ -64,6 +63,7 @@ Resources:
     Properties:
       Handler: app.bpartners.geojobs.ApiEventHandler::handleRequest
       MemorySize: 512
+      Timeout: 30
       Role: !Sub '{{resolve:ssm:/geo-jobs/${Env}/execution/role-arn}}'
       
       Events:
@@ -80,6 +80,7 @@ Resources:
     Properties:
       Handler: app.bpartners.geojobs.MailboxEventHandler::handleRequest
       MemorySize: 512
+      Timeout: 600 #note(qsq-visibility)
       Role: !Sub '{{resolve:ssm:/geo-jobs/${Env}/execution/role-arn}}'
       
       Events:

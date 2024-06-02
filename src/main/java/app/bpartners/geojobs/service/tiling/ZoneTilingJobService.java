@@ -8,10 +8,10 @@ import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.gen.ImportedZoneTilingJobSaved;
-import app.bpartners.geojobs.endpoint.event.gen.TilingTaskCreated;
-import app.bpartners.geojobs.endpoint.event.gen.ZoneTilingJobCreated;
-import app.bpartners.geojobs.endpoint.event.gen.ZoneTilingJobStatusChanged;
+import app.bpartners.geojobs.endpoint.event.model.ImportedZoneTilingJobSaved;
+import app.bpartners.geojobs.endpoint.event.model.TilingTaskCreated;
+import app.bpartners.geojobs.endpoint.event.model.ZoneTilingJobCreated;
+import app.bpartners.geojobs.endpoint.event.model.ZoneTilingJobStatusChanged;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;

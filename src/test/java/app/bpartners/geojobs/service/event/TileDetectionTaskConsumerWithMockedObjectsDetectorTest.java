@@ -5,7 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import app.bpartners.geojobs.endpoint.event.gen.TileDetectionTaskCreated;
+import app.bpartners.geojobs.endpoint.event.model.TileDetectionTaskCreated;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.repository.DetectedTileRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;

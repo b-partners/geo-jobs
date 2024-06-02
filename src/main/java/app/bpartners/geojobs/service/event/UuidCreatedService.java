@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.service.event;
 
 import app.bpartners.geojobs.PojaGenerated;
-import app.bpartners.geojobs.endpoint.event.gen.UuidCreated;
+import app.bpartners.geojobs.endpoint.event.model.UuidCreated;
 import app.bpartners.geojobs.repository.DummyUuidRepository;
 import app.bpartners.geojobs.repository.model.DummyUuid;
 import java.util.function.Consumer;

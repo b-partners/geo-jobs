@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.endpoint.event.gen;
+package app.bpartners.geojobs.endpoint.event.model;
 
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import javax.annotation.processing.Generated;

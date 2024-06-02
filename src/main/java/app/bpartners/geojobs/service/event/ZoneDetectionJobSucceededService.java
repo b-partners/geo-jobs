@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
-import app.bpartners.geojobs.endpoint.event.gen.ZoneDetectionJobSucceeded;
+import app.bpartners.geojobs.endpoint.event.model.ZoneDetectionJobSucceeded;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

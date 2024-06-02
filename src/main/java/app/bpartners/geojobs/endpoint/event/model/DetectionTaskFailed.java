@@ -1,5 +1,6 @@
-package app.bpartners.geojobs.endpoint.event.gen;
+package app.bpartners.geojobs.endpoint.event.model;
 
+import app.bpartners.geojobs.repository.model.detection.DetectionTask;
 import javax.annotation.processing.Generated;
 import lombok.*;
 
@@ -10,7 +11,7 @@ import lombok.*;
 @Data
 @EqualsAndHashCode
 @ToString
-public class HumanDetectionJobCreatedFailed {
-  private String humanDetectionJobId;
+public class DetectionTaskFailed {
+  private DetectionTask task;
   private int attemptNb;
 }

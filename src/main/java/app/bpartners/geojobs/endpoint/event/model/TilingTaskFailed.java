@@ -1,8 +1,6 @@
-package app.bpartners.geojobs.endpoint.event.gen;
+package app.bpartners.geojobs.endpoint.event.model;
 
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import java.io.Serializable;
 import javax.annotation.processing.Generated;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,7 +16,7 @@ import lombok.ToString;
 @Data
 @EqualsAndHashCode
 @ToString
-public class TilingTaskCreated implements Serializable {
-  @JsonProperty("tilingTask")
+public class TilingTaskFailed {
   private TilingTask task;
+  private int attemptNb;
 }

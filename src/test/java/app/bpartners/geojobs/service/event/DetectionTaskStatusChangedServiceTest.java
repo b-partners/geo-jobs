@@ -7,8 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.gen.DetectionTaskStatusChanged;
-import app.bpartners.geojobs.endpoint.event.gen.DetectionTaskSucceeded;
+import app.bpartners.geojobs.endpoint.event.model.DetectionTaskStatusChanged;
+import app.bpartners.geojobs.endpoint.event.model.DetectionTaskSucceeded;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.job.service.RetryableTaskStatusService;
 import app.bpartners.geojobs.repository.model.detection.DetectionTask;

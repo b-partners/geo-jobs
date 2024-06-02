@@ -16,7 +16,7 @@ import static org.mockito.Mockito.*;
 import app.bpartners.gen.annotator.endpoint.rest.model.Job;
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.gen.DetectionTaskCreated;
+import app.bpartners.geojobs.endpoint.event.model.DetectionTaskCreated;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.job.model.JobStatus;

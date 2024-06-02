@@ -7,8 +7,8 @@ import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.gen.TileDetectionTaskCreated;
-import app.bpartners.geojobs.endpoint.event.gen.TileDetectionTaskCreatedFailed;
+import app.bpartners.geojobs.endpoint.event.model.TileDetectionTaskCreated;
+import app.bpartners.geojobs.endpoint.event.model.TileDetectionTaskCreatedFailed;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;

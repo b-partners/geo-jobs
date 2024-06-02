@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
-import app.bpartners.geojobs.endpoint.event.gen.DetectionTaskSucceeded;
+import app.bpartners.geojobs.endpoint.event.model.DetectionTaskSucceeded;
 import app.bpartners.geojobs.job.service.RetryableTaskStatusService;
 import app.bpartners.geojobs.repository.DetectionTaskRepository;
 import app.bpartners.geojobs.repository.model.detection.DetectionTask;
