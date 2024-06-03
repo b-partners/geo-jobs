@@ -1,5 +1,10 @@
 package app.bpartners.geojobs;
 
+import static app.bpartners.geojobs.concurrency.ThreadRenamer.renameWorkerThread;
+import static java.lang.Runtime.getRuntime;
+import static java.lang.System.getenv;
+import static java.lang.Thread.currentThread;
+
 import app.bpartners.geojobs.endpoint.EndpointConf;
 import app.bpartners.geojobs.endpoint.event.EventConf;
 import app.bpartners.geojobs.endpoint.event.consumer.EventConsumer;
@@ -11,18 +16,12 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.SQSEvent;
 import com.amazonaws.services.lambda.runtime.events.SQSEvent.SQSMessage;
 import com.zaxxer.hikari.HikariDataSource;
+import java.util.List;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 import software.amazon.awssdk.regions.Region;
-
-import java.util.List;
-import java.util.Map;
-
-import static app.bpartners.geojobs.concurrency.ThreadRenamer.renameWorkerThread;
-import static java.lang.Runtime.getRuntime;
-import static java.lang.System.getenv;
-import static java.lang.Thread.currentThread;
 
 @Slf4j
 @PojaGenerated
