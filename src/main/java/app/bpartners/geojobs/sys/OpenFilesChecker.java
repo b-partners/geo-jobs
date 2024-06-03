@@ -12,10 +12,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class OpenFilesChecker {
   private final UnixOperatingSystemMXBean os;
-  private final CommandLauncher commandLauncher = new CommandLauncher();
 
   private final ScheduledExecutorService scheduler = newScheduledThreadPool(1);
-  private final Duration frequencyCheck = Duration.ofSeconds(10);
+  private final Duration frequencyCheck = Duration.ofSeconds(5);
 
   public OpenFilesChecker() {
     this.os =
@@ -34,18 +33,9 @@ public class OpenFilesChecker {
   }
 
   private void checkOpenFiles() {
-    var lsofByJava = commandLauncher.apply("lsof | grep java");
-    var lsofByJavaCount = commandLauncher.apply("lsof | grep java | wc -l");
-    var lsofAllCount = commandLauncher.apply("lsof | wc -l");
     var ofCountByMxBean = os.getOpenFileDescriptorCount();
     var maxOfByMxBean = os.getMaxFileDescriptorCount();
-    log.info(
-        "lsofByJava={}, lsofByJavaCount={}, lsofAllCount={}, ofCountByMxBean={}, maxOfByMxBean={}",
-        lsofByJava,
-        lsofByJavaCount,
-        lsofAllCount,
-        ofCountByMxBean,
-        maxOfByMxBean);
+    log.info("ofCountByMxBean={}, maxOfByMxBean={}", ofCountByMxBean, maxOfByMxBean);
   }
 
   public void stop() {
