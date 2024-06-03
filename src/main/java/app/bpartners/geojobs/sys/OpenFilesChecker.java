@@ -2,11 +2,11 @@ package app.bpartners.geojobs.sys;
 
 import static java.lang.management.ManagementFactory.getOperatingSystemMXBean;
 import static java.util.concurrent.Executors.newScheduledThreadPool;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 import com.sun.management.UnixOperatingSystemMXBean;
 import java.time.Duration;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit.SECONDS;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

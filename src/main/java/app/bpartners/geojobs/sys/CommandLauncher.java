@@ -1,8 +1,9 @@
 package app.bpartners.geojobs.sys;
 
+import static java.util.concurrent.TimeUnit.MINUTES;
+
 import java.io.IOException;
 import java.util.Scanner;
-import java.util.concurrent.TimeUnit.MINUTES;
 import java.util.function.Function;
 import lombok.extern.slf4j.Slf4j;
 
