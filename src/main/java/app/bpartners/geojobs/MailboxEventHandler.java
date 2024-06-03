@@ -10,6 +10,7 @@ import app.bpartners.geojobs.endpoint.event.EventConf;
 import app.bpartners.geojobs.endpoint.event.consumer.EventConsumer;
 import app.bpartners.geojobs.endpoint.event.consumer.model.ConsumableEvent;
 import app.bpartners.geojobs.endpoint.event.consumer.model.ConsumableEventTyper;
+import app.bpartners.geojobs.sys.OpenFilesChecker;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.SQSEvent;
@@ -42,6 +43,9 @@ public class MailboxEventHandler implements RequestHandler<SQSEvent, String> {
         .forEach(ConsumableEvent::newRandomVisibilityTimeout); // note(init-visibility)
     log.info("SQS messages: {}", messages);
 
+    var openFilesChecker = new OpenFilesChecker();
+    openFilesChecker.start();
+
     var applicationContext = applicationContext();
     getRuntime()
         .addShutdownHook(
@@ -50,7 +54,7 @@ public class MailboxEventHandler implements RequestHandler<SQSEvent, String> {
             //   Best is to regularly check whether we are nearing end of allowedTime,
             //   in which case we close resources before timing out.
             //   Frontal functions might have the same issue also.
-            new Thread(() -> onHandled(applicationContext)));
+            new Thread(() -> onHandled(openFilesChecker, applicationContext)));
 
     var eventConsumer = applicationContext.getBean(EventConsumer.class);
     var messageConverter = applicationContext.getBean(ConsumableEventTyper.class);
@@ -59,6 +63,12 @@ public class MailboxEventHandler implements RequestHandler<SQSEvent, String> {
 
     onHandled(applicationContext);
     return "ok";
+  }
+
+  private void onHandled(
+      OpenFilesChecker openFilesChecker, ConfigurableApplicationContext applicationContext) {
+    openFilesChecker.stop();
+    onHandled(applicationContext);
   }
 
   private void onHandled(ConfigurableApplicationContext applicationContext) {
