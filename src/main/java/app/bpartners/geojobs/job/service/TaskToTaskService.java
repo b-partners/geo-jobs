@@ -11,8 +11,6 @@ import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.job.model.*;
 import app.bpartners.geojobs.job.repository.TaskRepository;
 import app.bpartners.geojobs.job.repository.TaskStatusRepository;
-import app.bpartners.geojobs.model.BoundedPageSize;
-import app.bpartners.geojobs.model.PageFromOne;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -20,15 +18,13 @@ import java.time.Instant;
 import java.util.List;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 @Slf4j
 public abstract class TaskToTaskService<T_CHILD extends Task, T_PARENT extends Task> {
   protected final JpaRepository<T_PARENT, String> parentRepository;
-  protected final TaskStatusRepository taskStatusRepository;
   protected final TaskRepository<T_CHILD> childTaskRepository;
+  protected final TaskStatusRepository taskStatusRepository;
   protected final EventProducer eventProducer;
   private final Class<T_PARENT> jobClazz;
 
@@ -45,11 +41,6 @@ public abstract class TaskToTaskService<T_CHILD extends Task, T_PARENT extends T
     this.childTaskRepository = childTaskRepository;
     this.eventProducer = eventProducer;
     this.jobClazz = jobClazz;
-  }
-
-  public List<T_PARENT> findAll(PageFromOne page, BoundedPageSize pageSize) {
-    Pageable pageable = PageRequest.of(page.getValue() - 1, pageSize.getValue());
-    return parentRepository.findAll(pageable).toList();
   }
 
   public T_PARENT findById(String id) {
@@ -132,9 +123,5 @@ public abstract class TaskToTaskService<T_CHILD extends Task, T_PARENT extends T
     var saved = parentRepository.save(job);
     childTaskRepository.saveAll(tasks);
     return saved;
-  }
-
-  protected List<T_CHILD> getTasks(T_PARENT job) {
-    return childTaskRepository.findAllByJobId(job.getId());
   }
 }
