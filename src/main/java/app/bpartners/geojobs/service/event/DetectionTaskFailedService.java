@@ -6,7 +6,7 @@ import static app.bpartners.geojobs.service.event.DetectionTaskConsumer.withNewS
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionTaskFailed;
-import app.bpartners.geojobs.job.service.RetryableTaskStatusService;
+import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.repository.model.detection.DetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import java.util.List;
@@ -20,7 +20,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class DetectionTaskFailedService implements Consumer<DetectionTaskFailed> {
 
-  private final RetryableTaskStatusService<DetectionTask, ZoneDetectionJob> taskStatusService;
+  private final TaskStatusService<DetectionTask, ZoneDetectionJob> taskStatusService;
   private final DetectionTaskConsumer detectionTaskConsumer;
   private final EventProducer eventProducer;
   private final ExceptionToStringFunction exceptionToStringFunction;

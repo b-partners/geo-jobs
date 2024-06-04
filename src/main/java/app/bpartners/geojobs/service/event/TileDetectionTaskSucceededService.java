@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.service.event;
 
 import app.bpartners.geojobs.endpoint.event.model.TileDetectionTaskSucceeded;
-import app.bpartners.geojobs.job.service.RetryableTaskToTaskStatusService;
+import app.bpartners.geojobs.job.service.TaskToTaskStatusService;
 import app.bpartners.geojobs.repository.TileDetectionTaskRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.DetectionTask;
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 @Service
 @AllArgsConstructor
 public class TileDetectionTaskSucceededService implements Consumer<TileDetectionTaskSucceeded> {
-  private final RetryableTaskToTaskStatusService<TileDetectionTask, DetectionTask, ZoneDetectionJob>
+  private final TaskToTaskStatusService<TileDetectionTask, DetectionTask, ZoneDetectionJob>
       taskToTaskStatusService;
   private final TileDetectionTaskRepository tileDetectionTaskRepository;
 

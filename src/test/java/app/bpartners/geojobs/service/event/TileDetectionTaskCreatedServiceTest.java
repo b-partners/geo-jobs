@@ -13,7 +13,7 @@ import app.bpartners.geojobs.endpoint.event.model.TileDetectionTaskCreated;
 import app.bpartners.geojobs.endpoint.event.model.TileDetectionTaskCreatedFailed;
 import app.bpartners.geojobs.endpoint.event.model.TileDetectionTaskSucceeded;
 import app.bpartners.geojobs.job.model.TaskStatus;
-import app.bpartners.geojobs.job.service.RetryableTaskToTaskStatusService;
+import app.bpartners.geojobs.job.service.TaskToTaskStatusService;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 public class TileDetectionTaskCreatedServiceTest {
-  RetryableTaskToTaskStatusService<TileDetectionTask, DetectionTask, ZoneDetectionJob>
+  TaskToTaskStatusService<TileDetectionTask, DetectionTask, ZoneDetectionJob>
       taskToTaskStatusServiceMock = mock();
   TileDetectionTaskCreatedConsumer tileDetectionTaskConsumerMock = mock();
   EventProducer eventProducerMock = mock();

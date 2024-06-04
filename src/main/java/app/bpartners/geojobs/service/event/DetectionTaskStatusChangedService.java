@@ -3,7 +3,7 @@ package app.bpartners.geojobs.service.event;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionTaskStatusChanged;
 import app.bpartners.geojobs.endpoint.event.model.DetectionTaskSucceeded;
-import app.bpartners.geojobs.job.service.RetryableTaskStatusService;
+import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.repository.model.detection.DetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import java.util.List;
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 @AllArgsConstructor
 public class DetectionTaskStatusChangedService implements Consumer<DetectionTaskStatusChanged> {
   private final EventProducer eventProducer;
-  private final RetryableTaskStatusService<DetectionTask, ZoneDetectionJob> taskStatusService;
+  private final TaskStatusService<DetectionTask, ZoneDetectionJob> taskStatusService;
 
   @Override
   public void accept(DetectionTaskStatusChanged event) {

@@ -18,12 +18,12 @@ public class JobAnnotationProcessed extends PojaEvent {
   private String annotationJobWithoutObjectsId;
 
   @Override
-  public Duration maxDuration() {
+  public Duration maxConsumerDuration() {
     return Duration.ofMinutes(10L);
   }
 
   @Override
-  public Duration maxBackoffBetweenRetries() {
+  public Duration maxConsumerBackoffBetweenRetries() {
     return Duration.ofMinutes(1L);
   }
 }
