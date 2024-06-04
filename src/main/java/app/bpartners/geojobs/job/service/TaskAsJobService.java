@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 @Slf4j
-public abstract class TaskToTaskService<T_CHILD extends Task, T_PARENT extends Task> {
+public abstract class TaskAsJobService<T_CHILD extends Task, T_PARENT extends Task> {
   protected final JpaRepository<T_PARENT, String> parentRepository;
   protected final TaskRepository<T_CHILD> childTaskRepository;
   protected final TaskStatusRepository taskStatusRepository;
@@ -30,7 +30,7 @@ public abstract class TaskToTaskService<T_CHILD extends Task, T_PARENT extends T
 
   @Setter @PersistenceContext EntityManager em;
 
-  protected TaskToTaskService(
+  protected TaskAsJobService(
       JpaRepository<T_PARENT, String> parentRepository,
       TaskStatusRepository taskStatusRepository,
       TaskRepository<T_CHILD> childTaskRepository,

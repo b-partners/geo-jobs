@@ -8,10 +8,9 @@ import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.TileDetectionTaskCreated;
 import app.bpartners.geojobs.endpoint.event.model.TileDetectionTaskCreatedFailed;
 import app.bpartners.geojobs.endpoint.event.model.TileDetectionTaskSucceeded;
-import app.bpartners.geojobs.job.service.TaskToTaskStatusService;
+import app.bpartners.geojobs.job.service.TaskAsJobStatusService;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.DetectionTask;
-import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
@@ -24,8 +23,7 @@ import org.springframework.stereotype.Service;
 public class TileDetectionTaskCreatedFailedService
     implements Consumer<TileDetectionTaskCreatedFailed> {
   private static final int MAX_ATTEMPT = 3;
-  private final TaskToTaskStatusService<TileDetectionTask, DetectionTask, ZoneDetectionJob>
-      taskToTaskStatusService;
+  private final TaskAsJobStatusService<TileDetectionTask, DetectionTask> taskAsJobStatusService;
   private final TileDetectionTaskCreatedConsumer tileDetectionTaskConsumer;
   private final EventProducer eventProducer;
 
@@ -36,7 +34,7 @@ public class TileDetectionTaskCreatedFailedService
     var detectableTypes = tileDetectionTaskCreated.getDetectableTypes();
     var attemptNb = tileDetectionTaskCreatedFailed.getAttemptNb();
     if (attemptNb > MAX_ATTEMPT) {
-      taskToTaskStatusService.fail(tileDetectionTask);
+      taskAsJobStatusService.fail(tileDetectionTask);
       log.error(
           "Max attempt reached for TileDetectionTask(taskId={})",
           tileDetectionTask.getDetectionTaskId());

@@ -13,35 +13,33 @@ import app.bpartners.geojobs.endpoint.event.model.TileDetectionTaskCreated;
 import app.bpartners.geojobs.endpoint.event.model.TileDetectionTaskCreatedFailed;
 import app.bpartners.geojobs.endpoint.event.model.TileDetectionTaskSucceeded;
 import app.bpartners.geojobs.job.model.TaskStatus;
-import app.bpartners.geojobs.job.service.TaskToTaskStatusService;
+import app.bpartners.geojobs.job.service.TaskAsJobStatusService;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.DetectionTask;
-import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 public class TileDetectionTaskCreatedServiceTest {
-  TaskToTaskStatusService<TileDetectionTask, DetectionTask, ZoneDetectionJob>
-      taskToTaskStatusServiceMock = mock();
+  TaskAsJobStatusService<TileDetectionTask, DetectionTask> taskAsJobStatusServiceMock = mock();
   TileDetectionTaskCreatedConsumer tileDetectionTaskConsumerMock = mock();
   EventProducer eventProducerMock = mock();
   TileDetectionTaskCreatedService subject =
       new TileDetectionTaskCreatedService(
-          taskToTaskStatusServiceMock, tileDetectionTaskConsumerMock, eventProducerMock);
+          taskAsJobStatusServiceMock, tileDetectionTaskConsumerMock, eventProducerMock);
 
   @Test
   void accept_ok() {
     doNothing().when(tileDetectionTaskConsumerMock).accept(any());
-    when(taskToTaskStatusServiceMock.process(any()))
+    when(taskAsJobStatusServiceMock.process(any()))
         .thenReturn(
             TileDetectionTask.builder()
                 .statusHistory(
                     List.of(TaskStatus.builder().progression(PROCESSING).health(UNKNOWN).build()))
                 .build());
-    when(taskToTaskStatusServiceMock.succeed(any()))
+    when(taskAsJobStatusServiceMock.succeed(any()))
         .thenReturn(
             TileDetectionTask.builder()
                 .statusHistory(
@@ -73,13 +71,13 @@ public class TileDetectionTaskCreatedServiceTest {
   @Test
   void accept_ko() {
     doThrow(ApiException.class).when(tileDetectionTaskConsumerMock).accept(any());
-    when(taskToTaskStatusServiceMock.process(any()))
+    when(taskAsJobStatusServiceMock.process(any()))
         .thenReturn(
             TileDetectionTask.builder()
                 .statusHistory(
                     List.of(TaskStatus.builder().progression(PROCESSING).health(UNKNOWN).build()))
                 .build());
-    when(taskToTaskStatusServiceMock.succeed(any()))
+    when(taskAsJobStatusServiceMock.succeed(any()))
         .thenReturn(
             TileDetectionTask.builder()
                 .statusHistory(

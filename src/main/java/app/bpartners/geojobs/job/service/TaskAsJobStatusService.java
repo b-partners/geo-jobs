@@ -1,31 +1,24 @@
 package app.bpartners.geojobs.job.service;
 
-import static app.bpartners.geojobs.job.model.Status.HealthStatus.*;
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.FAILED;
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
 import static java.time.Instant.now;
 
-import app.bpartners.geojobs.job.model.Job;
 import app.bpartners.geojobs.job.model.Status.HealthStatus;
 import app.bpartners.geojobs.job.model.Status.ProgressionStatus;
 import app.bpartners.geojobs.job.model.Task;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.job.repository.TaskStatusRepository;
+import lombok.AllArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
-public class TaskToTaskStatusService<T_CHILD extends Task, T_PARENT extends Task, J extends Job> {
-  protected final TaskStatusService<T_PARENT, J> parentTaskStatusService;
+@AllArgsConstructor
+public class TaskAsJobStatusService<T_CHILD extends Task, T_PARENT extends Task> {
   protected final TaskStatusRepository taskStatusRepository;
-  protected final TaskToTaskService<T_CHILD, T_PARENT> taskToTaskService;
-
-  public TaskToTaskStatusService(
-      TaskStatusService<T_PARENT, J> parentTaskStatusService,
-      TaskStatusRepository taskStatusRepository,
-      TaskToTaskService<T_CHILD, T_PARENT> taskToTaskService) {
-    this.parentTaskStatusService = parentTaskStatusService;
-    this.taskStatusRepository = taskStatusRepository;
-    this.taskToTaskService = taskToTaskService;
-  }
+  protected final TaskAsJobService<T_CHILD, T_PARENT> taskAsJobService;
 
   @Transactional
   public T_CHILD process(T_CHILD task) {
@@ -45,7 +38,7 @@ public class TaskToTaskStatusService<T_CHILD extends Task, T_PARENT extends Task
   private T_CHILD update(
       T_CHILD childTask, ProgressionStatus progression, HealthStatus health, String message) {
     var parentTaskId = childTask.getParentTaskId();
-    var oldParentTask = taskToTaskService.findById(parentTaskId);
+    var oldParentTask = taskAsJobService.findById(parentTaskId);
 
     var taskStatus =
         TaskStatus.builder()
@@ -57,7 +50,7 @@ public class TaskToTaskStatusService<T_CHILD extends Task, T_PARENT extends Task
             .build();
     childTask.hasNewStatus(taskStatus);
     taskStatusRepository.save(taskStatus);
-    taskToTaskService.recomputeStatus(oldParentTask);
+    taskAsJobService.recomputeStatus(oldParentTask);
 
     return childTask;
   }
