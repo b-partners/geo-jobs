@@ -40,8 +40,8 @@ Resources:
       VpcSecurityGroupIds:
         - !Sub '{{resolve:ssm:/bpartners-imagery/sg/id}}'
       ScalingConfiguration:
-        MaxCapacity: 192
-        MinCapacity: 192
+        MaxCapacity: 8
+        MinCapacity: 8
         SecondsBeforeTimeout: 60
         AutoPause: true
         SecondsUntilAutoPause: !If [ IsProdEnv, 900, !Ref ProdDbClusterTimeout]
