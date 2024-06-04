@@ -26,7 +26,7 @@ import org.springframework.stereotype.Service;
 @AllArgsConstructor
 @Slf4j
 public class ZoneDetectionJobAnnotationProcessor {
-  public static final double MIN_CONFIDENCE_TRUE_POSITIVE = 0.95;
+  public static final double MIN_CONFIDENCE_TRUE_POSITIVE = 0.8;
   private final AnnotationService annotationService;
   private final DetectionTaskService detectionTaskService;
   private final DetectedTileRepository detectedTileRepository;
