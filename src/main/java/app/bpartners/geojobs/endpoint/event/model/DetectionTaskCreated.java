@@ -23,12 +23,12 @@ public class DetectionTaskCreated extends PojaEvent {
   private DetectionTask task;
 
   @Override
-  public Duration maxDuration() {
+  public Duration maxConsumerDuration() {
     return Duration.ofMinutes(3);
   }
 
   @Override
-  public Duration maxBackoffBetweenRetries() {
+  public Duration maxConsumerBackoffBetweenRetries() {
     return Duration.ofMinutes(1);
   }
 }

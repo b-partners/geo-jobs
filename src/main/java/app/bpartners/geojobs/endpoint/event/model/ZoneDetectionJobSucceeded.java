@@ -25,12 +25,12 @@ public class ZoneDetectionJobSucceeded extends PojaEvent {
   private String humanZdjId;
 
   @Override
-  public Duration maxDuration() {
+  public Duration maxConsumerDuration() {
     return Duration.ofMinutes(1);
   }
 
   @Override
-  public Duration maxBackoffBetweenRetries() {
+  public Duration maxConsumerBackoffBetweenRetries() {
     return Duration.ofMinutes(1);
   }
 }

@@ -21,12 +21,12 @@ public class ZoneTilingJobWithoutTasksCreated extends PojaEvent {
   private String duplicatedJobId;
 
   @Override
-  public Duration maxDuration() {
+  public Duration maxConsumerDuration() {
     return Duration.ofMinutes(5);
   }
 
   @Override
-  public Duration maxBackoffBetweenRetries() {
+  public Duration maxConsumerBackoffBetweenRetries() {
     return Duration.ofMinutes(1);
   }
 }

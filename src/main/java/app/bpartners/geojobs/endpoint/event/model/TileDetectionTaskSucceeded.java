@@ -18,12 +18,12 @@ public class TileDetectionTaskSucceeded extends PojaEvent {
   private TileDetectionTask tileDetectionTask;
 
   @Override
-  public Duration maxDuration() {
+  public Duration maxConsumerDuration() {
     return Duration.ofMinutes(1);
   }
 
   @Override
-  public Duration maxBackoffBetweenRetries() {
+  public Duration maxConsumerBackoffBetweenRetries() {
     return Duration.ofMinutes(1);
   }
 }
