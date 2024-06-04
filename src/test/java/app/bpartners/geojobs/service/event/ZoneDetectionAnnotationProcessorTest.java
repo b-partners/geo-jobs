@@ -123,7 +123,14 @@ public class ZoneDetectionAnnotationProcessorTest extends FacadeIT {
 
   @Test
   void accept_event_ok() throws ApiException {
-    subject.accept(MOCK_JOB_ID);
+    String annotationJobWithObjectsIdTruePositive = randomUUID().toString();
+    String annotationJobWithObjectsIdFalsePositive = randomUUID().toString();
+    String annotationJobWithoutObjectsId = randomUUID().toString();
+    subject.accept(
+        MOCK_JOB_ID,
+        annotationJobWithObjectsIdTruePositive,
+        annotationJobWithObjectsIdFalsePositive,
+        annotationJobWithoutObjectsId);
 
     verify(annotationServiceMock, times(2)).createAnnotationJob(any(), any());
   }

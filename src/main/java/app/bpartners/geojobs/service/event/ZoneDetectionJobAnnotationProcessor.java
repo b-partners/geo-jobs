@@ -34,13 +34,14 @@ public class ZoneDetectionJobAnnotationProcessor {
   private final EventProducer eventProducer;
   private final ZoneDetectionJobService zoneDetectionJobService;
 
-  public AnnotationJobIds accept(String zoneDetectionJobId) {
+  public AnnotationJobIds accept(
+      String zoneDetectionJobId,
+      String annotationJobWithObjectsIdTruePositive,
+      String annotationJobWithObjectsIdFalsePositive,
+      String annotationJobWithoutObjectsId) {
     String humanZDJTruePositiveId = randomUUID().toString();
     String humanZDJFalsePositiveId = randomUUID().toString();
     String inDoubtHumanDetectionJobId = randomUUID().toString();
-    String annotationJobWithoutObjectsId = randomUUID().toString();
-    String annotationJobWithObjectsIdTruePositive = randomUUID().toString();
-    String annotationJobWithObjectsIdFalsePositive = randomUUID().toString();
 
     var humanJob = zoneDetectionJobService.getHumanZdjFromZdjId(zoneDetectionJobId);
     var humanZDJId = humanJob.getId();

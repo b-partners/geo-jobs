@@ -1,13 +1,17 @@
 package app.bpartners.geojobs.job.service;
 
+import static java.util.UUID.randomUUID;
+
+import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.JobAnnotationProcessed;
 import app.bpartners.geojobs.endpoint.rest.model.AnnotationJobProcessing;
 import app.bpartners.geojobs.endpoint.rest.model.JobType;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
-import app.bpartners.geojobs.service.event.ZoneDetectionJobAnnotationProcessor;
 import java.time.Instant;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +20,7 @@ import org.springframework.stereotype.Service;
 public class JobAnnotationService {
   private final ZoneDetectionJobRepository zoneDetectionJobRepository;
   private final ZoneTilingJobRepository tilingJobRepository;
-  private final ZoneDetectionJobAnnotationProcessor detectionJobAnnotationProcessor;
+  private final EventProducer eventProducer;
 
   public AnnotationJobProcessing processAnnotationJob(String jobId) {
     if (tilingJobRepository.findById(jobId).isPresent()) {
@@ -27,13 +31,24 @@ public class JobAnnotationService {
             .findById(jobId)
             .orElseThrow(() -> new NotFoundException("ZoneDetection(id=" + jobId + ")"));
 
-    var annotationJobIds = detectionJobAnnotationProcessor.accept(zoneDetectionJob.getId());
+    var annotationJobWithoutObjectsId = randomUUID().toString();
+    var annotationJobWithObjectsIdTruePositive = randomUUID().toString();
+    var annotationJobWithObjectsIdFalsePositive = randomUUID().toString();
+
+    eventProducer.accept(
+        List.of(
+            JobAnnotationProcessed.builder()
+                .jobId(zoneDetectionJob.getId())
+                .annotationJobWithObjectsIdTruePositive(annotationJobWithObjectsIdTruePositive)
+                .annotationJobWithObjectsIdFalsePositive(annotationJobWithObjectsIdFalsePositive)
+                .annotationJobWithoutObjectsId(annotationJobWithoutObjectsId)
+                .build()));
 
     return new AnnotationJobProcessing()
         .jobId(jobId)
-        .annotationWithObjectTruePositive(annotationJobIds.getJobWithDetectedTruePositiveId())
-        .annotationWithObjectFalsePositive(annotationJobIds.getJobWithDetectedFalsePositiveId())
-        .annotationWithoutObjectJobId(annotationJobIds.getJobWithoutDetectedObjectsId())
+        .annotationWithObjectTruePositive(annotationJobWithObjectsIdTruePositive)
+        .annotationWithObjectFalsePositive(annotationJobWithObjectsIdFalsePositive)
+        .annotationWithoutObjectJobId(annotationJobWithoutObjectsId)
         .jobType(JobType.DETECTION) // TODO: only DETECTION is handle but must be computed
         .creationDatetime(Instant.now());
   }

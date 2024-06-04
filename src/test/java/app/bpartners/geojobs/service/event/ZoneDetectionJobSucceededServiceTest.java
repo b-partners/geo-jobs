@@ -18,6 +18,6 @@ public class ZoneDetectionJobSucceededServiceTest {
   void accept_ok() {
     subject.accept(ZoneDetectionJobSucceeded.builder().succeededJobId(MOCK_JOB_ID).build());
 
-    verify(jobAnnotationProcessorMock, times(1)).accept(any());
+    verify(jobAnnotationProcessorMock, times(1)).accept(any(), any(), any(), any());
   }
 }

@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.service.event;
 
+import static java.util.UUID.randomUUID;
+
 import app.bpartners.geojobs.endpoint.event.model.ZoneDetectionJobSucceeded;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
@@ -18,6 +20,13 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
   public void accept(ZoneDetectionJobSucceeded event) {
     log.info("ZoneDetectionJobSucceeded {}, now handling human detection job", event);
     String succeededJobId = event.getSucceededJobId();
-    jobAnnotationProcessor.accept(succeededJobId);
+    var annotationJobWithObjectsIdTruePositive = randomUUID().toString();
+    var annotationJobWithObjectsIdFalsePositive = randomUUID().toString();
+    var annotationJobWithoutObjectsId = randomUUID().toString();
+    jobAnnotationProcessor.accept(
+        succeededJobId,
+        annotationJobWithObjectsIdTruePositive,
+        annotationJobWithObjectsIdFalsePositive,
+        annotationJobWithoutObjectsId);
   }
 }
