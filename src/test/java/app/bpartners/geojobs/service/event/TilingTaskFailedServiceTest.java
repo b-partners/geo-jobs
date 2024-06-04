@@ -15,13 +15,12 @@ import app.bpartners.geojobs.endpoint.event.model.TilingTaskSucceeded;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
-import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 class TilingTaskFailedServiceTest {
-  TaskStatusService<TilingTask, ZoneTilingJob> taskStatusService = mock();
+  TaskStatusService<TilingTask> taskStatusService = mock();
   TilingTaskConsumer tilingTaskConsumer = mock();
   EventProducer eventProducer = mock();
   TilingTaskFailedService subject =

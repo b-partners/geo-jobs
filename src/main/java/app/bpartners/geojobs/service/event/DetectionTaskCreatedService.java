@@ -9,7 +9,6 @@ import app.bpartners.geojobs.endpoint.event.model.DetectionTaskCreated;
 import app.bpartners.geojobs.endpoint.event.model.DetectionTaskFailed;
 import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.repository.model.detection.DetectionTask;
-import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
@@ -18,7 +17,7 @@ import org.springframework.stereotype.Service;
 @Service
 @AllArgsConstructor
 public class DetectionTaskCreatedService implements Consumer<DetectionTaskCreated> {
-  private final TaskStatusService<DetectionTask, ZoneDetectionJob> taskStatusService;
+  private final TaskStatusService<DetectionTask> taskStatusService;
   private final DetectionTaskConsumer detectionTaskConsumer;
   private final EventProducer eventProducer;
 

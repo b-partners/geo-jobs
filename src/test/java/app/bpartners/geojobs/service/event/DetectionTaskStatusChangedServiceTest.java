@@ -12,14 +12,13 @@ import app.bpartners.geojobs.endpoint.event.model.DetectionTaskSucceeded;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.repository.model.detection.DetectionTask;
-import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 public class DetectionTaskStatusChangedServiceTest {
   EventProducer eventProducerMock = mock();
-  TaskStatusService<DetectionTask, ZoneDetectionJob> taskStatusServiceMock = mock();
+  TaskStatusService<DetectionTask> taskStatusServiceMock = mock();
   DetectionTaskStatusChangedService subject =
       new DetectionTaskStatusChangedService(eventProducerMock, taskStatusServiceMock);
 

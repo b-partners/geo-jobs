@@ -40,6 +40,7 @@ import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.tiling.TilingTaskStatusService;
+import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import app.bpartners.geojobs.service.tiling.downloader.TilesDownloader;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -83,6 +84,7 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
   @MockBean TilesDownloader tilesDownloader;
   @Autowired TilingTaskRepository tilingTaskRepository;
   @Autowired ZoneTilingJobRepository zoneTilingJobRepository;
+  @Autowired ZoneTilingJobService zoneTilingJobService;
   @MockBean EventProducer eventProducer;
   @Autowired ObjectMapper om;
   @Autowired TilingTaskStatusService tilingTaskStatusService;
@@ -250,11 +252,12 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
     TilingTask created = tilingTaskRepository.save(toCreate);
     TilingTaskCreated createdEventPayload = TilingTaskCreated.builder().task(created).build();
     subject.accept(createdEventPayload);
+    zoneTilingJobService.recomputeStatus(zoneTilingJobRepository.findById(jobId).get());
     var eventsCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducer, times(2)).accept(eventsCaptor.capture());
     var sentEvents = eventsCaptor.getAllValues().stream().flatMap(List::stream).toList();
     assertEquals(2, sentEvents.size());
-    var tilingTaskSucceeded = (TilingTaskSucceeded) sentEvents.get(1);
+    var tilingTaskSucceeded = (TilingTaskSucceeded) sentEvents.get(0);
     assertEquals(2, tilingTaskSucceeded.getTask().getParcelContent().getTiles().size());
   }
 
@@ -272,6 +275,7 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
       tasks.add(tilingTaskRepository.save(toCreate));
     }
     tilingTaskStatusService.fail(tasks.get(7));
+    zoneTilingJobService.recomputeStatus(zoneTilingJobRepository.findById(jobId).get());
     var jobStatusAfterFail = zoneTilingJobRepository.findById(jobId).get().getStatus();
     assertEquals(PROCESSING, jobStatusAfterFail.getProgression());
     assertEquals(FAILED, jobStatusAfterFail.getHealth());
@@ -314,6 +318,7 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
             .filter((result) -> result)
             .count();
     assertEquals(callersNb, succeeded);
+    zoneTilingJobService.recomputeStatus(zoneTilingJobRepository.findById(jobId).get());
     var jobStatusAfterTiling = zoneTilingJobRepository.findById(jobId).get().getStatus();
     assertEquals(PROCESSING, jobStatusAfterTiling.getProgression());
     assertEquals(UNKNOWN, jobStatusAfterTiling.getHealth());
@@ -360,16 +365,17 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
     TilingTask created = tilingTaskRepository.save(toCreate);
     TilingTaskCreated createdEventPayload = TilingTaskCreated.builder().task(created).build();
     subject.accept(createdEventPayload);
+    zoneTilingJobService.recomputeStatus(zoneTilingJobRepository.findById(jobId).get());
     var eventsCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducer, times(2)).accept(eventsCaptor.capture());
     var events = eventsCaptor.getAllValues();
     assertEquals(2, events.size());
-    var jobStatusChanged = ((ZoneTilingJobStatusChanged) events.get(0).get(0));
+    var jobStatusChanged = ((ZoneTilingJobStatusChanged) events.get(1).get(0));
     assertEquals(PENDING, jobStatusChanged.getOldJob().getStatus().getProgression());
     assertEquals(UNKNOWN, jobStatusChanged.getOldJob().getStatus().getHealth());
     assertEquals(PROCESSING, jobStatusChanged.getNewJob().getStatus().getProgression());
     assertEquals(UNKNOWN, jobStatusChanged.getNewJob().getStatus().getHealth());
-    var taskStatusInEvent = ((TilingTaskSucceeded) events.get(1).get(0)).getTask().getStatus();
+    var taskStatusInEvent = ((TilingTaskSucceeded) events.get(0).get(0)).getTask().getStatus();
     assertEquals(FINISHED, taskStatusInEvent.getProgression());
     assertEquals(SUCCEEDED, taskStatusInEvent.getHealth());
     var jobStatusInDb = zoneTilingJobRepository.findById(jobId).get().getStatus();
@@ -406,10 +412,11 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
     TilingTask created = tilingTaskRepository.save(toCreate);
     TilingTaskCreated ztjCreated = TilingTaskCreated.builder().task(created).build();
     subject.accept(ztjCreated);
+    zoneTilingJobService.recomputeStatus(zoneTilingJobRepository.findById(jobId).get());
     var eventsCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducer, times(2)).accept(eventsCaptor.capture());
     var events = eventsCaptor.getAllValues();
-    var taskSucceeded = (TilingTaskSucceeded) events.get(1).get(0);
+    var taskSucceeded = (TilingTaskSucceeded) events.get(0).get(0);
     tilingTaskSucceededService.accept(taskSucceeded);
     List<app.bpartners.geojobs.endpoint.rest.model.Parcel> parcels =
         zoneTilingController.getZTJParcels(jobId);
@@ -429,10 +436,11 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
     reset(tilesDownloader);
     when(tilesDownloader.apply(any())).thenThrow(new RuntimeException());
     subject.accept(ztjCreated);
+    zoneTilingJobService.recomputeStatus(zoneTilingJobRepository.findById(jobId).get());
     var eventsCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducer, times(2)).accept(eventsCaptor.capture());
     var events = eventsCaptor.getAllValues();
-    var taskFailed = (TilingTaskFailed) events.get(1).get(0);
+    var taskFailed = (TilingTaskFailed) events.get(0).get(0);
     reset(tilesDownloader);
     when(tilesDownloader.apply(any()))
         .thenAnswer(

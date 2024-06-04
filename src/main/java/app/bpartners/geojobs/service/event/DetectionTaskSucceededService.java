@@ -4,7 +4,6 @@ import app.bpartners.geojobs.endpoint.event.model.DetectionTaskSucceeded;
 import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.repository.DetectionTaskRepository;
 import app.bpartners.geojobs.repository.model.detection.DetectionTask;
-import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -13,7 +12,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class DetectionTaskSucceededService implements Consumer<DetectionTaskSucceeded> {
   private final DetectionTaskRepository taskRepository;
-  private final TaskStatusService<DetectionTask, ZoneDetectionJob> taskStatusService;
+  private final TaskStatusService<DetectionTask> taskStatusService;
 
   @Override
   public void accept(DetectionTaskSucceeded detectionTaskSucceeded) {

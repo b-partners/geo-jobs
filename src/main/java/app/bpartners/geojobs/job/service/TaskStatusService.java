@@ -7,23 +7,18 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
 import static java.time.Instant.now;
 
-import app.bpartners.geojobs.job.model.Job;
 import app.bpartners.geojobs.job.model.Status.HealthStatus;
 import app.bpartners.geojobs.job.model.Status.ProgressionStatus;
 import app.bpartners.geojobs.job.model.Task;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.job.repository.TaskStatusRepository;
+import lombok.AllArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
-public class TaskStatusService<T extends Task, J extends Job> {
+@AllArgsConstructor
+public class TaskStatusService<T extends Task> {
 
   protected final TaskStatusRepository taskStatusRepository;
-  protected final JobService<T, J> jobService;
-
-  public TaskStatusService(TaskStatusRepository taskStatusRepository, JobService<T, J> jobService) {
-    this.taskStatusRepository = taskStatusRepository;
-    this.jobService = jobService;
-  }
 
   @Transactional
   public T process(T task) {
@@ -41,9 +36,6 @@ public class TaskStatusService<T extends Task, J extends Job> {
   }
 
   private T update(T task, ProgressionStatus progression, HealthStatus health, String message) {
-    var jobIb = task.getJobId();
-    var oldJob = jobService.findById(jobIb);
-
     var taskStatus =
         TaskStatus.builder()
             .creationDatetime(now())
@@ -54,7 +46,6 @@ public class TaskStatusService<T extends Task, J extends Job> {
             .build();
     task.hasNewStatus(taskStatus);
     taskStatusRepository.save(taskStatus);
-    jobService.recomputeStatus(oldJob);
 
     return task;
   }
