@@ -18,7 +18,7 @@ public class TaskStatisticMapper {
         .jobType(getJobType(domain.getJobType()))
         .taskStatusStatistics(
             domain.getTaskStatusStatistics().stream().map(TaskStatisticMapper::toRest).toList())
-        .actualJobStatus(statusMapper.statusConverter(domain.getActualJobStatus()))
+        .actualJobStatus(statusMapper.toRest(domain.getActualJobStatus()))
         .updatedAt(domain.getUpdatedAt());
   }
 

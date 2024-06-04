@@ -62,6 +62,11 @@ public abstract class JobService<T extends Task, J extends Job> {
     return repository.findById(id).orElseThrow(() -> new NotFoundException("job.id=" + id));
   }
 
+  public J recomputeStatus(String id) {
+    var oldJob = repository.findById(id).orElseThrow(() -> new NotFoundException("job.id=" + id));
+    return recomputeStatus(oldJob);
+  }
+
   public J recomputeStatus(J oldJob) {
     var jobId = oldJob.getId();
     var oldStatus = oldJob.getStatus();

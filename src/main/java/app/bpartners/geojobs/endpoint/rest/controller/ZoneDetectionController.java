@@ -5,10 +5,17 @@ import static app.bpartners.geojobs.endpoint.rest.model.SuccessStatus.SUCCEEDED;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectConfigurationMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionTaskMapper;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.TaskStatisticMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMapper;
-import app.bpartners.geojobs.endpoint.rest.model.*;
+import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration;
+import app.bpartners.geojobs.endpoint.rest.model.DetectedParcel;
+import app.bpartners.geojobs.endpoint.rest.model.FilteredDetectionJob;
+import app.bpartners.geojobs.endpoint.rest.model.GeoJsonsUrl;
+import app.bpartners.geojobs.endpoint.rest.model.Status;
+import app.bpartners.geojobs.endpoint.rest.model.TaskStatistic;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
+import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.model.BoundedPageSize;
 import app.bpartners.geojobs.model.PageFromOne;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
@@ -18,7 +25,13 @@ import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @AllArgsConstructor
@@ -32,6 +45,7 @@ public class ZoneDetectionController {
   private final DetectionTaskMapper taskMapper;
   private final ZoneDetectionJobValidator jobValidator;
   private final TaskStatisticMapper taskStatisticMapper;
+  private final StatusMapper<JobStatus> jobStatusStatusMapper;
 
   @PutMapping("/detectionJobs/{id}/taskFiltering")
   public List<FilteredDetectionJob> filteredDetectionJobs(@PathVariable String id) {
@@ -43,6 +57,11 @@ public class ZoneDetectionController {
         new FilteredDetectionJob()
             .status(NOT_SUCCEEDED)
             .job(mapper.toRest(filteredTilingJob.getNotSucceededJob(), List.of())));
+  }
+
+  @GetMapping("/detectionJobs/{id}/recomputedStatus")
+  public Status getZTJRecomputedStatus(@PathVariable String id) {
+    return jobStatusStatusMapper.toRest(service.recomputeStatus(id).getStatus());
   }
 
   @GetMapping("/detectionJobs/{id}/taskStatistics")

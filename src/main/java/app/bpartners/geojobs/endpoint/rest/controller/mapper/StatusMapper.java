@@ -27,7 +27,7 @@ public class StatusMapper<T extends app.bpartners.geojobs.job.model.Status> {
     };
   }
 
-  public Status statusConverter(T tilingJobStatus) {
+  public Status toRest(T tilingJobStatus) {
     return new Status()
         .progression(toProgressionEnum(tilingJobStatus.getProgression()))
         .health(toHealthStatus(tilingJobStatus.getHealth()))

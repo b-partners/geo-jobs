@@ -29,7 +29,7 @@ paths:
         - Tiling
         - Detection
       operationId: processAnnotationJob
-      description: | 
+      description: |
         Send jobs tiles to bpartners-annotator.
         In case of ZDJ, detected objects are sent with all images.
         In case of ZTJ, only images are sent with empty detected objects.
@@ -114,6 +114,28 @@ paths:
                   $ref: "#/components/schemas/ZoneTilingJob"
         '500':
           $ref: '#/components/responses/500'
+  '/tilingJobs/{id}/recomputedStatus':
+    get:
+      tags:
+        - Tiling
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: ZTJ identifier
+          schema:
+            type: string
+      operationId: getRecomputedZTJStatus
+      description: Get freshly recomputed ZTJ status
+      responses:
+        200:
+          description: The recomputed status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Status"
+        '500':
+          $ref: '#/components/responses/500'
   '/tilingJobs/{id}/taskStatistics':
     get:
       tags:
@@ -133,7 +155,7 @@ paths:
           content:
             application/json:
               schema:
-                  $ref: "#/components/schemas/TaskStatistic"
+                $ref: "#/components/schemas/TaskStatistic"
         '500':
           $ref: '#/components/responses/500'
   '/tilingJobs/{id}/taskFiltering':
@@ -148,11 +170,11 @@ paths:
           schema:
             type: string
       operationId: filterTilingTasks
-      description: | 
+      description: |
         Separate SUCCEEDED tasks into new tiling job from not SUCCEEDED tasks inside another tiling job, for the given ZTJ
       responses:
         200:
-          description: | 
+          description: |
             List of new tiling jobs with its tasks statuses.
             SUCCEEDED status value means the job contains only SUCCEEDED tasks.
             NOT_SUCCEEDED status value means the job contains only not SUCCEEDED tasks, i.e FAILED or UNKNOWN
@@ -259,6 +281,28 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ZoneDetectionJob"
+        '500':
+          $ref: '#/components/responses/500'
+  '/detectionJobs/{id}/recomputedStatus':
+    get:
+      tags:
+        - Detection
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: ZDJ identifier
+          schema:
+            type: string
+      operationId: getRecomputedZDJStatus
+      description: Get freshly recomputed ZDJ status
+      responses:
+        200:
+          description: The recomputed status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Status"
         '500':
           $ref: '#/components/responses/500'
   '/detectionJobs/{id}/taskStatistics':
@@ -603,7 +647,7 @@ components:
         objectsToDetect:
           type: array
           items:
-           $ref: "#/components/schemas/DetectableObjectConfiguration"
+            $ref: "#/components/schemas/DetectableObjectConfiguration"
     ZoneDetectionJob:
       allOf:
         - $ref: "#/components/schemas/CreateZoneDetectionJob"
@@ -736,21 +780,21 @@ components:
         detectedObjects:
           type: array
           items:
-              $ref: "#/components/schemas/DetectedObject"
+            $ref: "#/components/schemas/DetectedObject"
         status:
           $ref: "#/components/schemas/Status"
         bucketPath:
           type: string
     DetectedObject:
       properties:
-          detectedObjectType:
-            $ref: "#/components/schemas/DetectableObjectType"
-          feature:
-            $ref: "#/components/schemas/Feature"
-          confidence:
-            type: number
-          detectorVersion:
-            type: string
+        detectedObjectType:
+          $ref: "#/components/schemas/DetectableObjectType"
+        feature:
+          $ref: "#/components/schemas/Feature"
+        confidence:
+          type: number
+        detectorVersion:
+          type: string
     JobType:
       type: string
       enum:

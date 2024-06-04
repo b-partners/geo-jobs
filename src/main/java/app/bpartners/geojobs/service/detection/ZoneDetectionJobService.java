@@ -293,7 +293,7 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
 
     return new GeoJsonsUrl()
         .url(generateGeoJsonsUrl(jobStatus))
-        .status(statusMapper.statusConverter(jobStatus));
+        .status(statusMapper.toRest(jobStatus));
   }
 
   private String generateGeoJsonsUrl(JobStatus jobStatus) {

@@ -24,6 +24,6 @@ public class ZoneDetectionJobMapper {
         .zoneTilingJobId(domain.getZoneTilingJob().getId())
         .objectsToDetect(detectableObjectConfigurations)
         .creationDatetime(domain.getSubmissionInstant())
-        .status(statusMapper.statusConverter(domain.getStatus()));
+        .status(statusMapper.toRest(domain.getStatus()));
   }
 }

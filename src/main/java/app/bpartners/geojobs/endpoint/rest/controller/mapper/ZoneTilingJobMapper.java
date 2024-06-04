@@ -77,6 +77,6 @@ public class ZoneTilingJobMapper {
         .geoServerParameter(parcel0 == null ? null : parcelContent.getGeoServerParameter())
         .emailReceiver(domain.getEmailReceiver())
         .features(tilingTaskList.stream().map(FeatureMapper::from).toList())
-        .status(statusMapper.statusConverter(domain.getStatus()));
+        .status(statusMapper.toRest(domain.getStatus()));
   }
 }
