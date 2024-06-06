@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.TaskStatisticRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.job.model.JobStatus;
@@ -367,19 +368,18 @@ public class ZoneDetectionJobServiceTest {
 
     TaskStatistic actual = subject.computeTaskStatistics(JOB_3_ID);
 
+    var eventCapture = ArgumentCaptor.forClass(List.class);
+    verify(eventProducerMock, times(1)).accept(eventCapture.capture());
+    List<TaskStatisticRecomputingSubmitted> events = eventCapture.getValue();
+    var taskStatisticRecomputingEvent = events.getFirst();
     assertEquals(JOB_3_ID, actual.getJobId());
+    assertEquals(actual.getJobId(), taskStatisticRecomputingEvent.getJobId());
     assertEquals(FAILED, actual.getActualJobStatus().getHealth());
     assertEquals(PROCESSING, actual.getActualJobStatus().getProgression());
-    ZoneTilingJobServiceTest.StatisticResult statisticResult =
-        ZoneTilingJobServiceTest.getResult(actual);
-    assertEquals(2, statisticResult.unknownPendingTask().getCount());
-    assertEquals(1, statisticResult.unknownProcessingTask().getCount());
-    assertEquals(1, statisticResult.failedFinishedTask().getCount());
-    assertEquals(2, statisticResult.succeededFinishedTask().getCount());
-    assertEquals(0, statisticResult.unknownFinishedTask().getCount());
+    assertTrue(actual.getTaskStatusStatistics().isEmpty());
   }
 
-  private static DetectionTask taskWithStatus(
+  static DetectionTask taskWithStatus(
       Status.ProgressionStatus progressionStatus, Status.HealthStatus healthStatus) {
     return DetectionTask.builder()
         .statusHistory(
