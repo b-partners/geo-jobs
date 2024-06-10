@@ -5,6 +5,15 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 public class EnvConf {
 
   public static final String ANNOTATOR_USER_ID_FOR_GEOJOBS = "geo-jobs_user_id";
+  private static final String COMMUNITY_AUTH_DETAILS_TEST_VALUE =
+      """
+[{"id":"community1_id",
+  "community_name": "community1_name",
+  "api_key":"community1_key",
+  "detectableObjects":["ROOF", "POOL"],
+  "total_accessible_zone":"{}"
+  }]
+""";
 
   void configureProperties(DynamicPropertyRegistry registry) {
     registry.add("annotator.api.url", () -> "http://dummy.com");
@@ -37,5 +46,6 @@ public class EnvConf {
                 + ANNOTATOR_USER_ID_FOR_GEOJOBS
                 + "\", \"teamId\":\"geo_jobs_team_id\"}");
     registry.add("jobs.status.update.retry.max.attempt", () -> 0);
+    registry.add("community.auth.details", () -> COMMUNITY_AUTH_DETAILS_TEST_VALUE);
   }
 }

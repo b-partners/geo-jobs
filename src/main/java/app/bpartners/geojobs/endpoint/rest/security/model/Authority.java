@@ -5,7 +5,8 @@ import org.springframework.security.core.GrantedAuthority;
 public record Authority(Role value) implements GrantedAuthority {
 
   public enum Role {
-    ROLE_ADMIN
+    ROLE_ADMIN,
+    ROLE_COMMUNITY
   }
 
   @Override
