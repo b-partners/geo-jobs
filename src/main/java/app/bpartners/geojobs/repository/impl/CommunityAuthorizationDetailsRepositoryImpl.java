@@ -6,7 +6,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
-import java.util.Optional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
@@ -25,8 +24,11 @@ public class CommunityAuthorizationDetailsRepositoryImpl
   }
 
   @Override
-  public Optional<CommunityAuthorizationDetails> findById(String id) {
-    return communityAuthorizationDetails.stream().filter(cad -> cad.id().equals(id)).findFirst();
+  public CommunityAuthorizationDetails findByApiKey(String apiKey) {
+    return communityAuthorizationDetails.stream()
+        .filter(cad -> cad.apiKey().equals(apiKey))
+        .findFirst()
+        .orElseThrow();
   }
 
   @Override
