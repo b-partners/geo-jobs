@@ -2,8 +2,7 @@ package app.bpartners.geojobs.service.event;
 
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.FAILED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
-import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
-import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -51,12 +50,16 @@ class ZoneTilingJobStatusChangedServiceTest {
   }
 
   @Test
-  void do_nothing_if_old_equals_new() {
-    var ztjStatusChanged = new ZoneTilingJobStatusChanged();
-    ztjStatusChanged.setOldJob(aZTJ(PROCESSING, UNKNOWN));
-    ztjStatusChanged.setNewJob(aZTJ(PROCESSING, UNKNOWN));
+  void do_nothing() {
+    var ztjStatusChanged1 = new ZoneTilingJobStatusChanged();
+    var ztjStatusChanged2 = new ZoneTilingJobStatusChanged();
+    ztjStatusChanged1.setOldJob(aZTJ(PROCESSING, UNKNOWN));
+    ztjStatusChanged1.setNewJob(aZTJ(PROCESSING, UNKNOWN));
+    ztjStatusChanged2.setOldJob(aZTJ(PENDING, UNKNOWN));
+    ztjStatusChanged2.setNewJob(aZTJ(PROCESSING, UNKNOWN));
 
-    subject.accept(ztjStatusChanged);
+    subject.accept(ztjStatusChanged1);
+    subject.accept(ztjStatusChanged2);
 
     verify(jobService, times(0)).saveZDJFromZTJ(any());
     verify(mailer, times(0)).accept(any());
