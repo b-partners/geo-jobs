@@ -12,6 +12,7 @@ import app.bpartners.geojobs.endpoint.event.model.DetectionTaskSucceeded;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.repository.model.detection.DetectionTask;
+import app.bpartners.geojobs.service.StatusChangedHandler;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -19,8 +20,10 @@ import org.mockito.ArgumentCaptor;
 public class DetectionTaskStatusChangedServiceTest {
   EventProducer eventProducerMock = mock();
   TaskStatusService<DetectionTask> taskStatusServiceMock = mock();
+  StatusChangedHandler statusChangedHandler = new StatusChangedHandler();
   DetectionTaskStatusChangedService subject =
-      new DetectionTaskStatusChangedService(eventProducerMock, taskStatusServiceMock);
+      new DetectionTaskStatusChangedService(
+          eventProducerMock, taskStatusServiceMock, statusChangedHandler);
 
   @Test
   void finished_succeeded_task_ok() {

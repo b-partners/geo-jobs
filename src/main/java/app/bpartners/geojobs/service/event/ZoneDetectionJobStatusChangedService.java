@@ -7,8 +7,9 @@ import app.bpartners.geojobs.endpoint.event.model.ZoneDetectionJobStatusChanged;
 import app.bpartners.geojobs.endpoint.event.model.ZoneDetectionJobSucceeded;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
+import app.bpartners.geojobs.service.StatusChangedHandler;
+import app.bpartners.geojobs.service.StatusHandler;
 import app.bpartners.geojobs.service.detection.DetectionFinishedMailer;
-import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
@@ -22,49 +23,39 @@ public class ZoneDetectionJobStatusChangedService
     implements Consumer<ZoneDetectionJobStatusChanged> {
   private final DetectionFinishedMailer mailer;
   private final EventProducer eventProducer;
-  private final ZoneDetectionJobService zoneDetectionJobService;
+  private final StatusChangedHandler statusChangedHandler;
 
   @Override
   public void accept(ZoneDetectionJobStatusChanged event) {
     var oldJob = event.getOldJob();
-    var oldStatus = oldJob.getStatus();
-    var oldProgression = oldStatus.getProgression();
-
     var newJob = event.getNewJob();
-    var newStatus = newJob.getStatus();
-    var newProgression = newStatus.getProgression();
-    var newHealth = newStatus.getHealth();
 
-    if (oldStatus.equals(newStatus)) {
-      log.info("Status did not change, yet change event received: event=" + event);
-      return;
-    }
-
-    var illegalFinishedMessage = "Cannot finish as unknown or retrying, event=" + event;
-    var notFinishedMessage = "Not finished yet, nothing to do, event=" + event;
-    var doNothingMessage = "Old job already finished, do nothing";
-    var message =
-        switch (oldProgression) {
-          case PENDING, PROCESSING -> switch (newProgression) {
-            case FINISHED -> switch (newHealth) {
-              case UNKNOWN, RETRYING -> throw new IllegalStateException(illegalFinishedMessage);
-              case SUCCEEDED -> handleFinishedJob(newJob);
-              case FAILED -> throw new ApiException(
-                  SERVER_EXCEPTION, "Failed to process zdj=" + newJob.getId());
-            };
-            case PENDING, PROCESSING -> notFinishedMessage;
-          };
-          case FINISHED -> doNothingMessage;
-        };
-    log.info(message);
+    statusChangedHandler.handle(
+        event,
+        newJob.getStatus(),
+        oldJob.getStatus(),
+        new OnSucceededHandler(mailer, eventProducer, newJob),
+        new OnFailedHandler(newJob));
   }
 
-  private String handleFinishedJob(ZoneDetectionJob zdj) {
-    mailer.accept(zdj);
+  private record OnSucceededHandler(
+      DetectionFinishedMailer mailer, EventProducer eventProducer, ZoneDetectionJob zdj)
+      implements StatusHandler {
 
-    eventProducer.accept(
-        List.of(ZoneDetectionJobSucceeded.builder().succeededJobId(zdj.getId()).build()));
+    @Override
+    public String performAction() {
+      mailer.accept(zdj);
+      eventProducer.accept(
+          List.of(ZoneDetectionJobSucceeded.builder().succeededJobId(zdj.getId()).build()));
+      return "Finished, mail sent, ztj=" + zdj;
+    }
+  }
 
-    return "Finished, mail sent, ztj=" + zdj;
+  private record OnFailedHandler(ZoneDetectionJob zdj) implements StatusHandler {
+
+    @Override
+    public String performAction() {
+      throw new ApiException(SERVER_EXCEPTION, "Failed to process zdj=" + zdj.getId());
+    }
   }
 }

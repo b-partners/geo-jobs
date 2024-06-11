@@ -5,6 +5,8 @@ import app.bpartners.geojobs.endpoint.event.model.DetectionTaskStatusChanged;
 import app.bpartners.geojobs.endpoint.event.model.DetectionTaskSucceeded;
 import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.repository.model.detection.DetectionTask;
+import app.bpartners.geojobs.service.StatusChangedHandler;
+import app.bpartners.geojobs.service.StatusHandler;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
@@ -17,56 +19,47 @@ import org.springframework.stereotype.Service;
 public class DetectionTaskStatusChangedService implements Consumer<DetectionTaskStatusChanged> {
   private final EventProducer eventProducer;
   private final TaskStatusService<DetectionTask> taskStatusService;
+  private final StatusChangedHandler statusChangedHandler;
 
   @Override
   public void accept(DetectionTaskStatusChanged event) {
     var oldTask = event.getOldTask();
-    var oldStatus = oldTask.getStatus();
-    var oldProgression = oldStatus.getProgression();
-
     var newTask = event.getNewTask();
-    var newStatus = newTask.getStatus();
-    var newProgression = newStatus.getProgression();
-    var newHealth = newStatus.getHealth();
 
-    if (oldStatus.equals(newStatus)) {
-      log.info("Status did not change, yet change event received: event=" + event);
-      return;
+    statusChangedHandler.handle(
+        event,
+        newTask.getStatus(),
+        oldTask.getStatus(),
+        new OnSucceededHandler(eventProducer, newTask),
+        new OnFailedHandler(taskStatusService, newTask));
+  }
+
+  private record OnSucceededHandler(EventProducer eventProducer, DetectionTask detectionTask)
+      implements StatusHandler {
+
+    @Override
+    public String performAction() {
+      eventProducer.accept(List.of(new DetectionTaskSucceeded(detectionTask)));
+      return "Finished task="
+          + detectionTask
+          + ", now computing new status of job(id="
+          + detectionTask.getJobId()
+          + ")";
     }
-
-    var illegalFinishedMessage = "Cannot finish as unknown or retrying, event=" + event;
-    var notFinishedMessage = "Not finished yet, nothing to do, event=" + event;
-    var doNothingMessage = "Old task already finished, do nothing";
-    var message =
-        switch (oldProgression) {
-          case PENDING, PROCESSING -> switch (newProgression) {
-            case FINISHED -> switch (newHealth) {
-              case UNKNOWN, RETRYING -> throw new IllegalStateException(illegalFinishedMessage);
-              case SUCCEEDED -> handleFinishedTask(newTask);
-              case FAILED -> handleFinishedFailedTask(newTask);
-            };
-            case PENDING, PROCESSING -> notFinishedMessage;
-          };
-          case FINISHED -> doNothingMessage;
-        };
-    log.info(message);
   }
 
-  private String handleFinishedTask(DetectionTask newTask) {
-    eventProducer.accept(List.of(new DetectionTaskSucceeded(newTask)));
-    return "Finished task="
-        + newTask
-        + ", now computing new status of job(id="
-        + newTask.getJobId()
-        + ")";
-  }
+  private record OnFailedHandler(
+      TaskStatusService<DetectionTask> taskStatusService, DetectionTask detectionTask)
+      implements StatusHandler {
 
-  private String handleFinishedFailedTask(DetectionTask newTask) {
-    // TODO: if necessary, retry detectionTask directly with nbAttempt
-    // eventProducer.accept(List.of(new DetectionTaskFailed(newTask, nbAttempt)));
-    taskStatusService.fail(newTask);
-    String message = "Failed to process task=" + newTask;
-    log.error(message);
-    return message;
+    @Override
+    public String performAction() {
+      // TODO: if necessary, retry detectionTask directly with nbAttempt
+      // eventProducer.accept(List.of(new DetectionTaskFailed(newTask, nbAttempt)));
+      taskStatusService.fail(detectionTask);
+      String message = "Failed to process task=" + detectionTask;
+      log.error(message);
+      return message;
+    }
   }
 }

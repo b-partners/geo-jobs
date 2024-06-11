@@ -2,6 +2,8 @@ package app.bpartners.geojobs.service.event;
 
 import app.bpartners.geojobs.endpoint.event.model.ZoneTilingJobStatusChanged;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
+import app.bpartners.geojobs.service.StatusChangedHandler;
+import app.bpartners.geojobs.service.StatusHandler;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.tiling.TilingFinishedMailer;
 import java.util.function.Consumer;
@@ -13,46 +15,34 @@ import org.springframework.stereotype.Service;
 @Service
 @AllArgsConstructor
 public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJobStatusChanged> {
-
-  private TilingFinishedMailer tilingFinishedMailer;
-  private ZoneDetectionJobService zoneDetectionJobService;
+  private final TilingFinishedMailer tilingFinishedMailer;
+  private final ZoneDetectionJobService zoneDetectionJobService;
+  private final StatusChangedHandler statusChangedHandler;
 
   @Override
   public void accept(ZoneTilingJobStatusChanged event) {
     var oldJob = event.getOldJob();
-    var oldStatus = oldJob.getStatus();
-    var oldProgression = oldStatus.getProgression();
-
     var newJob = event.getNewJob();
-    var newStatus = newJob.getStatus();
-    var newProgression = newStatus.getProgression();
-    var newHealth = newStatus.getHealth();
 
-    if (oldStatus.equals(newStatus)) {
-      log.info("Status did not change, yet change event received: event=" + event);
-      return;
-    }
-
-    var illegalFinishedMessage = "Cannot finish as unknown or retrying, event=" + event;
-    var notFinishedMessage = "Not finished yet, nothing to do, event=" + event;
-    var doNothingMessage = "Old job already finished, do nothing";
-    var message =
-        switch (oldProgression) {
-          case PENDING, PROCESSING -> switch (newProgression) {
-            case FINISHED -> switch (newHealth) {
-              case UNKNOWN, RETRYING -> throw new IllegalStateException(illegalFinishedMessage);
-              case SUCCEEDED, FAILED -> handleFinishedJob(newJob);
-            };
-            case PENDING, PROCESSING -> notFinishedMessage;
-          };
-          case FINISHED -> doNothingMessage;
-        };
-    log.info(message);
+    statusChangedHandler.handle(
+        event,
+        newJob.getStatus(),
+        oldJob.getStatus(),
+        new OnFinishedHandler(tilingFinishedMailer, zoneDetectionJobService, newJob),
+        new OnFinishedHandler(tilingFinishedMailer, zoneDetectionJobService, newJob));
   }
 
-  private String handleFinishedJob(ZoneTilingJob ztj) {
-    zoneDetectionJobService.saveZDJFromZTJ(ztj);
-    tilingFinishedMailer.accept(ztj);
-    return "Finished, mail sent, ztj=" + ztj;
+  private record OnFinishedHandler(
+      TilingFinishedMailer tilingFinishedMailer,
+      ZoneDetectionJobService zoneDetectionJobService,
+      ZoneTilingJob ztj)
+      implements StatusHandler {
+
+    @Override
+    public String performAction() {
+      zoneDetectionJobService.saveZDJFromZTJ(ztj);
+      tilingFinishedMailer.accept(ztj);
+      return "Finished, mail sent, ztj=" + ztj;
+    }
   }
 }

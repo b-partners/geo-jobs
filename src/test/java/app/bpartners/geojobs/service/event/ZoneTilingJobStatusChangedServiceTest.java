@@ -14,6 +14,7 @@ import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status.HealthStatus;
 import app.bpartners.geojobs.job.model.Status.ProgressionStatus;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
+import app.bpartners.geojobs.service.StatusChangedHandler;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.tiling.TilingFinishedMailer;
 import java.util.ArrayList;
@@ -23,8 +24,9 @@ class ZoneTilingJobStatusChangedServiceTest {
 
   TilingFinishedMailer mailer = mock();
   ZoneDetectionJobService jobService = mock();
+  StatusChangedHandler statusChangedHandler = new StatusChangedHandler();
   ZoneTilingJobStatusChangedService subject =
-      new ZoneTilingJobStatusChangedService(mailer, jobService);
+      new ZoneTilingJobStatusChangedService(mailer, jobService, statusChangedHandler);
 
   @Test
   void do_not_mail_if_old_fails_and_new_fails() {
