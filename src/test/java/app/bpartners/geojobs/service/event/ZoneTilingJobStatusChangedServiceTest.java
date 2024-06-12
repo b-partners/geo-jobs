@@ -13,15 +13,14 @@ import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status.HealthStatus;
 import app.bpartners.geojobs.job.model.Status.ProgressionStatus;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
+import app.bpartners.geojobs.service.JobFinishedMailer;
 import app.bpartners.geojobs.service.StatusChangedHandler;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
-import app.bpartners.geojobs.service.tiling.TilingFinishedMailer;
 import java.util.ArrayList;
 import org.junit.jupiter.api.Test;
 
 class ZoneTilingJobStatusChangedServiceTest {
-
-  TilingFinishedMailer mailer = mock();
+  JobFinishedMailer<ZoneTilingJob> mailer = mock();
   ZoneDetectionJobService jobService = mock();
   StatusChangedHandler statusChangedHandler = new StatusChangedHandler();
   ZoneTilingJobStatusChangedService subject =

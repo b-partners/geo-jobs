@@ -2,10 +2,10 @@ package app.bpartners.geojobs.service.event;
 
 import app.bpartners.geojobs.endpoint.event.model.ZoneTilingJobStatusChanged;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
+import app.bpartners.geojobs.service.JobFinishedMailer;
 import app.bpartners.geojobs.service.StatusChangedHandler;
 import app.bpartners.geojobs.service.StatusHandler;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
-import app.bpartners.geojobs.service.tiling.TilingFinishedMailer;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 @Service
 @AllArgsConstructor
 public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJobStatusChanged> {
-  private final TilingFinishedMailer tilingFinishedMailer;
+  private final JobFinishedMailer<ZoneTilingJob> tilingFinishedMailer;
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final StatusChangedHandler statusChangedHandler;
 
@@ -33,7 +33,7 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
   }
 
   private record OnFinishedHandler(
-      TilingFinishedMailer tilingFinishedMailer,
+      JobFinishedMailer<ZoneTilingJob> tilingFinishedMailer,
       ZoneDetectionJobService zoneDetectionJobService,
       ZoneTilingJob ztj)
       implements StatusHandler {

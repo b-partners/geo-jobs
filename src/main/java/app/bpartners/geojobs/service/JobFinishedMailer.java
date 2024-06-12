@@ -1,8 +1,9 @@
-package app.bpartners.geojobs.service.tiling;
+package app.bpartners.geojobs.service;
 
+import app.bpartners.geojobs.job.model.Job;
+import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.mail.Email;
 import app.bpartners.geojobs.mail.Mailer;
-import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.template.HTMLTemplateParser;
 import jakarta.mail.internet.InternetAddress;
 import java.util.List;
@@ -14,33 +15,36 @@ import org.thymeleaf.context.Context;
 
 @Service
 @AllArgsConstructor
-public class TilingFinishedMailer implements Consumer<ZoneTilingJob> {
+public class JobFinishedMailer<J extends Job> implements Consumer<J> {
+  public static final String JOB_FINISHED_TEMPLATE = "job_finished";
   private final Mailer mailer;
-  public static final String TILING_TEMPLATE_NAME = "zone_tiling";
   private final HTMLTemplateParser htmlTemplateParser;
   private final String env = System.getenv("ENV");
 
   @SneakyThrows
   @Override
-  public void accept(ZoneTilingJob job) {
+  public void accept(J job) {
+    JobStatus jobStatus = job.getStatus();
     Context context = new Context();
     String zoneName = job.getZoneName();
-    context.setVariable("zone", zoneName);
-    context.setVariable("status", String.valueOf(job.getStatus()));
-    String emailBody = htmlTemplateParser.apply(TILING_TEMPLATE_NAME, context);
+    context.setVariable("job", job);
+    context.setVariable("status", String.valueOf(jobStatus));
+    String emailBody = htmlTemplateParser.apply(JOB_FINISHED_TEMPLATE, context);
 
     mailer.accept(
         new Email(
             new InternetAddress(job.getEmailReceiver()),
             List.of(),
             List.of(),
-            "[GEO-JOBS/"
+            "[geo-jobs/"
                 + env
-                + "] Tâche de pavage [ID="
+                + "] Fin du job (id="
                 + job.getId()
-                + ", Zone="
+                + ", type="
+                + jobStatus.getJobType()
+                + ", zone="
                 + zoneName
-                + "] términée",
+                + ")",
             emailBody,
             List.of()));
   }

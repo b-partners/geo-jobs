@@ -11,8 +11,8 @@ import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.model.ZoneTilingJobStatusChanged;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
+import app.bpartners.geojobs.service.JobFinishedMailer;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
-import app.bpartners.geojobs.service.tiling.TilingFinishedMailer;
 import java.util.ArrayList;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +20,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 
 public class ZoneTilingJobStatusChangedIT extends FacadeIT {
   @Autowired private ZoneTilingJobStatusChangedService subject;
-  @MockBean private TilingFinishedMailer mailer;
+  @MockBean private JobFinishedMailer<ZoneTilingJob> mailer;
   @MockBean private ZoneDetectionJobService zdjService;
 
   @Test

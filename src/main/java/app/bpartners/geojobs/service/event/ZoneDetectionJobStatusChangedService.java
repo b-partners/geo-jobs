@@ -7,9 +7,9 @@ import app.bpartners.geojobs.endpoint.event.model.ZoneDetectionJobStatusChanged;
 import app.bpartners.geojobs.endpoint.event.model.ZoneDetectionJobSucceeded;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
+import app.bpartners.geojobs.service.JobFinishedMailer;
 import app.bpartners.geojobs.service.StatusChangedHandler;
 import app.bpartners.geojobs.service.StatusHandler;
-import app.bpartners.geojobs.service.detection.DetectionFinishedMailer;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
 @AllArgsConstructor
 public class ZoneDetectionJobStatusChangedService
     implements Consumer<ZoneDetectionJobStatusChanged> {
-  private final DetectionFinishedMailer mailer;
+  private final JobFinishedMailer<ZoneDetectionJob> mailer;
   private final EventProducer eventProducer;
   private final StatusChangedHandler statusChangedHandler;
 
@@ -39,7 +39,7 @@ public class ZoneDetectionJobStatusChangedService
   }
 
   private record OnSucceededHandler(
-      DetectionFinishedMailer mailer, EventProducer eventProducer, ZoneDetectionJob zdj)
+      JobFinishedMailer<ZoneDetectionJob> mailer, EventProducer eventProducer, ZoneDetectionJob zdj)
       implements StatusHandler {
 
     @Override

@@ -14,13 +14,13 @@ import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
+import app.bpartners.geojobs.service.JobFinishedMailer;
 import app.bpartners.geojobs.service.StatusChangedHandler;
-import app.bpartners.geojobs.service.detection.DetectionFinishedMailer;
 import java.util.ArrayList;
 import org.junit.jupiter.api.Test;
 
 public class ZoneDetectionJobStatusChangedServiceTest {
-  DetectionFinishedMailer detectionFinishedMailerMock = mock();
+  JobFinishedMailer<ZoneDetectionJob> detectionFinishedMailerMock = mock();
   EventProducer eventProducerMock = mock();
   StatusChangedHandler statusChangedHandler = new StatusChangedHandler();
   ZoneDetectionJobStatusChangedService subject =
