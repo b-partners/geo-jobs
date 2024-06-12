@@ -17,7 +17,7 @@ import org.thymeleaf.context.Context;
 @AllArgsConstructor
 public class JobFilteredMailer<J extends Job> implements Consumer<FilteredJob<J>> {
   private final Mailer mailer;
-  private static final String TEMPLATE_NAME = "job_filtering";
+  public static final String TEMPLATE_NAME = "job_filtering";
   private final HTMLTemplateParser htmlTemplateParser;
   private final String env = System.getenv("ENV");
 
@@ -38,7 +38,14 @@ public class JobFilteredMailer<J extends Job> implements Consumer<FilteredJob<J>
             new InternetAddress(succeededJob.getEmailReceiver()),
             List.of(),
             List.of(),
-            "[geo-jobs/" + env + "] Séparation des tâches du job [ID=" + initialJobId + " términée",
+            "[geo-jobs/"
+                + env
+                + "] Séparation des tâches du job (id="
+                + initialJobId
+                + ","
+                + " type="
+                + succeededJob.getStatus().getJobType()
+                + ") términée",
             emailBody,
             List.of()));
   }
