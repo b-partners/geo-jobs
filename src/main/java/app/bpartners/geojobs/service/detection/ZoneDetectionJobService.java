@@ -32,6 +32,7 @@ import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
+import app.bpartners.geojobs.service.JobFilteredMailer;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -52,7 +53,7 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
   private final AnnotationService annotationService;
   private final ZoneDetectionJobRepository zoneDetectionJobRepository;
   private final TileDetectionTaskRepository tileDetectionTaskRepository;
-  private final DetectionFilteredMailer detectionFilteredMailer;
+  private final JobFilteredMailer<ZoneDetectionJob> detectionFilteredMailer;
 
   public ZoneDetectionJobService(
       JpaRepository<ZoneDetectionJob, String> repository,
@@ -67,7 +68,7 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
       AnnotationService annotationService,
       ZoneDetectionJobRepository zoneDetectionJobRepository,
       TileDetectionTaskRepository tileDetectionTaskRepository,
-      DetectionFilteredMailer detectionFilteredMailer) {
+      JobFilteredMailer<ZoneDetectionJob> detectionFilteredMailer) {
     super(repository, jobStatusRepository, taskRepository, eventProducer, ZoneDetectionJob.class);
     this.tilingTaskRepository = tilingTaskRepository;
     this.detectionMapper = detectionMapper;

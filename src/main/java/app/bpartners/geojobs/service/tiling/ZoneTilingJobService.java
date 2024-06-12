@@ -22,6 +22,7 @@ import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.model.FilteredTilingJob;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
+import app.bpartners.geojobs.service.JobFilteredMailer;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> {
   private final ZoneDetectionJobService detectionJobService;
-  private final TilingFilteredMailer tilingFilteredMailer;
+  private final JobFilteredMailer<ZoneTilingJob> tilingFilteredMailer;
 
   public ZoneTilingJobService(
       JpaRepository<ZoneTilingJob, String> repository,
@@ -40,7 +41,7 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
       TaskRepository<TilingTask> taskRepository,
       EventProducer eventProducer,
       ZoneDetectionJobService detectionJobService,
-      TilingFilteredMailer tilingFilteredMailer) {
+      JobFilteredMailer<ZoneTilingJob> tilingFilteredMailer) {
     super(repository, jobStatusRepository, taskRepository, eventProducer, ZoneTilingJob.class);
     this.detectionJobService = detectionJobService;
     this.tilingFilteredMailer = tilingFilteredMailer;
