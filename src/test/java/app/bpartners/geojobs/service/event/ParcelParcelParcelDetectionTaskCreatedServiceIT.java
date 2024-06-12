@@ -10,16 +10,16 @@ import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.DetectionTaskCreated;
+import app.bpartners.geojobs.endpoint.event.model.ParcelDetectionTaskCreated;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.repository.DetectedTileRepository;
-import app.bpartners.geojobs.repository.DetectionTaskRepository;
+import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.detection.DetectedTile;
-import app.bpartners.geojobs.repository.model.detection.DetectionTask;
+import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.detection.DetectionResponse;
@@ -38,7 +38,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 @Slf4j
-class DetectionTaskCreatedServiceIT extends FacadeIT {
+class ParcelParcelParcelDetectionTaskCreatedServiceIT extends FacadeIT {
   private static final String FILE_NAME =
       "src"
           + File.separator
@@ -50,7 +50,7 @@ class DetectionTaskCreatedServiceIT extends FacadeIT {
           + File.separator
           + "image-to-detect.jpg";
 
-  @Autowired DetectionTaskCreatedService subject;
+  @Autowired ParcelDetectionTaskCreatedService subject;
 
   @MockBean TileObjectDetector objectsDetector;
 
@@ -58,7 +58,7 @@ class DetectionTaskCreatedServiceIT extends FacadeIT {
 
   @MockBean DetectedTileRepository detectedTileRepository;
 
-  @MockBean DetectionTaskRepository detectionTaskRepository;
+  @MockBean ParcelDetectionTaskRepository parcelDetectionTaskRepository;
 
   @MockBean ZoneDetectionJobService zoneDetectionJobService;
   @MockBean EventProducer eventProducer;
@@ -112,13 +112,13 @@ class DetectionTaskCreatedServiceIT extends FacadeIT {
         .build();
   }
 
-  DetectionTaskCreated detectionTaskCreated() {
+  ParcelDetectionTaskCreated detectionTaskCreated() {
     String taskId = randomUUID().toString();
     String jobId = randomUUID().toString();
 
-    return DetectionTaskCreated.builder()
+    return ParcelDetectionTaskCreated.builder()
         .task(
-            DetectionTask.builder()
+            ParcelDetectionTask.builder()
                 .id(taskId)
                 .jobId(jobId)
                 .parcels(

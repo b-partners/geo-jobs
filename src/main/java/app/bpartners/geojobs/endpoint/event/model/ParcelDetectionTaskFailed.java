@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.endpoint.event.model;
 
-import app.bpartners.geojobs.repository.model.detection.DetectionTask;
+import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import java.time.Duration;
 import javax.annotation.processing.Generated;
 import lombok.*;
@@ -12,8 +12,8 @@ import lombok.*;
 @Data
 @EqualsAndHashCode
 @ToString
-public class DetectionTaskFailed extends PojaEvent {
-  private DetectionTask task;
+public class ParcelDetectionTaskFailed extends PojaEvent {
+  private ParcelDetectionTask task;
   private int attemptNb;
 
   @Override

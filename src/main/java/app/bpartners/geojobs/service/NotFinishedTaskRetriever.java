@@ -11,7 +11,7 @@ import app.bpartners.geojobs.job.model.JobType;
 import app.bpartners.geojobs.job.model.Task;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
-import app.bpartners.geojobs.repository.model.detection.DetectionTask;
+import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -22,7 +22,7 @@ public class NotFinishedTaskRetriever<T extends Task> implements Function<T, T> 
   @Override
   public T apply(T failedTask) {
     JobType jobType =
-        failedTask instanceof DetectionTask || failedTask instanceof TileDetectionTask
+        failedTask instanceof ParcelDetectionTask || failedTask instanceof TileDetectionTask
             ? DETECTION
             : TILING;
     List<TaskStatus> newStatus = new ArrayList<>(failedTask.getStatusHistory());

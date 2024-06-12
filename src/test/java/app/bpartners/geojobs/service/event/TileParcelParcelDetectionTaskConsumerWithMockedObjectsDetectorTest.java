@@ -16,7 +16,7 @@ import app.bpartners.geojobs.service.detection.MockedTileObjectDetector;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-class TileDetectionTaskConsumerWithMockedObjectsDetectorTest {
+class TileParcelParcelDetectionTaskConsumerWithMockedObjectsDetectorTest {
 
   @Test
   void can_consume_with_no_error() {

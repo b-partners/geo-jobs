@@ -8,7 +8,7 @@ import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.DetectionTaskCreated;
+import app.bpartners.geojobs.endpoint.event.model.ParcelDetectionTaskCreated;
 import app.bpartners.geojobs.endpoint.event.model.TaskStatisticRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.ZoneDetectionJobStatusChanged;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
@@ -22,12 +22,13 @@ import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.job.service.JobService;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.exception.NotFoundException;
+import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.*;
 import app.bpartners.geojobs.repository.model.FilteredDetectionJob;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.*;
-import app.bpartners.geojobs.repository.model.detection.DetectionTask;
+import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
@@ -45,7 +46,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
-public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetectionJob> {
+public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, ZoneDetectionJob> {
   private final DetectionMapper detectionMapper;
   private final DetectableObjectConfigurationRepository objectConfigurationRepository;
   private final TilingTaskRepository tilingTaskRepository;
@@ -55,13 +56,14 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
   private final ZoneDetectionJobRepository zoneDetectionJobRepository;
   private final TileDetectionTaskRepository tileDetectionTaskRepository;
   private final JobFilteredMailer<ZoneDetectionJob> detectionFilteredMailer;
-  private final NotFinishedTaskRetriever<DetectionTask> notFinishedTaskRetriever;
+  private final NotFinishedTaskRetriever<ParcelDetectionTask> notFinishedTaskRetriever;
+  private final ParcelDetectionJobService parcelDetectionJobService;
 
   public ZoneDetectionJobService(
       JpaRepository<ZoneDetectionJob, String> repository,
       JobStatusRepository jobStatusRepository,
       TilingTaskRepository tilingTaskRepository,
-      DetectionTaskRepository taskRepository,
+      ParcelDetectionTaskRepository taskRepository,
       EventProducer eventProducer,
       DetectionMapper detectionMapper,
       DetectableObjectConfigurationRepository objectConfigurationRepository,
@@ -71,7 +73,8 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
       ZoneDetectionJobRepository zoneDetectionJobRepository,
       TileDetectionTaskRepository tileDetectionTaskRepository,
       JobFilteredMailer<ZoneDetectionJob> detectionFilteredMailer,
-      NotFinishedTaskRetriever<DetectionTask> notFinishedTaskRetriever) {
+      NotFinishedTaskRetriever<ParcelDetectionTask> notFinishedTaskRetriever,
+      ParcelDetectionJobService parcelDetectionJobService) {
     super(repository, jobStatusRepository, taskRepository, eventProducer, ZoneDetectionJob.class);
     this.tilingTaskRepository = tilingTaskRepository;
     this.detectionMapper = detectionMapper;
@@ -83,6 +86,7 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
     this.tileDetectionTaskRepository = tileDetectionTaskRepository;
     this.detectionFilteredMailer = detectionFilteredMailer;
     this.notFinishedTaskRetriever = notFinishedTaskRetriever;
+    this.parcelDetectionJobService = parcelDetectionJobService;
   }
 
   public TaskStatistic computeTaskStatistics(String jobId) {
@@ -99,6 +103,9 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
 
   @Transactional
   public FilteredDetectionJob dispatchTasksBySucceededStatus(String jobId) {
+    throw new NotImplementedException("Not supported");
+    /*
+    TODO
     var job = findById(jobId);
     var tileDetectionTasks = tileDetectionTaskRepository.findAllByJobId(job.getId());
     var succeededTileTasks = tileDetectionTasks.stream().filter(Task::isSucceeded).toList();
@@ -144,24 +151,24 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
 
     var filteredDetectionJob = new FilteredDetectionJob(jobId, succeededJob, notSucceededJob);
     detectionFilteredMailer.accept(filteredDetectionJob);
-    return filteredDetectionJob;
+    return filteredDetectionJob;*/
   }
 
-  private List<DetectionTask> getDetectionTasksFrom(
+  private List<ParcelDetectionTask> getDetectionTasksFrom(
       List<TileDetectionTask> tileDetectionTasks,
-      String jobId,
+      String zoneDetectionJobId,
       Status.ProgressionStatus progressionStatus,
       Status.HealthStatus healthStatus) {
-    List<DetectionTask> detectionTasks = new ArrayList<>();
+    List<ParcelDetectionTask> detectionTasks = new ArrayList<>();
     Map<String, List<TileDetectionTask>> taskGroupedByParent =
         tileDetectionTasks.stream()
-            .filter(task -> task.getParentTaskId() != null)
-            .collect(Collectors.groupingBy(Task::getParentTaskId));
+            .filter(task -> task.getJobId() != null)
+            .collect(Collectors.groupingBy(Task::getJobId));
     for (Map.Entry<String, List<TileDetectionTask>> entry : taskGroupedByParent.entrySet()) {
       String parentTaskId = entry.getKey();
       List<TileDetectionTask> tileTasks = entry.getValue();
       List<Tile> tiles = tileTasks.stream().map(TileDetectionTask::getTile).toList();
-      DetectionTask existingTask =
+      ParcelDetectionTask existingTask =
           taskRepository
               .findById(parentTaskId)
               .orElseThrow(
@@ -171,11 +178,10 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
       String taskId = randomUUID().toString();
       Parcel duplicatedParcel =
           existingTask.getParcel().duplicate(parcelId, parcelContentId, tiles);
-
       detectionTasks.add(
-          DetectionTask.builder()
+          ParcelDetectionTask.builder()
               .id(taskId)
-              .jobId(jobId)
+              .jobId(zoneDetectionJobId)
               .submissionInstant(now())
               .statusHistory(
                   List.of(
@@ -194,7 +200,7 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
   private ZoneDetectionJob duplicateWithNewStatus(
       String duplicatedJobId,
       ZoneDetectionJob job,
-      List<DetectionTask> tasks,
+      List<ParcelDetectionTask> tasks,
       JobStatus newStatus) {
     ZoneDetectionJob jobToDuplicate = job.duplicate(duplicatedJobId);
     if (newStatus != null) {
@@ -214,11 +220,11 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
             .findById(jobId)
             .orElseThrow(
                 () -> new NotFoundException("ZoneDetectionJob(id=" + jobId + ") not found"));
-    List<DetectionTask> detectionTasks = taskRepository.findAllByJobId(jobId);
+    List<ParcelDetectionTask> parcelDetectionTasks = taskRepository.findAllByJobId(jobId);
 
-    List<DetectionTask> unfinishedTasks = new ArrayList<>();
-    List<DetectionTask> finishedWithBadStatus = new ArrayList<>();
-    detectionTasks.forEach(
+    List<ParcelDetectionTask> unfinishedTasks = new ArrayList<>();
+    List<ParcelDetectionTask> finishedWithBadStatus = new ArrayList<>();
+    parcelDetectionTasks.forEach(
         task -> {
           var tileDetectionTasks = tileDetectionTaskRepository.findAllByParentTaskId(task.getId());
           boolean computedStatusIsSucceeded =
@@ -244,9 +250,10 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
       throw new BadRequestException(
           "All tilling tasks of job(id=" + jobId + ") are already SUCCEEDED");
     }
-    List<DetectionTask> savedFailedTasks =
+    List<ParcelDetectionTask> savedFailedTasks =
         taskRepository.saveAll(unfinishedTasks.stream().map(notFinishedTaskRetriever).toList());
-    savedFailedTasks.forEach(task -> eventProducer.accept(List.of(new DetectionTaskCreated(task))));
+    savedFailedTasks.forEach(
+        task -> eventProducer.accept(List.of(new ParcelDetectionTaskCreated(task))));
     // /!\ Force job status to status PROCESSING again
     job.hasNewStatus(
         JobStatus.builder()
@@ -261,7 +268,7 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
   }
 
   private Optional<ZoneDetectionJob> computeFromDetectionBadStatuses(
-      List<DetectionTask> finishedWithBadStatus, ZoneDetectionJob initialJob) {
+      List<ParcelDetectionTask> finishedWithBadStatus, ZoneDetectionJob initialJob) {
     if (finishedWithBadStatus.isEmpty()) return Optional.empty();
     finishedWithBadStatus.forEach(
         task -> {
@@ -379,7 +386,8 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
   @Transactional
   public ZoneDetectionJob fireTasks(String jobId) {
     var job = findById(jobId);
-    getTasks(job).forEach(task -> eventProducer.accept(List.of(new DetectionTaskCreated(task))));
+    getTasks(job)
+        .forEach(task -> eventProducer.accept(List.of(new ParcelDetectionTaskCreated(task))));
     return job;
   }
 
@@ -397,7 +405,8 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
         Stream.of(objectConfigurationsFromMachineZDJ, objectConfigurationsFromHumanZDJ)
             .flatMap(List::stream)
             .toList());
-    getTasks(job).forEach(task -> eventProducer.accept(List.of(new DetectionTaskCreated(task))));
+    getTasks(job)
+        .forEach(task -> eventProducer.accept(List.of(new ParcelDetectionTaskCreated(task))));
     return job;
   }
 
@@ -425,17 +434,17 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
 
   public ZoneDetectionJob saveWithTasks(
       List<TilingTask> tilingTasks, ZoneDetectionJob zoneDetectionJob) {
-    List<DetectionTask> detectionTasks =
+    List<ParcelDetectionTask> parcelDetectionTasks =
         tilingTasks.stream()
             .map(
                 tilingTask -> {
                   var parcels = tilingTask.getParcels();
                   var generatedTaskId = randomUUID().toString();
-                  DetectionTask detectionTask = new DetectionTask();
-                  detectionTask.setId(generatedTaskId);
-                  detectionTask.setJobId(zoneDetectionJob.getId());
-                  detectionTask.setParcels(parcels);
-                  detectionTask.setStatusHistory(
+                  ParcelDetectionTask parcelDetectionTask = new ParcelDetectionTask();
+                  parcelDetectionTask.setId(generatedTaskId);
+                  parcelDetectionTask.setJobId(zoneDetectionJob.getId());
+                  parcelDetectionTask.setParcels(parcels);
+                  parcelDetectionTask.setStatusHistory(
                       List.of(
                           TaskStatus.builder()
                               .id(randomUUID().toString())
@@ -444,12 +453,12 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
                               .progression(PENDING)
                               .creationDatetime(now())
                               .build()));
-                  detectionTask.setSubmissionInstant(now());
-                  return detectionTask;
+                  parcelDetectionTask.setSubmissionInstant(now());
+                  return parcelDetectionTask;
                 })
             .toList();
 
-    return super.create(zoneDetectionJob, detectionTasks);
+    return super.create(zoneDetectionJob, parcelDetectionTasks);
   }
 
   public ZoneDetectionJob save(ZoneDetectionJob job) {

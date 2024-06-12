@@ -30,8 +30,10 @@ public class StatusChangedHandler {
           case PENDING, PROCESSING -> switch (newProgression) {
             case FINISHED -> switch (newHealth) {
               case UNKNOWN, RETRYING -> throw new IllegalStateException(illegalFinishedMessage);
-              case SUCCEEDED -> onFinish.performAction(); //TODO: use Runnable instead of simple Interface
-              case FAILED -> onFailed.performAction(); //TODO: use Runnable instead of simple Interface
+              case SUCCEEDED -> onFinish
+                  .performAction(); // TODO: use Runnable instead of simple Interface
+              case FAILED -> onFailed
+                  .performAction(); // TODO: use Runnable instead of simple Interface
             };
             case PENDING, PROCESSING -> notFinishedMessage;
           };

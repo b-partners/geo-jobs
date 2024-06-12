@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 @Setter
 @ToString
 @JsonIgnoreProperties({"status"})
-public class DetectionTask extends Task implements Serializable {
+public class ParcelDetectionTask extends Task implements Serializable {
   @ManyToMany(fetch = EAGER)
   @JoinTable(
       name = "parcel_detection_task",
@@ -63,7 +63,7 @@ public class DetectionTask extends Task implements Serializable {
   }
 
   @Override
-  public DetectionTask semanticClone() {
+  public ParcelDetectionTask semanticClone() {
     return this.toBuilder().statusHistory(new ArrayList<>(getStatusHistory())).build();
   }
 }

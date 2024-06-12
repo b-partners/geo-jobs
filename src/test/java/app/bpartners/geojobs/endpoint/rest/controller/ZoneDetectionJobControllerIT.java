@@ -16,7 +16,7 @@ import static org.mockito.Mockito.*;
 import app.bpartners.gen.annotator.endpoint.rest.model.Job;
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.DetectionTaskCreated;
+import app.bpartners.geojobs.endpoint.event.model.ParcelDetectionTaskCreated;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.job.model.JobStatus;
@@ -24,14 +24,14 @@ import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.model.BoundedPageSize;
 import app.bpartners.geojobs.model.PageFromOne;
-import app.bpartners.geojobs.repository.DetectionTaskRepository;
 import app.bpartners.geojobs.repository.HumanDetectionJobRepository;
+import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;
 import app.bpartners.geojobs.repository.ParcelRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
-import app.bpartners.geojobs.repository.model.detection.DetectionTask;
 import app.bpartners.geojobs.repository.model.detection.HumanDetectionJob;
+import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
@@ -56,7 +56,7 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
   @Autowired ZoneDetectionController subject;
   @Autowired ZoneDetectionJobRepository jobRepository;
   @Autowired JobStatusRepository jobStatusRepository;
-  @Autowired DetectionTaskRepository detectionTaskRepository;
+  @Autowired ParcelDetectionTaskRepository parcelDetectionTaskRepository;
   @Autowired ZoneDetectionJobMapper detectionJobMapper;
   @Autowired ParcelRepository parcelRepository;
   @MockBean EventProducer eventProducer;
@@ -99,9 +99,9 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
         aZDJ(randomUUID().toString(), tilingJobId2).toBuilder().detectionType(HUMAN).build());
   }
 
-  public static DetectionTask someDetectionTask(
+  public static ParcelDetectionTask someDetectionTask(
       String jobId, String taskId, String parcelId, String parcelContentId, String tileId) {
-    return DetectionTask.builder()
+    return ParcelDetectionTask.builder()
         .id(taskId)
         .jobId(jobId)
         .parcels(List.of(someParcel(parcelId, parcelContentId, tileId)))
@@ -116,8 +116,8 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
         .build();
   }
 
-  public static DetectionTask someDetectionTask(String jobId, String taskId) {
-    return DetectionTask.builder()
+  public static ParcelDetectionTask someDetectionTask(String jobId, String taskId) {
+    return ParcelDetectionTask.builder()
         .id(taskId)
         .jobId(jobId)
         .parcels(
@@ -146,16 +146,16 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
         .build();
   }
 
-  private static DetectionTask detectionTask2(String jobId) {
+  private static ParcelDetectionTask detectionTask2(String jobId) {
     return someDetectionTask(jobId, "detection_task2");
   }
 
-  private static DetectionTask detectionTask1(String jobId) {
+  private static ParcelDetectionTask detectionTask1(String jobId) {
     return someDetectionTask(jobId, "detection_task1");
   }
 
   @NotNull
-  private static List<DetectionTask> randomDetectionTasks(String jobId) {
+  private static List<ParcelDetectionTask> randomDetectionTasks(String jobId) {
     return List.of(detectionTask1(jobId), detectionTask2(jobId));
   }
 
@@ -331,13 +331,13 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
   @Transactional
   void process_zdj() {
     var job1 = jobRepository.saveAll(someDetectionJobs()).get(0);
-    List<DetectionTask> detectionTasks = randomDetectionTasks(job1.getId());
+    List<ParcelDetectionTask> parcelDetectionTasks = randomDetectionTasks(job1.getId());
     List<Parcel> parcels =
-        detectionTasks.stream()
+        parcelDetectionTasks.stream()
             .flatMap(task -> task.getParcels().stream())
             .collect(Collectors.toList());
     parcelRepository.saveAll(parcels);
-    var configuredTasks = detectionTaskRepository.saveAll(detectionTasks);
+    var configuredTasks = parcelDetectionTaskRepository.saveAll(parcelDetectionTasks);
     var detectableObjectConfig =
         List.of(new DetectableObjectConfiguration().type(ROOF).confidence(new BigDecimal("0.75")));
     var expected =
@@ -351,18 +351,18 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
     var events = eventsCaptor.getAllValues();
     var capturedEvent1 = events.get(0).get(0);
     var capturedEvent2 = events.get(1).get(0);
-    assertEquals(new DetectionTaskCreated(configuredTasks.get(0)), capturedEvent1);
-    assertEquals(new DetectionTaskCreated(configuredTasks.get(1)), capturedEvent2);
+    assertEquals(new ParcelDetectionTaskCreated(configuredTasks.get(0)), capturedEvent1);
+    assertEquals(new ParcelDetectionTaskCreated(configuredTasks.get(1)), capturedEvent2);
   }
 
   @Test
   @Transactional
   void read_zdj_parcels() {
     jobRepository.saveAll(someDetectionJobs());
-    DetectionTask detectionTask =
+    ParcelDetectionTask parcelDetectionTask =
         someDetectionTask(JOB1_ID, "task1", "parcel1", "parcelContent1", "tile1");
-    parcelRepository.saveAll(detectionTask.getParcels());
-    var savedTask = detectionTaskRepository.save(detectionTask);
+    parcelRepository.saveAll(parcelDetectionTask.getParcels());
+    var savedTask = parcelDetectionTaskRepository.save(parcelDetectionTask);
     var status =
         new Status().progression(Status.ProgressionEnum.PENDING).health(Status.HealthEnum.UNKNOWN);
     var expected =
@@ -388,6 +388,6 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
         );
 
     // TODO: reset database correctly
-    detectionTaskRepository.delete(savedTask);
+    parcelDetectionTaskRepository.delete(savedTask);
   }
 }

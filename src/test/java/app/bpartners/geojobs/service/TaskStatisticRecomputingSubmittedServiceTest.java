@@ -11,7 +11,7 @@ import static org.mockito.Mockito.*;
 import app.bpartners.geojobs.endpoint.event.model.TaskStatisticRecomputingSubmitted;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.mail.Mailer;
-import app.bpartners.geojobs.repository.DetectionTaskRepository;
+import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
@@ -31,7 +31,7 @@ public class TaskStatisticRecomputingSubmittedServiceTest {
   private static final String JOB_ID = "jobId";
   MockedConstruction<TaskStatisticMailer> taskMailerMockedConstruction;
   TilingTaskRepository tilingTaskRepositoryMock = mock();
-  DetectionTaskRepository detectionTaskRepositoryMock = mock();
+  ParcelDetectionTaskRepository parcelDetectionTaskRepositoryMock = mock();
   ZoneTilingJobRepository tilingJobRepositoryMock = mock();
   ZoneDetectionJobRepository zoneDetectionJobRepositoryMock = mock();
   Mailer mailerMock = mock();
@@ -53,7 +53,7 @@ public class TaskStatisticRecomputingSubmittedServiceTest {
     TaskStatisticRecomputingSubmittedService subject =
         new TaskStatisticRecomputingSubmittedService(
             tilingTaskRepositoryMock,
-            detectionTaskRepositoryMock,
+            parcelDetectionTaskRepositoryMock,
             tilingJobRepositoryMock,
             zoneDetectionJobRepositoryMock,
             mailerMock,
@@ -63,7 +63,7 @@ public class TaskStatisticRecomputingSubmittedServiceTest {
     ZoneDetectionJob expectedDetectionJob = ZoneDetectionJob.builder().id(JOB_ID).build();
     when(zoneDetectionJobRepositoryMock.findById(JOB_ID))
         .thenReturn(Optional.of(expectedDetectionJob));
-    when(detectionTaskRepositoryMock.findAllByJobId(JOB_ID))
+    when(parcelDetectionTaskRepositoryMock.findAllByJobId(JOB_ID))
         .thenReturn(
             List.of(
                 taskWithStatus(FINISHED, SUCCEEDED),
@@ -95,7 +95,7 @@ public class TaskStatisticRecomputingSubmittedServiceTest {
     TaskStatisticRecomputingSubmittedService subject =
         new TaskStatisticRecomputingSubmittedService(
             tilingTaskRepositoryMock,
-            detectionTaskRepositoryMock,
+            parcelDetectionTaskRepositoryMock,
             tilingJobRepositoryMock,
             zoneDetectionJobRepositoryMock,
             mailerMock,

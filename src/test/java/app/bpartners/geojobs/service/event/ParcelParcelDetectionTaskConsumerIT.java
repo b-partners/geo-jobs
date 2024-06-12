@@ -4,7 +4,7 @@ import static app.bpartners.geojobs.endpoint.rest.controller.ZoneDetectionJobCon
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
-import static app.bpartners.geojobs.service.DetectionTaskServiceIT.detectedTile;
+import static app.bpartners.geojobs.service.ParcelDetectionTaskServiceIT.detectedTile;
 import static java.util.UUID.randomUUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -32,23 +32,23 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.transaction.annotation.Transactional;
 
 @Transactional
-public class DetectionTaskConsumerIT extends FacadeIT {
+public class ParcelParcelDetectionTaskConsumerIT extends FacadeIT {
   public static final String JOB_ID = "JOB_ID";
   public static final String DETECTION_TASK_ID = "detection_task1";
   @MockBean TileObjectDetector objectDetector;
   @MockBean DetectionMapper detectionMapper;
   @MockBean EventProducer eventProducer;
   @MockBean TileDetectionTaskRepository tileDetectionTaskRepository;
-  @Autowired DetectionTaskConsumer subject;
+  @Autowired ParcelDetectionTaskConsumer subject;
   @Autowired DetectableObjectConfigurationRepository objectConfigurationRepository;
-  @Autowired DetectionTaskRepository detectionTaskRepository;
+  @Autowired ParcelDetectionTaskRepository parcelDetectionTaskRepository;
   @Autowired ZoneDetectionJobRepository jobRepository;
   @Autowired DetectedTileRepository detectedTileRepository;
   @Autowired ParcelRepository parcelRepository;
 
-  private static DetectionTask detectionTask() {
+  private static ParcelDetectionTask detectionTask() {
     List<Parcel> parcels = getParcels();
-    return DetectionTask.builder()
+    return ParcelDetectionTask.builder()
         .id(DETECTION_TASK_ID)
         .jobId(JOB_ID)
         .parcels(parcels)
@@ -80,7 +80,7 @@ public class DetectionTaskConsumerIT extends FacadeIT {
     when(tileDetectionTaskRepository.saveAll(any())).thenReturn(List.of(new TileDetectionTask()));
     jobRepository.save(ZoneDetectionJob.builder().id(JOB_ID).build());
     parcelRepository.saveAll(getParcels());
-    detectionTaskRepository.save(detectionTask());
+    parcelDetectionTaskRepository.save(detectionTask());
     objectConfigurationRepository.save(
         DetectableObjectConfiguration.builder()
             .id("detectableObjectConfigurationId1")

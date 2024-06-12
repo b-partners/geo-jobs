@@ -2,9 +2,9 @@ package app.bpartners.geojobs.service.event;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionTaskStatusChanged;
-import app.bpartners.geojobs.endpoint.event.model.DetectionTaskSucceeded;
+import app.bpartners.geojobs.endpoint.event.model.ParcelDetectionTaskSucceeded;
 import app.bpartners.geojobs.job.service.TaskStatusService;
-import app.bpartners.geojobs.repository.model.detection.DetectionTask;
+import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.service.StatusChangedHandler;
 import app.bpartners.geojobs.service.StatusHandler;
 import java.util.List;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 @AllArgsConstructor
 public class DetectionTaskStatusChangedService implements Consumer<DetectionTaskStatusChanged> {
   private final EventProducer eventProducer;
-  private final TaskStatusService<DetectionTask> taskStatusService;
+  private final TaskStatusService<ParcelDetectionTask> taskStatusService;
   private final StatusChangedHandler statusChangedHandler;
 
   @Override
@@ -34,30 +34,32 @@ public class DetectionTaskStatusChangedService implements Consumer<DetectionTask
         new OnFailedHandler(taskStatusService, newTask));
   }
 
-  private record OnSucceededHandler(EventProducer eventProducer, DetectionTask detectionTask)
+  private record OnSucceededHandler(
+      EventProducer eventProducer, ParcelDetectionTask parcelDetectionTask)
       implements StatusHandler {
 
     @Override
     public String performAction() {
-      eventProducer.accept(List.of(new DetectionTaskSucceeded(detectionTask)));
+      eventProducer.accept(List.of(new ParcelDetectionTaskSucceeded(parcelDetectionTask)));
       return "Finished task="
-          + detectionTask
+          + parcelDetectionTask
           + ", now computing new status of job(id="
-          + detectionTask.getJobId()
+          + parcelDetectionTask.getJobId()
           + ")";
     }
   }
 
   private record OnFailedHandler(
-      TaskStatusService<DetectionTask> taskStatusService, DetectionTask detectionTask)
+      TaskStatusService<ParcelDetectionTask> taskStatusService,
+      ParcelDetectionTask parcelDetectionTask)
       implements StatusHandler {
 
     @Override
     public String performAction() {
       // TODO: if necessary, retry detectionTask directly with nbAttempt
       // eventProducer.accept(List.of(new DetectionTaskFailed(newTask, nbAttempt)));
-      taskStatusService.fail(detectionTask);
-      String message = "Failed to process task=" + detectionTask;
+      taskStatusService.fail(parcelDetectionTask);
+      String message = "Failed to process task=" + parcelDetectionTask;
       log.error(message);
       return message;
     }

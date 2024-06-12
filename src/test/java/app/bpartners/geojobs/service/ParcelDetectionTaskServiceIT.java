@@ -19,14 +19,14 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Transactional(isolation = Isolation.SERIALIZABLE)
-public class DetectionTaskServiceIT extends FacadeIT {
+public class ParcelDetectionTaskServiceIT extends FacadeIT {
   public static final String JOB_ID = "jobId";
   public static final double MIN_CONFIDENCE = 0.70;
   @Autowired private DetectionTaskService subject;
   @Autowired private ZoneDetectionJobRepository jobRepository;
   @Autowired private DetectedTileRepository detectedTileRepository;
   @Autowired private DetectableObjectConfigurationRepository objectConfigurationRepository;
-  @Autowired private DetectionTaskRepository detectionTaskRepository;
+  @Autowired private ParcelDetectionTaskRepository parcelDetectionTaskRepository;
   @Autowired private ParcelRepository parcelRepository;
   private static final double UNDER_MIN_CONFIDENCE = 0.67;
 
@@ -62,8 +62,8 @@ public class DetectionTaskServiceIT extends FacadeIT {
     jobRepository.save(ZoneDetectionJob.builder().id(JOB_ID).build());
     List<Parcel> parcels = getParcels();
     parcelRepository.saveAll(parcels);
-    detectionTaskRepository.save(
-        DetectionTask.builder().id("detectionTaskId").parcels(parcels).build());
+    parcelDetectionTaskRepository.save(
+        ParcelDetectionTask.builder().id("detectionTaskId").parcels(parcels).build());
     detectedTileRepository.saveAll(
         List.of(
             detectedTile(JOB_ID, "tile1Id", "parcel1Id", "detectedObjectId1", UNDER_MIN_CONFIDENCE),
@@ -90,7 +90,7 @@ public class DetectionTaskServiceIT extends FacadeIT {
   void tearDown() {
     objectConfigurationRepository.deleteById("detectableObjectConfigurationId");
     detectedTileRepository.deleteById("detectedTileId");
-    detectionTaskRepository.deleteById("detectionTaskId");
+    parcelDetectionTaskRepository.deleteById("detectionTaskId");
     jobRepository.deleteById(JOB_ID);
     parcelRepository.deleteAllById(getParcels().stream().map(Parcel::getId).toList());
   }

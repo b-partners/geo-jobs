@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.endpoint.event.model;
 
-import app.bpartners.geojobs.repository.model.detection.DetectionTask;
+import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Duration;
 import javax.annotation.processing.Generated;
@@ -15,10 +15,10 @@ import lombok.*;
 @ToString
 public class DetectionTaskStatusChanged extends PojaEvent {
   @JsonProperty("oldTask")
-  private DetectionTask oldTask;
+  private ParcelDetectionTask oldTask;
 
   @JsonProperty("newTask")
-  private DetectionTask newTask;
+  private ParcelDetectionTask newTask;
 
   @Override
   public Duration maxConsumerDuration() {

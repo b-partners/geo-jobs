@@ -17,9 +17,9 @@ import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.ZoneDetectionJobCreated;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.TaskStatus;
-import app.bpartners.geojobs.repository.DetectionTaskRepository;
+import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
-import app.bpartners.geojobs.repository.model.detection.DetectionTask;
+import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import java.util.List;
@@ -31,7 +31,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 class ZoneDetectionJobCreatedServiceIT extends FacadeIT {
   @Autowired ZoneDetectionJobCreatedService subject;
   @Autowired ZoneDetectionJobService zoneDetectionJobService;
-  @Mock DetectionTaskRepository taskRepository;
+  @Mock ParcelDetectionTaskRepository taskRepository;
   @MockBean EventProducer eventProducer;
   @Autowired ZoneDetectionJobRepository repository;
 
@@ -61,7 +61,7 @@ class ZoneDetectionJobCreatedServiceIT extends FacadeIT {
     when(taskRepository.findAllByJobId(jobId))
         .thenReturn(
             List.of(
-                DetectionTask.builder()
+                ParcelDetectionTask.builder()
                     .id(taskId)
                     .jobId(jobId)
                     .submissionInstant(now())

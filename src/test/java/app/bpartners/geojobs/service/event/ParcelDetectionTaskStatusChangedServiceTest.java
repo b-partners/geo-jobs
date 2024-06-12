@@ -8,18 +8,18 @@ import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionTaskStatusChanged;
-import app.bpartners.geojobs.endpoint.event.model.DetectionTaskSucceeded;
+import app.bpartners.geojobs.endpoint.event.model.ParcelDetectionTaskSucceeded;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.job.service.TaskStatusService;
-import app.bpartners.geojobs.repository.model.detection.DetectionTask;
+import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.service.StatusChangedHandler;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
-public class DetectionTaskStatusChangedServiceTest {
+public class ParcelDetectionTaskStatusChangedServiceTest {
   EventProducer eventProducerMock = mock();
-  TaskStatusService<DetectionTask> taskStatusServiceMock = mock();
+  TaskStatusService<ParcelDetectionTask> taskStatusServiceMock = mock();
   StatusChangedHandler statusChangedHandler = new StatusChangedHandler();
   DetectionTaskStatusChangedService subject =
       new DetectionTaskStatusChangedService(
@@ -27,13 +27,13 @@ public class DetectionTaskStatusChangedServiceTest {
 
   @Test
   void finished_succeeded_task_ok() {
-    DetectionTask oldTask =
-        DetectionTask.builder()
+    ParcelDetectionTask oldTask =
+        ParcelDetectionTask.builder()
             .statusHistory(
                 List.of(TaskStatus.builder().progression(PROCESSING).health(UNKNOWN).build()))
             .build();
-    DetectionTask newTask =
-        DetectionTask.builder()
+    ParcelDetectionTask newTask =
+        ParcelDetectionTask.builder()
             .statusHistory(
                 List.of(TaskStatus.builder().progression(FINISHED).health(SUCCEEDED).build()))
             .build();
@@ -42,45 +42,46 @@ public class DetectionTaskStatusChangedServiceTest {
 
     var eventCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducerMock, times(1)).accept(eventCaptor.capture());
-    DetectionTaskSucceeded first = (DetectionTaskSucceeded) eventCaptor.getValue().getFirst();
+    ParcelDetectionTaskSucceeded first =
+        (ParcelDetectionTaskSucceeded) eventCaptor.getValue().getFirst();
     assertEquals(newTask, first.getTask());
   }
 
   @Test
   void finished_failed_task_ok() {
-    DetectionTask oldTask =
-        DetectionTask.builder()
+    ParcelDetectionTask oldTask =
+        ParcelDetectionTask.builder()
             .statusHistory(
                 List.of(TaskStatus.builder().progression(PROCESSING).health(UNKNOWN).build()))
             .build();
-    DetectionTask newTask =
-        DetectionTask.builder()
+    ParcelDetectionTask newTask =
+        ParcelDetectionTask.builder()
             .statusHistory(
                 List.of(TaskStatus.builder().progression(FINISHED).health(FAILED).build()))
             .build();
 
     subject.accept(new DetectionTaskStatusChanged(oldTask, newTask));
 
-    var eventCaptor = ArgumentCaptor.forClass(DetectionTask.class);
+    var eventCaptor = ArgumentCaptor.forClass(ParcelDetectionTask.class);
     verify(taskStatusServiceMock, times(1)).fail(eventCaptor.capture());
-    DetectionTask first = eventCaptor.getValue();
+    ParcelDetectionTask first = eventCaptor.getValue();
     assertEquals(newTask, first);
   }
 
   @Test
   void finished_unknown_ko() {
-    DetectionTask oldProcessingTask =
-        DetectionTask.builder()
+    ParcelDetectionTask oldProcessingTask =
+        ParcelDetectionTask.builder()
             .statusHistory(
                 List.of(TaskStatus.builder().progression(PROCESSING).health(UNKNOWN).build()))
             .build();
-    DetectionTask oldPendingTask =
-        DetectionTask.builder()
+    ParcelDetectionTask oldPendingTask =
+        ParcelDetectionTask.builder()
             .statusHistory(
                 List.of(TaskStatus.builder().progression(PENDING).health(UNKNOWN).build()))
             .build();
-    DetectionTask newTask =
-        DetectionTask.builder()
+    ParcelDetectionTask newTask =
+        ParcelDetectionTask.builder()
             .statusHistory(
                 List.of(TaskStatus.builder().progression(FINISHED).health(UNKNOWN).build()))
             .build();

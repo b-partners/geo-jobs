@@ -5,18 +5,20 @@ import static org.mockito.Mockito.mock;
 
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
-import app.bpartners.geojobs.repository.model.detection.DetectionTask;
+import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
+import app.bpartners.geojobs.service.KeyPredicateFunction;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-class DetectionTaskConsumerTest {
-  DetectionTaskConsumer subject = new DetectionTaskConsumer(mock(), mock(), mock(), mock());
+class ParcelParcelDetectionTaskConsumerTest {
+  ParcelDetectionTaskConsumer subject =
+      new ParcelDetectionTaskConsumer(mock(), mock(), mock(), new KeyPredicateFunction());
 
   @Test
   void consumes_task_without_parcels_ko() {
     assertThrows(
         IllegalArgumentException.class,
-        () -> subject.accept(DetectionTask.builder().parcels(List.of()).build()));
+        () -> subject.accept(ParcelDetectionTask.builder().parcels(List.of()).build()));
   }
 
   @Test
@@ -25,7 +27,7 @@ class DetectionTaskConsumerTest {
         IllegalArgumentException.class,
         () ->
             subject.accept(
-                DetectionTask.builder()
+                ParcelDetectionTask.builder()
                     .parcels(
                         List.of(
                             Parcel.builder()
@@ -35,6 +37,6 @@ class DetectionTaskConsumerTest {
 
     assertThrows(
         IllegalArgumentException.class,
-        () -> subject.accept(DetectionTask.builder().parcels(List.of()).build()));
+        () -> subject.accept(ParcelDetectionTask.builder().parcels(List.of()).build()));
   }
 }

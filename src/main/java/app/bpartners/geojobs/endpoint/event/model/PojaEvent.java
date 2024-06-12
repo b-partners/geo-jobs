@@ -6,6 +6,8 @@ import java.time.Duration;
 
 @PojaGenerated
 public abstract class PojaEvent implements Serializable {
+  // TODO: add property for sqsMessageMaxAttempt, default 50
+
   public abstract Duration maxConsumerDuration();
 
   private Duration randomConsumerBackoffBetweenRetries() {

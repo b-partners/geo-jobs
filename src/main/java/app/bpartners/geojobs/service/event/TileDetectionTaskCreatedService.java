@@ -8,10 +8,9 @@ import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.TileDetectionTaskCreated;
 import app.bpartners.geojobs.endpoint.event.model.TileDetectionTaskCreatedFailed;
 import app.bpartners.geojobs.endpoint.event.model.TileDetectionTaskSucceeded;
-import app.bpartners.geojobs.job.service.TaskAsJobStatusService;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
-import app.bpartners.geojobs.repository.model.detection.DetectionTask;
+import app.bpartners.geojobs.service.detection.TileDetectionTaskStatusService;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
@@ -22,7 +21,7 @@ import org.springframework.stereotype.Service;
 @AllArgsConstructor
 @Slf4j
 public class TileDetectionTaskCreatedService implements Consumer<TileDetectionTaskCreated> {
-  private final TaskAsJobStatusService<TileDetectionTask, DetectionTask> taskAsJobStatusService;
+  private final TileDetectionTaskStatusService tileDetectionTaskStatusService;
   private final TileDetectionTaskCreatedConsumer tileDetectionTaskConsumer;
   private final EventProducer eventProducer;
 
@@ -30,7 +29,7 @@ public class TileDetectionTaskCreatedService implements Consumer<TileDetectionTa
   public void accept(TileDetectionTaskCreated tileDetectionTaskCreated) {
     TileDetectionTask tileDetectionTask = tileDetectionTaskCreated.getTileDetectionTask();
     List<DetectableType> detectableTypes = tileDetectionTaskCreated.getDetectableTypes();
-    taskAsJobStatusService.process(tileDetectionTask);
+    tileDetectionTaskStatusService.process(tileDetectionTask);
 
     try {
       tileDetectionTaskConsumer.accept(tileDetectionTaskCreated);

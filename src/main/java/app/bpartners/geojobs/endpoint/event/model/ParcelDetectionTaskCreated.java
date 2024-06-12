@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.endpoint.event.model;
 
-import app.bpartners.geojobs.repository.model.detection.DetectionTask;
+import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Duration;
 import javax.annotation.processing.Generated;
@@ -18,9 +18,9 @@ import lombok.ToString;
 @Data
 @EqualsAndHashCode
 @ToString
-public class DetectionTaskCreated extends PojaEvent {
+public class ParcelDetectionTaskCreated extends PojaEvent {
   @JsonProperty("detectionTask")
-  private DetectionTask task;
+  private ParcelDetectionTask task;
 
   @Override
   public Duration maxConsumerDuration() {

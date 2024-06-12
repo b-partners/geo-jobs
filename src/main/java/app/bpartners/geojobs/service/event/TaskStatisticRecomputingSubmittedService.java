@@ -6,11 +6,11 @@ import app.bpartners.geojobs.job.service.TaskStatisticFunction;
 import app.bpartners.geojobs.job.service.TaskStatisticsComputing;
 import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.model.exception.NotFoundException;
-import app.bpartners.geojobs.repository.DetectionTaskRepository;
+import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
-import app.bpartners.geojobs.repository.model.detection.DetectionTask;
+import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Service;
 public class TaskStatisticRecomputingSubmittedService
     implements Consumer<TaskStatisticRecomputingSubmitted> {
   private final TaskStatisticFunction<TilingTask, ZoneTilingJob> tilingJobTaskStatisticFunction;
-  private final TaskStatisticFunction<DetectionTask, ZoneDetectionJob>
+  private final TaskStatisticFunction<ParcelDetectionTask, ZoneDetectionJob>
       detectionJobTaskStatisticFunction;
   private final ZoneTilingJobRepository tilingJobRepository;
   private final ZoneDetectionJobRepository detectionJobRepository;
@@ -32,7 +32,7 @@ public class TaskStatisticRecomputingSubmittedService
 
   public TaskStatisticRecomputingSubmittedService(
       TilingTaskRepository tilingTaskRepository,
-      DetectionTaskRepository detectionTaskRepository,
+      ParcelDetectionTaskRepository parcelDetectionTaskRepository,
       ZoneTilingJobRepository tilingJobRepository,
       ZoneDetectionJobRepository detectionJobRepository,
       Mailer mailer,
@@ -42,7 +42,7 @@ public class TaskStatisticRecomputingSubmittedService
     this.tilingJobTaskStatisticFunction =
         new TaskStatisticFunction<>(tilingTaskRepository, new TaskStatisticsComputing<>());
     this.detectionJobTaskStatisticFunction =
-        new TaskStatisticFunction<>(detectionTaskRepository, new TaskStatisticsComputing<>());
+        new TaskStatisticFunction<>(parcelDetectionTaskRepository, new TaskStatisticsComputing<>());
     this.detectionStatisticMailer = new TaskStatisticMailer<>(mailer, htmlTemplateParser);
     this.tilingStatisticMailer = new TaskStatisticMailer<>(mailer, htmlTemplateParser);
   }

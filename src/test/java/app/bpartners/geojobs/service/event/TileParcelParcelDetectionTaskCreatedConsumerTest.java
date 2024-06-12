@@ -16,7 +16,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
-public class TileDetectionTaskCreatedConsumerTest {
+public class TileParcelParcelDetectionTaskCreatedConsumerTest {
   DetectedTileRepository detectedTileRepositoryMock = mock();
   TileObjectDetector objectDetectorMock = mock();
   DetectionMapper detectionMapperMock = mock();

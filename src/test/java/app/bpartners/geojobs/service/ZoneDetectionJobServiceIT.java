@@ -7,16 +7,15 @@ import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.job.model.JobStatus;
-import app.bpartners.geojobs.repository.DetectionTaskRepository;
+import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;
 import app.bpartners.geojobs.repository.ParcelRepository;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
-import app.bpartners.geojobs.repository.model.detection.DetectionTask;
+import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
@@ -30,7 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(isolation = Isolation.SERIALIZABLE)
 class ZoneDetectionJobServiceIT extends FacadeIT {
   @Autowired ZoneDetectionJobService service;
-  @Autowired DetectionTaskRepository taskRepository;
+  @Autowired ParcelDetectionTaskRepository taskRepository;
   @Autowired ParcelRepository parcelRepository;
 
   @Test
@@ -76,7 +75,7 @@ class ZoneDetectionJobServiceIT extends FacadeIT {
 
     ZoneDetectionJob actual = service.saveWithTasks(tilingTasks, jobToSave);
 
-    List<DetectionTask> savedTasks = taskRepository.findAllByJobId(actual.getId());
+    List<ParcelDetectionTask> savedTasks = taskRepository.findAllByJobId(actual.getId());
     assertNotNull(actual);
     assertEquals(1, savedTasks.size());
     assertEquals(parcels, savedTasks.get(0).getParcels());
