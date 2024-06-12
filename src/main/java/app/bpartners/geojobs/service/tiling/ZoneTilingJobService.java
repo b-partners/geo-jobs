@@ -2,7 +2,6 @@ package app.bpartners.geojobs.service.tiling;
 
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.*;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
-import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
 import static app.bpartners.geojobs.repository.model.GeoJobType.TILING;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
@@ -12,7 +11,6 @@ import app.bpartners.geojobs.endpoint.event.model.*;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Task;
-import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.job.repository.TaskRepository;
@@ -23,6 +21,7 @@ import app.bpartners.geojobs.repository.model.FilteredTilingJob;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.JobFilteredMailer;
+import app.bpartners.geojobs.service.NotFinishedTaskRetriever;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> {
   private final ZoneDetectionJobService detectionJobService;
   private final JobFilteredMailer<ZoneTilingJob> tilingFilteredMailer;
+  private final NotFinishedTaskRetriever<TilingTask> notFinishedTaskRetriever;
 
   public ZoneTilingJobService(
       JpaRepository<ZoneTilingJob, String> repository,
@@ -41,10 +41,12 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
       TaskRepository<TilingTask> taskRepository,
       EventProducer eventProducer,
       ZoneDetectionJobService detectionJobService,
-      JobFilteredMailer<ZoneTilingJob> tilingFilteredMailer) {
+      JobFilteredMailer<ZoneTilingJob> tilingFilteredMailer,
+      NotFinishedTaskRetriever<TilingTask> notFinishedTaskRetriever) {
     super(repository, jobStatusRepository, taskRepository, eventProducer, ZoneTilingJob.class);
     this.detectionJobService = detectionJobService;
     this.tilingFilteredMailer = tilingFilteredMailer;
+    this.notFinishedTaskRetriever = notFinishedTaskRetriever;
   }
 
   public ZoneTilingJob importFromBucket(
@@ -152,23 +154,7 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
           "All tilling tasks of job(id=" + jobId + ") are already SUCCEEDED");
     }
     List<TilingTask> savedFailedTasks =
-        taskRepository.saveAll(
-            failedTasks.stream()
-                .peek(
-                    failedTask -> {
-                      List<TaskStatus> newStatus = new ArrayList<>(failedTask.getStatusHistory());
-                      newStatus.add(
-                          TaskStatus.builder()
-                              .id(randomUUID().toString())
-                              .taskId(failedTask.getId())
-                              .jobType(TILING)
-                              .progression(PENDING)
-                              .health(RETRYING)
-                              .creationDatetime(now())
-                              .build());
-                      failedTask.setStatusHistory(newStatus);
-                    })
-                .toList());
+        taskRepository.saveAll(failedTasks.stream().map(notFinishedTaskRetriever).toList());
     savedFailedTasks.forEach(task -> eventProducer.accept(List.of(new TilingTaskCreated(task))));
     // /!\ Force job status to status PROCESSING again
     job.hasNewStatus(

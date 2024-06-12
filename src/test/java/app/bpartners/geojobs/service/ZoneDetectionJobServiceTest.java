@@ -60,6 +60,8 @@ public class ZoneDetectionJobServiceTest {
   EventProducer eventProducerMock = mock();
   EntityManager entityManagerMock = mock();
   TileDetectionTaskRepository tileDetectionTaskRepositoryMock = mock();
+  NotFinishedTaskRetriever<DetectionTask> notFinishedTaskRetriever =
+      new NotFinishedTaskRetriever<>();
   ZoneDetectionJobService subject =
       new ZoneDetectionJobService(
           jobRepositoryMock,
@@ -74,7 +76,8 @@ public class ZoneDetectionJobServiceTest {
           mock(),
           mock(),
           tileDetectionTaskRepositoryMock,
-          mock());
+          mock(),
+          notFinishedTaskRetriever);
 
   @BeforeEach
   void setUp() {

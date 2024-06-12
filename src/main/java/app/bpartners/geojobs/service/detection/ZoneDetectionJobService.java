@@ -33,6 +33,7 @@ import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.JobFilteredMailer;
+import app.bpartners.geojobs.service.NotFinishedTaskRetriever;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -54,6 +55,7 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
   private final ZoneDetectionJobRepository zoneDetectionJobRepository;
   private final TileDetectionTaskRepository tileDetectionTaskRepository;
   private final JobFilteredMailer<ZoneDetectionJob> detectionFilteredMailer;
+  private final NotFinishedTaskRetriever<DetectionTask> notFinishedTaskRetriever;
 
   public ZoneDetectionJobService(
       JpaRepository<ZoneDetectionJob, String> repository,
@@ -68,7 +70,8 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
       AnnotationService annotationService,
       ZoneDetectionJobRepository zoneDetectionJobRepository,
       TileDetectionTaskRepository tileDetectionTaskRepository,
-      JobFilteredMailer<ZoneDetectionJob> detectionFilteredMailer) {
+      JobFilteredMailer<ZoneDetectionJob> detectionFilteredMailer,
+      NotFinishedTaskRetriever<DetectionTask> notFinishedTaskRetriever) {
     super(repository, jobStatusRepository, taskRepository, eventProducer, ZoneDetectionJob.class);
     this.tilingTaskRepository = tilingTaskRepository;
     this.detectionMapper = detectionMapper;
@@ -79,6 +82,7 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
     this.zoneDetectionJobRepository = zoneDetectionJobRepository;
     this.tileDetectionTaskRepository = tileDetectionTaskRepository;
     this.detectionFilteredMailer = detectionFilteredMailer;
+    this.notFinishedTaskRetriever = notFinishedTaskRetriever;
   }
 
   public TaskStatistic computeTaskStatistics(String jobId) {
@@ -241,23 +245,7 @@ public class ZoneDetectionJobService extends JobService<DetectionTask, ZoneDetec
           "All tilling tasks of job(id=" + jobId + ") are already SUCCEEDED");
     }
     List<DetectionTask> savedFailedTasks =
-        taskRepository.saveAll(
-            unfinishedTasks.stream()
-                .peek(
-                    failedTask -> {
-                      List<TaskStatus> newStatus = new ArrayList<>(failedTask.getStatusHistory());
-                      newStatus.add(
-                          TaskStatus.builder()
-                              .id(randomUUID().toString())
-                              .taskId(failedTask.getId())
-                              .jobType(DETECTION)
-                              .progression(PENDING)
-                              .health(RETRYING)
-                              .creationDatetime(now())
-                              .build());
-                      failedTask.setStatusHistory(newStatus);
-                    })
-                .toList());
+        taskRepository.saveAll(unfinishedTasks.stream().map(notFinishedTaskRetriever).toList());
     savedFailedTasks.forEach(task -> eventProducer.accept(List.of(new DetectionTaskCreated(task))));
     // /!\ Force job status to status PROCESSING again
     job.hasNewStatus(

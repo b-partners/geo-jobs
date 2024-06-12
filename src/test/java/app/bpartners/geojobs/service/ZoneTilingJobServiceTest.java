@@ -53,6 +53,7 @@ public class ZoneTilingJobServiceTest {
   TaskRepository<TilingTask> taskRepositoryMock = mock();
   EventProducer eventProducerMock = mock();
   ZoneDetectionJobService detectionJobServiceMock = mock();
+  NotFinishedTaskRetriever<TilingTask> notFinishedTaskRetriever = new NotFinishedTaskRetriever<>();
   ZoneTilingJobService subject =
       new ZoneTilingJobService(
           jobRepositoryMock,
@@ -60,7 +61,8 @@ public class ZoneTilingJobServiceTest {
           taskRepositoryMock,
           eventProducerMock,
           detectionJobServiceMock,
-          mock());
+          mock(),
+          notFinishedTaskRetriever);
 
   @Test
   void duplicate_ok() {
