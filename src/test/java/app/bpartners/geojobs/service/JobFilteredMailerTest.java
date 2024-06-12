@@ -17,7 +17,7 @@ import org.mockito.ArgumentCaptor;
 import org.thymeleaf.context.Context;
 
 public class JobFilteredMailerTest {
-  public static final String INITIAL_JOB_ID = "initialJobId";
+  private static final String INITIAL_JOB_ID = "initialJobId";
   Mailer mailerMock = mock();
   HTMLTemplateParser htmlTemplateParserMock = mock();
   JobFilteredMailer<ZoneDetectionJob> detectionSubject =
