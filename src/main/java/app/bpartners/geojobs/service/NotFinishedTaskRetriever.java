@@ -36,6 +36,6 @@ public class NotFinishedTaskRetriever<T extends Task> implements Function<T, T> 
             .creationDatetime(now())
             .build());
     failedTask.setStatusHistory(newStatus);
-    return null;
+    return failedTask;
   }
 }
