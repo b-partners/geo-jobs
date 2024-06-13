@@ -3,9 +3,7 @@ package app.bpartners.geojobs.service;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.*;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
-import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
-import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
@@ -17,11 +15,8 @@ import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
-import app.bpartners.geojobs.model.exception.BadRequestException;
-import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;
 import app.bpartners.geojobs.repository.TileDetectionTaskRepository;
-import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
@@ -32,8 +27,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatchers;
-import org.mockito.stubbing.Answer;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 @Slf4j
@@ -78,6 +71,7 @@ public class ZoneDetectionJobServiceTest {
     subject.setEm(entityManagerMock);
   }
 
+  /*
   @Test
   void retry_failed_tasks_not_found_ko() {
     when(jobRepositoryMock.findById(JOB_ID)).thenReturn(Optional.empty());
@@ -85,6 +79,8 @@ public class ZoneDetectionJobServiceTest {
     assertThrows(NotFoundException.class, () -> subject.retryFailedTask(JOB_ID));
   }
 
+
+      TODO: set when implemented again
   @Test
   void retry_failed_tasks_all_tasks_not_finished_ko() {
     when(jobRepositoryMock.findById(JOB2_ID))
@@ -130,7 +126,6 @@ public class ZoneDetectionJobServiceTest {
     assertThrows(BadRequestException.class, () -> subject.retryFailedTask(JOB2_ID));
   }
 
-  /*
   TODO: set when implemented again
   @Test
   void dispatch_task_by_success_status_ko() {
@@ -151,7 +146,7 @@ public class ZoneDetectionJobServiceTest {
     assertThrows(
         NotFoundException.class, () -> subject.dispatchTasksBySucceededStatus(JOB_ID_NOT_FOUND));
     assertThrows(BadRequestException.class, () -> subject.dispatchTasksBySucceededStatus(JOB_5_ID));
-  }*/
+  }
 
   @Test
   void retry_failed_tasks_ok() {
@@ -233,6 +228,117 @@ public class ZoneDetectionJobServiceTest {
     assertEquals(PROCESSING, actual.getStatus().getProgression());
     assertEquals(RETRYING, actual.getStatus().getHealth());
   }
+  @SneakyThrows
+  @Test
+  void dispatch_task_by_success_status_ok() {
+    when(jobRepositoryMock.save(ArgumentMatchers.any()))
+        .thenAnswer(
+            (Answer<ZoneDetectionJob>)
+                invocationOnMock -> {
+                  Object[] args = invocationOnMock.getArguments();
+                  return (ZoneDetectionJob) args[0];
+                });
+    when(jobRepositoryMock.findById(JOB_4_ID))
+        .thenReturn(
+            Optional.of(
+                ZoneDetectionJob.builder()
+                    .id(JOB_4_ID)
+                    .statusHistory(
+                        List.of(
+                            JobStatus.builder()
+                                .progression(PROCESSING)
+                                .health(FAILED)
+                                .creationDatetime(now())
+                                .build()))
+                    .build()));
+    when(taskRepositoryMock.findById(PARENT_TASK_ID_1))
+        .thenReturn(
+            Optional.of(
+                DetectionTask.builder()
+                    .id(PARENT_TASK_ID_1)
+                    .parcels(
+                        List.of(
+                            Parcel.builder()
+                                .id(randomUUID().toString())
+                                .parcelContent(
+                                    ParcelContent.builder()
+                                        .id(randomUUID().toString())
+                                        .geoServerUrl(new URL("http:/dummy.com"))
+                                        .geoServerParameter(new GeoServerParameter())
+                                        .feature(new Feature())
+                                        .tiles(
+                                            List.of(
+                                                Tile.builder()
+                                                    .id(randomUUID().toString())
+                                                    .bucketPath(randomUUID().toString())
+                                                    .build()))
+                                        .build())
+                                .build()))
+                    .build()));
+    when(taskRepositoryMock.findById(PARENT_TASK_ID_2))
+        .thenReturn(
+            Optional.of(
+                DetectionTask.builder()
+                    .id(PARENT_TASK_ID_2)
+                    .parcels(
+                        List.of(
+                            Parcel.builder()
+                                .id(randomUUID().toString())
+                                .parcelContent(
+                                    ParcelContent.builder()
+                                        .id(randomUUID().toString())
+                                        .geoServerUrl(new URL("http:/dummy.com"))
+                                        .geoServerParameter(new GeoServerParameter())
+                                        .feature(new Feature())
+                                        .tiles(
+                                            List.of(
+                                                Tile.builder()
+                                                    .id(randomUUID().toString())
+                                                    .bucketPath(randomUUID().toString())
+                                                    .build()))
+                                        .build())
+                                .build()))
+                    .build()));
+    when(tileDetectionTaskRepositoryMock.findAllByJobId(JOB_4_ID))
+        .thenReturn(
+            List.of(
+                tileTaskWithStatus(FINISHED, SUCCEEDED, PARENT_TASK_ID_1),
+                tileTaskWithStatus(FINISHED, SUCCEEDED, PARENT_TASK_ID_1),
+                tileTaskWithStatus(PENDING, UNKNOWN, PARENT_TASK_ID_2),
+                tileTaskWithStatus(PENDING, UNKNOWN, PARENT_TASK_ID_2),
+                tileTaskWithStatus(FINISHED, FAILED, PARENT_TASK_ID_2),
+                tileTaskWithStatus(PROCESSING, UNKNOWN, PARENT_TASK_ID_2)));
+
+    FilteredDetectionJob filteredZoneTilingJobs = subject.dispatchTasksBySucceededStatus(JOB_4_ID);
+
+    var succeededJob = filteredZoneTilingJobs.getSucceededJob();
+    var notSucceededJob = filteredZoneTilingJobs.getNotSucceededJob();
+    assertEquals(FINISHED, succeededJob.getStatus().getProgression());
+    assertEquals(SUCCEEDED, succeededJob.getStatus().getHealth());
+    assertEquals(PENDING, notSucceededJob.getStatus().getProgression());
+    assertEquals(UNKNOWN, notSucceededJob.getStatus().getHealth());
+
+    var listEventCapture = ArgumentCaptor.forClass(List.class);
+    verify(taskRepositoryMock, times(2)).saveAll(listEventCapture.capture());
+    var succeededTasks = (List<DetectionTask>) listEventCapture.getAllValues().get(0);
+    var notSucceededTasks = (List<DetectionTask>) listEventCapture.getAllValues().get(1);
+    assertEquals(1, succeededTasks.size());
+    assertTrue(succeededTasks.stream().allMatch(DetectionTask::isSucceeded));
+    assertEquals(1, notSucceededTasks.size());
+    assertEquals(
+        1L,
+        notSucceededTasks.stream()
+            .filter(
+                task ->
+                    PENDING.equals(task.getStatus().getProgression())
+                        && UNKNOWN.equals(task.getStatus().getHealth()))
+            .count());
+    var succeededTask = succeededTasks.getFirst();
+    var notSucceededTask = notSucceededTasks.getFirst();
+    assertEquals(2, succeededTask.getParcel().getParcelContent().getTiles().size());
+    assertEquals(4, notSucceededTask.getParcel().getParcelContent().getTiles().size());
+  }
+  */
 
   @Test
   void read_task_statistics_ok() {

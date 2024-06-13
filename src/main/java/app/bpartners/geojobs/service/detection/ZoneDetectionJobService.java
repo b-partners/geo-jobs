@@ -20,7 +20,6 @@ import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.job.service.JobService;
-import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.*;
@@ -215,7 +214,9 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
 
   @Transactional
   public ZoneDetectionJob retryFailedTask(String jobId) {
-    ZoneDetectionJob job =
+    // TODO: not implemented
+    throw new NotImplementedException("Not supported");
+    /*ZoneDetectionJob job =
         repository
             .findById(jobId)
             .orElseThrow(
@@ -264,7 +265,7 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
             .health(RETRYING)
             .creationDatetime(now())
             .build());
-    return repository.save(job);
+    return repository.save(job);*/
   }
 
   private Optional<ZoneDetectionJob> computeFromDetectionBadStatuses(

@@ -82,7 +82,7 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
               + ") tasks are SUCCEEDED. "
               + "Use POST /tiling/id/duplications to duplicate job instead");
     }
-    List<TilingTask> tilingTasks = parcelTaskDetectionTaskRepostiory.findAllByJobId(jobId);
+    List<TilingTask> tilingTasks = taskRepository.findAllByJobId(jobId);
     List<TilingTask> succeededTasks = tilingTasks.stream().filter(Task::isSucceeded).toList();
     List<TilingTask> notSucceededTasks =
         tilingTasks.stream().filter(task -> !task.isSucceeded()).toList();
@@ -142,7 +142,7 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
   @Transactional
   public ZoneTilingJob retryFailedTask(String jobId) {
     ZoneTilingJob job = getZoneTilingJob(jobId);
-    List<TilingTask> tilingTasks = parcelTaskDetectionTaskRepostiory.findAllByJobId(jobId);
+    List<TilingTask> tilingTasks = taskRepository.findAllByJobId(jobId);
     if (!tilingTasks.stream()
         .allMatch(task -> task.getStatus().getProgression().equals(FINISHED))) {
       throw new BadRequestException("Only job with all finished tasks can be retry");
@@ -154,8 +154,7 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
           "All tilling tasks of job(id=" + jobId + ") are already SUCCEEDED");
     }
     List<TilingTask> savedFailedTasks =
-        parcelTaskDetectionTaskRepostiory.saveAll(
-            failedTasks.stream().map(notFinishedTaskRetriever).toList());
+        taskRepository.saveAll(failedTasks.stream().map(notFinishedTaskRetriever).toList());
     savedFailedTasks.forEach(task -> eventProducer.accept(List.of(new TilingTaskCreated(task))));
     // /!\ Force job status to status PROCESSING again
     job.hasNewStatus(
@@ -235,7 +234,7 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
       jobToDuplicate.setStatusHistory(statusHistory);
     }
     ZoneTilingJob duplicatedJob = repository.save(jobToDuplicate);
-    parcelTaskDetectionTaskRepostiory.saveAll(duplicatedTasks);
+    taskRepository.saveAll(duplicatedTasks);
     if (saveZDJ) {
       detectionJobService.saveZDJFromZTJ(duplicatedJob);
     }

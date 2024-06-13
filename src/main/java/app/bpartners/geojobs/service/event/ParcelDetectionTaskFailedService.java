@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @AllArgsConstructor
 @Service
-public class DetectionTaskFailedService implements Consumer<ParcelDetectionTaskFailed> {
+public class ParcelDetectionTaskFailedService implements Consumer<ParcelDetectionTaskFailed> {
 
   private final TaskStatusService<ParcelDetectionTask> taskStatusService;
   private final ParcelDetectionTaskConsumer parcelDetectionTaskConsumer;

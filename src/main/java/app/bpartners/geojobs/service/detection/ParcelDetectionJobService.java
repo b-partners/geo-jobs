@@ -15,8 +15,7 @@ public class ParcelDetectionJobService extends JobService<TileDetectionTask, Par
       JpaRepository<ParcelDetectionJob, String> repository,
       JobStatusRepository jobStatusRepository,
       TaskRepository<TileDetectionTask> taskRepository,
-      EventProducer eventProducer,
-      Class<ParcelDetectionJob> jobClazz) {
-    super(repository, jobStatusRepository, taskRepository, eventProducer, jobClazz);
+      EventProducer eventProducer) {
+    super(repository, jobStatusRepository, taskRepository, eventProducer, ParcelDetectionJob.class);
   }
 }

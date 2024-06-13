@@ -24,7 +24,7 @@ import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Entity
+@Entity(name = "parcel_detection_task_entity")
 @AllArgsConstructor
 @NoArgsConstructor
 @SuperBuilder(toBuilder = true)
