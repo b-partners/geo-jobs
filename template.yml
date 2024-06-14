@@ -63,7 +63,7 @@ Resources:
     Properties:
       Handler: app.bpartners.geojobs.ApiEventHandler::handleRequest
       MemorySize: 2048
-      Timeout: 300
+      Timeout: 30
       Role: !Sub '{{resolve:ssm:/geo-jobs/${Env}/execution/role-arn}}'
       
       Events:
@@ -75,7 +75,7 @@ Resources:
             RestApiId:
               Ref: FrontalServerlessRestApi
 
-  WorkerFunction:
+  WorkerFunction1:
     Type: AWS::Serverless::Function
     Properties:
       Handler: app.bpartners.geojobs.MailboxEventHandler::handleRequest
@@ -87,7 +87,23 @@ Resources:
         AllEvents:
           Type: SQS
           Properties:
-            Queue: !Sub '{{resolve:ssm:/geo-jobs/${Env}/sqs/mailbox-queue-arn}}'
+            Queue: !Sub '{{resolve:ssm:/geo-jobs/${Env}/1/sqs/mailbox-queue-arn}}'
+            BatchSize: 1
+      ReservedConcurrentExecutions: 60
+
+  WorkerFunction2:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.bpartners.geojobs.MailboxEventHandler::handleRequest
+      MemorySize: 512
+      Timeout: 600 #note(sqs-visibility)
+      Role: !Sub '{{resolve:ssm:/geo-jobs/${Env}/execution/role-arn}}'
+      
+      Events:
+        AllEvents:
+          Type: SQS
+          Properties:
+            Queue: !Sub '{{resolve:ssm:/geo-jobs/${Env}/2/sqs/mailbox-queue-arn}}'
             BatchSize: 1
       ReservedConcurrentExecutions: 60
 
