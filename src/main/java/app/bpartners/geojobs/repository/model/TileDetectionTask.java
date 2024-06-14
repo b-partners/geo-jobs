@@ -34,12 +34,12 @@ public class TileDetectionTask extends Task implements Serializable {
 
   public TileDetectionTask(
       String id,
-      String equivalentJobId,
+      String asJobId,
       String parcelId,
       String jobId,
       Tile tile,
       List<TaskStatus> statusHistory) {
-    super(id, jobId, equivalentJobId, now(), statusHistory);
+    super(id, jobId, asJobId, now(), statusHistory);
     this.id = id;
     this.parcelId = parcelId;
     this.tile = tile;
