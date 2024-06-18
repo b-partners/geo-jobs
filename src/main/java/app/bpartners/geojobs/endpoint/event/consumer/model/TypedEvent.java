@@ -4,4 +4,5 @@ import app.bpartners.geojobs.PojaGenerated;
 import app.bpartners.geojobs.endpoint.event.model.PojaEvent;
 
 @PojaGenerated
+@SuppressWarnings("all")
 public record TypedEvent(String typeName, PojaEvent payload) {}

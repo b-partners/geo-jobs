@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @PojaGenerated
+@SuppressWarnings("all")
 class EventConsumerIT extends FacadeIT {
 
   @Autowired EventConsumer subject;

@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @PojaGenerated
+@SuppressWarnings("all")
 class HealthControllerIT extends FacadeIT {
 
   @Autowired PingController pingController;
