@@ -27,7 +27,6 @@ import org.hibernate.annotations.JdbcTypeCode;
 @JsonIgnoreProperties({"tilingStatus"}) // TODO: must not be here
 public class TileDetectionTask extends Task implements Serializable {
   @Id private String id;
-  private String detectionTaskId;
   private String parcelId;
 
   @JdbcTypeCode(JSON)
@@ -35,14 +34,13 @@ public class TileDetectionTask extends Task implements Serializable {
 
   public TileDetectionTask(
       String id,
-      String detectionTaskId,
+      String asJobId,
       String parcelId,
       String jobId,
       Tile tile,
       List<TaskStatus> statusHistory) {
-    super(id, jobId, detectionTaskId, now(), statusHistory);
+    super(id, jobId, asJobId, now(), statusHistory);
     this.id = id;
-    this.detectionTaskId = detectionTaskId;
     this.parcelId = parcelId;
     this.tile = tile;
   }

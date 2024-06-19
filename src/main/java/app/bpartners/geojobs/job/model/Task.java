@@ -31,7 +31,7 @@ public abstract class Task implements Serializable, Statusable<TaskStatus> {
   @Id private String id;
 
   private String jobId;
-  @Nullable private String parentTaskId;
+  @Nullable String asJobId;
   @Getter @CreationTimestamp private Instant submissionInstant;
 
   @OneToMany(cascade = ALL, mappedBy = "taskId", fetch = EAGER)

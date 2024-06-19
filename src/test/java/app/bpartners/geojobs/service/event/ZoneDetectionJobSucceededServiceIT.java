@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.service.DetectionTaskServiceIT.detectedTile;
+import static app.bpartners.geojobs.service.ParcelDetectionTaskServiceIT.detectedTile;
 import static org.junit.jupiter.api.Assertions.*;
 
 import app.bpartners.geojobs.conf.FacadeIT;
@@ -35,7 +35,7 @@ class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
   @Autowired private DetectedTileRepository detectedTileRepository;
   @Autowired private DetectableObjectConfigurationRepository objectConfigurationRepository;
   @Autowired private HumanDetectionJobRepository humanDetectionJobRepository;
-  @Autowired private DetectionTaskRepository detectionTaskRepository;
+  @Autowired private ParcelDetectionTaskRepository parcelDetectionTaskRepository;
   @Autowired private ParcelRepository parcelRepository;
   @MockBean ZoneDetectionJobAnnotationProcessor zoneDetectionJobAnnotationProcessorMock;
 
@@ -85,14 +85,14 @@ class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
                 .build()));
     parcelRepository.saveAll(getJob1Parcels());
     parcelRepository.saveAll(getJob2Parcels());
-    detectionTaskRepository.saveAll(
+    parcelDetectionTaskRepository.saveAll(
         List.of(
-            DetectionTask.builder()
+            ParcelDetectionTask.builder()
                 .id("detectionTaskId")
                 .jobId(SUCCEEDED_JOB_ID)
                 .parcels(getJob1Parcels())
                 .build(),
-            DetectionTask.builder()
+            ParcelDetectionTask.builder()
                 .id("detectionTaskId2")
                 .jobId(SUCCEEDED_JOB_ID_2)
                 .parcels(getJob2Parcels())

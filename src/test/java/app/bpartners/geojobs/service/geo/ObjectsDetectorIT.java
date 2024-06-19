@@ -14,7 +14,7 @@ import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
-import app.bpartners.geojobs.repository.model.detection.DetectionTask;
+import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.detection.TileObjectDetector;
 import java.io.File;
@@ -66,7 +66,7 @@ public class ObjectsDetectorIT extends FacadeIT {
     when(bucketComponent.download(any(), any())).thenReturn(new File(FILE_NAME));
 
     var task =
-        DetectionTask.builder()
+        ParcelDetectionTask.builder()
             .id(String.valueOf(randomUUID()))
             .jobId(String.valueOf(randomUUID()))
             .submissionInstant(Instant.now())

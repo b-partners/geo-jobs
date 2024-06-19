@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.service;
 
 import app.bpartners.geojobs.model.exception.NotFoundException;
-import app.bpartners.geojobs.repository.DetectionTaskRepository;
+import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ParcelService {
 
   private final TilingTaskRepository tilingTaskRepository;
-  private final DetectionTaskRepository detectionTaskRepository;
+  private final ParcelDetectionTaskRepository parcelDetectionTaskRepository;
   private final ZoneTilingJobRepository tilingJobRepository;
   private final ZoneDetectionJobRepository detectionJobRepository;
 
@@ -59,7 +59,7 @@ public class ParcelService {
 
     var zoneDetectionJob = detectionJobRepository.findById(jobId);
     if (zoneDetectionJob.isPresent()) {
-      return detectionTaskRepository.findAllByJobId(jobId).stream()
+      return parcelDetectionTaskRepository.findAllByJobId(jobId).stream()
           .map(
               detectionTask -> {
                 var parcel = detectionTask.getParcel();

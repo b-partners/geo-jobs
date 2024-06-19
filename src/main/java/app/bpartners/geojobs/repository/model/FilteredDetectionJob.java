@@ -4,13 +4,11 @@ import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import lombok.*;
 
 @Data
-@Builder(toBuilder = true)
-@AllArgsConstructor
-@NoArgsConstructor
 @ToString
-@EqualsAndHashCode
-public class FilteredDetectionJob {
-  private String initialJobId;
-  private ZoneDetectionJob succeededJob;
-  private ZoneDetectionJob notSucceededJob;
+@EqualsAndHashCode(callSuper = true)
+public class FilteredDetectionJob extends FilteredJob<ZoneDetectionJob> {
+  public FilteredDetectionJob(
+      String jobId, ZoneDetectionJob succeededJob, ZoneDetectionJob notSucceededJob) {
+    super(jobId, succeededJob, notSucceededJob);
+  }
 }

@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.*;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
+import static app.bpartners.geojobs.repository.model.GeoJobType.TILING;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static org.junit.Assert.assertThrows;
@@ -11,6 +12,7 @@ import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.ImportedZoneTilingJobSaved;
+import app.bpartners.geojobs.endpoint.event.model.TaskStatisticRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.ZoneTilingJobWithoutTasksCreated;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.job.model.JobStatus;
@@ -51,6 +53,7 @@ public class ZoneTilingJobServiceTest {
   TaskRepository<TilingTask> taskRepositoryMock = mock();
   EventProducer eventProducerMock = mock();
   ZoneDetectionJobService detectionJobServiceMock = mock();
+  NotFinishedTaskRetriever<TilingTask> notFinishedTaskRetriever = new NotFinishedTaskRetriever<>();
   ZoneTilingJobService subject =
       new ZoneTilingJobService(
           jobRepositoryMock,
@@ -58,7 +61,8 @@ public class ZoneTilingJobServiceTest {
           taskRepositoryMock,
           eventProducerMock,
           detectionJobServiceMock,
-          mock());
+          mock(),
+          notFinishedTaskRetriever);
 
   @Test
   void duplicate_ok() {
@@ -261,15 +265,15 @@ public class ZoneTilingJobServiceTest {
 
     TaskStatistic actual = subject.computeTaskStatistics(JOB_3_ID);
 
+    var eventCapture = ArgumentCaptor.forClass(List.class);
+    verify(eventProducerMock, times(1)).accept(eventCapture.capture());
+    List<TaskStatisticRecomputingSubmitted> events = eventCapture.getValue();
+    var taskStatisticRecomputingEvent = events.getFirst();
     assertEquals(JOB_3_ID, actual.getJobId());
+    assertEquals(actual.getJobId(), taskStatisticRecomputingEvent.getJobId());
     assertEquals(FAILED, actual.getActualJobStatus().getHealth());
     assertEquals(PROCESSING, actual.getActualJobStatus().getProgression());
-    StatisticResult statisticResult = getResult(actual);
-    assertEquals(2, statisticResult.unknownPendingTask().getCount());
-    assertEquals(1, statisticResult.unknownProcessingTask().getCount());
-    assertEquals(1, statisticResult.failedFinishedTask().getCount());
-    assertEquals(2, statisticResult.succeededFinishedTask().getCount());
-    assertEquals(0, statisticResult.unknownFinishedTask().getCount());
+    assertTrue(actual.getTaskStatusStatistics().isEmpty());
   }
 
   @Test
@@ -296,7 +300,7 @@ public class ZoneTilingJobServiceTest {
     assertThrows(BadRequestException.class, () -> subject.retryFailedTask(JOB2_ID));
   }
 
-  private static TilingTask taskWithStatus(
+  static TilingTask taskWithStatus(
       Status.ProgressionStatus progressionStatus, Status.HealthStatus healthStatus) {
     return TilingTask.builder()
         .statusHistory(
@@ -304,7 +308,7 @@ public class ZoneTilingJobServiceTest {
                 TaskStatus.builder()
                     .id(randomUUID().toString())
                     .progression(progressionStatus)
-                    .jobType(DETECTION)
+                    .jobType(TILING)
                     .health(healthStatus)
                     .build()))
         .build();
