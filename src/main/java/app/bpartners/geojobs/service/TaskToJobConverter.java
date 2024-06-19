@@ -50,7 +50,7 @@ public class TaskToJobConverter<T extends Task, J extends Job> implements Functi
   public TileDetectionTask apply(ParcelDetectionTask task, Tile tile) {
     String tileDetectionTaskId = randomUUID().toString();
     String parcelId = task.getParcel().getId();
-    String jobId = task.getJobId();
+    String jobId = task.getAsJobId();
     List<TaskStatus> status =
         List.of(
             TaskStatus.builder()
