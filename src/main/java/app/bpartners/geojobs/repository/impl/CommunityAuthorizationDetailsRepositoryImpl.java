@@ -27,9 +27,9 @@ public class CommunityAuthorizationDetailsRepositoryImpl
   @Override
   public CommunityAuthorizationDetails findByApiKey(String apiKey) {
     return communityAuthorizationDetails.stream()
-      .filter(cad -> cad.apiKey().equals(apiKey))
-      .findFirst()
-      .orElseThrow(ForbiddenException::new);
+        .filter(cad -> cad.apiKey().equals(apiKey))
+        .findFirst()
+        .orElseThrow(ForbiddenException::new);
   }
 
   @Override

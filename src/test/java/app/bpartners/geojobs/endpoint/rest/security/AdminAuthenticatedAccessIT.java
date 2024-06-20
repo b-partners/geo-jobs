@@ -24,7 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
-public class AuthenticatedAccessIT extends FacadeIT {
+public class AdminAuthenticatedAccessIT extends FacadeIT {
 
   @LocalServerPort private int port;
 
