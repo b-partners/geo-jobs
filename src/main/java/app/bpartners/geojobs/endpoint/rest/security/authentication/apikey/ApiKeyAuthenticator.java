@@ -2,7 +2,6 @@ package app.bpartners.geojobs.endpoint.rest.security.authentication.apikey;
 
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_COMMUNITY;
-import static app.bpartners.geojobs.repository.impl.CommunityAuthorizationDetailsRepositoryImpl.COMMUNITY_AUTHORIZATION_DETAILS_ENV_KEY;
 
 import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
 import app.bpartners.geojobs.repository.CommunityAuthorizationDetailsRepository;
@@ -22,7 +21,6 @@ public class ApiKeyAuthenticator implements Function<HttpServletRequest, Authent
 
   public ApiKeyAuthenticator(
       @Value("${admin.api.key}") String adminApiKey,
-      @Value(COMMUNITY_AUTHORIZATION_DETAILS_ENV_KEY) String communityAuthorizationDetails,
       CommunityAuthorizationDetailsRepository communityAuthorizationDetailsRepository) {
     this.adminApiKey = adminApiKey;
     this.communityAuthorizationDetailsRepository = communityAuthorizationDetailsRepository;

@@ -28,4 +28,8 @@ public class ApiKeyAuthenticationFilter extends GenericFilterBean {
 
     chain.doFilter(request, response);
   }
+
+  public static ApiKeyAuthentication getApiKeyAuthentication() {
+    return (ApiKeyAuthentication) SecurityContextHolder.getContext().getAuthentication();
+  }
 }

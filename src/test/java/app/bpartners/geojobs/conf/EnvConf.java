@@ -10,8 +10,8 @@ public class EnvConf {
 [{"id":"community1_id",
   "community_name": "community1_name",
   "api_key":"community1_key",
-  "detectableObjects":["ROOF", "POOL"],
-  "total_accessible_zone":"{}"
+  "detectable_objects_types":["ROOF", "POOL"],
+  "authorized_zone_names":"["dummy_zone_name1"]"
   }]
 """;
 
