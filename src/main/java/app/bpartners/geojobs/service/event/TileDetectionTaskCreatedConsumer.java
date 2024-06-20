@@ -27,13 +27,16 @@ public class TileDetectionTaskCreatedConsumer implements Consumer<TileDetectionT
   public void accept(TileDetectionTaskCreated tileDetectionTaskCreated) {
     var tileDetectionTask = tileDetectionTaskCreated.getTileDetectionTask();
     var detectableTypes = tileDetectionTaskCreated.getDetectableTypes();
+    var zoneDetectionJobId = tileDetectionTaskCreated.getZoneDetectionJobId();
+    var parcelJobId = tileDetectionTask.getJobId();
     DetectionResponse response = objectsDetector.apply(tileDetectionTask, detectableTypes);
     DetectedTile detectedTile =
         detectionMapper.toDetectedTile(
             response,
             tileDetectionTask.getTile(),
             tileDetectionTask.getParcelId(),
-            tileDetectionTask.getJobId());
+            zoneDetectionJobId,
+            parcelJobId);
     log.info("[DEBUG] TileDetectionTaskCreatedConsumer to save tile {}", detectedTile.describe());
     detectedTileRepository.save(detectedTile);
   }

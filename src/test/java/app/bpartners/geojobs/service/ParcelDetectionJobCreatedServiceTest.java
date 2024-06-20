@@ -54,10 +54,12 @@ public class ParcelDetectionJobCreatedServiceTest {
 
     assertTrue(
         event1.contains(
-            new TileDetectionTaskCreated(aTileDetectionTask("task1"), List.of(PATHWAY))));
+            new TileDetectionTaskCreated(
+                zoneDetectionJobId, aTileDetectionTask("task1"), List.of(PATHWAY))));
     assertTrue(
         event2.contains(
-            new TileDetectionTaskCreated(aTileDetectionTask("task2"), List.of(PATHWAY))));
+            new TileDetectionTaskCreated(
+                zoneDetectionJobId, aTileDetectionTask("task2"), List.of(PATHWAY))));
   }
 
   private TileDetectionTask aTileDetectionTask(String id) {

@@ -38,6 +38,7 @@ public class TileDetectionTaskCreatedService implements Consumer<TileDetectionTa
           List.of(
               new TileDetectionTaskCreatedFailed(
                   new TileDetectionTaskCreated(
+                      "zdjId",
                       withNewStatus(tileDetectionTask, PROCESSING, UNKNOWN, e.getMessage()),
                       detectableTypes),
                   1)));

@@ -33,6 +33,6 @@ public class ParcelDetectionJobCreatedService implements Consumer<ParcelDetectio
     tileDetectionTasks.forEach(
         tileDetectionTask ->
             eventProducer.accept(
-                List.of(new TileDetectionTaskCreated(tileDetectionTask, detectableTypes))));
+                List.of(new TileDetectionTaskCreated(zdjId, tileDetectionTask, detectableTypes))));
   }
 }

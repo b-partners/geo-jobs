@@ -33,7 +33,11 @@ public class DetectionMapper {
   private final TileValidator tileValidator;
 
   public DetectedTile toDetectedTile(
-      DetectionResponse detectionResponse, Tile tile, String parcelId, String jobId) {
+      DetectionResponse detectionResponse,
+      Tile tile,
+      String parcelId,
+      String zdjJobId,
+      String parcelJobId) {
     String detectedTileId = randomUUID().toString();
     var tileCoordinates = tile.getCoordinates();
     tileValidator.accept(tile);
@@ -49,7 +53,8 @@ public class DetectionMapper {
 
     return DetectedTile.builder()
         .id(detectedTileId)
-        .jobId(jobId)
+        .zdjJobId(zdjJobId)
+        .parcelJobId(parcelJobId)
         .parcelId(parcelId)
         .tile(tile)
         .bucketPath(tile.getBucketPath())

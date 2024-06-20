@@ -16,6 +16,8 @@ import lombok.*;
 @EqualsAndHashCode
 @ToString
 public class TileDetectionTaskCreated extends PojaEvent {
+  private String zoneDetectionJobId;
+
   @JsonProperty("tileDetectionTask")
   private TileDetectionTask tileDetectionTask;
 

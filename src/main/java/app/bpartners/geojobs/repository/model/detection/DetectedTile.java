@@ -42,14 +42,14 @@ public class DetectedTile implements Serializable {
   private String bucketPath;
 
   private String parcelId;
-
-  private String jobId;
+  private String parcelJobId;
+  private String zdjJobId;
 
   @Column(name = "human_detection_job_id")
   private String humanDetectionJobId;
 
   public String describe() {
-    return "DetectedTile(id=" + id + ",tile=" + tile + "," + "jobId=" + jobId + ")";
+    return "DetectedTile(id=" + id + ",tile=" + tile + "," + "jobId=" + zdjJobId + ")";
   }
 
   public DetectedObject getFirstObject() {

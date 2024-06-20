@@ -70,7 +70,7 @@ public class ZoneDetectionAnnotationProcessorTest extends FacadeIT {
         .id(randomUUID().toString())
         .bucketPath(LAYER_20_10_1_PNG + randomUUID())
         .tile(Tile.builder().build())
-        .jobId(MOCK_JOB_ID)
+        .zdjJobId(MOCK_JOB_ID)
         .parcelId(PARCEL_MOCK_ID)
         .creationDatetime(Instant.now())
         .detectedObjects(detectedObjects)
@@ -93,7 +93,7 @@ public class ZoneDetectionAnnotationProcessorTest extends FacadeIT {
   }
 
   void setupDetectedTileRepository(DetectedTileRepository detectedTileRepository) {
-    when(detectedTileRepository.findAllByJobId(MOCK_JOB_ID)).thenReturn(detectedTiles);
+    when(detectedTileRepository.findAllByZdjJobId(MOCK_JOB_ID)).thenReturn(detectedTiles);
   }
 
   void setUpObjectConfigurationRepository(

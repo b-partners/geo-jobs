@@ -57,7 +57,7 @@ public class ExtractorIT extends FacadeIT {
         .id(randomUUID().toString())
         .bucketPath(LAYER_20_10_1_PNG)
         .tile(Tile.builder().build())
-        .jobId(MOCK_JOB_ID)
+        .zdjJobId(MOCK_JOB_ID)
         .parcelId(PARCEL_MOCK_ID)
         .creationDatetime(Instant.now())
         .detectedObjects(detectedObjects)
