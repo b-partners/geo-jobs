@@ -18,6 +18,7 @@ import app.bpartners.geojobs.endpoint.rest.model.FilteredDetectionJob;
 import app.bpartners.geojobs.endpoint.rest.model.GeoJsonsUrl;
 import app.bpartners.geojobs.endpoint.rest.model.Status;
 import app.bpartners.geojobs.endpoint.rest.model.TaskStatistic;
+import app.bpartners.geojobs.endpoint.rest.security.authentication.apikey.authorizer.CommunityZoneDetectionJobProcessAuthorizer;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.model.page.BoundedPageSize;
@@ -51,6 +52,7 @@ public class ZoneDetectionController {
   private final TaskStatisticMapper taskStatisticMapper;
   private final StatusMapper<JobStatus> jobStatusMapper;
   private final EventProducer eventProducer;
+  private final CommunityZoneDetectionJobProcessAuthorizer communityZoneDetectionJobProcessAuthorizer;
 
   @PutMapping("/detectionJobs/{id}/taskFiltering")
   public List<FilteredDetectionJob> filteredDetectionJobs(@PathVariable String id) {
@@ -135,10 +137,11 @@ public class ZoneDetectionController {
       @RequestBody List<DetectableObjectConfiguration> detectableObjectConfigurations) {
     jobValidator.accept(jobId);
     List<app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration>
-        configurations =
+            configurations =
             detectableObjectConfigurations.stream()
-                .map(objectConf -> objectConfigurationMapper.toDomain(jobId, objectConf))
-                .toList();
+                    .map(objectConf -> objectConfigurationMapper.toDomain(jobId, objectConf))
+                    .toList();
+    communityZoneDetectionJobProcessAuthorizer.accept(configurations);
     ZoneDetectionJob processedZDJ = service.fireTasks(jobId, configurations);
     return mapper.toRest(processedZDJ, detectableObjectConfigurations);
   }

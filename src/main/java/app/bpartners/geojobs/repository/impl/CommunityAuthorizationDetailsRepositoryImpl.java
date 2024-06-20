@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.repository.impl;
 
 import app.bpartners.geojobs.model.CommunityAuthorizationDetails;
+import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationDetailsRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -26,9 +27,9 @@ public class CommunityAuthorizationDetailsRepositoryImpl
   @Override
   public CommunityAuthorizationDetails findByApiKey(String apiKey) {
     return communityAuthorizationDetails.stream()
-        .filter(cad -> cad.apiKey().equals(apiKey))
-        .findFirst()
-        .orElseThrow();
+      .filter(cad -> cad.apiKey().equals(apiKey))
+      .findFirst()
+      .orElseThrow(ForbiddenException::new);
   }
 
   @Override

@@ -19,6 +19,7 @@ import app.bpartners.geojobs.endpoint.rest.model.Parcel;
 import app.bpartners.geojobs.endpoint.rest.model.Status;
 import app.bpartners.geojobs.endpoint.rest.model.TaskStatistic;
 import app.bpartners.geojobs.endpoint.rest.model.ZoneTilingJob;
+import app.bpartners.geojobs.endpoint.rest.security.authentication.apikey.authorizer.CommunityZoneTilingJobProcessAuthorizer;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneTilingJobValidator;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.model.page.BoundedPageSize;
@@ -52,6 +53,7 @@ public class ZoneTilingController {
   private final ZoneTilingJobValidator zoneTilingJobValidator;
   private final StatusMapper<JobStatus> jobStatusMapper;
   private final EventProducer eventProducer;
+  private final CommunityZoneTilingJobProcessAuthorizer communityZoneTilingJobProcessAuthorizer;
 
   @PostMapping("/tilingJobs/import")
   public ZoneTilingJob importZTJ(@RequestBody ImportZoneTilingJob importZoneTilingJob) {
@@ -99,6 +101,7 @@ public class ZoneTilingController {
   @PostMapping("/tilingJobs")
   public ZoneTilingJob tileZone(@RequestBody CreateZoneTilingJob createJob) {
     var job = mapper.toDomain(createJob);
+    communityZoneTilingJobProcessAuthorizer.accept(job);
     var tilingTasks = getTilingTasks(createJob, job.getId());
     return mapper.toRest(service.create(job, tilingTasks), tilingTasks);
   }

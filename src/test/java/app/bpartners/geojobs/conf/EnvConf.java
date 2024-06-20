@@ -7,12 +7,22 @@ public class EnvConf {
   public static final String ANNOTATOR_USER_ID_FOR_GEOJOBS = "geo-jobs_user_id";
   private static final String COMMUNITY_AUTH_DETAILS_TEST_VALUE =
       """
-[{"id":"community1_id",
-  "community_name": "community1_name",
-  "api_key":"community1_key",
-  "detectable_objects_types":["ROOF", "POOL"],
-  "authorized_zone_names":"["dummy_zone_name1"]"
-  }]
+[
+  {
+    "id":"community1_id",
+    "community_name": "community1_name",
+    "api_key":"community1_key",
+    "detectable_objects_types":["ROOF", "POOL"],
+    "authorized_zone_names":["zoneName1"]
+  },
+  {
+    "id":"community2_id",
+    "community_name": "community2_name",
+    "api_key":"community2_key",
+    "detectable_objects_types":["PATHWAY"],
+    "authorized_zone_names":["zoneName2", "zoneName3"]
+  }
+]
 """;
 
   void configureProperties(DynamicPropertyRegistry registry) {

@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.endpoint.rest.security.authentication.apikey.authorizer;
 
-import app.bpartners.geojobs.endpoint.rest.model.CreateZoneTilingJob;
 import app.bpartners.geojobs.endpoint.rest.security.authentication.apikey.ApiKeyAuthentication;
 import app.bpartners.geojobs.endpoint.rest.security.authentication.apikey.ApiKeyAuthenticationFilter;
 import app.bpartners.geojobs.model.CommunityAuthorizationDetails;
@@ -8,16 +7,18 @@ import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationDetailsRepository;
 import java.util.List;
 import java.util.function.Consumer;
+
+import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @AllArgsConstructor
-public class CommunityZoneTilingJobProcessAuthorizer implements Consumer<CreateZoneTilingJob> {
+public class CommunityZoneTilingJobProcessAuthorizer implements Consumer<ZoneTilingJob> {
   private final CommunityAuthorizationDetailsRepository communityAuthorizationDetailsRepository;
 
   @Override
-  public void accept(CreateZoneTilingJob createZoneTilingJob) {
+  public void accept(ZoneTilingJob createZoneTilingJob) {
     ApiKeyAuthentication apiKeyAuthentication =
         ApiKeyAuthenticationFilter.getApiKeyAuthentication();
     if (apiKeyAuthentication.isAdmin()) {
