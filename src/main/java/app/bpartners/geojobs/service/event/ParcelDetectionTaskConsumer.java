@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.job.model.Status.HealthStatus.*;
 import static java.time.Instant.now;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
@@ -35,17 +34,17 @@ public class ParcelDetectionTaskConsumer implements Consumer<ParcelDetectionTask
   @Transactional
   public void accept(ParcelDetectionTask task) {
     String detectionTaskId = task.getId();
-    String jobId = task.getJobId();
+    String zdjId = task.getJobId();
     if (task.getParcels().isEmpty()) {
       throw new IllegalArgumentException(
-          "DetectionTask(id=" + detectionTaskId + ", jobId=" + jobId + ") does not have parcel");
+          "DetectionTask(id=" + detectionTaskId + ", zdjId=" + zdjId + ") does not have parcel");
     } else if (task.getParcels().stream()
         .anyMatch(parcel -> parcel.getParcelContent().getTiles().isEmpty())) {
       throw new IllegalArgumentException(
           "DetectionTask(id="
               + detectionTaskId
-              + ", jobId="
-              + jobId
+              + ", zdjId="
+              + zdjId
               + ") has parcel without tiles");
     }
     ParcelDetectionJob parcelDetectionJob = taskToJobConverter.apply(task);
@@ -61,6 +60,7 @@ public class ParcelDetectionTaskConsumer implements Consumer<ParcelDetectionTask
     eventProducer.accept(
         List.of(
             ParcelDetectionJobCreated.builder()
+                .zdjId(zdjId)
                 .parcelDetectionJob(createdParcelDetectionJob)
                 .build()));
   }
