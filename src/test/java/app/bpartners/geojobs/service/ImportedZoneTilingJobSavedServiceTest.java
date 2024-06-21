@@ -42,7 +42,8 @@ public class ImportedZoneTilingJobSavedServiceTest {
     String dummyGeoServerUrl = "https://dummyGeoServerUrl.com";
     List<S3Object> s3Objects =
         List.of(
-            S3Object.builder().key("100_200").build(), S3Object.builder().key("200_200").build());
+            S3Object.builder().key("defaultPath/20/fusionAll/100_200").build(),
+            S3Object.builder().key("defaultPath/20/fusionAll/200_200").build());
     when(tilingJobServiceMock.findById(jobId))
         .thenReturn(
             ZoneTilingJob.builder()
