@@ -38,6 +38,7 @@ import software.amazon.awssdk.services.s3.model.S3Object;
 @AllArgsConstructor
 @Slf4j
 public class ImportedZoneTilingJobSavedService implements Consumer<ImportedZoneTilingJobSaved> {
+  public static final int DEFAULT_Z_VALUE = 20;
   private final BucketCustomizedComponent bucketCustomizedComponent;
   private final ZoneTilingJobService tilingJobService;
   private final TilingTaskRepository tilingTaskRepository;
@@ -142,12 +143,46 @@ public class ImportedZoneTilingJobSavedService implements Consumer<ImportedZoneT
   }
 
   private Tile mapFromKey(String bucketPathKey) {
+    String[] slashSplitter = bucketPathKey.split("/");
+    if (slashSplitter.length != 4) {
+      return mapFromName(bucketPathKey);
+    }
     return Tile.builder()
         .id(randomUUID().toString())
         .bucketPath(bucketPathKey)
         .coordinates(fromBucketPathKey(bucketPathKey))
         .creationDatetime(now())
         .build();
+  }
+
+  private Tile mapFromName(String objectName) {
+    TileCoordinates coordinates = fromObjectName(objectName);
+    return Tile.builder()
+        .id(randomUUID().toString())
+        .bucketPath(
+            "defaultPath/"
+                + coordinates.getZ()
+                + "/"
+                + coordinates.getX()
+                + "/"
+                + coordinates.getY())
+        .coordinates(coordinates)
+        .creationDatetime(now())
+        .build();
+  }
+
+  public TileCoordinates fromObjectName(String objectName) {
+    String[] coordinatesValues = objectName.split("_");
+    if (coordinatesValues.length != 2) {
+      throw new ApiException(
+          SERVER_EXCEPTION, "Unable to convert objectName " + objectName + " to TilesCoordinates");
+    }
+    String xValue = coordinatesValues[0];
+    String yValue = coordinatesValues[1];
+    return new TileCoordinates()
+        .x(Integer.valueOf(xValue))
+        .y(Integer.valueOf(yValue))
+        .z(DEFAULT_Z_VALUE);
   }
 
   public TileCoordinates fromBucketPathKey(String bucketPathKey) {
