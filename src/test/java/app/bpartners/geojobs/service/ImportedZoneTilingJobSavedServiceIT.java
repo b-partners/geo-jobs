@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.model.ImportedZoneTilingJobSaved;
+import app.bpartners.geojobs.endpoint.rest.model.BucketSeparatorType;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
@@ -80,7 +81,8 @@ public class ImportedZoneTilingJobSavedServiceIT extends FacadeIT {
             dummyBucketName,
             dummyBucketPathPrefix,
             geoServerParameter,
-            dummyGeoServerUrl));
+            dummyGeoServerUrl,
+            BucketSeparatorType.SLASH));
 
     List<TilingTask> tasksActual = tilingTaskRepository.findAllByJobId(JOB_ID);
     ZoneTilingJob jobActual = tilingJobRepository.findById(JOB_ID).orElseThrow();

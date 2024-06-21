@@ -8,6 +8,7 @@ import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.*;
+import app.bpartners.geojobs.endpoint.rest.model.BucketSeparatorType;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Task;
@@ -56,7 +57,8 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
       GeoServerParameter geoServerParameter,
       String geoServerUrl,
       Long startFrom,
-      Long endAt) {
+      Long endAt,
+      BucketSeparatorType bucketSeparator) {
     var createdJob = repository.save(job);
     eventProducer.accept(
         List.of(
@@ -68,6 +70,7 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
                 .bucketPathPrefix(bucketPathPrefix)
                 .geoServerParameter(geoServerParameter)
                 .geoServerUrl(geoServerUrl)
+                .bucketSeparatorType(bucketSeparator)
                 .build()));
     return createdJob;
   }
