@@ -8,6 +8,7 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.conf.FacadeIT;
+import app.bpartners.geojobs.endpoint.rest.model.CreateZoneTilingJob;
 import app.bpartners.geojobs.endpoint.rest.security.authentication.apikey.ApiKeyAuthentication;
 import app.bpartners.geojobs.endpoint.rest.security.authentication.apikey.ApiKeyAuthenticationFilter;
 import app.bpartners.geojobs.endpoint.rest.security.authentication.apikey.authorizer.CommunityZoneTilingJobProcessAuthorizer;
@@ -15,7 +16,6 @@ import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
 import app.bpartners.geojobs.model.CommunityAuthorizationDetails;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.repository.impl.CommunityAuthorizationDetailsRepositoryImpl;
-import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
@@ -78,8 +78,8 @@ public class CommunityZoneTilingJobProcessAuthorizerIT extends FacadeIT {
         "dummy_id", "dummy_name", "dummy_name", detectableZoneName, List.of());
   }
 
-  private ZoneTilingJob asZoneTilingJob(String zoneName) {
-    var zoneTilingJob = new ZoneTilingJob();
+  private CreateZoneTilingJob asZoneTilingJob(String zoneName) {
+    var zoneTilingJob = new CreateZoneTilingJob();
     zoneTilingJob.setZoneName(zoneName);
     return zoneTilingJob;
   }

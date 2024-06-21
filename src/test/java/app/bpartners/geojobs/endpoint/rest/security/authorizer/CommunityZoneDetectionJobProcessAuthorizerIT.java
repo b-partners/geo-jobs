@@ -9,6 +9,8 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.conf.FacadeIT;
+import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration;
+import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType;
 import app.bpartners.geojobs.endpoint.rest.security.authentication.apikey.ApiKeyAuthentication;
 import app.bpartners.geojobs.endpoint.rest.security.authentication.apikey.ApiKeyAuthenticationFilter;
 import app.bpartners.geojobs.endpoint.rest.security.authentication.apikey.authorizer.CommunityZoneDetectionJobProcessAuthorizer;
@@ -16,8 +18,9 @@ import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
 import app.bpartners.geojobs.model.CommunityAuthorizationDetails;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.repository.impl.CommunityAuthorizationDetailsRepositoryImpl;
-import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
+
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
@@ -39,7 +42,9 @@ class CommunityZoneDetectionJobProcessAuthorizerIT extends FacadeIT {
     assertDoesNotThrow(
         () -> {
           communityZoneDetectionJobProcessAuthorizer.accept(
-              asDetectableObjectConfiguration(List.of(PATHWAY, ROOF)));
+              "dummyJobId",
+              asDetectableObjectConfiguration(List.of(DetectableObjectType.PATHWAY, DetectableObjectType.ROOF))
+          );
         });
   }
 
@@ -54,7 +59,8 @@ class CommunityZoneDetectionJobProcessAuthorizerIT extends FacadeIT {
             ForbiddenException.class,
             () -> {
               communityZoneDetectionJobProcessAuthorizer.accept(
-                  asDetectableObjectConfiguration(List.of(PATHWAY, ROOF)));
+                  "dummyJobId",
+                  asDetectableObjectConfiguration(List.of(DetectableObjectType.PATHWAY, DetectableObjectType.ROOF)));
             });
     assertTrue(error.getMessage().contains("PATHWAY"));
     assertTrue(error.getMessage().contains("ROOF"));
@@ -71,7 +77,8 @@ class CommunityZoneDetectionJobProcessAuthorizerIT extends FacadeIT {
             ForbiddenException.class,
             () -> {
               communityZoneDetectionJobProcessAuthorizer.accept(
-                  asDetectableObjectConfiguration(List.of(PATHWAY, ROOF)));
+                  "dummyJobId",
+                  asDetectableObjectConfiguration(List.of(DetectableObjectType.PATHWAY, DetectableObjectType.ROOF)));
             });
     assertTrue(error.getMessage().contains("ROOF"));
   }
@@ -85,12 +92,14 @@ class CommunityZoneDetectionJobProcessAuthorizerIT extends FacadeIT {
     assertDoesNotThrow(
         () -> {
           communityZoneDetectionJobProcessAuthorizer.accept(
-              asDetectableObjectConfiguration(List.of(PATHWAY, ROOF)));
+              "dummyJobId",
+              asDetectableObjectConfiguration(List.of(DetectableObjectType.PATHWAY, DetectableObjectType.ROOF)));
         });
     assertDoesNotThrow(
         () -> {
           communityZoneDetectionJobProcessAuthorizer.accept(
-              asDetectableObjectConfiguration(List.of(PATHWAY, ROOF, POOL)));
+              "dummyJobId",
+              asDetectableObjectConfiguration(List.of(DetectableObjectType.PATHWAY, DetectableObjectType.ROOF, DetectableObjectType.POOL)));
         });
   }
 
@@ -100,16 +109,15 @@ class CommunityZoneDetectionJobProcessAuthorizerIT extends FacadeIT {
         "dummy_id", "dummy_name", "dummy_name", List.of("dummy_zone_name"), detectableObjectTypes);
   }
 
-  private List<DetectableObjectConfiguration> asDetectableObjectConfiguration(
-      List<DetectableType> detectableObjectTypes) {
+  public List<DetectableObjectConfiguration> asDetectableObjectConfiguration(
+      List<DetectableObjectType> detectableObjectTypes) {
     return detectableObjectTypes.stream()
         .map(
-            objetType ->
-                new DetectableObjectConfiguration("dummy_id", "job_id", objetType, (double) 0))
-        .toList();
+            objetType -> new DetectableObjectConfiguration().type(objetType).confidence(BigDecimal.TEN)
+        ).toList();
   }
 
-  private void useRole(Authority.Role role) {
+  void useRole(Authority.Role role) {
     var apiKeyAuthentication =
         new ApiKeyAuthentication("dummy-api-key", Set.of(new Authority(role)));
     apiKeyAuthenticationFilter

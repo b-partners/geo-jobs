@@ -100,8 +100,8 @@ public class ZoneTilingController {
 
   @PostMapping("/tilingJobs")
   public ZoneTilingJob tileZone(@RequestBody CreateZoneTilingJob createJob) {
+    communityZoneTilingJobProcessAuthorizer.accept(createJob);
     var job = mapper.toDomain(createJob);
-    communityZoneTilingJobProcessAuthorizer.accept(job);
     var tilingTasks = getTilingTasks(createJob, job.getId());
     return mapper.toRest(service.create(job, tilingTasks), tilingTasks);
   }

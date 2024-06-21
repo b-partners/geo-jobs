@@ -137,12 +137,12 @@ public class ZoneDetectionController {
       @PathVariable("id") String jobId,
       @RequestBody List<DetectableObjectConfiguration> detectableObjectConfigurations) {
     jobValidator.accept(jobId);
+    communityZoneDetectionJobProcessAuthorizer.accept(jobId, detectableObjectConfigurations);
     List<app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration>
         configurations =
             detectableObjectConfigurations.stream()
                 .map(objectConf -> objectConfigurationMapper.toDomain(jobId, objectConf))
                 .toList();
-    communityZoneDetectionJobProcessAuthorizer.accept(configurations);
     ZoneDetectionJob processedZDJ = service.fireTasks(jobId, configurations);
     return mapper.toRest(processedZDJ, detectableObjectConfigurations);
   }

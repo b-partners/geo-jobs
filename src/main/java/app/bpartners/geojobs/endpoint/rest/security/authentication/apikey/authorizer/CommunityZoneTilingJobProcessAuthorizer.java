@@ -1,11 +1,10 @@
 package app.bpartners.geojobs.endpoint.rest.security.authentication.apikey.authorizer;
 
-import app.bpartners.geojobs.endpoint.rest.security.authentication.apikey.ApiKeyAuthentication;
+import app.bpartners.geojobs.endpoint.rest.model.CreateZoneTilingJob;
 import app.bpartners.geojobs.endpoint.rest.security.authentication.apikey.ApiKeyAuthenticationFilter;
 import app.bpartners.geojobs.model.CommunityAuthorizationDetails;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationDetailsRepository;
-import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
@@ -13,12 +12,12 @@ import org.springframework.stereotype.Component;
 
 @Component
 @AllArgsConstructor
-public class CommunityZoneTilingJobProcessAuthorizer implements Consumer<ZoneTilingJob> {
+public class CommunityZoneTilingJobProcessAuthorizer implements Consumer<CreateZoneTilingJob> {
   private final CommunityAuthorizationDetailsRepository communityAuthorizationDetailsRepository;
 
   @Override
-  public void accept(ZoneTilingJob createZoneTilingJob) {
-    ApiKeyAuthentication apiKeyAuthentication =
+  public void accept(CreateZoneTilingJob createZoneTilingJob) {
+    var apiKeyAuthentication =
         ApiKeyAuthenticationFilter.getApiKeyAuthentication();
     if (apiKeyAuthentication.isAdmin()) {
       return;
@@ -26,9 +25,9 @@ public class CommunityZoneTilingJobProcessAuthorizer implements Consumer<ZoneTil
 
     CommunityAuthorizationDetails authenticatedCommunityAuthorizationDetails =
         communityAuthorizationDetailsRepository.findByApiKey(apiKeyAuthentication.getApiKey());
-    List<String> authorizedZoneNames =
+    var authorizedZoneNames =
         authenticatedCommunityAuthorizationDetails.authorizedZoneNames();
-    String payloadZoneName = createZoneTilingJob.getZoneName();
+    var payloadZoneName = createZoneTilingJob.getZoneName();
 
     if (payloadZoneName == null || !isAuthorizedZoneName(authorizedZoneNames, payloadZoneName)) {
       throw new ForbiddenException(

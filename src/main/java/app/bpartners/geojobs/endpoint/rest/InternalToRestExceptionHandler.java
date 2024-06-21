@@ -2,6 +2,7 @@ package app.bpartners.geojobs.endpoint.rest;
 
 import app.bpartners.geojobs.endpoint.rest.model.Exception;
 import app.bpartners.geojobs.model.exception.BadRequestException;
+import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.model.exception.TooManyRequestsException;
 import lombok.extern.slf4j.Slf4j;
@@ -54,6 +55,13 @@ public class InternalToRestExceptionHandler {
     log.info("Too many requests", e);
     return new ResponseEntity<>(
         toRest(e, HttpStatus.TOO_MANY_REQUESTS), HttpStatus.TOO_MANY_REQUESTS);
+  }
+
+  @ExceptionHandler(value = {ForbiddenException.class})
+  ResponseEntity<Exception> handleDefault(ForbiddenException e) {
+    log.error("Authentication error", e);
+    return new ResponseEntity<>(
+      toRest(e, HttpStatus.FORBIDDEN), HttpStatus.FORBIDDEN);
   }
 
   @ExceptionHandler(value = {NotFoundException.class})
