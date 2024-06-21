@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.model.ImportedZoneTilingJobSaved;
+import app.bpartners.geojobs.endpoint.rest.model.BucketSeparatorType;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.file.BucketCustomizedComponent;
@@ -70,7 +71,8 @@ public class ImportedZoneTilingJobSavedServiceTest {
             dummyBucketName,
             dummyBucketPrefix,
             geoServerParameter,
-            dummyGeoServerUrl));
+            dummyGeoServerUrl,
+            BucketSeparatorType.UNDERSCORE));
 
     var listCaptor = ArgumentCaptor.forClass(List.class);
     verify(tilingTaskRepositoryMock, times(1)).saveAll(listCaptor.capture());
@@ -139,7 +141,8 @@ public class ImportedZoneTilingJobSavedServiceTest {
             dummyBucketName,
             dummyBucketPrefix,
             geoServerParameter,
-            dummyGeoServerUrl));
+            dummyGeoServerUrl,
+            BucketSeparatorType.SLASH));
 
     var listCaptor = ArgumentCaptor.forClass(List.class);
     verify(tilingTaskRepositoryMock, times(1)).saveAll(listCaptor.capture());
@@ -208,7 +211,8 @@ public class ImportedZoneTilingJobSavedServiceTest {
             dummyBucketName,
             dummyBucketPrefix,
             geoServerParameter,
-            dummyGeoServerUrl));
+            dummyGeoServerUrl,
+            BucketSeparatorType.SLASH));
 
     var listCaptor = ArgumentCaptor.forClass(List.class);
     verify(tilingTaskRepositoryMock, times(1)).saveAll(listCaptor.capture());
@@ -268,7 +272,8 @@ public class ImportedZoneTilingJobSavedServiceTest {
             dummyBucketName,
             dummyBucketPrefix,
             geoServerParameter,
-            dummyGeoServerUrl));
+            dummyGeoServerUrl,
+            BucketSeparatorType.SLASH));
 
     var listCaptor = ArgumentCaptor.forClass(List.class);
     verify(tilingTaskRepositoryMock, times(1)).saveAll(listCaptor.capture());

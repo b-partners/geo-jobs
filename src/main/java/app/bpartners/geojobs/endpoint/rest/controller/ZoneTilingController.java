@@ -67,9 +67,17 @@ public class ZoneTilingController {
             : importZoneTilingJob.getStartFrom().longValue();
     var endAt =
         importZoneTilingJob.getEndAt() == null ? null : importZoneTilingJob.getEndAt().longValue();
+    var bucketSeparator = importZoneTilingJob.getBucketSeparator();
     return mapper.toRest(
         service.importFromBucket(
-            job, bucketName, bucketPathPrefix, geoServerParameter, geoServerUrl, startFrom, endAt),
+            job,
+            bucketName,
+            bucketPathPrefix,
+            geoServerParameter,
+            geoServerUrl,
+            startFrom,
+            endAt,
+            bucketSeparator),
         List.of());
   }
 
