@@ -39,6 +39,7 @@ import software.amazon.awssdk.services.s3.model.S3Object;
 @Slf4j
 public class ImportedZoneTilingJobSavedService implements Consumer<ImportedZoneTilingJobSaved> {
   public static final int DEFAULT_Z_VALUE = 20;
+  private static final String UNDERSCORE = "_";
   private final BucketCustomizedComponent bucketCustomizedComponent;
   private final ZoneTilingJobService tilingJobService;
   private final TilingTaskRepository tilingTaskRepository;
@@ -145,6 +146,11 @@ public class ImportedZoneTilingJobSavedService implements Consumer<ImportedZoneT
   private Tile mapFromKey(String bucketPathKey) {
     String[] slashSplitter = bucketPathKey.split("/");
     if (slashSplitter.length != 4) {
+      throw new ApiException(
+          SERVER_EXCEPTION,
+          "Unable to convert bucketPathKey " + bucketPathKey + " to TilesCoordinates");
+    }
+    if (bucketPathKey.contains(UNDERSCORE)) {
       return mapFromName(bucketPathKey);
     }
     return Tile.builder()
@@ -155,7 +161,9 @@ public class ImportedZoneTilingJobSavedService implements Consumer<ImportedZoneT
         .build();
   }
 
-  private Tile mapFromName(String objectName) {
+  private Tile mapFromName(String bucketPath) {
+    String[] coordinatesFromPath = bucketPath.split("/");
+    String objectName = coordinatesFromPath[3].split(".jpg")[0];
     TileCoordinates coordinates = fromObjectName(objectName);
     return Tile.builder()
         .id(randomUUID().toString())
@@ -172,7 +180,7 @@ public class ImportedZoneTilingJobSavedService implements Consumer<ImportedZoneT
   }
 
   public TileCoordinates fromObjectName(String objectName) {
-    String[] coordinatesValues = objectName.split("_");
+    String[] coordinatesValues = objectName.split(UNDERSCORE);
     if (coordinatesValues.length != 2) {
       throw new ApiException(
           SERVER_EXCEPTION, "Unable to convert objectName " + objectName + " to TilesCoordinates");
