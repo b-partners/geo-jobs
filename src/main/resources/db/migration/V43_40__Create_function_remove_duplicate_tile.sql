@@ -1,16 +1,16 @@
-CREATE or replace FUNCTION remove_duplicate_bucket_paths()
-    RETURNS VOID
-    LANGUAGE plpgsql
-AS $$
-BEGIN
+create or replace function remove_duplicate_bucket_paths()
+    returns void
+    language plpgsql
+as $$
+begin
     -- Delete duplicates while keeping one record per group
-    DELETE FROM "detected_tile"
-    WHERE id IN (
-        SELECT id
-        FROM (
-                 SELECT id, job_id, bucket_path, ROW_NUMBER() OVER (PARTITION BY job_id, bucket_path ORDER BY id) AS rn
-                 FROM "detected_tile"
-             ) AS tmp
-        WHERE rn > 1
+    delete from "detected_tile"
+    where id in (
+        select id
+        from (
+                 select id, job_id, bucket_path, row_number() over (partition by job_id, bucket_path order by id) as row_number
+                 from "detected_tile"
+             ) as tmp
+        where row_number > 1
     );
 END $$;
