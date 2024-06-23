@@ -183,13 +183,7 @@ public class ImportedZoneTilingJobSavedService implements Consumer<ImportedZoneT
     TileCoordinates coordinates = fromObjectName(objectName);
     return Tile.builder()
         .id(randomUUID().toString())
-        .bucketPath(
-            "defaultPath/"
-                + coordinates.getZ()
-                + "/"
-                + coordinates.getX()
-                + "/"
-                + coordinates.getY())
+        .bucketPath(bucketPath)
         .coordinates(coordinates)
         .creationDatetime(now())
         .build();

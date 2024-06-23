@@ -88,7 +88,7 @@ public class ImportedZoneTilingJobSavedServiceTest {
         Tile.builder()
             .id(firstTile.getId())
             .creationDatetime(firstTile.getCreationDatetime())
-            .bucketPath("defaultPath/20/100/200")
+            .bucketPath("defaultPath/20/fusionAll/100_200")
             .coordinates(new TileCoordinates().x(100).y(200).z(20))
             .build(),
         firstTile);
@@ -96,7 +96,7 @@ public class ImportedZoneTilingJobSavedServiceTest {
         Tile.builder()
             .id(lastTile.getId())
             .creationDatetime(lastTile.getCreationDatetime())
-            .bucketPath("defaultPath/20/200/200")
+            .bucketPath("defaultPath/20/fusionAll/200_200")
             .coordinates(new TileCoordinates().x(200).y(200).z(20))
             .build(),
         lastTile);
