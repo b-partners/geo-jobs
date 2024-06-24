@@ -17,6 +17,7 @@ import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;
 import app.bpartners.geojobs.repository.TileDetectionTaskRepository;
+import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
@@ -374,6 +375,11 @@ public class ZoneDetectionJobServiceTest {
 
   static ParcelDetectionTask taskWithStatus(
       Status.ProgressionStatus progressionStatus, Status.HealthStatus healthStatus) {
+    return taskWithStatus(progressionStatus, healthStatus, null);
+  }
+
+  static ParcelDetectionTask taskWithStatus(
+      Status.ProgressionStatus progressionStatus, Status.HealthStatus healthStatus, Parcel parcel) {
     return ParcelDetectionTask.builder()
         .statusHistory(
             List.of(
@@ -383,6 +389,7 @@ public class ZoneDetectionJobServiceTest {
                     .jobType(DETECTION)
                     .health(healthStatus)
                     .build()))
+        .parcels(parcel == null ? null : List.of(parcel))
         .build();
   }
 }

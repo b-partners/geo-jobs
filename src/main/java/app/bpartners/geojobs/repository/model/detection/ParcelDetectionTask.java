@@ -45,7 +45,7 @@ public class ParcelDetectionTask extends Task implements Serializable {
   }
 
   public Parcel getParcel() {
-    if (parcels.isEmpty()) return null;
+    if (parcels == null || parcels.isEmpty()) return null;
     var chosenParcel = parcels.get(0);
     if (parcels.size() > 1) {
       log.error(
