@@ -30,6 +30,7 @@ import java.util.StringJoiner;
   TaskStatistics.JSON_PROPERTY_TOTAL_TASKS
 })
 @OpenapiGenerated
+@SuppressWarnings("all")
 public class TaskStatistics implements Serializable {
   private static final long serialVersionUID = 1L;
 

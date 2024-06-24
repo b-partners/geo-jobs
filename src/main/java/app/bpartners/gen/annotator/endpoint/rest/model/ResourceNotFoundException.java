@@ -28,6 +28,7 @@ import java.util.StringJoiner;
   ResourceNotFoundException.JSON_PROPERTY_MESSAGE
 })
 @OpenapiGenerated
+@SuppressWarnings("all")
 public class ResourceNotFoundException implements Serializable {
   private static final long serialVersionUID = 1L;
 

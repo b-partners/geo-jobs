@@ -3,6 +3,7 @@ package app.bpartners.gen.annotator.endpoint.rest.client;
 import java.util.HashSet;
 
 /** Representing a Server Variable for server URL template substitution. */
+@SuppressWarnings("all")
 public class ServerVariable {
   public String description;
   public String defaultValue;

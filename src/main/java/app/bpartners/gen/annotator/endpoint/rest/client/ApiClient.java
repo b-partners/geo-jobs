@@ -52,6 +52,7 @@ import org.openapitools.jackson.nullable.JsonNullableModule;
  * configuration.
  */
 @OpenapiGenerated
+@SuppressWarnings("all")
 public class ApiClient {
 
   private HttpClient.Builder builder;

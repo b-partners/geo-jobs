@@ -31,6 +31,7 @@ import java.util.StringJoiner;
   AnnotationBatch.JSON_PROPERTY_CREATION_DATETIME
 })
 @OpenapiGenerated
+@SuppressWarnings("all")
 public class AnnotationBatch implements Serializable {
   private static final long serialVersionUID = 1L;
 

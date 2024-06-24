@@ -39,6 +39,7 @@ import java.util.Objects;
 @javax.annotation.processing.Generated(
     value = "org.openapitools.codegen.languages.JavaClientCodegen",
     date = "2024-03-20T11:16:20.230359+03:00[Indian/Antananarivo]")
+@SuppressWarnings("all")
 public class CrupdateAnnotatedJob implements Serializable {
   private static final long serialVersionUID = 1L;
 

@@ -28,6 +28,7 @@ import java.util.StringJoiner;
   BadRequestException.JSON_PROPERTY_MESSAGE
 })
 @OpenapiGenerated
+@SuppressWarnings("all")
 public class BadRequestException implements Serializable {
   private static final long serialVersionUID = 1L;
 

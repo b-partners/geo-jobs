@@ -40,6 +40,7 @@ import java.util.StringJoiner;
   Job.JSON_PROPERTY_LABELS
 })
 @OpenapiGenerated
+@SuppressWarnings("all")
 public class Job implements Serializable {
   private static final long serialVersionUID = 1L;
 

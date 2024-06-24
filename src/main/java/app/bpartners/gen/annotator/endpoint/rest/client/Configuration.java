@@ -15,6 +15,7 @@ package app.bpartners.gen.annotator.endpoint.rest.client;
 import app.bpartners.gen.annotator.endpoint.rest.OpenapiGenerated;
 
 @OpenapiGenerated
+@SuppressWarnings("all")
 public class Configuration {
   public static final String VERSION = "latest";
 

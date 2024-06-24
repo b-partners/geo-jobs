@@ -25,6 +25,7 @@ import java.util.StringJoiner;
 /** CreateTeam */
 @JsonPropertyOrder({CreateTeam.JSON_PROPERTY_NAME})
 @OpenapiGenerated
+@SuppressWarnings("all")
 public class CreateTeam implements Serializable {
   private static final long serialVersionUID = 1L;
 

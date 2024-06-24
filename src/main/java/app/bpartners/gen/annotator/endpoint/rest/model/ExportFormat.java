@@ -16,6 +16,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 /** Gets or Sets ExportFormat */
+@SuppressWarnings("all")
 public enum ExportFormat {
   COCO("COCO"),
 

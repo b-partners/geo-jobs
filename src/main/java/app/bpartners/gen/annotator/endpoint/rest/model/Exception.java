@@ -25,6 +25,7 @@ import java.util.StringJoiner;
 /** Exception */
 @JsonPropertyOrder({Exception.JSON_PROPERTY_TYPE, Exception.JSON_PROPERTY_MESSAGE})
 @OpenapiGenerated
+@SuppressWarnings("all")
 public class Exception implements Serializable {
   private static final long serialVersionUID = 1L;
 

@@ -1,11 +1,11 @@
 app_name: geo-jobs
 aurora_auto_pause: 'true'
 aurora_max_capacity: 64
-aurora_min_capacity: 2
+aurora_min_capacity: 64
 aurora_scale_point: 60
 aurora_sleep: 900
 aws_account_id: 'null'
-cli_version: 13.8.0
+cli_version: 13.8.1
 codeartifact_domain_name: 'null'
 codeartifact_repository_name: 'null'
 custom_java_deps: poja-custom-java-deps.txt
