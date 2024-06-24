@@ -29,6 +29,7 @@ public class TileDetectionTaskCreatedService implements Consumer<TileDetectionTa
   public void accept(TileDetectionTaskCreated tileDetectionTaskCreated) {
     TileDetectionTask tileDetectionTask = tileDetectionTaskCreated.getTileDetectionTask();
     List<DetectableType> detectableTypes = tileDetectionTaskCreated.getDetectableTypes();
+    String zoneDetectionJobId = tileDetectionTaskCreated.getZoneDetectionJobId();
     tileDetectionTaskStatusService.process(tileDetectionTask);
 
     try {
@@ -38,7 +39,7 @@ public class TileDetectionTaskCreatedService implements Consumer<TileDetectionTa
           List.of(
               new TileDetectionTaskCreatedFailed(
                   new TileDetectionTaskCreated(
-                      "zdjId",
+                      zoneDetectionJobId,
                       withNewStatus(tileDetectionTask, PROCESSING, UNKNOWN, e.getMessage()),
                       detectableTypes),
                   1)));

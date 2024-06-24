@@ -27,6 +27,7 @@ public class TileDetectionTaskCreatedFailedService
   @Override
   public void accept(TileDetectionTaskCreatedFailed tileDetectionTaskCreatedFailed) {
     var createdTask = tileDetectionTaskCreatedFailed.getTileDetectionTaskCreated();
+    var zoneDetectionJobId = createdTask.getZoneDetectionJobId();
     var tileDetectionTask = createdTask.getTileDetectionTask();
     var attemptNb = tileDetectionTaskCreatedFailed.getAttemptNb();
     var detectableTypes = createdTask.getDetectableTypes();
@@ -42,7 +43,7 @@ public class TileDetectionTaskCreatedFailedService
     } catch (Exception e) {
       var newTask =
           new TileDetectionTaskCreated(
-              "zdjId",
+              zoneDetectionJobId,
               TileDetectionTaskCreatedConsumer.withNewStatus(
                   tileDetectionTask, PROCESSING, UNKNOWN, e.getMessage()),
               detectableTypes);
