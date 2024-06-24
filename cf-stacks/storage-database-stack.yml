@@ -41,7 +41,7 @@ Resources:
         - !Sub '{{resolve:ssm:/bpartners-imagery/sg/id}}'
       ScalingConfiguration:
         MaxCapacity: 64
-        MinCapacity: 64
+        MinCapacity: 2
         SecondsBeforeTimeout: 60
         AutoPause: true
         SecondsUntilAutoPause: !If [ IsProdEnv, 900, !Ref ProdDbClusterTimeout]
