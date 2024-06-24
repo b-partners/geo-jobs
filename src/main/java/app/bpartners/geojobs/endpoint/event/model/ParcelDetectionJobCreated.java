@@ -11,6 +11,7 @@ import lombok.*;
 @EqualsAndHashCode(callSuper = true)
 @ToString
 public class ParcelDetectionJobCreated extends PojaEvent {
+  private String zdjId;
   private ParcelDetectionJob parcelDetectionJob;
 
   @Override

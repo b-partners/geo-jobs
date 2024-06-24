@@ -15,10 +15,14 @@ import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
+import app.bpartners.geojobs.repository.model.Parcel;
+import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
+import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.event.TaskStatisticRecomputingSubmittedService;
 import app.bpartners.geojobs.template.HTMLTemplateParser;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
@@ -66,12 +70,12 @@ public class TaskStatisticRecomputingSubmittedServiceTest {
     when(parcelDetectionTaskRepositoryMock.findAllByJobId(JOB_ID))
         .thenReturn(
             List.of(
-                taskWithStatus(FINISHED, SUCCEEDED),
-                taskWithStatus(FINISHED, SUCCEEDED),
-                taskWithStatus(PENDING, UNKNOWN),
-                taskWithStatus(PENDING, UNKNOWN),
+                taskWithStatus(FINISHED, SUCCEEDED, someParcels(0)),
+                taskWithStatus(FINISHED, SUCCEEDED, someParcels(0)),
+                taskWithStatus(PENDING, UNKNOWN, someParcels(0)),
+                taskWithStatus(PENDING, UNKNOWN, someParcels(0)),
                 taskWithStatus(FINISHED, FAILED),
-                taskWithStatus(PROCESSING, UNKNOWN)));
+                taskWithStatus(PROCESSING, UNKNOWN, someParcels(0))));
 
     subject.accept(new TaskStatisticRecomputingSubmitted(JOB_ID));
 
@@ -87,7 +91,16 @@ public class TaskStatisticRecomputingSubmittedServiceTest {
     assertEquals(1, statisticResult.failedFinishedTask().getCount());
     assertEquals(2, statisticResult.succeededFinishedTask().getCount());
     assertEquals(0, statisticResult.unknownFinishedTask().getCount());
+    assertEquals(0, taskStatistic.getTilesCount());
     assertEquals(expectedDetectionJob, zoneDetectionJob);
+  }
+
+  private Parcel someParcels(Integer parcelNb) {
+    List<Tile> tiles = new ArrayList<>();
+    for (int i = 0; i < parcelNb; i++) {
+      tiles.add(new Tile());
+    }
+    return Parcel.builder().parcelContent(ParcelContent.builder().tiles(tiles).build()).build();
   }
 
   @Test
@@ -107,12 +120,12 @@ public class TaskStatisticRecomputingSubmittedServiceTest {
     when(tilingTaskRepositoryMock.findAllByJobId(JOB_ID))
         .thenReturn(
             List.of(
-                ZoneTilingJobServiceTest.taskWithStatus(FINISHED, SUCCEEDED),
-                ZoneTilingJobServiceTest.taskWithStatus(FINISHED, SUCCEEDED),
+                ZoneTilingJobServiceTest.taskWithStatus(FINISHED, SUCCEEDED, someParcels(10)),
+                ZoneTilingJobServiceTest.taskWithStatus(FINISHED, SUCCEEDED, someParcels(8)),
                 ZoneTilingJobServiceTest.taskWithStatus(PENDING, UNKNOWN),
                 ZoneTilingJobServiceTest.taskWithStatus(PENDING, UNKNOWN),
-                ZoneTilingJobServiceTest.taskWithStatus(FINISHED, FAILED),
-                ZoneTilingJobServiceTest.taskWithStatus(PROCESSING, UNKNOWN)));
+                ZoneTilingJobServiceTest.taskWithStatus(FINISHED, FAILED, someParcels(0)),
+                ZoneTilingJobServiceTest.taskWithStatus(PROCESSING, UNKNOWN, someParcels(0))));
 
     subject.accept(new TaskStatisticRecomputingSubmitted(JOB_ID));
 
@@ -128,6 +141,7 @@ public class TaskStatisticRecomputingSubmittedServiceTest {
     assertEquals(1, statisticResult.failedFinishedTask().getCount());
     assertEquals(2, statisticResult.succeededFinishedTask().getCount());
     assertEquals(0, statisticResult.unknownFinishedTask().getCount());
+    assertEquals(18, taskStatistic.getTilesCount());
     assertEquals(expectedJob, zoneDetectionJob);
   }
 }

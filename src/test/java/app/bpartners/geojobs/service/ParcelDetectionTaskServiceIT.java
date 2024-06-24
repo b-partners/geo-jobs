@@ -34,7 +34,8 @@ public class ParcelDetectionTaskServiceIT extends FacadeIT {
       String jobId, String tileId, String parcelId, String detectedObjectId, double confidence) {
     return DetectedTile.builder()
         .id(tileId)
-        .jobId(jobId)
+        .zdjJobId(jobId)
+        // TODO: .parcelJobId(parcelJobId)
         .parcelId(parcelId)
         .detectedObjects(
             List.of(
@@ -97,7 +98,7 @@ public class ParcelDetectionTaskServiceIT extends FacadeIT {
 
   @Test
   void read_in_doubt_tiles() {
-    List<DetectedTile> detectedTiles = detectedTileRepository.findAllByJobId(JOB_ID);
+    List<DetectedTile> detectedTiles = detectedTileRepository.findAllByZdjJobId(JOB_ID);
     List<DetectedTile> expected =
         List.of(
             detectedTile(JOB_ID, "tile1Id", "parcel1Id", "detectedObjectId1", UNDER_MIN_CONFIDENCE),

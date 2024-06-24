@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service;
 
+import static app.bpartners.geojobs.endpoint.rest.model.BucketSeparatorType.SLASH;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.*;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
@@ -14,6 +15,7 @@ import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.ImportedZoneTilingJobSaved;
 import app.bpartners.geojobs.endpoint.event.model.TaskStatisticRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.ZoneTilingJobWithoutTasksCreated;
+import app.bpartners.geojobs.endpoint.rest.model.BucketSeparatorType;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
@@ -25,6 +27,7 @@ import app.bpartners.geojobs.job.repository.TaskRepository;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.model.FilteredTilingJob;
+import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
@@ -108,6 +111,7 @@ public class ZoneTilingJobServiceTest {
     String bucketName = "bucketName";
     String bucketPathPrefix = "bucketPathPrefix";
     String geoServerUrlDummy = "geoServerUrlDummy";
+    BucketSeparatorType bucketSeparatorType = SLASH;
     Long startFrom = 0L;
     Long endAt = 1L;
     GeoServerParameter geoServerParameter = new GeoServerParameter();
@@ -133,7 +137,8 @@ public class ZoneTilingJobServiceTest {
             geoServerParameter,
             geoServerUrlDummy,
             startFrom,
-            endAt);
+            endAt,
+            bucketSeparatorType);
 
     var eventCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducerMock, times(1)).accept(eventCaptor.capture());
@@ -311,6 +316,21 @@ public class ZoneTilingJobServiceTest {
                     .jobType(TILING)
                     .health(healthStatus)
                     .build()))
+        .build();
+  }
+
+  static TilingTask taskWithStatus(
+      Status.ProgressionStatus progressionStatus, Status.HealthStatus healthStatus, Parcel parcel) {
+    return TilingTask.builder()
+        .statusHistory(
+            List.of(
+                TaskStatus.builder()
+                    .id(randomUUID().toString())
+                    .progression(progressionStatus)
+                    .jobType(TILING)
+                    .health(healthStatus)
+                    .build()))
+        .parcels(parcel == null ? null : List.of(parcel))
         .build();
   }
 

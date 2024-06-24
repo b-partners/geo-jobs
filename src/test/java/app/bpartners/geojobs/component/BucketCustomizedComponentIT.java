@@ -60,7 +60,10 @@ public class BucketCustomizedComponentIT extends FacadeIT {
   void list_objects_with_prefix_ok() {
     List<S3Object> actual = subject.listObjects("cannes-draft", "draft_layer");
     List<S3Object> actual2 = subject.listObjects("cannes-draft", "draft_copy");
+    List<S3Object> actualByName =
+        subject.listObjects("cannes-qgis-tiles-pathway", "cannes_zone_all/20/Fusion_All");
 
+    assertEquals(30607, actualByName.size());
     assertEquals(3, actual.size());
     assertEquals(3, actual2.size());
     assertTrue(

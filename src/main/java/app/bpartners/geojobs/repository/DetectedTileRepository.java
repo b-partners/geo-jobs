@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface DetectedTileRepository extends JpaRepository<DetectedTile, String> {
-  List<DetectedTile> findAllByJobId(String id);
+  List<DetectedTile> findAllByZdjJobId(String id);
 
   List<DetectedTile> findAllByParcelId(String parcelId);
 }

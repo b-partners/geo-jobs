@@ -49,6 +49,7 @@ public class TileDetectionTaskCreatedServiceTest {
         () ->
             subject.accept(
                 new TileDetectionTaskCreated(
+                    "zdjId",
                     TileDetectionTask.builder()
                         .statusHistory(
                             List.of(
@@ -84,7 +85,7 @@ public class TileDetectionTaskCreatedServiceTest {
                 .build());
     TileDetectionTaskCreated expectedTileDetectionTaskCreated =
         new TileDetectionTaskCreated(
-            TileDetectionTask.builder().build(), List.of(DetectableType.PATHWAY));
+            "zdjId", TileDetectionTask.builder().build(), List.of(DetectableType.PATHWAY));
     assertDoesNotThrow(() -> subject.accept(expectedTileDetectionTaskCreated));
     var eventCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducerMock, times(1)).accept(eventCaptor.capture());

@@ -17,4 +17,5 @@ public class TaskStatistic {
   private Instant updatedAt;
   private JobStatus actualJobStatus;
   private List<TaskStatusStatistic> taskStatusStatistics;
+  private Integer tilesCount;
 }

@@ -2,6 +2,7 @@ package app.bpartners.geojobs.endpoint.event.model;
 
 import static java.time.temporal.ChronoUnit.MINUTES;
 
+import app.bpartners.geojobs.endpoint.event.EventStack;
 import java.time.Duration;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,5 +29,10 @@ public class ZTJStatusRecomputingSubmitted extends PojaEvent {
   @Override
   public Duration maxConsumerBackoffBetweenRetries() {
     return Duration.of(1, MINUTES);
+  }
+
+  @Override
+  public EventStack getEventStack() {
+    return EventStack.EVENT_STACK_2;
   }
 }

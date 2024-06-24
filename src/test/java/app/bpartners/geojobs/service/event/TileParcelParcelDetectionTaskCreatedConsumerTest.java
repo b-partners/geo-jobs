@@ -28,14 +28,16 @@ public class TileParcelParcelDetectionTaskCreatedConsumerTest {
   void accept_ok() {
     when(detectedTileRepositoryMock.save(any())).thenReturn(new DetectedTile());
     when(objectDetectorMock.apply(any(), any())).thenReturn(new DetectionResponse());
-    when(detectionMapperMock.toDetectedTile(any(), any(), any(), any()))
+    when(detectionMapperMock.toDetectedTile(any(), any(), any(), any(), any()))
         .thenReturn(new DetectedTile());
 
     assertDoesNotThrow(
         () ->
             subject.accept(
                 new TileDetectionTaskCreated(
-                    TileDetectionTask.builder().build(), List.of(DetectableType.PATHWAY))));
+                    "zdjId",
+                    TileDetectionTask.builder().build(),
+                    List.of(DetectableType.PATHWAY))));
 
     var detectedTileCaptor = ArgumentCaptor.forClass(DetectedTile.class);
     verify(detectedTileRepositoryMock, times(1)).save(detectedTileCaptor.capture());

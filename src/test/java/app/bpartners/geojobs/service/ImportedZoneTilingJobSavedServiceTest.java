@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.model.ImportedZoneTilingJobSaved;
+import app.bpartners.geojobs.endpoint.rest.model.BucketSeparatorType;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.file.BucketCustomizedComponent;
@@ -32,7 +33,77 @@ public class ImportedZoneTilingJobSavedServiceTest {
           bucketCustomizedComponentMock, tilingJobServiceMock, tilingTaskRepositoryMock);
 
   @Test
-  void accept_all_ok() {
+  void accept_object_name_ok() {
+    Long startFrom = 0L;
+    Long endAt = null;
+    String jobId = "jobId";
+    String dummyBucketName = "dummyBucketName";
+    String dummyBucketPrefix = "dummyBucketPrefix";
+    GeoServerParameter geoServerParameter = new GeoServerParameter();
+    String dummyGeoServerUrl = "https://dummyGeoServerUrl.com";
+    List<S3Object> s3Objects =
+        List.of(
+            S3Object.builder().key("defaultPath/20/fusionAll/100_200").build(),
+            S3Object.builder().key("defaultPath/20/fusionAll/200_200").build());
+    when(tilingJobServiceMock.findById(jobId))
+        .thenReturn(
+            ZoneTilingJob.builder()
+                .id(jobId)
+                .zoneName("dummyZoneName")
+                .emailReceiver("dummyEmailReceiver")
+                .statusHistory(
+                    List.of(
+                        JobStatus.builder()
+                            .progression(PENDING)
+                            .health(UNKNOWN)
+                            .creationDatetime(now())
+                            .build()))
+                .build());
+
+    when(bucketCustomizedComponentMock.listObjects(dummyBucketName, dummyBucketPrefix))
+        .thenReturn(s3Objects);
+
+    subject.accept(
+        new ImportedZoneTilingJobSaved(
+            startFrom,
+            endAt,
+            jobId,
+            dummyBucketName,
+            dummyBucketPrefix,
+            geoServerParameter,
+            dummyGeoServerUrl,
+            BucketSeparatorType.UNDERSCORE));
+
+    var listCaptor = ArgumentCaptor.forClass(List.class);
+    verify(tilingTaskRepositoryMock, times(1)).saveAll(listCaptor.capture());
+    List<TilingTask> savedTilingTasks = (List<TilingTask>) listCaptor.getValue();
+    var firstTask = savedTilingTasks.getFirst();
+    var lastTask = savedTilingTasks.getLast();
+    assertEquals(2, savedTilingTasks.size());
+    Tile firstTile = firstTask.getParcelContent().getFirstTile();
+    Tile lastTile = lastTask.getParcelContent().getFirstTile();
+    assertEquals(s3Objects.size(), savedTilingTasks.size());
+    assertTrue(savedTilingTasks.stream().allMatch(TilingTask::isSucceeded));
+    assertEquals(
+        Tile.builder()
+            .id(firstTile.getId())
+            .creationDatetime(firstTile.getCreationDatetime())
+            .bucketPath("defaultPath/20/fusionAll/100_200")
+            .coordinates(new TileCoordinates().x(100).y(200).z(20))
+            .build(),
+        firstTile);
+    assertEquals(
+        Tile.builder()
+            .id(lastTile.getId())
+            .creationDatetime(lastTile.getCreationDatetime())
+            .bucketPath("defaultPath/20/fusionAll/200_200")
+            .coordinates(new TileCoordinates().x(200).y(200).z(20))
+            .build(),
+        lastTile);
+  }
+
+  @Test
+  void accept_object_slash_splitter_ok() {
     Long startFrom = 0L;
     Long endAt = null;
     String jobId = "jobId";
@@ -70,7 +141,8 @@ public class ImportedZoneTilingJobSavedServiceTest {
             dummyBucketName,
             dummyBucketPrefix,
             geoServerParameter,
-            dummyGeoServerUrl));
+            dummyGeoServerUrl,
+            BucketSeparatorType.SLASH));
 
     var listCaptor = ArgumentCaptor.forClass(List.class);
     verify(tilingTaskRepositoryMock, times(1)).saveAll(listCaptor.capture());
@@ -139,7 +211,8 @@ public class ImportedZoneTilingJobSavedServiceTest {
             dummyBucketName,
             dummyBucketPrefix,
             geoServerParameter,
-            dummyGeoServerUrl));
+            dummyGeoServerUrl,
+            BucketSeparatorType.SLASH));
 
     var listCaptor = ArgumentCaptor.forClass(List.class);
     verify(tilingTaskRepositoryMock, times(1)).saveAll(listCaptor.capture());
@@ -199,7 +272,8 @@ public class ImportedZoneTilingJobSavedServiceTest {
             dummyBucketName,
             dummyBucketPrefix,
             geoServerParameter,
-            dummyGeoServerUrl));
+            dummyGeoServerUrl,
+            BucketSeparatorType.SLASH));
 
     var listCaptor = ArgumentCaptor.forClass(List.class);
     verify(tilingTaskRepositoryMock, times(1)).saveAll(listCaptor.capture());
@@ -214,5 +288,10 @@ public class ImportedZoneTilingJobSavedServiceTest {
   @Test
   void convert_tiles_from_bucket_path_ko() {
     assertThrows(ApiException.class, () -> subject.fromBucketPathKey("dummyBucket"));
+  }
+
+  @Test
+  void convert_tiles_from_object_name_ko() {
+    assertThrows(ApiException.class, () -> subject.fromObjectName("dummyBucket"));
   }
 }

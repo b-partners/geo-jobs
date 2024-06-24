@@ -51,7 +51,7 @@ public class ZoneDetectionJobAnnotationProcessor {
     var humanZDJId = humanJob.getId();
 
     List<DetectedTile> detectedTiles =
-        detectedTileRepository.findAllByJobId(zoneDetectionJobId).stream()
+        detectedTileRepository.findAllByZdjJobId(zoneDetectionJobId).stream()
             .filter(keyPredicateFunction.apply(DetectedTile::getBucketPath))
             .toList();
     List<DetectedTile> inDoubtTiles =

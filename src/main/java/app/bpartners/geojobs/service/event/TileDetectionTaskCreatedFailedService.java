@@ -42,6 +42,7 @@ public class TileDetectionTaskCreatedFailedService
     } catch (Exception e) {
       var newTask =
           new TileDetectionTaskCreated(
+              "zdjId",
               TileDetectionTaskCreatedConsumer.withNewStatus(
                   tileDetectionTask, PROCESSING, UNKNOWN, e.getMessage()),
               detectableTypes);

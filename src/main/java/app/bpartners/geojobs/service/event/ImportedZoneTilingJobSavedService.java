@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.endpoint.rest.model.BucketSeparatorType.UNDERSCORE;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
@@ -8,6 +9,7 @@ import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.model.ImportedZoneTilingJobSaved;
+import app.bpartners.geojobs.endpoint.rest.model.BucketSeparatorType;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.file.BucketCustomizedComponent;
@@ -38,6 +40,8 @@ import software.amazon.awssdk.services.s3.model.S3Object;
 @AllArgsConstructor
 @Slf4j
 public class ImportedZoneTilingJobSavedService implements Consumer<ImportedZoneTilingJobSaved> {
+  public static final int DEFAULT_Z_VALUE = 20;
+  private static final String UNDERSCORE = "_";
   private final BucketCustomizedComponent bucketCustomizedComponent;
   private final ZoneTilingJobService tilingJobService;
   private final TilingTaskRepository tilingTaskRepository;
@@ -50,11 +54,15 @@ public class ImportedZoneTilingJobSavedService implements Consumer<ImportedZoneT
     var bucketPathPrefix = importedZoneTilingJobSaved.getBucketPathPrefix();
     var geoServerParameter = importedZoneTilingJobSaved.getGeoServerParameter();
     var geoServerUrlValue = importedZoneTilingJobSaved.getGeoServerUrl();
+    var bucketSeparator =
+        importedZoneTilingJobSaved.getBucketSeparatorType() == null
+            ? BucketSeparatorType.SLASH
+            : importedZoneTilingJobSaved.getBucketSeparatorType();
     List<S3Object> s3Objects =
         getS3Objects(importedZoneTilingJobSaved, bucketName, bucketPathPrefix);
 
     log.info("[DEBUG] S3 objects size {}", s3Objects.size());
-    Map<Integer, List<Tile>> groupedTilesByX = getGroupedTiles(s3Objects);
+    Map<Integer, List<Tile>> groupedTilesByX = getGroupedTiles(s3Objects, bucketSeparator);
     List<TilingTask> tilingTasks = new ArrayList<>();
     for (Map.Entry<Integer, List<Tile>> entry : groupedTilesByX.entrySet()) {
       List<Tile> groupedTiles = entry.getValue();
@@ -74,8 +82,12 @@ public class ImportedZoneTilingJobSavedService implements Consumer<ImportedZoneT
   }
 
   @NonNull
-  private Map<Integer, List<Tile>> getGroupedTiles(List<S3Object> s3Objects) {
-    var tiles = s3Objects.stream().map(s3Object -> mapFromKey(s3Object.key())).toList();
+  private Map<Integer, List<Tile>> getGroupedTiles(
+      List<S3Object> s3Objects, BucketSeparatorType bucketSeparatorType) {
+    var tiles =
+        s3Objects.stream()
+            .map(s3Object -> mapFromKey(s3Object.key(), bucketSeparatorType))
+            .toList();
     Map<Integer, List<Tile>> groupedByX =
         tiles.stream()
             .filter(tile -> tile.getCoordinates() != null & tile.getCoordinates().getX() != null)
@@ -141,13 +153,54 @@ public class ImportedZoneTilingJobSavedService implements Consumer<ImportedZoneT
     return defaultS3Objects;
   }
 
-  private Tile mapFromKey(String bucketPathKey) {
+  private Tile mapFromKey(String bucketPathKey, BucketSeparatorType bucketSeparatorType) {
+    String[] slashSplitter = bucketPathKey.split("/");
+    if (slashSplitter.length != 4) {
+      throw new ApiException(
+          SERVER_EXCEPTION,
+          "Unable to convert bucketPathKey " + bucketPathKey + " to TilesCoordinates");
+    }
+    switch (bucketSeparatorType) {
+      case UNDERSCORE -> {
+        return mapFromName(bucketPathKey);
+      }
+      case SLASH -> {
+        return Tile.builder()
+            .id(randomUUID().toString())
+            .bucketPath(bucketPathKey)
+            .coordinates(fromBucketPathKey(bucketPathKey))
+            .creationDatetime(now())
+            .build();
+      }
+      default -> throw new ApiException(
+          SERVER_EXCEPTION, "BucketSeparator " + bucketSeparatorType + " unknown");
+    }
+  }
+
+  private Tile mapFromName(String bucketPath) {
+    String[] coordinatesFromPath = bucketPath.split("/");
+    String objectName = coordinatesFromPath[3].split(".jpg")[0];
+    TileCoordinates coordinates = fromObjectName(objectName);
     return Tile.builder()
         .id(randomUUID().toString())
-        .bucketPath(bucketPathKey)
-        .coordinates(fromBucketPathKey(bucketPathKey))
+        .bucketPath(bucketPath)
+        .coordinates(coordinates)
         .creationDatetime(now())
         .build();
+  }
+
+  public TileCoordinates fromObjectName(String objectName) {
+    String[] coordinatesValues = objectName.split(UNDERSCORE);
+    if (coordinatesValues.length != 2) {
+      throw new ApiException(
+          SERVER_EXCEPTION, "Unable to convert objectName " + objectName + " to TilesCoordinates");
+    }
+    String xValue = coordinatesValues[0];
+    String yValue = coordinatesValues[1];
+    return new TileCoordinates()
+        .x(Integer.valueOf(xValue))
+        .y(Integer.valueOf(yValue))
+        .z(DEFAULT_Z_VALUE);
   }
 
   public TileCoordinates fromBucketPathKey(String bucketPathKey) {

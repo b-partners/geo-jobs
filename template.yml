@@ -65,7 +65,7 @@ Resources:
     Properties:
       Handler: app.bpartners.geojobs.ApiEventHandler::handleRequest
       MemorySize: 2048
-      Timeout: 30
+      Timeout: 300
       Role: !Sub '{{resolve:ssm:/geo-jobs/${Env}/execution/role-arn}}'
       
       Events:

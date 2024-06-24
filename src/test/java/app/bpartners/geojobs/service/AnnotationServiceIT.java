@@ -73,7 +73,8 @@ public class AnnotationServiceIT extends FacadeIT {
     MultiPolygon geometry = new MultiPolygon().coordinates(List.of(aMultiPolygon));
     return DetectedTile.builder()
         .id(tileId)
-        .jobId(jobId)
+        .zdjJobId(jobId)
+        // TODO: .parcelJobId(parcelJobId)
         .parcelId(parcelId)
         .detectedObjects(
             List.of(

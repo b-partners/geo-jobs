@@ -23,7 +23,7 @@ class TileParcelParcelDetectionTaskConsumerWithMockedObjectsDetectorTest {
     DetectedTileRepository detectedTileRepositoryMock = mock();
     DetectionMapper detectionMapperMock = mock();
     when(detectedTileRepositoryMock.save(any())).thenReturn(new DetectedTile());
-    when(detectionMapperMock.toDetectedTile(any(), any(), any(), any()))
+    when(detectionMapperMock.toDetectedTile(any(), any(), any(), any(), any()))
         .thenReturn(new DetectedTile());
     var subject =
         new TileDetectionTaskCreatedConsumer(
@@ -31,6 +31,7 @@ class TileParcelParcelDetectionTaskConsumerWithMockedObjectsDetectorTest {
 
     subject.accept(
         new TileDetectionTaskCreated(
+            "zdjId",
             new TileDetectionTask(
                 "tileDetectionTaskId",
                 "detectionTaskId",
@@ -54,6 +55,7 @@ class TileParcelParcelDetectionTaskConsumerWithMockedObjectsDetectorTest {
       for (int i = 0; i < 10; i++) {
         subject.accept(
             new TileDetectionTaskCreated(
+                "zdjId",
                 new TileDetectionTask(
                     "tileDetectionTaskId", "taskId", "parcelId", "jobId", new Tile(), List.of()),
                 List.of()));

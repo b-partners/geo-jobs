@@ -22,16 +22,17 @@ public class ParcelDetectionJobCreatedService implements Consumer<ParcelDetectio
   public void accept(ParcelDetectionJobCreated parcelDetectionJobCreated) {
     // TODO: add ParcelDetectionJobStatusComputingSubmitted event here
     var parcelDetectionJob = parcelDetectionJobCreated.getParcelDetectionJob();
-    String jobId = parcelDetectionJob.getId();
+    var zdjId = parcelDetectionJobCreated.getZdjId();
+    var jobId = parcelDetectionJob.getId();
     var tileDetectionTasks = tileDetectionTaskRepository.findAllByJobId(jobId);
     var detectableTypes =
-        objectConfigurationRepository.findAllByDetectionJobId(jobId).stream()
+        objectConfigurationRepository.findAllByDetectionJobId(zdjId).stream()
             .map(DetectableObjectConfiguration::getObjectType)
             .toList();
 
     tileDetectionTasks.forEach(
         tileDetectionTask ->
             eventProducer.accept(
-                List.of(new TileDetectionTaskCreated(tileDetectionTask, detectableTypes))));
+                List.of(new TileDetectionTaskCreated(zdjId, tileDetectionTask, detectableTypes))));
   }
 }

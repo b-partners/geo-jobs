@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.endpoint.event.model;
 
+import app.bpartners.geojobs.endpoint.rest.model.BucketSeparatorType;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import java.time.Duration;
 import javax.annotation.processing.Generated;
@@ -20,6 +21,7 @@ public class ImportedZoneTilingJobSaved extends PojaEvent {
   private String bucketPathPrefix;
   private GeoServerParameter geoServerParameter;
   private String geoServerUrl;
+  private BucketSeparatorType bucketSeparatorType;
 
   @Override
   public Duration maxConsumerDuration() {

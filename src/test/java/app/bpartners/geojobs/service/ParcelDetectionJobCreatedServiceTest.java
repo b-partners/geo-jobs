@@ -29,9 +29,10 @@ public class ParcelDetectionJobCreatedServiceTest {
   @Test
   void accept_ok() {
     var parcelDetectionJob = ParcelDetectionJob.builder().id(JOB_ID).build();
+    var zoneDetectionJobId = "zoneDetectionJobId";
     when(taskRepositoryMock.findAllByJobId(JOB_ID))
         .thenReturn(List.of(aTileDetectionTask("task1"), aTileDetectionTask("task2")));
-    when(objectConfigurationRepositoryMock.findAllByDetectionJobId(JOB_ID))
+    when(objectConfigurationRepositoryMock.findAllByDetectionJobId(zoneDetectionJobId))
         .thenReturn(
             List.of(
                 DetectableObjectConfiguration.builder()
@@ -39,11 +40,13 @@ public class ParcelDetectionJobCreatedServiceTest {
                     .objectType(PATHWAY)
                     .build()));
 
-    assertDoesNotThrow(() -> subject.accept(new ParcelDetectionJobCreated(parcelDetectionJob)));
+    assertDoesNotThrow(
+        () ->
+            subject.accept(new ParcelDetectionJobCreated(zoneDetectionJobId, parcelDetectionJob)));
 
     var eventCaptor = ArgumentCaptor.forClass(List.class);
     verify(taskRepositoryMock, times(1)).findAllByJobId(JOB_ID);
-    verify(objectConfigurationRepositoryMock, times(1)).findAllByDetectionJobId(JOB_ID);
+    verify(objectConfigurationRepositoryMock, times(1)).findAllByDetectionJobId(zoneDetectionJobId);
     verify(eventProducerMock, times(2)).accept(eventCaptor.capture());
     var events = eventCaptor.getAllValues();
     var event1 = (List<TileDetectionTaskCreated>) events.getFirst();
@@ -51,10 +54,12 @@ public class ParcelDetectionJobCreatedServiceTest {
 
     assertTrue(
         event1.contains(
-            new TileDetectionTaskCreated(aTileDetectionTask("task1"), List.of(PATHWAY))));
+            new TileDetectionTaskCreated(
+                zoneDetectionJobId, aTileDetectionTask("task1"), List.of(PATHWAY))));
     assertTrue(
         event2.contains(
-            new TileDetectionTaskCreated(aTileDetectionTask("task2"), List.of(PATHWAY))));
+            new TileDetectionTaskCreated(
+                zoneDetectionJobId, aTileDetectionTask("task2"), List.of(PATHWAY))));
   }
 
   private TileDetectionTask aTileDetectionTask(String id) {
