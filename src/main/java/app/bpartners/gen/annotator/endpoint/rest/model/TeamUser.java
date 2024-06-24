@@ -25,6 +25,7 @@ import java.util.StringJoiner;
 /** TeamUser */
 @JsonPropertyOrder({TeamUser.JSON_PROPERTY_USER_ID, TeamUser.JSON_PROPERTY_TEAM_ID})
 @OpenapiGenerated
+@SuppressWarnings("all")
 public class TeamUser implements Serializable {
   private static final long serialVersionUID = 1L;
 

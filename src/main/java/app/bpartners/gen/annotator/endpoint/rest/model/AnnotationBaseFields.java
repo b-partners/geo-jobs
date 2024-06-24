@@ -43,6 +43,7 @@ import java.util.StringJoiner;
   AnnotationBaseFields.JSON_PROPERTY_COMMENT
 })
 @OpenapiGenerated
+@SuppressWarnings("all")
 public class AnnotationBaseFields implements Serializable {
   private static final long serialVersionUID = 1L;
 

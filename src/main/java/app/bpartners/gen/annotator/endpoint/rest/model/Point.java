@@ -25,6 +25,7 @@ import java.util.StringJoiner;
 /** Point */
 @JsonPropertyOrder({Point.JSON_PROPERTY_X, Point.JSON_PROPERTY_Y})
 @OpenapiGenerated
+@SuppressWarnings("all")
 public class Point implements Serializable {
   private static final long serialVersionUID = 1L;
 

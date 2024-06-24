@@ -16,6 +16,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 /** Gets or Sets JobType */
+@SuppressWarnings("all")
 public enum JobType {
   LABELLING("LABELLING"),
 

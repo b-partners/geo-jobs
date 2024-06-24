@@ -25,6 +25,7 @@ import java.util.StringJoiner;
 /** DummyComponent */
 @JsonPropertyOrder({DummyComponent.JSON_PROPERTY_ID})
 @OpenapiGenerated
+@SuppressWarnings("all")
 public class DummyComponent implements Serializable {
   private static final long serialVersionUID = 1L;
 

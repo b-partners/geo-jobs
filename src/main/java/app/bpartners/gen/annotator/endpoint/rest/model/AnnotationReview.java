@@ -29,6 +29,7 @@ import java.util.StringJoiner;
   AnnotationReview.JSON_PROPERTY_ANNOTATION_ID
 })
 @OpenapiGenerated
+@SuppressWarnings("all")
 public class AnnotationReview implements Serializable {
   private static final long serialVersionUID = 1L;
 

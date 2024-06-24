@@ -28,6 +28,7 @@ import java.util.StringJoiner;
   NotAuthorizedException.JSON_PROPERTY_MESSAGE
 })
 @OpenapiGenerated
+@SuppressWarnings("all")
 public class NotAuthorizedException implements Serializable {
   private static final long serialVersionUID = 1L;
 

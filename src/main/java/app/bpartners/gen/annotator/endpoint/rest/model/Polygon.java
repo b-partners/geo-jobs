@@ -25,6 +25,7 @@ import java.util.StringJoiner;
 /** Polygon */
 @JsonPropertyOrder({Polygon.JSON_PROPERTY_POINTS})
 @OpenapiGenerated
+@SuppressWarnings("all")
 public class Polygon implements Serializable {
   private static final long serialVersionUID = 1L;
 
