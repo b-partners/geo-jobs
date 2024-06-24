@@ -673,6 +673,11 @@ components:
         confidence:
           type: number
           description: between 0 and 1
+        bucketStorageName:
+          type: string
+          description: | 
+            Bucket where are stores images to be detected. 
+            If null is provided, the default apps bucket is chosen.
     DetectableObjectType:
       type: string
       enum:

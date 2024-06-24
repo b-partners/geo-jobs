@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.endpoint.event.model;
 
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
-import app.bpartners.geojobs.repository.model.detection.DetectableType;
+import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Duration;
 import java.util.List;
@@ -21,8 +21,8 @@ public class TileDetectionTaskCreated extends PojaEvent {
   @JsonProperty("tileDetectionTask")
   private TileDetectionTask tileDetectionTask;
 
-  @JsonProperty("detectableTypes")
-  private List<DetectableType> detectableTypes;
+  @JsonProperty("detectableObjectConfigurations")
+  private List<DetectableObjectConfiguration> detectableObjectConfigurations;
 
   @Override
   public Duration maxConsumerDuration() {

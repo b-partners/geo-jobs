@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service.event;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.PATHWAY;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -15,7 +16,7 @@ import app.bpartners.geojobs.endpoint.event.model.TileDetectionTaskSucceeded;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
-import app.bpartners.geojobs.repository.model.detection.DetectableType;
+import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.service.detection.TileDetectionTaskStatusService;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -61,7 +62,7 @@ public class TileDetectionTaskCreatedServiceTest {
                                     .health(SUCCEEDED)
                                     .build()))
                         .build(),
-                    List.of(DetectableType.PATHWAY))));
+                    List.of(DetectableObjectConfiguration.builder().objectType(PATHWAY).build()))));
     var eventCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducerMock, times(1)).accept(eventCaptor.capture());
     TileDetectionTaskSucceeded capturedTileDetectionTaskSucceeded =
@@ -88,7 +89,9 @@ public class TileDetectionTaskCreatedServiceTest {
                 .build());
     TileDetectionTaskCreated expectedTileDetectionTaskCreated =
         new TileDetectionTaskCreated(
-            "zdjId", TileDetectionTask.builder().build(), List.of(DetectableType.PATHWAY));
+            "zdjId",
+            TileDetectionTask.builder().build(),
+            List.of(DetectableObjectConfiguration.builder().objectType(PATHWAY).build()));
     assertDoesNotThrow(() -> subject.accept(expectedTileDetectionTaskCreated));
     var eventCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducerMock, times(1)).accept(eventCaptor.capture());

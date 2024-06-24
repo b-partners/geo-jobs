@@ -31,7 +31,7 @@ public class TileDetectionTaskCreatedFailedService
     var zoneDetectionJobId = createdTask.getZoneDetectionJobId();
     var tileDetectionTask = createdTask.getTileDetectionTask();
     var attemptNb = tileDetectionTaskCreatedFailed.getAttemptNb();
-    var detectableTypes = createdTask.getDetectableTypes();
+    var detectableTypes = createdTask.getDetectableObjectConfigurations();
     if (attemptNb > MAX_ATTEMPT) {
       tileDetectionTaskStatusService.fail(tileDetectionTask);
       log.info(

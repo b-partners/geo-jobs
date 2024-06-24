@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.PATHWAY;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -7,7 +8,7 @@ import static org.mockito.Mockito.*;
 import app.bpartners.geojobs.endpoint.event.model.TileDetectionTaskCreated;
 import app.bpartners.geojobs.repository.DetectedTileRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
-import app.bpartners.geojobs.repository.model.detection.DetectableType;
+import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.DetectedTile;
 import app.bpartners.geojobs.service.detection.DetectionMapper;
 import app.bpartners.geojobs.service.detection.DetectionResponse;
@@ -37,7 +38,7 @@ public class TileParcelParcelDetectionTaskCreatedConsumerTest {
                 new TileDetectionTaskCreated(
                     "zdjId",
                     TileDetectionTask.builder().build(),
-                    List.of(DetectableType.PATHWAY))));
+                    List.of(DetectableObjectConfiguration.builder().objectType(PATHWAY).build()))));
 
     var detectedTileCaptor = ArgumentCaptor.forClass(DetectedTile.class);
     verify(detectedTileRepositoryMock, times(1)).save(detectedTileCaptor.capture());

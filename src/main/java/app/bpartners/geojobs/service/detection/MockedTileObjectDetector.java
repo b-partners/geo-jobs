@@ -4,6 +4,7 @@ import static app.bpartners.geojobs.service.detection.DetectionResponse.REGION_C
 import static app.bpartners.geojobs.service.detection.DetectionResponse.REGION_LABEL_PROPERTY;
 
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
+import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import java.math.BigDecimal;
 import java.util.List;
@@ -16,8 +17,13 @@ import org.springframework.stereotype.Component;
 public class MockedTileObjectDetector implements TileObjectDetector {
   @Override
   public DetectionResponse apply(
-      TileDetectionTask tileDetectionTask, List<DetectableType> detectableTypes) {
+      TileDetectionTask tileDetectionTask,
+      List<DetectableObjectConfiguration> detectableObjectConfigurations) {
     double randomConfidence = Math.random();
+    var detectableTypes =
+        detectableObjectConfigurations.stream()
+            .map(DetectableObjectConfiguration::getObjectType)
+            .toList();
     return aMockedDetectionResponse(
         randomConfidence,
         detectableTypes.isEmpty() ? DetectableType.ROOF : detectableTypes.getFirst());

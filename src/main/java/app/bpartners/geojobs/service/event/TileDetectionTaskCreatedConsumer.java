@@ -26,10 +26,12 @@ public class TileDetectionTaskCreatedConsumer implements Consumer<TileDetectionT
   @Override
   public void accept(TileDetectionTaskCreated tileDetectionTaskCreated) {
     var tileDetectionTask = tileDetectionTaskCreated.getTileDetectionTask();
-    var detectableTypes = tileDetectionTaskCreated.getDetectableTypes();
+    var detectableObjectConfigurations =
+        tileDetectionTaskCreated.getDetectableObjectConfigurations();
     var zoneDetectionJobId = tileDetectionTaskCreated.getZoneDetectionJobId();
     var parcelJobId = tileDetectionTask.getJobId();
-    DetectionResponse response = objectsDetector.apply(tileDetectionTask, detectableTypes);
+    DetectionResponse response =
+        objectsDetector.apply(tileDetectionTask, detectableObjectConfigurations);
     DetectedTile detectedTile =
         detectionMapper.toDetectedTile(
             response,

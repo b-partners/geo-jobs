@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.service.geo;
 
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.PATHWAY;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.ROOF;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -13,7 +15,7 @@ import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
-import app.bpartners.geojobs.repository.model.detection.DetectableType;
+import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.detection.TileObjectDetector;
@@ -41,7 +43,10 @@ public class ObjectsDetectorIT extends FacadeIT {
 
   @Test
   void process_detection_ok() {
-    var actual = objectsDetector.apply(detectionTask(), List.of(DetectableType.PATHWAY));
+    var actual =
+        objectsDetector.apply(
+            detectionTask(),
+            List.of(DetectableObjectConfiguration.builder().objectType(PATHWAY).build()));
 
     assertNotNull(actual);
     assertNotNull(actual.getRstImageUrl());
@@ -55,7 +60,10 @@ public class ObjectsDetectorIT extends FacadeIT {
         NotImplementedException.class,
         () ->
             objectsDetector.apply(
-                detectionTask(), List.of(DetectableType.ROOF, DetectableType.PATHWAY)));
+                detectionTask(),
+                List.of(
+                    DetectableObjectConfiguration.builder().objectType(ROOF).build(),
+                    DetectableObjectConfiguration.builder().objectType(PATHWAY).build())));
   }
 
   public TileDetectionTask detectionTask() {
