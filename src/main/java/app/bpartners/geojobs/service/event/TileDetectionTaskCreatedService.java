@@ -24,6 +24,7 @@ public class TileDetectionTaskCreatedService implements Consumer<TileDetectionTa
   private final TileDetectionTaskStatusService tileDetectionTaskStatusService;
   private final TileDetectionTaskCreatedConsumer tileDetectionTaskConsumer;
   private final EventProducer eventProducer;
+  private final ExceptionToStringFunction exceptionToStringFunction;
 
   @Override
   public void accept(TileDetectionTaskCreated tileDetectionTaskCreated) {
@@ -40,7 +41,11 @@ public class TileDetectionTaskCreatedService implements Consumer<TileDetectionTa
               new TileDetectionTaskCreatedFailed(
                   new TileDetectionTaskCreated(
                       zoneDetectionJobId,
-                      withNewStatus(tileDetectionTask, PROCESSING, UNKNOWN, e.getMessage()),
+                      withNewStatus(
+                          tileDetectionTask,
+                          PROCESSING,
+                          UNKNOWN,
+                          exceptionToStringFunction.apply(e)),
                       detectableTypes),
                   1)));
       return;

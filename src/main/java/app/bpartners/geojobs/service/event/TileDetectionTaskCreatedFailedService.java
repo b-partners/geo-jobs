@@ -22,7 +22,8 @@ public class TileDetectionTaskCreatedFailedService
   private static final int MAX_ATTEMPT = 3;
   private final EventProducer eventProducer;
   private final TileDetectionTaskCreatedConsumer consumer;
-  private TileDetectionTaskStatusService tileDetectionTaskStatusService;
+  private final TileDetectionTaskStatusService tileDetectionTaskStatusService;
+  private final ExceptionToStringFunction exceptionToStringFunction;
 
   @Override
   public void accept(TileDetectionTaskCreatedFailed tileDetectionTaskCreatedFailed) {
@@ -45,7 +46,7 @@ public class TileDetectionTaskCreatedFailedService
           new TileDetectionTaskCreated(
               zoneDetectionJobId,
               TileDetectionTaskCreatedConsumer.withNewStatus(
-                  tileDetectionTask, PROCESSING, UNKNOWN, e.getMessage()),
+                  tileDetectionTask, PROCESSING, UNKNOWN, exceptionToStringFunction.apply(e)),
               detectableTypes);
       eventProducer.accept(List.of(new TileDetectionTaskCreatedFailed(newTask, attemptNb + 1)));
       return;

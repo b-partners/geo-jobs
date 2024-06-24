@@ -12,6 +12,7 @@ import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.service.detection.TileDetectionTaskStatusService;
+import app.bpartners.geojobs.service.event.ExceptionToStringFunction;
 import app.bpartners.geojobs.service.event.TileDetectionTaskCreatedConsumer;
 import app.bpartners.geojobs.service.event.TileDetectionTaskCreatedFailedService;
 import java.time.Instant;
@@ -26,7 +27,10 @@ public class TileDetectionTaskCreatedFailedServiceTest {
   TileDetectionTaskStatusService taskStatusServiceMock = mock();
   TileDetectionTaskCreatedFailedService subject =
       new TileDetectionTaskCreatedFailedService(
-          eventProducerMock, taskCreatedConsumerMock, taskStatusServiceMock);
+          eventProducerMock,
+          taskCreatedConsumerMock,
+          taskStatusServiceMock,
+          new ExceptionToStringFunction());
 
   @Test
   void task_consumed_ok() {
