@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.converter;
 
-import app.bpartners.geojobs.model.BoundedPageSize;
+import app.bpartners.geojobs.model.page.BoundedPageSize;
 import org.springframework.core.convert.converter.Converter;
 
 public class PageSizeConverter implements Converter<String, BoundedPageSize> {
