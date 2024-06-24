@@ -59,7 +59,7 @@ public class TilingTask extends Task implements Serializable {
   }
 
   public Parcel getParcel() {
-    if (parcels.isEmpty()) return null;
+    if (parcels == null || parcels.isEmpty()) return null;
     var chosenParcel = parcels.get(0);
     if (parcels.size() > 1) {
       log.error(
@@ -70,6 +70,10 @@ public class TilingTask extends Task implements Serializable {
           chosenParcel.getId());
     }
     return chosenParcel;
+  }
+
+  public List<Tile> getTiles() {
+    return getParcel() == null ? null : getParcel().getParcelContent().getTiles();
   }
 
   public TilingTask duplicate(
