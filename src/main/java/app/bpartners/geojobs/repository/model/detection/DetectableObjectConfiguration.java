@@ -30,6 +30,7 @@ public class DetectableObjectConfiguration {
   @JdbcTypeCode(NAMED_ENUM)
   private DetectableType objectType;
 
+  private String bucketStorageName;
   private Double confidence;
 
   public DetectableObjectConfiguration duplicate(String id, String detectionJobId) {

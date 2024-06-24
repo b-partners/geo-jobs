@@ -32,13 +32,14 @@ public class ParcelDetectionJobCreatedServiceTest {
     var zoneDetectionJobId = "zoneDetectionJobId";
     when(taskRepositoryMock.findAllByJobId(JOB_ID))
         .thenReturn(List.of(aTileDetectionTask("task1"), aTileDetectionTask("task2")));
+    List<DetectableObjectConfiguration> objectConfigurations =
+        List.of(
+            DetectableObjectConfiguration.builder()
+                .id("objectConfiguration1")
+                .objectType(PATHWAY)
+                .build());
     when(objectConfigurationRepositoryMock.findAllByDetectionJobId(zoneDetectionJobId))
-        .thenReturn(
-            List.of(
-                DetectableObjectConfiguration.builder()
-                    .id("objectConfiguration1")
-                    .objectType(PATHWAY)
-                    .build()));
+        .thenReturn(objectConfigurations);
 
     assertDoesNotThrow(
         () ->
@@ -55,11 +56,11 @@ public class ParcelDetectionJobCreatedServiceTest {
     assertTrue(
         event1.contains(
             new TileDetectionTaskCreated(
-                zoneDetectionJobId, aTileDetectionTask("task1"), List.of(PATHWAY))));
+                zoneDetectionJobId, aTileDetectionTask("task1"), objectConfigurations)));
     assertTrue(
         event2.contains(
             new TileDetectionTaskCreated(
-                zoneDetectionJobId, aTileDetectionTask("task2"), List.of(PATHWAY))));
+                zoneDetectionJobId, aTileDetectionTask("task2"), objectConfigurations)));
   }
 
   private TileDetectionTask aTileDetectionTask(String id) {

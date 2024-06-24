@@ -398,6 +398,13 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
     var job = findById(jobId);
     var humanZDJ = this.getHumanZdjFromZdjId(jobId);
     var humanZDJId = humanZDJ.getId();
+    Set<String> bucketStorageNameCollections =
+        objectConfigurationsFromMachineZDJ.stream()
+            .map(DetectableObjectConfiguration::getBucketStorageName)
+            .collect(Collectors.toSet());
+    if (!bucketStorageNameCollections.isEmpty() && bucketStorageNameCollections.size() != 1) {
+      throw new NotImplementedException("Only same detectable is supported for now");
+    }
     var objectConfigurationsFromHumanZDJ =
         objectConfigurationsFromMachineZDJ.stream()
             .map(objectConf -> objectConf.duplicate(randomUUID().toString(), humanZDJId))

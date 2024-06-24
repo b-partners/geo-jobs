@@ -3,9 +3,9 @@ package app.bpartners.geojobs.service;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.*;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
+import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static java.util.UUID.randomUUID;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
@@ -15,11 +15,15 @@ import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
+import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;
 import app.bpartners.geojobs.repository.TileDetectionTaskRepository;
+import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.Parcel;
+import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
+import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import jakarta.persistence.EntityManager;
 import java.util.List;
@@ -48,6 +52,7 @@ public class ZoneDetectionJobServiceTest {
   TileDetectionTaskRepository tileDetectionTaskRepositoryMock = mock();
   NotFinishedTaskRetriever<ParcelDetectionTask> notFinishedTaskRetriever =
       new NotFinishedTaskRetriever<>();
+  ZoneDetectionJobRepository zoneDetectionJobRepositoryMock = mock();
   ZoneDetectionJobService subject =
       new ZoneDetectionJobService(
           jobRepositoryMock,
@@ -60,7 +65,7 @@ public class ZoneDetectionJobServiceTest {
           mock(),
           mock(),
           mock(),
-          mock(),
+          zoneDetectionJobRepositoryMock,
           tileDetectionTaskRepositoryMock,
           mock(),
           notFinishedTaskRetriever,
@@ -340,6 +345,34 @@ public class ZoneDetectionJobServiceTest {
     assertEquals(4, notSucceededTask.getParcel().getParcelContent().getTiles().size());
   }
   */
+
+  @Test
+  void process_zdj_ko() {
+    when(jobRepositoryMock.findById(JOB_4_ID))
+        .thenReturn(
+            Optional.of(
+                ZoneDetectionJob.builder()
+                    .statusHistory(
+                        List.of(
+                            JobStatus.builder().progression(PROCESSING).health(UNKNOWN).build()))
+                    .zoneTilingJob(ZoneTilingJob.builder().id("zoneTilingJobId").build())
+                    .build()));
+    when(zoneDetectionJobRepositoryMock.findAllByZoneTilingJob_Id("zoneTilingJobId"))
+        .thenReturn(List.of(ZoneDetectionJob.builder().detectionType(HUMAN).build()));
+
+    assertThrows(
+        NotImplementedException.class,
+        () ->
+            subject.fireTasks(
+                JOB_4_ID,
+                List.of(
+                    DetectableObjectConfiguration.builder()
+                        .bucketStorageName("bucketStorageName")
+                        .build(),
+                    DetectableObjectConfiguration.builder()
+                        .bucketStorageName("otherBucketStorageName")
+                        .build())));
+  }
 
   @Test
   void read_task_statistics_ok() {

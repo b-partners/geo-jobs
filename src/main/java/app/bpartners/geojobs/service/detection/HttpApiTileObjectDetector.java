@@ -9,6 +9,7 @@ import app.bpartners.geojobs.file.ImageJpegCompressor;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
+import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -57,6 +58,24 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
     }
   }
 
+  private String retrieveBucket(
+      List<DetectableObjectConfiguration> detectableObjectConfigurations) {
+    DetectableObjectConfiguration objectConfiguration;
+    if (detectableObjectConfigurations.size() > 1) {
+      objectConfiguration = detectableObjectConfigurations.getFirst();
+      log.error(
+          "Only one detectableObject per detection is supported for now. {} chosen.",
+          objectConfiguration);
+      return objectConfiguration.getBucketStorageName();
+    } else if (!detectableObjectConfigurations.isEmpty()) {
+      objectConfiguration = detectableObjectConfigurations.getFirst();
+      return objectConfiguration.getBucketStorageName() == null
+          ? bucketComponent.getBucketConf().getBucketName()
+          : objectConfiguration.getBucketStorageName();
+    }
+    return bucketComponent.getBucketConf().getBucketName();
+  }
+
   private String retrieveBaseUrl(List<DetectableType> types) {
     if (types.size() != 1) {
       throw new NotImplementedException(
@@ -79,7 +98,12 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
   @SneakyThrows
   @Override
   public DetectionResponse apply(
-      TileDetectionTask tileDetectionTask, List<DetectableType> detectableTypes) {
+      TileDetectionTask tileDetectionTask,
+      List<DetectableObjectConfiguration> detectableObjectConfigurations) {
+    var detectableTypes =
+        detectableObjectConfigurations.stream()
+            .map(DetectableObjectConfiguration::getObjectType)
+            .toList();
     Tile tile = tileDetectionTask.getTile();
     if (tile == null) {
       return null;
@@ -90,7 +114,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
 
     File file =
         bucketComponent.download(
-            bucketComponent.getBucketConf().getBucketName(), tile.getBucketPath());
+            retrieveBucket(detectableObjectConfigurations), tile.getBucketPath());
     String base64ImgData = Base64.getEncoder().encodeToString(readFileToByteArray(file));
 
     var payload =
