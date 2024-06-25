@@ -59,5 +59,6 @@ public class JobAnnotationServiceTest {
         actual.getAnnotationWithObjectFalsePositive());
     assertEquals(event.getJobId(), actual.getJobId());
     assertEquals(DETECTION_JOB_ID, actual.getJobId());
+    assertEquals(MIN_CONFIDENCE, event.getMinConfidence());
   }
 }
