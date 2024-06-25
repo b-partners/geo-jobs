@@ -22,7 +22,7 @@ public class JobAnnotationService {
   private final ZoneTilingJobRepository tilingJobRepository;
   private final EventProducer eventProducer;
 
-  public AnnotationJobProcessing processAnnotationJob(String jobId) {
+  public AnnotationJobProcessing processAnnotationJob(String jobId, Double minConfidence) {
     if (tilingJobRepository.findById(jobId).isPresent()) {
       throw new NotImplementedException("Only DETECTION job is handle for now");
     }
@@ -39,6 +39,7 @@ public class JobAnnotationService {
         List.of(
             JobAnnotationProcessed.builder()
                 .jobId(zoneDetectionJob.getId())
+                .minConfidence(minConfidence)
                 .annotationJobWithObjectsIdTruePositive(annotationJobWithObjectsIdTruePositive)
                 .annotationJobWithObjectsIdFalsePositive(annotationJobWithObjectsIdFalsePositive)
                 .annotationJobWithoutObjectsId(annotationJobWithoutObjectsId)

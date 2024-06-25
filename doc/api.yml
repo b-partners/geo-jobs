@@ -40,6 +40,12 @@ paths:
           description: ZTJ or ZDJ identifier
           schema:
             type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcessJobAnnotation'
       responses:
         200:
           description: The created ZTJ
@@ -689,7 +695,12 @@ components:
         - SIDEWALK
         - LINE
         - GREEN_SPACE
-
+    ProcessJobAnnotation:
+      type: object
+      properties:
+        minimumConfidence:
+          type: number
+          format: double
     Parcel:
       properties:
         id:

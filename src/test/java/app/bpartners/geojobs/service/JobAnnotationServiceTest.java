@@ -21,6 +21,7 @@ import org.mockito.ArgumentCaptor;
 public class JobAnnotationServiceTest {
   public static final String TILING_JOB = "tilingJob";
   public static final String DETECTION_JOB_ID = "detectionJobId";
+  private static final double MIN_CONFIDENCE = 0.8;
   ZoneTilingJobRepository tilingJobRepositoryMock = mock();
   ZoneDetectionJobRepository zoneDetectionJobRepositoryMock = mock();
   EventProducer eventProducerMock = mock();
@@ -32,7 +33,9 @@ public class JobAnnotationServiceTest {
   void process_annotation_job_ko() {
     when(tilingJobRepositoryMock.findById(TILING_JOB))
         .thenReturn(Optional.of(ZoneTilingJob.builder().build()));
-    assertThrows(NotImplementedException.class, () -> subject.processAnnotationJob(TILING_JOB));
+    assertThrows(
+        NotImplementedException.class,
+        () -> subject.processAnnotationJob(TILING_JOB, MIN_CONFIDENCE));
   }
 
   @Test
@@ -40,7 +43,7 @@ public class JobAnnotationServiceTest {
     when(zoneDetectionJobRepositoryMock.findById(DETECTION_JOB_ID))
         .thenReturn(Optional.of(ZoneDetectionJob.builder().id(DETECTION_JOB_ID).build()));
 
-    AnnotationJobProcessing actual = subject.processAnnotationJob(DETECTION_JOB_ID);
+    AnnotationJobProcessing actual = subject.processAnnotationJob(DETECTION_JOB_ID, MIN_CONFIDENCE);
 
     var eventCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducerMock, times(1)).accept(eventCaptor.capture());
