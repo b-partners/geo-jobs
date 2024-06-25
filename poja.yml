@@ -41,5 +41,5 @@ with_sonar: 'true'
 with_swagger_ui: 'false'
 worker_batch: 1
 worker_function_timeout: 600
-worker_memory: 8192
+worker_memory: 512
 worker_reserved_concurrent_executions_nb: 60
