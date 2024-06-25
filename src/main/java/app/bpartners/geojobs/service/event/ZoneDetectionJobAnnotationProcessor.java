@@ -28,7 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
 @AllArgsConstructor
 @Slf4j
 public class ZoneDetectionJobAnnotationProcessor {
-  public static final double MIN_CONFIDENCE_TRUE_POSITIVE = 0.9;
   private final AnnotationService annotationService;
   private final DetectionTaskService detectionTaskService;
   private final DetectedTileRepository detectedTileRepository;
@@ -40,6 +39,7 @@ public class ZoneDetectionJobAnnotationProcessor {
   @Transactional
   public AnnotationJobIds accept(
       String zoneDetectionJobId,
+      Double minConfidence,
       String annotationJobWithObjectsIdTruePositive,
       String annotationJobWithObjectsIdFalsePositive,
       String annotationJobWithoutObjectsId) {
@@ -76,8 +76,7 @@ public class ZoneDetectionJobAnnotationProcessor {
             .filter(
                 detectedTile ->
                     detectedTile.getDetectedObjects().stream()
-                        .anyMatch(
-                            tile -> tile.getComputedConfidence() >= MIN_CONFIDENCE_TRUE_POSITIVE))
+                        .anyMatch(tile -> tile.getComputedConfidence() >= minConfidence))
             .peek(detectedTile -> detectedTile.setHumanDetectionJobId(humanZDJTruePositiveId))
             .toList();
     var falsePositiveTiles = new ArrayList<>(inDoubtTiles);
@@ -125,7 +124,9 @@ public class ZoneDetectionJobAnnotationProcessor {
             humanJob.getZoneName()
                 + " - "
                 + truePositiveDetectedTiles.size()
-                + " tiles with confidence >= 80%"
+                + " tiles with confidence >= "
+                + minConfidence * 100
+                + "%"
                 + " "
                 + now());
       } else {
@@ -149,7 +150,9 @@ public class ZoneDetectionJobAnnotationProcessor {
             humanJob.getZoneName()
                 + " - "
                 + falsePositiveTiles.size()
-                + " tiles with confidence < 95%"
+                + " tiles with confidence < "
+                + minConfidence
+                + "%"
                 + " "
                 + now());
       } else {

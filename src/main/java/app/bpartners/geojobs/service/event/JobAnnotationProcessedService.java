@@ -18,9 +18,11 @@ public class JobAnnotationProcessedService implements Consumer<JobAnnotationProc
     var annotationJobWithObjectsIdFalsePositive =
         jobAnnotationProcessed.getAnnotationJobWithObjectsIdFalsePositive();
     var annotationJobWithoutObjectsId = jobAnnotationProcessed.getAnnotationJobWithoutObjectsId();
+    var minConfidence = jobAnnotationProcessed.getMinConfidence();
 
     zoneDetectionJobAnnotationProcessor.accept(
         jobId,
+        minConfidence,
         annotationJobWithObjectsIdTruePositive,
         annotationJobWithObjectsIdFalsePositive,
         annotationJobWithoutObjectsId);
