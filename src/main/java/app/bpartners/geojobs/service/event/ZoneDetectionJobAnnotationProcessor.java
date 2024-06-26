@@ -38,6 +38,7 @@ public class ZoneDetectionJobAnnotationProcessor {
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final KeyPredicateFunction keyPredicateFunction;
   private final DetectableObjectConfigurationRepository objectConfigurationRepository;
+
   @Transactional
   public AnnotationJobIds accept(
       String zoneDetectionJobId,
@@ -57,9 +58,11 @@ public class ZoneDetectionJobAnnotationProcessor {
             .filter(keyPredicateFunction.apply(DetectedTile::getBucketPath))
             .toList();
     List<DetectableObjectConfiguration> detectableObjectConfigurations =
-            objectConfigurationRepository.findAllByDetectionJobId(zoneDetectionJobId);
+        objectConfigurationRepository.findAllByDetectionJobId(zoneDetectionJobId);
     List<DetectedTile> inDoubtTiles =
-        detectionTaskService.findInDoubtTilesByJobId(detectedTiles, detectableObjectConfigurations).stream()
+        detectionTaskService
+            .findInDoubtTilesByJobId(detectedTiles, detectableObjectConfigurations)
+            .stream()
             .peek(detectedTile -> detectedTile.setHumanDetectionJobId(humanZDJFalsePositiveId))
             .toList();
     List<DetectedTile> tilesWithoutObject =
@@ -112,10 +115,16 @@ public class ZoneDetectionJobAnnotationProcessor {
 
     savedHumanZDJTruePositive.setDetectedTiles(
         truePositiveDetectedTiles); // TODO: check if still necessary
+    savedHumanZDJTruePositive.setDetectableObjectConfigurations(
+        detectableObjectConfigurations); // TODO: check if still necessary
     savedHumanZDJFalsePositive.setDetectedTiles(
         falsePositiveTiles); // TODO: check if still necessary
+    savedHumanZDJFalsePositive.setDetectableObjectConfigurations(
+        detectableObjectConfigurations); // TODO: check if still necessary
     savedHumanDetectionJobWithoutTile.setDetectedTiles(
         tilesWithoutObject); // TODO: check if still necessary
+    savedHumanDetectionJobWithoutTile.setDetectableObjectConfigurations(
+        detectableObjectConfigurations); // TODO: check if still necessary
 
     detectedTileRepository.saveAll(
         Stream.of(truePositiveDetectedTiles, falsePositiveTiles, tilesWithoutObject)

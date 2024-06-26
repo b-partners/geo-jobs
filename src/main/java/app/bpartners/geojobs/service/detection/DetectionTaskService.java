@@ -13,7 +13,7 @@ public class DetectionTaskService {
 
   @Transactional
   public List<DetectedTile> findInDoubtTilesByJobId(
-          List<DetectedTile> detectedTiles,
+      List<DetectedTile> detectedTiles,
       List<DetectableObjectConfiguration> detectableObjectConfigurations) {
     return detectedTiles.stream()
         .filter(
