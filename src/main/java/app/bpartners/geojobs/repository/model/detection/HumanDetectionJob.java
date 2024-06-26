@@ -24,8 +24,6 @@ public class HumanDetectionJob {
   @JoinColumn(name = "human_detection_job_id")
   private List<DetectedTile> detectedTiles;
 
-  public boolean hasInDoubtTiles() {
-    return !detectedTiles.stream()
-        .allMatch(detectedTile -> detectedTile.getDetectedObjects().isEmpty());
-  }
+  // TODO: must be persisted but can be retrieved by zoneDetectionJobId
+  @Transient private List<DetectableObjectConfiguration> detectableObjectConfigurations;
 }

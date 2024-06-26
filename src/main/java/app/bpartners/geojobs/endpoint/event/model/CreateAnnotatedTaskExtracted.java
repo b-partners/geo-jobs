@@ -22,7 +22,7 @@ public class CreateAnnotatedTaskExtracted extends PojaEvent {
 
   @Override
   public Duration maxConsumerDuration() {
-    return Duration.ofMinutes(10);
+    return Duration.ofMinutes(3);
   }
 
   @Override

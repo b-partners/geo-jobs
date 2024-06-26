@@ -44,12 +44,16 @@ public class AnnotationServiceTest {
     jobsApiMockedConstruction = mockConstruction(JobsApi.class);
 
     when(detectableObjectRepositoryMock.findAllByDetectionJobId(ZONE_DETECTION_JOB_ID))
-        .thenReturn(
-            List.of(
-                DetectableObjectConfiguration.builder().objectType(PATHWAY).build(),
-                DetectableObjectConfiguration.builder().objectType(ROOF).build()));
+        .thenReturn(detectableObjects());
     when(labelConverterMock.apply(PATHWAY)).thenReturn(new Label().name("PATHWAY"));
     when(annotatorApiConfMock.newApiClientWithApiKey()).thenReturn(new ApiClient());
+  }
+
+  @NonNull
+  private static List<DetectableObjectConfiguration> detectableObjects() {
+    return List.of(
+        DetectableObjectConfiguration.builder().objectType(PATHWAY).build(),
+        DetectableObjectConfiguration.builder().objectType(ROOF).build());
   }
 
   @AfterEach
@@ -80,6 +84,7 @@ public class AnnotationServiceTest {
             .zoneDetectionJobId(ZONE_DETECTION_JOB_ID)
             .annotationJobId("annotationJobId")
             .detectedTiles(detectedTiles())
+            .detectableObjectConfigurations(detectableObjects())
             .build());
 
     var eventCapture = ArgumentCaptor.forClass(List.class);
