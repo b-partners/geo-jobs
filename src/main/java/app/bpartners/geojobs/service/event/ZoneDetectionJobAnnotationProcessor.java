@@ -7,8 +7,10 @@ import static java.util.UUID.randomUUID;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.HumanDetectionJobCreatedFailed;
 import app.bpartners.geojobs.model.exception.ApiException;
+import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.DetectedTileRepository;
 import app.bpartners.geojobs.repository.HumanDetectionJobRepository;
+import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.DetectedTile;
 import app.bpartners.geojobs.repository.model.detection.HumanDetectionJob;
 import app.bpartners.geojobs.service.KeyPredicateFunction;
@@ -35,7 +37,7 @@ public class ZoneDetectionJobAnnotationProcessor {
   private final EventProducer eventProducer;
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final KeyPredicateFunction keyPredicateFunction;
-
+  private final DetectableObjectConfigurationRepository objectConfigurationRepository;
   @Transactional
   public AnnotationJobIds accept(
       String zoneDetectionJobId,
@@ -54,8 +56,10 @@ public class ZoneDetectionJobAnnotationProcessor {
         detectedTileRepository.findAllByZdjJobId(zoneDetectionJobId).stream()
             .filter(keyPredicateFunction.apply(DetectedTile::getBucketPath))
             .toList();
+    List<DetectableObjectConfiguration> detectableObjectConfigurations =
+            objectConfigurationRepository.findAllByDetectionJobId(zoneDetectionJobId);
     List<DetectedTile> inDoubtTiles =
-        detectionTaskService.findInDoubtTilesByJobId(zoneDetectionJobId, detectedTiles).stream()
+        detectionTaskService.findInDoubtTilesByJobId(detectedTiles, detectableObjectConfigurations).stream()
             .peek(detectedTile -> detectedTile.setHumanDetectionJobId(humanZDJFalsePositiveId))
             .toList();
     List<DetectedTile> tilesWithoutObject =
