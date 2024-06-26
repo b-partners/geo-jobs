@@ -28,9 +28,6 @@ import org.springframework.stereotype.Service;
 public class AnnotationService {
   public static final int DEFAULT_IMAGES_HEIGHT = 1024;
   public static final int DEFAULT_IMAGES_WIDTH = 1024;
-  public static final double DEFAULT_CONFIDENCE = 1.0;
-  public static final String CANNES_ZONE_NAME = "cannes";
-  public static final String CHALON_ZONE_NAME = "chalon";
   private final JobsApi jobsApi;
   private final TaskExtractor taskExtractor;
   private final LabelConverter labelConverter;
@@ -84,39 +81,6 @@ public class AnnotationService {
     String zoneDetectionJobId = humanDetectionJob.getZoneDetectionJobId();
     List<DetectableObjectConfiguration> detectableObjects =
         detectableObjectRepository.findAllByDetectionJobId(zoneDetectionJobId);
-    if (detectableObjects.isEmpty()) {
-      // TODO: switch dynamically default zones values
-      var zoneDetectionJob = zoneDetectionJobRepository.findById(zoneDetectionJobId).orElseThrow();
-      if (zoneDetectionJob.getZoneName().equals(CANNES_ZONE_NAME)) {
-        DetectableObjectConfiguration newObjectConf =
-            DetectableObjectConfiguration.builder()
-                .id(randomUUID().toString())
-                .objectType(POOL)
-                .confidence(DEFAULT_CONFIDENCE)
-                .detectionJobId(zoneDetectionJobId)
-                .build();
-        var savedNewConf = detectableObjectRepository.save(newObjectConf);
-        detectableObjects.add(savedNewConf);
-      } else if (zoneDetectionJob.getZoneName().equals(CHALON_ZONE_NAME)) {
-        DetectableObjectConfiguration newObjectConf =
-            DetectableObjectConfiguration.builder()
-                .id(randomUUID().toString())
-                .objectType(PATHWAY)
-                .confidence(DEFAULT_CONFIDENCE)
-                .detectionJobId(zoneDetectionJobId)
-                .build();
-        var savedNewConf = detectableObjectRepository.save(newObjectConf);
-        detectableObjects.add(savedNewConf);
-      } else {
-        detectableObjects.add(
-            DetectableObjectConfiguration.builder()
-                .id(randomUUID().toString())
-                .objectType(POOL) // TODO: add UNKNOWN for default
-                .confidence(DEFAULT_CONFIDENCE)
-                .detectionJobId(zoneDetectionJobId)
-                .build());
-      }
-    }
     List<Label> expectedLabels =
         detectableObjects.stream()
             .map(object -> labelConverter.apply(object.getObjectType()))
@@ -125,7 +89,6 @@ public class AnnotationService {
         taskExtractor.apply(inDoubtTiles, annotatorUserInfoGetter.getUserId(), expectedLabels);
     List<Label> extractLabelsFromTasks = labelExtractor.extractLabelsFromTasks(annotatedTasks);
     List<Label> labels = extractLabelsFromTasks.isEmpty() ? expectedLabels : extractLabelsFromTasks;
-    Instant now = Instant.now();
     log.error(
         "[DEBUG] AnnotationService : AnnotationJob(id={}) with labels (count={}, values={}) and"
             + " tasks (count={})",
