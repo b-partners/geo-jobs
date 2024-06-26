@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.endpoint.event.model;
 
 import app.bpartners.gen.annotator.endpoint.rest.model.CreateAnnotatedTask;
+import app.bpartners.geojobs.endpoint.event.EventStack;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Duration;
 import javax.annotation.processing.Generated;
@@ -28,5 +29,10 @@ public class CreateAnnotatedTaskExtracted extends PojaEvent {
   @Override
   public Duration maxConsumerBackoffBetweenRetries() {
     return Duration.ofMinutes(1);
+  }
+
+  @Override
+  public EventStack getEventStack() {
+    return EventStack.EVENT_STACK_2;
   }
 }
