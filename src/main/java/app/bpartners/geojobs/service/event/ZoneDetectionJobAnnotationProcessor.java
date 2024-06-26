@@ -151,7 +151,7 @@ public class ZoneDetectionJobAnnotationProcessor {
                 + " - "
                 + falsePositiveTiles.size()
                 + " tiles with confidence < "
-                + minConfidence
+                + minConfidence * 100
                 + "%"
                 + " "
                 + now());
