@@ -30,104 +30,101 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 class CommunityZoneDetectionJobProcessAuthorizerIT extends FacadeIT {
-  private final MockedStatic<ApiKeyAuthenticationFilter> apiKeyAuthenticationFilter =
-      mockStatic(ApiKeyAuthenticationFilter.class);
-  @MockBean CommunityAuthorizationDetailsRepositoryImpl communityAuthorizationDetailsRepository;
+    private final MockedStatic<ApiKeyAuthenticationFilter> apiKeyAuthenticationFilter =
+            mockStatic(ApiKeyAuthenticationFilter.class);
+    @MockBean CommunityAuthorizationDetailsRepositoryImpl communityAuthorizationDetailsRepository;
 
-  @Autowired CommunityZoneDetectionJobProcessAuthorizer communityZoneDetectionJobProcessAuthorizer;
+    @Autowired CommunityZoneDetectionJobProcessAuthorizer communityZoneDetectionJobProcessAuthorizer;
 
-  @Test
-  void should_accept_directly_admin_key() {
-    useRole(ROLE_ADMIN);
-    assertDoesNotThrow(
-        () -> {
-          communityZoneDetectionJobProcessAuthorizer.accept(
-              "dummyJobId",
-              asDetectableObjectConfiguration(List.of(DetectableObjectType.PATHWAY, DetectableObjectType.ROOF))
-          );
-        });
-  }
+    @Test
+    void should_accept_directly_admin_key() {
+        useRole(ROLE_ADMIN);
+        assertDoesNotThrow(
+                () -> {
+                    communityZoneDetectionJobProcessAuthorizer.accept(
+                            "dummyJobId",
+                            asDetectableObjectConfiguration(List.of(DetectableObjectType.PATHWAY, DetectableObjectType.ROOF))
+                    );
+                });
+    }
 
-  @Test
-  void should_throws_forbidden_if_community_doesnt_have_access_to_any_payload_object_types() {
-    useRole(ROLE_COMMUNITY);
-    when(communityAuthorizationDetailsRepository.findByApiKey(any()))
-        .thenReturn(asCommunityAuthorizationDetails(List.of(POOL)));
+    @Test
+    void community_cannot_detect_not_authorized_object_type() {
+        useRole(ROLE_COMMUNITY);
+        when(communityAuthorizationDetailsRepository.findByApiKey(any()))
+                .thenReturn(asCommunityAuthorizationDetails(List.of(POOL)));
 
-    var error =
-        assertThrows(
-            ForbiddenException.class,
+        var error =
+                assertThrows(
+                        ForbiddenException.class,
+                        () -> {
+                            communityZoneDetectionJobProcessAuthorizer.accept(
+                                    "dummyJobId",
+                                    asDetectableObjectConfiguration(List.of(DetectableObjectType.PATHWAY, DetectableObjectType.ROOF)));
+                        });
+        assertTrue(error.getMessage().contains("PATHWAY"));
+        assertTrue(error.getMessage().contains("ROOF"));
+    }
+
+    @Test
+    void should_throws_forbidden_if_community_doesnt_have_access_to_one_of_payload_object_types() {
+        useRole(ROLE_COMMUNITY);
+        when(communityAuthorizationDetailsRepository.findByApiKey(any()))
+                .thenReturn(asCommunityAuthorizationDetails(List.of(PATHWAY)));
+
+        var error =
+            assertThrows(
+                ForbiddenException.class,
+                () -> {
+                    communityZoneDetectionJobProcessAuthorizer.accept(
+                        "dummyJobId",
+                        asDetectableObjectConfiguration(List.of(DetectableObjectType.PATHWAY, DetectableObjectType.ROOF)));
+                });
+        assertTrue(error.getMessage().contains("ROOF"));
+    }
+
+    @Test
+    void should_accept_community_with_correct_permissions() {
+        useRole(ROLE_COMMUNITY);
+        when(communityAuthorizationDetailsRepository.findByApiKey(any()))
+                .thenReturn(asCommunityAuthorizationDetails(List.of(PATHWAY, ROOF, POOL)));
+
+        assertDoesNotThrow(
             () -> {
-              communityZoneDetectionJobProcessAuthorizer.accept(
-                  "dummyJobId",
-                  asDetectableObjectConfiguration(List.of(DetectableObjectType.PATHWAY, DetectableObjectType.ROOF)));
+                communityZoneDetectionJobProcessAuthorizer.accept(
+                    "dummyJobId",
+                    asDetectableObjectConfiguration(List.of(DetectableObjectType.PATHWAY, DetectableObjectType.ROOF)));
+                communityZoneDetectionJobProcessAuthorizer.accept(
+                    "dummyJobId",
+                    asDetectableObjectConfiguration(List.of(DetectableObjectType.PATHWAY, DetectableObjectType.ROOF, DetectableObjectType.POOL)));
             });
-    assertTrue(error.getMessage().contains("PATHWAY"));
-    assertTrue(error.getMessage().contains("ROOF"));
-  }
+    }
 
-  @Test
-  void should_throws_forbidden_if_community_doesnt_have_access_to_one_of_payload_object_types() {
-    useRole(ROLE_COMMUNITY);
-    when(communityAuthorizationDetailsRepository.findByApiKey(any()))
-        .thenReturn(asCommunityAuthorizationDetails(List.of(PATHWAY)));
+    private CommunityAuthorizationDetails asCommunityAuthorizationDetails(
+            List<DetectableType> detectableObjectTypes) {
+        return new CommunityAuthorizationDetails(
+                "dummy_id", "dummy_name", "dummy_name", List.of("dummy_zone_name"), detectableObjectTypes);
+    }
 
-    var error =
-        assertThrows(
-            ForbiddenException.class,
-            () -> {
-              communityZoneDetectionJobProcessAuthorizer.accept(
-                  "dummyJobId",
-                  asDetectableObjectConfiguration(List.of(DetectableObjectType.PATHWAY, DetectableObjectType.ROOF)));
-            });
-    assertTrue(error.getMessage().contains("ROOF"));
-  }
+    public List<DetectableObjectConfiguration> asDetectableObjectConfiguration(
+            List<DetectableObjectType> detectableObjectTypes) {
+        return detectableObjectTypes.stream()
+                .map(
+                        objetType -> new DetectableObjectConfiguration().type(objetType).confidence(BigDecimal.TEN)
+                ).toList();
+    }
 
-  @Test
-  void should_accept_community_with_correct_permissions() {
-    useRole(ROLE_COMMUNITY);
-    when(communityAuthorizationDetailsRepository.findByApiKey(any()))
-        .thenReturn(asCommunityAuthorizationDetails(List.of(PATHWAY, ROOF, POOL)));
+    void useRole(Authority.Role role) {
+        var apiKeyAuthentication =
+                new ApiKeyAuthentication("dummy-api-key", Set.of(new Authority(role)));
+        apiKeyAuthenticationFilter
+                .when(ApiKeyAuthenticationFilter::getApiKeyAuthentication)
+                .thenReturn(apiKeyAuthentication);
+    }
 
-    assertDoesNotThrow(
-        () -> {
-          communityZoneDetectionJobProcessAuthorizer.accept(
-              "dummyJobId",
-              asDetectableObjectConfiguration(List.of(DetectableObjectType.PATHWAY, DetectableObjectType.ROOF)));
-        });
-    assertDoesNotThrow(
-        () -> {
-          communityZoneDetectionJobProcessAuthorizer.accept(
-              "dummyJobId",
-              asDetectableObjectConfiguration(List.of(DetectableObjectType.PATHWAY, DetectableObjectType.ROOF, DetectableObjectType.POOL)));
-        });
-  }
-
-  private CommunityAuthorizationDetails asCommunityAuthorizationDetails(
-      List<DetectableType> detectableObjectTypes) {
-    return new CommunityAuthorizationDetails(
-        "dummy_id", "dummy_name", "dummy_name", List.of("dummy_zone_name"), detectableObjectTypes);
-  }
-
-  public List<DetectableObjectConfiguration> asDetectableObjectConfiguration(
-      List<DetectableObjectType> detectableObjectTypes) {
-    return detectableObjectTypes.stream()
-        .map(
-            objetType -> new DetectableObjectConfiguration().type(objetType).confidence(BigDecimal.TEN)
-        ).toList();
-  }
-
-  void useRole(Authority.Role role) {
-    var apiKeyAuthentication =
-        new ApiKeyAuthentication("dummy-api-key", Set.of(new Authority(role)));
-    apiKeyAuthenticationFilter
-        .when(ApiKeyAuthenticationFilter::getApiKeyAuthentication)
-        .thenReturn(apiKeyAuthentication);
-  }
-
-  @AfterEach
-  void cleanMock() {
-    // to avoid creating multiple static mock registration
-    apiKeyAuthenticationFilter.close();
-  }
+    @AfterEach
+    void cleanMock() {
+        // to avoid creating multiple static mock registration
+        apiKeyAuthenticationFilter.close();
+    }
 }

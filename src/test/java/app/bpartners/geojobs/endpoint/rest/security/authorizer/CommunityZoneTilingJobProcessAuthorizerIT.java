@@ -36,9 +36,7 @@ public class CommunityZoneTilingJobProcessAuthorizerIT extends FacadeIT {
   void should_accept_directly_admin_key() {
     useRole(ROLE_ADMIN);
     assertDoesNotThrow(
-        () -> {
-          communityZoneTilingJobProcessAuthorizer.accept(asZoneTilingJob("dummy_zone_name"));
-        });
+        () -> communityZoneTilingJobProcessAuthorizer.accept(asZoneTilingJob("dummy_zone_name")));
   }
 
   @Test
@@ -50,9 +48,7 @@ public class CommunityZoneTilingJobProcessAuthorizerIT extends FacadeIT {
     var error =
         assertThrows(
             ForbiddenException.class,
-            () -> {
-              communityZoneTilingJobProcessAuthorizer.accept(asZoneTilingJob("private_zone_name"));
-            });
+            () -> communityZoneTilingJobProcessAuthorizer.accept(asZoneTilingJob("private_zone_name")));
     assertTrue(error.getMessage().contains("private_zone_name"));
   }
 
@@ -64,11 +60,8 @@ public class CommunityZoneTilingJobProcessAuthorizerIT extends FacadeIT {
 
     assertDoesNotThrow(
         () -> {
-          communityZoneTilingJobProcessAuthorizer.accept(asZoneTilingJob("community_zone1"));
-        });
-    assertDoesNotThrow(
-        () -> {
-          communityZoneTilingJobProcessAuthorizer.accept(asZoneTilingJob("community_zone2"));
+            communityZoneTilingJobProcessAuthorizer.accept(asZoneTilingJob("community_zone1"));
+            communityZoneTilingJobProcessAuthorizer.accept(asZoneTilingJob("community_zone2"));
         });
   }
 
@@ -79,9 +72,7 @@ public class CommunityZoneTilingJobProcessAuthorizerIT extends FacadeIT {
   }
 
   private CreateZoneTilingJob asZoneTilingJob(String zoneName) {
-    var zoneTilingJob = new CreateZoneTilingJob();
-    zoneTilingJob.setZoneName(zoneName);
-    return zoneTilingJob;
+    return new CreateZoneTilingJob().zoneName(zoneName);
   }
 
   private void useRole(Authority.Role role) {

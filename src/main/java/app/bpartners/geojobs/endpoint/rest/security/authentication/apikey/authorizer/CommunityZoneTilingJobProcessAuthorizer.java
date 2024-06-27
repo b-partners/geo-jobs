@@ -5,7 +5,6 @@ import app.bpartners.geojobs.endpoint.rest.security.authentication.apikey.ApiKey
 import app.bpartners.geojobs.model.CommunityAuthorizationDetails;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationDetailsRepository;
-import java.util.List;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -29,16 +28,12 @@ public class CommunityZoneTilingJobProcessAuthorizer implements Consumer<CreateZ
         authenticatedCommunityAuthorizationDetails.authorizedZoneNames();
     var payloadZoneName = createZoneTilingJob.getZoneName();
 
-    if (payloadZoneName == null || !isAuthorizedZoneName(authorizedZoneNames, payloadZoneName)) {
+    if (payloadZoneName == null || !authorizedZoneNames.contains(payloadZoneName)) {
       throw new ForbiddenException(
           "following zoneName is not authorized for your community.name = "
               + authenticatedCommunityAuthorizationDetails.communityName()
               + " : "
               + payloadZoneName);
     }
-  }
-
-  private boolean isAuthorizedZoneName(List<String> authorizedZoneNames, String candidateZoneName) {
-    return authorizedZoneNames.stream().anyMatch(candidateZoneName::equals);
   }
 }
