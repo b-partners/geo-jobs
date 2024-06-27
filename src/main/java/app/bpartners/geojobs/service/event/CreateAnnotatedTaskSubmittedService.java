@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
-import app.bpartners.geojobs.endpoint.event.model.CreateAnnotatedTaskExtracted;
+import app.bpartners.geojobs.endpoint.event.model.CreateAnnotatedTaskSubmitted;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
 import java.util.function.Consumer;
@@ -11,13 +11,13 @@ import org.springframework.stereotype.Service;
 @Service
 @AllArgsConstructor
 @Slf4j
-public class CreateAnnotatedTaskExtractedService implements Consumer<CreateAnnotatedTaskExtracted> {
+public class CreateAnnotatedTaskSubmittedService implements Consumer<CreateAnnotatedTaskSubmitted> {
   private final AnnotationService annotationService;
 
   @Override
-  public void accept(CreateAnnotatedTaskExtracted createAnnotatedTaskExtracted) {
-    var jobId = createAnnotatedTaskExtracted.getAnnotationJobId();
-    var annotatedTask = createAnnotatedTaskExtracted.getCreateAnnotatedTask();
+  public void accept(CreateAnnotatedTaskSubmitted createAnnotatedTaskSubmitted) {
+    var jobId = createAnnotatedTaskSubmitted.getAnnotationJobId();
+    var annotatedTask = createAnnotatedTaskSubmitted.getCreateAnnotatedTask();
     try {
       annotationService.addAnnotationTask(jobId, annotatedTask);
       log.error(

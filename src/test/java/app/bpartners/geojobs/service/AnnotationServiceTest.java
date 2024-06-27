@@ -10,7 +10,7 @@ import app.bpartners.gen.annotator.endpoint.rest.client.ApiClient;
 import app.bpartners.gen.annotator.endpoint.rest.model.Job;
 import app.bpartners.gen.annotator.endpoint.rest.model.Label;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.CreateAnnotatedTaskExtracted;
+import app.bpartners.geojobs.endpoint.event.model.CreateAnnotatedTaskSubmitted;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
@@ -89,10 +89,10 @@ public class AnnotationServiceTest {
 
     var eventCapture = ArgumentCaptor.forClass(List.class);
     verify(eventProducerMock, times(2)).accept(eventCapture.capture()); // detectedTiles().size()
-    CreateAnnotatedTaskExtracted annotatedTaskExtracted1 =
-        (CreateAnnotatedTaskExtracted) eventCapture.getValue().get(0);
-    CreateAnnotatedTaskExtracted annotatedTaskExtracted2 =
-        (CreateAnnotatedTaskExtracted) eventCapture.getValue().get(0);
+    CreateAnnotatedTaskSubmitted annotatedTaskExtracted1 =
+        (CreateAnnotatedTaskSubmitted) eventCapture.getValue().get(0);
+    CreateAnnotatedTaskSubmitted annotatedTaskExtracted2 =
+        (CreateAnnotatedTaskSubmitted) eventCapture.getValue().get(0);
     assertEquals(
         PATHWAY.name(),
         annotatedTaskExtracted1
