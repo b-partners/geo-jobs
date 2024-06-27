@@ -465,6 +465,43 @@ paths:
         '500':
           $ref: '#/components/responses/500'
 
+  '/parcelize':
+    put:
+      tags:
+        - Parcelization
+      operationId: parcelizePolygon
+      description: Parcelize a polygon
+      parameters:
+        - in: query
+          name: targetZoom
+          schema:
+            type: integer
+          description: Target Zoom
+        - in: query
+          name: referenceZoom
+          schema:
+            type: integer
+          description: Reference zoom
+        - in: query
+          name: maxParcelAreaAtReferenceZoom
+          schema:
+            type: number
+          description: Max Parcel Area at reference zoom
+      requestBody:
+        content:
+          application/json:
+            schema:
+              items:
+                $ref: '#/components/schemas/Polygon'
+      responses:
+        200:
+          description: Polygon that have been parcelized
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Polygon"
 components:
   responses:
     400:
@@ -557,32 +594,7 @@ components:
           items:
             $ref: "#/components/schemas/Feature"
         zoomLevel:
-          type: string
-          enum:
-            - WORLD_0
-            - WORLD_1
-            - WORLD_2
-            - CONTINENT_0
-            - CONTINENT_1
-            - COUNTRIES
-            - COUNTRY
-            - STATES
-            - COUNTIES_0
-            - COUNTIES_1
-            - COUNTY
-            - METROPOLITAN_AREA
-            - CITIES
-            - CITY
-            - TOWN
-            - NEIGHBORHOOD
-            - STREETS
-            - CITY_BLOCK
-            - BUILDINGS
-            - BUILDING
-            - HOUSES_0
-            - HOUSES_1
-            - HOUSES_2
-            - HOUSE_PROPERTY
+            $ref: '#/components/schemas/ZoomLevel'
     AnnotationJobProcessing:
       type: object
       properties:
@@ -943,6 +955,7 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/Point2D'
+
     GeoJsonsUrl:
       type: object
       properties:
@@ -950,8 +963,37 @@ components:
           type: string
         status:
           $ref: "#/components/schemas/Status"
+
     BucketSeparatorType:
       type: string
       enum:
         - UNDERSCORE
         - SLASH
+
+    ZoomLevel:
+      type: string
+      enum:
+        - WORLD_0
+        - WORLD_1
+        - WORLD_2
+        - CONTINENT_0
+        - CONTINENT_1
+        - COUNTRIES
+        - COUNTRY
+        - STATES
+        - COUNTIES_0
+        - COUNTIES_1
+        - COUNTY
+        - METROPOLITAN_AREA
+        - CITIES
+        - CITY
+        - TOWN
+        - NEIGHBORHOOD
+        - STREETS
+        - CITY_BLOCK
+        - BUILDINGS
+        - BUILDING
+        - HOUSES_0
+        - HOUSES_1
+        - HOUSES_2
+        - HOUSE_PROPERTY
