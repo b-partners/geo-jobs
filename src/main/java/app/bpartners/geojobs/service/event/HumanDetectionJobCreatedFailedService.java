@@ -19,6 +19,7 @@ public class HumanDetectionJobCreatedFailedService
   private final AnnotationService annotationService;
   private final EventProducer eventProducer;
   private final ZoneDetectionJobService zoneDetectionJobService;
+  private final ExceptionToStringFunction exceptionToStringFunction;
   private static final int MAX_ATTEMPT = 50;
 
   @Override
@@ -30,12 +31,17 @@ public class HumanDetectionJobCreatedFailedService
     }
     var humanZdjId = event.getHumanDetectionJobId();
     var humanZdj = zoneDetectionJobService.getHumanDetectionJobById(event.getHumanDetectionJobId());
+    var annotationJobCustomName = event.getAnnotationJobCustomName();
     if (attemptNb > MAX_ATTEMPT) {
       log.info("Max attempt {} reached for humanDetectionJobFailed={}", attemptNb, humanZdj);
       return;
     }
     try {
-      annotationService.createAnnotationJob(humanZdj);
+      if (annotationJobCustomName != null) {
+        annotationService.createAnnotationJob(humanZdj, annotationJobCustomName);
+      } else {
+        annotationService.createAnnotationJob(humanZdj);
+      }
     } catch (Exception e) {
       log.info(
           "Processing humanDetectionJob(id={}) failed with attemptNb = {} and exception message ="
@@ -47,7 +53,9 @@ public class HumanDetectionJobCreatedFailedService
           List.of(
               HumanDetectionJobCreatedFailed.builder()
                   .humanDetectionJobId(humanZdjId)
+                  .annotationJobCustomName(annotationJobCustomName)
                   .attemptNb(attemptNb + 1)
+                  .exceptionMessage(exceptionToStringFunction.apply(e))
                   .build()));
     }
   }
