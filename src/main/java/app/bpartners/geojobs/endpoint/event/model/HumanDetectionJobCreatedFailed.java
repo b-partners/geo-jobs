@@ -13,6 +13,8 @@ import lombok.*;
 @ToString
 public class HumanDetectionJobCreatedFailed extends PojaEvent {
   private String humanDetectionJobId;
+  private String annotationJobCustomName;
+  private String exceptionMessage;
   private int attemptNb;
 
   @Override
