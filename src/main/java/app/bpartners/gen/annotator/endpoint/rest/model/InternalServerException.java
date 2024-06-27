@@ -28,6 +28,7 @@ import java.util.StringJoiner;
   InternalServerException.JSON_PROPERTY_MESSAGE
 })
 @OpenapiGenerated
+@SuppressWarnings("all")
 public class InternalServerException implements Serializable {
   private static final long serialVersionUID = 1L;
 

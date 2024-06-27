@@ -9,7 +9,7 @@ import app.bpartners.geojobs.endpoint.event.model.TileDetectionTaskCreated;
 import app.bpartners.geojobs.endpoint.event.model.TileDetectionTaskCreatedFailed;
 import app.bpartners.geojobs.endpoint.event.model.TileDetectionTaskSucceeded;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
-import app.bpartners.geojobs.repository.model.detection.DetectableType;
+import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.service.detection.TileDetectionTaskStatusService;
 import java.util.List;
 import java.util.function.Consumer;
@@ -24,11 +24,14 @@ public class TileDetectionTaskCreatedService implements Consumer<TileDetectionTa
   private final TileDetectionTaskStatusService tileDetectionTaskStatusService;
   private final TileDetectionTaskCreatedConsumer tileDetectionTaskConsumer;
   private final EventProducer eventProducer;
+  private final ExceptionToStringFunction exceptionToStringFunction;
 
   @Override
   public void accept(TileDetectionTaskCreated tileDetectionTaskCreated) {
     TileDetectionTask tileDetectionTask = tileDetectionTaskCreated.getTileDetectionTask();
-    List<DetectableType> detectableTypes = tileDetectionTaskCreated.getDetectableTypes();
+    List<DetectableObjectConfiguration> detectableObjectConfigurations =
+        tileDetectionTaskCreated.getDetectableObjectConfigurations();
+    String zoneDetectionJobId = tileDetectionTaskCreated.getZoneDetectionJobId();
     tileDetectionTaskStatusService.process(tileDetectionTask);
 
     try {
@@ -38,9 +41,13 @@ public class TileDetectionTaskCreatedService implements Consumer<TileDetectionTa
           List.of(
               new TileDetectionTaskCreatedFailed(
                   new TileDetectionTaskCreated(
-                      "zdjId",
-                      withNewStatus(tileDetectionTask, PROCESSING, UNKNOWN, e.getMessage()),
-                      detectableTypes),
+                      zoneDetectionJobId,
+                      withNewStatus(
+                          tileDetectionTask,
+                          PROCESSING,
+                          UNKNOWN,
+                          exceptionToStringFunction.apply(e)),
+                      detectableObjectConfigurations),
                   1)));
       return;
     }

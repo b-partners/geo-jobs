@@ -16,6 +16,7 @@ import app.bpartners.gen.annotator.endpoint.rest.OpenapiGenerated;
 import java.net.http.HttpHeaders;
 
 @OpenapiGenerated
+@SuppressWarnings("all")
 public class ApiException extends Exception {
   private static final long serialVersionUID = 1L;
 

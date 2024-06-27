@@ -28,6 +28,7 @@ import java.util.StringJoiner;
   AnnotationNumberPerLabel.JSON_PROPERTY_NUMBER_OF_ANNOTATIONS
 })
 @OpenapiGenerated
+@SuppressWarnings("all")
 public class AnnotationNumberPerLabel implements Serializable {
   private static final long serialVersionUID = 1L;
 

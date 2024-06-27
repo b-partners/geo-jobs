@@ -3,6 +3,7 @@ package app.bpartners.gen.annotator.endpoint.rest.client;
 import java.util.Map;
 
 /** Representing a Server configuration. */
+@SuppressWarnings("all")
 public class ServerConfiguration {
   public String URL;
   public String description;

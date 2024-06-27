@@ -20,6 +20,7 @@ public class DetectableObjectConfigurationMapper {
         .detectionJobId(jobId)
         .objectType(typeMapper.toDomain(Objects.requireNonNull(rest.getType())))
         .confidence(Objects.requireNonNull(rest.getConfidence()).doubleValue())
+        .bucketStorageName(rest.getBucketStorageName())
         .build();
   }
 
@@ -30,6 +31,7 @@ public class DetectableObjectConfigurationMapper {
             domain.getConfidence() == null
                 ? null
                 : BigDecimal.valueOf(domain.getConfidence())) // TODO: Unknown default value
-        .type(typeMapper.toRest(domain.getObjectType()));
+        .type(typeMapper.toRest(domain.getObjectType()))
+        .bucketStorageName(domain.getBucketStorageName());
   }
 }

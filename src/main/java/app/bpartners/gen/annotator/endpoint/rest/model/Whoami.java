@@ -23,6 +23,7 @@ import java.util.StringJoiner;
 /** Whoami */
 @JsonPropertyOrder({Whoami.JSON_PROPERTY_USER})
 @OpenapiGenerated
+@SuppressWarnings("all")
 public class Whoami implements Serializable {
   private static final long serialVersionUID = 1L;
 

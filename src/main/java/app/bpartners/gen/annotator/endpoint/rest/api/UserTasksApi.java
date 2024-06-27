@@ -31,6 +31,7 @@ import java.time.Duration;
 import java.util.function.Consumer;
 
 @OpenapiGenerated
+@SuppressWarnings("all")
 public class UserTasksApi {
   private final HttpClient memberVarHttpClient;
   private final ObjectMapper memberVarObjectMapper;

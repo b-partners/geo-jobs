@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 @AllArgsConstructor
 @Slf4j
 public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJobSucceeded> {
+  public static final double DEFAULT_MIN_CONFIDENCE = 0.8;
   private final ZoneDetectionJobAnnotationProcessor jobAnnotationProcessor;
 
   @Override
@@ -25,6 +26,7 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
     var annotationJobWithoutObjectsId = randomUUID().toString();
     jobAnnotationProcessor.accept(
         succeededJobId,
+        DEFAULT_MIN_CONFIDENCE,
         annotationJobWithObjectsIdTruePositive,
         annotationJobWithObjectsIdFalsePositive,
         annotationJobWithoutObjectsId);

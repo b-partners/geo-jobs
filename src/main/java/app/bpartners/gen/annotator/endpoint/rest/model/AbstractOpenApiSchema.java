@@ -19,6 +19,7 @@ import java.util.Objects;
 
 /** Abstract class for oneOf,anyOf schemas defined in OpenAPI spec */
 @OpenapiGenerated
+@SuppressWarnings("all")
 public abstract class AbstractOpenApiSchema {
 
   // store the actual instance of the schema/object

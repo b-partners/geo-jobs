@@ -39,6 +39,7 @@ import java.util.StringJoiner;
   CrupdateJob.JSON_PROPERTY_LABELS
 })
 @OpenapiGenerated
+@SuppressWarnings("all")
 public class CrupdateJob implements Serializable {
   private static final long serialVersionUID = 1L;
 

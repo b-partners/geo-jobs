@@ -70,13 +70,16 @@ public class ParcelDetectionTaskServiceIT extends FacadeIT {
             detectedTile(JOB_ID, "tile1Id", "parcel1Id", "detectedObjectId1", UNDER_MIN_CONFIDENCE),
             detectedTile(JOB_ID, "tile2Id", "parcel2Id", "detectedObjectId2", 0.70),
             detectedTile(JOB_ID, "tile3Id", "parcel3Id", "detectedObjectId3", 0.71)));
-    objectConfigurationRepository.save(
-        DetectableObjectConfiguration.builder()
-            .id("detectableObjectConfigurationId")
-            .confidence(MIN_CONFIDENCE)
-            .objectType(DetectableType.ROOF)
-            .detectionJobId(JOB_ID)
-            .build());
+    objectConfigurationRepository.save(detectableObjectConfigurations());
+  }
+
+  private static DetectableObjectConfiguration detectableObjectConfigurations() {
+    return DetectableObjectConfiguration.builder()
+        .id("detectableObjectConfigurationId")
+        .confidence(MIN_CONFIDENCE)
+        .objectType(DetectableType.ROOF)
+        .detectionJobId(JOB_ID)
+        .build();
   }
 
   @NotNull
@@ -104,7 +107,8 @@ public class ParcelDetectionTaskServiceIT extends FacadeIT {
             detectedTile(JOB_ID, "tile1Id", "parcel1Id", "detectedObjectId1", UNDER_MIN_CONFIDENCE),
             detectedTile(JOB_ID, "tile2Id", "parcel2Id", "detectedObjectId2", MIN_CONFIDENCE));
 
-    List<DetectedTile> actual = subject.findInDoubtTilesByJobId(JOB_ID, detectedTiles);
+    List<DetectedTile> actual =
+        subject.findInDoubtTilesByJobId(detectedTiles, List.of(detectableObjectConfigurations()));
 
     assertEquals(expected, actual.stream().peek(tile -> tile.setCreationDatetime(null)).toList());
   }

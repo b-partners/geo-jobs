@@ -30,6 +30,7 @@ import java.util.StringJoiner;
   CreateAnnotatedTask.JSON_PROPERTY_ANNOTATION_BATCH
 })
 @OpenapiGenerated
+@SuppressWarnings("all")
 public class CreateAnnotatedTask implements Serializable {
   private static final long serialVersionUID = 1L;
 

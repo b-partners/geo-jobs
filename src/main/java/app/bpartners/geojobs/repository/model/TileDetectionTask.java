@@ -54,4 +54,8 @@ public class TileDetectionTask extends Task implements Serializable {
   public Task semanticClone() {
     return this.toBuilder().statusHistory(new ArrayList<>(getStatusHistory())).build();
   }
+
+  public String describeTile() {
+    return "TileDetectionTask(id=" + id + ", Tile(coordinates=" + tile.getCoordinates() + ")";
+  }
 }

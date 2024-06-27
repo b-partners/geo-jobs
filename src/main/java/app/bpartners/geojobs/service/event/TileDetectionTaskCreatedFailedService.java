@@ -22,14 +22,16 @@ public class TileDetectionTaskCreatedFailedService
   private static final int MAX_ATTEMPT = 3;
   private final EventProducer eventProducer;
   private final TileDetectionTaskCreatedConsumer consumer;
-  private TileDetectionTaskStatusService tileDetectionTaskStatusService;
+  private final TileDetectionTaskStatusService tileDetectionTaskStatusService;
+  private final ExceptionToStringFunction exceptionToStringFunction;
 
   @Override
   public void accept(TileDetectionTaskCreatedFailed tileDetectionTaskCreatedFailed) {
     var createdTask = tileDetectionTaskCreatedFailed.getTileDetectionTaskCreated();
+    var zoneDetectionJobId = createdTask.getZoneDetectionJobId();
     var tileDetectionTask = createdTask.getTileDetectionTask();
     var attemptNb = tileDetectionTaskCreatedFailed.getAttemptNb();
-    var detectableTypes = createdTask.getDetectableTypes();
+    var detectableTypes = createdTask.getDetectableObjectConfigurations();
     if (attemptNb > MAX_ATTEMPT) {
       tileDetectionTaskStatusService.fail(tileDetectionTask);
       log.info(
@@ -42,9 +44,9 @@ public class TileDetectionTaskCreatedFailedService
     } catch (Exception e) {
       var newTask =
           new TileDetectionTaskCreated(
-              "zdjId",
+              zoneDetectionJobId,
               TileDetectionTaskCreatedConsumer.withNewStatus(
-                  tileDetectionTask, PROCESSING, UNKNOWN, e.getMessage()),
+                  tileDetectionTask, PROCESSING, UNKNOWN, exceptionToStringFunction.apply(e)),
               detectableTypes);
       eventProducer.accept(List.of(new TileDetectionTaskCreatedFailed(newTask, attemptNb + 1)));
       return;

@@ -166,7 +166,7 @@ public class ExtractorIT extends FacadeIT {
   }
 
   private static Polygon getFeaturePolygon() {
-    return new Polygon().points(List.of(new Point().x(45.904988912620688).y(4.459648282829194)));
+    return new Polygon().points(List.of(new Point().x(4.459648282829194).y(45.904988912620688)));
   }
 
   @Test

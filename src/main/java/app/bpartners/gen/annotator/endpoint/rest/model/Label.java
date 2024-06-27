@@ -25,6 +25,7 @@ import java.util.StringJoiner;
 /** Label */
 @JsonPropertyOrder({Label.JSON_PROPERTY_ID, Label.JSON_PROPERTY_NAME, Label.JSON_PROPERTY_COLOR})
 @OpenapiGenerated
+@SuppressWarnings("all")
 public class Label implements Serializable {
   private static final long serialVersionUID = 1L;
 

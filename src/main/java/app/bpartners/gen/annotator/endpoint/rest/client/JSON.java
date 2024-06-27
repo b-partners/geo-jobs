@@ -14,6 +14,7 @@ import java.util.Set;
 import org.openapitools.jackson.nullable.JsonNullableModule;
 
 @OpenapiGenerated
+@SuppressWarnings("all")
 public class JSON {
   private ObjectMapper mapper;
 

@@ -35,6 +35,7 @@ import java.util.StringJoiner;
 import java.util.function.Consumer;
 
 @OpenapiGenerated
+@SuppressWarnings("all")
 public class TasksApi {
   private final HttpClient memberVarHttpClient;
   private final ObjectMapper memberVarObjectMapper;

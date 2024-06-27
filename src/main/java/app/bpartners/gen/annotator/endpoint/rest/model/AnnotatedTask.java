@@ -28,6 +28,7 @@ import java.util.Objects;
   AnnotatedTask.JSON_PROPERTY_ANNOTATION_BATCH
 })
 @OpenapiGenerated
+@SuppressWarnings("all")
 public class AnnotatedTask implements Serializable {
   private static final long serialVersionUID = 1L;
 

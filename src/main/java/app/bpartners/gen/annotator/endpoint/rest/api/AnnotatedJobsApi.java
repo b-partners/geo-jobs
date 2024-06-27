@@ -30,6 +30,7 @@ import java.time.Duration;
 import java.util.function.Consumer;
 
 @OpenapiGenerated
+@SuppressWarnings("all")
 public class AnnotatedJobsApi {
   private final HttpClient memberVarHttpClient;
   private final ObjectMapper memberVarObjectMapper;

@@ -30,6 +30,7 @@ import java.util.StringJoiner;
   User.JSON_PROPERTY_EMAIL
 })
 @OpenapiGenerated
+@SuppressWarnings("all")
 public class User implements Serializable {
   private static final long serialVersionUID = 1L;
 

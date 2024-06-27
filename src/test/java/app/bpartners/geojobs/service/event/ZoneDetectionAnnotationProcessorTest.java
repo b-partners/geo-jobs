@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service.event;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 import static app.bpartners.geojobs.service.annotator.ExtractorIT.PARCEL_MOCK_ID;
 import static app.bpartners.geojobs.service.event.TilingTaskCreatedServiceIT.MOCK_FEATURE_AS_STRING;
+import static app.bpartners.geojobs.service.event.ZoneDetectionJobSucceededService.DEFAULT_MIN_CONFIDENCE;
 import static java.util.UUID.randomUUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -128,6 +129,7 @@ public class ZoneDetectionAnnotationProcessorTest extends FacadeIT {
     String annotationJobWithoutObjectsId = randomUUID().toString();
     subject.accept(
         MOCK_JOB_ID,
+        DEFAULT_MIN_CONFIDENCE,
         annotationJobWithObjectsIdTruePositive,
         annotationJobWithObjectsIdFalsePositive,
         annotationJobWithoutObjectsId);

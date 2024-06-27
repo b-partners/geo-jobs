@@ -31,6 +31,7 @@ import java.util.StringJoiner;
   Task.JSON_PROPERTY_STATUS
 })
 @OpenapiGenerated
+@SuppressWarnings("all")
 public class Task implements Serializable {
   private static final long serialVersionUID = 1L;
 

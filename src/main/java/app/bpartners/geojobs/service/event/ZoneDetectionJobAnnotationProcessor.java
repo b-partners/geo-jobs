@@ -7,8 +7,10 @@ import static java.util.UUID.randomUUID;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.HumanDetectionJobCreatedFailed;
 import app.bpartners.geojobs.model.exception.ApiException;
+import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.DetectedTileRepository;
 import app.bpartners.geojobs.repository.HumanDetectionJobRepository;
+import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.DetectedTile;
 import app.bpartners.geojobs.repository.model.detection.HumanDetectionJob;
 import app.bpartners.geojobs.service.KeyPredicateFunction;
@@ -28,7 +30,6 @@ import org.springframework.transaction.annotation.Transactional;
 @AllArgsConstructor
 @Slf4j
 public class ZoneDetectionJobAnnotationProcessor {
-  public static final double MIN_CONFIDENCE_TRUE_POSITIVE = 0.9;
   private final AnnotationService annotationService;
   private final DetectionTaskService detectionTaskService;
   private final DetectedTileRepository detectedTileRepository;
@@ -36,10 +37,12 @@ public class ZoneDetectionJobAnnotationProcessor {
   private final EventProducer eventProducer;
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final KeyPredicateFunction keyPredicateFunction;
+  private final DetectableObjectConfigurationRepository objectConfigurationRepository;
 
   @Transactional
   public AnnotationJobIds accept(
       String zoneDetectionJobId,
+      Double minConfidence,
       String annotationJobWithObjectsIdTruePositive,
       String annotationJobWithObjectsIdFalsePositive,
       String annotationJobWithoutObjectsId) {
@@ -54,8 +57,12 @@ public class ZoneDetectionJobAnnotationProcessor {
         detectedTileRepository.findAllByZdjJobId(zoneDetectionJobId).stream()
             .filter(keyPredicateFunction.apply(DetectedTile::getBucketPath))
             .toList();
+    List<DetectableObjectConfiguration> detectableObjectConfigurations =
+        objectConfigurationRepository.findAllByDetectionJobId(zoneDetectionJobId);
     List<DetectedTile> inDoubtTiles =
-        detectionTaskService.findInDoubtTilesByJobId(zoneDetectionJobId, detectedTiles).stream()
+        detectionTaskService
+            .findInDoubtTilesByJobId(detectedTiles, detectableObjectConfigurations)
+            .stream()
             .peek(detectedTile -> detectedTile.setHumanDetectionJobId(humanZDJFalsePositiveId))
             .toList();
     List<DetectedTile> tilesWithoutObject =
@@ -76,8 +83,7 @@ public class ZoneDetectionJobAnnotationProcessor {
             .filter(
                 detectedTile ->
                     detectedTile.getDetectedObjects().stream()
-                        .anyMatch(
-                            tile -> tile.getComputedConfidence() >= MIN_CONFIDENCE_TRUE_POSITIVE))
+                        .anyMatch(tile -> tile.getComputedConfidence() >= minConfidence))
             .peek(detectedTile -> detectedTile.setHumanDetectionJobId(humanZDJTruePositiveId))
             .toList();
     var falsePositiveTiles = new ArrayList<>(inDoubtTiles);
@@ -109,10 +115,16 @@ public class ZoneDetectionJobAnnotationProcessor {
 
     savedHumanZDJTruePositive.setDetectedTiles(
         truePositiveDetectedTiles); // TODO: check if still necessary
+    savedHumanZDJTruePositive.setDetectableObjectConfigurations(
+        detectableObjectConfigurations); // TODO: check if still necessary
     savedHumanZDJFalsePositive.setDetectedTiles(
         falsePositiveTiles); // TODO: check if still necessary
+    savedHumanZDJFalsePositive.setDetectableObjectConfigurations(
+        detectableObjectConfigurations); // TODO: check if still necessary
     savedHumanDetectionJobWithoutTile.setDetectedTiles(
         tilesWithoutObject); // TODO: check if still necessary
+    savedHumanDetectionJobWithoutTile.setDetectableObjectConfigurations(
+        detectableObjectConfigurations); // TODO: check if still necessary
 
     detectedTileRepository.saveAll(
         Stream.of(truePositiveDetectedTiles, falsePositiveTiles, tilesWithoutObject)
@@ -125,7 +137,9 @@ public class ZoneDetectionJobAnnotationProcessor {
             humanJob.getZoneName()
                 + " - "
                 + truePositiveDetectedTiles.size()
-                + " tiles with confidence >= 80%"
+                + " tiles with confidence >= "
+                + minConfidence * 100
+                + "%"
                 + " "
                 + now());
       } else {
@@ -149,7 +163,9 @@ public class ZoneDetectionJobAnnotationProcessor {
             humanJob.getZoneName()
                 + " - "
                 + falsePositiveTiles.size()
-                + " tiles with confidence < 95%"
+                + " tiles with confidence < "
+                + minConfidence * 100
+                + "%"
                 + " "
                 + now());
       } else {

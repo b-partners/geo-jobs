@@ -20,6 +20,7 @@ public class ParcelDetectionTaskCreatedService implements Consumer<ParcelDetecti
   private final TaskStatusService<ParcelDetectionTask> taskStatusService;
   private final ParcelDetectionTaskConsumer parcelDetectionTaskConsumer;
   private final EventProducer eventProducer;
+  private final ExceptionToStringFunction exceptionToStringFunction;
 
   @Override
   public void accept(ParcelDetectionTaskCreated parcelDetectionTaskCreated) {
@@ -32,7 +33,8 @@ public class ParcelDetectionTaskCreatedService implements Consumer<ParcelDetecti
       eventProducer.accept(
           List.of(
               new ParcelDetectionTaskFailed(
-                  withNewStatus(task, PROCESSING, UNKNOWN, e.getMessage()), 1)));
+                  withNewStatus(task, PROCESSING, UNKNOWN, exceptionToStringFunction.apply(e)),
+                  1)));
     }
   }
 }

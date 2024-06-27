@@ -31,6 +31,7 @@ import java.util.StringJoiner;
   Annotation.JSON_PROPERTY_POLYGON
 })
 @OpenapiGenerated
+@SuppressWarnings("all")
 public class Annotation implements Serializable {
   private static final long serialVersionUID = 1L;
 
