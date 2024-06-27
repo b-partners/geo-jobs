@@ -10,7 +10,7 @@ import app.bpartners.gen.annotator.endpoint.rest.api.JobsApi;
 import app.bpartners.gen.annotator.endpoint.rest.client.ApiException;
 import app.bpartners.gen.annotator.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.CreateAnnotatedTaskExtracted;
+import app.bpartners.geojobs.endpoint.event.model.CreateAnnotatedTaskSubmitted;
 import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
@@ -110,7 +110,7 @@ public class AnnotationService {
     annotatedTasks.forEach(
         task ->
             eventProducer.accept(
-                List.of(new CreateAnnotatedTaskExtracted(createdAnnotationJob.getId(), task))));
+                List.of(new CreateAnnotatedTaskSubmitted(createdAnnotationJob.getId(), task))));
   }
 
   public void createAnnotationJob(HumanDetectionJob humanDetectionJob) throws ApiException {
