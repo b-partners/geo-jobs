@@ -3,7 +3,6 @@ package app.bpartners.geojobs.endpoint.rest.security.authentication.apikey.autho
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectConfigurationMapper;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration;
 import app.bpartners.geojobs.endpoint.rest.security.authentication.apikey.ApiKeyAuthenticationFilter;
-import app.bpartners.geojobs.model.CommunityAuthorizationDetails;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationDetailsRepository;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
@@ -17,24 +16,24 @@ import org.springframework.stereotype.Component;
 @AllArgsConstructor
 public class CommunityZoneDetectionJobProcessAuthorizer
     implements BiConsumer<String, List<DetectableObjectConfiguration>> {
-  private final CommunityAuthorizationDetailsRepository communityAuthorizationDetailsRepository;
+  private final CommunityAuthorizationDetailsRepository cadRepository;
   private final DetectableObjectConfigurationMapper detectableObjectConfigurationMapper;
 
   @Override
-  public void accept(String jobId, List<DetectableObjectConfiguration> detectableObjectConfigurations) {
-    var apiKeyAuthentication =
-        ApiKeyAuthenticationFilter.getApiKeyAuthentication();
-    if (apiKeyAuthentication.isAdmin()) {
-      return;
-    }
+  public void accept(
+      String jobId, List<DetectableObjectConfiguration> detectableObjectConfigurations) {
+    var apiKeyAuthentication = ApiKeyAuthenticationFilter.getApiKeyAuthentication();
+    if (apiKeyAuthentication.isAdmin()) return;
 
-    CommunityAuthorizationDetails authenticatedCommunityAuthorizationDetails =
-        communityAuthorizationDetailsRepository.findByApiKey(apiKeyAuthentication.getApiKey());
-    var authorizedDetectableObjectTypes =
-        authenticatedCommunityAuthorizationDetails.detectableObjectTypes();
+    var authorizationDetails = cadRepository.findByApiKey(apiKeyAuthentication.getApiKey());
+    var authorizedDetectableObjectTypes = authorizationDetails.detectableObjectTypes();
     var payloadDetectableTypes =
         detectableObjectConfigurations.stream()
-            .map(detectableObjectConfiguration -> detectableObjectConfigurationMapper.toDomain(jobId, detectableObjectConfiguration).getObjectType())
+            .map(
+                detectableObjectConfiguration ->
+                    detectableObjectConfigurationMapper
+                        .toDomain(jobId, detectableObjectConfiguration)
+                        .getObjectType())
             .toList();
     var notAuthorizedObjectTypes =
         getNotAuthorizedObjectTypes(authorizedDetectableObjectTypes, payloadDetectableTypes);
@@ -42,7 +41,7 @@ public class CommunityZoneDetectionJobProcessAuthorizer
     if (!notAuthorizedObjectTypes.isEmpty()) {
       throw new ForbiddenException(
           "following objects are not authorized for your community.name = "
-              + authenticatedCommunityAuthorizationDetails.communityName()
+              + authorizationDetails.communityName()
               + " : "
               + notAuthorizedObjectTypes);
     }

@@ -10,17 +10,11 @@ public class EnvConf {
 [
   {
     "id":"community1_id",
+    "max_surface": 5000,
     "community_name": "community1_name",
     "api_key":"community1_key",
     "detectable_objects_types":["ROOF", "POOL"],
     "authorized_zone_names":["zoneName1"]
-  },
-  {
-    "id":"community2_id",
-    "community_name": "community2_name",
-    "api_key":"community2_key",
-    "detectable_objects_types":["PATHWAY"],
-    "authorized_zone_names":["zoneName2", "zoneName3"]
   }
 ]
 """;

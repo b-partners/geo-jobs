@@ -32,7 +32,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> {
-  private final ZoneDetectionJobService detectionJobService; private final JobFilteredMailer<ZoneTilingJob> tilingFilteredMailer;
+  private final ZoneDetectionJobService detectionJobService;
+  private final JobFilteredMailer<ZoneTilingJob> tilingFilteredMailer;
   private final NotFinishedTaskRetriever<TilingTask> notFinishedTaskRetriever;
 
   public ZoneTilingJobService(

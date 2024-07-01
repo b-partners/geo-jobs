@@ -60,8 +60,7 @@ public class InternalToRestExceptionHandler {
   @ExceptionHandler(value = {ForbiddenException.class})
   ResponseEntity<Exception> handleDefault(ForbiddenException e) {
     log.error("Authentication error", e);
-    return new ResponseEntity<>(
-      toRest(e, HttpStatus.FORBIDDEN), HttpStatus.FORBIDDEN);
+    return new ResponseEntity<>(toRest(e, HttpStatus.FORBIDDEN), HttpStatus.FORBIDDEN);
   }
 
   @ExceptionHandler(value = {NotFoundException.class})

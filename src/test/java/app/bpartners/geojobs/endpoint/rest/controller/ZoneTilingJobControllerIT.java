@@ -15,6 +15,7 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneTilingJobMapper
 import app.bpartners.geojobs.endpoint.rest.model.CreateZoneTilingJob;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
+import app.bpartners.geojobs.endpoint.rest.security.authentication.apikey.authorizer.CommunityZoneTilingJobProcessAuthorizer;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.model.page.BoundedPageSize;
@@ -54,9 +55,11 @@ class ZoneTilingJobControllerIT extends FacadeIT {
   @Autowired ZoneTilingJobMapper tilingJobMapper;
   @Autowired ZoneDetectionJobRepository detectionJobRepository;
   @MockBean TilingJobDuplicatedMailer tilingJobDuplicatedMailerMock;
+  @MockBean CommunityZoneTilingJobProcessAuthorizer communityZoneTilingJobProcessAuthorizer;
 
   @BeforeEach
   void setUp() {
+    doNothing().when(communityZoneTilingJobProcessAuthorizer).accept(any());
     zoneTilingJobRepository.save(
         ZoneTilingJob.builder()
             .id(JOB_ID)

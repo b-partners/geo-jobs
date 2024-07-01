@@ -10,5 +10,6 @@ public record CommunityAuthorizationDetails(
     String id,
     @JsonProperty("community_name") String communityName,
     @JsonProperty("api_key") String apiKey,
+    @JsonProperty("max_surface") double maxSurface,
     @JsonProperty("authorized_zone_names") List<String> authorizedZoneNames,
     @JsonProperty("detectable_objects_types") List<DetectableType> detectableObjectTypes) {}
