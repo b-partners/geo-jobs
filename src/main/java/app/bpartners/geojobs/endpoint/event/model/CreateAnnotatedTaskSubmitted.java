@@ -14,7 +14,7 @@ import lombok.*;
 @Data
 @EqualsAndHashCode
 @ToString
-public class CreateAnnotatedTaskExtracted extends PojaEvent {
+public class CreateAnnotatedTaskSubmitted extends PojaEvent {
   @JsonProperty("annotationJobId")
   private String annotationJobId;
 
