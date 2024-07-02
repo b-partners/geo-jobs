@@ -1,15 +1,20 @@
 package app.bpartners.geojobs.service;
 
+import app.bpartners.geojobs.model.ArcgisRasterZoom;
 import app.bpartners.geojobs.model.exception.NotFoundException;
+import app.bpartners.geojobs.model.parcelization.ParcelizedPolygon;
+import app.bpartners.geojobs.model.parcelization.area.SquareDegree;
 import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.locationtech.jts.geom.Polygon;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -74,5 +79,23 @@ public class ParcelService {
     }
 
     throw new NotFoundException("jobId=" + jobId);
+  }
+
+  public List<Polygon> parcelizeFeature(
+      Polygon polygon, Integer referenceZoom, Integer targetZoom, Double maxParcelArea) {
+    int refZoom = referenceZoom != null ? referenceZoom : 20;
+    if (targetZoom == null || maxParcelArea == null) {
+      ParcelizedPolygon parcelizedPolygon =
+          new ParcelizedPolygon(polygon, new ArcgisRasterZoom(refZoom));
+      return new ArrayList<>(parcelizedPolygon.getParcels());
+    }
+
+    ParcelizedPolygon parcelizedPolygon =
+        new ParcelizedPolygon(
+            polygon,
+            new ArcgisRasterZoom(targetZoom),
+            new ArcgisRasterZoom(referenceZoom),
+            new SquareDegree(maxParcelArea));
+    return new ArrayList<>(parcelizedPolygon.getParcels());
   }
 }
