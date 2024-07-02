@@ -11,6 +11,7 @@ import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
@@ -45,25 +46,28 @@ public class FeatureMapper {
   }
 
   public Polygon toDomain(Feature feature) {
-    var multiPolygonCoordinates = feature.getGeometry().getCoordinates();
-    GeometryFactory geometryFactory = new GeometryFactory();
-    List<Coordinate> polygonCoords = new ArrayList<>();
-
+    List<List<List<List<BigDecimal>>>> multiPolygonCoordinates =
+        feature.getGeometry().getCoordinates();
     if (multiPolygonCoordinates == null || multiPolygonCoordinates.isEmpty()) {
       throw new IllegalArgumentException("Multipolygon coordinates should not be null");
     }
 
-    List<List<List<BigDecimal>>> polygon = multiPolygonCoordinates.getFirst();
-    for (List<List<BigDecimal>> ring : polygon) {
-      Coordinate[] ringCoords = new Coordinate[ring.size()];
-      for (int i = 0; i < ring.size(); i++) {
-        BigDecimal x = ring.get(i).getFirst();
-        BigDecimal y = ring.get(i).getLast();
-        ringCoords[i] = new Coordinate(x.doubleValue(), y.doubleValue());
-      }
+    GeometryFactory geometryFactory = new GeometryFactory();
+    List<Coordinate> polygonCoords = new ArrayList<>();
 
-      polygonCoords.addAll(List.of(ringCoords));
-    }
+    multiPolygonCoordinates
+        .getFirst()
+        .forEach(
+            ring -> {
+              Coordinate[] ringCoords =
+                  ring.stream()
+                      .map(
+                          point ->
+                              new Coordinate(
+                                  point.getFirst().doubleValue(), point.getLast().doubleValue()))
+                      .toArray(Coordinate[]::new);
+              polygonCoords.addAll(List.of(ringCoords));
+            });
 
     LinearRing linearRing =
         geometryFactory.createLinearRing(polygonCoords.toArray(new Coordinate[0]));
@@ -72,22 +76,21 @@ public class FeatureMapper {
   }
 
   public Feature toRest(Polygon domain) {
-    List<List<List<List<BigDecimal>>>> multipolygonCoordinates = new ArrayList<>();
+    List<List<List<List<BigDecimal>>>> multiPolygonCoordinates = new ArrayList<>();
     Coordinate[] polygonCoordinates = domain.getCoordinates();
+
+    List<List<BigDecimal>> ringCoords =
+        Arrays.stream(polygonCoordinates)
+            .map(
+                coord ->
+                    List.of(BigDecimal.valueOf(coord.getX()), BigDecimal.valueOf(coord.getY())))
+            .toList();
+
     List<List<List<BigDecimal>>> polygonCoords = new ArrayList<>();
-    List<List<BigDecimal>> ringCoords = new ArrayList<>();
-
-    for (Coordinate coord : polygonCoordinates) {
-      List<BigDecimal> point = new ArrayList<>();
-      point.add(BigDecimal.valueOf(coord.getX()));
-      point.add(BigDecimal.valueOf(coord.getY()));
-      ringCoords.add(point);
-    }
-
     polygonCoords.add(ringCoords);
-    multipolygonCoordinates.add(polygonCoords);
+    multiPolygonCoordinates.add(polygonCoords);
 
-    MultiPolygon multiPolygon = new MultiPolygon().coordinates(multipolygonCoordinates);
+    MultiPolygon multiPolygon = new MultiPolygon().coordinates(multiPolygonCoordinates);
     Feature feature = new Feature();
     feature.setGeometry(multiPolygon);
 
