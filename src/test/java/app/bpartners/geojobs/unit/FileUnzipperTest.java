@@ -3,6 +3,7 @@ package app.bpartners.geojobs.unit;
 import static app.bpartners.geojobs.file.zip.FileZipper.ZIP_FILE_SUFFIX;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertThrows;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.file.FileWriter;
