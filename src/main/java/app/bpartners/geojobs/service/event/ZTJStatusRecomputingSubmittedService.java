@@ -2,42 +2,26 @@ package app.bpartners.geojobs.service.event;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.ZTJStatusRecomputingSubmitted;
+import app.bpartners.geojobs.repository.model.tiling.TilingTask;
+import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
-import java.util.List;
 import java.util.function.Consumer;
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
-@AllArgsConstructor
-@Component
-@Slf4j
+@Service
 public class ZTJStatusRecomputingSubmittedService
     implements Consumer<ZTJStatusRecomputingSubmitted> {
-  private static final int ATTEMPT_FOR_256_MINUTES_DURATION = 8;
-  private final ZoneTilingJobService zoneTilingJobService;
-  private final EventProducer eventProducer;
+  private final JobStatusRecomputingSubmittedService<
+          ZoneTilingJob, TilingTask, ZTJStatusRecomputingSubmitted>
+      service;
+
+  public ZTJStatusRecomputingSubmittedService(
+      ZoneTilingJobService jobService, EventProducer eventProducer) {
+    this.service = new JobStatusRecomputingSubmittedService<>(eventProducer, jobService);
+  }
 
   @Override
-  public void accept(ZTJStatusRecomputingSubmitted ztjStatusRecomputingSubmitted) {
-    var jobId = ztjStatusRecomputingSubmitted.getJobId();
-    var lastDurationValue =
-        ztjStatusRecomputingSubmitted.getMaxConsumerBackoffBetweenRetriesDurationValue();
-    var attemptNb = ztjStatusRecomputingSubmitted.getAttemptNb();
-    var oldJob = zoneTilingJobService.findById(jobId);
-    var newJob = zoneTilingJobService.recomputeStatus(oldJob);
-
-    if (!(newJob.isFailed() || newJob.isSucceeded())) {
-      if (attemptNb < ATTEMPT_FOR_256_MINUTES_DURATION) {
-        long maxConsumerBackoffBetweenRetriesDurationValue = lastDurationValue * 2;
-        int newAttemptNb = attemptNb + 1;
-        eventProducer.accept(
-            List.of(
-                new ZTJStatusRecomputingSubmitted(
-                    newJob.getId(), maxConsumerBackoffBetweenRetriesDurationValue, newAttemptNb)));
-      } else {
-        log.error("Max attempt reached for ZTJStatusRecomputingSubmitted handler");
-      }
-    }
+  public void accept(ZTJStatusRecomputingSubmitted event) {
+    service.accept(event);
   }
 }
