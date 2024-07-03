@@ -35,13 +35,7 @@ public class ZTJStatusRecomputingSubmittedServiceTest {
     var listCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducerMock, times(1)).accept(listCaptor.capture());
     var event = ((List<ZTJStatusRecomputingSubmitted>) listCaptor.getValue()).getFirst();
-    assertEquals(
-        ZTJStatusRecomputingSubmitted.builder()
-            .jobId(pendingJobId)
-            .attemptNb(1)
-            .maxConsumerBackoffBetweenRetriesDurationValue(2 * 5)
-            .build(),
-        event);
+    assertEquals(new ZTJStatusRecomputingSubmitted(pendingJobId, 2 * 5, 1), event);
   }
 
   @Test
@@ -69,12 +63,7 @@ public class ZTJStatusRecomputingSubmittedServiceTest {
     when(tilingJobServiceMock.findById(jobId)).thenReturn(job);
     when(tilingJobServiceMock.recomputeStatus(job)).thenReturn(job);
 
-    subject.accept(
-        ZTJStatusRecomputingSubmitted.builder()
-            .jobId(jobId)
-            .maxConsumerBackoffBetweenRetriesDurationValue(1L)
-            .attemptNb(8)
-            .build());
+    subject.accept(new ZTJStatusRecomputingSubmitted(jobId, 256L, 8));
 
     var listCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducerMock, times(0)).accept(listCaptor.capture());
