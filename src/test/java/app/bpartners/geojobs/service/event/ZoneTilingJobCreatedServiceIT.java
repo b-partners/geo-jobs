@@ -6,13 +6,13 @@ import static app.bpartners.geojobs.repository.model.GeoJobType.TILING;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.ZTJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.ZoneTilingJobCreated;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.TaskStatus;
@@ -26,6 +26,7 @@ import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
@@ -87,8 +88,15 @@ class ZoneTilingJobCreatedServiceIT extends FacadeIT {
     ZoneTilingJob actualAfterAccept = zoneTilingJobService.findById(created.getId());
 
     int numberOfFeaturesInJob = 1;
-    verify(eventProducer, times(numberOfFeaturesInJob)).accept(anyList());
+    int numberOfZTJStatusComputingEvent = 1;
+    var listCaptor = ArgumentCaptor.forClass(List.class);
+    verify(eventProducer, times(numberOfFeaturesInJob + numberOfZTJStatusComputingEvent))
+        .accept(listCaptor.capture());
+    List<List> allValues = listCaptor.getAllValues();
+    var ztjStatusComputeEvent =
+        ((List<ZTJStatusRecomputingSubmitted>) allValues.getLast()).getFirst();
     assertEquals(UNKNOWN, actualAfterAccept.getStatus().getHealth());
     assertEquals(PENDING, actualAfterAccept.getStatus().getProgression());
+    assertEquals(new ZTJStatusRecomputingSubmitted(created.getId()), ztjStatusComputeEvent);
   }
 }
