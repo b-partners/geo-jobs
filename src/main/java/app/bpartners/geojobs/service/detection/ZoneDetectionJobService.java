@@ -8,9 +8,7 @@ import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.ParcelDetectionTaskCreated;
-import app.bpartners.geojobs.endpoint.event.model.TaskStatisticRecomputingSubmitted;
-import app.bpartners.geojobs.endpoint.event.model.ZoneDetectionJobStatusChanged;
+import app.bpartners.geojobs.endpoint.event.model.*;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
 import app.bpartners.geojobs.endpoint.rest.model.GeoJsonsUrl;
 import app.bpartners.geojobs.job.model.JobStatus;
@@ -415,6 +413,9 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
             .toList());
     getTasks(job)
         .forEach(task -> eventProducer.accept(List.of(new ParcelDetectionTaskCreated(task))));
+
+    eventProducer.accept(List.of(new ZDJParcelsStatusRecomputingSubmitted(job.getId())));
+    eventProducer.accept(List.of(new ZDJStatusRecomputingSubmitted(job.getId())));
     return job;
   }
 
