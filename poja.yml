@@ -5,7 +5,7 @@ aurora_min_capacity: 2
 aurora_scale_point: 60
 aurora_sleep: 900
 aws_account_id: 'null'
-cli_version: 14.0.0
+cli_version: 15.1.1
 codeartifact_domain_name: 'null'
 codeartifact_repository_name: 'null'
 custom_java_deps: poja-custom-java-deps.txt
@@ -40,6 +40,7 @@ with_snapstart: 'true'
 with_sonar: 'true'
 with_swagger_ui: 'false'
 worker_batch: 1
-worker_function_timeout: 600
+worker_function_1_timeout: 600
+worker_function_2_timeout: 600
 worker_memory: 512
 worker_reserved_concurrent_executions_nb: 60
