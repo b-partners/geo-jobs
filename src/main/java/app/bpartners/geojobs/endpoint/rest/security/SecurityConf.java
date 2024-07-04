@@ -32,6 +32,7 @@ public class SecurityConf {
         new OrRequestMatcher(
             new AntPathRequestMatcher("/**", OPTIONS.toString()),
             new AntPathRequestMatcher("/ping", GET.name()),
+            new AntPathRequestMatcher("/health/event/uuids", POST.name()),
             new AntPathRequestMatcher("/health/**", GET.name()));
     httpSecurity
         .addFilterBefore(

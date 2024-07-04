@@ -1,26 +1,28 @@
 package app.bpartners.geojobs.endpoint.event.model;
 
 import app.bpartners.geojobs.endpoint.event.EventStack;
-import java.time.Duration;
 import lombok.*;
 
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder(toBuilder = true)
 @Data
 @EqualsAndHashCode(callSuper = false)
 @ToString
-public class ParcelDetectionStatusRecomputingSubmitted extends PojaEvent {
-  private String parcelDetectionJobId;
+public class ParcelDetectionStatusRecomputingSubmitted extends JobStatusRecomputingSubmitted {
+  private static final long MAX_CONSUMER_DURATION_VALUE = 5L;
 
-  @Override
-  public Duration maxConsumerDuration() {
-    return Duration.ofMinutes(5L);
+  public ParcelDetectionStatusRecomputingSubmitted(String parcelDetectionJobId) {
+    this.jobId = parcelDetectionJobId;
+    this.maxConsumerBackoffBetweenRetriesDurationValue = 1L;
+    this.maxConsumerDurationValue = MAX_CONSUMER_DURATION_VALUE;
+    this.attemptNb = 0;
   }
 
-  @Override
-  public Duration maxConsumerBackoffBetweenRetries() {
-    return Duration.ofMinutes(1L);
+  public ParcelDetectionStatusRecomputingSubmitted(
+      String jobId, Long maxConsumerBackoffBetweenRetriesDurationValue, Integer attemptNb) {
+    super(
+        jobId,
+        MAX_CONSUMER_DURATION_VALUE,
+        maxConsumerBackoffBetweenRetriesDurationValue,
+        attemptNb);
   }
 
   @Override

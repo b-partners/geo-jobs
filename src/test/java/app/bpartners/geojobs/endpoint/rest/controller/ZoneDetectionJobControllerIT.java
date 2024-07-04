@@ -17,13 +17,15 @@ import app.bpartners.gen.annotator.endpoint.rest.model.Job;
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.ParcelDetectionTaskCreated;
+import app.bpartners.geojobs.endpoint.event.model.ZDJParcelsStatusRecomputingSubmitted;
+import app.bpartners.geojobs.endpoint.event.model.ZDJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
-import app.bpartners.geojobs.model.BoundedPageSize;
-import app.bpartners.geojobs.model.PageFromOne;
+import app.bpartners.geojobs.model.page.BoundedPageSize;
+import app.bpartners.geojobs.model.page.PageFromOne;
 import app.bpartners.geojobs.repository.HumanDetectionJobRepository;
 import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;
 import app.bpartners.geojobs.repository.ParcelRepository;
@@ -349,12 +351,19 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
 
     assertEquals(expected, actual);
     var eventsCaptor = ArgumentCaptor.forClass(List.class);
-    verify(eventProducer, times(configuredTasks.size())).accept(eventsCaptor.capture());
+    var parcelStatusEventNb = 1;
+    var zdjStatusEventNb = 1;
+    verify(eventProducer, times(configuredTasks.size() + parcelStatusEventNb + zdjStatusEventNb))
+        .accept(eventsCaptor.capture());
     var events = eventsCaptor.getAllValues();
     var capturedEvent1 = events.get(0).get(0);
     var capturedEvent2 = events.get(1).get(0);
+    var capturedEvent3 = events.get(2).get(0);
+    var capturedEvent4 = events.get(3).get(0);
     assertEquals(new ParcelDetectionTaskCreated(configuredTasks.get(0)), capturedEvent1);
     assertEquals(new ParcelDetectionTaskCreated(configuredTasks.get(1)), capturedEvent2);
+    assertEquals(new ZDJParcelsStatusRecomputingSubmitted(job1.getId()), capturedEvent3);
+    assertEquals(new ZDJStatusRecomputingSubmitted(job1.getId()), capturedEvent4);
   }
 
   @Test

@@ -464,7 +464,29 @@ paths:
                 $ref: "#/components/schemas/ZoneDetectionJob"
         '500':
           $ref: '#/components/responses/500'
-
+  '/parcelization':
+    put:
+      tags:
+        - Parcelization
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/Feature'
+      responses:
+        '200':
+          description: Zone successfully parcelized
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Feature'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/500'
 components:
   responses:
     400:

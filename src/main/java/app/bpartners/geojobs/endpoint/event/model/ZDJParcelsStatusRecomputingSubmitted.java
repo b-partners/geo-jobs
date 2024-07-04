@@ -7,7 +7,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder(toBuilder = true)
 @Data
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = false)
 @ToString
 public class ZDJParcelsStatusRecomputingSubmitted extends PojaEvent {
   private String zoneDetectionJobId;

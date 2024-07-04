@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.model;
+package app.bpartners.geojobs.model.page;
 
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import lombok.Getter;
