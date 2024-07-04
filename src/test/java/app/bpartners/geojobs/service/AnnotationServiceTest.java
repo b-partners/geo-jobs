@@ -71,8 +71,6 @@ public class AnnotationServiceTest {
             labelConverterMock,
             labelExtractorMock,
             mock(),
-            detectableObjectRepositoryMock,
-            mock(),
             mock(),
             eventProducerMock);
     var jobsApi = jobsApiMockedConstruction.constructed().getFirst();

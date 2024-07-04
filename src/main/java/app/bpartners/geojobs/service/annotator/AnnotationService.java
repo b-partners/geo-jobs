@@ -12,8 +12,6 @@ import app.bpartners.gen.annotator.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.CreateAnnotatedTaskSubmitted;
 import app.bpartners.geojobs.file.BucketComponent;
-import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
-import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.detection.*;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -29,10 +27,8 @@ public class AnnotationService {
   private final LabelConverter labelConverter;
   private final LabelExtractor labelExtractor;
   private final AnnotatorUserInfoGetter annotatorUserInfoGetter;
-  private final DetectableObjectConfigurationRepository detectableObjectRepository;
-  private final ZoneDetectionJobRepository zoneDetectionJobRepository;
   private final BucketComponent bucketComponent;
-  private final EventProducer eventProducer;
+  private final EventProducer<CreateAnnotatedTaskSubmitted> eventProducer;
   private final AdminApi adminApi;
 
   public AnnotationService(
@@ -41,18 +37,14 @@ public class AnnotationService {
       LabelConverter labelConverter,
       LabelExtractor labelExtractor,
       AnnotatorUserInfoGetter annotatorUserInfoGetter,
-      DetectableObjectConfigurationRepository detectableObjectRepository,
-      ZoneDetectionJobRepository zoneDetectionJobRepository,
       BucketComponent bucketComponent,
-      EventProducer eventProducer) {
+      EventProducer<CreateAnnotatedTaskSubmitted> eventProducer) {
     this.jobsApi = new JobsApi(annotatorApiConf.newApiClientWithApiKey());
     this.adminApi = new AdminApi(annotatorApiConf.newApiClientWithApiKey());
     this.taskExtractor = taskExtractor;
     this.labelConverter = labelConverter;
     this.labelExtractor = labelExtractor;
     this.annotatorUserInfoGetter = annotatorUserInfoGetter;
-    this.detectableObjectRepository = detectableObjectRepository;
-    this.zoneDetectionJobRepository = zoneDetectionJobRepository;
     this.bucketComponent = bucketComponent;
     this.eventProducer = eventProducer;
   }

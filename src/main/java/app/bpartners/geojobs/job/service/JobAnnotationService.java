@@ -1,11 +1,11 @@
 package app.bpartners.geojobs.job.service;
 
+import static app.bpartners.geojobs.endpoint.rest.model.JobType.DETECTION;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.JobAnnotationProcessed;
 import app.bpartners.geojobs.endpoint.rest.model.AnnotationJobProcessing;
-import app.bpartners.geojobs.endpoint.rest.model.JobType;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
@@ -20,7 +20,7 @@ import org.springframework.stereotype.Service;
 public class JobAnnotationService {
   private final ZoneDetectionJobRepository zoneDetectionJobRepository;
   private final ZoneTilingJobRepository tilingJobRepository;
-  private final EventProducer eventProducer;
+  private final EventProducer<JobAnnotationProcessed> eventProducer;
 
   public AnnotationJobProcessing processAnnotationJob(String jobId, Double minConfidence) {
     if (tilingJobRepository.findById(jobId).isPresent()) {
@@ -50,7 +50,7 @@ public class JobAnnotationService {
         .annotationWithObjectTruePositive(annotationJobWithObjectsIdTruePositive)
         .annotationWithObjectFalsePositive(annotationJobWithObjectsIdFalsePositive)
         .annotationWithoutObjectJobId(annotationJobWithoutObjectsId)
-        .jobType(JobType.DETECTION) // TODO: only DETECTION is handle but must be computed
+        .jobType(DETECTION) // TODO: only DETECTION is handle but must be computed
         .creationDatetime(Instant.now());
   }
 }

@@ -19,7 +19,6 @@ import app.bpartners.geojobs.service.detection.DetectionTaskService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -34,11 +33,52 @@ public class ZoneDetectionJobAnnotationProcessor {
   private final DetectionTaskService detectionTaskService;
   private final DetectedTileRepository detectedTileRepository;
   private final HumanDetectionJobRepository humanDetectionJobRepository;
-  private final EventProducer eventProducer;
+  private final EventProducer<HumanDetectionJobCreatedFailed> eventProducer;
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final KeyPredicateFunction keyPredicateFunction;
   private final DetectableObjectConfigurationRepository objectConfigurationRepository;
   private final ExceptionToStringFunction exceptionToStringFunction;
+
+  private List<DetectedTile> getInDoubtTiles(
+      List<DetectedTile> detectedTiles,
+      List<DetectableObjectConfiguration> detectableObjectConfigurations,
+      String humanZDJFalsePositiveId) {
+    return detectionTaskService
+        .findInDoubtTilesByJobId(detectedTiles, detectableObjectConfigurations)
+        .stream()
+        .peek(detectedTile -> detectedTile.setHumanDetectionJobId(humanZDJFalsePositiveId))
+        .toList();
+  }
+
+  private List<DetectedTile> getTilesWithoutObject(
+      List<DetectedTile> detectedTiles, String inDoubtHumanDetectionJobId) {
+    return detectedTiles.stream()
+        .filter(detectedTile -> detectedTile.getDetectedObjects().isEmpty())
+        .peek(detectedTile -> detectedTile.setHumanDetectionJobId(inDoubtHumanDetectionJobId))
+        .toList();
+  }
+
+  private List<DetectedTile> getTruePositiveDetectedTiles(
+      List<DetectedTile> inDoubtTiles, double minConfidence, String humanZDJTruePositiveId) {
+    return inDoubtTiles.stream()
+        .filter(
+            detectedTile ->
+                detectedTile.getDetectedObjects().stream()
+                    .anyMatch(tile -> tile.getComputedConfidence() >= minConfidence))
+        .peek(detectedTile -> detectedTile.setHumanDetectionJobId(humanZDJTruePositiveId))
+        .toList();
+  }
+
+  private HumanDetectionJob save(
+      String id, String jobId, List<DetectedTile> detectedTiles, String zoneId) {
+    return humanDetectionJobRepository.save(
+        HumanDetectionJob.builder()
+            .id(id)
+            .annotationJobId(jobId)
+            .detectedTiles(detectedTiles)
+            .zoneDetectionJobId(zoneId)
+            .build());
+  }
 
   @Transactional
   public AnnotationJobIds accept(
@@ -61,16 +101,10 @@ public class ZoneDetectionJobAnnotationProcessor {
     List<DetectableObjectConfiguration> detectableObjectConfigurations =
         objectConfigurationRepository.findAllByDetectionJobId(zoneDetectionJobId);
     List<DetectedTile> inDoubtTiles =
-        detectionTaskService
-            .findInDoubtTilesByJobId(detectedTiles, detectableObjectConfigurations)
-            .stream()
-            .peek(detectedTile -> detectedTile.setHumanDetectionJobId(humanZDJFalsePositiveId))
-            .toList();
+        getInDoubtTiles(detectedTiles, detectableObjectConfigurations, humanZDJFalsePositiveId);
     List<DetectedTile> tilesWithoutObject =
-        detectedTiles.stream()
-            .filter(detectedTile -> detectedTile.getDetectedObjects().isEmpty())
-            .peek(detectedTile -> detectedTile.setHumanDetectionJobId(inDoubtHumanDetectionJobId))
-            .toList();
+        getTilesWithoutObject(detectedTiles, inDoubtHumanDetectionJobId);
+
     if (inDoubtTiles.isEmpty() && !tilesWithoutObject.isEmpty()) {
       log.error(
           "Any in doubt tiles detected from ZoneDetectionJob(id={})."
@@ -80,57 +114,25 @@ public class ZoneDetectionJobAnnotationProcessor {
           tilesWithoutObject.stream().map(DetectedTile::describe).toList());
     }
     var truePositiveDetectedTiles =
-        inDoubtTiles.stream()
-            .filter(
-                detectedTile ->
-                    detectedTile.getDetectedObjects().stream()
-                        .anyMatch(tile -> tile.getComputedConfidence() >= minConfidence))
-            .peek(detectedTile -> detectedTile.setHumanDetectionJobId(humanZDJTruePositiveId))
-            .toList();
+        getTruePositiveDetectedTiles(inDoubtTiles, minConfidence, humanZDJTruePositiveId);
+
     var falsePositiveTiles = new ArrayList<>(inDoubtTiles);
     falsePositiveTiles.removeAll(truePositiveDetectedTiles);
+
     HumanDetectionJob savedHumanZDJTruePositive =
-        humanDetectionJobRepository.save(
-            HumanDetectionJob.builder()
-                .id(humanZDJTruePositiveId)
-                .annotationJobId(annotationJobWithObjectsIdTruePositive)
-                .detectedTiles(truePositiveDetectedTiles)
-                .zoneDetectionJobId(humanZDJId)
-                .build());
+        save(
+            humanZDJTruePositiveId,
+            annotationJobWithObjectsIdTruePositive,
+            truePositiveDetectedTiles,
+            humanZDJId);
     HumanDetectionJob savedHumanZDJFalsePositive =
-        humanDetectionJobRepository.save(
-            HumanDetectionJob.builder()
-                .id(humanZDJFalsePositiveId)
-                .annotationJobId(annotationJobWithObjectsIdFalsePositive)
-                .detectedTiles(falsePositiveTiles)
-                .zoneDetectionJobId(humanZDJId)
-                .build());
+        save(
+            humanZDJFalsePositiveId,
+            annotationJobWithObjectsIdFalsePositive,
+            falsePositiveTiles,
+            humanZDJId);
     HumanDetectionJob savedHumanDetectionJobWithoutTile =
-        humanDetectionJobRepository.save(
-            HumanDetectionJob.builder()
-                .id(inDoubtHumanDetectionJobId)
-                .annotationJobId(annotationJobWithoutObjectsId)
-                .detectedTiles(tilesWithoutObject)
-                .zoneDetectionJobId(humanZDJId)
-                .build());
-
-    savedHumanZDJTruePositive.setDetectedTiles(
-        truePositiveDetectedTiles); // TODO: check if still necessary
-    savedHumanZDJTruePositive.setDetectableObjectConfigurations(
-        detectableObjectConfigurations); // TODO: check if still necessary
-    savedHumanZDJFalsePositive.setDetectedTiles(
-        falsePositiveTiles); // TODO: check if still necessary
-    savedHumanZDJFalsePositive.setDetectableObjectConfigurations(
-        detectableObjectConfigurations); // TODO: check if still necessary
-    savedHumanDetectionJobWithoutTile.setDetectedTiles(
-        tilesWithoutObject); // TODO: check if still necessary
-    savedHumanDetectionJobWithoutTile.setDetectableObjectConfigurations(
-        detectableObjectConfigurations); // TODO: check if still necessary
-
-    detectedTileRepository.saveAll(
-        Stream.of(truePositiveDetectedTiles, falsePositiveTiles, tilesWithoutObject)
-            .flatMap(List::stream)
-            .toList()); // TODO: check if still necessary
+        save(inDoubtHumanDetectionJobId, annotationJobWithoutObjectsId, inDoubtTiles, humanZDJId);
 
     computeTilesIntoAnnotatedJobs(
         truePositiveDetectedTiles.isEmpty(),
