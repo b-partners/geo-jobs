@@ -32,6 +32,7 @@ public class AnnotationServiceTest {
   LabelConverter labelConverterMock = mock();
   EventProducer eventProducerMock = mock();
   AnnotatorApiConf annotatorApiConfMock = mock();
+  AnnotatedTaskService annotatedTaskService = mock();
   LabelExtractor labelExtractorMock =
       new LabelExtractor(new KeyPredicateFunction(), labelConverterMock);
   CreateAnnotationBatchExtractor batchExtractorMock =
@@ -72,6 +73,7 @@ public class AnnotationServiceTest {
             labelExtractorMock,
             mock(),
             mock(),
+            annotatedTaskService,
             eventProducerMock);
     var jobsApi = jobsApiMockedConstruction.constructed().getFirst();
     when(jobsApi.saveJob(any(), any())).thenReturn(new Job().id("annotatorJobId"));

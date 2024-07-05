@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-public class JobControllerTest extends FacadeIT {
+class JobControllerTest extends FacadeIT {
   @MockBean JobAnnotationService annotationServiceMock;
   @Autowired ProcessJobAnnotationValidator processJobAnnotationValidatorMock;
   @Autowired JobController subject;

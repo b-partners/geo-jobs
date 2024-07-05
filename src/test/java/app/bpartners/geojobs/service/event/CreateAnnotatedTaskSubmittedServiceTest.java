@@ -7,13 +7,18 @@ import static org.mockito.Mockito.*;
 import app.bpartners.gen.annotator.endpoint.rest.model.CreateAnnotatedTask;
 import app.bpartners.geojobs.endpoint.event.model.CreateAnnotatedTaskSubmitted;
 import app.bpartners.geojobs.model.exception.ApiException;
+import app.bpartners.geojobs.service.annotator.AnnotatedTaskService;
+import app.bpartners.geojobs.service.annotator.AnnotatedTaskStatusService;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
 import org.junit.jupiter.api.Test;
 
 public class CreateAnnotatedTaskSubmittedServiceTest {
   AnnotationService annotationServiceMock = mock();
+  AnnotatedTaskStatusService annotatedTaskStatusServiceMock = mock();
+  AnnotatedTaskService annotatedTaskServiceMock = mock();
   CreateAnnotatedTaskSubmittedService subject =
-      new CreateAnnotatedTaskSubmittedService(annotationServiceMock);
+      new CreateAnnotatedTaskSubmittedService(
+          annotationServiceMock, annotatedTaskStatusServiceMock, annotatedTaskServiceMock);
 
   @Test
   void accept_ok() {

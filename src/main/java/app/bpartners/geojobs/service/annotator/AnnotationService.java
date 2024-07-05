@@ -1,19 +1,27 @@
 package app.bpartners.geojobs.service.annotator;
 
-import static app.bpartners.gen.annotator.endpoint.rest.model.JobStatus.*;
+import static app.bpartners.gen.annotator.endpoint.rest.model.JobStatus.PENDING;
 import static app.bpartners.gen.annotator.endpoint.rest.model.JobType.REVIEWING;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
-import static java.time.LocalTime.now;
+import static java.time.Instant.now;
+import static java.util.UUID.randomUUID;
 
 import app.bpartners.gen.annotator.endpoint.rest.api.AdminApi;
 import app.bpartners.gen.annotator.endpoint.rest.api.JobsApi;
 import app.bpartners.gen.annotator.endpoint.rest.client.ApiException;
-import app.bpartners.gen.annotator.endpoint.rest.model.*;
+import app.bpartners.gen.annotator.endpoint.rest.model.CreateAnnotatedTask;
+import app.bpartners.gen.annotator.endpoint.rest.model.CrupdateJob;
+import app.bpartners.gen.annotator.endpoint.rest.model.Job;
+import app.bpartners.gen.annotator.endpoint.rest.model.Label;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.CreateAnnotatedTaskSubmitted;
 import app.bpartners.geojobs.file.BucketComponent;
-import app.bpartners.geojobs.repository.model.detection.*;
+import app.bpartners.geojobs.repository.model.annotator.AnnotatedTask;
+import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
+import app.bpartners.geojobs.repository.model.detection.DetectedTile;
+import app.bpartners.geojobs.repository.model.detection.HumanDetectionJob;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +37,7 @@ public class AnnotationService {
   private final AnnotatorUserInfoGetter annotatorUserInfoGetter;
   private final BucketComponent bucketComponent;
   private final EventProducer<CreateAnnotatedTaskSubmitted> eventProducer;
+  private final AnnotatedTaskService annotatedTaskService;
   private final AdminApi adminApi;
 
   public AnnotationService(
@@ -38,6 +47,7 @@ public class AnnotationService {
       LabelExtractor labelExtractor,
       AnnotatorUserInfoGetter annotatorUserInfoGetter,
       BucketComponent bucketComponent,
+      AnnotatedTaskService annotatedTaskService,
       EventProducer<CreateAnnotatedTaskSubmitted> eventProducer) {
     this.jobsApi = new JobsApi(annotatorApiConf.newApiClientWithApiKey());
     this.adminApi = new AdminApi(annotatorApiConf.newApiClientWithApiKey());
@@ -46,6 +56,7 @@ public class AnnotationService {
     this.labelExtractor = labelExtractor;
     this.annotatorUserInfoGetter = annotatorUserInfoGetter;
     this.bucketComponent = bucketComponent;
+    this.annotatedTaskService = annotatedTaskService;
     this.eventProducer = eventProducer;
   }
 
@@ -98,11 +109,28 @@ public class AnnotationService {
                 .imagesHeight(DEFAULT_IMAGES_HEIGHT)
                 .imagesWidth(DEFAULT_IMAGES_WIDTH)
                 .teamId(annotatorUserInfoGetter.getTeamId()));
-
+    var jobId = createdAnnotationJob.getId();
+    persist(jobId, annotatedTasks);
     annotatedTasks.forEach(
         task ->
             eventProducer.accept(
                 List.of(new CreateAnnotatedTaskSubmitted(createdAnnotationJob.getId(), task))));
+  }
+
+  private void persist(String jobId, List<CreateAnnotatedTask> toCreate) {
+    List<AnnotatedTask> toSave =
+        toCreate.stream()
+            .map(
+                task ->
+                    AnnotatedTask.builder()
+                        .id(randomUUID().toString())
+                        .jobId(jobId)
+                        .createAnnotatedTaskId(task.getAnnotatorId())
+                        .statusHistory(List.of())
+                        .submissionInstant(now())
+                        .build())
+            .collect(Collectors.toUnmodifiableList());
+    annotatedTaskService.saveAll(toSave);
   }
 
   public void createAnnotationJob(HumanDetectionJob humanDetectionJob) throws ApiException {
