@@ -76,6 +76,8 @@ public class SecurityConf {
                     .hasAuthority(ROLE_ADMIN.name())
                     .requestMatchers(GET, "/detectionJobs/*/geojsonsUrl")
                     .hasAuthority(ROLE_ADMIN.name())
+                    .requestMatchers(PUT, "/parcelization")
+                    .hasAuthority(ROLE_ADMIN.name())
                     .anyRequest()
                     .denyAll())
         .csrf(AbstractHttpConfigurer::disable)
