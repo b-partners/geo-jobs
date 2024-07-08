@@ -46,12 +46,12 @@ public class FeatureMapper {
   }
 
   public Polygon toDomain(Feature feature) {
-    List<List<List<List<BigDecimal>>>> multiPolygonCoordinates =
-        feature.getGeometry().getCoordinates();
-    if (multiPolygonCoordinates == null || multiPolygonCoordinates.isEmpty()) {
+    if (feature.getGeometry() == null) {
       throw new IllegalArgumentException("Multipolygon coordinates should not be null");
     }
 
+    List<List<List<List<BigDecimal>>>> multiPolygonCoordinates =
+        feature.getGeometry().getCoordinates();
     GeometryFactory geometryFactory = new GeometryFactory();
     List<Coordinate> polygonCoords = new ArrayList<>();
 

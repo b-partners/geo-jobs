@@ -468,7 +468,25 @@ paths:
     put:
       tags:
         - Parcelization
+      parameters:
+        - in: query
+          name: targetZoom
+          schema:
+            type: integer
+          required: false
+        - in: query
+          name: referenceZoom
+          schema:
+            type: integer
+          required: false
+        - in: query
+          name: maxParcelAreaAtReferenceZoom
+          schema:
+            type: number
+          required: false
+      operationId: processParcelization
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -487,6 +505,7 @@ paths:
         '500':
           description: Internal Server Error
           $ref: '#/components/responses/500'
+
 components:
   responses:
     400:
