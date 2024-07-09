@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.unit;
 
+import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.MULTIPOLYGON;
+import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
@@ -13,6 +15,7 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Polygon;
 
 class FeatureMapperTest {
+  private final String id = randomUUID().toString();
   private final FeatureMapper subject = new FeatureMapper();
 
   private Feature expectedFeature() {
@@ -46,7 +49,9 @@ class FeatureMapperTest {
                         BigDecimal.valueOf(6.958009303660302),
                         BigDecimal.valueOf(43.543013820437459)))));
     MultiPolygon multiPolygon = new MultiPolygon().coordinates(coordinates);
+    multiPolygon.setType(MULTIPOLYGON);
     feature.setGeometry(multiPolygon);
+    feature.setId(id);
     return feature;
   }
 
@@ -75,7 +80,7 @@ class FeatureMapperTest {
 
   @Test
   void geo_tools_polygon_to_rest_feature_mapper_ok() {
-    Feature feature = subject.toRest(expectedPolygon());
+    Feature feature = subject.toRest(expectedPolygon(), id);
 
     assertEquals(expectedFeature(), feature);
   }

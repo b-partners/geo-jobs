@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.controller.mapper;
 
+import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.MULTIPOLYGON;
 import static java.time.Instant.now;
 
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
@@ -23,7 +24,6 @@ import org.springframework.stereotype.Component;
 @Component
 @Slf4j
 public class FeatureMapper {
-
   public Parcel toDomain(
       String parcelId, Feature rest, URL geoServerUrl, GeoServerParameter GeoServerParameter) {
     Parcel extractedParcel =
@@ -75,7 +75,7 @@ public class FeatureMapper {
     return geometryFactory.createPolygon(linearRing);
   }
 
-  public Feature toRest(Polygon domain) {
+  public Feature toRest(Polygon domain, String id) {
     List<List<List<List<BigDecimal>>>> multiPolygonCoordinates = new ArrayList<>();
     Coordinate[] polygonCoordinates = domain.getCoordinates();
 
@@ -92,6 +92,8 @@ public class FeatureMapper {
 
     MultiPolygon multiPolygon = new MultiPolygon().coordinates(multiPolygonCoordinates);
     Feature feature = new Feature();
+    feature.setId(id);
+    multiPolygon.setType(MULTIPOLYGON);
     feature.setGeometry(multiPolygon);
 
     return feature;
