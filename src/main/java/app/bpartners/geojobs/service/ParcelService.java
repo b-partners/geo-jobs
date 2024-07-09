@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 @AllArgsConstructor
 @Slf4j
 public class ParcelService {
-
+  private final static int DEFAULT_ZOOM = 20;
   private final TilingTaskRepository tilingTaskRepository;
   private final ParcelDetectionTaskRepository parcelDetectionTaskRepository;
   private final ZoneTilingJobRepository tilingJobRepository;
@@ -83,7 +83,7 @@ public class ParcelService {
 
   public List<Polygon> parcelizeFeature(
       Polygon polygon, Integer referenceZoom, Integer targetZoom, Double maxParcelArea) {
-    int refZoom = referenceZoom != null ? referenceZoom : 20;
+    int refZoom = referenceZoom != null ? referenceZoom : DEFAULT_ZOOM;
     if (targetZoom == null || maxParcelArea == null) {
       ParcelizedPolygon parcelizedPolygon =
           new ParcelizedPolygon(polygon, new ArcgisRasterZoom(refZoom));

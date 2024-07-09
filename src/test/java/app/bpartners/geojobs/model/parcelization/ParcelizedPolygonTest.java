@@ -32,9 +32,9 @@ class ParcelizedPolygonTest {
     assertEquals(
         1, new ParcelizedPolygon(ivandryPolygon, new ArcgisRasterZoom(19)).getParcels().size());
     assertEquals(
-        2, new ParcelizedPolygon(ivandryPolygon, new ArcgisRasterZoom(20)).getParcels().size());
+        4, new ParcelizedPolygon(ivandryPolygon, new ArcgisRasterZoom(20)).getParcels().size());
     assertEquals(
-        8, new ParcelizedPolygon(ivandryPolygon, new ArcgisRasterZoom(21)).getParcels().size());
+        16, new ParcelizedPolygon(ivandryPolygon, new ArcgisRasterZoom(21)).getParcels().size());
   }
 
   @Test
@@ -62,7 +62,7 @@ class ParcelizedPolygonTest {
             new ArcgisRasterZoom(20),
             new SquareDegree(2 * pow(10, -5)));
 
-    assertEquals(15, parcelized_ivandry.getParcels().size());
+    assertEquals(16, parcelized_ivandry.getParcels().size());
   }
 
   @Test
