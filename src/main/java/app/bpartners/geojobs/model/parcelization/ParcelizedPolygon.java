@@ -1,13 +1,12 @@
 package app.bpartners.geojobs.model.parcelization;
 
 import static java.lang.Math.pow;
-import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.geojobs.model.ArcgisRasterZoom;
 import app.bpartners.geojobs.model.parcelization.area.IsAreaOfParcel;
 import app.bpartners.geojobs.model.parcelization.area.SquareDegree;
-import java.util.Arrays;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.Getter;
 import org.locationtech.jts.geom.Coordinate;
@@ -42,45 +41,40 @@ public class ParcelizedPolygon {
       return Set.of((Polygon) intersection);
     }
 
-    var leftHalfEnvelope =
-        leftHalfEnvelope(thatPolygon); // envelope = the smallest containing rectangle
-    var rightHalfEnvelope = rightHalfEnvelope(thatPolygon);
+    var envelope = thatPolygon.getEnvelopeInternal();
+    var minX = envelope.getMinX();
+    var maxX = envelope.getMaxX();
+    var minY = envelope.getMinY();
+    var maxY = envelope.getMaxY();
+    var centroidX = (minX + maxX) / 2.0;
+    var centroidY = (minY + maxY) / 2.0;
+
+    var upperLeftEnvelope = new Envelope(minX, centroidX, centroidY, maxY);
+    var upperRightEnvelope = new Envelope(centroidX, maxX, centroidY, maxY);
+    var lowerLeftEnvelope = new Envelope(minX, centroidX, minY, centroidY);
+    var lowerRightEnvelope = new Envelope(centroidX, maxX, minY, centroidY);
+    var upperLeft = parcelize(quadrilateralFromEnvelope(upperLeftEnvelope));
+    var upperRight = parcelize(quadrilateralFromEnvelope(upperRightEnvelope));
+    var lowerLeft = parcelize(quadrilateralFromEnvelope(lowerLeftEnvelope));
+    var lowerRight = parcelize(quadrilateralFromEnvelope(lowerRightEnvelope));
+
     return Stream.concat(
-            parcelize(leftHalfEnvelope).stream(), parcelize(rightHalfEnvelope).stream())
-        .collect(toSet());
+            Stream.concat(upperLeft.stream(), upperRight.stream()),
+            Stream.concat(lowerLeft.stream(), lowerRight.stream()))
+        .collect(Collectors.toSet());
   }
 
-  private Polygon leftHalfEnvelope(Polygon polygon) {
-    var edges = new NamedEdgesQuadrilateral(envelopeEdgesCoordinates(polygon));
-    var a = edges.getA();
-    var b = edges.getB();
-    var centroidX = polygon.getCentroid().getX();
-    return quadrilateralFromSameSideEdgesAndCentroidX(a, b, centroidX);
-  }
-
-  private Polygon rightHalfEnvelope(Polygon thatPolygon) {
-    var edges = new NamedEdgesQuadrilateral(envelopeEdgesCoordinates(thatPolygon));
-    var c = edges.getC();
-    var d = edges.getD();
-    var centroidX = thatPolygon.getCentroid().getX();
-    return quadrilateralFromSameSideEdgesAndCentroidX(c, d, centroidX);
-  }
-
-  private static Polygon quadrilateralFromSameSideEdgesAndCentroidX(
-      Coordinate edge1, Coordinate edge2, double centroidX) {
+  private Polygon quadrilateralFromEnvelope(Envelope envelope) {
     var geometryFactory = new GeometryFactory();
-    return geometryFactory.createPolygon(
-        new Coordinate[] {
-          edge1,
-          edge2,
-          new Coordinate(centroidX, edge2.y),
-          new Coordinate(centroidX, edge1.y),
-          edge1 // note(LinearRing): else IllegalArgumentException: Points of LinearRing do not form
-          // a closed linestring
-        });
-  }
-
-  private Set<Coordinate> envelopeEdgesCoordinates(Polygon thatPolygon) {
-    return Arrays.stream(thatPolygon.getEnvelope().getCoordinates()).collect(toSet());
+    var poly =
+        geometryFactory.createLinearRing(
+            new Coordinate[] {
+              new Coordinate(envelope.minX(), envelope.minY()),
+              new Coordinate(envelope.maxX(), envelope.minY()),
+              new Coordinate(envelope.maxX(), envelope.maxY()),
+              new Coordinate(envelope.minX(), envelope.maxY()),
+              new Coordinate(envelope.minX(), envelope.minY())
+            });
+    return geometryFactory.createPolygon(poly);
   }
 }
