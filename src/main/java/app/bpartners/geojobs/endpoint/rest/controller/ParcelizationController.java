@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @AllArgsConstructor
 public class ParcelizationController {
-
   private final FeatureMapper featureMapper;
   private final ParcelService parcelService;
 
@@ -29,17 +28,13 @@ public class ParcelizationController {
       @RequestParam(name = "maxParcelAreaAtReferenceZoom", required = false)
           Double maxParcelAreaAtReferenceZoom) {
     List<Polygon> polygons = features.stream().map(featureMapper::toDomain).toList();
-    List<Polygon> parcelizedPolygons =
-        polygons.stream()
-            .map(
-                polygon ->
-                    parcelService.parcelizeFeature(
-                        polygon, referenceZoom, targetZoom, maxParcelAreaAtReferenceZoom))
-            .flatMap(Collection::stream)
-            .toList();
     String polygonsId = randomUUID().toString();
-    return parcelizedPolygons.stream()
-        .map(polygon -> featureMapper.toRest(polygon, polygonsId))
+    return polygons.stream()
+        .map(
+            polygon ->
+                parcelService.parcelizeFeature(
+                    polygon, referenceZoom, targetZoom, maxParcelAreaAtReferenceZoom, polygonsId))
+        .flatMap(Collection::stream)
         .toList();
   }
 }

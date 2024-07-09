@@ -7,11 +7,9 @@ import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import java.math.BigDecimal;
-import java.text.Bidi;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
-import org.locationtech.jts.geom.Coordinates;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Slf4j
