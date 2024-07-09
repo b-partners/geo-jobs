@@ -1,17 +1,19 @@
 package app.bpartners.geojobs.service;
 
+import static java.util.UUID.randomUUID;
+
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
+import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.model.ArcgisRasterZoom;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.model.parcelization.ParcelizedPolygon;
 import app.bpartners.geojobs.model.parcelization.area.SquareDegree;
-import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;
-import app.bpartners.geojobs.repository.TilingTaskRepository;
-import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
-import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
+import app.bpartners.geojobs.repository.*;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Polygon;
@@ -27,6 +29,8 @@ public class ParcelService {
   private final ParcelDetectionTaskRepository parcelDetectionTaskRepository;
   private final ZoneTilingJobRepository tilingJobRepository;
   private final ZoneDetectionJobRepository detectionJobRepository;
+  private final FeatureMapper featureMapper;
+  private final ParcelizedPolygonRepository parcelizedPolygonRepository;
 
   @Transactional
   public List<Parcel> getParcelsByJobId(String jobId) {
@@ -81,21 +85,35 @@ public class ParcelService {
     throw new NotFoundException("jobId=" + jobId);
   }
 
-  public List<Polygon> parcelizeFeature(
-      Polygon polygon, Integer referenceZoom, Integer targetZoom, Double maxParcelArea) {
+  public List<Feature> parcelizeFeature(
+      Polygon polygon, Integer referenceZoom, Integer targetZoom, Double maxParcelArea, String id) {
     int refZoom = referenceZoom != null ? referenceZoom : DEFAULT_ZOOM;
+    ParcelizedPolygon parcelizedPolygon;
     if (targetZoom == null || maxParcelArea == null) {
-      ParcelizedPolygon parcelizedPolygon =
-          new ParcelizedPolygon(polygon, new ArcgisRasterZoom(refZoom));
-      return new ArrayList<>(parcelizedPolygon.getParcels());
+      parcelizedPolygon = new ParcelizedPolygon(polygon, new ArcgisRasterZoom(refZoom));
+    } else {
+      parcelizedPolygon =
+          new ParcelizedPolygon(
+              polygon,
+              new ArcgisRasterZoom(targetZoom),
+              new ArcgisRasterZoom(referenceZoom),
+              new SquareDegree(maxParcelArea));
     }
 
-    ParcelizedPolygon parcelizedPolygon =
-        new ParcelizedPolygon(
-            polygon,
-            new ArcgisRasterZoom(targetZoom),
-            new ArcgisRasterZoom(referenceZoom),
-            new SquareDegree(maxParcelArea));
-    return new ArrayList<>(parcelizedPolygon.getParcels());
+    ArrayList<Polygon> parcels = new ArrayList<>(parcelizedPolygon.getParcels());
+    List<Feature> features =
+        parcels.stream().map(polygonParcel -> featureMapper.toRest(polygonParcel, id)).toList();
+    List<app.bpartners.geojobs.repository.model.ParcelizedPolygon> parcelizedPolygons =
+        features.stream()
+            .map(
+                feat ->
+                    app.bpartners.geojobs.repository.model.ParcelizedPolygon.builder()
+                        .feature(feat)
+                        .id(randomUUID().toString())
+                        .build())
+            .collect(Collectors.toList());
+    parcelizedPolygonRepository.saveAll(parcelizedPolygons);
+
+    return features;
   }
 }
