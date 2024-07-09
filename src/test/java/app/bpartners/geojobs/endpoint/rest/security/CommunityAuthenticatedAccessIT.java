@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.endpoint.rest.security;
 
 import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.*;
-import static app.bpartners.geojobs.endpoint.rest.security.authenticator.ApiKeyAuthenticator.APIKEY_HEADER_NAME;
+import static app.bpartners.geojobs.endpoint.rest.security.authenticator.ApiKeyAuthenticator.API_KEY_HEADER;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -57,7 +57,7 @@ public class CommunityAuthenticatedAccessIT extends FacadeIT {
   void setupClientWithApiKey() {
     var authenticatedClient = new ApiClient();
     authenticatedClient.setRequestInterceptor(
-        builder -> builder.header(APIKEY_HEADER_NAME, "community1_key"));
+        builder -> builder.header(API_KEY_HEADER, "community1_key"));
     authenticatedClient.setScheme("http");
     authenticatedClient.setPort(port);
     authenticatedClient.setObjectMapper(om);

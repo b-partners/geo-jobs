@@ -11,9 +11,9 @@ import static org.mockito.Mockito.when;
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType;
-import app.bpartners.geojobs.endpoint.rest.security.authentication.apikey.ApiKeyAuthentication;
-import app.bpartners.geojobs.endpoint.rest.security.authentication.apikey.ApiKeyAuthenticationFilter;
+import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
+import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.model.CommunityAuthorizationDetails;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.repository.impl.CommunityAuthorizationDetailsRepositoryImpl;
@@ -28,8 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 class CommunityZoneDetectionJobProcessAuthorizerIT extends FacadeIT {
-  private final MockedStatic<ApiKeyAuthenticationFilter> apiKeyAuthenticationFilter =
-      mockStatic(ApiKeyAuthenticationFilter.class);
+  private final MockedStatic<AuthProvider> authProvider = mockStatic(AuthProvider.class);
   @MockBean CommunityAuthorizationDetailsRepositoryImpl cadRepository;
   @Autowired CommunityZoneDetectionJobProcessAuthorizer communityZoneDetectionJobProcessAuthorizer;
 
@@ -106,15 +105,12 @@ class CommunityZoneDetectionJobProcessAuthorizerIT extends FacadeIT {
   }
 
   void useRole(Authority.Role role) {
-    var apiKeyAuthentication =
-        new ApiKeyAuthentication("dummy-api-key", Set.of(new Authority(role)));
-    apiKeyAuthenticationFilter
-        .when(ApiKeyAuthenticationFilter::getApiKeyAuthentication)
-        .thenReturn(apiKeyAuthentication);
+    var userPrincipal = new Principal("dummy-api-key", Set.of(new Authority(role)));
+    authProvider.when(AuthProvider::getPrincipal).thenReturn(userPrincipal);
   }
 
   @AfterEach
   void cleanMock() {
-    apiKeyAuthenticationFilter.close();
+    authProvider.close();
   }
 }

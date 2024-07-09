@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.security;
 
-import static app.bpartners.geojobs.endpoint.rest.security.authenticator.ApiKeyAuthenticator.APIKEY_HEADER_NAME;
+import static app.bpartners.geojobs.endpoint.rest.security.authenticator.ApiKeyAuthenticator.API_KEY_HEADER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -40,7 +40,7 @@ public class AdminAuthenticatedAccessIT extends FacadeIT {
   void setUp() {
     var authenticatedClient = new ApiClient();
     authenticatedClient.setRequestInterceptor(
-        builder -> builder.header(APIKEY_HEADER_NAME, "the-admin-api-key"));
+        builder -> builder.header(API_KEY_HEADER, "the-admin-api-key"));
     authenticatedClient.setScheme("http");
     authenticatedClient.setPort(port);
     authenticatedClient.setObjectMapper(om);

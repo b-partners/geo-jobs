@@ -12,21 +12,21 @@ import org.springframework.stereotype.Component;
 @Component
 @AllArgsConstructor
 public class AuthProvider extends AbstractUserDetailsAuthenticationProvider {
-    private final UsernamePasswordAuthenticator authenticator;
+  private final UsernamePasswordAuthenticator authenticator;
 
-    @Override
-    protected void additionalAuthenticationChecks(UserDetails userDetails, UsernamePasswordAuthenticationToken token) {
-        // nothing
-    }
+  @Override
+  protected void additionalAuthenticationChecks(
+      UserDetails userDetails, UsernamePasswordAuthenticationToken token) {
+    // nothing
+  }
 
-    @Override
-    protected UserDetails retrieveUser(
-            String username, UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken) {
-        return authenticator.retrieveUser(username, usernamePasswordAuthenticationToken);
-    }
+  @Override
+  protected UserDetails retrieveUser(
+      String username, UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken) {
+    return authenticator.retrieveUser(username, usernamePasswordAuthenticationToken);
+  }
 
-
-    public static Principal getPrincipal() {
-        return (Principal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-    }
+  public static Principal getPrincipal() {
+    return (Principal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+  }
 }

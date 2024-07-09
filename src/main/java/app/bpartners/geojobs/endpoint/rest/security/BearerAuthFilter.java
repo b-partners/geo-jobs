@@ -16,26 +16,26 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 
 @Slf4j
 public class BearerAuthFilter extends AbstractAuthenticationProcessingFilter {
-    protected BearerAuthFilter(RequestMatcher requestMatcher) {
-        super(requestMatcher);
-    }
+  protected BearerAuthFilter(RequestMatcher requestMatcher) {
+    super(requestMatcher);
+  }
 
-    @Override
-    public Authentication attemptAuthentication(
-            HttpServletRequest request, HttpServletResponse response) {
-        String apiKey = request.getHeader(API_KEY_HEADER);
-        AuthenticationManager manager = this.getAuthenticationManager();
-        return manager.authenticate(new UsernamePasswordAuthenticationToken(API_KEY_HEADER, apiKey));
-    }
+  @Override
+  public Authentication attemptAuthentication(
+      HttpServletRequest request, HttpServletResponse response) {
+    String apiKey = request.getHeader(API_KEY_HEADER);
+    AuthenticationManager manager = this.getAuthenticationManager();
+    return manager.authenticate(new UsernamePasswordAuthenticationToken(API_KEY_HEADER, apiKey));
+  }
 
-    @Override
-    protected void successfulAuthentication(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain chain,
-            Authentication authenticated)
-            throws IOException, ServletException {
-        super.successfulAuthentication(request, response, chain, authenticated);
-        chain.doFilter(request, response);
-    }
+  @Override
+  protected void successfulAuthentication(
+      HttpServletRequest request,
+      HttpServletResponse response,
+      FilterChain chain,
+      Authentication authenticated)
+      throws IOException, ServletException {
+    super.successfulAuthentication(request, response, chain, authenticated);
+    chain.doFilter(request, response);
+  }
 }

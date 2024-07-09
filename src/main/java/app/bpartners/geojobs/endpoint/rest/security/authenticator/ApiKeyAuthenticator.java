@@ -6,13 +6,12 @@ import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.
 import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.repository.CommunityAuthorizationDetailsRepository;
-
 import java.util.Objects;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -29,14 +28,15 @@ public class ApiKeyAuthenticator implements UsernamePasswordAuthenticator {
   }
 
   @Override
-  public UserDetails retrieveUser(String username, UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken) {
+  public UserDetails retrieveUser(
+      String username, UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken) {
     String candidateApiKey = getApiKeyFromHeader(usernamePasswordAuthenticationToken);
     if (existsAsApiKeyInCommunityKeys(candidateApiKey)) {
       return new Principal(candidateApiKey, Set.of(new Authority(ROLE_COMMUNITY)));
     } else if (adminApiKey.equals(candidateApiKey)) {
       return new Principal(candidateApiKey, Set.of(new Authority(ROLE_ADMIN)));
     }
-    throw new UsernameNotFoundException("Invalid Api key");
+    throw new BadCredentialsException("Bad credentials");
   }
 
   private boolean existsAsApiKeyInCommunityKeys(String candidateApiKey) {
@@ -44,10 +44,10 @@ public class ApiKeyAuthenticator implements UsernamePasswordAuthenticator {
   }
 
   private String getApiKeyFromHeader(
-          UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken) {
+      UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken) {
     Object tokenObject = usernamePasswordAuthenticationToken.getCredentials();
     if (!(tokenObject instanceof String)
-            || !Objects.equals(usernamePasswordAuthenticationToken.getName(), API_KEY_HEADER)) {
+        || !Objects.equals(usernamePasswordAuthenticationToken.getName(), API_KEY_HEADER)) {
       return null;
     }
     return ((String) tokenObject);

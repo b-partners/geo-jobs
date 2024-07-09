@@ -10,12 +10,12 @@ import org.springframework.stereotype.Component;
 @Component
 @AllArgsConstructor
 public class UsernamePasswordAuthenticatorFacade implements UsernamePasswordAuthenticator {
-    private final ApiKeyAuthenticator adminApiKeyAuthenticator;
+  private final ApiKeyAuthenticator authenticator;
 
-    @Override
-    public UserDetails retrieveUser(
-            String username, UsernamePasswordAuthenticationToken authentication) {
-        // add more authenticator here
-        return adminApiKeyAuthenticator.retrieveUser(username, authentication);
-    }
+  @Override
+  public UserDetails retrieveUser(
+      String username, UsernamePasswordAuthenticationToken authentication) {
+    // add more authenticator here
+    return authenticator.retrieveUser(username, authentication);
+  }
 }

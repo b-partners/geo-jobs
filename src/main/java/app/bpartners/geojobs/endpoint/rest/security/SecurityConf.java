@@ -5,11 +5,14 @@ import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.
 import static org.springframework.http.HttpMethod.*;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
-import app.bpartners.geojobs.endpoint.rest.security.authentication.apikey.ApiKeyAuthenticationFilter;
-import app.bpartners.geojobs.endpoint.rest.security.authenticator.ApiKeyAuthenticator;
-import lombok.AllArgsConstructor;
+import app.bpartners.geojobs.model.exception.ForbiddenException;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -19,13 +22,23 @@ import org.springframework.security.web.authentication.AnonymousAuthenticationFi
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 
 @Configuration
-@AllArgsConstructor
+@Slf4j
 @EnableWebSecurity
 public class SecurityConf {
+  private final AuthProvider authProvider;
+  private final HandlerExceptionResolver exceptionResolver;
 
-  private final ApiKeyAuthenticator apiKeyAuthenticator;
+  public SecurityConf(
+      AuthProvider authProvider,
+      // InternalToExternalErrorHandler behind
+      @Qualifier("handlerExceptionResolver") HandlerExceptionResolver exceptionResolver) {
+    this.authProvider = authProvider;
+    this.exceptionResolver = exceptionResolver;
+  }
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
@@ -36,9 +49,24 @@ public class SecurityConf {
             new AntPathRequestMatcher("/health/event/uuids", POST.name()),
             new AntPathRequestMatcher("/health/**", GET.name()));
     httpSecurity
+        .exceptionHandling(
+            (exceptionHandler) ->
+                exceptionHandler
+                    .authenticationEntryPoint(
+                        // note(spring-exception)
+                        // https://stackoverflow.com/questions/59417122/how-to-handle-usernamenotfoundexception-spring-security
+                        // issues like when a user tries to access a resource
+                        // without appropriate authentication elements
+                        (req, res, e) ->
+                            exceptionResolver.resolveException(
+                                req, res, null, forbiddenWithRemoteInfo(e, req)))
+                    .accessDeniedHandler(
+                        // note(spring-exception): issues like when a user not having required roles
+                        (req, res, e) ->
+                            exceptionResolver.resolveException(
+                                req, res, null, forbiddenWithRemoteInfo(e, req))))
         .addFilterBefore(
-            new ApiKeyAuthenticationFilter(
-                new NegatedRequestMatcher(anonymousPath), apiKeyAuthenticator),
+            bearerFilter(new NegatedRequestMatcher(anonymousPath)),
             AnonymousAuthenticationFilter.class)
         .authorizeHttpRequests(
             authorizationManagerRequestMatcherRegistry ->
@@ -88,5 +116,34 @@ public class SecurityConf {
                 httpSecuritySessionManagementConfigurer.sessionCreationPolicy(STATELESS));
 
     return httpSecurity.build();
+  }
+
+  private Exception forbiddenWithRemoteInfo(Exception e, HttpServletRequest req) {
+    log.info(
+        String.format(
+            "Access is denied for remote caller: address=%s, host=%s, port=%s",
+            req.getRemoteAddr(), req.getRemoteHost(), req.getRemotePort()));
+    return new ForbiddenException(e.getMessage());
+  }
+
+  @Bean
+  public AuthenticationManager authenticationManager() {
+    return new ProviderManager(authProvider);
+  }
+
+  private BearerAuthFilter bearerFilter(RequestMatcher requestMatcher) {
+    BearerAuthFilter bearerFilter = new BearerAuthFilter(requestMatcher);
+    bearerFilter.setAuthenticationManager(authenticationManager());
+    bearerFilter.setAuthenticationSuccessHandler(
+        (httpServletRequest, httpServletResponse, authentication) -> {});
+    bearerFilter.setAuthenticationFailureHandler(
+        (req, res, e) ->
+            // note(spring-exception)
+            // issues like when a user is not found(i.e. UsernameNotFoundException)
+            // or other exceptions thrown inside authentication provider.
+            // In fact, this handles other authentication exceptions that are
+            // not handled by AccessDeniedException and AuthenticationEntryPoint
+            exceptionResolver.resolveException(req, res, null, forbiddenWithRemoteInfo(e, req)));
+    return bearerFilter;
   }
 }

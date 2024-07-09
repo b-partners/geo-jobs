@@ -59,21 +59,21 @@ public class AnonymousAccessIT extends FacadeIT {
   @Test
   void anonymous_cannot_tile() {
     var e = assertThrows(ApiException.class, () -> tilingApi.getTilingJobs(1, 2));
-    assertTrue(e.getMessage().contains("call failed with: 401"));
+    assertTrue(e.getMessage().contains("Bad credentials"));
 
     e = assertThrows(ApiException.class, () -> tilingApi.getZTJParcels("dummy"));
-    assertTrue(e.getMessage().contains("call failed with: 401"));
+    assertTrue(e.getMessage().contains("Bad credentials"));
 
     e = assertThrows(ApiException.class, () -> tilingApi.tileZone(mock(CreateZoneTilingJob.class)));
-    assertTrue(e.getMessage().contains("call failed with: 401"));
+    assertTrue(e.getMessage().contains("Bad credentials"));
   }
 
   @Test
   void anonymous_cannot_detect() {
     var e = assertThrows(ApiException.class, () -> detectionApi.getDetectionJobs(1, 2));
-    assertTrue(e.getMessage().contains("call failed with: 401"));
+    assertTrue(e.getMessage().contains("Bad credentials"));
 
     e = assertThrows(ApiException.class, () -> detectionApi.getZDJGeojsonsUrl("dummy"));
-    assertTrue(e.getMessage().contains("call failed with: 401"));
+    assertTrue(e.getMessage().contains("Bad credentials"));
   }
 }
