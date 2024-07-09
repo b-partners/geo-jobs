@@ -1,8 +1,8 @@
-package app.bpartners.geojobs.endpoint.rest.security.authentication.apikey.authorizer;
+package app.bpartners.geojobs.endpoint.rest.security.authorizer;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.CreateZoneTilingJob;
-import app.bpartners.geojobs.endpoint.rest.security.authentication.apikey.ApiKeyAuthenticationFilter;
+import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.model.parcelization.area.AreaComputer;
 import app.bpartners.geojobs.model.parcelization.area.SquareDegree;
@@ -21,10 +21,10 @@ public class CommunityZoneTilingJobProcessAuthorizer implements Consumer<CreateZ
 
   @Override
   public void accept(CreateZoneTilingJob createZoneTilingJob) {
-    var apiKeyAuthentication = ApiKeyAuthenticationFilter.getApiKeyAuthentication();
-    if (apiKeyAuthentication.isAdmin()) return;
+    var userPrincipal = AuthProvider.getPrincipal();
+    if (userPrincipal.isAdmin()) return;
 
-    var authorizationDetails = cadRepository.findByApiKey(apiKeyAuthentication.getApiKey());
+    var authorizationDetails = cadRepository.findByApiKey(userPrincipal.getPassword());
     var authorizedZoneNames = authorizationDetails.authorizedZoneNames();
     var maxAuthorizedSurface = authorizationDetails.maxSurface();
 

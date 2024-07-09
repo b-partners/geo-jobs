@@ -1,8 +1,8 @@
-package app.bpartners.geojobs.endpoint.rest.security.authentication.apikey.authorizer;
+package app.bpartners.geojobs.endpoint.rest.security.authorizer;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectConfigurationMapper;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration;
-import app.bpartners.geojobs.endpoint.rest.security.authentication.apikey.ApiKeyAuthenticationFilter;
+import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationDetailsRepository;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
@@ -22,10 +22,10 @@ public class CommunityZoneDetectionJobProcessAuthorizer
   @Override
   public void accept(
       String jobId, List<DetectableObjectConfiguration> detectableObjectConfigurations) {
-    var apiKeyAuthentication = ApiKeyAuthenticationFilter.getApiKeyAuthentication();
-    if (apiKeyAuthentication.isAdmin()) return;
+    var userPrincipal = AuthProvider.getPrincipal();
+    if (userPrincipal.isAdmin()) return;
 
-    var authorizationDetails = cadRepository.findByApiKey(apiKeyAuthentication.getApiKey());
+    var authorizationDetails = cadRepository.findByApiKey(userPrincipal.getPassword());
     var authorizedDetectableObjectTypes = authorizationDetails.detectableObjectTypes();
     var payloadDetectableTypes =
         detectableObjectConfigurations.stream()

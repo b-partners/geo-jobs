@@ -18,7 +18,7 @@ import app.bpartners.geojobs.endpoint.rest.model.FilteredDetectionJob;
 import app.bpartners.geojobs.endpoint.rest.model.GeoJsonsUrl;
 import app.bpartners.geojobs.endpoint.rest.model.Status;
 import app.bpartners.geojobs.endpoint.rest.model.TaskStatistic;
-import app.bpartners.geojobs.endpoint.rest.security.authentication.apikey.authorizer.CommunityZoneDetectionJobProcessAuthorizer;
+import app.bpartners.geojobs.endpoint.rest.security.authorizer.CommunityZoneDetectionJobProcessAuthorizer;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.model.page.BoundedPageSize;

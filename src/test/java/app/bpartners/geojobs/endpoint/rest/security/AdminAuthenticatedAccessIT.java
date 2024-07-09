@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.security;
 
-import static app.bpartners.geojobs.endpoint.rest.security.authentication.apikey.ApiKeyAuthenticator.APIKEY_HEADER_NAME;
+import static app.bpartners.geojobs.endpoint.rest.security.authenticator.ApiKeyAuthenticator.APIKEY_HEADER_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;

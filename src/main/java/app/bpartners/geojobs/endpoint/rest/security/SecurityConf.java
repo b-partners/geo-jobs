@@ -6,7 +6,7 @@ import static org.springframework.http.HttpMethod.*;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
 import app.bpartners.geojobs.endpoint.rest.security.authentication.apikey.ApiKeyAuthenticationFilter;
-import app.bpartners.geojobs.endpoint.rest.security.authentication.apikey.ApiKeyAuthenticator;
+import app.bpartners.geojobs.endpoint.rest.security.authenticator.ApiKeyAuthenticator;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -76,9 +76,9 @@ public class SecurityConf {
                     .requestMatchers(POST, "/detectionJobs/*/humanVerificationStatus")
                     .hasAnyAuthority(ROLE_ADMIN.name(), ROLE_COMMUNITY.name())
                     .requestMatchers(GET, "/detectionJobs/*/geojsonsUrl")
-                    .hasAuthority(ROLE_ADMIN.name())
-                    .requestMatchers(PUT, "/parcelization")
                     .hasAnyAuthority(ROLE_ADMIN.name(), ROLE_COMMUNITY.name())
+                    .requestMatchers(PUT, "/parcelization")
+                    .hasAuthority(ROLE_ADMIN.name())
                     .anyRequest()
                     .denyAll())
         .csrf(AbstractHttpConfigurer::disable)

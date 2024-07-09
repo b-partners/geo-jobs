@@ -19,7 +19,7 @@ import app.bpartners.geojobs.endpoint.rest.model.Parcel;
 import app.bpartners.geojobs.endpoint.rest.model.Status;
 import app.bpartners.geojobs.endpoint.rest.model.TaskStatistic;
 import app.bpartners.geojobs.endpoint.rest.model.ZoneTilingJob;
-import app.bpartners.geojobs.endpoint.rest.security.authentication.apikey.authorizer.CommunityZoneTilingJobProcessAuthorizer;
+import app.bpartners.geojobs.endpoint.rest.security.authorizer.CommunityZoneTilingJobProcessAuthorizer;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneTilingJobValidator;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.model.page.BoundedPageSize;
