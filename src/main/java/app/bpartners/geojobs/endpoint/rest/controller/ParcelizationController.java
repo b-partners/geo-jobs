@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.endpoint.rest.controller;
 
+import static java.util.UUID.randomUUID;
+
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.service.ParcelService;
@@ -35,6 +37,9 @@ public class ParcelizationController {
                         polygon, referenceZoom, targetZoom, maxParcelAreaAtReferenceZoom))
             .flatMap(Collection::stream)
             .toList();
-    return parcelizedPolygons.stream().map(featureMapper::toRest).toList();
+    String polygonsId = randomUUID().toString();
+    return parcelizedPolygons.stream()
+        .map(polygon -> featureMapper.toRest(polygon, polygonsId))
+        .toList();
   }
 }
