@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -29,15 +28,15 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 @Slf4j
 @EnableWebSecurity
 public class SecurityConf {
-  private final AuthProvider authProvider;
   private final HandlerExceptionResolver exceptionResolver;
+  private final AuthenticationManager authenticationManager;
 
   public SecurityConf(
-      AuthProvider authProvider,
       // InternalToExternalErrorHandler behind
-      @Qualifier("handlerExceptionResolver") HandlerExceptionResolver exceptionResolver) {
-    this.authProvider = authProvider;
+      @Qualifier("handlerExceptionResolver") HandlerExceptionResolver exceptionResolver,
+      AuthenticationManager authenticationManager) {
     this.exceptionResolver = exceptionResolver;
+    this.authenticationManager = authenticationManager;
   }
 
   @Bean
@@ -66,13 +65,14 @@ public class SecurityConf {
                             exceptionResolver.resolveException(
                                 req, res, null, forbiddenWithRemoteInfo(e, req))))
         .addFilterBefore(
-            bearerFilter(new NegatedRequestMatcher(anonymousPath)),
+            apiKeyAuthFilter(new NegatedRequestMatcher(anonymousPath)),
             AnonymousAuthenticationFilter.class)
         .authorizeHttpRequests(
             authorizationManagerRequestMatcherRegistry ->
                 authorizationManagerRequestMatcherRegistry
                     .requestMatchers(anonymousPath)
                     .anonymous()
+                    // TODO: should check which endpoint is not allowed for the community role
                     .requestMatchers("/jobs/*/annotationProcessing")
                     .hasAnyAuthority(ROLE_ADMIN.name(), ROLE_COMMUNITY.name())
                     .requestMatchers(GET, "/tilingJobs", "/tilingJobs/**")
@@ -126,17 +126,12 @@ public class SecurityConf {
     return new ForbiddenException(e.getMessage());
   }
 
-  @Bean
-  public AuthenticationManager authenticationManager() {
-    return new ProviderManager(authProvider);
-  }
-
-  private BearerAuthFilter bearerFilter(RequestMatcher requestMatcher) {
-    BearerAuthFilter bearerFilter = new BearerAuthFilter(requestMatcher);
-    bearerFilter.setAuthenticationManager(authenticationManager());
-    bearerFilter.setAuthenticationSuccessHandler(
+  private ApiKeyAuthFilter apiKeyAuthFilter(RequestMatcher requestMatcher) {
+    ApiKeyAuthFilter apiKeyFilter = new ApiKeyAuthFilter(requestMatcher);
+    apiKeyFilter.setAuthenticationManager(authenticationManager);
+    apiKeyFilter.setAuthenticationSuccessHandler(
         (httpServletRequest, httpServletResponse, authentication) -> {});
-    bearerFilter.setAuthenticationFailureHandler(
+    apiKeyFilter.setAuthenticationFailureHandler(
         (req, res, e) ->
             // note(spring-exception)
             // issues like when a user is not found(i.e. UsernameNotFoundException)
@@ -144,6 +139,6 @@ public class SecurityConf {
             // In fact, this handles other authentication exceptions that are
             // not handled by AccessDeniedException and AuthenticationEntryPoint
             exceptionResolver.resolveException(req, res, null, forbiddenWithRemoteInfo(e, req)));
-    return bearerFilter;
+    return apiKeyFilter;
   }
 }

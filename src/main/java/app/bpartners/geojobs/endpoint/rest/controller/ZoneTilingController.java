@@ -100,6 +100,7 @@ public class ZoneTilingController {
 
   @PostMapping("/tilingJobs")
   public ZoneTilingJob tileZone(@RequestBody CreateZoneTilingJob createJob) {
+    // TODO: authorization check should be done inside security conf
     communityZoneTilingJobProcessAuthorizer.accept(createJob);
     var job = mapper.toDomain(createJob);
     var tilingTasks = getTilingTasks(createJob, job.getId());

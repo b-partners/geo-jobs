@@ -15,8 +15,8 @@ import org.springframework.security.web.authentication.AbstractAuthenticationPro
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
 @Slf4j
-public class BearerAuthFilter extends AbstractAuthenticationProcessingFilter {
-  protected BearerAuthFilter(RequestMatcher requestMatcher) {
+public class ApiKeyAuthFilter extends AbstractAuthenticationProcessingFilter {
+  protected ApiKeyAuthFilter(RequestMatcher requestMatcher) {
     super(requestMatcher);
   }
 

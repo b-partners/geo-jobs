@@ -137,6 +137,7 @@ public class ZoneDetectionController {
       @PathVariable("id") String jobId,
       @RequestBody List<DetectableObjectConfiguration> detectableObjectConfigurations) {
     jobValidator.accept(jobId);
+    // TODO: authorization check should be done inside security conf
     communityZoneDetectionJobProcessAuthorizer.accept(jobId, detectableObjectConfigurations);
     List<app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration>
         configurations =

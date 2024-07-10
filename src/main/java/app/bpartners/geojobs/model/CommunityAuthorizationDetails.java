@@ -7,7 +7,7 @@ import lombok.Builder;
 
 @Builder
 public record CommunityAuthorizationDetails(
-    String id,
+    @JsonProperty("id") String id,
     @JsonProperty("community_name") String communityName,
     @JsonProperty("api_key") String apiKey,
     @JsonProperty("max_surface") double maxSurface,

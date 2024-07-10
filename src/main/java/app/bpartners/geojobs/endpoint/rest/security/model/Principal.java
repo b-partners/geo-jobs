@@ -13,7 +13,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 @ToString
 @AllArgsConstructor
 public class Principal implements UserDetails {
-  private final String bearer;
+  private final String apiKey;
   private Collection<? extends GrantedAuthority> authorities;
 
   @Override
@@ -23,7 +23,7 @@ public class Principal implements UserDetails {
 
   @Override
   public String getPassword() {
-    return bearer;
+    return apiKey;
   }
 
   @Override
