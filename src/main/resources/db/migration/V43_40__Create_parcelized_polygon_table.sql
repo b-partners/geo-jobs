@@ -1,4 +1,4 @@
 create table parcelized_polygon (
-   id VARCHAR(255) primary key,
+   id varchar primary key default uuid_generate_v4(),
    feature jsonb not null
 );
