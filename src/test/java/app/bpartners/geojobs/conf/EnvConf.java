@@ -18,7 +18,7 @@ public class EnvConf {
         () ->
             "[ { \"objectType\": \"ROOF\", \"url\": \"https://roof-api.azurewebsites.net/api\" }, {"
                 + " \"objectType\": \"PATHWAY\", \"url\":"
-                + " \"https://2p3jsxl3zadpi7r5fysmq4mzsu0fzphw.lambda-url.eu-west-3.on.aws\" }, {"
+                + " \"https://pathway-api.azurewebsites.net/api\" }, {"
                 + " \"objectType\": \"SOLAR_PANEL\", \"url\":"
                 + " \"https://solarpanel-api.azurewebsites.net/api\" }, { \"objectType\": \"POOL\","
                 + " \"url\": \"https://pool-api.azurewebsites.net/api\" }, { \"objectType\":"
