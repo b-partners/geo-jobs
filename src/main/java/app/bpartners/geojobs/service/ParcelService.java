@@ -13,7 +13,6 @@ import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Polygon;
@@ -24,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 @AllArgsConstructor
 @Slf4j
 public class ParcelService {
-  private final static int DEFAULT_ZOOM = 20;
+  private static final int DEFAULT_ZOOM = 20;
   private final TilingTaskRepository tilingTaskRepository;
   private final ParcelDetectionTaskRepository parcelDetectionTaskRepository;
   private final ZoneTilingJobRepository tilingJobRepository;
@@ -111,7 +110,7 @@ public class ParcelService {
                         .feature(feat)
                         .id(randomUUID().toString())
                         .build())
-            .collect(Collectors.toList());
+            .toList();
     parcelizedPolygonRepository.saveAll(parcelizedPolygons);
 
     return features;
