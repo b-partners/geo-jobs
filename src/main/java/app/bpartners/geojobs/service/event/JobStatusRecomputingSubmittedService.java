@@ -44,6 +44,12 @@ public class JobStatusRecomputingSubmittedService<
       } else {
         log.error("Max attempt reached for " + clazz.getSimpleName() + " handler");
       }
+    } else {
+      log.error(
+          "Nothing happens while oldJobStatus={} and newJobStatus={} for job.id={}",
+          oldJob.getStatus(),
+          newJob.getStatus(),
+          jobId);
     }
   }
 }
