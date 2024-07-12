@@ -39,7 +39,9 @@ public class JobStatusRecomputingSubmittedService<
                 .getDeclaredConstructor(String.class, Long.class, Integer.class)
                 .newInstance(
                     newJob.getId(), maxConsumerBackoffBetweenRetriesDurationValue, newAttemptNb);
-
+        newEvent.setJobId(newJob.getId());
+        newEvent.setMaxConsumerDurationValue(maxConsumerBackoffBetweenRetriesDurationValue);
+        newEvent.setAttemptNb(attemptNb);
         eventProducer.accept(List.of(newEvent));
       } else {
         log.error("Max attempt reached for " + clazz.getSimpleName() + " handler");
