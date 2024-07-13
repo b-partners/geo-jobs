@@ -1,7 +1,9 @@
 package app.bpartners.geojobs.model.parcelization.area;
 
+import lombok.Getter;
 import lombok.Value;
 
+@Getter
 @Value
 public class SquareDegree extends Area {
   double value;

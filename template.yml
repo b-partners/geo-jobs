@@ -42,6 +42,7 @@ Globals:
         ANNOTATOR_API_KEY: !Sub '{{resolve:ssm:/geo-jobs/${Env}/annotator/api/key}}'
         ANNOTATOR_GEOJOBS_USER_INFO: !Sub '{{resolve:ssm:/geo-jobs/${Env}/annotator/user/info}}'
         TILES_DOWNLOADER_MOCK_ACTIVATED: !Sub '{{resolve:ssm:/geo-jobs/${Env}/tiles-downloader-activated}}'
+        COMMUNITY_AUTH_DETAILS: !Sub '{{resolve:ssm:/geo-jobs/${Env}/community/auth-details}}'
         OBJECTS_DETECTOR_MOCK_ACTIVATED: !Sub '{{resolve:ssm:/geo-jobs/${Env}/objects-detector-activated}}'
 
     
