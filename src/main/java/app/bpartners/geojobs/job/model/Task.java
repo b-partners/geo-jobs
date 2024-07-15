@@ -44,6 +44,10 @@ public abstract class Task implements Serializable, Statusable<TaskStatus> {
     return PENDING.equals(getStatus().getProgression());
   }
 
+  public boolean isFinished() {
+    return FINISHED.equals(getStatus().getProgression());
+  }
+
   public boolean isSucceeded() {
     return FINISHED.equals(getStatus().getProgression())
         && SUCCEEDED.equals(getStatus().getHealth());

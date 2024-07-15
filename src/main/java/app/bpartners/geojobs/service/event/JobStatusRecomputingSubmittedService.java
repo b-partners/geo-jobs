@@ -4,7 +4,9 @@ import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.JobStatusRecomputingSubmitted;
 import app.bpartners.geojobs.job.model.Job;
 import app.bpartners.geojobs.job.model.Task;
+import app.bpartners.geojobs.job.repository.TaskRepository;
 import app.bpartners.geojobs.job.service.JobService;
+import app.bpartners.geojobs.job.service.TaskStatusService;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
@@ -19,6 +21,8 @@ public class JobStatusRecomputingSubmittedService<
   private static final int ATTEMPT_FOR_256_MINUTES_DURATION = 8;
   private final EventProducer eventProducer;
   private JobService<T, J> jobService;
+  private final TaskStatusService<T> taskStatusService;
+  private final TaskRepository<T> taskRepository;
 
   @Override
   @SneakyThrows
@@ -45,6 +49,10 @@ public class JobStatusRecomputingSubmittedService<
         eventProducer.accept(List.of(newEvent));
       } else {
         log.error("Max attempt reached for " + clazz.getSimpleName() + " handler");
+        var tasks = taskRepository.findAllByJobId(jobId);
+        var notFinishedTasks = tasks.stream().filter(task -> !task.isFinished()).toList();
+        notFinishedTasks.forEach(taskStatusService::fail);
+        jobService.recomputeStatus(newJob);
       }
     } else {
       log.error(

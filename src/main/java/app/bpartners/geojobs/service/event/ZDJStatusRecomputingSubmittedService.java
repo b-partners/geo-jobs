@@ -2,6 +2,8 @@ package app.bpartners.geojobs.service.event;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.ZDJStatusRecomputingSubmitted;
+import app.bpartners.geojobs.job.repository.TaskRepository;
+import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
@@ -18,8 +20,13 @@ public class ZDJStatusRecomputingSubmittedService
       service;
 
   public ZDJStatusRecomputingSubmittedService(
-      ZoneDetectionJobService jobService, EventProducer eventProducer) {
-    this.service = new JobStatusRecomputingSubmittedService<>(eventProducer, jobService);
+      ZoneDetectionJobService jobService,
+      EventProducer eventProducer,
+      TaskStatusService<ParcelDetectionTask> taskStatusService,
+      TaskRepository<ParcelDetectionTask> taskRepository) {
+    this.service =
+        new JobStatusRecomputingSubmittedService<>(
+            eventProducer, jobService, taskStatusService, taskRepository);
   }
 
   @Override

@@ -2,6 +2,8 @@ package app.bpartners.geojobs.service.event;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.ZTJStatusRecomputingSubmitted;
+import app.bpartners.geojobs.job.repository.TaskRepository;
+import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
@@ -16,8 +18,13 @@ public class ZTJStatusRecomputingSubmittedService
       service;
 
   public ZTJStatusRecomputingSubmittedService(
-      ZoneTilingJobService jobService, EventProducer eventProducer) {
-    this.service = new JobStatusRecomputingSubmittedService<>(eventProducer, jobService);
+      ZoneTilingJobService jobService,
+      EventProducer eventProducer,
+      TaskStatusService<TilingTask> taskStatusService,
+      TaskRepository<TilingTask> taskRepository) {
+    this.service =
+        new JobStatusRecomputingSubmittedService<>(
+            eventProducer, jobService, taskStatusService, taskRepository);
   }
 
   @Override

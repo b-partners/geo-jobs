@@ -2,14 +2,19 @@ package app.bpartners.geojobs.service.event;
 
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.*;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
+import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.ZTJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
+import app.bpartners.geojobs.job.model.TaskStatus;
+import app.bpartners.geojobs.job.repository.TaskRepository;
+import app.bpartners.geojobs.job.service.TaskStatusService;
+import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import java.util.List;
@@ -19,8 +24,50 @@ import org.mockito.ArgumentCaptor;
 public class ZTJStatusRecomputingSubmittedServiceTest {
   ZoneTilingJobService tilingJobServiceMock = mock();
   EventProducer eventProducerMock = mock();
+  TaskStatusService<TilingTask> taskStatusServiceMock = mock();
+  TaskRepository<TilingTask> taskRepositoryMock = mock();
   ZTJStatusRecomputingSubmittedService subject =
-      new ZTJStatusRecomputingSubmittedService(tilingJobServiceMock, eventProducerMock);
+      new ZTJStatusRecomputingSubmittedService(
+          tilingJobServiceMock, eventProducerMock, taskStatusServiceMock, taskRepositoryMock);
+
+  @Test
+  void accept_max_attempt_reached() {
+    String processingJob = "jobId";
+    ZoneTilingJob zoneTilingJob = aZTJ(processingJob, PROCESSING, UNKNOWN);
+
+    when(tilingJobServiceMock.findById(processingJob)).thenReturn(zoneTilingJob);
+    when(tilingJobServiceMock.recomputeStatus(zoneTilingJob)).thenReturn(zoneTilingJob);
+    when(taskRepositoryMock.findAllByJobId(processingJob))
+        .thenReturn(
+            List.of(
+                aTilingTask(PROCESSING, UNKNOWN),
+                aTilingTask(PROCESSING, UNKNOWN),
+                aTilingTask(FINISHED, FAILED),
+                aTilingTask(FINISHED, SUCCEEDED)));
+
+    subject.accept(new ZTJStatusRecomputingSubmitted(processingJob, 10L, 8));
+
+    verify(eventProducerMock, times(0)).accept(any());
+    verify(taskRepositoryMock, times(1)).findAllByJobId(processingJob);
+    verify(taskStatusServiceMock, times(2)).fail(any());
+    var jobCaptor = ArgumentCaptor.forClass(ZoneTilingJob.class);
+    verify(tilingJobServiceMock, times(2)).recomputeStatus(jobCaptor.capture());
+    assertFalse(jobCaptor.getValue().isFinished());
+  }
+
+  private static TilingTask aTilingTask(
+      Status.ProgressionStatus progressionStatus, Status.HealthStatus healthStatus) {
+    return TilingTask.builder()
+        .id(randomUUID().toString())
+        .statusHistory(
+            List.of(
+                TaskStatus.builder()
+                    .progression(progressionStatus)
+                    .health(healthStatus)
+                    .creationDatetime(now())
+                    .build()))
+        .build();
+  }
 
   @Test
   void accept_pending_ok() {
