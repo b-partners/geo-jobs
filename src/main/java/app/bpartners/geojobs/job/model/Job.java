@@ -51,6 +51,10 @@ public abstract class Job implements Serializable, Statusable<JobStatus> {
     return FINISHED.equals(getStatus().getProgression()) && FAILED.equals(getStatus().getHealth());
   }
 
+  public boolean isFinished() {
+    return FINISHED.equals(getStatus().getProgression());
+  }
+
   @Override
   public JobStatus from(Status status) {
     return JobStatus.from(id, status, getType());

@@ -11,6 +11,9 @@ import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.ZDJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
+import app.bpartners.geojobs.job.repository.TaskRepository;
+import app.bpartners.geojobs.job.service.TaskStatusService;
+import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import java.util.List;
@@ -20,8 +23,11 @@ import org.mockito.ArgumentCaptor;
 public class ZDJStatusRecomputingSubmittedServiceTest {
   ZoneDetectionJobService jobServiceMock = mock();
   EventProducer eventProducerMock = mock();
+  TaskStatusService<ParcelDetectionTask> taskStatusServiceMock = mock();
+  TaskRepository<ParcelDetectionTask> taskRepositoryMock = mock();
   ZDJStatusRecomputingSubmittedService subject =
-      new ZDJStatusRecomputingSubmittedService(jobServiceMock, eventProducerMock);
+      new ZDJStatusRecomputingSubmittedService(
+          jobServiceMock, eventProducerMock, taskStatusServiceMock, taskRepositoryMock);
 
   @Test
   void accept_ok() {

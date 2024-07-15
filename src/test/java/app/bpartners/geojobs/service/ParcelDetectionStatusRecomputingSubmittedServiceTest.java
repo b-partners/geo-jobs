@@ -10,6 +10,9 @@ import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.ParcelDetectionStatusRecomputingSubmitted;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
+import app.bpartners.geojobs.job.repository.TaskRepository;
+import app.bpartners.geojobs.job.service.TaskStatusService;
+import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionJob;
 import app.bpartners.geojobs.service.detection.ParcelDetectionJobService;
 import app.bpartners.geojobs.service.event.ParcelDetectionStatusRecomputingSubmittedService;
@@ -21,9 +24,14 @@ public class ParcelDetectionStatusRecomputingSubmittedServiceTest {
   private static final String JOB_ID = "jobId";
   ParcelDetectionJobService parcelDetectionJobServiceMock = mock();
   EventProducer eventProducerMock = mock();
+  TaskStatusService<TileDetectionTask> taskStatusServiceMock = mock();
+  TaskRepository<TileDetectionTask> taskRepositoryMock = mock();
   ParcelDetectionStatusRecomputingSubmittedService subject =
       new ParcelDetectionStatusRecomputingSubmittedService(
-          parcelDetectionJobServiceMock, eventProducerMock);
+          parcelDetectionJobServiceMock,
+          eventProducerMock,
+          taskStatusServiceMock,
+          taskRepositoryMock);
 
   @Test
   void accept_ok() {

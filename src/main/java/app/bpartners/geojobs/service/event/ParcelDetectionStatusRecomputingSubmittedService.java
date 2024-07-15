@@ -2,6 +2,8 @@ package app.bpartners.geojobs.service.event;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.ParcelDetectionStatusRecomputingSubmitted;
+import app.bpartners.geojobs.job.repository.TaskRepository;
+import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionJob;
 import app.bpartners.geojobs.service.detection.ParcelDetectionJobService;
@@ -18,8 +20,13 @@ public class ParcelDetectionStatusRecomputingSubmittedService
       service;
 
   public ParcelDetectionStatusRecomputingSubmittedService(
-      ParcelDetectionJobService jobService, EventProducer eventProducer) {
-    this.service = new JobStatusRecomputingSubmittedService<>(eventProducer, jobService);
+      ParcelDetectionJobService jobService,
+      EventProducer eventProducer,
+      TaskStatusService<TileDetectionTask> taskStatusService,
+      TaskRepository<TileDetectionTask> taskRepository) {
+    this.service =
+        new JobStatusRecomputingSubmittedService<>(
+            eventProducer, jobService, taskStatusService, taskRepository);
   }
 
   @Override
