@@ -45,7 +45,7 @@ public class ZTJStatusRecomputingSubmittedServiceTest {
                 aTilingTask(FINISHED, FAILED),
                 aTilingTask(FINISHED, SUCCEEDED)));
 
-    subject.accept(new ZTJStatusRecomputingSubmitted(processingJob, 10L, 8));
+    subject.accept(new ZTJStatusRecomputingSubmitted(processingJob, 180L, 6));
 
     verify(eventProducerMock, times(0)).accept(any());
     verify(taskRepositoryMock, times(1)).findAllByJobId(processingJob);

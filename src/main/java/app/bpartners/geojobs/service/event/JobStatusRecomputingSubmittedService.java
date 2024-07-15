@@ -18,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 public class JobStatusRecomputingSubmittedService<
         J extends Job, T extends Task, E extends JobStatusRecomputingSubmitted>
     implements Consumer<E> {
-  private static final int ATTEMPT_FOR_256_MINUTES_DURATION = 8;
+  private static final int ATTEMPT_FOR_256_MINUTES_DURATION = 6;
   private final EventProducer eventProducer;
   private JobService<T, J> jobService;
   private final TaskStatusService<T> taskStatusService;

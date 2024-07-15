@@ -17,11 +17,11 @@ public class JobStatusRecomputingSubmitted extends PojaEvent {
 
   @Override
   public Duration maxConsumerDuration() {
-    return Duration.ofMinutes(maxConsumerDurationValue);
+    return Duration.ofSeconds(maxConsumerDurationValue);
   }
 
   @Override
   public Duration maxConsumerBackoffBetweenRetries() {
-    return Duration.ofMinutes(maxConsumerBackoffBetweenRetriesDurationValue);
+    return Duration.ofSeconds(maxConsumerBackoffBetweenRetriesDurationValue);
   }
 }

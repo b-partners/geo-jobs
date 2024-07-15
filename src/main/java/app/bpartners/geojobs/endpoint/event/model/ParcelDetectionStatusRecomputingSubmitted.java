@@ -7,11 +7,12 @@ import lombok.*;
 @EqualsAndHashCode(callSuper = false)
 @ToString
 public class ParcelDetectionStatusRecomputingSubmitted extends JobStatusRecomputingSubmitted {
-  private static final long MAX_CONSUMER_DURATION_VALUE = 5L;
+  private static final long MAX_CONSUMER_DURATION_VALUE = 300L;
+  public static final long DEFAULT_BACKOFF_VALUE = 180L;
 
   public ParcelDetectionStatusRecomputingSubmitted(String parcelDetectionJobId) {
     this.jobId = parcelDetectionJobId;
-    this.maxConsumerBackoffBetweenRetriesDurationValue = 1L;
+    this.maxConsumerBackoffBetweenRetriesDurationValue = DEFAULT_BACKOFF_VALUE;
     this.maxConsumerDurationValue = MAX_CONSUMER_DURATION_VALUE;
     this.attemptNb = 0;
   }

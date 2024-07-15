@@ -9,8 +9,8 @@ import lombok.ToString;
 @EqualsAndHashCode
 @ToString
 public class ZTJStatusRecomputingSubmitted extends JobStatusRecomputingSubmitted {
-  private static final long MAX_CONSUMER_DURATION_VALUE = 10L;
-  private static final long DEFAULT_BACK_OFF_VALUE = 1L;
+  private static final long MAX_CONSUMER_DURATION_VALUE = 300L;
+  private static final long DEFAULT_BACK_OFF_VALUE = 180L;
 
   public ZTJStatusRecomputingSubmitted(String jobId) {
     this.jobId = jobId;

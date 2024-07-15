@@ -7,8 +7,8 @@ import lombok.*;
 @EqualsAndHashCode
 @ToString
 public class ZDJStatusRecomputingSubmitted extends JobStatusRecomputingSubmitted {
-  private static final int MAX_CONSUMER_DURATION_VALUE = 10;
-  private static final long DEFAULT_BACK_OFF_VALUE = 3L;
+  private static final int MAX_CONSUMER_DURATION_VALUE = 300;
+  private static final long DEFAULT_BACK_OFF_VALUE = 180L;
 
   public ZDJStatusRecomputingSubmitted(String jobId) {
     this.jobId = jobId;
