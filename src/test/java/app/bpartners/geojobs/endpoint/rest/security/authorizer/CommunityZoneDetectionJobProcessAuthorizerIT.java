@@ -14,7 +14,7 @@ import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
-import app.bpartners.geojobs.model.CommunityAuthorizationDetails;
+import app.bpartners.geojobs.repository.model.CommunityAuthorization;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.repository.impl.CommunityAuthorizationDetailsRepositoryImpl;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
@@ -84,9 +84,9 @@ class CommunityZoneDetectionJobProcessAuthorizerIT extends FacadeIT {
         });
   }
 
-  private CommunityAuthorizationDetails asCommunityAuthorizationDetails(
+  private CommunityAuthorization asCommunityAuthorizationDetails(
       List<DetectableType> detectableObjectTypes) {
-    return new CommunityAuthorizationDetails(
+    return new CommunityAuthorization(
         "dummy_id",
         "dummy_name",
         "dummy_name",

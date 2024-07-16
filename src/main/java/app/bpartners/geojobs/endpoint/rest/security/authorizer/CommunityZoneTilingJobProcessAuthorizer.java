@@ -6,7 +6,7 @@ import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.model.parcelization.area.AreaComputer;
 import app.bpartners.geojobs.model.parcelization.area.SquareDegree;
-import app.bpartners.geojobs.repository.CommunityAuthorizationDetailsRepository;
+import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import jakarta.ws.rs.NotSupportedException;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 @Component
 @AllArgsConstructor
 public class CommunityZoneTilingJobProcessAuthorizer implements Consumer<CreateZoneTilingJob> {
-  private final CommunityAuthorizationDetailsRepository cadRepository;
+  private final CommunityAuthorizationRepository cadRepository;
   private static final AreaComputer areaComputer = new AreaComputer();
   private final FeatureMapper featureMapper;
 

@@ -14,7 +14,7 @@ import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
-import app.bpartners.geojobs.model.CommunityAuthorizationDetails;
+import app.bpartners.geojobs.repository.model.CommunityAuthorization;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.repository.impl.CommunityAuthorizationDetailsRepositoryImpl;
 import java.math.BigDecimal;
@@ -83,9 +83,9 @@ public class CommunityZoneTilingJobProcessAuthorizerIT extends FacadeIT {
         });
   }
 
-  private CommunityAuthorizationDetails asCommunityAuthorizationDetails(
+  private CommunityAuthorization asCommunityAuthorizationDetails(
       List<String> detectableZoneName, double maxSurface) {
-    return new CommunityAuthorizationDetails(
+    return new CommunityAuthorization(
         "dummy_id", "dummy_name", "dummy_name", maxSurface, detectableZoneName, List.of());
   }
 

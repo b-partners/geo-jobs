@@ -5,7 +5,7 @@ import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.
 
 import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
-import app.bpartners.geojobs.repository.CommunityAuthorizationDetailsRepository;
+import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import java.util.Objects;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,13 +18,13 @@ import org.springframework.stereotype.Component;
 public class ApiKeyAuthenticator implements UsernamePasswordAuthenticator {
   public static final String API_KEY_HEADER = "x-api-key";
   private final String adminApiKey;
-  private final CommunityAuthorizationDetailsRepository communityAuthorizationDetailsRepository;
+  private final CommunityAuthorizationRepository communityAuthorizationRepository;
 
   public ApiKeyAuthenticator(
       @Value("${admin.api.key}") String adminApiKey,
-      CommunityAuthorizationDetailsRepository communityAuthorizationDetailsRepository) {
+      CommunityAuthorizationRepository communityAuthorizationDetailsRepository) {
     this.adminApiKey = adminApiKey;
-    this.communityAuthorizationDetailsRepository = communityAuthorizationDetailsRepository;
+    this.communityAuthorizationRepository = communityAuthorizationDetailsRepository;
   }
 
   @Override
@@ -40,7 +40,7 @@ public class ApiKeyAuthenticator implements UsernamePasswordAuthenticator {
   }
 
   private boolean existsAsApiKeyInCommunityKeys(String candidateApiKey) {
-    return communityAuthorizationDetailsRepository.existsByApiKey(candidateApiKey);
+    return communityAuthorizationRepository.findCommunityAuthorizationByApiKey(candidateApiKey).isPresent();
   }
 
   private String getApiKeyFromHeader(

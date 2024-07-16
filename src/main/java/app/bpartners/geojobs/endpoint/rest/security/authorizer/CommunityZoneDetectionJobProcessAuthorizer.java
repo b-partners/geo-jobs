@@ -4,7 +4,8 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectCon
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
-import app.bpartners.geojobs.repository.CommunityAuthorizationDetailsRepository;
+import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
+import app.bpartners.geojobs.repository.model.CommunityDetectableObjectType;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -16,7 +17,7 @@ import org.springframework.stereotype.Component;
 @AllArgsConstructor
 public class CommunityZoneDetectionJobProcessAuthorizer
     implements BiConsumer<String, List<DetectableObjectConfiguration>> {
-  private final CommunityAuthorizationDetailsRepository cadRepository;
+  private final CommunityAuthorizationRepository cadRepository;
   private final DetectableObjectConfigurationMapper detectableObjectConfigurationMapper;
 
   @Override
@@ -25,8 +26,8 @@ public class CommunityZoneDetectionJobProcessAuthorizer
     var userPrincipal = AuthProvider.getPrincipal();
     if (userPrincipal.isAdmin()) return;
 
-    var authorizationDetails = cadRepository.findByApiKey(userPrincipal.getPassword());
-    var authorizedDetectableObjectTypes = authorizationDetails.detectableObjectTypes();
+    var authorizationDetails = cadRepository.findByApiKey(userPrincipal.getPassword()).orElseThrow(ForbiddenException::new);
+    var authorizedDetectableObjectTypes = authorizationDetails.getDetectableObjectTypes();
     var payloadDetectableTypes =
         detectableObjectConfigurations.stream()
             .map(
@@ -48,7 +49,7 @@ public class CommunityZoneDetectionJobProcessAuthorizer
   }
 
   private static List<DetectableType> getNotAuthorizedObjectTypes(
-      List<DetectableType> authorizedObjectTypes, List<DetectableType> candidateTypes) {
-    return candidateTypes.stream().filter(Predicate.not(authorizedObjectTypes::contains)).toList();
+    List<CommunityDetectableObjectType> authorizedObjectTypes, List<DetectableType> candidateTypes) {
+    return authorizedObjectTypes.stream().map(CommunityDetectableObjectType::getType).filter().toList();
   }
 }
