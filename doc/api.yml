@@ -464,6 +464,26 @@ paths:
                 $ref: "#/components/schemas/ZoneDetectionJob"
         '500':
           $ref: '#/components/responses/500'
+
+  '/fullDetection':
+    put:
+      tags:
+        - Detection
+      operationId: processFullDetection
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/CreateFullDetection'
+      responses:
+        200:
+          description: Zone successfully detected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FullDetectedZone'
   '/parcelization':
     put:
       tags:
@@ -996,3 +1016,31 @@ components:
       enum:
         - UNDERSCORE
         - SLASH
+
+    CreateFullDetection:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/CreateZoneTilingJob'
+      properties:
+        objectType:
+          $ref: '#/components/schemas/DetectableObjectType'
+
+    JobTypes:
+      enum:
+        - MACHINE_DETECTION
+        - HUMAN_DETECTION
+        - TILING
+
+    FullDetectedZone:
+      type: object
+      properties:
+        jobTypes:
+          type: array
+          items:
+           $ref: '#/components/schemas/JobTypes'
+        statistics:
+          type: array
+          items:
+           $ref: '#/components/schemas/TaskStatistic'
+        detectedGeojsonUrl:
+           type: string
