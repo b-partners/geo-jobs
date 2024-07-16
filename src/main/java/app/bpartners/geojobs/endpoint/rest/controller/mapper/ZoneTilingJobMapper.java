@@ -5,6 +5,7 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
+import app.bpartners.geojobs.endpoint.rest.model.CreateFullDetection;
 import app.bpartners.geojobs.endpoint.rest.model.CreateZoneTilingJob;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.repository.model.ArcgisImageZoom;
@@ -78,5 +79,19 @@ public class ZoneTilingJobMapper {
         .emailReceiver(domain.getEmailReceiver())
         .features(tilingTaskList.stream().map(FeatureMapper::from).toList())
         .status(statusMapper.toRest(domain.getStatus()));
+  }
+
+  public CreateZoneTilingJob from(CreateFullDetection zoneToDetect) {
+    CreateFullDetection.ZoomLevelEnum zoom = zoneToDetect.getZoomLevel();
+    assert zoom != null;
+    CreateZoneTilingJob.ZoomLevelEnum zoomLevelEnum =
+        CreateZoneTilingJob.ZoomLevelEnum.valueOf(zoom.getValue());
+    return new CreateZoneTilingJob()
+        .emailReceiver(zoneToDetect.getEmailReceiver())
+        .zoneName(zoneToDetect.getZoneName())
+        .geoServerParameter(zoneToDetect.getGeoServerParameter())
+        .geoServerUrl(zoneToDetect.getGeoServerUrl())
+        .features(zoneToDetect.getFeatures())
+        .zoomLevel(zoomLevelEnum);
   }
 }

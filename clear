@@ -1,0 +1,625 @@
+[33mececef52[m[33m ([m[1;36mHEAD -> [m[1;32mpreprod[m[33m, [m[1;31morigin/preprod[m[33m, [m[1;31morigin/HEAD[m[33m)[m chore: only admin can process parcelization
+[33mf182f386[m feat: implement parcelization endpoint
+[33mb40fa076[m promotion: prod to preprod
+[33m29bcc706[m[33m ([m[1;31morigin/prod[m[33m)[m promotion: preprod to prod
+[33m255ad4da[m chore: send events computing auto ZDJ status after ZDJ fired tasks
+[33m830398e4[m fix: set initial ZDJStatusRecomputingSubmitted backOff to 5 minutes
+[33m7df513d6[m chore: handle ZTJ and ZDJ and ZTJ status computing with backOff expontential
+[33ma3c83e75[m chore: refactor ZTJStatusRecomputingSubmitted using JobStatusRecomputingSubmitted
+[33mffac5345[m poja-upgrade: 15.1.1
+[33m629f5690[m chore: ZTJStatusRecomputingSubmittedServiceTest
+[33m61f5ca30[m chore: compute automatically ZTJ status with backOff expontential after creating ZTJ
+[33m3082865b[m feat: add polygon mapper and parcelization doc
+[33m36cf9ee9[m promotion: prod to preprod
+[33m3ad1f462[m chore: no auth on poja endpoints
+[33ma2eb4969[m poja-upgrade: 14.0.0
+[33md5192c55[m feat: new model.parcelization package
+[33mb25cb266[m refactor: new model.page package
+[33m84094fd1[m[33m ([m[1;32mprod[m[33m)[m chore: HumanDetectionJobCreatedFailedServiceTest
+[33m4c0ee2b6[m chore: CreateAnnotatedTaskSubmittedServiceTest
+[33me0b3ab66[m chore: rename CreatedAnnotatedTaskExtracted event to CreateAnnotatedTaskSubmitted
+[33mb052e1b8[m chore: refactor ZoneDetectionJobAnnotationProcessor and HumanDetectionJobCreatedFailedService
+[33m06d8c6b8[m promotion: prod to preprod
+[33mf1cadd2b[m promotion: preprod to prod
+[33m9f2f1a57[m[33m ([m[1;31morigin/fix-annotation-job-processor[m[33m)[m chore: handle CreatedAnnotatedTask into EVENT STACK 2
+[33me6eb4275[m Revert "infra(to-revert): increase worker1 concurrency to 1250 and memory to 8192"
+[33m1dc09bd0[m chore: refactor AnnotationJobProcess
+[33m220fe7ca[m chore: remove default detectableObjectTypes for cannes and chalon zone
+[33m6b6bb399[m chore: refactor detectableObjects retriever for in doubt tiles computing
+[33maad226f3[m chore: rename correctly annotationJob for potential falsePositive job
+[33m581ff22b[m infra(to-revert): increase worker1 concurrency to 1250 and memory to 8192
+[33m31c88448[m fix: map correctly point when sending task to annotator
+[33mb4041792[m Revert "chore(to-revert): upgrade workerFunction1 memory to 8192"
+[33m0140120f[m chore: JobAnnotationProcessedServiceTest
+[33mda3afaf7[m chore: add JobAnnotation service and controller tests
+[33mc9360be5[m fix: provide minimum confidence when processing job annotation
+[33mdb7d9173[m chore(to-revert): upgrade workerFunction1 memory to 8192
+[33m6767d382[m fix: explicit bucket storage before detection
+[33m59a0c197[m chore: add ParcelDetectionJobCreatedService logs
+[33ma0e5ef84[m chore: use exceptionToStringFunction for DetectionTask failed event message
+[33mf4a48140[m chore: remove unused DetectionTaskStatusChanged event and its handler and tests
+[33m019c5e80[m fix: map ZDJ.id correctly for TileDetectionTaskCreatedService and its FailedService
+[33m2a92f896[m chore: make sonar not scan generated files
+[33mc071ce36[m promotion: preprod to prod
+[33m6f857297[m chore: add tiles count into tasks statistic mail
+[33m3e62811f[m fix: leave S3 bucketPath from importing as its initial value
+[33m1545e67c[m fix: explicit bucket separator when importing tiles
+[33m82da5498[m fix: split s3 objectName from key before import tiles
+[33m5ac40eea[m fix: handle tiles import from objectName with underscore splitter
+[33m25d87c05[m fix: associate detected tiles to zdj and pdj
+[33mf309a05b[m chore: handle TaskStatisticRecomputingSubmitted event into event_stack_2
+[33m506900b2[m chore: handle ZDJ statuses computing events into event_stack_2
+[33me1ca9f8f[m fix: get detectable objects from ZDJ.id when consuming ParcelDetectionJobCreated
+[33m92310b5f[m chore: handle ZTJStatusRecomputingSubmitted event into event_stack_2
+[33m6d8e691c[m fix: replace tile_detection_task entity.job_id fk to parcel_detection_job.id
+[33m5ea4785c[m infra: set rds min capacity to 2
+[33m858ec625[m infra: set worker reserved concurrency to 60
+[33m5463b384[m poja-upgrade: 13.8.0
+[33m487aee83[m promotion: preprod to prod
+[33mc093e138[m fix: set tileDetectionTask.jobId as PDJ.id instead of ZDJ.id
+[33m0fc4d3f9[m infra: set worker reserved concurrency to 3000
+[33m62e8240d[m chore: enable ObjectsDetectorIT with aws-pathway-detection-api-4g
+[33ma0391849[m promotion: prod to preprod
+[33m24f921b0[m promotion: preprod to prod
+[33m0c75b2d8[m poja-upgrade: 13.7.1
+[33m98c758c9[m chore: make ParcelDetectionTaskConsumer @Transactional
+[33m4839b48b[m[33m ([m[1;31morigin/chore/db-infra[m[33m, [m[1;32mchore/db-infra[m[33m)[m chore: increase db acu to 64
+[33mccca59e2[m fix: save parceltask.asJobId when PDJ created
+[33mb358b1d9[m infra: add event stacks EventBridge and SQS env variables
+[33me10e4ed6[m chore: ZDJParcelsStatusRecomputingSubmittedServiceTest
+[33me8afa284[m chore: ParcelDetectionStatusRecomputingSubmittedServiceTest
+[33m5db631d8[m feat: recompute ZDJ parcels statuses
+[33me5db6507[m chore: ParcelDetectionJobStatusChangedServiceTest
+[33mb74fbf05[m fix: handle ParcelDetectionJobStatusChanged
+[33mb419fdfc[m chore: rename Task.equivalentJobId attribute
+[33md92399d7[m poja-upgrade: 13.6.0
+[33me1831d6e[m chore: NotFinishedTaskRetrieverTest
+[33m7447324e[m fix: return task instead of null for NotFinishedTaskRetriever
+[33m6c64d15f[m chore: rename ParcelDeectionTaskCreatedServiceIT
+[33m62e0d8d1[m chore: TileDetectionTaskCreatedFailedServiceTest
+[33m2e787e6f[m chore: ParcelDetectionTaskSucceededServiceTest
+[33m2375a571[m chore: ParcelDetectionJobCreatedServiceTest
+[33m0dd6e964[m chore: ParcelDetectionTaskFailedServiceTest
+[33mfe8ae73a[m chore(to-complete): finish detection retryer and dispatch by succeess
+[33mb57c7870[m chore: split DetectionTask into ParcelDetectionJob including TileDetectionTask
+[33m89430484[m chore(todo): use Runnable instead of simple Interface for StatusHandler
+[33m8333b616[m chore: refactor not finished task computing
+[33m5f19225d[m fix: set TilingJobType = TILING when retry failed tasks
+[33m2aa8c206[m chore: JobFinishedMailerTest
+[33mb46a0440[m chore: refactor finished email refactor
+[33m0ab8bb30[m chore: JobFilteredMailerTest
+[33m04459759[m chore: generalize job filtered mailing
+[33m81773c75[m chore: ZoneDetectionJobStatusChangedServiceTest
+[33m59486583[m chore: generalize statusChanged handler
+[33mad91eb72[m promotion: prod to preprod
+[33mccb01e99[m Revert "chore(to-revert): set worker to 8192"
+[33mc4c5ba04[m chore(to-revert): set worker to 8192
+[33m0130a5c8[m chore: set tiling task statistics asynchronous and generalize computing
+[33ma015d9ea[m promotion: prod to preprod
+[33mf0640b4d[m Revert "chore(to-revert): set worker to 8192"
+[33mdc0df161[m chore(to-revert): set worker to 8192
+[33m151a8dca[m promotion: prod to preprod
+[33mc81400d2[m chore: upgrade frontalFunction.timeout=300
+[33mf0550d4b[m promotion: preprod to prod
+[33md6c1e3de[m Revert "chore(to-revert): set worker to 8192"
+[33m5f2e0340[m chore(to-revert): set worker to 8192
+[33m71083530[m poja-upgrade: 13.4.0
+[33mc6c89c86[m poja-upgrade: 13.4.0
+[33md688ff79[m chore: ZDJTaskStatisticMailerTest
+[33m3a6d98ef[m fix: set ZDJ task statistics asynchronous as it takes too much time
+[33m60c1bc49[m infra: add sonarcloud analysis to project
+[33me76a2700[m infra: add sonarcloud analysis scan to project
+[33m97d647bd[m fix: set JobAnnotationProcessor.MIN_CONFIDENCE_TRUE_POSITIVE = 0.9
+[33m104c4df7[m promotion: prod to preprod
+[33mf65ff5a0[m poja-upgrade: 13.3.1
+[33me7ee0c88[m promotion: preprod to prod
+[33mc78b55e8[m chore: test pathway detection api from azure
+[33m665544a2[m chore: test pathway detection api from aws
+[33m1b5f98cd[m fix: do not recompute status when jobStatus is FINISHED
+[33m84b20fc0[m fix: detectionJob.status recompute must be asynchronous
+[33m78e7299a[m fix: check tilingJob existence before recomputing status
+[33m14bb0253[m fix: jobStatus recompute must be asynchronous as it takes too much time
+[33m613dbddd[m infra: decrease worker and db power as jobStatus update is no more triggered by taskStatus update
+[33m1157aebe[m feat: GET xxxJob/:id/recomputedStatus
+[33m7f78c9e9[m fix: only recompute jobStatus on manual trigger
+[33mf875b9da[m refactor: TaskToTask<T_CHILD,T_PARENT,JOB> --> TaskAsJob<T_CHILD,T_PARENT>
+[33m7ea4906c[m refactor: rm unused code in TaskToTaskService
+[33mdb145934[m fix: rm RetryableServices as we should rely on SQS retries
+[33m2fe2aba7[m promotion: prod to preprod
+[33me0b22a6f[m chore: ZoneDetectionJobAnnotationProcessor as @Transactional
+[33m404d12c6[m fix: filter DetectedTiles with same bucketPath before sending to annotator
+[33m0dce4627[m chore: set ZoneDetectionJobAnnotationProcessor.MIN_CONFIDENCE_TRUE_POSITIVE = 0.8
+[33me9f5e40a[m fix: set JobAnnotationProcessor asynchrounous
+[33m9e37549f[m poja-upgrade: 13.1.1
+[33m63e99316[m promotion: preprod to prod
+[33m0d0f6cd9[m promotion: prod to preprod
+[33me7cc8dce[m chore: log when TilingJobDuplicatedMailer finished
+[33m8b4e46e5[m chore: set ZoneTilingJobWithoutTasksCreatedService @transactional
+[33m342a20f1[m fix: ZoneTilingJobWithoutTasksCreated extends PojaEvent
+[33m0dac5ac4[m fix: set tiling duplication computing asynchronously
+[33mee81d0d1[m fix: remove static bucketName for cannes
+[33ma6428480[m debug-complete: yay: rm all ref to OpenFilesChecker except the class for future purposes
+[33m692055f0[m fixup
+[33m479b11c0[m debug: monitoring TileDetectionTaskCreatedFailedService with openFilesChecker
+[33m990df553[m feat: new sys package for checking open files
+[33m87cac6ad[m chore: remove ImageJpegCompressor before detection
+[33m83c11d0e[m fixup: format
+[33m796ce483[m debug: imageJpegCompressor causes too-many-files-leak?
+[33mae0a9586[m promotion: preprod to prod
+[33m73606891[m fixup: regen poja
+[33m18711ee8[m revert: 6b8b8321d131483e249c673afb5094a869658dd7
+[33m14a79217[m infra: frontal and worker mem to 2048 as they can load massive amout of tiles (todo: how massive precisely?)
+[33mc5fc32d5[m fix: aurora minCapacity is 2 not 1
+[33m57d5a9f1[m infra: set high value for hikari maxLifetime and leakThreshold
+[33m6b8b8321[m infra: reduce aurora power as concurrency is low (only 60 lambda)
+[33m1ee047d6[m poja-upgrade: v13.1.0
+[33m8d3b89f4[m fixup: make all event.model classes extend PojaEvent
+[33m517b27d7[m poja-upgrade: v13.0.1
+[33m39df7705[m chore: enable RetryableTaskStatusService.retry again
+[33m24723209[m[33m ([m[1;32mpreprod-backup[m[33m)[m feat: dispatch ZDJ by tile detection task status
+[33m18f5f93c[m promotion: preprod to prod
+[33m21db4a0b[m chore: rename annotationJob sent to annotator manually
+[33m140bdce2[m promotion: prod to preprod
+[33m3c1f0413[m chore: rename jobs sent to annotation when processing manually
+[33m149869e7[m promotion: preprod to prod
+[33m74443f18[m fix: group tiles retrieved from s3 objects by TileCoordinates.x
+[33m689edc86[m fix: remove thread retryer from taskStatusService and taskToTaskStatusService
+[33m6f4a2b1f[m chore: send email when tiling jobs duplicated
+[33me052404a[m feat: constant random backoff on message failure
+[33m421a05ad[m feat: get detection task statistics
+[33m5ca27c02[m chore: compress image before detection
+[33m2d7ed08e[m chore: add ImageJpegCompressor
+[33mec4b1fde[m fix: avoid NPE when converting import ZTJ parameters
+[33mcdaa3f14[m fix: import task from specified bucket intervals
+[33m132c0e1e[m feat: add bucketList.startFrom parameter when importing ZTJ
+[33m995d3a0a[m fix: list all objects from S3 not only 1.000
+[33m4c4f8972[m promotion: preprod to prod
+[33m8133bab2[m chore(to-revert): use static bucketname for Detection
+[33m256a065f[m promotion: preprod to prod
+[33m01c8efee[m chore: adjust poja configurations
+[33m5c5835da[m feat: specify bucketPathPrefix when importing ZTJ
+[33mbc85ed69[m fix: remove file extension from bucket to TilesCoordinates conversion and add ImportedZoneTilingJobSavedServiceIT
+[33mfa9ddc74[m chore: set ImportedZoneTilingJobSavedService @transactional
+[33mdb398930[m chore: reformat exception thrown in ImportedZoneTilingJobSavedService
+[33m424096b6[m chore: debug logs for ImportedZoneTilingJobSavedService
+[33mb0aa8e0a[m chore: local BucketCustomizedComponentIT
+[33m67b9622b[m fix: avoid NPE when mapping ZTJ to rest
+[33m074ffcb4[m chore: ImportedZoneTilingJobSavedServiceTest
+[33m738ee289[m chore: add importTilingJob test in ZoneTilingJobServiceTest
+[33m10dcd1dd[m chore: ZoneTilingJobValidatorTest
+[33me74c9701[m feat: import ZTJ from bucketPath
+[33mbc425a7b[m fix: dispatch annotation jobs by false and true positive in doubt objects
+[33m59b94f4d[m chore: reformat code
+[33mf8a46c72[m chore: add default detectable object types
+[33m97babc27[m chore: handle default detectable objects conf for chalon zone
+[33m559437a8[m chore: set cannes zone name as constant
+[33m10aa1199[m promotion: prod to preprod
+[33m5657ac3d[m promotion: preprod to prod
+[33meadb01e9[m fix: remove cascade.ALL from HumanDetectionJob tiles
+[33m683e051d[m chore: log humanZDJ tiles values when sending annotation
+[33m439762ff[m fix: save new detectable object conf when sending to annotation when conf is empty
+[33mcede40d2[m fix: throw exception when it occurs when creating annotation job
+[33mdd90e26d[m fix: associate DetectableObjectConfiguration to human ZDJ
+[33m2900dbe6[m fix: associate tilesWithoutObject to inDoubtHumanDetectionJobId
+[33m6710c6c9[m feat: process annotation for ZDJ
+[33mcb6bc734[m chore: separate ZDJ Annotation processor from ZDJSucceededService
+[33ma51baca3[m docs(api): process annotation job for both ZTJ and ZDJ
+[33m3813c442[m chore: specify new taskStatusId when saving ZDJ tasks from ZTJ tasks
+[33m2544f9b0[m chore: create separate annotation jobs for in doubt tiles and tiles without objects
+[33mdde02a7e[m promotion: preprod to prod
+[33ma7669059[m promotion: prod to preprod
+[33m3334f944[m fix: add missing brace in tiles downloader ssm param
+[33ma3f73a42[m poja-upgrade: 12.8.1
+[33mc28fe818[m chore: set geo-tiles downloader api url as ssm param
+[33me7ed6bcf[m chore: set worker_reserved_concurrent_executions_nb to 250
+[33md3ce7721[m promotion: preprod to prod
+[33m31f46db3[m chore: send tilingJob minimum infos when mailing filtered job
+[33m672b4167[m chore: send tiling task filterting through email
+[33mf11b321b[m chore: save only actual task status when duplicating
+[33mf271592d[m fix: duplicated tiling tasks have same datetime values and parcels same ids
+[33m97a7a7ad[m feat: dispatch tiling tasks by success status
+[33mf255c401[m feat: get tiling task statistics
+[33md25bd685[m feat: duplicate tiling jobs
+[33mc89ffacf[m chore: use parcels with response under 6MB for cannes TilesDownloaderIT
+[33mb42d8754[m chore: add cannes parcel data test inside TilesDownloaderIT
+[33m0f0f0cb5[m chore: update TILES_DOWNLOADER_API_URL inside template.yml
+[33m402207f3[m chore(to-revert): skip ObjectsDetectorIT
+[33m81112e48[m chore: update tiler downloader url
+[33m7c346b78[m fix: compute detectionTask status from tileDetectionTask statuses when retrying
+[33m2c16d099[m fix: able to process status from succeeded to retrying
+[33m775128f4[m promotion: preprod to prod
+[33m167a314c[m chore: send indoubt tiles to annotator only
+[33m9e3effd2[m chore: include confidence value during in doubt compute
+[33m003f2830[m chore: send only succeeded detection job to annotator
+[33mfb39fe74[m chore: log debug DetectionTaskConsumer
+[33mbb1008d8[m chore: filter unfinished task when validating detectionJob retryer
+[33m7baa1493[m chore: reverse failed tileDetectionTasks filter
+[33me56fb1a8[m promotion: preprod to prod
+[33m7f50cc2b[m chore(to-revert): allow processing retryer for PROCESSING-UNKNOWN detectionTasks
+[33me1be6f67[m fix: retry only failed TileDetectionTask
+[33mae84ba0b[m chore: handle FAILED zdj
+[33m41e535a5[m chore: send all detected tiles to bp-annotation with defaultLabels if any object detected
+[33ma600913a[m feat: retry failed detection tasks using new health status RETRYING
+[33m21462e9a[m promotion: preprod to prod
+[33m16bca708[m chore: allow RETRYING health status
+[33m6bb9d9e1[m chore: add RETRYING health status into db
+[33m36d9ccf9[m feat: retry failed tiling tasks using new health status RETRYING
+[33mf88063fb[m promotion: preprod to prod
+[33ma6a2480a[m chore: move DetectionTaskStatusChangedService into service.event package
+[33m0bdc99fa[m chore: add missing task db indexes
+[33m8b937107[m fix: persist TileDetectionTask before asynchronous treatment
+[33meb3b937d[m fix: TileDetectionTask persistance through TileDetectionTaskSucceeded
+[33m14b89241[m chore: remove LAZY fetching and debug logs
+[33m0a8e9694[m chore: DetectionTaskStatusChangedServiceTest
+[33m2b41313b[m fix: compute DetectionTask status through DetectionTaskStatusChanged and DetectionTaskSucceeded
+[33m0075f38d[m chore: rename TaskToTaskService correctly
+[33m514867db[m chore: complete parallel detection
+[33m2c2f1289[m fix: do not save parcels from detectionTask
+[33m0ec243d9[m chore: reformat code
+[33m9e1ef863[m fix: process parallel tile detection task
+[33m894a7cf1[m fix: set detected parcel creation datetime to last detected tile creation datetime
+[33m5007b216[m chore: log multiple parcels in tiling task
+[33m98b09ede[m chore: add confidence as annotation comment
+[33m07158756[m chore: update annotator client
+[33mbbda4827[m fix: filter duplicated tiles before detection
+[33mbbdb5b3e[m fix: filter distinct tiles by bucketPath before detection
+[33mb22524e8[m chore: separate KeyPredicateFunction from LabelExtractor
+[33me7bf56c7[m minor: format code
+[33mee1b3c2e[m chore(tests): test label extraction from DetectedTile
+[33ma9c63269[m fix: correctly map labels
+[33m69c83cd3[m fix: use correct tile when saving detected tile
+[33mbfda19ae[m chore: log exception message when CreateAnnotatedTask failed
+[33m495117ac[m promotion: prod to preprod
+[33m9b86d53e[m promotion: preprod to prod
+[33m7fef2702[m chore: add logs for debuging CreateAnnotatedTask
+[33m42650eb7[m promotion: preprod to prod
+[33m1d68e9e5[m chore: replace log.error to log.info
+[33m0847eb1c[m fix: use new saving job operation when creating annotation job
+[33m577983b7[m promotion: preprod to prod
+[33m7a406804[m promotion: prod to preprod
+[33mab500ede[m chore: send annotation task separately from annotation job
+[33m6b5df328[m chore: update annotator client
+[33m7d89b25b[m chore: dont log annotated tasks
+[33m11f78103[m promotion: preprod to prod
+[33m202b9348[m chore: set default annotation job status to PENDING
+[33mefd53d2c[m chore: FileZipper
+[33mceafa0e1[m chore: clean ZoneDetectionJobService
+[33m521b192e[m chore: complete human detection job automatically when any indoubt tiles detected
+[33m771f3807[m chore: add chalon parcels data
+[33m2ec4dc51[m chore: add DetectionTaskConsumerIT
+[33me1f69db1[m chore: split DetectionMapper and TileValidator as component
+[33md523b56e[m chore: enable ZoneDetectionJobSucceededServiceIT
+[33m853585b4[m chore: disable HikariIT
+[33md7a48d54[m chore: enable DetectionTaskServiceIT and ZoneDetectionJobServiceIT
+[33m4af9900c[m promotion: preprod to prod
+[33mb09b358f[m fix: add missing detectable object types
+[33m90c617ed[m promotion: prod to preprod
+[33m4c6fbddf[m fix: detect all tiles associated to task
+[33m2306e874[m promotion: prod to preprod
+[33m34d137a1[m chore: set tiles detection urls into env variables
+[33m7267037b[m chore: remove describing logs DetectedTile
+[33me2d6bcfd[m chore: debugs task saving process
+[33m1d1f71f1[m poja-upgrade: 12.7.1
+[33m795c283f[m chore: debug logs DetectionTaskService
+[33m5bb2492f[m chore: DetectionTaskServiceIT
+[33m256a72bf[m fix: filter all detected tiles for indoubt tiles
+[33m73ecfe20[m Revert "chore: skip ObjectsDetectorIT"
+[33mf9653548[m chore: debug logs for AnnotatedTasks
+[33m57ca266c[m chore: remove sending annotations logs
+[33m515d8941[m promotion: prod to preprod
+[33m59161ebf[m chore: skip ObjectsDetectorIT
+[33m60950eba[m chore: make explicit triggered email object and body after job finished
+[33mf7d2a6da[m chore: reverse mapping polygon coordinates sent to annotator
+[33m00400719[m promotion: prod to preprod
+[33m4545d9a4[m chore: tileDetectionBaseUrls logs
+[33me1a9fe66[m chore: set HumanDetectionJobCreatedFailedService @transactional
+[33m17a20f29[m promotion: preprod to prod
+[33m20920efc[m Revert "chore: revert debug logs"
+[33m17e6f3c8[m promotion: preprod to prod
+[33mbd696ed2[m fix: tiling features mapper
+[33m36edb22b[m feat: check manually human zdj update status
+[33m5a84bac1[m chore: return given detectablType during MockedObjectsDetector
+[33me7b709f4[m promotion: preprod to prod
+[33mfccd1dbb[m promotion: prod to preprod
+[33m5b639ca6[m test: Labège divided into 200 parcels
+[33mb165c419[m promotion: preprod to prod
+[33m169a8e13[m chore: delete unused tiling tasks logs
+[33m5befebcb[m chore: optimize human detection job events
+[33m05146161[m chore: log annotation job and labels and tasks
+[33m17ea06e0[m fix: filter distinct labels sent to annotator
+[33m38f92129[m chore: revert debug logs
+[33m66747d5d[m promotion: preprod to prod
+[33m4ae8a3f5[m promotion: prod to preprod
+[33me19c1356[m chore: map tiles detector urls from detectable type
+[33m261b71c9[m infra: update tiles downloader it cron
+[33m661ddd6a[m chore(to-revert): log objects detector response
+[33mb0158497[m chore(to-revert): set human zdj max failure attempt to 50
+[33m2e333953[m infra: can manually trigger tiles-downloader-it
+[33mbda71f07[m infra: add scheduled workflow to check tiles downloader api
+[33m3dbd42cf[m promotion: preprod to prod
+[33m4cf5c39e[m promotion: prod to preprod
+[33mbaea6f11[m chore: throw RestClientException during TilesDownloader
+[33mbdf8f33d[m fix: add AnnotatedTask.annotatorId
+[33mb6e4c79d[m chore: set Status serializable
+[33m039f2a72[m fix: ignore unknown taskId in Status entity
+[33m527f208f[m chore(to-revert): replace log.warn to log.error
+[33md168239a[m chore: debug tiling task parcels
+[33m3ab67249[m chore(to-revert): debug empty labels
+[33mf4b33d14[m chore: set default CrupdateAnnotatedJob images properties to 1024
+[33m9a872a0a[m chore: add images height and width to CrupdateAnnotedJob of annotator-api client
+[33mfda6aaf0[m chore: log.error exception when HumanDetectionJobCreatedFailed
+[33m46ac54b3[m fix: tilesDownloaderApiURl path
+[33me8b84e12[m feat: ZoneDetectionJob geoJsons url
+[33m6dbefca9[m promotion: preprod to prod
+[33m3f33157a[m chore: set frontal max-pool-size to 3
+[33m61142ae2[m wip: use VirtualThreadPerTask instead of ThreadPool
+[33m2cea6055[m wip: thread naming
+[33mfc032a13[m fix(to-revert): revert workers
+[33m0f189fa5[m fix: DetectionTaskConsumerWithMockedObjectsDetectorTest
+[33m6ccf49c2[m fix: check tiles and parcels when consuming DetectionTask
+[33m4f170665[m fix: add zoneDetectionJob validator
+[33m9f3972d7[m poja-upgrade: 12.2.1
+[33mb34a9c90[m fix: ZoneDetectionJobSucceededServiceTest
+[33m9175fff6[m chore: update tiles downloader and tile detection api url
+[33mdae7c43a[m chore: force saving indoubt tiles with human detection job
+[33mf359faec[m chore: ZoneDetectionJobSucceeded IT
+[33m875eae80[m poja-upgrade: 12.2.0
+[33m605db539[m chore(to-revert): log saved tasks
+[33m2cc64bc2[m chore: skip DetectionTaskServiceIT and ZoneDetectionJobServiceIT
+[33m67622abb[m chore: debug TilingTaskSucceededService
+[33m45548b90[m chore: DetectionTaskService IT
+[33ma388466c[m fix: set crupdateAnnotatedJobFolderPath to null
+[33med9a027b[m Revert "chore(to-revert): log saved tasks" (#56)
+[33m456636ce[m promotion: preprod to prod
+[33m4d8a5f72[m fix: annotator-api-client baseUrl to imagery not preprod
+[33m8c4ecbbb[m chore: update annotator-api-client
+[33m36434186[m fix: rename correctly HumanDetectionJobCreatedFailedService
+[33m5ad42388[m chore: log.warn humanDetectionJob process
+[33mc476eeb3[m chore: log.warn humanDetectionJob process
+[33m2bc66810[m chore: save human detection job and send annotations with retryer
+[33md0243cc7[m chore: set global and worker-specific hikari properties
+[33mb4087da8[m chore: add sentry conf
+[33mbc8bdda4[m promotion: preprod to prod
+[33m4d82c6eb[m fix: set ParcelContent.tiles as JdbcTypeCode(JSON)
+[33mfc92ac3c[m fix: add computed_confidence to detected_object table
+[33mf66d15a1[m chore(to-revert): log saved tasks
+[33m04d9b924[m chore: set ZoneTilingJob.create as @Transactional
+[33m9142b416[m chore: set with_sentry to true and add sentry dsn
+[33m7cddd042[m infra: hikari.sizePool=5
+[33ma9470d66[m chore: set random mocked values to DetectionResponse
+[33m78a4caf1[m chore: avoid NPE when zdj parcel is null
+[33md3ec6815[m infra: hikari.poolSize=10
+[33m6b687e9e[m chore: reverse ObjectDetector conditional values
+[33m23cc244e[m to-fix: retry attemp still 2 on workers, workers still does not process correctly parallel messages, disable flyway on workers
+[33m5a0ad10d[m todo: fix db properties when using poja-managed db
+[33m48472a00[m debug: disable snap
+[33m4eb90c7b[m fix: rm repository.conf
+[33m16dfdb00[m infra: worker_batch=3, worker_memory=1500, hikari.poolSize=2
+[33mf0af22e5[m chore: format
+[33m5a5c05cf[m poja-upgrade: 11.11.2
+[33m84d211be[m chore: TilesDownloaderIT
+[33m2fceca06[m chore: save_and_read_zdj_with_tasks
+[33md757d8c7[m chore: read zdj detected parcels
+[33mf7403b17[m chore: process_zdj IT
+[33m8c69d2ed[m chore: read_detection_jobs IT
+[33m43e29085[m infra: set TILES_DOWNLOADER_MOCK_ACTIVATED and OBJECTS_DETECTOR_MOCK_ACTIVATED env vars
+[33mea089da9[m chore: add MockedObjectsDetector and activation conditional property
+[33mdcd881c4[m poja-upgrade: 11.9.0
+[33m81b0df8b[m fixup
+[33m7e8024d3[m fix: hikari conf cannot be read from properties when deployed in lambda
+[33mabe98a5c[m poja: EventInvokeConfig: MaximumRetryAttempts: 0
+[33md0166060[m fixup
+[33m43db5f6f[m infra: spring.datasource.hikari.maximum-pool-size=1
+[33mb2ab12e0[m infra: worker_batch=1 and worker_memory=512
+[33mcb697a59[m infra: worker_memory=3000
+[33me42574f8[m todo: release resources on timeout
+[33m9402b685[m fix: close hikariDatasource on MailboxEventHandler::handleRequest completion
+[33me3c0fcf5[m debug: spring.datasource.hikari.leak-detection-threshold=3000
+[33m5436ea2b[m poja-upgrade: 11.7.1
+[33m253e29e7[m feat: ExceptionToStringFunction
+[33mbfe2d943[m poja-upgrade: v11.7.0
+[33m8cb9f958[m feat: FalliblyDurableMockedFunction
+[33m6871e8b6[m refactor: tiles.downloader.mock --> mock.activated
+[33ma3669390[m infra: spring.datasource.hikari.max-lifetime=1000
+[33md70e5d6d[m poja-upgrade: 11.6.0
+[33ma4027bd9[m test: exclude **/gen/** from coverage
+[33m41c4f5a2[m fixup: some generated classes are not decorated by Openapi gen
+[33m5fe87015[m fix: add @OpenapiGenerated to exclude Openapi generated files
+[33mf946ee96[m refactor: TilesDownloader inside tiling.downloader
+[33m97f9a255[m test: TilingTaskConsumerWithMockedDownloaderTest
+[33me90175dc[m fix: .txt extension to mocked downloaded tiles
+[33md46a8d44[m fix: sw.toString instead of pw.toString for stackTraceToString
+[33m17474012[m fix: add stackTrace to TilingTaskFailed.errorMessage
+[33m263ab193[m conf: aurora capacity from 16 to 32
+[33mef0ded0f[m conf: hikari pool size to 2
+[33md99da4af[m fixup
+[33m4c10fff0[m fix: tiles.downloader.mock rather than IsPreprod for mock activation
+[33m69494a62[m chore: format
+[33md315f858[m fix: f0dd9b20af0d5e528f0
+[33mf0dd9b20[m to-fix: annotator.yml has nothing to do here
+[33m05714f66[m poja-upgrade: 11.2.0
+[33mb86d2ef4[m chore: set TilesDownloader as env dependent
+[33m9cdee811[m chore: avoid NPE when DetectionTask has any parcels
+[33md6755816[m fix: set human zdj with new ID after ztj finished
+[33m2b9c8778[m chore: reformat
+[33m560bd584[m fix: replace db fk inside parcel_detection_task
+[33mdbd7629d[m chore: replace DetectionTask.Builder with new instance when saving ZDJ from ZDT
+[33md42e4229[m chore: set ZDJ.fireTasks to Transactional
+[33ma9dd5c8b[m chore: set ZTJ.fireTasks to Transactional
+[33m86db7917[m chore: avoid NPE when mapping detected parcels
+[33m62fc5bce[m chore: avoid NPE when mapping tilling jobs
+[33m3c1c8c3d[m feat: get zdj parcels
+[33mbc15ad6d[m fix: add detectedTile.parcelId and its sql script
+[33m564f69c2[m chore: refactor detection task consumer
+[33mc5d3b859[m chore: refactor ZoneDetectionJobSucceededService
+[33m0b5b4bdd[m chore: link detection task to parcels and compute when creating zdj
+[33m3a992b19[m chore: separate parcel geo-obj from tiling-task
+[33mafe5cb97[m chore: create sql script for parcels
+[33m79940120[m chore: save zdj human detection when saving zdj from ztj
+[33m079c6242[m fix: rm tmp files after usage
+[33m1c0446fb[m fix: missing jobType
+[33m05519728[m poja: EventConsumer use Workers
+[33ma2a4fcfc[m poja: todo: parallelize EventConsumer::accept
+[33mf98a7809[m fix: set worker.sqs.batchSize to 1 until EventConsumer accepts events parallely
+[33mbe91db7b[m chore: add page and pageSize requestParm in ZoneDetectionController
+[33me2ef2ae5[m fix: let db create uuid for new statuses
+[33m707241a8[m fix: type ZoneDetectionType
+[33m57ef7c63[m feat: GetDetectionJobs
+[33m410075c6[m chore: handle detectable object configuration during ZDJ processing
+[33m2d6e1a91[m[33m ([m[1;31morigin/refactor-indoubt-job[m[33m)[m fix: use correct values in InDoubtTileDetectedService
+[33m35351789[m fix: map tile bucket path to DetectedTile
+[33mc0c782a4[m chore(to-complete): handle indoubt tiles detected event inside its own service
+[33mcd5e77d7[m chore: refactor ZoneDetectionJobStatusChangedService
+[33m28eaf1db[m chore: only save taskStatus in taskStatusService, not whole task
+[33m0cc5cb98[m fix: fail(oneTask) does not affect otherTasks
+[33md0594aa7[m todo: fail(oneTask) seem to set job.tasks.status to job.status!
+[33m44bc2590[m test: concurrent task saving is perfectly fine...
+[33mae1e19f1[m fix: only save status instead of whole job
+[33m1a6b2f5f[m fix: minimize db operation for JobService::recomputeStatus
+[33m43b66696[m chore: log error message when maxRetry reached during event handling
+[33m80b827d5[m fix: do not fail task status on retryable failure
+[33m82f7b04c[m chore: replace manual bp-annotator integration with openapi-gen and local maven installation
+[33m21c69471[m feat: TilingTaskFailedService
+[33m58c88153[m fix: rm bucket name from bucket path
+[33m7add2b70[m fix: pessimistically locked status update and RetryableTaskStatusService
+[33m7899be9f[m wip: user user db login instead of master
+[33m66e27da1[m infra: set decent DBCluster.MinCapacity and MaxCapacity for decent pgsql.max_connections
+[33m88200dd9[m refactor: extract generic job package
+[33m725adb63[m fix: JobStatus still needs to be globally computed from tasks
+[33m66d248c5[m chore: Polygon to MultiPolygon in test parcels
+[33m555b90d4[m fix: ztj.zoom
+[33mefa50d2e[m fix: override feature.zoom with job.zoom
+[33mffe1a42f[m fix: disable status.jobType (de)serialization
+[33mc468dc96[m fix: enable tiles_downloader_test and increase coverage to 0.7
+[33mf7e7e1df[m fix: ADMIN_API_URL --> ADMIN_API_KEY
+[33mfdadccc0[m fix: no job.tasks
+[33m00bb3af6[m chore: add admin api key in env var
+[33m571b8c23[m infra: add annotator api url as environment variable through ssm
+[33m33a52988[m chore: intagrate bp-annotators and handle indoubt tiles event
+[33m022c438c[m poja-upgrade: v11.2.0
+[33m6cb1d7b3[m feat: health-check-poja.yml
+[33m4e467a64[m poja-upgrade: v11.1.0
+[33m34df245b[m test: reduce 2M statuses
+[33mf32061b1[m refactor: use Instant instead of String when applicable
+[33m0d51a3f3[m refactor: separate GeoJobType from JobType
+[33m07f0191c[m todo: make tilesDownloader use different tmpFolder for consecutive calls
+[33m8a895040[m test: read_parcel_with_non_emptyTiles
+[33m5f4a024a[m fix: Parcel.tiles cannot be set to null
+[33m526d9ea5[m fix: Parcel.tiles are initialized on construction
+[33m08926d66[m fix: ZoneTilingJobStatusChanged::toString
+[33m69e06582[m fix: properly monitor task.status changes
+[33m7432de3b[m fix: restJobZoomLevel_overrides_restJobFeatureZoom
+[33m2c49c38f[m test: coverage to 0.7
+[33me6e1ad59[m test: fix download_tiles_ok
+[33m108ea4ca[m test: fix create_tiling_job_ok
+[33m43cc0758[m fix: mail only once on failure
+[33mbdb99583[m refactor: less verbose saveZDJFromZTJ
+[33m35afb14f[m feat: create detection job after tiling job
+[33m4794c7f0[m ci: codeql
+[33m0129bd4d[m chore: upgrade tika-core
+[33m50b0606f[m fix: admin can tile and detect
+[33m120f30c5[m feat: disable anonymous calls
+[33md4658d8d[m refactor!: upgrade to spring v3 (#11)
+[33m0849bff9[m feat: /geojsonsUrl
+[33md686294c[m docs: DZJ.type=MAHINE or HUMAN
+[33ma35435e4[m docs: new DetectableObjectConfiguration and DetectedObject.detectorVersion
+[33m63a5dbfd[m chore(tests): disable flaky download_tiles_ok
+[33m218d3c38[m chore(test): re-enable download_tiles_ok
+[33med7b1631[m poja-upgrade: 10.8.0
+[33ma3ae465f[m to-revert: disable download_tiles_ok
+[33m92f63c34[m chore: reformat project and add object confidence test
+[33m2804a2f9[m chore: add confidence to tile detected object
+[33m8b5b286f[m refactor: static imports
+[33md4388d9f[m refactor: continuing eda447dd875c
+[33m384d8b15[m poja: --worker-memory=512
+[33mf7f9c778[m refactor: continuing  134f55147fb
+[33m9a03b31c[m refactor: extract ParcelService from ZTJService
+[33m8d507335[m refactor: add JobService::onStatusChanged
+[33mf50c7c6f[m refactor: TaskStatusService is base class for XxxTaskStatusService
+[33mb454da65[m refactor: switch-expression in ZoneTilingJobStatusChangedService
+[33m606b897c[m refactor: TilesDetectionApi --> ObjectsDetector
+[33mcbd5986e[m refactor: continue eda447dd875c5
+[33m134f5514[m refactor: put geo services in geo.service package
+[33mb8cdd608[m refactor: put geo Object in geo package and continue eda447dd875c5
+[33meda447dd[m refactor: ZoneTask --> Task. Only tie Zone to Jobs.
+[33mf5c6a277[m ci: min-coverage to 0.75
+[33m4beab2c9[m poja-upgrade: v10.7.0
+[33m74960faf[m fix: fix ZoneTask::getJobType. Actually should be deduced from jobId --> job.
+[33md6df6e8e[m test: job stays in PENDING as long as no task reached PROCESSING
+[33m9d4c1644[m refactor: static import
+[33m5a6df7c5[m refactor: ZoneJob::getJobType is abstract
+[33mffe4469b[m refactor: ZoneJobService as super-class of others
+[33m074c786a[m refactor: why was JobType inside JobStatus...
+[33m8f0e90ff[m rector: rm ZoneXxxJob::addStatus in favor of NON_DEFAULT ZoneJob::addStatus (NEVER create default non-working method)
+[33m363fbe9d[m refactor: ZoneJob<T extends ZoneTask>::getStatus
+[33m4565e761[m refactor: tiling and dectection status to only job status
+[33m1c1bf936[m chore: update tiles downloader api url
+[33mc48dbd84[m fix: zone_tiling template content
+[33m9935bb6b[m fix: zone_tiling template content
+[33m078b47b0[m chore: add test on bad status transition
+[33m00707620[m fix: update tile detection api url
+[33ma9fb7b80[m chore: set ses_source to contact@bpartners.app
+[33m8bb7ccc7[m refactor: school.hei --> app.bpartners
+[33m99039233[m poja-upgrade: v10.6.1
+[33m6c91367f[m chore: map correctly and adjust test
+[33me1f14567[m fix: wrong bucketPath
+[33mee7842a9[m chore: cancel transaction on bad status transition
+[33md053361d[m infra: update subnets and security groups
+[33m7bbeb9dc[m docs: LICENSE.md
+[33m018c37cd[m refactor: geo-tiler --> geo-jobs
+[33m4c2a68e0[m chore: test status changement
+[33me191fd57[m feat: process zone detection job
+[33m8b75324f[m conf: use small enough Parcel so that tiling fits under 6Mo
+[33m99539018[m refactor: use List::forEachn instead of List::stream::map::toList
+[33m795161a3[m refactor: you need to be SUPER DUPER strict with visibility
+[33m2a2abf8e[m refactor: api.TilesDownloaderApi --> geo.TilesDownloader
+[33m12c35daa[m refactor: for one million time: do __NOT__ publicly expose methods that returns large bytes
+[33m170be080[m refactor: write TilesDownloaderApi input files in tempFile
+[33m34e82420[m refactor: tiles.downloader.api.url env var instead of constant
+[33md71a2efc[m refactor: no field injection
+[33mb47fa940[m feat: enrich Tiling API implementation
+[33mf94881e7[m chore: send email when job is finished with success
+[33m720a3ef9[m[33m ([m[1;32mfeat/tiling-jobs[m[33m)[m feat: Detection API
+[33m2f231c24[m fix: correctly reference geo components in rest api
+[33mf8252abf[m refactor: ZoneTilingTaskCreatedService::unzip
+[33mda21af8f[m wip: following 747353db080a
+[33m7b209ff2[m refactor: ZoneTilingJobService::fireEvents gives zero hint of what are the events sent
+[33m9da2156a[m refactor: use IllegalArgumentException for bad function parameters
+[33m428b3d60[m refactor: eloquent areAllTasksPending
+[33m0a7d1fd3[m wip: following de0249cde4df
+[33md3e0d3ee[m wip= TaskStatus::reduce
+[33mf805ae9b[m refactor: do not put any test resources in src/main/resources
+[33m7ca0b2b6[m test: unit tests (Test) are for single classes, no framework, no FacadeIT inheritance
+[33m972e7050[m test: testing for ExtensionGuesser is bad: test behaviours, not implem
+[33mc74f9d0e[m feat: ZoneTilingJobStatusChanged
+[33m0387ff96[m refacor: for the million time: no utils
+[33me714f0e4[m wip: refactor: restrict status manipulation by consumers to strict minimum
+[33m697daa28[m refactor: ZoneTilingJob::isDone --> succeeded
+[33ma9f24b13[m refactor: updateStatus(task, taskStatus) --> (task, progression, health)
+[33meaa78ca0[m rename: api --> tilesDownloaderApi
+[33mb45e16a6[m chore: rename zip images to their references
+[33me5c4a665[m poja-upgrade:10.2.0
+[33m7c7dbb06[m  chore: use poja 10.1.0
+[33mb297c4ad[m feat: send email after all job task completion
+[33m7ca4d123[m data: grand-lyon-2bis
+[33m8659bcf9[m fix: integrate geo-tiler api
+[33m9b5f41d7[m fixup
+[33m302fd954[m docs: perf of wms-tile-get
+[33mde044784[m fix: flyway: explicit geometry --> feature --> parcel
+[33mf0922052[m poja: rm infra-health-check.yml in favour of health-chek-infra.yml
+[33m11f48517[m feat: download parameters for geoServer
+[33mbf3156cc[m feat: domain.Feature is renamed Parcel and persists whole rest.Feature
+[33m3003ec9c[m refactor: Geometry --> Feature
+[33mb0fc0db5[m infra: add required env var for test
+[33mac69d5b7[m poja: update poja to 7.0.0
+[33m80e2bbcc[m fix: ignore properties inferred from Getter on ZoneTilingTaskCreated and ZoneTilingJobCreated
+[33m020f0e06[m chore: register modules on EventConsumer.om
+[33meaab1e25[m chore(to-revert): decrease line-coverage reqs to 0.6
+[33m11ce5fc1[m feat: handle task completion and job completion
+[33md7f835fb[m feat: connect to external api, unzip files and upload them to s3
+[33mde7ce09c[m chore: fire events ( ZoneTilingJobCreated and ZoneTilingTaskCreate)
+[33m2b266ad7[m chore: expose /tilingJobs with post and get methods
+[33md683d653[m chore: page, pageSize and exceptions
+[33mac28cd71[m chore: job, task, and statuses migrations
+[33m97851937[m docs(api): post zone tiling job
+[33mf1a7e85f[m feat: poja generated files

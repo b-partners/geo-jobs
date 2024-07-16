@@ -5,10 +5,14 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
 import static app.bpartners.geojobs.repository.model.GeoJobType.TILING;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
+import static java.util.stream.Collectors.toList;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.*;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.TilingTaskMapper;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoomMapper;
 import app.bpartners.geojobs.endpoint.rest.model.BucketSeparatorType;
+import app.bpartners.geojobs.endpoint.rest.model.CreateZoneTilingJob;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Task;
@@ -24,8 +28,10 @@ import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.JobFilteredMailer;
 import app.bpartners.geojobs.service.NotFinishedTaskRetriever;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.SneakyThrows;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +41,8 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
   private final ZoneDetectionJobService detectionJobService;
   private final JobFilteredMailer<ZoneTilingJob> tilingFilteredMailer;
   private final NotFinishedTaskRetriever<TilingTask> notFinishedTaskRetriever;
+  private static ZoomMapper zoomMapper;
+  private static TilingTaskMapper tilingTaskMapper;
 
   public ZoneTilingJobService(
       JpaRepository<ZoneTilingJob, String> repository,
@@ -55,6 +63,8 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
     this.detectionJobService = detectionJobService;
     this.tilingFilteredMailer = tilingFilteredMailer;
     this.notFinishedTaskRetriever = notFinishedTaskRetriever;
+    this.zoomMapper = zoomMapper;
+    this.tilingTaskMapper = tilingTaskMapper;
   }
 
   public ZoneTilingJob importFromBucket(
@@ -236,5 +246,17 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
       detectionJobService.saveZDJFromZTJ(duplicatedJob);
     }
     return duplicatedJob;
+  }
+
+  @SneakyThrows
+  public static List<TilingTask> getTilingTasks(CreateZoneTilingJob job, String jobId) {
+    var serverUrl = new URL(job.getGeoServerUrl());
+    return job.getFeatures().stream()
+        .map(
+            feature -> {
+              feature.setZoom(zoomMapper.toDomain(job.getZoomLevel()).getZoomLevel());
+              return tilingTaskMapper.from(feature, serverUrl, job.getGeoServerParameter(), jobId);
+            })
+        .collect(toList());
   }
 }

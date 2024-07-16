@@ -29,6 +29,7 @@ import app.bpartners.geojobs.model.page.PageFromOne;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.service.ParcelService;
+import app.bpartners.geojobs.service.ZoneService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
 import java.util.List;
@@ -58,6 +59,7 @@ public class ZoneDetectionController {
   private final EventProducer eventProducer;
   private final GeoJsonConversionInitiationService geoJsonConversionInitiationService;
   private final CommunityFullDetectionAuthorizer communityFullDetectionAuthorizer;
+  private final ZoneService zoneService;
 
   @PutMapping("/detectionJobs/{id}/taskFiltering")
   public List<FilteredDetectionJob> filteredDetectionJobs(@PathVariable String id) {
