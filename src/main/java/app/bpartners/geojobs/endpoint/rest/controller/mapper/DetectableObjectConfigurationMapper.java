@@ -5,7 +5,6 @@ import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import java.math.BigDecimal;
-import java.util.Date;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -23,7 +22,10 @@ public class DetectableObjectConfigurationMapper {
         .detectionJobId(jobId)
         .objectType(typeMapper.toDomain(Objects.requireNonNull(rest.getType())))
         .confidence(rest.getConfidence() != null ? rest.getConfidence().doubleValue() : 1)
-        .bucketStorageName(rest.getBucketStorageName() != null ? rest.getBucketStorageName() : BUCKET_STORAGE_NAME + "_" + now())
+        .bucketStorageName(
+            rest.getBucketStorageName() != null
+                ? rest.getBucketStorageName()
+                : BUCKET_STORAGE_NAME + "_" + now())
         .build();
   }
 
