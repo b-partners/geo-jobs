@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import app.bpartners.geojobs.file.ExtensionGuesser;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.model.exception.ApiException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -17,11 +18,13 @@ class FileWriterTest {
 
   private ExtensionGuesser extensionGuesser;
   private FileWriter fileWriter;
+  private ObjectMapper objectMapper;
 
   @BeforeEach
   void setUp() {
     extensionGuesser = mock(ExtensionGuesser.class);
-    fileWriter = new FileWriter(extensionGuesser);
+    objectMapper = new ObjectMapper();
+    fileWriter = new FileWriter(objectMapper, extensionGuesser);
   }
 
   @Test
