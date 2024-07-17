@@ -9,6 +9,7 @@ import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.*;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectConfigurationMapper;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.Task;
@@ -43,18 +44,19 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
   private final TilingTaskRepository tilingTaskRepository;
   private final HumanDetectionJobRepository humanDetectionJobRepository;
   private final ZoneDetectionJobRepository zoneDetectionJobRepository;
-
+  private final DetectableObjectConfigurationMapper objectConfigurationMapper;
   public ZoneDetectionJobService(
-      JpaRepository<ZoneDetectionJob, String> repository,
-      JobStatusRepository jobStatusRepository,
-      TilingTaskRepository tilingTaskRepository,
-      ParcelDetectionTaskRepository taskRepository,
-      EventProducer eventProducer,
-      DetectionMapper detectionMapper,
-      DetectableObjectConfigurationRepository objectConfigurationRepository,
-      HumanDetectionJobRepository humanDetectionJobRepository,
-      ZoneDetectionJobRepository zoneDetectionJobRepository,
-      TaskStatisticRepository taskStatisticRepository) {
+          JpaRepository<ZoneDetectionJob, String> repository,
+          JobStatusRepository jobStatusRepository,
+          TilingTaskRepository tilingTaskRepository,
+          ParcelDetectionTaskRepository taskRepository,
+          EventProducer eventProducer,
+          DetectionMapper detectionMapper,
+          DetectableObjectConfigurationRepository objectConfigurationRepository,
+          HumanDetectionJobRepository humanDetectionJobRepository,
+
+          ZoneDetectionJobRepository zoneDetectionJobRepository,
+          TaskStatisticRepository taskStatisticRepository, CommunityZoneDetectionJobProcessAuthorizer communityZoneDetectionJobProcessAuthorizer, DetectableObjectConfigurationMapper objectConfigurationMapper) {
     super(
         repository,
         jobStatusRepository,
@@ -67,6 +69,20 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
     this.objectConfigurationRepository = objectConfigurationRepository;
     this.humanDetectionJobRepository = humanDetectionJobRepository;
     this.zoneDetectionJobRepository = zoneDetectionJobRepository;
+    this.objectConfigurationMapper = objectConfigurationMapper;
+  }
+
+  @Transactional
+  public ZoneDetectionJob processZDJ(
+      String jobId,
+      List<app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration>
+          detectableObjectConfigurations) {
+    List<app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration>
+        configurations =
+            detectableObjectConfigurations.stream()
+                .map(objectConf -> objectConfigurationMapper.toDomain(jobId, objectConf))
+                .toList();
+    return fireTasks(jobId, configurations);
   }
 
   @Transactional
@@ -311,7 +327,7 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
     return job;
   }
 
-  @Transactional
+
   public ZoneDetectionJob fireTasks(
       String jobId, List<DetectableObjectConfiguration> objectConfigurationsFromMachineZDJ) {
     var job = findById(jobId);
