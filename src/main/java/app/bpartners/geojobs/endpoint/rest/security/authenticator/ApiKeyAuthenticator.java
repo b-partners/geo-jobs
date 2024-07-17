@@ -40,7 +40,7 @@ public class ApiKeyAuthenticator implements UsernamePasswordAuthenticator {
   }
 
   private boolean existsAsApiKeyInCommunityKeys(String candidateApiKey) {
-    return communityAuthorizationRepository.findCommunityAuthorizationByApiKey(candidateApiKey).isPresent();
+    return communityAuthorizationRepository.findByApiKey(candidateApiKey).isPresent();
   }
 
   private String getApiKeyFromHeader(

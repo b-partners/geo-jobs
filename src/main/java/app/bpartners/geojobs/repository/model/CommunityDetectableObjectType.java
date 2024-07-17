@@ -1,17 +1,16 @@
 package app.bpartners.geojobs.repository.model;
 
-import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import static jakarta.persistence.EnumType.STRING;
 import static org.hibernate.type.SqlTypes.NAMED_ENUM;
 
+import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import jakarta.persistence.*;
+import java.io.Serializable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
-
-import java.io.Serializable;
 
 @Data
 @Builder
@@ -19,14 +18,13 @@ import java.io.Serializable;
 @NoArgsConstructor
 @Entity(name = "community_detectable_object_type")
 public class CommunityDetectableObjectType implements Serializable {
-    @Id
-    private String id;
+  @Id private String id;
 
-    @Enumerated(STRING)
-    @JdbcTypeCode(NAMED_ENUM)
-    private DetectableType type;
+  @Enumerated(STRING)
+  @JdbcTypeCode(NAMED_ENUM)
+  private DetectableType type;
 
-    @ManyToOne
-    @JoinColumn(name="id_community_authorization")
-    private CommunityAuthorization communityAuthorization;
+  @ManyToOne
+  @JoinColumn(name = "id_community_authorization")
+  private CommunityAuthorization communityAuthorization;
 }
