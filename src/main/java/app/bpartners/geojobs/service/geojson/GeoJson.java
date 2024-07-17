@@ -1,14 +1,21 @@
 package app.bpartners.geojobs.service.geojson;
 
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 
+@AllArgsConstructor
+@Getter
+@Setter
 @ToString
 @EqualsAndHashCode
-public class GeoJson {
+public class GeoJson implements Serializable {
   private static final String DEFAULT_TYPE = "FeatureCollection";
   private final String type;
   private final CRS crs;
@@ -20,9 +27,12 @@ public class GeoJson {
     this.features = features;
   }
 
+  @AllArgsConstructor
+  @Getter
+  @Setter
   @ToString
   @EqualsAndHashCode
-  public static class CRS {
+  public static class CRS implements Serializable {
     private static final String DEFAULT_CSR_TYPE = "name";
     private static final Map<String, String> DEFAULT_CSR_PROPERTIES =
         Map.of("name", "urn:ogc:def:crs:OGC:1.3:CRS84");
@@ -35,15 +45,18 @@ public class GeoJson {
     }
   }
 
+  @AllArgsConstructor
+  @Getter
+  @Setter
   @ToString
   @EqualsAndHashCode
-  public static class GeoFeature {
-    private static final String DEFAULT_FEATURE_TYPE="Feature";
+  public static class GeoFeature implements Serializable {
+    private static final String DEFAULT_FEATURE_TYPE = "Feature";
     private Map<String, String> properties;
     private String type;
     private MultiPolygon geometry;
 
-    public GeoFeature(Map<String, String> properties, MultiPolygon geometry){
+    public GeoFeature(Map<String, String> properties, MultiPolygon geometry) {
       this.properties = properties;
       this.type = DEFAULT_TYPE;
       this.geometry = geometry;

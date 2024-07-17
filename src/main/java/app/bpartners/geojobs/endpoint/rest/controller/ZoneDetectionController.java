@@ -27,6 +27,7 @@ import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.service.ParcelService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
+import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,6 +55,7 @@ public class ZoneDetectionController {
   private final EventProducer eventProducer;
   private final CommunityZoneDetectionJobProcessAuthorizer
       communityZoneDetectionJobProcessAuthorizer;
+  private final GeoJsonConversionInitiationService geoJsonConversionInitiationService;
 
   @PutMapping("/detectionJobs/{id}/taskFiltering")
   public List<FilteredDetectionJob> filteredDetectionJobs(@PathVariable String id) {
@@ -150,6 +152,6 @@ public class ZoneDetectionController {
 
   @GetMapping("/detectionJobs/{id}/geojsonsUrl")
   public GeoJsonsUrl getZDJGeojsonsUrl(@PathVariable(value = "id") String detectionJobId) {
-    return service.getGeoJsonsUrl(detectionJobId);
+    return geoJsonConversionInitiationService.initiateGeoJsonConversion(detectionJobId);
   }
 }

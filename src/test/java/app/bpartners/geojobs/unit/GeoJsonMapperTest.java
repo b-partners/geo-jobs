@@ -1,44 +1,34 @@
 package app.bpartners.geojobs.unit;
 
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
-import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
-import app.bpartners.geojobs.service.geojson.GeoJson;
-import app.bpartners.geojobs.service.geojson.GeoJsonMapper;
-import org.junit.jupiter.api.Test;
-
-import java.math.BigDecimal;
-import java.util.List;
-
 import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.MULTIPOLYGON;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.POOL;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-class GeoJsonMapperTest {
+import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
+import app.bpartners.geojobs.repository.model.detection.DetectableObjectType;
+import app.bpartners.geojobs.repository.model.detection.DetectedObject;
+import app.bpartners.geojobs.service.geojson.GeoJson;
+import app.bpartners.geojobs.service.geojson.GeoJsonMapper;
+import java.math.BigDecimal;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+
+public class GeoJsonMapperTest {
   private final GeoJsonMapper subject = new GeoJsonMapper();
 
-  private Feature annotation() {
+  public static Feature feature() {
     Feature feature = new Feature();
     var coordinates =
         List.of(
             List.of(
                 List.of(
-                    List.of(
-                        BigDecimal.valueOf(322.36584784164086),
-                        BigDecimal.valueOf(134.31910326735036)),
-                    List.of(
-                        BigDecimal.valueOf(385.8621512043883),
-                        BigDecimal.valueOf(0.0)),
-                    List.of(
-                        BigDecimal.valueOf(66.66666666666667),
-                        BigDecimal.valueOf(0.0)),
-                    List.of(
-                        BigDecimal.valueOf(61.05413784879562),
-                        BigDecimal.valueOf(19.5373241116146)),
-                    List.of(
-                        BigDecimal.valueOf(322.36584784164086),
-                        BigDecimal.valueOf(134.31910326735036)))));
-
+                    List.of(BigDecimal.valueOf(600), BigDecimal.valueOf(136.5)),
+                    List.of(BigDecimal.valueOf(566), BigDecimal.valueOf(800.54)),
+                    List.of(BigDecimal.valueOf(1022), BigDecimal.valueOf(1010)),
+                    List.of(BigDecimal.valueOf(6), BigDecimal.valueOf(43)))));
     MultiPolygon multiPolygon = new MultiPolygon().coordinates(coordinates);
     multiPolygon.setType(MULTIPOLYGON);
     feature.setGeometry(multiPolygon);
@@ -46,9 +36,19 @@ class GeoJsonMapperTest {
     return feature;
   }
 
+  public static DetectedObject detectedObject() {
+    return DetectedObject.builder()
+        .id(randomUUID().toString())
+        .feature(feature())
+        .computedConfidence(0.95)
+        .detectedObjectTypes(List.of(DetectableObjectType.builder().detectableType(POOL).build()))
+        .build();
+  }
+
   @Test
   void annotation_to_geo_json() {
-    List<GeoJson.GeoFeature> actual = subject.toGeoFeatures(538559, 373791, 20, 1024, List.of(annotation()));
+    List<GeoJson.GeoFeature> actual =
+        subject.toGeoFeatures(538559, 373791, 20, 1024, List.of(detectedObject()));
 
     assertNotNull(actual);
     assertFalse(actual.isEmpty());

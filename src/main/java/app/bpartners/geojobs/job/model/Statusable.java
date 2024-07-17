@@ -23,7 +23,7 @@ public interface Statusable<S extends Status> {
                 .map(status -> (Status) status)
                 .sorted(comparing(Status::getCreationDatetime, naturalOrder()).reversed())
                 .toList()
-                .get(0));
+                .getFirst());
   }
 
   default Statusable<S> hasNewStatus(Status status) {
