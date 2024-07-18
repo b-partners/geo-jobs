@@ -6,13 +6,12 @@ import static org.hibernate.type.SqlTypes.NAMED_ENUM;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import jakarta.persistence.*;
 import java.io.Serializable;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.util.Objects;
+import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 
-@Data
+@Getter
+@Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -27,4 +26,22 @@ public class CommunityDetectableObjectType implements Serializable {
   @ManyToOne
   @JoinColumn(name = "id_community_authorization")
   private CommunityAuthorization communityAuthorization;
+
+  @Override
+  public String toString() {
+    return "CommunityDetectableObjectType{" + "id='" + id + '\'' + ", type=" + type + '}';
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    CommunityDetectableObjectType that = (CommunityDetectableObjectType) o;
+    return Objects.equals(id, that.id) && type == that.type;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id, type);
+  }
 }

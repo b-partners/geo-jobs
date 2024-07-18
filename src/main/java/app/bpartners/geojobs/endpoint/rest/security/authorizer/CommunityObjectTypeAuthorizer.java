@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.endpoint.rest.security.authorizer;
 
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
+import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
@@ -13,11 +15,12 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class CommunityObjectTypeAuthorizer implements Consumer<List<DetectableType>> {
+public class CommunityObjectTypeAuthorizer implements Consumer<List<DetectableObjectType>> {
   private final CommunityAuthorizationRepository caRepository;
+  private final DetectableObjectTypeMapper detectableObjectTypeMapper;
 
   @Override
-  public void accept(List<DetectableType> candidateObjectTypes) {
+  public void accept(List<DetectableObjectType> candidateObjectTypes) {
     var userPrincipal = AuthProvider.getPrincipal();
     if (userPrincipal.isAdmin()) return;
 
@@ -27,8 +30,10 @@ public class CommunityObjectTypeAuthorizer implements Consumer<List<DetectableTy
         communityAuthorization.getDetectableObjectTypes().stream()
             .map(CommunityDetectableObjectType::getType)
             .toList();
+    var candidateObjectTypesDomain =
+        candidateObjectTypes.stream().map(detectableObjectTypeMapper::toDomain).toList();
     var notAuthorizedObjectTypes =
-        getNotAuthorizedObjectTypes(authorizedObjectTypes, candidateObjectTypes);
+        getNotAuthorizedObjectTypes(authorizedObjectTypes, candidateObjectTypesDomain);
 
     if (!notAuthorizedObjectTypes.isEmpty()) {
       throw new ForbiddenException(
