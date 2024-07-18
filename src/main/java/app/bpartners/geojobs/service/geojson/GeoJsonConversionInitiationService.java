@@ -34,12 +34,13 @@ public class GeoJsonConversionInitiationService {
                   + jobStatus)
           .status(null);
     }
-    return processConversionTask(jobId);
+    return processConversionTask(linkedJob.getZoneName(), jobId);
   }
 
-  private GeoJsonsUrl processConversionTask(String jobId) {
-    var persisted = service.getByJobId(jobId);
-    if (persisted != null) {
+  private GeoJsonsUrl processConversionTask(String zoneName, String jobId) {
+    var optionalTask = service.getByJobId(jobId);
+    if (optionalTask.isPresent()) {
+      var persisted = optionalTask.get();
       return new GeoJsonsUrl()
           .url(persisted.getGeoJsonUrl())
           .status(taskStatusMapper.toRest(persisted.getStatus()));
@@ -54,7 +55,7 @@ public class GeoJsonConversionInitiationService {
             .build();
 
     var saved = service.save(geoJsonConversionTask);
-    eventProducer.accept(List.of(new GeoJsonConversionInitiated(jobId, saved.getId())));
+    eventProducer.accept(List.of(new GeoJsonConversionInitiated(jobId, saved.getId(), zoneName)));
     return new GeoJsonsUrl()
         .url(saved.getGeoJsonUrl())
         .status(taskStatusMapper.toRest(saved.getStatus()));

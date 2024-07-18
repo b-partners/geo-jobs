@@ -182,8 +182,14 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
     var tilingJobId = randomUUID().toString();
     jobRepository.saveAll(
         List.of(
-            aZDJ(JOB3_ID, tilingJobId).toBuilder().detectionType(MACHINE).build(),
-            aZDJ(JOB1_ID, tilingJobId).toBuilder().detectionType(HUMAN).build()));
+            aZDJ(JOB3_ID, tilingJobId).toBuilder()
+                .submissionInstant(now())
+                .detectionType(MACHINE)
+                .build(),
+            aZDJ(JOB1_ID, tilingJobId).toBuilder()
+                .submissionInstant(now())
+                .detectionType(HUMAN)
+                .build()));
     when(humanDetectionJobRepositoryMock.findByZoneDetectionJobId(JOB1_ID))
         .thenReturn(
             List.of(HumanDetectionJob.builder().annotationJobId(ANNOTATION_JOB_ID).build()));
@@ -285,6 +291,8 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
   void read_zdj_geo_jobs_url() {
     var tilingJobId1 = randomUUID().toString();
     var tilingJobId2 = randomUUID().toString();
+    var eventCapture = ArgumentCaptor.forClass(List.class);
+
     jobRepository.saveAll(
         List.of(
             aZDJ(JOB3_ID, tilingJobId1).toBuilder().detectionType(MACHINE).build(),
@@ -303,6 +311,14 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
     GeoJsonsUrl actual1 = subject.getZDJGeojsonsUrl(JOB1_ID);
     GeoJsonsUrl actual2 = subject.getZDJGeojsonsUrl(JOB2_ID);
 
+    assertNotNull(actual1.getUrl());
+    assertTrue(
+        actual1
+            .getUrl()
+            .contains(
+                "Unable to generate geoJsons Url to unfinished succeeded job. Actual status is"));
+    assertNull(actual1.getStatus());
+    verify(eventProducer, times(1)).accept(eventCapture.capture());
     assertEquals(
         new GeoJsonsUrl()
             .url(null)
@@ -310,15 +326,6 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
                 new Status()
                     .progression(Status.ProgressionEnum.PENDING)
                     .health(Status.HealthEnum.UNKNOWN)
-                    .creationDatetime(null)),
-        actual1.status(actual1.getStatus().creationDatetime(null)));
-    assertEquals(
-        new GeoJsonsUrl()
-            .url("NotImplemented: finished human detection job without url")
-            .status(
-                new Status()
-                    .progression(Status.ProgressionEnum.FINISHED)
-                    .health(Status.HealthEnum.SUCCEEDED)
                     .creationDatetime(null)),
         actual2.status(actual2.getStatus().creationDatetime(null)));
 

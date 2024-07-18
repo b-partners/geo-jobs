@@ -58,7 +58,7 @@ public class GeoJson implements Serializable {
 
     public GeoFeature(Map<String, String> properties, MultiPolygon geometry) {
       this.properties = properties;
-      this.type = DEFAULT_TYPE;
+      this.type = DEFAULT_FEATURE_TYPE;
       this.geometry = geometry;
     }
   }

@@ -25,6 +25,9 @@ public class GeoJsonConversionInitiated extends PojaEvent {
   @JsonProperty("conversionTaskId")
   private String conversionTaskId;
 
+  @JsonProperty("zoneName")
+  private String zoneName;
+
   @Override
   public Duration maxConsumerDuration() {
     return Duration.ofMinutes(5);

@@ -1,40 +1,62 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.unit.GeoJsonMapperTest.detectedObject;
+import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionInitiated;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
+import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.file.FileWriter;
-import app.bpartners.geojobs.mail.Email;
-import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.repository.HumanDetectionJobRepository;
+import app.bpartners.geojobs.repository.model.GeoJsonConversionTask;
 import app.bpartners.geojobs.repository.model.detection.DetectedTile;
 import app.bpartners.geojobs.repository.model.detection.HumanDetectionJob;
+import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
+import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
+import app.bpartners.geojobs.service.geojson.GeoJsonConversionTaskService;
+import app.bpartners.geojobs.service.geojson.GeoJsonConversionTaskStatusService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConverter;
-import app.bpartners.geojobs.template.HTMLTemplateParser;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 class GeoJsonConversionInitiatedServiceIT extends FacadeIT {
-  private static final String MOCK_ANNOTATED_JOB_ID = "mock_job_id";
-  @MockBean private HumanDetectionJobRepository humanDetectionJobRepository;
-  @Autowired private GeoJsonConverter geoJsonConverter;
-  @Autowired private FileWriter writer;
-  @Autowired private HTMLTemplateParser templateParser;
-  @MockBean private Mailer mailer;
-  @Autowired private GeoJsonConversionInitiatedService subject;
+  private static final String MOCK_JOB_ID = "mock_job_id";
+  private static final String MOCK_TASK_ID = "mock_task_id";
+  @MockBean HumanDetectionJobRepository humanDetectionJobRepository;
+  @MockBean ZoneDetectionJobService zoneDetectionJobService;
+  @Autowired GeoJsonConversionTaskStatusService taskStatusService;
+  @Autowired GeoJsonConversionTaskService taskService;
+  @Autowired GeoJsonConverter geoJsonConverter;
+  @Autowired FileWriter writer;
+  @MockBean BucketComponent bucketComponent;
+  @Autowired GeoJsonConversionInitiatedService subject;
+
+  ZoneDetectionJob detectionJob() {
+    return ZoneDetectionJob.builder().zoneName("Cannes").build();
+  }
+
+  GeoJsonConversionTask conversionTask() {
+    return GeoJsonConversionTask.builder()
+        .id(MOCK_TASK_ID)
+        .jobId(MOCK_JOB_ID)
+        .submissionInstant(now())
+        .geoJsonUrl(null)
+        .statusHistory(List.of())
+        .build();
+  }
 
   HumanDetectionJob humanDetectionJob() {
     return HumanDetectionJob.builder()
@@ -52,20 +74,27 @@ class GeoJsonConversionInitiatedServiceIT extends FacadeIT {
   }
 
   GeoJsonConversionInitiated initiated() {
-    return new GeoJsonConversionInitiated(MOCK_ANNOTATED_JOB_ID, "tech@bpartners.app");
+    return new GeoJsonConversionInitiated(MOCK_JOB_ID, MOCK_TASK_ID, detectionJob().getZoneName());
   }
 
   @BeforeEach
-  void setUp() {
-    when(humanDetectionJobRepository.findByAnnotationJobId(any()))
-        .thenReturn(Optional.of(humanDetectionJob()));
+  void setUp() throws MalformedURLException {
+    when(zoneDetectionJobService.getHumanZdjFromZdjId(MOCK_JOB_ID)).thenReturn(detectionJob());
+    when(humanDetectionJobRepository.findByZoneDetectionJobId(MOCK_JOB_ID))
+        .thenReturn(List.of(humanDetectionJob()));
+    when(bucketComponent.presign(any(), any()))
+        .thenReturn(new URL("https://s3presignedurl.aws.com"));
   }
 
   @Test
   void generate_geo_json_from_detected_tiles() {
-    subject.accept(initiated());
+    taskService.save(conversionTask());
 
-    var emailCaptor = ArgumentCaptor.forClass(Email.class);
-    verify(mailer, times(1)).accept(emailCaptor.capture());
+    subject.accept(initiated());
+    var actual = taskService.getById(MOCK_TASK_ID);
+
+    assertEquals("https://s3presignedurl.aws.com", actual.getGeoJsonUrl());
+    assertEquals(FINISHED, actual.getStatus().getProgression());
+    assertEquals(SUCCEEDED, actual.getStatus().getHealth());
   }
 }

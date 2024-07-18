@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static java.nio.file.attribute.PosixFilePermissions.asFileAttribute;
 import static java.nio.file.attribute.PosixFilePermissions.fromString;
 import static java.time.temporal.ChronoUnit.FOREVER;
@@ -8,11 +9,12 @@ import static java.util.UUID.randomUUID;
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionInitiated;
 import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.file.FileWriter;
-import app.bpartners.geojobs.job.service.TaskStatusService;
-import app.bpartners.geojobs.repository.model.GeoJsonConversionTask;
+import app.bpartners.geojobs.model.exception.ApiException;
+import app.bpartners.geojobs.repository.HumanDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.detection.DetectedTile;
-import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
+import app.bpartners.geojobs.repository.model.detection.HumanDetectionJob;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionTaskService;
+import app.bpartners.geojobs.service.geojson.GeoJsonConversionTaskStatusService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConverter;
 import java.io.File;
 import java.nio.file.Files;
@@ -28,8 +30,8 @@ import org.springframework.stereotype.Service;
 public class GeoJsonConversionInitiatedService implements Consumer<GeoJsonConversionInitiated> {
   private static final String TEMP_FOLDER_PERMISSION = "rwx------";
   private static final String GEO_JSON_EXTENSION = ".geojson";
-  private final ZoneDetectionJobService zoneDetectionJobService;
-  private final TaskStatusService<GeoJsonConversionTask> taskStatusService;
+  private final HumanDetectionJobRepository humanDetectionJobRepository;
+  private final GeoJsonConversionTaskStatusService taskStatusService;
   private final GeoJsonConversionTaskService taskService;
   private final GeoJsonConverter geoJsonConverter;
   private final FileWriter writer;
@@ -39,20 +41,30 @@ public class GeoJsonConversionInitiatedService implements Consumer<GeoJsonConver
   public void accept(GeoJsonConversionInitiated initiated) {
     var jobId = initiated.getJobId();
     var taskId = initiated.getConversionTaskId();
-    var linkedJob = zoneDetectionJobService.getHumanZdjFromZdjId(jobId);
+    var zoneName = initiated.getZoneName();
     var task = taskService.getById(taskId);
     taskStatusService.process(task);
-    var fileKey = jobId + "/" + linkedJob.getZoneName() + GEO_JSON_EXTENSION;
-    List<DetectedTile> detectedTile = List.of(); // Wait for human detection is completed
-    var geoJson = geoJsonConverter.convert(detectedTile);
-    var geoJsonAsByte = writer.writeAsByte(geoJson);
-    var geoJsonAsFile =
-        writer.write(
-            geoJsonAsByte, createTempDirectory(), linkedJob.getZoneName() + GEO_JSON_EXTENSION);
-    bucketComponent.upload(geoJsonAsFile, fileKey);
-    var url = bucketComponent.presign(fileKey, FOREVER.getDuration());
-    task.setGeoJsonUrl(url.toString());
-    taskStatusService.succeed(task);
+    var fileKey = jobId + "/" + zoneName + GEO_JSON_EXTENSION;
+    List<DetectedTile> detectedTile =
+        humanDetectionJobRepository.findByZoneDetectionJobId(jobId).stream()
+            .map(HumanDetectionJob::getDetectedTiles)
+            .flatMap(List::stream)
+            .toList(); // Should be replaced by detected tiles after human verification
+    try {
+      var geoJson = geoJsonConverter.convert(detectedTile);
+      var geoJsonAsByte = writer.writeAsByte(geoJson);
+      var geoJsonAsFile =
+          writer.write(geoJsonAsByte, createTempDirectory(), zoneName + GEO_JSON_EXTENSION);
+      bucketComponent.upload(geoJsonAsFile, fileKey);
+      var url = bucketComponent.presign(fileKey, FOREVER.getDuration());
+      task.setGeoJsonUrl(url.toString());
+      var finished = taskStatusService.succeed(task);
+      taskService.save(finished);
+    } catch (RuntimeException e) {
+      var failed = taskStatusService.fail(task);
+      taskService.save(failed);
+      throw new ApiException(SERVER_EXCEPTION, e.getMessage());
+    }
   }
 
   @SneakyThrows

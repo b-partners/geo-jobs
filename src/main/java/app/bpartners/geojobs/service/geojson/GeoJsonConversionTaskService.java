@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service.geojson;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.GeoJsonConversionTaskRepository;
 import app.bpartners.geojobs.repository.model.GeoJsonConversionTask;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,11 +22,7 @@ public class GeoJsonConversionTaskService {
         .orElseThrow(() -> new NotFoundException("GeoJson task.id=" + id + " is not found"));
   }
 
-  public GeoJsonConversionTask getByJobId(String jobId) {
-    return repository
-        .findByJobId(jobId)
-        .orElseThrow(
-            () ->
-                new NotFoundException("GeoJson task linked to job.id=" + jobId + " is not found"));
+  public Optional<GeoJsonConversionTask> getByJobId(String jobId) {
+    return repository.findByJobId(jobId);
   }
 }
