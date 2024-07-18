@@ -10,12 +10,15 @@ import app.bpartners.gen.annotator.endpoint.rest.api.JobsApi;
 import app.bpartners.gen.annotator.endpoint.rest.client.ApiException;
 import app.bpartners.gen.annotator.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.AnnotationBatchRetrievingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.CreateAnnotatedTaskSubmitted;
 import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.detection.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -123,5 +126,46 @@ public class AnnotationService {
     } catch (ApiException e) {
       throw new app.bpartners.geojobs.model.exception.ApiException(SERVER_EXCEPTION, e);
     }
+  }
+
+  public List<AnnotationBatch> getAnnotations(String annotationJobId, String taskId) {
+    try {
+      return adminApi.getAnnotationBatchesByJobTask(annotationJobId, taskId, null, null);
+    } catch (ApiException e) {
+      throw new app.bpartners.geojobs.model.exception.ApiException(
+          app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION, e);
+    }
+  }
+
+  public void fireTasks(String jobId, String annotationJobId, int imageSize) {
+    List<Task> annotationTasks;
+    try {
+      annotationTasks =
+          adminApi.getJobTasks(annotationJobId, null, null, TaskStatus.COMPLETED, null);
+    } catch (ApiException e) {
+      throw new app.bpartners.geojobs.model.exception.ApiException(
+          app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION, e);
+    }
+    annotationTasks.forEach(
+        task -> {
+          var metadata = getTileMetaData(task.getFilename());
+          var xTile = metadata.getFirst();
+          var yTile = metadata.get(metadata.size() - 2);
+          var zoom = metadata.getLast();
+          eventProducer.accept(
+              List.of(
+                  new AnnotationBatchRetrievingSubmitted(
+                      jobId, annotationJobId, task.getId(), imageSize, xTile, yTile, zoom)));
+        });
+  }
+
+  private List<Integer> getTileMetaData(String filename) {
+    var metadata = new ArrayList<Integer>();
+    var pattern = Pattern.compile("//d+");
+    var filenameMatcher = pattern.matcher(filename);
+    while (filenameMatcher.find()) {
+      metadata.add(Integer.parseInt(filenameMatcher.group()));
+    }
+    return metadata;
   }
 }

@@ -300,18 +300,16 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
 
     var firstHumanDetectionJob = humanDetectionJobs.getFirst();
     var lastHumanDetectionJob = humanDetectionJobs.getLast();
+    var firstAnnotationJobId = firstHumanDetectionJob.getAnnotationJobId();
+    var lastAnnotationJobId = lastHumanDetectionJob.getAnnotationJobId();
     var firstAnnotationJobStatus =
-        annotationService
-            .getAnnotationJobById(firstHumanDetectionJob.getAnnotationJobId())
-            .getStatus();
+        annotationService.getAnnotationJobById(firstAnnotationJobId).getStatus();
     Status.ProgressionStatus firstProgressionStatus =
         detectionMapper.getProgressionStatus(firstAnnotationJobStatus);
     Status.HealthStatus firstHealthStatus =
         detectionMapper.getHealthStatus(firstAnnotationJobStatus);
     var lastAnnotationJobStatus =
-        annotationService
-            .getAnnotationJobById(lastHumanDetectionJob.getAnnotationJobId())
-            .getStatus();
+        annotationService.getAnnotationJobById(lastAnnotationJobId).getStatus();
     Status.ProgressionStatus lastProgressionStatus =
         detectionMapper.getProgressionStatus(lastAnnotationJobStatus);
     Status.HealthStatus lastHealthStatus = detectionMapper.getHealthStatus(lastAnnotationJobStatus);
@@ -325,6 +323,13 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
     } else {
       humanZDJProgression = PENDING; // TODO: check when processing
       humanZDJHealth = UNKNOWN;
+    }
+
+    if (FINISHED.equals(humanZDJProgression) && SUCCEEDED.equals(humanZDJHealth)) {
+      eventProducer.accept(
+          List.of(
+              new AnnotationTaskRetrievingSubmitted(
+                  jobId, firstAnnotationJobId, lastAnnotationJobId)));
     }
 
     humanZDJ.hasNewStatus(
