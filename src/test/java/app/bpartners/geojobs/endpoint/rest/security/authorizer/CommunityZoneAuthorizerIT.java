@@ -1,11 +1,8 @@
 package app.bpartners.geojobs.endpoint.rest.security.authorizer;
 
-import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
-import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_COMMUNITY;
+import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.*;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
@@ -48,7 +45,7 @@ class CommunityZoneAuthorizerIT extends FacadeIT {
   }
 
   @Test
-  void should_accept_community_with_correct_object_type() {
+  void should_accept_if_authorized_zone() {
     useRole(ROLE_COMMUNITY);
     when(caRepository.findByApiKey(any()))
         .thenReturn(asOptionalCommunityAuthorization(List.of("zoneName1", "zoneName2")));

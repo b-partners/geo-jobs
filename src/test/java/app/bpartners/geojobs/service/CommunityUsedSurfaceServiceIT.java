@@ -17,9 +17,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public class CommunityUsedSurfaceServiceIT extends FacadeIT {
-  private static final double LAST_USED_SURFACE_VALUE = 10;
-  private static final String LAST_USED_SURFACE_ID = "dummyId";
-  private static final String COMMUNITY_AUTHORIZATION_APIKEY = "communityApiKey";
+  private static final double LAST_SURFACE_VALUE = 10;
+  private static final String API_KEY = "APIKEY";
   private static final Instant DUMMY_DATE = Instant.parse("2024-07-18T00:00:00Z");
 
   @Autowired CommunityAuthorizationRepository communityAuthorizationRepository;
@@ -29,8 +28,7 @@ public class CommunityUsedSurfaceServiceIT extends FacadeIT {
   @BeforeEach
   void setup() {
     communityAuthorizationRepository.save(communityAuthorization());
-    communityUsedSurfaceRepository.save(
-        communityUsedSurface(LAST_USED_SURFACE_ID, LAST_USED_SURFACE_VALUE, DUMMY_DATE));
+    communityUsedSurfaceRepository.save(communityUsedSurface(LAST_SURFACE_VALUE, DUMMY_DATE));
   }
 
   @AfterEach
@@ -44,17 +42,16 @@ public class CommunityUsedSurfaceServiceIT extends FacadeIT {
         .id("id")
         .name("communityName")
         .maxSurface(5_000)
-        .apiKey(COMMUNITY_AUTHORIZATION_APIKEY)
+        .apiKey(API_KEY)
         .authorizedZones(List.of())
         .usedSurfaces(List.of())
         .detectableObjectTypes(List.of())
         .build();
   }
 
-  private static CommunityUsedSurface communityUsedSurface(
-      String id, double value, Instant usageDatetime) {
+  private static CommunityUsedSurface communityUsedSurface(double value, Instant usageDatetime) {
     return CommunityUsedSurface.builder()
-        .id(id)
+        .id("id")
         .usedSurface(value)
         .usageDatetime(usageDatetime)
         .communityAuthorization(communityAuthorization())
@@ -62,53 +59,39 @@ public class CommunityUsedSurfaceServiceIT extends FacadeIT {
   }
 
   @Test
-  void take_last_used_surface_by_api_key_when_empty_or_not() {
-    var exceptedLastUsedSurfaceValue =
-        communityUsedSurface(LAST_USED_SURFACE_ID, LAST_USED_SURFACE_VALUE, DUMMY_DATE);
-    var actualLastUsedSurface =
-        communityUsedSurfaceService.getLastUsedSurfaceByApiKey(COMMUNITY_AUTHORIZATION_APIKEY);
-    assertEquals(exceptedLastUsedSurfaceValue, actualLastUsedSurface.orElse(null));
+  void can_take_last_used_surface() {
+    var expectedUsedSurface = communityUsedSurface(LAST_SURFACE_VALUE, DUMMY_DATE);
+    var actualUsedSurface = communityUsedSurfaceService.getLastUsedSurfaceByApiKey(API_KEY);
+    assertEquals(expectedUsedSurface, actualUsedSurface.orElse(null));
 
     communityUsedSurfaceRepository.deleteAll();
-    assertTrue(
-        communityUsedSurfaceService
-            .getLastUsedSurfaceByApiKey(COMMUNITY_AUTHORIZATION_APIKEY)
-            .isEmpty());
+    assertTrue(communityUsedSurfaceService.getLastUsedSurfaceByApiKey(API_KEY).isEmpty());
   }
 
   @Test
-  void new_last_used_surface_should_be_last_used_surface_if_empty() {
+  void add_first_new_last_used_surface() {
     communityUsedSurfaceRepository.deleteAll();
-    var exceptedLastUsedSurfaceValue = communityUsedSurface("dummy", 10, Instant.now());
-    communityUsedSurfaceService.appendLastUsedSurface(exceptedLastUsedSurfaceValue);
-    var actualLastUsedSurface =
-        communityUsedSurfaceService
-            .getLastUsedSurfaceByApiKey(COMMUNITY_AUTHORIZATION_APIKEY)
-            .orElseThrow();
-    assertEquals(
-        formatCommunitySurfaceUsageDatetime(exceptedLastUsedSurfaceValue),
-        formatCommunitySurfaceUsageDatetime(actualLastUsedSurface));
+    var exceptedUsedSurface = communityUsedSurface(10, Instant.now());
+    communityUsedSurfaceService.appendLastUsedSurface(exceptedUsedSurface);
+    var actualUsedSurface =
+        communityUsedSurfaceService.getLastUsedSurfaceByApiKey(API_KEY).orElseThrow();
+
+    assertEquals(formatUsageDatetime(exceptedUsedSurface), formatUsageDatetime(actualUsedSurface));
   }
 
   @Test
-  void can_append_last_used_surface_when_not_empty() {
-    var newLastUsedSurfaceValue = 20;
-    var newLastUsedSurface = communityUsedSurface("dummyId2", 20, DUMMY_DATE.plusSeconds(5_000));
-    communityUsedSurfaceService.appendLastUsedSurface(newLastUsedSurface);
+  void can_append_new_used_surface_with_last_used_surface() {
+    var newUsedSurface = communityUsedSurface(20, DUMMY_DATE.plusSeconds(5_000));
+    communityUsedSurfaceService.appendLastUsedSurface(newUsedSurface);
 
-    var exceptedLastUsedSurfaceValue = LAST_USED_SURFACE_VALUE + newLastUsedSurfaceValue;
-    var exceptedLastUsedSurface =
-        communityUsedSurface("dummyId2", exceptedLastUsedSurfaceValue, Instant.now());
+    var exceptedUsedSurface = communityUsedSurface(LAST_SURFACE_VALUE + 20, Instant.now());
     var actualLastUsedSurface =
-        communityUsedSurfaceService
-            .getLastUsedSurfaceByApiKey(COMMUNITY_AUTHORIZATION_APIKEY)
-            .orElseThrow();
+        communityUsedSurfaceService.getLastUsedSurfaceByApiKey(API_KEY).orElseThrow();
     assertEquals(
-        formatCommunitySurfaceUsageDatetime(exceptedLastUsedSurface),
-        formatCommunitySurfaceUsageDatetime(actualLastUsedSurface));
+        formatUsageDatetime(exceptedUsedSurface), formatUsageDatetime(actualLastUsedSurface));
   }
 
-  private static CommunityUsedSurface formatCommunitySurfaceUsageDatetime(
+  private static CommunityUsedSurface formatUsageDatetime(
       CommunityUsedSurface communityUsedSurface) {
     communityUsedSurface.setUsageDatetime(
         communityUsedSurface.getUsageDatetime().truncatedTo(ChronoUnit.MINUTES));
