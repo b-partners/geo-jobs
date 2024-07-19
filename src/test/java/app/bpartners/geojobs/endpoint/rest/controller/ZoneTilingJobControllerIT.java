@@ -196,7 +196,7 @@ class ZoneTilingJobControllerIT extends FacadeIT {
                             + "    \"CLUSTER_ID\": 99520,\n"
                             + "    \"CLUSTER_SIZE\": 386884 },\n"
                             + "  \"geometry\": {\n"
-                            + "    \"type\": \"MultiPolygon\",\n"
+                            + "    \"type\": \"MULTIPOLYGON\",\n"
                             + "    \"coordinates\": [ [ [\n"
                             + "      [ 4.459648282829194, 45.904988912620688 ],\n"
                             + "      [ 4.464709510872551, 45.928950368349426 ],\n"

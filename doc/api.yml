@@ -939,10 +939,10 @@ components:
         type:
           type: string
           enum:
-            - Point
-            - LineString
-            - Polygon
-            - MultiPolygon
+            - POINT
+            - LINESTRING
+            - POLYGON
+            - MULTIPOLYGON
 
     Point2D:
       type: array

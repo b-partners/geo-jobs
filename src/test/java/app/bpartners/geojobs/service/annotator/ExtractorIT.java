@@ -39,7 +39,7 @@ public class ExtractorIT extends FacadeIT {
               "CLUSTER_ID": 99520,
               "CLUSTER_SIZE": 386884 },
             "geometry": {
-              "type": "MultiPolygon",
+              "type": "MULTIPOLYGON",
               "coordinates": [ [ [
                 [ 4.459648282829194, 45.904988912620688 ]
                 ] ] ] } }""";

@@ -56,7 +56,7 @@ public class TilesDownloaderIT extends FacadeIT {
                             "CLUSTER_ID": 99520,
                             "CLUSTER_SIZE": 386884 },
                           "geometry": {
-                            "type": "MultiPolygon",
+                            "type": "MULTIPOLYGON",
                             "coordinates": [ [ [
                               [ 4.803193184300449, 45.732156868763205 ],
                               [ 4.802538245115325, 45.732990634128193 ],
