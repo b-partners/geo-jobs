@@ -149,9 +149,10 @@ public class AnnotationService {
     annotationTasks.forEach(
         task -> {
           var metadata = getTileMetaData(task.getFilename());
-          var xTile = metadata.getFirst();
-          var yTile = metadata.get(metadata.size() - 2);
-          var zoom = metadata.getLast();
+          var zoom = metadata.getFirst();
+          var xTile = metadata.get(metadata.size() - 2);
+          var yTile = metadata.getLast();
+          log.info("File metadata x={} y={} z={}", xTile, yTile, zoom);
           eventProducer.accept(
               List.of(
                   new AnnotationBatchRetrievingSubmitted(
@@ -161,11 +162,12 @@ public class AnnotationService {
 
   private List<Integer> getTileMetaData(String filename) {
     var metadata = new ArrayList<Integer>();
-    var pattern = Pattern.compile("//d+");
+    var pattern = Pattern.compile("\\d+");
     var filenameMatcher = pattern.matcher(filename);
     while (filenameMatcher.find()) {
       metadata.add(Integer.parseInt(filenameMatcher.group()));
     }
-    return metadata;
+    int size = metadata.size();
+    return metadata.subList(size - 3, size);
   }
 }

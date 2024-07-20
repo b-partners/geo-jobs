@@ -3,15 +3,16 @@ package app.bpartners.geojobs.service.event;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
+import app.bpartners.gen.annotator.endpoint.rest.model.Annotation;
 import app.bpartners.gen.annotator.endpoint.rest.model.AnnotationBatch;
 import app.bpartners.geojobs.endpoint.event.model.AnnotationBatchRetrievingSubmitted;
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.repository.model.detection.HumanDetectedObject;
 import app.bpartners.geojobs.repository.model.detection.HumanDetectedTile;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
 import app.bpartners.geojobs.service.detection.HumanDetectedTileService;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
@@ -47,21 +48,7 @@ public class AnnotationBatchRetrievingSubmittedService
                       .annotationJobId(annotationJobId)
                       .annotationTaskId(taskId)
                       .imageSize(imageSize)
-                      .detectedObjects(
-                          annotations.stream()
-                              .map(
-                                  ann ->
-                                      HumanDetectedObject.builder()
-                                          .label(ann.getLabel())
-                                          .confidence(ann.getComment())
-                                          .feature(
-                                              new Feature()
-                                                  .id(randomUUID().toString())
-                                                  .zoom(zoom)
-                                                  .geometry(null))
-                                          .humanDetectedTileId(tileId)
-                                          .build())
-                              .toList())
+                      .detectedObjects(toHumanDetectedObject(tileId, annotations))
                       .tile(
                           Tile.builder()
                               .id(randomUUID().toString())
@@ -72,5 +59,19 @@ public class AnnotationBatchRetrievingSubmittedService
                 })
             .toList();
     humanDetectedTileService.saveAll(humanDetectedTiles);
+  }
+
+  private List<HumanDetectedObject> toHumanDetectedObject(
+      String tileId, List<Annotation> annotations) {
+    return annotations.stream()
+        .map(
+            ann ->
+                HumanDetectedObject.builder()
+                    .label(ann.getLabel())
+                    .confidence(ann.getComment())
+                    .feature(ann.getPolygon())
+                    .humanDetectedTileId(tileId)
+                    .build())
+        .toList();
   }
 }

@@ -19,7 +19,7 @@ public class AnnotationTaskRetrievingSubmittedService
     var lastAnnotationJobId = annotationTaskRetrievingSubmitted.getLastAnnotationJobId();
     var firstAnnotationJob = annotationService.getAnnotationJobById(firstAnnotationJobId);
     var lastAnnotationJob = annotationService.getAnnotationJobById(lastAnnotationJobId);
-    annotationService.fireTasks(jobId, lastAnnotationJobId, firstAnnotationJob.getImagesWidth());
-    annotationService.fireTasks(jobId, firstAnnotationJobId, lastAnnotationJob.getImagesWidth());
+    annotationService.fireTasks(jobId, firstAnnotationJobId, firstAnnotationJob.getImagesWidth());
+    annotationService.fireTasks(jobId, lastAnnotationJobId, lastAnnotationJob.getImagesWidth());
   }
 }

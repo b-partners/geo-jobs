@@ -3,7 +3,7 @@ package app.bpartners.geojobs.repository.model.detection;
 import static org.hibernate.type.SqlTypes.JSON;
 
 import app.bpartners.gen.annotator.endpoint.rest.model.Label;
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import app.bpartners.gen.annotator.endpoint.rest.model.Polygon;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -31,7 +31,7 @@ public class HumanDetectedObject implements Serializable {
   @Id private String id;
 
   @JdbcTypeCode(JSON)
-  private Feature feature;
+  private Polygon feature;
 
   @JoinColumn(referencedColumnName = "id")
   private String humanDetectedTileId;

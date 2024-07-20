@@ -203,7 +203,8 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
     verify(eventProducer, times(1)).accept(eventCapture.capture());
     var eventsSent = eventCapture.getAllValues();
 
-    assertEquals(eventsSent.getFirst().getFirst().getClass(), AnnotationTaskRetrievingSubmitted.class);
+    assertEquals(
+        eventsSent.getFirst().getFirst().getClass(), AnnotationTaskRetrievingSubmitted.class);
     assertEquals(JOB1_ID, actual.getId());
     assertEquals(
         new Status()
