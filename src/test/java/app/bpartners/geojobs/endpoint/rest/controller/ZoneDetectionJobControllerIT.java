@@ -16,6 +16,7 @@ import static org.mockito.Mockito.*;
 import app.bpartners.gen.annotator.endpoint.rest.model.Job;
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.AnnotationTaskRetrievingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.ParcelDetectionTaskCreated;
 import app.bpartners.geojobs.endpoint.event.model.ZDJParcelsStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.ZDJStatusRecomputingSubmitted;
@@ -180,6 +181,8 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
   @Test
   void check_annotation_job_status_completed() {
     var tilingJobId = randomUUID().toString();
+    var eventCapture = ArgumentCaptor.forClass(List.class);
+
     jobRepository.saveAll(
         List.of(
             aZDJ(JOB3_ID, tilingJobId).toBuilder()
@@ -197,7 +200,10 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
         .thenReturn(
             new Job().status(app.bpartners.gen.annotator.endpoint.rest.model.JobStatus.COMPLETED));
     ZoneDetectionJob actual = subject.checkHumanDetectionJobStatus(JOB3_ID);
+    verify(eventProducer, times(1)).accept(eventCapture.capture());
+    var eventsSent = eventCapture.getAllValues();
 
+    assertEquals(eventsSent.getFirst().getFirst().getClass(), AnnotationTaskRetrievingSubmitted.class);
     assertEquals(JOB1_ID, actual.getId());
     assertEquals(
         new Status()
