@@ -53,7 +53,7 @@ class GeoJsonConversionInitiatedServiceIT extends FacadeIT {
         .id(MOCK_TASK_ID)
         .jobId(MOCK_JOB_ID)
         .submissionInstant(now())
-        .geoJsonUrl(null)
+        .fileKey(null)
         .statusHistory(List.of())
         .build();
   }
@@ -93,7 +93,7 @@ class GeoJsonConversionInitiatedServiceIT extends FacadeIT {
     subject.accept(initiated());
     var actual = taskService.getById(MOCK_TASK_ID);
 
-    assertEquals("https://s3presignedurl.aws.com", actual.getGeoJsonUrl());
+    assertEquals("mock_job_id/Cannes.geojson", actual.getFileKey());
     assertEquals(FINISHED, actual.getStatus().getProgression());
     assertEquals(SUCCEEDED, actual.getStatus().getHealth());
   }

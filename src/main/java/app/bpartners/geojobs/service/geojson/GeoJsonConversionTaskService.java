@@ -16,6 +16,10 @@ public class GeoJsonConversionTaskService {
     return repository.save(task);
   }
 
+  public void delete(GeoJsonConversionTask task) {
+    repository.delete(task);
+  }
+
   public GeoJsonConversionTask getById(String id) {
     return repository
         .findById(id)

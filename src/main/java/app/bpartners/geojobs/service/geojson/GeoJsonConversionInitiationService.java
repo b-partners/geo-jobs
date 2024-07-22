@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.geojson;
 
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.FAILED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static java.time.Instant.now;
@@ -9,9 +10,11 @@ import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionInitiated;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
 import app.bpartners.geojobs.endpoint.rest.model.GeoJsonsUrl;
+import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.repository.model.GeoJsonConversionTask;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
+import java.time.Duration;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,9 +22,11 @@ import org.springframework.stereotype.Service;
 @Service
 @AllArgsConstructor
 public class GeoJsonConversionInitiationService {
+  private static final Duration PRE_SIGNED_URL_DURATION = Duration.ofHours(1L);
   private final GeoJsonConversionTaskService service;
   private final StatusMapper<TaskStatus> taskStatusMapper;
   private final ZoneDetectionJobService zoneDetectionJobService;
+  private final BucketComponent bucketComponent;
   private final EventProducer<GeoJsonConversionInitiated> eventProducer;
 
   public GeoJsonsUrl initiateGeoJsonConversion(String jobId) {
@@ -37,19 +42,28 @@ public class GeoJsonConversionInitiationService {
     return processConversionTask(linkedJob.getZoneName(), jobId);
   }
 
+  private String generatePresignedUrl(GeoJsonConversionTask task) {
+    if (SUCCEEDED.equals(task.getStatus().getHealth())) {
+      return bucketComponent.presign(task.getFileKey(), PRE_SIGNED_URL_DURATION).toString();
+    }
+    return null;
+  }
+
   private GeoJsonsUrl processConversionTask(String zoneName, String jobId) {
     var optionalTask = service.getByJobId(jobId);
     if (optionalTask.isPresent()) {
       var persisted = optionalTask.get();
-      return new GeoJsonsUrl()
-          .url(persisted.getGeoJsonUrl())
-          .status(taskStatusMapper.toRest(persisted.getStatus()));
+      if (!FAILED.equals(persisted.getStatus().getHealth())) {
+        var url = generatePresignedUrl(persisted);
+        return new GeoJsonsUrl().url(url).status(taskStatusMapper.toRest(persisted.getStatus()));
+      }
+      service.delete(persisted);
     }
     var geoJsonConversionTask =
         GeoJsonConversionTask.builder()
             .id(randomUUID().toString())
             .jobId(jobId)
-            .geoJsonUrl(null) // Null until task is finished
+            .fileKey(null) // Null until task is finished
             .submissionInstant(now())
             .statusHistory(List.of())
             .build();
@@ -57,7 +71,7 @@ public class GeoJsonConversionInitiationService {
     var saved = service.save(geoJsonConversionTask);
     eventProducer.accept(List.of(new GeoJsonConversionInitiated(jobId, saved.getId(), zoneName)));
     return new GeoJsonsUrl()
-        .url(saved.getGeoJsonUrl())
+        .url(saved.getFileKey())
         .status(taskStatusMapper.toRest(saved.getStatus()));
   }
 }

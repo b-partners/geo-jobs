@@ -25,7 +25,7 @@ import lombok.experimental.SuperBuilder;
 @Setter
 @EqualsAndHashCode(callSuper = false)
 public class GeoJsonConversionTask extends Task {
-  private String geoJsonUrl;
+  private String fileKey;
 
   @Override
   public JobType getJobType() {

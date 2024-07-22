@@ -3,7 +3,6 @@ package app.bpartners.geojobs.service.event;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static java.nio.file.attribute.PosixFilePermissions.asFileAttribute;
 import static java.nio.file.attribute.PosixFilePermissions.fromString;
-import static java.time.temporal.ChronoUnit.FOREVER;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionInitiated;
@@ -23,10 +22,12 @@ import java.util.List;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class GeoJsonConversionInitiatedService implements Consumer<GeoJsonConversionInitiated> {
   private static final String TEMP_FOLDER_PERMISSION = "rwx------";
   private static final String GEO_JSON_EXTENSION = ".geojson";
@@ -56,8 +57,7 @@ public class GeoJsonConversionInitiatedService implements Consumer<GeoJsonConver
       var geoJsonAsFile =
           writer.write(geoJsonAsByte, createTempDirectory(), zoneName + GEO_JSON_EXTENSION);
       bucketComponent.upload(geoJsonAsFile, fileKey);
-      var url = bucketComponent.presign(fileKey, FOREVER.getDuration());
-      task.setGeoJsonUrl(url.toString());
+      task.setFileKey(fileKey);
       var finished = taskStatusService.succeed(task);
       taskService.save(finished);
     } catch (RuntimeException e) {
