@@ -34,7 +34,7 @@ public class AnnotationBatchRetrievingSubmittedService
     var xTile = submitted.getXTile();
     var yTile = submitted.getYTile();
     var zoom = submitted.getZoom();
-    var annotationBatches = annotationService.getAnnotations(jobId, taskId);
+    var annotationBatches = annotationService.getAnnotations(annotationJobId, taskId);
     var humanDetectedTiles =
         annotationBatches.stream()
             .map(AnnotationBatch::getAnnotations)
@@ -44,7 +44,7 @@ public class AnnotationBatchRetrievingSubmittedService
                   var tileId = randomUUID().toString();
                   return HumanDetectedTile.builder()
                       .id(tileId)
-                      .JobId(jobId)
+                      .jobId(jobId)
                       .annotationJobId(annotationJobId)
                       .annotationTaskId(taskId)
                       .imageSize(imageSize)
@@ -67,6 +67,7 @@ public class AnnotationBatchRetrievingSubmittedService
         .map(
             ann ->
                 HumanDetectedObject.builder()
+                    .id(randomUUID().toString())
                     .label(ann.getLabel())
                     .confidence(ann.getComment())
                     .feature(ann.getPolygon())

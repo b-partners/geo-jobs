@@ -28,7 +28,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 @ToString
 public class HumanDetectedTile implements Serializable {
   @Id private String id;
-  private String JobId;
+  private String jobId;
   private String annotationJobId;
   private String annotationTaskId;
   private int imageSize;
