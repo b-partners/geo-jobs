@@ -38,7 +38,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 @Slf4j
-class ParcelParcelParcelDetectionTaskCreatedServiceIT extends FacadeIT {
+class ParcelDetectionTaskCreatedServiceIT extends FacadeIT {
   private static final String FILE_NAME =
       "src"
           + File.separator
