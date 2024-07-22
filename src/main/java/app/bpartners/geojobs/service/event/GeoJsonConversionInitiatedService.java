@@ -23,10 +23,12 @@ import java.util.List;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class GeoJsonConversionInitiatedService implements Consumer<GeoJsonConversionInitiated> {
   private static final String TEMP_FOLDER_PERMISSION = "rwx------";
   private static final String GEO_JSON_EXTENSION = ".geojson";
@@ -52,11 +54,13 @@ public class GeoJsonConversionInitiatedService implements Consumer<GeoJsonConver
             .toList(); // Should be replaced by detected tiles after human verification
     try {
       var geoJson = geoJsonConverter.convert(detectedTile);
+      log.info("GeoJson Object {}", geoJson);
       var geoJsonAsByte = writer.writeAsByte(geoJson);
       var geoJsonAsFile =
           writer.write(geoJsonAsByte, createTempDirectory(), zoneName + GEO_JSON_EXTENSION);
       bucketComponent.upload(geoJsonAsFile, fileKey);
       var url = bucketComponent.presign(fileKey, FOREVER.getDuration());
+      log.info("PreSigned Url {}", url);
       task.setGeoJsonUrl(url.toString());
       var finished = taskStatusService.succeed(task);
       taskService.save(finished);

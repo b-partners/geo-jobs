@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.geojson;
 
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.FAILED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static java.time.Instant.now;
@@ -41,9 +42,11 @@ public class GeoJsonConversionInitiationService {
     var optionalTask = service.getByJobId(jobId);
     if (optionalTask.isPresent()) {
       var persisted = optionalTask.get();
-      return new GeoJsonsUrl()
-          .url(persisted.getGeoJsonUrl())
-          .status(taskStatusMapper.toRest(persisted.getStatus()));
+      if (!FAILED.equals(persisted.getStatus().getHealth())) {
+        return new GeoJsonsUrl()
+            .url(persisted.getGeoJsonUrl())
+            .status(taskStatusMapper.toRest(persisted.getStatus()));
+      }
     }
     var geoJsonConversionTask =
         GeoJsonConversionTask.builder()
