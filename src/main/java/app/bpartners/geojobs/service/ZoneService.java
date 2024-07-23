@@ -22,10 +22,12 @@ import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.model.exception.ApiException;
+import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
@@ -41,8 +43,23 @@ public class ZoneService {
   private final ZoneDetectionJobValidator detectionjobValidator;
   private final EventProducer eventProducer;
   private final TaskStatisticMapper taskStatisticMapper;
+  private final ZoneDetectionJobRepository zoneDetectionJobRepository;
 
   public FullDetectedZone processTilingAndDetection(CreateFullDetection zoneToDetect) {
+    ZoneTilingJob job = processZoneTilingJob(zoneToDetect);
+    List<TaskStatistic> ZDJStats = processZoneDetectionJobs(zoneToDetect, job);
+    TaskStatistic ZTJStat = zoneTilingJobService.computeTaskStatistics(job.getId());
+
+    return new FullDetectedZone()
+        .jobTypes(List.of(TILING, MACHINE_DETECTION, HUMAN_DETECTION))
+        .detectedGeojsonUrl(zoneDetectionJobService.getGeoJsonsUrl(job.getId()).toString())
+        .statistics(
+            Stream.concat(Stream.of(ZTJStat), ZDJStats.stream())
+                .map(stat -> taskStatisticMapper.toRest(stat))
+                .toList());
+  }
+
+  private ZoneTilingJob processZoneTilingJob(CreateFullDetection zoneToDetect) {
     var createJob = zoneTilingJobMapper.from(zoneToDetect);
     communityZoneTilingJobProcessAuthorizer.accept(createJob);
     var job = zoneTilingJobMapper.toDomain(createJob);
@@ -54,28 +71,38 @@ public class ZoneService {
         && !Status.HealthStatus.SUCCEEDED.equals(ZTJStatus.getHealth())) {
       eventProducer.accept(List.of(new ZTJStatusRecomputingSubmitted(ZTJId)));
     }
+    return zoneTilingJob;
+  }
 
-    detectionjobValidator.accept(ZTJId);
-    DetectableObjectType detectableObjectType = zoneToDetect.getObjectType();
-    if (detectableObjectType == null) {
-      throw new ApiException(SERVER_EXCEPTION, "You should provide object to detect");
-    }
-    List<DetectableObjectConfiguration> detectableObjectConfigurations =
-        List.of(new DetectableObjectConfiguration().type(detectableObjectType));
-    ZoneDetectionJob processedZDJ =
-        zoneDetectionJobService.processZDJ(ZTJId, detectableObjectConfigurations);
-    JobStatus jobStatus = processedZDJ.getStatus();
-    String ZDJId = processedZDJ.getId();
-    if (!FINISHED.equals(jobStatus.getProgression())) {
-      eventProducer.accept(List.of(new ZDJStatusRecomputingSubmitted(processedZDJ.getId())));
-    }
+  private List<TaskStatistic> processZoneDetectionJobs(
+      CreateFullDetection zoneToDetect, ZoneTilingJob job) {
+    String ZTJId = job.getId();
+    var detectionJobs = zoneDetectionJobRepository.findAllByZoneTilingJob_Id(ZTJId);
+    List<TaskStatistic> ZDJStats = new ArrayList<>();
+    detectionJobs.forEach(
+        ZDJ -> {
+          detectionjobValidator.accept(ZDJ.getId());
 
-    TaskStatistic ZTJStat = zoneTilingJobService.computeTaskStatistics(ZTJId);
-    TaskStatistic ZDJStat = zoneDetectionJobService.computeTaskStatistics(ZDJId);
+          DetectableObjectType detectableObjectType = zoneToDetect.getObjectType();
+          if (detectableObjectType == null) {
+            throw new ApiException(SERVER_EXCEPTION, "You should provide an object to detect");
+          }
 
-    return new FullDetectedZone()
-        .jobTypes(List.of(TILING, MACHINE_DETECTION, HUMAN_DETECTION))
-        .detectedGeojsonUrl(zoneDetectionJobService.getGeoJsonsUrl(processedZDJ.getId()).toString())
-        .statistics(Stream.of(ZTJStat, ZDJStat).map(taskStatisticMapper::toRest).toList());
+          List<DetectableObjectConfiguration> detectableObjectConfigurations =
+              List.of(new DetectableObjectConfiguration().type(detectableObjectType));
+          ZoneDetectionJob processedZDJ =
+              zoneDetectionJobService.processZDJ(ZDJ.getId(), detectableObjectConfigurations);
+
+          JobStatus jobStatus = processedZDJ.getStatus();
+          String ZDJId = processedZDJ.getId();
+
+          if (!FINISHED.equals(jobStatus.getProgression())) {
+            eventProducer.accept(List.of(new ZDJStatusRecomputingSubmitted(processedZDJ.getId())));
+
+            TaskStatistic ZDJStat = zoneDetectionJobService.computeTaskStatistics(ZDJId);
+            ZDJStats.add(ZDJStat);
+          }
+        });
+    return ZDJStats;
   }
 }

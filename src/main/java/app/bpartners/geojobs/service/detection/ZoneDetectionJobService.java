@@ -327,7 +327,6 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
     return job;
   }
 
-
   public ZoneDetectionJob fireTasks(
       String jobId, List<DetectableObjectConfiguration> objectConfigurationsFromMachineZDJ) {
     var job = findById(jobId);
