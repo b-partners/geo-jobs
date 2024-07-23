@@ -3,13 +3,13 @@ package app.bpartners.geojobs.service;
 import static app.bpartners.geojobs.endpoint.rest.model.JobTypes.HUMAN_DETECTION;
 import static app.bpartners.geojobs.endpoint.rest.model.JobTypes.MACHINE_DETECTION;
 import static app.bpartners.geojobs.endpoint.rest.model.JobTypes.TILING;
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static app.bpartners.geojobs.service.tiling.ZoneTilingJobService.getTilingTasks;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.ZDJStatusRecomputingSubmitted;
-import app.bpartners.geojobs.endpoint.event.model.ZTJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.TaskStatisticMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneTilingJobMapper;
 import app.bpartners.geojobs.endpoint.rest.model.CreateFullDetection;
@@ -19,7 +19,6 @@ import app.bpartners.geojobs.endpoint.rest.model.FullDetectedZone;
 import app.bpartners.geojobs.endpoint.rest.security.authorizer.CommunityZoneTilingJobProcessAuthorizer;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.job.model.JobStatus;
-import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
@@ -47,8 +46,16 @@ public class ZoneService {
 
   public FullDetectedZone processTilingAndDetection(CreateFullDetection zoneToDetect) {
     ZoneTilingJob job = processZoneTilingJob(zoneToDetect);
-    List<TaskStatistic> ZDJStats = processZoneDetectionJobs(zoneToDetect, job);
     TaskStatistic ZTJStat = zoneTilingJobService.computeTaskStatistics(job.getId());
+    var detectionJobs = zoneDetectionJobRepository.findAllByZoneTilingJob_Id(job.getId());
+    List<TaskStatistic> ZDJStats = new ArrayList<>();
+    detectionJobs.forEach(
+        ZDJ -> {
+          detectionjobValidator.accept(ZDJ.getId());
+          String ZDJId = ZDJ.getId();
+          TaskStatistic ZDJStat = zoneDetectionJobService.computeTaskStatistics(ZDJId);
+          ZDJStats.add(ZDJStat);
+        });
 
     return new FullDetectedZone()
         .jobTypes(List.of(TILING, MACHINE_DETECTION, HUMAN_DETECTION))
@@ -65,24 +72,16 @@ public class ZoneService {
     var job = zoneTilingJobMapper.toDomain(createJob);
     String ZTJId = job.getId();
     var tilingTasks = getTilingTasks(createJob, ZTJId);
-    ZoneTilingJob zoneTilingJob = zoneTilingJobService.create(job, tilingTasks);
-    JobStatus ZTJStatus = zoneTilingJob.getStatus();
-    if (!FINISHED.equals(ZTJStatus.getProgression())
-        && !Status.HealthStatus.SUCCEEDED.equals(ZTJStatus.getHealth())) {
-      eventProducer.accept(List.of(new ZTJStatusRecomputingSubmitted(ZTJId)));
-    }
+    ZoneTilingJob zoneTilingJob = zoneTilingJobService.create(job, tilingTasks, zoneToDetect);
     return zoneTilingJob;
   }
 
-  private List<TaskStatistic> processZoneDetectionJobs(
-      CreateFullDetection zoneToDetect, ZoneTilingJob job) {
+  public void processZoneDetectionJobs(CreateFullDetection zoneToDetect, ZoneTilingJob job) {
     String ZTJId = job.getId();
     var detectionJobs = zoneDetectionJobRepository.findAllByZoneTilingJob_Id(ZTJId);
-    List<TaskStatistic> ZDJStats = new ArrayList<>();
     detectionJobs.forEach(
         ZDJ -> {
           detectionjobValidator.accept(ZDJ.getId());
-
           DetectableObjectType detectableObjectType = zoneToDetect.getObjectType();
           if (detectableObjectType == null) {
             throw new ApiException(SERVER_EXCEPTION, "You should provide an object to detect");
@@ -94,15 +93,10 @@ public class ZoneService {
               zoneDetectionJobService.processZDJ(ZDJ.getId(), detectableObjectConfigurations);
 
           JobStatus jobStatus = processedZDJ.getStatus();
-          String ZDJId = processedZDJ.getId();
-
-          if (!FINISHED.equals(jobStatus.getProgression())) {
+          if (!FINISHED.equals(jobStatus.getProgression())
+              && !SUCCEEDED.equals(jobStatus.getHealth())) {
             eventProducer.accept(List.of(new ZDJStatusRecomputingSubmitted(processedZDJ.getId())));
-
-            TaskStatistic ZDJStat = zoneDetectionJobService.computeTaskStatistics(ZDJId);
-            ZDJStats.add(ZDJStat);
           }
         });
-    return ZDJStats;
   }
 }

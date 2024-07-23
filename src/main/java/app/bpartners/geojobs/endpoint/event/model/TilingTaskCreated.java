@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.endpoint.event.model;
 
+import app.bpartners.geojobs.endpoint.rest.model.CreateFullDetection;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Duration;
@@ -21,6 +22,12 @@ import lombok.ToString;
 public class TilingTaskCreated extends PojaEvent {
   @JsonProperty("tilingTask")
   private TilingTask task;
+
+  private CreateFullDetection fullDetection;
+
+  public TilingTaskCreated(TilingTask task) {
+    super();
+  }
 
   @Override
   public Duration maxConsumerDuration() {

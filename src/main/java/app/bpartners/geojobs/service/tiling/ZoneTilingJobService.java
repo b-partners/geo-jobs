@@ -12,6 +12,7 @@ import app.bpartners.geojobs.endpoint.event.model.*;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.TilingTaskMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoomMapper;
 import app.bpartners.geojobs.endpoint.rest.model.BucketSeparatorType;
+import app.bpartners.geojobs.endpoint.rest.model.CreateFullDetection;
 import app.bpartners.geojobs.endpoint.rest.model.CreateZoneTilingJob;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.job.model.JobStatus;
@@ -185,8 +186,22 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
   }
 
   @Transactional
+  public ZoneTilingJob create(
+      ZoneTilingJob job, List<TilingTask> tasks, CreateFullDetection fullDetection) {
+    var saved = super.create(job, tasks);
+    eventProducer.accept(List.of(new ZoneTilingJobCreated(saved, fullDetection)));
+    return saved;
+  }
+
+  @Transactional
   public void fireTasks(ZoneTilingJob job) {
     getTasks(job).forEach(task -> eventProducer.accept(List.of(new TilingTaskCreated(task))));
+  }
+
+  @Transactional
+  public void fireTasks(ZoneTilingJob job, CreateFullDetection fullDetection) {
+    getTasks(job)
+        .forEach(task -> eventProducer.accept(List.of(new TilingTaskCreated(task), fullDetection)));
   }
 
   @Override
