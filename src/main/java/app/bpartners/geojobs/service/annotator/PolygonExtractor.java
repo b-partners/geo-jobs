@@ -2,7 +2,7 @@ package app.bpartners.geojobs.service.annotator;
 
 import app.bpartners.gen.annotator.endpoint.rest.model.Point;
 import app.bpartners.gen.annotator.endpoint.rest.model.Polygon;
-import app.bpartners.geojobs.repository.model.detection.DetectedObject;
+import app.bpartners.geojobs.repository.model.detection.MachineDetectedObject;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.function.Function;
@@ -11,10 +11,10 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
-public class PolygonExtractor implements Function<DetectedObject, Polygon> {
+public class PolygonExtractor implements Function<MachineDetectedObject, Polygon> {
   @Override
-  public Polygon apply(DetectedObject detectedObject) {
-    return detectedObject.getFeature().getGeometry().getCoordinates().stream()
+  public Polygon apply(MachineDetectedObject machineDetectedObject) {
+    return machineDetectedObject.getFeature().getGeometry().getCoordinates().stream()
         .map(
             multipolygonCoordinates ->
                 new Polygon().points(extractMultipolygonPoints(multipolygonCoordinates).get(0)))

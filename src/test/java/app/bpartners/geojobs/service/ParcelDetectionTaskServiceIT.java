@@ -30,16 +30,16 @@ public class ParcelDetectionTaskServiceIT extends FacadeIT {
   @Autowired private ParcelRepository parcelRepository;
   private static final double UNDER_MIN_CONFIDENCE = 0.67;
 
-  public static DetectedTile detectedTile(
+  public static MachineDetectedTile detectedTile(
       String jobId, String tileId, String parcelId, String detectedObjectId, double confidence) {
-    return DetectedTile.builder()
+    return MachineDetectedTile.builder()
         .id(tileId)
         .zdjJobId(jobId)
         // TODO: .parcelJobId(parcelJobId)
         .parcelId(parcelId)
-        .detectedObjects(
+        .machineDetectedObjects(
             List.of(
-                DetectedObject.builder()
+                MachineDetectedObject.builder()
                     .id(detectedObjectId)
                     .computedConfidence(confidence)
                     .detectedTileId(tileId)
@@ -101,14 +101,16 @@ public class ParcelDetectionTaskServiceIT extends FacadeIT {
 
   @Test
   void read_in_doubt_tiles() {
-    List<DetectedTile> detectedTiles = detectedTileRepository.findAllByZdjJobId(JOB_ID);
-    List<DetectedTile> expected =
+    List<MachineDetectedTile> machineDetectedTiles =
+        detectedTileRepository.findAllByZdjJobId(JOB_ID);
+    List<MachineDetectedTile> expected =
         List.of(
             detectedTile(JOB_ID, "tile1Id", "parcel1Id", "detectedObjectId1", UNDER_MIN_CONFIDENCE),
             detectedTile(JOB_ID, "tile2Id", "parcel2Id", "detectedObjectId2", MIN_CONFIDENCE));
 
-    List<DetectedTile> actual =
-        subject.findInDoubtTilesByJobId(detectedTiles, List.of(detectableObjectConfigurations()));
+    List<MachineDetectedTile> actual =
+        subject.findInDoubtTilesByJobId(
+            machineDetectedTiles, List.of(detectableObjectConfigurations()));
 
     assertEquals(expected, actual.stream().peek(tile -> tile.setCreationDatetime(null)).toList());
   }

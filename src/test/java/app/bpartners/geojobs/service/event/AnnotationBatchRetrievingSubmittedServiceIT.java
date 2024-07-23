@@ -45,14 +45,15 @@ class AnnotationBatchRetrievingSubmittedServiceIT extends FacadeIT {
   }
 
   private Polygon polygon() {
-    Point point1 = new Point().x(300.0).y(400.0);
-    Point point2 = new Point().x(350.0).y(450.0);
-    Point point3 = new Point().x(400.0).y(500.0);
-    Point point4 = new Point().x(450.0).y(550.0);
-    Point point5 = new Point().x(500.0).y(600.0);
-    Point point6 = new Point().x(550.0).y(650.0);
-    Point point7 = new Point().x(600.0).y(700.0);
-    List<Point> points = List.of(point1, point2, point3, point4, point5, point6, point7, point1);
+    List<Point> points =
+        List.of(
+            new Point().x(300.0).y(400.0),
+            new Point().x(350.0).y(450.0),
+            new Point().x(400.0).y(500.0),
+            new Point().x(450.0).y(550.0),
+            new Point().x(500.0).y(600.0),
+            new Point().x(550.0).y(650.0),
+            new Point().x(600.0).y(700.0));
     Polygon polygon = new Polygon();
     polygon.points(points);
     return polygon;

@@ -14,4 +14,8 @@ public class HumanDetectedTileService {
   public List<HumanDetectedTile> saveAll(List<HumanDetectedTile> tiles) {
     return repository.saveAll(tiles);
   }
+
+  public List<HumanDetectedTile> getByJobId(String jobId) {
+    return repository.findByJobId(jobId);
+  }
 }

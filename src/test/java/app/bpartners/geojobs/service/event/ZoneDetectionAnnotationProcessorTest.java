@@ -48,7 +48,7 @@ public class ZoneDetectionAnnotationProcessorTest extends FacadeIT {
   public static final String MOCK_JOB_ID = "mock_job_id";
   public static final String MOCK_HUMAN_JOB_ID = "mock_human_job_id";
   private Feature feature;
-  private final List<DetectedTile> detectedTiles =
+  private final List<MachineDetectedTile> machineDetectedTiles =
       List.of(
           differentDetectedTile(List.of()),
           differentDetectedTile(
@@ -66,22 +66,23 @@ public class ZoneDetectionAnnotationProcessorTest extends FacadeIT {
                   inDoubtDetectedObject(ROOF),
                   inDoubtDetectedObject(SOLAR_PANEL))));
 
-  public static DetectedTile differentDetectedTile(List<DetectedObject> detectedObjects) {
-    return DetectedTile.builder()
+  public static MachineDetectedTile differentDetectedTile(
+      List<MachineDetectedObject> machineDetectedObjects) {
+    return MachineDetectedTile.builder()
         .id(randomUUID().toString())
         .bucketPath(LAYER_20_10_1_PNG + randomUUID())
         .tile(Tile.builder().build())
         .zdjJobId(MOCK_JOB_ID)
         .parcelId(PARCEL_MOCK_ID)
         .creationDatetime(Instant.now())
-        .detectedObjects(detectedObjects)
+        .machineDetectedObjects(machineDetectedObjects)
         .build();
   }
 
   @SneakyThrows
-  DetectedObject inDoubtDetectedObject(DetectableType type) {
+  MachineDetectedObject inDoubtDetectedObject(DetectableType type) {
     String id = randomUUID().toString();
-    return DetectedObject.builder()
+    return MachineDetectedObject.builder()
         .id(id)
         .detectedObjectTypes(detectedObjectType(id, type))
         .feature(feature)
@@ -94,7 +95,7 @@ public class ZoneDetectionAnnotationProcessorTest extends FacadeIT {
   }
 
   void setupDetectedTileRepository(DetectedTileRepository detectedTileRepository) {
-    when(detectedTileRepository.findAllByZdjJobId(MOCK_JOB_ID)).thenReturn(detectedTiles);
+    when(detectedTileRepository.findAllByZdjJobId(MOCK_JOB_ID)).thenReturn(machineDetectedTiles);
   }
 
   void setUpObjectConfigurationRepository(

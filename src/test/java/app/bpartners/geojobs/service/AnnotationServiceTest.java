@@ -27,9 +27,9 @@ import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectType;
-import app.bpartners.geojobs.repository.model.detection.DetectedObject;
-import app.bpartners.geojobs.repository.model.detection.DetectedTile;
 import app.bpartners.geojobs.repository.model.detection.HumanDetectionJob;
+import app.bpartners.geojobs.repository.model.detection.MachineDetectedObject;
+import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
 import app.bpartners.geojobs.service.annotator.AnnotatorApiConf;
 import app.bpartners.geojobs.service.annotator.CreateAnnotationBatchExtractor;
@@ -71,14 +71,17 @@ public class AnnotationServiceTest {
   }
 
   @NonNull
-  private static List<DetectedTile> detectedTiles() {
+  private static List<MachineDetectedTile> detectedTiles() {
     return List.of(
-        DetectedTile.builder().id("detectedTile1Id").detectedObjects(List.of()).build(),
-        DetectedTile.builder()
+        MachineDetectedTile.builder()
+            .id("detectedTile1Id")
+            .machineDetectedObjects(List.of())
+            .build(),
+        MachineDetectedTile.builder()
             .id("detectedTile2Id")
-            .detectedObjects(
+            .machineDetectedObjects(
                 List.of(
-                    DetectedObject.builder()
+                    MachineDetectedObject.builder()
                         .detectedObjectTypes(
                             List.of(DetectableObjectType.builder().detectableType(PATHWAY).build()))
                         .feature(
@@ -136,7 +139,7 @@ public class AnnotationServiceTest {
             .id("humanDetectionJob")
             .zoneDetectionJobId(ZONE_DETECTION_JOB_ID)
             .annotationJobId("annotationJobId")
-            .detectedTiles(detectedTiles())
+            .machineDetectedTiles(detectedTiles())
             .detectableObjectConfigurations(detectableObjects())
             .build());
 

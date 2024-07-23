@@ -9,9 +9,8 @@ import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionInitiated;
 import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.model.exception.ApiException;
-import app.bpartners.geojobs.repository.HumanDetectionJobRepository;
-import app.bpartners.geojobs.repository.model.detection.DetectedTile;
-import app.bpartners.geojobs.repository.model.detection.HumanDetectionJob;
+import app.bpartners.geojobs.repository.model.detection.HumanDetectedTile;
+import app.bpartners.geojobs.service.detection.HumanDetectedTileService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionTaskService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionTaskStatusService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConverter;
@@ -31,7 +30,7 @@ import org.springframework.stereotype.Service;
 public class GeoJsonConversionInitiatedService implements Consumer<GeoJsonConversionInitiated> {
   private static final String TEMP_FOLDER_PERMISSION = "rwx------";
   private static final String GEO_JSON_EXTENSION = ".geojson";
-  private final HumanDetectionJobRepository humanDetectionJobRepository;
+  private final HumanDetectedTileService humanDetectedTileService;
   private final GeoJsonConversionTaskStatusService taskStatusService;
   private final GeoJsonConversionTaskService taskService;
   private final GeoJsonConverter geoJsonConverter;
@@ -46,13 +45,9 @@ public class GeoJsonConversionInitiatedService implements Consumer<GeoJsonConver
     var task = taskService.getById(taskId);
     taskStatusService.process(task);
     var fileKey = jobId + "/" + zoneName + GEO_JSON_EXTENSION;
-    List<DetectedTile> detectedTile =
-        humanDetectionJobRepository.findByZoneDetectionJobId(jobId).stream()
-            .map(HumanDetectionJob::getDetectedTiles)
-            .flatMap(List::stream)
-            .toList(); // Should be replaced by detected tiles after human verification
+    List<HumanDetectedTile> humanDetectedTiles = humanDetectedTileService.getByJobId(jobId);
     try {
-      var geoJson = geoJsonConverter.convert(detectedTile);
+      var geoJson = geoJsonConverter.convert(humanDetectedTiles);
       var geoJsonAsByte = writer.writeAsByte(geoJson);
       var geoJsonAsFile =
           writer.write(geoJsonAsByte, createTempDirectory(), zoneName + GEO_JSON_EXTENSION);

@@ -5,8 +5,8 @@ import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.gen.annotator.endpoint.rest.model.*;
 import app.bpartners.geojobs.model.exception.ApiException;
-import app.bpartners.geojobs.repository.model.detection.DetectedObject;
-import app.bpartners.geojobs.repository.model.detection.DetectedTile;
+import app.bpartners.geojobs.repository.model.detection.MachineDetectedObject;
+import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.service.KeyPredicateFunction;
 import java.util.Collection;
 import java.util.HashSet;
@@ -20,11 +20,11 @@ public class LabelExtractor {
   private final KeyPredicateFunction keyPredicateFunction;
   private final LabelConverter labelConverter;
 
-  public List<Label> createUniqueLabelListFrom(List<DetectedTile> tiles) {
+  public List<Label> createUniqueLabelListFrom(List<MachineDetectedTile> tiles) {
     return tiles.stream()
-        .map(DetectedTile::getDetectedObjects)
+        .map(MachineDetectedTile::getMachineDetectedObjects)
         .flatMap(Collection::stream)
-        .map(DetectedObject::getDetectableObjectType)
+        .map(MachineDetectedObject::getDetectableObjectType)
         .distinct()
         .map(labelConverter::apply)
         .toList();

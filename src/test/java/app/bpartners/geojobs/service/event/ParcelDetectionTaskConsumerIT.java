@@ -101,7 +101,7 @@ public class ParcelDetectionTaskConsumerIT extends FacadeIT {
         .accept(eventsCaptor.capture());
   }
 
-  private static DetectedTile someDetectedTile() {
+  private static MachineDetectedTile someDetectedTile() {
     return detectedTile(JOB_ID, "tileId", "parcel1Id", "detectedObject1Id", 0.98);
   }
 }

@@ -7,6 +7,7 @@ import app.bpartners.gen.annotator.endpoint.rest.model.Polygon;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Table;
 import java.io.Serializable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.JdbcTypeCode;
 
 @Entity
+@Table(name = "human_detected_object")
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder

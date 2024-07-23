@@ -22,7 +22,7 @@ public class HumanDetectionJob {
 
   @OneToMany(fetch = EAGER)
   @JoinColumn(name = "human_detection_job_id")
-  private List<DetectedTile> detectedTiles;
+  private List<MachineDetectedTile> machineDetectedTiles;
 
   // TODO: must be persisted but can be retrieved by zoneDetectionJobId
   @Transient private List<DetectableObjectConfiguration> detectableObjectConfigurations;

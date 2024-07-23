@@ -9,7 +9,7 @@ import app.bpartners.geojobs.endpoint.event.model.TileDetectionTaskCreated;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.repository.DetectedTileRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
-import app.bpartners.geojobs.repository.model.detection.DetectedTile;
+import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.detection.DetectionMapper;
 import app.bpartners.geojobs.service.detection.MockedTileObjectDetector;
@@ -22,9 +22,9 @@ class TileParcelParcelDetectionTaskConsumerWithMockedObjectsDetectorTest {
   void can_consume_with_no_error() {
     DetectedTileRepository detectedTileRepositoryMock = mock();
     DetectionMapper detectionMapperMock = mock();
-    when(detectedTileRepositoryMock.save(any())).thenReturn(new DetectedTile());
+    when(detectedTileRepositoryMock.save(any())).thenReturn(new MachineDetectedTile());
     when(detectionMapperMock.toDetectedTile(any(), any(), any(), any(), any()))
-        .thenReturn(new DetectedTile());
+        .thenReturn(new MachineDetectedTile());
     var subject =
         new TileDetectionTaskCreatedConsumer(
             detectedTileRepositoryMock, new MockedTileObjectDetector(), detectionMapperMock);
@@ -46,7 +46,7 @@ class TileParcelParcelDetectionTaskConsumerWithMockedObjectsDetectorTest {
   void can_consume_with_some_errors() {
     DetectedTileRepository detectedTileRepositoryMock = mock();
     DetectionMapper detectionMapperMock = mock();
-    when(detectedTileRepositoryMock.save(any())).thenReturn(new DetectedTile());
+    when(detectedTileRepositoryMock.save(any())).thenReturn(new MachineDetectedTile());
     var subject =
         new TileDetectionTaskCreatedConsumer(
             detectedTileRepositoryMock, new MockedTileObjectDetector(), detectionMapperMock);

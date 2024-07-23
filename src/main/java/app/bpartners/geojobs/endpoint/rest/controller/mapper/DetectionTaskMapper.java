@@ -8,6 +8,8 @@ import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.DetectedTileRepository;
 import app.bpartners.geojobs.repository.model.Parcel;
+import app.bpartners.geojobs.repository.model.detection.MachineDetectedObject;
+import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
@@ -20,18 +22,12 @@ public class DetectionTaskMapper {
   private final DetectedTileRepository detectedTileRepository;
 
   public DetectedParcel toRest(String jobId, Parcel parcel) {
-    List<app.bpartners.geojobs.repository.model.detection.DetectedTile> detectedTiles =
+    List<MachineDetectedTile> machineDetectedTiles =
         parcel == null ? List.of() : detectedTileRepository.findAllByParcelId(parcel.getId());
     var lastDetectedTileCreationDatetime =
-        detectedTiles.stream()
-            .max(
-                Comparator.comparing(
-                    app.bpartners.geojobs.repository.model.detection.DetectedTile
-                        ::getCreationDatetime))
-            .orElse(
-                app.bpartners.geojobs.repository.model.detection.DetectedTile.builder()
-                    .creationDatetime(now())
-                    .build())
+        machineDetectedTiles.stream()
+            .max(Comparator.comparing(MachineDetectedTile::getCreationDatetime))
+            .orElse(MachineDetectedTile.builder().creationDatetime(now()).build())
             .getCreationDatetime();
     return new DetectedParcel()
         .id(randomUUID().toString()) // TODO DetectedParcel must be persisted
@@ -49,18 +45,12 @@ public class DetectionTaskMapper {
                             .creationDatetime(status.getCreationDatetime()))
                 .orElse(null))
         .detectedTiles(
-            detectedTiles.stream()
-                .map(
-                    tile ->
-                        toRest(
-                            (app.bpartners.geojobs.repository.model.detection.DetectedTile) tile))
-                .toList());
+            machineDetectedTiles.stream().map(tile -> toRest((MachineDetectedTile) tile)).toList());
   }
 
-  private DetectedTile toRest(
-      app.bpartners.geojobs.repository.model.detection.DetectedTile detectedTile) {
-    var tile = detectedTile.getTile();
-    var detectedObjects = detectedTile.getDetectedObjects();
+  private DetectedTile toRest(MachineDetectedTile machineDetectedTile) {
+    var tile = machineDetectedTile.getTile();
+    var detectedObjects = machineDetectedTile.getMachineDetectedObjects();
     return new DetectedTile()
         .tileId(tile.getId())
         .creationDatetime(tile.getCreationDatetime())
@@ -69,12 +59,11 @@ public class DetectionTaskMapper {
         .bucketPath(tile.getBucketPath());
   }
 
-  private DetectedObject toRest(
-      app.bpartners.geojobs.repository.model.detection.DetectedObject detectedObject) {
+  private DetectedObject toRest(MachineDetectedObject machineDetectedObject) {
     return new DetectedObject()
-        .detectedObjectType(toRest(detectedObject.getDetectableObjectType()))
-        .feature(detectedObject.getFeature())
-        .confidence(BigDecimal.valueOf(detectedObject.getComputedConfidence()))
+        .detectedObjectType(toRest(machineDetectedObject.getDetectableObjectType()))
+        .feature(machineDetectedObject.getFeature())
+        .confidence(BigDecimal.valueOf(machineDetectedObject.getComputedConfidence()))
         .detectorVersion("TODO"); // TODO
   }
 

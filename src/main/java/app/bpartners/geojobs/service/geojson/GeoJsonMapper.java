@@ -4,7 +4,7 @@ import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.MU
 import static app.bpartners.geojobs.service.geojson.GeoReferencer.toGeographicalCoordinates;
 
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
-import app.bpartners.geojobs.repository.model.detection.DetectedObject;
+import app.bpartners.geojobs.repository.model.detection.HumanDetectedObject;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,28 +15,24 @@ import org.springframework.stereotype.Component;
 public class GeoJsonMapper {
 
   public List<GeoJson.GeoFeature> toGeoFeatures(
-      int xTile, int yTile, int zoom, int imageWidth, List<DetectedObject> detectedObjects) {
+      int xTile, int yTile, int zoom, int imageWidth, List<HumanDetectedObject> detectedObjects) {
     var geoFeatures = new ArrayList<GeoJson.GeoFeature>();
     detectedObjects.forEach(
         object -> {
           var feature = object.getFeature();
-          if (feature == null
-              || feature.getGeometry() == null
-              || feature.getGeometry().getCoordinates() == null) {
+          if (feature == null || feature.getPoints() == null) {
             throw new IllegalArgumentException("Multipolygon coordinates should not be null");
           }
           var properties = new HashMap<String, String>();
-          properties.put("confidence", object.getComputedConfidence().toString());
-          properties.put("label", object.getDetectableObjectType().name());
+          properties.put("confidence", object.getConfidence());
+          properties.put("label", object.getLabel().getName());
           var multipolygon = new MultiPolygon();
           List<List<BigDecimal>> coordinates =
-              feature.getGeometry().getCoordinates().stream()
-                  .flatMap(List::stream)
-                  .flatMap(List::stream)
+              feature.getPoints().stream()
                   .map(
                       coor -> {
-                        var x = coor.getFirst().doubleValue();
-                        var y = coor.getFirst().doubleValue();
+                        var x = coor.getX();
+                        var y = coor.getY();
                         return toGeographicalCoordinates(xTile, yTile, x, y, zoom, imageWidth);
                       })
                   .toList();

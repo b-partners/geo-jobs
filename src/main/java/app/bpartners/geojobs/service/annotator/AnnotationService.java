@@ -71,11 +71,11 @@ public class AnnotationService {
   public void createAnnotationJob(HumanDetectionJob humanDetectionJob, String jobName)
       throws ApiException {
     String folderPath = null;
-    List<DetectedTile> detectedTiles = humanDetectionJob.getDetectedTiles();
+    List<MachineDetectedTile> machineDetectedTiles = humanDetectionJob.getMachineDetectedTiles();
     log.info(
         "[DEBUG] AnnotationService detected tiles [size={}, tiles={}]",
-        detectedTiles.size(),
-        detectedTiles.stream().map(DetectedTile::describe).toList());
+        machineDetectedTiles.size(),
+        machineDetectedTiles.stream().map(MachineDetectedTile::describe).toList());
     String annotationJobId = humanDetectionJob.getAnnotationJobId();
     List<DetectableObjectConfiguration> detectableObjects =
         humanDetectionJob.getDetectableObjectConfigurations();
@@ -84,7 +84,8 @@ public class AnnotationService {
             .map(object -> labelConverter.apply(object.getObjectType()))
             .toList();
     List<CreateAnnotatedTask> annotatedTasks =
-        taskExtractor.apply(detectedTiles, annotatorUserInfoGetter.getUserId(), expectedLabels);
+        taskExtractor.apply(
+            machineDetectedTiles, annotatorUserInfoGetter.getUserId(), expectedLabels);
     List<Label> extractLabelsFromTasks = labelExtractor.extractLabelsFromTasks(annotatedTasks);
     List<Label> labels = extractLabelsFromTasks.isEmpty() ? expectedLabels : extractLabelsFromTasks;
     log.error(
@@ -130,7 +131,8 @@ public class AnnotationService {
 
   public List<AnnotationBatch> getAnnotations(String annotationJobId, String taskId) {
     try {
-      return adminApi.getAnnotationBatchesByJobTask(annotationJobId, taskId, null, null);//page, pageSize not required
+      return adminApi.getAnnotationBatchesByJobTask(
+          annotationJobId, taskId, null, null); // page, pageSize not required
     } catch (ApiException e) {
       throw new app.bpartners.geojobs.model.exception.ApiException(
           app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION, e);
@@ -141,7 +143,12 @@ public class AnnotationService {
     List<Task> annotationTasks;
     try {
       annotationTasks =
-          adminApi.getJobTasks(annotationJobId, null, null, TaskStatus.COMPLETED, null); //page, pageSize and UserId not required
+          adminApi.getJobTasks(
+              annotationJobId,
+              null,
+              null,
+              TaskStatus.COMPLETED,
+              null); // page, pageSize and UserId not required
     } catch (ApiException e) {
       throw new app.bpartners.geojobs.model.exception.ApiException(
           app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION, e);
