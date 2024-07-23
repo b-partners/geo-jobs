@@ -13,10 +13,10 @@ public class AnnotationTaskRetrievingSubmittedService
   private final AnnotationService annotationService;
 
   @Override
-  public void accept(AnnotationTaskRetrievingSubmitted annotationTaskRetrievingSubmitted) {
-    var jobId = annotationTaskRetrievingSubmitted.getJobId();
-    var firstAnnotationJobId = annotationTaskRetrievingSubmitted.getFirstAnnotationJobId();
-    var lastAnnotationJobId = annotationTaskRetrievingSubmitted.getLastAnnotationJobId();
+  public void accept(AnnotationTaskRetrievingSubmitted submitted) {
+    var jobId = submitted.getJobId();
+    var firstAnnotationJobId = submitted.getFirstAnnotationJobId();
+    var lastAnnotationJobId = submitted.getLastAnnotationJobId();
     var firstAnnotationJob = annotationService.getAnnotationJobById(firstAnnotationJobId);
     var lastAnnotationJob = annotationService.getAnnotationJobById(lastAnnotationJobId);
     annotationService.fireTasks(jobId, firstAnnotationJobId, firstAnnotationJob.getImagesWidth());

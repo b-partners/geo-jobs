@@ -3,7 +3,6 @@ package app.bpartners.geojobs.endpoint.event.model;
 import app.bpartners.geojobs.endpoint.event.EventStack;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Duration;
-import javax.annotation.processing.Generated;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,12 +10,11 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-@Generated("EventBridge")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder(toBuilder = true)
 @Data
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = false)
 @ToString
 public class AnnotationBatchRetrievingSubmitted extends PojaEvent {
   @JsonProperty("jobId")
@@ -25,8 +23,8 @@ public class AnnotationBatchRetrievingSubmitted extends PojaEvent {
   @JsonProperty("annotationId")
   private String annotationJobId;
 
-  @JsonProperty("taskId")
-  private String taskId;
+  @JsonProperty("annotationTaskId")
+  private String annotationTaskId;
 
   @JsonProperty("imageSize")
   private int imageSize;

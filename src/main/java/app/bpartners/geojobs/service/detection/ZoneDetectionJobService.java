@@ -10,7 +10,6 @@ import static java.util.UUID.randomUUID;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.*;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
-import app.bpartners.geojobs.endpoint.rest.model.GeoJsonsUrl;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.Task;
@@ -273,26 +272,6 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
     return Optional.empty();
   }
 
-  public GeoJsonsUrl getGeoJsonsUrl(String jobId) {
-    var humanZDJ = getHumanZdjFromZdjId(jobId);
-    var jobStatus = humanZDJ.getStatus();
-
-    return new GeoJsonsUrl()
-        .url(generateGeoJsonsUrl(jobStatus))
-        .status(statusMapper.toRest(jobStatus));
-  }
-
-  private String generateGeoJsonsUrl(JobStatus jobStatus) {
-    if (!jobStatus.getProgression().equals(FINISHED)
-        && !jobStatus.getHealth().equals(Status.HealthStatus.SUCCEEDED)) {
-      log.info(
-          "Unable to generate geoJsons Url to unfinished succeeded job. Actual status is "
-              + jobStatus);
-      return null;
-    }
-    return "NotImplemented: finished human detection job without url";
-  }
-
   public ZoneDetectionJob checkHumanDetectionJobStatus(String jobId) {
     var humanZDJ = getHumanZdjFromZdjId(jobId);
     var humanDetectionJobs = humanDetectionJobRepository.findByZoneDetectionJobId(humanZDJ.getId());
@@ -325,13 +304,6 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
       humanZDJHealth = UNKNOWN;
     }
 
-    if (FINISHED.equals(humanZDJProgression) && SUCCEEDED.equals(humanZDJHealth)) {
-      eventProducer.accept(
-          List.of(
-              new AnnotationTaskRetrievingSubmitted(
-                  jobId, firstAnnotationJobId, lastAnnotationJobId)));
-    }
-
     humanZDJ.hasNewStatus(
         Status.builder()
             .id(randomUUID().toString())
@@ -339,6 +311,13 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
             .health(humanZDJHealth)
             .creationDatetime(now())
             .build());
+
+    if (humanZDJ.isSucceeded()) {
+      eventProducer.accept(
+          List.of(
+              new AnnotationTaskRetrievingSubmitted(
+                  jobId, firstAnnotationJobId, lastAnnotationJobId)));
+    }
     return repository.save(humanZDJ);
   }
 

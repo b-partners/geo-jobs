@@ -32,7 +32,7 @@ class AnnotationBatchRetrievingSubmittedServiceIT extends FacadeIT {
     return AnnotationBatchRetrievingSubmitted.builder()
         .jobId(MOCK_JOB_ID)
         .annotationJobId(MOCK_ANNOTATION_JOB_ID)
-        .taskId(MOCK_TASK_ID)
+        .annotationTaskId(MOCK_TASK_ID)
         .xTile(50000)
         .yTile(12000)
         .zoom(20)

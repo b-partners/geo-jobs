@@ -29,12 +29,12 @@ public class AnnotationBatchRetrievingSubmittedService
   public void accept(AnnotationBatchRetrievingSubmitted submitted) {
     var jobId = submitted.getJobId();
     var annotationJobId = submitted.getAnnotationJobId();
-    var taskId = submitted.getTaskId();
+    var annotationTaskId = submitted.getAnnotationTaskId();
     var imageSize = submitted.getImageSize();
     var xTile = submitted.getXTile();
     var yTile = submitted.getYTile();
     var zoom = submitted.getZoom();
-    var annotationBatches = annotationService.getAnnotations(annotationJobId, taskId);
+    var annotationBatches = annotationService.getAnnotations(annotationJobId, annotationTaskId);
     var humanDetectedTiles =
         annotationBatches.stream()
             .map(AnnotationBatch::getAnnotations)
@@ -46,7 +46,7 @@ public class AnnotationBatchRetrievingSubmittedService
                       .id(tileId)
                       .jobId(jobId)
                       .annotationJobId(annotationJobId)
-                      .annotationTaskId(taskId)
+                      .annotationTaskId(annotationTaskId)
                       .imageSize(imageSize)
                       .detectedObjects(toHumanDetectedObject(tileId, annotations))
                       .tile(

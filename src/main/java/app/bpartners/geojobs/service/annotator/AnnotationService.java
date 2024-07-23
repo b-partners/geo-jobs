@@ -130,7 +130,7 @@ public class AnnotationService {
 
   public List<AnnotationBatch> getAnnotations(String annotationJobId, String taskId) {
     try {
-      return adminApi.getAnnotationBatchesByJobTask(annotationJobId, taskId, null, null);
+      return adminApi.getAnnotationBatchesByJobTask(annotationJobId, taskId, null, null);//page, pageSize not required
     } catch (ApiException e) {
       throw new app.bpartners.geojobs.model.exception.ApiException(
           app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION, e);
@@ -141,7 +141,7 @@ public class AnnotationService {
     List<Task> annotationTasks;
     try {
       annotationTasks =
-          adminApi.getJobTasks(annotationJobId, null, null, TaskStatus.COMPLETED, null);
+          adminApi.getJobTasks(annotationJobId, null, null, TaskStatus.COMPLETED, null); //page, pageSize and UserId not required
     } catch (ApiException e) {
       throw new app.bpartners.geojobs.model.exception.ApiException(
           app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION, e);
@@ -152,7 +152,6 @@ public class AnnotationService {
           var zoom = metadata.getFirst();
           var xTile = metadata.get(metadata.size() - 2);
           var yTile = metadata.getLast();
-          log.info("File metadata x={} y={} z={}", xTile, yTile, zoom);
           eventProducer.accept(
               List.of(
                   new AnnotationBatchRetrievingSubmitted(
