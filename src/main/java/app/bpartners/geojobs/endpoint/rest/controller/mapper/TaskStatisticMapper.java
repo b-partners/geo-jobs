@@ -33,8 +33,7 @@ public class TaskStatisticMapper {
   }
 
   private static HealthStatusStatistic toRest(
-      app.bpartners.geojobs.job.model.statistic.TaskStatusStatistic.HealthStatusStatistic
-          healthStatusStatistic) {
+      app.bpartners.geojobs.job.model.statistic.HealthStatusStatistic healthStatusStatistic) {
     return new HealthStatusStatistic()
         .health(getHealthStatus(healthStatusStatistic.getHealthStatus()))
         .count(BigDecimal.valueOf(healthStatusStatistic.getCount()));
