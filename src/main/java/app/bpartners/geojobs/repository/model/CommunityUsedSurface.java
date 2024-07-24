@@ -6,9 +6,9 @@ import java.time.Instant;
 import java.util.Objects;
 import lombok.*;
 
+@Builder
 @Getter
 @Setter
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity(name = "community_used_surface")
@@ -21,22 +21,9 @@ public class CommunityUsedSurface implements Serializable {
   @Column(name = "usage_datetime")
   private Instant usageDatetime;
 
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "id_community_authorization")
   private CommunityAuthorization communityAuthorization;
-
-  @Override
-  public String toString() {
-    return "CommunityUsedSurface{"
-        + "id='"
-        + id
-        + '\''
-        + ", usedSurface="
-        + usedSurface
-        + ", usageDatetime="
-        + usageDatetime
-        + '}';
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -51,5 +38,18 @@ public class CommunityUsedSurface implements Serializable {
   @Override
   public int hashCode() {
     return Objects.hash(id, usedSurface, usageDatetime);
+  }
+
+  @Override
+  public String toString() {
+    return "CommunityUsedSurface{"
+        + "id='"
+        + id
+        + '\''
+        + ", usedSurface="
+        + usedSurface
+        + ", usageDatetime="
+        + usageDatetime
+        + '}';
   }
 }

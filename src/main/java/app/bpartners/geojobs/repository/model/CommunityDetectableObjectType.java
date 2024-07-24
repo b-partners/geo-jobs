@@ -10,9 +10,9 @@ import java.util.Objects;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 
+@Builder
 @Getter
 @Setter
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity(name = "community_detectable_object_type")
@@ -23,14 +23,9 @@ public class CommunityDetectableObjectType implements Serializable {
   @JdbcTypeCode(NAMED_ENUM)
   private DetectableType type;
 
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "id_community_authorization")
   private CommunityAuthorization communityAuthorization;
-
-  @Override
-  public String toString() {
-    return "CommunityDetectableObjectType{" + "id='" + id + '\'' + ", type=" + type + '}';
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -43,5 +38,10 @@ public class CommunityDetectableObjectType implements Serializable {
   @Override
   public int hashCode() {
     return Objects.hash(id, type);
+  }
+
+  @Override
+  public String toString() {
+    return "CommunityDetectableObjectType{" + "id='" + id + '\'' + ", type=" + type + '}';
   }
 }

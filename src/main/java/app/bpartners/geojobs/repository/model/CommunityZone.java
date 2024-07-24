@@ -16,14 +16,9 @@ public class CommunityZone implements Serializable {
 
   @Column private String name;
 
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "id_community_authorization")
   private CommunityAuthorization communityAuthorization;
-
-  @Override
-  public String toString() {
-    return "CommunityZone{" + "id='" + id + '\'' + ", name='" + name + '\'' + '}';
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -36,5 +31,10 @@ public class CommunityZone implements Serializable {
   @Override
   public int hashCode() {
     return Objects.hash(id, name);
+  }
+
+  @Override
+  public String toString() {
+    return "CommunityZone{" + "name='" + name + '\'' + ", id='" + id + '\'' + '}';
   }
 }
