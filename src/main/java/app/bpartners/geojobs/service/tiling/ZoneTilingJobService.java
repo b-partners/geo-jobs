@@ -18,6 +18,7 @@ import app.bpartners.geojobs.job.repository.TaskRepository;
 import app.bpartners.geojobs.job.service.JobService;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.exception.NotFoundException;
+import app.bpartners.geojobs.repository.TaskStatisticRepository;
 import app.bpartners.geojobs.repository.model.FilteredTilingJob;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
@@ -35,6 +36,7 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
   private final ZoneDetectionJobService detectionJobService;
   private final JobFilteredMailer<ZoneTilingJob> tilingFilteredMailer;
   private final NotFinishedTaskRetriever<TilingTask> notFinishedTaskRetriever;
+  private final TaskStatisticRepository taskStatisticRepository;
 
   public ZoneTilingJobService(
       JpaRepository<ZoneTilingJob, String> repository,
@@ -43,11 +45,13 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
       EventProducer eventProducer,
       ZoneDetectionJobService detectionJobService,
       JobFilteredMailer<ZoneTilingJob> tilingFilteredMailer,
-      NotFinishedTaskRetriever<TilingTask> notFinishedTaskRetriever) {
+      NotFinishedTaskRetriever<TilingTask> notFinishedTaskRetriever,
+      TaskStatisticRepository taskStatisticRepository) {
     super(repository, jobStatusRepository, taskRepository, eventProducer, ZoneTilingJob.class);
     this.detectionJobService = detectionJobService;
     this.tilingFilteredMailer = tilingFilteredMailer;
     this.notFinishedTaskRetriever = notFinishedTaskRetriever;
+    this.taskStatisticRepository = taskStatisticRepository;
   }
 
   public ZoneTilingJob importFromBucket(
@@ -125,13 +129,7 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
   public TaskStatistic computeTaskStatistics(String jobId) {
     ZoneTilingJob job = getZoneTilingJob(jobId);
     eventProducer.accept(List.of(TaskStatisticRecomputingSubmitted.builder().jobId(jobId).build()));
-    return TaskStatistic.builder()
-        .jobId(jobId)
-        .jobType(TILING)
-        .actualJobStatus(job.getStatus())
-        .taskStatusStatistics(List.of())
-        .updatedAt(job.getStatus().getCreationDatetime())
-        .build();
+    return taskStatisticRepository.findTopByJobIdOrderByUpdatedAt(job.getId());
   }
 
   private ZoneTilingJob getZoneTilingJob(String jobId) {
