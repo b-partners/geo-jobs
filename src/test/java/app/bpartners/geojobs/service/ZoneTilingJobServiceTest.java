@@ -13,7 +13,6 @@ import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.ImportedZoneTilingJobSaved;
-import app.bpartners.geojobs.endpoint.event.model.TaskStatisticRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.ZoneTilingJobWithoutTasksCreated;
 import app.bpartners.geojobs.endpoint.rest.model.BucketSeparatorType;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
@@ -26,6 +25,7 @@ import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.job.repository.TaskRepository;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.exception.NotFoundException;
+import app.bpartners.geojobs.repository.TaskStatisticRepository;
 import app.bpartners.geojobs.repository.model.FilteredTilingJob;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
@@ -57,6 +57,7 @@ public class ZoneTilingJobServiceTest {
   EventProducer eventProducerMock = mock();
   ZoneDetectionJobService detectionJobServiceMock = mock();
   NotFinishedTaskRetriever<TilingTask> notFinishedTaskRetriever = new NotFinishedTaskRetriever<>();
+  TaskStatisticRepository taskStatisticRepositoryMock = mock();
   ZoneTilingJobService subject =
       new ZoneTilingJobService(
           jobRepositoryMock,
@@ -65,7 +66,8 @@ public class ZoneTilingJobServiceTest {
           eventProducerMock,
           detectionJobServiceMock,
           mock(),
-          notFinishedTaskRetriever);
+          notFinishedTaskRetriever,
+          taskStatisticRepositoryMock);
 
   @Test
   void duplicate_ok() {
@@ -255,30 +257,16 @@ public class ZoneTilingJobServiceTest {
         .thenReturn(
             Optional.of(
                 ZoneTilingJob.builder()
+                    .id(JOB_3_ID)
                     .statusHistory(
                         List.of(JobStatus.builder().progression(PROCESSING).health(FAILED).build()))
                     .build()));
-    when(taskRepositoryMock.findAllByJobId(JOB_3_ID))
-        .thenReturn(
-            List.of(
-                taskWithStatus(FINISHED, SUCCEEDED),
-                taskWithStatus(FINISHED, SUCCEEDED),
-                taskWithStatus(PENDING, UNKNOWN),
-                taskWithStatus(PENDING, UNKNOWN),
-                taskWithStatus(FINISHED, FAILED),
-                taskWithStatus(PROCESSING, UNKNOWN)));
+    TaskStatistic expected = new TaskStatistic();
+    when(taskStatisticRepositoryMock.findTopByJobIdOrderByUpdatedAt(JOB_3_ID)).thenReturn(expected);
 
     TaskStatistic actual = subject.computeTaskStatistics(JOB_3_ID);
 
-    var eventCapture = ArgumentCaptor.forClass(List.class);
-    verify(eventProducerMock, times(1)).accept(eventCapture.capture());
-    List<TaskStatisticRecomputingSubmitted> events = eventCapture.getValue();
-    var taskStatisticRecomputingEvent = events.getFirst();
-    assertEquals(JOB_3_ID, actual.getJobId());
-    assertEquals(actual.getJobId(), taskStatisticRecomputingEvent.getJobId());
-    assertEquals(FAILED, actual.getActualJobStatus().getHealth());
-    assertEquals(PROCESSING, actual.getActualJobStatus().getProgression());
-    assertTrue(actual.getTaskStatusStatistics().isEmpty());
+    assertEquals(expected, actual);
   }
 
   @Test

@@ -9,7 +9,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.TaskStatisticRecomputingSubmitted;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.TaskStatus;
@@ -17,6 +16,7 @@ import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;
+import app.bpartners.geojobs.repository.TaskStatisticRepository;
 import app.bpartners.geojobs.repository.TileDetectionTaskRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.Parcel;
@@ -31,7 +31,6 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 @Slf4j
@@ -53,6 +52,7 @@ public class ZoneDetectionJobServiceTest {
   NotFinishedTaskRetriever<ParcelDetectionTask> notFinishedTaskRetriever =
       new NotFinishedTaskRetriever<>();
   ZoneDetectionJobRepository zoneDetectionJobRepositoryMock = mock();
+  TaskStatisticRepository taskStatisticRepositoryMock = mock();
   ZoneDetectionJobService subject =
       new ZoneDetectionJobService(
           jobRepositoryMock,
@@ -66,10 +66,7 @@ public class ZoneDetectionJobServiceTest {
           mock(),
           mock(),
           zoneDetectionJobRepositoryMock,
-          tileDetectionTaskRepositoryMock,
-          mock(),
-          notFinishedTaskRetriever,
-          mock());
+          taskStatisticRepositoryMock);
 
   @BeforeEach
   void setUp() {
@@ -380,30 +377,16 @@ public class ZoneDetectionJobServiceTest {
         .thenReturn(
             Optional.of(
                 ZoneDetectionJob.builder()
+                    .id(JOB_3_ID)
                     .statusHistory(
                         List.of(JobStatus.builder().progression(PROCESSING).health(FAILED).build()))
                     .build()));
-    when(taskRepositoryMock.findAllByJobId(JOB_3_ID))
-        .thenReturn(
-            List.of(
-                taskWithStatus(FINISHED, SUCCEEDED),
-                taskWithStatus(FINISHED, SUCCEEDED),
-                taskWithStatus(PENDING, UNKNOWN),
-                taskWithStatus(PENDING, UNKNOWN),
-                taskWithStatus(FINISHED, FAILED),
-                taskWithStatus(PROCESSING, UNKNOWN)));
+    TaskStatistic expected = new TaskStatistic();
+    when(taskStatisticRepositoryMock.findTopByJobIdOrderByUpdatedAt(JOB_3_ID)).thenReturn(expected);
 
     TaskStatistic actual = subject.computeTaskStatistics(JOB_3_ID);
 
-    var eventCapture = ArgumentCaptor.forClass(List.class);
-    verify(eventProducerMock, times(1)).accept(eventCapture.capture());
-    List<TaskStatisticRecomputingSubmitted> events = eventCapture.getValue();
-    var taskStatisticRecomputingEvent = events.getFirst();
-    assertEquals(JOB_3_ID, actual.getJobId());
-    assertEquals(actual.getJobId(), taskStatisticRecomputingEvent.getJobId());
-    assertEquals(FAILED, actual.getActualJobStatus().getHealth());
-    assertEquals(PROCESSING, actual.getActualJobStatus().getProgression());
-    assertTrue(actual.getTaskStatusStatistics().isEmpty());
+    assertEquals(expected, actual);
   }
 
   static ParcelDetectionTask taskWithStatus(

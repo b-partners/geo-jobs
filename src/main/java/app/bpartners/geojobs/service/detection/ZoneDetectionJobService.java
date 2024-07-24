@@ -30,8 +30,6 @@ import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
-import app.bpartners.geojobs.service.JobFilteredMailer;
-import app.bpartners.geojobs.service.NotFinishedTaskRetriever;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -51,10 +49,7 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
   private final HumanDetectionJobRepository humanDetectionJobRepository;
   private final AnnotationService annotationService;
   private final ZoneDetectionJobRepository zoneDetectionJobRepository;
-  private final TileDetectionTaskRepository tileDetectionTaskRepository;
-  private final JobFilteredMailer<ZoneDetectionJob> detectionFilteredMailer;
-  private final NotFinishedTaskRetriever<ParcelDetectionTask> notFinishedTaskRetriever;
-  private final ParcelDetectionJobService parcelDetectionJobService;
+  private final TaskStatisticRepository taskStatisticRepository;
 
   public ZoneDetectionJobService(
       JpaRepository<ZoneDetectionJob, String> repository,
@@ -68,10 +63,7 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
       HumanDetectionJobRepository humanDetectionJobRepository,
       AnnotationService annotationService,
       ZoneDetectionJobRepository zoneDetectionJobRepository,
-      TileDetectionTaskRepository tileDetectionTaskRepository,
-      JobFilteredMailer<ZoneDetectionJob> detectionFilteredMailer,
-      NotFinishedTaskRetriever<ParcelDetectionTask> notFinishedTaskRetriever,
-      ParcelDetectionJobService parcelDetectionJobService) {
+      TaskStatisticRepository taskStatisticRepository) {
     super(repository, jobStatusRepository, taskRepository, eventProducer, ZoneDetectionJob.class);
     this.tilingTaskRepository = tilingTaskRepository;
     this.detectionMapper = detectionMapper;
@@ -80,22 +72,13 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
     this.humanDetectionJobRepository = humanDetectionJobRepository;
     this.annotationService = annotationService;
     this.zoneDetectionJobRepository = zoneDetectionJobRepository;
-    this.tileDetectionTaskRepository = tileDetectionTaskRepository;
-    this.detectionFilteredMailer = detectionFilteredMailer;
-    this.notFinishedTaskRetriever = notFinishedTaskRetriever;
-    this.parcelDetectionJobService = parcelDetectionJobService;
+    this.taskStatisticRepository = taskStatisticRepository;
   }
 
   public TaskStatistic computeTaskStatistics(String jobId) {
     ZoneDetectionJob detectionJob = findById(jobId);
     eventProducer.accept(List.of(TaskStatisticRecomputingSubmitted.builder().jobId(jobId).build()));
-    return TaskStatistic.builder()
-        .jobId(jobId)
-        .jobType(DETECTION)
-        .actualJobStatus(detectionJob.getStatus())
-        .taskStatusStatistics(List.of())
-        .updatedAt(detectionJob.getStatus().getCreationDatetime())
-        .build();
+    return taskStatisticRepository.findTopByJobIdOrderByUpdatedAt(detectionJob.getId());
   }
 
   @Transactional
