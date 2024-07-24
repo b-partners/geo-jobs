@@ -10,15 +10,15 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class FeatureSurfaceService {
-  private static final AreaComputer areaComputer = new AreaComputer();
+  private static final AreaComputer AREA_COMPUTER = new AreaComputer();
   private final FeatureMapper featureMapper;
 
-  double getSurface(Feature feature) {
-    var areaValue = areaComputer.apply(featureMapper.toDomain(feature));
+  double getAreaValue(Feature feature) {
+    var areaValue = AREA_COMPUTER.apply(featureMapper.toDomain(feature));
     return areaValue.getValue();
   }
 
-  double getSurface(List<Feature> features) {
-    return features.stream().mapToDouble(this::getSurface).sum();
+  double getAreaValue(List<Feature> features) {
+    return features.stream().mapToDouble(this::getAreaValue).sum();
   }
 }

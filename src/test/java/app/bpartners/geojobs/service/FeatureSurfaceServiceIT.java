@@ -10,20 +10,24 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class FeatureSurfaceServiceIT extends FacadeIT {
-  @Autowired FeatureSurfaceService featureSurfaceService;
+class FeatureSurfaceServiceIT extends FacadeIT {
+  @Autowired FeatureSurfaceService subject;
 
   @Test
   void can_calc_one_feature_surface_in_square_degree() {
     var expected = 6_000;
-    var actual = featureSurfaceService.getSurface(oneFeature());
+
+    var actual = subject.getAreaValue(oneFeature());
+
     assertEquals(expected, actual);
   }
 
   @Test
   void can_calc_many_feature_surface_in_square_degree() {
     var expected = 12_000;
-    var actual = featureSurfaceService.getSurface(List.of(oneFeature(), oneFeature()));
+
+    var actual = subject.getAreaValue(List.of(oneFeature(), oneFeature()));
+
     assertEquals(expected, actual);
   }
 
