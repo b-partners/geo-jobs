@@ -47,14 +47,16 @@ public class TaskStatisticFunction<T extends Task, J extends Job>
             .mapToInt(Integer::intValue)
             .sum();
     var taskStatusStatistics = taskStatisticsComputing.apply(tasks);
-    return TaskStatistic.builder()
-        .id(randomUUID().toString())
-        .jobId(job.getId())
-        .jobType(job.getStatus().getJobType())
-        .actualJobStatus(job.getStatus())
-        .tilesCount(tilesCount)
-        .taskStatusStatistics(taskStatusStatistics)
-        .updatedAt(Instant.now())
-        .build();
+    TaskStatistic taskStatistic =
+        TaskStatistic.builder()
+            .id(randomUUID().toString())
+            .jobId(job.getId())
+            .jobType(job.getStatus().getJobType())
+            .actualJobStatus(job.getStatus())
+            .tilesCount(tilesCount)
+            .updatedAt(Instant.now())
+            .build();
+    taskStatistic.addStatusStatistics(taskStatusStatistics);
+    return taskStatistic;
   }
 }

@@ -419,17 +419,17 @@ public class ZoneTilingJobServiceTest {
   public static ZoneTilingJobServiceTest.StatisticResult getResult(TaskStatistic actual) {
     var pendingTaskStatistic =
         actual.getTaskStatusStatistics().stream()
-            .filter(statistic -> statistic.getProgressionStatus().equals(PENDING))
+            .filter(statistic -> statistic.getProgression().equals(PENDING))
             .findFirst()
             .orElseThrow();
     var processingTaskStatistic =
         actual.getTaskStatusStatistics().stream()
-            .filter(statistic -> statistic.getProgressionStatus().equals(PROCESSING))
+            .filter(statistic -> statistic.getProgression().equals(PROCESSING))
             .findFirst()
             .orElseThrow();
     var finishedTaskStatistic =
         actual.getTaskStatusStatistics().stream()
-            .filter(statistic -> statistic.getProgressionStatus().equals(FINISHED))
+            .filter(statistic -> statistic.getProgression().equals(FINISHED))
             .findFirst()
             .orElseThrow();
     var unknownPendingTask =
