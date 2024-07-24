@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.repository.model;
 
+import static jakarta.persistence.FetchType.EAGER;
+
 import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.List;
@@ -24,12 +26,12 @@ public class CommunityAuthorization implements Serializable {
   @Column(name = "max_surface")
   private double maxSurface;
 
-  @OneToMany(mappedBy = "communityAuthorization", cascade = CascadeType.ALL)
+  @OneToMany(fetch = EAGER, mappedBy = "communityAuthorization")
   private List<CommunityZone> authorizedZones;
 
-  @OneToMany(mappedBy = "communityAuthorization", cascade = CascadeType.ALL)
+  @OneToMany(fetch = EAGER, mappedBy = "communityAuthorization")
   private List<CommunityDetectableObjectType> detectableObjectTypes;
 
-  @OneToMany(mappedBy = "communityAuthorization", cascade = CascadeType.ALL)
+  @OneToMany(fetch = EAGER, mappedBy = "communityAuthorization")
   private List<CommunityUsedSurface> usedSurfaces;
 }
