@@ -25,9 +25,22 @@ public class TaskStatistic {
 
   private Instant updatedAt;
 
-  @OneToMany(cascade = CascadeType.ALL, fetch = EAGER, orphanRemoval = true)
+  @OneToMany(
+      cascade = CascadeType.ALL,
+      fetch = EAGER,
+      orphanRemoval = true,
+      mappedBy = "taskStatistic")
   private List<TaskStatusStatistic> taskStatusStatistics;
 
   private Integer tilesCount;
   @Transient private JobStatus actualJobStatus;
+
+  public void addStatusStatistics(List<TaskStatusStatistic> toAdd) {
+    toAdd.forEach(tss -> tss.setTaskStatistic(this));
+    if (this.getTaskStatusStatistics() != null) {
+      this.getTaskStatusStatistics().addAll(toAdd);
+    } else {
+      this.setTaskStatusStatistics(toAdd);
+    }
+  }
 }

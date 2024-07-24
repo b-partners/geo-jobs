@@ -25,7 +25,7 @@ public class TaskStatisticMapper {
   private static TaskStatusStatistic toRest(
       app.bpartners.geojobs.job.model.statistic.TaskStatusStatistic taskStatusStatistic) {
     return new TaskStatusStatistic()
-        .progression(getProgressionStatus(taskStatusStatistic.getProgressionStatus()))
+        .progression(getProgressionStatus(taskStatusStatistic.getProgression()))
         .healthStatistics(
             taskStatusStatistic.getHealthStatusStatistics().stream()
                 .map(TaskStatisticMapper::toRest)

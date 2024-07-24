@@ -29,12 +29,13 @@ public class TaskStatisticsComputing<T extends Task>
                   healthStatus ->
                       healthStatistics.add(
                           computeHealthStatistics(tasks, progressionStatus, healthStatus)));
-          taskStatusStatistics.add(
+          TaskStatusStatistic taskStatusStatistic =
               TaskStatusStatistic.builder()
                   .id(randomUUID().toString())
-                  .progressionStatus(progressionStatus)
-                  .healthStatusStatistics(healthStatistics)
-                  .build());
+                  .progression(progressionStatus)
+                  .build();
+          taskStatusStatistic.addHealthStatusStatistics(healthStatistics);
+          taskStatusStatistics.add(taskStatusStatistic);
         });
     return taskStatusStatistics;
   }
