@@ -379,14 +379,40 @@ public class ZoneDetectionJobServiceTest {
                 ZoneDetectionJob.builder()
                     .id(JOB_3_ID)
                     .statusHistory(
-                        List.of(JobStatus.builder().progression(PROCESSING).health(FAILED).build()))
+                        List.of(
+                            JobStatus.builder()
+                                .progression(PROCESSING)
+                                .health(FAILED)
+                                .jobType(DETECTION)
+                                .build()))
+                    .build()));
+    JobStatus pendingJobStatus =
+        JobStatus.builder().progression(PENDING).health(UNKNOWN).jobType(DETECTION).build();
+    when(jobRepositoryMock.findById(JOB_ID))
+        .thenReturn(
+            Optional.of(
+                ZoneDetectionJob.builder()
+                    .id(JOB_ID)
+                    .statusHistory(List.of(pendingJobStatus))
                     .build()));
     TaskStatistic expected = new TaskStatistic();
     when(taskStatisticRepositoryMock.findTopByJobIdOrderByUpdatedAt(JOB_3_ID)).thenReturn(expected);
+    when(taskStatisticRepositoryMock.findTopByJobIdOrderByUpdatedAt(JOB_ID)).thenReturn(null);
 
     TaskStatistic actual = subject.computeTaskStatistics(JOB_3_ID);
+    TaskStatistic actual2 = subject.computeTaskStatistics(JOB_ID);
 
     assertEquals(expected, actual);
+    assertEquals(
+        TaskStatistic.builder()
+            .id(actual2.getId())
+            .jobId(JOB_ID)
+            .taskStatusStatistics(List.of())
+            .actualJobStatus(pendingJobStatus)
+            .jobType(pendingJobStatus.getJobType())
+            .updatedAt(actual2.getUpdatedAt())
+            .build(),
+        actual2);
   }
 
   static ParcelDetectionTask taskWithStatus(
