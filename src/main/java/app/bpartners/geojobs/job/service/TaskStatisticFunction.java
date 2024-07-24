@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.job.service;
 
+import static java.util.UUID.randomUUID;
+
 import app.bpartners.geojobs.job.model.Job;
 import app.bpartners.geojobs.job.model.Task;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
@@ -7,6 +9,7 @@ import app.bpartners.geojobs.job.repository.TaskRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
+import java.time.Instant;
 import java.util.function.Function;
 import lombok.extern.slf4j.Slf4j;
 
@@ -45,12 +48,13 @@ public class TaskStatisticFunction<T extends Task, J extends Job>
             .sum();
     var taskStatusStatistics = taskStatisticsComputing.apply(tasks);
     return TaskStatistic.builder()
+        .id(randomUUID().toString())
         .jobId(job.getId())
         .jobType(job.getStatus().getJobType())
         .actualJobStatus(job.getStatus())
         .tilesCount(tilesCount)
         .taskStatusStatistics(taskStatusStatistics)
-        .updatedAt(job.getStatus().getCreationDatetime())
+        .updatedAt(Instant.now())
         .build();
   }
 }

@@ -20,8 +20,8 @@ import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.TaskStatus;
+import app.bpartners.geojobs.job.model.statistic.HealthStatusStatistic;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
-import app.bpartners.geojobs.job.model.statistic.TaskStatusStatistic;
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.job.repository.TaskRepository;
 import app.bpartners.geojobs.model.exception.BadRequestException;
@@ -395,11 +395,11 @@ public class ZoneTilingJobServiceTest {
   }
 
   public record StatisticResult(
-      TaskStatusStatistic.HealthStatusStatistic unknownPendingTask,
-      TaskStatusStatistic.HealthStatusStatistic unknownProcessingTask,
-      TaskStatusStatistic.HealthStatusStatistic succeededFinishedTask,
-      TaskStatusStatistic.HealthStatusStatistic failedFinishedTask,
-      TaskStatusStatistic.HealthStatusStatistic unknownFinishedTask) {}
+      HealthStatusStatistic unknownPendingTask,
+      HealthStatusStatistic unknownProcessingTask,
+      HealthStatusStatistic succeededFinishedTask,
+      HealthStatusStatistic failedFinishedTask,
+      HealthStatusStatistic unknownFinishedTask) {}
 
   @NonNull
   public static ZoneTilingJobServiceTest.StatisticResult getResult(TaskStatistic actual) {

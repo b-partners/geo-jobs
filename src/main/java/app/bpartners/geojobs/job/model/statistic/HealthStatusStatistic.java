@@ -1,28 +1,27 @@
 package app.bpartners.geojobs.job.model.statistic;
 
 import static jakarta.persistence.EnumType.STRING;
-import static jakarta.persistence.FetchType.EAGER;
 import static org.hibernate.type.SqlTypes.NAMED_ENUM;
 
 import app.bpartners.geojobs.job.model.Status;
-import jakarta.persistence.*;
-import java.util.List;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 
-@Entity(name = "\"task_status_statistic\"")
+@Entity
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder(toBuilder = true)
 @Data
 @ToString
-public class TaskStatusStatistic {
+public class HealthStatusStatistic {
   @Id private String id;
 
   @Enumerated(STRING)
   @JdbcTypeCode(NAMED_ENUM)
-  private Status.ProgressionStatus progressionStatus;
+  private Status.HealthStatus healthStatus;
 
-  @OneToMany(cascade = CascadeType.ALL, fetch = EAGER, orphanRemoval = true)
-  private List<HealthStatusStatistic> healthStatusStatistics;
+  private long count;
 }

@@ -1,7 +1,10 @@
 package app.bpartners.geojobs.job.service;
 
+import static java.util.UUID.randomUUID;
+
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.Task;
+import app.bpartners.geojobs.job.model.statistic.HealthStatusStatistic;
 import app.bpartners.geojobs.job.model.statistic.TaskStatusStatistic;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,7 +23,7 @@ public class TaskStatisticsComputing<T extends Task>
         Arrays.stream(Status.ProgressionStatus.values());
     progressionStatuses.forEach(
         progressionStatus -> {
-          var healthStatistics = new ArrayList<TaskStatusStatistic.HealthStatusStatistic>();
+          var healthStatistics = new ArrayList<HealthStatusStatistic>();
           Arrays.stream(Status.HealthStatus.values())
               .forEach(
                   healthStatus ->
@@ -28,6 +31,7 @@ public class TaskStatisticsComputing<T extends Task>
                           computeHealthStatistics(tasks, progressionStatus, healthStatus)));
           taskStatusStatistics.add(
               TaskStatusStatistic.builder()
+                  .id(randomUUID().toString())
                   .progressionStatus(progressionStatus)
                   .healthStatusStatistics(healthStatistics)
                   .build());
@@ -36,9 +40,10 @@ public class TaskStatisticsComputing<T extends Task>
   }
 
   @NonNull
-  private TaskStatusStatistic.HealthStatusStatistic computeHealthStatistics(
+  private HealthStatusStatistic computeHealthStatistics(
       List<T> tasks, Status.ProgressionStatus progressionStatus, Status.HealthStatus healthStatus) {
-    return TaskStatusStatistic.HealthStatusStatistic.builder()
+    return HealthStatusStatistic.builder()
+        .id(randomUUID().toString())
         .healthStatus(healthStatus)
         .count(
             tasks.stream()
