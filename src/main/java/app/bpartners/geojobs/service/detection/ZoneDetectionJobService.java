@@ -31,6 +31,7 @@ import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -78,7 +79,19 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
   public TaskStatistic computeTaskStatistics(String jobId) {
     ZoneDetectionJob detectionJob = findById(jobId);
     eventProducer.accept(List.of(TaskStatisticRecomputingSubmitted.builder().jobId(jobId).build()));
-    return taskStatisticRepository.findTopByJobIdOrderByUpdatedAt(detectionJob.getId());
+    TaskStatistic taskStatistic =
+        taskStatisticRepository.findTopByJobIdOrderByUpdatedAt(detectionJob.getId());
+    if (taskStatistic == null) {
+      return TaskStatistic.builder()
+          .id(randomUUID().toString())
+          .jobId(jobId)
+          .taskStatusStatistics(List.of())
+          .actualJobStatus(detectionJob.getStatus())
+          .jobType(detectionJob.getStatus().getJobType())
+          .updatedAt(Instant.now())
+          .build();
+    }
+    return taskStatistic;
   }
 
   @Transactional

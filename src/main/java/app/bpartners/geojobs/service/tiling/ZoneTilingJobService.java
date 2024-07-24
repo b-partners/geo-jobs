@@ -25,6 +25,7 @@ import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.JobFilteredMailer;
 import app.bpartners.geojobs.service.NotFinishedTaskRetriever;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -129,7 +130,19 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
   public TaskStatistic computeTaskStatistics(String jobId) {
     ZoneTilingJob job = getZoneTilingJob(jobId);
     eventProducer.accept(List.of(TaskStatisticRecomputingSubmitted.builder().jobId(jobId).build()));
-    return taskStatisticRepository.findTopByJobIdOrderByUpdatedAt(job.getId());
+    TaskStatistic taskStatistic =
+        taskStatisticRepository.findTopByJobIdOrderByUpdatedAt(job.getId());
+    if (taskStatistic == null) {
+      return TaskStatistic.builder()
+          .id(randomUUID().toString())
+          .jobId(jobId)
+          .taskStatusStatistics(List.of())
+          .actualJobStatus(job.getStatus())
+          .jobType(job.getStatus().getJobType())
+          .updatedAt(Instant.now())
+          .build();
+    }
+    return taskStatistic;
   }
 
   private ZoneTilingJob getZoneTilingJob(String jobId) {
