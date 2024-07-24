@@ -16,7 +16,7 @@ database_non_root_username: /geo-jobs/${Env}/db/user/username
 frontal_function_timeout: 300
 frontal_memory: 2048
 frontal_reserved_concurrent_executions_nb: null
-jacoco_min_coverage: '0.7'
+jacoco_min_coverage: '0.8'
 java_facade_it: FacadeIT
 package_full_name: app.bpartners.geojobs
 poja_domain_owner: 088312068315
