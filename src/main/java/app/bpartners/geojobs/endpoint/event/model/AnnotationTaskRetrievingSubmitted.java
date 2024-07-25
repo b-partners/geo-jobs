@@ -20,20 +20,14 @@ public class AnnotationTaskRetrievingSubmitted extends PojaEvent {
   @JsonProperty("jobId")
   private String jobId;
 
-  @JsonProperty("firstAnnotationJobId")
-  private String firstAnnotationJobId;
-
-  @JsonProperty("lastAnnotationJobId")
-  private String lastAnnotationJobId;
+  @Override
+  public Duration maxConsumerBackoffBetweenRetries() {
+    return Duration.ofMinutes(1);
+  }
 
   @Override
   public Duration maxConsumerDuration() {
     return Duration.ofMinutes(5);
-  }
-
-  @Override
-  public Duration maxConsumerBackoffBetweenRetries() {
-    return Duration.ofMinutes(1);
   }
 
   @Override

@@ -187,7 +187,7 @@ public class ExtractorIT extends FacadeIT {
 
     CreateAnnotationBatch actual =
         createAnnotationBatchExtractor.apply(
-            detectedTile(List.of(machineDetectedObject)), "dummy", "dummy", List.of(label));
+            detectedTile(List.of(machineDetectedObject)), "dummy", List.of(label));
 
     assertEquals(ignoreGeneratedValues(expected), ignoreGeneratedValues(actual));
   }

@@ -46,7 +46,7 @@ public class AnnotationBatchRetrievingSubmittedService
                       .id(tileId)
                       .jobId(jobId)
                       .annotationJobId(annotationJobId)
-                      .annotationTaskId(annotationTaskId)
+                      .machineDetectedTileId(annotationTaskId)
                       .imageSize(imageSize)
                       .detectedObjects(toHumanDetectedObject(tileId, annotations))
                       .tile(

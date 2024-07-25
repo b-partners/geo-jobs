@@ -63,15 +63,13 @@ public class GeoJsonConversionInitiationService {
         GeoJsonConversionTask.builder()
             .id(randomUUID().toString())
             .jobId(jobId)
-            .fileKey(null) // Null until task is finished
+            .fileKey(null)
             .submissionInstant(now())
             .statusHistory(List.of())
             .build();
 
     var saved = service.save(geoJsonConversionTask);
     eventProducer.accept(List.of(new GeoJsonConversionInitiated(jobId, saved.getId(), zoneName)));
-    return new GeoJsonsUrl()
-        .url(saved.getFileKey())
-        .status(taskStatusMapper.toRest(saved.getStatus()));
+    return new GeoJsonsUrl().url(null).status(taskStatusMapper.toRest(saved.getStatus()));
   }
 }

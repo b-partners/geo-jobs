@@ -16,7 +16,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.JdbcTypeCode;
 
 @Entity
@@ -28,7 +27,6 @@ import org.hibernate.annotations.JdbcTypeCode;
 @Setter
 @EqualsAndHashCode
 @ToString
-@Slf4j
 public class HumanDetectedObject implements Serializable {
   @Id private String id;
 

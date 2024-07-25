@@ -21,10 +21,7 @@ public class CreateAnnotationBatchExtractor {
   private final PolygonExtractor polygonExtractor;
 
   public CreateAnnotationBatch apply(
-      MachineDetectedTile machineDetectedTile,
-      String annotatorId,
-      String taskId,
-      List<Label> existingLabels) {
+      MachineDetectedTile machineDetectedTile, String annotatorId, List<Label> existingLabels) {
     CreateAnnotationBatch annotations =
         new CreateAnnotationBatch()
             .id(randomUUID().toString())

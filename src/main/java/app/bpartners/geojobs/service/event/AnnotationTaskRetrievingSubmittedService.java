@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service.event;
 
 import app.bpartners.geojobs.endpoint.event.model.AnnotationTaskRetrievingSubmitted;
+import app.bpartners.geojobs.repository.HumanDetectionJobRepository;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
@@ -11,15 +12,16 @@ import org.springframework.stereotype.Service;
 public class AnnotationTaskRetrievingSubmittedService
     implements Consumer<AnnotationTaskRetrievingSubmitted> {
   private final AnnotationService annotationService;
+  private final HumanDetectionJobRepository humanDetectionJobRepository;
 
   @Override
   public void accept(AnnotationTaskRetrievingSubmitted submitted) {
     var jobId = submitted.getJobId();
-    var firstAnnotationJobId = submitted.getFirstAnnotationJobId();
-    var lastAnnotationJobId = submitted.getLastAnnotationJobId();
-    var firstAnnotationJob = annotationService.getAnnotationJobById(firstAnnotationJobId);
-    var lastAnnotationJob = annotationService.getAnnotationJobById(lastAnnotationJobId);
-    annotationService.fireTasks(jobId, firstAnnotationJobId, firstAnnotationJob.getImagesWidth());
-    annotationService.fireTasks(jobId, lastAnnotationJobId, lastAnnotationJob.getImagesWidth());
+    var humanDetectionJob = humanDetectionJobRepository.findByZoneDetectionJobId(jobId);
+    humanDetectionJob.forEach(
+        humanJob -> {
+          var annotationJob = annotationService.getAnnotationJobById(humanJob.getAnnotationJobId());
+          annotationService.fireTasks(jobId, annotationJob.getId(), annotationJob.getImagesWidth());
+        });
   }
 }

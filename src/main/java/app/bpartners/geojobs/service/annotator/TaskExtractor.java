@@ -1,7 +1,5 @@
 package app.bpartners.geojobs.service.annotator;
 
-import static java.util.UUID.randomUUID;
-
 import app.bpartners.gen.annotator.endpoint.rest.model.CreateAnnotatedTask;
 import app.bpartners.gen.annotator.endpoint.rest.model.Label;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
@@ -18,14 +16,12 @@ public class TaskExtractor {
 
   private CreateAnnotatedTask extractTask(
       MachineDetectedTile machineDetectedTile, String annotatorId, List<Label> existingLabels) {
-    String taskId = randomUUID().toString();
     return new CreateAnnotatedTask()
-        .id(taskId)
+        .id(machineDetectedTile.getId())
         .annotatorId(annotatorId)
         .filename(machineDetectedTile.getBucketPath())
         .annotationBatch(
-            createAnnotationBatchExtractor.apply(
-                machineDetectedTile, annotatorId, taskId, existingLabels));
+            createAnnotationBatchExtractor.apply(machineDetectedTile, annotatorId, existingLabels));
   }
 
   public List<CreateAnnotatedTask> apply(

@@ -33,7 +33,7 @@ public class HumanDetectedTile implements Serializable {
   @Id private String id;
   private String jobId;
   private String annotationJobId;
-  private String annotationTaskId;
+  private String machineDetectedTileId;
   private int imageSize;
 
   @JdbcTypeCode(JSON)

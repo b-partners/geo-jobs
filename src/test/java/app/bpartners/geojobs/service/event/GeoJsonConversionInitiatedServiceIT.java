@@ -60,7 +60,7 @@ class GeoJsonConversionInitiatedServiceIT extends FacadeIT {
   HumanDetectedTile humanDetectedTile() {
     return HumanDetectedTile.builder()
         .id(randomUUID().toString())
-        .annotationTaskId(MOCK_TASK_ID)
+        .machineDetectedTileId(MOCK_TASK_ID)
         .imageSize(1024)
         .tile(Tile.builder().coordinates(new TileCoordinates().x(521151).y(151151).z(20)).build())
         .detectedObjects(List.of(detectedObject()))
