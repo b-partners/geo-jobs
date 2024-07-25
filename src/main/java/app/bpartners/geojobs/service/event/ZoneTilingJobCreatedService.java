@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service.event;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.AutoTaskStatisticRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.ZTJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.ZoneTilingJobCreated;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
@@ -22,5 +23,6 @@ public class ZoneTilingJobCreatedService implements Consumer<ZoneTilingJobCreate
     zoneTilingJobService.fireTasks(ztj);
 
     eventProducer.accept(List.of(new ZTJStatusRecomputingSubmitted(ztj.getId())));
+    eventProducer.accept(List.of(new AutoTaskStatisticRecomputingSubmitted(ztj.getId())));
   }
 }
