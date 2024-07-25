@@ -368,7 +368,14 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
     var eventsCaptor = ArgumentCaptor.forClass(List.class);
     var parcelStatusEventNb = 1;
     var zdjStatusEventNb = 1;
-    verify(eventProducer, times(configuredTasks.size() + parcelStatusEventNb + zdjStatusEventNb))
+    var taskStatusComputingEvent = 1;
+    verify(
+            eventProducer,
+            times(
+                configuredTasks.size()
+                    + parcelStatusEventNb
+                    + zdjStatusEventNb
+                    + taskStatusComputingEvent))
         .accept(eventsCaptor.capture());
     var events = eventsCaptor.getAllValues();
     var capturedEvent1 = events.get(0).get(0);
