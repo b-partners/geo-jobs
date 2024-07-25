@@ -12,7 +12,6 @@ import app.bpartners.geojobs.endpoint.rest.model.BucketSeparatorType;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Task;
-import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.job.repository.TaskRepository;
 import app.bpartners.geojobs.job.service.JobService;
@@ -25,7 +24,6 @@ import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.JobFilteredMailer;
 import app.bpartners.geojobs.service.NotFinishedTaskRetriever;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -37,7 +35,6 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
   private final ZoneDetectionJobService detectionJobService;
   private final JobFilteredMailer<ZoneTilingJob> tilingFilteredMailer;
   private final NotFinishedTaskRetriever<TilingTask> notFinishedTaskRetriever;
-  private final TaskStatisticRepository taskStatisticRepository;
 
   public ZoneTilingJobService(
       JpaRepository<ZoneTilingJob, String> repository,
@@ -48,11 +45,16 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
       JobFilteredMailer<ZoneTilingJob> tilingFilteredMailer,
       NotFinishedTaskRetriever<TilingTask> notFinishedTaskRetriever,
       TaskStatisticRepository taskStatisticRepository) {
-    super(repository, jobStatusRepository, taskRepository, eventProducer, ZoneTilingJob.class);
+    super(
+        repository,
+        jobStatusRepository,
+        taskStatisticRepository,
+        taskRepository,
+        eventProducer,
+        ZoneTilingJob.class);
     this.detectionJobService = detectionJobService;
     this.tilingFilteredMailer = tilingFilteredMailer;
     this.notFinishedTaskRetriever = notFinishedTaskRetriever;
-    this.taskStatisticRepository = taskStatisticRepository;
   }
 
   public ZoneTilingJob importFromBucket(
@@ -124,25 +126,6 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
         new FilteredTilingJob(jobId, succeededJob, notSucceededJob);
     tilingFilteredMailer.accept(filteredTilingJob);
     return filteredTilingJob;
-  }
-
-  @Transactional
-  public TaskStatistic computeTaskStatistics(String jobId) {
-    ZoneTilingJob job = getZoneTilingJob(jobId);
-    eventProducer.accept(List.of(TaskStatisticRecomputingSubmitted.builder().jobId(jobId).build()));
-    TaskStatistic taskStatistic =
-        taskStatisticRepository.findTopByJobIdOrderByUpdatedAt(job.getId());
-    if (taskStatistic == null) {
-      return TaskStatistic.builder()
-          .id(randomUUID().toString())
-          .jobId(jobId)
-          .taskStatusStatistics(List.of())
-          .actualJobStatus(job.getStatus())
-          .jobType(job.getStatus().getJobType())
-          .updatedAt(Instant.now())
-          .build();
-    }
-    return taskStatistic.toBuilder().actualJobStatus(job.getStatus()).build();
   }
 
   private ZoneTilingJob getZoneTilingJob(String jobId) {
