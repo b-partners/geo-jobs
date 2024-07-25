@@ -3,12 +3,14 @@ package app.bpartners.geojobs.service;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.*;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.ROOF;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.AutoTaskStatisticRecomputingSubmitted;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.TaskStatus;
@@ -31,6 +33,7 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 @Slf4j
@@ -342,6 +345,35 @@ public class ZoneDetectionJobServiceTest {
     assertEquals(4, notSucceededTask.getParcel().getParcelContent().getTiles().size());
   }
   */
+
+  @Test
+  void auto_task_statistic_event_sent_ok() {
+    String jobId = "jobId";
+    when(jobRepositoryMock.findById(jobId))
+        .thenReturn(
+            Optional.of(
+                ZoneDetectionJob.builder()
+                    .id(jobId)
+                    .detectionType(HUMAN)
+                    .zoneTilingJob(new ZoneTilingJob())
+                    .build()));
+    var objectConfiguration =
+        DetectableObjectConfiguration.builder()
+            .detectionJobId(jobId)
+            .bucketStorageName("bucketStorageName")
+            .objectType(ROOF)
+            .confidence(1.0)
+            .build();
+
+    assertDoesNotThrow(() -> subject.fireTasks(jobId, List.of(objectConfiguration)));
+
+    var listCaptor = ArgumentCaptor.forClass(List.class);
+    verify(eventProducerMock, times(3)).accept(listCaptor.capture());
+    List<List> allValues = listCaptor.getAllValues();
+    var taskStatisticComputingEvent =
+        ((List<AutoTaskStatisticRecomputingSubmitted>) allValues.getLast()).getFirst();
+    assertEquals(new AutoTaskStatisticRecomputingSubmitted(jobId), taskStatisticComputingEvent);
+  }
 
   @Test
   void process_zdj_ko() {

@@ -396,6 +396,7 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
 
     eventProducer.accept(List.of(new ZDJParcelsStatusRecomputingSubmitted(job.getId())));
     eventProducer.accept(List.of(new ZDJStatusRecomputingSubmitted(job.getId())));
+    eventProducer.accept(List.of(new AutoTaskStatisticRecomputingSubmitted(job.getId())));
     return job;
   }
 
