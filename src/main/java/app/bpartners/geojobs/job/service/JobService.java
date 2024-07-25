@@ -7,19 +7,23 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.naturalOrder;
+import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.TaskStatisticRecomputingSubmitted;
 import app.bpartners.geojobs.job.model.Job;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.Task;
 import app.bpartners.geojobs.job.model.TaskStatus;
+import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.job.repository.TaskRepository;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.model.page.BoundedPageSize;
 import app.bpartners.geojobs.model.page.PageFromOne;
+import app.bpartners.geojobs.repository.TaskStatisticRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.time.Instant;
@@ -34,6 +38,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public abstract class JobService<T extends Task, J extends Job> {
   protected final JpaRepository<J, String> repository;
   protected final JobStatusRepository jobStatusRepository;
+  protected final TaskStatisticRepository taskStatisticRepository;
   protected final TaskRepository<T> taskRepository;
   protected final EventProducer eventProducer;
   private final Class<J> jobClazz;
@@ -43,14 +48,34 @@ public abstract class JobService<T extends Task, J extends Job> {
   protected JobService(
       JpaRepository<J, String> repository,
       JobStatusRepository jobStatusRepository,
+      TaskStatisticRepository taskStatisticRepository,
       TaskRepository<T> taskRepository,
       EventProducer eventProducer,
       Class<J> jobClazz) {
     this.repository = repository;
     this.jobStatusRepository = jobStatusRepository;
+    this.taskStatisticRepository = taskStatisticRepository;
     this.taskRepository = taskRepository;
     this.eventProducer = eventProducer;
     this.jobClazz = jobClazz;
+  }
+
+  public TaskStatistic computeTaskStatistics(String jobId) {
+    J job = findById(jobId);
+    eventProducer.accept(List.of(TaskStatisticRecomputingSubmitted.builder().jobId(jobId).build()));
+    TaskStatistic taskStatistic =
+        taskStatisticRepository.findTopByJobIdOrderByUpdatedAt(job.getId());
+    if (taskStatistic == null) {
+      return TaskStatistic.builder()
+          .id(randomUUID().toString())
+          .jobId(jobId)
+          .taskStatusStatistics(List.of())
+          .actualJobStatus(job.getStatus())
+          .jobType(job.getStatus().getJobType())
+          .updatedAt(Instant.now())
+          .build();
+    }
+    return taskStatistic.toBuilder().actualJobStatus(job.getStatus()).build();
   }
 
   public List<J> findAll(PageFromOne page, BoundedPageSize pageSize) {

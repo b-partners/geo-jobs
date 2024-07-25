@@ -15,7 +15,6 @@ import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.Task;
 import app.bpartners.geojobs.job.model.TaskStatus;
-import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.job.service.JobService;
 import app.bpartners.geojobs.model.exception.NotFoundException;
@@ -31,7 +30,6 @@ import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
-import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -50,7 +48,6 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
   private final HumanDetectionJobRepository humanDetectionJobRepository;
   private final AnnotationService annotationService;
   private final ZoneDetectionJobRepository zoneDetectionJobRepository;
-  private final TaskStatisticRepository taskStatisticRepository;
 
   public ZoneDetectionJobService(
       JpaRepository<ZoneDetectionJob, String> repository,
@@ -65,7 +62,13 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
       AnnotationService annotationService,
       ZoneDetectionJobRepository zoneDetectionJobRepository,
       TaskStatisticRepository taskStatisticRepository) {
-    super(repository, jobStatusRepository, taskRepository, eventProducer, ZoneDetectionJob.class);
+    super(
+        repository,
+        jobStatusRepository,
+        taskStatisticRepository,
+        taskRepository,
+        eventProducer,
+        ZoneDetectionJob.class);
     this.tilingTaskRepository = tilingTaskRepository;
     this.detectionMapper = detectionMapper;
     this.objectConfigurationRepository = objectConfigurationRepository;
@@ -73,25 +76,6 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
     this.humanDetectionJobRepository = humanDetectionJobRepository;
     this.annotationService = annotationService;
     this.zoneDetectionJobRepository = zoneDetectionJobRepository;
-    this.taskStatisticRepository = taskStatisticRepository;
-  }
-
-  public TaskStatistic computeTaskStatistics(String jobId) {
-    ZoneDetectionJob detectionJob = findById(jobId);
-    eventProducer.accept(List.of(TaskStatisticRecomputingSubmitted.builder().jobId(jobId).build()));
-    TaskStatistic taskStatistic =
-        taskStatisticRepository.findTopByJobIdOrderByUpdatedAt(detectionJob.getId());
-    if (taskStatistic == null) {
-      return TaskStatistic.builder()
-          .id(randomUUID().toString())
-          .jobId(jobId)
-          .taskStatusStatistics(List.of())
-          .actualJobStatus(detectionJob.getStatus())
-          .jobType(detectionJob.getStatus().getJobType())
-          .updatedAt(Instant.now())
-          .build();
-    }
-    return taskStatistic.toBuilder().actualJobStatus(detectionJob.getStatus()).build();
   }
 
   @Transactional
