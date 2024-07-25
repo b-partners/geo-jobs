@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.AutoTaskStatisticRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.ZTJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.ZoneTilingJobCreated;
 import app.bpartners.geojobs.job.model.JobStatus;
@@ -89,14 +90,22 @@ class ZoneTilingJobCreatedServiceIT extends FacadeIT {
 
     int numberOfFeaturesInJob = 1;
     int numberOfZTJStatusComputingEvent = 1;
+    int numberOfAutoTaskStatisticComputingEvent = 1;
     var listCaptor = ArgumentCaptor.forClass(List.class);
-    verify(eventProducer, times(numberOfFeaturesInJob + numberOfZTJStatusComputingEvent))
+    verify(
+            eventProducer,
+            times(
+                numberOfFeaturesInJob
+                    + numberOfZTJStatusComputingEvent
+                    + numberOfAutoTaskStatisticComputingEvent))
         .accept(listCaptor.capture());
     List<List> allValues = listCaptor.getAllValues();
-    var ztjStatusComputeEvent =
-        ((List<ZTJStatusRecomputingSubmitted>) allValues.getLast()).getFirst();
+    var ztjStatusComputeEvent = ((List<ZTJStatusRecomputingSubmitted>) allValues.get(1)).getFirst();
+    var taskStatisticComputingEvent =
+        ((List<AutoTaskStatisticRecomputingSubmitted>) allValues.getLast()).getFirst();
     assertEquals(UNKNOWN, actualAfterAccept.getStatus().getHealth());
     assertEquals(PENDING, actualAfterAccept.getStatus().getProgression());
     assertEquals(new ZTJStatusRecomputingSubmitted(created.getId()), ztjStatusComputeEvent);
+    assertEquals(new AutoTaskStatisticRecomputingSubmitted(jobId), taskStatisticComputingEvent);
   }
 }
