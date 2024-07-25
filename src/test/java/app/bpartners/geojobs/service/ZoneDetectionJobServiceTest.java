@@ -373,18 +373,14 @@ public class ZoneDetectionJobServiceTest {
 
   @Test
   void read_task_statistics_ok() {
+    JobStatus failedProcessingStatus =
+        JobStatus.builder().progression(PROCESSING).health(FAILED).jobType(DETECTION).build();
     when(jobRepositoryMock.findById(JOB_3_ID))
         .thenReturn(
             Optional.of(
                 ZoneDetectionJob.builder()
                     .id(JOB_3_ID)
-                    .statusHistory(
-                        List.of(
-                            JobStatus.builder()
-                                .progression(PROCESSING)
-                                .health(FAILED)
-                                .jobType(DETECTION)
-                                .build()))
+                    .statusHistory(List.of(failedProcessingStatus))
                     .build()));
     JobStatus pendingJobStatus =
         JobStatus.builder().progression(PENDING).health(UNKNOWN).jobType(DETECTION).build();
@@ -395,7 +391,8 @@ public class ZoneDetectionJobServiceTest {
                     .id(JOB_ID)
                     .statusHistory(List.of(pendingJobStatus))
                     .build()));
-    TaskStatistic expected = new TaskStatistic();
+    TaskStatistic expected =
+        TaskStatistic.builder().actualJobStatus(failedProcessingStatus).build();
     when(taskStatisticRepositoryMock.findTopByJobIdOrderByUpdatedAt(JOB_3_ID)).thenReturn(expected);
     when(taskStatisticRepositoryMock.findTopByJobIdOrderByUpdatedAt(JOB_ID)).thenReturn(null);
 

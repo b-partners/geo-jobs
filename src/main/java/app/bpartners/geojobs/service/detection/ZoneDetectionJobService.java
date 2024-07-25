@@ -91,7 +91,7 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
           .updatedAt(Instant.now())
           .build();
     }
-    return taskStatistic;
+    return taskStatistic.toBuilder().actualJobStatus(detectionJob.getStatus()).build();
   }
 
   @Transactional

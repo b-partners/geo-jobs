@@ -142,7 +142,7 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
           .updatedAt(Instant.now())
           .build();
     }
-    return taskStatistic;
+    return taskStatistic.toBuilder().actualJobStatus(job.getStatus()).build();
   }
 
   private ZoneTilingJob getZoneTilingJob(String jobId) {

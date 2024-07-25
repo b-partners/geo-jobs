@@ -253,20 +253,16 @@ public class ZoneTilingJobServiceTest {
 
   @Test
   void read_task_statistics_ok() {
+    JobStatus processFailedStatus =
+        JobStatus.builder().progression(PROCESSING).health(FAILED).jobType(TILING).build();
     when(jobRepositoryMock.findById(JOB_3_ID))
         .thenReturn(
             Optional.of(
                 ZoneTilingJob.builder()
                     .id(JOB_3_ID)
-                    .statusHistory(
-                        List.of(
-                            JobStatus.builder()
-                                .progression(PROCESSING)
-                                .health(FAILED)
-                                .jobType(TILING)
-                                .build()))
+                    .statusHistory(List.of(processFailedStatus))
                     .build()));
-    TaskStatistic expected = new TaskStatistic();
+    TaskStatistic expected = TaskStatistic.builder().actualJobStatus(processFailedStatus).build();
     JobStatus pendingJobStatus =
         JobStatus.builder().progression(PENDING).health(UNKNOWN).jobType(TILING).build();
     when(jobRepositoryMock.findById(JOB_ID))
