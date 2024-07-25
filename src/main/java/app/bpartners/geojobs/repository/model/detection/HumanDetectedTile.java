@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.repository.model.detection;
 
 import static jakarta.persistence.CascadeType.ALL;
-import static jakarta.persistence.FetchType.LAZY;
+import static jakarta.persistence.FetchType.EAGER;
 import static org.hibernate.type.SqlTypes.JSON;
 
 import app.bpartners.geojobs.repository.model.tiling.Tile;
@@ -27,7 +27,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 @Builder
 @Getter
 @Setter
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = false)
 @ToString
 public class HumanDetectedTile implements Serializable {
   @Id private String id;
@@ -39,6 +39,6 @@ public class HumanDetectedTile implements Serializable {
   @JdbcTypeCode(JSON)
   private Tile tile;
 
-  @OneToMany(cascade = ALL, mappedBy = "humanDetectedTileId", fetch = LAZY)
+  @OneToMany(cascade = ALL, mappedBy = "humanDetectedTileId", fetch = EAGER)
   private List<HumanDetectedObject> detectedObjects;
 }

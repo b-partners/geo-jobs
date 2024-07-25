@@ -44,8 +44,7 @@ public class DetectionTaskMapper {
                             .progression(StatusMapper.toProgressionEnum(status.getProgression()))
                             .creationDatetime(status.getCreationDatetime()))
                 .orElse(null))
-        .detectedTiles(
-            machineDetectedTiles.stream().map(tile -> toRest((MachineDetectedTile) tile)).toList());
+        .detectedTiles(machineDetectedTiles.stream().map(this::toRest).toList());
   }
 
   private DetectedTile toRest(MachineDetectedTile machineDetectedTile) {

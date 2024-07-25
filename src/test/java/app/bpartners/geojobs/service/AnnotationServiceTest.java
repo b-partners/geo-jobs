@@ -188,7 +188,7 @@ public class AnnotationServiceTest {
     subject.fireTasks(ZONE_DETECTION_JOB_ID, ANNOTATION_JOB_ID, imageSize);
     verify(eventProducerMock, times(tasks.size())).accept(eventsCapture.capture());
     var eventsValues = eventsCapture.getAllValues();
-
-    assertInstanceOf(AnnotationBatchRetrievingSubmitted.class, eventsValues.getFirst().getFirst());
+    var batchRetrievingSubmitted = eventsValues.getFirst().getFirst();
+    assertInstanceOf(AnnotationBatchRetrievingSubmitted.class, batchRetrievingSubmitted);
   }
 }
