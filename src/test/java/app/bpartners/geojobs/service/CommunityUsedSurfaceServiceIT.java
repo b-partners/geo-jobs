@@ -4,10 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import app.bpartners.geojobs.conf.FacadeIT;
+import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.CommunityUsedSurfaceRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
+import app.bpartners.geojobs.repository.model.community.CommunityAuthorizedZone;
 import app.bpartners.geojobs.repository.model.community.CommunityUsedSurface;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -43,7 +46,7 @@ class CommunityUsedSurfaceServiceIT extends FacadeIT {
         .maxSurface(5_000)
         .apiKey("dummmyId")
         .name("communityName")
-        .authorizedZones(List.of())
+        .authorizedZones(List.of(communityAuthorizedZone()))
         .usedSurfaces(List.of())
         .detectableObjectTypes(List.of())
         .build();
@@ -95,5 +98,39 @@ class CommunityUsedSurfaceServiceIT extends FacadeIT {
         communityUsedSurface.getUsageDatetime().truncatedTo(ChronoUnit.MINUTES));
     communityUsedSurface.setId("id");
     return communityUsedSurface;
+  }
+
+  private static CommunityAuthorizedZone communityAuthorizedZone() {
+    return CommunityAuthorizedZone.builder()
+        .id("dummyId")
+        .name("dummyZoneName")
+        .communityAuthorizationId(COMMUNITY_ID)
+        .multiPolygon(multiPolygon())
+        .build();
+  }
+
+  private static MultiPolygon multiPolygon() {
+    var coordinates =
+        List.of(
+            List.of(
+                List.of(
+                    List.of(BigDecimal.valueOf(48.05622828269508), BigDecimal.valueOf(0)),
+                    List.of(
+                        BigDecimal.valueOf(24.028114141347547),
+                        BigDecimal.valueOf(41.617914502878165)),
+                    List.of(
+                        BigDecimal.valueOf(-24.028114141347547),
+                        BigDecimal.valueOf(41.617914502878165)),
+                    List.of(
+                        BigDecimal.valueOf(-48.05622828269508),
+                        BigDecimal.valueOf(5.8851906145497036E-15)),
+                    List.of(
+                        BigDecimal.valueOf(-24.02811414134756),
+                        BigDecimal.valueOf(-41.61791450287816)),
+                    List.of(
+                        BigDecimal.valueOf(24.02811414134751),
+                        BigDecimal.valueOf(-41.617914502878186)),
+                    List.of(BigDecimal.valueOf(48.05622828269508), BigDecimal.valueOf(0)))));
+    return new MultiPolygon().coordinates(coordinates);
   }
 }
