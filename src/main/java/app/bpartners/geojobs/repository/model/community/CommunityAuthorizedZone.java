@@ -8,8 +8,8 @@ import lombok.*;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity(name = "community_zone")
-public class CommunityZone implements Serializable {
+@Entity(name = "community_authorized_zone")
+public class CommunityAuthorizedZone implements Serializable {
   @Id private String id;
 
   @Column private String name;

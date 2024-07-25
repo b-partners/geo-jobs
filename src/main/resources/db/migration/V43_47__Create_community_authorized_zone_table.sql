@@ -1,4 +1,4 @@
-create table community_zone
+create table community_authorized_zone
 (
     id   varchar primary key default uuid_generate_v4(),
     name varchar not null,

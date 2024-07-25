@@ -13,11 +13,9 @@ import lombok.*;
 public class CommunityUsedSurface implements Serializable {
   @Id private String id;
 
-  @Column(name = "used_surface")
-  private double usedSurface;
+  @Column private double usedSurface;
 
-  @Column(name = "usage_datetime")
-  private Instant usageDatetime;
+  @Column private Instant usageDatetime;
 
   @JoinColumn(referencedColumnName = "id")
   private String communityAuthorizationId;

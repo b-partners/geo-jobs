@@ -20,14 +20,12 @@ public class CommunityAuthorization implements Serializable {
 
   @Column private String name;
 
-  @Column(name = "api_key")
-  private String apiKey;
+  @Column private String apiKey;
 
-  @Column(name = "max_surface")
-  private double maxSurface;
+  @Column private double maxSurface;
 
   @OneToMany(mappedBy = "communityAuthorizationId", cascade = ALL)
-  private List<CommunityZone> authorizedZones;
+  private List<CommunityAuthorizedZone> authorizedZones;
 
   @OneToMany(mappedBy = "communityAuthorizationId", cascade = ALL)
   private List<CommunityDetectableObjectType> detectableObjectTypes;
