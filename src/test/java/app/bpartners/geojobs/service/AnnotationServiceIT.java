@@ -14,9 +14,9 @@ import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectType;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
-import app.bpartners.geojobs.repository.model.detection.DetectedObject;
-import app.bpartners.geojobs.repository.model.detection.DetectedTile;
 import app.bpartners.geojobs.repository.model.detection.HumanDetectionJob;
+import app.bpartners.geojobs.repository.model.detection.MachineDetectedObject;
+import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
 import java.math.BigDecimal;
@@ -51,7 +51,7 @@ public class AnnotationServiceIT extends FacadeIT {
     annotationService.createAnnotationJob(
         HumanDetectionJob.builder()
             .annotationJobId(CURRENT_ANNOTATION_JOB_ID)
-            .detectedTiles(inDoubtTiles)
+            .machineDetectedTiles(inDoubtTiles)
             .build());
     Job createdJob = annotationService.getAnnotationJobById(CURRENT_ANNOTATION_JOB_ID);
 
@@ -60,7 +60,7 @@ public class AnnotationServiceIT extends FacadeIT {
     verify(eventProducerMock, times(inDoubtTiles.size())).accept(anyList());
   }
 
-  public static DetectedTile inDoubtTile(
+  public static MachineDetectedTile inDoubtTile(
       String jobId,
       String tileId,
       String parcelId,
@@ -71,14 +71,14 @@ public class AnnotationServiceIT extends FacadeIT {
     List<List<BigDecimal>> aPolygon = List.of(aPoint, aPoint);
     List<List<List<BigDecimal>>> aMultiPolygon = List.of(aPolygon);
     MultiPolygon geometry = new MultiPolygon().coordinates(List.of(aMultiPolygon));
-    return DetectedTile.builder()
+    return MachineDetectedTile.builder()
         .id(tileId)
         .zdjJobId(jobId)
         // TODO: .parcelJobId(parcelJobId)
         .parcelId(parcelId)
-        .detectedObjects(
+        .machineDetectedObjects(
             List.of(
-                DetectedObject.builder()
+                MachineDetectedObject.builder()
                     .id(detectedObjectId)
                     .computedConfidence(0.0)
                     .detectedTileId(tileId)

@@ -164,7 +164,7 @@ class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
             .build(),
         humanZDJ2AfterStatus);
     assertEquals(HUMAN_ZDJ_ID, humanDetectionAfter.getFirst().getZoneDetectionJobId());
-    assertFalse(humanDetectionAfter.getFirst().getDetectedTiles().isEmpty());
-    assertFalse(humanDetectionAfter2.getFirst().getDetectedTiles().isEmpty());
+    assertFalse(humanDetectionAfter.getFirst().getMachineDetectedTiles().isEmpty());
+    assertFalse(humanDetectionAfter2.getFirst().getMachineDetectedTiles().isEmpty());
   }
 }

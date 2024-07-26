@@ -6,7 +6,7 @@ import app.bpartners.geojobs.endpoint.event.model.TileDetectionTaskCreated;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.repository.DetectedTileRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
-import app.bpartners.geojobs.repository.model.detection.DetectedTile;
+import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.service.detection.DetectionMapper;
 import app.bpartners.geojobs.service.detection.DetectionResponse;
 import app.bpartners.geojobs.service.detection.TileObjectDetector;
@@ -32,15 +32,16 @@ public class TileDetectionTaskCreatedConsumer implements Consumer<TileDetectionT
     var parcelJobId = tileDetectionTask.getJobId();
     DetectionResponse response =
         objectsDetector.apply(tileDetectionTask, detectableObjectConfigurations);
-    DetectedTile detectedTile =
+    MachineDetectedTile machineDetectedTile =
         detectionMapper.toDetectedTile(
             response,
             tileDetectionTask.getTile(),
             tileDetectionTask.getParcelId(),
             zoneDetectionJobId,
             parcelJobId);
-    log.info("[DEBUG] TileDetectionTaskCreatedConsumer to save tile {}", detectedTile.describe());
-    detectedTileRepository.save(detectedTile);
+    log.info(
+        "[DEBUG] TileDetectionTaskCreatedConsumer to save tile {}", machineDetectedTile.describe());
+    detectedTileRepository.save(machineDetectedTile);
   }
 
   public static TileDetectionTask withNewStatus(

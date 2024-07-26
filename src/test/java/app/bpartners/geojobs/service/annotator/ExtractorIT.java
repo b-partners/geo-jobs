@@ -16,8 +16,8 @@ import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectType;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
-import app.bpartners.geojobs.repository.model.detection.DetectedObject;
-import app.bpartners.geojobs.repository.model.detection.DetectedTile;
+import app.bpartners.geojobs.repository.model.detection.MachineDetectedObject;
+import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -52,22 +52,23 @@ public class ExtractorIT extends FacadeIT {
 
   private Feature feature;
 
-  public static DetectedTile detectedTile(List<DetectedObject> detectedObjects) {
-    return DetectedTile.builder()
+  public static MachineDetectedTile detectedTile(
+      List<MachineDetectedObject> machineDetectedObjects) {
+    return MachineDetectedTile.builder()
         .id(randomUUID().toString())
         .bucketPath(LAYER_20_10_1_PNG)
         .tile(Tile.builder().build())
         .zdjJobId(MOCK_JOB_ID)
         .parcelId(PARCEL_MOCK_ID)
         .creationDatetime(Instant.now())
-        .detectedObjects(detectedObjects)
+        .machineDetectedObjects(machineDetectedObjects)
         .build();
   }
 
   @SneakyThrows
-  DetectedObject inDoubtDetectedObject(DetectableType type) {
+  MachineDetectedObject inDoubtDetectedObject(DetectableType type) {
     String id = randomUUID().toString();
-    return DetectedObject.builder()
+    return MachineDetectedObject.builder()
         .id(id)
         .detectedObjectTypes(detectedObjectType(id, type))
         .feature(feature)
@@ -118,14 +119,14 @@ public class ExtractorIT extends FacadeIT {
   @Test
   void extract_polygon_ok() {
     Polygon expected = getFeaturePolygon();
-    DetectedObject detectedObject =
-        DetectedObject.builder()
+    MachineDetectedObject machineDetectedObject =
+        MachineDetectedObject.builder()
             .detectedObjectTypes(
                 List.of(DetectableObjectType.builder().detectableType(ROOF).build()))
             .feature(feature)
             .build();
 
-    Polygon actual = polygonExtractor.apply(detectedObject);
+    Polygon actual = polygonExtractor.apply(machineDetectedObject);
 
     assertEquals(expected, actual);
   }
@@ -172,7 +173,7 @@ public class ExtractorIT extends FacadeIT {
   @Test
   void extract_annotation_batch_ok() {
     Label label = labelConverter.apply(ROOF);
-    DetectedObject detectedObject = inDoubtDetectedObject(ROOF);
+    MachineDetectedObject machineDetectedObject = inDoubtDetectedObject(ROOF);
     CreateAnnotationBatch expected =
         new CreateAnnotationBatch()
             .annotations(
@@ -180,12 +181,13 @@ public class ExtractorIT extends FacadeIT {
                     new AnnotationBaseFields()
                         .userId("dummy")
                         .label(label)
-                        .comment("confidence=" + detectedObject.getComputedConfidence() * 100)
+                        .comment(
+                            "confidence=" + machineDetectedObject.getComputedConfidence() * 100)
                         .polygon(getFeaturePolygon())));
 
     CreateAnnotationBatch actual =
         createAnnotationBatchExtractor.apply(
-            detectedTile(List.of(detectedObject)), "dummy", "dummy", List.of(label));
+            detectedTile(List.of(machineDetectedObject)), "dummy", List.of(label));
 
     assertEquals(ignoreGeneratedValues(expected), ignoreGeneratedValues(actual));
   }

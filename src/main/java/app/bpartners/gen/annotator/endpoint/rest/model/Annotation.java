@@ -28,10 +28,10 @@ import java.util.StringJoiner;
   Annotation.JSON_PROPERTY_TASK_ID,
   Annotation.JSON_PROPERTY_USER_ID,
   Annotation.JSON_PROPERTY_LABEL,
-  Annotation.JSON_PROPERTY_POLYGON
+  Annotation.JSON_PROPERTY_POLYGON,
+  Annotation.JSON_PROPERTY_COMMENT
 })
 @OpenapiGenerated
-@SuppressWarnings("all")
 public class Annotation implements Serializable {
   private static final long serialVersionUID = 1L;
 
@@ -49,6 +49,9 @@ public class Annotation implements Serializable {
 
   public static final String JSON_PROPERTY_POLYGON = "polygon";
   private Polygon polygon;
+
+  public static final String JSON_PROPERTY_COMMENT = "comment";
+  private String comment;
 
   public Annotation() {}
 
@@ -167,6 +170,29 @@ public class Annotation implements Serializable {
     this.polygon = polygon;
   }
 
+  public Annotation comment(String comment) {
+    this.comment = comment;
+    return this;
+  }
+
+  /**
+   * Get comment
+   *
+   * @return comment
+   */
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_COMMENT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public String getComment() {
+    return comment;
+  }
+
+  @JsonProperty(JSON_PROPERTY_COMMENT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setComment(String comment) {
+    this.comment = comment;
+  }
+
   /** Return true if this Annotation object is equal to o. */
   @Override
   public boolean equals(Object o) {
@@ -181,12 +207,13 @@ public class Annotation implements Serializable {
         && Objects.equals(this.taskId, annotation.taskId)
         && Objects.equals(this.userId, annotation.userId)
         && Objects.equals(this.label, annotation.label)
-        && Objects.equals(this.polygon, annotation.polygon);
+        && Objects.equals(this.polygon, annotation.polygon)
+        && Objects.equals(this.comment, annotation.comment);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, taskId, userId, label, polygon);
+    return Objects.hash(id, taskId, userId, label, polygon, comment);
   }
 
   @Override
@@ -198,6 +225,7 @@ public class Annotation implements Serializable {
     sb.append("    userId: ").append(toIndentedString(userId)).append("\n");
     sb.append("    label: ").append(toIndentedString(label)).append("\n");
     sb.append("    polygon: ").append(toIndentedString(polygon)).append("\n");
+    sb.append("    comment: ").append(toIndentedString(comment)).append("\n");
     sb.append("}");
     return sb.toString();
   }
@@ -274,6 +302,17 @@ public class Annotation implements Serializable {
     // add `polygon` to the URL query string
     if (getPolygon() != null) {
       joiner.add(getPolygon().toUrlQueryString(prefix + "polygon" + suffix));
+    }
+
+    // add `comment` to the URL query string
+    if (getComment() != null) {
+      joiner.add(
+          String.format(
+              "%scomment%s=%s",
+              prefix,
+              suffix,
+              URLEncoder.encode(String.valueOf(getComment()), StandardCharsets.UTF_8)
+                  .replaceAll("\\+", "%20")));
     }
 
     return joiner.toString();

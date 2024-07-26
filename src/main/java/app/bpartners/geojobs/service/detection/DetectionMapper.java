@@ -32,7 +32,7 @@ import org.springframework.stereotype.Component;
 public class DetectionMapper {
   private final TileValidator tileValidator;
 
-  public DetectedTile toDetectedTile(
+  public MachineDetectedTile toDetectedTile(
       DetectionResponse detectionResponse,
       Tile tile,
       String parcelId,
@@ -46,24 +46,24 @@ public class DetectionMapper {
 
     List<DetectionResponse.ImageData.Region> regions =
         fileData.getRegions().values().stream().toList();
-    List<DetectedObject> detectedObjects =
+    List<MachineDetectedObject> machineDetectedObjects =
         regions.stream()
             .map(region -> toDetectedObject(region, detectedTileId, tileCoordinates.getZ()))
             .toList();
 
-    return DetectedTile.builder()
+    return MachineDetectedTile.builder()
         .id(detectedTileId)
         .zdjJobId(zdjJobId)
         .parcelJobId(parcelJobId)
         .parcelId(parcelId)
         .tile(tile)
         .bucketPath(tile.getBucketPath())
-        .detectedObjects(detectedObjects)
+        .machineDetectedObjects(machineDetectedObjects)
         .creationDatetime(now())
         .build();
   }
 
-  public DetectedObject toDetectedObject(
+  public MachineDetectedObject toDetectedObject(
       DetectionResponse.ImageData.Region region, String detectedTileId, Integer zoom) {
     var regionAttributes = region.getRegionAttributes();
     var label = regionAttributes.get(REGION_LABEL_PROPERTY);
@@ -75,7 +75,7 @@ public class DetectionMapper {
     }
     var polygon = region.getShapeAttributes();
     var objectId = randomUUID().toString();
-    return DetectedObject.builder()
+    return MachineDetectedObject.builder()
         .id(objectId)
         .detectedTileId(detectedTileId)
         .detectedObjectTypes(

@@ -9,7 +9,7 @@ import app.bpartners.geojobs.endpoint.event.model.TileDetectionTaskCreated;
 import app.bpartners.geojobs.repository.DetectedTileRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
-import app.bpartners.geojobs.repository.model.detection.DetectedTile;
+import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.service.detection.DetectionMapper;
 import app.bpartners.geojobs.service.detection.DetectionResponse;
 import app.bpartners.geojobs.service.detection.TileObjectDetector;
@@ -27,10 +27,10 @@ public class TileParcelParcelDetectionTaskCreatedConsumerTest {
 
   @Test
   void accept_ok() {
-    when(detectedTileRepositoryMock.save(any())).thenReturn(new DetectedTile());
+    when(detectedTileRepositoryMock.save(any())).thenReturn(new MachineDetectedTile());
     when(objectDetectorMock.apply(any(), any())).thenReturn(new DetectionResponse());
     when(detectionMapperMock.toDetectedTile(any(), any(), any(), any(), any()))
-        .thenReturn(new DetectedTile());
+        .thenReturn(new MachineDetectedTile());
 
     assertDoesNotThrow(
         () ->
@@ -40,7 +40,7 @@ public class TileParcelParcelDetectionTaskCreatedConsumerTest {
                     TileDetectionTask.builder().build(),
                     List.of(DetectableObjectConfiguration.builder().objectType(PATHWAY).build()))));
 
-    var detectedTileCaptor = ArgumentCaptor.forClass(DetectedTile.class);
+    var detectedTileCaptor = ArgumentCaptor.forClass(MachineDetectedTile.class);
     verify(detectedTileRepositoryMock, times(1)).save(detectedTileCaptor.capture());
   }
 }

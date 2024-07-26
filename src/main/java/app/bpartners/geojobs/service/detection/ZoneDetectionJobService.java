@@ -9,8 +9,6 @@ import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.*;
-import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
-import app.bpartners.geojobs.endpoint.rest.model.GeoJsonsUrl;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.Task;
@@ -44,7 +42,6 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
   private final DetectionMapper detectionMapper;
   private final DetectableObjectConfigurationRepository objectConfigurationRepository;
   private final TilingTaskRepository tilingTaskRepository;
-  private final StatusMapper<JobStatus> statusMapper;
   private final HumanDetectionJobRepository humanDetectionJobRepository;
   private final AnnotationService annotationService;
   private final ZoneDetectionJobRepository zoneDetectionJobRepository;
@@ -57,7 +54,6 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
       EventProducer eventProducer,
       DetectionMapper detectionMapper,
       DetectableObjectConfigurationRepository objectConfigurationRepository,
-      StatusMapper<JobStatus> statusMapper,
       HumanDetectionJobRepository humanDetectionJobRepository,
       AnnotationService annotationService,
       ZoneDetectionJobRepository zoneDetectionJobRepository,
@@ -72,7 +68,6 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
     this.tilingTaskRepository = tilingTaskRepository;
     this.detectionMapper = detectionMapper;
     this.objectConfigurationRepository = objectConfigurationRepository;
-    this.statusMapper = statusMapper;
     this.humanDetectionJobRepository = humanDetectionJobRepository;
     this.annotationService = annotationService;
     this.zoneDetectionJobRepository = zoneDetectionJobRepository;
@@ -273,26 +268,6 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
     return Optional.empty();
   }
 
-  public GeoJsonsUrl getGeoJsonsUrl(String jobId) {
-    var humanZDJ = getHumanZdjFromZdjId(jobId);
-    var jobStatus = humanZDJ.getStatus();
-
-    return new GeoJsonsUrl()
-        .url(generateGeoJsonsUrl(jobStatus))
-        .status(statusMapper.toRest(jobStatus));
-  }
-
-  private String generateGeoJsonsUrl(JobStatus jobStatus) {
-    if (!jobStatus.getProgression().equals(FINISHED)
-        && !jobStatus.getHealth().equals(Status.HealthStatus.SUCCEEDED)) {
-      log.info(
-          "Unable to generate geoJsons Url to unfinished succeeded job. Actual status is "
-              + jobStatus);
-      return null;
-    }
-    return "NotImplemented: finished human detection job without url";
-  }
-
   public ZoneDetectionJob checkHumanDetectionJobStatus(String jobId) {
     var humanZDJ = getHumanZdjFromZdjId(jobId);
     var humanDetectionJobs = humanDetectionJobRepository.findByZoneDetectionJobId(humanZDJ.getId());
@@ -300,18 +275,16 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
 
     var firstHumanDetectionJob = humanDetectionJobs.getFirst();
     var lastHumanDetectionJob = humanDetectionJobs.getLast();
+    var firstAnnotationJobId = firstHumanDetectionJob.getAnnotationJobId();
+    var lastAnnotationJobId = lastHumanDetectionJob.getAnnotationJobId();
     var firstAnnotationJobStatus =
-        annotationService
-            .getAnnotationJobById(firstHumanDetectionJob.getAnnotationJobId())
-            .getStatus();
+        annotationService.getAnnotationJobById(firstAnnotationJobId).getStatus();
     Status.ProgressionStatus firstProgressionStatus =
         detectionMapper.getProgressionStatus(firstAnnotationJobStatus);
     Status.HealthStatus firstHealthStatus =
         detectionMapper.getHealthStatus(firstAnnotationJobStatus);
     var lastAnnotationJobStatus =
-        annotationService
-            .getAnnotationJobById(lastHumanDetectionJob.getAnnotationJobId())
-            .getStatus();
+        annotationService.getAnnotationJobById(lastAnnotationJobId).getStatus();
     Status.ProgressionStatus lastProgressionStatus =
         detectionMapper.getProgressionStatus(lastAnnotationJobStatus);
     Status.HealthStatus lastHealthStatus = detectionMapper.getHealthStatus(lastAnnotationJobStatus);
@@ -334,6 +307,10 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
             .health(humanZDJHealth)
             .creationDatetime(now())
             .build());
+
+    if (humanZDJ.isSucceeded()) {
+      eventProducer.accept(List.of(new AnnotationTaskRetrievingSubmitted(jobId)));
+    }
     return repository.save(humanZDJ);
   }
 

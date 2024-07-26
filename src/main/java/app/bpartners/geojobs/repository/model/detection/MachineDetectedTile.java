@@ -21,6 +21,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 
 @Entity
+@Table(name = "detected_tile")
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -28,7 +29,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 @Setter
 @EqualsAndHashCode
 @ToString
-public class DetectedTile implements Serializable {
+public class MachineDetectedTile implements Serializable {
   @Id private String id;
 
   @JdbcTypeCode(JSON)
@@ -37,7 +38,7 @@ public class DetectedTile implements Serializable {
   @CreationTimestamp private Instant creationDatetime;
 
   @OneToMany(cascade = ALL, fetch = EAGER, mappedBy = "detectedTileId")
-  private List<DetectedObject> detectedObjects;
+  private List<MachineDetectedObject> machineDetectedObjects;
 
   private String bucketPath;
 
@@ -52,9 +53,9 @@ public class DetectedTile implements Serializable {
     return "DetectedTile(id=" + id + ",tile=" + tile + "," + "jobId=" + zdjJobId + ")";
   }
 
-  public DetectedObject getFirstObject() {
+  public MachineDetectedObject getFirstObject() {
     try {
-      return detectedObjects == null ? null : detectedObjects.getFirst();
+      return machineDetectedObjects == null ? null : machineDetectedObjects.getFirst();
     } catch (NoSuchElementException e) {
       return null;
     }

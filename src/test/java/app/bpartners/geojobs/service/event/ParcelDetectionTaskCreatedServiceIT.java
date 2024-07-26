@@ -18,7 +18,7 @@ import app.bpartners.geojobs.repository.DetectedTileRepository;
 import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
-import app.bpartners.geojobs.repository.model.detection.DetectedTile;
+import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
@@ -62,7 +62,7 @@ class ParcelDetectionTaskCreatedServiceIT extends FacadeIT {
 
   @MockBean ZoneDetectionJobService zoneDetectionJobService;
   @MockBean EventProducer eventProducer;
-  @Captor ArgumentCaptor<DetectedTile> detectedTileCaptor;
+  @Captor ArgumentCaptor<MachineDetectedTile> detectedTileCaptor;
 
   DetectionResponse detectionResponse() {
     return DetectionResponse.builder()
@@ -167,7 +167,7 @@ class ParcelDetectionTaskCreatedServiceIT extends FacadeIT {
 
   @Test
   void process_detection() {
-    when(detectedTileRepository.save(any())).thenReturn(new DetectedTile());
+    when(detectedTileRepository.save(any())).thenReturn(new MachineDetectedTile());
     when(bucketComponent.download(any())).thenReturn(new File(FILE_NAME));
     when(objectsDetector.apply(any(), any())).thenReturn(detectionResponse());
     when(zoneDetectionJobService.findById(any())).thenReturn(zoneDetectionJob());

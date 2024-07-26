@@ -10,12 +10,15 @@ import app.bpartners.gen.annotator.endpoint.rest.api.JobsApi;
 import app.bpartners.gen.annotator.endpoint.rest.client.ApiException;
 import app.bpartners.gen.annotator.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.AnnotationBatchRetrievingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.CreateAnnotatedTaskSubmitted;
 import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.detection.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -68,11 +71,11 @@ public class AnnotationService {
   public void createAnnotationJob(HumanDetectionJob humanDetectionJob, String jobName)
       throws ApiException {
     String folderPath = null;
-    List<DetectedTile> detectedTiles = humanDetectionJob.getDetectedTiles();
+    List<MachineDetectedTile> machineDetectedTiles = humanDetectionJob.getMachineDetectedTiles();
     log.info(
         "[DEBUG] AnnotationService detected tiles [size={}, tiles={}]",
-        detectedTiles.size(),
-        detectedTiles.stream().map(DetectedTile::describe).toList());
+        machineDetectedTiles.size(),
+        machineDetectedTiles.stream().map(MachineDetectedTile::describe).toList());
     String annotationJobId = humanDetectionJob.getAnnotationJobId();
     List<DetectableObjectConfiguration> detectableObjects =
         humanDetectionJob.getDetectableObjectConfigurations();
@@ -81,7 +84,8 @@ public class AnnotationService {
             .map(object -> labelConverter.apply(object.getObjectType()))
             .toList();
     List<CreateAnnotatedTask> annotatedTasks =
-        taskExtractor.apply(detectedTiles, annotatorUserInfoGetter.getUserId(), expectedLabels);
+        taskExtractor.apply(
+            machineDetectedTiles, annotatorUserInfoGetter.getUserId(), expectedLabels);
     List<Label> extractLabelsFromTasks = labelExtractor.extractLabelsFromTasks(annotatedTasks);
     List<Label> labels = extractLabelsFromTasks.isEmpty() ? expectedLabels : extractLabelsFromTasks;
     log.error(
@@ -123,5 +127,53 @@ public class AnnotationService {
     } catch (ApiException e) {
       throw new app.bpartners.geojobs.model.exception.ApiException(SERVER_EXCEPTION, e);
     }
+  }
+
+  public List<AnnotationBatch> getAnnotations(String annotationJobId, String taskId) {
+    try {
+      return adminApi.getAnnotationBatchesByJobTask(
+          annotationJobId, taskId, null, null); // page, pageSize not required
+    } catch (ApiException e) {
+      throw new app.bpartners.geojobs.model.exception.ApiException(
+          app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION, e);
+    }
+  }
+
+  public void fireTasks(String jobId, String annotationJobId, int imageSize) {
+    List<Task> annotationTasks;
+    try {
+      annotationTasks =
+          adminApi.getJobTasks(
+              annotationJobId,
+              null,
+              null,
+              TaskStatus.COMPLETED,
+              null); // page, pageSize and UserId not required
+    } catch (ApiException e) {
+      throw new app.bpartners.geojobs.model.exception.ApiException(
+          app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION, e);
+    }
+    annotationTasks.forEach(
+        task -> {
+          var metadata = getTileMetaData(task.getFilename());
+          var zoom = metadata.getFirst();
+          var xTile = metadata.get(metadata.size() - 2);
+          var yTile = metadata.getLast();
+          eventProducer.accept(
+              List.of(
+                  new AnnotationBatchRetrievingSubmitted(
+                      jobId, annotationJobId, task.getId(), imageSize, xTile, yTile, zoom)));
+        });
+  }
+
+  private List<Integer> getTileMetaData(String filename) {
+    var metadata = new ArrayList<Integer>();
+    var pattern = Pattern.compile("\\d+");
+    var filenameMatcher = pattern.matcher(filename);
+    while (filenameMatcher.find()) {
+      metadata.add(Integer.parseInt(filenameMatcher.group()));
+    }
+    int size = metadata.size();
+    return metadata.subList(size - 3, size);
   }
 }

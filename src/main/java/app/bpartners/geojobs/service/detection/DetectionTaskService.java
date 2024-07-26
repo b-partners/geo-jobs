@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.service.detection;
 
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
-import app.bpartners.geojobs.repository.model.detection.DetectedTile;
+import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -12,16 +12,16 @@ import org.springframework.transaction.annotation.Transactional;
 public class DetectionTaskService {
 
   @Transactional
-  public List<DetectedTile> findInDoubtTilesByJobId(
-      List<DetectedTile> detectedTiles,
+  public List<MachineDetectedTile> findInDoubtTilesByJobId(
+      List<MachineDetectedTile> machineDetectedTiles,
       List<DetectableObjectConfiguration> detectableObjectConfigurations) {
-    return detectedTiles.stream()
+    return machineDetectedTiles.stream()
         .filter(
             detectedTile -> {
-              if (detectedTile.getDetectedObjects().isEmpty()) {
+              if (detectedTile.getMachineDetectedObjects().isEmpty()) {
                 return false;
               }
-              return detectedTile.getDetectedObjects().stream()
+              return detectedTile.getMachineDetectedObjects().stream()
                   .anyMatch(
                       detectedObject -> detectedObject.isInDoubt(detectableObjectConfigurations));
             })

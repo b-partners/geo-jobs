@@ -21,6 +21,7 @@ import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.JdbcTypeCode;
 
 @Entity
+@Table(name = "detected_object")
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -29,7 +30,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 @EqualsAndHashCode
 @ToString
 @Slf4j
-public class DetectedObject implements Serializable {
+public class MachineDetectedObject implements Serializable {
   @Id private String id;
 
   @JdbcTypeCode(JSON)
@@ -63,7 +64,7 @@ public class DetectedObject implements Serializable {
       return null;
     }
     int detectableObjectsSize = detectedObjectTypes.size();
-    DetectableObjectType firstObjectType = detectedObjectTypes.get(0);
+    DetectableObjectType firstObjectType = detectedObjectTypes.getFirst();
     if (detectableObjectsSize > 1) {
       log.info(
           "Detectable objects for detected object is "

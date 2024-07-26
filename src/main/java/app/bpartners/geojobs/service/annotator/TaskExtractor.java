@@ -1,10 +1,8 @@
 package app.bpartners.geojobs.service.annotator;
 
-import static java.util.UUID.randomUUID;
-
 import app.bpartners.gen.annotator.endpoint.rest.model.CreateAnnotatedTask;
 import app.bpartners.gen.annotator.endpoint.rest.model.Label;
-import app.bpartners.geojobs.repository.model.detection.DetectedTile;
+import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -17,21 +15,21 @@ public class TaskExtractor {
   private final LabelExtractor labelExtractor;
 
   private CreateAnnotatedTask extractTask(
-      DetectedTile detectedTile, String annotatorId, List<Label> existingLabels) {
-    String taskId = randomUUID().toString();
+      MachineDetectedTile machineDetectedTile, String annotatorId, List<Label> existingLabels) {
     return new CreateAnnotatedTask()
-        .id(taskId)
+        .id(machineDetectedTile.getId())
         .annotatorId(annotatorId)
-        .filename(detectedTile.getBucketPath())
+        .filename(machineDetectedTile.getBucketPath())
         .annotationBatch(
-            createAnnotationBatchExtractor.apply(
-                detectedTile, annotatorId, taskId, existingLabels));
+            createAnnotationBatchExtractor.apply(machineDetectedTile, annotatorId, existingLabels));
   }
 
   public List<CreateAnnotatedTask> apply(
-      List<DetectedTile> detectedTiles, String annotatorId, List<Label> expectedLabels) {
-    var existingLabels = labelExtractor.createUniqueLabelListFrom(detectedTiles);
-    return detectedTiles.stream()
+      List<MachineDetectedTile> machineDetectedTiles,
+      String annotatorId,
+      List<Label> expectedLabels) {
+    var existingLabels = labelExtractor.createUniqueLabelListFrom(machineDetectedTiles);
+    return machineDetectedTiles.stream()
         .map(
             tile ->
                 extractTask(
