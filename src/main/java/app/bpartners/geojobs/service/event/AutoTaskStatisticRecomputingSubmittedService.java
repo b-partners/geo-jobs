@@ -10,7 +10,6 @@ import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
-import app.bpartners.geojobs.service.TaskStatisticRecomputingSubmittedConsumer;
 import java.util.List;
 import java.util.function.Consumer;
 import org.springframework.stereotype.Service;
