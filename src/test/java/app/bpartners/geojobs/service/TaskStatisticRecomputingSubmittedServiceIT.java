@@ -47,12 +47,12 @@ public class TaskStatisticRecomputingSubmittedServiceIT extends FacadeIT {
 
   @Test
   void accept_tiling_task_ok() {
-    var before = taskStatisticRepository.findTopByJobIdOrderByUpdatedAt(JOB_ID);
+    var before = taskStatisticRepository.findTopByJobIdOrderByUpdatedAtDesc(JOB_ID);
 
     assertDoesNotThrow(
         () -> subject.accept(TaskStatisticRecomputingSubmitted.builder().jobId(JOB_ID).build()));
 
-    var actual = taskStatisticRepository.findTopByJobIdOrderByUpdatedAt(JOB_ID);
+    var actual = taskStatisticRepository.findTopByJobIdOrderByUpdatedAtDesc(JOB_ID);
     assertNull(before);
     assertEquals(
         TaskStatistic.builder()

@@ -64,7 +64,7 @@ public abstract class JobService<T extends Task, J extends Job> {
     J job = findById(jobId);
     eventProducer.accept(List.of(TaskStatisticRecomputingSubmitted.builder().jobId(jobId).build()));
     TaskStatistic taskStatistic =
-        taskStatisticRepository.findTopByJobIdOrderByUpdatedAt(job.getId());
+        taskStatisticRepository.findTopByJobIdOrderByUpdatedAtDesc(job.getId());
     if (taskStatistic == null) {
       return TaskStatistic.builder()
           .id(randomUUID().toString())

@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface TaskStatisticRepository extends JpaRepository<TaskStatistic, String> {
-  TaskStatistic findTopByJobIdOrderByUpdatedAt(String jobId);
+  TaskStatistic findTopByJobIdOrderByUpdatedAtDesc(String jobId);
 }

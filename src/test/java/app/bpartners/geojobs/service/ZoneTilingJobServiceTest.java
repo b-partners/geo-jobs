@@ -272,8 +272,9 @@ public class ZoneTilingJobServiceTest {
                     .id(JOB_ID)
                     .statusHistory(List.of(pendingJobStatus))
                     .build()));
-    when(taskStatisticRepositoryMock.findTopByJobIdOrderByUpdatedAt(JOB_3_ID)).thenReturn(expected);
-    when(taskStatisticRepositoryMock.findTopByJobIdOrderByUpdatedAt(JOB_ID)).thenReturn(null);
+    when(taskStatisticRepositoryMock.findTopByJobIdOrderByUpdatedAtDesc(JOB_3_ID))
+        .thenReturn(expected);
+    when(taskStatisticRepositoryMock.findTopByJobIdOrderByUpdatedAtDesc(JOB_ID)).thenReturn(null);
 
     TaskStatistic actual = subject.computeTaskStatistics(JOB_3_ID);
     TaskStatistic actual2 = subject.computeTaskStatistics(JOB_ID);
