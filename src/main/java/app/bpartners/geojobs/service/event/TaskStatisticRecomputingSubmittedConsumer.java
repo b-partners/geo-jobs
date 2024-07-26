@@ -10,6 +10,7 @@ import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.*;
 import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 public class TaskStatisticRecomputingSubmittedConsumer<T extends Task, J extends Job>
@@ -29,6 +30,7 @@ public class TaskStatisticRecomputingSubmittedConsumer<T extends Task, J extends
   }
 
   @Override
+  @Transactional
   public void accept(TaskStatisticRecomputingSubmitted taskStatisticRecomputingSubmitted) {
     String jobId = taskStatisticRecomputingSubmitted.getJobId();
     log.info("[DEBUG] TaskStatisticRecomputingSubmitted computing jobId={}", jobId);
