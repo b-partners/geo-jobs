@@ -155,7 +155,7 @@ public class ZoneDetectionController {
 
   @PutMapping("/fullDetection")
   public FullDetectedZone processFullDetection(
-      @RequestBody List<CreateFullDetection> zoneToDetects) {
+      @RequestBody CreateFullDetection zoneToDetect) {
     throw new NotImplementedException("Full Detection is still in development");
   }
 }

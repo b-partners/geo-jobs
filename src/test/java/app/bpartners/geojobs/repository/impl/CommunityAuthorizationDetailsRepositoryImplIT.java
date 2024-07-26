@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import app.bpartners.geojobs.conf.FacadeIT;
-import app.bpartners.geojobs.model.CommunityAuthorizationDetails;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
 import java.util.List;
 import org.junit.jupiter.api.Test;
