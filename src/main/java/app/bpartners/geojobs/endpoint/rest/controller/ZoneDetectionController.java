@@ -20,6 +20,7 @@ import app.bpartners.geojobs.endpoint.rest.model.FullDetectedZone;
 import app.bpartners.geojobs.endpoint.rest.model.GeoJsonsUrl;
 import app.bpartners.geojobs.endpoint.rest.model.Status;
 import app.bpartners.geojobs.endpoint.rest.model.TaskStatistic;
+import app.bpartners.geojobs.endpoint.rest.security.authorizer.CommunityFullDetectionAuthorizer;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
@@ -56,6 +57,7 @@ public class ZoneDetectionController {
   private final StatusMapper<JobStatus> jobStatusMapper;
   private final EventProducer eventProducer;
   private final GeoJsonConversionInitiationService geoJsonConversionInitiationService;
+  private final CommunityFullDetectionAuthorizer communityFullDetectionAuthorizer;
 
   @PutMapping("/detectionJobs/{id}/taskFiltering")
   public List<FilteredDetectionJob> filteredDetectionJobs(@PathVariable String id) {
@@ -155,7 +157,8 @@ public class ZoneDetectionController {
 
   @PutMapping("/fullDetection")
   public FullDetectedZone processFullDetection(
-      @RequestBody CreateFullDetection zoneToDetect) {
+      @RequestBody CreateFullDetection createFullDetection) {
+    communityFullDetectionAuthorizer.accept(createFullDetection);
     throw new NotImplementedException("Full Detection is still in development");
   }
 }

@@ -10,9 +10,11 @@ import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.mockito.MockedStatic;
+import org.springframework.beans.factory.annotation.Autowired;
 
-public class CommunityFullDetectionAuthorizerIT extends FacadeIT {
+class CommunityFullDetectionAuthorizerIT extends FacadeIT {
   private final MockedStatic<AuthProvider> authProvider = mockStatic(AuthProvider.class);
+  @Autowired CommunityFullDetectionAuthorizer communityFullDetectionAuthorizer;
 
   private static Feature feature1555SurfaceInside2000() {
     Feature feature = new Feature();

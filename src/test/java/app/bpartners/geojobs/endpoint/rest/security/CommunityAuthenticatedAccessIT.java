@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.endpoint.rest.security;
 
+import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.PATHWAY;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.POOL;
 import static app.bpartners.geojobs.endpoint.rest.security.authenticator.ApiKeyAuthenticator.API_KEY_HEADER;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -8,34 +10,37 @@ import app.bpartners.geojobs.endpoint.rest.api.DetectionApi;
 import app.bpartners.geojobs.endpoint.rest.client.ApiClient;
 import app.bpartners.geojobs.endpoint.rest.client.ApiException;
 import app.bpartners.geojobs.endpoint.rest.model.*;
+import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
+import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
+import app.bpartners.geojobs.repository.model.community.CommunityDetectableObjectType;
+import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.math.BigDecimal;
 import java.util.List;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
-public class CommunityAuthenticatedAccessIT extends FacadeIT {
+class CommunityAuthenticatedAccessIT extends FacadeIT {
+  private static String APIKEY = "APIKEY";
+
   DetectionApi detectionApi;
 
   @Autowired ObjectMapper om;
+  @Autowired CommunityAuthorizationRepository caRepository;
+
   @LocalServerPort private int port;
 
   @BeforeEach
   void setup() {
+    caRepository.save(communityAuthorization());
     setupClientWithApiKey();
   }
 
-  void setupClientWithApiKey() {
-    var authenticatedClient = new ApiClient();
-    authenticatedClient.setRequestInterceptor(
-        builder -> builder.header(API_KEY_HEADER, "community1_key"));
-    authenticatedClient.setScheme("http");
-    authenticatedClient.setPort(port);
-    authenticatedClient.setObjectMapper(om);
-
-    detectionApi = new DetectionApi(authenticatedClient);
+  @AfterEach
+  void cleanup() {
+    caRepository.deleteAll();
   }
 
   @Test
@@ -46,45 +51,62 @@ public class CommunityAuthenticatedAccessIT extends FacadeIT {
             () -> {
               detectionApi.getDetectionJobs(1, 10);
             });
-    assertEquals("ricka", error.getMessage());
+    assertTrue(error.getMessage().contains("Access Denied"));
   }
 
   @Test
-  void community_cannot_do_full_detection_with_not_authorized_object_type() {
+  void community_cannot_do_full_detection_with_wrong_authorization() {
     var error =
         assertThrows(
             ApiException.class,
             () -> {
-              detectionApi.processFullDetection(asCreateFullDetections(List.of()));
+              detectionApi.processFullDetection(asCreateFullDetection(POOL));
             });
-    assertEquals("ricka", error.getMessage());
+    assertTrue(error.getMessage().contains(POOL.name()));
   }
 
   @Test
   void community_can_do_full_detection_with_correct_authorization() throws ApiException {
-    assertDoesNotThrow(
-        () -> {
-          detectionApi.processFullDetection(asCreateFullDetections(List.of()));
-        });
+    var error =
+        assertThrows(
+            ApiException.class,
+            () -> {
+              detectionApi.processFullDetection(asCreateFullDetection(PATHWAY));
+            });
+    assertTrue(error.getMessage().contains("Full Detection is still in development"));
   }
 
-  private List<CreateFullDetection> asCreateFullDetections(
-      List<DetectableObjectType> authorizedTypes) {
-    return null;
+  void setupClientWithApiKey() {
+    var authenticatedClient = new ApiClient();
+    authenticatedClient.setRequestInterceptor(builder -> builder.header(API_KEY_HEADER, APIKEY));
+    authenticatedClient.setScheme("http");
+    authenticatedClient.setPort(port);
+    authenticatedClient.setObjectMapper(om);
+
+    detectionApi = new DetectionApi(authenticatedClient);
   }
 
-  private static Feature feature2000Surface() {
-    Feature feature = new Feature();
-    var coordinates =
-        List.of(
-            List.of(
-                List.of(BigDecimal.valueOf(0), BigDecimal.valueOf(0)),
-                List.of(BigDecimal.valueOf(0), BigDecimal.valueOf(44.72)),
-                List.of(BigDecimal.valueOf(44.72), BigDecimal.valueOf(44.72)),
-                List.of(BigDecimal.valueOf(44.72), BigDecimal.valueOf(0)),
-                List.of(BigDecimal.valueOf(0), BigDecimal.valueOf(0))));
-    MultiPolygon multiPolygon = new MultiPolygon().coordinates(List.of(coordinates));
-    feature.setGeometry(multiPolygon);
-    return feature;
+  private CreateFullDetection asCreateFullDetection(DetectableObjectType authorizedTypes) {
+    return new CreateFullDetection().objectType(authorizedTypes);
+  }
+
+  private CommunityAuthorization communityAuthorization() {
+    String COMMUNITY_ID = "dummyId";
+    var communityDetectableType =
+        CommunityDetectableObjectType.builder()
+            .id("dummyId")
+            .type(DetectableType.PATHWAY)
+            .communityAuthorizationId(COMMUNITY_ID)
+            .build();
+
+    return CommunityAuthorization.builder()
+        .id(COMMUNITY_ID)
+        .apiKey(APIKEY)
+        .name("communityName")
+        .maxSurface(5_000)
+        .authorizedZones(List.of())
+        .usedSurfaces(List.of())
+        .detectableObjectTypes(List.of(communityDetectableType))
+        .build();
   }
 }

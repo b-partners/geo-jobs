@@ -1,10 +1,7 @@
 package app.bpartners.geojobs.endpoint.rest;
 
 import app.bpartners.geojobs.endpoint.rest.model.Exception;
-import app.bpartners.geojobs.model.exception.BadRequestException;
-import app.bpartners.geojobs.model.exception.ForbiddenException;
-import app.bpartners.geojobs.model.exception.NotFoundException;
-import app.bpartners.geojobs.model.exception.TooManyRequestsException;
+import app.bpartners.geojobs.model.exception.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -67,6 +64,12 @@ public class InternalToRestExceptionHandler {
   ResponseEntity<Exception> handleNotFound(NotFoundException e) {
     log.info("Not found", e);
     return new ResponseEntity<>(toRest(e, HttpStatus.NOT_FOUND), HttpStatus.NOT_FOUND);
+  }
+
+  @ExceptionHandler(value = {NotImplementedException.class})
+  ResponseEntity<Exception> handleNotFound(NotImplementedException e) {
+    log.info("Not implemented", e);
+    return new ResponseEntity<>(toRest(e, HttpStatus.NOT_IMPLEMENTED), HttpStatus.NOT_IMPLEMENTED);
   }
 
   @ExceptionHandler(value = {java.lang.Exception.class})
