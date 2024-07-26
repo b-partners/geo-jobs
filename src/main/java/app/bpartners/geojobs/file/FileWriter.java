@@ -41,6 +41,9 @@ public class FileWriter implements BiFunction<byte[], File, File> {
   }
 
   public File write(byte[] bytes, @Nullable File directory, String filename) {
+    if (directory != null && directory.getName().contains("..")) {
+      throw new IllegalArgumentException("name must not contain .. but receceived: pathValue");
+    }
     try {
       String suffix = extensionGuesser.apply(bytes);
       File newFile = new File(directory, filename + suffix);

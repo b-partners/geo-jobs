@@ -40,9 +40,9 @@ public class MockedTilesDownloader extends FalliblyDurableMockedFunction<ParcelC
   }
 
   private static void writeRandomContent(File file) throws IOException {
-    FileWriter writer = new FileWriter(file);
-    var content = randomUUID().toString();
-    writer.write(content);
-    writer.close();
+    try (FileWriter writer = new FileWriter(file)) {
+      var content = randomUUID().toString();
+      writer.write(content);
+    }
   }
 }
