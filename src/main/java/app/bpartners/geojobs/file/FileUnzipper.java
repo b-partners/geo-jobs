@@ -46,10 +46,14 @@ public class FileUnzipper implements BiFunction<ZipFile, String, Path> {
 
   private static String getFolderPath(ZipEntry zipEntry) {
     String entryPath = zipEntry.getName();
-    if (entryPath.contains("..")) {
-      throw new IllegalArgumentException("path contain \"..\"");
+    Path normalizedPath = Paths.get(entryPath).normalize();
+
+    if (normalizedPath.startsWith("..")) {
+      throw new IllegalArgumentException("Path traversal attempt detected");
     }
-    return entryPath.substring(0, entryPath.lastIndexOf("/"));
+
+    Path parentPath = normalizedPath.getParent();
+    return (parentPath != null) ? parentPath.toString() : "";
   }
 
   private static String getFilename(ZipEntry zipEntry) {
