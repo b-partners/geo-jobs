@@ -13,7 +13,6 @@ import app.bpartners.geojobs.repository.model.community.CommunityAuthorizedZone;
 import app.bpartners.geojobs.repository.model.community.CommunityDetectableObjectType;
 import app.bpartners.geojobs.service.CommunityUsedSurfaceService;
 import app.bpartners.geojobs.service.FeatureSurfaceService;
-import java.util.HashSet;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -86,6 +85,7 @@ public class CommunityFullDetectionAuthorizer implements Consumer<CreateFullDete
   private void verifyZoneCoordinatesToDetect(
       CommunityAuthorization communityAuthorization, CreateFullDetection createFullDetection) {
     if (createFullDetection.getFeatures() == null) return;
+
     var candidateFeatures =
         createFullDetection.getFeatures().stream().map(featureMapper::toDomain).toList();
     var authorizedFeatureDomain =
@@ -96,10 +96,12 @@ public class CommunityFullDetectionAuthorizer implements Consumer<CreateFullDete
             .toList();
 
     var isAllFeaturesAreAuthorized =
-        new HashSet<>(authorizedFeatureDomain).containsAll(candidateFeatures);
+        candidateFeatures.stream()
+            .allMatch(feature -> authorizedFeatureDomain.stream().anyMatch(feature::contains));
+
     if (!isAllFeaturesAreAuthorized) {
       throw new ForbiddenException(
-          "Some given feature is not allowed for your community. name = "
+          "Some given feature is not allowed for your community.name = "
               + communityAuthorization.getName());
     }
   }
