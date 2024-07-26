@@ -308,7 +308,8 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
             .creationDatetime(now())
             .build());
 
-    if (humanZDJ.isSucceeded()) {
+    log.info("Is job succeeded {}", humanZDJ.isSucceeded());
+    if (FINISHED.equals(humanZDJProgression) && SUCCEEDED.equals(humanZDJHealth)) {
       eventProducer.accept(List.of(new AnnotationTaskRetrievingSubmitted(jobId)));
     }
     return repository.save(humanZDJ);
