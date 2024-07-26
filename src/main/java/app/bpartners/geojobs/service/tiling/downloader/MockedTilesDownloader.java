@@ -8,6 +8,7 @@ import app.bpartners.geojobs.service.FalliblyDurableMockedFunction;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.time.Duration;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,7 +33,7 @@ public class MockedTilesDownloader extends FalliblyDurableMockedFunction<ParcelC
     var zoomAndXDir = new File(rootDir.getAbsolutePath() + "/20/1");
     zoomAndXDir.mkdirs();
 
-    var yName = ((int) (Math.random() * 1000)) + ".txt";
+    var yName = ((int) (new SecureRandom().nextDouble() * 1000)) + ".txt";
     var yFile = new File(zoomAndXDir.getAbsolutePath() + "/" + yName);
     writeRandomContent(yFile);
 

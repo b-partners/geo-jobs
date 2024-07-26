@@ -2,6 +2,7 @@ package app.bpartners.geojobs.service;
 
 import static java.lang.Thread.sleep;
 
+import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.function.Function;
 import lombok.AllArgsConstructor;
@@ -16,7 +17,7 @@ public abstract class FalliblyDurableMockedFunction<T, R> implements Function<T,
   @SneakyThrows
   @Override
   public R apply(T t) {
-    var random = Math.random();
+    var random = new SecureRandom().nextDouble();
     sleep((long) (random * maxCallDuration.toMillis()));
     if (random < failureRate) {
       throw new RuntimeException("Oops, mock function randomly failed!");
