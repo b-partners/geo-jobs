@@ -7,6 +7,7 @@ import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import java.math.BigDecimal;
+import java.security.SecureRandom;
 import java.util.List;
 import java.util.Map;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -19,7 +20,7 @@ public class MockedTileObjectDetector implements TileObjectDetector {
   public DetectionResponse apply(
       TileDetectionTask tileDetectionTask,
       List<DetectableObjectConfiguration> detectableObjectConfigurations) {
-    double randomConfidence = Math.random();
+    double randomConfidence = new SecureRandom().nextDouble();
     var detectableTypes =
         detectableObjectConfigurations.stream()
             .map(DetectableObjectConfiguration::getObjectType)
@@ -31,8 +32,8 @@ public class MockedTileObjectDetector implements TileObjectDetector {
 
   private DetectionResponse aMockedDetectionResponse(
       Double confidence, DetectableType detectableType) {
-    double randomX = Math.random() * 100;
-    double randomY = Math.random() * 100;
+    double randomX = new SecureRandom().nextDouble() * 100;
+    double randomY = new SecureRandom().nextDouble() * 100;
     return DetectionResponse.builder()
         .rstImageUrl("dummyImageUrl")
         .srcImageUrl("dummyImageUrl")
