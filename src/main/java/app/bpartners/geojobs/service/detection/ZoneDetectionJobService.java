@@ -268,6 +268,7 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
     return Optional.empty();
   }
 
+  @Transactional
   public ZoneDetectionJob checkHumanDetectionJobStatus(String jobId) {
     var humanZDJ = getHumanZdjFromZdjId(jobId);
     var humanDetectionJobs = humanDetectionJobRepository.findByZoneDetectionJobId(humanZDJ.getId());
