@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class ParcelDetectionJobService extends JobService<TileDetectionTask, ParcelDetectionJob> {
-  protected ParcelDetectionJobService(
+  public ParcelDetectionJobService(
       JpaRepository<ParcelDetectionJob, String> repository,
       TaskStatisticRepository taskStatisticRepository,
       JobStatusRepository jobStatusRepository,
