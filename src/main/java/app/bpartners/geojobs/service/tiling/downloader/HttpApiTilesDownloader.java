@@ -10,7 +10,9 @@ import app.bpartners.geojobs.repository.model.ParcelContent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -73,7 +75,12 @@ public class HttpApiTilesDownloader implements TilesDownloader {
         var zip = fileWriter.apply(responseEntity.getBody(), null);
 
         var unzipped = unzip(zip, parcelContent);
-        zip.delete();
+        Path zipPath = Paths.get(zip.getAbsolutePath());
+        try {
+          Files.delete(zipPath);
+        } catch (IOException e) {
+          System.out.println("Temporary zip file could not be deleted: {} \n" + e.getMessage());
+        }
 
         return unzipped;
       } catch (IOException e) {

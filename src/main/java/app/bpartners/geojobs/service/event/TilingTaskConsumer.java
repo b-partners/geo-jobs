@@ -35,7 +35,11 @@ public class TilingTaskConsumer implements Consumer<TilingTask> {
     String bucketKey = downloadedTiles.getName();
 
     bucketComponent.upload(downloadedTiles, bucketKey);
-    downloadedTiles.delete();
+    boolean isDeleted = downloadedTiles.delete();
+    if (!isDeleted) {
+      System.out.println(
+          "Failed to delete downloaded tiles file: " + downloadedTiles.getAbsolutePath());
+    }
 
     setParcelTiles(downloadedTiles, parcel, bucketKey);
   }
