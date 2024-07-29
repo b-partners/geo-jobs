@@ -10,6 +10,12 @@ import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
 @Component
 public class HTMLTemplateParser implements BiFunction<String, Context, String> {
+  private final TemplateEngine templateEngine;
+
+  public HTMLTemplateParser() {
+    templateEngine = configureEngine();
+  }
+
   private TemplateEngine configureEngine() {
     var templateResolver = new ClassLoaderTemplateResolver();
     templateResolver.setPrefix("/templates/");
@@ -24,7 +30,6 @@ public class HTMLTemplateParser implements BiFunction<String, Context, String> {
 
   @Override
   public String apply(String template, Context context) {
-    TemplateEngine engine = configureEngine();
-    return engine.process(template, context);
+    return templateEngine.process(template, context);
   }
 }
