@@ -16,8 +16,9 @@ public class AnnotationTaskRetrievingSubmittedService
 
   @Override
   public void accept(AnnotationTaskRetrievingSubmitted submitted) {
-    var jobId = submitted.getJobId();
-    var humanDetectionJob = humanDetectionJobRepository.findByZoneDetectionJobId(jobId);
+    var jobId = submitted.getZdjId();
+    var humanZdjId = submitted.getHumanZdjId();
+    var humanDetectionJob = humanDetectionJobRepository.findByZoneDetectionJobId(humanZdjId);
     humanDetectionJob.forEach(
         humanJob -> {
           var annotationJob = annotationService.getAnnotationJobById(humanJob.getAnnotationJobId());
