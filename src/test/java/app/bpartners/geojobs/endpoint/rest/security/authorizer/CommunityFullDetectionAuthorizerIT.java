@@ -19,6 +19,7 @@ import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorizedZone;
 import app.bpartners.geojobs.repository.model.community.CommunityDetectableObjectType;
+import app.bpartners.geojobs.service.CommunityUsedSurfaceService;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
@@ -30,37 +31,79 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 class CommunityFullDetectionAuthorizerIT extends FacadeIT {
   private final MockedStatic<AuthProvider> authProvider = mockStatic(AuthProvider.class);
-  private final String COMMUNITY_ID = "communityId";
-  private final String COMMUNITY_API_KEY = "communityApiKey";
-  private final String ADMIN_API_KEY = "the-admin-api-key";
+  private static final String COMMUNITY_ID = "communityId";
+  private static final String COMMUNITY_API_KEY = "communityApiKey";
+  private static final String ADMIN_API_KEY = "the-admin-api-key";
 
   @Autowired CommunityFullDetectionAuthorizer subject;
   @Autowired CommunityAuthorizationRepository caRepository;
+  @Autowired CommunityUsedSurfaceService communityUsedSurfaceService;
 
   @BeforeEach
   void setup() {
     caRepository.save(communityAuthorization());
   }
 
+  @AfterEach
+  void cleanMock() {
+    caRepository.deleteAll();
+    authProvider.close();
+  }
+
   @Test
   void should_accept_directly_admin_api_key() {
     useRole(ROLE_ADMIN);
+    var createFullDetection =
+        asCreateFullDetection(DetectableObjectType.POOL, List.of(feature2000Surface()));
+
     assertDoesNotThrow(
         () -> {
-          subject.accept(
-              asCreateFullDetection(DetectableObjectType.POOL, List.of(feature2000Surface())));
+          subject.accept(createFullDetection);
         });
+  }
+
+  @Test
+  void should_accept_if_authorization_is_correct() {
+    useRole(ROLE_COMMUNITY);
+    var createFullDetection =
+        asCreateFullDetection(DetectableObjectType.PATHWAY, List.of(feature1550InsideSurface()));
+
+    assertDoesNotThrow(
+        () -> {
+          subject.accept(createFullDetection);
+        });
+  }
+
+  @Test
+  void should_throws_if_community_does_not_have_authorized_zone() {
+    useRole(ROLE_COMMUNITY);
+    caRepository.deleteAll();
+    var communityAuthorization = communityAuthorization();
+    communityAuthorization.setAuthorizedZones(List.of());
+    var createFullDetection =
+        asCreateFullDetection(DetectableObjectType.PATHWAY, List.of(feature2000Surface()));
+    caRepository.save(communityAuthorization);
+
+    var error =
+        assertThrows(
+            ForbiddenException.class,
+            () -> {
+              subject.accept(createFullDetection);
+            });
+    assertTrue(error.getMessage().contains("There is no zone authorized"));
   }
 
   @Test
   void should_throws_if_object_type_is_not_authorized() {
     useRole(ROLE_COMMUNITY);
+    var createFullDetection =
+        asCreateFullDetection(DetectableObjectType.POOL, List.of(feature2000Surface()));
+
     var error =
         assertThrows(
             ForbiddenException.class,
             () -> {
-              subject.accept(
-                  asCreateFullDetection(DetectableObjectType.POOL, List.of(feature2000Surface())));
+              subject.accept(createFullDetection);
             });
     assertTrue(error.getMessage().contains("POOL"));
   }
@@ -68,20 +111,33 @@ class CommunityFullDetectionAuthorizerIT extends FacadeIT {
   @Test
   void should_throws_if_feature_is_not_covered_by_authorized_zone() {
     useRole(ROLE_COMMUNITY);
+    var createFullDetection =
+        asCreateFullDetection(DetectableObjectType.PATHWAY, List.of(feature50SurfaceOutside2000()));
+
     var error =
         assertThrows(
             ForbiddenException.class,
             () -> {
-              subject.accept(
-                  asCreateFullDetection(
-                      DetectableObjectType.PATHWAY, List.of(feature50SurfaceOutside2000())));
+              subject.accept(createFullDetection);
             });
     assertTrue(error.getMessage().contains("Some given feature is not allowed"));
   }
 
-  @AfterEach
-  void cleanMock() {
-    authProvider.close();
+  @Test
+  void should_throws_if_max_surface_is_exceeded() {
+    useRole(ROLE_COMMUNITY);
+    communityUsedSurfaceService.appendLastUsedSurface(COMMUNITY_ID, 500);
+    var createFullDetection =
+        asCreateFullDetection(DetectableObjectType.PATHWAY, List.of(feature1550InsideSurface()));
+
+    var error =
+        assertThrows(
+            ForbiddenException.class,
+            () -> {
+              subject.accept(createFullDetection);
+            });
+    assertTrue(error.getMessage().contains("Max Surface is exceeded"));
+    assertTrue(error.getMessage().contains("2000"));
   }
 
   private void useRole(Authority.Role role) {
@@ -90,17 +146,19 @@ class CommunityFullDetectionAuthorizerIT extends FacadeIT {
     authProvider.when(AuthProvider::getPrincipal).thenReturn(userPrincipal);
   }
 
-  private Feature feature1555SurfaceInside2000() {
+  private Feature feature1550InsideSurface() {
     Feature feature = new Feature();
-    var sideLength = Math.sqrt(1_555);
+    BigDecimal sideLength = BigDecimal.valueOf(Math.sqrt(1550));
     var coordinates =
         List.of(
             List.of(
-                List.of(BigDecimal.valueOf(2.5), BigDecimal.valueOf(2.5)),
-                List.of(BigDecimal.valueOf(2.5), BigDecimal.valueOf(2.5 + sideLength)),
-                List.of(BigDecimal.valueOf(2.5 + sideLength), BigDecimal.valueOf(2.5 + sideLength)),
-                List.of(BigDecimal.valueOf(2.5 + sideLength), BigDecimal.valueOf(2.5)),
-                List.of(BigDecimal.valueOf(2.5), BigDecimal.valueOf(2.5))));
+                List.of(BigDecimal.valueOf(2.675), BigDecimal.valueOf(2.675)),
+                List.of(BigDecimal.valueOf(2.675), sideLength.add(BigDecimal.valueOf(2.675))),
+                List.of(
+                    sideLength.add(BigDecimal.valueOf(2.675)),
+                    sideLength.add(BigDecimal.valueOf(2.675))),
+                List.of(sideLength.add(BigDecimal.valueOf(2.675)), BigDecimal.valueOf(2.675)),
+                List.of(BigDecimal.valueOf(2.675), BigDecimal.valueOf(2.675))));
     MultiPolygon multiPolygon = new MultiPolygon().coordinates(List.of(coordinates));
     feature.setGeometry(multiPolygon);
     return feature;
@@ -162,7 +220,7 @@ class CommunityFullDetectionAuthorizerIT extends FacadeIT {
     return CommunityAuthorization.builder()
         .id("communityId")
         .name("communityName")
-        .maxSurface(1_000)
+        .maxSurface(2_000)
         .apiKey(COMMUNITY_API_KEY)
         .usedSurfaces(List.of())
         .authorizedZones(List.of(communityAuthorizedZone()))

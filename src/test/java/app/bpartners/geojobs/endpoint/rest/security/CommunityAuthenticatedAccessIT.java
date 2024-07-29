@@ -23,7 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
 class CommunityAuthenticatedAccessIT extends FacadeIT {
-  private static String APIKEY = "APIKEY";
+  private static final String APIKEY = "APIKEY";
 
   DetectionApi detectionApi;
 
@@ -66,7 +66,7 @@ class CommunityAuthenticatedAccessIT extends FacadeIT {
   }
 
   @Test
-  void community_can_do_full_detection_with_correct_authorization() throws ApiException {
+  void community_can_do_full_detection_with_correct_authorization() {
     var error =
         assertThrows(
             ApiException.class,
@@ -91,16 +91,15 @@ class CommunityAuthenticatedAccessIT extends FacadeIT {
   }
 
   private CommunityAuthorization communityAuthorization() {
-    String COMMUNITY_ID = "dummyId";
     var communityDetectableType =
         CommunityDetectableObjectType.builder()
             .id("dummyId")
             .type(DetectableType.PATHWAY)
-            .communityAuthorizationId(COMMUNITY_ID)
+            .communityAuthorizationId("dummyId")
             .build();
 
     return CommunityAuthorization.builder()
-        .id(COMMUNITY_ID)
+        .id("dummyId")
         .apiKey(APIKEY)
         .name("communityName")
         .maxSurface(5_000)

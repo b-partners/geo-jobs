@@ -15,6 +15,7 @@ import app.bpartners.geojobs.service.CommunityUsedSurfaceService;
 import app.bpartners.geojobs.service.FeatureSurfaceService;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
+import org.locationtech.jts.geom.Polygon;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -50,7 +51,7 @@ public class CommunityFullDetectionAuthorizer implements Consumer<CreateFullDete
 
     if (!authorizedObjectTypes.contains(candidateObjectType)) {
       throw new ForbiddenException(
-          "following objects are not authorized for your community.name = "
+          "The following objects are not authorized for your community.name = "
               + communityAuthorization.getName()
               + " : "
               + candidateObjectType);
@@ -87,19 +88,23 @@ public class CommunityFullDetectionAuthorizer implements Consumer<CreateFullDete
     if (createFullDetection.getFeatures() == null) return;
 
     var candidateFeatures =
-        createFullDetection.getFeatures().stream().map(featureMapper::toDomain).toList();
-    var authorizedFeatureDomain =
+        createFullDetection.getFeatures().stream()
+            .map(featureMapper::toDomain)
+            .reduce((acc, feature) -> (Polygon) acc.union(feature));
+
+    var authorizedZone =
         communityAuthorization.getAuthorizedZones().stream()
             .map(CommunityAuthorizedZone::getMultiPolygon)
             .map(this::convertPolygonToFeature)
             .map(featureMapper::toDomain)
-            .toList();
+            .reduce((acc, feature) -> (Polygon) acc.union(feature))
+            .orElseThrow(
+                () ->
+                    new ForbiddenException(
+                        "There is no zone authorized for your community.name="
+                            + communityAuthorization.getName()));
 
-    var isAllFeaturesAreAuthorized =
-        candidateFeatures.stream()
-            .allMatch(feature -> authorizedFeatureDomain.stream().anyMatch(feature::contains));
-
-    if (!isAllFeaturesAreAuthorized) {
+    if (candidateFeatures.isPresent() && !authorizedZone.contains(candidateFeatures.get())) {
       throw new ForbiddenException(
           "Some given feature is not allowed for your community.name = "
               + communityAuthorization.getName());
