@@ -26,6 +26,7 @@ import app.bpartners.geojobs.repository.model.FilteredDetectionJob;
 import app.bpartners.geojobs.repository.model.GeoJobType;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.ParcelService;
+import app.bpartners.geojobs.service.ZoneService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
 import java.util.List;
@@ -48,7 +49,7 @@ class ZoneDetectionControllerTest {
   EventProducer eventProducerMock = mock();
   CommunityFullDetectionAuthorizer communityFullDetectionAuthorizer = mock();
   GeoJsonConversionInitiationService geoJsonConversionInitiationServiceMock = mock();
-
+  ZoneService zoneServiceMock = mock();
   ZoneDetectionController subject =
       new ZoneDetectionController(
           parcelServiceMock,
@@ -62,7 +63,8 @@ class ZoneDetectionControllerTest {
           statusMapper,
           eventProducerMock,
           geoJsonConversionInitiationServiceMock,
-          communityFullDetectionAuthorizer);
+          communityFullDetectionAuthorizer,
+          zoneServiceMock);
 
   @Test
   void task_filtering_ok() {

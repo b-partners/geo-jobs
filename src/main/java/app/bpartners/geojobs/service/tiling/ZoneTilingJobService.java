@@ -53,6 +53,8 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
       ZoneDetectionJobService detectionJobService,
       JobFilteredMailer<ZoneTilingJob> tilingFilteredMailer,
       NotFinishedTaskRetriever<TilingTask> notFinishedTaskRetriever,
+      ZoomMapper zoomMapper,
+      TilingTaskMapper tilingTaskMapper,
       TaskStatisticRepository taskStatisticRepository) {
     super(
         repository,

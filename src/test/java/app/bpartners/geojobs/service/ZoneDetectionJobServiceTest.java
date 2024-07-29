@@ -11,6 +11,8 @@ import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.AutoTaskStatisticRecomputingSubmitted;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectConfigurationMapper;
+import app.bpartners.geojobs.endpoint.rest.security.authorizer.CommunityZoneDetectionJobProcessAuthorizer;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.TaskStatus;
@@ -56,6 +58,8 @@ public class ZoneDetectionJobServiceTest {
       new NotFinishedTaskRetriever<>();
   ZoneDetectionJobRepository zoneDetectionJobRepositoryMock = mock();
   TaskStatisticRepository taskStatisticRepositoryMock = mock();
+  CommunityZoneDetectionJobProcessAuthorizer communityZoneDetectionJobProcessAuthorizer = mock();
+  DetectableObjectConfigurationMapper objectConfigurationMapper = mock();
   ZoneDetectionJobService subject =
       new ZoneDetectionJobService(
           jobRepositoryMock,
@@ -67,7 +71,9 @@ public class ZoneDetectionJobServiceTest {
           mock(),
           mock(),
           zoneDetectionJobRepositoryMock,
-          taskStatisticRepositoryMock);
+          taskStatisticRepositoryMock,
+          communityZoneDetectionJobProcessAuthorizer,
+          objectConfigurationMapper);
 
   @BeforeEach
   void setUp() {

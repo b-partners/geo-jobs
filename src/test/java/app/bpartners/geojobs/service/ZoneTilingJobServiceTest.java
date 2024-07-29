@@ -14,6 +14,8 @@ import static org.mockito.Mockito.*;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.ImportedZoneTilingJobSaved;
 import app.bpartners.geojobs.endpoint.event.model.ZoneTilingJobWithoutTasksCreated;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.TilingTaskMapper;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoomMapper;
 import app.bpartners.geojobs.endpoint.rest.model.BucketSeparatorType;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.job.model.JobStatus;
@@ -58,6 +60,8 @@ public class ZoneTilingJobServiceTest {
   ZoneDetectionJobService detectionJobServiceMock = mock();
   NotFinishedTaskRetriever<TilingTask> notFinishedTaskRetriever = new NotFinishedTaskRetriever<>();
   TaskStatisticRepository taskStatisticRepositoryMock = mock();
+  ZoomMapper zoomMapper = mock();
+  TilingTaskMapper tilingTaskMapper = mock();
   ZoneTilingJobService subject =
       new ZoneTilingJobService(
           jobRepositoryMock,
@@ -67,6 +71,8 @@ public class ZoneTilingJobServiceTest {
           detectionJobServiceMock,
           mock(),
           notFinishedTaskRetriever,
+          zoomMapper,
+          tilingTaskMapper,
           taskStatisticRepositoryMock);
 
   @Test

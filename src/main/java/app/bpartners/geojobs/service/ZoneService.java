@@ -59,7 +59,8 @@ public class ZoneService {
 
     return new FullDetectedZone()
         .jobTypes(List.of(TILING, MACHINE_DETECTION, HUMAN_DETECTION))
-        .detectedGeojsonUrl(zoneDetectionJobService.getGeoJsonsUrl(job.getId()).toString())
+        //
+        // .detectedGeojsonUrl(zoneDetectionJobService.getGeoJsonsUrl(job.getId()).toString())
         .statistics(
             Stream.concat(Stream.of(ZTJStat), ZDJStats.stream())
                 .map(stat -> taskStatisticMapper.toRest(stat))
