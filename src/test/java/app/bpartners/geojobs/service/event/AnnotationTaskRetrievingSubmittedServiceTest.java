@@ -17,6 +17,7 @@ import org.mockito.ArgumentCaptor;
 
 class AnnotationTaskRetrievingSubmittedServiceTest {
   private static final String MOCK_JOB_ID = "mock_job_id";
+  private static final String MOCK_HUMAN_JOB_ID = "mock_job_id";
   private static final String MOCK_ANNOTATION_JOB_ID = "mock_first_job_id";
 
   AnnotationService annotationService = mock();
@@ -29,7 +30,10 @@ class AnnotationTaskRetrievingSubmittedServiceTest {
   }
 
   AnnotationTaskRetrievingSubmitted submitted() {
-    return AnnotationTaskRetrievingSubmitted.builder().jobId(MOCK_JOB_ID).build();
+    return AnnotationTaskRetrievingSubmitted.builder()
+        .zdjId(MOCK_JOB_ID)
+        .humanZdjId(MOCK_HUMAN_JOB_ID)
+        .build();
   }
 
   HumanDetectionJob humanDetectionJob() {
@@ -41,7 +45,7 @@ class AnnotationTaskRetrievingSubmittedServiceTest {
     var jobIdsCapture = ArgumentCaptor.forClass(String.class);
     var annotationJobIdsCapture = ArgumentCaptor.forClass(String.class);
     var imageSizesCapture = ArgumentCaptor.forClass(Integer.class);
-    when(humanDetectionJobRepository.findByZoneDetectionJobId(MOCK_JOB_ID))
+    when(humanDetectionJobRepository.findByZoneDetectionJobId(MOCK_HUMAN_JOB_ID))
         .thenReturn(List.of(humanDetectionJob()));
     when(annotationService.getAnnotationJobById(MOCK_ANNOTATION_JOB_ID))
         .thenReturn(annotationJob());
@@ -57,7 +61,7 @@ class AnnotationTaskRetrievingSubmittedServiceTest {
     var annotationJobIdsValues = annotationJobIdsCapture.getAllValues();
     var imageSizesValues = imageSizesCapture.getAllValues();
 
-    assertEquals(submitted().getJobId(), jobIdsValues.getFirst());
+    assertEquals(submitted().getZdjId(), jobIdsValues.getFirst());
     assertEquals(MOCK_ANNOTATION_JOB_ID, annotationJobIdsValues.getFirst());
     assertEquals(1024, imageSizesValues.getFirst());
   }
