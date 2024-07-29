@@ -1,8 +1,7 @@
 package app.bpartners.geojobs.endpoint.rest.controller;
 
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.*;
-import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
-import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -19,7 +18,9 @@ import app.bpartners.geojobs.endpoint.rest.security.authorizer.CommunityZoneDete
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
+import app.bpartners.geojobs.job.model.statistic.HealthStatusStatistic;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
+import app.bpartners.geojobs.job.model.statistic.TaskStatusStatistic;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.model.FilteredDetectionJob;
 import app.bpartners.geojobs.repository.model.GeoJobType;
@@ -178,18 +179,39 @@ class ZoneDetectionControllerTest {
   }
 
   private static TaskStatistic aTaskStatistic(String jobId) {
-    return TaskStatistic.builder()
-        .id("taskStatisticId")
-        .jobId(jobId)
-        .taskStatusStatistics(List.of())
-        .actualJobStatus(
-            JobStatus.builder()
-                .progression(PENDING)
-                .health(UNKNOWN)
-                .creationDatetime(now())
-                .build())
-        .updatedAt(now())
-        .jobType(GeoJobType.DETECTION)
-        .build();
+    var statusStatistics =
+        List.of(
+            aStatusStatistic(PENDING), aStatusStatistic(PROCESSING), aStatusStatistic(FINISHED));
+    var taskStatistic =
+        TaskStatistic.builder()
+            .id("taskStatisticId")
+            .jobId(jobId)
+            .actualJobStatus(
+                JobStatus.builder()
+                    .progression(PENDING)
+                    .health(UNKNOWN)
+                    .creationDatetime(now())
+                    .build())
+            .updatedAt(now())
+            .jobType(GeoJobType.DETECTION)
+            .build();
+    taskStatistic.addStatusStatistics(statusStatistics);
+    return taskStatistic;
+  }
+
+  private static TaskStatusStatistic aStatusStatistic(Status.ProgressionStatus progressionStatus) {
+    var healthStatusStatistics =
+        List.of(
+            aHealthStatusStatistic(UNKNOWN),
+            aHealthStatusStatistic(RETRYING),
+            aHealthStatusStatistic(FAILED),
+            aHealthStatusStatistic(SUCCEEDED));
+    var taskStatusStatistic = TaskStatusStatistic.builder().progression(progressionStatus).build();
+    taskStatusStatistic.addHealthStatusStatistics(healthStatusStatistics);
+    return taskStatusStatistic;
+  }
+
+  private static HealthStatusStatistic aHealthStatusStatistic(Status.HealthStatus healthStatus) {
+    return HealthStatusStatistic.builder().healthStatus(healthStatus).count(1L).build();
   }
 }
