@@ -5,5 +5,6 @@ import app.bpartners.geojobs.job.model.JobType;
 public enum GeoJobType implements JobType {
   TILING,
   DETECTION,
-  PARCEL_DETECTION
+  PARCEL_DETECTION,
+  TILE_ANNOTATION_DELIVERY
 }
