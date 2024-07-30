@@ -68,7 +68,7 @@ public class ZoneDetectionJobAnnotationProcessor {
             .toList();
     List<MachineDetectedTile> tilesWithoutObject =
         machineDetectedTiles.stream()
-            .filter(detectedTile -> detectedTile.getMachineDetectedObjects().isEmpty())
+            .filter(detectedTile -> detectedTile.getDetectedObjects().isEmpty())
             .peek(detectedTile -> detectedTile.setHumanDetectionJobId(inDoubtHumanDetectionJobId))
             .toList();
     if (inDoubtTiles.isEmpty() && !tilesWithoutObject.isEmpty()) {
@@ -83,7 +83,7 @@ public class ZoneDetectionJobAnnotationProcessor {
         inDoubtTiles.stream()
             .filter(
                 detectedTile ->
-                    detectedTile.getMachineDetectedObjects().stream()
+                    detectedTile.getDetectedObjects().stream()
                         .anyMatch(tile -> tile.getComputedConfidence() >= minConfidence))
             .peek(detectedTile -> detectedTile.setHumanDetectionJobId(humanZDJTruePositiveId))
             .toList();

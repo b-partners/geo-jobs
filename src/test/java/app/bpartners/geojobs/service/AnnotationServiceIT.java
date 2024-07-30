@@ -14,8 +14,8 @@ import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectType;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
+import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.detection.HumanDetectionJob;
-import app.bpartners.geojobs.repository.model.detection.MachineDetectedObject;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
@@ -76,20 +76,19 @@ public class AnnotationServiceIT extends FacadeIT {
         .zdjJobId(jobId)
         // TODO: .parcelJobId(parcelJobId)
         .parcelId(parcelId)
-        .machineDetectedObjects(
+        .detectedObjects(
             List.of(
-                MachineDetectedObject.builder()
+                DetectedObject.builder()
                     .id(detectedObjectId)
                     .computedConfidence(0.0)
                     .detectedTileId(tileId)
                     .feature(new Feature().id("featureId").geometry(geometry))
-                    .detectedObjectTypes(
-                        List.of(
-                            DetectableObjectType.builder()
-                                .id(detectedObjectId)
-                                .detectableType(detectableType)
-                                .objectId(detectedObjectId)
-                                .build()))
+                    .detectedObjectType(
+                        DetectableObjectType.builder()
+                            .id(detectedObjectId)
+                            .detectableType(detectableType)
+                            .objectId(detectedObjectId)
+                            .build())
                     .build()))
         .bucketPath(null)
         .creationDatetime(NOW)

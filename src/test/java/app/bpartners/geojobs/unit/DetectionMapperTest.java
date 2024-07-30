@@ -1,10 +1,18 @@
 package app.bpartners.geojobs.unit;
 
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.POOL;
+import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import app.bpartners.gen.annotator.endpoint.rest.model.Annotation;
+import app.bpartners.gen.annotator.endpoint.rest.model.Label;
+import app.bpartners.gen.annotator.endpoint.rest.model.Point;
+import app.bpartners.gen.annotator.endpoint.rest.model.Polygon;
+import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.detection.DetectionMapper;
@@ -60,11 +68,40 @@ class DetectionMapperTest {
         subject.toDetectedTile(detectionResponse(), tile, parcelId, zoneJobId, parcelJobId);
 
     assertNotNull(actual);
-    assertFalse(actual.getMachineDetectedObjects().isEmpty());
+    assertFalse(actual.getDetectedObjects().isEmpty());
     assertNotNull(actual.getFirstObject());
     assertEquals(tile, actual.getTile());
     assertEquals(parcelId, actual.getParcelId());
     assertEquals(zoneJobId, actual.getZdjJobId());
     assertEquals(parcelJobId, actual.getParcelJobId());
+  }
+
+  @Test
+  void map_annotation_to_human_detected_object() {
+    var zoom = 20;
+    var tileId = randomUUID().toString();
+
+    var actual = subject.toHumanDetectedObject(zoom, tileId, List.of(annotation()));
+    var detectedObject = actual.getFirst();
+
+    assertFalse(actual.isEmpty());
+    assertEquals(POOL, detectedObject.getDetectableObjectType());
+    assertEquals(HUMAN, detectedObject.getType());
+    assertEquals(tileId, detectedObject.getDetectedTileId());
+    assertEquals(0.9515481, detectedObject.getComputedConfidence());
+    assertEquals(feature(), detectedObject.getFeature().id(null));
+  }
+
+  private Annotation annotation() {
+    return new Annotation()
+        .comment("confidence=95.15481")
+        .label(new Label().id(randomUUID().toString()).name("POOL").color("#fffff"))
+        .polygon(new Polygon().points(List.of(new Point().y(500.0).x(147.5))));
+  }
+
+  private Feature feature() {
+    var coordinates =
+        List.of(List.of(List.of(List.of(new BigDecimal("147.5"), new BigDecimal("500.0")))));
+    return new Feature().id(null).zoom(20).geometry(new MultiPolygon().coordinates(coordinates));
   }
 }

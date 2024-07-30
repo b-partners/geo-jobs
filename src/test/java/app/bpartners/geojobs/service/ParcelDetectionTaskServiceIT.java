@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service;
 
+import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import app.bpartners.geojobs.conf.FacadeIT;
@@ -37,20 +38,20 @@ public class ParcelDetectionTaskServiceIT extends FacadeIT {
         .zdjJobId(jobId)
         // TODO: .parcelJobId(parcelJobId)
         .parcelId(parcelId)
-        .machineDetectedObjects(
+        .detectedObjects(
             List.of(
-                MachineDetectedObject.builder()
+                DetectedObject.builder()
                     .id(detectedObjectId)
                     .computedConfidence(confidence)
                     .detectedTileId(tileId)
                     .feature(new Feature().id("featureId"))
-                    .detectedObjectTypes(
-                        List.of(
-                            DetectableObjectType.builder()
-                                .id(detectedObjectId)
-                                .detectableType(DetectableType.ROOF)
-                                .objectId(detectedObjectId)
-                                .build()))
+                    .type(MACHINE)
+                    .detectedObjectType(
+                        DetectableObjectType.builder()
+                            .id(detectedObjectId)
+                            .detectableType(DetectableType.ROOF)
+                            .objectId(detectedObjectId)
+                            .build())
                     .build()))
         .bucketPath("dummyPath")
         .creationDatetime(null)

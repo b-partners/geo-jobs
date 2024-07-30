@@ -39,6 +39,6 @@ public class HumanDetectedTile implements Serializable {
   @JdbcTypeCode(JSON)
   private Tile tile;
 
-  @OneToMany(cascade = ALL, mappedBy = "humanDetectedTileId", fetch = EAGER)
-  private List<HumanDetectedObject> detectedObjects;
+  @OneToMany(cascade = ALL, mappedBy = "detectedTileId", fetch = EAGER)
+  private List<DetectedObject> detectedObjects;
 }

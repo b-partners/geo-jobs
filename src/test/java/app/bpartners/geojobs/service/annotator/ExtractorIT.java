@@ -16,7 +16,7 @@ import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectType;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
-import app.bpartners.geojobs.repository.model.detection.MachineDetectedObject;
+import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -52,8 +52,7 @@ public class ExtractorIT extends FacadeIT {
 
   private Feature feature;
 
-  public static MachineDetectedTile detectedTile(
-      List<MachineDetectedObject> machineDetectedObjects) {
+  public static MachineDetectedTile detectedTile(List<DetectedObject> detectedObjects) {
     return MachineDetectedTile.builder()
         .id(randomUUID().toString())
         .bucketPath(LAYER_20_10_1_PNG)
@@ -61,23 +60,23 @@ public class ExtractorIT extends FacadeIT {
         .zdjJobId(MOCK_JOB_ID)
         .parcelId(PARCEL_MOCK_ID)
         .creationDatetime(Instant.now())
-        .machineDetectedObjects(machineDetectedObjects)
+        .detectedObjects(detectedObjects)
         .build();
   }
 
   @SneakyThrows
-  MachineDetectedObject inDoubtDetectedObject(DetectableType type) {
+  DetectedObject inDoubtDetectedObject(DetectableType type) {
     String id = randomUUID().toString();
-    return MachineDetectedObject.builder()
+    return DetectedObject.builder()
         .id(id)
-        .detectedObjectTypes(detectedObjectType(id, type))
+        .detectedObjectType(detectedObjectType(id, type))
         .feature(feature)
         .computedConfidence(1.0)
         .build();
   }
 
-  private static List<DetectableObjectType> detectedObjectType(String id, DetectableType type) {
-    return List.of(DetectableObjectType.builder().objectId(id).detectableType(type).build());
+  private DetectableObjectType detectedObjectType(String id, DetectableType type) {
+    return DetectableObjectType.builder().objectId(id).detectableType(type).build();
   }
 
   @BeforeEach
@@ -119,10 +118,9 @@ public class ExtractorIT extends FacadeIT {
   @Test
   void extract_polygon_ok() {
     Polygon expected = getFeaturePolygon();
-    MachineDetectedObject machineDetectedObject =
-        MachineDetectedObject.builder()
-            .detectedObjectTypes(
-                List.of(DetectableObjectType.builder().detectableType(ROOF).build()))
+    DetectedObject machineDetectedObject =
+        DetectedObject.builder()
+            .detectedObjectType(DetectableObjectType.builder().detectableType(ROOF).build())
             .feature(feature)
             .build();
 
@@ -173,7 +171,7 @@ public class ExtractorIT extends FacadeIT {
   @Test
   void extract_annotation_batch_ok() {
     Label label = labelConverter.apply(ROOF);
-    MachineDetectedObject machineDetectedObject = inDoubtDetectedObject(ROOF);
+    DetectedObject machineDetectedObject = inDoubtDetectedObject(ROOF);
     CreateAnnotationBatch expected =
         new CreateAnnotationBatch()
             .annotations(
