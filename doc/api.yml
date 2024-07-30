@@ -1024,7 +1024,8 @@ components:
       properties:
         objectType:
           $ref: '#/components/schemas/DetectableObjectType'
-
+        endToEndId:
+          type: string
     JobTypes:
       enum:
         - MACHINE_DETECTION
