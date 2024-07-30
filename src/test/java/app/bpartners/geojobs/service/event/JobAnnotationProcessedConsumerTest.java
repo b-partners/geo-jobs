@@ -5,10 +5,10 @@ import static org.mockito.Mockito.*;
 import app.bpartners.geojobs.endpoint.event.model.JobAnnotationProcessed;
 import org.junit.jupiter.api.Test;
 
-public class JobAnnotationProcessedServiceTest {
+public class JobAnnotationProcessedConsumerTest {
   ZoneDetectionJobAnnotationProcessor jobAnnotationProcessorMock = mock();
-  JobAnnotationProcessedService subject =
-      new JobAnnotationProcessedService(jobAnnotationProcessorMock);
+  JobAnnotationProcessedConsumer subject =
+      new JobAnnotationProcessedConsumer(jobAnnotationProcessorMock);
 
   @Test
   void accept_ok() {

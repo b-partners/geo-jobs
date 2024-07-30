@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
-public class JobAnnotationProcessedService implements Consumer<JobAnnotationProcessed> {
+public class JobAnnotationProcessedConsumer implements Consumer<JobAnnotationProcessed> {
   private final ZoneDetectionJobAnnotationProcessor zoneDetectionJobAnnotationProcessor;
 
   @Override
