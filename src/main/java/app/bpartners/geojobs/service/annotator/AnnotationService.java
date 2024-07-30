@@ -153,12 +153,14 @@ public class AnnotationService {
       throw new app.bpartners.geojobs.model.exception.ApiException(
           app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION, e);
     }
+    log.info("Annotation Tasks count {}", annotationTasks.size());
     annotationTasks.forEach(
         task -> {
           var metadata = getTileMetaData(task.getFilename());
           var zoom = metadata.getFirst();
           var xTile = metadata.get(metadata.size() - 2);
           var yTile = metadata.getLast();
+          log.info("Tile metadata {}", metadata);
           eventProducer.accept(
               List.of(
                   new AnnotationBatchRetrievingSubmitted(
