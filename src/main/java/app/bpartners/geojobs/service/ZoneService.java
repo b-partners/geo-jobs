@@ -85,7 +85,7 @@ public class ZoneService {
           detectionjobValidator.accept(ZDJ.getId());
           DetectableObjectType detectableObjectType = zoneToDetect.getObjectType();
           if (detectableObjectType == null) {
-            throw new ApiException(SERVER_EXCEPTION, "You should provide an object to detect");
+            throw new ApiException(SERVER_EXCEPTION, "Object to detect is mandatory. ");
           }
 
           List<DetectableObjectConfiguration> detectableObjectConfigurations =

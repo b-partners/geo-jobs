@@ -44,6 +44,7 @@ public class ZTJStatusRecomputingSubmittedService
 
   @Override
   public void accept(ZTJStatusRecomputingSubmitted event) {
+    service.accept(event);
     Optional<ZoneTilingJob> zoneTilingJob = zoneTilingJobRepository.findById(event.getJobId());
     if (zoneTilingJob.isEmpty()) {
       throw new ApiException(
@@ -54,6 +55,5 @@ public class ZTJStatusRecomputingSubmittedService
     if (FINISHED.equals(jobStatus.getProgression()) && SUCCEEDED.equals(jobStatus.getHealth())) {
       zoneService.processZoneDetectionJobs(event.getCreateFullDetection(), ZTJ);
     }
-    service.accept(event);
   }
 }

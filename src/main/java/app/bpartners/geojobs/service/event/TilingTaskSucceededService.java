@@ -29,18 +29,19 @@ public class TilingTaskSucceededService implements Consumer<TilingTaskSucceeded>
     taskRepository.save(task);
     taskStatusService.succeed(task);
     var jobTasks = taskRepository.findAllByJobId(task.getJobId());
-    jobTasks.stream()
-        .filter(this::isFinished)
-        .forEach(
-            ZTJTask ->
-                eventProducer.accept(
-                    List.of(
-                        new ZTJStatusRecomputingSubmitted(
-                            task.getJobId(), tilingTaskSucceeded.getFullDetection()))));
+    if (isFinished(jobTasks)) {
+      eventProducer.accept(
+          List.of(
+              new ZTJStatusRecomputingSubmitted(
+                  task.getJobId(), tilingTaskSucceeded.getFullDetection())));
+    }
   }
 
-  private boolean isFinished(TilingTask tilingTask) {
-    return FINISHED.equals(tilingTask.getStatus().getProgression())
-        && SUCCEEDED.equals(tilingTask.getStatus().getHealth());
+  private boolean isFinished(List<TilingTask> tilingTasks) {
+    return tilingTasks.stream()
+        .allMatch(
+            tilingTask ->
+                FINISHED.equals(tilingTask.getStatus().getProgression())
+                    && SUCCEEDED.equals(tilingTask.getStatus().getHealth()));
   }
 }

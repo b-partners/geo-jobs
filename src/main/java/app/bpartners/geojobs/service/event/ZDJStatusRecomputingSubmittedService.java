@@ -1,8 +1,13 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
+
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.ZDJStatusRecomputingSubmitted;
+import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.repository.TaskRepository;
+import app.bpartners.geojobs.job.service.JobAnnotationService;
 import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
@@ -18,12 +23,18 @@ public class ZDJStatusRecomputingSubmittedService
   private final JobStatusRecomputingSubmittedService<
           ZoneDetectionJob, ParcelDetectionTask, ZDJStatusRecomputingSubmitted>
       service;
+  private final ZoneDetectionJobService zoneDetectionJobService;
+  private final JobAnnotationService jobAnnotationService;
 
   public ZDJStatusRecomputingSubmittedService(
       ZoneDetectionJobService jobService,
       EventProducer eventProducer,
       TaskStatusService<ParcelDetectionTask> taskStatusService,
-      TaskRepository<ParcelDetectionTask> taskRepository) {
+      TaskRepository<ParcelDetectionTask> taskRepository,
+      ZoneDetectionJobService zoneDetectionJobService,
+      JobAnnotationService jobAnnotationService) {
+    this.zoneDetectionJobService = zoneDetectionJobService;
+    this.jobAnnotationService = jobAnnotationService;
     this.service =
         new JobStatusRecomputingSubmittedService<>(
             eventProducer, jobService, taskStatusService, taskRepository);
@@ -32,5 +43,10 @@ public class ZDJStatusRecomputingSubmittedService
   @Override
   public void accept(ZDJStatusRecomputingSubmitted event) {
     service.accept(event);
+    ZoneDetectionJob zoneDetectionJob = zoneDetectionJobService.findById(event.getJobId());
+    JobStatus jobStatus = zoneDetectionJob.getStatus();
+    if (FINISHED.equals(jobStatus.getProgression()) && SUCCEEDED.equals(jobStatus.getHealth())) {
+      jobAnnotationService.processAnnotationJob(event.getJobId(), Double.valueOf(0.8));
+    }
   }
 }
