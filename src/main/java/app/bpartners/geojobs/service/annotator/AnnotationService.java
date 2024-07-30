@@ -16,6 +16,7 @@ import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.detection.*;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Service;
 public class AnnotationService {
   public static final int DEFAULT_IMAGES_HEIGHT = 1024;
   public static final int DEFAULT_IMAGES_WIDTH = 1024;
+  private static final Pattern DIGIT_PATTERN = Pattern.compile("\\d+");
   private final JobsApi jobsApi;
   private final TaskExtractor taskExtractor;
   private final LabelConverter labelConverter;
@@ -168,10 +170,9 @@ public class AnnotationService {
 
   private List<Integer> getTileMetaData(String filename) {
     var metadata = new ArrayList<Integer>();
-    var pattern = Pattern.compile("\\d+");
-    var filenameMatcher = pattern.matcher(filename);
+    var filenameMatcher = DIGIT_PATTERN.matcher(filename);
     while (filenameMatcher.find()) {
-      metadata.add(Integer.parseInt(filenameMatcher.group()));
+      metadata.add(new BigInteger(filenameMatcher.group()).intValue());
     }
     int size = metadata.size();
     return metadata.subList(size - 3, size);
