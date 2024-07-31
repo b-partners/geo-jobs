@@ -269,49 +269,16 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
   }
 
   @Transactional
-  public ZoneDetectionJob checkHumanDetectionJobStatus(String jobId) {
-    var humanZDJ = getHumanZdjFromZdjId(jobId);
-    var humanDetectionJobs = humanDetectionJobRepository.findByZoneDetectionJobId(humanZDJ.getId());
-    if (humanDetectionJobs.isEmpty()) return humanZDJ;
-
-    var firstHumanDetectionJob = humanDetectionJobs.getFirst();
-    var lastHumanDetectionJob = humanDetectionJobs.getLast();
-    var firstAnnotationJobId = firstHumanDetectionJob.getAnnotationJobId();
-    var lastAnnotationJobId = lastHumanDetectionJob.getAnnotationJobId();
-    var firstAnnotationJobStatus =
-        annotationService.getAnnotationJobById(firstAnnotationJobId).getStatus();
-    Status.ProgressionStatus firstProgressionStatus =
-        detectionMapper.getProgressionStatus(firstAnnotationJobStatus);
-    Status.HealthStatus firstHealthStatus =
-        detectionMapper.getHealthStatus(firstAnnotationJobStatus);
-    var lastAnnotationJobStatus =
-        annotationService.getAnnotationJobById(lastAnnotationJobId).getStatus();
-    Status.ProgressionStatus lastProgressionStatus =
-        detectionMapper.getProgressionStatus(lastAnnotationJobStatus);
-    Status.HealthStatus lastHealthStatus = detectionMapper.getHealthStatus(lastAnnotationJobStatus);
-
-    Status.ProgressionStatus humanZDJProgression;
-    Status.HealthStatus humanZDJHealth;
-    if (firstProgressionStatus.equals(lastProgressionStatus)
-        && firstHealthStatus.equals(lastHealthStatus)) {
-      humanZDJProgression = firstProgressionStatus;
-      humanZDJHealth = firstHealthStatus;
-    } else {
-      humanZDJProgression = PENDING; // TODO: check when processing
-      humanZDJHealth = UNKNOWN;
-    }
-
-    humanZDJ.hasNewStatus(
-        Status.builder()
-            .id(randomUUID().toString())
-            .progression(humanZDJProgression)
-            .health(humanZDJHealth)
-            .creationDatetime(now())
-            .build());
-
-    if (humanZDJ.isSucceeded()) {
-      eventProducer.accept(List.of(new AnnotationTaskRetrievingSubmitted(jobId, humanZDJ.getId())));
-    }
+  public ZoneDetectionJob checkHumanDetectionJobStatus(String annotationJobId) {
+    var linkedHumanDetectionJob =
+        humanDetectionJobRepository
+            .findByAnnotationJobId(annotationJobId)
+            .orElseThrow(
+                () ->
+                    new NotFoundException(
+                        "No human detection job found for annotationJobId=" + annotationJobId));
+    var humanZDJ = getHumanZdjFromZdjId(linkedHumanDetectionJob.getZoneDetectionJobId());
+    eventProducer.accept(List.of(new AnnotationJobVerificationSent(humanZDJ.getId())));
     return repository.save(humanZDJ);
   }
 

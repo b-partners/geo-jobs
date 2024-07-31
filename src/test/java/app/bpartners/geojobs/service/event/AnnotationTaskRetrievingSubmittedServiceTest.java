@@ -4,35 +4,26 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
-import app.bpartners.gen.annotator.endpoint.rest.model.Job;
 import app.bpartners.geojobs.endpoint.event.model.AnnotationTaskRetrievingSubmitted;
-import app.bpartners.geojobs.repository.HumanDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.detection.HumanDetectionJob;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
-import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 class AnnotationTaskRetrievingSubmittedServiceTest {
-  private static final String MOCK_JOB_ID = "mock_job_id";
   private static final String MOCK_HUMAN_JOB_ID = "mock_job_id";
-  private static final String MOCK_ANNOTATION_JOB_ID = "mock_first_job_id";
+  private static final String MOCK_ANNOTATION_JOB_ID = "mock_annotation_job_id";
 
   AnnotationService annotationService = mock();
-  HumanDetectionJobRepository humanDetectionJobRepository = mock();
   AnnotationTaskRetrievingSubmittedService subject =
-      new AnnotationTaskRetrievingSubmittedService(annotationService, humanDetectionJobRepository);
-
-  Job annotationJob() {
-    return new Job().id(MOCK_ANNOTATION_JOB_ID).imagesWidth(1024);
-  }
+      new AnnotationTaskRetrievingSubmittedService(annotationService);
 
   AnnotationTaskRetrievingSubmitted submitted() {
     return AnnotationTaskRetrievingSubmitted.builder()
-        .zdjId(MOCK_JOB_ID)
         .humanZdjId(MOCK_HUMAN_JOB_ID)
+        .annotationJobId(MOCK_ANNOTATION_JOB_ID)
+        .imageWidth(1024)
         .build();
   }
 
@@ -45,10 +36,6 @@ class AnnotationTaskRetrievingSubmittedServiceTest {
     var jobIdsCapture = ArgumentCaptor.forClass(String.class);
     var annotationJobIdsCapture = ArgumentCaptor.forClass(String.class);
     var imageSizesCapture = ArgumentCaptor.forClass(Integer.class);
-    when(humanDetectionJobRepository.findByZoneDetectionJobId(MOCK_HUMAN_JOB_ID))
-        .thenReturn(List.of(humanDetectionJob()));
-    when(annotationService.getAnnotationJobById(MOCK_ANNOTATION_JOB_ID))
-        .thenReturn(annotationJob());
 
     subject.accept(submitted());
     verify(annotationService, times(1))
@@ -61,7 +48,7 @@ class AnnotationTaskRetrievingSubmittedServiceTest {
     var annotationJobIdsValues = annotationJobIdsCapture.getAllValues();
     var imageSizesValues = imageSizesCapture.getAllValues();
 
-    assertEquals(submitted().getZdjId(), jobIdsValues.getFirst());
+    assertEquals(submitted().getHumanZdjId(), jobIdsValues.getFirst());
     assertEquals(MOCK_ANNOTATION_JOB_ID, annotationJobIdsValues.getFirst());
     assertEquals(1024, imageSizesValues.getFirst());
   }

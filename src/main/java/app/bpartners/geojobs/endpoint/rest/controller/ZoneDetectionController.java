@@ -103,14 +103,15 @@ public class ZoneDetectionController {
         service.retryFailedTask(id), List.of()); // TODO: check if features must be returned
   }
 
-  @PostMapping("/detectionJobs/{id}/humanVerificationStatus")
+  @PostMapping("/detectionJobs/{annotationJobId}/humanVerificationStatus")
   public app.bpartners.geojobs.endpoint.rest.model.ZoneDetectionJob checkHumanDetectionJobStatus(
-      @PathVariable String id) {
+      @PathVariable String annotationJobId) {
+    var job = service.checkHumanDetectionJobStatus(annotationJobId);
     var objectConfigurations =
-        objectConfigurationRepository.findAllByDetectionJobId(id).stream()
+        objectConfigurationRepository.findAllByDetectionJobId(job.getId()).stream()
             .map(objectConfigurationMapper::toRest)
             .toList();
-    return mapper.toRest(service.checkHumanDetectionJobStatus(id), objectConfigurations);
+    return mapper.toRest(job, objectConfigurations);
   }
 
   @GetMapping("/detectionJobs/{id}/detectedParcels")
