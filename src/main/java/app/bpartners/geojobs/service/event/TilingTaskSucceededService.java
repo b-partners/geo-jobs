@@ -24,6 +24,7 @@ public class TilingTaskSucceededService implements Consumer<TilingTaskSucceeded>
   private final TaskStatusService<TilingTask> taskStatusService;
   private final EventProducer eventProducer;
 
+  @Override
   public void accept(TilingTaskSucceeded tilingTaskSucceeded) {
     var task = tilingTaskSucceeded.getTask();
     taskRepository.save(task);

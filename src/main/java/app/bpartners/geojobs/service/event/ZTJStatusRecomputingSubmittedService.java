@@ -1,12 +1,9 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
-import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.ZTJStatusRecomputingSubmitted;
-import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.repository.TaskRepository;
 import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.model.exception.ApiException;
@@ -51,9 +48,8 @@ public class ZTJStatusRecomputingSubmittedService
           SERVER_EXCEPTION, String.format("The job %s is not found", event.getJobId()));
     }
     ZoneTilingJob ZTJ = zoneTilingJob.get();
-    JobStatus jobStatus = ZTJ.getStatus();
-    if (FINISHED.equals(jobStatus.getProgression()) && SUCCEEDED.equals(jobStatus.getHealth())) {
-      zoneService.processZoneDetectionJobs(event.getCreateFullDetection(), ZTJ);
+    if (ZTJ.isFinished() && ZTJ.isSucceeded()) {
+      zoneService.processZoneDetectionJob(event.getCreateFullDetection(), ZTJ);
     }
   }
 }

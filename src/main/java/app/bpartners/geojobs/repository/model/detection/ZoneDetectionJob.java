@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -25,6 +26,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
+@Setter
 public class ZoneDetectionJob extends Job {
   @OneToOne(cascade = ALL)
   private ZoneTilingJob zoneTilingJob;
@@ -32,6 +34,8 @@ public class ZoneDetectionJob extends Job {
   @Enumerated(STRING)
   @JdbcTypeCode(NAMED_ENUM)
   private DetectionType detectionType;
+
+  protected String endToEndId;
 
   @Override
   protected JobType getType() {

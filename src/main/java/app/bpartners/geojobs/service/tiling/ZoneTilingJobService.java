@@ -190,6 +190,7 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
   @Transactional
   public ZoneTilingJob create(
       ZoneTilingJob job, List<TilingTask> tasks, CreateFullDetection fullDetection) {
+    job.setEndToEndId(fullDetection.getEndToEndId());
     var saved = super.create(job, tasks);
     eventProducer.accept(List.of(new ZoneTilingJobCreated(saved, fullDetection)));
     return saved;

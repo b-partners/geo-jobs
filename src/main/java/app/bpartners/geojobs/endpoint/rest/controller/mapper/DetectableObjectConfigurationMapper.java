@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 public class DetectableObjectConfigurationMapper {
   private final DetectableObjectTypeMapper typeMapper;
   public static String BUCKET_STORAGE_NAME = "TILING_IMAGES";
+  public final int DEFAULT_CONFIDENCE = 1;
 
   public DetectableObjectConfiguration toDomain(
       String jobId, app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration rest) {
@@ -34,7 +35,7 @@ public class DetectableObjectConfigurationMapper {
     return new app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration()
         .confidence(
             domain.getConfidence() == null
-                ? BigDecimal.valueOf(1)
+                ? BigDecimal.valueOf(DEFAULT_CONFIDENCE)
                 : BigDecimal.valueOf(domain.getConfidence()))
         .type(typeMapper.toRest(domain.getObjectType()))
         .bucketStorageName(domain.getBucketStorageName());

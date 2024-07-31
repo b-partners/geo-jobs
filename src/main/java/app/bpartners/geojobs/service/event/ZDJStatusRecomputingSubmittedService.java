@@ -1,11 +1,7 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
-import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
-
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.ZDJStatusRecomputingSubmitted;
-import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.repository.TaskRepository;
 import app.bpartners.geojobs.job.service.JobAnnotationService;
 import app.bpartners.geojobs.job.service.TaskStatusService;
@@ -44,8 +40,7 @@ public class ZDJStatusRecomputingSubmittedService
   public void accept(ZDJStatusRecomputingSubmitted event) {
     service.accept(event);
     ZoneDetectionJob zoneDetectionJob = zoneDetectionJobService.findById(event.getJobId());
-    JobStatus jobStatus = zoneDetectionJob.getStatus();
-    if (FINISHED.equals(jobStatus.getProgression()) && SUCCEEDED.equals(jobStatus.getHealth())) {
+    if (zoneDetectionJob.isFinished() && zoneDetectionJob.isSucceeded()) {
       jobAnnotationService.processAnnotationJob(event.getJobId(), Double.valueOf(0.8));
     }
   }

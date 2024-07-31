@@ -34,7 +34,7 @@ public class TileDetectionTaskSucceededService implements Consumer<TileDetection
     }
   }
 
-  private boolean isFinished(List<TileDetectionTask> tasks) {
+  public boolean isFinished(List<TileDetectionTask> tasks) {
     return tasks.stream()
         .map(
             task ->
