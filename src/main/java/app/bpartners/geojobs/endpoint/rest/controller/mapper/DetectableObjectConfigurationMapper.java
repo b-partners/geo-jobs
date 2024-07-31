@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 @AllArgsConstructor
 public class DetectableObjectConfigurationMapper {
   private final DetectableObjectTypeMapper typeMapper;
-  public static String BUCKET_STORAGE_NAME = "TILING_IMAGES";
+  public final String BUCKET_STORAGE_NAME = "DETECTED_IMAGES";
   public final int DEFAULT_CONFIDENCE = 1;
 
   public DetectableObjectConfiguration toDomain(

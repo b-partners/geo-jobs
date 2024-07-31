@@ -35,8 +35,6 @@ public class ZoneDetectionJob extends Job {
   @JdbcTypeCode(NAMED_ENUM)
   private DetectionType detectionType;
 
-  protected String endToEndId;
-
   @Override
   protected JobType getType() {
     return DETECTION;

@@ -5,4 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface FullDetectionRepository extends JpaRepository<FullDetection, String> {
   FullDetection findByEndToEndId(String endToEndId);
+
+  FullDetection findByZtjId(String ztjId);
 }

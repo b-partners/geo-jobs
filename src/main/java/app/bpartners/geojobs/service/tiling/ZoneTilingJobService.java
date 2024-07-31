@@ -9,6 +9,7 @@ import static java.util.stream.Collectors.toList;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.*;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.TilingTaskMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoomMapper;
 import app.bpartners.geojobs.endpoint.rest.model.BucketSeparatorType;
@@ -22,8 +23,10 @@ import app.bpartners.geojobs.job.repository.TaskRepository;
 import app.bpartners.geojobs.job.service.JobService;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.exception.NotFoundException;
+import app.bpartners.geojobs.repository.FullDetectionRepository;
 import app.bpartners.geojobs.repository.TaskStatisticRepository;
 import app.bpartners.geojobs.repository.model.FilteredTilingJob;
+import app.bpartners.geojobs.repository.model.detection.FullDetection;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.JobFilteredMailer;
@@ -32,6 +35,7 @@ import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import lombok.SneakyThrows;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -44,6 +48,13 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
   private final NotFinishedTaskRetriever<TilingTask> notFinishedTaskRetriever;
   private static ZoomMapper zoomMapper;
   private static TilingTaskMapper tilingTaskMapper;
+  private final FullDetectionRepository fullDetectionRepository;
+
+  static {
+    FeatureMapper featureMapper = new FeatureMapper();
+    zoomMapper = new ZoomMapper();
+    tilingTaskMapper = new TilingTaskMapper(featureMapper);
+  }
 
   public ZoneTilingJobService(
       JpaRepository<ZoneTilingJob, String> repository,
@@ -55,7 +66,8 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
       NotFinishedTaskRetriever<TilingTask> notFinishedTaskRetriever,
       ZoomMapper zoomMapper,
       TilingTaskMapper tilingTaskMapper,
-      TaskStatisticRepository taskStatisticRepository) {
+      TaskStatisticRepository taskStatisticRepository,
+      FullDetectionRepository fullDetectionRepository) {
     super(
         repository,
         jobStatusRepository,
@@ -68,6 +80,7 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
     this.notFinishedTaskRetriever = notFinishedTaskRetriever;
     this.zoomMapper = zoomMapper;
     this.tilingTaskMapper = tilingTaskMapper;
+    this.fullDetectionRepository = fullDetectionRepository;
   }
 
   public ZoneTilingJob importFromBucket(
@@ -190,8 +203,14 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
   @Transactional
   public ZoneTilingJob create(
       ZoneTilingJob job, List<TilingTask> tasks, CreateFullDetection fullDetection) {
-    job.setEndToEndId(fullDetection.getEndToEndId());
     var saved = super.create(job, tasks);
+    FullDetection toSave =
+        FullDetection.builder()
+            .id(randomUUID().toString())
+            .endToEndId(fullDetection.getEndToEndId())
+            .ztjId(saved.getId())
+            .build();
+    fullDetectionRepository.save(toSave);
     eventProducer.accept(List.of(new ZoneTilingJobCreated(saved, fullDetection)));
     return saved;
   }
@@ -268,11 +287,12 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
 
   @SneakyThrows
   public static List<TilingTask> getTilingTasks(CreateZoneTilingJob job, String jobId) {
-    var serverUrl = new URL(job.getGeoServerUrl());
-    return job.getFeatures().stream()
+    var serverUrl = new URL(Objects.requireNonNull(job.getGeoServerUrl()));
+    return Objects.requireNonNull(job.getFeatures()).stream()
         .map(
             feature -> {
-              feature.setZoom(zoomMapper.toDomain(job.getZoomLevel()).getZoomLevel());
+              feature.setZoom(
+                  zoomMapper.toDomain(Objects.requireNonNull(job.getZoomLevel())).getZoomLevel());
               return tilingTaskMapper.from(feature, serverUrl, job.getGeoServerParameter(), jobId);
             })
         .collect(toList());

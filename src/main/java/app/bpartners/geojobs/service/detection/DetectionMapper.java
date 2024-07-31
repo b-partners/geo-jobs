@@ -152,7 +152,6 @@ public class DetectionMapper {
     String zoneDetectionJobId = randomUUID().toString();
     var detectionJob =
         ZoneDetectionJob.builder()
-            .endToEndId(tilingJob.getEndToEndId())
             .id(zoneDetectionJobId)
             .zoneTilingJob(tilingJob)
             .detectionType(MACHINE)
