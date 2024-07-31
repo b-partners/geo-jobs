@@ -38,7 +38,7 @@ public class MachineDetectedTile implements Serializable {
   @CreationTimestamp private Instant creationDatetime;
 
   @OneToMany(cascade = ALL, fetch = EAGER, mappedBy = "detectedTileId")
-  private List<MachineDetectedObject> machineDetectedObjects;
+  private List<DetectedObject> detectedObjects;
 
   private String bucketPath;
 
@@ -53,9 +53,9 @@ public class MachineDetectedTile implements Serializable {
     return "DetectedTile(id=" + id + ",tile=" + tile + "," + "jobId=" + zdjJobId + ")";
   }
 
-  public MachineDetectedObject getFirstObject() {
+  public DetectedObject getFirstObject() {
     try {
-      return machineDetectedObjects == null ? null : machineDetectedObjects.getFirst();
+      return detectedObjects == null ? null : detectedObjects.getFirst();
     } catch (NoSuchElementException e) {
       return null;
     }

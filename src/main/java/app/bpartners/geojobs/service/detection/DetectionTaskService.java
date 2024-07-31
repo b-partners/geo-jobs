@@ -18,10 +18,10 @@ public class DetectionTaskService {
     return machineDetectedTiles.stream()
         .filter(
             detectedTile -> {
-              if (detectedTile.getMachineDetectedObjects().isEmpty()) {
+              if (detectedTile.getDetectedObjects().isEmpty()) {
                 return false;
               }
-              return detectedTile.getMachineDetectedObjects().stream()
+              return detectedTile.getDetectedObjects().stream()
                   .anyMatch(
                       detectedObject -> detectedObject.isInDoubt(detectableObjectConfigurations));
             })

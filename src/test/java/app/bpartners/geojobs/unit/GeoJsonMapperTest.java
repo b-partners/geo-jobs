@@ -1,37 +1,41 @@
 package app.bpartners.geojobs.unit;
 
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.PATHWAY;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import app.bpartners.gen.annotator.endpoint.rest.model.Label;
-import app.bpartners.gen.annotator.endpoint.rest.model.Point;
-import app.bpartners.gen.annotator.endpoint.rest.model.Polygon;
-import app.bpartners.geojobs.repository.model.detection.HumanDetectedObject;
+import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
+import app.bpartners.geojobs.repository.model.detection.DetectableObjectType;
+import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.service.geojson.GeoJson;
 import app.bpartners.geojobs.service.geojson.GeoJsonMapper;
+import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
 public class GeoJsonMapperTest {
   private final GeoJsonMapper subject = new GeoJsonMapper();
 
-  public static Polygon feature() {
+  public static Feature feature() {
     var coordinates =
         List.of(
-            new Point().x(600.0).y(136.5),
-            new Point().x(566.0).y(800.54),
-            new Point().x(1022.0).y(1010.0),
-            new Point().x(6.0).y(43.0));
-    return new Polygon().points(coordinates);
+            List.of(
+                List.of(List.of(new BigDecimal("600.0"), new BigDecimal("136.5"))),
+                List.of(List.of(new BigDecimal("566.0"), new BigDecimal("800.54"))),
+                List.of(List.of(new BigDecimal("1022.0"), new BigDecimal("1010.0"))),
+                List.of(List.of(new BigDecimal("6.0"), new BigDecimal("43.0")))));
+
+    return new Feature().geometry(new MultiPolygon().coordinates(coordinates));
   }
 
-  public static HumanDetectedObject detectedObject() {
-    return HumanDetectedObject.builder()
+  public static DetectedObject detectedObject() {
+    return DetectedObject.builder()
         .id(randomUUID().toString())
         .feature(feature())
-        .confidence("0.95")
-        .label(new Label().name("PATHWAY"))
+        .computedConfidence(0.95)
+        .detectedObjectType(DetectableObjectType.builder().detectableType(PATHWAY).build())
         .build();
   }
 

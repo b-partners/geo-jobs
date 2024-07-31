@@ -5,7 +5,7 @@ import static java.util.UUID.randomUUID;
 import app.bpartners.gen.annotator.endpoint.rest.model.AnnotationBaseFields;
 import app.bpartners.gen.annotator.endpoint.rest.model.CreateAnnotationBatch;
 import app.bpartners.gen.annotator.endpoint.rest.model.Label;
-import app.bpartners.geojobs.repository.model.detection.MachineDetectedObject;
+import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import java.time.Instant;
 import java.util.List;
@@ -27,7 +27,7 @@ public class CreateAnnotationBatchExtractor {
             .id(randomUUID().toString())
             .creationDatetime(Instant.now())
             .annotations(
-                machineDetectedTile.getMachineDetectedObjects().stream()
+                machineDetectedTile.getDetectedObjects().stream()
                     .map(
                         detectedObject ->
                             extractAnnotation(detectedObject, annotatorId, existingLabels))
@@ -49,7 +49,7 @@ public class CreateAnnotationBatchExtractor {
   }
 
   private AnnotationBaseFields extractAnnotation(
-      MachineDetectedObject machineDetectedObject, String annotatorId, List<Label> existingLabels) {
+      DetectedObject machineDetectedObject, String annotatorId, List<Label> existingLabels) {
     var label =
         labelExtractor.findLabelByNameFromList(
             existingLabels, machineDetectedObject.getDetectableObjectType().name());

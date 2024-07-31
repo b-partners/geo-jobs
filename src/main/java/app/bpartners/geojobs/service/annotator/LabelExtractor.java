@@ -5,7 +5,7 @@ import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.gen.annotator.endpoint.rest.model.*;
 import app.bpartners.geojobs.model.exception.ApiException;
-import app.bpartners.geojobs.repository.model.detection.MachineDetectedObject;
+import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.service.KeyPredicateFunction;
 import java.util.Collection;
@@ -22,11 +22,11 @@ public class LabelExtractor {
 
   public List<Label> createUniqueLabelListFrom(List<MachineDetectedTile> tiles) {
     return tiles.stream()
-        .map(MachineDetectedTile::getMachineDetectedObjects)
+        .map(MachineDetectedTile::getDetectedObjects)
         .flatMap(Collection::stream)
-        .map(MachineDetectedObject::getDetectableObjectType)
+        .map(DetectedObject::getDetectableObjectType)
         .distinct()
-        .map(labelConverter::apply)
+        .map(labelConverter)
         .toList();
   }
 

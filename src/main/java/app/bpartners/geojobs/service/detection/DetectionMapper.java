@@ -5,12 +5,24 @@ import static app.bpartners.geojobs.job.model.Status.HealthStatus.*;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.GREEN_SPACE;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.LINE;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.PATHWAY;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.POOL;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.ROOF;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.SIDEWALK;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.SOLAR_PANEL;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.TREE;
+import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static app.bpartners.geojobs.service.detection.DetectionResponse.REGION_CONFIDENCE_PROPERTY;
 import static app.bpartners.geojobs.service.detection.DetectionResponse.REGION_LABEL_PROPERTY;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
+import app.bpartners.gen.annotator.endpoint.rest.model.Annotation;
+import app.bpartners.gen.annotator.endpoint.rest.model.Label;
+import app.bpartners.gen.annotator.endpoint.rest.model.Polygon;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.job.model.JobStatus;
@@ -22,6 +34,7 @@ import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.tiling.TileValidator;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
 import lombok.AllArgsConstructor;
@@ -42,11 +55,11 @@ public class DetectionMapper {
     var tileCoordinates = tile.getCoordinates();
     tileValidator.accept(tile);
 
-    var fileData = detectionResponse.getRstRaw().values().stream().toList().get(0);
+    var fileData = detectionResponse.getRstRaw().values().stream().toList().getFirst();
 
     List<DetectionResponse.ImageData.Region> regions =
         fileData.getRegions().values().stream().toList();
-    List<MachineDetectedObject> machineDetectedObjects =
+    List<DetectedObject> machineDetectedObjects =
         regions.stream()
             .map(region -> toDetectedObject(region, detectedTileId, tileCoordinates.getZ()))
             .toList();
@@ -58,12 +71,12 @@ public class DetectionMapper {
         .parcelId(parcelId)
         .tile(tile)
         .bucketPath(tile.getBucketPath())
-        .machineDetectedObjects(machineDetectedObjects)
+        .detectedObjects(machineDetectedObjects)
         .creationDatetime(now())
         .build();
   }
 
-  public MachineDetectedObject toDetectedObject(
+  public DetectedObject toDetectedObject(
       DetectionResponse.ImageData.Region region, String detectedTileId, Integer zoom) {
     var regionAttributes = region.getRegionAttributes();
     var label = regionAttributes.get(REGION_LABEL_PROPERTY);
@@ -75,16 +88,16 @@ public class DetectionMapper {
     }
     var polygon = region.getShapeAttributes();
     var objectId = randomUUID().toString();
-    return MachineDetectedObject.builder()
+    return DetectedObject.builder()
         .id(objectId)
         .detectedTileId(detectedTileId)
-        .detectedObjectTypes(
-            List.of(
-                DetectableObjectType.builder()
-                    .id(randomUUID().toString())
-                    .objectId(objectId)
-                    .detectableType(toDetectableType(label))
-                    .build()))
+        .type(MACHINE)
+        .detectedObjectType(
+            DetectableObjectType.builder()
+                .id(randomUUID().toString())
+                .objectId(objectId)
+                .detectableType(toDetectableType(label))
+                .build())
         .feature(toFeature(polygon, zoom))
         .computedConfidence(confidence)
         .build();
@@ -178,5 +191,75 @@ public class DetectionMapper {
       case "FAILED" -> FAILED;
       default -> UNKNOWN;
     };
+  }
+
+  public List<DetectedObject> toHumanDetectedObject(
+      int zoom, String tileId, List<Annotation> annotations) {
+    return annotations.stream()
+        .map(
+            ann -> {
+              var objectId = randomUUID().toString();
+              if (ann.getPolygon() == null) return null;
+              var confidence = ann.getComment() != null ? getConfidence(ann.getComment()) : null;
+              return DetectedObject.builder()
+                  .id(objectId)
+                  .detectedObjectType(toDetectableObjectType(objectId, ann.getLabel()))
+                  .computedConfidence(confidence)
+                  .feature(toFeature(zoom, ann.getPolygon()))
+                  .detectedTileId(tileId)
+                  .type(HUMAN)
+                  .build();
+            })
+        .toList();
+  }
+
+  private DetectableObjectType toDetectableObjectType(String objectId, Label label) {
+    if (label.getName() == null) {
+      throw new IllegalArgumentException("label.name cannot be null");
+    }
+    return switch (label.getName().toUpperCase()) {
+      case "ROOF" -> create(objectId, ROOF);
+      case "SOLAR_PANEL" -> create(objectId, SOLAR_PANEL);
+      case "POOL" -> create(objectId, POOL);
+      case "TREE" -> create(objectId, TREE);
+      case "SIDEWALK" -> create(objectId, SIDEWALK);
+      case "PATHWAY" -> create(objectId, PATHWAY);
+      case "LINE" -> create(objectId, LINE);
+      case "GREEN_SPACE" -> create(objectId, GREEN_SPACE);
+      default -> throw new IllegalStateException(
+          "Unexpected value: " + label.getName().toUpperCase());
+    };
+  }
+
+  private double getConfidence(String comment) {
+    var splitInput = Arrays.stream(comment.split("=")).toList();
+    return new BigDecimal(splitInput.getLast()).doubleValue() / 100;
+  }
+
+  private DetectableObjectType create(String objectId, DetectableType detectableType) {
+    return DetectableObjectType.builder()
+        .id(randomUUID().toString())
+        .objectId(objectId)
+        .detectableType(detectableType)
+        .build();
+  }
+
+  private Feature toFeature(int zoom, Polygon polygon) {
+    if (polygon.getPoints() == null) return null;
+    var coordinates =
+        polygon.getPoints().stream()
+            .map(
+                point -> {
+                  if (point.getX() == null || point.getY() == null) return null;
+                  return List.of(
+                      List.of(
+                          List.of(
+                              BigDecimal.valueOf(point.getX()), BigDecimal.valueOf(point.getY()))));
+                })
+            .toList();
+    return new Feature()
+        .id(randomUUID().toString())
+        .zoom(zoom)
+        .geometry(new MultiPolygon().coordinates(coordinates));
   }
 }
