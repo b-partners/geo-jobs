@@ -4,11 +4,14 @@ import static java.time.Instant.now;
 import static java.util.Optional.ofNullable;
 import static java.util.UUID.randomUUID;
 
-import app.bpartners.geojobs.endpoint.rest.model.*;
+import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType;
+import app.bpartners.geojobs.endpoint.rest.model.DetectedObject;
+import app.bpartners.geojobs.endpoint.rest.model.DetectedParcel;
+import app.bpartners.geojobs.endpoint.rest.model.DetectedTile;
+import app.bpartners.geojobs.endpoint.rest.model.Status;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.DetectedTileRepository;
 import app.bpartners.geojobs.repository.model.Parcel;
-import app.bpartners.geojobs.repository.model.detection.MachineDetectedObject;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import java.math.BigDecimal;
 import java.util.Comparator;
@@ -49,7 +52,7 @@ public class DetectionTaskMapper {
 
   private DetectedTile toRest(MachineDetectedTile machineDetectedTile) {
     var tile = machineDetectedTile.getTile();
-    var detectedObjects = machineDetectedTile.getMachineDetectedObjects();
+    var detectedObjects = machineDetectedTile.getDetectedObjects();
     return new DetectedTile()
         .tileId(tile.getId())
         .creationDatetime(tile.getCreationDatetime())
@@ -58,11 +61,12 @@ public class DetectionTaskMapper {
         .bucketPath(tile.getBucketPath());
   }
 
-  private DetectedObject toRest(MachineDetectedObject machineDetectedObject) {
+  private DetectedObject toRest(
+      app.bpartners.geojobs.repository.model.detection.DetectedObject detectedObject) {
     return new DetectedObject()
-        .detectedObjectType(toRest(machineDetectedObject.getDetectableObjectType()))
-        .feature(machineDetectedObject.getFeature())
-        .confidence(BigDecimal.valueOf(machineDetectedObject.getComputedConfidence()))
+        .detectedObjectType(toRest(detectedObject.getDetectableObjectType()))
+        .feature(detectedObject.getFeature())
+        .confidence(BigDecimal.valueOf(detectedObject.getComputedConfidence()))
         .detectorVersion("TODO"); // TODO
   }
 

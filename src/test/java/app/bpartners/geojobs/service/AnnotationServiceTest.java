@@ -27,8 +27,8 @@ import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectType;
+import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.detection.HumanDetectionJob;
-import app.bpartners.geojobs.repository.model.detection.MachineDetectedObject;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
 import app.bpartners.geojobs.service.annotator.AnnotatorApiConf;
@@ -73,17 +73,14 @@ public class AnnotationServiceTest {
   @NonNull
   private static List<MachineDetectedTile> detectedTiles() {
     return List.of(
-        MachineDetectedTile.builder()
-            .id("detectedTile1Id")
-            .machineDetectedObjects(List.of())
-            .build(),
+        MachineDetectedTile.builder().id("detectedTile1Id").detectedObjects(List.of()).build(),
         MachineDetectedTile.builder()
             .id("detectedTile2Id")
-            .machineDetectedObjects(
+            .detectedObjects(
                 List.of(
-                    MachineDetectedObject.builder()
-                        .detectedObjectTypes(
-                            List.of(DetectableObjectType.builder().detectableType(PATHWAY).build()))
+                    DetectedObject.builder()
+                        .detectedObjectType(
+                            DetectableObjectType.builder().detectableType(PATHWAY).build())
                         .feature(
                             new Feature()
                                 .geometry(

@@ -66,8 +66,7 @@ public class ZoneDetectionAnnotationProcessorTest extends FacadeIT {
                   inDoubtDetectedObject(ROOF),
                   inDoubtDetectedObject(SOLAR_PANEL))));
 
-  public static MachineDetectedTile differentDetectedTile(
-      List<MachineDetectedObject> machineDetectedObjects) {
+  public static MachineDetectedTile differentDetectedTile(List<DetectedObject> detectedObjects) {
     return MachineDetectedTile.builder()
         .id(randomUUID().toString())
         .bucketPath(LAYER_20_10_1_PNG + randomUUID())
@@ -75,23 +74,23 @@ public class ZoneDetectionAnnotationProcessorTest extends FacadeIT {
         .zdjJobId(MOCK_JOB_ID)
         .parcelId(PARCEL_MOCK_ID)
         .creationDatetime(Instant.now())
-        .machineDetectedObjects(machineDetectedObjects)
+        .detectedObjects(detectedObjects)
         .build();
   }
 
   @SneakyThrows
-  MachineDetectedObject inDoubtDetectedObject(DetectableType type) {
+  DetectedObject inDoubtDetectedObject(DetectableType type) {
     String id = randomUUID().toString();
-    return MachineDetectedObject.builder()
+    return DetectedObject.builder()
         .id(id)
-        .detectedObjectTypes(detectedObjectType(id, type))
+        .detectedObjectType(detectedObjectType(id, type))
         .feature(feature)
         .computedConfidence(0.75)
         .build();
   }
 
-  private static List<DetectableObjectType> detectedObjectType(String id, DetectableType type) {
-    return List.of(DetectableObjectType.builder().id(id).objectId(id).detectableType(type).build());
+  private static DetectableObjectType detectedObjectType(String id, DetectableType type) {
+    return DetectableObjectType.builder().id(id).objectId(id).detectableType(type).build();
   }
 
   void setupDetectedTileRepository(DetectedTileRepository detectedTileRepository) {

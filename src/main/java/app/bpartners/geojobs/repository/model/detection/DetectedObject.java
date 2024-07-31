@@ -1,11 +1,18 @@
 package app.bpartners.geojobs.repository.model.detection;
 
 import static jakarta.persistence.CascadeType.ALL;
-import static org.hibernate.annotations.FetchMode.SELECT;
+import static jakarta.persistence.EnumType.STRING;
+import static jakarta.persistence.FetchType.LAZY;
 import static org.hibernate.type.SqlTypes.JSON;
+import static org.hibernate.type.SqlTypes.NAMED_ENUM;
 
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Optional;
@@ -16,12 +23,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
-import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.JdbcTypeCode;
 
 @Entity
-@Table(name = "detected_object")
+@Table(name = "\"detected_object\"")
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -29,8 +34,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 @Setter
 @EqualsAndHashCode
 @ToString
-@Slf4j
-public class MachineDetectedObject implements Serializable {
+public class DetectedObject implements Serializable {
   @Id private String id;
 
   @JdbcTypeCode(JSON)
@@ -39,11 +43,14 @@ public class MachineDetectedObject implements Serializable {
   @JoinColumn(referencedColumnName = "id")
   private String detectedTileId;
 
-  @OneToMany(cascade = ALL, mappedBy = "objectId")
-  @Fetch(SELECT)
-  private List<DetectableObjectType> detectedObjectTypes;
+  @OneToOne(cascade = ALL, fetch = LAZY)
+  private DetectableObjectType detectedObjectType;
 
   private Double computedConfidence;
+
+  @Enumerated(STRING)
+  @JdbcTypeCode(NAMED_ENUM)
+  private ZoneDetectionJob.DetectionType type;
 
   public boolean isInDoubt(List<DetectableObjectConfiguration> objectConfigurations) {
     DetectableType detectableObjectType = getDetectableObjectType();
@@ -60,21 +67,6 @@ public class MachineDetectedObject implements Serializable {
   }
 
   public DetectableType getDetectableObjectType() {
-    if (detectedObjectTypes.isEmpty()) {
-      return null;
-    }
-    int detectableObjectsSize = detectedObjectTypes.size();
-    DetectableObjectType firstObjectType = detectedObjectTypes.getFirst();
-    if (detectableObjectsSize > 1) {
-      log.info(
-          "Detectable objects for detected object is "
-              + detectableObjectsSize
-              + "("
-              + detectedObjectTypes
-              + ") but only 1 ("
-              + firstObjectType
-              + ") chosen");
-    }
-    return firstObjectType.getDetectableType();
+    return detectedObjectType.getDetectableType();
   }
 }

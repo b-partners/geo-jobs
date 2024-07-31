@@ -1,13 +1,15 @@
 package app.bpartners.geojobs.service;
 
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.PATHWAY;
+import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import app.bpartners.gen.annotator.endpoint.rest.model.Label;
-import app.bpartners.gen.annotator.endpoint.rest.model.Polygon;
 import app.bpartners.geojobs.conf.FacadeIT;
+import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
-import app.bpartners.geojobs.repository.model.detection.HumanDetectedObject;
+import app.bpartners.geojobs.repository.model.detection.DetectableObjectType;
+import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.detection.HumanDetectedTile;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.detection.HumanDetectedTileService;
@@ -37,13 +39,20 @@ class HumanDetectedTileServiceIT extends FacadeIT {
         .build();
   }
 
-  HumanDetectedObject detectedObject() {
-    return HumanDetectedObject.builder()
-        .id(randomUUID().toString())
-        .humanDetectedTileId(HUMAN_DETECTED_TILE_ID)
-        .label(new Label().id(randomUUID().toString()).name("POOL").color("BLUE"))
-        .confidence("0.95")
-        .feature(new Polygon())
+  DetectedObject detectedObject() {
+    String objectId = randomUUID().toString();
+    return DetectedObject.builder()
+        .id(objectId)
+        .detectedTileId(HUMAN_DETECTED_TILE_ID)
+        .type(HUMAN)
+        .detectedObjectType(
+            DetectableObjectType.builder()
+                .id(randomUUID().toString())
+                .objectId(objectId)
+                .detectableType(PATHWAY)
+                .build())
+        .computedConfidence(0.95)
+        .feature(new Feature())
         .build();
   }
 
