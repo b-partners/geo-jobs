@@ -16,15 +16,9 @@ import lombok.ToString;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @ToString
-public class AnnotationTaskRetrievingSubmitted extends PojaEvent {
+public class AnnotationJobVerificationSent extends PojaEvent {
   @JsonProperty("humanZdjId")
   private String humanZdjId;
-
-  @JsonProperty("annotationJobId")
-  private String annotationJobId;
-
-  @JsonProperty("imageWidth")
-  private int imageWidth;
 
   @Override
   public Duration maxConsumerBackoffBetweenRetries() {
@@ -33,7 +27,7 @@ public class AnnotationTaskRetrievingSubmitted extends PojaEvent {
 
   @Override
   public Duration maxConsumerDuration() {
-    return Duration.ofMinutes(10);
+    return Duration.ofMinutes(5);
   }
 
   @Override
