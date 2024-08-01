@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.repository.model;
 
+import app.bpartners.geojobs.job.model.Job;
 import app.bpartners.geojobs.job.model.JobType;
-import app.bpartners.geojobs.job.model.Task;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -11,8 +11,6 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
-import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
-
 @Entity
 @Table(name = "annotation_retrieving_task")
 @SuperBuilder
@@ -21,16 +19,16 @@ import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
 @ToString
 @Data
 @EqualsAndHashCode(callSuper = false)
-public class AnnotationRetrievingTask extends Task {
-  private String annotationTaskId;
-
+public class AnnotationRetrievingJob extends Job {
+  private String annotationJobId;
+  private String detectionJobId;
   @Override
-  public JobType getJobType() {
+  protected JobType getType() {
     return null;
   }
 
   @Override
-  public Task semanticClone() {
+  public Job semanticClone() {
     return null;
   }
 }

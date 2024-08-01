@@ -1,11 +1,14 @@
 package app.bpartners.geojobs.service.event;
 
 import app.bpartners.gen.annotator.endpoint.rest.model.AnnotationBatch;
+import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.AnnotationBatchRetrievingSubmitted;
+import app.bpartners.geojobs.endpoint.event.model.AnnotationRetrievingJobStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.model.detection.HumanDetectedTile;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
+import app.bpartners.geojobs.service.AnnotationRetrievingJobService;
 import app.bpartners.geojobs.service.AnnotationRetrievingTaskService;
 import app.bpartners.geojobs.service.annotator.AnnotationRetrievingTaskStatusService;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
@@ -15,6 +18,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -32,6 +36,7 @@ public class AnnotationBatchRetrievingSubmittedService
   private final DetectionMapper detectionMapper;
   private final AnnotationRetrievingTaskService annotationRetrievingTaskService;
   private final AnnotationRetrievingTaskStatusService annotationRetrievingTaskStatusService;
+  private final EventProducer<AnnotationRetrievingJobStatusRecomputingSubmitted> eventProducer;
 
   @Override
   public void accept(AnnotationBatchRetrievingSubmitted submitted) {
@@ -71,7 +76,8 @@ public class AnnotationBatchRetrievingSubmittedService
                   })
               .toList();
       humanDetectedTileService.saveAll(humanDetectedTiles);
-      annotationRetrievingTaskStatusService.succeed(processed);
+      var succeededTask = annotationRetrievingTaskStatusService.succeed(processed);
+      eventProducer.accept(List.of(new AnnotationRetrievingJobStatusRecomputingSubmitted(succeededTask.getJobId())));
     } catch (RuntimeException e) {
       log.error("Error when creating human detected tile {}", e.getMessage());
       annotationRetrievingTaskStatusService.fail(processed);

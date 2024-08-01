@@ -8,7 +8,9 @@ import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.AnnotationJobVerificationSent;
 import app.bpartners.geojobs.endpoint.event.model.AnnotationTaskRetrievingSubmitted;
 import app.bpartners.geojobs.repository.HumanDetectionJobRepository;
+import app.bpartners.geojobs.repository.model.AnnotationRetrievingJob;
 import app.bpartners.geojobs.repository.model.AnnotationRetrievingTask;
+import app.bpartners.geojobs.service.AnnotationRetrievingJobService;
 import app.bpartners.geojobs.service.AnnotationRetrievingTaskService;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
 import java.util.List;
@@ -23,6 +25,7 @@ public class AnnotationJobVerificationSentService
   private final HumanDetectionJobRepository humanDetectionJobRepository;
   private final AnnotationService annotationService;
   private EventProducer<AnnotationTaskRetrievingSubmitted> eventProducer;
+  private final AnnotationRetrievingJobService annotationRetrievingJobService;
 
   @Override
   public void accept(AnnotationJobVerificationSent annotationJobVerificationSent) {
@@ -43,10 +46,16 @@ public class AnnotationJobVerificationSentService
       annotationJobs.forEach(
           job ->{
             var annotationJobId = job.getId();
+            var retrievingJob = annotationRetrievingJobService.save(AnnotationRetrievingJob.builder()
+                    .id(randomUUID().toString())
+                    .annotationJobId(annotationJobId)
+                    .detectionJobId(humanZdjId)
+                    .statusHistory(List.of())
+                .build());
             eventProducer.accept(
                 List.of(
                     new AnnotationTaskRetrievingSubmitted(
-                        humanZdjId, annotationJobId, job.getImagesWidth())));
+                        humanZdjId, retrievingJob.getId(), retrievingJob.getAnnotationJobId(), job.getImagesWidth())));
           });
     }
   }

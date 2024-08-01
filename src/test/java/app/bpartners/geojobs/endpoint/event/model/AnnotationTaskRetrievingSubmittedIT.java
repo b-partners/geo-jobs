@@ -24,6 +24,6 @@ class AnnotationTaskRetrievingSubmittedIT extends FacadeIT {
     assertEquals(batchRetrievingSubmitted, deserialized);
     assertEquals("jobId", deserialized.getJobId());
     assertEquals(Duration.ofMinutes(1), deserialized.maxConsumerBackoffBetweenRetries());
-    assertEquals(Duration.ofMinutes(5), deserialized.maxConsumerDuration());
+    assertEquals(Duration.ofMinutes(10), deserialized.maxConsumerDuration());
   }
 }

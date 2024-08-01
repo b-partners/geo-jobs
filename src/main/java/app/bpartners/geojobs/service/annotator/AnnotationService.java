@@ -149,7 +149,7 @@ public class AnnotationService {
     }
   }
 
-  public void fireTasks(String jobId, String annotationJobId, int imageSize) {
+  public void fireTasks(String jobId,String retrievingJobId, String annotationJobId, int imageSize) {
     List<Task> annotationTasks;
     Integer page = null;
     Integer pageSize = null;
@@ -174,8 +174,7 @@ public class AnnotationService {
           var yTile = metadata.getLast();
           var retrievingTask = annotationRetrievingTaskService.save(AnnotationRetrievingTask.builder()
               .id(randomUUID().toString())
-              .jobId(jobId)
-              .asJobId(jobId)
+              .jobId(retrievingJobId)
               .annotationTaskId(task.getId())
               .statusHistory(List.of())
               .submissionInstant(Instant.now())

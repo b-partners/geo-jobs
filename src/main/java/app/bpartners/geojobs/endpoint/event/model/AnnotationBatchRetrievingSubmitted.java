@@ -40,7 +40,7 @@ public class AnnotationBatchRetrievingSubmitted extends PojaEvent {
 
   @Override
   public Duration maxConsumerDuration() {
-    return Duration.ofMinutes(5);
+    return Duration.ofMinutes(10);
   }
 
   @Override

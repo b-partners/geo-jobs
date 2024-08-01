@@ -13,6 +13,10 @@ import java.util.List;
 public class AnnotationRetrievingTaskService {
   private final AnnotationRetrievingTaskRepository repository;
 
+  public List<AnnotationRetrievingTask> getByRetrievingJobId(String jobId){
+    return repository.findByJobId(jobId);
+  }
+
   public AnnotationRetrievingTask getByAnnotationTaskId(String annotationTaskId){
     return repository.findByAnnotationTaskId(annotationTaskId)
         .orElseThrow(()-> new NotFoundException("No retrieving task found for annotation task id="+annotationTaskId));
