@@ -45,7 +45,6 @@ public class ZoneTilingJobStatusChangedIT extends FacadeIT {
             .zoneName("mock")
             .emailReceiver("mock@gmail.com")
             .statusHistory(statusHistory)
-            .endToEndId("endToEndId")
             .build();
     var zoneTilingJobStatusChanged =
         ZoneTilingJobStatusChanged.builder().oldJob(new ZoneTilingJob()).newJob(newZtj).build();

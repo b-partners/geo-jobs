@@ -14,7 +14,6 @@ import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType;
 import app.bpartners.geojobs.endpoint.rest.model.FullDetectedZone;
 import app.bpartners.geojobs.endpoint.rest.model.JobTypes;
-import app.bpartners.geojobs.endpoint.rest.security.authorizer.CommunityZoneTilingJobProcessAuthorizer;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.model.exception.ApiException;
@@ -39,7 +38,6 @@ public class ZoneService {
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final ZoneTilingJobService zoneTilingJobService;
   private final ZoneTilingJobMapper zoneTilingJobMapper;
-  private final CommunityZoneTilingJobProcessAuthorizer communityZoneTilingJobProcessAuthorizer;
   private final ZoneDetectionJobValidator detectionjobValidator;
   private final EventProducer eventProducer;
   private final TaskStatisticMapper taskStatisticMapper;
@@ -102,7 +100,6 @@ public class ZoneService {
 
   private ZoneTilingJob processZoneTilingJob(CreateFullDetection zoneToDetect) {
     var createJob = zoneTilingJobMapper.from(zoneToDetect);
-    communityZoneTilingJobProcessAuthorizer.accept(createJob);
     var job = zoneTilingJobMapper.toDomain(createJob);
     String ZTJId = job.getId();
     var tilingTasks = getTilingTasks(createJob, ZTJId);

@@ -58,8 +58,8 @@ class ZoneTilingJobStatusChangedServiceTest {
         .thenReturn(
             FullDetection.builder()
                 .endToEndId("end_to_end_id")
-                .zTJId("ztj_id")
-                .zDJId("zdj_id")
+                .ztjId("ztj_id")
+                .zdjId("zdj_id")
                 .build());
     when(jobService.saveZDJFromZTJ(any())).thenReturn(ZoneDetectionJob.builder().build());
     subject.accept(ztjStatusChanged);

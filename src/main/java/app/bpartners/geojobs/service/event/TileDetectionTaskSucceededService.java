@@ -36,10 +36,9 @@ public class TileDetectionTaskSucceededService implements Consumer<TileDetection
 
   public boolean isFinished(List<TileDetectionTask> tasks) {
     return tasks.stream()
-        .map(
+        .allMatch(
             task ->
                 FINISHED.equals(task.getStatus().getProgression())
-                    && SUCCEEDED.equals(task.getStatus().getHealth()))
-        .isParallel();
+                    && SUCCEEDED.equals(task.getStatus().getHealth()));
   }
 }

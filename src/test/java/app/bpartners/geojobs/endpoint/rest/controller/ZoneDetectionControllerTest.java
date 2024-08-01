@@ -14,7 +14,7 @@ import app.bpartners.geojobs.endpoint.event.model.ZDJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.*;
 import app.bpartners.geojobs.endpoint.rest.model.SuccessStatus;
 import app.bpartners.geojobs.endpoint.rest.model.ZoneDetectionJob;
-import app.bpartners.geojobs.endpoint.rest.security.authorizer.CommunityFullDetectionAuthorizer;
+import app.bpartners.geojobs.endpoint.rest.validator.CreateFullDetectionValidator;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
@@ -47,9 +47,9 @@ class ZoneDetectionControllerTest {
   ZoneDetectionJobValidator jobValidator = new ZoneDetectionJobValidator(mock());
   TaskStatisticMapper taskStatisticMapper = new TaskStatisticMapper(statusMapper);
   EventProducer eventProducerMock = mock();
-  CommunityFullDetectionAuthorizer communityFullDetectionAuthorizer = mock();
   GeoJsonConversionInitiationService geoJsonConversionInitiationServiceMock = mock();
   ZoneService zoneServiceMock = mock();
+  CreateFullDetectionValidator fullDetectionValidatorMock = mock();
   ZoneDetectionController subject =
       new ZoneDetectionController(
           parcelServiceMock,
@@ -63,8 +63,8 @@ class ZoneDetectionControllerTest {
           statusMapper,
           eventProducerMock,
           geoJsonConversionInitiationServiceMock,
-          communityFullDetectionAuthorizer,
-          zoneServiceMock);
+          zoneServiceMock,
+          fullDetectionValidatorMock);
 
   @Test
   void task_filtering_ok() {

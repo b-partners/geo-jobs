@@ -47,16 +47,17 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
   private final DetectableObjectConfigurationMapper objectConfigurationMapper;
 
   public ZoneDetectionJobService(
-          JpaRepository<ZoneDetectionJob, String> repository,
-          JobStatusRepository jobStatusRepository,
-          TilingTaskRepository tilingTaskRepository,
-          ParcelDetectionTaskRepository taskRepository,
-          EventProducer eventProducer,
-          DetectionMapper detectionMapper,
-          DetectableObjectConfigurationRepository objectConfigurationRepository,
-          HumanDetectionJobRepository humanDetectionJobRepository,
-          ZoneDetectionJobRepository zoneDetectionJobRepository,
-          TaskStatisticRepository taskStatisticRepository, DetectableObjectConfigurationMapper objectConfigurationMapper) {
+      JpaRepository<ZoneDetectionJob, String> repository,
+      JobStatusRepository jobStatusRepository,
+      TilingTaskRepository tilingTaskRepository,
+      ParcelDetectionTaskRepository taskRepository,
+      EventProducer eventProducer,
+      DetectionMapper detectionMapper,
+      DetectableObjectConfigurationRepository objectConfigurationRepository,
+      HumanDetectionJobRepository humanDetectionJobRepository,
+      ZoneDetectionJobRepository zoneDetectionJobRepository,
+      TaskStatisticRepository taskStatisticRepository,
+      DetectableObjectConfigurationMapper objectConfigurationMapper) {
     super(
         repository,
         jobStatusRepository,

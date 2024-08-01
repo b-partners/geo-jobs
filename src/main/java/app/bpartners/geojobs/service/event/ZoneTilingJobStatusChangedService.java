@@ -48,8 +48,10 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
     public String performAction() {
       var zdj = zoneDetectionJobService.saveZDJFromZTJ(ztj);
       FullDetection fullDetection = fullDetectionRepository.findByZtjId(ztj.getId());
-      fullDetection.setZdjId(zdj.getId());
-      fullDetectionRepository.save(fullDetection);
+      if (fullDetection != null) {
+        fullDetection.setZdjId(zdj.getId());
+        fullDetectionRepository.save(fullDetection);
+      }
       tilingFinishedMailer.accept(ztj);
       return "Finished, mail sent, ztj=" + ztj;
     }
