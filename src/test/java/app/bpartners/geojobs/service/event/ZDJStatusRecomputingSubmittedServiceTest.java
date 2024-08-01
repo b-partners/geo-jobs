@@ -16,7 +16,9 @@ import app.bpartners.geojobs.job.service.JobAnnotationService;
 import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
+import app.bpartners.geojobs.service.AnnotationRetrievingJobService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
+import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -26,6 +28,8 @@ public class ZDJStatusRecomputingSubmittedServiceTest {
   EventProducer eventProducerMock = mock();
   TaskStatusService<ParcelDetectionTask> taskStatusServiceMock = mock();
   TaskRepository<ParcelDetectionTask> taskRepositoryMock = mock();
+  AnnotationRetrievingJobService annotationRetrievingJobServiceMock = mock();
+  GeoJsonConversionInitiationService geoJsonConversionInitiationServiceMock = mock();
   ZoneDetectionJobService zoneDetectionJobServiceMock = mock();
   JobAnnotationService jobAnnotationServiceMock = mock();
   ZDJStatusRecomputingSubmittedService subject =
@@ -34,8 +38,8 @@ public class ZDJStatusRecomputingSubmittedServiceTest {
           eventProducerMock,
           taskStatusServiceMock,
           taskRepositoryMock,
-          zoneDetectionJobServiceMock,
-          jobAnnotationServiceMock);
+          annotationRetrievingJobServiceMock,
+          geoJsonConversionInitiationServiceMock);
 
   @Test
   void accept_ok() {
@@ -43,6 +47,8 @@ public class ZDJStatusRecomputingSubmittedServiceTest {
     ZoneDetectionJob job = aZDJ(jobId, PROCESSING, UNKNOWN);
     when(jobServiceMock.findById(jobId)).thenReturn(job);
     when(jobServiceMock.recomputeStatus(job)).thenReturn(job);
+    when(annotationRetrievingJobServiceMock.getByDetectionJobId(any())).thenReturn(List.of());
+
     when(zoneDetectionJobServiceMock.findById(jobId)).thenReturn(job);
     assertDoesNotThrow(() -> subject.accept(new ZDJStatusRecomputingSubmitted(jobId)));
 

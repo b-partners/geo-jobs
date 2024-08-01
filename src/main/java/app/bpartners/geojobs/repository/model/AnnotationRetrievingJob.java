@@ -12,8 +12,8 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "annotation_retrieving_task")
-@SuperBuilder
+@Table(name = "annotation_retrieving_job")
+@SuperBuilder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
@@ -22,6 +22,7 @@ import lombok.experimental.SuperBuilder;
 public class AnnotationRetrievingJob extends Job {
   private String annotationJobId;
   private String detectionJobId;
+
   @Override
   protected JobType getType() {
     return null;

@@ -18,13 +18,12 @@ import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.AnnotationRetrievingTask;
 import app.bpartners.geojobs.repository.model.detection.*;
+import app.bpartners.geojobs.service.AnnotationRetrievingTaskService;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
-
-import app.bpartners.geojobs.service.AnnotationRetrievingTaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -65,7 +64,7 @@ public class AnnotationService {
     this.annotatorUserInfoGetter = annotatorUserInfoGetter;
     this.detectableObjectRepository = detectableObjectRepository;
     this.zoneDetectionJobRepository = zoneDetectionJobRepository;
-    this.annotationRetrievingTaskService =  annotationRetrievingTaskService;
+    this.annotationRetrievingTaskService = annotationRetrievingTaskService;
     this.bucketComponent = bucketComponent;
     this.eventProducer = eventProducer;
   }
@@ -149,7 +148,8 @@ public class AnnotationService {
     }
   }
 
-  public void fireTasks(String jobId,String retrievingJobId, String annotationJobId, int imageSize) {
+  public void fireTasks(
+      String jobId, String retrievingJobId, String annotationJobId, int imageSize) {
     List<Task> annotationTasks;
     Integer page = null;
     Integer pageSize = null;
@@ -172,13 +172,15 @@ public class AnnotationService {
           var zoom = metadata.getFirst();
           var xTile = metadata.get(metadata.size() - 2);
           var yTile = metadata.getLast();
-          var retrievingTask = annotationRetrievingTaskService.save(AnnotationRetrievingTask.builder()
-              .id(randomUUID().toString())
-              .jobId(retrievingJobId)
-              .annotationTaskId(task.getId())
-              .statusHistory(List.of())
-              .submissionInstant(Instant.now())
-              .build());
+          var retrievingTask =
+              annotationRetrievingTaskService.save(
+                  AnnotationRetrievingTask.builder()
+                      .id(randomUUID().toString())
+                      .jobId(retrievingJobId)
+                      .annotationTaskId(task.getId())
+                      .statusHistory(List.of())
+                      .submissionInstant(Instant.now())
+                      .build());
           annotationRetrievingTaskService.save(retrievingTask);
           eventProducer.accept(
               List.of(

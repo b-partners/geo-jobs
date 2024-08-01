@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service.event;
 
 import static java.util.UUID.randomUUID;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -12,9 +13,15 @@ import app.bpartners.gen.annotator.endpoint.rest.model.Label;
 import app.bpartners.gen.annotator.endpoint.rest.model.Point;
 import app.bpartners.gen.annotator.endpoint.rest.model.Polygon;
 import app.bpartners.geojobs.conf.FacadeIT;
+import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.AnnotationBatchRetrievingSubmitted;
+import app.bpartners.geojobs.endpoint.event.model.AnnotationRetrievingJobStatusRecomputingSubmitted;
+import app.bpartners.geojobs.repository.model.AnnotationRetrievingTask;
+import app.bpartners.geojobs.service.AnnotationRetrievingTaskService;
+import app.bpartners.geojobs.service.annotator.AnnotationRetrievingTaskStatusService;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
 import app.bpartners.geojobs.service.detection.HumanDetectedTileService;
+import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +33,9 @@ class AnnotationBatchRetrievingSubmittedServiceIT extends FacadeIT {
   private static final String MOCK_TASK_ID = "mock_task_id";
   @MockBean AnnotationService annotationService;
   @MockBean HumanDetectedTileService humanDetectedTileService;
+  @MockBean AnnotationRetrievingTaskService annotationRetrievingTaskService;
+  @MockBean EventProducer<AnnotationRetrievingJobStatusRecomputingSubmitted> eventProducer;
+  @Autowired AnnotationRetrievingTaskStatusService annotationRetrievingTaskStatusService;
   @Autowired AnnotationBatchRetrievingSubmittedService subject;
 
   AnnotationBatchRetrievingSubmitted submitted() {
@@ -71,7 +81,13 @@ class AnnotationBatchRetrievingSubmittedServiceIT extends FacadeIT {
   void accept_ok() {
     when(annotationService.getAnnotations(MOCK_ANNOTATION_JOB_ID, MOCK_TASK_ID))
         .thenReturn(List.of(annotationBatch()));
-
+    when(annotationRetrievingTaskService.getByAnnotationTaskId(any()))
+        .thenReturn(
+            AnnotationRetrievingTask.builder()
+                .id(MOCK_TASK_ID)
+                .annotationTaskId(MOCK_ANNOTATION_JOB_ID)
+                .statusHistory(new ArrayList<>())
+                .build());
     subject.accept(submitted());
 
     verify(humanDetectedTileService, times(1)).saveAll(anyList());

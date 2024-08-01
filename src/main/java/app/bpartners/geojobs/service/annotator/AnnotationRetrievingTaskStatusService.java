@@ -6,7 +6,8 @@ import app.bpartners.geojobs.repository.model.AnnotationRetrievingTask;
 import org.springframework.stereotype.Service;
 
 @Service
-public class AnnotationRetrievingTaskStatusService extends TaskStatusService<AnnotationRetrievingTask> {
+public class AnnotationRetrievingTaskStatusService
+    extends TaskStatusService<AnnotationRetrievingTask> {
   public AnnotationRetrievingTaskStatusService(TaskStatusRepository taskStatusRepository) {
     super(taskStatusRepository);
   }

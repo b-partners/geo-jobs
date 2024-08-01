@@ -11,11 +11,9 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
-import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
-
 @Entity
 @Table(name = "annotation_retrieving_task")
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString

@@ -1,7 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
 import static app.bpartners.gen.annotator.endpoint.rest.model.JobStatus.COMPLETED;
-import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
@@ -9,9 +8,7 @@ import app.bpartners.geojobs.endpoint.event.model.AnnotationJobVerificationSent;
 import app.bpartners.geojobs.endpoint.event.model.AnnotationTaskRetrievingSubmitted;
 import app.bpartners.geojobs.repository.HumanDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.AnnotationRetrievingJob;
-import app.bpartners.geojobs.repository.model.AnnotationRetrievingTask;
 import app.bpartners.geojobs.service.AnnotationRetrievingJobService;
-import app.bpartners.geojobs.service.AnnotationRetrievingTaskService;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
 import java.util.List;
 import java.util.function.Consumer;
@@ -44,18 +41,23 @@ public class AnnotationJobVerificationSentService
             .toList();
     if (annotationJobs.stream().allMatch(job -> COMPLETED.equals(job.getStatus()))) {
       annotationJobs.forEach(
-          job ->{
+          job -> {
             var annotationJobId = job.getId();
-            var retrievingJob = annotationRetrievingJobService.save(AnnotationRetrievingJob.builder()
-                    .id(randomUUID().toString())
-                    .annotationJobId(annotationJobId)
-                    .detectionJobId(humanZdjId)
-                    .statusHistory(List.of())
-                .build());
+            var retrievingJob =
+                annotationRetrievingJobService.save(
+                    AnnotationRetrievingJob.builder()
+                        .id(randomUUID().toString())
+                        .annotationJobId(annotationJobId)
+                        .detectionJobId(humanZdjId)
+                        .statusHistory(List.of())
+                        .build());
             eventProducer.accept(
                 List.of(
                     new AnnotationTaskRetrievingSubmitted(
-                        humanZdjId, retrievingJob.getId(), retrievingJob.getAnnotationJobId(), job.getImagesWidth())));
+                        humanZdjId,
+                        retrievingJob.getId(),
+                        retrievingJob.getAnnotationJobId(),
+                        job.getImagesWidth())));
           });
     }
   }

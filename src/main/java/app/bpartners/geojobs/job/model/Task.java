@@ -55,8 +55,7 @@ public abstract class Task implements Serializable, Statusable<TaskStatus> {
   }
 
   public boolean isFailed() {
-    return FINISHED.equals(getStatus().getProgression())
-        && FAILED.equals(getStatus().getHealth());
+    return FINISHED.equals(getStatus().getProgression()) && FAILED.equals(getStatus().getHealth());
   }
 
   public abstract Task semanticClone();
