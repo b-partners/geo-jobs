@@ -28,6 +28,12 @@ public class FileUnzipper implements BiFunction<ZipFile, String, Path> {
       while (entries.hasMoreElements()) {
         ZipEntry entry = entries.nextElement();
         if (!entry.isDirectory()) {
+          // Ensure the target file is within the intended directory
+          Path targetFile = extractDirectoryPath.resolve(entry.getName()).normalize();
+          if (!targetFile.startsWith(extractDirectoryPath)) {
+            throw new IOException("Entry is outside of the target dir: " + entry.getName());
+          }
+
           try (InputStream is = zipFile.getInputStream(entry)) {
             String entryParentPath = getFolderPath(entry);
             String entryFilename = getFilename(entry);
