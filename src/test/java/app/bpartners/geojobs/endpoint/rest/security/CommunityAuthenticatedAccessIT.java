@@ -1,125 +1,111 @@
 package app.bpartners.geojobs.endpoint.rest.security;
 
-import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.*;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.PATHWAY;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.POOL;
 import static app.bpartners.geojobs.endpoint.rest.security.authenticator.ApiKeyAuthenticator.API_KEY_HEADER;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.rest.api.DetectionApi;
-import app.bpartners.geojobs.endpoint.rest.api.TilingApi;
 import app.bpartners.geojobs.endpoint.rest.client.ApiClient;
 import app.bpartners.geojobs.endpoint.rest.client.ApiException;
-import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMapper;
-import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneTilingJobMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
-import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
-import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
-import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
+import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
+import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
+import app.bpartners.geojobs.repository.model.community.CommunityDetectableObjectType;
+import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.math.BigDecimal;
 import java.util.List;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
-public class CommunityAuthenticatedAccessIT extends FacadeIT {
-  TilingApi tilingApi;
+class CommunityAuthenticatedAccessIT extends FacadeIT {
+  private static final String APIKEY = "APIKEY";
+
   DetectionApi detectionApi;
-  ZoneDetectionJob expectedZoneDetectionJob = new ZoneDetectionJob();
-  ZoneTilingJob expectedZoneTilingJob = new ZoneTilingJob();
 
   @Autowired ObjectMapper om;
-  @LocalServerPort private int port;
+  @Autowired CommunityAuthorizationRepository caRepository;
 
-  @MockBean ZoneDetectionJobValidator zoneDetectionJobValidator;
-  @MockBean ZoneDetectionJobService zoneDetectionJobService;
-  @MockBean ZoneDetectionJobMapper zoneDetectionJobMapper;
-  @MockBean ZoneTilingJobMapper zoneTilingJobMapper;
-  @MockBean ZoneTilingJobService zoneTilingJobService;
+  @LocalServerPort private int port;
 
   @BeforeEach
   void setup() {
-    doNothing().when(zoneDetectionJobValidator).accept(any());
-    when(zoneDetectionJobMapper.toRest(any(), any())).thenReturn(expectedZoneDetectionJob);
-    when(zoneTilingJobMapper.toRest(any(), any())).thenReturn(expectedZoneTilingJob);
-    when(zoneDetectionJobService.fireTasks(any())).thenReturn(null);
-    when(zoneTilingJobService.create(any(), any())).thenReturn(null);
-    when(zoneTilingJobMapper.toDomain(any()))
-        .thenReturn(new app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob());
-
+    caRepository.save(communityAuthorization());
     setupClientWithApiKey();
   }
 
-  void setupClientWithApiKey() {
-    var authenticatedClient = new ApiClient();
-    authenticatedClient.setRequestInterceptor(
-        builder -> builder.header(API_KEY_HEADER, "community1_key"));
-    authenticatedClient.setScheme("http");
-    authenticatedClient.setPort(port);
-    authenticatedClient.setObjectMapper(om);
-
-    tilingApi = new TilingApi(authenticatedClient);
-    detectionApi = new DetectionApi(authenticatedClient);
+  @AfterEach
+  void cleanup() {
+    caRepository.deleteAll();
   }
 
   @Test
-  void community_cannot_detect_if_one_object_type_is_not_authorized() {
+  void community_cannot_access_endpoint_if_not_full_detection() {
     var error =
         assertThrows(
             ApiException.class,
             () -> {
-              detectionApi.processZDJ("dummy", asZoneDetectionJob(List.of(PATHWAY, ROOF)));
+              detectionApi.getDetectionJobs(1, 10);
             });
-    assertTrue(error.getMessage().contains("PATHWAY"));
-    assertFalse(error.getMessage().contains("POOL"));
+    assertTrue(error.getMessage().contains("Access Denied"));
   }
 
   @Test
-  void community_can_detect_with_correct_authorization() throws ApiException {
-    var actualWithPoolAndRoofObject =
-        detectionApi.processZDJ("dummy", asZoneDetectionJob(List.of(ROOF, POOL)));
-    assertEquals(expectedZoneDetectionJob, actualWithPoolAndRoofObject);
-    var actualWithPoolObject = detectionApi.processZDJ("dummy", asZoneDetectionJob(List.of(POOL)));
-    assertEquals(expectedZoneDetectionJob, actualWithPoolObject);
-  }
-
-  @Test
-  void community_cannot_do_tiling_with_not_authorized_zoneName() {
-    var community1Error =
+  void community_cannot_do_full_detection_with_wrong_authorization() {
+    var error =
         assertThrows(
             ApiException.class,
             () -> {
-              tilingApi.tileZone(asZoneTilingJob("not_authorized_zone_name"));
+              detectionApi.processFullDetection(asCreateFullDetection(POOL));
             });
-    assertTrue(community1Error.getMessage().contains("not_authorized_zone_name"));
+    assertTrue(error.getMessage().contains(POOL.name()));
   }
 
   @Test
-  void community_can_do_tiling_with_authorized_zone_name() throws ApiException {
-    var actualWithZoneName1 = tilingApi.tileZone(asZoneTilingJob("zoneName1"));
-    assertEquals(expectedZoneTilingJob, actualWithZoneName1);
+  void community_can_do_full_detection_with_correct_authorization() {
+    var error =
+        assertThrows(
+            ApiException.class,
+            () -> {
+              detectionApi.processFullDetection(asCreateFullDetection(PATHWAY));
+            });
+    assertTrue(error.getMessage().contains("Full Detection is still in development"));
   }
 
-  private List<DetectableObjectConfiguration> asZoneDetectionJob(
-      List<DetectableObjectType> detectableObjectTypes) {
-    return detectableObjectTypes.stream()
-        .map(
-            detectableObjectType ->
-                new DetectableObjectConfiguration()
-                    .type(detectableObjectType)
-                    .confidence(BigDecimal.TEN)
-                    .bucketStorageName("dummy_bucket_storage_name"))
-        .toList();
+  void setupClientWithApiKey() {
+    var authenticatedClient = new ApiClient();
+    authenticatedClient.setRequestInterceptor(builder -> builder.header(API_KEY_HEADER, APIKEY));
+    authenticatedClient.setScheme("http");
+    authenticatedClient.setPort(port);
+    authenticatedClient.setObjectMapper(om);
+
+    detectionApi = new DetectionApi(authenticatedClient);
   }
 
-  private CreateZoneTilingJob asZoneTilingJob(String zoneName) {
-    return new CreateZoneTilingJob()
-        .geoServerUrl("http://dummy_url")
-        .zoneName(zoneName)
-        .features(List.of());
+  private CreateFullDetection asCreateFullDetection(DetectableObjectType authorizedTypes) {
+    return new CreateFullDetection().objectType(authorizedTypes);
+  }
+
+  private CommunityAuthorization communityAuthorization() {
+    var communityDetectableType =
+        CommunityDetectableObjectType.builder()
+            .id("dummyId")
+            .type(DetectableType.PATHWAY)
+            .communityAuthorizationId("dummyId")
+            .build();
+
+    return CommunityAuthorization.builder()
+        .id("dummyId")
+        .apiKey(APIKEY)
+        .name("communityName")
+        .maxSurface(5_000)
+        .authorizedZones(List.of())
+        .usedSurfaces(List.of())
+        .detectableObjectTypes(List.of(communityDetectableType))
+        .build();
   }
 }

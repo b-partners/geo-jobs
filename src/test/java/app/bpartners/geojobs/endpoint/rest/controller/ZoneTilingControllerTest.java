@@ -13,7 +13,6 @@ import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.ZTJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.*;
 import app.bpartners.geojobs.endpoint.rest.model.*;
-import app.bpartners.geojobs.endpoint.rest.security.authorizer.CommunityZoneTilingJobProcessAuthorizer;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneTilingJobValidator;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.repository.model.FilteredTilingJob;
@@ -33,7 +32,6 @@ class ZoneTilingControllerTest {
   TaskStatisticMapper taskStatisticMapper = new TaskStatisticMapper(statusMapper);
   ZoneTilingJobValidator zoneTilingJobValidator = new ZoneTilingJobValidator();
   EventProducer eventProducerMock = mock();
-  CommunityZoneTilingJobProcessAuthorizer jobProcessAuthorizerMock = mock();
   ZoneTilingJobMapper tilingJobMapper =
       new ZoneTilingJobMapper(parcelServiceMock, statusMapper, zoomMapper);
   ZoneTilingController subject =
@@ -46,8 +44,7 @@ class ZoneTilingControllerTest {
           taskStatisticMapper,
           zoneTilingJobValidator,
           statusMapper,
-          eventProducerMock,
-          jobProcessAuthorizerMock);
+          eventProducerMock);
 
   @Test
   void import_tiling_ok() {

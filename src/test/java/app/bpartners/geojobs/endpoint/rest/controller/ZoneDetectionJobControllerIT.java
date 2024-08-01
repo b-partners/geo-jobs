@@ -22,7 +22,6 @@ import app.bpartners.geojobs.endpoint.event.model.ZDJParcelsStatusRecomputingSub
 import app.bpartners.geojobs.endpoint.event.model.ZDJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
-import app.bpartners.geojobs.endpoint.rest.security.authorizer.CommunityZoneDetectionJobProcessAuthorizer;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
@@ -45,7 +44,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,12 +65,6 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
   @MockBean EventProducer eventProducer;
   @MockBean AnnotationService annotationServiceMock;
   @MockBean HumanDetectionJobRepository humanDetectionJobRepositoryMock;
-  @MockBean CommunityZoneDetectionJobProcessAuthorizer zoneDetectionJobProcessAuthorizer;
-
-  @BeforeEach
-  void setup() {
-    doNothing().when(zoneDetectionJobProcessAuthorizer).accept(any(), any());
-  }
 
   static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob aZDJ(
       String jobId, String tilingJobId) {

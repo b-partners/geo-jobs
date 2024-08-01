@@ -12,15 +12,18 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionTaskMapper
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.TaskStatisticMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMapper;
+import app.bpartners.geojobs.endpoint.rest.model.CreateFullDetection;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration;
 import app.bpartners.geojobs.endpoint.rest.model.DetectedParcel;
 import app.bpartners.geojobs.endpoint.rest.model.FilteredDetectionJob;
+import app.bpartners.geojobs.endpoint.rest.model.FullDetectedZone;
 import app.bpartners.geojobs.endpoint.rest.model.GeoJsonsUrl;
 import app.bpartners.geojobs.endpoint.rest.model.Status;
 import app.bpartners.geojobs.endpoint.rest.model.TaskStatistic;
-import app.bpartners.geojobs.endpoint.rest.security.authorizer.CommunityZoneDetectionJobProcessAuthorizer;
+import app.bpartners.geojobs.endpoint.rest.security.authorizer.CommunityFullDetectionAuthorizer;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.job.model.JobStatus;
+import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.model.page.BoundedPageSize;
 import app.bpartners.geojobs.model.page.PageFromOne;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
@@ -53,9 +56,8 @@ public class ZoneDetectionController {
   private final TaskStatisticMapper taskStatisticMapper;
   private final StatusMapper<JobStatus> jobStatusMapper;
   private final EventProducer eventProducer;
-  private final CommunityZoneDetectionJobProcessAuthorizer
-      communityZoneDetectionJobProcessAuthorizer;
   private final GeoJsonConversionInitiationService geoJsonConversionInitiationService;
+  private final CommunityFullDetectionAuthorizer communityFullDetectionAuthorizer;
 
   @PutMapping("/detectionJobs/{id}/taskFiltering")
   public List<FilteredDetectionJob> filteredDetectionJobs(@PathVariable String id) {
@@ -139,8 +141,6 @@ public class ZoneDetectionController {
       @PathVariable("id") String jobId,
       @RequestBody List<DetectableObjectConfiguration> detectableObjectConfigurations) {
     jobValidator.accept(jobId);
-    // TODO: authorization check should be done inside security conf
-    communityZoneDetectionJobProcessAuthorizer.accept(jobId, detectableObjectConfigurations);
     List<app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration>
         configurations =
             detectableObjectConfigurations.stream()
@@ -153,5 +153,12 @@ public class ZoneDetectionController {
   @GetMapping("/detectionJobs/{id}/geojsonsUrl")
   public GeoJsonsUrl getZDJGeojsonsUrl(@PathVariable(value = "id") String detectionJobId) {
     return geoJsonConversionInitiationService.initiateGeoJsonConversion(detectionJobId);
+  }
+
+  @PutMapping("/fullDetection")
+  public FullDetectedZone processFullDetection(
+      @RequestBody CreateFullDetection createFullDetection) {
+    communityFullDetectionAuthorizer.accept(createFullDetection);
+    throw new NotImplementedException("Full Detection is still in development");
   }
 }
