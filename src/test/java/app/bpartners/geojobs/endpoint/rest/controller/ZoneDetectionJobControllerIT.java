@@ -13,10 +13,8 @@ import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import app.bpartners.gen.annotator.endpoint.rest.model.Job;
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.AnnotationTaskRetrievingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.ParcelDetectionTaskCreated;
 import app.bpartners.geojobs.endpoint.event.model.ZDJParcelsStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.ZDJStatusRecomputingSubmitted;
@@ -41,6 +39,7 @@ import app.bpartners.geojobs.service.annotator.AnnotationService;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
@@ -171,110 +170,20 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
   }
 
   @Test
-  void check_annotation_job_status_completed() {
-    var tilingJobId = randomUUID().toString();
-    var eventCapture = ArgumentCaptor.forClass(List.class);
-
-    jobRepository.saveAll(
-        List.of(
-            aZDJ(JOB3_ID, tilingJobId).toBuilder()
-                .submissionInstant(now())
-                .detectionType(MACHINE)
-                .build(),
-            aZDJ(JOB1_ID, tilingJobId).toBuilder()
-                .submissionInstant(now())
-                .detectionType(HUMAN)
-                .build()));
-    when(humanDetectionJobRepositoryMock.findByZoneDetectionJobId(JOB1_ID))
-        .thenReturn(
-            List.of(HumanDetectionJob.builder().annotationJobId(ANNOTATION_JOB_ID).build()));
-    when(annotationServiceMock.getAnnotationJobById(ANNOTATION_JOB_ID))
-        .thenReturn(
-            new Job().status(app.bpartners.gen.annotator.endpoint.rest.model.JobStatus.COMPLETED));
-    ZoneDetectionJob actual = subject.checkHumanDetectionJobStatus(JOB3_ID);
-    verify(eventProducer, times(1)).accept(eventCapture.capture());
-    var eventsSent = eventCapture.getAllValues();
-    var taskRetrievingSubmitted = eventsSent.getFirst().getFirst();
-
-    assertEquals(taskRetrievingSubmitted.getClass(), AnnotationTaskRetrievingSubmitted.class);
-    assertEquals(new AnnotationTaskRetrievingSubmitted(JOB3_ID, JOB1_ID), taskRetrievingSubmitted);
-    assertEquals(JOB1_ID, actual.getId());
-    assertEquals(
-        new Status()
-            .progression(Status.ProgressionEnum.FINISHED)
-            .health(Status.HealthEnum.SUCCEEDED)
-            .creationDatetime(actual.getStatus().getCreationDatetime()),
-        actual.getStatus());
-
-    jobRepository.deleteAllById(List.of(JOB1_ID, JOB3_ID));
-  }
-
-  @Test
-  void check_annotation_job_status_failed() {
+  void check_annotation_job_status() {
     var tilingJobId = randomUUID().toString();
     jobRepository.saveAll(
         List.of(
             aZDJ(JOB3_ID, tilingJobId).toBuilder().detectionType(MACHINE).build(),
             aZDJ(JOB1_ID, tilingJobId).toBuilder().detectionType(HUMAN).build()));
-    when(humanDetectionJobRepositoryMock.findByZoneDetectionJobId(JOB1_ID))
+    when(humanDetectionJobRepositoryMock.findByAnnotationJobId(ANNOTATION_JOB_ID))
         .thenReturn(
-            List.of(HumanDetectionJob.builder().annotationJobId(ANNOTATION_JOB_ID).build()));
-    when(annotationServiceMock.getAnnotationJobById(ANNOTATION_JOB_ID))
-        .thenReturn(
-            new Job().status(app.bpartners.gen.annotator.endpoint.rest.model.JobStatus.FAILED));
-    ZoneDetectionJob actual = subject.checkHumanDetectionJobStatus(JOB3_ID);
-
-    assertEquals(JOB1_ID, actual.getId());
-    assertEquals(
-        new Status()
-            .progression(Status.ProgressionEnum.FINISHED)
-            .health(Status.HealthEnum.FAILED)
-            .creationDatetime(actual.getStatus().getCreationDatetime()),
-        actual.getStatus());
-
-    jobRepository.deleteAllById(List.of(JOB1_ID, JOB3_ID));
-  }
-
-  @Test
-  void check_annotation_job_status_processing() {
-    var tilingJobId = randomUUID().toString();
-    jobRepository.saveAll(
-        List.of(
-            aZDJ(JOB3_ID, tilingJobId).toBuilder().detectionType(MACHINE).build(),
-            aZDJ(JOB1_ID, tilingJobId).toBuilder().detectionType(HUMAN).build()));
-    when(humanDetectionJobRepositoryMock.findByZoneDetectionJobId(JOB1_ID))
-        .thenReturn(
-            List.of(HumanDetectionJob.builder().annotationJobId(ANNOTATION_JOB_ID).build()));
-    when(annotationServiceMock.getAnnotationJobById(ANNOTATION_JOB_ID))
-        .thenReturn(
-            new Job().status(app.bpartners.gen.annotator.endpoint.rest.model.JobStatus.STARTED));
-    ZoneDetectionJob actual = subject.checkHumanDetectionJobStatus(JOB3_ID);
-
-    assertEquals(JOB1_ID, actual.getId());
-    assertEquals(
-        new Status()
-            .progression(Status.ProgressionEnum.PROCESSING)
-            .health(Status.HealthEnum.UNKNOWN)
-            .creationDatetime(actual.getStatus().getCreationDatetime()),
-        actual.getStatus());
-
-    jobRepository.deleteAllById(List.of(JOB1_ID, JOB3_ID));
-  }
-
-  @Test
-  void check_annotation_job_status_pending() {
-    var tilingJobId = randomUUID().toString();
-    jobRepository.saveAll(
-        List.of(
-            aZDJ(JOB3_ID, tilingJobId).toBuilder().detectionType(MACHINE).build(),
-            aZDJ(JOB1_ID, tilingJobId).toBuilder().detectionType(HUMAN).build()));
-    when(humanDetectionJobRepositoryMock.findByZoneDetectionJobId(JOB1_ID))
-        .thenReturn(
-            List.of(HumanDetectionJob.builder().annotationJobId(ANNOTATION_JOB_ID).build()));
-    when(annotationServiceMock.getAnnotationJobById(ANNOTATION_JOB_ID))
-        .thenReturn(
-            new Job().status(app.bpartners.gen.annotator.endpoint.rest.model.JobStatus.TO_REVIEW));
-    ZoneDetectionJob actual = subject.checkHumanDetectionJobStatus(JOB3_ID);
+            Optional.of(
+                HumanDetectionJob.builder()
+                    .zoneDetectionJobId(JOB1_ID)
+                    .annotationJobId(ANNOTATION_JOB_ID)
+                    .build()));
+    ZoneDetectionJob actual = subject.checkHumanDetectionJobStatus(ANNOTATION_JOB_ID);
 
     assertEquals(JOB1_ID, actual.getId());
     assertEquals(

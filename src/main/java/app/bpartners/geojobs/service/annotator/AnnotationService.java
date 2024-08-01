@@ -143,14 +143,17 @@ public class AnnotationService {
 
   public void fireTasks(String jobId, String annotationJobId, int imageSize) {
     List<Task> annotationTasks;
+    Integer page = null;
+    Integer pageSize = null;
+    String userId = null;
     try {
       annotationTasks =
           adminApi.getJobTasks(
               annotationJobId,
-              null,
-              null,
+              page,
+              pageSize,
               TaskStatus.COMPLETED,
-              null); // page, pageSize and UserId not required
+              userId); // page, pageSize and UserId not required
     } catch (ApiException e) {
       throw new app.bpartners.geojobs.model.exception.ApiException(
           app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION, e);

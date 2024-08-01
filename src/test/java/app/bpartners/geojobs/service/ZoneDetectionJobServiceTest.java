@@ -66,7 +66,6 @@ public class ZoneDetectionJobServiceTest {
           mock(),
           mock(),
           mock(),
-          mock(),
           zoneDetectionJobRepositoryMock,
           taskStatisticRepositoryMock);
 

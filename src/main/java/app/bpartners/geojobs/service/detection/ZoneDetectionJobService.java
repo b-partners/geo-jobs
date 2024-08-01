@@ -27,7 +27,6 @@ import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
-import app.bpartners.geojobs.service.annotator.AnnotationService;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -43,7 +42,6 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
   private final DetectableObjectConfigurationRepository objectConfigurationRepository;
   private final TilingTaskRepository tilingTaskRepository;
   private final HumanDetectionJobRepository humanDetectionJobRepository;
-  private final AnnotationService annotationService;
   private final ZoneDetectionJobRepository zoneDetectionJobRepository;
 
   public ZoneDetectionJobService(
@@ -55,7 +53,6 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
       DetectionMapper detectionMapper,
       DetectableObjectConfigurationRepository objectConfigurationRepository,
       HumanDetectionJobRepository humanDetectionJobRepository,
-      AnnotationService annotationService,
       ZoneDetectionJobRepository zoneDetectionJobRepository,
       TaskStatisticRepository taskStatisticRepository) {
     super(
@@ -69,7 +66,6 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
     this.detectionMapper = detectionMapper;
     this.objectConfigurationRepository = objectConfigurationRepository;
     this.humanDetectionJobRepository = humanDetectionJobRepository;
-    this.annotationService = annotationService;
     this.zoneDetectionJobRepository = zoneDetectionJobRepository;
   }
 
@@ -269,49 +265,16 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
   }
 
   @Transactional
-  public ZoneDetectionJob checkHumanDetectionJobStatus(String jobId) {
-    var humanZDJ = getHumanZdjFromZdjId(jobId);
-    var humanDetectionJobs = humanDetectionJobRepository.findByZoneDetectionJobId(humanZDJ.getId());
-    if (humanDetectionJobs.isEmpty()) return humanZDJ;
-
-    var firstHumanDetectionJob = humanDetectionJobs.getFirst();
-    var lastHumanDetectionJob = humanDetectionJobs.getLast();
-    var firstAnnotationJobId = firstHumanDetectionJob.getAnnotationJobId();
-    var lastAnnotationJobId = lastHumanDetectionJob.getAnnotationJobId();
-    var firstAnnotationJobStatus =
-        annotationService.getAnnotationJobById(firstAnnotationJobId).getStatus();
-    Status.ProgressionStatus firstProgressionStatus =
-        detectionMapper.getProgressionStatus(firstAnnotationJobStatus);
-    Status.HealthStatus firstHealthStatus =
-        detectionMapper.getHealthStatus(firstAnnotationJobStatus);
-    var lastAnnotationJobStatus =
-        annotationService.getAnnotationJobById(lastAnnotationJobId).getStatus();
-    Status.ProgressionStatus lastProgressionStatus =
-        detectionMapper.getProgressionStatus(lastAnnotationJobStatus);
-    Status.HealthStatus lastHealthStatus = detectionMapper.getHealthStatus(lastAnnotationJobStatus);
-
-    Status.ProgressionStatus humanZDJProgression;
-    Status.HealthStatus humanZDJHealth;
-    if (firstProgressionStatus.equals(lastProgressionStatus)
-        && firstHealthStatus.equals(lastHealthStatus)) {
-      humanZDJProgression = firstProgressionStatus;
-      humanZDJHealth = firstHealthStatus;
-    } else {
-      humanZDJProgression = PENDING; // TODO: check when processing
-      humanZDJHealth = UNKNOWN;
-    }
-
-    humanZDJ.hasNewStatus(
-        Status.builder()
-            .id(randomUUID().toString())
-            .progression(humanZDJProgression)
-            .health(humanZDJHealth)
-            .creationDatetime(now())
-            .build());
-
-    if (humanZDJ.isSucceeded()) {
-      eventProducer.accept(List.of(new AnnotationTaskRetrievingSubmitted(jobId, humanZDJ.getId())));
-    }
+  public ZoneDetectionJob checkHumanDetectionJobStatus(String annotationJobId) {
+    var linkedHumanDetectionJob =
+        humanDetectionJobRepository
+            .findByAnnotationJobId(annotationJobId)
+            .orElseThrow(
+                () ->
+                    new NotFoundException(
+                        "No human detection job found for annotationJobId=" + annotationJobId));
+    var humanZDJ = getHumanZdjFromZdjId(linkedHumanDetectionJob.getZoneDetectionJobId());
+    eventProducer.accept(List.of(new AnnotationJobVerificationSent(humanZDJ.getId())));
     return repository.save(humanZDJ);
   }
 
