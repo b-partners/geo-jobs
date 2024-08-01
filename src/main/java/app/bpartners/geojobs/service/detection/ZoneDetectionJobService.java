@@ -27,7 +27,6 @@ import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
-import app.bpartners.geojobs.service.annotator.AnnotationService;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -43,7 +42,6 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
   private final DetectableObjectConfigurationRepository objectConfigurationRepository;
   private final TilingTaskRepository tilingTaskRepository;
   private final HumanDetectionJobRepository humanDetectionJobRepository;
-  private final AnnotationService annotationService;
   private final ZoneDetectionJobRepository zoneDetectionJobRepository;
 
   public ZoneDetectionJobService(
@@ -55,7 +53,6 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
       DetectionMapper detectionMapper,
       DetectableObjectConfigurationRepository objectConfigurationRepository,
       HumanDetectionJobRepository humanDetectionJobRepository,
-      AnnotationService annotationService,
       ZoneDetectionJobRepository zoneDetectionJobRepository,
       TaskStatisticRepository taskStatisticRepository) {
     super(
@@ -69,7 +66,6 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
     this.detectionMapper = detectionMapper;
     this.objectConfigurationRepository = objectConfigurationRepository;
     this.humanDetectionJobRepository = humanDetectionJobRepository;
-    this.annotationService = annotationService;
     this.zoneDetectionJobRepository = zoneDetectionJobRepository;
   }
 

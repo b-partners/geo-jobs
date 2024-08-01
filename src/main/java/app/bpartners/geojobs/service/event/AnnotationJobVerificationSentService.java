@@ -24,22 +24,24 @@ public class AnnotationJobVerificationSentService
   public void accept(AnnotationJobVerificationSent annotationJobVerificationSent) {
     var humanZdjId = annotationJobVerificationSent.getHumanZdjId();
     var humanDetectionJobs = humanDetectionJobRepository.findByZoneDetectionJobId(humanZdjId);
-    if (!humanDetectionJobs.isEmpty()) {
-      var annotationJobs =
-          humanDetectionJobs.stream()
-              .map(
-                  humanDetectionJob ->
-                      annotationService.getAnnotationJobById(
-                          humanDetectionJob.getAnnotationJobId()))
-              .toList();
-      if (annotationJobs.stream().allMatch(job -> COMPLETED.equals(job.getStatus()))) {
-        annotationJobs.forEach(
-            job ->
-                eventProducer.accept(
-                    List.of(
-                        new AnnotationTaskRetrievingSubmitted(
-                            humanZdjId, job.getId(), job.getImagesWidth()))));
-      }
+
+    if (humanDetectionJobs.isEmpty()) {
+      return;
+    }
+
+    var annotationJobs =
+        humanDetectionJobs.stream()
+            .map(
+                humanDetectionJob ->
+                    annotationService.getAnnotationJobById(humanDetectionJob.getAnnotationJobId()))
+            .toList();
+    if (annotationJobs.stream().allMatch(job -> COMPLETED.equals(job.getStatus()))) {
+      annotationJobs.forEach(
+          job ->
+              eventProducer.accept(
+                  List.of(
+                      new AnnotationTaskRetrievingSubmitted(
+                          humanZdjId, job.getId(), job.getImagesWidth()))));
     }
   }
 }
