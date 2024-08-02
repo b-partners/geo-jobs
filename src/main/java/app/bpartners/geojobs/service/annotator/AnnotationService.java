@@ -4,6 +4,7 @@ import static app.bpartners.gen.annotator.endpoint.rest.model.JobStatus.*;
 import static app.bpartners.gen.annotator.endpoint.rest.model.JobType.REVIEWING;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static java.time.LocalTime.now;
+import static java.util.UUID.randomUUID;
 
 import app.bpartners.gen.annotator.endpoint.rest.api.AdminApi;
 import app.bpartners.gen.annotator.endpoint.rest.api.JobsApi;
@@ -15,11 +16,15 @@ import app.bpartners.geojobs.endpoint.event.model.CreateAnnotatedTaskSubmitted;
 import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
+import app.bpartners.geojobs.repository.model.AnnotationRetrievingTask;
 import app.bpartners.geojobs.repository.model.detection.*;
+import app.bpartners.geojobs.service.AnnotationRetrievingTaskService;
 import java.math.BigInteger;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -36,6 +41,7 @@ public class AnnotationService {
   private final AnnotatorUserInfoGetter annotatorUserInfoGetter;
   private final DetectableObjectConfigurationRepository detectableObjectRepository;
   private final ZoneDetectionJobRepository zoneDetectionJobRepository;
+  private final AnnotationRetrievingTaskService annotationRetrievingTaskService;
   private final BucketComponent bucketComponent;
   private final EventProducer eventProducer;
   private final AdminApi adminApi;
@@ -48,6 +54,7 @@ public class AnnotationService {
       AnnotatorUserInfoGetter annotatorUserInfoGetter,
       DetectableObjectConfigurationRepository detectableObjectRepository,
       ZoneDetectionJobRepository zoneDetectionJobRepository,
+      AnnotationRetrievingTaskService annotationRetrievingTaskService,
       BucketComponent bucketComponent,
       EventProducer eventProducer) {
     this.jobsApi = new JobsApi(annotatorApiConf.newApiClientWithApiKey());
@@ -58,6 +65,7 @@ public class AnnotationService {
     this.annotatorUserInfoGetter = annotatorUserInfoGetter;
     this.detectableObjectRepository = detectableObjectRepository;
     this.zoneDetectionJobRepository = zoneDetectionJobRepository;
+    this.annotationRetrievingTaskService = annotationRetrievingTaskService;
     this.bucketComponent = bucketComponent;
     this.eventProducer = eventProducer;
   }
@@ -141,7 +149,8 @@ public class AnnotationService {
     }
   }
 
-  public void fireTasks(String jobId, String annotationJobId, int imageSize) {
+  public void fireTasks(
+      String jobId, String retrievingJobId, String annotationJobId, int imageSize) {
     List<Task> annotationTasks;
     Integer page = null;
     Integer pageSize = null;
@@ -158,6 +167,19 @@ public class AnnotationService {
       throw new app.bpartners.geojobs.model.exception.ApiException(
           app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION, e);
     }
+    List<AnnotationRetrievingTask> retrievingTasks =
+        annotationTasks.stream()
+            .map(
+                atask ->
+                    AnnotationRetrievingTask.builder()
+                        .id(randomUUID().toString())
+                        .jobId(retrievingJobId)
+                        .annotationTaskId(atask.getId())
+                        .statusHistory(List.of())
+                        .submissionInstant(Instant.now())
+                        .build())
+            .collect(Collectors.toUnmodifiableList());
+    annotationRetrievingTaskService.saveAll(retrievingTasks);
     annotationTasks.forEach(
         task -> {
           var metadata = getTileMetaData(task.getFilename());

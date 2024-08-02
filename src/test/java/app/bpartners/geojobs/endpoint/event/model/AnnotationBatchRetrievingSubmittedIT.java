@@ -16,7 +16,8 @@ class AnnotationBatchRetrievingSubmittedIT extends FacadeIT {
   @Test
   void serialize_then_deserialize() throws JsonProcessingException {
     var taskRetrievingSubmitted =
-        new AnnotationTaskRetrievingSubmitted("humanZdjId", "annotationJobId", 1024);
+        new AnnotationTaskRetrievingSubmitted(
+            "humanZdjId", "annotationRetrievingJobId", "annotationJobId", 1024);
 
     var serialized = om.writeValueAsString(taskRetrievingSubmitted);
     var deserialized = om.readValue(serialized, AnnotationTaskRetrievingSubmitted.class);

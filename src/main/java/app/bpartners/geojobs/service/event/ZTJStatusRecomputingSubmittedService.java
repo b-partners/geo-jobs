@@ -41,6 +41,7 @@ public class ZTJStatusRecomputingSubmittedService
 
   @Override
   public void accept(ZTJStatusRecomputingSubmitted event) {
+
     service.accept(event);
     Optional<ZoneTilingJob> zoneTilingJob = zoneTilingJobRepository.findById(event.getJobId());
     if (zoneTilingJob.isEmpty()) {

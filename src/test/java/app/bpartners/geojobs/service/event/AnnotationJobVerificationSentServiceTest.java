@@ -11,7 +11,9 @@ import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.AnnotationJobVerificationSent;
 import app.bpartners.geojobs.endpoint.event.model.AnnotationTaskRetrievingSubmitted;
 import app.bpartners.geojobs.repository.HumanDetectionJobRepository;
+import app.bpartners.geojobs.repository.model.AnnotationRetrievingJob;
 import app.bpartners.geojobs.repository.model.detection.HumanDetectionJob;
+import app.bpartners.geojobs.service.AnnotationRetrievingJobService;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -20,9 +22,13 @@ class AnnotationJobVerificationSentServiceTest {
   HumanDetectionJobRepository humanDetectionJobRepository = mock();
   AnnotationService annotationService = mock();
   EventProducer<AnnotationTaskRetrievingSubmitted> eventProducer = mock();
+  AnnotationRetrievingJobService annotationRetrievingJobService = mock();
   AnnotationJobVerificationSentService subject =
       new AnnotationJobVerificationSentService(
-          humanDetectionJobRepository, annotationService, eventProducer);
+          humanDetectionJobRepository,
+          annotationService,
+          eventProducer,
+          annotationRetrievingJobService);
 
   @Test
   void should_accept_do_nothing_if_human_detection_job_is_empty() {
@@ -64,19 +70,29 @@ class AnnotationJobVerificationSentServiceTest {
     List<HumanDetectionJob> humanDetectionJobs =
         List.of(completedHumanDetectionJobOne, completedHumanDetectionJobTwo);
     var annotationJobVerificationSendId = "dummyId";
+    var annotationRetrievingJobId = "retrievingJobId";
 
     var exceptedAnnotationTaskRetrievingSubmitted =
         new AnnotationTaskRetrievingSubmitted(
-            annotationJobVerificationSendId, completedJob.getId(), completedJob.getImagesWidth());
+            annotationJobVerificationSendId,
+            annotationRetrievingJobId,
+            completedJob.getId(),
+            completedJob.getImagesWidth());
 
     when(annotationJobVerificationSent.getHumanZdjId()).thenReturn(annotationJobVerificationSendId);
     when(annotationService.getAnnotationJobById(any())).thenReturn(completedJob);
     when(humanDetectionJobRepository.findByZoneDetectionJobId(any()))
         .thenReturn(humanDetectionJobs);
+    when(annotationRetrievingJobService.saveAll(any()))
+        .thenReturn(
+            List.of(
+                AnnotationRetrievingJob.builder()
+                    .id(annotationRetrievingJobId)
+                    .annotationJobId(completedJob.getId())
+                    .build()));
     subject.accept(annotationJobVerificationSent);
 
-    verify(eventProducer, times(humanDetectionJobs.size()))
-        .accept(List.of(exceptedAnnotationTaskRetrievingSubmitted));
+    verify(eventProducer, times(1)).accept(List.of(exceptedAnnotationTaskRetrievingSubmitted));
   }
 
   HumanDetectionJob asHumanDetectionJob(String id) {
@@ -84,6 +100,6 @@ class AnnotationJobVerificationSentServiceTest {
   }
 
   Job asJob(JobStatus status) {
-    return new Job().status(status).id("dummyId").imagesWidth(2_000);
+    return new Job().status(status).id("dummyId").imagesWidth(1024);
   }
 }

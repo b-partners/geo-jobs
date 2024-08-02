@@ -50,6 +50,7 @@ import org.mockito.MockedConstruction;
 public class AnnotationServiceTest {
   public static final String ZONE_DETECTION_JOB_ID = "zoneDetectionJobId";
   public static final String ANNOTATION_JOB_ID = "AnnotationJobId";
+  public static final String ANNOTATION_RETRIEVING_JOB_ID = "AnnotationRetrievingJobId";
   MockedConstruction<JobsApi> jobsApiMockedConstruction;
   MockedConstruction<AdminApi> adminApiMockedConstruction;
   DetectableObjectConfigurationRepository detectableObjectRepositoryMock = mock();
@@ -58,6 +59,7 @@ public class AnnotationServiceTest {
   AnnotatorApiConf annotatorApiConfMock = mock();
   LabelExtractor labelExtractorMock =
       new LabelExtractor(new KeyPredicateFunction(), labelConverterMock);
+  AnnotationRetrievingTaskService annotationRetrievingTaskServiceMock = mock();
   CreateAnnotationBatchExtractor batchExtractorMock =
       new CreateAnnotationBatchExtractor(labelExtractorMock, new PolygonExtractor());
   TaskExtractor taskExtractorMock = new TaskExtractor(batchExtractorMock, labelExtractorMock);
@@ -109,6 +111,7 @@ public class AnnotationServiceTest {
             labelExtractorMock,
             mock(),
             detectableObjectRepositoryMock,
+            mock(),
             mock(),
             mock(),
             eventProducerMock);
@@ -182,7 +185,8 @@ public class AnnotationServiceTest {
     var adminApi = adminApiMockedConstruction.constructed().getFirst();
     when(adminApi.getJobTasks(any(), any(), any(), any(), any())).thenReturn(tasks);
 
-    subject.fireTasks(ZONE_DETECTION_JOB_ID, ANNOTATION_JOB_ID, imageSize);
+    subject.fireTasks(
+        ZONE_DETECTION_JOB_ID, ANNOTATION_RETRIEVING_JOB_ID, ANNOTATION_JOB_ID, imageSize);
     verify(eventProducerMock, times(tasks.size())).accept(eventsCapture.capture());
     var eventsValues = eventsCapture.getAllValues();
     var batchRetrievingSubmitted = eventsValues.getFirst().getFirst();
