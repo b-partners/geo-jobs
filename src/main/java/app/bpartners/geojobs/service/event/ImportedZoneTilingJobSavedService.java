@@ -25,6 +25,7 @@ import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -62,7 +63,13 @@ public class ImportedZoneTilingJobSavedService implements Consumer<ImportedZoneT
         getS3Objects(importedZoneTilingJobSaved, bucketName, bucketPathPrefix);
 
     log.info("[DEBUG] S3 objects size {}", s3Objects.size());
-    Map<Integer, List<Tile>> groupedTilesByX = getGroupedTiles(s3Objects, bucketSeparator);
+    Map<Integer, List<Tile>> groupedTilesByX = new HashMap<>();
+    try {
+      groupedTilesByX = getGroupedTiles(s3Objects, bucketSeparator);
+    } catch (RuntimeException e) {
+      log.error("Exception was thrown on getGroupedTiles method: {}", e.getMessage());
+      throw new ApiException(SERVER_EXCEPTION, e.getMessage());
+    }
     List<TilingTask> tilingTasks = new ArrayList<>();
     for (Map.Entry<Integer, List<Tile>> entry : groupedTilesByX.entrySet()) {
       List<Tile> groupedTiles = entry.getValue();
@@ -84,13 +91,15 @@ public class ImportedZoneTilingJobSavedService implements Consumer<ImportedZoneT
   @NonNull
   private Map<Integer, List<Tile>> getGroupedTiles(
       List<S3Object> s3Objects, BucketSeparatorType bucketSeparatorType) {
+    log.info("Object keys found: {}", s3Objects.stream().map(S3Object::key).toList());
     var tiles =
-        s3Objects.stream()
+        s3Objects.subList(1, s3Objects.size())
+                .stream()
             .map(s3Object -> mapFromKey(s3Object.key(), bucketSeparatorType))
             .toList();
     Map<Integer, List<Tile>> groupedByX =
         tiles.stream()
-            .filter(tile -> tile.getCoordinates() != null & tile.getCoordinates().getX() != null)
+            .filter(tile -> tile.getCoordinates() != null && tile.getCoordinates().getX() != null)
             .collect(Collectors.groupingBy(tile -> tile.getCoordinates().getX()));
     return groupedByX;
   }
