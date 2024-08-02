@@ -12,16 +12,25 @@ import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
 import static app.bpartners.geojobs.repository.model.GeoJobType.TILING;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static java.time.Instant.now;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.TaskStatisticMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMapper;
-import app.bpartners.geojobs.endpoint.rest.model.*;
+import app.bpartners.geojobs.endpoint.rest.model.CreateFullDetection;
+import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration;
+import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
+import app.bpartners.geojobs.endpoint.rest.model.JobType;
+import app.bpartners.geojobs.endpoint.rest.model.Status;
 import app.bpartners.geojobs.endpoint.rest.security.authorizer.CommunityFullDetectionAuthorizer;
+import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.statistic.HealthStatusStatistic;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
@@ -66,6 +75,7 @@ public class FullDetectionControllerIT extends FacadeIT {
   @Autowired FullDetectionRepository fullDetectionRepository;
   @Autowired ZoneTilingJobRepository zoneTilingJobRepository;
   @Autowired ZoneDetectionJobRepository zoneDetectionJobRepository;
+  @MockBean BucketComponent bucketComponent;
   @Autowired ZoneService zoneService;
   @MockBean ZoneDetectionJobService zoneDetectionJobService;
   @MockBean StatusMapper statusMapper;
@@ -170,7 +180,7 @@ public class FullDetectionControllerIT extends FacadeIT {
         .id("full_detection_id")
         .ztjId("ztj_1_id")
         .zdjId("zdj_1_id")
-        .geojsonS3FileKey("bucket_key")
+        .geojsonS3FileKey(null)
         .detectableObjectConfiguration(
             new DetectableObjectConfiguration().confidence(BigDecimal.valueOf(0.8)).type(ROOF))
         .build();
