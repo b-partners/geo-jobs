@@ -15,6 +15,7 @@ import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType;
 import app.bpartners.geojobs.endpoint.rest.model.FullDetectedZone;
 import app.bpartners.geojobs.endpoint.rest.model.JobTypes;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
+import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.FullDetectionRepository;
@@ -25,6 +26,7 @@ import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
@@ -35,6 +37,7 @@ import org.springframework.stereotype.Service;
 @AllArgsConstructor
 @Slf4j
 public class ZoneService {
+  private static final Duration PRE_SIGNED_URL_DURATION = Duration.ofHours(1L);
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final ZoneTilingJobService zoneTilingJobService;
   private final ZoneTilingJobMapper zoneTilingJobMapper;
@@ -44,6 +47,7 @@ public class ZoneService {
   private final ZoneDetectionJobRepository zoneDetectionJobRepository;
   private final FullDetectionRepository fullDetectionRepository;
   private final ZoneTilingJobRepository zoneTilingJobRepository;
+  private final BucketComponent bucketComponent;
 
   public FullDetectedZone processTilingAndDetection(CreateFullDetection zoneToDetect) {
     String endToEndId = zoneToDetect.getEndToEndId();
@@ -89,10 +93,10 @@ public class ZoneService {
   }
 
   private FullDetectedZone createFullDetectedZone(
-      String geoJsonUrl, List<TaskStatistic> statistics, JobTypes jobType) {
+      String s3FileKey, List<TaskStatistic> statistics, JobTypes jobType) {
     FullDetectedZone fullDetectedZone =
         new FullDetectedZone()
-            .detectedGeojsonUrl(geoJsonUrl == null ? "s3_key" : geoJsonUrl)
+            .detectedGeojsonUrl(generatePresignedUrl(s3FileKey))
             .statistics(statistics.stream().map(taskStatisticMapper::toRest).toList());
     fullDetectedZone.setJobTypes(List.of(jobType));
     return fullDetectedZone;
@@ -131,5 +135,12 @@ public class ZoneService {
     if (!processedZDJ.isSucceeded()) {
       eventProducer.accept(List.of(new ZDJStatusRecomputingSubmitted(processedZDJ.getId())));
     }
+  }
+
+  private String generatePresignedUrl(String fileKey) {
+    if (fileKey == null) {
+      return null;
+    }
+    return bucketComponent.presign(fileKey, PRE_SIGNED_URL_DURATION).toString();
   }
 }

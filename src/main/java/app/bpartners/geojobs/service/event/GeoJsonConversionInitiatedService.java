@@ -9,6 +9,7 @@ import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionInitiated;
 import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.model.exception.ApiException;
+import app.bpartners.geojobs.repository.FullDetectionRepository;
 import app.bpartners.geojobs.repository.model.detection.HumanDetectedTile;
 import app.bpartners.geojobs.service.detection.HumanDetectedTileService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionTaskService;
@@ -36,6 +37,7 @@ public class GeoJsonConversionInitiatedService implements Consumer<GeoJsonConver
   private final GeoJsonConverter geoJsonConverter;
   private final FileWriter writer;
   private final BucketComponent bucketComponent;
+  private final FullDetectionRepository fullDetectionRepository;
 
   @Override
   public void accept(GeoJsonConversionInitiated initiated) {
@@ -43,6 +45,7 @@ public class GeoJsonConversionInitiatedService implements Consumer<GeoJsonConver
     var taskId = initiated.getConversionTaskId();
     var zoneName = initiated.getZoneName();
     var task = taskService.getById(taskId);
+    var fullDetectionJob = fullDetectionRepository.findByZdjId(jobId);
     taskStatusService.process(task);
     var fileKey = jobId + "/" + zoneName + GEO_JSON_EXTENSION;
     List<HumanDetectedTile> humanDetectedTiles = humanDetectedTileService.getByJobId(jobId);
@@ -55,6 +58,11 @@ public class GeoJsonConversionInitiatedService implements Consumer<GeoJsonConver
       task.setFileKey(fileKey);
       var finished = taskStatusService.succeed(task);
       taskService.save(finished);
+      if (fullDetectionJob.isPresent()) {
+        var persisted = fullDetectionJob.get();
+        persisted.setGeojsonS3FileKey(fileKey);
+        fullDetectionRepository.save(persisted);
+      }
     } catch (RuntimeException e) {
       var failed = taskStatusService.fail(task);
       taskService.save(failed);

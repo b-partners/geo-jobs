@@ -20,7 +20,6 @@ import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.event.ImportedZoneTilingJobSavedService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import java.util.List;
-
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
