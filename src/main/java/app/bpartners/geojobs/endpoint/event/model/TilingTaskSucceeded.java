@@ -22,10 +22,6 @@ public class TilingTaskSucceeded extends PojaEvent {
   private TilingTask task;
   private CreateFullDetection fullDetection;
 
-  private TilingTaskSucceeded(TilingTask tilingTask) {
-    this.task = tilingTask;
-  }
-
   @Override
   public Duration maxConsumerDuration() {
     return Duration.ofMinutes(1);
