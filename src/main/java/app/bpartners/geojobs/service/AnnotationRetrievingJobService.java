@@ -32,7 +32,7 @@ public class AnnotationRetrievingJobService {
             () -> new NotFoundException("Annotation retrieving job id=" + id + " is not found"));
   }
 
-  public AnnotationRetrievingJob save(AnnotationRetrievingJob toSave) {
-    return repository.save(toSave);
+  public List<AnnotationRetrievingJob> saveAll(List<AnnotationRetrievingJob> toSave) {
+    return repository.saveAll(toSave);
   }
 }

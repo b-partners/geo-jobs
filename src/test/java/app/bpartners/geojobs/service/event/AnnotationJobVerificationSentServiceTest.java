@@ -83,16 +83,16 @@ class AnnotationJobVerificationSentServiceTest {
     when(annotationService.getAnnotationJobById(any())).thenReturn(completedJob);
     when(humanDetectionJobRepository.findByZoneDetectionJobId(any()))
         .thenReturn(humanDetectionJobs);
-    when(annotationRetrievingJobService.save(any()))
+    when(annotationRetrievingJobService.saveAll(any()))
         .thenReturn(
-            AnnotationRetrievingJob.builder()
-                .id(annotationRetrievingJobId)
-                .annotationJobId(completedJob.getId())
-                .build());
+            List.of(
+                AnnotationRetrievingJob.builder()
+                    .id(annotationRetrievingJobId)
+                    .annotationJobId(completedJob.getId())
+                    .build()));
     subject.accept(annotationJobVerificationSent);
 
-    verify(eventProducer, times(humanDetectionJobs.size()))
-        .accept(List.of(exceptedAnnotationTaskRetrievingSubmitted));
+    verify(eventProducer, times(1)).accept(List.of(exceptedAnnotationTaskRetrievingSubmitted));
   }
 
   HumanDetectionJob asHumanDetectionJob(String id) {
@@ -100,6 +100,6 @@ class AnnotationJobVerificationSentServiceTest {
   }
 
   Job asJob(JobStatus status) {
-    return new Job().status(status).id("dummyId").imagesWidth(2_000);
+    return new Job().status(status).id("dummyId").imagesWidth(1024);
   }
 }

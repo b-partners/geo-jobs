@@ -2,6 +2,7 @@ package app.bpartners.geojobs.service.event;
 
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
+import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class ZDJStatusRecomputingSubmittedService
     implements Consumer<ZDJStatusRecomputingSubmitted> {
+  private static final double DEFAULT_CONFIDENCE = 0.8;
   private final JobStatusRecomputingSubmittedService<
           ZoneDetectionJob, ParcelDetectionTask, ZDJStatusRecomputingSubmitted>
       service;
@@ -39,8 +41,7 @@ public class ZDJStatusRecomputingSubmittedService
       TaskStatusService<ParcelDetectionTask> taskStatusService,
       TaskRepository<ParcelDetectionTask> taskRepository,
       AnnotationRetrievingJobService annotationRetrievingJobService,
-      GeoJsonConversionInitiationService geoJsonConversionInitiationService) {
-      ZoneDetectionJobService zoneDetectionJobService,
+      GeoJsonConversionInitiationService geoJsonConversionInitiationService,
       JobAnnotationService jobAnnotationService) {
     this.jobAnnotationService = jobAnnotationService;
     this.service =
@@ -56,25 +57,23 @@ public class ZDJStatusRecomputingSubmittedService
     var detectionJobId = event.getJobId();
     var annotationRetrievingJob =
         annotationRetrievingJobService.getByDetectionJobId(detectionJobId);
-    if (annotationRetrievingJob.isEmpty()
-        || !annotationRetrievingJob.stream().allMatch(AnnotationRetrievingJob::isSucceeded)) {
-      service.accept(event);
-      return;
+    if (!annotationRetrievingJob.isEmpty()
+        && annotationRetrievingJob.stream().allMatch(AnnotationRetrievingJob::isSucceeded)) {
+      var humanZDJ = zoneDetectionJobService.getHumanZdjFromZdjId(detectionJobId);
+      humanZDJ.hasNewStatus(
+          Status.builder()
+              .id(randomUUID().toString())
+              .progression(FINISHED)
+              .health(SUCCEEDED)
+              .creationDatetime(now())
+              .build());
+      geoJsonConversionInitiationService.processConversionTask(
+          humanZDJ.getZoneName(), humanZDJ.getId());
     }
-    var humanZDJ = zoneDetectionJobService.getHumanZdjFromZdjId(detectionJobId);
-    humanZDJ.hasNewStatus(
-        Status.builder()
-            .id(randomUUID().toString())
-            .progression(FINISHED)
-            .health(SUCCEEDED)
-            .creationDatetime(now())
-            .build());
-    geoJsonConversionInitiationService.processConversionTask(
-        humanZDJ.getZoneName(), humanZDJ.getId());
     service.accept(event);
     ZoneDetectionJob zoneDetectionJob = zoneDetectionJobService.findById(event.getJobId());
-    if (zoneDetectionJob.isFinished() && zoneDetectionJob.isSucceeded()) {
-      jobAnnotationService.processAnnotationJob(event.getJobId(), Double.valueOf(0.8));
+    if (zoneDetectionJob.isSucceeded() && MACHINE.equals(zoneDetectionJob.getDetectionType())) {
+      jobAnnotationService.processAnnotationJob(event.getJobId(), DEFAULT_CONFIDENCE);
     }
   }
 }

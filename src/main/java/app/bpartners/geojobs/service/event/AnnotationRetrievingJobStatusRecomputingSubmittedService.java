@@ -32,15 +32,14 @@ public class AnnotationRetrievingJobStatusRecomputingSubmittedService
     if (retrievingTasks.isEmpty()) {
       return;
     }
+    var retrievingJob = annotationRetrievingJobService.getByAnnotationJobId(linkedJobId);
     if (retrievingTasks.stream().allMatch(AnnotationRetrievingTask::isSucceeded)) {
-      var retrievingJob = annotationRetrievingJobService.getByAnnotationJobId(linkedJobId);
       retrievingJob.hasNewStatus(newStatus(SUCCEEDED));
       eventProducer.accept(
           List.of(new ZDJStatusRecomputingSubmitted(retrievingJob.getDetectionJobId())));
       return;
     }
     if (retrievingTasks.stream().anyMatch(AnnotationRetrievingTask::isFailed)) {
-      var retrievingJob = annotationRetrievingJobService.getByAnnotationJobId(linkedJobId);
       retrievingJob.hasNewStatus(newStatus(FAILED));
     }
   }

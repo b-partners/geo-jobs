@@ -2,6 +2,7 @@ package app.bpartners.geojobs.service.event;
 
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
+import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.Mockito.*;
@@ -39,7 +40,8 @@ public class ZDJStatusRecomputingSubmittedServiceTest {
           taskStatusServiceMock,
           taskRepositoryMock,
           annotationRetrievingJobServiceMock,
-          geoJsonConversionInitiationServiceMock);
+          geoJsonConversionInitiationServiceMock,
+          jobAnnotationServiceMock);
 
   @Test
   void accept_ok() {
@@ -52,7 +54,7 @@ public class ZDJStatusRecomputingSubmittedServiceTest {
     when(zoneDetectionJobServiceMock.findById(jobId)).thenReturn(job);
     assertDoesNotThrow(() -> subject.accept(new ZDJStatusRecomputingSubmitted(jobId)));
 
-    verify(jobServiceMock, times(1)).findById(jobId);
+    verify(jobServiceMock, times(2)).findById(jobId);
     verify(jobServiceMock, times(1)).recomputeStatus(job);
     ArgumentCaptor<List<ZDJStatusRecomputingSubmitted>> listCaptor =
         ArgumentCaptor.forClass(List.class);
@@ -65,6 +67,7 @@ public class ZDJStatusRecomputingSubmittedServiceTest {
         .id(jobId)
         .zoneName("dummy")
         .emailReceiver("dummy")
+        .detectionType(MACHINE)
         .statusHistory(
             List.of(
                 JobStatus.builder()

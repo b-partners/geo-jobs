@@ -24,6 +24,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -166,22 +167,25 @@ public class AnnotationService {
       throw new app.bpartners.geojobs.model.exception.ApiException(
           app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION, e);
     }
+    List<AnnotationRetrievingTask> retrievingTasks =
+        annotationTasks.stream()
+            .map(
+                atask ->
+                    AnnotationRetrievingTask.builder()
+                        .id(randomUUID().toString())
+                        .jobId(retrievingJobId)
+                        .annotationTaskId(atask.getId())
+                        .statusHistory(List.of())
+                        .submissionInstant(Instant.now())
+                        .build())
+            .collect(Collectors.toUnmodifiableList());
+    annotationRetrievingTaskService.saveAll(retrievingTasks);
     annotationTasks.forEach(
         task -> {
           var metadata = getTileMetaData(task.getFilename());
           var zoom = metadata.getFirst();
           var xTile = metadata.get(metadata.size() - 2);
           var yTile = metadata.getLast();
-          var retrievingTask =
-              annotationRetrievingTaskService.save(
-                  AnnotationRetrievingTask.builder()
-                      .id(randomUUID().toString())
-                      .jobId(retrievingJobId)
-                      .annotationTaskId(task.getId())
-                      .statusHistory(List.of())
-                      .submissionInstant(Instant.now())
-                      .build());
-          annotationRetrievingTaskService.save(retrievingTask);
           eventProducer.accept(
               List.of(
                   new AnnotationBatchRetrievingSubmitted(
