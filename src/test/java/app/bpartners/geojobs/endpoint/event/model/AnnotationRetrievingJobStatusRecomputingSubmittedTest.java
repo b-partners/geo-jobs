@@ -9,21 +9,22 @@ import java.time.Duration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class AnnotationTaskRetrievingSubmittedIT extends FacadeIT {
+class AnnotationRetrievingJobStatusRecomputingSubmittedTest extends FacadeIT {
+
   @Autowired ObjectMapper om;
 
   @Test
   void serialize_then_deserialize() throws JsonProcessingException {
-    var batchRetrievingSubmitted =
-        new AnnotationBatchRetrievingSubmitted(
-            "jobId", "annotationJobId", "annotationTaskId", 1024, 2000, 5000, 20);
+    var retrievingJob =
+        new AnnotationRetrievingJobStatusRecomputingSubmitted("annotationRetrievingJobId");
 
-    var serialized = om.writeValueAsString(batchRetrievingSubmitted);
-    var deserialized = om.readValue(serialized, AnnotationBatchRetrievingSubmitted.class);
+    var serialized = om.writeValueAsString(retrievingJob);
+    var deserialized =
+        om.readValue(serialized, AnnotationRetrievingJobStatusRecomputingSubmitted.class);
 
-    assertEquals(batchRetrievingSubmitted, deserialized);
-    assertEquals("jobId", deserialized.getJobId());
+    assertEquals(retrievingJob, deserialized);
+    assertEquals("annotationRetrievingJobId", deserialized.getAnnotationRetrievingJobId());
+    assertEquals(Duration.ofMinutes(5), deserialized.maxConsumerDuration());
     assertEquals(Duration.ofMinutes(1), deserialized.maxConsumerBackoffBetweenRetries());
-    assertEquals(Duration.ofMinutes(10), deserialized.maxConsumerDuration());
   }
 }

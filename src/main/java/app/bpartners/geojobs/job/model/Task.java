@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.job.model;
 
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.FAILED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
@@ -51,6 +52,10 @@ public abstract class Task implements Serializable, Statusable<TaskStatus> {
   public boolean isSucceeded() {
     return FINISHED.equals(getStatus().getProgression())
         && SUCCEEDED.equals(getStatus().getHealth());
+  }
+
+  public boolean isFailed() {
+    return FINISHED.equals(getStatus().getProgression()) && FAILED.equals(getStatus().getHealth());
   }
 
   public abstract Task semanticClone();

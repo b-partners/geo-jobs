@@ -33,7 +33,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 
 class GeoJsonConversionInitiatedServiceIT extends FacadeIT {
   private static final String MOCK_JOB_ID = "mock_job_id";
-  private static final String MOCK_TASK_ID = "mock_task_id";
+  private static final String MOCK_TASK_ID = "random_task_id";
   @MockBean HumanDetectedTileService humanDetectedTileService;
   @MockBean ZoneDetectionJobService zoneDetectionJobService;
   @Autowired GeoJsonConversionTaskStatusService taskStatusService;

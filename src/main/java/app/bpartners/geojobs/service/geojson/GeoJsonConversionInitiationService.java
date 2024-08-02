@@ -49,7 +49,7 @@ public class GeoJsonConversionInitiationService {
     return null;
   }
 
-  private GeoJsonsUrl processConversionTask(String zoneName, String jobId) {
+  public GeoJsonsUrl processConversionTask(String zoneName, String jobId) {
     var optionalTask = service.getByJobId(jobId);
     if (optionalTask.isPresent()) {
       var persisted = optionalTask.get();
