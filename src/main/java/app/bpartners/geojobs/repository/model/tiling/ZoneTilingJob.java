@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 @Entity
@@ -17,7 +18,8 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder(toBuilder = true)
 @AllArgsConstructor
 @JsonIgnoreProperties({"status", "done"})
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = false)
+@Setter
 public class ZoneTilingJob extends Job {
   @Override
   protected JobType getType() {

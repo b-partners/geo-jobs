@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.endpoint.rest.security;
 
-import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.PATHWAY;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.POOL;
 import static app.bpartners.geojobs.endpoint.rest.security.authenticator.ApiKeyAuthenticator.API_KEY_HEADER;
 import static org.junit.jupiter.api.Assertions.*;
@@ -63,17 +62,6 @@ class CommunityAuthenticatedAccessIT extends FacadeIT {
               detectionApi.processFullDetection(asCreateFullDetection(POOL));
             });
     assertTrue(error.getMessage().contains(POOL.name()));
-  }
-
-  @Test
-  void community_can_do_full_detection_with_correct_authorization() {
-    var error =
-        assertThrows(
-            ApiException.class,
-            () -> {
-              detectionApi.processFullDetection(asCreateFullDetection(PATHWAY));
-            });
-    assertTrue(error.getMessage().contains("Full Detection is still in development"));
   }
 
   void setupClientWithApiKey() {

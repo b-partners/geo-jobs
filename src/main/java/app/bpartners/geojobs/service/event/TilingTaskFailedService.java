@@ -46,11 +46,15 @@ public class TilingTaskFailedService implements Consumer<TilingTaskFailed> {
           List.of(
               new TilingTaskFailed(
                   withNewStatus(task, PROCESSING, UNKNOWN, exceptionToStringFunction.apply(e)),
-                  attemptNb + 1)));
+                  attemptNb + 1,
+                  tilingTaskFailed.getCreateFullDetection())));
       return;
     }
 
     eventProducer.accept(
-        List.of(new TilingTaskSucceeded(withNewStatus(task, FINISHED, SUCCEEDED, null))));
+        List.of(
+            new TilingTaskSucceeded(
+                withNewStatus(task, FINISHED, SUCCEEDED, null),
+                tilingTaskFailed.getCreateFullDetection())));
   }
 }

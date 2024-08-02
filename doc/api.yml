@@ -1022,6 +1022,8 @@ components:
       properties:
         objectType:
           $ref: '#/components/schemas/DetectableObjectType'
+        confidence:
+          type: number
         endToEndId:
           type: string
     JobTypes:

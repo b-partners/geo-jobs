@@ -3,7 +3,7 @@ package app.bpartners.geojobs.endpoint.rest.controller;
 import static app.bpartners.geojobs.endpoint.rest.model.SuccessStatus.NOT_SUCCEEDED;
 import static app.bpartners.geojobs.endpoint.rest.model.SuccessStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
-import static java.util.stream.Collectors.toList;
+import static app.bpartners.geojobs.service.tiling.ZoneTilingJobService.getTilingTasks;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.ZTJStatusRecomputingSubmitted;
@@ -23,13 +23,10 @@ import app.bpartners.geojobs.endpoint.rest.validator.ZoneTilingJobValidator;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.model.page.BoundedPageSize;
 import app.bpartners.geojobs.model.page.PageFromOne;
-import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.service.ParcelService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
-import java.net.URL;
 import java.util.List;
 import lombok.AllArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -125,18 +122,6 @@ public class ZoneTilingController {
   public ZoneTilingJob processFailedTilingJob(@PathVariable String id) {
     return mapper.toRest(
         service.retryFailedTask(id), List.of()); // TODO: check if features must be returned
-  }
-
-  @SneakyThrows
-  private List<TilingTask> getTilingTasks(CreateZoneTilingJob job, String jobId) {
-    var serverUrl = new URL(job.getGeoServerUrl());
-    return job.getFeatures().stream()
-        .map(
-            feature -> {
-              feature.setZoom(zoomMapper.toDomain(job.getZoomLevel()).getZoomLevel());
-              return tilingTaskMapper.from(feature, serverUrl, job.getGeoServerParameter(), jobId);
-            })
-        .collect(toList());
   }
 
   @GetMapping("/tilingJobs")

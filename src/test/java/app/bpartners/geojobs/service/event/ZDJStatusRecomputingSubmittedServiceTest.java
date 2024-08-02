@@ -12,6 +12,7 @@ import app.bpartners.geojobs.endpoint.event.model.ZDJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.repository.TaskRepository;
+import app.bpartners.geojobs.job.service.JobAnnotationService;
 import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
@@ -25,9 +26,16 @@ public class ZDJStatusRecomputingSubmittedServiceTest {
   EventProducer eventProducerMock = mock();
   TaskStatusService<ParcelDetectionTask> taskStatusServiceMock = mock();
   TaskRepository<ParcelDetectionTask> taskRepositoryMock = mock();
+  ZoneDetectionJobService zoneDetectionJobServiceMock = mock();
+  JobAnnotationService jobAnnotationServiceMock = mock();
   ZDJStatusRecomputingSubmittedService subject =
       new ZDJStatusRecomputingSubmittedService(
-          jobServiceMock, eventProducerMock, taskStatusServiceMock, taskRepositoryMock);
+          jobServiceMock,
+          eventProducerMock,
+          taskStatusServiceMock,
+          taskRepositoryMock,
+          zoneDetectionJobServiceMock,
+          jobAnnotationServiceMock);
 
   @Test
   void accept_ok() {
@@ -35,7 +43,7 @@ public class ZDJStatusRecomputingSubmittedServiceTest {
     ZoneDetectionJob job = aZDJ(jobId, PROCESSING, UNKNOWN);
     when(jobServiceMock.findById(jobId)).thenReturn(job);
     when(jobServiceMock.recomputeStatus(job)).thenReturn(job);
-
+    when(zoneDetectionJobServiceMock.findById(jobId)).thenReturn(job);
     assertDoesNotThrow(() -> subject.accept(new ZDJStatusRecomputingSubmitted(jobId)));
 
     verify(jobServiceMock, times(1)).findById(jobId);

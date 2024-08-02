@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.TileDetectionTaskSucceeded;
 import app.bpartners.geojobs.repository.TileDetectionTaskRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
@@ -14,9 +15,10 @@ import org.junit.jupiter.api.Test;
 public class TileDetectionTaskSucceededServiceTest {
   TileDetectionTaskStatusService tileDetectionTaskStatusServiceMock = mock();
   TileDetectionTaskRepository tileDetectionTaskRepositoryMock = mock();
+  EventProducer eventProducerMock = mock();
   TileDetectionTaskSucceededService subject =
       new TileDetectionTaskSucceededService(
-          tileDetectionTaskStatusServiceMock, tileDetectionTaskRepositoryMock);
+          tileDetectionTaskStatusServiceMock, tileDetectionTaskRepositoryMock, eventProducerMock);
 
   @Test
   void consume_with_any_error_ok() {

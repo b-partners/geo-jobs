@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -49,6 +50,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 public class ZoneDetectionJobControllerIT extends FacadeIT {
   public static final String JOB1_ID = "job1";
   public static final String JOB2_ID = "job2";
@@ -79,6 +81,7 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
     return app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.builder()
         .id(jobId)
         .statusHistory(statusHistory)
+        .submissionInstant(now())
         .zoneTilingJob(
             ZoneTilingJob.builder()
                 .id(tilingJobId)

@@ -34,11 +34,17 @@ public class TilingTaskCreatedService implements Consumer<TilingTaskCreated> {
     } catch (Exception e) {
       eventProducer.accept(
           List.of(
-              new TilingTaskFailed(withNewStatus(task, PROCESSING, UNKNOWN, e.getMessage()), 1)));
+              new TilingTaskFailed(
+                  withNewStatus(task, PROCESSING, UNKNOWN, e.getMessage()),
+                  1,
+                  tilingTaskCreated.getFullDetection())));
       return;
     }
 
     eventProducer.accept(
-        List.of(new TilingTaskSucceeded(withNewStatus(task, FINISHED, SUCCEEDED, null))));
+        List.of(
+            new TilingTaskSucceeded(
+                withNewStatus(task, FINISHED, SUCCEEDED, null),
+                tilingTaskCreated.getFullDetection())));
   }
 }

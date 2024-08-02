@@ -25,7 +25,7 @@ class DetectableObjectConfigurationMapperTest {
             .bucketStorageName(dummyBucket);
     var expected2 =
         new app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration()
-            .confidence(null)
+            .confidence(BigDecimal.valueOf(1))
             .type(DetectableObjectType.LINE)
             .bucketStorageName(dummyBucket);
 

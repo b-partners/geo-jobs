@@ -20,15 +20,15 @@ import app.bpartners.geojobs.endpoint.rest.model.FullDetectedZone;
 import app.bpartners.geojobs.endpoint.rest.model.GeoJsonsUrl;
 import app.bpartners.geojobs.endpoint.rest.model.Status;
 import app.bpartners.geojobs.endpoint.rest.model.TaskStatistic;
-import app.bpartners.geojobs.endpoint.rest.security.authorizer.CommunityFullDetectionAuthorizer;
+import app.bpartners.geojobs.endpoint.rest.validator.CreateFullDetectionValidator;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.job.model.JobStatus;
-import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.model.page.BoundedPageSize;
 import app.bpartners.geojobs.model.page.PageFromOne;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.service.ParcelService;
+import app.bpartners.geojobs.service.ZoneService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
 import java.util.List;
@@ -57,7 +57,8 @@ public class ZoneDetectionController {
   private final StatusMapper<JobStatus> jobStatusMapper;
   private final EventProducer eventProducer;
   private final GeoJsonConversionInitiationService geoJsonConversionInitiationService;
-  private final CommunityFullDetectionAuthorizer communityFullDetectionAuthorizer;
+  private final ZoneService zoneService;
+  private final CreateFullDetectionValidator fullDetectionValidator;
 
   @PutMapping("/detectionJobs/{id}/taskFiltering")
   public List<FilteredDetectionJob> filteredDetectionJobs(@PathVariable String id) {
@@ -159,7 +160,7 @@ public class ZoneDetectionController {
   @PutMapping("/fullDetection")
   public FullDetectedZone processFullDetection(
       @RequestBody CreateFullDetection createFullDetection) {
-    communityFullDetectionAuthorizer.accept(createFullDetection);
-    throw new NotImplementedException("Full Detection is still in development");
+    fullDetectionValidator.accept(createFullDetection);
+    return zoneService.processTilingAndDetection(createFullDetection);
   }
 }
