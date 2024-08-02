@@ -11,7 +11,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder(toBuilder = true)
 @Data
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = false)
 @ToString
 public class ZoneTilingJobWithoutTasksCreated extends PojaEvent {
   @JsonProperty("originalJob")

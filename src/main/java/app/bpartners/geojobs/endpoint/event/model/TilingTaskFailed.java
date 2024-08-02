@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.endpoint.event.model;
 
+import app.bpartners.geojobs.endpoint.rest.model.CreateFullDetection;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import java.time.Duration;
 import javax.annotation.processing.Generated;
@@ -20,6 +21,7 @@ import lombok.ToString;
 public class TilingTaskFailed extends PojaEvent {
   private TilingTask task;
   private int attemptNb;
+  private CreateFullDetection createFullDetection;
 
   @Override
   public Duration maxConsumerDuration() {

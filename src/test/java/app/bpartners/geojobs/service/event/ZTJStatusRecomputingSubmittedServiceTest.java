@@ -14,10 +14,13 @@ import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.job.repository.TaskRepository;
 import app.bpartners.geojobs.job.service.TaskStatusService;
+import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
+import app.bpartners.geojobs.service.ZoneService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -26,9 +29,16 @@ public class ZTJStatusRecomputingSubmittedServiceTest {
   EventProducer eventProducerMock = mock();
   TaskStatusService<TilingTask> taskStatusServiceMock = mock();
   TaskRepository<TilingTask> taskRepositoryMock = mock();
+  ZoneTilingJobRepository zoneTilingJobRepository = mock();
+  ZoneService zoneService = mock();
   ZTJStatusRecomputingSubmittedService subject =
       new ZTJStatusRecomputingSubmittedService(
-          tilingJobServiceMock, eventProducerMock, taskStatusServiceMock, taskRepositoryMock);
+          tilingJobServiceMock,
+          eventProducerMock,
+          taskStatusServiceMock,
+          taskRepositoryMock,
+          zoneTilingJobRepository,
+          zoneService);
 
   @Test
   void accept_max_attempt_reached() {
@@ -44,7 +54,7 @@ public class ZTJStatusRecomputingSubmittedServiceTest {
                 aTilingTask(PROCESSING, UNKNOWN),
                 aTilingTask(FINISHED, FAILED),
                 aTilingTask(FINISHED, SUCCEEDED)));
-
+    when(zoneTilingJobRepository.findById(processingJob)).thenReturn(Optional.of(zoneTilingJob));
     subject.accept(new ZTJStatusRecomputingSubmitted(processingJob, 180L, 6));
 
     verify(eventProducerMock, times(0)).accept(any());
@@ -76,6 +86,7 @@ public class ZTJStatusRecomputingSubmittedServiceTest {
 
     when(tilingJobServiceMock.findById(pendingJobId)).thenReturn(zoneTilingJob);
     when(tilingJobServiceMock.recomputeStatus(zoneTilingJob)).thenReturn(zoneTilingJob);
+    when(zoneTilingJobRepository.findById(pendingJobId)).thenReturn(Optional.of(zoneTilingJob));
 
     subject.accept(new ZTJStatusRecomputingSubmitted(pendingJobId));
 
@@ -96,6 +107,8 @@ public class ZTJStatusRecomputingSubmittedServiceTest {
     when(tilingJobServiceMock.recomputeStatus(succeededJob)).thenReturn(succeededJob);
     when(tilingJobServiceMock.findById(failedJobId)).thenReturn(failedJob);
     when(tilingJobServiceMock.recomputeStatus(failedJob)).thenReturn(failedJob);
+    when(zoneTilingJobRepository.findById(succeededJobId)).thenReturn(Optional.of(succeededJob));
+    when(zoneTilingJobRepository.findById(failedJobId)).thenReturn(Optional.of(failedJob));
 
     subject.accept(new ZTJStatusRecomputingSubmitted(succeededJobId));
     subject.accept(new ZTJStatusRecomputingSubmitted(failedJobId));
@@ -111,6 +124,7 @@ public class ZTJStatusRecomputingSubmittedServiceTest {
     ZoneTilingJob job = aZTJ(jobId, PROCESSING, UNKNOWN);
     when(tilingJobServiceMock.findById(jobId)).thenReturn(job);
     when(tilingJobServiceMock.recomputeStatus(job)).thenReturn(job);
+    when(zoneTilingJobRepository.findById(jobId)).thenReturn(Optional.ofNullable(job));
 
     subject.accept(new ZTJStatusRecomputingSubmitted(jobId, 256L, 8));
 

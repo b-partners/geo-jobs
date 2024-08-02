@@ -6,10 +6,14 @@ import static java.util.UUID.randomUUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.model.ZoneTilingJobStatusChanged;
 import app.bpartners.geojobs.job.model.JobStatus;
+import app.bpartners.geojobs.repository.FullDetectionRepository;
+import app.bpartners.geojobs.repository.model.detection.FullDetection;
+import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.JobFinishedMailer;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
@@ -22,6 +26,7 @@ public class ZoneTilingJobStatusChangedIT extends FacadeIT {
   @Autowired private ZoneTilingJobStatusChangedService subject;
   @MockBean private JobFinishedMailer<ZoneTilingJob> mailer;
   @MockBean private ZoneDetectionJobService zdjService;
+  @MockBean private FullDetectionRepository fullDetectionRepository;
 
   @Test
   void send_email_ok() {
@@ -43,7 +48,10 @@ public class ZoneTilingJobStatusChangedIT extends FacadeIT {
             .build();
     var zoneTilingJobStatusChanged =
         ZoneTilingJobStatusChanged.builder().oldJob(new ZoneTilingJob()).newJob(newZtj).build();
-
+    when(zdjService.saveZDJFromZTJ(any()))
+        .thenReturn(ZoneDetectionJob.builder().id("zdj_id").build());
+    when(fullDetectionRepository.findByEndToEndId(any()))
+        .thenReturn(FullDetection.builder().build());
     subject.accept(zoneTilingJobStatusChanged);
 
     verify(zdjService, times(1)).saveZDJFromZTJ(zoneTilingJobStatusChanged.getNewJob());

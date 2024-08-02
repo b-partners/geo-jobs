@@ -9,6 +9,7 @@ import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.*;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectConfigurationMapper;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.Task;
@@ -43,6 +44,7 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
   private final TilingTaskRepository tilingTaskRepository;
   private final HumanDetectionJobRepository humanDetectionJobRepository;
   private final ZoneDetectionJobRepository zoneDetectionJobRepository;
+  private final DetectableObjectConfigurationMapper objectConfigurationMapper;
 
   public ZoneDetectionJobService(
       JpaRepository<ZoneDetectionJob, String> repository,
@@ -54,7 +56,8 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
       DetectableObjectConfigurationRepository objectConfigurationRepository,
       HumanDetectionJobRepository humanDetectionJobRepository,
       ZoneDetectionJobRepository zoneDetectionJobRepository,
-      TaskStatisticRepository taskStatisticRepository) {
+      TaskStatisticRepository taskStatisticRepository,
+      DetectableObjectConfigurationMapper objectConfigurationMapper) {
     super(
         repository,
         jobStatusRepository,
@@ -67,6 +70,20 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
     this.objectConfigurationRepository = objectConfigurationRepository;
     this.humanDetectionJobRepository = humanDetectionJobRepository;
     this.zoneDetectionJobRepository = zoneDetectionJobRepository;
+    this.objectConfigurationMapper = objectConfigurationMapper;
+  }
+
+  @Transactional
+  public ZoneDetectionJob processZDJ(
+      String jobId,
+      List<app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration>
+          detectableObjectConfigurations) {
+    List<app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration>
+        configurations =
+            detectableObjectConfigurations.stream()
+                .map(objectConf -> objectConfigurationMapper.toDomain(jobId, objectConf))
+                .toList();
+    return fireTasks(jobId, configurations);
   }
 
   @Transactional
@@ -348,12 +365,13 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
   }
 
   @Transactional
-  public void saveZDJFromZTJ(ZoneTilingJob job) {
+  public ZoneDetectionJob saveZDJFromZTJ(ZoneTilingJob job) {
     var zoneDetectionJob = detectionMapper.fromTilingJob(job);
     var tilingTasks = tilingTaskRepository.findAllByJobId(job.getId());
 
     var savedZDJ = saveWithTasks(tilingTasks, zoneDetectionJob);
-    repository.save(savedZDJ.toBuilder().id(randomUUID().toString()).detectionType(HUMAN).build());
+    return repository.save(
+        savedZDJ.toBuilder().id(randomUUID().toString()).detectionType(HUMAN).build());
   }
 
   @Transactional

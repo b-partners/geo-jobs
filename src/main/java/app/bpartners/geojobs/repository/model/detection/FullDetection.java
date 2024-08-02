@@ -3,6 +3,7 @@ package app.bpartners.geojobs.repository.model.detection;
 import static org.hibernate.type.SqlTypes.JSON;
 
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -27,9 +28,15 @@ import org.hibernate.annotations.JdbcTypeCode;
 public class FullDetection {
   @Id private String id;
   private String endToEndId;
-  private String geoJsonS3FileKey;
-  private String zDJId;
-  private String zTJId;
+
+  @Column(name = "geojson_s3_file_key")
+  private String geojsonS3FileKey;
+
+  @Column(name = "zdj_id")
+  private String zdjId;
+
+  @Column(name = "ztj_id")
+  private String ztjId;
 
   @JdbcTypeCode(JSON)
   private DetectableObjectConfiguration detectableObjectConfiguration;
