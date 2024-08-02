@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service;
 import static app.bpartners.geojobs.endpoint.rest.model.JobTypes.MACHINE_DETECTION;
 import static app.bpartners.geojobs.endpoint.rest.model.JobTypes.TILING;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
+import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static app.bpartners.geojobs.service.tiling.ZoneTilingJobService.getTilingTasks;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
@@ -112,7 +113,7 @@ public class ZoneService {
 
   public void processZoneDetectionJob(CreateFullDetection zoneToDetect, ZoneTilingJob job) {
     String ZTJId = job.getId();
-    ZoneDetectionJob zoneDetectionJob = zoneDetectionJobRepository.findByZoneTilingJobId(ZTJId);
+    ZoneDetectionJob zoneDetectionJob = getMachineZdjByZtjId(ZTJId);
     FullDetection fullDetection =
         fullDetectionRepository.findByEndToEndId(zoneToDetect.getEndToEndId());
     detectionjobValidator.accept(zoneDetectionJob.getId());
@@ -135,6 +136,19 @@ public class ZoneService {
     if (!processedZDJ.isSucceeded()) {
       eventProducer.accept(List.of(new ZDJStatusRecomputingSubmitted(processedZDJ.getId())));
     }
+  }
+
+  private ZoneDetectionJob getMachineZdjByZtjId(String ztjId) {
+    return zoneDetectionJobRepository.findAllByZoneTilingJob_Id(ztjId).stream()
+        .filter(dJob -> MACHINE.equals(dJob.getDetectionType()))
+        .findAny()
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    "ZoneTilingJob(id="
+                        + ztjId
+                        + ") is not associated to any"
+                        + " ZoneDetectionJob.type=MACHINE"));
   }
 
   private String generatePresignedUrl(String fileKey) {
