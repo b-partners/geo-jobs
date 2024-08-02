@@ -93,8 +93,7 @@ public class ImportedZoneTilingJobSavedService implements Consumer<ImportedZoneT
       List<S3Object> s3Objects, BucketSeparatorType bucketSeparatorType) {
     log.info("Object keys found: {}", s3Objects.stream().map(S3Object::key).toList());
     var tiles =
-        s3Objects.subList(1, s3Objects.size())
-                .stream()
+        s3Objects.subList(1, s3Objects.size()).stream()
             .map(s3Object -> mapFromKey(s3Object.key(), bucketSeparatorType))
             .toList();
     Map<Integer, List<Tile>> groupedByX =
