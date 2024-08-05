@@ -125,6 +125,7 @@ public class ZoneService {
     List<DetectableObjectConfiguration> detectableObjectConfigurations =
         List.of(
             new DetectableObjectConfiguration()
+                .bucketStorageName(zoneToDetect.getBucketStorage())
                 .type(detectableObjectType)
                 .confidence(zoneToDetect.getConfidence()));
     fullDetection.setDetectableObjectConfiguration(detectableObjectConfigurations.getFirst());

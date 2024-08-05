@@ -1026,6 +1026,8 @@ components:
           type: number
         endToEndId:
           type: string
+        bucketStorage:
+          type: string
     JobTypes:
       enum:
         - MACHINE_DETECTION

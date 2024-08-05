@@ -3,17 +3,20 @@ package app.bpartners.geojobs.unit;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.LINE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.ROOF;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectConfigurationMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType;
+import app.bpartners.geojobs.file.BucketConf;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
 
-class DetectableObjectConfigurationMapperTest {
+class DetectableObjectConfigufrationMapperTest {
+  BucketConf bucketConf = mock();
   DetectableObjectConfigurationMapper subject =
-      new DetectableObjectConfigurationMapper(new DetectableObjectTypeMapper());
+      new DetectableObjectConfigurationMapper(new DetectableObjectTypeMapper(), bucketConf);
 
   @Test
   void to_rest_ok() {
