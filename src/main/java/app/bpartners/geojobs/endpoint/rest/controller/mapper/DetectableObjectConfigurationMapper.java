@@ -2,6 +2,7 @@ package app.bpartners.geojobs.endpoint.rest.controller.mapper;
 
 import static java.util.UUID.randomUUID;
 
+import app.bpartners.geojobs.file.BucketConf;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import java.math.BigDecimal;
 import java.util.Objects;
@@ -12,7 +13,7 @@ import org.springframework.stereotype.Component;
 @AllArgsConstructor
 public class DetectableObjectConfigurationMapper {
   private final DetectableObjectTypeMapper typeMapper;
-  public final String BUCKET_STORAGE_NAME = "full-detection-images";
+  private BucketConf bucketConf;
   public final int DEFAULT_CONFIDENCE = 1;
 
   public DetectableObjectConfiguration toDomain(
@@ -23,7 +24,9 @@ public class DetectableObjectConfigurationMapper {
         .objectType(typeMapper.toDomain(Objects.requireNonNull(rest.getType())))
         .confidence(rest.getConfidence() != null ? rest.getConfidence().doubleValue() : 1)
         .bucketStorageName(
-            rest.getBucketStorageName() != null ? rest.getBucketStorageName() : BUCKET_STORAGE_NAME)
+            rest.getBucketStorageName() != null
+                ? rest.getBucketStorageName()
+                : bucketConf.getBucketName())
         .build();
   }
 
