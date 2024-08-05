@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.endpoint.rest.controller.mapper;
 
-import static java.time.LocalDate.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
@@ -24,9 +23,7 @@ public class DetectableObjectConfigurationMapper {
         .objectType(typeMapper.toDomain(Objects.requireNonNull(rest.getType())))
         .confidence(rest.getConfidence() != null ? rest.getConfidence().doubleValue() : 1)
         .bucketStorageName(
-            rest.getBucketStorageName() != null
-                ? rest.getBucketStorageName()
-                : BUCKET_STORAGE_NAME)
+            rest.getBucketStorageName() != null ? rest.getBucketStorageName() : BUCKET_STORAGE_NAME)
         .build();
   }
 

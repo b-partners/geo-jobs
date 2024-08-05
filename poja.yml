@@ -1,6 +1,6 @@
 app_name: geo-jobs
 aurora_auto_pause: 'true'
-aurora_max_capacity: 64
+aurora_max_capacity: 32
 aurora_min_capacity: 2
 aurora_scale_point: 60
 aurora_sleep: 900
@@ -44,4 +44,4 @@ worker_batch: 1
 worker_function_1_timeout: 600
 worker_function_2_timeout: 600
 worker_memory: 512
-worker_reserved_concurrent_executions_nb: 60
+worker_reserved_concurrent_executions_nb: 1250
