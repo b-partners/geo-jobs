@@ -19,22 +19,50 @@ import org.springframework.stereotype.Component;
 public class FileUnzipper implements BiFunction<ZipFile, String, Path> {
   private final FileWriter fileWriter;
 
+  private static final int THRESHOLD_ENTRIES = 10000;
+  private static final int THRESHOLD_SIZE = 1000000000; // 1 GB
+  private static final double THRESHOLD_RATIO = 10.0;
+
   @Override
   public Path apply(ZipFile zipFile, String mainDir) {
     try {
       Path extractDirectoryPath = Files.createTempDirectory(mainDir);
       Enumeration<? extends ZipEntry> entries = zipFile.entries();
 
+      int totalEntryArchive = 0;
+      int totalSizeArchive = 0;
+
       while (entries.hasMoreElements()) {
         ZipEntry entry = entries.nextElement();
         if (!entry.isDirectory()) {
+          totalEntryArchive++;
           // Ensure the target file is within the intended directory
           Path targetFile = extractDirectoryPath.resolve(entry.getName()).normalize();
           if (!targetFile.startsWith(extractDirectoryPath)) {
             throw new IOException("Entry is outside of the target dir: " + entry.getName());
           }
+          if (totalEntryArchive > THRESHOLD_ENTRIES) {
+            throw new IOException("Too many entries in the archive, potential Zip Bomb Attack");
+          }
 
           try (InputStream is = zipFile.getInputStream(entry)) {
+            int totalSizeEntry = 0;
+            byte[] buffer = new byte[2048];
+            int nBytes;
+            while ((nBytes = is.read(buffer)) > 0) {
+              totalSizeEntry += nBytes;
+              totalSizeArchive += nBytes;
+              double compressionRatio = (double) totalSizeEntry / entry.getCompressedSize();
+
+              if (compressionRatio > THRESHOLD_RATIO) {
+                throw new IOException(
+                    "Suspicious compression ratio detected, potential Zip Bomb Attack");
+              }
+              if (totalSizeArchive > THRESHOLD_SIZE) {
+                throw new IOException(
+                    "Total uncompressed size exceeds limit, potential Zip Bomb Attack");
+              }
+            }
             String entryParentPath = getFolderPath(entry);
             String entryFilename = getFilename(entry);
             String extensionlessEntryFilename = stripExtension(entryFilename);
