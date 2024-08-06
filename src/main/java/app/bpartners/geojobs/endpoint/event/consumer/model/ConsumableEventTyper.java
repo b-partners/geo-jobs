@@ -48,7 +48,7 @@ public class ConsumableEventTyper implements Function<List<SQSMessage>, List<Con
       String sqsQueueUrl = typedEvent.payload().getEventStack().getSqsQueueUrl();
       ConsumableEvent consumableEvent =
           new ConsumableEvent(
-              typedEvent, acknowledger(message, sqsQueueUrl), failer(message, sqsQueueUrl));
+              typedEvent, acknowledger(message, sqsQueueUrl), visibilityChanger(message, sqsQueueUrl));
       res.add(consumableEvent);
     }
     return res;
@@ -81,7 +81,7 @@ public class ConsumableEventTyper implements Function<List<SQSMessage>, List<Con
     };
   }
 
-  private Runnable failer(SQSMessage message, String sqsQueueUrl) {
+  private Runnable visibilityChanger(SQSMessage message, String sqsQueueUrl) {
     return () -> {
       var newRandomVisibility =
           (int) (toTypedEvent(message).payload()).randomVisibilityTimeout().toSeconds();
