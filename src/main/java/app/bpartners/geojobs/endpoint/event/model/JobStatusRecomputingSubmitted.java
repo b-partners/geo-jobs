@@ -13,7 +13,6 @@ public class JobStatusRecomputingSubmitted extends PojaEvent {
   protected String jobId;
   protected long maxConsumerDurationValue;
   protected long maxConsumerBackoffBetweenRetriesDurationValue;
-  protected int attemptNb;
 
   @Override
   public Duration maxConsumerDuration() {

@@ -14,16 +14,6 @@ public class ParcelDetectionStatusRecomputingSubmitted extends JobStatusRecomput
     this.jobId = parcelDetectionJobId;
     this.maxConsumerBackoffBetweenRetriesDurationValue = DEFAULT_BACKOFF_VALUE;
     this.maxConsumerDurationValue = MAX_CONSUMER_DURATION_VALUE;
-    this.attemptNb = 0;
-  }
-
-  public ParcelDetectionStatusRecomputingSubmitted(
-      String jobId, Long maxConsumerBackoffBetweenRetriesDurationValue, Integer attemptNb) {
-    super(
-        jobId,
-        MAX_CONSUMER_DURATION_VALUE,
-        maxConsumerBackoffBetweenRetriesDurationValue,
-        attemptNb);
   }
 
   @Override

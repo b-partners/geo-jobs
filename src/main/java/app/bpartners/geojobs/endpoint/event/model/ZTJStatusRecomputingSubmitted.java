@@ -18,7 +18,6 @@ public class ZTJStatusRecomputingSubmitted extends JobStatusRecomputingSubmitted
     this.jobId = jobId;
     this.maxConsumerBackoffBetweenRetriesDurationValue = DEFAULT_BACK_OFF_VALUE;
     this.maxConsumerDurationValue = MAX_CONSUMER_DURATION_VALUE;
-    this.attemptNb = 0;
     this.createFullDetection = createFullDetection;
   }
 
@@ -26,7 +25,6 @@ public class ZTJStatusRecomputingSubmitted extends JobStatusRecomputingSubmitted
     this.jobId = jobId;
     this.maxConsumerBackoffBetweenRetriesDurationValue = DEFAULT_BACK_OFF_VALUE;
     this.maxConsumerDurationValue = MAX_CONSUMER_DURATION_VALUE;
-    this.attemptNb = 0;
     this.createFullDetection = new CreateFullDetection();
   }
 
@@ -35,8 +33,7 @@ public class ZTJStatusRecomputingSubmitted extends JobStatusRecomputingSubmitted
     super(
         jobId,
         MAX_CONSUMER_DURATION_VALUE,
-        maxConsumerBackoffBetweenRetriesDurationValue,
-        attemptNb);
+        maxConsumerBackoffBetweenRetriesDurationValue);
     this.createFullDetection = new CreateFullDetection();
   }
 

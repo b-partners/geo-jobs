@@ -14,7 +14,6 @@ public class ZDJStatusRecomputingSubmitted extends JobStatusRecomputingSubmitted
     this.jobId = jobId;
     this.maxConsumerBackoffBetweenRetriesDurationValue = DEFAULT_BACK_OFF_VALUE;
     this.maxConsumerDurationValue = MAX_CONSUMER_DURATION_VALUE;
-    this.attemptNb = 0;
   }
 
   public ZDJStatusRecomputingSubmitted(
@@ -22,8 +21,7 @@ public class ZDJStatusRecomputingSubmitted extends JobStatusRecomputingSubmitted
     super(
         jobId,
         MAX_CONSUMER_DURATION_VALUE,
-        maxConsumerBackoffBetweenRetriesDurationValue,
-        attemptNb);
+        maxConsumerBackoffBetweenRetriesDurationValue);
   }
 
   @Override
