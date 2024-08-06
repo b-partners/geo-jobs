@@ -1,33 +1,31 @@
 package app.bpartners.geojobs.service.event;
 
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static java.util.UUID.randomUUID;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.ZDJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.job.model.JobStatus;
-import app.bpartners.geojobs.job.model.Status;
+import app.bpartners.geojobs.job.model.Status.HealthStatus;
+import app.bpartners.geojobs.job.model.Status.ProgressionStatus;
 import app.bpartners.geojobs.job.service.JobAnnotationService;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.service.AnnotationRetrievingJobService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
 import java.util.List;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 
 public class ZDJStatusRecomputingSubmittedServiceTest {
   ZoneDetectionJobService jobServiceMock = mock();
-  EventProducer eventProducerMock = mock();
   AnnotationRetrievingJobService annotationRetrievingJobServiceMock = mock();
   GeoJsonConversionInitiationService geoJsonConversionInitiationServiceMock = mock();
   ZoneDetectionJobService zoneDetectionJobServiceMock = mock();
@@ -35,31 +33,41 @@ public class ZDJStatusRecomputingSubmittedServiceTest {
   ZDJStatusRecomputingSubmittedService subject =
       new ZDJStatusRecomputingSubmittedService(
           jobServiceMock,
+          mock(),
+          mock(),
           annotationRetrievingJobServiceMock,
           geoJsonConversionInitiationServiceMock,
           jobAnnotationServiceMock);
 
-  @Disabled("TODO")
   @Test
-  void accept_ok() {
-    String jobId = "jobId";
-    ZoneDetectionJob job = aZDJ(jobId, PROCESSING, UNKNOWN);
+  void processing_after_recomputing_throws_exception() {
+    var jobId = "jobId";
+    var job = aZDJ(jobId, PROCESSING, UNKNOWN);
     when(jobServiceMock.findById(jobId)).thenReturn(job);
     when(jobServiceMock.recomputeStatus(job)).thenReturn(job);
     when(annotationRetrievingJobServiceMock.getByDetectionJobId(any())).thenReturn(List.of());
-
     when(zoneDetectionJobServiceMock.findById(jobId)).thenReturn(job);
-    assertDoesNotThrow(() -> subject.accept(new ZDJStatusRecomputingSubmitted(jobId)));
 
-    verify(jobServiceMock, times(2)).findById(jobId);
+    assertThrows(
+        RuntimeException.class, () -> subject.accept(new ZDJStatusRecomputingSubmitted(jobId)));
     verify(jobServiceMock, times(1)).recomputeStatus(job);
-    ArgumentCaptor<List<ZDJStatusRecomputingSubmitted>> listCaptor =
-        ArgumentCaptor.forClass(List.class);
-    verify(eventProducerMock, times(1)).accept(listCaptor.capture());
+  }
+
+  @Test
+  void finished_after_recomputing_does_not_throw_exception() {
+    var jobId = "jobId";
+    var job = aZDJ(jobId, FINISHED, UNKNOWN);
+    when(jobServiceMock.findById(jobId)).thenReturn(job);
+    when(jobServiceMock.recomputeStatus(job)).thenReturn(job);
+    when(annotationRetrievingJobServiceMock.getByDetectionJobId(any())).thenReturn(List.of());
+    when(zoneDetectionJobServiceMock.findById(jobId)).thenReturn(job);
+
+    subject.accept(new ZDJStatusRecomputingSubmitted(jobId));
+    verify(jobServiceMock, times(0)).recomputeStatus(job);
   }
 
   private static ZoneDetectionJob aZDJ(
-      String jobId, Status.ProgressionStatus progressionStatus, Status.HealthStatus healthStatus) {
+      String jobId, ProgressionStatus progressionStatus, HealthStatus healthStatus) {
     return ZoneDetectionJob.builder()
         .id(jobId)
         .zoneName("dummy")

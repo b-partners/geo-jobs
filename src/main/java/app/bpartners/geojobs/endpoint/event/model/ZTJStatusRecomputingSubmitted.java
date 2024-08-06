@@ -29,7 +29,7 @@ public class ZTJStatusRecomputingSubmitted extends JobStatusRecomputingSubmitted
   }
 
   public ZTJStatusRecomputingSubmitted(
-      String jobId, Long maxConsumerBackoffBetweenRetriesDurationValue, Integer attemptNb) {
+      String jobId, Long maxConsumerBackoffBetweenRetriesDurationValue) {
     super(jobId, MAX_CONSUMER_DURATION_VALUE, maxConsumerBackoffBetweenRetriesDurationValue);
     this.createFullDetection = new CreateFullDetection();
   }

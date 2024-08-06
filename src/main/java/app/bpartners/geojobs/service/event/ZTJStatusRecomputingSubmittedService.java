@@ -3,6 +3,8 @@ package app.bpartners.geojobs.service.event;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 
 import app.bpartners.geojobs.endpoint.event.model.ZTJStatusRecomputingSubmitted;
+import app.bpartners.geojobs.job.repository.TaskRepository;
+import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
@@ -24,16 +26,18 @@ public class ZTJStatusRecomputingSubmittedService
 
   public ZTJStatusRecomputingSubmittedService(
       ZoneTilingJobService jobService,
+      TaskStatusService<TilingTask> taskStatusService,
+      TaskRepository<TilingTask> taskRepository,
       ZoneTilingJobRepository zoneTilingJobRepository,
       ZoneService zoneService) {
     this.zoneTilingJobRepository = zoneTilingJobRepository;
     this.zoneService = zoneService;
-    this.service = new JobStatusRecomputingSubmittedService<>(jobService);
+    this.service =
+        new JobStatusRecomputingSubmittedService<>(jobService, taskStatusService, taskRepository);
   }
 
   @Override
   public void accept(ZTJStatusRecomputingSubmitted event) {
-
     service.accept(event);
     Optional<ZoneTilingJob> zoneTilingJob = zoneTilingJobRepository.findById(event.getJobId());
     if (zoneTilingJob.isEmpty()) {

@@ -48,7 +48,9 @@ public class ConsumableEventTyper implements Function<List<SQSMessage>, List<Con
       String sqsQueueUrl = typedEvent.payload().getEventStack().getSqsQueueUrl();
       ConsumableEvent consumableEvent =
           new ConsumableEvent(
-              typedEvent, acknowledger(message, sqsQueueUrl), visibilityChanger(message, sqsQueueUrl));
+              typedEvent,
+              acknowledger(message, sqsQueueUrl),
+              visibilityChanger(message, sqsQueueUrl));
       res.add(consumableEvent);
     }
     return res;

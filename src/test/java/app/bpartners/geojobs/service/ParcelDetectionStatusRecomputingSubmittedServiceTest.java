@@ -26,7 +26,8 @@ public class ParcelDetectionStatusRecomputingSubmittedServiceTest {
   ParcelDetectionJobService parcelDetectionJobServiceMock = mock();
   EventProducer eventProducerMock = mock();
   ParcelDetectionStatusRecomputingSubmittedService subject =
-      new ParcelDetectionStatusRecomputingSubmittedService(parcelDetectionJobServiceMock);
+      new ParcelDetectionStatusRecomputingSubmittedService(
+          parcelDetectionJobServiceMock, mock(), mock());
 
   @Disabled("TODO")
   @Test

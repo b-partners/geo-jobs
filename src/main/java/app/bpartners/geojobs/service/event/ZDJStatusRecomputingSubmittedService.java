@@ -9,10 +9,12 @@ import static java.util.UUID.randomUUID;
 import app.bpartners.geojobs.endpoint.event.model.ZDJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.service.JobAnnotationService;
+import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;
 import app.bpartners.geojobs.repository.model.AnnotationRetrievingJob;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.service.AnnotationRetrievingJobService;
+import app.bpartners.geojobs.service.detection.ParcelDetectionTaskStatusService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
 import java.util.function.Consumer;
@@ -34,11 +36,14 @@ public class ZDJStatusRecomputingSubmittedService
 
   public ZDJStatusRecomputingSubmittedService(
       ZoneDetectionJobService jobService,
+      ParcelDetectionTaskStatusService taskStatusService,
+      ParcelDetectionTaskRepository taskRepository,
       AnnotationRetrievingJobService annotationRetrievingJobService,
       GeoJsonConversionInitiationService geoJsonConversionInitiationService,
       JobAnnotationService jobAnnotationService) {
     this.jobAnnotationService = jobAnnotationService;
-    this.service = new JobStatusRecomputingSubmittedService<>(jobService);
+    this.service =
+        new JobStatusRecomputingSubmittedService<>(jobService, taskStatusService, taskRepository);
     this.zoneDetectionJobService = jobService;
     this.annotationRetrievingJobService = annotationRetrievingJobService;
     this.geoJsonConversionInitiationService = geoJsonConversionInitiationService;
