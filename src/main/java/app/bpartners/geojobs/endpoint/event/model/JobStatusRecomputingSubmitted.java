@@ -1,7 +1,12 @@
 package app.bpartners.geojobs.endpoint.event.model;
 
 import java.time.Duration;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -21,6 +26,11 @@ public class JobStatusRecomputingSubmitted extends PojaEvent {
 
   @Override
   public Duration maxConsumerBackoffBetweenRetries() {
-    return Duration.ofSeconds(maxConsumerBackoffBetweenRetriesDurationValue);
+    // u_n = u_0 * q^n
+    // u_0: maxConsumerBackoffBetweenRetriesDurationValue
+    // q: 2
+    // n: attemptNb()
+    return Duration.ofSeconds(
+        maxConsumerBackoffBetweenRetriesDurationValue * (int) Math.pow(2, getAttemptNb()));
   }
 }

@@ -6,10 +6,15 @@ import app.bpartners.geojobs.PojaGenerated;
 import app.bpartners.geojobs.endpoint.event.EventStack;
 import java.io.Serializable;
 import java.time.Duration;
+import lombok.Getter;
+import lombok.Setter;
 
 @PojaGenerated
 @SuppressWarnings("all")
 public abstract class PojaEvent implements Serializable {
+
+  @Getter @Setter protected int attemptNb;
+
   public abstract Duration maxConsumerDuration();
 
   private Duration randomConsumerBackoffBetweenRetries() {

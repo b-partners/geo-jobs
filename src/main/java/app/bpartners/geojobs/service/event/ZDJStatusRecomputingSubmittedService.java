@@ -1,5 +1,11 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
+import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
+import static java.time.Instant.now;
+import static java.util.UUID.randomUUID;
+
 import app.bpartners.geojobs.endpoint.event.model.ZDJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.service.JobAnnotationService;
@@ -9,16 +15,9 @@ import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.service.AnnotationRetrievingJobService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
+import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
-import java.util.function.Consumer;
-
-import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
-import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
-import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
-import static java.time.Instant.now;
-import static java.util.UUID.randomUUID;
 
 @Service
 @Slf4j
@@ -26,7 +25,7 @@ public class ZDJStatusRecomputingSubmittedService
     implements Consumer<ZDJStatusRecomputingSubmitted> {
   private static final double DEFAULT_CONFIDENCE = 0.8;
   private final JobStatusRecomputingSubmittedService<
-      ZoneDetectionJob, ParcelDetectionTask, ZDJStatusRecomputingSubmitted>
+          ZoneDetectionJob, ParcelDetectionTask, ZDJStatusRecomputingSubmitted>
       service;
   private final AnnotationRetrievingJobService annotationRetrievingJobService;
   private final ZoneDetectionJobService zoneDetectionJobService;
@@ -39,8 +38,7 @@ public class ZDJStatusRecomputingSubmittedService
       GeoJsonConversionInitiationService geoJsonConversionInitiationService,
       JobAnnotationService jobAnnotationService) {
     this.jobAnnotationService = jobAnnotationService;
-    this.service =
-        new JobStatusRecomputingSubmittedService<>(jobService);
+    this.service = new JobStatusRecomputingSubmittedService<>(jobService);
     this.zoneDetectionJobService = jobService;
     this.annotationRetrievingJobService = annotationRetrievingJobService;
     this.geoJsonConversionInitiationService = geoJsonConversionInitiationService;

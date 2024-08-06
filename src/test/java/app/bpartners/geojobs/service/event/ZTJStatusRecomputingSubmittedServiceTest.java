@@ -1,24 +1,5 @@
 package app.bpartners.geojobs.service.event;
 
-import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.ZTJStatusRecomputingSubmitted;
-import app.bpartners.geojobs.job.model.JobStatus;
-import app.bpartners.geojobs.job.model.Status;
-import app.bpartners.geojobs.job.model.TaskStatus;
-import app.bpartners.geojobs.job.repository.TaskRepository;
-import app.bpartners.geojobs.job.service.TaskStatusService;
-import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
-import app.bpartners.geojobs.repository.model.tiling.TilingTask;
-import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
-import app.bpartners.geojobs.service.ZoneService;
-import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-
-import java.util.List;
-import java.util.Optional;
-
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.FAILED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
@@ -35,6 +16,24 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.ZTJStatusRecomputingSubmitted;
+import app.bpartners.geojobs.job.model.JobStatus;
+import app.bpartners.geojobs.job.model.Status;
+import app.bpartners.geojobs.job.model.TaskStatus;
+import app.bpartners.geojobs.job.repository.TaskRepository;
+import app.bpartners.geojobs.job.service.TaskStatusService;
+import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
+import app.bpartners.geojobs.repository.model.tiling.TilingTask;
+import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
+import app.bpartners.geojobs.service.ZoneService;
+import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
+import java.util.List;
+import java.util.Optional;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+
 public class ZTJStatusRecomputingSubmittedServiceTest {
   ZoneTilingJobService tilingJobServiceMock = mock();
   EventProducer eventProducerMock = mock();
@@ -44,9 +43,7 @@ public class ZTJStatusRecomputingSubmittedServiceTest {
   ZoneService zoneService = mock();
   ZTJStatusRecomputingSubmittedService subject =
       new ZTJStatusRecomputingSubmittedService(
-          tilingJobServiceMock,
-          zoneTilingJobRepository,
-          zoneService);
+          tilingJobServiceMock, zoneTilingJobRepository, zoneService);
 
   @Disabled("TODO")
   @Test

@@ -1,18 +1,5 @@
 package app.bpartners.geojobs.service;
 
-import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.ParcelDetectionStatusRecomputingSubmitted;
-import app.bpartners.geojobs.job.model.JobStatus;
-import app.bpartners.geojobs.job.model.Status;
-import app.bpartners.geojobs.repository.model.detection.ParcelDetectionJob;
-import app.bpartners.geojobs.service.detection.ParcelDetectionJobService;
-import app.bpartners.geojobs.service.event.ParcelDetectionStatusRecomputingSubmittedService;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-
-import java.util.List;
-
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
 import static java.util.UUID.randomUUID;
@@ -22,13 +9,24 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.ParcelDetectionStatusRecomputingSubmitted;
+import app.bpartners.geojobs.job.model.JobStatus;
+import app.bpartners.geojobs.job.model.Status;
+import app.bpartners.geojobs.repository.model.detection.ParcelDetectionJob;
+import app.bpartners.geojobs.service.detection.ParcelDetectionJobService;
+import app.bpartners.geojobs.service.event.ParcelDetectionStatusRecomputingSubmittedService;
+import java.util.List;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+
 public class ParcelDetectionStatusRecomputingSubmittedServiceTest {
   private static final String JOB_ID = "jobId";
   ParcelDetectionJobService parcelDetectionJobServiceMock = mock();
   EventProducer eventProducerMock = mock();
   ParcelDetectionStatusRecomputingSubmittedService subject =
-      new ParcelDetectionStatusRecomputingSubmittedService(
-          parcelDetectionJobServiceMock);
+      new ParcelDetectionStatusRecomputingSubmittedService(parcelDetectionJobServiceMock);
 
   @Disabled("TODO")
   @Test

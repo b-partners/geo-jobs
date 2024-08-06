@@ -18,10 +18,7 @@ public class ZDJStatusRecomputingSubmitted extends JobStatusRecomputingSubmitted
 
   public ZDJStatusRecomputingSubmitted(
       String jobId, Long maxConsumerBackoffBetweenRetriesDurationValue, Integer attemptNb) {
-    super(
-        jobId,
-        MAX_CONSUMER_DURATION_VALUE,
-        maxConsumerBackoffBetweenRetriesDurationValue);
+    super(jobId, MAX_CONSUMER_DURATION_VALUE, maxConsumerBackoffBetweenRetriesDurationValue);
   }
 
   @Override

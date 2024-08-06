@@ -1,23 +1,5 @@
 package app.bpartners.geojobs.service.event;
 
-import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.ZDJStatusRecomputingSubmitted;
-import app.bpartners.geojobs.job.model.JobStatus;
-import app.bpartners.geojobs.job.model.Status;
-import app.bpartners.geojobs.job.repository.TaskRepository;
-import app.bpartners.geojobs.job.service.JobAnnotationService;
-import app.bpartners.geojobs.job.service.TaskStatusService;
-import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
-import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
-import app.bpartners.geojobs.service.AnnotationRetrievingJobService;
-import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
-import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-
-import java.util.List;
-
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
@@ -28,6 +10,20 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.ZDJStatusRecomputingSubmitted;
+import app.bpartners.geojobs.job.model.JobStatus;
+import app.bpartners.geojobs.job.model.Status;
+import app.bpartners.geojobs.job.service.JobAnnotationService;
+import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
+import app.bpartners.geojobs.service.AnnotationRetrievingJobService;
+import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
+import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
+import java.util.List;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 public class ZDJStatusRecomputingSubmittedServiceTest {
   ZoneDetectionJobService jobServiceMock = mock();

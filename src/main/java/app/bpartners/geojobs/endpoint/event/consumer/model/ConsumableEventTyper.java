@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.endpoint.event.consumer.model;
 
+import static java.lang.Integer.parseInt;
+
 import app.bpartners.geojobs.PojaGenerated;
 import app.bpartners.geojobs.endpoint.event.EventConf;
 import app.bpartners.geojobs.endpoint.event.model.PojaEvent;
@@ -57,8 +59,14 @@ public class ConsumableEventTyper implements Function<List<SQSMessage>, List<Con
     TypeReference<Map<String, Object>> typeRef = new TypeReference<>() {};
     Map<String, Object> body = om.readValue(message.getBody(), typeRef);
     String typeName = body.get(DETAIL_TYPE_PROPERTY).toString();
-    return new TypedEvent(
-        typeName, (PojaEvent) om.convertValue(body.get(DETAIL_PROPERTY), Class.forName(typeName)));
+
+    var pojaEvent = (PojaEvent) om.convertValue(body.get(DETAIL_PROPERTY), Class.forName(typeName));
+
+    var sqsMessageAttributes = message.getAttributes();
+    log.info("SQSMessage.attributes : {} \n", sqsMessageAttributes);
+    pojaEvent.setAttemptNb(parseInt(sqsMessageAttributes.get("ApproximateReceiveCount")));
+
+    return new TypedEvent(typeName, pojaEvent);
   }
 
   private Runnable acknowledger(SQSMessage message, String sqsQueueUrl) {

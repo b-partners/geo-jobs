@@ -4,16 +4,15 @@ import app.bpartners.geojobs.endpoint.event.model.JobStatusRecomputingSubmitted;
 import app.bpartners.geojobs.job.model.Job;
 import app.bpartners.geojobs.job.model.Task;
 import app.bpartners.geojobs.job.service.JobService;
+import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.function.Consumer;
-
 @AllArgsConstructor
 @Slf4j
 public class JobStatusRecomputingSubmittedService<
-    J extends Job, T extends Task, E extends JobStatusRecomputingSubmitted>
+        J extends Job, T extends Task, E extends JobStatusRecomputingSubmitted>
     implements Consumer<E> {
 
   private JobService<T, J> jobService;
