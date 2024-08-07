@@ -8,6 +8,8 @@ import java.time.Duration;
 import javax.annotation.processing.Generated;
 import lombok.*;
 
+import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
+
 @Generated("EventBridge")
 @NoArgsConstructor
 @AllArgsConstructor
@@ -34,6 +36,6 @@ public class CreateAnnotatedTaskSubmitted extends PojaEvent {
 
   @Override
   public EventStack getEventStack() {
-    return EventStack.EVENT_STACK_2;
+    return EVENT_STACK_2;
   }
 }

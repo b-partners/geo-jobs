@@ -11,6 +11,8 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder(toBuilder = true)
@@ -51,6 +53,6 @@ public class AnnotationBatchRetrievingSubmitted extends PojaEvent {
 
   @Override
   public EventStack getEventStack() {
-    return EventStack.EVENT_STACK_2;
+    return EVENT_STACK_2;
   }
 }

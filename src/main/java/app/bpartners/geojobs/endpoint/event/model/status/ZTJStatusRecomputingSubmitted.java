@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
+
 @Data
 @EqualsAndHashCode(callSuper = false)
 @ToString
@@ -36,6 +38,6 @@ public class ZTJStatusRecomputingSubmitted extends JobStatusRecomputingSubmitted
 
   @Override
   public EventStack getEventStack() {
-    return EventStack.EVENT_STACK_2;
+    return EVENT_STACK_2;
   }
 }

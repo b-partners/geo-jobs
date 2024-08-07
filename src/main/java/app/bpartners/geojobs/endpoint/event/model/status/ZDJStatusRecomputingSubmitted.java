@@ -3,6 +3,8 @@ package app.bpartners.geojobs.endpoint.event.model.status;
 import app.bpartners.geojobs.endpoint.event.EventStack;
 import lombok.*;
 
+import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
+
 @Data
 @EqualsAndHashCode
 @ToString
@@ -23,6 +25,6 @@ public class ZDJStatusRecomputingSubmitted extends JobStatusRecomputingSubmitted
 
   @Override
   public EventStack getEventStack() {
-    return EventStack.EVENT_STACK_2;
+    return EVENT_STACK_2;
   }
 }
