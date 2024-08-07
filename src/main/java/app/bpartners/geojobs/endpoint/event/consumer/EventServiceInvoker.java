@@ -13,6 +13,8 @@ import org.reflections.scanners.Scanners;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
+import static org.reflections.scanners.Scanners.SubTypes;
+
 @PojaGenerated
 @SuppressWarnings("all")
 @AllArgsConstructor
@@ -61,7 +63,7 @@ public class EventServiceInvoker implements Consumer<TypedEvent> {
   }
 
   private Set<Class<?>> getAllClasses(String packageName) {
-    var reflections = new Reflections(packageName, Scanners.SubTypes.filterResultsBy(s -> true));
+    var reflections = new Reflections(packageName, SubTypes.filterResultsBy(s -> true));
     return new HashSet<>(reflections.getSubTypesOf(Object.class));
   }
 }
