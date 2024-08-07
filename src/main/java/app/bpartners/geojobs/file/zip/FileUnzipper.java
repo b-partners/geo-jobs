@@ -4,7 +4,6 @@ import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.model.exception.ApiException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Enumeration;
@@ -26,7 +25,7 @@ public class FileUnzipper implements BiFunction<ZipFile, String, Path> {
   @Override
   public Path apply(ZipFile zipFile, String mainDir) {
     try {
-      Path extractDirectoryPath = Files.createTempDirectory(mainDir);
+      Path extractDirectoryPath = fileWriter.createSecureTempDirectory(mainDir);
       Enumeration<? extends ZipEntry> entries = zipFile.entries();
 
       int totalEntryArchive = 0;

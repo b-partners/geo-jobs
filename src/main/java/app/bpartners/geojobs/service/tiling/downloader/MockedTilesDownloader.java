@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.service.tiling.downloader;
 
-import static java.nio.file.Files.createTempDirectory;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.repository.model.ParcelContent;
@@ -19,6 +18,7 @@ import org.springframework.stereotype.Component;
 @ConditionalOnProperty(value = "tiles.downloader.mock.activated", havingValue = "true")
 public class MockedTilesDownloader extends FalliblyDurableMockedFunction<ParcelContent, File>
     implements TilesDownloader {
+  app.bpartners.geojobs.file.FileWriter fileWriter;
 
   public MockedTilesDownloader(
       @Value("${tiles.downloader.mock.maxCallDuration}") long maxCallDurationInMillis,
@@ -29,7 +29,7 @@ public class MockedTilesDownloader extends FalliblyDurableMockedFunction<ParcelC
   @SneakyThrows
   @Override
   protected File successfulMockedApply(ParcelContent parcelContent) {
-    var rootDir = createTempDirectory("tiles").toFile();
+    var rootDir = fileWriter.createSecureTempDirectory("tiles").toFile();
     var zoomAndXDir = new File(rootDir.getAbsolutePath() + "/20/1");
     zoomAndXDir.mkdirs();
 

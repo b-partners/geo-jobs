@@ -1,7 +1,6 @@
 package app.bpartners.geojobs.service.tiling.downloader;
 
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
-import static java.nio.file.Files.createTempFile;
 
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.zip.FileUnzipper;
@@ -130,7 +129,8 @@ public class HttpApiTilesDownloader implements TilesDownloader {
     serverInfo.put("parameter", serverParameter);
     serverInfo.put("concurrency", 1);
 
-    Path serverInfoPath = createTempFile(tempFileParcelPrefix(parcelContent) + "_server", "json");
+    Path serverInfoPath =
+        fileWriter.createTempFileSecurely(tempFileParcelPrefix(parcelContent) + "_server", "json");
     File file = serverInfoPath.toFile();
     om.writeValue(file, serverInfo);
 
@@ -150,7 +150,8 @@ public class HttpApiTilesDownloader implements TilesDownloader {
     featureCollection.put("type", "FeatureCollection");
     featureCollection.put("features", featuresList);
 
-    Path geojsonPath = createTempFile(tempFileParcelPrefix(parcelContent), "geojson");
+    Path geojsonPath =
+        fileWriter.createTempFileSecurely(tempFileParcelPrefix(parcelContent), "geojson");
     File geojsonFile = geojsonPath.toFile();
     om.writeValue(geojsonFile, featureCollection);
 

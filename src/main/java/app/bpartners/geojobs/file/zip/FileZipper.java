@@ -17,11 +17,12 @@ import org.springframework.stereotype.Component;
 public class FileZipper implements Function<List<File>, ZipFile> {
 
   public static final String ZIP_FILE_SUFFIX = ".zip";
+  private FileWriter fileWriter;
 
   @Override
   @SneakyThrows
   public ZipFile apply(List<File> files) {
-    File zipFile = File.createTempFile("zip-file-" + now(), ZIP_FILE_SUFFIX);
+    File zipFile = fileWriter.createTempFileSecurely("zip-file-" + now(), ZIP_FILE_SUFFIX).toFile();
     try (FileOutputStream fos = new FileOutputStream(zipFile);
         ZipOutputStream zos = new ZipOutputStream(fos)) {
       byte[] buffer = new byte[1024];

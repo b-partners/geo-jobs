@@ -1,11 +1,8 @@
 package app.bpartners.geojobs.file.bucket;
 
-import static java.io.File.createTempFile;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Component;
@@ -15,9 +12,13 @@ import software.amazon.awssdk.transfer.s3.model.FileDownload;
 
 @Getter
 @Component
-@AllArgsConstructor
 public class CustomBucketComponent {
   private final BucketConf bucketConf;
+  FileWriter fileWriter;
+
+  public CustomBucketComponent(BucketConf bucketConf) {
+    this.bucketConf = bucketConf;
+  }
 
   public List<S3Object> listObjects(String bucketName) {
     var s3Client = bucketConf.getS3Client();
@@ -46,7 +47,9 @@ public class CustomBucketComponent {
   @SneakyThrows
   public File download(String bucketName, String bucketKey) {
     var destination =
-        createTempFile(prefixFromBucketKey(bucketKey), suffixFromBucketKey(bucketKey));
+        fileWriter
+            .createTempFileSecurely(prefixFromBucketKey(bucketKey), suffixFromBucketKey(bucketKey))
+            .toFile();
     FileDownload download =
         bucketConf
             .getS3TransferManager()

@@ -9,6 +9,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.util.Set;
 import java.util.function.BiFunction;
 import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
@@ -52,5 +56,30 @@ public class FileWriter implements BiFunction<byte[], File, File> {
     } catch (IOException e) {
       throw new ApiException(SERVER_EXCEPTION, e);
     }
+  }
+
+  public Path createTempFileSecurely(String prefix, String suffix) throws IOException {
+    // Create a temporary file securely, restricting permissions
+    Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("rw-------");
+    Path tempFile =
+        Files.createTempFile(prefix, suffix, PosixFilePermissions.asFileAttribute(permissions));
+
+    // Ensure the directory itself is also secured
+    Path parentDir = tempFile.getParent();
+    Files.setPosixFilePermissions(parentDir, permissions);
+
+    return tempFile;
+  }
+
+  public Path createSecureTempDirectory(String mainDir) throws IOException {
+    // Create a temporary directory securely with restricted permissions
+    Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("rwx------");
+    Path tempDirectory =
+        Files.createTempDirectory(mainDir, PosixFilePermissions.asFileAttribute(permissions));
+
+    // Ensure the directory itself is also secured
+    Files.setPosixFilePermissions(tempDirectory, permissions);
+
+    return tempDirectory;
   }
 }
