@@ -27,8 +27,10 @@ import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
 @AllArgsConstructor
 public class ConsumableEventTyper implements Function<List<SQSMessage>, List<ConsumableEvent>> {
 
-  private static final String DETAIL_PROPERTY = "detail";
-  private static final String DETAIL_TYPE_PROPERTY = "detail-type";
+  private static final String DETAIL_SQS_PROPERTY = "detail";
+  private static final String DETAIL_TYPE_SQS_PROPERTY = "detail-type";
+  private static final String SQS_APPROXIMATE_RECEIVE_COUNT_SQS_ATTRIBUTE =
+      "ApproximateReceiveCount";
 
   private final ObjectMapper om;
   private final EventConf eventConf;
@@ -36,23 +38,23 @@ public class ConsumableEventTyper implements Function<List<SQSMessage>, List<Con
   @Override
   public List<ConsumableEvent> apply(List<SQSMessage> messages) {
     var res = new ArrayList<ConsumableEvent>();
+
     for (SQSMessage message : messages) {
       TypedEvent typedEvent;
       try {
         typedEvent = toTypedEvent(message);
       } catch (Exception e) {
-        log.error(e.getMessage());
-        log.error("Message could not be unmarshalled, message : {} \n", message);
+        log.error("Message could not be unmarshalled, message: {} \n", message);
         continue;
       }
       String sqsQueueUrl = typedEvent.payload().getEventStack().getSqsQueueUrl();
-      ConsumableEvent consumableEvent =
+      res.add(
           new ConsumableEvent(
               typedEvent,
               acknowledger(message, sqsQueueUrl),
-              visibilityChanger(message, sqsQueueUrl));
-      res.add(consumableEvent);
+              visibilityChanger(message, sqsQueueUrl)));
     }
+
     return res;
   }
 
@@ -60,13 +62,13 @@ public class ConsumableEventTyper implements Function<List<SQSMessage>, List<Con
   private TypedEvent toTypedEvent(SQSMessage message) {
     TypeReference<Map<String, Object>> typeRef = new TypeReference<>() {};
     Map<String, Object> body = om.readValue(message.getBody(), typeRef);
-    String typeName = body.get(DETAIL_TYPE_PROPERTY).toString();
+    String typeName = body.get(DETAIL_TYPE_SQS_PROPERTY).toString();
 
-    var pojaEvent = (PojaEvent) om.convertValue(body.get(DETAIL_PROPERTY), Class.forName(typeName));
-
+    var pojaEvent =
+        (PojaEvent) om.convertValue(body.get(DETAIL_SQS_PROPERTY), Class.forName(typeName));
     var sqsMessageAttributes = message.getAttributes();
-    log.info("SQSMessage.attributes : {} \n", sqsMessageAttributes);
-    pojaEvent.setAttemptNb(parseInt(sqsMessageAttributes.get("ApproximateReceiveCount")));
+    pojaEvent.setAttemptNb(
+        parseInt(sqsMessageAttributes.get(SQS_APPROXIMATE_RECEIVE_COUNT_SQS_ATTRIBUTE)));
 
     return new TypedEvent(typeName, pojaEvent);
   }
@@ -79,7 +81,7 @@ public class ConsumableEventTyper implements Function<List<SQSMessage>, List<Con
                   .queueUrl(sqsQueueUrl)
                   .receiptHandle(message.getReceiptHandle())
                   .build());
-      log.info("deleted message: {}", message);
+      log.info("Deleted message: {}", message);
     };
   }
 

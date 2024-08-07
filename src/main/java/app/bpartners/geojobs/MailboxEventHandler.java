@@ -2,11 +2,8 @@ package app.bpartners.geojobs;
 
 import static app.bpartners.geojobs.concurrency.ThreadRenamer.renameWorkerThread;
 import static java.lang.Runtime.getRuntime;
-import static java.lang.System.getenv;
 import static java.lang.Thread.currentThread;
 
-import app.bpartners.geojobs.endpoint.EndpointConf;
-import app.bpartners.geojobs.endpoint.event.EventConf;
 import app.bpartners.geojobs.endpoint.event.consumer.EventConsumer;
 import app.bpartners.geojobs.endpoint.event.consumer.model.ConsumableEvent;
 import app.bpartners.geojobs.endpoint.event.consumer.model.ConsumableEventTyper;
@@ -20,7 +17,6 @@ import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ConfigurableApplicationContext;
-import software.amazon.awssdk.regions.Region;
 
 @Slf4j
 @PojaGenerated
@@ -28,40 +24,43 @@ import software.amazon.awssdk.regions.Region;
 public class MailboxEventHandler implements RequestHandler<SQSEvent, String> {
 
   public static final String SPRING_SERVER_PORT_FOR_RANDOM_VALUE = "0";
-  private final ConsumableEventTyper consumableEventTyper =
-      new ConsumableEventTyper(
-          new EndpointConf().objectMapper(), new EventConf(Region.of(getenv("AWS_REGION"))));
 
   @Override
   public String handleRequest(SQSEvent event, Context context) {
     renameWorkerThread(currentThread());
     log.info("Received: event={}, awsReqId={}", event, context.getAwsRequestId());
     List<SQSMessage> messages = event.getRecords();
-    consumableEventTyper
-        .apply(messages)
-        .forEach(ConsumableEvent::newRandomVisibilityTimeout); // note(init-visibility)
     log.info("SQS messages: {}", messages);
 
     var applicationContext = applicationContext();
-    getRuntime()
-        .addShutdownHook(
-            // in case, say, the execution timed out
-            // TODO: no, we have no control over when AWS shuts the JVM down
-            //   Best is to regularly check whether we are nearing end of allowedTime,
-            //   in which case we close resources before timing out.
-            //   Frontal functions might have the same issue also.
-            new Thread(() -> onHandled(applicationContext)));
+    closeResourcesOnShutdown(applicationContext);
+    consume(applicationContext, messages);
+    closeResources(applicationContext);
 
-    var eventConsumer = applicationContext.getBean(EventConsumer.class);
-    var messageConverter = applicationContext.getBean(ConsumableEventTyper.class);
-
-    eventConsumer.accept(messageConverter.apply(messages));
-
-    onHandled(applicationContext);
     return "ok";
   }
 
-  private void onHandled(ConfigurableApplicationContext applicationContext) {
+  private static void consume(
+      ConfigurableApplicationContext applicationContext, List<SQSMessage> messages) {
+    var eventConsumer = applicationContext.getBean(EventConsumer.class);
+    var consumableEventTyper = applicationContext.getBean(ConsumableEventTyper.class);
+    var consumableEvents = consumableEventTyper.apply(messages);
+    consumableEvents.forEach(ConsumableEvent::newRandomVisibilityTimeout); // note(init-visibility)
+    eventConsumer.accept(consumableEventTyper.apply(messages));
+  }
+
+  private void closeResourcesOnShutdown(ConfigurableApplicationContext applicationContext) {
+    getRuntime()
+        .addShutdownHook(
+            // in case, say, the execution timed out
+            // TODO: not enough. Indeed, we have no control over when AWS shuts the JVM down
+            //   Best is to regularly check whether we are nearing end of allowedTime,
+            //   in which case we close resources before timing out.
+            //   Frontal functions might have the same issue also.
+            new Thread(() -> closeResources(applicationContext)));
+  }
+
+  private void closeResources(ConfigurableApplicationContext applicationContext) {
     try {
       var hikariDatasource = applicationContext.getBean(HikariDataSource.class);
       hikariDatasource.close();
