@@ -1,10 +1,11 @@
-package app.bpartners.geojobs.file;
+package app.bpartners.geojobs.file.bucket;
 
-import static app.bpartners.geojobs.file.FileHashAlgorithm.NONE;
-import static app.bpartners.geojobs.file.FileHashAlgorithm.SHA256;
+import static app.bpartners.geojobs.file.hash.FileHashAlgorithm.NONE;
+import static app.bpartners.geojobs.file.hash.FileHashAlgorithm.SHA256;
 import static java.io.File.createTempFile;
 
 import app.bpartners.geojobs.PojaGenerated;
+import app.bpartners.geojobs.file.hash.FileHash;
 import java.io.File;
 import java.net.URL;
 import java.time.Duration;

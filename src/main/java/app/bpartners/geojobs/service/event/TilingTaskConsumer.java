@@ -4,8 +4,8 @@ import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
-import app.bpartners.geojobs.file.BucketComponent;
-import app.bpartners.geojobs.file.FileUnzipper;
+import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.zip.FileUnzipper;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.tiling.Tile;

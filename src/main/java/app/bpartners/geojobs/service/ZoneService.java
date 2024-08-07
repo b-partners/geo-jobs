@@ -16,7 +16,7 @@ import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType;
 import app.bpartners.geojobs.endpoint.rest.model.FullDetectedZone;
 import app.bpartners.geojobs.endpoint.rest.model.JobTypes;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
-import app.bpartners.geojobs.file.BucketComponent;
+import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.FullDetectionRepository;

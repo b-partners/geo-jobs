@@ -1,12 +1,12 @@
 package app.bpartners.geojobs.unit;
 
-import static app.bpartners.geojobs.file.FileZipper.ZIP_FILE_SUFFIX;
+import static app.bpartners.geojobs.file.zip.FileZipper.ZIP_FILE_SUFFIX;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.conf.FacadeIT;
-import app.bpartners.geojobs.file.FileUnzipper;
 import app.bpartners.geojobs.file.FileWriter;
+import app.bpartners.geojobs.file.zip.FileUnzipper;
 import app.bpartners.geojobs.model.exception.ApiException;
 import java.io.*;
 import java.util.Enumeration;

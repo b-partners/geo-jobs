@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.file.FileHashAlgorithm.SHA256;
+import static app.bpartners.geojobs.file.hash.FileHashAlgorithm.SHA256;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.FAILED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
@@ -28,8 +28,8 @@ import app.bpartners.geojobs.endpoint.event.model.ZoneTilingJobStatusChanged;
 import app.bpartners.geojobs.endpoint.rest.controller.ZoneTilingController;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
-import app.bpartners.geojobs.file.BucketComponent;
-import app.bpartners.geojobs.file.FileHash;
+import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.hash.FileHash;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.Task;
 import app.bpartners.geojobs.job.model.TaskStatus;

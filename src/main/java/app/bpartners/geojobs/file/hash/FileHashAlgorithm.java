@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.file;
+package app.bpartners.geojobs.file.hash;
 
 import app.bpartners.geojobs.PojaGenerated;
 

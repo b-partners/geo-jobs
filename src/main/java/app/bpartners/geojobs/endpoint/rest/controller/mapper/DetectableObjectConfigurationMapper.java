@@ -2,7 +2,7 @@ package app.bpartners.geojobs.endpoint.rest.controller.mapper;
 
 import static java.util.UUID.randomUUID;
 
-import app.bpartners.geojobs.file.BucketConf;
+import app.bpartners.geojobs.file.bucket.BucketConf;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import java.math.BigDecimal;
 import java.util.Objects;

@@ -10,7 +10,7 @@ import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.conf.BucketConf;
 import app.bpartners.geojobs.conf.FacadeIT;
-import app.bpartners.geojobs.file.CustomBucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
@@ -70,7 +70,8 @@ public class ObjectsDetectorIT extends FacadeIT {
 
   public TileDetectionTask detectionTask() {
     when(bucketComponent.getBucketConf())
-        .thenReturn(new app.bpartners.geojobs.file.BucketConf("dummyRegion", "dummyBucketName"));
+        .thenReturn(
+            new app.bpartners.geojobs.file.bucket.BucketConf("dummyRegion", "dummyBucketName"));
     when(bucketComponent.download(any(), any())).thenReturn(new File(FILE_NAME));
 
     var task =

@@ -6,8 +6,8 @@ import static java.nio.file.attribute.PosixFilePermissions.fromString;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionInitiated;
-import app.bpartners.geojobs.file.BucketComponent;
 import app.bpartners.geojobs.file.FileWriter;
+import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.FullDetectionRepository;
 import app.bpartners.geojobs.repository.model.detection.HumanDetectedTile;

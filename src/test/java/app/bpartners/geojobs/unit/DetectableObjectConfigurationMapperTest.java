@@ -8,7 +8,7 @@ import static org.mockito.Mockito.mock;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectConfigurationMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType;
-import app.bpartners.geojobs.file.BucketConf;
+import app.bpartners.geojobs.file.bucket.BucketConf;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;

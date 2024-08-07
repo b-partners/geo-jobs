@@ -1,5 +1,6 @@
-package app.bpartners.geojobs.file;
+package app.bpartners.geojobs.file.zip;
 
+import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.model.exception.ApiException;
 import java.io.IOException;
 import java.io.InputStream;

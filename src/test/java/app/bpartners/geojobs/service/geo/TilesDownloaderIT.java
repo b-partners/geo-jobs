@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
-import app.bpartners.geojobs.file.BucketComponent;
+import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.service.tiling.downloader.TilesDownloader;
 import com.fasterxml.jackson.core.JsonProcessingException;

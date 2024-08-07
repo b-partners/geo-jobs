@@ -16,7 +16,7 @@ import app.bpartners.geojobs.endpoint.rest.model.SuccessStatus;
 import app.bpartners.geojobs.endpoint.rest.model.ZoneDetectionJob;
 import app.bpartners.geojobs.endpoint.rest.validator.CreateFullDetectionValidator;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
-import app.bpartners.geojobs.file.BucketConf;
+import app.bpartners.geojobs.file.bucket.BucketConf;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.statistic.HealthStatusStatistic;

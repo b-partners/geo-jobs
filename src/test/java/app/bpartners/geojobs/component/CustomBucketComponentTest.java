@@ -6,8 +6,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import app.bpartners.geojobs.file.BucketConf;
-import app.bpartners.geojobs.file.CustomBucketComponent;
+import app.bpartners.geojobs.file.bucket.BucketConf;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;

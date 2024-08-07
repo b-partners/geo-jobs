@@ -13,7 +13,7 @@ import app.bpartners.gen.annotator.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.AnnotationBatchRetrievingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.CreateAnnotatedTaskSubmitted;
-import app.bpartners.geojobs.file.BucketComponent;
+import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.AnnotationRetrievingTask;

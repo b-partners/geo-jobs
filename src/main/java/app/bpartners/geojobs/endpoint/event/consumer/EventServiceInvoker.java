@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.endpoint.event.consumer;
 
+import static org.reflections.scanners.Scanners.SubTypes;
+
 import app.bpartners.geojobs.PojaGenerated;
 import app.bpartners.geojobs.endpoint.event.consumer.model.TypedEvent;
 import java.lang.reflect.InvocationTargetException;
@@ -9,11 +11,8 @@ import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.reflections.Reflections;
-import org.reflections.scanners.Scanners;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
-
-import static org.reflections.scanners.Scanners.SubTypes;
 
 @PojaGenerated
 @SuppressWarnings("all")

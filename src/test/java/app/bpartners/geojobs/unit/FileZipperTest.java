@@ -2,7 +2,7 @@ package app.bpartners.geojobs.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import app.bpartners.geojobs.file.FileZipper;
+import app.bpartners.geojobs.file.zip.FileZipper;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Enumeration;
