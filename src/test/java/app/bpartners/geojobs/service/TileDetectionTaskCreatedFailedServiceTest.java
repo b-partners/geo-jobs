@@ -46,7 +46,7 @@ public class TileDetectionTaskCreatedFailedServiceTest {
     verify(taskCreatedConsumerMock, times(1)).accept(tileDetectionTaskCreated);
     verify(eventProducerMock, times(1)).accept(listCaptor.capture());
     var taskSucceededEvent = ((List<TileDetectionTaskSucceeded>) listCaptor.getValue()).getFirst();
-    assertEquals(new TileDetectionTaskSucceeded(tileDetectionTask), taskSucceededEvent);
+    assertEquals(new TileDetectionTaskSucceeded(tileDetectionTask, null), taskSucceededEvent);
   }
 
   @Test

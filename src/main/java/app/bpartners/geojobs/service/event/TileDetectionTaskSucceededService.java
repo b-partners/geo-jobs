@@ -1,21 +1,23 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
-import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
-
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.AutoTaskStatisticRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.TileDetectionTaskSucceeded;
+import app.bpartners.geojobs.endpoint.event.model.ZDJParcelsStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.ZDJStatusRecomputingSubmitted;
+import app.bpartners.geojobs.job.model.Task;
 import app.bpartners.geojobs.repository.TileDetectionTaskRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.service.detection.TileDetectionTaskStatusService;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class TileDetectionTaskSucceededService implements Consumer<TileDetectionTaskSucceeded> {
   private final TileDetectionTaskStatusService tileDetectionTaskStatusService;
   private final TileDetectionTaskRepository tileDetectionTaskRepository;
@@ -28,17 +30,17 @@ public class TileDetectionTaskSucceededService implements Consumer<TileDetection
     tileDetectionTaskStatusService.succeed(tileDetectionTask);
     List<TileDetectionTask> tasks =
         tileDetectionTaskRepository.findAllByJobId(tileDetectionTask.getJobId());
-    if (isFinished(tasks)) {
+    if (areFinished(tasks)) {
+      log.info("Tile detection tasks from jobId: {} are finished", tileDetectionTask.getJobId());
       eventProducer.accept(
-          List.of(new ZDJStatusRecomputingSubmitted(tileDetectionTask.getJobId())));
+          List.of(
+              new ZDJParcelsStatusRecomputingSubmitted(tileDetectionTaskSucceeded.getZdjId()),
+              new ZDJStatusRecomputingSubmitted(tileDetectionTaskSucceeded.getZdjId()),
+              new AutoTaskStatisticRecomputingSubmitted(tileDetectionTaskSucceeded.getZdjId())));
     }
   }
 
-  public boolean isFinished(List<TileDetectionTask> tasks) {
-    return tasks.stream()
-        .allMatch(
-            task ->
-                FINISHED.equals(task.getStatus().getProgression())
-                    && SUCCEEDED.equals(task.getStatus().getHealth()));
+  public boolean areFinished(List<TileDetectionTask> tasks) {
+    return tasks.stream().allMatch(Task::isSucceeded);
   }
 }

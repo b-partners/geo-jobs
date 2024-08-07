@@ -14,9 +14,11 @@ import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfigur
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionJob;
 import app.bpartners.geojobs.service.event.ParcelDetectionJobCreatedService;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+@Slf4j
 public class ParcelDetectionJobCreatedServiceTest {
   private static final String JOB_ID = "jobId";
   TileDetectionTaskRepository taskRepositoryMock = mock();
@@ -48,11 +50,10 @@ public class ParcelDetectionJobCreatedServiceTest {
     var eventCaptor = ArgumentCaptor.forClass(List.class);
     verify(taskRepositoryMock, times(1)).findAllByJobId(JOB_ID);
     verify(objectConfigurationRepositoryMock, times(1)).findAllByDetectionJobId(zoneDetectionJobId);
-    verify(eventProducerMock, times(2)).accept(eventCaptor.capture());
+    verify(eventProducerMock, times(3)).accept(eventCaptor.capture());
     var events = eventCaptor.getAllValues();
-    var event1 = (List<TileDetectionTaskCreated>) events.getFirst();
+    var event1 = (List<TileDetectionTaskCreated>) events.get(1);
     var event2 = (List<TileDetectionTaskCreated>) events.getLast();
-
     assertTrue(
         event1.contains(
             new TileDetectionTaskCreated(

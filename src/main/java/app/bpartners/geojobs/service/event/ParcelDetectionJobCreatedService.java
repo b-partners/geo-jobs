@@ -2,6 +2,7 @@ package app.bpartners.geojobs.service.event;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.ParcelDetectionJobCreated;
+import app.bpartners.geojobs.endpoint.event.model.ParcelDetectionStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.TileDetectionTaskCreated;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.TileDetectionTaskRepository;
@@ -21,7 +22,10 @@ public class ParcelDetectionJobCreatedService implements Consumer<ParcelDetectio
 
   @Override
   public void accept(ParcelDetectionJobCreated parcelDetectionJobCreated) {
-    // TODO: add ParcelDetectionJobStatusComputingSubmitted event here
+    eventProducer.accept(
+        List.of(
+            new ParcelDetectionStatusRecomputingSubmitted(
+                parcelDetectionJobCreated.getParcelDetectionJob().getId())));
     var parcelDetectionJob = parcelDetectionJobCreated.getParcelDetectionJob();
     var zdjId = parcelDetectionJobCreated.getZdjId();
     var jobId = parcelDetectionJob.getId();

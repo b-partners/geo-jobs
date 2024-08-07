@@ -17,6 +17,8 @@ public class TileDetectionTaskSucceeded extends PojaEvent {
   @JsonProperty("tileDetectionTask")
   private TileDetectionTask tileDetectionTask;
 
+  private String zdjId;
+
   @Override
   public Duration maxConsumerDuration() {
     return Duration.ofMinutes(1);
