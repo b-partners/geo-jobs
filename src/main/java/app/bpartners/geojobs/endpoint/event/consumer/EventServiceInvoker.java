@@ -31,7 +31,7 @@ public class EventServiceInvoker implements Consumer<TypedEvent> {
       if (clazz.getTypeName().equals(typeName)) {
         var serviceClazz = Class.forName(getEventService(typeName));
         var acceptMethod = serviceClazz.getMethod("accept", clazz);
-        log.info("Invoke: class={}, method={}", serviceClazz, acceptMethod);
+        log.info("Invoke: class={}, method={}",serviceClazz, acceptMethod);
         acceptMethod.invoke(applicationContext.getBean(serviceClazz), typedEvent.payload());
         return;
       }
