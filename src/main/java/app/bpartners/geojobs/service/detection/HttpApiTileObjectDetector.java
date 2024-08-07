@@ -4,7 +4,7 @@ import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.S
 import static org.apache.commons.io.FileUtils.readFileToByteArray;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
-import app.bpartners.geojobs.file.BucketCustomizedComponent;
+import app.bpartners.geojobs.file.CustomBucketComponent;
 import app.bpartners.geojobs.file.ImageJpegCompressor;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
@@ -35,13 +35,13 @@ import org.springframework.web.util.UriComponentsBuilder;
 public class HttpApiTileObjectDetector implements TileObjectDetector {
   public static final float IMAGE_QUALITY = 0.8f;
   private final ObjectMapper om;
-  private final BucketCustomizedComponent bucketComponent;
+  private final CustomBucketComponent bucketComponent;
   private final String tileDetectionRawBaseUrls;
   private final ImageJpegCompressor imageJpegCompressor;
 
   public HttpApiTileObjectDetector(
       ObjectMapper om,
-      BucketCustomizedComponent bucketComponent,
+      CustomBucketComponent bucketComponent,
       @Value("${tile.detection.api.urls}") String tileDetectionRawBaseUrls,
       ImageJpegCompressor imageJpegCompressor) {
     this.om = om;

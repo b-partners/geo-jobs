@@ -10,7 +10,7 @@ import app.bpartners.geojobs.endpoint.event.model.ImportedZoneTilingJobSaved;
 import app.bpartners.geojobs.endpoint.rest.model.BucketSeparatorType;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
-import app.bpartners.geojobs.file.BucketCustomizedComponent;
+import app.bpartners.geojobs.file.CustomBucketComponent;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
@@ -28,12 +28,12 @@ import software.amazon.awssdk.services.s3.model.S3Object;
 //  TODO: enable accept_truncated_ok
 @Disabled
 public class ImportedZoneTilingJobSavedServiceTest {
-  BucketCustomizedComponent bucketCustomizedComponentMock = mock();
+  CustomBucketComponent customBucketComponentMock = mock();
   ZoneTilingJobService tilingJobServiceMock = mock();
   TilingTaskRepository tilingTaskRepositoryMock = mock();
   ImportedZoneTilingJobSavedService subject =
       new ImportedZoneTilingJobSavedService(
-          bucketCustomizedComponentMock, tilingJobServiceMock, tilingTaskRepositoryMock);
+          customBucketComponentMock, tilingJobServiceMock, tilingTaskRepositoryMock);
 
   @Test
   void accept_object_name_ok() {
@@ -63,7 +63,7 @@ public class ImportedZoneTilingJobSavedServiceTest {
                             .build()))
                 .build());
 
-    when(bucketCustomizedComponentMock.listObjects(dummyBucketName, dummyBucketPrefix))
+    when(customBucketComponentMock.listObjects(dummyBucketName, dummyBucketPrefix))
         .thenReturn(s3Objects);
 
     subject.accept(
@@ -133,7 +133,7 @@ public class ImportedZoneTilingJobSavedServiceTest {
                             .build()))
                 .build());
 
-    when(bucketCustomizedComponentMock.listObjects(dummyBucketName, dummyBucketPrefix))
+    when(customBucketComponentMock.listObjects(dummyBucketName, dummyBucketPrefix))
         .thenReturn(s3Objects);
 
     subject.accept(
@@ -203,7 +203,7 @@ public class ImportedZoneTilingJobSavedServiceTest {
                             .build()))
                 .build());
 
-    when(bucketCustomizedComponentMock.listObjects(dummyBucketName, dummyBucketPrefix))
+    when(customBucketComponentMock.listObjects(dummyBucketName, dummyBucketPrefix))
         .thenReturn(s3Objects);
 
     subject.accept(
@@ -264,7 +264,7 @@ public class ImportedZoneTilingJobSavedServiceTest {
                             .build()))
                 .build());
 
-    when(bucketCustomizedComponentMock.listObjects(dummyBucketName, dummyBucketPrefix))
+    when(customBucketComponentMock.listObjects(dummyBucketName, dummyBucketPrefix))
         .thenReturn(s3Objects);
 
     subject.accept(

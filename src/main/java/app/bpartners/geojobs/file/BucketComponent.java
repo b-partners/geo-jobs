@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.file;
 
+import static app.bpartners.geojobs.file.FileHashAlgorithm.NONE;
+import static app.bpartners.geojobs.file.FileHashAlgorithm.SHA256;
 import static java.io.File.createTempFile;
 
 import app.bpartners.geojobs.PojaGenerated;
@@ -42,7 +44,7 @@ public class BucketComponent {
     if (!uploaded.failedTransfers().isEmpty()) {
       throw new RuntimeException("Failed to upload following files: " + uploaded.failedTransfers());
     }
-    return new FileHash(FileHashAlgorithm.NONE, null);
+    return new FileHash(NONE, null);
   }
 
   private FileHash uploadFile(File file, String bucketKey) {
@@ -54,7 +56,7 @@ public class BucketComponent {
             .build();
     var upload = bucketConf.getS3TransferManager().uploadFile(request);
     var uploaded = upload.completionFuture().join();
-    return new FileHash(FileHashAlgorithm.SHA256, uploaded.response().checksumSHA256());
+    return new FileHash(SHA256, uploaded.response().checksumSHA256());
   }
 
   @SneakyThrows

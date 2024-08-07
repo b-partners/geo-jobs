@@ -7,7 +7,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.file.BucketConf;
-import app.bpartners.geojobs.file.BucketCustomizedComponent;
+import app.bpartners.geojobs.file.CustomBucketComponent;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
@@ -19,9 +19,9 @@ import software.amazon.awssdk.transfer.s3.S3TransferManager;
 import software.amazon.awssdk.transfer.s3.model.DownloadFileRequest;
 import software.amazon.awssdk.transfer.s3.model.FileDownload;
 
-public class BucketCustomizedComponentTest {
+public class CustomBucketComponentTest {
   BucketConf bucketConfMock = mock();
-  BucketCustomizedComponent subject = new BucketCustomizedComponent(bucketConfMock);
+  CustomBucketComponent subject = new CustomBucketComponent(bucketConfMock);
 
   @Test
   void list_objects_ok() {

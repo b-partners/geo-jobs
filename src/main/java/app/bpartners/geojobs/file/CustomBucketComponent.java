@@ -16,23 +16,22 @@ import software.amazon.awssdk.transfer.s3.model.FileDownload;
 @Getter
 @Component
 @AllArgsConstructor
-// TODO: must be available from BucketComponent so update POJA BucketComponent
-public class BucketCustomizedComponent {
+public class CustomBucketComponent {
   private final BucketConf bucketConf;
 
-  public List<S3Object> listObjects(String bucketPath) {
+  public List<S3Object> listObjects(String bucketName) {
     var s3Client = bucketConf.getS3Client();
-    return s3Client.listObjects(ListObjectsRequest.builder().bucket(bucketPath).build()).contents();
+    return s3Client.listObjects(ListObjectsRequest.builder().bucket(bucketName).build()).contents();
   }
 
-  public List<S3Object> listObjects(String bucket, String prefix) {
+  public List<S3Object> listObjects(String bucketName, String prefix) {
     var s3Client = bucketConf.getS3Client();
     String continuationToken = null;
     List<S3Object> allS3Objects = new ArrayList<>();
     do {
       ListObjectsV2Request listObjectsV2Request =
           ListObjectsV2Request.builder()
-              .bucket(bucket)
+              .bucket(bucketName)
               .prefix(prefix)
               .continuationToken(continuationToken)
               .build();

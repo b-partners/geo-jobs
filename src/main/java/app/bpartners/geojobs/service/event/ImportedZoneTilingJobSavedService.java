@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.endpoint.rest.model.BucketSeparatorType.UNDERSCORE;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
@@ -12,7 +11,7 @@ import app.bpartners.geojobs.endpoint.event.model.ImportedZoneTilingJobSaved;
 import app.bpartners.geojobs.endpoint.rest.model.BucketSeparatorType;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
-import app.bpartners.geojobs.file.BucketCustomizedComponent;
+import app.bpartners.geojobs.file.CustomBucketComponent;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
@@ -43,7 +42,7 @@ import software.amazon.awssdk.services.s3.model.S3Object;
 public class ImportedZoneTilingJobSavedService implements Consumer<ImportedZoneTilingJobSaved> {
   public static final int DEFAULT_Z_VALUE = 20;
   private static final String UNDERSCORE = "_";
-  private final BucketCustomizedComponent bucketCustomizedComponent;
+  private final CustomBucketComponent customBucketComponent;
   private final ZoneTilingJobService tilingJobService;
   private final TilingTaskRepository tilingTaskRepository;
 
@@ -150,7 +149,7 @@ public class ImportedZoneTilingJobSavedService implements Consumer<ImportedZoneT
       ImportedZoneTilingJobSaved importedZoneTilingJobSaved,
       String bucketName,
       String bucketPathPrefix) {
-    var defaultS3Objects = bucketCustomizedComponent.listObjects(bucketName, bucketPathPrefix);
+    var defaultS3Objects = customBucketComponent.listObjects(bucketName, bucketPathPrefix);
     var startFromValue = importedZoneTilingJobSaved.getStartFrom();
     var endAtValue = importedZoneTilingJobSaved.getEndAt();
     long startFrom = startFromValue == null ? 0L : startFromValue;

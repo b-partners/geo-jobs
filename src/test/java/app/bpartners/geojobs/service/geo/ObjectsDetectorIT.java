@@ -10,7 +10,7 @@ import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.conf.BucketConf;
 import app.bpartners.geojobs.conf.FacadeIT;
-import app.bpartners.geojobs.file.BucketCustomizedComponent;
+import app.bpartners.geojobs.file.CustomBucketComponent;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
@@ -39,7 +39,7 @@ public class ObjectsDetectorIT extends FacadeIT {
           + File.separator
           + "image-to-detect.jpg";
   @MockBean BucketConf bucketConf;
-  @MockBean BucketCustomizedComponent bucketComponent;
+  @MockBean CustomBucketComponent bucketComponent;
   @Autowired TileObjectDetector objectsDetector;
 
   @Disabled("TODO: change to AWS detection API")

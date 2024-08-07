@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import app.bpartners.geojobs.conf.FacadeIT;
-import app.bpartners.geojobs.file.BucketCustomizedComponent;
+import app.bpartners.geojobs.file.CustomBucketComponent;
 import java.util.List;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -13,8 +13,8 @@ import software.amazon.awssdk.services.s3.model.S3Object;
 
 @Disabled(
     "TODO: must be launched only locally by configuration AWS credentials and EventConf.region")
-public class BucketCustomizedComponentIT extends FacadeIT {
-  @Autowired private BucketCustomizedComponent subject;
+public class CustomBucketComponentIT extends FacadeIT {
+  @Autowired private CustomBucketComponent subject;
 
   @Test
   void list_objects_ok() {
