@@ -28,6 +28,26 @@ class FileUnzipperTest extends FacadeIT {
     fileUnzipper = new FileUnzipper(fileWriter);
   }
 
+  @Test
+  public void testEntryOutsideTargetDirThrowsIOException() throws IOException {
+    var mainDir = "testDir";
+    var zipFile = mock(ZipFile.class);
+    var zipEntryMock = mock(ZipEntry.class);
+    var entries = mock(Enumeration.class);
+
+    when(zipFile.entries()).thenReturn(entries);
+    when(entries.hasMoreElements()).thenReturn(true, false);
+    when(entries.nextElement()).thenReturn(zipEntryMock);
+    when(zipEntryMock.isDirectory()).thenReturn(false);
+    when(zipEntryMock.getName()).thenReturn("/evilFile.txt");
+
+    assertThrows(
+        ApiException.class,
+        () -> {
+          fileUnzipper.apply(zipFile, mainDir);
+        });
+  }
+
   ZipFile zipFileIllegalArgumentException() throws IOException {
     var zipFile = File.createTempFile("maliciousZipFile", ZIP_FILE_SUFFIX);
     try (FileOutputStream fos = new FileOutputStream(zipFile);
