@@ -1,8 +1,8 @@
-package app.bpartners.geojobs.endpoint.event.model;
-
-import static java.lang.Math.random;
+package app.bpartners.geojobs.endpoint.event.model.uuid;
 
 import app.bpartners.geojobs.PojaGenerated;
+import app.bpartners.geojobs.endpoint.event.model.PojaEvent;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Duration;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,23 +19,17 @@ import lombok.ToString;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @ToString
-public class DurablyFallibleUuidCreated1 extends PojaEvent {
-  private UuidCreated uuidCreated;
-  private int waitDurationBeforeConsumingInSeconds;
-  private double failureRate;
-
-  public boolean shouldFail() {
-    return random() < failureRate;
-  }
+public class UuidCreated extends PojaEvent {
+  @JsonProperty("uuid")
+  private String uuid;
 
   @Override
   public Duration maxConsumerDuration() {
-    return Duration.ofSeconds(
-        waitDurationBeforeConsumingInSeconds + uuidCreated.maxConsumerDuration().toSeconds());
+    return Duration.ofSeconds(10);
   }
 
   @Override
   public Duration maxConsumerBackoffBetweenRetries() {
-    return uuidCreated.maxConsumerBackoffBetweenRetries();
+    return Duration.ofSeconds(30);
   }
 }

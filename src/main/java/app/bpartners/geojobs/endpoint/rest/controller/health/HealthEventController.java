@@ -6,9 +6,9 @@ import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.PojaGenerated;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.DurablyFallibleUuidCreated1;
-import app.bpartners.geojobs.endpoint.event.model.DurablyFallibleUuidCreated2;
-import app.bpartners.geojobs.endpoint.event.model.UuidCreated;
+import app.bpartners.geojobs.endpoint.event.model.uuid.DurablyFallibleUuidCreated1;
+import app.bpartners.geojobs.endpoint.event.model.uuid.DurablyFallibleUuidCreated2;
+import app.bpartners.geojobs.endpoint.event.model.uuid.UuidCreated;
 import app.bpartners.geojobs.repository.DummyUuidRepository;
 import app.bpartners.geojobs.repository.model.DummyUuid;
 import java.util.ArrayList;
