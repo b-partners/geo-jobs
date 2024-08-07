@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
-import app.bpartners.geojobs.endpoint.event.model.JobAnnotationProcessed;
+import app.bpartners.geojobs.endpoint.event.model.annotation.JobAnnotationProcessed;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;

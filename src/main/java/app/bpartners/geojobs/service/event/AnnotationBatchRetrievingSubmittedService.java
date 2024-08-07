@@ -6,8 +6,8 @@ import static java.util.UUID.randomUUID;
 
 import app.bpartners.gen.annotator.endpoint.rest.model.AnnotationBatch;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.AnnotationBatchRetrievingSubmitted;
-import app.bpartners.geojobs.endpoint.event.model.AnnotationRetrievingJobStatusRecomputingSubmitted;
+import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationBatchRetrievingSubmitted;
+import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationRetrievingJobStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.model.detection.HumanDetectedTile;

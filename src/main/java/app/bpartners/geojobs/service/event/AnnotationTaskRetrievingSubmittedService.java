@@ -5,7 +5,7 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSIN
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
-import app.bpartners.geojobs.endpoint.event.model.AnnotationTaskRetrievingSubmitted;
+import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationTaskRetrievingSubmitted;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.service.AnnotationRetrievingJobService;
 import app.bpartners.geojobs.service.annotator.AnnotationService;

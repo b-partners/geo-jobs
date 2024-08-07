@@ -21,10 +21,10 @@ import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.TilingTaskCreated;
-import app.bpartners.geojobs.endpoint.event.model.TilingTaskFailed;
-import app.bpartners.geojobs.endpoint.event.model.TilingTaskSucceeded;
-import app.bpartners.geojobs.endpoint.event.model.ZoneTilingJobStatusChanged;
+import app.bpartners.geojobs.endpoint.event.model.tile.TilingTaskCreated;
+import app.bpartners.geojobs.endpoint.event.model.tile.TilingTaskFailed;
+import app.bpartners.geojobs.endpoint.event.model.tile.TilingTaskSucceeded;
+import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobStatusChanged;
 import app.bpartners.geojobs.endpoint.rest.controller.ZoneTilingController;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;

@@ -4,9 +4,9 @@ import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.TileDetectionTaskCreated;
-import app.bpartners.geojobs.endpoint.event.model.TileDetectionTaskCreatedFailed;
-import app.bpartners.geojobs.endpoint.event.model.TileDetectionTaskSucceeded;
+import app.bpartners.geojobs.endpoint.event.model.tile.TileDetectionTaskCreated;
+import app.bpartners.geojobs.endpoint.event.model.tile.TileDetectionTaskCreatedFailed;
+import app.bpartners.geojobs.endpoint.event.model.tile.TileDetectionTaskSucceeded;
 import app.bpartners.geojobs.service.detection.TileDetectionTaskStatusService;
 import java.util.List;
 import java.util.function.Consumer;

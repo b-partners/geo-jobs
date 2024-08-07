@@ -8,7 +8,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import app.bpartners.geojobs.endpoint.event.model.AnnotationTaskRetrievingSubmitted;
+import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationTaskRetrievingSubmitted;
 import app.bpartners.geojobs.repository.model.AnnotationRetrievingJob;
 import app.bpartners.geojobs.repository.model.detection.HumanDetectionJob;
 import app.bpartners.geojobs.service.AnnotationRetrievingJobService;

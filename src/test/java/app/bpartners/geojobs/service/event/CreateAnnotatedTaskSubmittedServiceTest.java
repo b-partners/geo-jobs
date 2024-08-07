@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.gen.annotator.endpoint.rest.model.CreateAnnotatedTask;
-import app.bpartners.geojobs.endpoint.event.model.CreateAnnotatedTaskSubmitted;
+import app.bpartners.geojobs.endpoint.event.model.annotation.CreateAnnotatedTaskSubmitted;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
 import org.junit.jupiter.api.Test;

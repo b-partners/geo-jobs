@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
-import app.bpartners.geojobs.endpoint.event.model.ParcelDetectionJobStatusChanged;
+import app.bpartners.geojobs.endpoint.event.model.parcel.ParcelDetectionJobStatusChanged;
 import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;

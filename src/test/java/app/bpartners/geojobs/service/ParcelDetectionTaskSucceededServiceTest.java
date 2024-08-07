@@ -3,7 +3,7 @@ package app.bpartners.geojobs.service;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.Mockito.*;
 
-import app.bpartners.geojobs.endpoint.event.model.ParcelDetectionTaskSucceeded;
+import app.bpartners.geojobs.endpoint.event.model.parcel.ParcelDetectionTaskSucceeded;
 import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;

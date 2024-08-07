@@ -2,7 +2,7 @@ package app.bpartners.geojobs.service.event;
 
 import static java.util.UUID.randomUUID;
 
-import app.bpartners.geojobs.endpoint.event.model.ZoneDetectionJobSucceeded;
+import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobSucceeded;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

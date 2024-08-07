@@ -1,9 +1,9 @@
 package app.bpartners.geojobs.service.event;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.ParcelDetectionJobCreated;
-import app.bpartners.geojobs.endpoint.event.model.ParcelDetectionStatusRecomputingSubmitted;
-import app.bpartners.geojobs.endpoint.event.model.TileDetectionTaskCreated;
+import app.bpartners.geojobs.endpoint.event.model.parcel.ParcelDetectionJobCreated;
+import app.bpartners.geojobs.endpoint.event.model.status.ParcelDetectionStatusRecomputingSubmitted;
+import app.bpartners.geojobs.endpoint.event.model.tile.TileDetectionTaskCreated;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.TileDetectionTaskRepository;
 import java.util.List;

@@ -2,7 +2,7 @@ package app.bpartners.geojobs.service.event;
 
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 
-import app.bpartners.geojobs.endpoint.event.model.ZTJStatusRecomputingSubmitted;
+import app.bpartners.geojobs.endpoint.event.model.status.ZTJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.job.repository.TaskRepository;
 import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.model.exception.ApiException;

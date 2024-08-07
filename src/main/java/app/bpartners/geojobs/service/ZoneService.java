@@ -7,7 +7,7 @@ import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.
 import static app.bpartners.geojobs.service.tiling.ZoneTilingJobService.getTilingTasks;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.ZDJStatusRecomputingSubmitted;
+import app.bpartners.geojobs.endpoint.event.model.status.ZDJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.TaskStatisticMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneTilingJobMapper;
 import app.bpartners.geojobs.endpoint.rest.model.CreateFullDetection;

@@ -3,7 +3,7 @@ package app.bpartners.geojobs.service.event;
 import static java.time.Instant.now;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.ParcelDetectionJobCreated;
+import app.bpartners.geojobs.endpoint.event.model.parcel.ParcelDetectionJobCreated;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;

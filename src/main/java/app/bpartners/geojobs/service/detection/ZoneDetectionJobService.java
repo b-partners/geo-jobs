@@ -9,6 +9,11 @@ import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.*;
+import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerificationSent;
+import app.bpartners.geojobs.endpoint.event.model.parcel.ParcelDetectionTaskCreated;
+import app.bpartners.geojobs.endpoint.event.model.status.ZDJParcelsStatusRecomputingSubmitted;
+import app.bpartners.geojobs.endpoint.event.model.status.ZDJStatusRecomputingSubmitted;
+import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobStatusChanged;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectConfigurationMapper;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;

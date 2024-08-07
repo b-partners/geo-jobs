@@ -10,8 +10,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.TilingTaskFailed;
-import app.bpartners.geojobs.endpoint.event.model.TilingTaskSucceeded;
+import app.bpartners.geojobs.endpoint.event.model.tile.TilingTaskFailed;
+import app.bpartners.geojobs.endpoint.event.model.tile.TilingTaskSucceeded;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;

@@ -2,8 +2,8 @@ package app.bpartners.geojobs.service.event;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.AutoTaskStatisticRecomputingSubmitted;
-import app.bpartners.geojobs.endpoint.event.model.ZTJStatusRecomputingSubmitted;
-import app.bpartners.geojobs.endpoint.event.model.ZoneTilingJobCreated;
+import app.bpartners.geojobs.endpoint.event.model.status.ZTJStatusRecomputingSubmitted;
+import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobCreated;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import java.util.List;

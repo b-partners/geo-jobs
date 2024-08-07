@@ -2,9 +2,9 @@ package app.bpartners.geojobs.service.event;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.AutoTaskStatisticRecomputingSubmitted;
-import app.bpartners.geojobs.endpoint.event.model.TileDetectionTaskSucceeded;
-import app.bpartners.geojobs.endpoint.event.model.ZDJParcelsStatusRecomputingSubmitted;
-import app.bpartners.geojobs.endpoint.event.model.ZDJStatusRecomputingSubmitted;
+import app.bpartners.geojobs.endpoint.event.model.status.ZDJParcelsStatusRecomputingSubmitted;
+import app.bpartners.geojobs.endpoint.event.model.status.ZDJStatusRecomputingSubmitted;
+import app.bpartners.geojobs.endpoint.event.model.tile.TileDetectionTaskSucceeded;
 import app.bpartners.geojobs.job.model.Task;
 import app.bpartners.geojobs.repository.TileDetectionTaskRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;

@@ -5,7 +5,7 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSIN
 import static app.bpartners.geojobs.service.event.ParcelDetectionTaskConsumer.withNewStatus;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.ParcelDetectionTaskFailed;
+import app.bpartners.geojobs.endpoint.event.model.parcel.ParcelDetectionTaskFailed;
 import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import java.util.List;

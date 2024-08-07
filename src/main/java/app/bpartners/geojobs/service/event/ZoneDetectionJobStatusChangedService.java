@@ -3,8 +3,8 @@ package app.bpartners.geojobs.service.event;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.ZoneDetectionJobStatusChanged;
-import app.bpartners.geojobs.endpoint.event.model.ZoneDetectionJobSucceeded;
+import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobStatusChanged;
+import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobSucceeded;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.service.JobFinishedMailer;

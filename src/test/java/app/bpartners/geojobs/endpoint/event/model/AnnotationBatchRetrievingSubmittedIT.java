@@ -3,6 +3,7 @@ package app.bpartners.geojobs.endpoint.event.model;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import app.bpartners.geojobs.conf.FacadeIT;
+import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationTaskRetrievingSubmitted;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Duration;

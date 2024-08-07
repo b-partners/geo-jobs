@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
-import app.bpartners.geojobs.endpoint.event.model.ZoneTilingJobStatusChanged;
+import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobStatusChanged;
 import app.bpartners.geojobs.repository.FullDetectionRepository;
 import app.bpartners.geojobs.repository.model.detection.FullDetection;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;

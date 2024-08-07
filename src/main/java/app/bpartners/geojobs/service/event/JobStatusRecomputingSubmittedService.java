@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
-import app.bpartners.geojobs.endpoint.event.model.JobStatusRecomputingSubmitted;
+import app.bpartners.geojobs.endpoint.event.model.status.JobStatusRecomputingSubmitted;
 import app.bpartners.geojobs.job.model.Job;
 import app.bpartners.geojobs.job.model.Task;
 import app.bpartners.geojobs.job.repository.TaskRepository;

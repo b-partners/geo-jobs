@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
-import app.bpartners.geojobs.endpoint.event.model.TaskStatisticRecomputingSubmitted;
+import app.bpartners.geojobs.endpoint.event.model.status.TaskStatisticRecomputingSubmitted;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.*;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;

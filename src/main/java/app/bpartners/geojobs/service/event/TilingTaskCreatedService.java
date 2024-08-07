@@ -7,9 +7,9 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSIN
 import static app.bpartners.geojobs.service.event.TilingTaskConsumer.withNewStatus;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.TilingTaskCreated;
-import app.bpartners.geojobs.endpoint.event.model.TilingTaskFailed;
-import app.bpartners.geojobs.endpoint.event.model.TilingTaskSucceeded;
+import app.bpartners.geojobs.endpoint.event.model.tile.TilingTaskCreated;
+import app.bpartners.geojobs.endpoint.event.model.tile.TilingTaskFailed;
+import app.bpartners.geojobs.endpoint.event.model.tile.TilingTaskSucceeded;
 import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import java.util.List;

@@ -12,8 +12,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.ImportedZoneTilingJobSaved;
-import app.bpartners.geojobs.endpoint.event.model.ZoneTilingJobWithoutTasksCreated;
+import app.bpartners.geojobs.endpoint.event.model.zone.ImportedZoneTilingJobSaved;
+import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobWithoutTasksCreated;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.TilingTaskMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoomMapper;
 import app.bpartners.geojobs.endpoint.rest.model.BucketSeparatorType;

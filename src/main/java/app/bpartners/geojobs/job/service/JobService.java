@@ -11,7 +11,7 @@ import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.TaskStatisticRecomputingSubmitted;
+import app.bpartners.geojobs.endpoint.event.model.status.TaskStatisticRecomputingSubmitted;
 import app.bpartners.geojobs.job.model.Job;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;

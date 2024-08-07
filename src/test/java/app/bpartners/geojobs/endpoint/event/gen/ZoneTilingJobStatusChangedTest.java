@@ -2,6 +2,7 @@ package app.bpartners.geojobs.endpoint.event.model;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobStatusChanged;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import java.util.List;
 import org.junit.jupiter.api.Test;

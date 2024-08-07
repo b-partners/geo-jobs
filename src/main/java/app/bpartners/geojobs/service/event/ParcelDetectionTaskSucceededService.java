@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
-import app.bpartners.geojobs.endpoint.event.model.ParcelDetectionTaskSucceeded;
+import app.bpartners.geojobs.endpoint.event.model.parcel.ParcelDetectionTaskSucceeded;
 import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;

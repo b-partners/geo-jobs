@@ -4,8 +4,8 @@ import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.TilingTaskSucceeded;
-import app.bpartners.geojobs.endpoint.event.model.ZTJStatusRecomputingSubmitted;
+import app.bpartners.geojobs.endpoint.event.model.status.ZTJStatusRecomputingSubmitted;
+import app.bpartners.geojobs.endpoint.event.model.tile.TilingTaskSucceeded;
 import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;

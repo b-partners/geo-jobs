@@ -9,7 +9,7 @@ import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
 
-import app.bpartners.geojobs.endpoint.event.model.TaskStatisticRecomputingSubmitted;
+import app.bpartners.geojobs.endpoint.event.model.status.TaskStatisticRecomputingSubmitted;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.TaskStatus;

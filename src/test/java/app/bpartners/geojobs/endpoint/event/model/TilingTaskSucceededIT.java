@@ -3,6 +3,7 @@ package app.bpartners.geojobs.endpoint.event.model;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import app.bpartners.geojobs.conf.FacadeIT;
+import app.bpartners.geojobs.endpoint.event.model.tile.TilingTaskSucceeded;
 import app.bpartners.geojobs.endpoint.rest.model.CreateFullDetection;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;

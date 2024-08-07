@@ -4,8 +4,8 @@ import static app.bpartners.gen.annotator.endpoint.rest.model.JobStatus.COMPLETE
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.AnnotationJobVerificationSent;
-import app.bpartners.geojobs.endpoint.event.model.AnnotationTaskRetrievingSubmitted;
+import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerificationSent;
+import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationTaskRetrievingSubmitted;
 import app.bpartners.geojobs.repository.HumanDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.AnnotationRetrievingJob;
 import app.bpartners.geojobs.service.AnnotationRetrievingJobService;

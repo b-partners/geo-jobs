@@ -1,11 +1,9 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import app.bpartners.geojobs.endpoint.event.model.ZoneDetectionJobSucceeded;
-import app.bpartners.geojobs.repository.model.detection.*;
+import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobSucceeded;
 import org.junit.jupiter.api.Test;
 
 public class ZoneDetectionJobSucceededServiceTest {

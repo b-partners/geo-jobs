@@ -8,7 +8,11 @@ import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.*;
+import app.bpartners.geojobs.endpoint.event.model.tile.TilingTaskCreated;
+import app.bpartners.geojobs.endpoint.event.model.zone.ImportedZoneTilingJobSaved;
+import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobCreated;
+import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobStatusChanged;
+import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobWithoutTasksCreated;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.TilingTaskMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoomMapper;

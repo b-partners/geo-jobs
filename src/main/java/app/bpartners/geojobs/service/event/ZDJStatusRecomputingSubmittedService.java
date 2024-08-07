@@ -6,7 +6,7 @@ import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
-import app.bpartners.geojobs.endpoint.event.model.ZDJStatusRecomputingSubmitted;
+import app.bpartners.geojobs.endpoint.event.model.status.ZDJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.service.JobAnnotationService;
 import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;

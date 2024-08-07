@@ -3,8 +3,8 @@ package app.bpartners.geojobs.service;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.ZTJStatusRecomputingSubmitted;
-import app.bpartners.geojobs.endpoint.event.model.ZoneTilingJobCreated;
+import app.bpartners.geojobs.endpoint.event.model.status.ZTJStatusRecomputingSubmitted;
+import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobCreated;
 import app.bpartners.geojobs.endpoint.rest.model.CreateFullDetection;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.event.ZoneTilingJobCreatedService;

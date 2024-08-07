@@ -8,7 +8,7 @@ import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 import app.bpartners.geojobs.conf.FacadeIT;
-import app.bpartners.geojobs.endpoint.event.model.TaskStatisticRecomputingSubmitted;
+import app.bpartners.geojobs.endpoint.event.model.status.TaskStatisticRecomputingSubmitted;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.TaskStatus;

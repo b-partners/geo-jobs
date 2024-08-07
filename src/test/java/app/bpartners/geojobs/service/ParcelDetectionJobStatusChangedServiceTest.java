@@ -6,7 +6,7 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSIN
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
-import app.bpartners.geojobs.endpoint.event.model.ParcelDetectionJobStatusChanged;
+import app.bpartners.geojobs.endpoint.event.model.parcel.ParcelDetectionJobStatusChanged;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.service.TaskStatusService;

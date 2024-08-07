@@ -6,7 +6,7 @@ import static java.time.Instant.now;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import app.bpartners.geojobs.endpoint.event.model.ImportedZoneTilingJobSaved;
+import app.bpartners.geojobs.endpoint.event.model.zone.ImportedZoneTilingJobSaved;
 import app.bpartners.geojobs.endpoint.rest.model.BucketSeparatorType;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;

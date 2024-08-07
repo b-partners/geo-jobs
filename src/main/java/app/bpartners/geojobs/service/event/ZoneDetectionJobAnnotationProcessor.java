@@ -5,7 +5,7 @@ import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.HumanDetectionJobCreatedFailed;
+import app.bpartners.geojobs.endpoint.event.model.annotation.HumanDetectionJobCreatedFailed;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.DetectedTileRepository;

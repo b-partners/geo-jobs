@@ -6,8 +6,8 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.AnnotationRetrievingJobStatusRecomputingSubmitted;
-import app.bpartners.geojobs.endpoint.event.model.ZDJStatusRecomputingSubmitted;
+import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationRetrievingJobStatusRecomputingSubmitted;
+import app.bpartners.geojobs.endpoint.event.model.status.ZDJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.repository.model.AnnotationRetrievingTask;
 import app.bpartners.geojobs.service.AnnotationRetrievingJobService;

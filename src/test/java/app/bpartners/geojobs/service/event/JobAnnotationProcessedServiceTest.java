@@ -2,7 +2,7 @@ package app.bpartners.geojobs.service.event;
 
 import static org.mockito.Mockito.*;
 
-import app.bpartners.geojobs.endpoint.event.model.JobAnnotationProcessed;
+import app.bpartners.geojobs.endpoint.event.model.annotation.JobAnnotationProcessed;
 import org.junit.jupiter.api.Test;
 
 public class JobAnnotationProcessedServiceTest {

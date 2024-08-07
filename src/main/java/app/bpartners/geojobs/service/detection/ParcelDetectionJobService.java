@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.service.detection;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.ParcelDetectionJobStatusChanged;
+import app.bpartners.geojobs.endpoint.event.model.parcel.ParcelDetectionJobStatusChanged;
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.job.repository.TaskRepository;
 import app.bpartners.geojobs.job.service.JobService;

@@ -3,7 +3,7 @@ package app.bpartners.geojobs.service.event;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 
 import app.bpartners.geojobs.endpoint.event.model.AutoTaskStatisticRecomputingSubmitted;
-import app.bpartners.geojobs.endpoint.event.model.TaskStatisticRecomputingSubmitted;
+import app.bpartners.geojobs.endpoint.event.model.status.TaskStatisticRecomputingSubmitted;
 import app.bpartners.geojobs.job.model.Job;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.model.exception.NotFoundException;

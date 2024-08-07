@@ -4,7 +4,7 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import app.bpartners.geojobs.endpoint.event.model.ZoneTilingJobStatusChanged;
+import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobStatusChanged;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.repository.FullDetectionRepository;

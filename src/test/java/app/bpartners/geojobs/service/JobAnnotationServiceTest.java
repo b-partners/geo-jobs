@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.JobAnnotationProcessed;
+import app.bpartners.geojobs.endpoint.event.model.annotation.JobAnnotationProcessed;
 import app.bpartners.geojobs.endpoint.rest.model.AnnotationJobProcessing;
 import app.bpartners.geojobs.job.service.JobAnnotationService;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
