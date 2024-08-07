@@ -27,6 +27,15 @@ public class MailboxEventHandler implements RequestHandler<SQSEvent, String> {
 
   @Override
   public String handleRequest(SQSEvent event, Context context) {
+    try {
+      return faillibleHandleRequest(event, context);
+    } catch (Exception e) {
+      log.error("Error: {}", e);
+      throw e;
+    }
+  }
+
+  private String faillibleHandleRequest(SQSEvent event, Context context) {
     renameWorkerThread(currentThread());
     log.info("Received: event={}, awsReqId={}", event, context.getAwsRequestId());
     List<SQSMessage> messages = event.getRecords();
