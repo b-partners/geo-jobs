@@ -27,6 +27,7 @@ public class JobStatusRecomputingSubmittedService<
   public void accept(E event) {
     var jobId = event.getJobId();
     var oldJob = jobService.findById(jobId);
+    log.info("oldJob={}", oldJob);
     if (oldJob.isFinished()) {
       return;
     }
@@ -36,7 +37,8 @@ public class JobStatusRecomputingSubmittedService<
       return;
     }
 
-    jobService.recomputeStatus(oldJob);
+    var newJob = jobService.recomputeStatus(oldJob);
+    log.info("oldJob={}, newJob={}", oldJob, newJob);
     throw new RuntimeException("Fail on purpose so that message is not ack, causing retry");
   }
 
