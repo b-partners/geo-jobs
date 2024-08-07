@@ -1,26 +1,24 @@
 package app.bpartners.geojobs.endpoint.event.model.status;
 
-import app.bpartners.geojobs.endpoint.event.EventStack;
-import lombok.*;
-
 import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
 
+import app.bpartners.geojobs.endpoint.event.EventStack;
+import java.time.Duration;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+
 @Data
+@AllArgsConstructor
 @EqualsAndHashCode
 @ToString
 public class ZDJStatusRecomputingSubmitted extends JobStatusRecomputingSubmitted {
-  private static final int MAX_CONSUMER_DURATION_VALUE = 300;
-  private static final long DEFAULT_BACK_OFF_VALUE = 180L;
+  private static final long MAX_CONSUMER_DURATION_IN_SECONDS = Duration.ofMinutes(5).toSeconds();
+  public static final long INITIAL_BACKOFF_IN_SECONDS = Duration.ofMinutes(3).toSeconds();
 
   public ZDJStatusRecomputingSubmitted(String jobId) {
-    this.jobId = jobId;
-    this.maxConsumerBackoffBetweenRetriesDurationValue = DEFAULT_BACK_OFF_VALUE;
-    this.maxConsumerDurationValue = MAX_CONSUMER_DURATION_VALUE;
-  }
-
-  public ZDJStatusRecomputingSubmitted(
-      String jobId, Long maxConsumerBackoffBetweenRetriesDurationValue, Integer attemptNb) {
-    super(jobId, MAX_CONSUMER_DURATION_VALUE, maxConsumerBackoffBetweenRetriesDurationValue);
+    super(jobId, MAX_CONSUMER_DURATION_IN_SECONDS, INITIAL_BACKOFF_IN_SECONDS);
   }
 
   @Override

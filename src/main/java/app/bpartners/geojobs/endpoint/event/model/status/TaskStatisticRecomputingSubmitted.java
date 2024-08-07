@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.endpoint.event.model.status;
 
+import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
+
 import app.bpartners.geojobs.endpoint.event.EventStack;
 import app.bpartners.geojobs.endpoint.event.model.PojaEvent;
 import java.time.Duration;
@@ -16,16 +18,16 @@ public class TaskStatisticRecomputingSubmitted extends PojaEvent {
 
   @Override
   public Duration maxConsumerDuration() {
-    return Duration.ofMinutes(10L);
+    return Duration.ofMinutes(10);
   }
 
   @Override
   public Duration maxConsumerBackoffBetweenRetries() {
-    return Duration.ofMinutes(1L);
+    return Duration.ofMinutes(1);
   }
 
   @Override
   public EventStack getEventStack() {
-    return EventStack.EVENT_STACK_2;
+    return EVENT_STACK_2;
   }
 }

@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.endpoint.event.model;
 
+import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
+
 import app.bpartners.geojobs.endpoint.event.EventStack;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Duration;
@@ -10,8 +12,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-
-import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
 
 @Generated("EventBridge")
 @NoArgsConstructor

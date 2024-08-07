@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.endpoint.event.model.annotation;
 
+import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
+
 import app.bpartners.gen.annotator.endpoint.rest.model.CreateAnnotatedTask;
 import app.bpartners.geojobs.endpoint.event.EventStack;
 import app.bpartners.geojobs.endpoint.event.model.PojaEvent;
@@ -7,8 +9,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Duration;
 import javax.annotation.processing.Generated;
 import lombok.*;
-
-import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
 
 @Generated("EventBridge")
 @NoArgsConstructor

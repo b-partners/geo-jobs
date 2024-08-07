@@ -17,12 +17,12 @@ import lombok.ToString;
 @ToString
 public class JobStatusRecomputingSubmitted extends PojaEvent {
   protected String jobId;
-  protected long maxConsumerDurationValue;
-  protected long maxConsumerBackoffBetweenRetriesDurationValue;
+  protected long maxConsumerDurationInSeconds;
+  protected long initialConsumerBackoffBetweenRetriesInSeconds;
 
   @Override
   public Duration maxConsumerDuration() {
-    return Duration.ofSeconds(maxConsumerDurationValue);
+    return Duration.ofSeconds(maxConsumerDurationInSeconds);
   }
 
   @Override
@@ -32,6 +32,6 @@ public class JobStatusRecomputingSubmitted extends PojaEvent {
     // q: 2
     // n: attemptNb()
     return Duration.ofSeconds(
-        maxConsumerBackoffBetweenRetriesDurationValue * (int) Math.pow(2, getAttemptNb()));
+        initialConsumerBackoffBetweenRetriesInSeconds * (long) Math.pow(2, getAttemptNb()));
   }
 }

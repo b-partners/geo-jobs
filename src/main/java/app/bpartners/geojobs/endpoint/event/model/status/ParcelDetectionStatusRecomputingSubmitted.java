@@ -1,30 +1,28 @@
 package app.bpartners.geojobs.endpoint.event.model.status;
 
+import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
+
 import app.bpartners.geojobs.endpoint.event.EventStack;
+import java.time.Duration;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
 @Data
+@AllArgsConstructor
 @EqualsAndHashCode(callSuper = false)
 @ToString
 public class ParcelDetectionStatusRecomputingSubmitted extends JobStatusRecomputingSubmitted {
-  private static final long MAX_CONSUMER_DURATION_VALUE = 100L;
-  public static final long DEFAULT_BACKOFF_VALUE = 100L;
+  private static final long MAX_CONSUMER_DURATION_IN_SECONDS = Duration.ofMinutes(2).toSeconds();
+  public static final long INITIAL_BACKOFF_IN_SECONDS = Duration.ofMinutes(2).toSeconds();
 
   public ParcelDetectionStatusRecomputingSubmitted(String parcelDetectionJobId) {
-    this.jobId = parcelDetectionJobId;
-    this.maxConsumerBackoffBetweenRetriesDurationValue = DEFAULT_BACKOFF_VALUE;
-    this.maxConsumerDurationValue = MAX_CONSUMER_DURATION_VALUE;
-  }
-
-  public ParcelDetectionStatusRecomputingSubmitted( // needed for deserialization
-      String jobId, Long maxConsumerBackoffBetweenRetriesDurationValue, Integer attemptNb) {
-    super(jobId, MAX_CONSUMER_DURATION_VALUE, maxConsumerBackoffBetweenRetriesDurationValue);
+    super(parcelDetectionJobId, MAX_CONSUMER_DURATION_IN_SECONDS, INITIAL_BACKOFF_IN_SECONDS);
   }
 
   @Override
   public EventStack getEventStack() {
-    return EventStack.EVENT_STACK_2;
+    return EVENT_STACK_2;
   }
 }
