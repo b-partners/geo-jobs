@@ -25,6 +25,7 @@ public class JobStatusRecomputingSubmittedService<
   @Override
   @SneakyThrows
   public void accept(E event) {
+    log.info("Accepting event={}", event);
     var jobId = event.getJobId();
     var oldJob = jobService.findById(jobId);
     log.info("oldJob.id={}, oldJob.status={}", oldJob.getId(), oldJob.getStatus());
