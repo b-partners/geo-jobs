@@ -18,6 +18,7 @@ import static org.mockito.Mockito.when;
 import app.bpartners.geojobs.endpoint.event.model.AutoTaskStatisticRecomputingSubmitted;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
+import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;
 import app.bpartners.geojobs.repository.TaskStatisticRepository;
@@ -86,10 +87,9 @@ public class AutoTaskStatisticRecomputingSubmittedServiceTest {
   void accept_tiling_ok() {
     when(tilingJobRepositoryMock.findById(TILING_JOB_ID))
         .thenReturn(Optional.of(aZTJ(TILING_JOB_ID, PROCESSING, UNKNOWN)));
+    var statComputeEvent = new AutoTaskStatisticRecomputingSubmitted(TILING_JOB_ID);
 
-    assertThrows(
-        RuntimeException.class,
-        () -> subject.accept(new AutoTaskStatisticRecomputingSubmitted(TILING_JOB_ID)));
+    assertThrows(ApiException.class, () -> subject.accept(statComputeEvent));
     verify(tilingJobRepositoryMock, times(2)).findById(TILING_JOB_ID);
     verify(taskStatisticRepositoryMock, times(1)).save(any());
   }
@@ -98,10 +98,9 @@ public class AutoTaskStatisticRecomputingSubmittedServiceTest {
   void accept_detection_ok() {
     when(zoneDetectionRepositoryMock.findById(DETECTION_JOB_ID))
         .thenReturn(Optional.of(aZDJ(DETECTION_JOB_ID, PROCESSING, UNKNOWN)));
+    var statComputeEvent = new AutoTaskStatisticRecomputingSubmitted(DETECTION_JOB_ID);
 
-    assertThrows(
-        RuntimeException.class,
-        () -> subject.accept(new AutoTaskStatisticRecomputingSubmitted(DETECTION_JOB_ID)));
+    assertThrows(ApiException.class, () -> subject.accept(statComputeEvent));
     verify(zoneDetectionRepositoryMock, times(2)).findById(DETECTION_JOB_ID);
     verify(taskStatisticRepositoryMock, times(1)).save(any());
   }
@@ -132,6 +131,6 @@ public class AutoTaskStatisticRecomputingSubmittedServiceTest {
         () -> subject.accept(new AutoTaskStatisticRecomputingSubmitted(TILING_JOB_ID)));
     assertDoesNotThrow(
         () -> subject.accept(new AutoTaskStatisticRecomputingSubmitted(DETECTION_JOB_ID)));
-    verify(taskStatisticRepositoryMock, times(3)).save(any());
+    verify(taskStatisticRepositoryMock, times(0)).save(any());
   }
 }
