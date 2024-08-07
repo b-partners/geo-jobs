@@ -5,7 +5,6 @@ import static org.apache.commons.io.FileUtils.readFileToByteArray;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 import app.bpartners.geojobs.file.CustomBucketComponent;
-import app.bpartners.geojobs.file.ImageJpegCompressor;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
@@ -33,21 +32,17 @@ import org.springframework.web.util.UriComponentsBuilder;
 @ConditionalOnProperty(value = "objects.detector.mock.activated", havingValue = "false")
 @Slf4j
 public class HttpApiTileObjectDetector implements TileObjectDetector {
-  public static final float IMAGE_QUALITY = 0.8f;
   private final ObjectMapper om;
   private final CustomBucketComponent bucketComponent;
   private final String tileDetectionRawBaseUrls;
-  private final ImageJpegCompressor imageJpegCompressor;
 
   public HttpApiTileObjectDetector(
       ObjectMapper om,
       CustomBucketComponent bucketComponent,
-      @Value("${tile.detection.api.urls}") String tileDetectionRawBaseUrls,
-      ImageJpegCompressor imageJpegCompressor) {
+      @Value("${tile.detection.api.urls}") String tileDetectionRawBaseUrls) {
     this.om = om;
     this.bucketComponent = bucketComponent;
     this.tileDetectionRawBaseUrls = tileDetectionRawBaseUrls;
-    this.imageJpegCompressor = imageJpegCompressor;
   }
 
   private List<TileDetectorUrl> getDetectorUrls() {
