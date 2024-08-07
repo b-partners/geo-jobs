@@ -26,6 +26,8 @@ public class TileDetectionTaskSucceededServiceTest {
     when(tileDetectionTaskStatusServiceMock.succeed(any())).thenReturn(new TileDetectionTask());
 
     assertDoesNotThrow(
-        () -> subject.accept(new TileDetectionTaskSucceeded(new TileDetectionTask())));
+        () ->
+            subject.accept(
+                new TileDetectionTaskSucceeded(new TileDetectionTask(), any(String.class))));
   }
 }

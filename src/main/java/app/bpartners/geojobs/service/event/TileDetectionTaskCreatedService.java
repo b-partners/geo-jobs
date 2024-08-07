@@ -51,6 +51,9 @@ public class TileDetectionTaskCreatedService implements Consumer<TileDetectionTa
                   1)));
       return;
     }
-    eventProducer.accept(List.of(new TileDetectionTaskSucceeded(tileDetectionTask)));
+    eventProducer.accept(
+        List.of(
+            new TileDetectionTaskSucceeded(
+                tileDetectionTask, tileDetectionTaskCreated.getZoneDetectionJobId())));
   }
 }
