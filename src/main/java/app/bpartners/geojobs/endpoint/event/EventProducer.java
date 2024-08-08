@@ -26,22 +26,18 @@ import software.amazon.awssdk.services.eventbridge.model.PutEventsResultEntry;
 @Component
 @Slf4j
 public class EventProducer<T extends PojaEvent> implements Consumer<Collection<T>> {
+  private static final String EVENT_SOURCE = "app.bpartners.geojobs";
   private final ObjectMapper om;
   private final EventBridgeClient eventBridgeClient;
-  private final String eventBusName;
 
   private static final int MAX_EVENTS_FOR_PUT_REQUEST = 10;
   private final ListGrouper<T> listGrouper;
 
   public EventProducer(
-      ObjectMapper om,
-      EventBridgeClient eventBridgeClient,
-      @Value("${aws.eventBridge.bus}") String eventBusName,
-      ListGrouper<T> listGrouper) {
+      ObjectMapper om, EventBridgeClient eventBridgeClient, ListGrouper<T> listGrouper) {
     this.om = om;
     this.eventBridgeClient = eventBridgeClient;
     this.listGrouper = listGrouper;
-    this.eventBusName = eventBusName;
   }
 
   @Override
@@ -63,10 +59,10 @@ public class EventProducer<T extends PojaEvent> implements Consumer<Collection<T
     try {
       String eventAsString = om.writeValueAsString(event);
       return PutEventsRequestEntry.builder()
-          .source(event.getEventSource())
+          .source(EVENT_SOURCE)
           .detailType(event.getClass().getTypeName())
           .detail(eventAsString)
-          .eventBusName(this.eventBusName)
+          .eventBusName(event.getEventStack().getBusName())
           .build();
     } catch (JsonProcessingException e) {
       throw new RuntimeException(e);
