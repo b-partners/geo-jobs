@@ -3,6 +3,7 @@ package app.bpartners.geojobs.file.zip;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static java.time.Instant.now;
 
+import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.model.exception.ApiException;
 import java.io.*;
 import java.util.List;

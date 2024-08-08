@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.file.bucket;
 
+import app.bpartners.geojobs.file.FileWriter;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
