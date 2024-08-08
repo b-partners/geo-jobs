@@ -28,7 +28,7 @@ public class ZTJStatusRecomputingSubmittedService
     var newJob = zoneTilingJobService.recomputeStatus(oldJob);
 
     if (!(newJob.isFailed() || newJob.isSucceeded())) {
-      if (attemptNb < ATTEMPT_FOR_256_MINUTES_DURATION) {
+      if (attemptNb < ATTEMPT_FOR_256_MINUTES_DURATION)
         eventProducer.accept(
             List.of(
                 ZTJStatusRecomputingSubmitted.builder()
@@ -36,9 +36,8 @@ public class ZTJStatusRecomputingSubmittedService
                     .maxConsumerBackoffBetweenRetriesDurationValue(lastDurationValue * 2)
                     .attemptNb(attemptNb + 1)
                     .build()));
-      } else {
-        log.error("Max attempt reached for ZTJStatusRecomputingSubmitted handler");
-      }
+    } else {
+      log.error("Max attempt reached for ZTJStatusRecomputingSubmitted handler");
     }
   }
 }
