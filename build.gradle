@@ -26,9 +26,6 @@ sonarqube {
 
 repositories {
 mavenLocal()
-maven {
-  url 'https://repo.osgeo.org/repository/geotools-releases'
-}
     mavenCentral()
 }
 
@@ -208,8 +205,6 @@ dependencies {
 implementation 'app.bpartners:geo-jobs-gen:latest'
 implementation 'org.thymeleaf:thymeleaf:3.1.1.RELEASE'
 implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.1'
-implementation 'org.geotools:gt-api:31.2'
-implementation 'org.geotools:gt-main:31.2'
     
 
 }

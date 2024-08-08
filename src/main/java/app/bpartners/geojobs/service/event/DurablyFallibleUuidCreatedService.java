@@ -3,7 +3,7 @@ package app.bpartners.geojobs.service.event;
 import static java.lang.Thread.sleep;
 
 import app.bpartners.geojobs.PojaGenerated;
-import app.bpartners.geojobs.endpoint.event.model.DurablyFallibleUuidCreated1;
+import app.bpartners.geojobs.endpoint.event.model.DurablyFallibleUuidCreated;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
@@ -15,17 +15,17 @@ import org.springframework.stereotype.Service;
 @Service
 @AllArgsConstructor
 @Slf4j
-public class DurablyFallibleUuidCreated1Service implements Consumer<DurablyFallibleUuidCreated1> {
+public class DurablyFallibleUuidCreatedService implements Consumer<DurablyFallibleUuidCreated> {
   private final UuidCreatedService uuidCreatedService;
 
   @SneakyThrows
   @Override
-  public void accept(DurablyFallibleUuidCreated1 durablyFallibleUuidCreated1) {
-    sleep(durablyFallibleUuidCreated1.getWaitDurationBeforeConsumingInSeconds() * 1_000L);
-    if (durablyFallibleUuidCreated1.shouldFail()) {
+  public void accept(DurablyFallibleUuidCreated durablyFallibleUuidCreated) {
+    sleep(durablyFallibleUuidCreated.getWaitDurationBeforeConsumingInSeconds() * 1_000L);
+    if (durablyFallibleUuidCreated.shouldFail()) {
       throw new RuntimeException("Oops, random fail!");
     }
 
-    uuidCreatedService.accept(durablyFallibleUuidCreated1.getUuidCreated());
+    uuidCreatedService.accept(durablyFallibleUuidCreated.getUuidCreated());
   }
 }

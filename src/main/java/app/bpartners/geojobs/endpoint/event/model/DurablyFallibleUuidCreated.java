@@ -1,10 +1,8 @@
 package app.bpartners.geojobs.endpoint.event.model;
 
-import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
 import static java.lang.Math.random;
 
 import app.bpartners.geojobs.PojaGenerated;
-import app.bpartners.geojobs.endpoint.event.EventStack;
 import java.time.Duration;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,7 +19,7 @@ import lombok.ToString;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @ToString
-public class DurablyFallibleUuidCreated2 extends PojaEvent {
+public class DurablyFallibleUuidCreated extends PojaEvent {
   private UuidCreated uuidCreated;
   private int waitDurationBeforeConsumingInSeconds;
   private double failureRate;
@@ -39,10 +37,5 @@ public class DurablyFallibleUuidCreated2 extends PojaEvent {
   @Override
   public Duration maxConsumerBackoffBetweenRetries() {
     return uuidCreated.maxConsumerBackoffBetweenRetries();
-  }
-
-  @Override
-  public EventStack getEventStack() {
-    return EVENT_STACK_2;
   }
 }
