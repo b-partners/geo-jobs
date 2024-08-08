@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.job.model;
 
-import static app.bpartners.geojobs.job.model.Status.HealthStatus.FAILED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
@@ -45,10 +44,6 @@ public abstract class Job implements Serializable, Statusable<JobStatus> {
   public boolean isSucceeded() {
     return FINISHED.equals(getStatus().getProgression())
         && SUCCEEDED.equals(getStatus().getHealth());
-  }
-
-  public boolean isFailed() {
-    return FINISHED.equals(getStatus().getProgression()) && FAILED.equals(getStatus().getHealth());
   }
 
   @Override

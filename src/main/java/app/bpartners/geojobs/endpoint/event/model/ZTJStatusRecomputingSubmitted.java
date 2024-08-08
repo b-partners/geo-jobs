@@ -18,15 +18,8 @@ import lombok.ToString;
 @EqualsAndHashCode
 @ToString
 public class ZTJStatusRecomputingSubmitted extends PojaEvent {
-  private String jobId;
-  private long maxConsumerBackoffBetweenRetriesDurationValue;
-  private int attemptNb;
 
-  public ZTJStatusRecomputingSubmitted(String jobId) {
-    this.jobId = jobId;
-    this.maxConsumerBackoffBetweenRetriesDurationValue = 5L;
-    this.attemptNb = 0;
-  }
+  private String jobId;
 
   @Override
   public Duration maxConsumerDuration() {
@@ -35,7 +28,7 @@ public class ZTJStatusRecomputingSubmitted extends PojaEvent {
 
   @Override
   public Duration maxConsumerBackoffBetweenRetries() {
-    return Duration.of(maxConsumerBackoffBetweenRetriesDurationValue, MINUTES);
+    return Duration.of(1, MINUTES);
   }
 
   @Override
