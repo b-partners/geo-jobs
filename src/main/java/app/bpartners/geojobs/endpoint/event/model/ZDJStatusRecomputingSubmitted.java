@@ -1,29 +1,28 @@
 package app.bpartners.geojobs.endpoint.event.model;
 
+import static java.time.temporal.ChronoUnit.MINUTES;
+
 import app.bpartners.geojobs.endpoint.event.EventStack;
+import java.time.Duration;
 import lombok.*;
 
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder(toBuilder = true)
 @Data
 @EqualsAndHashCode
 @ToString
-public class ZDJStatusRecomputingSubmitted extends JobStatusRecomputingSubmitted {
-  private static final int MAX_CONSUMER_DURATION_VALUE = 10;
-  private static final long DEFAULT_BACK_OFF_VALUE = 1L;
+public class ZDJStatusRecomputingSubmitted extends PojaEvent {
+  private String jobId;
 
-  public ZDJStatusRecomputingSubmitted(String jobId) {
-    this.jobId = jobId;
-    this.maxConsumerBackoffBetweenRetriesDurationValue = DEFAULT_BACK_OFF_VALUE;
-    this.maxConsumerDurationValue = MAX_CONSUMER_DURATION_VALUE;
-    this.attemptNb = 0;
+  @Override
+  public Duration maxConsumerDuration() {
+    return Duration.of(10, MINUTES);
   }
 
-  public ZDJStatusRecomputingSubmitted(
-      String jobId, Long maxConsumerBackoffBetweenRetriesDurationValue, Integer attemptNb) {
-    super(
-        jobId,
-        MAX_CONSUMER_DURATION_VALUE,
-        maxConsumerBackoffBetweenRetriesDurationValue,
-        attemptNb);
+  @Override
+  public Duration maxConsumerBackoffBetweenRetries() {
+    return Duration.of(1, MINUTES);
   }
 
   @Override

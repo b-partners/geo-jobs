@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.endpoint.event.model;
 
+
 import app.bpartners.geojobs.endpoint.event.EventStack;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -20,7 +21,7 @@ public class ZTJStatusRecomputingSubmitted extends JobStatusRecomputingSubmitted
   }
 
   public ZTJStatusRecomputingSubmitted(
-      String jobId, Long maxConsumerBackoffBetweenRetriesDurationValue, Integer attemptNb) {
+      String jobId, long maxConsumerBackoffBetweenRetriesDurationValue, int attemptNb) {
     super(
         jobId,
         MAX_CONSUMER_DURATION_VALUE,

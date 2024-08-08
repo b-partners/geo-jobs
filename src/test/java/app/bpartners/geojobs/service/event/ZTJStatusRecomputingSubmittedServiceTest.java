@@ -32,11 +32,10 @@ public class ZTJStatusRecomputingSubmittedServiceTest {
 
     subject.accept(new ZTJStatusRecomputingSubmitted(pendingJobId));
 
-    ArgumentCaptor<List<ZTJStatusRecomputingSubmitted>> listCaptor =
-        ArgumentCaptor.forClass(List.class);
+    var listCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducerMock, times(1)).accept(listCaptor.capture());
-    var event = listCaptor.getValue().getFirst();
-    assertEquals(new ZTJStatusRecomputingSubmitted(pendingJobId, 10L, 1), event);
+    var event = ((List<ZTJStatusRecomputingSubmitted>) listCaptor.getValue()).getFirst();
+    assertEquals(new ZTJStatusRecomputingSubmitted(pendingJobId, 2 * 5, 1), event);
   }
 
   @Test
@@ -53,8 +52,7 @@ public class ZTJStatusRecomputingSubmittedServiceTest {
     subject.accept(new ZTJStatusRecomputingSubmitted(succeededJobId));
     subject.accept(new ZTJStatusRecomputingSubmitted(failedJobId));
 
-    ArgumentCaptor<List<ZTJStatusRecomputingSubmitted>> listCaptor =
-        ArgumentCaptor.forClass(List.class);
+    var listCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducerMock, times(0)).accept(listCaptor.capture());
   }
 
@@ -67,8 +65,7 @@ public class ZTJStatusRecomputingSubmittedServiceTest {
 
     subject.accept(new ZTJStatusRecomputingSubmitted(jobId, 256L, 8));
 
-    ArgumentCaptor<List<ZTJStatusRecomputingSubmitted>> listCaptor =
-        ArgumentCaptor.forClass(List.class);
+    var listCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducerMock, times(0)).accept(listCaptor.capture());
   }
 
