@@ -1,32 +1,41 @@
 package app.bpartners.geojobs.endpoint.event.model;
 
+import static java.time.temporal.ChronoUnit.MINUTES;
 
 import app.bpartners.geojobs.endpoint.event.EventStack;
+import java.time.Duration;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder(toBuilder = true)
 @Data
 @EqualsAndHashCode
 @ToString
-public class ZTJStatusRecomputingSubmitted extends JobStatusRecomputingSubmitted {
-  private static final long MAX_CONSUMER_DURATION_VALUE = 10L;
-  private static final long DEFAULT_BACK_OFF_VALUE = 1L;
+public class ZTJStatusRecomputingSubmitted extends PojaEvent {
+  private String jobId;
+  private long maxConsumerBackoffBetweenRetriesDurationValue;
+  private int attemptNb;
 
   public ZTJStatusRecomputingSubmitted(String jobId) {
     this.jobId = jobId;
-    this.maxConsumerBackoffBetweenRetriesDurationValue = DEFAULT_BACK_OFF_VALUE;
-    this.maxConsumerDurationValue = MAX_CONSUMER_DURATION_VALUE;
+    this.maxConsumerBackoffBetweenRetriesDurationValue = 5L;
     this.attemptNb = 0;
   }
 
-  public ZTJStatusRecomputingSubmitted(
-      String jobId, long maxConsumerBackoffBetweenRetriesDurationValue, int attemptNb) {
-    super(
-        jobId,
-        MAX_CONSUMER_DURATION_VALUE,
-        maxConsumerBackoffBetweenRetriesDurationValue,
-        attemptNb);
+  @Override
+  public Duration maxConsumerDuration() {
+    return Duration.of(10, MINUTES);
+  }
+
+  @Override
+  public Duration maxConsumerBackoffBetweenRetries() {
+    return Duration.of(maxConsumerBackoffBetweenRetriesDurationValue, MINUTES);
   }
 
   @Override

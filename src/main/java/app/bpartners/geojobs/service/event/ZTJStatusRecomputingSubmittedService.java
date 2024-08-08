@@ -29,12 +29,13 @@ public class ZTJStatusRecomputingSubmittedService
 
     if (!(newJob.isFailed() || newJob.isSucceeded())) {
       if (attemptNb < ATTEMPT_FOR_256_MINUTES_DURATION) {
-        long maxConsumerBackoffBetweenRetriesDurationValue = lastDurationValue * 2;
-        int newAttemptNb = attemptNb + 1;
         eventProducer.accept(
             List.of(
-                new ZTJStatusRecomputingSubmitted(
-                    newJob.getId(), maxConsumerBackoffBetweenRetriesDurationValue, newAttemptNb)));
+                ZTJStatusRecomputingSubmitted.builder()
+                    .jobId(newJob.getId())
+                    .maxConsumerBackoffBetweenRetriesDurationValue(lastDurationValue * 2)
+                    .attemptNb(attemptNb + 1)
+                    .build()));
       } else {
         log.error("Max attempt reached for ZTJStatusRecomputingSubmitted handler");
       }
