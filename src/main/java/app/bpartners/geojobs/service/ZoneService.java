@@ -7,7 +7,6 @@ import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.
 import static app.bpartners.geojobs.service.tiling.ZoneTilingJobService.getTilingTasks;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.status.ZDJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.TaskStatisticMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneTilingJobMapper;
 import app.bpartners.geojobs.endpoint.rest.model.CreateFullDetection;
@@ -130,9 +129,7 @@ public class ZoneService {
                 .confidence(zoneToDetect.getConfidence()));
     fullDetection.setDetectableObjectConfiguration(detectableObjectConfigurations.getFirst());
     fullDetectionRepository.save(fullDetection);
-    ZoneDetectionJob processedZDJ =
-        zoneDetectionJobService.processZDJ(
-            zoneDetectionJob.getId(), detectableObjectConfigurations);
+    zoneDetectionJobService.processZDJ(zoneDetectionJob.getId(), detectableObjectConfigurations);
   }
 
   private ZoneDetectionJob getMachineZdjByZtjId(String ztjId) {

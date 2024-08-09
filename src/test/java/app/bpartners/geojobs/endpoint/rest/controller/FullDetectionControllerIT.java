@@ -221,7 +221,6 @@ public class FullDetectionControllerIT extends FacadeIT {
     subject.processFullDetection(createFullDetection());
 
     verify(zoneDetectionJobService, times(1)).processZDJ(any(), any());
-    verify(eventProducer, times(1)).accept(any());
   }
 
   private FullDetection fullDetectionWithoutZTJAndZDJ() {
