@@ -133,10 +133,6 @@ public class ZoneService {
     ZoneDetectionJob processedZDJ =
         zoneDetectionJobService.processZDJ(
             zoneDetectionJob.getId(), detectableObjectConfigurations);
-
-    if (!processedZDJ.isSucceeded()) {
-      eventProducer.accept(List.of(new ZDJStatusRecomputingSubmitted(processedZDJ.getId())));
-    }
   }
 
   private ZoneDetectionJob getMachineZdjByZtjId(String ztjId) {

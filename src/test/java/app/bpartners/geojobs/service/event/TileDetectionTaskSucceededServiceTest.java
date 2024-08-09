@@ -15,10 +15,9 @@ import org.junit.jupiter.api.Test;
 public class TileDetectionTaskSucceededServiceTest {
   TileDetectionTaskStatusService tileDetectionTaskStatusServiceMock = mock();
   TileDetectionTaskRepository tileDetectionTaskRepositoryMock = mock();
-  EventProducer eventProducerMock = mock();
   TileDetectionTaskSucceededService subject =
       new TileDetectionTaskSucceededService(
-          tileDetectionTaskStatusServiceMock, tileDetectionTaskRepositoryMock, eventProducerMock);
+          tileDetectionTaskStatusServiceMock, tileDetectionTaskRepositoryMock);
 
   @Test
   void consume_with_any_error_ok() {

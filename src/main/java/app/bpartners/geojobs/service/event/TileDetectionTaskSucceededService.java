@@ -21,26 +21,11 @@ import org.springframework.stereotype.Service;
 public class TileDetectionTaskSucceededService implements Consumer<TileDetectionTaskSucceeded> {
   private final TileDetectionTaskStatusService tileDetectionTaskStatusService;
   private final TileDetectionTaskRepository tileDetectionTaskRepository;
-  private final EventProducer eventProducer;
 
   @Override
   public void accept(TileDetectionTaskSucceeded tileDetectionTaskSucceeded) {
     var tileDetectionTask = tileDetectionTaskSucceeded.getTileDetectionTask();
     tileDetectionTaskRepository.save(tileDetectionTask);
     tileDetectionTaskStatusService.succeed(tileDetectionTask);
-    List<TileDetectionTask> tasks =
-        tileDetectionTaskRepository.findAllByJobId(tileDetectionTask.getJobId());
-    if (areFinished(tasks)) {
-      log.info("Tile detection tasks from jobId: {} are finished", tileDetectionTask.getJobId());
-      eventProducer.accept(
-          List.of(
-              new ZDJParcelsStatusRecomputingSubmitted(tileDetectionTaskSucceeded.getZdjId()),
-              new ZDJStatusRecomputingSubmitted(tileDetectionTaskSucceeded.getZdjId()),
-              new AutoTaskStatisticRecomputingSubmitted(tileDetectionTaskSucceeded.getZdjId())));
-    }
-  }
-
-  public boolean areFinished(List<TileDetectionTask> tasks) {
-    return tasks.stream().allMatch(Task::isSucceeded);
   }
 }
