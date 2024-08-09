@@ -78,6 +78,7 @@ public class ZoneDetectionJobServiceTest {
   }
 
   /*
+  TODO: update these tests to cover ZDJ task filtering
   @Test
   void retry_failed_tasks_not_found_ko() {
     when(jobRepositoryMock.findById(JOB_ID)).thenReturn(Optional.empty());
@@ -86,7 +87,6 @@ public class ZoneDetectionJobServiceTest {
   }
 
 
-      TODO: set when implemented again
   @Test
   void retry_failed_tasks_all_tasks_not_finished_ko() {
     when(jobRepositoryMock.findById(JOB2_ID))
@@ -132,7 +132,6 @@ public class ZoneDetectionJobServiceTest {
     assertThrows(BadRequestException.class, () -> subject.retryFailedTask(JOB2_ID));
   }
 
-  TODO: set when implemented again
   @Test
   void dispatch_task_by_success_status_ko() {
     when(jobRepositoryMock.findById(JOB_ID_NOT_FOUND)).thenReturn(Optional.empty());
