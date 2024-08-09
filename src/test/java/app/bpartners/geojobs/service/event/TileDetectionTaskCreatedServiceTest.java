@@ -28,10 +28,7 @@ public class TileDetectionTaskCreatedServiceTest {
   EventProducer eventProducerMock = mock();
   TileDetectionTaskCreatedService subject =
       new TileDetectionTaskCreatedService(
-          tileDetectionTaskStatusServiceMock,
-          tileDetectionTaskConsumerMock,
-          eventProducerMock,
-          new ExceptionToStringFunction());
+          tileDetectionTaskStatusServiceMock, tileDetectionTaskConsumerMock, eventProducerMock);
 
   @Test
   void accept_ok() {

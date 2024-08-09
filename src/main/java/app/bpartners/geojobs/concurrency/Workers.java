@@ -8,6 +8,7 @@ import static java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor;
 import app.bpartners.geojobs.PojaGenerated;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import lombok.SneakyThrows;
@@ -24,7 +25,7 @@ public class Workers<T> {
   }
 
   @SneakyThrows
-  public List<Future<T>> invokeAll(List<Callable<T>> callables) {
+  public List<T> invokeAll(List<Callable<T>> callables) {
     var parentThread = currentThread();
     callables =
         callables.stream()
@@ -37,6 +38,16 @@ public class Workers<T> {
                           return c.call();
                         })
             .toList();
-    return executorService.invokeAll(callables);
+    List<Future<T>> futures = executorService.invokeAll(callables);
+    return futures.stream()
+        .map(
+            future -> {
+              try {
+                return future.get();
+              } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+              }
+            })
+        .toList();
   }
 }
