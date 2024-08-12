@@ -15,6 +15,7 @@ import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
+import app.bpartners.geojobs.job.model.Task;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
@@ -29,12 +30,15 @@ import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
+import app.bpartners.geojobs.repository.model.detection.ParcelDetectionJob;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
+import app.bpartners.geojobs.service.detection.ParcelDetectionJobService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import jakarta.persistence.EntityManager;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -64,9 +68,11 @@ public class ZoneDetectionJobServiceTest {
   EventProducer eventProducerMock = mock();
   EntityManager entityManagerMock = mock();
   TileDetectionTaskRepository tileDetectionTaskRepositoryMock = mock();
-  NotFinishedTaskRetriever<ParcelDetectionTask> notFinishedTaskRetriever =
-      new NotFinishedTaskRetriever<>();
   ZoneDetectionJobRepository zoneDetectionJobRepositoryMock = mock();
+  TaskToJobConverter<ParcelDetectionTask, ParcelDetectionJob> parcelJobConverter =
+      new TaskToJobConverter<>();
+  KeyPredicateFunction keyPredicateFunction = new KeyPredicateFunction();
+  ParcelDetectionJobService parcelDetectionJobServiceMock = mock();
   ZoneDetectionJobService subject =
       new ZoneDetectionJobService(
           jobRepositoryMock,
@@ -80,10 +86,11 @@ public class ZoneDetectionJobServiceTest {
           mock(),
           mock(),
           zoneDetectionJobRepositoryMock,
-          tileDetectionTaskRepositoryMock,
           mock(),
-          notFinishedTaskRetriever,
-          mock());
+          parcelJobConverter,
+          keyPredicateFunction,
+          parcelDetectionJobServiceMock,
+          tileDetectionTaskRepositoryMock);
 
   @BeforeEach
   void setUp() {
@@ -278,57 +285,34 @@ public class ZoneDetectionJobServiceTest {
                                 .creationDatetime(now())
                                 .build()))
                     .build()));
-    when(taskRepositoryMock.findAllByJobId(JOB_4_ID))
-        .thenReturn(
+    List<TileDetectionTask> tilesPDJ1 =
+        List.of(aTileDetectionTask("tileBucket1", FINISHED, SUCCEEDED, PDJ_ID_1));
+    List<TileDetectionTask> tilesPDJ2 =
+        List.of(
+            aTileDetectionTask("tileBucket2", FINISHED, SUCCEEDED, PDJ_2),
+            aTileDetectionTask("tileBucket3", FINISHED, FAILED, PDJ_2),
+            aTileDetectionTask("tileBucket4", PROCESSING, UNKNOWN, PDJ_2));
+    ParcelDetectionTask originalFinishedParcelTask =
+        parcelDetectionTask(
+            PDJ_ID_1,
+            FINISHED,
+            SUCCEEDED,
+            List.of(Tile.builder().bucketPath("tileBucket1").build()));
+    ParcelDetectionTask originalNotFinishedParcelTask =
+        parcelDetectionTask(
+            PDJ_2,
+            PROCESSING,
+            FAILED,
             List.of(
-                ParcelDetectionTask.builder()
-                    .asJobId(PDJ_ID_1)
-                    .parcels(
-                        List.of(
-                            Parcel.builder()
-                                .id(randomUUID().toString())
-                                .parcelContent(
-                                    ParcelContent.builder()
-                                        .id(randomUUID().toString())
-                                        .geoServerUrl(new URL("http:/dummy.com"))
-                                        .geoServerParameter(new GeoServerParameter())
-                                        .feature(new Feature())
-                                        .tiles(
-                                            List.of(
-                                                Tile.builder()
-                                                    .id(randomUUID().toString())
-                                                    .bucketPath(randomUUID().toString())
-                                                    .build()))
-                                        .build())
-                                .build()))
-                    .statusHistory(
-                        List.of(
-                            TaskStatus.builder().progression(FINISHED).health(SUCCEEDED).build()))
-                    .build(),
-                ParcelDetectionTask.builder()
-                    .asJobId(PDJ_2)
-                    .parcels(
-                        List.of(
-                            Parcel.builder()
-                                .id(randomUUID().toString())
-                                .parcelContent(
-                                    ParcelContent.builder()
-                                        .id(randomUUID().toString())
-                                        .geoServerUrl(new URL("http:/dummy.com"))
-                                        .geoServerParameter(new GeoServerParameter())
-                                        .feature(new Feature())
-                                        .tiles(
-                                            List.of(
-                                                Tile.builder()
-                                                    .id(randomUUID().toString())
-                                                    .bucketPath(randomUUID().toString())
-                                                    .build()))
-                                        .build())
-                                .build()))
-                    .statusHistory(
-                        List.of(
-                            TaskStatus.builder().progression(PROCESSING).health(FAILED).build()))
-                    .build()));
+                Tile.builder().bucketPath("tileBucket2").build(),
+                Tile.builder().bucketPath("tileBucket3").build(),
+                Tile.builder().bucketPath("tileBucket4").build()));
+    when(taskRepositoryMock.findAllByJobId(JOB_4_ID))
+        .thenReturn(List.of(originalFinishedParcelTask, originalNotFinishedParcelTask));
+    when(tileDetectionTaskRepositoryMock.findAllByJobId(PDJ_ID_1)).thenReturn(tilesPDJ1);
+    when(tileDetectionTaskRepositoryMock.findAllByJobId(PDJ_2)).thenReturn(tilesPDJ2);
+    when(parcelDetectionJobServiceMock.create(any(), any()))
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
 
     FilteredDetectionJob filteredZoneTilingJobs = subject.dispatchTasksBySucceededStatus(JOB_4_ID);
 
@@ -346,6 +330,59 @@ public class ZoneDetectionJobServiceTest {
     assertEquals(1, succeededTasks.size());
     assertTrue(succeededTasks.stream().allMatch(ParcelDetectionTask::isSucceeded));
     assertEquals(1, notSucceededTasks.size());
+
+    var parcelDetectionJobCaptor = ArgumentCaptor.forClass(ParcelDetectionJob.class);
+    verify(parcelDetectionJobServiceMock, times(2))
+        .create(parcelDetectionJobCaptor.capture(), listEventCapture.capture());
+    var finishedPDJ = parcelDetectionJobCaptor.getAllValues().getFirst();
+    var notFinishedPDJ = parcelDetectionJobCaptor.getAllValues().getLast();
+    var finishedTileDetectionTasks =
+        ((List<TileDetectionTask>) listEventCapture.getAllValues().get(2));
+    var notFinishedTileDetectionTasks =
+        ((List<TileDetectionTask>) listEventCapture.getAllValues().get(3));
+    assertTrue(finishedPDJ.isSucceeded());
+    assertTrue(notFinishedPDJ.isPending());
+    assertEquals(1, finishedTileDetectionTasks.size());
+    assertEquals(2, notFinishedTileDetectionTasks.size());
+    assertTrue(finishedTileDetectionTasks.stream().allMatch(Task::isSucceeded));
+    assertTrue(notFinishedTileDetectionTasks.stream().allMatch(Task::isPending));
+    assertTrue(
+        finishedTileDetectionTasks.stream()
+            .map(tileDetectionTask -> tileDetectionTask.getTile().getBucketPath())
+            .toList()
+            .contains("tileBucket1"));
+    assertTrue(
+        notFinishedTileDetectionTasks.stream()
+            .map(tileDetectionTask -> tileDetectionTask.getTile().getBucketPath())
+            .toList()
+            .containsAll(List.of("tileBucket3", "tileBucket4")));
+  }
+
+  private static ParcelDetectionTask parcelDetectionTask(
+      String asJobId,
+      Status.ProgressionStatus progressionStatus,
+      Status.HealthStatus healthStatus,
+      List<Tile> tiles)
+      throws MalformedURLException {
+    return ParcelDetectionTask.builder()
+        .asJobId(asJobId)
+        .parcels(
+            List.of(
+                Parcel.builder()
+                    .id(randomUUID().toString())
+                    .parcelContent(
+                        ParcelContent.builder()
+                            .id(randomUUID().toString())
+                            .geoServerUrl(new URL("http:/dummy.com"))
+                            .geoServerParameter(new GeoServerParameter())
+                            .feature(new Feature())
+                            .tiles(tiles)
+                            .build())
+                    .build()))
+        .statusHistory(
+            List.of(
+                TaskStatus.builder().progression(progressionStatus).health(healthStatus).build()))
+        .build();
   }
 
   @Test
@@ -429,6 +466,7 @@ public class ZoneDetectionJobServiceTest {
   }
 
   private TileDetectionTask aTileDetectionTask(
+      String tileBucketPath,
       Status.ProgressionStatus progressionStatus,
       Status.HealthStatus healthStatus,
       String parcelJobId) {
@@ -439,6 +477,11 @@ public class ZoneDetectionJobServiceTest {
             .health(healthStatus)
             .creationDatetime(now())
             .build());
-    return TileDetectionTask.builder().jobId(parcelJobId).statusHistory(statusHistory).build();
+    return TileDetectionTask.builder()
+        .id(tileBucketPath)
+        .jobId(parcelJobId)
+        .tile(Tile.builder().bucketPath(tileBucketPath).build())
+        .statusHistory(statusHistory)
+        .build();
   }
 }

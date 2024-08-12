@@ -25,10 +25,12 @@ import app.bpartners.geojobs.repository.model.FilteredDetectionJob;
 import app.bpartners.geojobs.repository.model.detection.*;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
+import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.JobFilteredMailer;
-import app.bpartners.geojobs.service.NotFinishedTaskRetriever;
+import app.bpartners.geojobs.service.KeyPredicateFunction;
+import app.bpartners.geojobs.service.TaskToJobConverter;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -48,10 +50,11 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
   private final HumanDetectionJobRepository humanDetectionJobRepository;
   private final AnnotationService annotationService;
   private final ZoneDetectionJobRepository zoneDetectionJobRepository;
-  private final TileDetectionTaskRepository tileDetectionTaskRepository;
   private final JobFilteredMailer<ZoneDetectionJob> detectionFilteredMailer;
-  private final NotFinishedTaskRetriever<ParcelDetectionTask> notFinishedTaskRetriever;
-  private final ParcelDetectionJobRepository parcelDetectionJobRepository;
+  private final TaskToJobConverter<ParcelDetectionTask, ParcelDetectionJob> parcelJobConverter;
+  private final KeyPredicateFunction keyPredicateFunction;
+  private final ParcelDetectionJobService parcelDetectionJobService;
+  private final TileDetectionTaskRepository tileDetectionTaskRepository;
 
   public ZoneDetectionJobService(
       JpaRepository<ZoneDetectionJob, String> repository,
@@ -65,10 +68,11 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
       HumanDetectionJobRepository humanDetectionJobRepository,
       AnnotationService annotationService,
       ZoneDetectionJobRepository zoneDetectionJobRepository,
-      TileDetectionTaskRepository tileDetectionTaskRepository,
       JobFilteredMailer<ZoneDetectionJob> detectionFilteredMailer,
-      NotFinishedTaskRetriever<ParcelDetectionTask> notFinishedTaskRetriever,
-      ParcelDetectionJobRepository parcelDetectionJobRepository) {
+      TaskToJobConverter<ParcelDetectionTask, ParcelDetectionJob> parcelJobConverter,
+      KeyPredicateFunction keyPredicateFunction,
+      ParcelDetectionJobService parcelDetectionJobService,
+      TileDetectionTaskRepository tileDetectionTaskRepository) {
     super(repository, jobStatusRepository, taskRepository, eventProducer, ZoneDetectionJob.class);
     this.tilingTaskRepository = tilingTaskRepository;
     this.detectionMapper = detectionMapper;
@@ -77,10 +81,11 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
     this.humanDetectionJobRepository = humanDetectionJobRepository;
     this.annotationService = annotationService;
     this.zoneDetectionJobRepository = zoneDetectionJobRepository;
-    this.tileDetectionTaskRepository = tileDetectionTaskRepository;
     this.detectionFilteredMailer = detectionFilteredMailer;
-    this.notFinishedTaskRetriever = notFinishedTaskRetriever;
-    this.parcelDetectionJobRepository = parcelDetectionJobRepository;
+    this.parcelJobConverter = parcelJobConverter;
+    this.keyPredicateFunction = keyPredicateFunction;
+    this.parcelDetectionJobService = parcelDetectionJobService;
+    this.tileDetectionTaskRepository = tileDetectionTaskRepository;
   }
 
   public TaskStatistic computeTaskStatistics(String jobId) {
@@ -100,8 +105,6 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
     var job = findById(jobId);
     var parcelDetectionTasks = taskRepository.findAllByJobId(jobId);
 
-    // TODO: can be improved by dispatching only failed TileDetectionTask not the whole
-    // ParcelDetectionTask
     var succeededParcelDetectionTasks =
         parcelDetectionTasks.stream().filter(Task::isSucceeded).toList();
     var notSucceededParcelDetectionTasks =
@@ -156,8 +159,88 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
       jobToDuplicate.setStatusHistory(statusHistory);
     }
     ZoneDetectionJob duplicatedJob = repository.save(jobToDuplicate);
-    taskRepository.saveAll(tasks);
+    processParcelDetectionDuplication(duplicatedJobId, tasks);
     return duplicatedJob;
+  }
+
+  private void processParcelDetectionDuplication(
+      String duplicatedJobId, List<ParcelDetectionTask> tasks) {
+    var detectionTaskDiffs =
+        tasks.stream()
+            .map(
+                oldTask -> {
+                  String newTaskId = randomUUID().toString();
+                  String parcelId = randomUUID().toString();
+                  String parcelContentId = randomUUID().toString();
+                  String newAsJobId = randomUUID().toString();
+                  var newTask =
+                      oldTask.duplicate(
+                          newTaskId, duplicatedJobId, parcelId, parcelContentId, newAsJobId);
+                  return new ParcelDetectionTask.ParcelDetectionTaskDiff(oldTask, newTask);
+                })
+            .toList();
+    taskRepository.saveAll(
+        detectionTaskDiffs.stream()
+            .map(ParcelDetectionTask.ParcelDetectionTaskDiff::newTask)
+            .toList());
+
+    detectionTaskDiffs.forEach(
+        diff -> {
+          var newTask = diff.newTask();
+          var oldTask = diff.oldTask();
+          var oldTileDetectionTasks =
+              tileDetectionTaskRepository.findAllByJobId(oldTask.getAsJobId());
+          var notSucceededTileTasks =
+              oldTileDetectionTasks.stream()
+                  .filter(tileDetectionTask -> !tileDetectionTask.isSucceeded())
+                  .toList();
+          var succeededTileBucketPaths =
+              oldTileDetectionTasks.stream()
+                  .filter(Task::isSucceeded)
+                  .map(task -> task.getTile().getBucketPath())
+                  .toList();
+
+          var parcelDetectionJob = parcelJobConverter.apply(newTask);
+          var newTileDetectionTasks =
+              new ArrayList<>(
+                  newTask.getTiles().stream()
+                      .filter(keyPredicateFunction.apply(Tile::getBucketPath))
+                      .map(tile -> parcelJobConverter.apply(newTask, tile))
+                      .toList());
+          if (!notSucceededTileTasks.isEmpty()) {
+            newTileDetectionTasks.removeIf(
+                tileDetectionTask ->
+                    succeededTileBucketPaths.contains(tileDetectionTask.getTile().getBucketPath()));
+          } else {
+            newTileDetectionTasks.forEach(
+                tileDetectionTask ->
+                    tileDetectionTask
+                        .getStatusHistory()
+                        .add(
+                            TaskStatus.builder()
+                                .id(randomUUID().toString())
+                                .taskId(tileDetectionTask.getId())
+                                .jobType(tileDetectionTask.getStatus().getJobType())
+                                .progression(FINISHED)
+                                .health(SUCCEEDED)
+                                .creationDatetime(now())
+                                .message(tileDetectionTask.getStatus().getMessage())
+                                .build()));
+            parcelDetectionJob
+                .getStatusHistory()
+                .add(
+                    JobStatus.builder()
+                        .id(randomUUID().toString())
+                        .jobId(parcelDetectionJob.getId())
+                        .jobType(parcelDetectionJob.getStatus().getJobType())
+                        .progression(FINISHED)
+                        .health(SUCCEEDED)
+                        .creationDatetime(now())
+                        .message(parcelDetectionJob.getStatus().getMessage())
+                        .build());
+          }
+          parcelDetectionJobService.create(parcelDetectionJob, newTileDetectionTasks);
+        });
   }
 
   @Transactional
