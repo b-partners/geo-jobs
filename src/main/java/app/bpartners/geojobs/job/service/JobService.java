@@ -132,7 +132,10 @@ public abstract class JobService<T extends Task, J extends Job> {
       throw new IllegalArgumentException(
           "Only PENDING job can be created. " + "You sure all tasks are PENDING?");
     }
+    return save(job, tasks);
+  }
 
+  public J save(J job, List<T> tasks) {
     var saved = repository.save(job);
     taskRepository.saveAll(tasks);
     return saved;

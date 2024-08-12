@@ -239,7 +239,7 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
                         .message(parcelDetectionJob.getStatus().getMessage())
                         .build());
           }
-          parcelDetectionJobService.create(parcelDetectionJob, newTileDetectionTasks);
+          parcelDetectionJobService.save(parcelDetectionJob, newTileDetectionTasks);
         });
   }
 

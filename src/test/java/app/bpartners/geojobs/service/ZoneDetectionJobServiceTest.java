@@ -311,7 +311,7 @@ public class ZoneDetectionJobServiceTest {
         .thenReturn(List.of(originalFinishedParcelTask, originalNotFinishedParcelTask));
     when(tileDetectionTaskRepositoryMock.findAllByJobId(PDJ_ID_1)).thenReturn(tilesPDJ1);
     when(tileDetectionTaskRepositoryMock.findAllByJobId(PDJ_2)).thenReturn(tilesPDJ2);
-    when(parcelDetectionJobServiceMock.create(any(), any()))
+    when(parcelDetectionJobServiceMock.save(any(), any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
 
     FilteredDetectionJob filteredZoneTilingJobs = subject.dispatchTasksBySucceededStatus(JOB_4_ID);
@@ -333,7 +333,7 @@ public class ZoneDetectionJobServiceTest {
 
     var parcelDetectionJobCaptor = ArgumentCaptor.forClass(ParcelDetectionJob.class);
     verify(parcelDetectionJobServiceMock, times(2))
-        .create(parcelDetectionJobCaptor.capture(), listEventCapture.capture());
+        .save(parcelDetectionJobCaptor.capture(), listEventCapture.capture());
     var finishedPDJ = parcelDetectionJobCaptor.getAllValues().getFirst();
     var notFinishedPDJ = parcelDetectionJobCaptor.getAllValues().getLast();
     var finishedTileDetectionTasks =
