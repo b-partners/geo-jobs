@@ -18,12 +18,14 @@ import org.springframework.stereotype.Component;
 @ConditionalOnProperty(value = "tiles.downloader.mock.activated", havingValue = "true")
 public class MockedTilesDownloader extends FalliblyDurableMockedFunction<ParcelContent, File>
     implements TilesDownloader {
-  app.bpartners.geojobs.file.FileWriter fileWriter;
+  private final app.bpartners.geojobs.file.FileWriter fileWriter;
 
   public MockedTilesDownloader(
       @Value("${tiles.downloader.mock.maxCallDuration}") long maxCallDurationInMillis,
-      @Value("${tiles.downloader.mock.failureRate}") double failureRate) {
+      @Value("${tiles.downloader.mock.failureRate}") double failureRate,
+      app.bpartners.geojobs.file.FileWriter fileWriter) {
     super(Duration.ofMillis(maxCallDurationInMillis), failureRate);
+    this.fileWriter = fileWriter;
   }
 
   @SneakyThrows

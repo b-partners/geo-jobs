@@ -34,6 +34,9 @@ public class FileUnzipper implements BiFunction<ZipFile, String, Path> {
       while (entries.hasMoreElements()) {
         ZipEntry entry = entries.nextElement();
         if (!entry.isDirectory()) {
+          if (entry.getName().contains("..")) {
+            throw new IllegalArgumentException("Entry name can't contain: ...");
+          }
           totalEntryArchive++;
           // Ensure the target file is within the intended directory
           Path targetFile = extractDirectoryPath.resolve(entry.getName()).normalize();

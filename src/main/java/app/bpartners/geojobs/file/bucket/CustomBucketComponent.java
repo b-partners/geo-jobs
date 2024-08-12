@@ -15,10 +15,11 @@ import software.amazon.awssdk.transfer.s3.model.FileDownload;
 @Component
 public class CustomBucketComponent {
   private final BucketConf bucketConf;
-  FileWriter fileWriter;
+  private final FileWriter fileWriter;
 
-  public CustomBucketComponent(BucketConf bucketConf) {
+  public CustomBucketComponent(BucketConf bucketConf, FileWriter fileWriter) {
     this.bucketConf = bucketConf;
+    this.fileWriter = fileWriter;
   }
 
   public List<S3Object> listObjects(String bucketName) {

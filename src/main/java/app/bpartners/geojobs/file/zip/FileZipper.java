@@ -11,14 +11,16 @@ import java.util.function.Function;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
+import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Component;
 
 @Component
+@AllArgsConstructor
 public class FileZipper implements Function<List<File>, ZipFile> {
 
   public static final String ZIP_FILE_SUFFIX = ".zip";
-  private FileWriter fileWriter;
+  private final FileWriter fileWriter;
 
   @Override
   @SneakyThrows

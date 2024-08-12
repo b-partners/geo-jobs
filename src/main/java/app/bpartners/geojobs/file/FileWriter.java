@@ -60,12 +60,9 @@ public class FileWriter implements BiFunction<byte[], File, File> {
   }
 
   public Path createTempFileSecurely(String prefix, String suffix) throws IOException {
-    // Create a temporary file securely, restricting permissions
-    Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("rw-------");
+    Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("rwx------");
     Path tempFile =
         Files.createTempFile(prefix, suffix, PosixFilePermissions.asFileAttribute(permissions));
-
-    // Ensure the directory itself is also secured
     Path parentDir = tempFile.getParent();
     Files.setPosixFilePermissions(parentDir, permissions);
 
@@ -73,12 +70,9 @@ public class FileWriter implements BiFunction<byte[], File, File> {
   }
 
   public Path createSecureTempDirectory(String mainDir) throws IOException {
-    // Create a temporary directory securely with restricted permissions
     Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("rwx------");
     Path tempDirectory =
         Files.createTempDirectory(mainDir, PosixFilePermissions.asFileAttribute(permissions));
-
-    // Ensure the directory itself is also secured
     Files.setPosixFilePermissions(tempDirectory, permissions);
 
     return tempDirectory;

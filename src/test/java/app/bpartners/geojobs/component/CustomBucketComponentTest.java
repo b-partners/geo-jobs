@@ -6,8 +6,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketConf;
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
@@ -21,7 +24,8 @@ import software.amazon.awssdk.transfer.s3.model.FileDownload;
 
 public class CustomBucketComponentTest {
   BucketConf bucketConfMock = mock();
-  CustomBucketComponent subject = new CustomBucketComponent(bucketConfMock);
+  FileWriter fileWriter = mock();
+  CustomBucketComponent subject = new CustomBucketComponent(bucketConfMock, fileWriter);
 
   @Test
   void list_objects_ok() {
@@ -60,7 +64,7 @@ public class CustomBucketComponentTest {
   }
 
   @Test
-  void download_file_ok() {
+  void download_file_ok() throws IOException {
     String bucketName = "bucketName";
     String bucketKey = "bucketKey";
     S3TransferManager s3TransferManagerMock = mock();
@@ -68,8 +72,8 @@ public class CustomBucketComponentTest {
     when(mockFileDownload.completionFuture()).thenReturn(CompletableFuture.completedFuture(null));
     when(s3TransferManagerMock.downloadFile(any(DownloadFileRequest.class)))
         .thenReturn(mockFileDownload);
-
     when(bucketConfMock.getS3TransferManager()).thenReturn(s3TransferManagerMock);
+    when(fileWriter.createTempFileSecurely(any(), any())).thenReturn(new File("").toPath());
 
     var actual = subject.download(bucketName, bucketKey);
 

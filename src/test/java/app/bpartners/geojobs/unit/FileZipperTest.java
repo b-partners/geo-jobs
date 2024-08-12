@@ -1,7 +1,11 @@
 package app.bpartners.geojobs.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.zip.FileZipper;
 import java.io.File;
 import java.util.ArrayList;
@@ -12,7 +16,8 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 
 public class FileZipperTest {
-  FileZipper subject = new FileZipper();
+  FileWriter fileWriter = mock();
+  FileZipper subject = new FileZipper(fileWriter);
 
   @Test
   @SneakyThrows
@@ -21,8 +26,9 @@ public class FileZipperTest {
         List.of(
             File.createTempFile("randomFile1", ".txt"), File.createTempFile("randomFile2", ".txt"));
 
-    var actual = subject.apply(files);
+    when(fileWriter.createTempFileSecurely(any(), any())).thenReturn(new File("").toPath());
 
+    var actual = subject.apply(files);
     var zipEntryList = enumerationToList(actual.entries());
     assertEquals(files.size(), zipEntryList.size());
     actual.close();

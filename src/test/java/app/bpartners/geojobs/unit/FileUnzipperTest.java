@@ -40,6 +40,7 @@ class FileUnzipperTest extends FacadeIT {
     when(entries.nextElement()).thenReturn(zipEntryMock);
     when(zipEntryMock.isDirectory()).thenReturn(false);
     when(zipEntryMock.getName()).thenReturn("/evilFile.txt");
+    when(fileWriter.createSecureTempDirectory(any())).thenReturn(new File("").toPath());
 
     assertThrows(
         ApiException.class,
@@ -64,7 +65,9 @@ class FileUnzipperTest extends FacadeIT {
   }
 
   @Test
-  void getFolderPathIllegalArgumentException() {
+  void getFolderPathIllegalArgumentException() throws IOException {
+    when(fileWriter.createSecureTempDirectory(any())).thenReturn(new File("").toPath());
+
     assertThrows(IllegalArgumentException.class, () -> applyFileUnzipperIllegalArgumentException());
   }
 
