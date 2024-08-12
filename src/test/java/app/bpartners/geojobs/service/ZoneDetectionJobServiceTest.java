@@ -39,7 +39,7 @@ import app.bpartners.geojobs.service.detection.ParcelDetectionJobService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import jakarta.persistence.EntityManager;
 import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -358,6 +358,7 @@ public class ZoneDetectionJobServiceTest {
             .containsAll(List.of("tileBucket3", "tileBucket4")));
   }
 
+  @SneakyThrows
   private static ParcelDetectionTask parcelDetectionTask(
       String asJobId,
       Status.ProgressionStatus progressionStatus,
@@ -373,7 +374,7 @@ public class ZoneDetectionJobServiceTest {
                     .parcelContent(
                         ParcelContent.builder()
                             .id(randomUUID().toString())
-                            .geoServerUrl(new URL("http:/dummy.com"))
+                            .geoServerUrl(new URI("http:/dummy.com").toURL())
                             .geoServerParameter(new GeoServerParameter())
                             .feature(new Feature())
                             .tiles(tiles)

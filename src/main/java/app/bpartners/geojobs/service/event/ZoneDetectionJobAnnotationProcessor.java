@@ -84,15 +84,22 @@ public class ZoneDetectionJobAnnotationProcessor {
             .filter(
                 detectedTile ->
                     detectedTile.getDetectedObjects().stream()
-                        .anyMatch(tile ->
-                                {log.info("Tile confidence= {}, minConfidence= {}", tile.getComputedConfidence(), minConfidence);
-                                  return tile.getComputedConfidence() >= minConfidence;}
-                                ))
+                        .anyMatch(
+                            tile -> {
+                              log.info(
+                                  "Tile confidence= {}, minConfidence= {}",
+                                  tile.getComputedConfidence(),
+                                  minConfidence);
+                              return tile.getComputedConfidence() >= minConfidence;
+                            }))
             .peek(detectedTile -> detectedTile.setHumanDetectionJobId(humanZDJTruePositiveId))
             .toList();
     var falsePositiveTiles = new ArrayList<>(inDoubtTiles);
     falsePositiveTiles.removeAll(truePositiveDetectedTiles);
-    log.info("True positive size= {}, False positive size= {}", truePositiveDetectedTiles.size(), falsePositiveTiles.size());
+    log.info(
+        "True positive size= {}, False positive size= {}",
+        truePositiveDetectedTiles.size(),
+        falsePositiveTiles.size());
     HumanDetectionJob savedHumanZDJTruePositive =
         humanDetectionJobRepository.save(
             HumanDetectionJob.builder()
