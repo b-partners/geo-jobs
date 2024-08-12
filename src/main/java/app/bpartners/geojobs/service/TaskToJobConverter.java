@@ -26,7 +26,7 @@ public class TaskToJobConverter<T extends Task, J extends Job> implements Functi
   @Override
   public J apply(T task) {
     if (task instanceof ParcelDetectionTask) {
-      String jobId = randomUUID().toString();
+      String jobId = task.getAsJobId() == null ? randomUUID().toString() : task.getAsJobId();
       return (J)
           ParcelDetectionJob.builder()
               .id(jobId)
