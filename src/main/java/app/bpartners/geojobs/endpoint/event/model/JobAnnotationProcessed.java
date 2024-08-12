@@ -1,12 +1,11 @@
 package app.bpartners.geojobs.endpoint.event.model;
 
-import java.time.Duration;
-import javax.annotation.processing.Generated;
+import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
 
 import app.bpartners.geojobs.endpoint.event.EventStack;
+import java.time.Duration;
+import javax.annotation.processing.Generated;
 import lombok.*;
-
-import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
 
 @Generated("EventBridge")
 @NoArgsConstructor

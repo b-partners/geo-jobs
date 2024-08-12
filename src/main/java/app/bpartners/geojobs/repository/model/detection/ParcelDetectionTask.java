@@ -2,6 +2,7 @@ package app.bpartners.geojobs.repository.model.detection;
 
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
 import static jakarta.persistence.FetchType.EAGER;
+import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.job.model.Task;
 import app.bpartners.geojobs.repository.model.GeoJobType;
@@ -66,4 +67,23 @@ public class ParcelDetectionTask extends Task implements Serializable {
   public ParcelDetectionTask semanticClone() {
     return this.toBuilder().statusHistory(new ArrayList<>(getStatusHistory())).build();
   }
+
+  public ParcelDetectionTask duplicate(
+      String taskId, String jobId, String parcelId, String parcelContentId, String asJobId) {
+    return ParcelDetectionTask.builder()
+        .id(taskId)
+        .jobId(jobId)
+        .asJobId(asJobId)
+        .parcels(
+            parcels == null
+                ? null
+                : parcels.stream()
+                    .map(parcel -> parcel.duplicate(parcelId, parcelContentId, false))
+                    .toList())
+        .statusHistory(List.of(this.getStatus().duplicate(randomUUID().toString(), taskId)))
+        .submissionInstant(this.getSubmissionInstant())
+        .build();
+  }
+
+  public record ParcelDetectionTaskDiff(ParcelDetectionTask oldTask, ParcelDetectionTask newTask) {}
 }

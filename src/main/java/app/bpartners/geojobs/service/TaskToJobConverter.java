@@ -15,6 +15,7 @@ import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionJob;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import lombok.NonNull;
@@ -26,21 +27,18 @@ public class TaskToJobConverter<T extends Task, J extends Job> implements Functi
   @Override
   public J apply(T task) {
     if (task instanceof ParcelDetectionTask) {
-      String jobId = randomUUID().toString();
-      return (J)
-          ParcelDetectionJob.builder()
-              .id(jobId)
-              .statusHistory(
-                  List.of(
-                      JobStatus.builder()
-                          .jobId(jobId)
-                          .id(randomUUID().toString())
-                          .creationDatetime(now())
-                          .jobType(PARCEL_DETECTION)
-                          .progression(PENDING)
-                          .health(UNKNOWN)
-                          .build()))
-              .build();
+      String jobId = task.getAsJobId() == null ? randomUUID().toString() : task.getAsJobId();
+      List<JobStatus> jobStatuses = new ArrayList<>();
+      jobStatuses.add(
+          JobStatus.builder()
+              .jobId(jobId)
+              .id(randomUUID().toString())
+              .creationDatetime(now())
+              .jobType(PARCEL_DETECTION)
+              .progression(PENDING)
+              .health(UNKNOWN)
+              .build());
+      return (J) ParcelDetectionJob.builder().id(jobId).statusHistory(jobStatuses).build();
     }
     throw new NotImplementedException(
         "Only ParcelDetectionTask to ParcelDetectionJob is handle for now");
@@ -51,14 +49,14 @@ public class TaskToJobConverter<T extends Task, J extends Job> implements Functi
     String tileDetectionTaskId = randomUUID().toString();
     String parcelId = task.getParcel().getId();
     String jobId = task.getAsJobId();
-    List<TaskStatus> status =
-        List.of(
-            TaskStatus.builder()
-                .health(UNKNOWN)
-                .progression(PENDING)
-                .creationDatetime(now())
-                .taskId(tileDetectionTaskId)
-                .build());
-    return new TileDetectionTask(tileDetectionTaskId, null, parcelId, jobId, tile, status);
+    List<TaskStatus> statuses = new ArrayList<>();
+    statuses.add(
+        TaskStatus.builder()
+            .health(UNKNOWN)
+            .progression(PENDING)
+            .creationDatetime(now())
+            .taskId(tileDetectionTaskId)
+            .build());
+    return new TileDetectionTask(tileDetectionTaskId, null, parcelId, jobId, tile, statuses);
   }
 }
