@@ -1,0 +1,347 @@
+openapi: 3.0.3
+
+info:
+  title: geo-jobs
+  description: Launch Full Zone Detection Jobs.
+  version: 'latest'
+
+servers:
+  - url: 'https://localhost:8080'
+
+
+paths:
+  '/ping':
+    get:
+      operationId: ping
+      tags:
+        - Health
+      responses:
+        200:
+          description: pong
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: pong
+
+  '/fullDetection':
+    put:
+      tags:
+        - Detection
+      operationId: processFullDetection
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFullDetection'
+      responses:
+        200:
+          description: Zone successfully detected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FullDetectedZone'
+
+components:
+  responses:
+    400:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BadRequestException'
+    403:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NotAuthorizedException'
+    404:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ResourceNotFoundException'
+    429:
+      description: Too many requests to the API
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TooManyRequestsException'
+    '500':
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/InternalServerException'
+  schemas:
+    Exception:
+      type: object
+      properties:
+        type:
+          type: string
+        message:
+          type: string
+    InternalServerException:
+      allOf:
+        - $ref: '#/components/schemas/Exception'
+      example:
+        type: InternalServerException
+        message: Unexpected error
+    BadRequestException:
+      allOf:
+        - $ref: '#/components/schemas/Exception'
+      example:
+        type: BadRequestException
+        message: Bad request
+    NotAuthorizedException:
+      allOf:
+        - $ref: '#/components/schemas/Exception'
+      example:
+        type: NotAuthorizedException
+        message: Not authorized
+    ResourceNotFoundException:
+      allOf:
+        - $ref: '#/components/schemas/Exception'
+      example:
+        type: ResourceNotFoundException
+        message: Resource of type <T> identified by <I> not found
+    TooManyRequestsException:
+      allOf:
+        - $ref: '#/components/schemas/Exception'
+      example:
+        type: TooManyRequestsException
+        message: Too many requests
+
+    CreateZoneTilingJob:
+      type: object
+      properties:
+        emailReceiver:
+          type: string
+        zoneName:
+          type: string
+        geoServerUrl:
+          type: string
+        geoServerParameter:
+          $ref: "#/components/schemas/GeoServerParameter"
+        features:
+          type: array
+          items:
+            $ref: "#/components/schemas/Feature"
+        zoomLevel:
+          type: string
+          enum:
+            - WORLD_0
+            - WORLD_1
+            - WORLD_2
+            - CONTINENT_0
+            - CONTINENT_1
+            - COUNTRIES
+            - COUNTRY
+            - STATES
+            - COUNTIES_0
+            - COUNTIES_1
+            - COUNTY
+            - METROPOLITAN_AREA
+            - CITIES
+            - CITY
+            - TOWN
+            - NEIGHBORHOOD
+            - STREETS
+            - CITY_BLOCK
+            - BUILDINGS
+            - BUILDING
+            - HOUSES_0
+            - HOUSES_1
+            - HOUSES_2
+            - HOUSE_PROPERTY
+
+    DetectableObjectType:
+      type: string
+      enum:
+        - ROOF
+        - SOLAR_PANEL
+        - POOL
+        - PATHWAY
+        - TREE
+        - SIDEWALK
+        - LINE
+        - GREEN_SPACE
+
+    TaskStatistic:
+      type: object
+      properties:
+        jobId:
+          type: string
+        jobType:
+          $ref: '#/components/schemas/JobType'
+        actualJobStatus:
+          $ref: '#/components/schemas/Status'
+        taskStatusStatistics:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskStatusStatistic'
+        updatedAt:
+          type: string
+          format: date-time
+    TaskStatusStatistic:
+      type: object
+      properties:
+        progression:
+          $ref: '#/components/schemas/ProgressionStatus'
+        healthStatistics:
+          type: array
+          items:
+            $ref: '#/components/schemas/HealthStatusStatistic'
+    HealthStatusStatistic:
+      type: object
+      properties:
+        health:
+          $ref: '#/components/schemas/HealthStatus'
+        count:
+          type: number
+
+    JobType:
+      type: string
+      enum:
+        - DETECTION
+        - TILING
+        - PARCEL_DETECTION
+    ProgressionStatus:
+      type: string
+      enum:
+        - PENDING
+        - PROCESSING
+        - FINISHED
+    HealthStatus:
+      type: string
+      enum:
+        - SUCCEEDED
+        - FAILED
+        - UNKNOWN
+        - RETRYING
+    Status:
+      type: object
+      properties:
+        progression:
+          type: string
+          enum:
+            - PENDING
+            - PROCESSING
+            - FINISHED
+        health:
+          type: string
+          enum:
+            - SUCCEEDED
+            - FAILED
+            - UNKNOWN
+            - RETRYING
+        creationDatetime:
+          type: string
+          format: date-time
+
+    ###########################################################################################################
+    ###  GeoJSON objects. Modified from: https://gist.github.com/bubbobne/fe5f2db65acf039be6a9fd92fc9c7233  ###
+    ###########################################################################################################
+
+    GeoServerParameter:
+      type: object
+      properties:
+        service:
+          type: string
+        request:
+          type: string
+        layers:
+          type: string
+        styles:
+          type: string
+        format:
+          type: string
+        transparent:
+          type: boolean
+        version:
+          type: string
+        width:
+          type: integer
+        height:
+          type: integer
+        srs:
+          type: string
+
+    Feature:
+      type: object
+      properties:
+        id:
+          type: string
+        zoom:
+          type: integer
+        geometry:
+          $ref: "#/components/schemas/MultiPolygon"
+
+    Geometry:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          enum:
+            - Point
+            - LineString
+            - Polygon
+            - MultiPolygon
+
+    Point2D:
+      type: array
+      maxItems: 2
+      minItems: 2
+      items:
+        type: number
+
+
+    MultiPolygon:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/Geometry"
+      properties:
+        coordinates:
+          type: array
+          items:
+            type: array
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/Point2D'
+
+    CreateFullDetection:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/CreateZoneTilingJob'
+      properties:
+        objectType:
+          $ref: '#/components/schemas/DetectableObjectType'
+        confidence:
+          type: number
+        endToEndId:
+          type: string
+        bucketStorage:
+          type: string
+    JobTypes:
+      enum:
+        - MACHINE_DETECTION
+        - HUMAN_DETECTION
+        - TILING
+
+    FullDetectedZone:
+      type: object
+      properties:
+        jobTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobTypes'
+        statistics:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskStatistic'
+        detectedGeojsonUrl:
+          type: string
