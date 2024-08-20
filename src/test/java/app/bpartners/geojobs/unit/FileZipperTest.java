@@ -22,11 +22,12 @@ public class FileZipperTest {
   @Test
   @SneakyThrows
   void zip_file_ok() {
-    var files =
-        List.of(
-            File.createTempFile("randomFile1", ".txt"), File.createTempFile("randomFile2", ".txt"));
+    var file1 = new File("src/test/resources/images/tile-1.jpg");
+    var file2 = new File("src/test/resources/images/tile-2.jpg");
+    var files = List.of(file1, file2);
+    var tempFile = new File("file");
 
-    when(fileWriter.createTempFileSecurely(any(), any())).thenReturn(new File("").toPath());
+    when(fileWriter.createTempFileSecurely(any(), any())).thenReturn(tempFile.toPath());
 
     var actual = subject.apply(files);
     var zipEntryList = enumerationToList(actual.entries());
