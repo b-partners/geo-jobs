@@ -9,6 +9,7 @@ import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
+import app.bpartners.geojobs.service.tiling.downloader.HttpApiTilesDownloader;
 import app.bpartners.geojobs.service.tiling.downloader.MockedTilesDownloader;
 import java.io.File;
 import java.io.IOException;
@@ -17,12 +18,14 @@ import org.junit.jupiter.api.Test;
 
 class TilingTaskConsumerWithMockedDownloaderTest {
   FileWriter fileWriter = mock();
+  HttpApiTilesDownloader tilesDownloader = mock();
 
   @Test
   void can_consume_with_no_error() throws IOException {
-    var subject = new TilingTaskConsumer(new MockedTilesDownloader(5_000, 0, fileWriter), mock());
+    var subject = new TilingTaskConsumer(tilesDownloader, mock());
 
     when(fileWriter.createSecureTempDirectory(any())).thenReturn(new File("").toPath());
+    when(tilesDownloader.apply(any())).thenReturn(new File("1/1/123456.zip"));
 
     subject.accept(
         new TilingTask()
