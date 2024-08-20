@@ -8,10 +8,15 @@ info:
 servers:
   - url: 'https://localhost:8080'
 
+security:
+  - apiKeyHeader: [ ]
+
 
 paths:
   '/ping':
     get:
+      summary: Check api health
+      security: [ ]
       operationId: ping
       tags:
         - Health
@@ -28,6 +33,9 @@ paths:
     put:
       tags:
         - Detection
+      summary: Process Zone full detection
+      security:
+        - apiKeyHeader: [ ]
       operationId: processFullDetection
       requestBody:
         content:
@@ -43,6 +51,11 @@ paths:
                 $ref: '#/components/schemas/FullDetectedZone'
 
 components:
+  securitySchemes:
+    apiKeyHeader:
+      type: apiKey
+      in: header
+      name: x-api-key
   responses:
     400:
       description: Bad request
