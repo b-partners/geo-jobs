@@ -1,0 +1,3 @@
+This project both defines and implements the [Geo-Jobs API](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/b-partners/geo-jobs/prod/doc/api.yml) in Java.
+
+In particular, the [full detection specification](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/b-partners/geo-jobs/prod/doc/fulldetection.yml) details the processing for detecting all relevant features within a specified zone.
