@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 @PojaGenerated
 @SuppressWarnings("all")
 @Component
-public class Workers<T> {
+public class Workers {
   private final ExecutorService executorService;
 
   public Workers() {
@@ -25,20 +25,21 @@ public class Workers<T> {
   }
 
   @SneakyThrows
-  public List<T> invokeAll(List<Callable<T>> callables) {
+  public List<Void> invokeAll(List<Callable<Void>> callables) {
     var parentThread = currentThread();
     callables =
         callables.stream()
             .map(
                 c ->
-                    (Callable<T>)
+                    (Callable<Void>)
                         () -> {
                           renameThread(
                               currentThread(), getRandomSubThreadNamePrefixFrom(parentThread));
                           return c.call();
                         })
             .toList();
-    List<Future<T>> futures = executorService.invokeAll(callables);
+    // TODO: refactor properly
+    List<Future<Void>> futures = executorService.invokeAll(callables);
     return futures.stream()
         .map(
             future -> {
