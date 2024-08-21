@@ -26,6 +26,7 @@ public class JobStatusRecomputingSubmittedService<
   @SneakyThrows
   public void accept(E event) {
     log.info("Accepting event={}", event);
+    var attemptNb = event.getAttemptNb();
     var jobId = event.getJobId();
     var oldJob = jobService.findById(jobId);
     log.info(
@@ -34,10 +35,11 @@ public class JobStatusRecomputingSubmittedService<
         oldJob.getStatus(),
         oldJob.getStatusHistory());
     if (oldJob.isFinished()) {
+      log.info("Job.id={} finished, oldJob.status={}", jobId, oldJob.getStatus());
       return;
     }
 
-    if (event.getAttemptNb() > MAX_ATTEMPTS) {
+    if (attemptNb > MAX_ATTEMPTS) {
       fail(oldJob);
       return;
     }

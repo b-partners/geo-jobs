@@ -34,7 +34,6 @@ public class ZDJStatusRecomputingSubmittedServiceTest {
       new ZDJStatusRecomputingSubmittedService(
           jobServiceMock,
           mock(),
-          mock(),
           annotationRetrievingJobServiceMock,
           geoJsonConversionInitiationServiceMock,
           jobAnnotationServiceMock);

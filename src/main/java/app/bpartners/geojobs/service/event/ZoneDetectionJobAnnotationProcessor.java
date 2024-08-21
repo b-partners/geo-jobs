@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -202,6 +203,7 @@ public class ZoneDetectionJobAnnotationProcessor {
 
   @AllArgsConstructor
   @Data
+  @Builder
   public static class AnnotationJobIds {
     private String jobWithDetectedTruePositiveId;
     private String jobWithDetectedFalsePositiveId;
