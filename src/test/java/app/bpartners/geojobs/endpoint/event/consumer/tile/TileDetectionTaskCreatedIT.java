@@ -66,7 +66,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 
 @Slf4j
 class TileDetectionTaskCreatedIT extends FacadeIT {
-  // TODO: set the IDs randomly
   private static final double OBJECT_DETECTION_SUCCESS_RATE = 100.0;
   private static final int DEFAULT_EVENT_DELAY_SPEED_FACTOR = 10;
   @Autowired EventConsumer eventConsumer;
@@ -116,9 +115,9 @@ class TileDetectionTaskCreatedIT extends FacadeIT {
   @SneakyThrows
   @Test
   void single_event_that_succeeds() {
-    String tilingJobId = "TILING_JOB_ID";
-    String detectionJobId = "ZONE_DETECTION_JOB_ID";
-    String parcelDetectionJobId = "PARCEL_DETECTION_JOB_ID";
+    String tilingJobId = randomUUID().toString();
+    String detectionJobId = randomUUID().toString();
+    String parcelDetectionJobId = randomUUID().toString();
     var tilingJob = ztjRepository.save(aZTJ(tilingJobId, FINISHED, SUCCEEDED));
     var detectionJob = zdjService.save(aZDJ(detectionJobId, PROCESSING, UNKNOWN, tilingJob));
     var parcel =
@@ -156,9 +155,9 @@ class TileDetectionTaskCreatedIT extends FacadeIT {
   @SneakyThrows
   @Test
   void thousand_events_that_succeeds() {
-    String tilingJobId = "TILING_JOB_ID2";
+    String tilingJobId = randomUUID().toString();
     var tilingJob = ztjRepository.save(aZTJ(tilingJobId, FINISHED, SUCCEEDED));
-    String detectionJobId = "ZONE_DETECTION_JOB_ID2";
+    String detectionJobId = randomUUID().toString();
     var detectionJob = zdjService.save(aZDJ(detectionJobId, PROCESSING, UNKNOWN, tilingJob));
     var parcelDetectionTasks =
         parcelDetectionTaskRepository.saveAll(someParcelDetectionTask(detectionJobId, 50, 20));
