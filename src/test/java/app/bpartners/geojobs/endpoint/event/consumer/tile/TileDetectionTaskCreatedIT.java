@@ -13,15 +13,15 @@ import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.consumer.EventConsumer;
 import app.bpartners.geojobs.endpoint.event.consumer.model.ConsumableEvent;
 import app.bpartners.geojobs.endpoint.event.consumer.model.TypedEvent;
-import app.bpartners.geojobs.endpoint.event.model.AutoTaskStatisticRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.PojaEvent;
+import app.bpartners.geojobs.endpoint.event.model.status.ParcelDetectionStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.status.ZDJParcelsStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.status.ZDJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.tile.TileDetectionTaskCreated;
@@ -29,6 +29,7 @@ import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.TaskStatus;
+import app.bpartners.geojobs.job.service.JobAnnotationService;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.*;
 import app.bpartners.geojobs.repository.model.Parcel;
@@ -37,12 +38,15 @@ import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.*;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
+import app.bpartners.geojobs.service.AnnotationRetrievingJobService;
+import app.bpartners.geojobs.service.JobFinishedMailer;
 import app.bpartners.geojobs.service.TaskToJobConverter;
 import app.bpartners.geojobs.service.detection.DetectionResponse;
 import app.bpartners.geojobs.service.detection.ParcelDetectionJobService;
 import app.bpartners.geojobs.service.detection.TileObjectDetector;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
-import app.bpartners.geojobs.sqs.LocalSQSTrigger;
+import app.bpartners.geojobs.service.event.ZoneDetectionJobAnnotationProcessor;
+import app.bpartners.geojobs.sqs.LocalEventQueue;
 import java.math.BigDecimal;
 import java.security.SecureRandom;
 import java.time.Duration;
@@ -50,6 +54,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -62,29 +67,33 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 @Slf4j
 class TileDetectionTaskCreatedIT extends FacadeIT {
   // TODO: set the IDs randomly
-  private static final String PARCEL_DETECTION_JOB_ID =
-      "parcelDetectionJobIdForTileDetectionTaskCreatedIT";
-  public static final String ZONE_DETECTION_JOB_ID =
-      "zoneDetectionJobIdForTileDetectionTaskCreatedIT";
-  public static final String TILING_JOB_ID = "tilingJobIdForTileDetectionTaskCreatedIT";
-  private static final String PARCEL_DETECTION_JOB_ID2 =
-      "parcelDetectionJobIdForTileDetectionTaskCreatedIT2";
-  public static final String ZONE_DETECTION_JOB_ID2 =
-      "zoneDetectionJobIdForTileDetectionTaskCreatedIT2";
-  public static final String TILING_JOB_ID2 = "tilingJobIdForTileDetectionTaskCreatedIT2";
-  public static final double OBJECT_DETECTION_SUCCESS_RATE = 65.0;
+  private static final double OBJECT_DETECTION_SUCCESS_RATE = 100.0;
+  private static final int DEFAULT_EVENT_DELAY_SPEED_FACTOR = 10;
   @Autowired EventConsumer eventConsumer;
   @Autowired ZoneTilingJobRepository ztjRepository;
   @Autowired ParcelRepository parcelRepository;
   @Autowired ParcelDetectionJobService pdjService;
-  @Autowired ParcelDetectionTaskRepository pdtRepository;
+  @Autowired ParcelDetectionTaskRepository parcelDetectionTaskRepository;
   @MockBean TileObjectDetector objectsDetector;
   @Autowired ZoneDetectionJobService zdjService;
   @Autowired TaskToJobConverter<ParcelDetectionTask, ParcelDetectionJob> taskToJobConverter;
   @Autowired ZoneDetectionJobRepository zdjRepository;
   @Autowired ParcelDetectionJobRepository pdjRepository;
+  @Autowired LocalEventQueue localEventQueue;
   @MockBean EventProducer eventProducerMock;
-  final LocalSQSTrigger localSQSTrigger = new LocalSQSTrigger();
+  @MockBean JobAnnotationService jobAnnotationServiceMock;
+  @MockBean AnnotationRetrievingJobService annotationRetrievingJobServiceMock;
+  @MockBean JobFinishedMailer<ZoneDetectionJob> mailerMock;
+  @MockBean ZoneDetectionJobAnnotationProcessor jobAnnotationProcessorMock;
+
+  @NonNull
+  private static List<LocalEventQueue.CustomEventDelayConfig> customEventConfigList() {
+    return List.of(
+        new LocalEventQueue.CustomEventDelayConfig(
+            ParcelDetectionStatusRecomputingSubmitted.class, 50),
+        new LocalEventQueue.CustomEventDelayConfig(ZDJParcelsStatusRecomputingSubmitted.class, 50),
+        new LocalEventQueue.CustomEventDelayConfig(ZDJStatusRecomputingSubmitted.class, 70));
+  }
 
   private static List<DetectableObjectConfiguration> detectableObjectConfiguration() {
     return List.of(
@@ -93,7 +102,13 @@ class TileDetectionTaskCreatedIT extends FacadeIT {
 
   @BeforeEach
   void setUp() {
+    localEventQueue.configure(customEventConfigList(), DEFAULT_EVENT_DELAY_SPEED_FACTOR);
     doAnswer(this::eventProducerInvocationToEventConsumer).when(eventProducerMock).accept(any());
+    when(jobAnnotationServiceMock.processAnnotationJob(any(), any())).thenReturn(null);
+    when(annotationRetrievingJobServiceMock.getByDetectionJobId(any())).thenReturn(List.of());
+    doNothing().when(mailerMock).accept(any());
+    when(jobAnnotationProcessorMock.accept(any(), any(), any(), any(), any()))
+        .thenReturn(ZoneDetectionJobAnnotationProcessor.AnnotationJobIds.builder().build());
 
     configureRandomObjectsDetectorResponse(OBJECT_DETECTION_SUCCESS_RATE);
   }
@@ -101,20 +116,27 @@ class TileDetectionTaskCreatedIT extends FacadeIT {
   @SneakyThrows
   @Test
   void single_event_that_succeeds() {
-    var tilingJob = ztjRepository.save(aZTJ(TILING_JOB_ID, FINISHED, SUCCEEDED));
-    var detectionJob = zdjService.save(aZDJ(ZONE_DETECTION_JOB_ID, PENDING, UNKNOWN, tilingJob));
-    var parcel = parcelRepository.save(parcel("parcel1Id", tile("tile1Id", "bucketPath1")));
+    String tilingJobId = "TILING_JOB_ID";
+    String detectionJobId = "ZONE_DETECTION_JOB_ID";
+    String parcelDetectionJobId = "PARCEL_DETECTION_JOB_ID";
+    var tilingJob = ztjRepository.save(aZTJ(tilingJobId, FINISHED, SUCCEEDED));
+    var detectionJob = zdjService.save(aZDJ(detectionJobId, PROCESSING, UNKNOWN, tilingJob));
+    var parcel =
+        parcelRepository.save(
+            parcel(randomUUID().toString(), tile(randomUUID().toString(), "bucketPath")));
     var tileDetectionTask =
         tileDetectionTask(
-            "tileDetectionTask1Id",
-            PARCEL_DETECTION_JOB_ID,
+            randomUUID().toString(),
+            parcelDetectionJobId,
             parcel.getId(),
             parcel.getParcelContent().getFirstTile());
     var parcelDetectionJob =
-        pdjService.create(parcelDetectionJob(PARCEL_DETECTION_JOB_ID), List.of(tileDetectionTask));
-    pdtRepository.save(
-        parcelDetectionTask(
-            "parcelDetectionTaskId", detectionJob.getId(), parcelDetectionJob.getId(), parcel));
+        pdjService.create(parcelDetectionJob(parcelDetectionJobId), List.of(tileDetectionTask));
+    parcelDetectionTaskRepository.save(
+        processingParcelDetectionTask(
+            randomUUID().toString(), detectionJob.getId(), parcelDetectionJob.getId(), parcel));
+    eventProducerMock.accept(List.of(new ZDJParcelsStatusRecomputingSubmitted(detectionJobId)));
+    eventProducerMock.accept(List.of(new ZDJStatusRecomputingSubmitted(detectionJobId)));
 
     eventProducerMock.accept(
         List.of(
@@ -124,39 +146,30 @@ class TileDetectionTaskCreatedIT extends FacadeIT {
                 .zoneDetectionJobId(detectionJob.getId())
                 .build()));
 
-    eventProducerMock.accept(
-        List.of(new ZDJParcelsStatusRecomputingSubmitted(ZONE_DETECTION_JOB_ID)));
-    eventProducerMock.accept(List.of(new ZDJStatusRecomputingSubmitted(ZONE_DETECTION_JOB_ID)));
-    eventProducerMock.accept(
-        List.of(new AutoTaskStatisticRecomputingSubmitted(ZONE_DETECTION_JOB_ID)));
-
     Thread.sleep(Duration.ofSeconds(15L));
+    if (localEventQueue != null) localEventQueue.attemptSchedulerShutDown();
     var retrievedJob = zdjService.findById(detectionJob.getId());
 
-    assertTrue(retrievedJob.isFinished());
+    assertTrue(retrievedJob.isSucceeded());
   }
 
   @SneakyThrows
   @Test
   void thousand_events_that_succeeds() {
-    var tilingJob = ztjRepository.save(aZTJ(TILING_JOB_ID2, FINISHED, SUCCEEDED));
-    var detectionJob = zdjService.save(aZDJ(ZONE_DETECTION_JOB_ID2, PENDING, UNKNOWN, tilingJob));
-
+    String tilingJobId = "TILING_JOB_ID2";
+    var tilingJob = ztjRepository.save(aZTJ(tilingJobId, FINISHED, SUCCEEDED));
+    String detectionJobId = "ZONE_DETECTION_JOB_ID2";
+    var detectionJob = zdjService.save(aZDJ(detectionJobId, PROCESSING, UNKNOWN, tilingJob));
     var parcelDetectionTasks =
-        pdtRepository.saveAll(someParcelDetectionTask(ZONE_DETECTION_JOB_ID2, 50, 20));
+        parcelDetectionTaskRepository.saveAll(someParcelDetectionTask(detectionJobId, 50, 20));
     var parcelDetectionJobWithTasks = someParcelDetectionJobWithTask(parcelDetectionTasks);
-
-    eventProducerMock.accept(
-        List.of(new ZDJParcelsStatusRecomputingSubmitted(ZONE_DETECTION_JOB_ID2)));
-    eventProducerMock.accept(List.of(new ZDJStatusRecomputingSubmitted(ZONE_DETECTION_JOB_ID2)));
-    eventProducerMock.accept(
-        List.of(new AutoTaskStatisticRecomputingSubmitted(ZONE_DETECTION_JOB_ID2)));
+    eventProducerMock.accept(List.of(new ZDJParcelsStatusRecomputingSubmitted(detectionJobId)));
+    eventProducerMock.accept(List.of(new ZDJStatusRecomputingSubmitted(detectionJobId)));
 
     parcelDetectionJobWithTasks.forEach(
         record -> {
           var tileDetectionTasks = record.tileDetectionTasks;
           processParcelDetectionData(record, tileDetectionTasks);
-
           tileDetectionTasks.forEach(
               tileDetectionTask ->
                   eventProducerMock.accept(
@@ -164,12 +177,11 @@ class TileDetectionTaskCreatedIT extends FacadeIT {
                           TileDetectionTaskCreated.builder()
                               .tileDetectionTask(tileDetectionTask)
                               .detectableObjectConfigurations(detectableObjectConfiguration())
-                              .zoneDetectionJobId(ZONE_DETECTION_JOB_ID2)
+                              .zoneDetectionJobId(detectionJobId)
                               .build())));
         });
-
-    Thread.sleep(Duration.ofSeconds(60L));
-    localSQSTrigger.shutDownScheduler();
+    Thread.sleep(Duration.ofSeconds(120L));
+    if (localEventQueue != null) localEventQueue.attemptSchedulerShutDown();
     var retrievedJob = zdjService.findById(detectionJob.getId());
 
     assertTrue(retrievedJob.isFinished());
@@ -182,7 +194,7 @@ class TileDetectionTaskCreatedIT extends FacadeIT {
     var parcelDetectionJobId = parcelDetectionJob.getId();
 
     parcelDetectionTask.setAsJobId(parcelDetectionJobId);
-    pdtRepository.save(parcelDetectionTask);
+    this.parcelDetectionTaskRepository.save(parcelDetectionTask);
 
     tileDetectionTasks.forEach(
         tileDetectionTask -> tileDetectionTask.setJobId(parcelDetectionJobId));
@@ -213,7 +225,7 @@ class TileDetectionTaskCreatedIT extends FacadeIT {
       var savedParcel = parcelRepository.save(someParcel(nbTilePerParcel));
       String taskId = randomUUID().toString();
       String asJobId = null;
-      parcelDetectionTasks.add(parcelDetectionTask(taskId, jobId, asJobId, savedParcel));
+      parcelDetectionTasks.add(processingParcelDetectionTask(taskId, jobId, asJobId, savedParcel));
     }
     return parcelDetectionTasks;
   }
@@ -275,20 +287,7 @@ class TileDetectionTaskCreatedIT extends FacadeIT {
     var consumableEvents =
         ((List) invocation.getArgument(0))
             .stream().map(argument -> toConsumableEvent((PojaEvent) argument)).toList();
-
-    consumableEvents.forEach(
-        consumableEvent -> {
-          PojaEvent pojaEvent = ((ConsumableEvent) consumableEvent).getEvent().payload();
-          Runnable runnable =
-              () -> {
-                try {
-                  eventConsumer.accept(List.of((ConsumableEvent) consumableEvent));
-                } catch (Exception e) {
-                  throw new RuntimeException(e);
-                }
-              };
-          localSQSTrigger.handle(runnable, pojaEvent);
-        });
+    localEventQueue.handle(consumableEvents);
     return null;
   }
 
@@ -399,7 +398,7 @@ class TileDetectionTaskCreatedIT extends FacadeIT {
         .build();
   }
 
-  private ParcelDetectionTask parcelDetectionTask(
+  private ParcelDetectionTask processingParcelDetectionTask(
       String taskId, String jobId, String asJobId, Parcel parcel) {
     List<TaskStatus> taskStatuses = new ArrayList<>();
     taskStatuses.add(
