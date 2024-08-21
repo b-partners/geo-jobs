@@ -26,9 +26,7 @@ import app.bpartners.geojobs.endpoint.event.model.status.ZDJParcelsStatusRecompu
 import app.bpartners.geojobs.endpoint.event.model.status.ZDJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.tile.TileDetectionTaskCreated;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
-import app.bpartners.geojobs.job.model.JobStatus;
-import app.bpartners.geojobs.job.model.Status;
-import app.bpartners.geojobs.job.model.TaskStatus;
+import app.bpartners.geojobs.job.model.*;
 import app.bpartners.geojobs.job.service.JobAnnotationService;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.*;
@@ -90,8 +88,10 @@ class TileDetectionTaskCreatedIT extends FacadeIT {
     return List.of(
         new LocalEventQueue.CustomEventDelayConfig(
             ParcelDetectionStatusRecomputingSubmitted.class, 50),
+        new LocalEventQueue.CustomEventDelayConfig(
+            ParcelDetectionStatusRecomputingSubmitted.class, 50),
         new LocalEventQueue.CustomEventDelayConfig(ZDJParcelsStatusRecomputingSubmitted.class, 50),
-        new LocalEventQueue.CustomEventDelayConfig(ZDJStatusRecomputingSubmitted.class, 70));
+        new LocalEventQueue.CustomEventDelayConfig(ZDJStatusRecomputingSubmitted.class, 50));
   }
 
   private static List<DetectableObjectConfiguration> detectableObjectConfiguration() {
@@ -162,8 +162,6 @@ class TileDetectionTaskCreatedIT extends FacadeIT {
     var parcelDetectionTasks =
         parcelDetectionTaskRepository.saveAll(someParcelDetectionTask(detectionJobId, 50, 20));
     var parcelDetectionJobWithTasks = someParcelDetectionJobWithTask(parcelDetectionTasks);
-    eventProducerMock.accept(List.of(new ZDJParcelsStatusRecomputingSubmitted(detectionJobId)));
-    eventProducerMock.accept(List.of(new ZDJStatusRecomputingSubmitted(detectionJobId)));
 
     parcelDetectionJobWithTasks.forEach(
         record -> {
@@ -179,11 +177,28 @@ class TileDetectionTaskCreatedIT extends FacadeIT {
                               .zoneDetectionJobId(detectionJobId)
                               .build())));
         });
+    eventProducerMock.accept(List.of(new ZDJParcelsStatusRecomputingSubmitted(detectionJobId)));
+    eventProducerMock.accept(List.of(new ZDJStatusRecomputingSubmitted(detectionJobId)));
     Thread.sleep(Duration.ofSeconds(120L));
     if (localEventQueue != null) localEventQueue.attemptSchedulerShutDown();
     var retrievedJob = zdjService.findById(detectionJob.getId());
+    var actualPDJRecords =
+        parcelDetectionJobWithTasks.stream()
+            .map(
+                record ->
+                    new PDJRecord(
+                        parcelDetectionTaskRepository
+                            .findById(record.parcelDetectionTask.getId())
+                            .orElseThrow(),
+                        pdjService.findById(record.parcelDetectionJob.getId()),
+                        List.of()))
+            .toList();
+    var updatedPDJ = actualPDJRecords.stream().map(PDJRecord::parcelDetectionJob).toList();
+    var updatedPDT = actualPDJRecords.stream().map(PDJRecord::parcelDetectionTask).toList();
 
-    assertTrue(retrievedJob.isFinished());
+    assertTrue(updatedPDJ.stream().allMatch(Job::isSucceeded));
+    assertTrue(updatedPDT.stream().allMatch(Task::isSucceeded));
+    assertTrue(retrievedJob.isSucceeded());
   }
 
   private void processParcelDetectionData(

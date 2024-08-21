@@ -12,7 +12,7 @@ import lombok.ToString;
 @Data
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = false)
-@ToString
+@ToString(callSuper = true)
 public class ParcelDetectionStatusRecomputingSubmitted extends JobStatusRecomputingSubmitted {
   private static final long MAX_CONSUMER_DURATION_IN_SECONDS = Duration.ofMinutes(2).toSeconds();
   public static final long INITIAL_BACKOFF_IN_SECONDS = Duration.ofMinutes(2).toSeconds();
