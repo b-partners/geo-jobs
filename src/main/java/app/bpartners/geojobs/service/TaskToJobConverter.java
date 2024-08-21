@@ -15,6 +15,7 @@ import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionJob;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import lombok.NonNull;
@@ -51,14 +52,14 @@ public class TaskToJobConverter<T extends Task, J extends Job> implements Functi
     String tileDetectionTaskId = randomUUID().toString();
     String parcelId = task.getParcel().getId();
     String jobId = task.getAsJobId();
-    List<TaskStatus> status =
-        List.of(
-            TaskStatus.builder()
-                .health(UNKNOWN)
-                .progression(PENDING)
-                .creationDatetime(now())
-                .taskId(tileDetectionTaskId)
-                .build());
+    List<TaskStatus> status = new ArrayList<>();
+    status.add(
+        TaskStatus.builder()
+            .health(UNKNOWN)
+            .progression(PENDING)
+            .creationDatetime(now())
+            .taskId(tileDetectionTaskId)
+            .build());
     return new TileDetectionTask(tileDetectionTaskId, null, parcelId, jobId, tile, status);
   }
 }

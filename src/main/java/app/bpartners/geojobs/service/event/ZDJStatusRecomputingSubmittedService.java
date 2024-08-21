@@ -9,13 +9,11 @@ import static java.util.UUID.randomUUID;
 import app.bpartners.geojobs.endpoint.event.model.status.ZDJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.service.JobAnnotationService;
-import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;
 import app.bpartners.geojobs.repository.model.AnnotationRetrievingJob;
-import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.service.AnnotationRetrievingJobService;
-import app.bpartners.geojobs.service.detection.ParcelDetectionTaskStatusService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
+import app.bpartners.geojobs.service.event.detection.ZDJStatusRecomputingSubmittedBean;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
 import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
@@ -26,9 +24,7 @@ import org.springframework.stereotype.Service;
 public class ZDJStatusRecomputingSubmittedService
     implements Consumer<ZDJStatusRecomputingSubmitted> {
   private static final double DEFAULT_CONFIDENCE = 0.8;
-  private final JobStatusRecomputingSubmittedService<
-          ZoneDetectionJob, ParcelDetectionTask, ZDJStatusRecomputingSubmitted>
-      service;
+  private final ZDJStatusRecomputingSubmittedBean service;
   private final AnnotationRetrievingJobService annotationRetrievingJobService;
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final GeoJsonConversionInitiationService geoJsonConversionInitiationService;
@@ -36,14 +32,12 @@ public class ZDJStatusRecomputingSubmittedService
 
   public ZDJStatusRecomputingSubmittedService(
       ZoneDetectionJobService jobService,
-      ParcelDetectionTaskStatusService taskStatusService,
-      ParcelDetectionTaskRepository taskRepository,
+      ZDJStatusRecomputingSubmittedBean zdjStatusRecomputingSubmittedBean,
       AnnotationRetrievingJobService annotationRetrievingJobService,
       GeoJsonConversionInitiationService geoJsonConversionInitiationService,
       JobAnnotationService jobAnnotationService) {
     this.jobAnnotationService = jobAnnotationService;
-    this.service =
-        new JobStatusRecomputingSubmittedService<>(jobService, taskStatusService, taskRepository);
+    this.service = zdjStatusRecomputingSubmittedBean;
     this.zoneDetectionJobService = jobService;
     this.annotationRetrievingJobService = annotationRetrievingJobService;
     this.geoJsonConversionInitiationService = geoJsonConversionInitiationService;
@@ -67,7 +61,9 @@ public class ZDJStatusRecomputingSubmittedService
       geoJsonConversionInitiationService.processConversionTask(
           humanZDJ.getZoneName(), humanZDJ.getId());
     }
+
     service.accept(event);
+
     ZoneDetectionJob zoneDetectionJob = zoneDetectionJobService.findById(event.getJobId());
     if (zoneDetectionJob.isSucceeded() && MACHINE.equals(zoneDetectionJob.getDetectionType())) {
       jobAnnotationService.processAnnotationJob(event.getJobId(), DEFAULT_CONFIDENCE);

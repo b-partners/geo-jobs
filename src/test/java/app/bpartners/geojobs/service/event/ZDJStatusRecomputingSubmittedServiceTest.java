@@ -20,21 +20,23 @@ import app.bpartners.geojobs.job.service.JobAnnotationService;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.service.AnnotationRetrievingJobService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
+import app.bpartners.geojobs.service.event.detection.ZDJStatusRecomputingSubmittedBean;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-public class ZDJStatusRecomputingSubmittedServiceTest {
+class ZDJStatusRecomputingSubmittedServiceTest {
   ZoneDetectionJobService jobServiceMock = mock();
   AnnotationRetrievingJobService annotationRetrievingJobServiceMock = mock();
   GeoJsonConversionInitiationService geoJsonConversionInitiationServiceMock = mock();
   ZoneDetectionJobService zoneDetectionJobServiceMock = mock();
   JobAnnotationService jobAnnotationServiceMock = mock();
+  ZDJStatusRecomputingSubmittedBean zdjStatusRecomputingSubmittedBeanMock =
+      new ZDJStatusRecomputingSubmittedBean(jobServiceMock, mock(), mock());
   ZDJStatusRecomputingSubmittedService subject =
       new ZDJStatusRecomputingSubmittedService(
           jobServiceMock,
-          mock(),
-          mock(),
+          zdjStatusRecomputingSubmittedBeanMock,
           annotationRetrievingJobServiceMock,
           geoJsonConversionInitiationServiceMock,
           jobAnnotationServiceMock);

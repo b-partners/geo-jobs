@@ -1,15 +1,9 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
-import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
-import static app.bpartners.geojobs.service.event.TileDetectionTaskCreatedConsumer.withNewStatus;
-
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.tile.TileDetectionTaskCreated;
-import app.bpartners.geojobs.endpoint.event.model.tile.TileDetectionTaskCreatedFailed;
 import app.bpartners.geojobs.endpoint.event.model.tile.TileDetectionTaskSucceeded;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
-import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.service.detection.TileDetectionTaskStatusService;
 import java.util.List;
 import java.util.function.Consumer;
@@ -24,33 +18,14 @@ public class TileDetectionTaskCreatedService implements Consumer<TileDetectionTa
   private final TileDetectionTaskStatusService tileDetectionTaskStatusService;
   private final TileDetectionTaskCreatedConsumer tileDetectionTaskConsumer;
   private final EventProducer eventProducer;
-  private final ExceptionToStringFunction exceptionToStringFunction;
 
   @Override
   public void accept(TileDetectionTaskCreated tileDetectionTaskCreated) {
     TileDetectionTask tileDetectionTask = tileDetectionTaskCreated.getTileDetectionTask();
-    List<DetectableObjectConfiguration> detectableObjectConfigurations =
-        tileDetectionTaskCreated.getDetectableObjectConfigurations();
-    String zoneDetectionJobId = tileDetectionTaskCreated.getZoneDetectionJobId();
     tileDetectionTaskStatusService.process(tileDetectionTask);
 
-    try {
-      tileDetectionTaskConsumer.accept(tileDetectionTaskCreated);
-    } catch (Exception e) {
-      eventProducer.accept(
-          List.of(
-              new TileDetectionTaskCreatedFailed(
-                  new TileDetectionTaskCreated(
-                      zoneDetectionJobId,
-                      withNewStatus(
-                          tileDetectionTask,
-                          PROCESSING,
-                          UNKNOWN,
-                          exceptionToStringFunction.apply(e)),
-                      detectableObjectConfigurations),
-                  1)));
-      return;
-    }
+    tileDetectionTaskConsumer.accept(tileDetectionTaskCreated);
+
     eventProducer.accept(
         List.of(
             new TileDetectionTaskSucceeded(
