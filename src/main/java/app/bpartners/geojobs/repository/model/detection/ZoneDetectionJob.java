@@ -25,7 +25,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 @SuperBuilder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
-@ToString
+@ToString(exclude = "zoneTilingJob", callSuper = true)
 @Setter
 public class ZoneDetectionJob extends Job {
   @OneToOne(cascade = ALL)
