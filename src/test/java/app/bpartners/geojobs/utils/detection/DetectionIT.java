@@ -2,8 +2,7 @@ package app.bpartners.geojobs.utils.detection;
 
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
-import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
-import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.job.service.JobAnnotationService;
@@ -52,6 +51,12 @@ public class DetectionIT extends FacadeIT {
       new ParcelDetectionTaskCreator();
   protected final ZoneDetectionJobCreator zoneDetectionJobCreator = new ZoneDetectionJobCreator();
   protected final ZoneTilingJobCreator zoneTilingJobCreator = new ZoneTilingJobCreator();
+
+  protected ZoneDetectionJob pendingZoneDetectionJob(
+      String detectionJobId, ZoneTilingJob tilingJob) {
+    return zoneDetectionJobCreator.create(
+        detectionJobId, "dummyZoneName", "dummyEmailReceiver", PENDING, UNKNOWN, tilingJob);
+  }
 
   protected ZoneDetectionJob processingZoneDetectionJob(
       String detectionJobId, ZoneTilingJob tilingJob) {
