@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.endpoint.event.consumer.tile;
 
-import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.POOL;
@@ -17,7 +16,6 @@ import app.bpartners.geojobs.endpoint.event.model.tile.TileDetectionTaskCreated;
 import app.bpartners.geojobs.job.model.*;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.*;
-import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.event.ZoneDetectionJobAnnotationProcessor;
 import app.bpartners.geojobs.sqs.EventProducerInvocationMock;
 import app.bpartners.geojobs.sqs.LocalEventQueue;
@@ -230,17 +228,6 @@ class TileDetectionTaskCreatedIT extends DetectionIT {
       pdjWithTasks.add(new PDJRecord(task, parcelDetectionJob, tileDetectionTasks));
     }
     return pdjWithTasks;
-  }
-
-  private ZoneDetectionJob processingZoneDetectionJob(
-      String detectionJobId, ZoneTilingJob tilingJob) {
-    return zoneDetectionJobCreator.create(
-        detectionJobId, "dummyZoneName", "dummyEmailReceiver", PROCESSING, UNKNOWN, tilingJob);
-  }
-
-  private ZoneTilingJob finishedZoneTilingJob(String tilingJobId) {
-    return zoneTilingJobCreator.create(
-        tilingJobId, "dummyZoneName", "dummyEmailReceiver", FINISHED, SUCCEEDED);
   }
 
   private List<ParcelDetectionTask> thousandTilesInFiftyParcels(String jobId) {

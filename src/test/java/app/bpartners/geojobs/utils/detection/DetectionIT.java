@@ -1,11 +1,17 @@
 package app.bpartners.geojobs.utils.detection;
 
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
+
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.job.service.JobAnnotationService;
 import app.bpartners.geojobs.repository.*;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionJob;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
+import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.AnnotationRetrievingJobService;
 import app.bpartners.geojobs.service.JobFinishedMailer;
 import app.bpartners.geojobs.service.TaskToJobConverter;
@@ -46,4 +52,15 @@ public class DetectionIT extends FacadeIT {
       new ParcelDetectionTaskCreator();
   protected final ZoneDetectionJobCreator zoneDetectionJobCreator = new ZoneDetectionJobCreator();
   protected final ZoneTilingJobCreator zoneTilingJobCreator = new ZoneTilingJobCreator();
+
+  protected ZoneDetectionJob processingZoneDetectionJob(
+      String detectionJobId, ZoneTilingJob tilingJob) {
+    return zoneDetectionJobCreator.create(
+        detectionJobId, "dummyZoneName", "dummyEmailReceiver", PROCESSING, UNKNOWN, tilingJob);
+  }
+
+  protected ZoneTilingJob finishedZoneTilingJob(String tilingJobId) {
+    return zoneTilingJobCreator.create(
+        tilingJobId, "dummyZoneName", "dummyEmailReceiver", FINISHED, SUCCEEDED);
+  }
 }
