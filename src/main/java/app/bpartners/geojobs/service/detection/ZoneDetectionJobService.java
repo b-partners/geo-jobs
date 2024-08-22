@@ -11,7 +11,6 @@ import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.*;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerificationSent;
 import app.bpartners.geojobs.endpoint.event.model.parcel.ParcelDetectionTaskCreated;
-import app.bpartners.geojobs.endpoint.event.model.status.ZDJParcelsStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.status.ZDJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobStatusChanged;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectConfigurationMapper;
@@ -330,13 +329,14 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
     var job = findById(jobId);
     getTasks(job)
         .forEach(task -> eventProducer.accept(List.of(new ParcelDetectionTaskCreated(task))));
+    eventProducer.accept(List.of(new ZDJStatusRecomputingSubmitted(job.getId())));
+    eventProducer.accept(List.of(new AutoTaskStatisticRecomputingSubmitted(job.getId())));
     return job;
   }
 
   @Transactional
   public ZoneDetectionJob fireTasks(
       String jobId, List<DetectableObjectConfiguration> objectConfigurationsFromMachineZDJ) {
-    var job = findById(jobId);
     var humanZDJ = this.getHumanZdjFromZdjId(jobId);
     var humanZDJId = humanZDJ.getId();
     Set<String> bucketStorageNameCollections =
@@ -354,13 +354,8 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
         Stream.of(objectConfigurationsFromMachineZDJ, objectConfigurationsFromHumanZDJ)
             .flatMap(List::stream)
             .toList());
-    getTasks(job)
-        .forEach(task -> eventProducer.accept(List.of(new ParcelDetectionTaskCreated(task))));
 
-    eventProducer.accept(List.of(new ZDJParcelsStatusRecomputingSubmitted(job.getId())));
-    eventProducer.accept(List.of(new ZDJStatusRecomputingSubmitted(job.getId())));
-    eventProducer.accept(List.of(new AutoTaskStatisticRecomputingSubmitted(job.getId())));
-    return job;
+    return fireTasks(jobId);
   }
 
   @Override
