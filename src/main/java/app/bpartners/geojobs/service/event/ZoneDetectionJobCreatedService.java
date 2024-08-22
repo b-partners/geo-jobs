@@ -6,6 +6,7 @@ import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @AllArgsConstructor
@@ -13,6 +14,7 @@ public class ZoneDetectionJobCreatedService implements Consumer<ZoneDetectionJob
   private final ZoneDetectionJobService zoneDetectionJobService;
 
   @Override
+  @Transactional
   public void accept(ZoneDetectionJobCreated zoneDetectionJobCreated) {
     var zoneDetectionJob = zoneDetectionJobCreated.getZoneDetectionJob();
     var detectionType = zoneDetectionJob.getDetectionType();

@@ -7,9 +7,7 @@ import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.only;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
@@ -36,6 +34,42 @@ class ZoneDetectionJobServiceMockedIT extends FacadeIT {
   @MockBean ParcelDetectionTaskRepository taskRepository;
   @MockBean EventProducer eventProducer;
 
+  private void setMockData(String jobId) {
+    when(taskRepository.findAllByJobId(jobId)).thenReturn(List.of(parcelDetectionTask(jobId)));
+  }
+
+  private ParcelDetectionTask parcelDetectionTask(String jobId) {
+    var taskStatusHistory = new ArrayList<TaskStatus>();
+    taskStatusHistory.add(
+        TaskStatus.builder()
+            .id(randomUUID().toString())
+            .progression(PENDING)
+            .jobType(DETECTION)
+            .health(UNKNOWN)
+            .build());
+    return ParcelDetectionTask.builder()
+        .id(randomUUID().toString())
+        .jobId(jobId)
+        .submissionInstant(now())
+        .parcels(
+            List.of(
+                Parcel.builder()
+                    .id(randomUUID().toString())
+                    .parcelContent(
+                        ParcelContent.builder()
+                            .id(randomUUID().toString())
+                            .tiles(
+                                List.of(
+                                    Tile.builder()
+                                        .id(randomUUID().toString())
+                                        .bucketPath(randomUUID().toString())
+                                        .build()))
+                            .build())
+                    .build()))
+        .statusHistory(taskStatusHistory)
+        .build();
+  }
+
   public ZoneDetectionJob aZDJ(String jobId) {
     var statusHistory = new ArrayList<JobStatus>();
     statusHistory.add(
@@ -53,44 +87,13 @@ class ZoneDetectionJobServiceMockedIT extends FacadeIT {
   void process_zdj() {
     var jobId = randomUUID().toString();
     var job = aZDJ(jobId);
+    setMockData(jobId);
     when(repository.findById(any())).thenReturn(Optional.of(job));
     when(repository.save(any())).thenReturn(job);
-    var taskStatusHistory = new ArrayList<TaskStatus>();
-    taskStatusHistory.add(
-        TaskStatus.builder()
-            .id(randomUUID().toString())
-            .progression(PENDING)
-            .jobType(DETECTION)
-            .health(UNKNOWN)
-            .build());
-    when(taskRepository.findAllByJobId(jobId))
-        .thenReturn(
-            List.of(
-                ParcelDetectionTask.builder()
-                    .id(randomUUID().toString())
-                    .jobId(jobId)
-                    .submissionInstant(now())
-                    .parcels(
-                        List.of(
-                            Parcel.builder()
-                                .id(randomUUID().toString())
-                                .parcelContent(
-                                    ParcelContent.builder()
-                                        .id(randomUUID().toString())
-                                        .tiles(
-                                            List.of(
-                                                Tile.builder()
-                                                    .id(randomUUID().toString())
-                                                    .bucketPath(randomUUID().toString())
-                                                    .build()))
-                                        .build())
-                                .build()))
-                    .statusHistory(taskStatusHistory)
-                    .build()));
 
     ZoneDetectionJob actual = service.fireTasks(jobId);
 
     assertNotNull(actual.getId());
-    verify(eventProducer, only()).accept(any());
+    verify(eventProducer, times(3)).accept(any());
   }
 }

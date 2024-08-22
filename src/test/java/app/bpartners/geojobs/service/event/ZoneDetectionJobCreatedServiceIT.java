@@ -16,7 +16,9 @@ import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.AutoTaskStatisticRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.parcel.ParcelDetectionTaskCreated;
+import app.bpartners.geojobs.endpoint.event.model.status.ZDJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobCreated;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;
@@ -80,9 +82,16 @@ class ZoneDetectionJobCreatedServiceIT extends FacadeIT {
     subject.accept(ZoneDetectionJobCreated.builder().zoneDetectionJob(savedZDJ).build());
 
     ArgumentCaptor<List> listCaptor = ArgumentCaptor.forClass(List.class);
-    verify(eventProducer, times(1)).accept(listCaptor.capture());
+    verify(eventProducer, times(3)).accept(listCaptor.capture());
+    assertEquals(
+        ParcelDetectionTaskCreated.class, (listCaptor.getAllValues().get(0).getFirst()).getClass());
+    assertEquals(
+        ZDJStatusRecomputingSubmitted.class,
+        (listCaptor.getAllValues().get(1).getFirst()).getClass());
+    assertEquals(
+        AutoTaskStatisticRecomputingSubmitted.class,
+        (listCaptor.getAllValues().get(2).getFirst()).getClass());
     ZoneDetectionJob actualJob = zoneDetectionJobService.findById(savedZDJ.getId());
-    assertEquals(ParcelDetectionTaskCreated.class, listCaptor.getValue().getFirst().getClass());
     assertEquals(MACHINE, actualJob.getDetectionType());
     assertEquals(PENDING, actualJob.getStatus().getProgression());
     assertEquals(UNKNOWN, actualJob.getStatus().getHealth());

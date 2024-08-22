@@ -8,6 +8,7 @@ import app.bpartners.geojobs.endpoint.event.model.PojaEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +53,10 @@ public class LocalEventQueue {
       log.info(
           "Remaining events in the queue (size={}, value={}",
           remainingEventSize,
-          remainingEvents.stream().map(event -> event.getEvent().typeName()).toList());
+          remainingEvents.stream()
+              .filter(Objects::nonNull)
+              .map(event -> event.getEvent().typeName())
+              .toList());
       if (shutDownAttempt < MAX_SHUTDOWN_ATTEMPT) {
         shutDownAttempt++;
         scheduler.schedule(this::attemptSchedulerShutDown, 15L, SECONDS);

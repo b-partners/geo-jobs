@@ -324,7 +324,6 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
                         + " ZoneDetectionJob.type=HUMAN"));
   }
 
-  @Transactional
   public ZoneDetectionJob fireTasks(String jobId) {
     var job = findById(jobId);
     getTasks(job)
