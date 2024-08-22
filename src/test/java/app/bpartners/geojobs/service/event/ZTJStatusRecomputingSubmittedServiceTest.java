@@ -24,26 +24,20 @@ import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
-import app.bpartners.geojobs.service.ZoneService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
-public class ZTJStatusRecomputingSubmittedServiceTest {
+class ZTJStatusRecomputingSubmittedServiceTest {
   ZoneTilingJobService tilingJobServiceMock = mock();
   TaskStatusService<TilingTask> taskStatusServiceMock = mock();
   TaskRepository<TilingTask> taskRepositoryMock = mock();
   ZoneTilingJobRepository zoneTilingJobRepository = mock();
-  ZoneService zoneService = mock();
   ZTJStatusRecomputingSubmittedService subject =
       new ZTJStatusRecomputingSubmittedService(
-          tilingJobServiceMock,
-          taskStatusServiceMock,
-          taskRepositoryMock,
-          zoneTilingJobRepository,
-          zoneService);
+          tilingJobServiceMock, taskStatusServiceMock, taskRepositoryMock);
 
   @Test
   void accept_max_attempt_reached() {

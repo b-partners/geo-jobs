@@ -375,8 +375,8 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
     var tilingTasks = tilingTaskRepository.findAllByJobId(job.getId());
 
     var savedZDJ = saveWithTasks(tilingTasks, zoneDetectionJob);
-    return repository.save(
-        savedZDJ.toBuilder().id(randomUUID().toString()).detectionType(HUMAN).build());
+    repository.save(savedZDJ.toBuilder().id(randomUUID().toString()).detectionType(HUMAN).build());
+    return savedZDJ;
   }
 
   @Transactional

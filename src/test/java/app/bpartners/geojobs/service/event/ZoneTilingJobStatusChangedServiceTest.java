@@ -9,6 +9,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobStatusChanged;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status.HealthStatus;
@@ -30,9 +31,10 @@ class ZoneTilingJobStatusChangedServiceTest {
   ZoneDetectionJobService jobService = mock();
   StatusChangedHandler statusChangedHandler = new StatusChangedHandler();
   FullDetectionRepository fullDetectionRepository = mock();
+  EventProducer eventProducerMock = mock();
   ZoneTilingJobStatusChangedService subject =
       new ZoneTilingJobStatusChangedService(
-          mailer, jobService, statusChangedHandler, fullDetectionRepository);
+          mailer, jobService, statusChangedHandler, fullDetectionRepository, eventProducerMock);
 
   @Test
   void do_not_mail_if_old_fails_and_new_fails() {
