@@ -369,7 +369,7 @@ public class ZoneDetectionJobServiceTest {
     assertDoesNotThrow(() -> subject.fireTasks(jobId, List.of(objectConfiguration)));
 
     var listCaptor = ArgumentCaptor.forClass(List.class);
-    verify(eventProducerMock, times(3)).accept(listCaptor.capture());
+    verify(eventProducerMock, times(2)).accept(listCaptor.capture());
     List<List> allValues = listCaptor.getAllValues();
     var taskStatisticComputingEvent =
         ((List<AutoTaskStatisticRecomputingSubmitted>) allValues.getLast()).getFirst();

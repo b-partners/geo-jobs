@@ -16,6 +16,7 @@ import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.repository.DetectedTileRepository;
 import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;
+import app.bpartners.geojobs.repository.ParcelRepository;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
@@ -30,10 +31,11 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
@@ -49,20 +51,20 @@ class ParcelDetectionTaskCreatedServiceIT extends FacadeIT {
           + "mockData"
           + File.separator
           + "image-to-detect.jpg";
-
+  @Autowired ParcelRepository parcelRepository;
   @Autowired ParcelDetectionTaskCreatedService subject;
-
   @MockBean TileObjectDetector objectsDetector;
-
   @MockBean BucketComponent bucketComponent;
-
   @MockBean DetectedTileRepository detectedTileRepository;
-
   @MockBean ParcelDetectionTaskRepository parcelDetectionTaskRepository;
-
   @MockBean ZoneDetectionJobService zoneDetectionJobService;
   @MockBean EventProducer eventProducer;
-  @Captor ArgumentCaptor<MachineDetectedTile> detectedTileCaptor;
+  List<Parcel> parcels = null;
+
+  @BeforeEach
+  void setUp() {
+    parcels = parcelRepository.saveAll(parcels());
+  }
 
   DetectionResponse detectionResponse() {
     return DetectionResponse.builder()
@@ -121,23 +123,7 @@ class ParcelDetectionTaskCreatedServiceIT extends FacadeIT {
             ParcelDetectionTask.builder()
                 .id(taskId)
                 .jobId(jobId)
-                .parcels(
-                    List.of(
-                        Parcel.builder()
-                            .id(randomUUID().toString())
-                            .parcelContent(
-                                ParcelContent.builder()
-                                    .id(randomUUID().toString())
-                                    .tiles(
-                                        List.of(
-                                            Tile.builder()
-                                                .id(randomUUID().toString())
-                                                .coordinates(
-                                                    new TileCoordinates().x(25659).y(15466).z(20))
-                                                .bucketPath("mock-bucket-key")
-                                                .build()))
-                                    .build())
-                            .build()))
+                .parcels(parcels)
                 .statusHistory(
                     new ArrayList<>() {
                       {
@@ -153,6 +139,25 @@ class ParcelDetectionTaskCreatedServiceIT extends FacadeIT {
                     })
                 .build())
         .build();
+  }
+
+  @NonNull
+  private List<Parcel> parcels() {
+    return List.of(
+        Parcel.builder()
+            .id(randomUUID().toString())
+            .parcelContent(
+                ParcelContent.builder()
+                    .id(randomUUID().toString())
+                    .tiles(
+                        List.of(
+                            Tile.builder()
+                                .id(randomUUID().toString())
+                                .coordinates(new TileCoordinates().x(25659).y(15466).z(20))
+                                .bucketPath("mock-bucket-key")
+                                .build()))
+                    .build())
+            .build());
   }
 
   ZoneDetectionJob zoneDetectionJob() {
@@ -171,6 +176,8 @@ class ParcelDetectionTaskCreatedServiceIT extends FacadeIT {
     when(bucketComponent.download(any())).thenReturn(new File(FILE_NAME));
     when(objectsDetector.apply(any(), any())).thenReturn(detectionResponse());
     when(zoneDetectionJobService.findById(any())).thenReturn(zoneDetectionJob());
+    when(parcelDetectionTaskRepository.save(any()))
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
 
     subject.accept(detectionTaskCreated());
 
