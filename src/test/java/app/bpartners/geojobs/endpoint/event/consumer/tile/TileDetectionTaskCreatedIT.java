@@ -18,9 +18,6 @@ import static org.mockito.Mockito.*;
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.consumer.EventConsumer;
-import app.bpartners.geojobs.endpoint.event.consumer.model.ConsumableEvent;
-import app.bpartners.geojobs.endpoint.event.consumer.model.TypedEvent;
-import app.bpartners.geojobs.endpoint.event.model.PojaEvent;
 import app.bpartners.geojobs.endpoint.event.model.status.ParcelDetectionStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.status.ZDJParcelsStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.status.ZDJStatusRecomputingSubmitted;
@@ -44,6 +41,7 @@ import app.bpartners.geojobs.service.detection.ParcelDetectionJobService;
 import app.bpartners.geojobs.service.detection.TileObjectDetector;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.event.ZoneDetectionJobAnnotationProcessor;
+import app.bpartners.geojobs.sqs.EventProducerInvocationMock;
 import app.bpartners.geojobs.sqs.LocalEventQueue;
 import java.math.BigDecimal;
 import java.security.SecureRandom;
@@ -57,8 +55,6 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
@@ -82,6 +78,7 @@ class TileDetectionTaskCreatedIT extends FacadeIT {
   @MockBean AnnotationRetrievingJobService annotationRetrievingJobServiceMock;
   @MockBean JobFinishedMailer<ZoneDetectionJob> mailerMock;
   @MockBean ZoneDetectionJobAnnotationProcessor jobAnnotationProcessorMock;
+  EventProducerInvocationMock eventProducerInvocationMock = new EventProducerInvocationMock();
 
   @NonNull
   private static List<LocalEventQueue.CustomEventDelayConfig> customEventConfigList() {
@@ -102,7 +99,11 @@ class TileDetectionTaskCreatedIT extends FacadeIT {
   @BeforeEach
   void setUp() {
     localEventQueue.configure(customEventConfigList(), DEFAULT_EVENT_DELAY_SPEED_FACTOR);
-    doAnswer(this::eventProducerInvocationToEventConsumer).when(eventProducerMock).accept(any());
+    doAnswer(
+            invocationOnMock ->
+                eventProducerInvocationMock.apply(localEventQueue, invocationOnMock))
+        .when(eventProducerMock)
+        .accept(any());
     when(jobAnnotationServiceMock.processAnnotationJob(any(), any())).thenReturn(null);
     when(annotationRetrievingJobServiceMock.getByDetectionJobId(any())).thenReturn(List.of());
     doNothing().when(mailerMock).accept(any());
@@ -295,19 +296,6 @@ class TileDetectionTaskCreatedIT extends FacadeIT {
             })
         .when(objectsDetector)
         .apply(any(), any());
-  }
-
-  Answer eventProducerInvocationToEventConsumer(InvocationOnMock invocation) {
-    var consumableEvents =
-        ((List) invocation.getArgument(0))
-            .stream().map(argument -> toConsumableEvent((PojaEvent) argument)).toList();
-    localEventQueue.handle(consumableEvents);
-    return null;
-  }
-
-  ConsumableEvent toConsumableEvent(PojaEvent pojaEvent) {
-    return new ConsumableEvent(
-        new TypedEvent(pojaEvent.getClass().getName(), pojaEvent), () -> {}, () -> {});
   }
 
   private static ZoneDetectionJob aZDJ(
