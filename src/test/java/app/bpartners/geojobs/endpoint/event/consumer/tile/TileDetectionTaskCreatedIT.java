@@ -9,32 +9,20 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.consumer.EventConsumer;
 import app.bpartners.geojobs.endpoint.event.model.status.ParcelDetectionStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.status.ZDJParcelsStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.status.ZDJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.tile.TileDetectionTaskCreated;
 import app.bpartners.geojobs.job.model.*;
-import app.bpartners.geojobs.job.service.JobAnnotationService;
-import app.bpartners.geojobs.repository.*;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.*;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
-import app.bpartners.geojobs.service.AnnotationRetrievingJobService;
-import app.bpartners.geojobs.service.JobFinishedMailer;
-import app.bpartners.geojobs.service.TaskToJobConverter;
-import app.bpartners.geojobs.service.detection.ParcelDetectionJobService;
-import app.bpartners.geojobs.service.detection.TileObjectDetector;
-import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.event.ZoneDetectionJobAnnotationProcessor;
 import app.bpartners.geojobs.sqs.EventProducerInvocationMock;
 import app.bpartners.geojobs.sqs.LocalEventQueue;
-import app.bpartners.geojobs.utils.ParcelCreator;
-import app.bpartners.geojobs.utils.TileCreator;
 import app.bpartners.geojobs.utils.detection.*;
-import app.bpartners.geojobs.utils.tiling.ZoneTilingJobCreator;
+import app.bpartners.geojobs.utils.detection.DetectionIT;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,34 +35,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 @Slf4j
-class TileDetectionTaskCreatedIT extends FacadeIT {
+class TileDetectionTaskCreatedIT extends DetectionIT {
   private static final double OBJECT_DETECTION_SUCCESS_RATE = 100.0;
   private static final int DEFAULT_EVENT_DELAY_SPEED_FACTOR = 10;
   private static final double MOCK_DETECTION_RESPONSE_CONFIDENCE = 1.0;
-  @Autowired EventConsumer eventConsumer;
-  @Autowired ZoneTilingJobRepository ztjRepository;
-  @Autowired ParcelRepository parcelRepository;
-  @Autowired ParcelDetectionJobService pdjService;
-  @Autowired ParcelDetectionTaskRepository parcelDetectionTaskRepository;
-  @MockBean TileObjectDetector objectsDetector;
-  @Autowired ZoneDetectionJobService zdjService;
-  @Autowired TaskToJobConverter<ParcelDetectionTask, ParcelDetectionJob> taskToJobConverter;
-  @Autowired ZoneDetectionJobRepository zdjRepository;
-  @Autowired ParcelDetectionJobRepository pdjRepository;
   @Autowired LocalEventQueue localEventQueue;
   @MockBean EventProducer eventProducerMock;
-  @MockBean JobAnnotationService jobAnnotationServiceMock;
-  @MockBean AnnotationRetrievingJobService annotationRetrievingJobServiceMock;
-  @MockBean JobFinishedMailer<ZoneDetectionJob> mailerMock;
-  @MockBean ZoneDetectionJobAnnotationProcessor jobAnnotationProcessorMock;
   EventProducerInvocationMock eventProducerInvocationMock = new EventProducerInvocationMock();
-  ParcelCreator parcelCreator = new ParcelCreator();
-  TileCreator tileCreator = new TileCreator();
-  TileDetectionTaskCreator tileDetectionTaskCreator = new TileDetectionTaskCreator();
-  ParcelDetectionJobCreator parcelDetectionJobCreator = new ParcelDetectionJobCreator();
-  ParcelDetectionTaskCreator parcelDetectionTaskCreator = new ParcelDetectionTaskCreator();
-  ZoneDetectionJobCreator zoneDetectionJobCreator = new ZoneDetectionJobCreator();
-  ZoneTilingJobCreator zoneTilingJobCreator = new ZoneTilingJobCreator();
 
   @NonNull
   private static List<LocalEventQueue.CustomEventDelayConfig> customEventConfigList() {
@@ -108,29 +75,29 @@ class TileDetectionTaskCreatedIT extends FacadeIT {
     doNothing().when(mailerMock).accept(any());
     when(jobAnnotationProcessorMock.accept(any(), any(), any(), any(), any()))
         .thenReturn(ZoneDetectionJobAnnotationProcessor.AnnotationJobIds.builder().build());
-    new ObjectsDetectorMockResponse(objectsDetector)
+    new ObjectsDetectorMockResponse(objectsDetectorMock)
         .apply(MOCK_DETECTION_RESPONSE_CONFIDENCE, POOL, OBJECT_DETECTION_SUCCESS_RATE);
   }
 
   @SneakyThrows
   @Test
   void single_event_that_succeeds() {
-    SingleEventDataSetUp testdata = getSingleEventDataSetUp();
+    SingleEventDataSetUp testData = getSingleEventDataSetUp();
 
     eventProducerMock.accept(
         List.of(
             TileDetectionTaskCreated.builder()
-                .tileDetectionTask(testdata.tileDetectionTask())
+                .tileDetectionTask(testData.tileDetectionTask())
                 .detectableObjectConfigurations(detectableObjectConfiguration())
-                .zoneDetectionJobId(testdata.detectionJob().getId())
+                .zoneDetectionJobId(testData.detectionJob().getId())
                 .build()));
 
     eventProducerMock.accept(
-        List.of(new ZDJParcelsStatusRecomputingSubmitted(testdata.detectionJobId())));
-    eventProducerMock.accept(List.of(new ZDJStatusRecomputingSubmitted(testdata.detectionJobId())));
+        List.of(new ZDJParcelsStatusRecomputingSubmitted(testData.detectionJobId())));
+    eventProducerMock.accept(List.of(new ZDJStatusRecomputingSubmitted(testData.detectionJobId())));
     Thread.sleep(Duration.ofSeconds(15L));
     if (localEventQueue != null) localEventQueue.attemptSchedulerShutDown();
-    var retrievedJob = zdjService.findById(testdata.detectionJob().getId());
+    var retrievedJob = zdjService.findById(testData.detectionJob().getId());
 
     assertTrue(retrievedJob.isSucceeded());
   }
