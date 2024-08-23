@@ -10,6 +10,7 @@ import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import java.math.BigDecimal;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.SneakyThrows;
@@ -40,6 +41,7 @@ public class ParcelCreator {
         .id(id)
         .parcelContent(
             ParcelContent.builder()
+                .geoServerUrl(new URI("https://dummy.com").toURL())
                 .feature(
                     new Feature()
                         .id(randomUUID().toString())
