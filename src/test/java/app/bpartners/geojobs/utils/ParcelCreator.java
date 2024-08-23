@@ -1,17 +1,22 @@
 package app.bpartners.geojobs.utils;
 
+import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.POLYGON;
 import static java.util.UUID.randomUUID;
 
+import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
+import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.SneakyThrows;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
 public class ParcelCreator {
+
   ObjectMapper om = new ObjectMapper();
   TileCreator tileCreator = new TileCreator();
 
@@ -35,6 +40,20 @@ public class ParcelCreator {
         .id(id)
         .parcelContent(
             ParcelContent.builder()
+                .feature(
+                    new Feature()
+                        .id(randomUUID().toString())
+                        .zoom(20)
+                        .geometry(
+                            new MultiPolygon()
+                                .type(POLYGON)
+                                .coordinates(
+                                    List.of(
+                                        List.of(
+                                            List.of(
+                                                List.of(
+                                                    new BigDecimal("0.0"),
+                                                    new BigDecimal("0.0"))))))))
                 .geoServerParameter(
                     om.readValue(
                         "{\n"
@@ -53,5 +72,26 @@ public class ParcelCreator {
                 .tiles(tiles)
                 .build())
         .build();
+  }
+
+  private String mockFeature() {
+    return "{ \"type\": \"Feature\",\n"
+        + "  \"properties\": {\n"
+        + "    \"code\": \"69\",\n"
+        + "    \"nom\": \"Rh\u00f4ne\",\n"
+        + "    \"id\": 30251921,\n"
+        + "    \"CLUSTER_ID\": 99520,\n"
+        + "    \"CLUSTER_SIZE\": 386884 },\n"
+        + "  \"geometry\": {\n"
+        + "    \"type\": \"MultiPolygon\",\n"
+        + "    \"coordinates\": [ [ [\n"
+        + "      [ 4.459648282829194, 45.904988912620688 ],\n"
+        + "      [ 4.464709510872551, 45.928950368349426 ],\n"
+        + "      [ 4.490816965688656, 45.941784543770964 ],\n"
+        + "      [ 4.510354299995861, 45.933697132664598 ],\n"
+        + "      [ 4.518386257467152, 45.912888345521047 ],\n"
+        + "      [ 4.496344031095243, 45.883438201401809 ],\n"
+        + "      [ 4.479593950305621, 45.882900828315755 ],\n"
+        + "      [ 4.459648282829194, 45.904988912620688 ] ] ] ] }";
   }
 }
