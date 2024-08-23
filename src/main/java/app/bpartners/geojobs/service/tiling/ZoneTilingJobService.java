@@ -215,19 +215,15 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
             .ztjId(saved.getId())
             .build();
     fullDetectionRepository.save(toSave);
-    eventProducer.accept(List.of(new ZoneTilingJobCreated(saved, fullDetection)));
+
+    eventProducer.accept(List.of(new ZoneTilingJobCreated(saved)));
+
     return saved;
   }
 
   @Transactional
   public void fireTasks(ZoneTilingJob job) {
     getTasks(job).forEach(task -> eventProducer.accept(List.of(new TilingTaskCreated(task))));
-  }
-
-  @Transactional
-  public void fireTasks(ZoneTilingJob job, CreateFullDetection fullDetection) {
-    getTasks(job)
-        .forEach(task -> eventProducer.accept(List.of(new TilingTaskCreated(task), fullDetection)));
   }
 
   @Override
