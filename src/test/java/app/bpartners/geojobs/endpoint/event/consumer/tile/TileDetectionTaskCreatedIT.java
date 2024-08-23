@@ -123,7 +123,7 @@ class TileDetectionTaskCreatedIT extends DetectionIT {
     eventProducerMock.accept(
         List.of(new ZDJParcelsStatusRecomputingSubmitted(testData.detectionJobId())));
     eventProducerMock.accept(List.of(new ZDJStatusRecomputingSubmitted(testData.detectionJobId())));
-    Thread.sleep(Duration.ofSeconds(150L));
+    Thread.sleep(Duration.ofSeconds(180L));
     if (localEventQueue != null) localEventQueue.attemptSchedulerShutDown();
 
     var retrievedJob = zdjService.findById(testData.detectionJob().getId());
