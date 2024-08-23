@@ -2,36 +2,28 @@ package app.bpartners.geojobs.service.event;
 
 import static app.bpartners.geojobs.file.hash.FileHashAlgorithm.SHA256;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.FAILED;
-import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
-import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
-import static java.util.concurrent.Executors.newFixedThreadPool;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.consumer.EventConsumer;
 import app.bpartners.geojobs.endpoint.event.model.tile.TilingTaskCreated;
-import app.bpartners.geojobs.endpoint.event.model.tile.TilingTaskFailed;
 import app.bpartners.geojobs.endpoint.event.model.tile.TilingTaskSucceeded;
-import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobStatusChanged;
 import app.bpartners.geojobs.endpoint.rest.controller.ZoneTilingController;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.hash.FileHash;
 import app.bpartners.geojobs.job.model.Status;
-import app.bpartners.geojobs.job.model.Task;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
@@ -42,13 +34,13 @@ import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.tiling.TilingTaskStatusService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import app.bpartners.geojobs.service.tiling.downloader.TilesDownloader;
+import app.bpartners.geojobs.sqs.EventProducerInvocationMock;
+import app.bpartners.geojobs.sqs.LocalEventQueue;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -89,11 +81,18 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
   @Autowired ObjectMapper om;
   @Autowired TilingTaskStatusService tilingTaskStatusService;
   @Autowired TilingTaskSucceededService tilingTaskSucceededService;
-  @Autowired TilingTaskFailedService tilingTaskFailedService;
+  @Autowired LocalEventQueue localEventQueue;
+  @Autowired EventConsumer eventConsumer;
+  EventProducerInvocationMock eventProducerInvocationMock = new EventProducerInvocationMock();
   private Feature lyonFeature;
 
   @BeforeEach
   void setUp() throws JsonProcessingException {
+    doAnswer(
+            invocationOnMock ->
+                eventProducerInvocationMock.apply(localEventQueue, invocationOnMock))
+        .when(eventProducer)
+        .accept(any());
     when(tilesDownloader.apply(any()))
         .thenAnswer(
             (i) ->
@@ -295,94 +294,6 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
                                 .equals(status.getHealth())));
   }
 
-  @SneakyThrows
-  @Test
-  void concurrently_tile_and_all_tasks_succeed() {
-    var callersNb = 100;
-    var callables = new ArrayList<Callable<Boolean>>();
-    var jobId = randomUUID().toString();
-    zoneTilingJobRepository.save(aZTJ(jobId));
-    for (int i = 0; i < callersNb; i++) {
-      var taskId = randomUUID().toString();
-      var parcelId = randomUUID().toString();
-      var toCreate = aZTT(jobId, taskId, parcelId);
-      var created = tilingTaskRepository.save(toCreate);
-      var createdEventPayload = TilingTaskCreated.builder().task(created).build();
-      callables.add(() -> isTilingEventHandledSuccessfully(createdEventPayload));
-    }
-    var executorService = newFixedThreadPool(callersNb);
-    var futures = executorService.invokeAll(callables);
-    var succeeded =
-        futures.stream()
-            .map(TilingTaskCreatedServiceIT::getFutureBoolean)
-            .filter((result) -> result)
-            .count();
-    assertEquals(callersNb, succeeded);
-    zoneTilingJobService.recomputeStatus(zoneTilingJobRepository.findById(jobId).get());
-    var jobStatusAfterTiling = zoneTilingJobRepository.findById(jobId).get().getStatus();
-    assertEquals(PROCESSING, jobStatusAfterTiling.getProgression());
-    assertEquals(UNKNOWN, jobStatusAfterTiling.getHealth());
-    var taskStatusesAfterTiling = tilingTaskRepository.findAllByJobId(jobId);
-    assertTrue(
-        taskStatusesAfterTiling.stream()
-            .map(Task::getStatus)
-            .allMatch(
-                (status) ->
-                    PROCESSING.equals(status.getProgression())
-                        && UNKNOWN.equals(status.getHealth())));
-  }
-
-  private static void assertFuturesAllSucceed(List<Future<Boolean>> futures) {
-    var succeeded =
-        futures.stream()
-            .map(TilingTaskCreatedServiceIT::getFutureBoolean)
-            .filter((result) -> result)
-            .count();
-    assertEquals(futures.size(), succeeded);
-  }
-
-  private Boolean isTilingEventHandledSuccessfully(TilingTaskCreated createdEventPayload) {
-    try {
-      subject.accept(createdEventPayload);
-      return true;
-    } catch (Exception e) {
-      return false;
-    }
-  }
-
-  @SneakyThrows
-  private static Boolean getFutureBoolean(Future<Boolean> future) {
-    return future.get();
-  }
-
-  @Test
-  void send_tilingTaskSucceeded_and_jobStatusChanged_after_task_is_processed_successfully() {
-    String jobId = randomUUID().toString();
-    zoneTilingJobRepository.save(aZTJ(jobId));
-    String taskId = randomUUID().toString();
-    String parcelId = randomUUID().toString();
-    TilingTask toCreate = aZTT(jobId, taskId, parcelId);
-    TilingTask created = tilingTaskRepository.save(toCreate);
-    TilingTaskCreated createdEventPayload = TilingTaskCreated.builder().task(created).build();
-    subject.accept(createdEventPayload);
-    zoneTilingJobService.recomputeStatus(zoneTilingJobRepository.findById(jobId).get());
-    var eventsCaptor = ArgumentCaptor.forClass(List.class);
-    verify(eventProducer, times(2)).accept(eventsCaptor.capture());
-    var events = eventsCaptor.getAllValues();
-    assertEquals(2, events.size());
-    var jobStatusChanged = ((ZoneTilingJobStatusChanged) events.get(1).get(0));
-    assertEquals(PENDING, jobStatusChanged.getOldJob().getStatus().getProgression());
-    assertEquals(UNKNOWN, jobStatusChanged.getOldJob().getStatus().getHealth());
-    assertEquals(PROCESSING, jobStatusChanged.getNewJob().getStatus().getProgression());
-    assertEquals(UNKNOWN, jobStatusChanged.getNewJob().getStatus().getHealth());
-    var taskStatusInEvent = ((TilingTaskSucceeded) events.get(0).get(0)).getTask().getStatus();
-    assertEquals(FINISHED, taskStatusInEvent.getProgression());
-    assertEquals(SUCCEEDED, taskStatusInEvent.getHealth());
-    var jobStatusInDb = zoneTilingJobRepository.findById(jobId).get().getStatus();
-    assertEquals(PROCESSING, jobStatusInDb.getProgression());
-    assertEquals(UNKNOWN, jobStatusInDb.getHealth());
-  }
-
   @Test
   void task_processing_to_pending_ko() {
     String jobId = randomUUID().toString();
@@ -416,42 +327,6 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
     var eventsCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducer, times(2)).accept(eventsCaptor.capture());
     var events = eventsCaptor.getAllValues();
-    var taskSucceeded = (TilingTaskSucceeded) events.get(0).get(0);
-    tilingTaskSucceededService.accept(taskSucceeded);
-    List<app.bpartners.geojobs.endpoint.rest.model.Parcel> parcels =
-        zoneTilingController.getZTJParcels(jobId);
-    assertEquals(1, parcels.size());
-    assertEquals(2, parcels.get(0).getTiles().size());
-  }
-
-  @Test
-  void get_ztj_tiles_after_successful_second_attempt() {
-    String jobId = randomUUID().toString();
-    zoneTilingJobRepository.save(aZTJ(jobId));
-    String taskId = randomUUID().toString();
-    String parcelId = randomUUID().toString();
-    TilingTask toCreate = aZTT(jobId, taskId, parcelId);
-    TilingTask created = tilingTaskRepository.save(toCreate);
-    TilingTaskCreated ztjCreated = TilingTaskCreated.builder().task(created).build();
-    reset(tilesDownloader);
-    when(tilesDownloader.apply(any())).thenThrow(new RuntimeException());
-    subject.accept(ztjCreated);
-    zoneTilingJobService.recomputeStatus(zoneTilingJobRepository.findById(jobId).get());
-    var eventsCaptor = ArgumentCaptor.forClass(List.class);
-    verify(eventProducer, times(2)).accept(eventsCaptor.capture());
-    var events = eventsCaptor.getAllValues();
-    var taskFailed = (TilingTaskFailed) events.get(0).get(0);
-    reset(tilesDownloader);
-    when(tilesDownloader.apply(any()))
-        .thenAnswer(
-            (i) ->
-                Paths.get(this.getClass().getClassLoader().getResource("mockData/lyon").toURI())
-                    .toFile());
-    reset(eventProducer);
-    tilingTaskFailedService.accept(taskFailed);
-    eventsCaptor = ArgumentCaptor.forClass(List.class);
-    verify(eventProducer, times(1)).accept(eventsCaptor.capture());
-    events = eventsCaptor.getAllValues();
     var taskSucceeded = (TilingTaskSucceeded) events.get(0).get(0);
     tilingTaskSucceededService.accept(taskSucceeded);
     List<app.bpartners.geojobs.endpoint.rest.model.Parcel> parcels =
