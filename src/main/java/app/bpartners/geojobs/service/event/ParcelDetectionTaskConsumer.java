@@ -1,10 +1,7 @@
 package app.bpartners.geojobs.service.event;
 
-import static java.time.Instant.now;
-
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.parcel.ParcelDetectionJobCreated;
-import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionJob;
@@ -18,7 +15,6 @@ import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 @AllArgsConstructor
 @Component
@@ -31,7 +27,6 @@ public class ParcelDetectionTaskConsumer implements Consumer<ParcelDetectionTask
   private final ParcelDetectionTaskRepository parcelDetectionTaskRepository;
 
   @Override
-  @Transactional
   public void accept(ParcelDetectionTask task) {
     String detectionTaskId = task.getId();
     String zdjId = task.getJobId();
@@ -63,20 +58,5 @@ public class ParcelDetectionTaskConsumer implements Consumer<ParcelDetectionTask
                 .zdjId(zdjId)
                 .parcelDetectionJob(createdParcelDetectionJob)
                 .build()));
-  }
-
-  public static ParcelDetectionTask withNewStatus(
-      ParcelDetectionTask task,
-      Status.ProgressionStatus progression,
-      Status.HealthStatus health,
-      String message) {
-    return (ParcelDetectionTask)
-        task.hasNewStatus(
-            Status.builder()
-                .progression(progression)
-                .health(health)
-                .creationDatetime(now())
-                .message(message)
-                .build());
   }
 }

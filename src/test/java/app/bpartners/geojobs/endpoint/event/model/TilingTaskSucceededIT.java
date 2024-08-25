@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.model.tile.TilingTaskSucceeded;
-import app.bpartners.geojobs.endpoint.rest.model.CreateFullDetection;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
@@ -27,20 +26,15 @@ public class TilingTaskSucceededIT extends FacadeIT {
         .build();
   }
 
-  private CreateFullDetection fullDetection() {
-    return new CreateFullDetection();
-  }
-
   @Test
   void serialize_then_deserialize() throws JsonProcessingException {
-    var tilingTaskSucceeded = new TilingTaskSucceeded(tilingTask(), fullDetection());
+    var tilingTaskSucceeded = new TilingTaskSucceeded(tilingTask());
 
     var serialized = om.writeValueAsString(tilingTaskSucceeded);
     var deserialized = om.readValue(serialized, TilingTaskSucceeded.class);
 
     assertEquals(tilingTaskSucceeded, deserialized);
     assertEquals(tilingTask(), deserialized.getTask());
-    assertEquals(fullDetection(), deserialized.getFullDetection());
     assertEquals(Duration.ofMinutes(1), deserialized.maxConsumerDuration());
     assertEquals(Duration.ofMinutes(1), deserialized.maxConsumerBackoffBetweenRetries());
   }

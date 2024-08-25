@@ -300,6 +300,20 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
   }
 
   @Transactional
+  public ZoneDetectionJob getByTilingJobId(
+      String tilingJobId, ZoneDetectionJob.DetectionType detectionType) {
+    var jobs =
+        zoneDetectionJobRepository.findAllByZoneTilingJob_Id(tilingJobId).stream()
+            .filter(job -> job.getDetectionType().equals(detectionType))
+            .toList();
+    var retrievedJob = jobs.getFirst();
+    if (jobs.size() > 1) {
+      log.error("ZTJ(id={}) associated to {} ZDJ", tilingJobId, jobs.size());
+    }
+    return retrievedJob;
+  }
+
+  @Transactional
   public ZoneDetectionJob getHumanZdjFromZdjId(String jobId) {
     var zoneDetectionJob =
         repository

@@ -41,6 +41,7 @@ public class TaskToJobConverter<T extends Task, J extends Job> implements Functi
                           .progression(PENDING)
                           .health(UNKNOWN)
                           .build()))
+              .submissionInstant(now())
               .build();
     }
     throw new NotImplementedException(

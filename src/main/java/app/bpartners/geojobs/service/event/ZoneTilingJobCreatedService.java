@@ -21,15 +21,8 @@ public class ZoneTilingJobCreatedService implements Consumer<ZoneTilingJobCreate
   public void accept(ZoneTilingJobCreated zoneTilingJobCreated) {
     ZoneTilingJob ztj = zoneTilingJobCreated.getZoneTilingJob();
 
-    if (zoneTilingJobCreated.getCreateFullDetection() != null) {
-      zoneTilingJobService.fireTasks(ztj, zoneTilingJobCreated.getCreateFullDetection());
-      eventProducer.accept(
-          List.of(
-              new ZTJStatusRecomputingSubmitted(
-                  ztj.getId(), zoneTilingJobCreated.getCreateFullDetection())));
-    }
-
     zoneTilingJobService.fireTasks(ztj);
+
     eventProducer.accept(List.of(new ZTJStatusRecomputingSubmitted(ztj.getId())));
     eventProducer.accept(List.of(new AutoTaskStatisticRecomputingSubmitted(ztj.getId())));
   }

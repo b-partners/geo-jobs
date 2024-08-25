@@ -22,10 +22,6 @@ public class ParcelDetectionJobCreatedService implements Consumer<ParcelDetectio
 
   @Override
   public void accept(ParcelDetectionJobCreated parcelDetectionJobCreated) {
-    eventProducer.accept(
-        List.of(
-            new ParcelDetectionStatusRecomputingSubmitted(
-                parcelDetectionJobCreated.getParcelDetectionJob().getId())));
     var parcelDetectionJob = parcelDetectionJobCreated.getParcelDetectionJob();
     var zdjId = parcelDetectionJobCreated.getZdjId();
     var jobId = parcelDetectionJob.getId();
@@ -33,6 +29,8 @@ public class ParcelDetectionJobCreatedService implements Consumer<ParcelDetectio
     var detectableObjectConfigurations =
         objectConfigurationRepository.findAllByDetectionJobId(zdjId);
 
+    eventProducer.accept(
+        List.of(new ParcelDetectionStatusRecomputingSubmitted(parcelDetectionJob.getId())));
     tileDetectionTasks.forEach(
         tileDetectionTask ->
             eventProducer.accept(

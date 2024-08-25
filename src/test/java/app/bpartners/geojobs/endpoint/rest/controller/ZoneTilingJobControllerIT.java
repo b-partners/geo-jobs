@@ -210,6 +210,7 @@ class ZoneTilingJobControllerIT extends FacadeIT {
   @Test
   void create_tiling_job_ok() throws IOException {
     var created = controller.tileZone(creatableJob());
+
     var createdList = controller.getTilingJobs(new PageFromOne(1), new BoundedPageSize(30));
     assertNotNull(created.getId());
     assertTrue(createdList.stream().anyMatch((z) -> z.equals(created.features(List.of()))));

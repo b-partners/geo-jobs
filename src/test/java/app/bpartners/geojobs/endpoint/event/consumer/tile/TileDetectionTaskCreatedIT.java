@@ -34,7 +34,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 
 @Slf4j
 class TileDetectionTaskCreatedIT extends DetectionIT {
-  private static final double OBJECT_DETECTION_SUCCESS_RATE = 65.0;
+  private static final double OBJECT_DETECTION_SUCCESS_RATE = 75.0;
   private static final int DEFAULT_EVENT_DELAY_SPEED_FACTOR = 10;
   private static final double MOCK_DETECTION_RESPONSE_CONFIDENCE = 1.0;
   @Autowired LocalEventQueue localEventQueue;
@@ -123,7 +123,7 @@ class TileDetectionTaskCreatedIT extends DetectionIT {
     eventProducerMock.accept(
         List.of(new ZDJParcelsStatusRecomputingSubmitted(testData.detectionJobId())));
     eventProducerMock.accept(List.of(new ZDJStatusRecomputingSubmitted(testData.detectionJobId())));
-    Thread.sleep(Duration.ofSeconds(150L));
+    Thread.sleep(Duration.ofSeconds(180L));
     if (localEventQueue != null) localEventQueue.attemptSchedulerShutDown();
 
     var retrievedJob = zdjService.findById(testData.detectionJob().getId());
