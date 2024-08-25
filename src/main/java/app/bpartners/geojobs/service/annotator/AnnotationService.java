@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -78,8 +79,8 @@ public class AnnotationService {
     }
   }
 
-  public void createAnnotationJob(HumanDetectionJob humanDetectionJob, String jobName)
-      throws ApiException {
+  @SneakyThrows
+  public void createAnnotationJob(HumanDetectionJob humanDetectionJob, String jobName) {
     String folderPath = null;
     List<MachineDetectedTile> machineDetectedTiles = humanDetectionJob.getMachineDetectedTiles();
     log.info(

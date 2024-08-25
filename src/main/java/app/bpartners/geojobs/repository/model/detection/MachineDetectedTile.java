@@ -24,7 +24,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 @Table(name = "detected_tile")
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
+@Builder(toBuilder = true)
 @Getter
 @Setter
 @EqualsAndHashCode

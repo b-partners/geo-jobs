@@ -8,7 +8,6 @@ import static java.util.UUID.randomUUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import app.bpartners.gen.annotator.endpoint.rest.client.ApiException;
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
@@ -115,7 +114,7 @@ public class ZoneDetectionAnnotationProcessorTest extends FacadeIT {
     setupDetectedTileRepository(detectedTileRepositoryMock);
     setUpObjectConfigurationRepository(objectConfigurationRepositoryMock);
     when(humanDetectionJobRepositoryMock.save(any()))
-        .thenReturn(HumanDetectionJob.builder().build());
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
 
     when(zoneDetectionJobServiceMock.getHumanZdjFromZdjId(MOCK_JOB_ID))
         .thenReturn(ZoneDetectionJob.builder().id(MOCK_HUMAN_JOB_ID).build());
@@ -123,10 +122,11 @@ public class ZoneDetectionAnnotationProcessorTest extends FacadeIT {
   }
 
   @Test
-  void accept_event_ok() throws ApiException {
+  void accept_event_ok() {
     String annotationJobWithObjectsIdTruePositive = randomUUID().toString();
     String annotationJobWithObjectsIdFalsePositive = randomUUID().toString();
     String annotationJobWithoutObjectsId = randomUUID().toString();
+
     subject.accept(
         MOCK_JOB_ID,
         DEFAULT_MIN_CONFIDENCE,
