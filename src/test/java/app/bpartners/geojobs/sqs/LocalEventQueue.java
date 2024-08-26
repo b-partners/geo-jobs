@@ -5,12 +5,10 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import app.bpartners.geojobs.endpoint.event.consumer.EventConsumer;
 import app.bpartners.geojobs.endpoint.event.consumer.model.ConsumableEvent;
 import app.bpartners.geojobs.endpoint.event.model.PojaEvent;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -21,6 +19,7 @@ import org.springframework.stereotype.Component;
 @Scope("prototype")
 public class LocalEventQueue {
   private static final int DEFAULT_MAX_ATTEMPT = 10;
+  private static final int CUSTOM_MAX_ATTEMPT = 5;
   private static final int MAX_SHUTDOWN_ATTEMPT = 3;
   final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
   private List<ConsumableEvent> remainingEvents = new ArrayList<>();
@@ -79,7 +78,8 @@ public class LocalEventQueue {
     var pojaEvent = consumableEvent.getEvent().payload();
     int attemptNb = getAttemptNb(consumableEvent) + 1;
     log.info("Attempt nb : {}, Event : {}", attemptNb, pojaEvent);
-    if (attemptNb <= DEFAULT_MAX_ATTEMPT) {
+    if ((isCustomEvent(pojaEvent) && attemptNb <= DEFAULT_MAX_ATTEMPT)
+        || (!isCustomEvent(pojaEvent) && attemptNb <= CUSTOM_MAX_ATTEMPT)) {
       try {
         add(consumableEvent);
         eventConsumer.accept(List.of(consumableEvent));
@@ -87,9 +87,7 @@ public class LocalEventQueue {
         log.info("Exception occurs when handling {} : {}", pojaEvent, e.getMessage());
         long defaultDelay = pojaEvent.maxConsumerBackoffBetweenRetries().getSeconds();
         long actualDelay =
-            customEventConfigList.stream()
-                .filter(config -> config.pojaEventClass.equals(pojaEvent.getClass()))
-                .findFirst()
+            verifyPojaCustomEvent(pojaEvent)
                 .map(config -> defaultDelay / config.delayExp)
                 .orElse(defaultDelay / defaultDelayExp);
         scheduler.schedule(() -> handle(consumableEvent), actualDelay, SECONDS);
@@ -99,6 +97,17 @@ public class LocalEventQueue {
     } else {
       fail(consumableEvent);
     }
+  }
+
+  @NonNull
+  private Optional<CustomEventDelayConfig> verifyPojaCustomEvent(PojaEvent pojaEvent) {
+    return customEventConfigList.stream()
+        .filter(config -> config.pojaEventClass.equals(pojaEvent.getClass()))
+        .findFirst();
+  }
+
+  private boolean isCustomEvent(PojaEvent pojaEvent) {
+    return verifyPojaCustomEvent(pojaEvent).isPresent();
   }
 
   private void add(ConsumableEvent event) {

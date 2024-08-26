@@ -1,11 +1,9 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
-
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobFailed;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobStatusChanged;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobSucceeded;
-import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.service.JobFinishedMailer;
 import app.bpartners.geojobs.service.StatusChangedHandler;
@@ -35,7 +33,7 @@ public class ZoneDetectionJobStatusChangedService
         newJob.getStatus(),
         oldJob.getStatus(),
         new OnSucceededHandler(mailer, eventProducer, newJob),
-        new OnFailedHandler(newJob));
+        new OnFailedHandler(mailer, eventProducer, newJob));
   }
 
   private record OnSucceededHandler(
@@ -51,11 +49,16 @@ public class ZoneDetectionJobStatusChangedService
     }
   }
 
-  private record OnFailedHandler(ZoneDetectionJob zdj) implements StatusHandler {
+  private record OnFailedHandler(
+      JobFinishedMailer<ZoneDetectionJob> mailer, EventProducer eventProducer, ZoneDetectionJob zdj)
+      implements StatusHandler {
 
     @Override
     public String performAction() {
-      throw new ApiException(SERVER_EXCEPTION, "Failed to process zdj=" + zdj.getId());
+      mailer.accept(zdj);
+      eventProducer.accept(
+          List.of(ZoneDetectionJobFailed.builder().failedJobId(zdj.getId()).build()));
+      return "Failed to process ZDJ {}, mail sent, processing annotator triggered anyway";
     }
   }
 }

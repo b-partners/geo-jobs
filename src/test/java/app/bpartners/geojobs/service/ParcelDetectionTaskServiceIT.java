@@ -110,8 +110,7 @@ public class ParcelDetectionTaskServiceIT extends FacadeIT {
             detectedTile(JOB_ID, "tile2Id", "parcel2Id", "detectedObjectId2", MIN_CONFIDENCE));
 
     List<MachineDetectedTile> actual =
-        subject.findInDoubtTilesByJobId(
-            machineDetectedTiles, List.of(detectableObjectConfigurations()));
+        subject.filterByInDoubt(machineDetectedTiles, List.of(detectableObjectConfigurations()));
 
     assertEquals(expected, actual.stream().peek(tile -> tile.setCreationDatetime(null)).toList());
   }

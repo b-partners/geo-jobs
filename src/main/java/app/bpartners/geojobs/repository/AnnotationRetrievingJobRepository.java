@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface AnnotationRetrievingJobRepository
     extends JpaRepository<AnnotationRetrievingJob, String> {
-  List<AnnotationRetrievingJob> findByDetectionJobId(String detectionJobId);
+  List<AnnotationRetrievingJob> findAllByDetectionJobId(String detectionJobId);
 
   Optional<AnnotationRetrievingJob> findByAnnotationJobId(String id);
 }

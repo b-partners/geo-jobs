@@ -3,12 +3,11 @@ package app.bpartners.geojobs.service.event;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 import static app.bpartners.geojobs.service.annotator.ExtractorIT.PARCEL_MOCK_ID;
 import static app.bpartners.geojobs.service.event.TilingTaskCreatedServiceIT.MOCK_FEATURE_AS_STRING;
-import static app.bpartners.geojobs.service.event.ZoneDetectionJobSucceededService.DEFAULT_MIN_CONFIDENCE;
+import static app.bpartners.geojobs.service.event.ZoneDetectionFinishedConsumer.DEFAULT_MIN_CONFIDENCE;
 import static java.util.UUID.randomUUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import app.bpartners.gen.annotator.endpoint.rest.client.ApiException;
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
@@ -26,6 +25,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.util.List;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -100,14 +100,15 @@ public class ZoneDetectionAnnotationProcessorTest extends FacadeIT {
   void setUpObjectConfigurationRepository(
       DetectableObjectConfigurationRepository objectConfigurationRepositoryMock) {
     when(objectConfigurationRepositoryMock.findAllByDetectionJobId(MOCK_JOB_ID))
-        .thenReturn(
-            List.of(
-                DetectableObjectConfiguration.builder().objectType(ROOF).confidence(0.8).build(),
-                DetectableObjectConfiguration.builder().objectType(TREE).confidence(0.8).build(),
-                DetectableObjectConfiguration.builder()
-                    .objectType(SOLAR_PANEL)
-                    .confidence(0.8)
-                    .build()));
+        .thenReturn(getObjectConfigurations());
+  }
+
+  @NonNull
+  private List<DetectableObjectConfiguration> getObjectConfigurations() {
+    return List.of(
+        DetectableObjectConfiguration.builder().objectType(ROOF).confidence(0.8).build(),
+        DetectableObjectConfiguration.builder().objectType(TREE).confidence(0.8).build(),
+        DetectableObjectConfiguration.builder().objectType(SOLAR_PANEL).confidence(0.8).build());
   }
 
   @BeforeEach
@@ -115,7 +116,7 @@ public class ZoneDetectionAnnotationProcessorTest extends FacadeIT {
     setupDetectedTileRepository(detectedTileRepositoryMock);
     setUpObjectConfigurationRepository(objectConfigurationRepositoryMock);
     when(humanDetectionJobRepositoryMock.save(any()))
-        .thenReturn(HumanDetectionJob.builder().build());
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
 
     when(zoneDetectionJobServiceMock.getHumanZdjFromZdjId(MOCK_JOB_ID))
         .thenReturn(ZoneDetectionJob.builder().id(MOCK_HUMAN_JOB_ID).build());
@@ -123,16 +124,18 @@ public class ZoneDetectionAnnotationProcessorTest extends FacadeIT {
   }
 
   @Test
-  void accept_event_ok() throws ApiException {
+  void accept_event_ok() {
     String annotationJobWithObjectsIdTruePositive = randomUUID().toString();
     String annotationJobWithObjectsIdFalsePositive = randomUUID().toString();
     String annotationJobWithoutObjectsId = randomUUID().toString();
+
     subject.accept(
         MOCK_JOB_ID,
         DEFAULT_MIN_CONFIDENCE,
         annotationJobWithObjectsIdTruePositive,
         annotationJobWithObjectsIdFalsePositive,
-        annotationJobWithoutObjectsId);
+        annotationJobWithoutObjectsId,
+        getObjectConfigurations());
 
     verify(annotationServiceMock, times(2)).createAnnotationJob(any(), any());
   }

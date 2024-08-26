@@ -13,7 +13,7 @@ import lombok.ToString;
 @AllArgsConstructor
 @Builder(toBuilder = true)
 @Data
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = false)
 @ToString
 public class JobStatusRecomputingSubmitted extends PojaEvent {
   protected String jobId;

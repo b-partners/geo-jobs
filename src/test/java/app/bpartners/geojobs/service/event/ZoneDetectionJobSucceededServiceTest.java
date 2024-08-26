@@ -1,21 +1,20 @@
 package app.bpartners.geojobs.service.event;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobSucceeded;
 import org.junit.jupiter.api.Test;
 
-public class ZoneDetectionJobSucceededServiceTest {
+class ZoneDetectionJobSucceededServiceTest {
   private static final String MOCK_JOB_ID = "mock_job_id";
-  ZoneDetectionJobAnnotationProcessor jobAnnotationProcessorMock = mock();
+  ZoneDetectionFinishedConsumer finishedConsumerMock = mock();
   ZoneDetectionJobSucceededService subject =
-      new ZoneDetectionJobSucceededService(jobAnnotationProcessorMock);
+      new ZoneDetectionJobSucceededService(finishedConsumerMock);
 
   @Test
   void accept_ok() {
     subject.accept(ZoneDetectionJobSucceeded.builder().succeededJobId(MOCK_JOB_ID).build());
 
-    verify(jobAnnotationProcessorMock, times(1)).accept(any(), any(), any(), any(), any());
+    verify(finishedConsumerMock, times(1)).accept(MOCK_JOB_ID);
   }
 }

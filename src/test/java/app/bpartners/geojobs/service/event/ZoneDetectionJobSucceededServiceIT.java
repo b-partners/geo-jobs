@@ -135,13 +135,14 @@ class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
     var humanDetectionBefore = humanDetectionJobRepository.findAll();
     var humanZDJ1Before = jobRepository.findById(HUMAN_ZDJ_ID).orElseThrow();
 
-    subject.accept(new ZoneDetectionJobSucceeded(SUCCEEDED_JOB_ID, HUMAN_ZDJ_ID));
-    subject.accept(new ZoneDetectionJobSucceeded(SUCCEEDED_JOB_ID_2, HUMAN_ZDJ_ID_2));
+    subject.accept(new ZoneDetectionJobSucceeded(SUCCEEDED_JOB_ID));
+    subject.accept(new ZoneDetectionJobSucceeded(SUCCEEDED_JOB_ID_2));
 
     var humanZDJ1After = jobRepository.findById(HUMAN_ZDJ_ID).orElseThrow();
     var humanZDJ2After = jobRepository.findById(HUMAN_ZDJ_ID_2).orElseThrow();
-    var humanDetectionAfter = humanDetectionJobRepository.findByZoneDetectionJobId(HUMAN_ZDJ_ID);
-    var humanDetectionAfter2 = humanDetectionJobRepository.findByZoneDetectionJobId(HUMAN_ZDJ_ID_2);
+    var humanDetectionAfter = humanDetectionJobRepository.findAllByZoneDetectionJobId(HUMAN_ZDJ_ID);
+    var humanDetectionAfter2 =
+        humanDetectionJobRepository.findAllByZoneDetectionJobId(HUMAN_ZDJ_ID_2);
     var humanZDJ1BeforeStatus = humanZDJ1Before.getStatus();
     var humanZDJ2AfterStatus = humanZDJ2After.getStatus();
     assertTrue(humanDetectionBefore.isEmpty());

@@ -11,13 +11,11 @@ import app.bpartners.geojobs.repository.model.detection.ParcelDetectionJob;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
-import app.bpartners.geojobs.service.AnnotationRetrievingJobService;
 import app.bpartners.geojobs.service.JobFinishedMailer;
 import app.bpartners.geojobs.service.TaskToJobConverter;
 import app.bpartners.geojobs.service.detection.ParcelDetectionJobService;
 import app.bpartners.geojobs.service.detection.TileObjectDetector;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
-import app.bpartners.geojobs.service.event.ZoneDetectionJobAnnotationProcessor;
 import app.bpartners.geojobs.utils.ParcelCreator;
 import app.bpartners.geojobs.utils.TileCreator;
 import app.bpartners.geojobs.utils.tiling.ZoneTilingJobCreator;
@@ -38,9 +36,7 @@ public class DetectionIT extends FacadeIT {
   @Autowired protected ParcelDetectionJobRepository pdjRepository;
   @MockBean protected TileObjectDetector objectsDetectorMock;
   @MockBean protected JobAnnotationService jobAnnotationServiceMock;
-  @MockBean protected AnnotationRetrievingJobService annotationRetrievingJobServiceMock;
   @MockBean protected JobFinishedMailer<ZoneDetectionJob> mailerMock;
-  @MockBean protected ZoneDetectionJobAnnotationProcessor jobAnnotationProcessorMock;
   protected final ParcelCreator parcelCreator = new ParcelCreator();
   protected final TileCreator tileCreator = new TileCreator();
   protected final TileDetectionTaskCreator tileDetectionTaskCreator =

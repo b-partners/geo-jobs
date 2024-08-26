@@ -21,6 +21,11 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = false)
 public class AnnotationRetrievingTask extends Task {
   private String annotationTaskId;
+  private String annotationJobId;
+  private String humanZoneDetectionJobId;
+  private int xTile;
+  private int yTile;
+  private int zoom;
 
   @Override
   public JobType getJobType() {

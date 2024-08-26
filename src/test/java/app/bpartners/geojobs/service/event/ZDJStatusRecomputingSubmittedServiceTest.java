@@ -6,7 +6,6 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSIN
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -16,30 +15,18 @@ import app.bpartners.geojobs.endpoint.event.model.status.ZDJStatusRecomputingSub
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status.HealthStatus;
 import app.bpartners.geojobs.job.model.Status.ProgressionStatus;
-import app.bpartners.geojobs.job.service.JobAnnotationService;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
-import app.bpartners.geojobs.service.AnnotationRetrievingJobService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.event.detection.ZDJStatusRecomputingSubmittedBean;
-import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class ZDJStatusRecomputingSubmittedServiceTest {
   ZoneDetectionJobService jobServiceMock = mock();
-  AnnotationRetrievingJobService annotationRetrievingJobServiceMock = mock();
-  GeoJsonConversionInitiationService geoJsonConversionInitiationServiceMock = mock();
-  ZoneDetectionJobService zoneDetectionJobServiceMock = mock();
-  JobAnnotationService jobAnnotationServiceMock = mock();
   ZDJStatusRecomputingSubmittedBean zdjStatusRecomputingSubmittedBeanMock =
       new ZDJStatusRecomputingSubmittedBean(jobServiceMock, mock(), mock());
   ZDJStatusRecomputingSubmittedService subject =
-      new ZDJStatusRecomputingSubmittedService(
-          jobServiceMock,
-          zdjStatusRecomputingSubmittedBeanMock,
-          annotationRetrievingJobServiceMock,
-          geoJsonConversionInitiationServiceMock,
-          jobAnnotationServiceMock);
+      new ZDJStatusRecomputingSubmittedService(zdjStatusRecomputingSubmittedBeanMock);
 
   @Test
   void processing_after_recomputing_throws_exception() {
@@ -47,8 +34,6 @@ class ZDJStatusRecomputingSubmittedServiceTest {
     var job = aZDJ(jobId, PROCESSING, UNKNOWN);
     when(jobServiceMock.findById(jobId)).thenReturn(job);
     when(jobServiceMock.recomputeStatus(job)).thenReturn(job);
-    when(annotationRetrievingJobServiceMock.getByDetectionJobId(any())).thenReturn(List.of());
-    when(zoneDetectionJobServiceMock.findById(jobId)).thenReturn(job);
 
     assertThrows(
         RuntimeException.class, () -> subject.accept(new ZDJStatusRecomputingSubmitted(jobId)));
@@ -61,8 +46,6 @@ class ZDJStatusRecomputingSubmittedServiceTest {
     var job = aZDJ(jobId, FINISHED, UNKNOWN);
     when(jobServiceMock.findById(jobId)).thenReturn(job);
     when(jobServiceMock.recomputeStatus(job)).thenReturn(job);
-    when(annotationRetrievingJobServiceMock.getByDetectionJobId(any())).thenReturn(List.of());
-    when(zoneDetectionJobServiceMock.findById(jobId)).thenReturn(job);
 
     subject.accept(new ZDJStatusRecomputingSubmitted(jobId));
     verify(jobServiceMock, times(0)).recomputeStatus(job);

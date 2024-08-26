@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.repository.model.detection;
 
+import static jakarta.persistence.CascadeType.ALL;
 import static jakarta.persistence.FetchType.EAGER;
 
 import jakarta.persistence.*;
@@ -20,7 +21,7 @@ public class HumanDetectionJob {
   @JoinColumn(referencedColumnName = "id")
   private String zoneDetectionJobId;
 
-  @OneToMany(fetch = EAGER)
+  @OneToMany(fetch = EAGER, orphanRemoval = true, cascade = ALL)
   @JoinColumn(name = "human_detection_job_id")
   private List<MachineDetectedTile> machineDetectedTiles;
 

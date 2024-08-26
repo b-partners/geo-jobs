@@ -295,7 +295,9 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
                     new NotFoundException(
                         "No human detection job found for annotationJobId=" + annotationJobId));
     var humanZDJ = getHumanZdjFromZdjId(linkedHumanDetectionJob.getZoneDetectionJobId());
+
     eventProducer.accept(List.of(new AnnotationJobVerificationSent(humanZDJ.getId())));
+
     return repository.save(humanZDJ);
   }
 

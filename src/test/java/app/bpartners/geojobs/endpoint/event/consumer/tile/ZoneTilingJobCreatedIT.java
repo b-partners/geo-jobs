@@ -1,32 +1,39 @@
 package app.bpartners.geojobs.endpoint.event.consumer.tile;
 
-import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.ROOF;
 import static app.bpartners.geojobs.file.hash.FileHashAlgorithm.SHA256;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.POOL;
+import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
+import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.when;
 
+import app.bpartners.gen.annotator.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.AutoTaskStatisticRecomputingSubmitted;
+import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerificationSent;
+import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationRetrievingJobStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.status.ParcelDetectionStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.status.ZDJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.status.ZTJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobCreated;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration;
+import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.hash.FileHash;
 import app.bpartners.geojobs.repository.FullDetectionRepository;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
+import app.bpartners.geojobs.repository.model.AnnotationRetrievingTask;
 import app.bpartners.geojobs.repository.model.detection.FullDetection;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.JobFinishedMailer;
-import app.bpartners.geojobs.service.event.ZoneDetectionJobAnnotationProcessor;
+import app.bpartners.geojobs.service.annotator.AnnotationService;
+import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
 import app.bpartners.geojobs.service.tiling.downloader.TilesDownloader;
 import app.bpartners.geojobs.sqs.EventProducerInvocationMock;
 import app.bpartners.geojobs.sqs.LocalEventQueue;
@@ -36,6 +43,7 @@ import app.bpartners.geojobs.utils.tiling.TilingTaskCreator;
 import java.math.BigDecimal;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -49,15 +57,17 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 class ZoneTilingJobCreatedIT extends DetectionIT {
   private static final double OBJECT_DETECTION_SUCCESS_RATE = 100.0;
   private static final int DEFAULT_EVENT_DELAY_SPEED_FACTOR = 10;
-  private static final double MOCK_DETECTION_RESPONSE_CONFIDENCE = 1.0;
+  private static final double MOCK_DETECTION_RESPONSE_CONFIDENCE = 0.9;
+  private static final String ANNOTATION_JOB_ID = "annotationJobId";
   @Autowired FullDetectionRepository fullDetectionRepository;
   @Autowired TilingTaskRepository tilingTaskRepository;
   @Autowired LocalEventQueue localEventQueue;
   @MockBean EventProducer eventProducerMock;
   @MockBean TilesDownloader tilesDownloaderMock;
   @MockBean BucketComponent bucketComponentMock;
-  @MockBean protected JobFinishedMailer<ZoneTilingJob> tilingJobMailerMock;
-
+  @MockBean JobFinishedMailer<ZoneTilingJob> tilingJobMailerMock;
+  @MockBean AnnotationService annotationServiceMock;
+  @MockBean GeoJsonConversionInitiationService geoJsonConversionInitiationServiceMock;
   EventProducerInvocationMock eventProducerInvocationMock = new EventProducerInvocationMock();
   TilingTaskCreator tilingTaskCreator = new TilingTaskCreator();
 
@@ -70,11 +80,8 @@ class ZoneTilingJobCreatedIT extends DetectionIT {
         .when(eventProducerMock)
         .accept(any());
     when(jobAnnotationServiceMock.processAnnotationJob(any(), any())).thenReturn(null);
-    when(annotationRetrievingJobServiceMock.getByDetectionJobId(any())).thenReturn(List.of());
     doNothing().when(mailerMock).accept(any());
     doNothing().when(tilingJobMailerMock).accept(any());
-    when(jobAnnotationProcessorMock.accept(any(), any(), any(), any(), any()))
-        .thenReturn(ZoneDetectionJobAnnotationProcessor.AnnotationJobIds.builder().build());
     new ObjectsDetectorMockResponse(objectsDetectorMock)
         .apply(MOCK_DETECTION_RESPONSE_CONFIDENCE, POOL, OBJECT_DETECTION_SUCCESS_RATE);
     when(tilesDownloaderMock.apply(any()))
@@ -83,12 +90,61 @@ class ZoneTilingJobCreatedIT extends DetectionIT {
                 Paths.get(this.getClass().getClassLoader().getResource("mockData/lyon").toURI())
                     .toFile());
     when(bucketComponentMock.upload(any(), any())).thenReturn(new FileHash(SHA256, "mock"));
+
+    doNothing().when(annotationServiceMock).createAnnotationJob(any(), any());
+    when(annotationServiceMock.getAnnotationJobById(any())).thenReturn(annotationJob());
+    when(annotationServiceMock.retrieveTasksFromAnnotationJob(
+            any(), any(), eq(ANNOTATION_JOB_ID), eq(null), eq(null), eq(null)))
+        .thenAnswer(
+            invocationOnMock ->
+                retrievingTasks(
+                    invocationOnMock.getArgument(0),
+                    invocationOnMock.getArgument(1),
+                    ANNOTATION_JOB_ID));
+    when(annotationServiceMock.getAnnotations(eq(ANNOTATION_JOB_ID), any()))
+        .thenReturn(getAnnotations());
+  }
+
+  @NonNull
+  private static List<AnnotationBatch> getAnnotations() {
+    return List.of(
+        new AnnotationBatch()
+            .annotations(
+                List.of(
+                    new Annotation()
+                        .polygon(new Polygon().points(List.of(new Point().x(100.0).y(200.0))))
+                        .comment("confidence=90.0")
+                        .label(new Label().name(DetectableObjectType.POOL.getValue())))));
+  }
+
+  @NonNull
+  private List<AnnotationRetrievingTask> retrievingTasks(
+      String humanDetectionJobId, String retrievingJobId, String annotationJobId) {
+    return List.of(
+        AnnotationRetrievingTask.builder()
+            .id(randomUUID().toString())
+            .jobId(retrievingJobId)
+            .annotationJobId(annotationJobId)
+            .xTile(100)
+            .yTile(200)
+            .zoom(20)
+            .humanZoneDetectionJobId(humanDetectionJobId) // ignored here
+            .annotationJobId(annotationJobId)
+            .statusHistory(new ArrayList<>())
+            .submissionInstant(now())
+            .build());
+  }
+
+  private Job annotationJob() {
+    return new Job().id(ANNOTATION_JOB_ID).status(JobStatus.COMPLETED);
   }
 
   @NonNull
   private static List<LocalEventQueue.CustomEventDelayConfig> customEventConfigList() {
     return List.of(
         new LocalEventQueue.CustomEventDelayConfig(AutoTaskStatisticRecomputingSubmitted.class, 50),
+        new LocalEventQueue.CustomEventDelayConfig(
+            AnnotationRetrievingJobStatusRecomputingSubmitted.class, 50),
         new LocalEventQueue.CustomEventDelayConfig(
             ParcelDetectionStatusRecomputingSubmitted.class, 50),
         new LocalEventQueue.CustomEventDelayConfig(ZTJStatusRecomputingSubmitted.class, 50),
@@ -110,6 +166,38 @@ class ZoneTilingJobCreatedIT extends DetectionIT {
     var actualDetectionJob = zdjService.getByTilingJobId(tilingJob.getId(), MACHINE);
     assertTrue(actualTilingJob.isSucceeded());
     assertTrue(actualDetectionJob.isSucceeded());
+  }
+
+  @Test
+  @SneakyThrows
+  void ztj_created_and_zdj_machine_succeeded_and_zdj_human_succeeded_ok() {
+    var tilingJob = zoneTilingJobId();
+
+    eventProducerMock.accept(
+        List.of(ZoneTilingJobCreated.builder().zoneTilingJob(tilingJob).build()));
+
+    Thread.sleep(Duration.ofSeconds(30L));
+    var actualTilingJob = ztjRepository.findById(tilingJob.getId()).orElseThrow();
+    var actualDetectionJob = zdjService.getByTilingJobId(tilingJob.getId(), MACHINE);
+    assertTrue(actualTilingJob.isSucceeded());
+    assertTrue(actualDetectionJob.isSucceeded());
+
+    verify(annotationServiceMock, times(1)).createAnnotationJob(any(), any());
+    var defaultDetectionJobHuman = zdjService.getByTilingJobId(tilingJob.getId(), HUMAN);
+    eventProducerMock.accept(
+        List.of(
+            AnnotationJobVerificationSent.builder()
+                .humanZdjId(defaultDetectionJobHuman.getId())
+                .build()));
+
+    Thread.sleep(Duration.ofSeconds(60L));
+    if (localEventQueue != null) localEventQueue.attemptSchedulerShutDown();
+    var actualDetectionJobHuman = zdjService.getByTilingJobId(tilingJob.getId(), HUMAN);
+
+    verify(geoJsonConversionInitiationServiceMock, times(1))
+        .processConversionTask(
+            actualDetectionJobHuman.getZoneName(), actualDetectionJobHuman.getId());
+    assertTrue(actualDetectionJobHuman.isSucceeded());
   }
 
   @NonNull
@@ -134,7 +222,7 @@ class ZoneTilingJobCreatedIT extends DetectionIT {
             .detectableObjectConfiguration(
                 new DetectableObjectConfiguration()
                     .bucketStorageName(null)
-                    .type(ROOF)
+                    .type(DetectableObjectType.POOL)
                     .confidence(new BigDecimal(1)))
             .build());
     return tilingJob;
