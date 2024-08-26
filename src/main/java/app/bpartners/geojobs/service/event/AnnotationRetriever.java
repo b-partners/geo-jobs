@@ -42,19 +42,21 @@ public class AnnotationRetriever {
       List<RetrievingJobWithTasks> retrievingJobsWithTasks =
           annotationJobs.stream()
               .map(
-                  aJob -> {
+                  annotationJob -> {
+                    var annotationRetrievingJobId = randomUUID().toString();
+                    var annotationJobId = annotationJob.getId();
                     var retrievingJob =
                         AnnotationRetrievingJob.builder()
-                            .id(randomUUID().toString())
-                            .annotationJobId(aJob.getId())
+                            .id(annotationRetrievingJobId)
+                            .annotationJobId(annotationJobId)
                             .detectionJobId(humanZDJId)
                             .statusHistory(List.of())
                             .build();
                     var retrievingTasks =
                         annotationService.retrieveTasksFromAnnotationJob(
                             humanZDJId,
-                            retrievingJob.getId(),
-                            retrievingJob.getAnnotationJobId(),
+                            annotationRetrievingJobId,
+                            annotationJobId,
                             null,
                             null,
                             null);
@@ -66,10 +68,8 @@ public class AnnotationRetriever {
           record -> {
             var job = record.job;
             var tasks = record.tasks;
-            AnnotationRetrievingJob newJob = annotationRetrievingJobService.create(job, tasks);
 
-            // TODO: set into AnnotationRetrievingJobCreated
-            annotationRetrievingJobService.fireTasks(newJob.getId());
+            annotationRetrievingJobService.create(job, tasks);
           });
     }
   }

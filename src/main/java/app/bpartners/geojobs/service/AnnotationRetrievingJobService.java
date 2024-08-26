@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationRetrievingJobCreated;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationRetrievingJobStatusChanged;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationRetrievingTaskCreated;
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
@@ -14,6 +15,7 @@ import app.bpartners.geojobs.repository.model.AnnotationRetrievingTask;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AnnotationRetrievingJobService
@@ -39,16 +41,17 @@ public class AnnotationRetrievingJobService
     this.eventProducer = eventProducer;
   }
 
+  @Transactional
   public AnnotationRetrievingJob fireTasks(String jobId) {
     var job = findById(jobId);
-    getTasks(job)
-        .forEach(
-            task ->
-                eventProducer.accept(
-                    List.of(
-                        AnnotationRetrievingTaskCreated.builder()
-                            .annotationRetrievingTask(task)
-                            .build())));
+    List<AnnotationRetrievingTask> tasks = getTasks(job);
+    tasks.forEach(
+        task ->
+            eventProducer.accept(
+                List.of(
+                    AnnotationRetrievingTaskCreated.builder()
+                        .annotationRetrievingTask(task)
+                        .build())));
 
     return job;
   }
@@ -68,6 +71,16 @@ public class AnnotationRetrievingJobService
 
   public List<AnnotationRetrievingJob> saveAll(List<AnnotationRetrievingJob> toSave) {
     return annotationRetrievingJobRepository.saveAll(toSave);
+  }
+
+  @Override
+  @Transactional
+  public AnnotationRetrievingJob create(
+      AnnotationRetrievingJob job, List<AnnotationRetrievingTask> tasks) {
+    AnnotationRetrievingJob newJob = super.create(job, tasks);
+    eventProducer.accept(
+        List.of(AnnotationRetrievingJobCreated.builder().retrievingJob(newJob).build()));
+    return newJob;
   }
 
   @Override

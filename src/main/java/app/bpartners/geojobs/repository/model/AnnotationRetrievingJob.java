@@ -4,6 +4,7 @@ import app.bpartners.geojobs.job.model.Job;
 import app.bpartners.geojobs.job.model.JobType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import java.util.ArrayList;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -16,7 +17,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
-@ToString
+@ToString(callSuper = true)
 @Data
 @EqualsAndHashCode(callSuper = false)
 public class AnnotationRetrievingJob extends Job {
@@ -30,6 +31,6 @@ public class AnnotationRetrievingJob extends Job {
 
   @Override
   public Job semanticClone() {
-    return null;
+    return this.toBuilder().statusHistory(new ArrayList<>(getStatusHistory())).build();
   }
 }

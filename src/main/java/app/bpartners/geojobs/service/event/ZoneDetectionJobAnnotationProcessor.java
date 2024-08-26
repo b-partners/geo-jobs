@@ -3,7 +3,6 @@ package app.bpartners.geojobs.service.event;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
-import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.DetectedTileRepository;
 import app.bpartners.geojobs.repository.HumanDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
@@ -30,7 +29,6 @@ public class ZoneDetectionJobAnnotationProcessor {
   private final HumanDetectionJobRepository humanDetectionJobRepository;
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final KeyPredicateFunction keyPredicateFunction;
-  private final DetectableObjectConfigurationRepository objectConfigurationRepository;
 
   @Transactional
   public AnnotationJobIds accept(
@@ -38,14 +36,13 @@ public class ZoneDetectionJobAnnotationProcessor {
       Double minConfidence,
       String annotationJobWithObjectsIdTruePositive,
       String annotationJobWithObjectsIdFalsePositive,
-      String annotationJobWithoutObjectsId) {
+      String annotationJobWithoutObjectsId,
+      List<DetectableObjectConfiguration> detectableObjectConfigurations) {
     ZoneDetectionJob humanJob = zoneDetectionJobService.getHumanZdjFromZdjId(zoneDetectionJobId);
     List<MachineDetectedTile> machineDetectedTiles =
         detectedTileRepository.findAllByZdjJobId(zoneDetectionJobId).stream()
             .filter(keyPredicateFunction.apply(MachineDetectedTile::getBucketPath))
             .toList();
-    List<DetectableObjectConfiguration> detectableObjectConfigurations =
-        objectConfigurationRepository.findAllByDetectionJobId(zoneDetectionJobId);
 
     processFilterWithoutDetectedObjects(
         zoneDetectionJobId, annotationJobWithoutObjectsId, machineDetectedTiles, humanJob);

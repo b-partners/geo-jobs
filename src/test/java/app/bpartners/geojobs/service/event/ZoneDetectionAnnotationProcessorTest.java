@@ -25,6 +25,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.util.List;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -99,14 +100,15 @@ public class ZoneDetectionAnnotationProcessorTest extends FacadeIT {
   void setUpObjectConfigurationRepository(
       DetectableObjectConfigurationRepository objectConfigurationRepositoryMock) {
     when(objectConfigurationRepositoryMock.findAllByDetectionJobId(MOCK_JOB_ID))
-        .thenReturn(
-            List.of(
-                DetectableObjectConfiguration.builder().objectType(ROOF).confidence(0.8).build(),
-                DetectableObjectConfiguration.builder().objectType(TREE).confidence(0.8).build(),
-                DetectableObjectConfiguration.builder()
-                    .objectType(SOLAR_PANEL)
-                    .confidence(0.8)
-                    .build()));
+        .thenReturn(getObjectConfigurations());
+  }
+
+  @NonNull
+  private List<DetectableObjectConfiguration> getObjectConfigurations() {
+    return List.of(
+        DetectableObjectConfiguration.builder().objectType(ROOF).confidence(0.8).build(),
+        DetectableObjectConfiguration.builder().objectType(TREE).confidence(0.8).build(),
+        DetectableObjectConfiguration.builder().objectType(SOLAR_PANEL).confidence(0.8).build());
   }
 
   @BeforeEach
@@ -132,7 +134,8 @@ public class ZoneDetectionAnnotationProcessorTest extends FacadeIT {
         DEFAULT_MIN_CONFIDENCE,
         annotationJobWithObjectsIdTruePositive,
         annotationJobWithObjectsIdFalsePositive,
-        annotationJobWithoutObjectsId);
+        annotationJobWithoutObjectsId,
+        getObjectConfigurations());
 
     verify(annotationServiceMock, times(2)).createAnnotationJob(any(), any());
   }
