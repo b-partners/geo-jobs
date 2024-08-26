@@ -3,34 +3,22 @@ package app.bpartners.geojobs.endpoint.event.model.annotation;
 import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
 
 import app.bpartners.geojobs.endpoint.event.EventStack;
-import app.bpartners.geojobs.endpoint.event.model.PojaEvent;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import app.bpartners.geojobs.endpoint.event.model.status.JobStatusRecomputingSubmitted;
 import java.time.Duration;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder(toBuilder = true)
 @Data
 @EqualsAndHashCode(callSuper = false)
 @ToString
-public class AnnotationRetrievingJobStatusRecomputingSubmitted extends PojaEvent {
-  @JsonProperty("annotationRetrievingJobId")
-  private String annotationRetrievingJobId;
+public class AnnotationRetrievingJobStatusRecomputingSubmitted
+    extends JobStatusRecomputingSubmitted {
+  private static final long MAX_CONSUMER_DURATION_IN_SECONDS = Duration.ofMinutes(5).getSeconds();
+  public static final long INITIAL_BACKOFF_DURATION_IN_SECONDS = Duration.ofMinutes(1).getSeconds();
 
-  @Override
-  public Duration maxConsumerDuration() {
-    return Duration.ofMinutes(5);
-  }
-
-  @Override
-  public Duration maxConsumerBackoffBetweenRetries() {
-    return Duration.ofMinutes(1);
+  public AnnotationRetrievingJobStatusRecomputingSubmitted(String jobId) {
+    super(jobId, MAX_CONSUMER_DURATION_IN_SECONDS, INITIAL_BACKOFF_DURATION_IN_SECONDS);
   }
 
   @Override

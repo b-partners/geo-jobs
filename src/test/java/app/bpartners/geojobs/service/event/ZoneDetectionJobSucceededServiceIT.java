@@ -140,8 +140,9 @@ class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
 
     var humanZDJ1After = jobRepository.findById(HUMAN_ZDJ_ID).orElseThrow();
     var humanZDJ2After = jobRepository.findById(HUMAN_ZDJ_ID_2).orElseThrow();
-    var humanDetectionAfter = humanDetectionJobRepository.findByZoneDetectionJobId(HUMAN_ZDJ_ID);
-    var humanDetectionAfter2 = humanDetectionJobRepository.findByZoneDetectionJobId(HUMAN_ZDJ_ID_2);
+    var humanDetectionAfter = humanDetectionJobRepository.findAllByZoneDetectionJobId(HUMAN_ZDJ_ID);
+    var humanDetectionAfter2 =
+        humanDetectionJobRepository.findAllByZoneDetectionJobId(HUMAN_ZDJ_ID_2);
     var humanZDJ1BeforeStatus = humanZDJ1Before.getStatus();
     var humanZDJ2AfterStatus = humanZDJ2After.getStatus();
     assertTrue(humanDetectionBefore.isEmpty());

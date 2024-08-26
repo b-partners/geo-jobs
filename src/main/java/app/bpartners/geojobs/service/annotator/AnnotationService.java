@@ -11,14 +11,10 @@ import app.bpartners.gen.annotator.endpoint.rest.api.JobsApi;
 import app.bpartners.gen.annotator.endpoint.rest.client.ApiException;
 import app.bpartners.gen.annotator.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationBatchRetrievingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.annotation.CreateAnnotatedTaskSubmitted;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
-import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
-import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.AnnotationRetrievingTask;
 import app.bpartners.geojobs.repository.model.detection.*;
-import app.bpartners.geojobs.service.AnnotationRetrievingTaskService;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -40,9 +36,6 @@ public class AnnotationService {
   private final LabelConverter labelConverter;
   private final LabelExtractor labelExtractor;
   private final AnnotatorUserInfoGetter annotatorUserInfoGetter;
-  private final DetectableObjectConfigurationRepository detectableObjectRepository;
-  private final ZoneDetectionJobRepository zoneDetectionJobRepository;
-  private final AnnotationRetrievingTaskService annotationRetrievingTaskService;
   private final BucketComponent bucketComponent;
   private final EventProducer eventProducer;
   private final AdminApi adminApi;
@@ -53,9 +46,6 @@ public class AnnotationService {
       LabelConverter labelConverter,
       LabelExtractor labelExtractor,
       AnnotatorUserInfoGetter annotatorUserInfoGetter,
-      DetectableObjectConfigurationRepository detectableObjectRepository,
-      ZoneDetectionJobRepository zoneDetectionJobRepository,
-      AnnotationRetrievingTaskService annotationRetrievingTaskService,
       BucketComponent bucketComponent,
       EventProducer eventProducer) {
     this.jobsApi = new JobsApi(annotatorApiConf.newApiClientWithApiKey());
@@ -64,9 +54,6 @@ public class AnnotationService {
     this.labelConverter = labelConverter;
     this.labelExtractor = labelExtractor;
     this.annotatorUserInfoGetter = annotatorUserInfoGetter;
-    this.detectableObjectRepository = detectableObjectRepository;
-    this.zoneDetectionJobRepository = zoneDetectionJobRepository;
-    this.annotationRetrievingTaskService = annotationRetrievingTaskService;
     this.bucketComponent = bucketComponent;
     this.eventProducer = eventProducer;
   }
@@ -150,12 +137,14 @@ public class AnnotationService {
     }
   }
 
-  public void fireTasks(
-      String jobId, String retrievingJobId, String annotationJobId, int imageSize) {
+  public List<AnnotationRetrievingTask> retrieveTasksFromAnnotationJob(
+      String humanZDJId,
+      String retrievingJobId,
+      String annotationJobId,
+      Integer page,
+      Integer pageSize,
+      String userId) {
     List<Task> annotationTasks;
-    Integer page = null;
-    Integer pageSize = null;
-    String userId = null;
     try {
       annotationTasks =
           adminApi.getJobTasks(
@@ -168,30 +157,28 @@ public class AnnotationService {
       throw new app.bpartners.geojobs.model.exception.ApiException(
           app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION, e);
     }
-    List<AnnotationRetrievingTask> retrievingTasks =
-        annotationTasks.stream()
-            .map(
-                atask ->
-                    AnnotationRetrievingTask.builder()
-                        .id(randomUUID().toString())
-                        .jobId(retrievingJobId)
-                        .annotationTaskId(atask.getId())
-                        .statusHistory(List.of())
-                        .submissionInstant(Instant.now())
-                        .build())
-            .collect(Collectors.toUnmodifiableList());
-    annotationRetrievingTaskService.saveAll(retrievingTasks);
-    annotationTasks.forEach(
-        task -> {
-          var metadata = getTileMetaData(task.getFilename());
-          var zoom = metadata.getFirst();
-          var xTile = metadata.get(metadata.size() - 2);
-          var yTile = metadata.getLast();
-          eventProducer.accept(
-              List.of(
-                  new AnnotationBatchRetrievingSubmitted(
-                      jobId, annotationJobId, task.getId(), imageSize, xTile, yTile, zoom)));
-        });
+    return annotationTasks.stream()
+        .map(
+            annotationTask -> {
+              var metadata = getTileMetaData(annotationTask.getFilename());
+              var zoom = metadata.getFirst();
+              var xTile = metadata.get(metadata.size() - 2);
+              var yTile = metadata.getLast();
+              // TODO: avoid redundant persisted metadata (x - y - z)
+              return AnnotationRetrievingTask.builder()
+                  .id(randomUUID().toString())
+                  .jobId(retrievingJobId)
+                  .annotationTaskId(annotationTask.getId())
+                  .annotationJobId(annotationJobId)
+                  .statusHistory(List.of())
+                  .submissionInstant(Instant.now())
+                  .humanZoneDetectionJobId(humanZDJId)
+                  .zoom(zoom)
+                  .xTile(xTile)
+                  .yTile(yTile)
+                  .build();
+            })
+        .collect(Collectors.toList());
   }
 
   private List<Integer> getTileMetaData(String filename) {

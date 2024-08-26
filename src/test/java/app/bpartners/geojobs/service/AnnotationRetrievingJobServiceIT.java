@@ -43,9 +43,9 @@ public class AnnotationRetrievingJobServiceIT extends FacadeIT {
 
   @Test
   void read_ok() {
-    var actual1 = subject.getById(JOB_ID);
+    var actual1 = subject.findById(JOB_ID);
     var actual2 = subject.getByAnnotationJobId(ANNOTATION_JOB_ID);
-    var actual3 = subject.getByDetectionJobId(DETECTION_JOB_ID);
+    var actual3 = subject.findAllByDetectionJobId(DETECTION_JOB_ID);
 
     assertEquals(job(), actual1.toBuilder().submissionInstant(null).build());
     assertEquals(actual2, actual1);
@@ -54,7 +54,7 @@ public class AnnotationRetrievingJobServiceIT extends FacadeIT {
 
   @Test
   void read_ko() {
-    assertThrows(NotFoundException.class, () -> subject.getById("dummy"));
+    assertThrows(NotFoundException.class, () -> subject.findById("dummy"));
     assertThrows(NotFoundException.class, () -> subject.getByAnnotationJobId("dummy"));
   }
 }

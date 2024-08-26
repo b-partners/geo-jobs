@@ -24,8 +24,4 @@ public class AnnotationRetrievingTaskService {
                 new NotFoundException(
                     "No retrieving task found for annotation task id=" + annotationTaskId));
   }
-
-  public List<AnnotationRetrievingTask> saveAll(List<AnnotationRetrievingTask> toSave) {
-    return repository.saveAll(toSave);
-  }
 }

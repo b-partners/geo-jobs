@@ -21,6 +21,16 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = false)
 public class AnnotationRetrievingTask extends Task {
   private String annotationTaskId;
+  // TODO: persist into db
+  private String annotationJobId;
+  // TODO: persist into db
+  private String humanZoneDetectionJobId;
+  // TODO: persist into db
+  private int xTile;
+  // TODO: persist into db
+  private int yTile;
+  // TODO: persist into db
+  private int zoom;
 
   @Override
   public JobType getJobType() {

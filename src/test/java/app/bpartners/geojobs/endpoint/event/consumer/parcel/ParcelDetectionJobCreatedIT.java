@@ -45,7 +45,7 @@ class ParcelDetectionJobCreatedIT extends DetectionIT {
         .when(eventProducerMock)
         .accept(any());
     when(jobAnnotationServiceMock.processAnnotationJob(any(), any())).thenReturn(null);
-    when(annotationRetrievingJobServiceMock.getByDetectionJobId(any())).thenReturn(List.of());
+    when(annotationRetrievingJobServiceMock.findAllByDetectionJobId(any())).thenReturn(List.of());
     doNothing().when(mailerMock).accept(any());
     when(jobAnnotationProcessorMock.accept(any(), any(), any(), any(), any()))
         .thenReturn(ZoneDetectionJobAnnotationProcessor.AnnotationJobIds.builder().build());

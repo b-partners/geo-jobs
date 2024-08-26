@@ -2,9 +2,7 @@ package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PATHWAY;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.ROOF;
-import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockConstruction;
@@ -15,12 +13,9 @@ import static org.mockito.Mockito.when;
 import app.bpartners.gen.annotator.endpoint.rest.api.AdminApi;
 import app.bpartners.gen.annotator.endpoint.rest.api.JobsApi;
 import app.bpartners.gen.annotator.endpoint.rest.client.ApiClient;
-import app.bpartners.gen.annotator.endpoint.rest.client.ApiException;
 import app.bpartners.gen.annotator.endpoint.rest.model.Job;
 import app.bpartners.gen.annotator.endpoint.rest.model.Label;
-import app.bpartners.gen.annotator.endpoint.rest.model.Task;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationBatchRetrievingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.annotation.CreateAnnotatedTaskSubmitted;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
@@ -59,7 +54,6 @@ public class AnnotationServiceTest {
   AnnotatorApiConf annotatorApiConfMock = mock();
   LabelExtractor labelExtractorMock =
       new LabelExtractor(new KeyPredicateFunction(), labelConverterMock);
-  AnnotationRetrievingTaskService annotationRetrievingTaskServiceMock = mock();
   CreateAnnotationBatchExtractor batchExtractorMock =
       new CreateAnnotationBatchExtractor(labelExtractorMock, new PolygonExtractor());
   TaskExtractor taskExtractorMock = new TaskExtractor(batchExtractorMock, labelExtractorMock);
@@ -109,9 +103,6 @@ public class AnnotationServiceTest {
             taskExtractorMock,
             labelConverterMock,
             labelExtractorMock,
-            mock(),
-            detectableObjectRepositoryMock,
-            mock(),
             mock(),
             mock(),
             eventProducerMock);
@@ -167,29 +158,5 @@ public class AnnotationServiceTest {
             .getFirst()
             .getLabel()
             .getName());
-  }
-
-  Task annotationTask1() {
-    return new Task().id(randomUUID().toString()).filename("Cannes5/20/545266/251451.jpeg");
-  }
-
-  Task annotationTask2() {
-    return new Task().id(randomUUID().toString()).filename("Cannes/20/545266/251452.jpeg");
-  }
-
-  @Test
-  void fire_task_ok() throws ApiException {
-    var imageSize = 1024;
-    var tasks = List.of(annotationTask1(), annotationTask2());
-    var eventsCapture = ArgumentCaptor.forClass(List.class);
-    var adminApi = adminApiMockedConstruction.constructed().getFirst();
-    when(adminApi.getJobTasks(any(), any(), any(), any(), any())).thenReturn(tasks);
-
-    subject.fireTasks(
-        ZONE_DETECTION_JOB_ID, ANNOTATION_RETRIEVING_JOB_ID, ANNOTATION_JOB_ID, imageSize);
-    verify(eventProducerMock, times(tasks.size())).accept(eventsCapture.capture());
-    var eventsValues = eventsCapture.getAllValues();
-    var batchRetrievingSubmitted = eventsValues.getFirst().getFirst();
-    assertInstanceOf(AnnotationBatchRetrievingSubmitted.class, batchRetrievingSubmitted);
   }
 }

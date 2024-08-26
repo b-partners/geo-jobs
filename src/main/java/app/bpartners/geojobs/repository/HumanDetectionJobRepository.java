@@ -6,7 +6,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface HumanDetectionJobRepository extends JpaRepository<HumanDetectionJob, String> {
-  List<HumanDetectionJob> findByZoneDetectionJobId(String jobId);
+  List<HumanDetectionJob> findAllByZoneDetectionJobId(String jobId);
 
   Optional<HumanDetectionJob> findByAnnotationJobId(String annotationJobId);
 }
