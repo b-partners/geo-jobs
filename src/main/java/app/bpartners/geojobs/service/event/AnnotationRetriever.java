@@ -12,6 +12,7 @@ import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Component
@@ -21,9 +22,12 @@ public class AnnotationRetriever {
   private final AnnotationService annotationService;
   private final AnnotationRetrievingJobService annotationRetrievingJobService;
 
+  @Transactional
   public void accept(String humanZDJId) {
     var humanDetectionJobs = humanDetectionJobRepository.findAllByZoneDetectionJobId(humanZDJId);
+    log.info("DEBUG: retrieving annotation, humanDetectionJobs {}", humanDetectionJobs);
     if (humanDetectionJobs.isEmpty()) {
+      log.info("DEBUG: aborting retrieving, humanDetectionJobs empty");
       return;
     }
     var annotationJobs =
