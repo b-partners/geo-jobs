@@ -104,6 +104,7 @@ public class ZoneService {
 
   private FullDetectedZone getTilingStatistics(FullDetection fullDetection, String tilingJobId) {
     return createFullDetectedZone(
+        fullDetection.getEndToEndId(),
         fullDetection.getGeojsonS3FileKey(),
         List.of(zoneTilingJobService.computeTaskStatistics(tilingJobId)),
         TILING);
@@ -112,15 +113,17 @@ public class ZoneService {
   private FullDetectedZone getDetectionStatistics(
       FullDetection fullDetection, String detectionJobId) {
     return createFullDetectedZone(
+        fullDetection.getEndToEndId(),
         fullDetection.getGeojsonS3FileKey(),
         List.of(zoneDetectionJobService.computeTaskStatistics(detectionJobId)),
         MACHINE_DETECTION);
   }
 
   private FullDetectedZone createFullDetectedZone(
-      String s3FileKey, List<TaskStatistic> statistics, JobTypes jobType) {
+      String endToEndId, String s3FileKey, List<TaskStatistic> statistics, JobTypes jobType) {
     FullDetectedZone fullDetectedZone =
         new FullDetectedZone()
+            .endToEndId(endToEndId)
             .detectedGeojsonUrl(generatePresignedUrl(s3FileKey))
             .statistics(statistics.stream().map(taskStatisticMapper::toRest).toList());
     fullDetectedZone.setJobTypes(List.of(jobType));

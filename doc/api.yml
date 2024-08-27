@@ -1037,6 +1037,8 @@ components:
     FullDetectedZone:
       type: object
       properties:
+        endToEndId:
+          type: string
         jobTypes:
           type: array
           items:
