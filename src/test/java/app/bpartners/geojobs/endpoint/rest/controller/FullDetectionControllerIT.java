@@ -12,6 +12,7 @@ import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
 import static app.bpartners.geojobs.repository.model.GeoJobType.TILING;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static java.time.Instant.now;
+import static java.util.UUID.randomUUID;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
@@ -61,7 +62,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 @Slf4j
-public class FullDetectionControllerIT extends FacadeIT {
+class FullDetectionControllerIT extends FacadeIT {
   @Autowired ZoneDetectionController subject;
   @Autowired ZoneDetectionJobRepository jobRepository;
   @Autowired JobStatusRepository jobStatusRepository;
@@ -89,9 +90,10 @@ public class FullDetectionControllerIT extends FacadeIT {
     doNothing().when(communityFullDetectionAuthorizer).accept(any());
   }
 
-  private CreateFullDetection createFullDetection() throws JsonProcessingException {
+  private CreateFullDetection createFullDetection(String endToEndId)
+      throws JsonProcessingException {
     return new CreateFullDetection()
-        .endToEndId("end_to_end_id")
+        .endToEndId(endToEndId)
         .objectType(ROOF)
         .confidence(BigDecimal.valueOf(0.8))
         .emailReceiver("mock@hotmail.com")
@@ -138,9 +140,9 @@ public class FullDetectionControllerIT extends FacadeIT {
                     .id("feature_1_id")));
   }
 
-  private ZoneTilingJob zoneTilingJob() {
+  private ZoneTilingJob zoneTilingJob(String id) {
     return ZoneTilingJob.builder()
-        .id("ztj_1_id")
+        .id(id)
         .zoneName("Lyon")
         .submissionInstant(Instant.now())
         .emailReceiver("mock@hotmail.com")
@@ -149,16 +151,17 @@ public class FullDetectionControllerIT extends FacadeIT {
                 JobStatus.builder()
                     .progression(FINISHED)
                     .health(SUCCEEDED)
-                    .jobId("ztj_1_id")
+                    .jobId(id)
                     .jobType(TILING)
                     .build()))
         .build();
   }
 
-  private app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob zoneDetectionJob() {
+  private app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob zoneDetectionJob(
+      String detectionJobId, String tilingJobId) {
     return app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.builder()
-        .id("zdj_1_id")
-        .zoneTilingJob(zoneTilingJob())
+        .id(detectionJobId)
+        .zoneTilingJob(zoneTilingJob(tilingJobId))
         .detectionType(MACHINE)
         .emailReceiver("mock@hotmail.com")
         .zoneName("Lyon")
@@ -168,18 +171,18 @@ public class FullDetectionControllerIT extends FacadeIT {
                 JobStatus.builder()
                     .progression(PENDING)
                     .health(UNKNOWN)
-                    .jobId("zdj_1_id")
+                    .jobId(detectionJobId)
                     .jobType(DETECTION)
                     .build()))
         .build();
   }
 
-  private FullDetection fullDetection() {
+  private FullDetection fullDetection(String tilingJobId, String detectionJobId) {
     return FullDetection.builder()
-        .endToEndId("end_to_end_id")
-        .id("full_detection_id")
-        .ztjId("ztj_1_id")
-        .zdjId("zdj_1_id")
+        .endToEndId(randomUUID().toString())
+        .id(randomUUID().toString())
+        .ztjId(tilingJobId)
+        .zdjId(detectionJobId)
         .geojsonS3FileKey(null)
         .detectableObjectConfiguration(
             new DetectableObjectConfiguration().confidence(BigDecimal.valueOf(0.8)).type(ROOF))
@@ -188,16 +191,20 @@ public class FullDetectionControllerIT extends FacadeIT {
 
   @Test
   void create_full_detection_without_tiling() throws JsonProcessingException {
-    zoneTilingJobRepository.save(zoneTilingJob());
-    zoneDetectionJobRepository.save(zoneDetectionJob());
-    fullDetectionRepository.save(fullDetection());
-    when(zoneDetectionJobService.getByTilingJobId(any(), any())).thenReturn(zoneDetectionJob());
-    when(zoneDetectionJobService.processZDJ(any(), any())).thenReturn(zoneDetectionJob());
+    var savedTilingJob = zoneTilingJobRepository.save(zoneTilingJob(randomUUID().toString()));
+    var savedDetectionJob =
+        zoneDetectionJobRepository.save(
+            zoneDetectionJob(randomUUID().toString(), savedTilingJob.getId()));
+    var fullDetection =
+        fullDetectionRepository.save(
+            fullDetection(savedTilingJob.getId(), savedDetectionJob.getId()));
+    when(zoneDetectionJobService.getByTilingJobId(any(), any())).thenReturn(savedDetectionJob);
+    when(zoneDetectionJobService.processZDJ(any(), any())).thenReturn(savedDetectionJob);
     when(zoneDetectionJobService.computeTaskStatistics(any()))
         .thenReturn(
             TaskStatistic.builder()
                 .jobType(DETECTION)
-                .jobId(zoneDetectionJob().getId())
+                .jobId(savedDetectionJob.getId())
                 .taskStatusStatistics(
                     List.of(
                         TaskStatusStatistic.builder()
@@ -207,7 +214,7 @@ public class FullDetectionControllerIT extends FacadeIT {
                                     HealthStatusStatistic.builder().healthStatus(UNKNOWN).build()))
                             .taskStatistic(
                                 TaskStatistic.builder()
-                                    .jobId(zoneDetectionJob().getId())
+                                    .jobId(savedDetectionJob.getId())
                                     .jobType(DETECTION)
                                     .build())
                             .build()))
@@ -219,26 +226,30 @@ public class FullDetectionControllerIT extends FacadeIT {
                 .health(toHealthStatus(SUCCEEDED))
                 .creationDatetime(now()));
 
-    subject.processFullDetection(createFullDetection());
+    subject.processFullDetection(createFullDetection(fullDetection.getEndToEndId()));
 
     verify(zoneDetectionJobService, times(1)).processZDJ(any(), any());
   }
 
   private FullDetection fullDetectionWithoutZTJAndZDJ() {
-    return FullDetection.builder().id("full_detection_id").endToEndId("end_to_end_id").build();
+    return FullDetection.builder()
+        .id(randomUUID().toString())
+        .endToEndId(randomUUID().toString())
+        .build();
   }
 
   @Test
   void create_full_detection() throws JsonProcessingException {
-    fullDetectionRepository.save(fullDetectionWithoutZTJAndZDJ());
-    when(zoneTilingJobService.create(any(), any())).thenReturn(zoneTilingJob());
+    var zoneTilingJob = zoneTilingJobRepository.save(zoneTilingJob(randomUUID().toString()));
+    var fullDetection = fullDetectionRepository.save(fullDetectionWithoutZTJAndZDJ());
+    when(zoneTilingJobService.create(any(), any())).thenReturn(zoneTilingJob);
     when(zoneTilingJobService.computeTaskStatistics(any()))
         .thenReturn(TaskStatistic.builder().build());
     when(taskStatisticMapper.toRest(any()))
         .thenReturn(
             new app.bpartners.geojobs.endpoint.rest.model.TaskStatistic().jobType(JobType.TILING));
 
-    subject.processFullDetection(createFullDetection());
+    subject.processFullDetection(createFullDetection(fullDetection.getEndToEndId()));
 
     verify(zoneTilingJobService, times(1)).create(any(), any());
   }
