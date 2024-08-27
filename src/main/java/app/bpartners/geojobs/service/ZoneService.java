@@ -2,11 +2,13 @@ package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.endpoint.rest.model.JobTypes.MACHINE_DETECTION;
 import static app.bpartners.geojobs.endpoint.rest.model.JobTypes.TILING;
-import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
+import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static app.bpartners.geojobs.service.tiling.ZoneTilingJobService.getTilingTasks;
+import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerificationSent;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.TaskStatisticMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneTilingJobMapper;
 import app.bpartners.geojobs.endpoint.rest.model.CreateFullDetection;
@@ -17,7 +19,7 @@ import app.bpartners.geojobs.endpoint.rest.model.JobTypes;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
-import app.bpartners.geojobs.model.exception.ApiException;
+import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.repository.FullDetectionRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
@@ -28,7 +30,6 @@ import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import java.time.Duration;
 import java.util.List;
-import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -50,45 +51,69 @@ public class ZoneService {
   private final BucketComponent bucketComponent;
 
   public FullDetectedZone processTilingAndDetection(CreateFullDetection zoneToDetect) {
-    String endToEndId = zoneToDetect.getEndToEndId();
-    FullDetection fullDetection = fullDetectionRepository.findByEndToEndId(endToEndId);
+    var endToEndId = zoneToDetect.getEndToEndId();
+    var fullDetection =
+        fullDetectionRepository
+            .findByEndToEndId(endToEndId)
+            .orElseGet(
+                () -> {
+                  FullDetection toSave =
+                      FullDetection.builder()
+                          .id(randomUUID().toString())
+                          .endToEndId(endToEndId)
+                          .build();
+                  return fullDetectionRepository.save(toSave);
+                });
 
     if (fullDetection.getZdjId() == null) {
       var ztj = processZoneTilingJob(zoneToDetect);
-      return getTilingStat(fullDetection, ztj.getId());
+      fullDetection =
+          fullDetectionRepository.save(fullDetection.toBuilder().ztjId(ztj.getId()).build());
+      return getTilingStatistics(fullDetection, ztj.getId());
     }
 
-    String ZTJId = fullDetection.getZtjId();
-    String ZDJId = fullDetection.getZdjId();
-    Optional<ZoneTilingJob> zoneTilingJobOpt = zoneTilingJobRepository.findById(ZTJId);
-    Optional<ZoneDetectionJob> zoneDetectionJobOpt = zoneDetectionJobRepository.findById(ZDJId);
-    ZoneTilingJob zoneTilingJob = zoneTilingJobOpt.orElse(null);
-    ZoneDetectionJob zoneDetectionJob = zoneDetectionJobOpt.orElse(null);
+    var tilingJobId = fullDetection.getZtjId();
+    var detectionJobId = fullDetection.getZdjId();
+    var zoneTilingJob = zoneTilingJobRepository.findById(tilingJobId).orElse(null);
+    var machineZoneDetectionJob = zoneDetectionJobRepository.findById(detectionJobId).orElse(null);
 
     assert zoneTilingJob != null;
     if (!zoneTilingJob.isSucceeded()) {
-      return getTilingStat(fullDetection, ZTJId);
+      return getTilingStatistics(fullDetection, tilingJobId);
     }
 
-    assert zoneDetectionJob != null;
-    if (zoneDetectionJob.isPending() && zoneTilingJob.isSucceeded()) {
-      processZoneDetectionJob(zoneToDetect, zoneTilingJob);
-      return getDetectionStat(fullDetection, ZDJId);
+    assert machineZoneDetectionJob != null;
+    if (machineZoneDetectionJob.isPending() && zoneTilingJob.isFinished()) {
+      var savedDetectionJob = processZoneDetectionJob(fullDetection, zoneToDetect, zoneTilingJob);
+      return getDetectionStatistics(fullDetection, savedDetectionJob.getId());
     }
-    return getDetectionStat(fullDetection, ZDJId);
+
+    if (machineZoneDetectionJob.isFinished()) {
+      var humanZoneDetectionJob = zoneDetectionJobService.getByTilingJobId(tilingJobId, HUMAN);
+      if (!humanZoneDetectionJob.isFinished()) {
+        eventProducer.accept(
+            List.of(
+                AnnotationJobVerificationSent.builder()
+                    .humanZdjId(humanZoneDetectionJob.getId())
+                    .build()));
+        // TODO: return human zone detection job statistics
+      }
+    }
+    return getDetectionStatistics(fullDetection, detectionJobId);
   }
 
-  private FullDetectedZone getTilingStat(FullDetection fullDetection, String ztjId) {
+  private FullDetectedZone getTilingStatistics(FullDetection fullDetection, String tilingJobId) {
     return createFullDetectedZone(
         fullDetection.getGeojsonS3FileKey(),
-        List.of(zoneTilingJobService.computeTaskStatistics(ztjId)),
+        List.of(zoneTilingJobService.computeTaskStatistics(tilingJobId)),
         TILING);
   }
 
-  private FullDetectedZone getDetectionStat(FullDetection fullDetection, String zdjId) {
+  private FullDetectedZone getDetectionStatistics(
+      FullDetection fullDetection, String detectionJobId) {
     return createFullDetectedZone(
         fullDetection.getGeojsonS3FileKey(),
-        List.of(zoneDetectionJobService.computeTaskStatistics(zdjId)),
+        List.of(zoneDetectionJobService.computeTaskStatistics(detectionJobId)),
         MACHINE_DETECTION);
   }
 
@@ -105,46 +130,38 @@ public class ZoneService {
   private ZoneTilingJob processZoneTilingJob(CreateFullDetection zoneToDetect) {
     var createJob = zoneTilingJobMapper.from(zoneToDetect);
     var job = zoneTilingJobMapper.toDomain(createJob);
-    String ZTJId = job.getId();
-    var tilingTasks = getTilingTasks(createJob, ZTJId);
-    return zoneTilingJobService.create(job, tilingTasks, zoneToDetect);
+    var tilingTasks = getTilingTasks(createJob, job.getId());
+
+    return zoneTilingJobService.create(job, tilingTasks);
   }
 
-  public void processZoneDetectionJob(CreateFullDetection zoneToDetect, ZoneTilingJob job) {
-    String ZTJId = job.getId();
-    ZoneDetectionJob zoneDetectionJob = getMachineZdjByZtjId(ZTJId);
-    FullDetection fullDetection =
-        fullDetectionRepository.findByEndToEndId(zoneToDetect.getEndToEndId());
+  // TODO: seems to be bad to handle FullDetection and CreateFullDetection together
+  public ZoneDetectionJob processZoneDetectionJob(
+      FullDetection fullDetection, CreateFullDetection zoneToDetect, ZoneTilingJob job) {
+    var zoneDetectionJob = zoneDetectionJobService.getByTilingJobId(job.getId(), MACHINE);
+
     detectionjobValidator.accept(zoneDetectionJob.getId());
+
+    // TODO: must handle multiple objects and refactor correctly
     DetectableObjectType detectableObjectType = zoneToDetect.getObjectType();
     if (detectableObjectType == null) {
-      throw new ApiException(SERVER_EXCEPTION, "Object to detect is mandatory. ");
+      throw new BadRequestException("Object to detect is mandatory to process ZoneDetectionJob");
     }
-
     List<DetectableObjectConfiguration> detectableObjectConfigurations =
         List.of(
             new DetectableObjectConfiguration()
                 .bucketStorageName(zoneToDetect.getBucketStorage())
                 .type(detectableObjectType)
                 .confidence(zoneToDetect.getConfidence()));
+
+    // TODO: not very good, as fulLDetection not immutable anymore
     fullDetection.setDetectableObjectConfiguration(detectableObjectConfigurations.getFirst());
     fullDetectionRepository.save(fullDetection);
-    zoneDetectionJobService.processZDJ(zoneDetectionJob.getId(), detectableObjectConfigurations);
+    return zoneDetectionJobService.processZDJ(
+        zoneDetectionJob.getId(), detectableObjectConfigurations);
   }
 
-  private ZoneDetectionJob getMachineZdjByZtjId(String ztjId) {
-    return zoneDetectionJobRepository.findAllByZoneTilingJob_Id(ztjId).stream()
-        .filter(dJob -> MACHINE.equals(dJob.getDetectionType()))
-        .findAny()
-        .orElseThrow(
-            () ->
-                new IllegalArgumentException(
-                    "ZoneTilingJob(id="
-                        + ztjId
-                        + ") is not associated to any"
-                        + " ZoneDetectionJob.type=MACHINE"));
-  }
-
+  // TODO: set in S3
   private String generatePresignedUrl(String fileKey) {
     if (fileKey == null) {
       return null;

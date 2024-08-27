@@ -77,6 +77,7 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
     this.objectConfigurationMapper = objectConfigurationMapper;
   }
 
+  // TODO: must be handle only domain models, set the mapping earlier
   @Transactional
   public ZoneDetectionJob processZDJ(
       String jobId,

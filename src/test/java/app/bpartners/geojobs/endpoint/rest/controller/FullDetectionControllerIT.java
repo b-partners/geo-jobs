@@ -191,6 +191,7 @@ public class FullDetectionControllerIT extends FacadeIT {
     zoneTilingJobRepository.save(zoneTilingJob());
     zoneDetectionJobRepository.save(zoneDetectionJob());
     fullDetectionRepository.save(fullDetection());
+    when(zoneDetectionJobService.getByTilingJobId(any(), any())).thenReturn(zoneDetectionJob());
     when(zoneDetectionJobService.processZDJ(any(), any())).thenReturn(zoneDetectionJob());
     when(zoneDetectionJobService.computeTaskStatistics(any()))
         .thenReturn(
@@ -230,7 +231,7 @@ public class FullDetectionControllerIT extends FacadeIT {
   @Test
   void create_full_detection() throws JsonProcessingException {
     fullDetectionRepository.save(fullDetectionWithoutZTJAndZDJ());
-    when(zoneTilingJobService.create(any(), any(), any())).thenReturn(zoneTilingJob());
+    when(zoneTilingJobService.create(any(), any())).thenReturn(zoneTilingJob());
     when(zoneTilingJobService.computeTaskStatistics(any()))
         .thenReturn(TaskStatistic.builder().build());
     when(taskStatisticMapper.toRest(any()))
@@ -239,6 +240,6 @@ public class FullDetectionControllerIT extends FacadeIT {
 
     subject.processFullDetection(createFullDetection());
 
-    verify(zoneTilingJobService, times(1)).create(any(), any(), any());
+    verify(zoneTilingJobService, times(1)).create(any(), any());
   }
 }

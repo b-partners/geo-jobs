@@ -22,6 +22,7 @@ import app.bpartners.geojobs.service.JobFinishedMailer;
 import app.bpartners.geojobs.service.StatusChangedHandler;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import java.util.ArrayList;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 
@@ -41,7 +42,7 @@ class ZoneTilingJobStatusChangedServiceTest {
     when(jobService.saveZDJFromZTJ(any()))
         .thenReturn(ZoneDetectionJob.builder().id("zdj_id").build());
     when(fullDetectionRepository.findByEndToEndId(any()))
-        .thenReturn(FullDetection.builder().build());
+        .thenReturn(Optional.ofNullable(FullDetection.builder().build()));
     var ztjStatusChanged = new ZoneTilingJobStatusChanged();
     ztjStatusChanged.setOldJob(aZTJ(FINISHED, FAILED));
     ztjStatusChanged.setNewJob(aZTJ(FINISHED, FAILED));
@@ -58,11 +59,12 @@ class ZoneTilingJobStatusChangedServiceTest {
     ztjStatusChanged.setNewJob(aZTJ(FINISHED, FAILED));
     when(fullDetectionRepository.findByEndToEndId(any()))
         .thenReturn(
-            FullDetection.builder()
-                .endToEndId("end_to_end_id")
-                .ztjId("ztj_id")
-                .zdjId("zdj_id")
-                .build());
+            Optional.ofNullable(
+                FullDetection.builder()
+                    .endToEndId("end_to_end_id")
+                    .ztjId("ztj_id")
+                    .zdjId("zdj_id")
+                    .build()));
     when(jobService.saveZDJFromZTJ(any())).thenReturn(ZoneDetectionJob.builder().build());
     subject.accept(ztjStatusChanged);
 

@@ -20,7 +20,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-@Builder
+@Builder(toBuilder = true)
 @Getter
 @Setter
 @EqualsAndHashCode

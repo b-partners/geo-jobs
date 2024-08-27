@@ -18,6 +18,7 @@ import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.JobFinishedMailer;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import java.util.ArrayList;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -51,7 +52,7 @@ public class ZoneTilingJobStatusChangedIT extends FacadeIT {
     when(zdjService.saveZDJFromZTJ(any()))
         .thenReturn(ZoneDetectionJob.builder().id("zdj_id").build());
     when(fullDetectionRepository.findByEndToEndId(any()))
-        .thenReturn(FullDetection.builder().build());
+        .thenReturn(Optional.ofNullable(FullDetection.builder().build()));
     subject.accept(zoneTilingJobStatusChanged);
 
     verify(zdjService, times(1)).saveZDJFromZTJ(zoneTilingJobStatusChanged.getNewJob());
