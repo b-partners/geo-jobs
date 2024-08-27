@@ -4,11 +4,11 @@ import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.repository.DetectedTileRepository;
-import app.bpartners.geojobs.repository.HumanDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.HumanDetectionJob;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
+import app.bpartners.geojobs.service.HumanDetectionJobService;
 import app.bpartners.geojobs.service.KeyPredicateFunction;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
 import app.bpartners.geojobs.service.detection.DetectionTaskService;
@@ -26,7 +26,7 @@ public class ZoneDetectionJobAnnotationProcessor {
   private final AnnotationService annotationService;
   private final DetectionTaskService detectionTaskService;
   private final DetectedTileRepository detectedTileRepository;
-  private final HumanDetectionJobRepository humanDetectionJobRepository;
+  private final HumanDetectionJobService humanDetectionJobService;
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final KeyPredicateFunction keyPredicateFunction;
 
@@ -78,7 +78,7 @@ public class ZoneDetectionJobAnnotationProcessor {
       Double minConfidence,
       String annotationJobId,
       List<MachineDetectedTile> machineDetectedTiles,
-      ZoneDetectionJob humanJob,
+      ZoneDetectionJob humanZDJ,
       List<DetectableObjectConfiguration> detectableObjectConfigurations) {
     var humanDetectionJobId = randomUUID().toString();
     var isGreaterThan = false;
@@ -91,7 +91,8 @@ public class ZoneDetectionJobAnnotationProcessor {
                     detectedTile.toBuilder().humanDetectionJobId(humanDetectionJobId).build())
             .toList();
     var hdjFalsePositiveDetectedObjects =
-        saveHDJ(annotationJobId, humanDetectionJobId, falsePositiveTiles, humanJob.getId());
+        humanDetectionJobService.create(
+            annotationJobId, humanDetectionJobId, falsePositiveTiles, humanZDJ.getId());
     hdjFalsePositiveDetectedObjects.setDetectableObjectConfigurations(
         detectableObjectConfigurations);
     var detectedTiles = hdjFalsePositiveDetectedObjects.getMachineDetectedTiles();
@@ -100,7 +101,7 @@ public class ZoneDetectionJobAnnotationProcessor {
     } else {
       annotationService.createAnnotationJob(
           hdjFalsePositiveDetectedObjects,
-          humanJob.getZoneName()
+          humanZDJ.getZoneName()
               + " - "
               + detectedTiles.size()
               + " tiles with detection confidence < "
@@ -116,7 +117,7 @@ public class ZoneDetectionJobAnnotationProcessor {
       Double minConfidence,
       String annotationJobId,
       List<MachineDetectedTile> machineDetectedTiles,
-      ZoneDetectionJob humanJob,
+      ZoneDetectionJob humanZDJ,
       List<DetectableObjectConfiguration> detectableObjectConfigurations) {
     var humanDetectionJobId = randomUUID().toString();
     var isGreaterThan = true;
@@ -129,7 +130,8 @@ public class ZoneDetectionJobAnnotationProcessor {
                     detectedTile.toBuilder().humanDetectionJobId(humanDetectionJobId).build())
             .toList();
     var hdjTruePositiveDetectedObjects =
-        saveHDJ(annotationJobId, humanDetectionJobId, truePositiveDetectedTiles, humanJob.getId());
+        humanDetectionJobService.create(
+            annotationJobId, humanDetectionJobId, truePositiveDetectedTiles, humanZDJ.getId());
     hdjTruePositiveDetectedObjects.setDetectableObjectConfigurations(
         detectableObjectConfigurations);
     var detectedTiles = hdjTruePositiveDetectedObjects.getMachineDetectedTiles();
@@ -138,7 +140,7 @@ public class ZoneDetectionJobAnnotationProcessor {
     } else {
       annotationService.createAnnotationJob(
           hdjTruePositiveDetectedObjects,
-          humanJob.getZoneName()
+          humanZDJ.getZoneName()
               + " - "
               + detectedTiles.size()
               + " tiles with detection confidence >= "
@@ -153,7 +155,7 @@ public class ZoneDetectionJobAnnotationProcessor {
       String zoneDetectionJobId,
       String annotationJobId,
       List<MachineDetectedTile> machineDetectedTiles,
-      ZoneDetectionJob humanJob,
+      ZoneDetectionJob humanZDJ,
       List<DetectableObjectConfiguration> detectableObjectConfigurations) {
     String humanDetectionJobId = randomUUID().toString();
     List<MachineDetectedTile> tilesWithoutObject =
@@ -164,7 +166,8 @@ public class ZoneDetectionJobAnnotationProcessor {
                     detectedTile.toBuilder().humanDetectionJobId(humanDetectionJobId).build())
             .toList();
     HumanDetectionJob hdjWithoutDetectedObjects =
-        saveHDJ(annotationJobId, humanDetectionJobId, tilesWithoutObject, humanJob.getId());
+        humanDetectionJobService.create(
+            annotationJobId, humanDetectionJobId, tilesWithoutObject, humanZDJ.getId());
     hdjWithoutDetectedObjects.setDetectableObjectConfigurations(detectableObjectConfigurations);
     List<MachineDetectedTile> detectedTiles = hdjWithoutDetectedObjects.getMachineDetectedTiles();
     if (detectedTiles.isEmpty()) {
@@ -172,28 +175,13 @@ public class ZoneDetectionJobAnnotationProcessor {
     } else {
       annotationService.createAnnotationJob(
           hdjWithoutDetectedObjects,
-          humanJob.getZoneName()
+          humanZDJ.getZoneName()
               + " - "
               + detectedTiles.size()
               + " tiles without detected objects"
               + " "
               + now());
     }
-  }
-
-  @NonNull
-  private HumanDetectionJob saveHDJ(
-      String annotationJobId,
-      String hdjId,
-      List<MachineDetectedTile> machineDetectedTiles,
-      String humanZDJId) {
-    return humanDetectionJobRepository.save(
-        HumanDetectionJob.builder()
-            .id(hdjId)
-            .annotationJobId(annotationJobId)
-            .machineDetectedTiles(machineDetectedTiles)
-            .zoneDetectionJobId(humanZDJId)
-            .build());
   }
 
   @AllArgsConstructor
