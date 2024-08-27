@@ -8,6 +8,7 @@ import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.status.ZTJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.tile.TilingTaskCreated;
 import app.bpartners.geojobs.endpoint.event.model.zone.ImportedZoneTilingJobSaved;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobCreated;
@@ -201,6 +202,7 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
   public ZoneTilingJob create(ZoneTilingJob job, List<TilingTask> tasks) {
     var saved = super.create(job, tasks);
     eventProducer.accept(List.of(new ZoneTilingJobCreated(saved)));
+    eventProducer.accept(List.of(new ZTJStatusRecomputingSubmitted(saved.getId())));
     return saved;
   }
 

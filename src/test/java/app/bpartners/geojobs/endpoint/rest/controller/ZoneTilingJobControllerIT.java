@@ -214,7 +214,7 @@ class ZoneTilingJobControllerIT extends FacadeIT {
     var createdList = controller.getTilingJobs(new PageFromOne(1), new BoundedPageSize(30));
     assertNotNull(created.getId());
     assertTrue(createdList.stream().anyMatch((z) -> z.equals(created.features(List.of()))));
-    verify(eventProducer, only()).accept(any());
+    verify(eventProducer, times(2)).accept(any());
   }
 
   @Test
