@@ -45,7 +45,11 @@ public class ZoneDetectionJobAnnotationProcessor {
             .toList();
 
     processFilterWithoutDetectedObjects(
-        zoneDetectionJobId, annotationJobWithoutObjectsId, machineDetectedTiles, humanJob);
+        zoneDetectionJobId,
+        annotationJobWithoutObjectsId,
+        machineDetectedTiles,
+        humanJob,
+        detectableObjectConfigurations);
 
     processFilterTruePositive(
         zoneDetectionJobId,
@@ -88,6 +92,8 @@ public class ZoneDetectionJobAnnotationProcessor {
             .toList();
     var hdjFalsePositiveDetectedObjects =
         saveHDJ(annotationJobId, humanDetectionJobId, falsePositiveTiles, humanJob.getId());
+    hdjFalsePositiveDetectedObjects.setDetectableObjectConfigurations(
+        detectableObjectConfigurations);
     var detectedTiles = hdjFalsePositiveDetectedObjects.getMachineDetectedTiles();
     if (detectedTiles.isEmpty()) {
       log.warn("No potential false positive objects found from ZDJ(id=" + zoneDetectionJobId + ")");
@@ -124,6 +130,8 @@ public class ZoneDetectionJobAnnotationProcessor {
             .toList();
     var hdjTruePositiveDetectedObjects =
         saveHDJ(annotationJobId, humanDetectionJobId, truePositiveDetectedTiles, humanJob.getId());
+    hdjTruePositiveDetectedObjects.setDetectableObjectConfigurations(
+        detectableObjectConfigurations);
     var detectedTiles = hdjTruePositiveDetectedObjects.getMachineDetectedTiles();
     if (detectedTiles.isEmpty()) {
       log.warn("No potential true positive objects found from ZDJ(id=" + zoneDetectionJobId + ")");
@@ -145,7 +153,8 @@ public class ZoneDetectionJobAnnotationProcessor {
       String zoneDetectionJobId,
       String annotationJobId,
       List<MachineDetectedTile> machineDetectedTiles,
-      ZoneDetectionJob humanJob) {
+      ZoneDetectionJob humanJob,
+      List<DetectableObjectConfiguration> detectableObjectConfigurations) {
     String humanDetectionJobId = randomUUID().toString();
     List<MachineDetectedTile> tilesWithoutObject =
         machineDetectedTiles.stream()
@@ -156,6 +165,7 @@ public class ZoneDetectionJobAnnotationProcessor {
             .toList();
     HumanDetectionJob hdjWithoutDetectedObjects =
         saveHDJ(annotationJobId, humanDetectionJobId, tilesWithoutObject, humanJob.getId());
+    hdjWithoutDetectedObjects.setDetectableObjectConfigurations(detectableObjectConfigurations);
     List<MachineDetectedTile> detectedTiles = hdjWithoutDetectedObjects.getMachineDetectedTiles();
     if (detectedTiles.isEmpty()) {
       log.warn("No tiles without objects found from ZDJ(id=" + zoneDetectionJobId + ")");
