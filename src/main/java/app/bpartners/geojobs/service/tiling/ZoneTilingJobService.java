@@ -18,7 +18,6 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.TilingTaskMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoomMapper;
 import app.bpartners.geojobs.endpoint.rest.model.BucketSeparatorType;
-import app.bpartners.geojobs.endpoint.rest.model.CreateFullDetection;
 import app.bpartners.geojobs.endpoint.rest.model.CreateZoneTilingJob;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.job.model.JobStatus;
@@ -31,7 +30,6 @@ import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.FullDetectionRepository;
 import app.bpartners.geojobs.repository.TaskStatisticRepository;
 import app.bpartners.geojobs.repository.model.FilteredTilingJob;
-import app.bpartners.geojobs.repository.model.detection.FullDetection;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.JobFilteredMailer;
@@ -203,23 +201,6 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
     var saved = super.create(job, tasks);
     eventProducer.accept(List.of(new ZoneTilingJobCreated(saved)));
     eventProducer.accept(List.of(new ZTJStatusRecomputingSubmitted(saved.getId())));
-    return saved;
-  }
-
-  @Transactional
-  public ZoneTilingJob create(
-      ZoneTilingJob job, List<TilingTask> tasks, CreateFullDetection fullDetection) {
-    var saved = super.create(job, tasks);
-    FullDetection toSave =
-        FullDetection.builder()
-            .id(randomUUID().toString())
-            .endToEndId(fullDetection.getEndToEndId())
-            .ztjId(saved.getId())
-            .build();
-    fullDetectionRepository.save(toSave);
-
-    eventProducer.accept(List.of(new ZoneTilingJobCreated(saved)));
-
     return saved;
   }
 

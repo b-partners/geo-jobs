@@ -38,9 +38,11 @@ public class DetectionTaskService {
               }
               return isGreaterThan
                   ? detectedTile.getDetectedObjects().stream()
-                      .anyMatch(tile -> tile.getComputedConfidence() >= confidence)
+                      .anyMatch(
+                          detectedObject -> detectedObject.getComputedConfidence() >= confidence)
                   : detectedTile.getDetectedObjects().stream()
-                      .anyMatch(tile -> tile.getComputedConfidence() < confidence);
+                      .anyMatch(
+                          detectedObject -> detectedObject.getComputedConfidence() < confidence);
             })
         .toList();
   }

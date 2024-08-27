@@ -55,9 +55,8 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
       var optionalFullDetection = fullDetectionRepository.findByZtjId(ztj.getId());
       // For now, only fullDetection process triggers ZDJ processing
       if (optionalFullDetection.isPresent()) {
-        var fullDetection = optionalFullDetection.get();
-        fullDetection.setZdjId(zdj.getId());
-        fullDetectionRepository.save(fullDetection);
+        fullDetectionRepository.save(
+            optionalFullDetection.get().toBuilder().zdjId(zdj.getId()).build());
         eventProducer.accept(
             List.of(ZoneDetectionJobCreated.builder().zoneDetectionJob(zdj).build()));
       }
