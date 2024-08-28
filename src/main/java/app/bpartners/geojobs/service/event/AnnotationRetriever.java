@@ -24,14 +24,16 @@ public class AnnotationRetriever {
 
   @Transactional
   public void accept(String humanZDJId) {
-    var humanDetectionJobs = humanDetectionJobRepository.findAllByZoneDetectionJobId(humanZDJId);
-    log.info("DEBUG: retrieving annotation, humanDetectionJobs {}", humanDetectionJobs);
-    if (humanDetectionJobs.isEmpty()) {
+    var humanDetectionJobWithDetectedTiles = humanDetectionJobRepository.findAllByZoneDetectionJobId(humanZDJId).stream()
+            .filter(humanDetectionJob -> !humanDetectionJob.getMachineDetectedTiles().isEmpty())
+            .toList();
+    log.info("DEBUG: retrieving annotation, humanDetectionJobs {}", humanDetectionJobWithDetectedTiles);
+    if (humanDetectionJobWithDetectedTiles.isEmpty()) {
       log.info("DEBUG: aborting retrieving, humanDetectionJobs empty");
       return;
     }
     var annotationJobs =
-        humanDetectionJobs.stream()
+        humanDetectionJobWithDetectedTiles.stream()
             .map(
                 humanDetectionJob ->
                     annotationService.getAnnotationJobById(humanDetectionJob.getAnnotationJobId()))
@@ -39,7 +41,7 @@ public class AnnotationRetriever {
     if (annotationJobs.isEmpty()) {
       log.warn(
           "Annotation jobs from annotator is empty, although humanDetectionJobs not empty {}",
-          humanDetectionJobs);
+          humanDetectionJobWithDetectedTiles);
       return;
     }
     if (annotationJobs.stream().allMatch(job -> COMPLETED.equals(job.getStatus()))) {
