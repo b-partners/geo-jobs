@@ -13,13 +13,11 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.TaskStatisticMapper
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneTilingJobMapper;
 import app.bpartners.geojobs.endpoint.rest.model.CreateFullDetection;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration;
-import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType;
 import app.bpartners.geojobs.endpoint.rest.model.FullDetectedZone;
 import app.bpartners.geojobs.endpoint.rest.model.JobTypes;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
-import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.repository.FullDetectionRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
@@ -61,6 +59,11 @@ public class ZoneService {
                       FullDetection.builder()
                           .id(randomUUID().toString())
                           .endToEndId(endToEndId)
+                          .detectableObjectConfiguration(
+                              new DetectableObjectConfiguration()
+                                  .bucketStorageName(zoneToDetect.getBucketStorage())
+                                  .type(zoneToDetect.getObjectType())
+                                  .confidence(zoneToDetect.getConfidence()))
                           .build();
                   return fullDetectionRepository.save(toSave);
                 });
@@ -84,7 +87,7 @@ public class ZoneService {
 
     assert machineZoneDetectionJob != null;
     if (machineZoneDetectionJob.isPending() && zoneTilingJob.isFinished()) {
-      var savedDetectionJob = processZoneDetectionJob(fullDetection, zoneToDetect, zoneTilingJob);
+      var savedDetectionJob = processZoneDetectionJob(fullDetection, zoneTilingJob);
       return getDetectionStatistics(fullDetection, savedDetectionJob.getId());
     }
 
@@ -140,28 +143,13 @@ public class ZoneService {
 
   // TODO: seems to be bad to handle FullDetection and CreateFullDetection together
   public ZoneDetectionJob processZoneDetectionJob(
-      FullDetection fullDetection, CreateFullDetection zoneToDetect, ZoneTilingJob job) {
+      FullDetection fullDetection, ZoneTilingJob job) {
     var zoneDetectionJob = zoneDetectionJobService.getByTilingJobId(job.getId(), MACHINE);
 
     detectionjobValidator.accept(zoneDetectionJob.getId());
 
-    // TODO: must handle multiple objects and refactor correctly
-    DetectableObjectType detectableObjectType = zoneToDetect.getObjectType();
-    if (detectableObjectType == null) {
-      throw new BadRequestException("Object to detect is mandatory to process ZoneDetectionJob");
-    }
-    List<DetectableObjectConfiguration> detectableObjectConfigurations =
-        List.of(
-            new DetectableObjectConfiguration()
-                .bucketStorageName(zoneToDetect.getBucketStorage())
-                .type(detectableObjectType)
-                .confidence(zoneToDetect.getConfidence()));
-
-    // TODO: not very good, as fulLDetection not immutable anymore
-    fullDetection.setDetectableObjectConfiguration(detectableObjectConfigurations.getFirst());
-    fullDetectionRepository.save(fullDetection);
     return zoneDetectionJobService.processZDJ(
-        zoneDetectionJob.getId(), detectableObjectConfigurations);
+        zoneDetectionJob.getId(), List.of(fullDetection.getDetectableObjectConfiguration()));
   }
 
   // TODO: set in S3

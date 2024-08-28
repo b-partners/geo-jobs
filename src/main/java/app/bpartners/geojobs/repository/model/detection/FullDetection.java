@@ -38,6 +38,7 @@ public class FullDetection {
   @Column(name = "ztj_id")
   private String ztjId;
 
+  // TODO: VERY VERY BAD ! Why didn't you use domain DetectableObjectConfiguration ?
   @JdbcTypeCode(JSON)
   private DetectableObjectConfiguration detectableObjectConfiguration;
 }
