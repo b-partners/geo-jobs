@@ -142,8 +142,7 @@ public class ZoneService {
   }
 
   // TODO: seems to be bad to handle FullDetection and CreateFullDetection together
-  public ZoneDetectionJob processZoneDetectionJob(
-      FullDetection fullDetection, ZoneTilingJob job) {
+  public ZoneDetectionJob processZoneDetectionJob(FullDetection fullDetection, ZoneTilingJob job) {
     var zoneDetectionJob = zoneDetectionJobService.getByTilingJobId(job.getId(), MACHINE);
 
     detectionjobValidator.accept(zoneDetectionJob.getId());

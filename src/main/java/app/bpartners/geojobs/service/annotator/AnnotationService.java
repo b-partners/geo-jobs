@@ -131,8 +131,7 @@ public class AnnotationService {
     try {
       int minPage = 1;
       int maxPageSize = 500;
-      return adminApi.getAnnotationBatchesByJobTask(
-          annotationJobId, taskId, minPage, maxPageSize);
+      return adminApi.getAnnotationBatchesByJobTask(annotationJobId, taskId, minPage, maxPageSize);
     } catch (ApiException e) {
       throw new app.bpartners.geojobs.model.exception.ApiException(
           app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION, e);
