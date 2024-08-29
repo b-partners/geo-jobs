@@ -13,11 +13,13 @@ import app.bpartners.geojobs.repository.TaskStatisticRepository;
 import app.bpartners.geojobs.repository.model.AnnotationRetrievingJob;
 import app.bpartners.geojobs.repository.model.AnnotationRetrievingTask;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 public class AnnotationRetrievingJobService
     extends JobService<AnnotationRetrievingTask, AnnotationRetrievingJob> {
   private final AnnotationRetrievingJobRepository annotationRetrievingJobRepository;
@@ -44,14 +46,16 @@ public class AnnotationRetrievingJobService
   @Transactional
   public AnnotationRetrievingJob fireTasks(String jobId) {
     var job = findById(jobId);
+    log.info("[DEBUG] firing tasks for {}", job);
     List<AnnotationRetrievingTask> tasks = getTasks(job);
+    log.info("[DEBUG] retrieving tasks.size={}", tasks.size());
     tasks.forEach(
-        task ->
-            eventProducer.accept(
-                List.of(
-                    AnnotationRetrievingTaskCreated.builder()
-                        .annotationRetrievingTask(task)
-                        .build())));
+        task -> {
+          AnnotationRetrievingTaskCreated event =
+              AnnotationRetrievingTaskCreated.builder().annotationRetrievingTask(task).build();
+          eventProducer.accept(List.of(event));
+          log.info("[DEBUG] sending event {}", event);
+        });
 
     return job;
   }

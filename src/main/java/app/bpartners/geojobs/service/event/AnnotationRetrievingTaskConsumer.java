@@ -15,10 +15,12 @@ import app.bpartners.geojobs.service.detection.HumanDetectedTileService;
 import java.util.Objects;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 @Component
 @AllArgsConstructor
+@Slf4j
 public class AnnotationRetrievingTaskConsumer implements Consumer<AnnotationRetrievingTask> {
   private final AnnotationService annotationService;
   private final HumanDetectedTileService humanDetectedTileService;
@@ -57,7 +59,8 @@ public class AnnotationRetrievingTaskConsumer implements Consumer<AnnotationRetr
                       .build();
                 })
             .toList();
-    humanDetectedTileService.saveAll(humanDetectedTiles);
+    var savedHumanDetectedTiles = humanDetectedTileService.saveAll(humanDetectedTiles);
+    log.info("[DEBUG] saved human tiles {}", savedHumanDetectedTiles);
   }
 
   public static AnnotationRetrievingTask withNewStatus(
