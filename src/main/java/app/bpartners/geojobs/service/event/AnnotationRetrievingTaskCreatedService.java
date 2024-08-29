@@ -26,7 +26,6 @@ public class AnnotationRetrievingTaskCreatedService
 
   @Override
   public void accept(AnnotationRetrievingTaskCreated event) {
-    log.info("[DEBUG] Processing {}", event);
     var task = event.getAnnotationRetrievingTask();
     taskStatusService.process(task);
 

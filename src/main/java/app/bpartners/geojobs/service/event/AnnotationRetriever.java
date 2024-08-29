@@ -1,13 +1,8 @@
 package app.bpartners.geojobs.service.event;
 
 import static app.bpartners.gen.annotator.endpoint.rest.model.JobStatus.COMPLETED;
-import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
-import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
-import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
-import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
-import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.repository.HumanDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.AnnotationRetrievingJob;
 import app.bpartners.geojobs.repository.model.AnnotationRetrievingTask;
@@ -29,12 +24,10 @@ public class AnnotationRetriever {
 
   @Transactional
   public void accept(String humanZDJId) {
-    var humanDetectionJobWithDetectedTiles =
-        humanDetectionJobRepository.findAllByZoneDetectionJobId(humanZDJId).stream()
+    var humanDetectionJobWithDetectedTiles = humanDetectionJobRepository.findAllByZoneDetectionJobId(humanZDJId).stream()
             .filter(humanDetectionJob -> !humanDetectionJob.getMachineDetectedTiles().isEmpty())
             .toList();
-    log.info(
-        "DEBUG: retrieving annotation, humanDetectionJobs {}", humanDetectionJobWithDetectedTiles);
+    log.info("DEBUG: retrieving annotation, humanDetectionJobs {}", humanDetectionJobWithDetectedTiles);
     if (humanDetectionJobWithDetectedTiles.isEmpty()) {
       log.info("DEBUG: aborting retrieving, humanDetectionJobs empty");
       return;
@@ -63,17 +56,7 @@ public class AnnotationRetriever {
                             .id(annotationRetrievingJobId)
                             .annotationJobId(annotationJobId)
                             .detectionJobId(humanZDJId)
-                            .statusHistory(
-                                List.of(
-                                    JobStatus.builder()
-                                        .jobId(annotationJobId)
-                                        .id(randomUUID().toString())
-                                        .creationDatetime(now())
-                                        .jobType(DETECTION) // TODO: add retrieving jobType
-                                        .progression(PENDING)
-                                        .health(UNKNOWN)
-                                        .build()))
-                            .submissionInstant(now())
+                            .statusHistory(List.of())
                             .build();
                     var retrievingTasks =
                         annotationService.retrieveTasksFromAnnotationJob(
