@@ -5,10 +5,12 @@ import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
 import app.bpartners.geojobs.endpoint.event.EventStack;
 import app.bpartners.geojobs.endpoint.event.model.status.JobStatusRecomputingSubmitted;
 import java.time.Duration;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+@AllArgsConstructor
 @Data
 @EqualsAndHashCode(callSuper = false)
 @ToString
