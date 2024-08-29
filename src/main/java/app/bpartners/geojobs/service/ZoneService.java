@@ -68,11 +68,11 @@ public class ZoneService {
                   return fullDetectionRepository.save(toSave);
                 });
 
-    if (fullDetection.getZdjId() == null) {
+    if (fullDetection.getZtjId() == null) {
       var ztj = processZoneTilingJob(zoneToDetect);
-      fullDetection =
+      var fullDetectionWithZTJ =
           fullDetectionRepository.save(fullDetection.toBuilder().ztjId(ztj.getId()).build());
-      return getTilingStatistics(fullDetection, ztj.getId());
+      return getTilingStatistics(fullDetectionWithZTJ, ztj.getId());
     }
 
     var tilingJobId = fullDetection.getZtjId();
