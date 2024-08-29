@@ -2,6 +2,8 @@ package app.bpartners.geojobs.service.annotator;
 
 import static app.bpartners.gen.annotator.endpoint.rest.model.JobStatus.*;
 import static app.bpartners.gen.annotator.endpoint.rest.model.JobType.REVIEWING;
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static java.time.LocalTime.now;
 import static java.util.UUID.randomUUID;
@@ -103,7 +105,7 @@ public class AnnotationService {
                 .folderPath(folderPath)
                 .labels(labels)
                 .ownerEmail("tech@bpartners.app")
-                .status(PENDING)
+                .status(JobStatus.PENDING)
                 .type(REVIEWING)
                 .imagesHeight(DEFAULT_IMAGES_HEIGHT)
                 .imagesWidth(DEFAULT_IMAGES_WIDTH)
@@ -165,12 +167,20 @@ public class AnnotationService {
               var xTile = metadata.get(metadata.size() - 2);
               var yTile = metadata.getLast();
               // TODO: avoid redundant persisted metadata (x - y - z)
+              var generatedTaskId = randomUUID().toString();
               return AnnotationRetrievingTask.builder()
-                  .id(randomUUID().toString())
+                  .id(generatedTaskId)
                   .jobId(retrievingJobId)
                   .annotationTaskId(annotationTask.getId())
                   .annotationJobId(annotationJobId)
-                  .statusHistory(List.of())
+                  .statusHistory(
+                      List.of(
+                          app.bpartners.geojobs.job.model.TaskStatus.builder()
+                              .health(UNKNOWN)
+                              .progression(PENDING)
+                              .creationDatetime(Instant.now())
+                              .taskId(generatedTaskId)
+                              .build()))
                   .submissionInstant(Instant.now())
                   .humanZoneDetectionJobId(humanZDJId)
                   .zoom(zoom)

@@ -8,6 +8,7 @@ import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.job.model.JobStatus;
+import app.bpartners.geojobs.repository.AnnotationRetrievingTaskRepository;
 import app.bpartners.geojobs.repository.HumanDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.AnnotationRetrievingJob;
 import app.bpartners.geojobs.repository.model.AnnotationRetrievingTask;
@@ -26,6 +27,7 @@ public class AnnotationRetriever {
   private final HumanDetectionJobRepository humanDetectionJobRepository;
   private final AnnotationService annotationService;
   private final AnnotationRetrievingJobService annotationRetrievingJobService;
+  private final AnnotationRetrievingTaskRepository retrievingTaskRepository;
 
   @Transactional
   public void accept(String humanZDJId) {
@@ -83,6 +85,10 @@ public class AnnotationRetriever {
                             null,
                             null,
                             null);
+                    log.info(
+                        "[DEBUG] tasks to save.size={}, content={}",
+                        retrievingTasks.size(),
+                        retrievingTasks);
                     return new RetrievingJobWithTasks(retrievingJob, retrievingTasks);
                   })
               .toList();
@@ -92,7 +98,15 @@ public class AnnotationRetriever {
             var job = record.job;
             var tasks = record.tasks;
 
-            annotationRetrievingJobService.create(job, tasks);
+            var savedRetrievingJob = annotationRetrievingJobService.create(job, tasks);
+            var savedRetrievingTasks =
+                retrievingTaskRepository.findAllByJobId(savedRetrievingJob.getId());
+
+            log.info("[DEBUG] saved retrieving job {}", savedRetrievingJob);
+            log.info(
+                "[DEBUG] saved retrieving tasks.size={}, content={}",
+                savedRetrievingTasks.size(),
+                savedRetrievingTasks);
           });
     }
   }
