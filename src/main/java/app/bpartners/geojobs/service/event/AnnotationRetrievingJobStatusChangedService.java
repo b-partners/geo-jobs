@@ -89,8 +89,6 @@ public class AnnotationRetrievingJobStatusChangedService
             + " and processing ZDJ(id="
             + newZDJ.getId()
             + ") geo json conversion";
-      } else if (!linkedJobsAreSucceeded) {
-        throw new RuntimeException("Fail on purpose so that message is not ack, causing retry");
       }
       return "AnnotationRetrievedJob (id"
           + newJob.getId()
