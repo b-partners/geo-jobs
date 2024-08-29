@@ -153,7 +153,7 @@ public class AnnotationService {
               annotationJobId,
               page,
               pageSize,
-              TaskStatus.COMPLETED,
+              null, // So get any tasks either the status is
               userId); // page, pageSize and UserId not required
     } catch (ApiException e) {
       throw new app.bpartners.geojobs.model.exception.ApiException(
