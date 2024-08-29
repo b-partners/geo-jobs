@@ -18,6 +18,7 @@ import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.AutoTaskStatisticRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerificationSent;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationRetrievingJobStatusRecomputingSubmitted;
+import app.bpartners.geojobs.endpoint.event.model.status.HumanZDJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.status.ParcelDetectionStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.status.ZDJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.status.ZTJStatusRecomputingSubmitted;
@@ -143,6 +144,7 @@ class ZoneTilingJobCreatedIT extends DetectionIT {
   private static List<LocalEventQueue.CustomEventDelayConfig> customEventConfigList() {
     return List.of(
         new LocalEventQueue.CustomEventDelayConfig(AutoTaskStatisticRecomputingSubmitted.class, 50),
+        new LocalEventQueue.CustomEventDelayConfig(HumanZDJStatusRecomputingSubmitted.class, 50),
         new LocalEventQueue.CustomEventDelayConfig(
             AnnotationRetrievingJobStatusRecomputingSubmitted.class, 50),
         new LocalEventQueue.CustomEventDelayConfig(
