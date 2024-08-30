@@ -25,6 +25,7 @@ import app.bpartners.geojobs.repository.model.detection.FullDetection;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
+import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import java.time.Duration;
 import java.util.List;
@@ -47,6 +48,7 @@ public class ZoneService {
   private final FullDetectionRepository fullDetectionRepository;
   private final ZoneTilingJobRepository zoneTilingJobRepository;
   private final BucketComponent bucketComponent;
+  private final GeoJsonConversionInitiationService conversionInitiationService;
 
   public FullDetectedZone processTilingAndDetection(CreateFullDetection zoneToDetect) {
     var endToEndId = zoneToDetect.getEndToEndId();
@@ -99,6 +101,10 @@ public class ZoneService {
                 AnnotationJobVerificationSent.builder()
                     .humanZdjId(humanZoneDetectionJob.getId())
                     .build()));
+        // TODO: return human zone detection job statistics
+      } else {
+        conversionInitiationService.processConversionTask(
+            humanZoneDetectionJob.getZoneName(), humanZoneDetectionJob.getId());
         // TODO: return human zone detection job statistics
       }
     }
