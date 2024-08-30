@@ -80,7 +80,10 @@ public class ZoneService {
     var tilingJobId = fullDetection.getZtjId();
     var detectionJobId = fullDetection.getZdjId();
     var zoneTilingJob = zoneTilingJobRepository.findById(tilingJobId).orElse(null);
-    var machineZoneDetectionJob = zoneDetectionJobRepository.findById(detectionJobId).orElse(null);
+    var machineZoneDetectionJob =
+        detectionJobId == null
+            ? null
+            : zoneDetectionJobRepository.findById(detectionJobId).orElse(null);
 
     assert zoneTilingJob != null;
     if (!zoneTilingJob.isSucceeded()) {
