@@ -24,6 +24,7 @@ import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @AllArgsConstructor
@@ -40,6 +41,7 @@ public class GeoJsonConversionInitiatedService implements Consumer<GeoJsonConver
   private final FullDetectionRepository fullDetectionRepository;
 
   @Override
+  @Transactional
   public void accept(GeoJsonConversionInitiated initiated) {
     var jobId = initiated.getJobId();
     var taskId = initiated.getConversionTaskId();
