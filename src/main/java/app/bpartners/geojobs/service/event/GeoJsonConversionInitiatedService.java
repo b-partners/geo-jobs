@@ -9,18 +9,20 @@ import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionInitiated;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.exception.ApiException;
+import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.FullDetectionRepository;
-import app.bpartners.geojobs.repository.model.detection.HumanDetectedTile;
+import app.bpartners.geojobs.repository.model.GeoJsonConversionTask;
 import app.bpartners.geojobs.service.detection.HumanDetectedTileService;
+import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionTaskService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionTaskStatusService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConverter;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -39,32 +41,50 @@ public class GeoJsonConversionInitiatedService implements Consumer<GeoJsonConver
   private final FileWriter writer;
   private final BucketComponent bucketComponent;
   private final FullDetectionRepository fullDetectionRepository;
+  private final ZoneDetectionJobService detectionJobService;
 
   @Override
   @Transactional
-  public void accept(GeoJsonConversionInitiated initiated) {
-    var jobId = initiated.getJobId();
-    var taskId = initiated.getConversionTaskId();
-    var zoneName = initiated.getZoneName();
+  public void accept(GeoJsonConversionInitiated event) {
+    var taskId = event.getConversionTaskId();
     var task = taskService.getById(taskId);
-    var fullDetectionJob = fullDetectionRepository.findByZdjId(jobId);
     taskStatusService.process(task);
-    var fileKey = jobId + "/" + zoneName + GEO_JSON_EXTENSION;
-    List<HumanDetectedTile> humanDetectedTiles = humanDetectedTileService.getByJobId(jobId);
+
+    var fileKey = consumeTask(event, task);
+
+    var finishedConversionTask =
+        taskStatusService.succeed(task.toBuilder().fileKey(fileKey).build());
+    taskService.save(finishedConversionTask);
+  }
+
+  @NonNull
+  private String consumeTask(GeoJsonConversionInitiated event, GeoJsonConversionTask task) {
     try {
+      var humanZDJId = event.getJobId();
+      var zoneName = event.getZoneName();
+      var machineZDJ = detectionJobService.getMachineZDJFromHumanZDJ(humanZDJId);
+      var machineZDJId = machineZDJ.getId();
+      var fullDetectionJob =
+          fullDetectionRepository
+              .findByZdjId(machineZDJId)
+              .orElseThrow(
+                  () ->
+                      new NotFoundException(
+                          "Any fullDetectionJob associated to ZDJ(type=MACHINE, id="
+                              + machineZDJId
+                              + ")"));
+      var fileKey = fullDetectionJob.getId() + "/" + zoneName + GEO_JSON_EXTENSION;
+      var humanDetectedTiles = humanDetectedTileService.getByJobId(humanZDJId);
       var geoJson = geoJsonConverter.convert(humanDetectedTiles);
       var geoJsonAsByte = writer.writeAsByte(geoJson);
       var geoJsonAsFile =
           writer.write(geoJsonAsByte, createTempDirectory(), zoneName + GEO_JSON_EXTENSION);
       bucketComponent.upload(geoJsonAsFile, fileKey);
-      task.setFileKey(fileKey);
-      var finished = taskStatusService.succeed(task);
-      taskService.save(finished);
-      if (fullDetectionJob.isPresent()) {
-        var persisted = fullDetectionJob.get();
-        persisted.setGeojsonS3FileKey(fileKey);
-        fullDetectionRepository.save(persisted);
-      }
+
+      var savedFullDetection =
+          fullDetectionRepository.save(
+              fullDetectionJob.toBuilder().geojsonS3FileKey(fileKey).build());
+      return savedFullDetection.getGeojsonS3FileKey();
     } catch (RuntimeException e) {
       var failed = taskStatusService.fail(task);
       taskService.save(failed);

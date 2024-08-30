@@ -104,7 +104,7 @@ public class ZoneService {
         // TODO: return human zone detection job statistics
       } else {
         conversionInitiationService.processConversionTask(
-            humanZoneDetectionJob.getZoneName(), humanZoneDetectionJob.getId());
+            fullDetection, humanZoneDetectionJob.getZoneName(), humanZoneDetectionJob.getId());
         // TODO: return human zone detection job statistics
       }
     }

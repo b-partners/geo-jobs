@@ -13,6 +13,7 @@ import app.bpartners.geojobs.endpoint.rest.model.GeoJsonsUrl;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.repository.model.GeoJsonConversionTask;
+import app.bpartners.geojobs.repository.model.detection.FullDetection;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import java.time.Duration;
 import java.util.List;
@@ -49,6 +50,21 @@ public class GeoJsonConversionInitiationService {
     return null;
   }
 
+  public GeoJsonsUrl processConversionTask(
+      FullDetection fullDetection, String zoneName, String jobId) {
+    var optionalTask = service.getByJobId(jobId);
+    if (optionalTask.isPresent()) {
+      var persisted = optionalTask.get();
+      if (fullDetection.getGeojsonS3FileKey() != null
+          && !FAILED.equals(persisted.getStatus().getHealth())) {
+        var url = generatePresignedUrl(persisted);
+        return new GeoJsonsUrl().url(url).status(taskStatusMapper.toRest(persisted.getStatus()));
+      }
+      service.delete(persisted);
+    }
+    return getGeoJsonsUrl(zoneName, jobId);
+  }
+
   public GeoJsonsUrl processConversionTask(String zoneName, String jobId) {
     var optionalTask = service.getByJobId(jobId);
     if (optionalTask.isPresent()) {
@@ -59,6 +75,10 @@ public class GeoJsonConversionInitiationService {
       }
       service.delete(persisted);
     }
+    return getGeoJsonsUrl(zoneName, jobId);
+  }
+
+  private GeoJsonsUrl getGeoJsonsUrl(String zoneName, String jobId) {
     var geoJsonConversionTask =
         GeoJsonConversionTask.builder()
             .id(randomUUID().toString())

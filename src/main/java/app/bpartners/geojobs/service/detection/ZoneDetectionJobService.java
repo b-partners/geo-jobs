@@ -4,6 +4,7 @@ import static app.bpartners.geojobs.job.model.Status.HealthStatus.*;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
+import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
@@ -339,6 +340,15 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
                         + jobId
                         + ", type=MACHINE) is not associated to any"
                         + " ZoneDetectionJob.type=HUMAN"));
+  }
+
+  @Transactional
+  public ZoneDetectionJob getMachineZDJFromHumanZDJ(String humanZDJId) {
+    var humanZDJ = findById(humanZDJId);
+    if (humanZDJ.getDetectionType() == MACHINE) {
+      return humanZDJ;
+    }
+    return getByTilingJobId(humanZDJ.getZoneTilingJob().getId(), MACHINE);
   }
 
   public ZoneDetectionJob fireTasks(String jobId) {
