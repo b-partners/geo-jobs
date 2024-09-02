@@ -1,47 +1,57 @@
-app_name: geo-jobs
-aurora_auto_pause: 'true'
-aurora_max_capacity: 64
-aurora_min_capacity: 64
-aurora_scale_point: 60
-aurora_sleep: 900
-aws_account_id: 'null'
-cli_version: 15.2.2
-codeartifact_domain_name: 'null'
-codeartifact_repository_name: 'null'
-custom_java_deps: poja-custom-java-deps.txt
-custom_java_env_vars: poja-custom-java-env-vars.txt
-custom_java_repositories: poja-custom-java-repositories.txt
-database_non_root_password: /geo-jobs/${Env}/db/user/password
-database_non_root_username: /geo-jobs/${Env}/db/user/username
-frontal_function_timeout: 300
-frontal_memory: 2048
-frontal_reserved_concurrent_executions_nb: null
-jacoco_min_coverage: '0.8'
-java_facade_it: FacadeIT
-package_full_name: app.bpartners.geojobs
-poja_domain_owner: 088312068315
-poja_python_repository_domain: python-numer-tech
-poja_python_repository_name: numer-python-store
-prod_db_cluster_timeout: '300'
-region: eu-west-3
-ses_source: lou@bpartners.app
-ssm_sg_id: /bpartners-imagery/sg/id
-ssm_subnet1_id: /bpartners-imagery/private/subnet1/id
-ssm_subnet2_id: /bpartners-imagery/private/subnet2/id
-ts_client_api_url_env_var_name: ''
-ts_client_default_openapi_server_url: ''
-with_codeql: 'true'
-with_database: aurora-postgres
-with_file_storage: 'true'
-with_gen_clients: 'true'
-with_own_vpc: 'true'
-with_publish_to_npm_registry: 'false'
-with_sentry: 'true'
-with_snapstart: 'true'
-with_sonar: 'true'
-with_swagger_ui: 'false'
-worker_batch: 1
-worker_function_1_timeout: 600
-worker_function_2_timeout: 600
-worker_memory: 512
-worker_reserved_concurrent_executions_nb: 1250
+compute:
+  frontal_function_timeout: 300
+  frontal_memory: 2048
+  worker_batch: 1
+  worker_function_1_timeout: 600
+  worker_function_2_timeout: 600
+  worker_memory: 512
+concurrency:
+  frontal_reserved_concurrent_executions_nb: null
+  worker_reserved_concurrent_executions_nb: 1250
+database:
+  aurora_auto_pause: 'true'
+  aurora_max_capacity: 64
+  aurora_min_capacity: 64
+  aurora_scale_point: 60
+  aurora_sleep: 900
+  database_non_root_password: /geo-jobs/${Env}/db/user/password
+  database_non_root_username: /geo-jobs/${Env}/db/user/username
+  prod_db_cluster_timeout: '300'
+  with_database: aurora-postgres
+emailing:
+  ses_source: lou@bpartners.app
+gen_api_client:
+  aws_account_id: 'null'
+  codeartifact_domain_name: 'null'
+  codeartifact_repository_name: 'null'
+  ts_client_api_url_env_var_name: ''
+  ts_client_default_openapi_server_url: ''
+  with_gen_clients: 'true'
+  with_publish_to_npm_registry: 'false'
+general:
+  app_name: geo-jobs
+  cli_version: 17.1.2
+  custom_java_deps: poja-custom-java-deps.txt
+  custom_java_env_vars: poja-custom-java-env-vars.txt
+  custom_java_repositories: poja-custom-java-repositories.txt
+  package_full_name: app.bpartners.geojobs
+  poja_domain_owner: 088312068315
+  poja_python_repository_domain: python-numer-tech
+  poja_python_repository_name: numer-python-store
+  with_queues_nb: 2
+  with_snapstart: 'true'
+integration:
+  with_codeql: 'true'
+  with_file_storage: 'true'
+  with_sentry: 'true'
+  with_sonar: 'true'
+  with_swagger_ui: 'false'
+networking:
+  region: eu-west-3
+  ssm_sg_id: /bpartners-imagery/sg/id
+  ssm_subnet1_id: /bpartners-imagery/private/subnet1/id
+  ssm_subnet2_id: /bpartners-imagery/private/subnet2/id
+  with_own_vpc: 'true'
+testing:
+  jacoco_min_coverage: '0.8'
+  java_facade_it: FacadeIT

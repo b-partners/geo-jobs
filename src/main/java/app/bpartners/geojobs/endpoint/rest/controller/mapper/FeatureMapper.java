@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.controller.mapper;
 
-import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.MULTIPOLYGON;
+import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.MULTI_POLYGON;
 import static java.time.Instant.now;
 
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
@@ -93,7 +93,7 @@ public class FeatureMapper {
     MultiPolygon multiPolygon = new MultiPolygon().coordinates(multiPolygonCoordinates);
     Feature feature = new Feature();
     feature.setId(id);
-    multiPolygon.setType(MULTIPOLYGON);
+    multiPolygon.setType(MULTI_POLYGON);
     feature.setGeometry(multiPolygon);
 
     return feature;

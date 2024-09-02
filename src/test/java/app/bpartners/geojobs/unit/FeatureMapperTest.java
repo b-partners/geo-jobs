@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.unit;
 
-import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.MULTIPOLYGON;
+import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.MULTI_POLYGON;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -49,7 +49,7 @@ class FeatureMapperTest {
                         BigDecimal.valueOf(6.958009303660302),
                         BigDecimal.valueOf(43.543013820437459)))));
     MultiPolygon multiPolygon = new MultiPolygon().coordinates(coordinates);
-    multiPolygon.setType(MULTIPOLYGON);
+    multiPolygon.setType(MULTI_POLYGON);
     feature.setGeometry(multiPolygon);
     feature.setId(id);
     return feature;
