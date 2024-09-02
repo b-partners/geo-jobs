@@ -730,7 +730,7 @@ components:
       enum:
         - MACHINE
         - HUMAN
-    DetectableObjectConfiguration:
+    DetectableObjectWithoutBucket:
       type: object
       properties:
         type:
@@ -738,9 +738,14 @@ components:
         confidence:
           type: number
           description: between 0 and 1
+    DetectableObjectConfiguration:
+      allOf:
+        - $ref: '#/components/schemas/DetectableObjectWithoutBucket'
+      type: object
+      properties:
         bucketStorageName:
           type: string
-          description: | 
+          description: |
             Bucket where are stores images to be detected. 
             If null is provided, the default apps bucket is chosen.
     DetectableObjectType:
@@ -1014,38 +1019,23 @@ components:
       enum:
         - UNDERSCORE
         - SLASH
-
     CreateFullDetection:
       type: object
       allOf:
         - $ref: '#/components/schemas/CreateZoneTilingJob'
       properties:
-        objectType:
-          $ref: '#/components/schemas/DetectableObjectType'
-        confidence:
-          type: number
         endToEndId:
           type: string
-        bucketStorage:
-          type: string
-    JobTypes:
-      enum:
-        - MACHINE_DETECTION
-        - HUMAN_DETECTION
-        - TILING
-
+        detectableObjectConfigurations:
+          type: array
+          items:
+            $ref: '#/components/schemas/DetectableObjectWithoutBucket'
     FullDetectedZone:
       type: object
       properties:
         endToEndId:
           type: string
-        jobTypes:
-          type: array
-          items:
-           $ref: '#/components/schemas/JobTypes'
         statistics:
-          type: array
-          items:
-           $ref: '#/components/schemas/TaskStatistic'
+          $ref: '#/components/schemas/TaskStatistic'
         detectedGeojsonUrl:
-           type: string
+          type: string
