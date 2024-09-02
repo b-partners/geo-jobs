@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.rest.model.CreateFullDetection;
+import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectWithoutBucket;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
@@ -21,7 +22,9 @@ import org.mockito.MockedStatic;
 
 class CommunityFullDetectionAuthorizerTest {
   CommunityAuthorization communityAuthorization = mock();
-  CreateFullDetection createFullDetection = mock();
+  CreateFullDetection createFullDetection =
+      new CreateFullDetection()
+          .detectableObjectConfigurations(List.of(new DetectableObjectWithoutBucket()));
   CommunityZoneSurfaceAuthorizer communityZoneSurfaceAuthorizer = mock();
   CommunityZoneAuthorizer communityZoneAuthorizer = mock();
   CommunityDetectableObjectTypeAuthorizer communityDetectableObjectTypeAuthorizer = mock();

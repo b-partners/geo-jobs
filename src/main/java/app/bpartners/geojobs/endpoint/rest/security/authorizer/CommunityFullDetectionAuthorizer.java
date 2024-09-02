@@ -24,8 +24,10 @@ public class CommunityFullDetectionAuthorizer implements Consumer<CreateFullDete
     var communityAuthorization =
         caRepository.findByApiKey(userPrincipal.getPassword()).orElseThrow(ForbiddenException::new);
 
+    var detectableObjectConfiguration =
+        createFullDetection.getDetectableObjectConfigurations().getFirst();
     communityDetectableObjectTypeAuthorizer.accept(
-        communityAuthorization, createFullDetection.getObjectType());
+        communityAuthorization, detectableObjectConfiguration.getType());
     if (createFullDetection.getFeatures() != null) {
       communityZoneSurfaceAuthorizer.accept(
           communityAuthorization, createFullDetection.getFeatures());

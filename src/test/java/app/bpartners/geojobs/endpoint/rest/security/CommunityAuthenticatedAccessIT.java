@@ -14,6 +14,7 @@ import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.community.CommunityDetectableObjectType;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -75,7 +76,12 @@ class CommunityAuthenticatedAccessIT extends FacadeIT {
   }
 
   private CreateFullDetection asCreateFullDetection(DetectableObjectType authorizedTypes) {
-    return new CreateFullDetection().objectType(authorizedTypes);
+    return new CreateFullDetection()
+        .detectableObjectConfigurations(
+            List.of(
+                new DetectableObjectWithoutBucket()
+                    .type(authorizedTypes)
+                    .confidence(BigDecimal.ONE)));
   }
 
   private CommunityAuthorization communityAuthorization() {

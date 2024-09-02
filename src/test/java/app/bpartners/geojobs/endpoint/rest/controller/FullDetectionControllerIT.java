@@ -24,12 +24,7 @@ import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.TaskStatisticMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMapper;
-import app.bpartners.geojobs.endpoint.rest.model.CreateFullDetection;
-import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration;
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
-import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
-import app.bpartners.geojobs.endpoint.rest.model.JobType;
-import app.bpartners.geojobs.endpoint.rest.model.Status;
+import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.security.authorizer.CommunityFullDetectionAuthorizer;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.job.model.JobStatus;
@@ -94,8 +89,9 @@ class FullDetectionControllerIT extends FacadeIT {
       throws JsonProcessingException {
     return new CreateFullDetection()
         .endToEndId(endToEndId)
-        .objectType(ROOF)
-        .confidence(BigDecimal.valueOf(0.8))
+        .detectableObjectConfigurations(
+            List.of(
+                new DetectableObjectWithoutBucket().type(ROOF).confidence(BigDecimal.valueOf(0.8))))
         .emailReceiver("mock@hotmail.com")
         .zoneName("Lyon")
         .geoServerUrl("https://data.grandlyon.com/fr/geoserv/grandlyon/ows")
