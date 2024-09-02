@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.service.geojson;
 
-import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.MULTIPOLYGON;
+import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.MULTI_POLYGON;
 import static app.bpartners.geojobs.service.geojson.GeoReferencer.toGeographicalCoordinates;
 
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
@@ -39,7 +39,7 @@ public class GeoJsonMapper {
                         return toGeographicalCoordinates(xTile, yTile, x, y, zoom, imageWidth);
                       })
                   .toList();
-          multipolygon.setType(MULTIPOLYGON);
+          multipolygon.setType(MULTI_POLYGON);
           multipolygon.setCoordinates(List.of(List.of(coordinates)));
           var geoFeature = new GeoJson.GeoFeature(properties, multipolygon);
           geoFeatures.add(geoFeature);

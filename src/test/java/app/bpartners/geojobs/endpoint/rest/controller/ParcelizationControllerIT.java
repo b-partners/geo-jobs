@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.controller;
 
-import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.MULTIPOLYGON;
+import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.MULTI_POLYGON;
 import static org.junit.jupiter.api.Assertions.*;
 
 import app.bpartners.geojobs.conf.FacadeIT;
@@ -78,7 +78,7 @@ public class ParcelizationControllerIT extends FacadeIT {
 
   private Feature featureFromCoordinates(List<List<List<List<BigDecimal>>>> coordinates) {
     MultiPolygon multiPolygon = new MultiPolygon().coordinates(coordinates);
-    multiPolygon.setType(MULTIPOLYGON);
+    multiPolygon.setType(MULTI_POLYGON);
     return new Feature().geometry(multiPolygon).id(null).zoom(null);
   }
 
