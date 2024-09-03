@@ -2,13 +2,18 @@ package app.bpartners.geojobs.endpoint.rest.security;
 
 import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.POOL;
 import static app.bpartners.geojobs.endpoint.rest.security.authenticator.ApiKeyAuthenticator.API_KEY_HEADER;
-import static org.junit.jupiter.api.Assertions.*;
+import static java.util.UUID.randomUUID;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.rest.api.DetectionApi;
 import app.bpartners.geojobs.endpoint.rest.client.ApiClient;
 import app.bpartners.geojobs.endpoint.rest.client.ApiException;
-import app.bpartners.geojobs.endpoint.rest.model.*;
+import app.bpartners.geojobs.endpoint.rest.model.CreateFullDetection;
+import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.community.CommunityDetectableObjectType;
@@ -44,12 +49,7 @@ class CommunityAuthenticatedAccessIT extends FacadeIT {
 
   @Test
   void community_cannot_access_endpoint_if_not_full_detection() {
-    var error =
-        assertThrows(
-            ApiException.class,
-            () -> {
-              detectionApi.getDetectionJobs(1, 10);
-            });
+    var error = assertThrows(ApiException.class, () -> detectionApi.getDetectionJobs(1, 10));
     assertTrue(error.getMessage().contains("Access Denied"));
   }
 
@@ -58,10 +58,17 @@ class CommunityAuthenticatedAccessIT extends FacadeIT {
     var error =
         assertThrows(
             ApiException.class,
-            () -> {
-              detectionApi.processFullDetection(asCreateFullDetection(POOL));
-            });
+            () -> detectionApi.processFullDetection(aCreateFullDetection(POOL)));
     assertTrue(error.getMessage().contains(POOL.name()));
+  }
+
+  @Test
+  void community_cannot_do_full_detection_if_no_e2e_id_provided() {
+    var error =
+        assertThrows(
+            ApiException.class, () -> detectionApi.processFullDetection(new CreateFullDetection()));
+    assertEquals(BAD_REQUEST.value(), error.getCode());
+    assertTrue(error.getMessage().contains("You must provide an end-to-end id for your detection"));
   }
 
   void setupClientWithApiKey() {
@@ -74,8 +81,8 @@ class CommunityAuthenticatedAccessIT extends FacadeIT {
     detectionApi = new DetectionApi(authenticatedClient);
   }
 
-  private CreateFullDetection asCreateFullDetection(DetectableObjectType authorizedTypes) {
-    return new CreateFullDetection().objectType(authorizedTypes);
+  private CreateFullDetection aCreateFullDetection(DetectableObjectType authorizedType) {
+    return new CreateFullDetection().endToEndId(randomUUID().toString()).objectType(authorizedType);
   }
 
   private CommunityAuthorization communityAuthorization() {
