@@ -2,8 +2,12 @@ package app.bpartners.geojobs.endpoint.rest.security.authorizer;
 
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_COMMUNITY;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.endpoint.rest.model.CreateFullDetection;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
@@ -46,30 +50,21 @@ class FullDetectionAuthorizerTest {
 
   @Test
   void should_accept_directly_admin_api_key() {
-    useRole(ROLE_ADMIN);
     when(communityAuthorization.getAuthorizedZones()).thenReturn(List.of());
 
-    assertDoesNotThrow(
-        () -> {
-          subject.accept(createFullDetection);
-        });
+    assertDoesNotThrow(() -> subject.accept(createFullDetection, useRole(ROLE_ADMIN)));
   }
 
   @Test
   void should_accept_community_if_authorization_is_correct() {
-    useRole(ROLE_COMMUNITY);
     doNothing().when(communityZoneSurfaceAuthorizer).accept(any(), any());
     doNothing().when(communityZoneAuthorizer).accept(any(), any());
     doNothing().when(communityDetectableObjectTypeAuthorizer).accept(any(), any());
 
-    assertDoesNotThrow(
-        () -> {
-          subject.accept(createFullDetection);
-        });
+    assertDoesNotThrow(() -> subject.accept(createFullDetection, useRole(ROLE_COMMUNITY)));
   }
 
-  private void useRole(Authority.Role role) {
-    var userPrincipal = new Principal("dummyKey", Set.of(new Authority(role)));
-    authProvider.when(AuthProvider::getPrincipal).thenReturn(userPrincipal);
+  private Principal useRole(Authority.Role role) {
+    return new Principal("dummyKey", Set.of(new Authority(role)));
   }
 }

@@ -20,6 +20,7 @@ import app.bpartners.geojobs.endpoint.rest.model.FullDetectedZone;
 import app.bpartners.geojobs.endpoint.rest.model.GeoJsonsUrl;
 import app.bpartners.geojobs.endpoint.rest.model.Status;
 import app.bpartners.geojobs.endpoint.rest.model.TaskStatistic;
+import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.validator.CreateFullDetectionValidator;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.job.model.JobStatus;
@@ -59,6 +60,7 @@ public class ZoneDetectionController {
   private final GeoJsonConversionInitiationService geoJsonConversionInitiationService;
   private final ZoneService zoneService;
   private final CreateFullDetectionValidator fullDetectionValidator;
+  private final AuthProvider authProvider;
 
   @PutMapping("/detectionJobs/{id}/taskFiltering")
   public List<FilteredDetectionJob> filteredDetectionJobs(@PathVariable String id) {
@@ -160,7 +162,7 @@ public class ZoneDetectionController {
   @PutMapping("/fullDetection")
   public FullDetectedZone processFullDetection(
       @RequestBody CreateFullDetection createFullDetection) {
-    fullDetectionValidator.accept(createFullDetection);
+    fullDetectionValidator.accept(createFullDetection, authProvider.getPrincipal());
     return zoneService.processTilingAndDetection(createFullDetection);
   }
 }

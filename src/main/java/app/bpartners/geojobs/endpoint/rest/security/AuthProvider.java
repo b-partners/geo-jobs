@@ -26,7 +26,7 @@ public class AuthProvider extends AbstractUserDetailsAuthenticationProvider {
     return authenticator.retrieveUser(username, usernamePasswordAuthenticationToken);
   }
 
-  public static Principal getPrincipal() {
+  public Principal getPrincipal() {
     return (Principal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
   }
 }

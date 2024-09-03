@@ -1,19 +1,33 @@
 package app.bpartners.geojobs.endpoint.rest.controller;
 
-import static app.bpartners.geojobs.job.model.Status.HealthStatus.*;
-import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.FAILED;
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.RETRYING;
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.status.ZDJParcelsStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.status.ZDJStatusRecomputingSubmitted;
-import app.bpartners.geojobs.endpoint.rest.controller.mapper.*;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectConfigurationMapper;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionTaskMapper;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.TaskStatisticMapper;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMapper;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.model.SuccessStatus;
 import app.bpartners.geojobs.endpoint.rest.model.ZoneDetectionJob;
+import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.validator.CreateFullDetectionValidator;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.file.bucket.BucketConf;
@@ -66,7 +80,8 @@ class ZoneDetectionControllerTest {
           eventProducerMock,
           geoJsonConversionInitiationServiceMock,
           zoneServiceMock,
-          fullDetectionValidatorMock);
+          fullDetectionValidatorMock,
+          mock(AuthProvider.class));
 
   @Test
   void task_filtering_ok() {

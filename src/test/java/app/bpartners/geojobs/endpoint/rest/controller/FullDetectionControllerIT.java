@@ -15,6 +15,7 @@ import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -30,7 +31,9 @@ import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.endpoint.rest.model.JobType;
 import app.bpartners.geojobs.endpoint.rest.model.Status;
+import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.authorizer.FullDetectionAuthorizer;
+import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.statistic.HealthStatusStatistic;
@@ -83,12 +86,14 @@ class FullDetectionControllerIT extends FacadeIT {
   @MockBean ZoneTilingJobService zoneTilingJobService;
   @MockBean TaskStatisticMapper taskStatisticMapper;
   @MockBean DetectableObjectConfigurationRepository detectableObjectConfigurationRepository;
-  @MockBean
-  FullDetectionAuthorizer fullDetectionAuthorizer;
+  @MockBean FullDetectionAuthorizer fullDetectionAuthorizer;
+
+  @MockBean AuthProvider authProviderMock;
 
   @BeforeEach
   void setUp() {
-    doNothing().when(fullDetectionAuthorizer).accept(any());
+    when(authProviderMock.getPrincipal()).thenReturn(mock(Principal.class));
+    doNothing().when(fullDetectionAuthorizer).accept(any(), any());
   }
 
   private CreateFullDetection createFullDetection(String endToEndId)
