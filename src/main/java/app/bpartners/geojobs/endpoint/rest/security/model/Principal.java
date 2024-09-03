@@ -1,13 +1,13 @@
 package app.bpartners.geojobs.endpoint.rest.security.model;
 
-import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
-
-import java.util.Collection;
+import app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.Collection;
 
 @Getter
 @ToString
@@ -51,7 +51,11 @@ public class Principal implements UserDetails {
     return true;
   }
 
-  public boolean isAdmin() {
-    return this.getAuthorities().contains(new Authority(ROLE_ADMIN));
+  public Role getRole() {
+    if (authorities.size() != 1) {
+      throw new RuntimeException("Only one role per principal expected but got: " + authorities);
+    }
+
+    return ((Authority) authorities.stream().toList().get(0)).value();
   }
 }
