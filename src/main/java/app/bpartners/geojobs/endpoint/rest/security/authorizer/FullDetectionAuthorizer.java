@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class CommunityFullDetectionAuthorizer implements Consumer<CreateFullDetection> {
+public class FullDetectionAuthorizer implements Consumer<CreateFullDetection> {
   private final CommunityDetectableObjectTypeAuthorizer communityDetectableObjectTypeAuthorizer;
   private final CommunityAuthorizationRepository caRepository;
   private final CommunityZoneAuthorizer communityZoneAuthorizer;

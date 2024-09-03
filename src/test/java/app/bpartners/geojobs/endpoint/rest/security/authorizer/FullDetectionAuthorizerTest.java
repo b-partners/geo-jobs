@@ -19,15 +19,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
-class CommunityFullDetectionAuthorizerTest {
+class FullDetectionAuthorizerTest {
   CommunityAuthorization communityAuthorization = mock();
   CreateFullDetection createFullDetection = mock();
   CommunityZoneSurfaceAuthorizer communityZoneSurfaceAuthorizer = mock();
   CommunityZoneAuthorizer communityZoneAuthorizer = mock();
   CommunityDetectableObjectTypeAuthorizer communityDetectableObjectTypeAuthorizer = mock();
   CommunityAuthorizationRepository caRepository = mock();
-  CommunityFullDetectionAuthorizer subject =
-      new CommunityFullDetectionAuthorizer(
+  FullDetectionAuthorizer subject =
+      new FullDetectionAuthorizer(
           communityDetectableObjectTypeAuthorizer,
           caRepository,
           communityZoneAuthorizer,
