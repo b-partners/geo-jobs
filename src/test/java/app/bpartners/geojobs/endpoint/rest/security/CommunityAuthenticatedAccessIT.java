@@ -13,7 +13,7 @@ import app.bpartners.geojobs.endpoint.rest.api.DetectionApi;
 import app.bpartners.geojobs.endpoint.rest.client.ApiClient;
 import app.bpartners.geojobs.endpoint.rest.client.ApiException;
 import app.bpartners.geojobs.endpoint.rest.model.CreateFullDetection;
-import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType;
+import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.community.CommunityDetectableObjectType;
@@ -58,7 +58,12 @@ class CommunityAuthenticatedAccessIT extends FacadeIT {
     var error =
         assertThrows(
             ApiException.class,
-            () -> detectionApi.processFullDetection(aCreateFullDetection(POOL)));
+            () ->
+                detectionApi.processFullDetection(
+                    new CreateFullDetection()
+                        .endToEndId(randomUUID().toString())
+                        .features(List.of(new Feature()))
+                        .objectType(POOL)));
     assertTrue(error.getMessage().contains(POOL.name()));
   }
 
@@ -71,6 +76,20 @@ class CommunityAuthenticatedAccessIT extends FacadeIT {
     assertTrue(error.getMessage().contains("You must provide an end-to-end id for your detection"));
   }
 
+  @Test
+  void community_cannot_do_full_detection_if_no_features_provided() {
+    var error =
+        assertThrows(
+            ApiException.class,
+            () ->
+                detectionApi.processFullDetection(
+                    new CreateFullDetection()
+                        .endToEndId(randomUUID().toString())
+                        .objectType(POOL)));
+    assertEquals(BAD_REQUEST.value(), error.getCode());
+    assertTrue(error.getMessage().contains("You must provide features for your detection"));
+  }
+
   void setupClientWithApiKey() {
     var authenticatedClient = new ApiClient();
     authenticatedClient.setRequestInterceptor(builder -> builder.header(API_KEY_HEADER, APIKEY));
@@ -79,10 +98,6 @@ class CommunityAuthenticatedAccessIT extends FacadeIT {
     authenticatedClient.setObjectMapper(om);
 
     detectionApi = new DetectionApi(authenticatedClient);
-  }
-
-  private CreateFullDetection aCreateFullDetection(DetectableObjectType authorizedType) {
-    return new CreateFullDetection().endToEndId(randomUUID().toString()).objectType(authorizedType);
   }
 
   private CommunityAuthorization communityAuthorization() {
