@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 @Component
 @AllArgsConstructor
 public class CreateFullDetectionValidator {
-  private FullDetectionAuthorizer fullDetectionAuthorizer;
+  private final FullDetectionAuthorizer fullDetectionAuthorizer;
 
   public void accept(CreateFullDetection createFullDetection) {
     if (createFullDetection.getEndToEndId() == null) {
