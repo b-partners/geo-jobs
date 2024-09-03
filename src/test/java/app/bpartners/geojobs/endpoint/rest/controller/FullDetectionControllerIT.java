@@ -30,7 +30,7 @@ import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.endpoint.rest.model.JobType;
 import app.bpartners.geojobs.endpoint.rest.model.Status;
-import app.bpartners.geojobs.endpoint.rest.security.authorizer.CommunityFullDetectionAuthorizer;
+import app.bpartners.geojobs.endpoint.rest.security.authorizer.FullDetectionAuthorizer;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.statistic.HealthStatusStatistic;
@@ -83,11 +83,12 @@ class FullDetectionControllerIT extends FacadeIT {
   @MockBean ZoneTilingJobService zoneTilingJobService;
   @MockBean TaskStatisticMapper taskStatisticMapper;
   @MockBean DetectableObjectConfigurationRepository detectableObjectConfigurationRepository;
-  @MockBean CommunityFullDetectionAuthorizer communityFullDetectionAuthorizer;
+  @MockBean
+  FullDetectionAuthorizer fullDetectionAuthorizer;
 
   @BeforeEach
   void setUp() {
-    doNothing().when(communityFullDetectionAuthorizer).accept(any());
+    doNothing().when(fullDetectionAuthorizer).accept(any());
   }
 
   private CreateFullDetection createFullDetection(String endToEndId)
