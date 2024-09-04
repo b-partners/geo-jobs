@@ -20,11 +20,11 @@ public class CommunityZoneSurfaceAuthorizer
   @Override
   public void accept(
       CommunityAuthorization communityAuthorization, List<Feature> candidateFeatures) {
-    var lastUsedSurface =
+    var totalUsedSurface =
         communityUsedSurfaceService.getLastUsedSurfaceByCommunityId(communityAuthorization.getId());
     var newSurfaceValueToDetect = featureSurfaceService.getAreaValue(candidateFeatures);
     var candidateSurface =
-        lastUsedSurface
+        totalUsedSurface
             .map(
                 communityUsedSurface ->
                     communityUsedSurface.getUsedSurface() + newSurfaceValueToDetect)
