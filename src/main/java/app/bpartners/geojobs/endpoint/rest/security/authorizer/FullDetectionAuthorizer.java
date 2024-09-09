@@ -29,7 +29,7 @@ public class FullDetectionAuthorizer implements BiConsumer<CreateFullDetection, 
 
   private void authorizeCommunity(CreateFullDetection createFullDetection, Principal principal) {
     var features = createFullDetection.getFeatures();
-    if (features == null) {
+    if (features == null || features.isEmpty()) {
       throw new BadRequestException("You must provide features for your detection");
     }
 
