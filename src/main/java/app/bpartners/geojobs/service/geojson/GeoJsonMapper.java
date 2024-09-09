@@ -24,26 +24,37 @@ public class GeoJsonMapper {
           if (geometry == null || geometry.getCoordinates() == null) {
             throw new IllegalArgumentException("Multipolygon coordinates should not be null");
           }
-          var properties = new HashMap<String, String>();
-          properties.put("confidence", object.getComputedConfidence().toString());
-          properties.put("label", object.getDetectedObjectType().getDetectableType().name());
-          var multipolygon = new MultiPolygon();
-          List<List<BigDecimal>> coordinates =
-              geometry.getCoordinates().stream()
-                  .flatMap(List::stream)
-                  .flatMap(List::stream)
-                  .map(
-                      coor -> {
-                        var x = coor.getFirst().doubleValue();
-                        var y = coor.getLast().doubleValue();
-                        return toGeographicalCoordinates(xTile, yTile, x, y, zoom, imageWidth);
-                      })
-                  .toList();
-          multipolygon.setType(MULTI_POLYGON);
-          multipolygon.setCoordinates(List.of(List.of(coordinates)));
-          var geoFeature = new GeoJson.GeoFeature(properties, multipolygon);
+          var geoFeature =
+              mapToFeature(xTile, yTile, zoom, imageWidth, object, geometry.getCoordinates());
           geoFeatures.add(geoFeature);
         });
     return geoFeatures;
+  }
+
+  private GeoJson.GeoFeature mapToFeature(
+      int xTile,
+      int yTile,
+      int zoom,
+      int imageWidth,
+      DetectedObject object,
+      List<List<List<List<BigDecimal>>>> geometryCoordinates) {
+    var properties = new HashMap<String, String>();
+    properties.put("confidence", object.getComputedConfidence().toString());
+    properties.put("label", object.getDetectedObjectType().getDetectableType().name());
+    var multipolygon = new MultiPolygon();
+    List<List<BigDecimal>> coordinates =
+        geometryCoordinates.stream()
+            .flatMap(List::stream)
+            .flatMap(List::stream)
+            .map(
+                coor -> {
+                  var x = coor.getFirst().doubleValue();
+                  var y = -coor.getLast().doubleValue();
+                  return toGeographicalCoordinates(xTile, yTile, x, y, zoom, imageWidth);
+                })
+            .toList();
+    multipolygon.setType(MULTI_POLYGON);
+    multipolygon.setCoordinates(List.of(List.of(coordinates)));
+    return new GeoJson.GeoFeature(properties, multipolygon);
   }
 }
