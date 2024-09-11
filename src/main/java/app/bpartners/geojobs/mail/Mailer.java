@@ -5,7 +5,7 @@ import static jakarta.mail.Message.RecipientType.CC;
 import static jakarta.mail.Message.RecipientType.TO;
 
 import app.bpartners.geojobs.PojaGenerated;
-import app.bpartners.geojobs.file.FileTyper;
+import app.bpartners.geojobs.file.zip.FileTyper;
 import jakarta.activation.DataHandler;
 import jakarta.activation.DataSource;
 import jakarta.mail.MessagingException;

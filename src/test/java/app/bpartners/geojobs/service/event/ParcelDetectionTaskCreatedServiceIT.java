@@ -12,7 +12,7 @@ import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.ParcelDetectionTaskCreated;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
-import app.bpartners.geojobs.file.BucketComponent;
+import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.repository.DetectedTileRepository;
 import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;

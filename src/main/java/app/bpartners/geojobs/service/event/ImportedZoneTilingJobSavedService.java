@@ -12,7 +12,7 @@ import app.bpartners.geojobs.endpoint.event.model.ImportedZoneTilingJobSaved;
 import app.bpartners.geojobs.endpoint.rest.model.BucketSeparatorType;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
-import app.bpartners.geojobs.file.BucketCustomizedComponent;
+import app.bpartners.geojobs.file.bucket.BucketCustomizedComponent;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
@@ -172,8 +172,9 @@ public class ImportedZoneTilingJobSavedService implements Consumer<ImportedZoneT
             .creationDatetime(now())
             .build();
       }
-      default -> throw new ApiException(
-          SERVER_EXCEPTION, "BucketSeparator " + bucketSeparatorType + " unknown");
+      default ->
+          throw new ApiException(
+              SERVER_EXCEPTION, "BucketSeparator " + bucketSeparatorType + " unknown");
     }
   }
 

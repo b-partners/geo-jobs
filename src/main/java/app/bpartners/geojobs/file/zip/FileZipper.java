@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.file;
+package app.bpartners.geojobs.file.zip;
 
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static java.time.Instant.now;

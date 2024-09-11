@@ -71,8 +71,8 @@ public class TaskStatisticMapper {
       case FINISHED -> {
         return ProgressionStatus.FINISHED;
       }
-      default -> throw new NotImplementedException(
-          "Unknown progression status " + progressionStatus);
+      default ->
+          throw new NotImplementedException("Unknown progression status " + progressionStatus);
     }
   }
 

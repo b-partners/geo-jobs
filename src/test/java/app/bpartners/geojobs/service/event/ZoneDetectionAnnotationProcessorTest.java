@@ -12,7 +12,7 @@ import app.bpartners.gen.annotator.endpoint.rest.client.ApiException;
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
-import app.bpartners.geojobs.file.BucketComponent;
+import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.DetectedTileRepository;
 import app.bpartners.geojobs.repository.HumanDetectionJobRepository;

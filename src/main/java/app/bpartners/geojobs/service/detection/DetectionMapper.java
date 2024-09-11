@@ -165,8 +165,9 @@ public class DetectionMapper {
       case "COMPLETED", "FAILED" -> FINISHED;
       case "STARTED" -> PROCESSING;
       case "PENDING", "READY", "TO_REVIEW", "TO_CORRECT" -> PENDING;
-      default -> throw new ApiException(
-          SERVER_EXCEPTION, "Unknown annotationJobStatus " + annotationJobStatus.getValue());
+      default ->
+          throw new ApiException(
+              SERVER_EXCEPTION, "Unknown annotationJobStatus " + annotationJobStatus.getValue());
     };
   }
 

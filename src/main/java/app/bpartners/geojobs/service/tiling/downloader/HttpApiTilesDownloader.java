@@ -3,8 +3,8 @@ package app.bpartners.geojobs.service.tiling.downloader;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static java.nio.file.Files.createTempFile;
 
-import app.bpartners.geojobs.file.FileUnzipper;
 import app.bpartners.geojobs.file.FileWriter;
+import app.bpartners.geojobs.file.zip.FileUnzipper;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import com.fasterxml.jackson.databind.ObjectMapper;

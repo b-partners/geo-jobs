@@ -33,20 +33,25 @@ Resources:
       DBSubnetGroupName: !Ref DBSubnetGroup
       DeletionProtection: true
       Engine: aurora-postgresql
-      EngineMode: serverless
-      EngineVersion: 13.9 #Only postgresql version 13.9 and 11.9 supports Aurora serverless v1
+      EngineMode: provisioned
+      EngineVersion: 16.1
       MasterUsername: !Sub '{{resolve:ssm:/geo-jobs/${Env}/db/username}}'
       MasterUserPassword: !Sub '{{resolve:ssm:/geo-jobs/${Env}/db/password}}'
       VpcSecurityGroupIds:
         - !Sub '{{resolve:ssm:/bpartners-imagery/sg/id}}'
-      ScalingConfiguration:
+      ServerlessV2ScalingConfiguration:
         MaxCapacity: 64
         MinCapacity: 64
-        SecondsBeforeTimeout: 60
-        AutoPause: true
-        SecondsUntilAutoPause: !If [ IsProdEnv, 900, !Ref ProdDbClusterTimeout]
-            
 
+  DatabaseInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBClusterIdentifier: !Ref DatabaseCluster
+      DBInstanceClass: db.serverless
+      Engine: aurora-postgresql
+      PubliclyAccessible: false
+      DBSubnetGroupName: !Ref DBSubnetGroup
+    DependsOn: DatabaseCluster
 
   DatabaseClusterSSM:
     Type: AWS::SSM::Parameter

@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.file;
+package app.bpartners.geojobs.file.bucket;
 
 import static java.io.File.createTempFile;
 

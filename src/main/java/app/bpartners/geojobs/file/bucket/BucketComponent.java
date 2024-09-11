@@ -1,8 +1,10 @@
-package app.bpartners.geojobs.file;
+package app.bpartners.geojobs.file.bucket;
 
 import static java.io.File.createTempFile;
 
 import app.bpartners.geojobs.PojaGenerated;
+import app.bpartners.geojobs.file.hash.FileHash;
+import app.bpartners.geojobs.file.hash.FileHashAlgorithm;
 import java.io.File;
 import java.net.URL;
 import java.time.Duration;

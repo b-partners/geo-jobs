@@ -1,13 +1,13 @@
 package app.bpartners.geojobs.endpoint.rest.controller.health;
 
-import static app.bpartners.geojobs.file.FileHashAlgorithm.NONE;
+import static app.bpartners.geojobs.file.hash.FileHashAlgorithm.NONE;
 import static java.io.File.createTempFile;
 import static java.nio.file.Files.createTempDirectory;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.PojaGenerated;
-import app.bpartners.geojobs.file.BucketComponent;
-import app.bpartners.geojobs.file.FileHash;
+import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.hash.FileHash;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;

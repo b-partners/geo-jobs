@@ -4,8 +4,8 @@ import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.S
 import static org.apache.commons.io.FileUtils.readFileToByteArray;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
-import app.bpartners.geojobs.file.BucketCustomizedComponent;
 import app.bpartners.geojobs.file.ImageJpegCompressor;
+import app.bpartners.geojobs.file.bucket.BucketCustomizedComponent;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;

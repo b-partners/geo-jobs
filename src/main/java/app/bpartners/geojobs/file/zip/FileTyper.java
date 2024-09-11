@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.file;
+package app.bpartners.geojobs.file.zip;
 
 import static org.springframework.http.MediaType.parseMediaType;
 
