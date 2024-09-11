@@ -18,13 +18,7 @@ import static org.mockito.Mockito.when;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.status.ZDJParcelsStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.status.ZDJStatusRecomputingSubmitted;
-import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectConfigurationMapper;
-import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
-import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionTaskMapper;
-import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
-import app.bpartners.geojobs.endpoint.rest.controller.mapper.TaskStatisticMapper;
-import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMapper;
-import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionTypeMapper;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.*;
 import app.bpartners.geojobs.endpoint.rest.model.SuccessStatus;
 import app.bpartners.geojobs.endpoint.rest.model.ZoneDetectionJob;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
@@ -40,6 +34,7 @@ import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.model.FilteredDetectionJob;
 import app.bpartners.geojobs.repository.model.GeoJobType;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
+import app.bpartners.geojobs.service.CommunityUsedSurfaceService;
 import app.bpartners.geojobs.service.ParcelService;
 import app.bpartners.geojobs.service.ZoneService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
@@ -81,6 +76,8 @@ class ZoneDetectionControllerTest {
           geoJsonConversionInitiationServiceMock,
           zoneServiceMock,
           fullDetectionValidatorMock,
+          mock(CommunityUsedSurfaceService.class),
+          mock(DetectionSurfaceUnitMapper.class),
           mock(AuthProvider.class));
 
   @Test

@@ -24,7 +24,7 @@ class CommunityZoneSurfaceAuthorizerTest {
   @Test
   void should_throws_if_max_surface_is_exceeded() {
     when(featureSurfaceService.getAreaValue(any(List.class))).thenReturn((double) 2_500);
-    when(communityUsedSurfaceService.getLastUsedSurfaceByCommunityId(any()))
+    when(communityUsedSurfaceService.getTotalUsedSurfaceByCommunityId(any()))
         .thenReturn(Optional.of(communityUsedSurface()));
     var communityAuthorization = communityAuthorization();
     List<Feature> features = List.of();
@@ -41,7 +41,7 @@ class CommunityZoneSurfaceAuthorizerTest {
   @Test
   void should_accept_if_max_surface_is_not_exceeded_yet() {
     when(featureSurfaceService.getAreaValue(any(List.class))).thenReturn((double) 1_500);
-    when(communityUsedSurfaceService.getLastUsedSurfaceByCommunityId(any()))
+    when(communityUsedSurfaceService.getTotalUsedSurfaceByCommunityId(any()))
         .thenReturn(Optional.empty());
     List<Feature> features = List.of();
     var communityAuthorization = communityAuthorization();
