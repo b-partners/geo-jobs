@@ -109,7 +109,7 @@ public class SecurityConf {
                     .requestMatchers(PUT, "/fullDetection")
                     .hasAnyAuthority(ROLE_ADMIN.name(), ROLE_COMMUNITY.name())
                     .requestMatchers(GET, "/usage")
-                    .hasAuthority(ROLE_COMMUNITY.name())
+                    .hasAnyAuthority(ROLE_ADMIN.name(), ROLE_COMMUNITY.name())
                     .anyRequest()
                     .denyAll())
         .csrf(AbstractHttpConfigurer::disable)

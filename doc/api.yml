@@ -469,7 +469,7 @@ paths:
       tags:
         - Detection
       operationId: getDetectionUsage
-      summary: get detection usage for community users (bad request for admins)
+      summary: get detection usage for community users
       parameters:
         - in: query
           name: surfaceUnit

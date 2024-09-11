@@ -10,5 +10,5 @@ import org.springframework.stereotype.Repository;
 public interface CommunityUsedSurfaceRepository
     extends JpaRepository<CommunityUsedSurface, String> {
   List<CommunityUsedSurface> findByCommunityAuthorizationIdOrderByUsageDatetimeDesc(
-      String communityId, Pageable page);
+      String communityId, Pageable pageable);
 }

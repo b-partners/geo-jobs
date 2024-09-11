@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.service;
 
-import static app.bpartners.geojobs.repository.model.SurfaceUnit.SQUARE_DEGREE;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
@@ -24,10 +23,6 @@ public class CommunityUsedSurfaceService {
   private final CommunityUsedSurfaceRepository communityUsedSurfaceRepository;
   private final CommunityAuthorizationRepository caRepository;
   private final DetectionSurfaceValueMapper surfaceValueMapper;
-
-  public Optional<CommunityUsedSurface> getTotalUsedSurfaceByCommunityId(String communityId) {
-    return getTotalUsedSurfaceByCommunityId(communityId, SQUARE_DEGREE);
-  }
 
   public Optional<CommunityUsedSurface> getTotalUsedSurfaceByCommunityId(
       String communityId, SurfaceUnit unit) {

@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.security.authorizer;
 
+import static app.bpartners.geojobs.repository.model.SurfaceUnit.SQUARE_DEGREE;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -24,7 +25,7 @@ class CommunityZoneSurfaceAuthorizerTest {
   @Test
   void should_throws_if_max_surface_is_exceeded() {
     when(featureSurfaceService.getAreaValue(any(List.class))).thenReturn((double) 2_500);
-    when(communityUsedSurfaceService.getTotalUsedSurfaceByCommunityId(any()))
+    when(communityUsedSurfaceService.getTotalUsedSurfaceByCommunityId(any(), any()))
         .thenReturn(Optional.of(communityUsedSurface()));
     var communityAuthorization = communityAuthorization();
     List<Feature> features = List.of();
@@ -41,7 +42,7 @@ class CommunityZoneSurfaceAuthorizerTest {
   @Test
   void should_accept_if_max_surface_is_not_exceeded_yet() {
     when(featureSurfaceService.getAreaValue(any(List.class))).thenReturn((double) 1_500);
-    when(communityUsedSurfaceService.getTotalUsedSurfaceByCommunityId(any()))
+    when(communityUsedSurfaceService.getTotalUsedSurfaceByCommunityId(any(), any()))
         .thenReturn(Optional.empty());
     List<Feature> features = List.of();
     var communityAuthorization = communityAuthorization();
@@ -57,6 +58,6 @@ class CommunityZoneSurfaceAuthorizerTest {
   }
 
   private CommunityUsedSurface communityUsedSurface() {
-    return CommunityUsedSurface.builder().usedSurface(1_000).build();
+    return CommunityUsedSurface.builder().usedSurface(1_000).unit(SQUARE_DEGREE).build();
   }
 }

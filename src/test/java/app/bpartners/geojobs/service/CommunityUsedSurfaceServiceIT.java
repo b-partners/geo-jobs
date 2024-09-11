@@ -77,11 +77,12 @@ class CommunityUsedSurfaceServiceIT extends FacadeIT {
   void can_take_last_used_surface() {
     var expectedUsedSurface = communityUsedSurface(LAST_SURFACE_VALUE, DUMMY_DATE);
 
-    var actualUsedSurface = subject.getTotalUsedSurfaceByCommunityId(COMMUNITY_ID).orElseThrow();
+    var actualUsedSurface =
+        subject.getTotalUsedSurfaceByCommunityId(COMMUNITY_ID, SQUARE_DEGREE).orElseThrow();
 
     assertEquals(formatUsedSurface(expectedUsedSurface), formatUsedSurface(actualUsedSurface));
     communityUsedSurfaceRepository.deleteAll();
-    assertTrue(subject.getTotalUsedSurfaceByCommunityId(COMMUNITY_ID).isEmpty());
+    assertTrue(subject.getTotalUsedSurfaceByCommunityId(COMMUNITY_ID, SQUARE_DEGREE).isEmpty());
   }
 
   @Test
@@ -90,7 +91,7 @@ class CommunityUsedSurfaceServiceIT extends FacadeIT {
 
     subject.appendLastUsedSurface(communityUsedSurface(20, now()));
     var actualLastUsedSurface =
-        subject.getTotalUsedSurfaceByCommunityId(COMMUNITY_ID).orElseThrow();
+        subject.getTotalUsedSurfaceByCommunityId(COMMUNITY_ID, SQUARE_DEGREE).orElseThrow();
 
     assertEquals(formatUsedSurface(exceptedUsedSurface), formatUsedSurface(actualLastUsedSurface));
   }
@@ -101,7 +102,8 @@ class CommunityUsedSurfaceServiceIT extends FacadeIT {
     var exceptedUsedSurface = communityUsedSurface(15, now());
 
     subject.appendLastUsedSurface(communityUsedSurface(15, now()));
-    var actualUsedSurface = subject.getTotalUsedSurfaceByCommunityId(COMMUNITY_ID).orElseThrow();
+    var actualUsedSurface =
+        subject.getTotalUsedSurfaceByCommunityId(COMMUNITY_ID, SQUARE_DEGREE).orElseThrow();
 
     assertEquals(formatUsedSurface(exceptedUsedSurface), formatUsedSurface(actualUsedSurface));
   }
