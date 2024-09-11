@@ -464,6 +464,25 @@ paths:
                 $ref: "#/components/schemas/ZoneDetectionJob"
         '500':
           $ref: '#/components/responses/500'
+  '/usage':
+    get:
+      tags:
+        - Detection
+      operationId: getDetectionUsage
+      summary: get detection usage for community users (bad request for admins)
+      parameters:
+        - in: query
+          name: surfaceUnit
+          required: false
+          schema:
+            $ref: '#/components/schemas/DetectionSurfaceUnit'
+      responses:
+        200:
+          description: The statistics of detections usages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetectionUsage'
 
   '/fullDetection':
     put:
@@ -642,6 +661,38 @@ components:
             - HOUSES_1
             - HOUSES_2
             - HOUSE_PROPERTY
+    DetectionSurfaceUnit:
+      type: string
+      enum:
+        - SQUARE_DEGREE
+    DetectionSurfaceValue:
+      type: object
+      required:
+        - value
+        - unit
+      properties:
+        value:
+          type: number
+          format: double
+        unit:
+          $ref: '#/components/schemas/DetectionSurfaceUnit'
+    DetectionUsage:
+      type: object
+      required:
+        - totalUsedSurface
+        - remainingSurface
+        - lastDatetimeSurfaceUsage
+        - maxAuthorizedSurface
+      properties:
+        maxAuthorizedSurface:
+          $ref: '#/components/schemas/DetectionSurfaceValue'
+        totalUsedSurface:
+          $ref: '#/components/schemas/DetectionSurfaceValue'
+        remainingSurface:
+          $ref: '#/components/schemas/DetectionSurfaceValue'
+        lastDatetimeSurfaceUsage:
+          type: string
+          format: date-time
     AnnotationJobProcessing:
       type: object
       properties:
