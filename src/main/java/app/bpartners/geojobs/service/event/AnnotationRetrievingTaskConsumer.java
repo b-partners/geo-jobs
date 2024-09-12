@@ -6,7 +6,7 @@ import static java.util.UUID.randomUUID;
 import app.bpartners.gen.annotator.endpoint.rest.model.AnnotationBatch;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.job.model.Status;
-import app.bpartners.geojobs.repository.model.AnnotationRetrievingTask;
+import app.bpartners.geojobs.repository.model.annotation.AnnotationRetrievingTask;
 import app.bpartners.geojobs.repository.model.detection.HumanDetectedTile;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.annotator.AnnotationService;

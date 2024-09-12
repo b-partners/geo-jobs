@@ -5,7 +5,7 @@ import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationRetrievin
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationRetrievingTaskSucceeded;
 import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.repository.AnnotationRetrievingTaskRepository;
-import app.bpartners.geojobs.repository.model.AnnotationRetrievingTask;
+import app.bpartners.geojobs.repository.model.annotation.AnnotationRetrievingTask;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;

@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.endpoint.event.model.annotation;
 
 import app.bpartners.geojobs.endpoint.event.model.PojaEvent;
-import app.bpartners.geojobs.repository.model.AnnotationRetrievingJob;
+import app.bpartners.geojobs.repository.model.annotation.AnnotationRetrievingJob;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Duration;
 import lombok.*;

@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.repository;
 
-import app.bpartners.geojobs.repository.model.AnnotationRetrievingJob;
+import app.bpartners.geojobs.repository.model.annotation.AnnotationRetrievingJob;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;

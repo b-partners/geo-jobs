@@ -1,12 +1,10 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.job.model.Status.HealthStatus.*;
-
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationRetrievingJobStatusChanged;
 import app.bpartners.geojobs.endpoint.event.model.status.HumanZDJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
-import app.bpartners.geojobs.repository.model.AnnotationRetrievingJob;
+import app.bpartners.geojobs.repository.model.annotation.AnnotationRetrievingJob;
 import app.bpartners.geojobs.service.AnnotationRetrievingJobService;
 import app.bpartners.geojobs.service.StatusChangedHandler;
 import app.bpartners.geojobs.service.StatusHandler;

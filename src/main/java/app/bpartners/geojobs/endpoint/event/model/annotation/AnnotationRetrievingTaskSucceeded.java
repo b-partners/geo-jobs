@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.endpoint.event.model.annotation;
 
 import app.bpartners.geojobs.endpoint.event.model.PojaEvent;
-import app.bpartners.geojobs.repository.model.AnnotationRetrievingTask;
+import app.bpartners.geojobs.repository.model.annotation.AnnotationRetrievingTask;
 import java.time.Duration;
 import lombok.*;
 

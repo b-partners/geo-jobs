@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.repository.model;
+package app.bpartners.geojobs.repository.model.annotation;
 
 import app.bpartners.geojobs.job.model.JobType;
 import app.bpartners.geojobs.job.model.Task;
