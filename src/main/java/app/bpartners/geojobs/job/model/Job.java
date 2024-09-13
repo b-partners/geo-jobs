@@ -2,8 +2,7 @@ package app.bpartners.geojobs.job.model;
 
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.FAILED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
-import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
-import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
 import static jakarta.persistence.CascadeType.ALL;
 import static jakarta.persistence.FetchType.EAGER;
 
@@ -37,6 +36,10 @@ public abstract class Job implements Serializable, Statusable<JobStatus> {
   @OneToMany(cascade = ALL, mappedBy = "jobId", fetch = EAGER)
   @Builder.Default
   private List<JobStatus> statusHistory = new ArrayList<>();
+
+  public boolean isProcessing() {
+    return PROCESSING.equals(getStatus().getProgression());
+  }
 
   public boolean isPending() {
     return PENDING.equals(getStatus().getProgression());

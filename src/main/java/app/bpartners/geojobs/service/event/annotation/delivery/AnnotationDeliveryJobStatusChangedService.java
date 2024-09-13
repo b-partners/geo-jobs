@@ -1,12 +1,19 @@
 package app.bpartners.geojobs.service.event.annotation.delivery;
 
 import static app.bpartners.gen.annotator.endpoint.rest.model.JobStatus.STARTED;
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
+import static app.bpartners.geojobs.repository.model.GeoJobType.ANNOTATION_DELIVERY;
+import static java.time.Instant.now;
+import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryJobStatusChanged;
+import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.repository.model.annotation.AnnotationDeliveryJob;
 import app.bpartners.geojobs.service.StatusChangedHandler;
 import app.bpartners.geojobs.service.StatusHandler;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
+import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,20 +26,25 @@ public class AnnotationDeliveryJobStatusChangedService
     implements Consumer<AnnotationDeliveryJobStatusChanged> {
   private final StatusChangedHandler statusChangedHandler;
   private final AnnotationService annotationService;
+  private final ZoneDetectionJobService zoneDetectionJobService;
 
   @Override
   public void accept(AnnotationDeliveryJobStatusChanged event) {
     var oldJob = event.getOldJob();
     var newJob = event.getNewJob();
 
-    OnFinishedHandler onFinishedHandler = new OnFinishedHandler(annotationService, newJob);
+    OnFinishedHandler onFinishedHandler =
+        new OnFinishedHandler(zoneDetectionJobService, annotationService, newJob);
 
     statusChangedHandler.handle(
         event, newJob.getStatus(), oldJob.getStatus(), onFinishedHandler, onFinishedHandler);
   }
 
   private record OnFinishedHandler(
-      AnnotationService annotationService, AnnotationDeliveryJob newJob) implements StatusHandler {
+      ZoneDetectionJobService zoneDetectionJobService,
+      AnnotationService annotationService,
+      AnnotationDeliveryJob newJob)
+      implements StatusHandler {
 
     @Override
     public String performAction() {
@@ -43,6 +55,17 @@ public class AnnotationDeliveryJobStatusChangedService
 
       annotationService.saveAnnotationJob(
           detectionJobId, annotationJobId, annotationJobName, labels, STARTED);
+      var humanZDJ = zoneDetectionJobService.getHumanZdjFromZdjId(detectionJobId);
+      humanZDJ.hasNewStatus(
+          JobStatus.builder()
+              .id(randomUUID().toString())
+              .jobId(humanZDJ.getId())
+              .jobType(ANNOTATION_DELIVERY)
+              .progression(PROCESSING)
+              .health(UNKNOWN)
+              .creationDatetime(now())
+              .build());
+      zoneDetectionJobService.save(humanZDJ);
 
       return "Annotation Delivery Job (id"
           + newJob.getId()

@@ -14,7 +14,7 @@ import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.JdbcTypeCode;
 
 @Entity
-@Table(name = "annotation_retrieving_task")
+@Table(name = "annotation_delivery_task")
 @SuperBuilder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor

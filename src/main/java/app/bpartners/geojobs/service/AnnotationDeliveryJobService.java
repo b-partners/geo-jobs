@@ -7,7 +7,6 @@ import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryT
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.job.repository.TaskRepository;
 import app.bpartners.geojobs.job.service.JobService;
-import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.AnnotationDeliveryJobRepository;
 import app.bpartners.geojobs.repository.TaskStatisticRepository;
 import app.bpartners.geojobs.repository.model.annotation.AnnotationDeliveryJob;
@@ -51,22 +50,6 @@ public class AnnotationDeliveryJobService
                 List.of(AnnotationDeliveryTaskCreated.builder().deliveryTask(task).build())));
 
     return job;
-  }
-
-  public List<AnnotationDeliveryJob> findAllByDetectionJobId(String id) {
-    return AnnotationDeliveryJobRepository.findAllByDetectionJobId(id);
-  }
-
-  public AnnotationDeliveryJob getByAnnotationJobId(String id) {
-    return AnnotationDeliveryJobRepository.findByAnnotationJobId(id)
-        .orElseThrow(
-            () ->
-                new NotFoundException(
-                    "No Annotation delivery job found for annotation job id=" + id));
-  }
-
-  public List<AnnotationDeliveryJob> saveAll(List<AnnotationDeliveryJob> toSave) {
-    return AnnotationDeliveryJobRepository.saveAll(toSave);
   }
 
   @Override
