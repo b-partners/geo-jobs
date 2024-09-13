@@ -7,3 +7,6 @@ ANNOTATOR_GEOJOBS_USER_INFO: !Sub '{{resolve:ssm:/geo-jobs/${Env}/annotator/user
 TILES_DOWNLOADER_MOCK_ACTIVATED: !Sub '{{resolve:ssm:/geo-jobs/${Env}/tiles-downloader-activated}}'
 COMMUNITY_AUTH_DETAILS: !Sub '{{resolve:ssm:/geo-jobs/${Env}/community/auth-details}}'
 OBJECTS_DETECTOR_MOCK_ACTIVATED: !Sub '{{resolve:ssm:/geo-jobs/${Env}/objects-detector-activated}}'
+SPRING_DATASOURCE_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/neon/db/url}}'
+SPRING_DATASOURCE_USERNAME: !Sub '{{resolve:ssm:/geo-jobs/${Env}/neon/db/username}}'
+SPRING_DATASOURCE_PASSWORD: !Sub '{{resolve:ssm:/geo-jobs/${Env}/neon/db/password}}'

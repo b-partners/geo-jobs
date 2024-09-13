@@ -27,16 +27,21 @@ public class StatusChangedHandler {
     var doNothingMessage = "Old task already finished, do nothing";
     var message =
         switch (oldStatus.getProgression()) {
-          case PENDING, PROCESSING -> switch (newProgression) {
-            case FINISHED -> switch (newHealth) {
-              case UNKNOWN, RETRYING -> throw new IllegalStateException(illegalFinishedMessage);
-              case SUCCEEDED -> onFinish
-                  .performAction(); // TODO: use Runnable instead of simple Interface
-              case FAILED -> onFailed
-                  .performAction(); // TODO: use Runnable instead of simple Interface
-            };
-            case PENDING, PROCESSING -> notFinishedMessage;
-          };
+          case PENDING, PROCESSING ->
+              switch (newProgression) {
+                case FINISHED ->
+                    switch (newHealth) {
+                      case UNKNOWN, RETRYING ->
+                          throw new IllegalStateException(illegalFinishedMessage);
+                      case SUCCEEDED ->
+                          onFinish
+                              .performAction(); // TODO: use Runnable instead of simple Interface
+                      case FAILED ->
+                          onFailed
+                              .performAction(); // TODO: use Runnable instead of simple Interface
+                    };
+                case PENDING, PROCESSING -> notFinishedMessage;
+              };
           case FINISHED -> doNothingMessage;
         };
     log.info(message);

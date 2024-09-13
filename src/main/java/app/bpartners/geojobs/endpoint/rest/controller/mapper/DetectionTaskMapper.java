@@ -89,8 +89,8 @@ public class DetectionTaskMapper {
       case PATHWAY -> {
         return DetectableObjectType.PATHWAY;
       }
-      default -> throw new NotImplementedException(
-          "Unknown Detectable Object Type " + detectableType);
+      default ->
+          throw new NotImplementedException("Unknown Detectable Object Type " + detectableType);
     }
   }
 }

@@ -31,18 +31,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class ExtractorIT extends FacadeIT {
   private static final String MOCK_FEATURE_AS_STRING =
       """
-          { "type": "Feature",
-            "properties": {
-              "code": "69",
-              "nom": "Rhône",
-              "id": 30251921,
-              "CLUSTER_ID": 99520,
-              "CLUSTER_SIZE": 386884 },
-            "geometry": {
-              "type": "MultiPolygon",
-              "coordinates": [ [ [
-                [ 4.459648282829194, 45.904988912620688 ]
-                ] ] ] } }""";
+      { "type": "Feature",
+        "properties": {
+          "code": "69",
+          "nom": "Rhône",
+          "id": 30251921,
+          "CLUSTER_ID": 99520,
+          "CLUSTER_SIZE": 386884 },
+        "geometry": {
+          "type": "MultiPolygon",
+          "coordinates": [ [ [
+            [ 4.459648282829194, 45.904988912620688 ]
+            ] ] ] } }""";
   public static final String PARCEL_MOCK_ID = "parcel1";
   @Autowired ObjectMapper om;
   @Autowired LabelConverter labelConverter;

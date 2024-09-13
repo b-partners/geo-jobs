@@ -178,8 +178,9 @@ public class DetectionMapper {
       case "COMPLETED", "FAILED" -> FINISHED;
       case "STARTED" -> PROCESSING;
       case "PENDING", "READY", "TO_REVIEW", "TO_CORRECT" -> PENDING;
-      default -> throw new ApiException(
-          SERVER_EXCEPTION, "Unknown annotationJobStatus " + annotationJobStatus.getValue());
+      default ->
+          throw new ApiException(
+              SERVER_EXCEPTION, "Unknown annotationJobStatus " + annotationJobStatus.getValue());
     };
   }
 
@@ -226,8 +227,8 @@ public class DetectionMapper {
       case "PATHWAY" -> create(objectId, PATHWAY);
       case "LINE" -> create(objectId, LINE);
       case "GREEN_SPACE" -> create(objectId, GREEN_SPACE);
-      default -> throw new IllegalStateException(
-          "Unexpected value: " + label.getName().toUpperCase());
+      default ->
+          throw new IllegalStateException("Unexpected value: " + label.getName().toUpperCase());
     };
   }
 
