@@ -8,7 +8,7 @@ import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.consumer.EventConsumer;
 import app.bpartners.geojobs.endpoint.event.consumer.model.ConsumableEvent;
 import app.bpartners.geojobs.endpoint.event.consumer.model.TypedEvent;
-import app.bpartners.geojobs.endpoint.event.model.uuid.UuidCreated;
+import app.bpartners.geojobs.endpoint.event.model.UuidCreated;
 import app.bpartners.geojobs.repository.DummyUuidRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,7 +34,7 @@ class EventConsumerIT extends FacadeIT {
         List.of(
             new ConsumableEvent(
                 new TypedEvent(
-                    "app.bpartners.geojobs.endpoint.event.model.uuid.UuidCreated", payloadReceived),
+                    "app.bpartners.geojobs.endpoint.event.model.UuidCreated", payloadReceived),
                 () -> {},
                 () -> {})));
 

@@ -12,7 +12,7 @@ import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.consumer.model.ConsumableEvent;
 import app.bpartners.geojobs.endpoint.event.consumer.model.ConsumableEventTyper;
 import app.bpartners.geojobs.endpoint.event.consumer.model.TypedEvent;
-import app.bpartners.geojobs.endpoint.event.model.uuid.UuidCreated;
+import app.bpartners.geojobs.endpoint.event.model.UuidCreated;
 import com.amazonaws.services.lambda.runtime.events.SQSEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -54,7 +54,7 @@ public class ConsumableEventTyperTest extends FacadeIT {
     var uuidCreated = UuidCreated.builder().uuid(uuid).build();
     var payload = om.readValue(om.writeValueAsString(uuidCreated), UuidCreated.class);
     var typedEvent =
-        new TypedEvent("app.bpartners.geojobs.endpoint.event.model.uuid.UuidCreated", payload);
+        new TypedEvent("app.bpartners.geojobs.endpoint.event.model.UuidCreated", payload);
 
     var actualAcknowledgeableEvents = subject.apply(List.of(sqsMessageFrom(typedEvent)));
     var actualAcknowledgeableEvent = actualAcknowledgeableEvents.get(0);
@@ -71,7 +71,7 @@ public class ConsumableEventTyperTest extends FacadeIT {
     var payload = om.readValue(om.writeValueAsString(uuidCreated), UuidCreated.class);
     var unknownTypenameTypedEvent = new TypedEvent(UNKNOWN_TYPENAME, payload);
     var validTypedEvent =
-        new TypedEvent("app.bpartners.geojobs.endpoint.event.model.uuid.UuidCreated", payload);
+        new TypedEvent("app.bpartners.geojobs.endpoint.event.model.UuidCreated", payload);
 
     var actualAcknowledgeableEvents =
         subject.apply(

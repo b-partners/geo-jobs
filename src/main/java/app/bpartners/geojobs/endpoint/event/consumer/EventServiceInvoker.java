@@ -1,16 +1,15 @@
 package app.bpartners.geojobs.endpoint.event.consumer;
 
-import static org.reflections.scanners.Scanners.SubTypes;
-
 import app.bpartners.geojobs.PojaGenerated;
 import app.bpartners.geojobs.endpoint.event.consumer.model.TypedEvent;
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.reflections.Reflections;
+import org.reflections.scanners.Scanners;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
@@ -23,36 +22,21 @@ public class EventServiceInvoker implements Consumer<TypedEvent> {
 
   private final ApplicationContext applicationContext;
 
+  @SneakyThrows
   @Override
   public void accept(TypedEvent typedEvent) {
     var typeName = typedEvent.typeName();
     var eventClasses = getAllClasses("app.bpartners.geojobs.endpoint.event.model");
     for (var clazz : eventClasses) {
       if (clazz.getTypeName().equals(typeName)) {
-        try {
-          faillibleInvoke(clazz, typeName, typedEvent);
-          return;
-        } catch (Exception e) {
-          log.error("Invocation failed", e);
-          throw new RuntimeException(e);
-        }
+        var serviceClazz = Class.forName(getEventService(typeName));
+        var acceptMethod = serviceClazz.getMethod("accept", clazz);
+        acceptMethod.invoke(applicationContext.getBean(serviceClazz), typedEvent.payload());
+        return;
       }
     }
 
     throw new RuntimeException("Unexpected type for event=" + typedEvent);
-  }
-
-  private void faillibleInvoke(Class<?> clazz, String typeName, TypedEvent typedEvent)
-      throws ClassNotFoundException,
-          NoSuchMethodException,
-          IllegalAccessException,
-          InvocationTargetException {
-    var serviceClazz = Class.forName(getEventService(typeName));
-    var acceptMethod =
-        // TODO: Does not work when serviceClazz gets its accept method from a super-class
-        serviceClazz.getMethod("accept", clazz);
-    log.info("Invoke: class={}, method={}", serviceClazz, acceptMethod);
-    acceptMethod.invoke(applicationContext.getBean(serviceClazz), typedEvent.payload());
   }
 
   private String getEventService(String eventClazzName) {
@@ -63,7 +47,7 @@ public class EventServiceInvoker implements Consumer<TypedEvent> {
   }
 
   private Set<Class<?>> getAllClasses(String packageName) {
-    var reflections = new Reflections(packageName, SubTypes.filterResultsBy(s -> true));
+    var reflections = new Reflections(packageName, Scanners.SubTypes.filterResultsBy(s -> true));
     return new HashSet<>(reflections.getSubTypesOf(Object.class));
   }
 }

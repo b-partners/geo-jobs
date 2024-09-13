@@ -3,7 +3,7 @@ package app.bpartners.geojobs.service.event;
 import static java.lang.Thread.sleep;
 
 import app.bpartners.geojobs.PojaGenerated;
-import app.bpartners.geojobs.endpoint.event.model.uuid.DurablyFallibleUuidCreated1;
+import app.bpartners.geojobs.endpoint.event.model.DurablyFallibleUuidCreated1;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;

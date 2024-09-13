@@ -29,9 +29,7 @@ Globals:
         AWS_EVENT_STACK_1_SQS_QUEUE_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/1/sqs/mailbox-queue-url}}'
         AWS_EVENT_STACK_2_SQS_QUEUE_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/2/sqs/mailbox-queue-url}}'
         
-        SPRING_DATASOURCE_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/db/url}}'
-        SPRING_DATASOURCE_USERNAME: !Sub '{{resolve:ssm:/geo-jobs/${Env}/db/user/username}}'
-        SPRING_DATASOURCE_PASSWORD: !Sub '{{resolve:ssm:/geo-jobs/${Env}/db/user/password}}'
+        
         
         SENTRY_DSN: !Sub '{{resolve:ssm:/geo-jobs/sentry/dsn}}'
         SENTRY_ENVIRONMENT: !Ref Env
@@ -44,7 +42,9 @@ Globals:
         TILES_DOWNLOADER_MOCK_ACTIVATED: !Sub '{{resolve:ssm:/geo-jobs/${Env}/tiles-downloader-activated}}'
         COMMUNITY_AUTH_DETAILS: !Sub '{{resolve:ssm:/geo-jobs/${Env}/community/auth-details}}'
         OBJECTS_DETECTOR_MOCK_ACTIVATED: !Sub '{{resolve:ssm:/geo-jobs/${Env}/objects-detector-activated}}'
-
+        SPRING_DATASOURCE_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/neon/db/url}}'
+        SPRING_DATASOURCE_USERNAME: !Sub '{{resolve:ssm:/geo-jobs/${Env}/neon/db/username}}'
+        SPRING_DATASOURCE_PASSWORD: !Sub '{{resolve:ssm:/geo-jobs/neon/${Env}/neon/db/password}}'
     
         
 
