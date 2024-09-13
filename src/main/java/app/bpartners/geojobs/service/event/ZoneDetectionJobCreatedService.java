@@ -20,8 +20,9 @@ public class ZoneDetectionJobCreatedService implements Consumer<ZoneDetectionJob
     var detectionType = zoneDetectionJob.getDetectionType();
     switch (detectionType) {
       case MACHINE -> zoneDetectionJobService.fireTasks(zoneDetectionJob.getId());
-      case HUMAN -> throw new NotImplementedException(
-          "Processing ZDJ(type=HUMAN, id=" + zoneDetectionJob.getId() + " not supported yet");
+      case HUMAN ->
+          throw new NotImplementedException(
+              "Processing ZDJ(type=HUMAN, id=" + zoneDetectionJob.getId() + " not supported yet");
       default -> throw new RuntimeException("Unknown ZDJ detection type : " + detectionType);
     }
   }

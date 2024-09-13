@@ -179,8 +179,9 @@ public class ImportedZoneTilingJobSavedService implements Consumer<ImportedZoneT
             .creationDatetime(now())
             .build();
       }
-      default -> throw new ApiException(
-          SERVER_EXCEPTION, "BucketSeparator " + bucketSeparatorType + " unknown");
+      default ->
+          throw new ApiException(
+              SERVER_EXCEPTION, "BucketSeparator " + bucketSeparatorType + " unknown");
     }
   }
 

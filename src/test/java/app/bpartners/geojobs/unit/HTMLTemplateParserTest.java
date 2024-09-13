@@ -17,13 +17,13 @@ class HTMLTemplateParserTest {
   void apply_ok() {
     var expected =
         """
-                <html lang="fr">
-                <head>
-                    <title>Template</title>
-                </head>
-                <body>
-                </body>
-                </html>""";
+        <html lang="fr">
+        <head>
+            <title>Template</title>
+        </head>
+        <body>
+        </body>
+        </html>""";
     HTMLTemplateParser subject = new HTMLTemplateParser();
 
     var actual = subject.apply("template", new Context());
