@@ -3,7 +3,12 @@ package app.bpartners.geojobs.repository.model.detection;
 import static org.hibernate.type.SqlTypes.JSON;
 
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Table;
+import java.io.Serializable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -22,7 +27,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 @Setter
 @EqualsAndHashCode
 @Table(name = "full_detection")
-public class FullDetection {
+public class FullDetection implements Serializable {
   @Id private String id;
   private String endToEndId;
 

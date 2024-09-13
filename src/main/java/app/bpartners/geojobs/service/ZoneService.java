@@ -29,6 +29,7 @@ import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -47,10 +48,12 @@ public class ZoneService {
   private final ZoneDetectionJobRepository zoneDetectionJobRepository;
   private final FullDetectionRepository fullDetectionRepository;
   private final ZoneTilingJobRepository zoneTilingJobRepository;
+  private final CommunityUsedSurfaceService communityUsedSurfaceService;
   private final BucketComponent bucketComponent;
   private final GeoJsonConversionInitiationService conversionInitiationService;
 
-  public FullDetectedZone processTilingAndDetection(CreateFullDetection zoneToDetect) {
+  public FullDetectedZone processTilingAndDetection(
+      CreateFullDetection zoneToDetect, Optional<String> communityOwnerId) {
     var endToEndId = zoneToDetect.getEndToEndId();
     var fullDetection =
         fullDetectionRepository
@@ -61,13 +64,15 @@ public class ZoneService {
                       FullDetection.builder()
                           .id(randomUUID().toString())
                           .endToEndId(endToEndId)
+                          .communityOwnerId(communityOwnerId.orElse(null))
                           .detectableObjectConfiguration(
                               new DetectableObjectConfiguration()
                                   .bucketStorageName(zoneToDetect.getBucketStorage())
                                   .type(zoneToDetect.getObjectType())
                                   .confidence(zoneToDetect.getConfidence()))
                           .build();
-                  return fullDetectionRepository.save(toSave);
+                  return communityUsedSurfaceService.persistFullDetectionWithSurfaceUsage(
+                      toSave, zoneToDetect.getFeatures());
                 });
 
     if (fullDetection.getZtjId() == null) {

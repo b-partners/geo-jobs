@@ -5,6 +5,7 @@ import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
+import app.bpartners.geojobs.repository.FullDetectionRepository;
 import java.util.function.BiConsumer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -16,6 +17,8 @@ public class FullDetectionAuthorizer implements BiConsumer<CreateFullDetection, 
   private final CommunityAuthorizationRepository caRepository;
   private final CommunityZoneAuthorizer communityZoneAuthorizer;
   private final CommunityZoneSurfaceAuthorizer communityZoneSurfaceAuthorizer;
+  private final FullDetectionOwnerAuthorizer fullDetectionOwnerAuthorizer;
+  private final FullDetectionRepository fullDetectionRepository;
 
   @Override
   public void accept(CreateFullDetection createFullDetection, Principal principal) {
@@ -32,9 +35,15 @@ public class FullDetectionAuthorizer implements BiConsumer<CreateFullDetection, 
     if (features == null || features.isEmpty()) {
       throw new BadRequestException("You must provide features for your detection");
     }
-
     var communityAuthorization =
         caRepository.findByApiKey(principal.getPassword()).orElseThrow(ForbiddenException::new);
+    var fullDetection =
+        fullDetectionRepository.findByEndToEndId(createFullDetection.getEndToEndId());
+    if (fullDetection.isPresent()) {
+      fullDetectionOwnerAuthorizer.accept(communityAuthorization, fullDetection.get());
+      return;
+    }
+
     communityDetectableObjectTypeAuthorizer.accept(
         communityAuthorization, createFullDetection.getObjectType());
     communityZoneSurfaceAuthorizer.accept(communityAuthorization, features);

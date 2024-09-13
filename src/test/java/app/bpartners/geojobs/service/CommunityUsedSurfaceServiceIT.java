@@ -3,20 +3,27 @@ package app.bpartners.geojobs.service;
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_COMMUNITY;
 import static app.bpartners.geojobs.repository.model.SurfaceUnit.SQUARE_DEGREE;
 import static java.time.Instant.now;
+import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionSurfaceValueMapper;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionUsage;
+import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.CommunityUsedSurfaceRepository;
+import app.bpartners.geojobs.repository.FullDetectionRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorizedZone;
 import app.bpartners.geojobs.repository.model.community.CommunityUsedSurface;
+import app.bpartners.geojobs.repository.model.detection.FullDetection;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -26,6 +33,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
 class CommunityUsedSurfaceServiceIT extends FacadeIT {
   private static final double LAST_SURFACE_VALUE = 10;
@@ -37,6 +45,8 @@ class CommunityUsedSurfaceServiceIT extends FacadeIT {
   @Autowired CommunityAuthorizationRepository communityAuthorizationRepository;
   @Autowired CommunityUsedSurfaceRepository communityUsedSurfaceRepository;
   @Autowired CommunityUsedSurfaceService subject;
+  @Autowired FullDetectionRepository fullDetectionRepository;
+  @MockBean FeatureSurfaceService featureSurfaceServiceMock;
 
   @BeforeEach
   void setup() {
@@ -46,6 +56,7 @@ class CommunityUsedSurfaceServiceIT extends FacadeIT {
 
   @AfterEach
   void cleanup() {
+    fullDetectionRepository.deleteAll();
     communityUsedSurfaceRepository.deleteAll();
     communityAuthorizationRepository.deleteAll();
   }
@@ -126,6 +137,28 @@ class CommunityUsedSurfaceServiceIT extends FacadeIT {
     var actual = subject.getUsage(principal, SQUARE_DEGREE);
 
     assertEquals(expected, actual);
+  }
+
+  @Test
+  void persist_fullDetectionWithSurfaceUsage_ok() {
+    var endToEndId = randomUUID().toString();
+    var fullDetection =
+        FullDetection.builder()
+            .endToEndId(endToEndId)
+            .communityOwnerId(COMMUNITY_ID)
+            .id(randomUUID().toString())
+            .build();
+    when(featureSurfaceServiceMock.getAreaValue(any(List.class))).thenReturn(LAST_SURFACE_VALUE);
+
+    subject.persistFullDetectionWithSurfaceUsage(fullDetection, List.of(mock(Feature.class)));
+    var expectedSurfaceValue = LAST_SURFACE_VALUE + LAST_SURFACE_VALUE;
+
+    var actualUsedSurface =
+        subject.getTotalUsedSurfaceByCommunityId(COMMUNITY_ID, SQUARE_DEGREE).orElseThrow();
+    var actualFullDetection = fullDetectionRepository.findByEndToEndId(endToEndId).orElseThrow();
+
+    assertEquals(expectedSurfaceValue, actualUsedSurface.getUsedSurface());
+    assertEquals(fullDetection, actualFullDetection);
   }
 
   private static CommunityUsedSurface formatUsedSurface(CommunityUsedSurface communityUsedSurface) {
