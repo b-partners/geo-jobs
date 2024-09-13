@@ -1,26 +1,31 @@
 package app.bpartners.geojobs.service.annotator;
 
-import static app.bpartners.gen.annotator.endpoint.rest.model.JobStatus.*;
 import static app.bpartners.gen.annotator.endpoint.rest.model.JobType.REVIEWING;
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
-import static java.time.LocalTime.now;
+import static app.bpartners.geojobs.repository.model.GeoJobType.ANNOTATION_DELIVERY;
+import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.gen.annotator.endpoint.rest.api.AdminApi;
 import app.bpartners.gen.annotator.endpoint.rest.api.JobsApi;
 import app.bpartners.gen.annotator.endpoint.rest.client.ApiException;
 import app.bpartners.gen.annotator.endpoint.rest.model.*;
-import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.annotation.CreateAnnotatedTaskSubmitted;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
+import app.bpartners.geojobs.repository.model.annotation.AnnotationDeliveryJob;
+import app.bpartners.geojobs.repository.model.annotation.AnnotationDeliveryTask;
 import app.bpartners.geojobs.repository.model.annotation.AnnotationRetrievingTask;
 import app.bpartners.geojobs.repository.model.detection.*;
+import app.bpartners.geojobs.service.AnnotationDeliveryJobService;
 import java.math.BigInteger;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,17 +33,18 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 public class AnnotationService {
-  public static final int DEFAULT_IMAGES_HEIGHT = 1024;
-  public static final int DEFAULT_IMAGES_WIDTH = 1024;
   private static final Pattern DIGIT_PATTERN = Pattern.compile("\\d+");
-  private final JobsApi jobsApi;
   private final TaskExtractor taskExtractor;
   private final LabelConverter labelConverter;
   private final LabelExtractor labelExtractor;
   private final AnnotatorUserInfoGetter annotatorUserInfoGetter;
-  private final BucketComponent bucketComponent;
-  private final EventProducer eventProducer;
+  private final AnnotationDeliveryJobService annotationDeliveryJobService;
   private final AdminApi adminApi;
+  private final JobsApi jobsApi;
+  private static final int DEFAULT_IMAGES_HEIGHT = 1024;
+  private static final int DEFAULT_IMAGES_WIDTH = 1024;
+  private final DetectableObjectConfigurationRepository objectConfigurationRepository;
+  private final BucketComponent bucketComponent;
 
   public AnnotationService(
       AnnotatorApiConf annotatorApiConf,
@@ -46,16 +52,18 @@ public class AnnotationService {
       LabelConverter labelConverter,
       LabelExtractor labelExtractor,
       AnnotatorUserInfoGetter annotatorUserInfoGetter,
-      BucketComponent bucketComponent,
-      EventProducer eventProducer) {
-    this.jobsApi = new JobsApi(annotatorApiConf.newApiClientWithApiKey());
+      AnnotationDeliveryJobService annotationDeliveryJobService,
+      DetectableObjectConfigurationRepository objectConfigurationRepository,
+      BucketComponent bucketComponent) {
     this.adminApi = new AdminApi(annotatorApiConf.newApiClientWithApiKey());
+    this.jobsApi = new JobsApi(annotatorApiConf.newApiClientWithApiKey());
     this.taskExtractor = taskExtractor;
     this.labelConverter = labelConverter;
     this.labelExtractor = labelExtractor;
     this.annotatorUserInfoGetter = annotatorUserInfoGetter;
+    this.annotationDeliveryJobService = annotationDeliveryJobService;
+    this.objectConfigurationRepository = objectConfigurationRepository;
     this.bucketComponent = bucketComponent;
-    this.eventProducer = eventProducer;
   }
 
   public Job getAnnotationJobById(String annotationJobId) {
@@ -68,51 +76,90 @@ public class AnnotationService {
 
   @SneakyThrows
   public void createAnnotationJob(HumanDetectionJob humanDetectionJob, String jobName) {
-    String folderPath = null;
-    List<MachineDetectedTile> machineDetectedTiles = humanDetectionJob.getMachineDetectedTiles();
-    log.info(
-        "[DEBUG] AnnotationService detected tiles [size={}, tiles={}]",
-        machineDetectedTiles.size(),
-        machineDetectedTiles.stream().map(MachineDetectedTile::describe).toList());
-    String annotationJobId = humanDetectionJob.getAnnotationJobId();
-    List<DetectableObjectConfiguration> detectableObjects =
-        humanDetectionJob.getDetectableObjectConfigurations();
-    List<Label> expectedLabels =
-        detectableObjects.stream()
-            .map(object -> labelConverter.apply(object.getObjectType()))
-            .toList();
-    List<CreateAnnotatedTask> annotatedTasks =
+    var machineDetectedTiles = humanDetectionJob.getMachineDetectedTiles();
+    var detectableObjectConfigurations = humanDetectionJob.getDetectableObjectConfigurations();
+    var expectedLabels =
+        retrieveExpectedLabelsFromObjectConfiguration(detectableObjectConfigurations);
+    var annotatedTasks =
         taskExtractor.apply(
             machineDetectedTiles, annotatorUserInfoGetter.getUserId(), expectedLabels);
-    List<Label> extractLabelsFromTasks = labelExtractor.extractLabelsFromTasks(annotatedTasks);
-    List<Label> labels = extractLabelsFromTasks.isEmpty() ? expectedLabels : extractLabelsFromTasks;
-    log.error(
-        "[DEBUG] AnnotationService : AnnotationJob(id={}) with labels (count={}, values={}) and"
-            + " tasks (count={})",
-        annotationJobId,
-        labels.size(),
-        labels,
-        annotatedTasks.size());
-    Job createdAnnotationJob =
-        jobsApi.saveJob(
-            annotationJobId,
-            new CrupdateJob()
-                .id(annotationJobId)
-                .name(jobName)
-                .bucketName(bucketComponent.getBucketName())
-                .folderPath(folderPath)
-                .labels(labels)
-                .ownerEmail("tech@bpartners.app")
-                .status(PENDING)
-                .type(REVIEWING)
-                .imagesHeight(DEFAULT_IMAGES_HEIGHT)
-                .imagesWidth(DEFAULT_IMAGES_WIDTH)
-                .teamId(annotatorUserInfoGetter.getTeamId()));
+    var extractLabelsFromTasks = labelExtractor.extractLabelsFromTasks(annotatedTasks);
+    var labels = extractLabelsFromTasks.isEmpty() ? expectedLabels : extractLabelsFromTasks;
+    var annotationJobId = humanDetectionJob.getAnnotationJobId();
+    var detectionJobId = humanDetectionJob.getZoneDetectionJobId();
+    var annotationDeliveryJobId = randomUUID().toString();
 
-    annotatedTasks.forEach(
-        task ->
-            eventProducer.accept(
-                List.of(new CreateAnnotatedTaskSubmitted(createdAnnotationJob.getId(), task))));
+    var annotationDeliveryJob =
+        fromDetectionJob(annotationDeliveryJobId, annotationJobId, jobName, detectionJobId, labels);
+    var annotationDeliveryTasks =
+        annotatedTasks.stream()
+            .map(
+                annotatedTask ->
+                    fromAnnotatedTask(annotationDeliveryJobId, annotationJobId, annotatedTask))
+            .collect(Collectors.toList());
+
+    annotationDeliveryJobService.create(annotationDeliveryJob, annotationDeliveryTasks);
+  }
+
+  @NonNull
+  private List<Label> retrieveExpectedLabelsFromObjectConfiguration(
+      List<DetectableObjectConfiguration> detectableObjects) {
+    return detectableObjects.stream()
+        .map(object -> labelConverter.apply(object.getObjectType()))
+        .toList();
+  }
+
+  private AnnotationDeliveryTask fromAnnotatedTask(
+      String annotationDeliveryJobId,
+      String annotationJobId,
+      CreateAnnotatedTask createAnnotatedTask) {
+    var annotationDeliveryTaskId = randomUUID().toString();
+    var annotatedTaskId = createAnnotatedTask.getId();
+    return AnnotationDeliveryTask.builder()
+        .id(annotationDeliveryTaskId)
+        .jobId(annotationDeliveryJobId)
+        .annotationJobId(annotationJobId)
+        .annotationTaskId(annotatedTaskId)
+        .createAnnotatedTask(createAnnotatedTask)
+        .submissionInstant(now())
+        .statusHistory(
+            List.of(
+                app.bpartners.geojobs.job.model.TaskStatus.builder()
+                    .id(randomUUID().toString())
+                    .taskId(annotationDeliveryTaskId)
+                    .progression(PENDING)
+                    .health(UNKNOWN)
+                    .creationDatetime(now())
+                    .build()))
+        .build();
+  }
+
+  @NonNull
+  private AnnotationDeliveryJob fromDetectionJob(
+      String annotationDeliveryJobId,
+      String annotationJobId,
+      String annotationJobName,
+      String detectionJobId,
+      List<Label> labels) {
+    var annotationDeliveryJob =
+        AnnotationDeliveryJob.builder()
+            .id(annotationDeliveryJobId)
+            .annotationJobId(annotationJobId)
+            .annotationJobName(annotationJobName)
+            .detectionJobId(detectionJobId)
+            .labels(labels)
+            .submissionInstant(now())
+            .build();
+    annotationDeliveryJob.hasNewStatus(
+        app.bpartners.geojobs.job.model.JobStatus.builder()
+            .id(randomUUID().toString())
+            .jobId(annotationDeliveryJobId)
+            .creationDatetime(now())
+            .jobType(ANNOTATION_DELIVERY)
+            .progression(PENDING)
+            .health(UNKNOWN)
+            .build());
+    return annotationDeliveryJob;
   }
 
   public void createAnnotationJob(HumanDetectionJob humanDetectionJob) throws ApiException {
@@ -172,7 +219,7 @@ public class AnnotationService {
                   .annotationTaskId(annotationTask.getId())
                   .annotationJobId(annotationJobId)
                   .statusHistory(List.of())
-                  .submissionInstant(Instant.now())
+                  .submissionInstant(now())
                   .humanZoneDetectionJobId(humanZDJId)
                   .zoom(zoom)
                   .xTile(xTile)
@@ -180,6 +227,50 @@ public class AnnotationService {
                   .build();
             })
         .collect(Collectors.toList());
+  }
+
+  public void saveAnnotationJob(
+      String detectionJobId,
+      String annotationJobId,
+      String annotationJobName,
+      List<Label> labels,
+      JobStatus annotationJobStatus) {
+    var defaultBucketName = bucketComponent.getBucketName();
+    var bucketName = new AtomicReference<>(defaultBucketName);
+    var detectableObjectConfigurations =
+        objectConfigurationRepository.findAllByDetectionJobId(detectionJobId);
+    detectableObjectConfigurations.stream()
+        .filter(objectConfiguration -> objectConfiguration.getBucketStorageName() != null)
+        .findFirst()
+        .ifPresent(
+            objectConfiguration -> {
+              bucketName.set(objectConfiguration.getBucketStorageName());
+            });
+
+    try {
+      jobsApi.saveJob(
+          annotationJobId,
+          new CrupdateJob()
+              .id(annotationJobId)
+              .name(annotationJobName)
+              .bucketName(bucketName.get())
+              .folderPath(null)
+              .labels(labels)
+              .ownerEmail("tech@bpartners.app")
+              .status(annotationJobStatus)
+              .type(REVIEWING)
+              .imagesHeight(DEFAULT_IMAGES_HEIGHT)
+              .imagesWidth(DEFAULT_IMAGES_WIDTH)
+              .teamId(annotatorUserInfoGetter.getTeamId()));
+    } catch (java.lang.Exception e) {
+      throw new app.bpartners.geojobs.model.exception.ApiException(
+          SERVER_EXCEPTION,
+          "Fail to delivery annotationJob(id="
+              + annotationJobId
+              + "status=PENDING) causing retry,"
+              + " exception message="
+              + e.getMessage());
+    }
   }
 
   private List<Integer> getTileMetaData(String filename) {

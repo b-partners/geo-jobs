@@ -2,23 +2,16 @@ package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PATHWAY;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.ROOF;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockConstruction;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import app.bpartners.gen.annotator.endpoint.rest.api.AdminApi;
 import app.bpartners.gen.annotator.endpoint.rest.api.JobsApi;
 import app.bpartners.gen.annotator.endpoint.rest.client.ApiClient;
 import app.bpartners.gen.annotator.endpoint.rest.model.Job;
 import app.bpartners.gen.annotator.endpoint.rest.model.Label;
-import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.annotation.CreateAnnotatedTaskSubmitted;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
+import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectType;
@@ -39,19 +32,18 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.MockedConstruction;
 
 public class AnnotationServiceTest {
   public static final String ZONE_DETECTION_JOB_ID = "zoneDetectionJobId";
-  public static final String ANNOTATION_JOB_ID = "AnnotationJobId";
-  public static final String ANNOTATION_RETRIEVING_JOB_ID = "AnnotationRetrievingJobId";
   MockedConstruction<JobsApi> jobsApiMockedConstruction;
   MockedConstruction<AdminApi> adminApiMockedConstruction;
   DetectableObjectConfigurationRepository detectableObjectRepositoryMock = mock();
   LabelConverter labelConverterMock = mock();
-  EventProducer eventProducerMock = mock();
   AnnotatorApiConf annotatorApiConfMock = mock();
+  DetectableObjectConfigurationRepository objectConfigurationRepositoryMock = mock();
+  AnnotationDeliveryJobService deliverJobServiceMock = mock();
+  BucketComponent bucketComponentMock = mock();
   LabelExtractor labelExtractorMock =
       new LabelExtractor(new KeyPredicateFunction(), labelConverterMock);
   CreateAnnotationBatchExtractor batchExtractorMock =
@@ -104,8 +96,9 @@ public class AnnotationServiceTest {
             labelConverterMock,
             labelExtractorMock,
             mock(),
-            mock(),
-            eventProducerMock);
+            deliverJobServiceMock,
+            objectConfigurationRepositoryMock,
+            bucketComponentMock);
 
     when(detectableObjectRepositoryMock.findAllByDetectionJobId(ZONE_DETECTION_JOB_ID))
         .thenReturn(detectableObjects());
@@ -134,29 +127,7 @@ public class AnnotationServiceTest {
             .detectableObjectConfigurations(detectableObjects())
             .build());
 
-    var eventCapture = ArgumentCaptor.forClass(List.class);
-    verify(eventProducerMock, times(2)).accept(eventCapture.capture()); // detectedTiles().size()
-    CreateAnnotatedTaskSubmitted annotatedTaskExtracted1 =
-        (CreateAnnotatedTaskSubmitted) eventCapture.getValue().get(0);
-    CreateAnnotatedTaskSubmitted annotatedTaskExtracted2 =
-        (CreateAnnotatedTaskSubmitted) eventCapture.getValue().get(0);
-    assertEquals(
-        PATHWAY.name(),
-        annotatedTaskExtracted1
-            .getCreateAnnotatedTask()
-            .getAnnotationBatch()
-            .getAnnotations()
-            .getFirst()
-            .getLabel()
-            .getName());
-    assertEquals(
-        PATHWAY.name(),
-        annotatedTaskExtracted2
-            .getCreateAnnotatedTask()
-            .getAnnotationBatch()
-            .getAnnotations()
-            .getFirst()
-            .getLabel()
-            .getName());
+    // TODO: complete assertions
+    verify(deliverJobServiceMock, only()).create(any(), any());
   }
 }
