@@ -3,10 +3,7 @@ package app.bpartners.geojobs.repository.model.detection;
 import static org.hibernate.type.SqlTypes.JSON;
 
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -37,6 +34,9 @@ public class FullDetection {
 
   @Column(name = "ztj_id")
   private String ztjId;
+
+  @JoinColumn(referencedColumnName = "id", name = "community_owner_id")
+  private String communityOwnerId;
 
   // TODO: VERY VERY BAD ! Why didn't you use domain DetectableObjectConfiguration ?
   @JdbcTypeCode(JSON)
