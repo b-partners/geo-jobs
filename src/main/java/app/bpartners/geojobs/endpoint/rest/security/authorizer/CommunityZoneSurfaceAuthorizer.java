@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.endpoint.rest.security.authorizer;
 
+import static app.bpartners.geojobs.repository.model.SurfaceUnit.SQUARE_DEGREE;
+
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
@@ -21,7 +23,8 @@ public class CommunityZoneSurfaceAuthorizer
   public void accept(
       CommunityAuthorization communityAuthorization, List<Feature> candidateFeatures) {
     var totalUsedSurface =
-        communityUsedSurfaceService.getLastUsedSurfaceByCommunityId(communityAuthorization.getId());
+        communityUsedSurfaceService.getTotalUsedSurfaceByCommunityId(
+            communityAuthorization.getId(), SQUARE_DEGREE);
     var newSurfaceValueToDetect = featureSurfaceService.getAreaValue(candidateFeatures);
     var candidateSurface =
         totalUsedSurface

@@ -1,8 +1,11 @@
 package app.bpartners.geojobs.repository.model.community;
 
 import static jakarta.persistence.CascadeType.ALL;
+import static jakarta.persistence.EnumType.STRING;
 import static jakarta.persistence.FetchType.EAGER;
+import static org.hibernate.type.SqlTypes.NAMED_ENUM;
 
+import app.bpartners.geojobs.repository.model.SurfaceUnit;
 import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.List;
@@ -10,6 +13,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
 
 @Data
 @Builder
@@ -24,6 +28,10 @@ public class CommunityAuthorization implements Serializable {
   @Column private String apiKey;
 
   @Column private double maxSurface;
+
+  @Enumerated(STRING)
+  @JdbcTypeCode(NAMED_ENUM)
+  private SurfaceUnit maxSurfaceUnit;
 
   @OneToMany(fetch = EAGER, mappedBy = "communityAuthorizationId", cascade = ALL)
   private List<CommunityAuthorizedZone> authorizedZones;

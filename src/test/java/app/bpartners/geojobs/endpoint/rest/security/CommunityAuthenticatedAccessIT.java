@@ -2,6 +2,7 @@ package app.bpartners.geojobs.endpoint.rest.security;
 
 import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.POOL;
 import static app.bpartners.geojobs.endpoint.rest.security.authenticator.ApiKeyAuthenticator.API_KEY_HEADER;
+import static app.bpartners.geojobs.repository.model.SurfaceUnit.SQUARE_DEGREE;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -113,6 +114,7 @@ class CommunityAuthenticatedAccessIT extends FacadeIT {
         .apiKey(APIKEY)
         .name("communityName")
         .maxSurface(5_000)
+        .maxSurfaceUnit(SQUARE_DEGREE)
         .authorizedZones(List.of())
         .usedSurfaces(List.of())
         .detectableObjectTypes(List.of(communityDetectableType))

@@ -8,6 +8,7 @@ import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.status.ZDJParcelsStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.status.ZDJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectConfigurationMapper;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionSurfaceUnitMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionTaskMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.TaskStatisticMapper;
@@ -15,6 +16,8 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMap
 import app.bpartners.geojobs.endpoint.rest.model.CreateFullDetection;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration;
 import app.bpartners.geojobs.endpoint.rest.model.DetectedParcel;
+import app.bpartners.geojobs.endpoint.rest.model.DetectionSurfaceUnit;
+import app.bpartners.geojobs.endpoint.rest.model.DetectionUsage;
 import app.bpartners.geojobs.endpoint.rest.model.FilteredDetectionJob;
 import app.bpartners.geojobs.endpoint.rest.model.FullDetectedZone;
 import app.bpartners.geojobs.endpoint.rest.model.GeoJsonsUrl;
@@ -22,12 +25,14 @@ import app.bpartners.geojobs.endpoint.rest.model.Status;
 import app.bpartners.geojobs.endpoint.rest.model.TaskStatistic;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.validator.CreateFullDetectionValidator;
+import app.bpartners.geojobs.endpoint.rest.validator.GetUsageValidator;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.model.page.BoundedPageSize;
 import app.bpartners.geojobs.model.page.PageFromOne;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
+import app.bpartners.geojobs.service.CommunityUsedSurfaceService;
 import app.bpartners.geojobs.service.ParcelService;
 import app.bpartners.geojobs.service.ZoneService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
@@ -60,6 +65,9 @@ public class ZoneDetectionController {
   private final GeoJsonConversionInitiationService geoJsonConversionInitiationService;
   private final ZoneService zoneService;
   private final CreateFullDetectionValidator fullDetectionValidator;
+  private final CommunityUsedSurfaceService communityUsedSurfaceService;
+  private final GetUsageValidator getUsageValidator;
+  private final DetectionSurfaceUnitMapper unitMapper;
   private final AuthProvider authProvider;
 
   @PutMapping("/detectionJobs/{id}/taskFiltering")
@@ -164,5 +172,14 @@ public class ZoneDetectionController {
       @RequestBody CreateFullDetection createFullDetection) {
     fullDetectionValidator.accept(createFullDetection, authProvider.getPrincipal());
     return zoneService.processTilingAndDetection(createFullDetection);
+  }
+
+  @GetMapping("/usage")
+  public DetectionUsage getDetectionUsage(
+      @RequestParam(name = "surfaceUnit", required = false, defaultValue = "SQUARE_DEGREE")
+          DetectionSurfaceUnit surfaceUnit) {
+    getUsageValidator.accept(authProvider.getPrincipal());
+    return communityUsedSurfaceService.getUsage(
+        authProvider.getPrincipal(), unitMapper.toDomain(surfaceUnit));
   }
 }
