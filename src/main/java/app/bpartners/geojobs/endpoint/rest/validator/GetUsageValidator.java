@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 public class GetUsageValidator implements Consumer<Principal> {
   @Override
   public void accept(Principal principal) {
-    if (principal.getRole().equals(ROLE_ADMIN)) {
+    if (ROLE_ADMIN.equals(principal.getRole())) {
       throw new BadRequestException("Get usage is only for COMMUNITY_ROLE");
     }
   }

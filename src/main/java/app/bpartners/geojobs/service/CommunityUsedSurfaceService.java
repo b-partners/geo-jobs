@@ -21,8 +21,9 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class CommunityUsedSurfaceService {
   private final CommunityUsedSurfaceRepository communityUsedSurfaceRepository;
-  private final CommunityAuthorizationRepository caRepository;
+  private final CommunityAuthorizationRepository communityAuthRepository;
   private final DetectionSurfaceValueMapper surfaceValueMapper;
+  private static final double DEFAULT_USED_SURFACE_VALUE = 0.0;
 
   public Optional<CommunityUsedSurface> getTotalUsedSurfaceByCommunityId(
       String communityId, SurfaceUnit unit) {
@@ -39,7 +40,9 @@ public class CommunityUsedSurfaceService {
         this.getTotalUsedSurfaceByCommunityId(
             newUsedSurface.getCommunityAuthorizationId(), newUsedSurface.getUnit());
     var lastTotalUsedSurfaceValue =
-        lastTotalUsedSurface.map(CommunityUsedSurface::getUsedSurface).orElse(0.0);
+        lastTotalUsedSurface
+            .map(CommunityUsedSurface::getUsedSurface)
+            .orElse(DEFAULT_USED_SURFACE_VALUE);
     var newLastTotalUsedSurfaceValue = lastTotalUsedSurfaceValue + newUsedSurface.getUsedSurface();
 
     return communityUsedSurfaceRepository.save(
@@ -54,12 +57,14 @@ public class CommunityUsedSurfaceService {
 
   public DetectionUsage getUsage(Principal principal, SurfaceUnit unit) {
     var communityAuthorization =
-        caRepository.findByApiKey(principal.getPassword()).orElseThrow(ForbiddenException::new);
+        communityAuthRepository
+            .findByApiKey(principal.getPassword())
+            .orElseThrow(ForbiddenException::new);
     var totalUsedSurface =
         getTotalUsedSurfaceByCommunityId(communityAuthorization.getId(), unit)
             .orElse(
                 CommunityUsedSurface.builder()
-                    .usedSurface(0)
+                    .usedSurface(DEFAULT_USED_SURFACE_VALUE)
                     .unit(unit)
                     .usageDatetime(now())
                     .build());
