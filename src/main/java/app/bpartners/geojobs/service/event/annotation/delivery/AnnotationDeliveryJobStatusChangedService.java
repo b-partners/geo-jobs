@@ -2,7 +2,6 @@ package app.bpartners.geojobs.service.event.annotation.delivery;
 
 import static app.bpartners.gen.annotator.endpoint.rest.model.JobStatus.STARTED;
 
-import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryJobStatusChanged;
 import app.bpartners.geojobs.repository.model.annotation.AnnotationDeliveryJob;
 import app.bpartners.geojobs.service.StatusChangedHandler;
@@ -18,7 +17,6 @@ import org.springframework.stereotype.Service;
 @AllArgsConstructor
 public class AnnotationDeliveryJobStatusChangedService
     implements Consumer<AnnotationDeliveryJobStatusChanged> {
-  private final EventProducer eventProducer;
   private final StatusChangedHandler statusChangedHandler;
   private final AnnotationService annotationService;
 
@@ -27,18 +25,14 @@ public class AnnotationDeliveryJobStatusChangedService
     var oldJob = event.getOldJob();
     var newJob = event.getNewJob();
 
-    OnFinishedHandler onFinishedHandler =
-        new OnFinishedHandler(eventProducer, annotationService, newJob);
+    OnFinishedHandler onFinishedHandler = new OnFinishedHandler(annotationService, newJob);
 
     statusChangedHandler.handle(
         event, newJob.getStatus(), oldJob.getStatus(), onFinishedHandler, onFinishedHandler);
   }
 
   private record OnFinishedHandler(
-      EventProducer eventProducer,
-      AnnotationService annotationService,
-      AnnotationDeliveryJob newJob)
-      implements StatusHandler {
+      AnnotationService annotationService, AnnotationDeliveryJob newJob) implements StatusHandler {
 
     @Override
     public String performAction() {
