@@ -7,11 +7,11 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryJobCreated;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryTaskCreated;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.repository.AnnotationDeliveryJobRepository;
@@ -41,6 +41,33 @@ class AnnotationDeliveryJobServiceIT extends FacadeIT {
   ZoneDetectionJobCreator zoneDetectionJobCreator = new ZoneDetectionJobCreator();
   ZoneTilingJobCreator zoneTilingJobCreator = new ZoneTilingJobCreator();
   AnnotationDeliveryTaskCreator annotationDeliveryTaskCreator = new AnnotationDeliveryTaskCreator();
+
+  @Test
+  void create_ok() {
+    var zdj = randomZDJ();
+    var jobId = randomUUID().toString();
+    var deliveryJob =
+        AnnotationDeliveryJob.builder()
+            .id(jobId)
+            .annotationJobId(randomUUID().toString())
+            .annotationJobName("dummyJobName")
+            .detectionJobId(zdj.getId())
+            .build();
+    int tasksNb = 10;
+    var deliveryTasks =
+        someDeliveryTasks(
+            tasksNb, deliveryJob.getId(), deliveryJob.getAnnotationJobId(), PENDING, UNKNOWN);
+
+    var actual = subject.create(deliveryJob, deliveryTasks);
+
+    var listCaptor = ArgumentCaptor.forClass(List.class);
+    verify(eventProducer, only()).accept(listCaptor.capture());
+    var deliveryJobCreated =
+        ((List<AnnotationDeliveryJobCreated>) listCaptor.getValue()).getFirst();
+    assertEquals(
+        AnnotationDeliveryJobCreated.builder().deliveryJob(actual).build(), deliveryJobCreated);
+    assertEquals(deliveryJob, actual);
+  }
 
   @Test
   void fire_tasks_ok() {

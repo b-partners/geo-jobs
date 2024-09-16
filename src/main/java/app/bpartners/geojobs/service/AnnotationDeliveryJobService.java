@@ -7,7 +7,6 @@ import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryT
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.job.repository.TaskRepository;
 import app.bpartners.geojobs.job.service.JobService;
-import app.bpartners.geojobs.repository.AnnotationDeliveryJobRepository;
 import app.bpartners.geojobs.repository.TaskStatisticRepository;
 import app.bpartners.geojobs.repository.model.annotation.AnnotationDeliveryJob;
 import app.bpartners.geojobs.repository.model.annotation.AnnotationDeliveryTask;
@@ -19,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AnnotationDeliveryJobService
     extends JobService<AnnotationDeliveryTask, AnnotationDeliveryJob> {
-  private final AnnotationDeliveryJobRepository AnnotationDeliveryJobRepository;
   private final EventProducer eventProducer;
 
   protected AnnotationDeliveryJobService(
@@ -27,8 +25,7 @@ public class AnnotationDeliveryJobService
       JobStatusRepository jobStatusRepository,
       TaskStatisticRepository taskStatisticRepository,
       TaskRepository<AnnotationDeliveryTask> taskRepository,
-      EventProducer eventProducer,
-      AnnotationDeliveryJobRepository AnnotationDeliveryJobRepository) {
+      EventProducer eventProducer) {
     super(
         repository,
         jobStatusRepository,
@@ -36,7 +33,6 @@ public class AnnotationDeliveryJobService
         taskRepository,
         eventProducer,
         AnnotationDeliveryJob.class);
-    this.AnnotationDeliveryJobRepository = AnnotationDeliveryJobRepository;
     this.eventProducer = eventProducer;
   }
 
