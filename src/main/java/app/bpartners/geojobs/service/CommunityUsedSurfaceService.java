@@ -1,17 +1,23 @@
 package app.bpartners.geojobs.service;
 
+import static app.bpartners.geojobs.repository.model.SurfaceUnit.SQUARE_DEGREE;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionSurfaceValueMapper;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionUsage;
+import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.CommunityUsedSurfaceRepository;
+import app.bpartners.geojobs.repository.FullDetectionRepository;
 import app.bpartners.geojobs.repository.model.SurfaceUnit;
 import app.bpartners.geojobs.repository.model.community.CommunityUsedSurface;
+import app.bpartners.geojobs.repository.model.detection.FullDetection;
+import jakarta.transaction.Transactional;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +29,8 @@ public class CommunityUsedSurfaceService {
   private final CommunityUsedSurfaceRepository communityUsedSurfaceRepository;
   private final CommunityAuthorizationRepository communityAuthRepository;
   private final DetectionSurfaceValueMapper surfaceValueMapper;
+  private final FeatureSurfaceService featureSurfaceService;
+  private final FullDetectionRepository fullDetectionRepository;
   private static final double DEFAULT_USED_SURFACE_VALUE = 0.0;
 
   public Optional<CommunityUsedSurface> getTotalUsedSurfaceByCommunityId(
@@ -92,5 +100,21 @@ public class CommunityUsedSurfaceService {
       return communityUsedSurface;
     }
     throw new NotImplementedException("Conversion of surface units is not supported yet");
+  }
+
+  @Transactional
+  public FullDetection persistFullDetectionWithSurfaceUsage(
+      FullDetection fullDetection, List<Feature> features) {
+    if (fullDetection.getCommunityOwnerId() != null) {
+      var newSurfaceUsage =
+          CommunityUsedSurface.builder()
+              .unit(SQUARE_DEGREE)
+              .usedSurface(featureSurfaceService.getAreaValue(features))
+              .communityAuthorizationId(fullDetection.getCommunityOwnerId())
+              .build();
+      appendLastUsedSurface(newSurfaceUsage);
+    }
+
+    return fullDetectionRepository.save(fullDetection);
   }
 }

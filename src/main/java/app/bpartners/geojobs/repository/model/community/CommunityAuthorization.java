@@ -3,9 +3,11 @@ package app.bpartners.geojobs.repository.model.community;
 import static jakarta.persistence.CascadeType.ALL;
 import static jakarta.persistence.EnumType.STRING;
 import static jakarta.persistence.FetchType.EAGER;
+import static jakarta.persistence.FetchType.LAZY;
 import static org.hibernate.type.SqlTypes.NAMED_ENUM;
 
 import app.bpartners.geojobs.repository.model.SurfaceUnit;
+import app.bpartners.geojobs.repository.model.detection.FullDetection;
 import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.List;
@@ -41,4 +43,7 @@ public class CommunityAuthorization implements Serializable {
 
   @OneToMany(mappedBy = "communityAuthorizationId", cascade = ALL)
   private List<CommunityUsedSurface> usedSurfaces;
+
+  @OneToMany(mappedBy = "communityOwnerId", fetch = LAZY)
+  private List<FullDetection> fullDetections;
 }

@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.controller;
 
+import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.FAILED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.RETRYING;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
@@ -29,6 +30,8 @@ import app.bpartners.geojobs.endpoint.rest.model.DetectionUsage;
 import app.bpartners.geojobs.endpoint.rest.model.SuccessStatus;
 import app.bpartners.geojobs.endpoint.rest.model.ZoneDetectionJob;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
+import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
+import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.endpoint.rest.validator.CreateFullDetectionValidator;
 import app.bpartners.geojobs.endpoint.rest.validator.GetUsageValidator;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
@@ -38,6 +41,7 @@ import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.statistic.HealthStatusStatistic;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.job.model.statistic.TaskStatusStatistic;
+import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.model.FilteredDetectionJob;
 import app.bpartners.geojobs.repository.model.GeoJobType;
@@ -48,6 +52,9 @@ import app.bpartners.geojobs.service.ZoneService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -71,6 +78,9 @@ class ZoneDetectionControllerTest {
   CreateFullDetectionValidator fullDetectionValidatorMock = mock();
   CommunityUsedSurfaceService communityUsedSurfaceServiceMock = mock();
   GetUsageValidator getUsageValidatorMock = mock();
+  CommunityAuthorizationRepository communityAuthRepositoryMock = mock();
+  AuthProvider authProviderMock = mock();
+  DetectionSurfaceUnitMapper surfaceUnitMapper = new DetectionSurfaceUnitMapper();
   ZoneDetectionController subject =
       new ZoneDetectionController(
           parcelServiceMock,
@@ -88,8 +98,16 @@ class ZoneDetectionControllerTest {
           fullDetectionValidatorMock,
           communityUsedSurfaceServiceMock,
           getUsageValidatorMock,
-          new DetectionSurfaceUnitMapper(),
-          mock(AuthProvider.class));
+          communityAuthRepositoryMock,
+          authProviderMock,
+          surfaceUnitMapper);
+
+  @BeforeEach
+  void setup() {
+    when(authProviderMock.getPrincipal())
+        .thenReturn(new Principal("dummyApiKey", Set.of(new Authority(ROLE_ADMIN))));
+    when(communityAuthRepositoryMock.findByApiKey(any())).thenReturn(Optional.empty());
+  }
 
   @Test
   void task_filtering_ok() {

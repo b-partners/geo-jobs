@@ -6,7 +6,9 @@ import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
+import java.io.Serializable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -25,7 +27,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 @Setter
 @EqualsAndHashCode
 @Table(name = "full_detection")
-public class FullDetection {
+public class FullDetection implements Serializable {
   @Id private String id;
   private String endToEndId;
 
@@ -37,6 +39,9 @@ public class FullDetection {
 
   @Column(name = "ztj_id")
   private String ztjId;
+
+  @JoinColumn(referencedColumnName = "id", name = "community_owner_id")
+  private String communityOwnerId;
 
   // TODO: VERY VERY BAD ! Why didn't you use domain DetectableObjectConfiguration ?
   @JdbcTypeCode(JSON)
