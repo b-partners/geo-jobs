@@ -20,7 +20,7 @@ public class AnnotationDeliveryJobService
     extends JobService<AnnotationDeliveryTask, AnnotationDeliveryJob> {
   private final EventProducer eventProducer;
 
-  protected AnnotationDeliveryJobService(
+  public AnnotationDeliveryJobService(
       JpaRepository<AnnotationDeliveryJob, String> repository,
       JobStatusRepository jobStatusRepository,
       TaskStatisticRepository taskStatisticRepository,

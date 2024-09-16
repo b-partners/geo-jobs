@@ -8,6 +8,7 @@ import app.bpartners.gen.annotator.endpoint.rest.model.CreateAnnotatedTask;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.repository.model.annotation.AnnotationDeliveryTask;
+import java.util.ArrayList;
 import java.util.List;
 
 public class AnnotationDeliveryTaskCreator {
@@ -34,5 +35,19 @@ public class AnnotationDeliveryTaskCreator {
                     .jobType(ANNOTATION_DELIVERY)
                     .build()))
         .build();
+  }
+
+  public List<AnnotationDeliveryTask> someDeliveryTasks(
+      Integer nb,
+      String jobId,
+      String annotationJobId,
+      Status.ProgressionStatus progressionStatus,
+      Status.HealthStatus healthStatus) {
+    var tasks = new ArrayList<AnnotationDeliveryTask>();
+    for (int i = 0; i < nb; i++) {
+      tasks.add(
+          create(randomUUID().toString(), jobId, annotationJobId, progressionStatus, healthStatus));
+    }
+    return tasks;
   }
 }
