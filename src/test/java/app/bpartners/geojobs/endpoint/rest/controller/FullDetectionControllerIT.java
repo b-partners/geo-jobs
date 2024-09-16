@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -30,10 +31,10 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMap
 import app.bpartners.geojobs.endpoint.rest.model.CreateFullDetection;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
-import app.bpartners.geojobs.endpoint.rest.model.JobTypes;
-import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.endpoint.rest.model.FullDetectedZone;
+import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.endpoint.rest.model.JobType;
+import app.bpartners.geojobs.endpoint.rest.model.JobTypes;
 import app.bpartners.geojobs.endpoint.rest.model.Status;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.authorizer.FullDetectionAuthorizer;
@@ -44,8 +45,9 @@ import app.bpartners.geojobs.job.model.statistic.HealthStatusStatistic;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.job.model.statistic.TaskStatusStatistic;
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
-import app.bpartners.geojobs.model.page.PageFromOne;
 import app.bpartners.geojobs.model.page.BoundedPageSize;
+import app.bpartners.geojobs.model.page.PageFromOne;
+import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.FullDetectionRepository;
 import app.bpartners.geojobs.repository.HumanDetectionJobRepository;
@@ -53,7 +55,6 @@ import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;
 import app.bpartners.geojobs.repository.ParcelRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
-import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.detection.FullDetection;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.ZoneService;
@@ -67,7 +68,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -107,6 +107,18 @@ class FullDetectionControllerIT extends FacadeIT {
     when(authProviderMock.getPrincipal()).thenReturn(mock(Principal.class));
     doNothing().when(fullDetectionAuthorizer).accept(any(), any());
     fullDetectionRepository.deleteAll();
+  }
+
+  private FullDetection fullDetectionWithoutZdj(String tilingJobId) {
+    return FullDetection.builder()
+        .endToEndId(randomUUID().toString())
+        .id(randomUUID().toString())
+        .ztjId(tilingJobId)
+        .zdjId(null)
+        .geojsonS3FileKey(null)
+        .detectableObjectConfiguration(
+            new DetectableObjectConfiguration().confidence(BigDecimal.valueOf(0.8)).type(ROOF))
+        .build();
   }
 
   private CreateFullDetection createFullDetection(String endToEndId)
@@ -257,19 +269,6 @@ class FullDetectionControllerIT extends FacadeIT {
         .build();
   }
 
-  private FullDetection fullDetectionWithoutZdj(String tilingJobId) {
-    return FullDetection.builder()
-            .endToEndId(randomUUID().toString())
-            .id(randomUUID().toString())
-            .ztjId(tilingJobId)
-            .zdjId(null)
-            .geojsonS3FileKey(null)
-            .detectableObjectConfiguration(
-                    new DetectableObjectConfiguration().confidence(BigDecimal.valueOf(0.8)).type(ROOF))
-            .build();
-  }
-
-
   @Test
   void create_full_detection() throws JsonProcessingException {
     var zoneTilingJob = zoneTilingJobRepository.save(zoneTilingJob(randomUUID().toString()));
@@ -310,28 +309,31 @@ class FullDetectionControllerIT extends FacadeIT {
     assertEquals(Duration.ofMinutes(3L), fullDetectionSavedEvent.maxConsumerDuration());
     assertEquals(
         Duration.ofMinutes(1L), fullDetectionSavedEvent.maxConsumerBackoffBetweenRetries());
+  }
+
+  @Test
   void get_full_detections_with_owner() {
     var zoneTilingJob = zoneTilingJobRepository.save(zoneTilingJob(randomUUID().toString()));
     var zoneDetectionJob =
-            zoneDetectionJobRepository.save(
-                    zoneDetectionJob(randomUUID().toString(), zoneTilingJob.getId()));
+        zoneDetectionJobRepository.save(
+            zoneDetectionJob(randomUUID().toString(), zoneTilingJob.getId()));
     var fullDetection =
-            fullDetectionRepository.save(
-                    fullDetection(zoneTilingJob.getId(), zoneDetectionJob.getId()));
+        fullDetectionRepository.save(
+            fullDetection(zoneTilingJob.getId(), zoneDetectionJob.getId()));
     var statistics =
-            new app.bpartners.geojobs.endpoint.rest.model.TaskStatistic().jobType(JobType.DETECTION);
+        new app.bpartners.geojobs.endpoint.rest.model.TaskStatistic().jobType(JobType.DETECTION);
 
     when(communityAuthRepository.findByApiKey(any())).thenReturn(Optional.of(mock()));
     when(zoneDetectionJobService.getTaskStatistic(any(String.class)))
-            .thenReturn(TaskStatistic.builder().build());
+        .thenReturn(TaskStatistic.builder().build());
     when(taskStatisticMapper.toRest(any())).thenReturn(statistics);
 
     var actual = subject.getFullDetections(new PageFromOne(1), new BoundedPageSize(10));
     var expected =
-            new FullDetectedZone()
-                    .endToEndId(fullDetection.getEndToEndId())
-                    .statistics(List.of(statistics))
-                    .jobTypes(List.of(JobTypes.MACHINE_DETECTION));
+        new FullDetectedZone()
+            .endToEndId(fullDetection.getEndToEndId())
+            .statistics(List.of(statistics))
+            .jobTypes(List.of(JobTypes.MACHINE_DETECTION));
 
     assertEquals(List.of(expected), actual);
   }
@@ -340,21 +342,21 @@ class FullDetectionControllerIT extends FacadeIT {
   void get_full_detections_without_owner_and_without_zdj() {
     var zoneTilingJob = zoneTilingJobRepository.save(zoneTilingJob(randomUUID().toString()));
     var fullDetection =
-            fullDetectionRepository.save(fullDetectionWithoutZdj(zoneTilingJob.getId()));
+        fullDetectionRepository.save(fullDetectionWithoutZdj(zoneTilingJob.getId()));
     var statistics =
-            new app.bpartners.geojobs.endpoint.rest.model.TaskStatistic().jobType(JobType.TILING);
+        new app.bpartners.geojobs.endpoint.rest.model.TaskStatistic().jobType(JobType.TILING);
 
     when(communityAuthRepository.findByApiKey(any())).thenReturn(Optional.empty());
     when(zoneTilingJobService.getTaskStatistic(any(String.class)))
-            .thenReturn(TaskStatistic.builder().build());
+        .thenReturn(TaskStatistic.builder().build());
     when(taskStatisticMapper.toRest(any())).thenReturn(statistics);
 
     var actual = subject.getFullDetections(new PageFromOne(1), new BoundedPageSize(10));
     var expected =
-            new FullDetectedZone()
-                    .endToEndId(fullDetection.getEndToEndId())
-                    .statistics(List.of(statistics))
-                    .jobTypes(List.of(JobTypes.TILING));
+        new FullDetectedZone()
+            .endToEndId(fullDetection.getEndToEndId())
+            .statistics(List.of(statistics))
+            .jobTypes(List.of(JobTypes.TILING));
 
     assertEquals(List.of(expected), actual);
   }

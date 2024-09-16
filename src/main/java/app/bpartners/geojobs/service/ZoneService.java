@@ -131,12 +131,12 @@ public class ZoneService {
   }
 
   public List<FullDetectedZone> getFullDetectionsByCriteria(
-          Optional<String> communityId, PageFromOne page, BoundedPageSize pageSize) {
+      Optional<String> communityId, PageFromOne page, BoundedPageSize pageSize) {
     Pageable pageable = PageRequest.of(page.getValue() - 1, pageSize.getValue());
     var fullDetections =
-            communityId
-                    .map(ownerId -> fullDetectionRepository.findByCommunityOwnerId(ownerId, pageable))
-                    .orElseGet(() -> fullDetectionRepository.findAll(pageable).getContent());
+        communityId
+            .map(ownerId -> fullDetectionRepository.findByCommunityOwnerId(ownerId, pageable))
+            .orElseGet(() -> fullDetectionRepository.findAll(pageable).getContent());
     return fullDetections.stream().map(this::addStatistics).toList();
   }
 
@@ -152,7 +152,7 @@ public class ZoneService {
     }
 
     return createFullDetectedZone(
-            fullDetection.getEndToEndId(), fullDetection.getGeojsonS3FileKey(), statistics, jobType);
+        fullDetection.getEndToEndId(), fullDetection.getGeojsonS3FileKey(), statistics, jobType);
   }
 
   private FullDetectedZone getTilingStatistics(FullDetection fullDetection, String tilingJobId) {

@@ -191,9 +191,9 @@ public class ZoneDetectionController {
 
   @GetMapping("/fullDetections")
   public List<FullDetectedZone> getFullDetections(
-          @RequestParam PageFromOne page, @RequestParam BoundedPageSize pageSize) {
+      @RequestParam PageFromOne page, @RequestParam BoundedPageSize pageSize) {
     var communityAuthorization =
-            communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
+        communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
     var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId);
     return zoneService.getFullDetectionsByCriteria(communityOwnerId, page, pageSize);
   }

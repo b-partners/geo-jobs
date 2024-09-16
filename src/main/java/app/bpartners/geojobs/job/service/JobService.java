@@ -62,16 +62,16 @@ public abstract class JobService<T extends Task, J extends Job> {
 
   public TaskStatistic getTaskStatistic(J job) {
     TaskStatistic taskStatistic =
-            taskStatisticRepository.findTopByJobIdOrderByUpdatedAtDesc(job.getId());
+        taskStatisticRepository.findTopByJobIdOrderByUpdatedAtDesc(job.getId());
     if (taskStatistic == null) {
       return TaskStatistic.builder()
-              .id(randomUUID().toString())
-              .jobId(job.getId())
-              .taskStatusStatistics(List.of())
-              .actualJobStatus(job.getStatus())
-              .jobType(job.getStatus().getJobType())
-              .updatedAt(Instant.now())
-              .build();
+          .id(randomUUID().toString())
+          .jobId(job.getId())
+          .taskStatusStatistics(List.of())
+          .actualJobStatus(job.getStatus())
+          .jobType(job.getStatus().getJobType())
+          .updatedAt(Instant.now())
+          .build();
     }
     return taskStatistic.toBuilder().actualJobStatus(job.getStatus()).build();
   }
