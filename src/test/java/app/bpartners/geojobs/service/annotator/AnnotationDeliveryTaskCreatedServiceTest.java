@@ -11,6 +11,7 @@ import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.repository.model.annotation.AnnotationDeliveryTask;
 import app.bpartners.geojobs.service.event.annotation.delivery.AnnotationDeliveryTaskConsumer;
 import app.bpartners.geojobs.service.event.annotation.delivery.AnnotationDeliveryTaskCreatedService;
+import java.time.Duration;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -44,6 +45,8 @@ class AnnotationDeliveryTaskCreatedServiceTest {
                 deliveryTask.toBuilder().statusHistory(retrievedTask.getStatusHistory()).build())
             .build(),
         deliveryTaskSucceeded);
+    assertEquals(Duration.ofMinutes(10), deliveryTaskSucceeded.maxConsumerDuration());
+    assertEquals(Duration.ofMinutes(1), deliveryTaskSucceeded.maxConsumerBackoffBetweenRetries());
     assertTrue(retrievedTask.isSucceeded());
   }
 }
