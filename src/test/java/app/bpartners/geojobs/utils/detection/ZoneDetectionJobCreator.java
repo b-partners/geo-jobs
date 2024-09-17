@@ -8,7 +8,7 @@ import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
-import java.util.List;
+import java.util.ArrayList;
 
 public class ZoneDetectionJobCreator {
   public ZoneDetectionJob create(
@@ -18,20 +18,21 @@ public class ZoneDetectionJobCreator {
       Status.ProgressionStatus progressionStatus,
       Status.HealthStatus healthStatus,
       ZoneTilingJob ztj) {
+    var statuses = new ArrayList<JobStatus>();
+    statuses.add(
+        JobStatus.builder()
+            .id(randomUUID().toString())
+            .jobId(jobId)
+            .progression(progressionStatus)
+            .health(healthStatus)
+            .creationDatetime(now())
+            .build());
     return ZoneDetectionJob.builder()
         .id(jobId)
         .zoneName(zoneName)
         .emailReceiver(emailReceiver)
         .detectionType(MACHINE)
-        .statusHistory(
-            List.of(
-                JobStatus.builder()
-                    .id(randomUUID().toString())
-                    .jobId(jobId)
-                    .progression(progressionStatus)
-                    .health(healthStatus)
-                    .creationDatetime(now())
-                    .build()))
+        .statusHistory(statuses)
         .zoneTilingJob(ztj)
         .submissionInstant(now())
         .build();
