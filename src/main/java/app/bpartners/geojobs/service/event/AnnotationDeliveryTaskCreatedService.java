@@ -1,8 +1,8 @@
-package app.bpartners.geojobs.service.event.annotation.delivery;
+package app.bpartners.geojobs.service.event;
 
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
-import static app.bpartners.geojobs.service.event.annotation.delivery.AnnotationDeliveryTaskConsumer.withNewStatus;
+import static app.bpartners.geojobs.service.event.AnnotationDeliveryTaskConsumer.withNewStatus;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryTaskCreated;

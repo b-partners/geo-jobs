@@ -5,6 +5,7 @@ import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
 
 import app.bpartners.geojobs.conf.FacadeIT;
+import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.service.JobAnnotationService;
 import app.bpartners.geojobs.repository.*;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionJob;
@@ -48,16 +49,33 @@ public class DetectionIT extends FacadeIT {
   protected final ZoneDetectionJobCreator zoneDetectionJobCreator = new ZoneDetectionJobCreator();
   protected final ZoneTilingJobCreator zoneTilingJobCreator = new ZoneTilingJobCreator();
 
+  protected ZoneDetectionJob dummyZoneDetectionJob(
+      String detectionJobId,
+      ZoneTilingJob tilingJob,
+      Status.ProgressionStatus progressionStatus,
+      Status.HealthStatus healthStatus) {
+    return zoneDetectionJobCreator.create(
+        detectionJobId,
+        "dummyZoneName",
+        "dummyEmailReceiver",
+        progressionStatus,
+        healthStatus,
+        tilingJob);
+  }
+
   protected ZoneDetectionJob pendingZoneDetectionJob(
       String detectionJobId, ZoneTilingJob tilingJob) {
-    return zoneDetectionJobCreator.create(
-        detectionJobId, "dummyZoneName", "dummyEmailReceiver", PENDING, UNKNOWN, tilingJob);
+    return dummyZoneDetectionJob(detectionJobId, tilingJob, PENDING, UNKNOWN);
   }
 
   protected ZoneDetectionJob processingZoneDetectionJob(
       String detectionJobId, ZoneTilingJob tilingJob) {
-    return zoneDetectionJobCreator.create(
-        detectionJobId, "dummyZoneName", "dummyEmailReceiver", PROCESSING, UNKNOWN, tilingJob);
+    return dummyZoneDetectionJob(detectionJobId, tilingJob, PROCESSING, UNKNOWN);
+  }
+
+  protected ZoneDetectionJob succeededZoneDetectionJob(
+      String detectionJobId, ZoneTilingJob tilingJob) {
+    return dummyZoneDetectionJob(detectionJobId, tilingJob, FINISHED, SUCCEEDED);
   }
 
   protected ZoneTilingJob finishedZoneTilingJob(String tilingJobId) {

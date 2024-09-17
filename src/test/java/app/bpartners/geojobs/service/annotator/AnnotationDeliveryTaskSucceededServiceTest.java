@@ -9,7 +9,7 @@ import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryT
 import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.repository.AnnotationDeliveryTaskRepository;
 import app.bpartners.geojobs.repository.model.annotation.AnnotationDeliveryTask;
-import app.bpartners.geojobs.service.event.annotation.delivery.AnnotationDeliveryTaskSucceededService;
+import app.bpartners.geojobs.service.event.AnnotationDeliveryTaskSucceededService;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;

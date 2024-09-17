@@ -9,8 +9,8 @@ import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryT
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryTaskSucceeded;
 import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.repository.model.annotation.AnnotationDeliveryTask;
-import app.bpartners.geojobs.service.event.annotation.delivery.AnnotationDeliveryTaskConsumer;
-import app.bpartners.geojobs.service.event.annotation.delivery.AnnotationDeliveryTaskCreatedService;
+import app.bpartners.geojobs.service.event.AnnotationDeliveryTaskConsumer;
+import app.bpartners.geojobs.service.event.AnnotationDeliveryTaskCreatedService;
 import java.time.Duration;
 import java.util.List;
 import org.junit.jupiter.api.Test;

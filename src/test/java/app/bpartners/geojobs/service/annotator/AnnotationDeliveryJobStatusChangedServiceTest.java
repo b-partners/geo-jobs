@@ -16,7 +16,7 @@ import app.bpartners.geojobs.repository.model.annotation.AnnotationDeliveryJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.StatusChangedHandler;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
-import app.bpartners.geojobs.service.event.annotation.delivery.AnnotationDeliveryJobStatusChangedService;
+import app.bpartners.geojobs.service.event.AnnotationDeliveryJobStatusChangedService;
 import app.bpartners.geojobs.utils.detection.ZoneDetectionJobCreator;
 import java.util.List;
 import org.junit.jupiter.api.Test;

@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.service.event.annotation.delivery;
+package app.bpartners.geojobs.service.event;
 
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static java.time.Instant.now;

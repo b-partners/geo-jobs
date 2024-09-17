@@ -6,7 +6,7 @@ import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.model.annotation.AnnotationDeliveryTask;
-import app.bpartners.geojobs.service.event.annotation.delivery.AnnotationDeliveryTaskConsumer;
+import app.bpartners.geojobs.service.event.AnnotationDeliveryTaskConsumer;
 import org.junit.jupiter.api.Test;
 
 class AnnotationDeliveryTaskConsumerTest {

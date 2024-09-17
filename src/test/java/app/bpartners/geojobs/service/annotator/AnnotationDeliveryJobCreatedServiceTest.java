@@ -6,7 +6,7 @@ import static org.mockito.Mockito.*;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryJobCreated;
 import app.bpartners.geojobs.repository.model.annotation.AnnotationDeliveryJob;
 import app.bpartners.geojobs.service.AnnotationDeliveryJobService;
-import app.bpartners.geojobs.service.event.annotation.delivery.AnnotationDeliveryJobCreatedService;
+import app.bpartners.geojobs.service.event.AnnotationDeliveryJobCreatedService;
 import org.junit.jupiter.api.Test;
 
 class AnnotationDeliveryJobCreatedServiceTest {

@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.service.event.annotation.delivery;
+package app.bpartners.geojobs.service.event;
 
 import static app.bpartners.gen.annotator.endpoint.rest.model.JobStatus.STARTED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;

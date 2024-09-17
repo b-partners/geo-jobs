@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.service.event.annotation.delivery;
+package app.bpartners.geojobs.service.event;
 
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryJobStatusRecomputingSubmitted;
 import java.util.function.Consumer;

@@ -3,8 +3,8 @@ package app.bpartners.geojobs.service.annotator;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryJobStatusRecomputingSubmitted;
-import app.bpartners.geojobs.service.event.annotation.delivery.AnnotationDeliveryJobStatusRecomputingSubmittedBean;
-import app.bpartners.geojobs.service.event.annotation.delivery.AnnotationDeliveryJobStatusRecomputingSubmittedService;
+import app.bpartners.geojobs.service.event.AnnotationDeliveryJobStatusRecomputingSubmittedBean;
+import app.bpartners.geojobs.service.event.AnnotationDeliveryJobStatusRecomputingSubmittedService;
 import org.junit.jupiter.api.Test;
 
 class AnnotationDeliveryJobStatusRecomputingSubmittedServiceTest {
