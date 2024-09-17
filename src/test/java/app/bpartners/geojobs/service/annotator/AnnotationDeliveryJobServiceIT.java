@@ -24,6 +24,7 @@ import app.bpartners.geojobs.service.AnnotationDeliveryJobService;
 import app.bpartners.geojobs.utils.annotation.AnnotationDeliveryTaskCreator;
 import app.bpartners.geojobs.utils.detection.ZoneDetectionJobCreator;
 import app.bpartners.geojobs.utils.tiling.ZoneTilingJobCreator;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.NonNull;
@@ -67,6 +68,8 @@ class AnnotationDeliveryJobServiceIT extends FacadeIT {
     assertEquals(
         AnnotationDeliveryJobCreated.builder().deliveryJob(actual).build(), deliveryJobCreated);
     assertEquals(deliveryJob, actual);
+    assertEquals(Duration.ofMinutes(3L), deliveryJobCreated.maxConsumerDuration());
+    assertEquals(Duration.ofMinutes(3L), deliveryJobCreated.maxConsumerBackoffBetweenRetries());
   }
 
   @Test
