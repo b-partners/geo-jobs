@@ -12,13 +12,18 @@ import app.bpartners.gen.annotator.endpoint.rest.model.Label;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryJobStatusChanged;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
+import app.bpartners.geojobs.mail.Email;
+import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.repository.model.annotation.AnnotationDeliveryJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.StatusChangedHandler;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.event.AnnotationDeliveryJobStatusChangedService;
 import app.bpartners.geojobs.utils.detection.ZoneDetectionJobCreator;
+import jakarta.mail.internet.InternetAddress;
+import java.io.File;
 import java.util.List;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 
 class AnnotationDeliveryJobStatusChangedServiceTest {
@@ -26,9 +31,10 @@ class AnnotationDeliveryJobStatusChangedServiceTest {
   StatusChangedHandler statusChangedHandlerMock = new StatusChangedHandler();
   AnnotationService annotationServiceMock = mock();
   ZoneDetectionJobService zoneDetectionJobServiceMock = mock();
+  Mailer mailerMock = mock();
   AnnotationDeliveryJobStatusChangedService subject =
       new AnnotationDeliveryJobStatusChangedService(
-          statusChangedHandlerMock, annotationServiceMock, zoneDetectionJobServiceMock);
+          statusChangedHandlerMock, annotationServiceMock, zoneDetectionJobServiceMock, mailerMock);
 
   @Test
   void accept_finished_event_ok() {
@@ -60,6 +66,7 @@ class AnnotationDeliveryJobStatusChangedServiceTest {
             STARTED);
     verify(zoneDetectionJobServiceMock).getHumanZdjFromZdjId(any());
     verify(zoneDetectionJobServiceMock).save(any());
+    verify(mailerMock, only()).accept(defaultDeliveryMail(newJob));
     assertTrue(humanZDJ.isProcessing());
   }
 
@@ -70,5 +77,21 @@ class AnnotationDeliveryJobStatusChangedServiceTest {
             List.of(
                 JobStatus.builder().health(healthStatus).progression(progressionStatus).build()))
         .build();
+  }
+
+  @SneakyThrows
+  private Email defaultDeliveryMail(AnnotationDeliveryJob deliveryJob) {
+    List<InternetAddress> cc = List.of();
+    List<InternetAddress> bcc = List.of();
+    String subject =
+        "AnnotationJob(id="
+            + deliveryJob.getAnnotationJobId()
+            + ",nom="
+            + deliveryJob.getAnnotationJobName()
+            + ") disponible sur annotator";
+    String htmlBody = "";
+    List<File> attachments = List.of();
+    return new Email(
+        new InternetAddress("tech@bpartners.app"), cc, bcc, subject, htmlBody, attachments);
   }
 }
