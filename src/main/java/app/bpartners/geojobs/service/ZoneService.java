@@ -8,6 +8,7 @@ import static app.bpartners.geojobs.service.tiling.ZoneTilingJobService.getTilin
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.FullDetectionSaved;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerificationSent;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.TaskStatisticMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneTilingJobMapper;
@@ -71,8 +72,13 @@ public class ZoneService {
                                   .type(zoneToDetect.getObjectType())
                                   .confidence(zoneToDetect.getConfidence()))
                           .build();
-                  return communityUsedSurfaceService.persistFullDetectionWithSurfaceUsage(
-                      toSave, zoneToDetect.getFeatures());
+                  var savedFullDetection =
+                      communityUsedSurfaceService.persistFullDetectionWithSurfaceUsage(
+                          toSave, zoneToDetect.getFeatures());
+                  eventProducer.accept(
+                      List.of(
+                          FullDetectionSaved.builder().fullDetection(savedFullDetection).build()));
+                  return savedFullDetection;
                 });
 
     if (fullDetection.getZtjId() == null) {

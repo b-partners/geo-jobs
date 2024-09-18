@@ -13,15 +13,12 @@ import static app.bpartners.geojobs.repository.model.GeoJobType.TILING;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.FullDetectionSaved;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.TaskStatisticMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMapper;
@@ -56,11 +53,13 @@ import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
@@ -258,5 +257,31 @@ class FullDetectionControllerIT extends FacadeIT {
     subject.processFullDetection(createFullDetection(fullDetection.getEndToEndId()));
 
     verify(zoneTilingJobService, times(1)).create(any(), any());
+  }
+
+  @Test
+  void create_full_detection_from_scratch() throws JsonProcessingException {
+    var zoneTilingJob = zoneTilingJobRepository.save(zoneTilingJob(randomUUID().toString()));
+    when(zoneTilingJobService.create(any(), any())).thenReturn(zoneTilingJob);
+    when(zoneTilingJobService.computeTaskStatistics(any()))
+        .thenReturn(TaskStatistic.builder().build());
+    when(taskStatisticMapper.toRest(any()))
+        .thenReturn(
+            new app.bpartners.geojobs.endpoint.rest.model.TaskStatistic().jobType(JobType.TILING));
+
+    subject.processFullDetection(createFullDetection(randomUUID().toString()));
+
+    var listCaptor = ArgumentCaptor.forClass(List.class);
+    verify(zoneTilingJobService, times(1)).create(any(), any());
+    verify(eventProducer, only()).accept(listCaptor.capture());
+    var fullDetectionSavedEvent = (FullDetectionSaved) listCaptor.getValue().getFirst();
+    assertEquals(
+        FullDetectionSaved.builder()
+            .fullDetection(fullDetectionSavedEvent.getFullDetection())
+            .build(),
+        fullDetectionSavedEvent);
+    assertEquals(Duration.ofMinutes(3L), fullDetectionSavedEvent.maxConsumerDuration());
+    assertEquals(
+        Duration.ofMinutes(1L), fullDetectionSavedEvent.maxConsumerBackoffBetweenRetries());
   }
 }
