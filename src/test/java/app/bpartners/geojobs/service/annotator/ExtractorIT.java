@@ -1,8 +1,8 @@
 package app.bpartners.geojobs.service.annotator;
 
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.PANNEAU_PHOTOVOLTAIQUE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PATHWAY;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.POOL;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.SOLAR_PANEL;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
 import static app.bpartners.geojobs.service.AnnotationServiceIT.inDoubtTile;
 import static app.bpartners.geojobs.service.event.ZoneDetectionAnnotationProcessorTest.LAYER_20_10_1_PNG;
@@ -196,7 +196,7 @@ public class ExtractorIT extends FacadeIT {
   }
 
   Label solarPanel() {
-    return new Label().name(SOLAR_PANEL.name());
+    return new Label().name(PANNEAU_PHOTOVOLTAIQUE.name());
   }
 
   Label pathWay() {

@@ -216,7 +216,9 @@ class FullDetectionControllerIT extends FacadeIT {
         .zdjId(detectionJobId)
         .geojsonS3FileKey(null)
         .detectableObjectConfiguration(
-            new DetectableObjectConfiguration().confidence(BigDecimal.valueOf(0.8)).type(TOITURE_REVETEMENT))
+            new DetectableObjectConfiguration()
+                .confidence(BigDecimal.valueOf(0.8))
+                .type(TOITURE_REVETEMENT))
         .build();
   }
 

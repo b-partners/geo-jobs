@@ -822,7 +822,7 @@ components:
       type: string
       enum:
         - TOITURE_REVETEMENT
-        - SOLAR_PANEL
+        - PANNEAU_PHOTOVOLTAIQUE
         - POOL
         - PATHWAY
         - TREE

@@ -2,7 +2,7 @@ package app.bpartners.geojobs.repository.model.detection;
 
 public enum DetectableType {
   TOITURE_REVETEMENT,
-  SOLAR_PANEL,
+  PANNEAU_PHOTOVOLTAIQUE,
   POOL,
   PATHWAY,
   TREE,

@@ -23,8 +23,8 @@ public class DetectableObjectTypeMapper {
       case PATHWAY -> {
         return DetectableType.PATHWAY;
       }
-      case SOLAR_PANEL -> {
-        return DetectableType.SOLAR_PANEL;
+      case PANNEAU_PHOTOVOLTAIQUE -> {
+        return DetectableType.PANNEAU_PHOTOVOLTAIQUE;
       }
       default -> throw new NotImplementedException("Unknown detectable object type " + rest);
     }
@@ -44,8 +44,8 @@ public class DetectableObjectTypeMapper {
       case PATHWAY -> {
         return PATHWAY;
       }
-      case SOLAR_PANEL -> {
-        return SOLAR_PANEL;
+      case PANNEAU_PHOTOVOLTAIQUE -> {
+        return PANNEAU_PHOTOVOLTAIQUE;
       }
       case SIDEWALK -> {
         return SIDEWALK;

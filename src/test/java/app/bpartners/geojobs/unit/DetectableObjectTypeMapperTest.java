@@ -18,7 +18,8 @@ class DetectableObjectTypeMapperTest {
     assertEquals(TOITURE_REVETEMENT, subject.toDomain(DetectableObjectType.TOITURE_REVETEMENT));
     assertEquals(POOL, subject.toDomain(DetectableObjectType.POOL));
     assertEquals(PATHWAY, subject.toDomain(DetectableObjectType.PATHWAY));
-    assertEquals(SOLAR_PANEL, subject.toDomain(DetectableObjectType.SOLAR_PANEL));
+    assertEquals(
+        PANNEAU_PHOTOVOLTAIQUE, subject.toDomain(DetectableObjectType.PANNEAU_PHOTOVOLTAIQUE));
   }
 
   @Test
@@ -36,7 +37,8 @@ class DetectableObjectTypeMapperTest {
     assertEquals(DetectableObjectType.TOITURE_REVETEMENT, subject.toRest(TOITURE_REVETEMENT));
     assertEquals(DetectableObjectType.POOL, subject.toRest(POOL));
     assertEquals(DetectableObjectType.PATHWAY, subject.toRest(PATHWAY));
-    assertEquals(DetectableObjectType.SOLAR_PANEL, subject.toRest(SOLAR_PANEL));
+    assertEquals(
+        DetectableObjectType.PANNEAU_PHOTOVOLTAIQUE, subject.toRest(PANNEAU_PHOTOVOLTAIQUE));
     assertEquals(DetectableObjectType.LINE, subject.toRest(LINE));
     assertEquals(DetectableObjectType.SIDEWALK, subject.toRest(SIDEWALK));
     assertEquals(DetectableObjectType.GREEN_SPACE, subject.toRest(GREEN_SPACE));

@@ -7,10 +7,10 @@ import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.S
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.GREEN_SPACE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.LINE;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.PANNEAU_PHOTOVOLTAIQUE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PATHWAY;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.POOL;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.SIDEWALK;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.SOLAR_PANEL;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.TREE;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
@@ -106,7 +106,7 @@ public class DetectionMapper {
   private static DetectableType toDetectableType(String label) {
     return switch (label.toUpperCase()) {
       case "ROOF" -> DetectableType.TOITURE_REVETEMENT;
-      case "SOLAR_PANEL" -> DetectableType.SOLAR_PANEL;
+      case "SOLAR_PANEL" -> DetectableType.PANNEAU_PHOTOVOLTAIQUE;
       case "TREE" -> DetectableType.TREE;
       case "PATHWAY" -> DetectableType.PATHWAY;
       case "POOL" -> DetectableType.POOL;
@@ -220,7 +220,7 @@ public class DetectionMapper {
     }
     return switch (label.getName().toUpperCase()) {
       case "ROOF" -> create(objectId, TOITURE_REVETEMENT);
-      case "SOLAR_PANEL" -> create(objectId, SOLAR_PANEL);
+      case "SOLAR_PANEL" -> create(objectId, PANNEAU_PHOTOVOLTAIQUE);
       case "POOL" -> create(objectId, POOL);
       case "TREE" -> create(objectId, TREE);
       case "SIDEWALK" -> create(objectId, SIDEWALK);

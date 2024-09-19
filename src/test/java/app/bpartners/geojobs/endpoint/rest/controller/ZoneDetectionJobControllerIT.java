@@ -271,7 +271,10 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
     parcelRepository.saveAll(parcels);
     var configuredTasks = parcelDetectionTaskRepository.saveAll(parcelDetectionTasks);
     var detectableObjectConfig =
-        List.of(new DetectableObjectConfiguration().type(TOITURE_REVETEMENT).confidence(new BigDecimal("0.75")));
+        List.of(
+            new DetectableObjectConfiguration()
+                .type(TOITURE_REVETEMENT)
+                .confidence(new BigDecimal("0.75")));
     var expected =
         detectionJobMapper.toRest(job1, List.of()).objectsToDetect(detectableObjectConfig);
 

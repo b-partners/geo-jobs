@@ -74,8 +74,8 @@ public class DetectionTaskMapper {
       app.bpartners.geojobs.repository.model.detection.DetectableType detectableType) {
     if (detectableType == null) return null;
     switch (detectableType) {
-      case SOLAR_PANEL -> {
-        return DetectableObjectType.SOLAR_PANEL;
+      case PANNEAU_PHOTOVOLTAIQUE -> {
+        return DetectableObjectType.PANNEAU_PHOTOVOLTAIQUE;
       }
       case TOITURE_REVETEMENT -> {
         return DetectableObjectType.TOITURE_REVETEMENT;
