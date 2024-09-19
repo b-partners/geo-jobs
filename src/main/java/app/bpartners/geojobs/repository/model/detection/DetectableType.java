@@ -5,7 +5,7 @@ public enum DetectableType {
   PANNEAU_PHOTOVOLTAIQUE,
   PISCINE,
   PASSAGE_PIETON,
-  TREE,
+  ARBRE,
   SIDEWALK,
   LINE,
   GREEN_SPACE

@@ -80,8 +80,8 @@ public class DetectionTaskMapper {
       case TOITURE_REVETEMENT -> {
         return DetectableObjectType.TOITURE_REVETEMENT;
       }
-      case TREE -> {
-        return DetectableObjectType.TREE;
+      case ARBRE -> {
+        return DetectableObjectType.ARBRE;
       }
       case PISCINE -> {
         return DetectableObjectType.PISCINE;

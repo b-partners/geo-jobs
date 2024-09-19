@@ -53,15 +53,15 @@ public class ZoneDetectionAnnotationProcessorTest extends FacadeIT {
           differentDetectedTile(List.of()),
           differentDetectedTile(
               List.of(
-                  inDoubtDetectedObject(TREE),
-                  inDoubtDetectedObject(TREE),
+                  inDoubtDetectedObject(ARBRE),
+                  inDoubtDetectedObject(ARBRE),
                   inDoubtDetectedObject(TOITURE_REVETEMENT),
                   inDoubtDetectedObject(TOITURE_REVETEMENT),
                   inDoubtDetectedObject(PANNEAU_PHOTOVOLTAIQUE))),
           differentDetectedTile(
               List.of(
-                  inDoubtDetectedObject(TREE),
-                  inDoubtDetectedObject(TREE),
+                  inDoubtDetectedObject(ARBRE),
+                  inDoubtDetectedObject(ARBRE),
                   inDoubtDetectedObject(TOITURE_REVETEMENT),
                   inDoubtDetectedObject(TOITURE_REVETEMENT),
                   inDoubtDetectedObject(PANNEAU_PHOTOVOLTAIQUE))));
@@ -110,7 +110,7 @@ public class ZoneDetectionAnnotationProcessorTest extends FacadeIT {
             .objectType(TOITURE_REVETEMENT)
             .confidence(0.8)
             .build(),
-        DetectableObjectConfiguration.builder().objectType(TREE).confidence(0.8).build(),
+        DetectableObjectConfiguration.builder().objectType(ARBRE).confidence(0.8).build(),
         DetectableObjectConfiguration.builder()
             .objectType(PANNEAU_PHOTOVOLTAIQUE)
             .confidence(0.8)

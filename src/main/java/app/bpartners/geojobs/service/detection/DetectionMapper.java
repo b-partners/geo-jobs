@@ -5,6 +5,7 @@ import static app.bpartners.geojobs.job.model.Status.HealthStatus.*;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.ARBRE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.GREEN_SPACE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.LINE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PANNEAU_PHOTOVOLTAIQUE;
@@ -12,7 +13,6 @@ import static app.bpartners.geojobs.repository.model.detection.DetectableType.PA
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PISCINE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.SIDEWALK;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.TREE;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static app.bpartners.geojobs.service.detection.DetectionResponse.REGION_CONFIDENCE_PROPERTY;
@@ -107,7 +107,7 @@ public class DetectionMapper {
     return switch (label.toUpperCase()) {
       case "ROOF" -> DetectableType.TOITURE_REVETEMENT;
       case "SOLAR_PANEL" -> DetectableType.PANNEAU_PHOTOVOLTAIQUE;
-      case "TREE" -> DetectableType.TREE;
+      case "TREE" -> DetectableType.ARBRE;
       case "PATHWAY" -> DetectableType.PASSAGE_PIETON;
       case "POOL" -> DetectableType.PISCINE;
       default -> throw new IllegalStateException("Unexpected value: " + label.toLowerCase());
@@ -222,7 +222,7 @@ public class DetectionMapper {
       case "ROOF" -> create(objectId, TOITURE_REVETEMENT);
       case "SOLAR_PANEL" -> create(objectId, PANNEAU_PHOTOVOLTAIQUE);
       case "POOL" -> create(objectId, PISCINE);
-      case "TREE" -> create(objectId, TREE);
+      case "TREE" -> create(objectId, ARBRE);
       case "SIDEWALK" -> create(objectId, SIDEWALK);
       case "PATHWAY" -> create(objectId, PASSAGE_PIETON);
       case "LINE" -> create(objectId, LINE);

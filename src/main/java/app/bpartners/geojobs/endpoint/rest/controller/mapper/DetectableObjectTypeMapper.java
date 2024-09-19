@@ -17,8 +17,8 @@ public class DetectableObjectTypeMapper {
       case TOITURE_REVETEMENT -> {
         return DetectableType.TOITURE_REVETEMENT;
       }
-      case TREE -> {
-        return DetectableType.TREE;
+      case ARBRE -> {
+        return DetectableType.ARBRE;
       }
       case PASSAGE_PIETON -> {
         return DetectableType.PASSAGE_PIETON;
@@ -38,8 +38,8 @@ public class DetectableObjectTypeMapper {
       case TOITURE_REVETEMENT -> {
         return TOITURE_REVETEMENT;
       }
-      case TREE -> {
-        return TREE;
+      case ARBRE -> {
+        return ARBRE;
       }
       case PASSAGE_PIETON -> {
         return PASSAGE_PIETON;
