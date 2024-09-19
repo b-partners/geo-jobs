@@ -43,7 +43,7 @@ public class AnnotationServiceIT extends FacadeIT {
         List.of(
             inDoubtTile(null, null, null, null, DetectableType.PATHWAY),
             inDoubtTile(null, null, null, null, DetectableType.TOITURE_REVETEMENT),
-            inDoubtTile(null, null, null, null, DetectableType.POOL),
+            inDoubtTile(null, null, null, null, DetectableType.PISCINE),
             inDoubtTile(null, null, null, null, DetectableType.TOITURE_REVETEMENT),
             inDoubtTile(null, null, null, null, DetectableType.PATHWAY),
             inDoubtTile(null, null, null, null, DetectableType.TOITURE_REVETEMENT));

@@ -823,7 +823,7 @@ components:
       enum:
         - TOITURE_REVETEMENT
         - PANNEAU_PHOTOVOLTAIQUE
-        - POOL
+        - PISCINE
         - PATHWAY
         - TREE
         - SIDEWALK

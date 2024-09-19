@@ -16,7 +16,7 @@ class DetectableObjectTypeMapperTest {
   void to_domain_ok() {
     assertEquals(TREE, subject.toDomain(DetectableObjectType.TREE));
     assertEquals(TOITURE_REVETEMENT, subject.toDomain(DetectableObjectType.TOITURE_REVETEMENT));
-    assertEquals(POOL, subject.toDomain(DetectableObjectType.POOL));
+    assertEquals(PISCINE, subject.toDomain(DetectableObjectType.PISCINE));
     assertEquals(PATHWAY, subject.toDomain(DetectableObjectType.PATHWAY));
     assertEquals(
         PANNEAU_PHOTOVOLTAIQUE, subject.toDomain(DetectableObjectType.PANNEAU_PHOTOVOLTAIQUE));
@@ -35,7 +35,7 @@ class DetectableObjectTypeMapperTest {
   void to_rest_ok() {
     assertEquals(DetectableObjectType.TREE, subject.toRest(TREE));
     assertEquals(DetectableObjectType.TOITURE_REVETEMENT, subject.toRest(TOITURE_REVETEMENT));
-    assertEquals(DetectableObjectType.POOL, subject.toRest(POOL));
+    assertEquals(DetectableObjectType.PISCINE, subject.toRest(PISCINE));
     assertEquals(DetectableObjectType.PATHWAY, subject.toRest(PATHWAY));
     assertEquals(
         DetectableObjectType.PANNEAU_PHOTOVOLTAIQUE, subject.toRest(PANNEAU_PHOTOVOLTAIQUE));

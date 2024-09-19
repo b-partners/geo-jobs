@@ -10,12 +10,12 @@ class CommunityDetectableObjectTypeTest {
   void getter_setter_test() {
     CommunityDetectableObjectType value = new CommunityDetectableObjectType();
     value.setId("123");
-    value.setType(DetectableType.POOL);
+    value.setType(DetectableType.PISCINE);
     value.setCommunityAuthorizationId("communityId");
 
     assertEquals("123", value.getId());
     assertEquals("communityId", value.getCommunityAuthorizationId());
-    assertEquals(DetectableType.POOL, value.getType());
+    assertEquals(DetectableType.PISCINE, value.getType());
   }
 
   @Test

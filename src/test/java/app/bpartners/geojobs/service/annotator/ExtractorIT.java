@@ -2,7 +2,7 @@ package app.bpartners.geojobs.service.annotator;
 
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PANNEAU_PHOTOVOLTAIQUE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PATHWAY;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.POOL;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.PISCINE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
 import static app.bpartners.geojobs.service.AnnotationServiceIT.inDoubtTile;
 import static app.bpartners.geojobs.service.event.ZoneDetectionAnnotationProcessorTest.LAYER_20_10_1_PNG;
@@ -135,11 +135,11 @@ public class ExtractorIT extends FacadeIT {
     var messyListOfTiles =
         List.of(
             inDoubtTile(null, null, null, null, PATHWAY),
-            inDoubtTile(null, null, null, null, POOL),
-            inDoubtTile(null, null, null, null, POOL),
+            inDoubtTile(null, null, null, null, PISCINE),
+            inDoubtTile(null, null, null, null, PISCINE),
             inDoubtTile(null, null, null, null, PATHWAY),
-            inDoubtTile(null, null, null, null, POOL),
-            inDoubtTile(null, null, null, null, POOL),
+            inDoubtTile(null, null, null, null, PISCINE),
+            inDoubtTile(null, null, null, null, PISCINE),
             inDoubtTile(null, null, null, null, TOITURE_REVETEMENT),
             inDoubtTile(null, null, null, null, TOITURE_REVETEMENT),
             inDoubtTile(null, null, null, null, TOITURE_REVETEMENT),
@@ -204,7 +204,7 @@ public class ExtractorIT extends FacadeIT {
   }
 
   Label pool() {
-    return new Label().name(POOL.name());
+    return new Label().name(PISCINE.name());
   }
 
   CreateAnnotationBatch ignoreGeneratedValues(CreateAnnotationBatch annotationBatch) {

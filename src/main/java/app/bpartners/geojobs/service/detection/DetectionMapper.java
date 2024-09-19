@@ -9,7 +9,7 @@ import static app.bpartners.geojobs.repository.model.detection.DetectableType.GR
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.LINE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PANNEAU_PHOTOVOLTAIQUE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PATHWAY;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.POOL;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.PISCINE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.SIDEWALK;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.TREE;
@@ -109,7 +109,7 @@ public class DetectionMapper {
       case "SOLAR_PANEL" -> DetectableType.PANNEAU_PHOTOVOLTAIQUE;
       case "TREE" -> DetectableType.TREE;
       case "PATHWAY" -> DetectableType.PATHWAY;
-      case "POOL" -> DetectableType.POOL;
+      case "POOL" -> DetectableType.PISCINE;
       default -> throw new IllegalStateException("Unexpected value: " + label.toLowerCase());
     };
   }
@@ -221,7 +221,7 @@ public class DetectionMapper {
     return switch (label.getName().toUpperCase()) {
       case "ROOF" -> create(objectId, TOITURE_REVETEMENT);
       case "SOLAR_PANEL" -> create(objectId, PANNEAU_PHOTOVOLTAIQUE);
-      case "POOL" -> create(objectId, POOL);
+      case "POOL" -> create(objectId, PISCINE);
       case "TREE" -> create(objectId, TREE);
       case "SIDEWALK" -> create(objectId, SIDEWALK);
       case "PATHWAY" -> create(objectId, PATHWAY);

@@ -34,7 +34,7 @@ class CommunityDetectableObjectTypeTest {
         assertThrows(
             ForbiddenException.class,
             () -> {
-              subject.accept(communityAuthorization, DetectableObjectType.POOL);
+              subject.accept(communityAuthorization, DetectableObjectType.PISCINE);
             });
     assertTrue(error.getMessage().contains("POOL"));
   }

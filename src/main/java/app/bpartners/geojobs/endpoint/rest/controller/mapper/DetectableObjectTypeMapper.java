@@ -11,8 +11,8 @@ import org.springframework.stereotype.Component;
 public class DetectableObjectTypeMapper {
   public DetectableType toDomain(DetectableObjectType rest) {
     switch (rest) {
-      case POOL -> {
-        return DetectableType.POOL;
+      case PISCINE -> {
+        return DetectableType.PISCINE;
       }
       case TOITURE_REVETEMENT -> {
         return DetectableType.TOITURE_REVETEMENT;
@@ -32,8 +32,8 @@ public class DetectableObjectTypeMapper {
 
   public DetectableObjectType toRest(DetectableType domain) {
     switch (domain) {
-      case POOL -> {
-        return POOL;
+      case PISCINE -> {
+        return PISCINE;
       }
       case TOITURE_REVETEMENT -> {
         return TOITURE_REVETEMENT;

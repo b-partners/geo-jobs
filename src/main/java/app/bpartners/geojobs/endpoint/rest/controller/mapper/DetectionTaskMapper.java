@@ -83,8 +83,8 @@ public class DetectionTaskMapper {
       case TREE -> {
         return DetectableObjectType.TREE;
       }
-      case POOL -> {
-        return DetectableObjectType.POOL;
+      case PISCINE -> {
+        return DetectableObjectType.PISCINE;
       }
       case PATHWAY -> {
         return DetectableObjectType.PATHWAY;
