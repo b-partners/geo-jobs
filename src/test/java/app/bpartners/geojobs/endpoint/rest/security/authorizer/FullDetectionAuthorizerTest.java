@@ -2,6 +2,7 @@ package app.bpartners.geojobs.endpoint.rest.security.authorizer;
 
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_COMMUNITY;
+import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doNothing;
@@ -11,7 +12,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import app.bpartners.geojobs.endpoint.rest.model.CreateFullDetection;
+import app.bpartners.geojobs.endpoint.rest.model.CreateDetection;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
@@ -27,7 +28,7 @@ import org.junit.jupiter.api.Test;
 
 class FullDetectionAuthorizerTest {
   private static final String COMMUNITY_ID = "dummyId";
-  CreateFullDetection createFullDetection = mock();
+  CreateDetection createDetection = mock();
   CommunityZoneSurfaceAuthorizer communityZoneSurfaceAuthorizer = mock();
   CommunityZoneAuthorizer communityZoneAuthorizer = mock();
   CommunityDetectableObjectTypeAuthorizer communityDetectableObjectTypeAuthorizer = mock();
@@ -49,12 +50,13 @@ class FullDetectionAuthorizerTest {
   void setup() {
     when(communityAuthRepository.findByApiKey(any()))
         .thenReturn(Optional.of(communityAuthorization));
-    when(createFullDetection.getFeatures()).thenReturn(List.of(mock(Feature.class)));
+    when(createDetection.getGeoJsonZone()).thenReturn(List.of(mock(Feature.class)));
   }
 
   @Test
   void should_accept_directly_admin_api_key() {
-    assertDoesNotThrow(() -> subject.accept(createFullDetection, useRole(ROLE_ADMIN)));
+    assertDoesNotThrow(
+        () -> subject.accept(randomUUID().toString(), createDetection, useRole(ROLE_ADMIN)));
   }
 
   @Test
@@ -64,7 +66,8 @@ class FullDetectionAuthorizerTest {
     doNothing().when(communityZoneAuthorizer).accept(any(), any());
     doNothing().when(communityDetectableObjectTypeAuthorizer).accept(any(), any());
 
-    assertDoesNotThrow(() -> subject.accept(createFullDetection, useRole(ROLE_COMMUNITY)));
+    assertDoesNotThrow(
+        () -> subject.accept(randomUUID().toString(), createDetection, useRole(ROLE_COMMUNITY)));
     verify(fullDetectionOwnerAuthorizer, never()).accept(any(), any());
   }
 
@@ -72,7 +75,8 @@ class FullDetectionAuthorizerTest {
   void should_check_only_owner_if_endToEndId_already_exist_and_accept_it() {
     when(fullDetectionRepository.findByEndToEndId(any()))
         .thenReturn(Optional.of(FullDetection.builder().communityOwnerId(COMMUNITY_ID).build()));
-    assertDoesNotThrow(() -> subject.accept(createFullDetection, useRole(ROLE_COMMUNITY)));
+    assertDoesNotThrow(
+        () -> subject.accept(randomUUID().toString(), createDetection, useRole(ROLE_COMMUNITY)));
 
     verify(fullDetectionOwnerAuthorizer, times(1)).accept(any(), any());
     verify(communityZoneAuthorizer, never()).accept(any(), any());

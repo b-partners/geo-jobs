@@ -106,7 +106,7 @@ public class SecurityConf {
                     .hasAuthority(ROLE_ADMIN.name())
                     .requestMatchers(PUT, "/parcelization")
                     .hasAuthority(ROLE_ADMIN.name())
-                    .requestMatchers(PUT, "/fullDetection")
+                    .requestMatchers(PUT, "/detections/*")
                     .hasAnyAuthority(ROLE_ADMIN.name(), ROLE_COMMUNITY.name())
                     .requestMatchers(GET, "/fullDetections")
                     .hasAnyAuthority(ROLE_ADMIN.name(), ROLE_COMMUNITY.name())

@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.service;
 
-import static app.bpartners.geojobs.endpoint.rest.model.JobTypes.MACHINE_DETECTION;
-import static app.bpartners.geojobs.endpoint.rest.model.JobTypes.TILING;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectionStep.MACHINE_DETECTION;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectionStep.TILING;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static app.bpartners.geojobs.service.tiling.ZoneTilingJobService.getTilingTasks;
@@ -12,10 +12,10 @@ import app.bpartners.geojobs.endpoint.event.model.FullDetectionSaved;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerificationSent;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.TaskStatisticMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneTilingJobMapper;
-import app.bpartners.geojobs.endpoint.rest.model.CreateFullDetection;
+import app.bpartners.geojobs.endpoint.rest.model.CreateDetection;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration;
-import app.bpartners.geojobs.endpoint.rest.model.FullDetectedZone;
-import app.bpartners.geojobs.endpoint.rest.model.JobTypes;
+import app.bpartners.geojobs.endpoint.rest.model.Detection;
+import app.bpartners.geojobs.endpoint.rest.model.DetectionStep;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
@@ -58,9 +58,9 @@ public class ZoneService {
   private final BucketComponent bucketComponent;
   private final GeoJsonConversionInitiationService conversionInitiationService;
 
-  public FullDetectedZone processTilingAndDetection(
-      CreateFullDetection zoneToDetect, Optional<String> communityOwnerId) {
-    var endToEndId = zoneToDetect.getEndToEndId();
+  public Detection processTilingAndDetection(
+      String detectionId, CreateDetection zoneToDetect, Optional<String> communityOwnerId) {
+    var endToEndId = detectionId;
     var fullDetection =
         fullDetectionRepository
             .findByEndToEndId(endToEndId)
@@ -72,14 +72,11 @@ public class ZoneService {
                           .endToEndId(endToEndId)
                           .communityOwnerId(communityOwnerId.orElse(null))
                           .detectableObjectConfiguration(
-                              new DetectableObjectConfiguration()
-                                  .bucketStorageName(zoneToDetect.getBucketStorage())
-                                  .type(zoneToDetect.getObjectType())
-                                  .confidence(zoneToDetect.getConfidence()))
+                              new DetectableObjectConfiguration()) // TODO
                           .build();
                   var savedFullDetection =
                       communityUsedSurfaceService.persistFullDetectionWithSurfaceUsage(
-                          toSave, zoneToDetect.getFeatures());
+                          toSave, zoneToDetect.getGeoJsonZone());
                   eventProducer.accept(
                       List.of(
                           FullDetectionSaved.builder().fullDetection(savedFullDetection).build()));
@@ -130,7 +127,7 @@ public class ZoneService {
     return getDetectionStatistics(fullDetection, detectionJobId);
   }
 
-  public List<FullDetectedZone> getFullDetectionsByCriteria(
+  public List<Detection> getFullDetectionsByCriteria(
       Optional<String> communityId, PageFromOne page, BoundedPageSize pageSize) {
     Pageable pageable = PageRequest.of(page.getValue() - 1, pageSize.getValue());
     var fullDetections =
@@ -140,7 +137,7 @@ public class ZoneService {
     return fullDetections.stream().map(this::addStatistics).toList();
   }
 
-  private FullDetectedZone addStatistics(FullDetection fullDetection) {
+  private Detection addStatistics(FullDetection fullDetection) {
     var jobType = TILING;
     List<TaskStatistic> statistics = new ArrayList<>();
 
@@ -151,39 +148,40 @@ public class ZoneService {
       statistics.add(zoneTilingJobService.getTaskStatistic(fullDetection.getZtjId()));
     }
 
-    return createFullDetectedZone(
+    return createDetection(
         fullDetection.getEndToEndId(), fullDetection.getGeojsonS3FileKey(), statistics, jobType);
   }
 
-  private FullDetectedZone getTilingStatistics(FullDetection fullDetection, String tilingJobId) {
-    return createFullDetectedZone(
+  private Detection getTilingStatistics(FullDetection fullDetection, String tilingJobId) {
+    return createDetection(
         fullDetection.getEndToEndId(),
         fullDetection.getGeojsonS3FileKey(),
         List.of(zoneTilingJobService.computeTaskStatistics(tilingJobId)),
         TILING);
   }
 
-  private FullDetectedZone getDetectionStatistics(
-      FullDetection fullDetection, String detectionJobId) {
-    return createFullDetectedZone(
+  private Detection getDetectionStatistics(FullDetection fullDetection, String detectionJobId) {
+    return createDetection(
         fullDetection.getEndToEndId(),
         fullDetection.getGeojsonS3FileKey(),
         List.of(zoneDetectionJobService.computeTaskStatistics(detectionJobId)),
         MACHINE_DETECTION);
   }
 
-  private FullDetectedZone createFullDetectedZone(
-      String endToEndId, String s3FileKey, List<TaskStatistic> statistics, JobTypes jobType) {
-    FullDetectedZone fullDetectedZone =
-        new FullDetectedZone()
-            .endToEndId(endToEndId)
-            .detectedGeojsonUrl(generatePresignedUrl(s3FileKey))
-            .statistics(statistics.stream().map(taskStatisticMapper::toRest).toList());
-    fullDetectedZone.setJobTypes(List.of(jobType));
-    return fullDetectedZone;
+  private Detection createDetection(
+      String endToEndId, String s3FileKey, List<TaskStatistic> statistics, DetectionStep jobType) {
+    Detection detection =
+        new Detection()
+            .id(endToEndId)
+            .excelUrl(null) // TODO: not handle for now
+            .shapeUrl(null) // TODO: not handle for now
+            .geoJsonUrl(generatePresignedUrl(s3FileKey));
+    // TODO: return overall configuration
+    // TODO .step(statistics.stream().map(taskStatisticMapper::toRest).toList());
+    return detection;
   }
 
-  private ZoneTilingJob processZoneTilingJob(CreateFullDetection zoneToDetect) {
+  private ZoneTilingJob processZoneTilingJob(CreateDetection zoneToDetect) {
     var createJob = zoneTilingJobMapper.from(zoneToDetect);
     var job = zoneTilingJobMapper.toDomain(createJob);
     var tilingTasks = getTilingTasks(createJob, job.getId());
@@ -191,7 +189,7 @@ public class ZoneService {
     return zoneTilingJobService.create(job, tilingTasks);
   }
 
-  // TODO: seems to be bad to handle FullDetection and CreateFullDetection together
+  // TODO: seems to be bad to handle FullDetection and CreateDetection together
   public ZoneDetectionJob processZoneDetectionJob(FullDetection fullDetection, ZoneTilingJob job) {
     var zoneDetectionJob = zoneDetectionJobService.getByTilingJobId(job.getId(), MACHINE);
 

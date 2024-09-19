@@ -30,9 +30,9 @@ import app.bpartners.geojobs.endpoint.rest.model.DetectionUsage;
 import app.bpartners.geojobs.endpoint.rest.model.SuccessStatus;
 import app.bpartners.geojobs.endpoint.rest.model.ZoneDetectionJob;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
+import app.bpartners.geojobs.endpoint.rest.security.authorizer.FullDetectionAuthorizer;
 import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
-import app.bpartners.geojobs.endpoint.rest.validator.CreateFullDetectionValidator;
 import app.bpartners.geojobs.endpoint.rest.validator.GetUsageValidator;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.file.bucket.BucketConf;
@@ -75,12 +75,12 @@ class ZoneDetectionControllerTest {
   EventProducer eventProducerMock = mock();
   GeoJsonConversionInitiationService geoJsonConversionInitiationServiceMock = mock();
   ZoneService zoneServiceMock = mock();
-  CreateFullDetectionValidator fullDetectionValidatorMock = mock();
   CommunityUsedSurfaceService communityUsedSurfaceServiceMock = mock();
   GetUsageValidator getUsageValidatorMock = mock();
   CommunityAuthorizationRepository communityAuthRepositoryMock = mock();
   AuthProvider authProviderMock = mock();
   DetectionSurfaceUnitMapper surfaceUnitMapper = new DetectionSurfaceUnitMapper();
+  FullDetectionAuthorizer fullDetectionAuthorizerMock = mock();
   ZoneDetectionController subject =
       new ZoneDetectionController(
           parcelServiceMock,
@@ -95,12 +95,12 @@ class ZoneDetectionControllerTest {
           eventProducerMock,
           geoJsonConversionInitiationServiceMock,
           zoneServiceMock,
-          fullDetectionValidatorMock,
           communityUsedSurfaceServiceMock,
           getUsageValidatorMock,
           communityAuthRepositoryMock,
           authProviderMock,
-          surfaceUnitMapper);
+          surfaceUnitMapper,
+          fullDetectionAuthorizerMock);
 
   @BeforeEach
   void setup() {
