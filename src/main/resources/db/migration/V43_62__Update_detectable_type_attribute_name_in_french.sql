@@ -4,3 +4,4 @@ alter type detectable_type rename value 'POOL' to 'PISCINE';
 alter type detectable_type rename value 'PATHWAY' to 'PASSAGE_PIETON';
 alter type detectable_type rename value 'TREE' to 'ARBRE';
 alter type detectable_type rename value 'SIDEWALK' to 'TROTTOIR';
+alter type detectable_type rename value 'GREEN_SPACE' to 'ESPACE_VERT';

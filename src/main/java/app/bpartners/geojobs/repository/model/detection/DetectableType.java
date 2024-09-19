@@ -8,5 +8,5 @@ public enum DetectableType {
   ARBRE,
   TROTTOIR,
   LINE,
-  GREEN_SPACE
+  ESPACE_VERT
 }

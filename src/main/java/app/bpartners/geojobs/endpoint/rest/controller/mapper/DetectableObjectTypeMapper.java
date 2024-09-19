@@ -53,8 +53,8 @@ public class DetectableObjectTypeMapper {
       case LINE -> {
         return LINE;
       }
-      case GREEN_SPACE -> {
-        return GREEN_SPACE;
+      case ESPACE_VERT -> {
+        return ESPACE_VERT;
       }
       default -> throw new NotImplementedException("Unknown detectable object type " + domain);
     }

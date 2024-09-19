@@ -6,7 +6,7 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.ARBRE;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.GREEN_SPACE;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.ESPACE_VERT;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.LINE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PANNEAU_PHOTOVOLTAIQUE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PASSAGE_PIETON;
@@ -226,7 +226,7 @@ public class DetectionMapper {
       case "SIDEWALK" -> create(objectId, TROTTOIR);
       case "PATHWAY" -> create(objectId, PASSAGE_PIETON);
       case "LINE" -> create(objectId, LINE);
-      case "GREEN_SPACE" -> create(objectId, GREEN_SPACE);
+      case "GREEN_SPACE" -> create(objectId, ESPACE_VERT);
       default ->
           throw new IllegalStateException("Unexpected value: " + label.getName().toUpperCase());
     };

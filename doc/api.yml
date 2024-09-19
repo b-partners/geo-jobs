@@ -828,7 +828,7 @@ components:
         - ARBRE
         - TROTTOIR
         - LINE
-        - GREEN_SPACE
+        - ESPACE_VERT
     ProcessJobAnnotation:
       type: object
       properties:
