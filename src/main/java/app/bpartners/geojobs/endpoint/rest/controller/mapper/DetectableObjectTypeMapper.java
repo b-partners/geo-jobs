@@ -47,8 +47,8 @@ public class DetectableObjectTypeMapper {
       case PANNEAU_PHOTOVOLTAIQUE -> {
         return PANNEAU_PHOTOVOLTAIQUE;
       }
-      case SIDEWALK -> {
-        return SIDEWALK;
+      case TROTTOIR -> {
+        return TROTTOIR;
       }
       case LINE -> {
         return LINE;

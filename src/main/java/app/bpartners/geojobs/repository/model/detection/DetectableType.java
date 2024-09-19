@@ -6,7 +6,7 @@ public enum DetectableType {
   PISCINE,
   PASSAGE_PIETON,
   ARBRE,
-  SIDEWALK,
+  TROTTOIR,
   LINE,
   GREEN_SPACE
 }

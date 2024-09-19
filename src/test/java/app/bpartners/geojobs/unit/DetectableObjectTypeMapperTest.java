@@ -25,7 +25,7 @@ class DetectableObjectTypeMapperTest {
   @Test
   void to_domain_ko() {
     assertThrows(
-        NotImplementedException.class, () -> subject.toDomain(DetectableObjectType.SIDEWALK));
+        NotImplementedException.class, () -> subject.toDomain(DetectableObjectType.TROTTOIR));
     assertThrows(NotImplementedException.class, () -> subject.toDomain(DetectableObjectType.LINE));
     assertThrows(
         NotImplementedException.class, () -> subject.toDomain(DetectableObjectType.GREEN_SPACE));
@@ -40,7 +40,7 @@ class DetectableObjectTypeMapperTest {
     assertEquals(
         DetectableObjectType.PANNEAU_PHOTOVOLTAIQUE, subject.toRest(PANNEAU_PHOTOVOLTAIQUE));
     assertEquals(DetectableObjectType.LINE, subject.toRest(LINE));
-    assertEquals(DetectableObjectType.SIDEWALK, subject.toRest(SIDEWALK));
+    assertEquals(DetectableObjectType.TROTTOIR, subject.toRest(TROTTOIR));
     assertEquals(DetectableObjectType.GREEN_SPACE, subject.toRest(GREEN_SPACE));
   }
 }

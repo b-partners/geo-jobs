@@ -11,8 +11,8 @@ import static app.bpartners.geojobs.repository.model.detection.DetectableType.LI
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PANNEAU_PHOTOVOLTAIQUE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PASSAGE_PIETON;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PISCINE;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.SIDEWALK;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.TROTTOIR;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static app.bpartners.geojobs.service.detection.DetectionResponse.REGION_CONFIDENCE_PROPERTY;
@@ -223,7 +223,7 @@ public class DetectionMapper {
       case "SOLAR_PANEL" -> create(objectId, PANNEAU_PHOTOVOLTAIQUE);
       case "POOL" -> create(objectId, PISCINE);
       case "TREE" -> create(objectId, ARBRE);
-      case "SIDEWALK" -> create(objectId, SIDEWALK);
+      case "SIDEWALK" -> create(objectId, TROTTOIR);
       case "PATHWAY" -> create(objectId, PASSAGE_PIETON);
       case "LINE" -> create(objectId, LINE);
       case "GREEN_SPACE" -> create(objectId, GREEN_SPACE);
