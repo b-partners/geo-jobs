@@ -105,11 +105,11 @@ public class DetectionMapper {
 
   private static DetectableType toDetectableType(String label) {
     return switch (label.toUpperCase()) {
-      case "ROOF" -> DetectableType.TOITURE_REVETEMENT;
-      case "SOLAR_PANEL" -> DetectableType.PANNEAU_PHOTOVOLTAIQUE;
-      case "TREE" -> DetectableType.ARBRE;
-      case "PATHWAY" -> DetectableType.PASSAGE_PIETON;
-      case "POOL" -> DetectableType.PISCINE;
+      case "ROOF", "TOITURE_REVETEMENT" -> DetectableType.TOITURE_REVETEMENT;
+      case "SOLAR_PANEL", "PANNEAU_PHOTOVOLTAIQUE" -> DetectableType.PANNEAU_PHOTOVOLTAIQUE;
+      case "TREE", "ARBRE" -> DetectableType.ARBRE;
+      case "PATHWAY", "PASSAGE_PIETON" -> DetectableType.PASSAGE_PIETON;
+      case "POOL", "PISCINE" -> DetectableType.PISCINE;
       default -> throw new IllegalStateException("Unexpected value: " + label.toLowerCase());
     };
   }

@@ -34,7 +34,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedConstruction;
 
-public class AnnotationServiceTest {
+class AnnotationServiceTest {
   public static final String ZONE_DETECTION_JOB_ID = "zoneDetectionJobId";
   MockedConstruction<JobsApi> jobsApiMockedConstruction;
   MockedConstruction<AdminApi> adminApiMockedConstruction;
@@ -102,7 +102,8 @@ public class AnnotationServiceTest {
 
     when(detectableObjectRepositoryMock.findAllByDetectionJobId(ZONE_DETECTION_JOB_ID))
         .thenReturn(detectableObjects());
-    when(labelConverterMock.apply(PASSAGE_PIETON)).thenReturn(new Label().name("PATHWAY"));
+    when(labelConverterMock.apply(PASSAGE_PIETON))
+        .thenReturn(new Label().name(PASSAGE_PIETON.name()));
     when(annotatorApiConfMock.newApiClientWithApiKey()).thenReturn(new ApiClient());
   }
 

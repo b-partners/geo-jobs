@@ -36,7 +36,7 @@ class CommunityDetectableObjectTypeTest {
             () -> {
               subject.accept(communityAuthorization, DetectableObjectType.PISCINE);
             });
-    assertTrue(error.getMessage().contains("POOL"));
+    assertTrue(error.getMessage().contains("PISCINE"));
   }
 
   private CommunityAuthorization communityAuthorization() {

@@ -7,7 +7,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 
 import app.bpartners.geojobs.model.exception.ApiException;
-import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.service.detection.DetectionResponse;
 import app.bpartners.geojobs.service.detection.TileObjectDetector;
 import java.math.BigDecimal;
@@ -23,13 +22,13 @@ public class ObjectsDetectorMockResponse {
     this.objectsDetector = objectsDetector;
   }
 
-  public void apply(double responseConfidence, DetectableType detectableType, double successRate) {
+  public void apply(double responseConfidence, String objectType, double successRate) {
     Random random = new Random();
     doAnswer(
             invocation -> {
               double randomDouble = random.nextDouble() * 100;
               if (randomDouble < successRate) {
-                return aDetectionResponse(responseConfidence, detectableType);
+                return aDetectionResponse(responseConfidence, objectType);
               } else {
                 throw new ApiException(SERVER_EXCEPTION, "Server error");
               }
@@ -38,7 +37,7 @@ public class ObjectsDetectorMockResponse {
         .apply(any(), any());
   }
 
-  private DetectionResponse aDetectionResponse(Double confidence, DetectableType detectableType) {
+  private DetectionResponse aDetectionResponse(Double confidence, String objectType) {
     double randomX = new SecureRandom().nextDouble() * 100;
     double randomY = new SecureRandom().nextDouble() * 100;
     return DetectionResponse.builder()
@@ -57,7 +56,7 @@ public class ObjectsDetectorMockResponse {
                                         REGION_CONFIDENCE_PROPERTY,
                                         confidence.toString(),
                                         REGION_LABEL_PROPERTY,
-                                        detectableType.toString()))
+                                        objectType))
                                 .shapeAttributes(
                                     DetectionResponse.ImageData.ShapeAttributes.builder()
                                         .allPointsX(List.of(BigDecimal.valueOf(randomX)))
