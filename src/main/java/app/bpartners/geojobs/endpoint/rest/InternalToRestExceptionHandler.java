@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest;
 
-import app.bpartners.geojobs.endpoint.rest.model.Exception;
+import app.bpartners.geojobs.endpoint.rest.model.RestException;
 import app.bpartners.geojobs.model.exception.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -17,70 +17,70 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 public class InternalToRestExceptionHandler {
 
   @ExceptionHandler(value = {BadRequestException.class})
-  ResponseEntity<Exception> handleBadRequest(BadRequestException e) {
+  ResponseEntity<RestException> handleBadRequest(BadRequestException e) {
     log.info("Bad request", e);
     return new ResponseEntity<>(toRest(e, HttpStatus.BAD_REQUEST), HttpStatus.BAD_REQUEST);
   }
 
   @ExceptionHandler(value = {MissingServletRequestParameterException.class})
-  ResponseEntity<Exception> handleBadRequest(MissingServletRequestParameterException e) {
+  ResponseEntity<RestException> handleBadRequest(MissingServletRequestParameterException e) {
     log.info("Missing parameter", e);
     return handleBadRequest(new BadRequestException(e.getMessage()));
   }
 
   @ExceptionHandler(value = {HttpRequestMethodNotSupportedException.class})
-  ResponseEntity<Exception> handleBadRequest(HttpRequestMethodNotSupportedException e) {
+  ResponseEntity<RestException> handleBadRequest(HttpRequestMethodNotSupportedException e) {
     log.info("Unsupported method for this endpoint", e);
     return handleBadRequest(new BadRequestException(e.getMessage()));
   }
 
   @ExceptionHandler(value = {HttpMessageNotReadableException.class})
-  ResponseEntity<Exception> handleBadRequest(HttpMessageNotReadableException e) {
+  ResponseEntity<RestException> handleBadRequest(HttpMessageNotReadableException e) {
     log.info("Missing required body", e);
     return handleBadRequest(new BadRequestException(e.getMessage()));
   }
 
   @ExceptionHandler(value = {MethodArgumentTypeMismatchException.class})
-  ResponseEntity<Exception> handleConversionFailed(MethodArgumentTypeMismatchException e) {
+  ResponseEntity<RestException> handleConversionFailed(MethodArgumentTypeMismatchException e) {
     log.info("Conversion failed", e);
     String message = e.getCause().getCause().getMessage();
     return handleBadRequest(new BadRequestException(message));
   }
 
   @ExceptionHandler(value = {TooManyRequestsException.class})
-  ResponseEntity<Exception> handleTooManyRequests(TooManyRequestsException e) {
+  ResponseEntity<RestException> handleTooManyRequests(TooManyRequestsException e) {
     log.info("Too many requests", e);
     return new ResponseEntity<>(
         toRest(e, HttpStatus.TOO_MANY_REQUESTS), HttpStatus.TOO_MANY_REQUESTS);
   }
 
   @ExceptionHandler(value = {ForbiddenException.class})
-  ResponseEntity<Exception> handleDefault(ForbiddenException e) {
+  ResponseEntity<RestException> handleDefault(ForbiddenException e) {
     log.error("Authentication error", e);
     return new ResponseEntity<>(toRest(e, HttpStatus.FORBIDDEN), HttpStatus.FORBIDDEN);
   }
 
   @ExceptionHandler(value = {NotFoundException.class})
-  ResponseEntity<Exception> handleNotFound(NotFoundException e) {
+  ResponseEntity<RestException> handleNotFound(NotFoundException e) {
     log.info("Not found", e);
     return new ResponseEntity<>(toRest(e, HttpStatus.NOT_FOUND), HttpStatus.NOT_FOUND);
   }
 
   @ExceptionHandler(value = {NotImplementedException.class})
-  ResponseEntity<Exception> handleNotFound(NotImplementedException e) {
+  ResponseEntity<RestException> handleNotFound(NotImplementedException e) {
     log.info("Not implemented", e);
     return new ResponseEntity<>(toRest(e, HttpStatus.NOT_IMPLEMENTED), HttpStatus.NOT_IMPLEMENTED);
   }
 
   @ExceptionHandler(value = {java.lang.Exception.class})
-  ResponseEntity<Exception> handleDefault(java.lang.Exception e) {
+  ResponseEntity<RestException> handleDefault(java.lang.Exception e) {
     log.error("Internal error", e);
     return new ResponseEntity<>(
         toRest(e, HttpStatus.INTERNAL_SERVER_ERROR), HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
-  private Exception toRest(java.lang.Exception e, HttpStatus status) {
-    var restException = new Exception();
+  private RestException toRest(java.lang.Exception e, HttpStatus status) {
+    var restException = new RestException();
     restException.setType(status.toString());
     restException.setMessage(e.getMessage());
     return restException;

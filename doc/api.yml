@@ -600,7 +600,7 @@ components:
           schema:
             $ref: '#/components/schemas/InternalServerException'
   schemas:
-    Exception:
+    RestException:
       type: object
       properties:
         type:
@@ -609,31 +609,31 @@ components:
           type: string
     InternalServerException:
       allOf:
-        - $ref: '#/components/schemas/Exception'
+        - $ref: '#/components/schemas/RestException'
       example:
         type: InternalServerException
         message: Unexpected error
     BadRequestException:
       allOf:
-        - $ref: '#/components/schemas/Exception'
+        - $ref: '#/components/schemas/RestException'
       example:
         type: BadRequestException
         message: Bad request
     NotAuthorizedException:
       allOf:
-        - $ref: '#/components/schemas/Exception'
+        - $ref: '#/components/schemas/RestException'
       example:
         type: NotAuthorizedException
         message: Not authorized
     ResourceNotFoundException:
       allOf:
-        - $ref: '#/components/schemas/Exception'
+        - $ref: '#/components/schemas/RestException'
       example:
         type: ResourceNotFoundException
         message: Resource of type <T> identified by <I> not found
     TooManyRequestsException:
       allOf:
-        - $ref: '#/components/schemas/Exception'
+        - $ref: '#/components/schemas/RestException'
       example:
         type: TooManyRequestsException
         message: Too many requests
