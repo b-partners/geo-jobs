@@ -105,7 +105,7 @@ class CommunityAuthenticatedAccessIT extends FacadeIT {
     var communityDetectableType =
         CommunityDetectableObjectType.builder()
             .id("dummyId")
-            .type(DetectableType.PATHWAY)
+            .type(DetectableType.PASSAGE_PIETON)
             .communityAuthorizationId("dummyId")
             .build();
 

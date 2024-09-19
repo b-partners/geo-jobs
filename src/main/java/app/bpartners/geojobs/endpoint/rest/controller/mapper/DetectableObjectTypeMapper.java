@@ -20,8 +20,8 @@ public class DetectableObjectTypeMapper {
       case TREE -> {
         return DetectableType.TREE;
       }
-      case PATHWAY -> {
-        return DetectableType.PATHWAY;
+      case PASSAGE_PIETON -> {
+        return DetectableType.PASSAGE_PIETON;
       }
       case PANNEAU_PHOTOVOLTAIQUE -> {
         return DetectableType.PANNEAU_PHOTOVOLTAIQUE;
@@ -41,8 +41,8 @@ public class DetectableObjectTypeMapper {
       case TREE -> {
         return TREE;
       }
-      case PATHWAY -> {
-        return PATHWAY;
+      case PASSAGE_PIETON -> {
+        return PASSAGE_PIETON;
       }
       case PANNEAU_PHOTOVOLTAIQUE -> {
         return PANNEAU_PHOTOVOLTAIQUE;

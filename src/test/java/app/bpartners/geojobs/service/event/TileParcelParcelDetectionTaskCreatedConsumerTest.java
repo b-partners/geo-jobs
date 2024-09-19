@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.PATHWAY;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.PASSAGE_PIETON;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -38,7 +38,10 @@ public class TileParcelParcelDetectionTaskCreatedConsumerTest {
                 new TileDetectionTaskCreated(
                     "zdjId",
                     TileDetectionTask.builder().build(),
-                    List.of(DetectableObjectConfiguration.builder().objectType(PATHWAY).build()))));
+                    List.of(
+                        DetectableObjectConfiguration.builder()
+                            .objectType(PASSAGE_PIETON)
+                            .build()))));
 
     var detectedTileCaptor = ArgumentCaptor.forClass(MachineDetectedTile.class);
     verify(detectedTileRepositoryMock, times(1)).save(detectedTileCaptor.capture());

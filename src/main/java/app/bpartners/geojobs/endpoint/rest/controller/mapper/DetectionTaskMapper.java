@@ -86,8 +86,8 @@ public class DetectionTaskMapper {
       case PISCINE -> {
         return DetectableObjectType.PISCINE;
       }
-      case PATHWAY -> {
-        return DetectableObjectType.PATHWAY;
+      case PASSAGE_PIETON -> {
+        return DetectableObjectType.PASSAGE_PIETON;
       }
       default ->
           throw new NotImplementedException("Unknown Detectable Object Type " + detectableType);

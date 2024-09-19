@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.service.annotator;
 
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PANNEAU_PHOTOVOLTAIQUE;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.PATHWAY;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.PASSAGE_PIETON;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PISCINE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
 import static app.bpartners.geojobs.service.AnnotationServiceIT.inDoubtTile;
@@ -134,23 +134,23 @@ public class ExtractorIT extends FacadeIT {
   void get_unique_labels_from_detected_tiles() {
     var messyListOfTiles =
         List.of(
-            inDoubtTile(null, null, null, null, PATHWAY),
+            inDoubtTile(null, null, null, null, PASSAGE_PIETON),
             inDoubtTile(null, null, null, null, PISCINE),
             inDoubtTile(null, null, null, null, PISCINE),
-            inDoubtTile(null, null, null, null, PATHWAY),
+            inDoubtTile(null, null, null, null, PASSAGE_PIETON),
             inDoubtTile(null, null, null, null, PISCINE),
             inDoubtTile(null, null, null, null, PISCINE),
             inDoubtTile(null, null, null, null, TOITURE_REVETEMENT),
             inDoubtTile(null, null, null, null, TOITURE_REVETEMENT),
             inDoubtTile(null, null, null, null, TOITURE_REVETEMENT),
-            inDoubtTile(null, null, null, null, PATHWAY),
+            inDoubtTile(null, null, null, null, PASSAGE_PIETON),
             inDoubtTile(null, null, null, null, TOITURE_REVETEMENT),
             inDoubtTile(null, null, null, null, TOITURE_REVETEMENT),
             inDoubtTile(null, null, null, null, TOITURE_REVETEMENT),
-            inDoubtTile(null, null, null, null, PATHWAY),
-            inDoubtTile(null, null, null, null, PATHWAY),
-            inDoubtTile(null, null, null, null, PATHWAY),
-            inDoubtTile(null, null, null, null, PATHWAY),
+            inDoubtTile(null, null, null, null, PASSAGE_PIETON),
+            inDoubtTile(null, null, null, null, PASSAGE_PIETON),
+            inDoubtTile(null, null, null, null, PASSAGE_PIETON),
+            inDoubtTile(null, null, null, null, PASSAGE_PIETON),
             inDoubtTile(null, null, null, null, TOITURE_REVETEMENT));
     var expected = List.of(pathWay(), roof(), pool());
 
@@ -200,7 +200,7 @@ public class ExtractorIT extends FacadeIT {
   }
 
   Label pathWay() {
-    return new Label().name(PATHWAY.name());
+    return new Label().name(PASSAGE_PIETON.name());
   }
 
   Label pool() {

@@ -23,7 +23,7 @@ public class LabelConverter implements Function<DetectableType, Label> {
       case TOITURE_REVETEMENT -> "#DFFF00";
       case PANNEAU_PHOTOVOLTAIQUE -> "#0E4EB3";
       case PISCINE -> "#0DCBD2";
-      case PATHWAY -> "#F5F586";
+      case PASSAGE_PIETON -> "#F5F586";
       case TREE -> "#4BFF33";
       default -> throw new IllegalArgumentException("unexpected value");
     };

@@ -8,7 +8,7 @@ import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.GREEN_SPACE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.LINE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PANNEAU_PHOTOVOLTAIQUE;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.PATHWAY;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.PASSAGE_PIETON;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PISCINE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.SIDEWALK;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
@@ -108,7 +108,7 @@ public class DetectionMapper {
       case "ROOF" -> DetectableType.TOITURE_REVETEMENT;
       case "SOLAR_PANEL" -> DetectableType.PANNEAU_PHOTOVOLTAIQUE;
       case "TREE" -> DetectableType.TREE;
-      case "PATHWAY" -> DetectableType.PATHWAY;
+      case "PATHWAY" -> DetectableType.PASSAGE_PIETON;
       case "POOL" -> DetectableType.PISCINE;
       default -> throw new IllegalStateException("Unexpected value: " + label.toLowerCase());
     };
@@ -224,7 +224,7 @@ public class DetectionMapper {
       case "POOL" -> create(objectId, PISCINE);
       case "TREE" -> create(objectId, TREE);
       case "SIDEWALK" -> create(objectId, SIDEWALK);
-      case "PATHWAY" -> create(objectId, PATHWAY);
+      case "PATHWAY" -> create(objectId, PASSAGE_PIETON);
       case "LINE" -> create(objectId, LINE);
       case "GREEN_SPACE" -> create(objectId, GREEN_SPACE);
       default ->

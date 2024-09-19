@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.service;
 
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.PATHWAY;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.PASSAGE_PIETON;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -48,7 +48,7 @@ public class ParcelDetectionJobCreatedServiceTest {
         List.of(
             DetectableObjectConfiguration.builder()
                 .id("objectConfiguration1")
-                .objectType(PATHWAY)
+                .objectType(PASSAGE_PIETON)
                 .build());
     when(objectConfigurationRepositoryMock.findAllByDetectionJobId(zoneDetectionJobId))
         .thenReturn(objectConfigurations);
@@ -84,7 +84,7 @@ public class ParcelDetectionJobCreatedServiceTest {
         List.of(
             DetectableObjectConfiguration.builder()
                 .id("objectConfiguration1")
-                .objectType(PATHWAY)
+                .objectType(PASSAGE_PIETON)
                 .build());
     when(objectConfigurationRepositoryMock.findAllByDetectionJobId(zoneDetectionJobId))
         .thenReturn(List.of());

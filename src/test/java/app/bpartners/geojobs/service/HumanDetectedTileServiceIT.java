@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.service;
 
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.PATHWAY;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.PASSAGE_PIETON;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -49,7 +49,7 @@ class HumanDetectedTileServiceIT extends FacadeIT {
             DetectableObjectType.builder()
                 .id(randomUUID().toString())
                 .objectId(objectId)
-                .detectableType(PATHWAY)
+                .detectableType(PASSAGE_PIETON)
                 .build())
         .computedConfidence(0.95)
         .feature(new Feature())
