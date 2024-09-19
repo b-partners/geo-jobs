@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.unit;
 
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.LINE;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.ROOF;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
@@ -24,7 +24,7 @@ class DetectableObjectConfigufrationMapperTest {
     var expected1 =
         new app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration()
             .confidence(BigDecimal.valueOf(0.5))
-            .type(DetectableObjectType.ROOF)
+            .type(DetectableObjectType.TOITURE_REVETEMENT)
             .bucketStorageName(dummyBucket);
     var expected2 =
         new app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration()
@@ -36,7 +36,7 @@ class DetectableObjectConfigufrationMapperTest {
         subject.toRest(
             DetectableObjectConfiguration.builder()
                 .confidence(0.5)
-                .objectType(ROOF)
+                .objectType(TOITURE_REVETEMENT)
                 .bucketStorageName(dummyBucket)
                 .build());
     var actual2 =

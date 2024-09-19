@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PATHWAY;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.ROOF;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.gen.annotator.endpoint.rest.api.AdminApi;
@@ -55,7 +55,7 @@ public class AnnotationServiceTest {
   private static List<DetectableObjectConfiguration> detectableObjects() {
     return List.of(
         DetectableObjectConfiguration.builder().objectType(PATHWAY).build(),
-        DetectableObjectConfiguration.builder().objectType(ROOF).build());
+        DetectableObjectConfiguration.builder().objectType(TOITURE_REVETEMENT).build());
   }
 
   @NonNull

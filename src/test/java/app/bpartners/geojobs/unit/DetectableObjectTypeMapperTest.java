@@ -15,7 +15,7 @@ class DetectableObjectTypeMapperTest {
   @Test
   void to_domain_ok() {
     assertEquals(TREE, subject.toDomain(DetectableObjectType.TREE));
-    assertEquals(ROOF, subject.toDomain(DetectableObjectType.ROOF));
+    assertEquals(TOITURE_REVETEMENT, subject.toDomain(DetectableObjectType.TOITURE_REVETEMENT));
     assertEquals(POOL, subject.toDomain(DetectableObjectType.POOL));
     assertEquals(PATHWAY, subject.toDomain(DetectableObjectType.PATHWAY));
     assertEquals(SOLAR_PANEL, subject.toDomain(DetectableObjectType.SOLAR_PANEL));
@@ -33,7 +33,7 @@ class DetectableObjectTypeMapperTest {
   @Test
   void to_rest_ok() {
     assertEquals(DetectableObjectType.TREE, subject.toRest(TREE));
-    assertEquals(DetectableObjectType.ROOF, subject.toRest(ROOF));
+    assertEquals(DetectableObjectType.TOITURE_REVETEMENT, subject.toRest(TOITURE_REVETEMENT));
     assertEquals(DetectableObjectType.POOL, subject.toRest(POOL));
     assertEquals(DetectableObjectType.PATHWAY, subject.toRest(PATHWAY));
     assertEquals(DetectableObjectType.SOLAR_PANEL, subject.toRest(SOLAR_PANEL));

@@ -3,7 +3,7 @@ package app.bpartners.geojobs.service;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.*;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.ROOF;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
@@ -362,7 +362,7 @@ public class ZoneDetectionJobServiceTest {
         DetectableObjectConfiguration.builder()
             .detectionJobId(jobId)
             .bucketStorageName("bucketStorageName")
-            .objectType(ROOF)
+            .objectType(TOITURE_REVETEMENT)
             .confidence(1.0)
             .build();
 

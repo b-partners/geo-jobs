@@ -14,8 +14,8 @@ public class DetectableObjectTypeMapper {
       case POOL -> {
         return DetectableType.POOL;
       }
-      case ROOF -> {
-        return DetectableType.ROOF;
+      case TOITURE_REVETEMENT -> {
+        return DetectableType.TOITURE_REVETEMENT;
       }
       case TREE -> {
         return DetectableType.TREE;
@@ -35,8 +35,8 @@ public class DetectableObjectTypeMapper {
       case POOL -> {
         return POOL;
       }
-      case ROOF -> {
-        return ROOF;
+      case TOITURE_REVETEMENT -> {
+        return TOITURE_REVETEMENT;
       }
       case TREE -> {
         return TREE;

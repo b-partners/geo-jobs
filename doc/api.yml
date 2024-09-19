@@ -821,7 +821,7 @@ components:
     DetectableObjectType:
       type: string
       enum:
-        - ROOF
+        - TOITURE_REVETEMENT
         - SOLAR_PANEL
         - POOL
         - PATHWAY

@@ -9,9 +9,9 @@ import static app.bpartners.geojobs.repository.model.detection.DetectableType.GR
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.LINE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PATHWAY;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.POOL;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.ROOF;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.SIDEWALK;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.SOLAR_PANEL;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.TREE;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
@@ -105,7 +105,7 @@ public class DetectionMapper {
 
   private static DetectableType toDetectableType(String label) {
     return switch (label.toUpperCase()) {
-      case "ROOF" -> DetectableType.ROOF;
+      case "ROOF" -> DetectableType.TOITURE_REVETEMENT;
       case "SOLAR_PANEL" -> DetectableType.SOLAR_PANEL;
       case "TREE" -> DetectableType.TREE;
       case "PATHWAY" -> DetectableType.PATHWAY;
@@ -219,7 +219,7 @@ public class DetectionMapper {
       throw new IllegalArgumentException("label.name cannot be null");
     }
     return switch (label.getName().toUpperCase()) {
-      case "ROOF" -> create(objectId, ROOF);
+      case "ROOF" -> create(objectId, TOITURE_REVETEMENT);
       case "SOLAR_PANEL" -> create(objectId, SOLAR_PANEL);
       case "POOL" -> create(objectId, POOL);
       case "TREE" -> create(objectId, TREE);

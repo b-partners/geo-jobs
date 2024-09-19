@@ -1,0 +1,1 @@
+alter type detectable_type rename value 'ROOF' to 'TOITURE_REVETEMENT';

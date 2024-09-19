@@ -77,8 +77,8 @@ public class DetectionTaskMapper {
       case SOLAR_PANEL -> {
         return DetectableObjectType.SOLAR_PANEL;
       }
-      case ROOF -> {
-        return DetectableObjectType.ROOF;
+      case TOITURE_REVETEMENT -> {
+        return DetectableObjectType.TOITURE_REVETEMENT;
       }
       case TREE -> {
         return DetectableObjectType.TREE;
