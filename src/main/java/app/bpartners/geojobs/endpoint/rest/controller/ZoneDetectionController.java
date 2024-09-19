@@ -189,7 +189,7 @@ public class ZoneDetectionController {
         authProvider.getPrincipal(), unitMapper.toDomain(surfaceUnit));
   }
 
-  @GetMapping("/fullDetections")
+  @GetMapping("/detections")
   public List<FullDetectedZone> getFullDetections(
       @RequestParam(name = "page", defaultValue = "1", required = false) PageFromOne page,
       @RequestParam(name = "pageSize", defaultValue = "10", required = false)
