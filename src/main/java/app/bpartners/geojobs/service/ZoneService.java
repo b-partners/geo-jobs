@@ -19,6 +19,8 @@ import app.bpartners.geojobs.endpoint.rest.model.JobTypes;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
+import app.bpartners.geojobs.model.page.BoundedPageSize;
+import app.bpartners.geojobs.model.page.PageFromOne;
 import app.bpartners.geojobs.repository.FullDetectionRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
@@ -29,10 +31,13 @@ import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -123,6 +128,31 @@ public class ZoneService {
       }
     }
     return getDetectionStatistics(fullDetection, detectionJobId);
+  }
+
+  public List<FullDetectedZone> getFullDetectionsByCriteria(
+      Optional<String> communityId, PageFromOne page, BoundedPageSize pageSize) {
+    Pageable pageable = PageRequest.of(page.getValue() - 1, pageSize.getValue());
+    var fullDetections =
+        communityId
+            .map(ownerId -> fullDetectionRepository.findByCommunityOwnerId(ownerId, pageable))
+            .orElseGet(() -> fullDetectionRepository.findAll(pageable).getContent());
+    return fullDetections.stream().map(this::addStatistics).toList();
+  }
+
+  private FullDetectedZone addStatistics(FullDetection fullDetection) {
+    var jobType = TILING;
+    List<TaskStatistic> statistics = new ArrayList<>();
+
+    if (fullDetection.getZdjId() != null) {
+      statistics.add(zoneDetectionJobService.getTaskStatistic(fullDetection.getZdjId()));
+      jobType = MACHINE_DETECTION;
+    } else if (fullDetection.getZtjId() != null) {
+      statistics.add(zoneTilingJobService.getTaskStatistic(fullDetection.getZtjId()));
+    }
+
+    return createFullDetectedZone(
+        fullDetection.getEndToEndId(), fullDetection.getGeojsonS3FileKey(), statistics, jobType);
   }
 
   private FullDetectedZone getTilingStatistics(FullDetection fullDetection, String tilingJobId) {

@@ -484,6 +484,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/DetectionUsage'
 
+  '/fullDetections':
+    get:
+      tags:
+        - Detection
+      operationId: getFullDetections
+      parameters:
+        - in: query
+          name: page
+          schema:
+            $ref: "#/components/schemas/Page"
+        - in: query
+          name: pageSize
+          schema:
+            $ref: "#/components/schemas/PageSize"
+      responses:
+        200:
+          description: List of fullDetections
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FullDetectedZone'
+
   '/fullDetection':
     put:
       tags:

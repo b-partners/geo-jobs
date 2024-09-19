@@ -60,15 +60,13 @@ public abstract class JobService<T extends Task, J extends Job> {
     this.jobClazz = jobClazz;
   }
 
-  public TaskStatistic computeTaskStatistics(String jobId) {
-    J job = findById(jobId);
-    eventProducer.accept(List.of(TaskStatisticRecomputingSubmitted.builder().jobId(jobId).build()));
+  public TaskStatistic getTaskStatistic(J job) {
     TaskStatistic taskStatistic =
         taskStatisticRepository.findTopByJobIdOrderByUpdatedAtDesc(job.getId());
     if (taskStatistic == null) {
       return TaskStatistic.builder()
           .id(randomUUID().toString())
-          .jobId(jobId)
+          .jobId(job.getId())
           .taskStatusStatistics(List.of())
           .actualJobStatus(job.getStatus())
           .jobType(job.getStatus().getJobType())
@@ -76,6 +74,17 @@ public abstract class JobService<T extends Task, J extends Job> {
           .build();
     }
     return taskStatistic.toBuilder().actualJobStatus(job.getStatus()).build();
+  }
+
+  public TaskStatistic getTaskStatistic(String jobId) {
+    J job = findById(jobId);
+    return getTaskStatistic(job);
+  }
+
+  public TaskStatistic computeTaskStatistics(String jobId) {
+    J job = findById(jobId);
+    eventProducer.accept(List.of(TaskStatisticRecomputingSubmitted.builder().jobId(jobId).build()));
+    return getTaskStatistic(job);
   }
 
   public List<J> findAll(PageFromOne page, BoundedPageSize pageSize) {

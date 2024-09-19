@@ -188,4 +188,15 @@ public class ZoneDetectionController {
     return communityUsedSurfaceService.getUsage(
         authProvider.getPrincipal(), unitMapper.toDomain(surfaceUnit));
   }
+
+  @GetMapping("/fullDetections")
+  public List<FullDetectedZone> getFullDetections(
+      @RequestParam(name = "page", defaultValue = "1", required = false) PageFromOne page,
+      @RequestParam(name = "pageSize", defaultValue = "10", required = false)
+          BoundedPageSize pageSize) {
+    var communityAuthorization =
+        communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
+    var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId);
+    return zoneService.getFullDetectionsByCriteria(communityOwnerId, page, pageSize);
+  }
 }
