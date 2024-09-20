@@ -30,7 +30,7 @@ import app.bpartners.geojobs.endpoint.rest.model.DetectionUsage;
 import app.bpartners.geojobs.endpoint.rest.model.SuccessStatus;
 import app.bpartners.geojobs.endpoint.rest.model.ZoneDetectionJob;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
-import app.bpartners.geojobs.endpoint.rest.security.authorizer.FullDetectionAuthorizer;
+import app.bpartners.geojobs.endpoint.rest.security.authorizer.DetectionAuthorizer;
 import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.endpoint.rest.validator.GetUsageValidator;
@@ -80,7 +80,7 @@ class ZoneDetectionControllerTest {
   CommunityAuthorizationRepository communityAuthRepositoryMock = mock();
   AuthProvider authProviderMock = mock();
   DetectionSurfaceUnitMapper surfaceUnitMapper = new DetectionSurfaceUnitMapper();
-  FullDetectionAuthorizer fullDetectionAuthorizerMock = mock();
+  DetectionAuthorizer detectionAuthorizerMock = mock();
   ZoneDetectionController subject =
       new ZoneDetectionController(
           parcelServiceMock,
@@ -100,7 +100,7 @@ class ZoneDetectionControllerTest {
           communityAuthRepositoryMock,
           authProviderMock,
           surfaceUnitMapper,
-          fullDetectionAuthorizerMock);
+          detectionAuthorizerMock);
 
   @BeforeEach
   void setup() {

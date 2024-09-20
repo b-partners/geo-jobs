@@ -1123,26 +1123,36 @@ components:
              EVALUATION DE L'ETAT DU BATI
         toitureRevetement:
           type: boolean
+          default: true
         arbre:
           type: boolean
+          default: true
         velux:
           type: boolean
+          default: true
         panneauPhotovoltaique:
           type: boolean
+          default: true
         moisissure:
           type: boolean
+          default: true
         usure:
           type: boolean
+          default: true
         fissureCassure:
           type: boolean
+          default: true
         obstacle:
           type: boolean
+          default: true
         cheminee:
           type: boolean
         humidite:
           type: boolean
+          default: true
         risqueFeu:
           type: boolean
+          default: true
     BPLomModel:
       type: object
       properties:

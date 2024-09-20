@@ -24,7 +24,7 @@ import app.bpartners.geojobs.endpoint.rest.model.GeoJsonsUrl;
 import app.bpartners.geojobs.endpoint.rest.model.Status;
 import app.bpartners.geojobs.endpoint.rest.model.TaskStatistic;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
-import app.bpartners.geojobs.endpoint.rest.security.authorizer.FullDetectionAuthorizer;
+import app.bpartners.geojobs.endpoint.rest.security.authorizer.DetectionAuthorizer;
 import app.bpartners.geojobs.endpoint.rest.validator.GetUsageValidator;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.job.model.JobStatus;
@@ -71,7 +71,7 @@ public class ZoneDetectionController {
   private final CommunityAuthorizationRepository communityAuthRepository;
   private final AuthProvider authProvider;
   private final DetectionSurfaceUnitMapper unitMapper;
-  private final FullDetectionAuthorizer fullDetectionAuthorizer;
+  private final DetectionAuthorizer detectionAuthorizer;
 
   @PutMapping("/detectionJobs/{id}/taskFiltering")
   public List<FilteredDetectionJob> filteredDetectionJobs(@PathVariable String id) {
@@ -173,7 +173,7 @@ public class ZoneDetectionController {
   @PutMapping("/detections/{id}")
   public Detection processDetection(
       @PathVariable(name = "id") String detectionId, @RequestBody CreateDetection createDetection) {
-    fullDetectionAuthorizer.accept(detectionId, createDetection, authProvider.getPrincipal());
+    detectionAuthorizer.accept(detectionId, createDetection, authProvider.getPrincipal());
     var communityAuthorization =
         communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
     var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId);

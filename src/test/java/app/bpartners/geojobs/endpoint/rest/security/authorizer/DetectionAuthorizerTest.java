@@ -26,7 +26,7 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class FullDetectionAuthorizerTest {
+class DetectionAuthorizerTest {
   private static final String COMMUNITY_ID = "dummyId";
   CreateDetection createDetection = mock();
   CommunityZoneSurfaceAuthorizer communityZoneSurfaceAuthorizer = mock();
@@ -35,8 +35,8 @@ class FullDetectionAuthorizerTest {
   CommunityAuthorizationRepository communityAuthRepository = mock();
   FullDetectionRepository fullDetectionRepository = mock();
   FullDetectionOwnerAuthorizer fullDetectionOwnerAuthorizer = mock();
-  FullDetectionAuthorizer subject =
-      new FullDetectionAuthorizer(
+  DetectionAuthorizer subject =
+      new DetectionAuthorizer(
           communityDetectableObjectTypeAuthorizer,
           communityAuthRepository,
           communityZoneAuthorizer,

@@ -30,7 +30,7 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.TaskStatisticMapper
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
-import app.bpartners.geojobs.endpoint.rest.security.authorizer.FullDetectionAuthorizer;
+import app.bpartners.geojobs.endpoint.rest.security.authorizer.DetectionAuthorizer;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.job.model.JobStatus;
@@ -92,7 +92,7 @@ class DetectionControllerIT extends FacadeIT {
   @MockBean ZoneTilingJobService zoneTilingJobService;
   @MockBean TaskStatisticMapper taskStatisticMapper;
   @MockBean DetectableObjectConfigurationRepository detectableObjectConfigurationRepository;
-  @MockBean FullDetectionAuthorizer fullDetectionAuthorizer;
+  @MockBean DetectionAuthorizer detectionAuthorizer;
   @MockBean CommunityAuthorizationRepository communityAuthRepository;
 
   @MockBean AuthProvider authProviderMock;
@@ -100,7 +100,7 @@ class DetectionControllerIT extends FacadeIT {
   @BeforeEach
   void setUp() {
     when(authProviderMock.getPrincipal()).thenReturn(mock(Principal.class));
-    doNothing().when(fullDetectionAuthorizer).accept(any(), any(), any());
+    doNothing().when(detectionAuthorizer).accept(any(), any(), any());
     fullDetectionRepository.deleteAll();
   }
 
