@@ -821,14 +821,14 @@ components:
     DetectableObjectType:
       type: string
       enum:
-        - ROOF
-        - SOLAR_PANEL
-        - POOL
-        - PATHWAY
-        - TREE
-        - SIDEWALK
+        - TOITURE_REVETEMENT
+        - PANNEAU_PHOTOVOLTAIQUE
+        - PISCINE
+        - PASSAGE_PIETON
+        - ARBRE
+        - TROTTOIR
         - LINE
-        - GREEN_SPACE
+        - ESPACE_VERT
     ProcessJobAnnotation:
       type: object
       properties:

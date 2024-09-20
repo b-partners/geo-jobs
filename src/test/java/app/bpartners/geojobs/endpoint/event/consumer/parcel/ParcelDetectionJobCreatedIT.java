@@ -2,7 +2,6 @@ package app.bpartners.geojobs.endpoint.event.consumer.parcel;
 
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.POOL;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -53,7 +52,7 @@ class ParcelDetectionJobCreatedIT extends DetectionIT {
     when(jobAnnotationProcessorMock.accept(any(), any(), any(), any(), any(), any()))
         .thenReturn(ZoneDetectionJobAnnotationProcessor.AnnotationJobIds.builder().build());
     new ObjectsDetectorMockResponse(objectsDetectorMock)
-        .apply(MOCK_DETECTION_RESPONSE_CONFIDENCE, POOL, OBJECT_DETECTION_SUCCESS_RATE);
+        .apply(MOCK_DETECTION_RESPONSE_CONFIDENCE, "POOL", OBJECT_DETECTION_SUCCESS_RATE);
   }
 
   @NonNull

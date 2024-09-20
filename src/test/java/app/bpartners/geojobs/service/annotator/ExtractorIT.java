@@ -1,9 +1,9 @@
 package app.bpartners.geojobs.service.annotator;
 
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.PATHWAY;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.POOL;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.ROOF;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.SOLAR_PANEL;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.PANNEAU_PHOTOVOLTAIQUE;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.PASSAGE_PIETON;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.PISCINE;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
 import static app.bpartners.geojobs.service.AnnotationServiceIT.inDoubtTile;
 import static app.bpartners.geojobs.service.event.ZoneDetectionAnnotationProcessorTest.LAYER_20_10_1_PNG;
 import static app.bpartners.geojobs.service.event.ZoneDetectionAnnotationProcessorTest.MOCK_JOB_ID;
@@ -86,7 +86,7 @@ public class ExtractorIT extends FacadeIT {
 
   @Test
   void extract_label_ok() {
-    DetectableType roof = ROOF;
+    DetectableType roof = TOITURE_REVETEMENT;
     String roofColor = "#DFFF00";
     Label expected = new Label().id(null).name(roof.name()).color(roofColor);
 
@@ -120,7 +120,8 @@ public class ExtractorIT extends FacadeIT {
     Polygon expected = getFeaturePolygon();
     DetectedObject machineDetectedObject =
         DetectedObject.builder()
-            .detectedObjectType(DetectableObjectType.builder().detectableType(ROOF).build())
+            .detectedObjectType(
+                DetectableObjectType.builder().detectableType(TOITURE_REVETEMENT).build())
             .feature(feature)
             .build();
 
@@ -133,24 +134,24 @@ public class ExtractorIT extends FacadeIT {
   void get_unique_labels_from_detected_tiles() {
     var messyListOfTiles =
         List.of(
-            inDoubtTile(null, null, null, null, PATHWAY),
-            inDoubtTile(null, null, null, null, POOL),
-            inDoubtTile(null, null, null, null, POOL),
-            inDoubtTile(null, null, null, null, PATHWAY),
-            inDoubtTile(null, null, null, null, POOL),
-            inDoubtTile(null, null, null, null, POOL),
-            inDoubtTile(null, null, null, null, ROOF),
-            inDoubtTile(null, null, null, null, ROOF),
-            inDoubtTile(null, null, null, null, ROOF),
-            inDoubtTile(null, null, null, null, PATHWAY),
-            inDoubtTile(null, null, null, null, ROOF),
-            inDoubtTile(null, null, null, null, ROOF),
-            inDoubtTile(null, null, null, null, ROOF),
-            inDoubtTile(null, null, null, null, PATHWAY),
-            inDoubtTile(null, null, null, null, PATHWAY),
-            inDoubtTile(null, null, null, null, PATHWAY),
-            inDoubtTile(null, null, null, null, PATHWAY),
-            inDoubtTile(null, null, null, null, ROOF));
+            inDoubtTile(null, null, null, null, PASSAGE_PIETON),
+            inDoubtTile(null, null, null, null, PISCINE),
+            inDoubtTile(null, null, null, null, PISCINE),
+            inDoubtTile(null, null, null, null, PASSAGE_PIETON),
+            inDoubtTile(null, null, null, null, PISCINE),
+            inDoubtTile(null, null, null, null, PISCINE),
+            inDoubtTile(null, null, null, null, TOITURE_REVETEMENT),
+            inDoubtTile(null, null, null, null, TOITURE_REVETEMENT),
+            inDoubtTile(null, null, null, null, TOITURE_REVETEMENT),
+            inDoubtTile(null, null, null, null, PASSAGE_PIETON),
+            inDoubtTile(null, null, null, null, TOITURE_REVETEMENT),
+            inDoubtTile(null, null, null, null, TOITURE_REVETEMENT),
+            inDoubtTile(null, null, null, null, TOITURE_REVETEMENT),
+            inDoubtTile(null, null, null, null, PASSAGE_PIETON),
+            inDoubtTile(null, null, null, null, PASSAGE_PIETON),
+            inDoubtTile(null, null, null, null, PASSAGE_PIETON),
+            inDoubtTile(null, null, null, null, PASSAGE_PIETON),
+            inDoubtTile(null, null, null, null, TOITURE_REVETEMENT));
     var expected = List.of(pathWay(), roof(), pool());
 
     List<Label> actual = labelExtractor.createUniqueLabelListFrom(messyListOfTiles);
@@ -170,8 +171,8 @@ public class ExtractorIT extends FacadeIT {
 
   @Test
   void extract_annotation_batch_ok() {
-    Label label = labelConverter.apply(ROOF);
-    DetectedObject machineDetectedObject = inDoubtDetectedObject(ROOF);
+    Label label = labelConverter.apply(TOITURE_REVETEMENT);
+    DetectedObject machineDetectedObject = inDoubtDetectedObject(TOITURE_REVETEMENT);
     CreateAnnotationBatch expected =
         new CreateAnnotationBatch()
             .annotations(
@@ -191,19 +192,19 @@ public class ExtractorIT extends FacadeIT {
   }
 
   Label roof() {
-    return new Label().name(ROOF.name());
+    return new Label().name(TOITURE_REVETEMENT.name());
   }
 
   Label solarPanel() {
-    return new Label().name(SOLAR_PANEL.name());
+    return new Label().name(PANNEAU_PHOTOVOLTAIQUE.name());
   }
 
   Label pathWay() {
-    return new Label().name(PATHWAY.name());
+    return new Label().name(PASSAGE_PIETON.name());
   }
 
   Label pool() {
-    return new Label().name(POOL.name());
+    return new Label().name(PISCINE.name());
   }
 
   CreateAnnotationBatch ignoreGeneratedValues(CreateAnnotationBatch annotationBatch) {

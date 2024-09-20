@@ -1,12 +1,12 @@
 package app.bpartners.geojobs.repository.model.detection;
 
 public enum DetectableType {
-  ROOF,
-  SOLAR_PANEL,
-  POOL,
-  PATHWAY,
-  TREE,
-  SIDEWALK,
+  TOITURE_REVETEMENT,
+  PANNEAU_PHOTOVOLTAIQUE,
+  PISCINE,
+  PASSAGE_PIETON,
+  ARBRE,
+  TROTTOIR,
   LINE,
-  GREEN_SPACE
+  ESPACE_VERT
 }

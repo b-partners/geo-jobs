@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.controller;
 
-import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.ROOF;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.TOITURE_REVETEMENT;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
@@ -271,7 +271,10 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
     parcelRepository.saveAll(parcels);
     var configuredTasks = parcelDetectionTaskRepository.saveAll(parcelDetectionTasks);
     var detectableObjectConfig =
-        List.of(new DetectableObjectConfiguration().type(ROOF).confidence(new BigDecimal("0.75")));
+        List.of(
+            new DetectableObjectConfiguration()
+                .type(TOITURE_REVETEMENT)
+                .confidence(new BigDecimal("0.75")));
     var expected =
         detectionJobMapper.toRest(job1, List.of()).objectsToDetect(detectableObjectConfig);
 

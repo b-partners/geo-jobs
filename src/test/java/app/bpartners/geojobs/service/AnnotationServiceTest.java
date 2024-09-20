@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.service;
 
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.PATHWAY;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.ROOF;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.PASSAGE_PIETON;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.gen.annotator.endpoint.rest.api.AdminApi;
@@ -34,7 +34,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedConstruction;
 
-public class AnnotationServiceTest {
+class AnnotationServiceTest {
   public static final String ZONE_DETECTION_JOB_ID = "zoneDetectionJobId";
   MockedConstruction<JobsApi> jobsApiMockedConstruction;
   MockedConstruction<AdminApi> adminApiMockedConstruction;
@@ -54,8 +54,8 @@ public class AnnotationServiceTest {
   @NonNull
   private static List<DetectableObjectConfiguration> detectableObjects() {
     return List.of(
-        DetectableObjectConfiguration.builder().objectType(PATHWAY).build(),
-        DetectableObjectConfiguration.builder().objectType(ROOF).build());
+        DetectableObjectConfiguration.builder().objectType(PASSAGE_PIETON).build(),
+        DetectableObjectConfiguration.builder().objectType(TOITURE_REVETEMENT).build());
   }
 
   @NonNull
@@ -68,7 +68,7 @@ public class AnnotationServiceTest {
                 List.of(
                     DetectedObject.builder()
                         .detectedObjectType(
-                            DetectableObjectType.builder().detectableType(PATHWAY).build())
+                            DetectableObjectType.builder().detectableType(PASSAGE_PIETON).build())
                         .feature(
                             new Feature()
                                 .geometry(
@@ -102,7 +102,8 @@ public class AnnotationServiceTest {
 
     when(detectableObjectRepositoryMock.findAllByDetectionJobId(ZONE_DETECTION_JOB_ID))
         .thenReturn(detectableObjects());
-    when(labelConverterMock.apply(PATHWAY)).thenReturn(new Label().name("PATHWAY"));
+    when(labelConverterMock.apply(PASSAGE_PIETON))
+        .thenReturn(new Label().name(PASSAGE_PIETON.name()));
     when(annotatorApiConfMock.newApiClientWithApiKey()).thenReturn(new ApiClient());
   }
 

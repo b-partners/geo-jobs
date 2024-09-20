@@ -2,7 +2,7 @@ package app.bpartners.geojobs.endpoint.event.consumer.tile;
 
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.POOL;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.PISCINE;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -57,7 +57,7 @@ class TileDetectionTaskCreatedIT extends DetectionIT {
   private static List<DetectableObjectConfiguration> detectableObjectConfiguration() {
     return List.of(
         DetectableObjectConfiguration.builder()
-            .objectType(POOL)
+            .objectType(PISCINE)
             .confidence(MOCK_DETECTION_RESPONSE_CONFIDENCE)
             .build());
   }
@@ -76,7 +76,7 @@ class TileDetectionTaskCreatedIT extends DetectionIT {
     when(jobAnnotationProcessorMock.accept(any(), any(), any(), any(), any(), any()))
         .thenReturn(ZoneDetectionJobAnnotationProcessor.AnnotationJobIds.builder().build());
     new ObjectsDetectorMockResponse(objectsDetectorMock)
-        .apply(MOCK_DETECTION_RESPONSE_CONFIDENCE, POOL, OBJECT_DETECTION_SUCCESS_RATE);
+        .apply(MOCK_DETECTION_RESPONSE_CONFIDENCE, "POOL", OBJECT_DETECTION_SUCCESS_RATE);
   }
 
   @SneakyThrows

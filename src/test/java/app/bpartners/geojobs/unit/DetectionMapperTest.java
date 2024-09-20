@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.unit;
 
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.POOL;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.PISCINE;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -85,7 +85,7 @@ class DetectionMapperTest {
     var detectedObject = actual.getFirst();
 
     assertFalse(actual.isEmpty());
-    assertEquals(POOL, detectedObject.getDetectableObjectType());
+    assertEquals(PISCINE, detectedObject.getDetectableObjectType());
     assertEquals(HUMAN, detectedObject.getType());
     assertEquals(tileId, detectedObject.getDetectedTileId());
     assertEquals(0.9515481, detectedObject.getComputedConfidence());

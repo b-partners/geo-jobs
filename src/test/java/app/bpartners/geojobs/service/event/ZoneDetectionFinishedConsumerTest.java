@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.ROOF;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
 import static app.bpartners.geojobs.service.event.ZoneDetectionFinishedConsumer.DEFAULT_MIN_CONFIDENCE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -68,7 +68,7 @@ class ZoneDetectionFinishedConsumerTest {
     var customedDetectableObjectConfiguration = customDetectableObjectConfiguration();
     var restDetectableObjectType =
         new app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration()
-            .type(DetectableObjectType.ROOF);
+            .type(DetectableObjectType.TOITURE_REVETEMENT);
     when(objectConfigurationRepositoryMock.findAllByDetectionJobId(DETECTION_JOB_ID))
         .thenReturn(getObjectConfigurations());
     when(fullDetectionRepositoryMock.findByZdjId(DETECTION_JOB_ID))
@@ -108,7 +108,7 @@ class ZoneDetectionFinishedConsumerTest {
 
   private DetectableObjectConfiguration customDetectableObjectConfiguration() {
     return DetectableObjectConfiguration.builder()
-        .objectType(ROOF)
+        .objectType(TOITURE_REVETEMENT)
         .confidence(CUSTOM_CONFIDENCE)
         .build();
   }

@@ -53,18 +53,18 @@ public class ZoneDetectionAnnotationProcessorTest extends FacadeIT {
           differentDetectedTile(List.of()),
           differentDetectedTile(
               List.of(
-                  inDoubtDetectedObject(TREE),
-                  inDoubtDetectedObject(TREE),
-                  inDoubtDetectedObject(ROOF),
-                  inDoubtDetectedObject(ROOF),
-                  inDoubtDetectedObject(SOLAR_PANEL))),
+                  inDoubtDetectedObject(ARBRE),
+                  inDoubtDetectedObject(ARBRE),
+                  inDoubtDetectedObject(TOITURE_REVETEMENT),
+                  inDoubtDetectedObject(TOITURE_REVETEMENT),
+                  inDoubtDetectedObject(PANNEAU_PHOTOVOLTAIQUE))),
           differentDetectedTile(
               List.of(
-                  inDoubtDetectedObject(TREE),
-                  inDoubtDetectedObject(TREE),
-                  inDoubtDetectedObject(ROOF),
-                  inDoubtDetectedObject(ROOF),
-                  inDoubtDetectedObject(SOLAR_PANEL))));
+                  inDoubtDetectedObject(ARBRE),
+                  inDoubtDetectedObject(ARBRE),
+                  inDoubtDetectedObject(TOITURE_REVETEMENT),
+                  inDoubtDetectedObject(TOITURE_REVETEMENT),
+                  inDoubtDetectedObject(PANNEAU_PHOTOVOLTAIQUE))));
 
   public static MachineDetectedTile differentDetectedTile(List<DetectedObject> detectedObjects) {
     return MachineDetectedTile.builder()
@@ -106,9 +106,15 @@ public class ZoneDetectionAnnotationProcessorTest extends FacadeIT {
   @NonNull
   private List<DetectableObjectConfiguration> getObjectConfigurations() {
     return List.of(
-        DetectableObjectConfiguration.builder().objectType(ROOF).confidence(0.8).build(),
-        DetectableObjectConfiguration.builder().objectType(TREE).confidence(0.8).build(),
-        DetectableObjectConfiguration.builder().objectType(SOLAR_PANEL).confidence(0.8).build());
+        DetectableObjectConfiguration.builder()
+            .objectType(TOITURE_REVETEMENT)
+            .confidence(0.8)
+            .build(),
+        DetectableObjectConfiguration.builder().objectType(ARBRE).confidence(0.8).build(),
+        DetectableObjectConfiguration.builder()
+            .objectType(PANNEAU_PHOTOVOLTAIQUE)
+            .confidence(0.8)
+            .build());
   }
 
   @BeforeEach

@@ -87,7 +87,7 @@ public class ParcelDetectionTaskConsumerIT extends FacadeIT {
         DetectableObjectConfiguration.builder()
             .id("detectableObjectConfigurationId1")
             .confidence(0.70)
-            .objectType(DetectableType.ROOF)
+            .objectType(DetectableType.TOITURE_REVETEMENT)
             .detectionJobId(JOB_ID)
             .build());
   }

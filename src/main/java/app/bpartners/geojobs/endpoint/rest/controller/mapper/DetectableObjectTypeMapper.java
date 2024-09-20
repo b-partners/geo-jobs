@@ -11,20 +11,20 @@ import org.springframework.stereotype.Component;
 public class DetectableObjectTypeMapper {
   public DetectableType toDomain(DetectableObjectType rest) {
     switch (rest) {
-      case POOL -> {
-        return DetectableType.POOL;
+      case PISCINE -> {
+        return DetectableType.PISCINE;
       }
-      case ROOF -> {
-        return DetectableType.ROOF;
+      case TOITURE_REVETEMENT -> {
+        return DetectableType.TOITURE_REVETEMENT;
       }
-      case TREE -> {
-        return DetectableType.TREE;
+      case ARBRE -> {
+        return DetectableType.ARBRE;
       }
-      case PATHWAY -> {
-        return DetectableType.PATHWAY;
+      case PASSAGE_PIETON -> {
+        return DetectableType.PASSAGE_PIETON;
       }
-      case SOLAR_PANEL -> {
-        return DetectableType.SOLAR_PANEL;
+      case PANNEAU_PHOTOVOLTAIQUE -> {
+        return DetectableType.PANNEAU_PHOTOVOLTAIQUE;
       }
       default -> throw new NotImplementedException("Unknown detectable object type " + rest);
     }
@@ -32,29 +32,29 @@ public class DetectableObjectTypeMapper {
 
   public DetectableObjectType toRest(DetectableType domain) {
     switch (domain) {
-      case POOL -> {
-        return POOL;
+      case PISCINE -> {
+        return PISCINE;
       }
-      case ROOF -> {
-        return ROOF;
+      case TOITURE_REVETEMENT -> {
+        return TOITURE_REVETEMENT;
       }
-      case TREE -> {
-        return TREE;
+      case ARBRE -> {
+        return ARBRE;
       }
-      case PATHWAY -> {
-        return PATHWAY;
+      case PASSAGE_PIETON -> {
+        return PASSAGE_PIETON;
       }
-      case SOLAR_PANEL -> {
-        return SOLAR_PANEL;
+      case PANNEAU_PHOTOVOLTAIQUE -> {
+        return PANNEAU_PHOTOVOLTAIQUE;
       }
-      case SIDEWALK -> {
-        return SIDEWALK;
+      case TROTTOIR -> {
+        return TROTTOIR;
       }
       case LINE -> {
         return LINE;
       }
-      case GREEN_SPACE -> {
-        return GREEN_SPACE;
+      case ESPACE_VERT -> {
+        return ESPACE_VERT;
       }
       default -> throw new NotImplementedException("Unknown detectable object type " + domain);
     }

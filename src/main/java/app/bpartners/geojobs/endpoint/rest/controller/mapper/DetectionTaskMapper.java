@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.controller.mapper;
 
+import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.*;
 import static java.time.Instant.now;
 import static java.util.Optional.ofNullable;
 import static java.util.UUID.randomUUID;
@@ -74,20 +75,20 @@ public class DetectionTaskMapper {
       app.bpartners.geojobs.repository.model.detection.DetectableType detectableType) {
     if (detectableType == null) return null;
     switch (detectableType) {
-      case SOLAR_PANEL -> {
-        return DetectableObjectType.SOLAR_PANEL;
+      case PANNEAU_PHOTOVOLTAIQUE -> {
+        return PANNEAU_PHOTOVOLTAIQUE;
       }
-      case ROOF -> {
-        return DetectableObjectType.ROOF;
+      case TOITURE_REVETEMENT -> {
+        return TOITURE_REVETEMENT;
       }
-      case TREE -> {
-        return DetectableObjectType.TREE;
+      case ARBRE -> {
+        return ARBRE;
       }
-      case POOL -> {
-        return DetectableObjectType.POOL;
+      case PISCINE -> {
+        return PISCINE;
       }
-      case PATHWAY -> {
-        return DetectableObjectType.PATHWAY;
+      case PASSAGE_PIETON -> {
+        return PASSAGE_PIETON;
       }
       default ->
           throw new NotImplementedException("Unknown Detectable Object Type " + detectableType);

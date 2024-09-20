@@ -3,7 +3,6 @@ package app.bpartners.geojobs.endpoint.event.consumer.tile;
 import static app.bpartners.geojobs.file.hash.FileHashAlgorithm.SHA256;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.POOL;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static java.time.Instant.now;
@@ -84,7 +83,7 @@ class ZoneTilingJobCreatedIT extends DetectionIT {
     doNothing().when(mailerMock).accept(any());
     doNothing().when(tilingJobMailerMock).accept(any());
     new ObjectsDetectorMockResponse(objectsDetectorMock)
-        .apply(MOCK_DETECTION_RESPONSE_CONFIDENCE, POOL, OBJECT_DETECTION_SUCCESS_RATE);
+        .apply(MOCK_DETECTION_RESPONSE_CONFIDENCE, "POOL", OBJECT_DETECTION_SUCCESS_RATE);
     when(tilesDownloaderMock.apply(any()))
         .thenAnswer(
             (i) ->
@@ -115,7 +114,7 @@ class ZoneTilingJobCreatedIT extends DetectionIT {
                     new Annotation()
                         .polygon(new Polygon().points(List.of(new Point().x(100.0).y(200.0))))
                         .comment("confidence=90.0")
-                        .label(new Label().name(DetectableObjectType.POOL.getValue())))));
+                        .label(new Label().name("POOL")))));
   }
 
   @NonNull
@@ -224,7 +223,7 @@ class ZoneTilingJobCreatedIT extends DetectionIT {
             .detectableObjectConfiguration(
                 new DetectableObjectConfiguration()
                     .bucketStorageName(null)
-                    .type(DetectableObjectType.POOL)
+                    .type(DetectableObjectType.PISCINE)
                     .confidence(new BigDecimal(1)))
             .build());
     return tilingJob;

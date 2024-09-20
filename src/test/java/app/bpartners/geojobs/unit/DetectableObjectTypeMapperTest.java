@@ -14,31 +14,33 @@ class DetectableObjectTypeMapperTest {
 
   @Test
   void to_domain_ok() {
-    assertEquals(TREE, subject.toDomain(DetectableObjectType.TREE));
-    assertEquals(ROOF, subject.toDomain(DetectableObjectType.ROOF));
-    assertEquals(POOL, subject.toDomain(DetectableObjectType.POOL));
-    assertEquals(PATHWAY, subject.toDomain(DetectableObjectType.PATHWAY));
-    assertEquals(SOLAR_PANEL, subject.toDomain(DetectableObjectType.SOLAR_PANEL));
+    assertEquals(ARBRE, subject.toDomain(DetectableObjectType.ARBRE));
+    assertEquals(TOITURE_REVETEMENT, subject.toDomain(DetectableObjectType.TOITURE_REVETEMENT));
+    assertEquals(PISCINE, subject.toDomain(DetectableObjectType.PISCINE));
+    assertEquals(PASSAGE_PIETON, subject.toDomain(DetectableObjectType.PASSAGE_PIETON));
+    assertEquals(
+        PANNEAU_PHOTOVOLTAIQUE, subject.toDomain(DetectableObjectType.PANNEAU_PHOTOVOLTAIQUE));
   }
 
   @Test
   void to_domain_ko() {
     assertThrows(
-        NotImplementedException.class, () -> subject.toDomain(DetectableObjectType.SIDEWALK));
+        NotImplementedException.class, () -> subject.toDomain(DetectableObjectType.TROTTOIR));
     assertThrows(NotImplementedException.class, () -> subject.toDomain(DetectableObjectType.LINE));
     assertThrows(
-        NotImplementedException.class, () -> subject.toDomain(DetectableObjectType.GREEN_SPACE));
+        NotImplementedException.class, () -> subject.toDomain(DetectableObjectType.ESPACE_VERT));
   }
 
   @Test
   void to_rest_ok() {
-    assertEquals(DetectableObjectType.TREE, subject.toRest(TREE));
-    assertEquals(DetectableObjectType.ROOF, subject.toRest(ROOF));
-    assertEquals(DetectableObjectType.POOL, subject.toRest(POOL));
-    assertEquals(DetectableObjectType.PATHWAY, subject.toRest(PATHWAY));
-    assertEquals(DetectableObjectType.SOLAR_PANEL, subject.toRest(SOLAR_PANEL));
+    assertEquals(DetectableObjectType.ARBRE, subject.toRest(ARBRE));
+    assertEquals(DetectableObjectType.TOITURE_REVETEMENT, subject.toRest(TOITURE_REVETEMENT));
+    assertEquals(DetectableObjectType.PISCINE, subject.toRest(PISCINE));
+    assertEquals(DetectableObjectType.PASSAGE_PIETON, subject.toRest(PASSAGE_PIETON));
+    assertEquals(
+        DetectableObjectType.PANNEAU_PHOTOVOLTAIQUE, subject.toRest(PANNEAU_PHOTOVOLTAIQUE));
     assertEquals(DetectableObjectType.LINE, subject.toRest(LINE));
-    assertEquals(DetectableObjectType.SIDEWALK, subject.toRest(SIDEWALK));
-    assertEquals(DetectableObjectType.GREEN_SPACE, subject.toRest(GREEN_SPACE));
+    assertEquals(DetectableObjectType.TROTTOIR, subject.toRest(TROTTOIR));
+    assertEquals(DetectableObjectType.ESPACE_VERT, subject.toRest(ESPACE_VERT));
   }
 }

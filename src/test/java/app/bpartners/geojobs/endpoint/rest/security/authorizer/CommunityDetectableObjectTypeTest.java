@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.security.authorizer;
 
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.PATHWAY;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.PASSAGE_PIETON;
 import static org.junit.jupiter.api.Assertions.*;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
@@ -22,7 +22,7 @@ class CommunityDetectableObjectTypeTest {
 
     assertDoesNotThrow(
         () -> {
-          subject.accept(communityAuthorization, DetectableObjectType.PATHWAY);
+          subject.accept(communityAuthorization, DetectableObjectType.PASSAGE_PIETON);
         });
   }
 
@@ -34,13 +34,13 @@ class CommunityDetectableObjectTypeTest {
         assertThrows(
             ForbiddenException.class,
             () -> {
-              subject.accept(communityAuthorization, DetectableObjectType.POOL);
+              subject.accept(communityAuthorization, DetectableObjectType.PISCINE);
             });
-    assertTrue(error.getMessage().contains("POOL"));
+    assertTrue(error.getMessage().contains("PISCINE"));
   }
 
   private CommunityAuthorization communityAuthorization() {
-    var detectableObjectType = CommunityDetectableObjectType.builder().type(PATHWAY).build();
+    var detectableObjectType = CommunityDetectableObjectType.builder().type(PASSAGE_PIETON).build();
     return CommunityAuthorization.builder()
         .detectableObjectTypes(List.of(detectableObjectType))
         .build();

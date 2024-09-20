@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.unit;
 
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.PATHWAY;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.PASSAGE_PIETON;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -35,7 +35,7 @@ public class GeoJsonMapperTest {
         .id(randomUUID().toString())
         .feature(feature())
         .computedConfidence(0.95)
-        .detectedObjectType(DetectableObjectType.builder().detectableType(PATHWAY).build())
+        .detectedObjectType(DetectableObjectType.builder().detectableType(PASSAGE_PIETON).build())
         .build();
   }
 

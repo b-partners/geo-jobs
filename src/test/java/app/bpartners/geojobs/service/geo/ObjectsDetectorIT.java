@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.service.geo;
 
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.PATHWAY;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.ROOF;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.PASSAGE_PIETON;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -48,7 +48,7 @@ public class ObjectsDetectorIT extends FacadeIT {
     var actual =
         objectsDetector.apply(
             detectionTask(),
-            List.of(DetectableObjectConfiguration.builder().objectType(PATHWAY).build()));
+            List.of(DetectableObjectConfiguration.builder().objectType(PASSAGE_PIETON).build()));
 
     assertNotNull(actual);
     assertNotNull(actual.getRstImageUrl());
@@ -64,8 +64,8 @@ public class ObjectsDetectorIT extends FacadeIT {
             objectsDetector.apply(
                 detectionTask(),
                 List.of(
-                    DetectableObjectConfiguration.builder().objectType(ROOF).build(),
-                    DetectableObjectConfiguration.builder().objectType(PATHWAY).build())));
+                    DetectableObjectConfiguration.builder().objectType(TOITURE_REVETEMENT).build(),
+                    DetectableObjectConfiguration.builder().objectType(PASSAGE_PIETON).build())));
   }
 
   public TileDetectionTask detectionTask() {

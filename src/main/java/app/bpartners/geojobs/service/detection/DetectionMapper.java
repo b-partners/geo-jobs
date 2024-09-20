@@ -5,14 +5,14 @@ import static app.bpartners.geojobs.job.model.Status.HealthStatus.*;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.GREEN_SPACE;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.ARBRE;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.ESPACE_VERT;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.LINE;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.PATHWAY;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.POOL;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.ROOF;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.SIDEWALK;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.SOLAR_PANEL;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.TREE;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.PANNEAU_PHOTOVOLTAIQUE;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.PASSAGE_PIETON;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.PISCINE;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.TROTTOIR;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static app.bpartners.geojobs.service.detection.DetectionResponse.REGION_CONFIDENCE_PROPERTY;
@@ -105,11 +105,11 @@ public class DetectionMapper {
 
   private static DetectableType toDetectableType(String label) {
     return switch (label.toUpperCase()) {
-      case "ROOF" -> DetectableType.ROOF;
-      case "SOLAR_PANEL" -> DetectableType.SOLAR_PANEL;
-      case "TREE" -> DetectableType.TREE;
-      case "PATHWAY" -> DetectableType.PATHWAY;
-      case "POOL" -> DetectableType.POOL;
+      case "ROOF", "TOITURE_REVETEMENT" -> DetectableType.TOITURE_REVETEMENT;
+      case "SOLAR_PANEL", "PANNEAU_PHOTOVOLTAIQUE" -> DetectableType.PANNEAU_PHOTOVOLTAIQUE;
+      case "TREE", "ARBRE" -> DetectableType.ARBRE;
+      case "PATHWAY", "PASSAGE_PIETON" -> DetectableType.PASSAGE_PIETON;
+      case "POOL", "PISCINE" -> DetectableType.PISCINE;
       default -> throw new IllegalStateException("Unexpected value: " + label.toLowerCase());
     };
   }
@@ -219,14 +219,14 @@ public class DetectionMapper {
       throw new IllegalArgumentException("label.name cannot be null");
     }
     return switch (label.getName().toUpperCase()) {
-      case "ROOF" -> create(objectId, ROOF);
-      case "SOLAR_PANEL" -> create(objectId, SOLAR_PANEL);
-      case "POOL" -> create(objectId, POOL);
-      case "TREE" -> create(objectId, TREE);
-      case "SIDEWALK" -> create(objectId, SIDEWALK);
-      case "PATHWAY" -> create(objectId, PATHWAY);
+      case "ROOF" -> create(objectId, TOITURE_REVETEMENT);
+      case "SOLAR_PANEL" -> create(objectId, PANNEAU_PHOTOVOLTAIQUE);
+      case "POOL" -> create(objectId, PISCINE);
+      case "TREE" -> create(objectId, ARBRE);
+      case "SIDEWALK" -> create(objectId, TROTTOIR);
+      case "PATHWAY" -> create(objectId, PASSAGE_PIETON);
       case "LINE" -> create(objectId, LINE);
-      case "GREEN_SPACE" -> create(objectId, GREEN_SPACE);
+      case "GREEN_SPACE" -> create(objectId, ESPACE_VERT);
       default ->
           throw new IllegalStateException("Unexpected value: " + label.getName().toUpperCase());
     };

@@ -41,12 +41,12 @@ public class AnnotationServiceIT extends FacadeIT {
   void create_job_ok() throws ApiException {
     var inDoubtTiles =
         List.of(
-            inDoubtTile(null, null, null, null, DetectableType.PATHWAY),
-            inDoubtTile(null, null, null, null, DetectableType.ROOF),
-            inDoubtTile(null, null, null, null, DetectableType.POOL),
-            inDoubtTile(null, null, null, null, DetectableType.ROOF),
-            inDoubtTile(null, null, null, null, DetectableType.PATHWAY),
-            inDoubtTile(null, null, null, null, DetectableType.ROOF));
+            inDoubtTile(null, null, null, null, DetectableType.PASSAGE_PIETON),
+            inDoubtTile(null, null, null, null, DetectableType.TOITURE_REVETEMENT),
+            inDoubtTile(null, null, null, null, DetectableType.PISCINE),
+            inDoubtTile(null, null, null, null, DetectableType.TOITURE_REVETEMENT),
+            inDoubtTile(null, null, null, null, DetectableType.PASSAGE_PIETON),
+            inDoubtTile(null, null, null, null, DetectableType.TOITURE_REVETEMENT));
 
     annotationService.createAnnotationJob(
         HumanDetectionJob.builder()

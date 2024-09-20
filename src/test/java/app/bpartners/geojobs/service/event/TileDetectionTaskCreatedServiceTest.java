@@ -3,7 +3,7 @@ package app.bpartners.geojobs.service.event;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.PATHWAY;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.PASSAGE_PIETON;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -57,7 +57,10 @@ class TileDetectionTaskCreatedServiceTest {
                                     .health(SUCCEEDED)
                                     .build()))
                         .build(),
-                    List.of(DetectableObjectConfiguration.builder().objectType(PATHWAY).build()))));
+                    List.of(
+                        DetectableObjectConfiguration.builder()
+                            .objectType(PASSAGE_PIETON)
+                            .build()))));
     var eventCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducerMock, times(1)).accept(eventCaptor.capture());
     TileDetectionTaskSucceeded capturedTileDetectionTaskSucceeded =
@@ -86,7 +89,7 @@ class TileDetectionTaskCreatedServiceTest {
         new TileDetectionTaskCreated(
             "zdjId",
             TileDetectionTask.builder().build(),
-            List.of(DetectableObjectConfiguration.builder().objectType(PATHWAY).build()));
+            List.of(DetectableObjectConfiguration.builder().objectType(PASSAGE_PIETON).build()));
 
     assertThrows(ApiException.class, () -> subject.accept(expectedTileDetectionTaskCreated));
 

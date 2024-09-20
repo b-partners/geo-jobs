@@ -2,7 +2,7 @@ package app.bpartners.geojobs.endpoint.rest.controller;
 
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper.toHealthStatus;
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper.toProgressionEnum;
-import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.ROOF;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.TOITURE_REVETEMENT;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
@@ -117,7 +117,9 @@ class FullDetectionControllerIT extends FacadeIT {
         .zdjId(null)
         .geojsonS3FileKey(null)
         .detectableObjectConfiguration(
-            new DetectableObjectConfiguration().confidence(BigDecimal.valueOf(0.8)).type(ROOF))
+            new DetectableObjectConfiguration()
+                .confidence(BigDecimal.valueOf(0.8))
+                .type(TOITURE_REVETEMENT))
         .build();
   }
 
@@ -125,7 +127,7 @@ class FullDetectionControllerIT extends FacadeIT {
       throws JsonProcessingException {
     return new CreateFullDetection()
         .endToEndId(endToEndId)
-        .objectType(ROOF)
+        .objectType(TOITURE_REVETEMENT)
         .confidence(BigDecimal.valueOf(0.8))
         .emailReceiver("mock@hotmail.com")
         .zoneName("Lyon")
@@ -216,7 +218,9 @@ class FullDetectionControllerIT extends FacadeIT {
         .zdjId(detectionJobId)
         .geojsonS3FileKey(null)
         .detectableObjectConfiguration(
-            new DetectableObjectConfiguration().confidence(BigDecimal.valueOf(0.8)).type(ROOF))
+            new DetectableObjectConfiguration()
+                .confidence(BigDecimal.valueOf(0.8))
+                .type(TOITURE_REVETEMENT))
         .build();
   }
 

@@ -27,7 +27,7 @@ public class MockedTileObjectDetector implements TileObjectDetector {
             .toList();
     return aMockedDetectionResponse(
         randomConfidence,
-        detectableTypes.isEmpty() ? DetectableType.ROOF : detectableTypes.getFirst());
+        detectableTypes.isEmpty() ? DetectableType.TOITURE_REVETEMENT : detectableTypes.getFirst());
   }
 
   private DetectionResponse aMockedDetectionResponse(

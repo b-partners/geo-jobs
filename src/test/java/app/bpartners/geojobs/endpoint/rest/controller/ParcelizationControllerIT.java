@@ -13,10 +13,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Slf4j
-public class ParcelizationControllerIT extends FacadeIT {
+class ParcelizationControllerIT extends FacadeIT {
   @Autowired ParcelizationController subject;
 
-  public static List<List<List<List<BigDecimal>>>> coordinatesToParcelize() {
+  private List<List<List<List<BigDecimal>>>> coordinatesToParcelize() {
     return List.of(
         List.of(
             List.of(
@@ -37,7 +37,7 @@ public class ParcelizationControllerIT extends FacadeIT {
                     BigDecimal.valueOf(-18.863332120399996)))));
   }
 
-  public static List<List<List<List<BigDecimal>>>> expectedCoordinates() {
+  private List<List<List<List<BigDecimal>>>> expectedCoordinates() {
     return List.of(
         List.of(
             List.of(
@@ -57,7 +57,7 @@ public class ParcelizationControllerIT extends FacadeIT {
                     BigDecimal.valueOf(-18.872993431021023)))));
   }
 
-  public static List<List<List<List<BigDecimal>>>> expectedCoordinates1() {
+  private List<List<List<List<BigDecimal>>>> expectedCoordinates1() {
     return List.of(
         List.of(
             List.of(

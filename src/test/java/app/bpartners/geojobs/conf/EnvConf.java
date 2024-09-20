@@ -13,7 +13,7 @@ public class EnvConf {
     "max_surface": 5000,
     "community_name": "community1_name",
     "api_key":"community1_key",
-    "detectable_objects_types":["ROOF", "POOL"],
+    "detectable_objects_types":["TOITURE_REVETEMENT", "PISCINE"],
     "authorized_zone_names":["zoneName1"]
   }
 ]
@@ -29,17 +29,17 @@ public class EnvConf {
     registry.add(
         "tile.detection.api.urls",
         () ->
-            "[ { \"objectType\": \"ROOF\", \"url\": \"https://roof-api.azurewebsites.net/api\" }, {"
-                + " \"objectType\": \"PATHWAY\", \"url\":"
-                + " \"https://pathway-api.azurewebsites.net/api\" }, {"
-                + " \"objectType\": \"SOLAR_PANEL\", \"url\":"
-                + " \"https://solarpanel-api.azurewebsites.net/api\" }, { \"objectType\": \"POOL\","
-                + " \"url\": \"https://pool-api.azurewebsites.net/api\" }, { \"objectType\":"
-                + " \"TREE\", \"url\": \"https://trees-api.azurewebsites.net/api\" }, {"
-                + " \"objectType\": \"SIDEWALK\", \"url\":"
+            "[ { \"objectType\": \"TOITURE_REVETEMENT\", \"url\":"
+                + " \"https://roof-api.azurewebsites.net/api\" }, { \"objectType\":"
+                + " \"PASSAGE_PIETON\", \"url\": \"https://pathway-api.azurewebsites.net/api\" }, {"
+                + " \"objectType\": \"PANNEAU_PHOTOVOLTAIQUE\", \"url\":"
+                + " \"https://solarpanel-api.azurewebsites.net/api\" }, { \"objectType\":"
+                + " \"PISCINE\", \"url\": \"https://pool-api.azurewebsites.net/api\" }, {"
+                + " \"objectType\": \"ARBRE\", \"url\": \"https://trees-api.azurewebsites.net/api\""
+                + " }, { \"objectType\": \"TROTTOIR\", \"url\":"
                 + " \"https://sidewalk-api.azurewebsites.net/api\" }, { \"objectType\": \"LINE\","
                 + " \"url\": \"https://line-api.azurewebsites.net/api\" }, { \"objectType\":"
-                + " \"GREEN_SPACE\", \"url\": \"https://greenspace-api.azurewebsites.net/api\" }"
+                + " \"ESPACE_VERT\", \"url\": \"https://greenspace-api.azurewebsites.net/api\" }"
                 + " ]");
     registry.add("admin.api.key", () -> "the-admin-api-key");
     registry.add("annotator.api.key", () -> "the-admin-api-key");

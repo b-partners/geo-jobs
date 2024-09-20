@@ -49,7 +49,7 @@ public class ParcelDetectionTaskServiceIT extends FacadeIT {
                     .detectedObjectType(
                         DetectableObjectType.builder()
                             .id(detectedObjectId)
-                            .detectableType(DetectableType.ROOF)
+                            .detectableType(DetectableType.TOITURE_REVETEMENT)
                             .objectId(detectedObjectId)
                             .build())
                     .build()))
@@ -78,7 +78,7 @@ public class ParcelDetectionTaskServiceIT extends FacadeIT {
     return DetectableObjectConfiguration.builder()
         .id("detectableObjectConfigurationId")
         .confidence(MIN_CONFIDENCE)
-        .objectType(DetectableType.ROOF)
+        .objectType(DetectableType.TOITURE_REVETEMENT)
         .detectionJobId(JOB_ID)
         .build();
   }
