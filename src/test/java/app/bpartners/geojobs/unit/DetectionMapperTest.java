@@ -40,7 +40,7 @@ class DetectionMapperTest {
 
   DetectionResponse.ImageData.Region region() {
     return DetectionResponse.ImageData.Region.builder()
-        .regionAttributes(Map.of("label", "POOL", "confidence", "0.95"))
+        .regionAttributes(Map.of("label", "PISCINE", "confidence", "0.95"))
         .shapeAttributes(shapes())
         .build();
   }
@@ -95,7 +95,7 @@ class DetectionMapperTest {
   private Annotation annotation() {
     return new Annotation()
         .comment("confidence=95.15481")
-        .label(new Label().id(randomUUID().toString()).name("POOL").color("#fffff"))
+        .label(new Label().id(randomUUID().toString()).name("PISCINE").color("#fffff"))
         .polygon(new Polygon().points(List.of(new Point().y(500.0).x(147.5))));
   }
 

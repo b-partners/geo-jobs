@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.security;
 
-import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.POOL;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.PISCINE;
 import static app.bpartners.geojobs.endpoint.rest.security.authenticator.ApiKeyAuthenticator.API_KEY_HEADER;
 import static app.bpartners.geojobs.repository.model.SurfaceUnit.SQUARE_DEGREE;
 import static java.util.UUID.randomUUID;
@@ -65,9 +65,9 @@ class CommunityAuthenticatedAccessIT extends FacadeIT {
                 detectionApi.processDetection(
                     randomUUID().toString(),
                     new CreateDetection().geoJsonZone(List.of(new Feature()))
-                    // TODO .objectType(POOL)
+                    // TODO .objectType(PISCINE)
                     ));
-    assertTrue(error.getMessage().contains(POOL.name()));
+    assertTrue(error.getMessage().contains(PISCINE.name()));
   }
 
   @Test
@@ -88,7 +88,7 @@ class CommunityAuthenticatedAccessIT extends FacadeIT {
             () ->
                 detectionApi.processDetection(
                     randomUUID().toString(), new CreateDetection()
-                    // TODO: set .objectType(POOL)
+                    // TODO: set .objectType(PISCINE)
                     ));
     assertEquals(BAD_REQUEST.value(), error.getCode());
     assertTrue(error.getMessage().contains("You must provide features for your detection"));
@@ -108,7 +108,7 @@ class CommunityAuthenticatedAccessIT extends FacadeIT {
     var communityDetectableType =
         CommunityDetectableObjectType.builder()
             .id("dummyId")
-            .type(DetectableType.PATHWAY)
+            .type(DetectableType.PASSAGE_PIETON)
             .communityAuthorizationId("dummyId")
             .build();
 

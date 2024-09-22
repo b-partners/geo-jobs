@@ -2,7 +2,7 @@ package app.bpartners.geojobs.endpoint.rest.controller;
 
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper.toHealthStatus;
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper.toProgressionEnum;
-import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.ROOF;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.TOITURE_REVETEMENT;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
@@ -112,13 +112,15 @@ class DetectionControllerIT extends FacadeIT {
         .zdjId(null)
         .geojsonS3FileKey(null)
         .detectableObjectConfiguration(
-            new DetectableObjectConfiguration().confidence(BigDecimal.valueOf(0.8)).type(ROOF))
+            new DetectableObjectConfiguration()
+                .confidence(BigDecimal.valueOf(0.8))
+                .type(TOITURE_REVETEMENT))
         .build();
   }
 
   private CreateDetection createDetection() throws JsonProcessingException {
     return new CreateDetection()
-        // .objectType(ROOF)
+        // .objectType(TOITURE_REVETEMENT)
         // .confidence(BigDecimal.valueOf(0.8))
         .overallConfiguration(
             new DetectionOverallConfiguration()
@@ -210,7 +212,9 @@ class DetectionControllerIT extends FacadeIT {
         .zdjId(detectionJobId)
         .geojsonS3FileKey(null)
         .detectableObjectConfiguration(
-            new DetectableObjectConfiguration().confidence(BigDecimal.valueOf(0.8)).type(ROOF))
+            new DetectableObjectConfiguration()
+                .confidence(BigDecimal.valueOf(0.8))
+                .type(TOITURE_REVETEMENT))
         .build();
   }
 

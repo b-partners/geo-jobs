@@ -63,7 +63,7 @@ class AnnotationDeliveryJobCreatedIT extends DetectionIT {
             .annotationJobId(randomUUID().toString())
             .annotationJobName("dummyDeliveryJobName")
             .detectionJobId(zdj.getId())
-            .labels(List.of(new Label().id(randomUUID().toString()).name("POOL").color("#000")))
+            .labels(List.of(new Label().id(randomUUID().toString()).name("PISCINE").color("#000")))
             .submissionInstant(now())
             .build();
     deliveryJob.hasNewStatus(

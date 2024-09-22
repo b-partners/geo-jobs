@@ -83,7 +83,7 @@ class ZoneTilingJobCreatedIT extends DetectionIT {
     doNothing().when(mailerMock).accept(any());
     doNothing().when(tilingJobMailerMock).accept(any());
     new ObjectsDetectorMockResponse(objectsDetectorMock)
-        .apply(MOCK_DETECTION_RESPONSE_CONFIDENCE, "POOL", OBJECT_DETECTION_SUCCESS_RATE);
+        .apply(MOCK_DETECTION_RESPONSE_CONFIDENCE, "PISCINE", OBJECT_DETECTION_SUCCESS_RATE);
     when(tilesDownloaderMock.apply(any()))
         .thenAnswer(
             (i) ->
@@ -114,7 +114,7 @@ class ZoneTilingJobCreatedIT extends DetectionIT {
                     new Annotation()
                         .polygon(new Polygon().points(List.of(new Point().x(100.0).y(200.0))))
                         .comment("confidence=90.0")
-                        .label(new Label().name("POOL")))));
+                        .label(new Label().name("PISCINE")))));
   }
 
   @NonNull
