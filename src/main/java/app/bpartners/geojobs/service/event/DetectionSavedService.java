@@ -53,10 +53,10 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
             + detection.getDetectableObjectConfigurations()
             + "\n"
             + "Configuration globale : "
-            + detection.getDetectableObjectConfigurations()
+            + detection.getDetectionOverallConfiguration()
             + "\n";
     if (detection.getGeoJsonZone() != null && !detection.getGeoJsonZone().isEmpty()) {
-      htmlBody += "Zone en GeoJson fournis : " + detection.getGeoJsonZone();
+      htmlBody += "Zone en GeoJson fournie : " + detection.getGeoJsonZone() + "\n";
     }
     if (detection.getShapeFileKey() != null) {
       var shapeFilePresignURL =

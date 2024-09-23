@@ -65,6 +65,24 @@ public class ZoneService {
   private final GeoJsonConversionInitiationService conversionInitiationService;
   private final DetectableObjectTypeMapper detectableObjectTypeMapper;
 
+  private List<Feature> readFromFile(File featuresFromShape) {
+    return List.of(new Feature().id("TODO: read features from shape"));
+  }
+
+  public app.bpartners.geojobs.endpoint.rest.model.Detection finalizeShapeConfig(
+      String detectionId, File featuresFromShape) {
+    var detection =
+        detectionRepository
+            .findById(detectionId)
+            .orElseThrow(
+                () -> new NotFoundException("Detection(id=" + detectionId + ") not found"));
+    var savedDetection =
+        detectionRepository.save(
+            detection.toBuilder().geoJsonZone(readFromFile(featuresFromShape)).build());
+    eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
+    return computeFromConfiguring(savedDetection);
+  }
+
   public app.bpartners.geojobs.endpoint.rest.model.Detection configureShapeFile(
       String detectionId, File shapeFile) {
     var detection =
