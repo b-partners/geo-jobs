@@ -108,6 +108,8 @@ public class SecurityConf {
                     .hasAuthority(ROLE_ADMIN.name())
                     .requestMatchers(PUT, "/detections/*")
                     .hasAnyAuthority(ROLE_ADMIN.name(), ROLE_COMMUNITY.name())
+                    .requestMatchers(POST, "/detections/*/shape/finalize")
+                    .hasAnyAuthority(ROLE_ADMIN.name())
                     .requestMatchers(POST, "/detections/*/shape")
                     .hasAnyAuthority(ROLE_ADMIN.name(), ROLE_COMMUNITY.name())
                     .requestMatchers(GET, "/detections")

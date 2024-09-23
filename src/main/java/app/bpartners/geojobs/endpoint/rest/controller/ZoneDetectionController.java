@@ -173,6 +173,13 @@ public class ZoneDetectionController {
     return geoJsonConversionInitiationService.initiateGeoJsonConversion(detectionJobId);
   }
 
+  @PostMapping("/detections/{id}/shape/finalize")
+  public Detection finalizeShapeConfig(
+      @PathVariable(name = "id") String detectionId, @RequestBody byte[] featuresFromShape) {
+    File shapeFile = fileWriter.apply(featuresFromShape, null);
+    return zoneService.finalizeShapeConfig(detectionId, shapeFile);
+  }
+
   @PostMapping("/detections/{id}/shape")
   public Detection processDetection(
       @PathVariable(name = "id") String detectionId, @RequestBody byte[] shapeFileAsBytes) {
