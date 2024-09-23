@@ -2,8 +2,7 @@ package app.bpartners.geojobs.repository.model.detection;
 
 import static org.hibernate.type.SqlTypes.JSON;
 
-import app.bpartners.geojobs.endpoint.rest.model.DetectionOverallConfiguration;
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import app.bpartners.geojobs.endpoint.rest.model.*;
 import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.List;
@@ -48,10 +47,28 @@ public class Detection implements Serializable {
   @JdbcTypeCode(JSON)
   private List<DetectableObjectConfiguration> detectableObjectConfigurations;
 
+  @JdbcTypeCode(JSON)
+  private BPToitureModel bpToitureModel;
+
+  @JdbcTypeCode(JSON)
+  private BPLomModel bpLomModel;
+
   // TODO: save as entity
   @JdbcTypeCode(JSON)
   private DetectionOverallConfiguration detectionOverallConfiguration;
 
   @JdbcTypeCode(JSON)
   private List<Feature> geoJsonZone;
+
+  public CreateMachineDetection getCreateMachineDetection() {
+    CreateMachineDetection createMachineDetection = new CreateMachineDetection();
+    if (bpToitureModel != null) {
+      createMachineDetection.setActualInstance(bpToitureModel);
+    } else if (bpLomModel != null) {
+      createMachineDetection.setActualInstance(bpLomModel);
+    } else {
+      return null;
+    }
+    return createMachineDetection;
+  }
 }

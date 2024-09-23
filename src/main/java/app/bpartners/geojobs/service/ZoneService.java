@@ -73,8 +73,7 @@ public class ZoneService {
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection finalizeGeoJsonConfig(
       String detectionId, File featuresFromShape) {
-    var detection =
-            getDetectionById(detectionId);
+    var detection = getDetectionById(detectionId);
     var savedDetection =
         detectionRepository.save(
             detection.toBuilder().geoJsonZone(readFromFile(featuresFromShape)).build());
@@ -84,9 +83,8 @@ public class ZoneService {
 
   private Detection getDetectionById(String detectionId) {
     return detectionRepository
-            .findById(detectionId)
-            .orElseThrow(
-                    () -> new NotFoundException("Detection(id=" + detectionId + ") not found"));
+        .findById(detectionId)
+        .orElseThrow(() -> new NotFoundException("Detection(id=" + detectionId + ") not found"));
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection configureShapeFile(
@@ -107,26 +105,14 @@ public class ZoneService {
             .findByEndToEndId(detectionId)
             .orElseGet(
                 () -> {
-                  var detectableObjectConfigurations =
-                      detectableObjectTypeMapper.mapDefaultConfigurationsFromModel(
-                          detectionId,
-                          Objects.requireNonNull(zoneToDetect.getDetectableObjectConfiguration())
-                              .getActualInstance());
-                  Detection toSave =
-                      Detection.builder()
-                          .id(detectionId)
-                          .endToEndId(detectionId)
-                          .communityOwnerId(communityOwnerId.orElse(null))
-                          .detectableObjectConfigurations(detectableObjectConfigurations)
-                          .detectionOverallConfiguration(zoneToDetect.getOverallConfiguration())
-                          .geoJsonZone(zoneToDetect.getGeoJsonZone())
-                          .build();
-                  var savedFullDetection =
+                  var detectionToSave =
+                      mapFromRestCreateDetection(detectionId, zoneToDetect, communityOwnerId);
+                  var savedDetection =
                       communityUsedSurfaceService.persistFullDetectionWithSurfaceUsage(
-                          toSave, zoneToDetect.getGeoJsonZone());
+                          detectionToSave, zoneToDetect.getGeoJsonZone());
                   eventProducer.accept(
-                      List.of(DetectionSaved.builder().detection(savedFullDetection).build()));
-                  return savedFullDetection;
+                      List.of(DetectionSaved.builder().detection(savedDetection).build()));
+                  return savedDetection;
                 });
 
     if (detection.getGeoJsonZone() == null || detection.getGeoJsonZone().isEmpty()) {
@@ -175,6 +161,29 @@ public class ZoneService {
       }
     }
     return getDetectionStatistics(detection, detectionJobId);
+  }
+
+  private Detection mapFromRestCreateDetection(
+      String detectionId, CreateDetection zoneToDetect, Optional<String> communityOwnerId) {
+    var createMachineDetection = zoneToDetect.getDetectableObjectConfiguration();
+    var modelActualInstance = Objects.requireNonNull(createMachineDetection).getActualInstance();
+    var detectableObjectConfigurations =
+        detectableObjectTypeMapper.mapDefaultConfigurationsFromModel(
+            detectionId, modelActualInstance);
+    var detectionBuilder =
+        Detection.builder()
+            .id(detectionId)
+            .endToEndId(detectionId)
+            .communityOwnerId(communityOwnerId.orElse(null))
+            .detectableObjectConfigurations(detectableObjectConfigurations)
+            .detectionOverallConfiguration(zoneToDetect.getOverallConfiguration())
+            .geoJsonZone(zoneToDetect.getGeoJsonZone());
+    if (modelActualInstance instanceof BPToitureModel) {
+      detectionBuilder.bpToitureModel((BPToitureModel) modelActualInstance);
+    } else if (modelActualInstance instanceof BPLomModel) {
+      detectionBuilder.bpLomModel((BPLomModel) modelActualInstance);
+    }
+    return detectionBuilder.build();
   }
 
   public List<app.bpartners.geojobs.endpoint.rest.model.Detection> getDetectionsByCriteria(
@@ -247,6 +256,7 @@ public class ZoneService {
         .geoJsonZone(detection.getGeoJsonZone())
         .geoJsonUrl(generatePresignedUrl(detection.getGeojsonS3FileKey()))
         .overallConfiguration(detection.getDetectionOverallConfiguration())
+        .detectableObjectConfiguration(detection.getCreateMachineDetection())
         .step(detectionStepStatisticMapper.toRestDetectionStepStatus(statistic, detectionStep));
   }
 
