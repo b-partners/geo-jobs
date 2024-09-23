@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.service.event.DetectionSavedService.computeStaticEmailBody;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
@@ -24,7 +25,7 @@ class DetectionSavedServiceTest {
     var detection = new Detection();
     List<InternetAddress> cc = List.of(); // TODO: add admin emails here
     List<InternetAddress> bcc = List.of();
-    String htmlBody = "Éléments fournis par la communauté à afficher";
+    String htmlBody = computeStaticEmailBody(detection);
     List<File> attachments = List.of(); // TODO: add attachments, as provided shape or excel file
 
     subject.accept(DetectionSaved.builder().detection(detection).build());
