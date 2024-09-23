@@ -4,6 +4,7 @@ import static app.bpartners.geojobs.endpoint.rest.model.DetectionStep.*;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
+import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.CLIENT_EXCEPTION;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
@@ -37,7 +38,10 @@ import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
+import java.nio.file.Files;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -66,9 +70,16 @@ public class ZoneService {
   private final BucketComponent bucketComponent;
   private final GeoJsonConversionInitiationService conversionInitiationService;
   private final DetectableObjectTypeMapper detectableObjectTypeMapper;
+  private final ObjectMapper objectMapper;
 
   private List<Feature> readFromFile(File featuresFromShape) {
-    return List.of(new Feature().id("TODO: read features from shape"));
+    try {
+      var featuresFileContent = Files.readString(featuresFromShape.toPath());
+      return objectMapper.readValue(featuresFileContent, new TypeReference<>() {});
+    } catch (Exception e) {
+      throw new ApiException(
+          CLIENT_EXCEPTION, "Unable to convert uploaded file to Features, exception=" + e);
+    }
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection finalizeGeoJsonConfig(

@@ -6,8 +6,9 @@ import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.UNKNOW
 import static app.bpartners.geojobs.endpoint.rest.model.Status.ProgressionEnum.FINISHED;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.ProgressionEnum.PROCESSING;
 import static app.bpartners.geojobs.file.hash.FileHashAlgorithm.SHA256;
+import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 import static java.util.UUID.randomUUID;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -19,11 +20,11 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneTilingJobMapper;
 import app.bpartners.geojobs.endpoint.rest.model.Detection;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionStepStatus;
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.Status;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.hash.FileHash;
+import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
@@ -32,11 +33,11 @@ import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import app.bpartners.geojobs.utils.FeatureCreator;
 import app.bpartners.geojobs.utils.detection.DetectionCreator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
-import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -58,7 +59,26 @@ class ZoneServiceTest {
   ZoneDetectionJobService zoneDetectionJobServiceMock = mock();
   FeatureCreator featureCreator = new FeatureCreator();
   DetectionCreator detectionCreator = new DetectionCreator(featureCreator);
-
+  private static final String FEATURE_FILE_NAME_OK =
+      "src"
+          + File.separator
+          + "test"
+          + File.separator
+          + "resources"
+          + File.separator
+          + "features"
+          + File.separator
+          + "features-ok.json";
+  private static final String FEATURE_FILE_NAME_KO =
+      "src"
+          + File.separator
+          + "test"
+          + File.separator
+          + "resources"
+          + File.separator
+          + "features"
+          + File.separator
+          + "features-ko.json";
   ZoneService subject =
       new ZoneService(
           zoneDetectionJobServiceMock,
@@ -73,7 +93,8 @@ class ZoneServiceTest {
           communityUsedSurfaceServiceMock,
           bucketComponentMock,
           conversionInitiationServiceMock,
-          detectableObjectTypeMapper);
+          detectableObjectTypeMapper,
+          new ObjectMapper().configure(FAIL_ON_UNKNOWN_PROPERTIES, false));
 
   @SneakyThrows
   @Test
@@ -120,10 +141,28 @@ class ZoneServiceTest {
     assertEquals(expectedRestDetection, actual);
   }
 
+  @Test
+  void finalize_geo_json_configuring_ko() {
+    var featuresFile = new File(FEATURE_FILE_NAME_KO);
+    var detection =
+        detectionCreator.createFromZTJAndZDJ(randomUUID().toString(), randomUUID().toString());
+    var detectionId = detection.getId();
+    when(detectionRepositoryMock.save(any()))
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+    when(detectionRepositoryMock.findById(detectionId)).thenReturn(Optional.of(detection));
+
+    var actual =
+        assertThrows(
+            ApiException.class, () -> subject.finalizeGeoJsonConfig(detectionId, featuresFile));
+
+    assertTrue(
+        actual.getMessage().contains("Unable to convert uploaded file to Features, exception="));
+  }
+
   @SneakyThrows
   @Test
   void finalize_geo_json_configuring_ok() {
-    var featuresFile = File.createTempFile(randomUUID().toString(), randomUUID().toString());
+    var featuresFile = new File(FEATURE_FILE_NAME_OK);
     var detection =
         detectionCreator.createFromZTJAndZDJ(randomUUID().toString(), randomUUID().toString());
     var detectionId = detection.getId();
@@ -140,11 +179,12 @@ class ZoneServiceTest {
     verify(eventProducerMock, only()).accept(listCaptor.capture());
     var savedDetection = detectionCaptor.getValue();
     var detectionProvided = (DetectionSaved) listCaptor.getValue().getFirst();
-    var expectedDetectionSaved = detection.toBuilder().geoJsonZone(notImplementedFeature()).build();
+    var expectedDetectionSaved =
+        detection.toBuilder().geoJsonZone(detection.getGeoJsonZone()).build();
     var expectedRestDetection =
         new Detection()
             .id(detectionId)
-            .geoJsonZone(notImplementedFeature())
+            .geoJsonZone(detection.getGeoJsonZone())
             .overallConfiguration(detection.getDetectionOverallConfiguration())
             .detectableObjectConfiguration(detection.getCreateMachineDetection())
             .step(
@@ -161,10 +201,5 @@ class ZoneServiceTest {
         DetectionSaved.builder().detection(expectedDetectionSaved).build(), detectionProvided);
     assertEquals(expectedDetectionSaved, savedDetection);
     assertEquals(expectedRestDetection, actual);
-  }
-
-  @NonNull
-  private static List<Feature> notImplementedFeature() {
-    return List.of(new Feature().id("TODO: read features from shape"));
   }
 }
