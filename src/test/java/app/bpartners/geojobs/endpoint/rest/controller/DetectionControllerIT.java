@@ -55,12 +55,13 @@ import app.bpartners.geojobs.service.ZoneService;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
+import app.bpartners.geojobs.utils.FeatureCreator;
+import app.bpartners.geojobs.utils.detection.DetectionCreator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -94,6 +95,8 @@ class DetectionControllerIT extends FacadeIT {
   @MockBean DetectionAuthorizer detectionAuthorizer;
   @MockBean CommunityAuthorizationRepository communityAuthRepository;
   @MockBean AuthProvider authProviderMock;
+  FeatureCreator featureCreator = new FeatureCreator();
+  DetectionCreator detectionCreator = new DetectionCreator(featureCreator);
 
   @BeforeEach
   void setUp() {
@@ -118,7 +121,7 @@ class DetectionControllerIT extends FacadeIT {
                     .objectType(DetectableType.TOITURE_REVETEMENT)
                     .confidence(DEFAULT_MIN_CONFIDENCE)
                     .build()))
-        .geoJsonZone(defaultFeatures())
+        .geoJsonZone(featureCreator.defaultFeatures())
         .build();
   }
 
@@ -132,7 +135,7 @@ class DetectionControllerIT extends FacadeIT {
                 .zoneName("Lyon")
                 .geoServerUrl("https://data.grandlyon.com/fr/geoserv/grandlyon/ows")
                 .geoServerParameter(defaultGeoServerParameter()))
-        .geoJsonZone(defaultFeatures());
+        .geoJsonZone(featureCreator.defaultFeatures());
   }
 
   @SneakyThrows
@@ -151,33 +154,6 @@ class DetectionControllerIT extends FacadeIT {
             + "    \"srs\": \"EPSG:3857\"\n"
             + "  }",
         GeoServerParameter.class);
-  }
-
-  @NonNull
-  @SneakyThrows
-  private List<Feature> defaultFeatures() {
-    return List.of(
-        om.readValue(
-                "{ \"type\": \"Feature\",\n"
-                    + "  \"properties\": {\n"
-                    + "    \"code\": \"69\",\n"
-                    + "    \"nom\": \"Rh\u00f4ne\",\n"
-                    + "    \"id\": 30251921,\n"
-                    + "    \"CLUSTER_ID\": 99520,\n"
-                    + "    \"CLUSTER_SIZE\": 386884 },\n"
-                    + "  \"geometry\": {\n"
-                    + "    \"type\": \"MultiPolygon\",\n"
-                    + "    \"coordinates\": [ [ [\n"
-                    + "      [ 4.459648282829194, 45.904988912620688 ],\n"
-                    + "      [ 4.464709510872551, 45.928950368349426 ],\n"
-                    + "      [ 4.490816965688656, 45.941784543770964 ],\n"
-                    + "      [ 4.510354299995861, 45.933697132664598 ],\n"
-                    + "      [ 4.518386257467152, 45.912888345521047 ],\n"
-                    + "      [ 4.496344031095243, 45.883438201401809 ],\n"
-                    + "      [ 4.479593950305621, 45.882900828315755 ],\n"
-                    + "      [ 4.459648282829194, 45.904988912620688 ] ] ] ] } }",
-                Feature.class)
-            .id("feature_1_id"));
   }
 
   private ZoneTilingJob zoneTilingJob(String id) {
@@ -217,26 +193,6 @@ class DetectionControllerIT extends FacadeIT {
         .build();
   }
 
-  private Detection someDetection(String tilingJobId, String detectionJobId) {
-    var detectionId = randomUUID().toString();
-    return Detection.builder()
-        .id(detectionId)
-        .endToEndId(detectionId)
-        .ztjId(tilingJobId)
-        .zdjId(detectionJobId)
-        .geojsonS3FileKey(null)
-        .detectableObjectConfigurations(
-            List.of(
-                app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration
-                    .builder()
-                    .bucketStorageName(null)
-                    .objectType(DetectableType.TOITURE_REVETEMENT)
-                    .confidence(DEFAULT_MIN_CONFIDENCE)
-                    .build()))
-        .geoJsonZone(defaultFeatures())
-        .build();
-  }
-
   @Test
   void create_detection_without_tiling() {
     var savedTilingJob = zoneTilingJobRepository.save(zoneTilingJob(randomUUID().toString()));
@@ -244,7 +200,9 @@ class DetectionControllerIT extends FacadeIT {
         zoneDetectionJobRepository.save(
             zoneDetectionJob(randomUUID().toString(), savedTilingJob.getId()));
     var detection =
-        detectionRepository.save(someDetection(savedTilingJob.getId(), savedDetectionJob.getId()));
+        detectionRepository.save(
+            detectionCreator.createFromZTJAndZDJ(
+                savedTilingJob.getId(), savedDetectionJob.getId()));
     when(zoneDetectionJobService.getByTilingJobId(any(), any())).thenReturn(savedDetectionJob);
     when(zoneDetectionJobService.processZDJ(any(), any())).thenReturn(savedDetectionJob);
     when(zoneDetectionJobService.computeTaskStatistics(any()))
@@ -319,7 +277,8 @@ class DetectionControllerIT extends FacadeIT {
         zoneDetectionJobRepository.save(
             zoneDetectionJob(randomUUID().toString(), zoneTilingJob.getId()));
     var detection =
-        detectionRepository.save(someDetection(zoneTilingJob.getId(), zoneDetectionJob.getId()));
+        detectionRepository.save(
+            detectionCreator.createFromZTJAndZDJ(zoneTilingJob.getId(), zoneDetectionJob.getId()));
     when(communityAuthRepository.findByApiKey(any())).thenReturn(Optional.of(mock()));
     var statistic = defaultComputedStatistic(zoneDetectionJob.getId(), DETECTION);
     when(zoneDetectionJobService.getTaskStatistic(any(String.class))).thenReturn(statistic);
@@ -329,7 +288,7 @@ class DetectionControllerIT extends FacadeIT {
     var expected =
         new app.bpartners.geojobs.endpoint.rest.model.Detection()
             .id(detection.getEndToEndId())
-            .geoJsonZone(defaultFeatures())
+            .geoJsonZone(featureCreator.defaultFeatures())
             .step(
                 detectionStepStatisticMapper.toRestDetectionStepStatus(
                     statistic, DetectionStep.MACHINE_DETECTION));
@@ -349,7 +308,7 @@ class DetectionControllerIT extends FacadeIT {
     var expected =
         new app.bpartners.geojobs.endpoint.rest.model.Detection()
             .id(detection.getEndToEndId())
-            .geoJsonZone(defaultFeatures())
+            .geoJsonZone(featureCreator.defaultFeatures())
             .step(
                 detectionStepStatisticMapper.toRestDetectionStepStatus(
                     statistic, DetectionStep.TILING));
