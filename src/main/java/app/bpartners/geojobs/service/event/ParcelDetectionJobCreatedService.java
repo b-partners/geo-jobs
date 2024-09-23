@@ -4,10 +4,10 @@ import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.parcel.ParcelDetectionJobCreated;
 import app.bpartners.geojobs.endpoint.event.model.status.ParcelDetectionStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.tile.TileDetectionTaskCreated;
-import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectConfigurationMapper;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
-import app.bpartners.geojobs.repository.FullDetectionRepository;
+import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.TileDetectionTaskRepository;
+import app.bpartners.geojobs.repository.model.detection.Detection;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
@@ -21,8 +21,7 @@ public class ParcelDetectionJobCreatedService implements Consumer<ParcelDetectio
   private final TileDetectionTaskRepository tileDetectionTaskRepository;
   private final DetectableObjectConfigurationRepository objectConfigurationRepository;
   private final EventProducer eventProducer;
-  private final FullDetectionRepository fullDetectionRepository;
-  private final DetectableObjectConfigurationMapper objectConfigurationMapper;
+  private final DetectionRepository detectionRepository;
 
   @Override
   public void accept(ParcelDetectionJobCreated parcelDetectionJobCreated) {
@@ -32,15 +31,11 @@ public class ParcelDetectionJobCreatedService implements Consumer<ParcelDetectio
     var tileDetectionTasks = tileDetectionTaskRepository.findAllByJobId(jobId);
     var persistedObjectConfigurations =
         objectConfigurationRepository.findAllByDetectionJobId(zdjId);
-    var optionalFullDetection = fullDetectionRepository.findByZdjId(zdjId);
+    var optionalFullDetection = detectionRepository.findByZdjId(zdjId);
     var detectableObjectConfigurations =
         persistedObjectConfigurations.isEmpty()
             ? (optionalFullDetection
-                .map(
-                    fullDetection ->
-                        List.of(
-                            objectConfigurationMapper.toDomain(
-                                zdjId, fullDetection.getDetectableObjectConfiguration())))
+                .map(Detection::getDetectableObjectConfigurations)
                 .orElseGet(List::of))
             : persistedObjectConfigurations;
 

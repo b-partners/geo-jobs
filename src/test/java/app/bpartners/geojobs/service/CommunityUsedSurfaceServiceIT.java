@@ -19,11 +19,11 @@ import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.CommunityUsedSurfaceRepository;
-import app.bpartners.geojobs.repository.FullDetectionRepository;
+import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorizedZone;
 import app.bpartners.geojobs.repository.model.community.CommunityUsedSurface;
-import app.bpartners.geojobs.repository.model.detection.FullDetection;
+import app.bpartners.geojobs.repository.model.detection.Detection;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -45,7 +45,7 @@ class CommunityUsedSurfaceServiceIT extends FacadeIT {
   @Autowired CommunityAuthorizationRepository communityAuthorizationRepository;
   @Autowired CommunityUsedSurfaceRepository communityUsedSurfaceRepository;
   @Autowired CommunityUsedSurfaceService subject;
-  @Autowired FullDetectionRepository fullDetectionRepository;
+  @Autowired DetectionRepository detectionRepository;
   @MockBean FeatureSurfaceService featureSurfaceServiceMock;
 
   @BeforeEach
@@ -56,7 +56,7 @@ class CommunityUsedSurfaceServiceIT extends FacadeIT {
 
   @AfterEach
   void cleanup() {
-    fullDetectionRepository.deleteAll();
+    detectionRepository.deleteAll();
     communityUsedSurfaceRepository.deleteAll();
     communityAuthorizationRepository.deleteAll();
   }
@@ -143,7 +143,7 @@ class CommunityUsedSurfaceServiceIT extends FacadeIT {
   void persist_fullDetectionWithSurfaceUsage_ok() {
     var endToEndId = randomUUID().toString();
     var fullDetection =
-        FullDetection.builder()
+        Detection.builder()
             .endToEndId(endToEndId)
             .communityOwnerId(COMMUNITY_ID)
             .id(randomUUID().toString())
@@ -155,7 +155,7 @@ class CommunityUsedSurfaceServiceIT extends FacadeIT {
 
     var actualUsedSurface =
         subject.getTotalUsedSurfaceByCommunityId(COMMUNITY_ID, SQUARE_DEGREE).orElseThrow();
-    var actualFullDetection = fullDetectionRepository.findByEndToEndId(endToEndId).orElseThrow();
+    var actualFullDetection = detectionRepository.findByEndToEndId(endToEndId).orElseThrow();
 
     assertEquals(expectedSurfaceValue, actualUsedSurface.getUsedSurface());
     assertEquals(fullDetection, actualFullDetection);

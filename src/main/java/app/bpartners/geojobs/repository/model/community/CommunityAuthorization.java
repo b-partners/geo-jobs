@@ -7,7 +7,7 @@ import static jakarta.persistence.FetchType.LAZY;
 import static org.hibernate.type.SqlTypes.NAMED_ENUM;
 
 import app.bpartners.geojobs.repository.model.SurfaceUnit;
-import app.bpartners.geojobs.repository.model.detection.FullDetection;
+import app.bpartners.geojobs.repository.model.detection.Detection;
 import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.List;
@@ -45,5 +45,5 @@ public class CommunityAuthorization implements Serializable {
   private List<CommunityUsedSurface> usedSurfaces;
 
   @OneToMany(mappedBy = "communityOwnerId", fetch = LAZY)
-  private List<FullDetection> fullDetections;
+  private List<Detection> detections;
 }

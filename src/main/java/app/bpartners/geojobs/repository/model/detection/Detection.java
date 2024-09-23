@@ -2,13 +2,11 @@ package app.bpartners.geojobs.repository.model.detection;
 
 import static org.hibernate.type.SqlTypes.JSON;
 
-import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Table;
+import app.bpartners.geojobs.endpoint.rest.model.DetectionOverallConfiguration;
+import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import jakarta.persistence.*;
 import java.io.Serializable;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -26,8 +24,9 @@ import org.hibernate.annotations.JdbcTypeCode;
 @Getter
 @Setter
 @EqualsAndHashCode
+// TODO: rename full_detection to detection and detection to machine_detection
 @Table(name = "full_detection")
-public class FullDetection implements Serializable {
+public class Detection implements Serializable {
   @Id private String id;
   private String endToEndId;
 
@@ -43,7 +42,14 @@ public class FullDetection implements Serializable {
   @JoinColumn(referencedColumnName = "id", name = "community_owner_id")
   private String communityOwnerId;
 
-  // TODO: VERY VERY BAD ! Why didn't you use domain DetectableObjectConfiguration ?
+  // TODO: save as entity as it map now the domain detectableObject
   @JdbcTypeCode(JSON)
-  private DetectableObjectConfiguration detectableObjectConfiguration;
+  private List<DetectableObjectConfiguration> detectableObjectConfigurations;
+
+  // TODO: save as entity
+  @JdbcTypeCode(JSON)
+  private DetectionOverallConfiguration detectionOverallConfiguration;
+
+  @JdbcTypeCode(JSON)
+  private List<Feature> geoJsonZone;
 }

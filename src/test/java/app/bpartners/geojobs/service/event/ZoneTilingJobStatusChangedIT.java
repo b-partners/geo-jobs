@@ -11,8 +11,8 @@ import static org.mockito.Mockito.when;
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobStatusChanged;
 import app.bpartners.geojobs.job.model.JobStatus;
-import app.bpartners.geojobs.repository.FullDetectionRepository;
-import app.bpartners.geojobs.repository.model.detection.FullDetection;
+import app.bpartners.geojobs.repository.DetectionRepository;
+import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.JobFinishedMailer;
@@ -27,7 +27,7 @@ public class ZoneTilingJobStatusChangedIT extends FacadeIT {
   @Autowired private ZoneTilingJobStatusChangedService subject;
   @MockBean private JobFinishedMailer<ZoneTilingJob> mailer;
   @MockBean private ZoneDetectionJobService zdjService;
-  @MockBean private FullDetectionRepository fullDetectionRepository;
+  @MockBean private DetectionRepository detectionRepository;
 
   @Test
   void send_email_ok() {
@@ -51,8 +51,8 @@ public class ZoneTilingJobStatusChangedIT extends FacadeIT {
         ZoneTilingJobStatusChanged.builder().oldJob(new ZoneTilingJob()).newJob(newZtj).build();
     when(zdjService.saveZDJFromZTJ(any()))
         .thenReturn(ZoneDetectionJob.builder().id("zdj_id").build());
-    when(fullDetectionRepository.findByEndToEndId(any()))
-        .thenReturn(Optional.ofNullable(FullDetection.builder().build()));
+    when(detectionRepository.findByEndToEndId(any()))
+        .thenReturn(Optional.ofNullable(Detection.builder().build()));
     subject.accept(zoneTilingJobStatusChanged);
 
     verify(zdjService, times(1)).saveZDJFromZTJ(zoneTilingJobStatusChanged.getNewJob());

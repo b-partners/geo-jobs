@@ -3,7 +3,7 @@ package app.bpartners.geojobs.service.event;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobCreated;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobStatusChanged;
-import app.bpartners.geojobs.repository.FullDetectionRepository;
+import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.JobFinishedMailer;
 import app.bpartners.geojobs.service.StatusChangedHandler;
@@ -22,7 +22,7 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
   private final JobFinishedMailer<ZoneTilingJob> tilingFinishedMailer;
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final StatusChangedHandler statusChangedHandler;
-  private final FullDetectionRepository fullDetectionRepository;
+  private final DetectionRepository detectionRepository;
   private final EventProducer eventProducer;
 
   @Override
@@ -36,7 +36,7 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
             tilingFinishedMailer,
             zoneDetectionJobService,
             newJob,
-            fullDetectionRepository);
+            detectionRepository);
     statusChangedHandler.handle(
         event, newJob.getStatus(), oldJob.getStatus(), onFinishHandler, onFinishHandler);
   }
@@ -46,16 +46,16 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
       JobFinishedMailer<ZoneTilingJob> tilingFinishedMailer,
       ZoneDetectionJobService zoneDetectionJobService,
       ZoneTilingJob ztj,
-      FullDetectionRepository fullDetectionRepository)
+      DetectionRepository detectionRepository)
       implements StatusHandler {
 
     @Override
     public String performAction() {
       var zdj = zoneDetectionJobService.saveZDJFromZTJ(ztj);
-      var optionalFullDetection = fullDetectionRepository.findByZtjId(ztj.getId());
+      var optionalFullDetection = detectionRepository.findByZtjId(ztj.getId());
       // For now, only fullDetection process triggers ZDJ processing
       if (optionalFullDetection.isPresent()) {
-        fullDetectionRepository.save(
+        detectionRepository.save(
             optionalFullDetection.get().toBuilder().zdjId(zdj.getId()).build());
         eventProducer.accept(
             List.of(ZoneDetectionJobCreated.builder().zoneDetectionJob(zdj).build()));

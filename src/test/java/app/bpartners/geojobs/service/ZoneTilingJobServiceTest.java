@@ -27,7 +27,7 @@ import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.job.repository.TaskRepository;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.exception.NotFoundException;
-import app.bpartners.geojobs.repository.FullDetectionRepository;
+import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.TaskStatisticRepository;
 import app.bpartners.geojobs.repository.model.FilteredTilingJob;
 import app.bpartners.geojobs.repository.model.Parcel;
@@ -63,7 +63,7 @@ public class ZoneTilingJobServiceTest {
   TaskStatisticRepository taskStatisticRepositoryMock = mock();
   ZoomMapper zoomMapper = mock();
   TilingTaskMapper tilingTaskMapper = mock();
-  FullDetectionRepository fullDetectionRepositoryMock = mock();
+  DetectionRepository detectionRepositoryMock = mock();
   ZoneTilingJobService subject =
       new ZoneTilingJobService(
           jobRepositoryMock,
@@ -76,7 +76,7 @@ public class ZoneTilingJobServiceTest {
           zoomMapper,
           tilingTaskMapper,
           taskStatisticRepositoryMock,
-          fullDetectionRepositoryMock);
+          detectionRepositoryMock);
 
   @Test
   void duplicate_ok() {

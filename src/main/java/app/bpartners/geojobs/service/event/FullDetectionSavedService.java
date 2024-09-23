@@ -21,7 +21,7 @@ public class FullDetectionSavedService implements Consumer<FullDetectionSaved> {
   @SneakyThrows
   @Override
   public void accept(FullDetectionSaved fullDetectionSaved) {
-    var fullDetection = fullDetectionSaved.getFullDetection();
+    var fullDetection = fullDetectionSaved.getDetection();
     List<InternetAddress> cc = List.of(); // TODO: add admin emails here
     List<InternetAddress> bcc = List.of();
     String subject =

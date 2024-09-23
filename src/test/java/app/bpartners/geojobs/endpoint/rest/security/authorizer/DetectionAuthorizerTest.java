@@ -12,14 +12,15 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.model.CreateDetection;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
-import app.bpartners.geojobs.repository.FullDetectionRepository;
+import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
-import app.bpartners.geojobs.repository.model.detection.FullDetection;
+import app.bpartners.geojobs.repository.model.detection.Detection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -33,16 +34,19 @@ class DetectionAuthorizerTest {
   CommunityZoneAuthorizer communityZoneAuthorizer = mock();
   CommunityDetectableObjectTypeAuthorizer communityDetectableObjectTypeAuthorizer = mock();
   CommunityAuthorizationRepository communityAuthRepository = mock();
-  FullDetectionRepository fullDetectionRepository = mock();
-  FullDetectionOwnerAuthorizer fullDetectionOwnerAuthorizer = mock();
+  DetectionRepository detectionRepository = mock();
+  DetectionOwnerAuthorizer detectionOwnerAuthorizer = mock();
+  DetectableObjectTypeMapper detectableObjectTypeMapperMock = mock();
   DetectionAuthorizer subject =
       new DetectionAuthorizer(
           communityDetectableObjectTypeAuthorizer,
           communityAuthRepository,
           communityZoneAuthorizer,
           communityZoneSurfaceAuthorizer,
-          fullDetectionOwnerAuthorizer,
-          fullDetectionRepository);
+          detectionOwnerAuthorizer,
+          detectionRepository,
+          detectableObjectTypeMapperMock);
+
   CommunityAuthorization communityAuthorization =
       CommunityAuthorization.builder().id(COMMUNITY_ID).authorizedZones(List.of()).build();
 
@@ -51,6 +55,7 @@ class DetectionAuthorizerTest {
     when(communityAuthRepository.findByApiKey(any()))
         .thenReturn(Optional.of(communityAuthorization));
     when(createDetection.getGeoJsonZone()).thenReturn(List.of(mock(Feature.class)));
+    when(createDetection.getDetectableObjectConfiguration()).thenReturn(mock());
   }
 
   @Test
@@ -61,24 +66,26 @@ class DetectionAuthorizerTest {
 
   @Test
   void should_accept_community_if_authorization_is_correct() {
-    when(fullDetectionRepository.findByEndToEndId(any())).thenReturn(Optional.empty());
+    when(detectionRepository.findByEndToEndId(any())).thenReturn(Optional.empty());
     doNothing().when(communityZoneSurfaceAuthorizer).accept(any(), any());
     doNothing().when(communityZoneAuthorizer).accept(any(), any());
     doNothing().when(communityDetectableObjectTypeAuthorizer).accept(any(), any());
+    when(detectableObjectTypeMapperMock.mapDefaultConfigurationsFromModel(any(), any()))
+        .thenReturn(List.of());
 
     assertDoesNotThrow(
         () -> subject.accept(randomUUID().toString(), createDetection, useRole(ROLE_COMMUNITY)));
-    verify(fullDetectionOwnerAuthorizer, never()).accept(any(), any());
+    verify(detectionOwnerAuthorizer, never()).accept(any(), any());
   }
 
   @Test
   void should_check_only_owner_if_endToEndId_already_exist_and_accept_it() {
-    when(fullDetectionRepository.findByEndToEndId(any()))
-        .thenReturn(Optional.of(FullDetection.builder().communityOwnerId(COMMUNITY_ID).build()));
+    when(detectionRepository.findByEndToEndId(any()))
+        .thenReturn(Optional.of(Detection.builder().communityOwnerId(COMMUNITY_ID).build()));
     assertDoesNotThrow(
         () -> subject.accept(randomUUID().toString(), createDetection, useRole(ROLE_COMMUNITY)));
 
-    verify(fullDetectionOwnerAuthorizer, times(1)).accept(any(), any());
+    verify(detectionOwnerAuthorizer, times(1)).accept(any(), any());
     verify(communityZoneAuthorizer, never()).accept(any(), any());
   }
 

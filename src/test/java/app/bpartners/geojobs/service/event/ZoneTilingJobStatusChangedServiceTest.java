@@ -14,8 +14,8 @@ import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobStatusChange
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status.HealthStatus;
 import app.bpartners.geojobs.job.model.Status.ProgressionStatus;
-import app.bpartners.geojobs.repository.FullDetectionRepository;
-import app.bpartners.geojobs.repository.model.detection.FullDetection;
+import app.bpartners.geojobs.repository.DetectionRepository;
+import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.JobFinishedMailer;
@@ -31,18 +31,18 @@ class ZoneTilingJobStatusChangedServiceTest {
   JobFinishedMailer<ZoneTilingJob> mailer = mock();
   ZoneDetectionJobService jobService = mock();
   StatusChangedHandler statusChangedHandler = new StatusChangedHandler();
-  FullDetectionRepository fullDetectionRepository = mock();
+  DetectionRepository detectionRepository = mock();
   EventProducer eventProducerMock = mock();
   ZoneTilingJobStatusChangedService subject =
       new ZoneTilingJobStatusChangedService(
-          mailer, jobService, statusChangedHandler, fullDetectionRepository, eventProducerMock);
+          mailer, jobService, statusChangedHandler, detectionRepository, eventProducerMock);
 
   @Test
   void do_not_mail_if_old_fails_and_new_fails() {
     when(jobService.saveZDJFromZTJ(any()))
         .thenReturn(ZoneDetectionJob.builder().id("zdj_id").build());
-    when(fullDetectionRepository.findByEndToEndId(any()))
-        .thenReturn(Optional.ofNullable(FullDetection.builder().build()));
+    when(detectionRepository.findByEndToEndId(any()))
+        .thenReturn(Optional.ofNullable(Detection.builder().build()));
     var ztjStatusChanged = new ZoneTilingJobStatusChanged();
     ztjStatusChanged.setOldJob(aZTJ(FINISHED, FAILED));
     ztjStatusChanged.setNewJob(aZTJ(FINISHED, FAILED));
@@ -57,10 +57,10 @@ class ZoneTilingJobStatusChangedServiceTest {
     var ztjStatusChanged = new ZoneTilingJobStatusChanged();
     ztjStatusChanged.setOldJob(aZTJ(PROCESSING, UNKNOWN));
     ztjStatusChanged.setNewJob(aZTJ(FINISHED, FAILED));
-    when(fullDetectionRepository.findByEndToEndId(any()))
+    when(detectionRepository.findByEndToEndId(any()))
         .thenReturn(
             Optional.ofNullable(
-                FullDetection.builder()
+                Detection.builder()
                     .endToEndId("end_to_end_id")
                     .ztjId("ztj_id")
                     .zdjId("zdj_id")
