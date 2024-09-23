@@ -33,6 +33,8 @@ public class Detection implements Serializable {
   @Column(name = "geojson_s3_file_key")
   private String geojsonS3FileKey;
 
+  private String shapeFileKey;
+
   @Column(name = "zdj_id")
   private String zdjId;
 

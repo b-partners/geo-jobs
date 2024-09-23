@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
+import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.mail.Email;
 import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.repository.model.detection.Detection;
@@ -16,8 +17,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 class DetectionSavedServiceTest {
+  BucketComponent bucketComponentMock = mock();
   Mailer mailerMock = mock();
-  DetectionSavedService subject = new DetectionSavedService(mailerMock);
+  DetectionSavedService subject = new DetectionSavedService(mailerMock, bucketComponentMock);
 
   @SneakyThrows
   @Test
@@ -25,7 +27,7 @@ class DetectionSavedServiceTest {
     var detection = new Detection();
     List<InternetAddress> cc = List.of(); // TODO: add admin emails here
     List<InternetAddress> bcc = List.of();
-    String htmlBody = computeStaticEmailBody(detection);
+    String htmlBody = computeStaticEmailBody(detection, bucketComponentMock);
     List<File> attachments = List.of(); // TODO: add attachments, as provided shape or excel file
 
     subject.accept(DetectionSaved.builder().detection(detection).build());
