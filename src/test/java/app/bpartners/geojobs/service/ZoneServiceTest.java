@@ -1,7 +1,9 @@
 package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStep.CONFIGURING;
+import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.SUCCEEDED;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.UNKNOWN;
+import static app.bpartners.geojobs.endpoint.rest.model.Status.ProgressionEnum.FINISHED;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.ProgressionEnum.PROCESSING;
 import static app.bpartners.geojobs.file.hash.FileHashAlgorithm.SHA256;
 import static java.util.UUID.randomUUID;
@@ -17,6 +19,7 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneTilingJobMapper;
 import app.bpartners.geojobs.endpoint.rest.model.Detection;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionStepStatus;
+import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.Status;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
@@ -33,6 +36,7 @@ import java.io.File;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -114,5 +118,53 @@ class ZoneServiceTest {
                     .updatedAt(actual.getStep().getUpdatedAt()));
     assertEquals(expectedDetectionSavedEvent, detectionSaved);
     assertEquals(expectedRestDetection, actual);
+  }
+
+  @SneakyThrows
+  @Test
+  void finalize_geo_json_configuring_ok() {
+    var featuresFile = File.createTempFile(randomUUID().toString(), randomUUID().toString());
+    var detection =
+        detectionCreator.createFromZTJAndZDJ(randomUUID().toString(), randomUUID().toString());
+    var detectionId = detection.getId();
+    when(detectionRepositoryMock.save(any()))
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+    when(detectionRepositoryMock.findById(detectionId)).thenReturn(Optional.of(detection));
+
+    var actual = subject.finalizeGeoJsonConfig(detectionId, featuresFile);
+
+    var detectionCaptor =
+        ArgumentCaptor.forClass(app.bpartners.geojobs.repository.model.detection.Detection.class);
+    var listCaptor = ArgumentCaptor.forClass(List.class);
+    verify(detectionRepositoryMock).save(detectionCaptor.capture());
+    verify(eventProducerMock, only()).accept(listCaptor.capture());
+    var savedDetection = detectionCaptor.getValue();
+    var detectionProvided = (DetectionSaved) listCaptor.getValue().getFirst();
+    var expectedDetectionSaved = detection.toBuilder().geoJsonZone(notImplementedFeature()).build();
+    var expectedRestDetection =
+        new Detection()
+            .id(detectionId)
+            .geoJsonZone(notImplementedFeature())
+            .overallConfiguration(detection.getDetectionOverallConfiguration())
+            .detectableObjectConfiguration(detection.getCreateMachineDetection())
+            .step(
+                new DetectionStepStatus()
+                    .step(CONFIGURING)
+                    .status(
+                        new Status()
+                            .progression(FINISHED)
+                            .health(SUCCEEDED)
+                            .creationDatetime(actual.getStep().getStatus().getCreationDatetime()))
+                    .statistics(List.of())
+                    .updatedAt(actual.getStep().getUpdatedAt()));
+    assertEquals(
+        DetectionSaved.builder().detection(expectedDetectionSaved).build(), detectionProvided);
+    assertEquals(expectedDetectionSaved, savedDetection);
+    assertEquals(expectedRestDetection, actual);
+  }
+
+  @NonNull
+  private static List<Feature> notImplementedFeature() {
+    return List.of(new Feature().id("TODO: read features from shape"));
   }
 }
