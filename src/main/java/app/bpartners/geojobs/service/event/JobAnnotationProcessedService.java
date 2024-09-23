@@ -1,9 +1,9 @@
 package app.bpartners.geojobs.service.event;
 
 import app.bpartners.geojobs.endpoint.event.model.annotation.JobAnnotationProcessed;
-import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectConfigurationMapper;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
-import app.bpartners.geojobs.repository.FullDetectionRepository;
+import app.bpartners.geojobs.repository.DetectionRepository;
+import app.bpartners.geojobs.repository.model.detection.Detection;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
@@ -14,8 +14,7 @@ import org.springframework.stereotype.Service;
 public class JobAnnotationProcessedService implements Consumer<JobAnnotationProcessed> {
   private final ZoneDetectionJobAnnotationProcessor zoneDetectionJobAnnotationProcessor;
   private final DetectableObjectConfigurationRepository objectConfigurationRepository;
-  private final FullDetectionRepository fullDetectionRepository;
-  private final DetectableObjectConfigurationMapper objectConfigurationMapper;
+  private final DetectionRepository detectionRepository;
 
   @Override
   public void accept(JobAnnotationProcessed jobAnnotationProcessed) {
@@ -28,15 +27,11 @@ public class JobAnnotationProcessedService implements Consumer<JobAnnotationProc
     var minConfidence = jobAnnotationProcessed.getMinConfidence();
     var persistedObjectConfigurations =
         objectConfigurationRepository.findAllByDetectionJobId(jobId);
-    var optionalFullDetection = fullDetectionRepository.findByZdjId(jobId);
+    var optionalFullDetection = detectionRepository.findByZdjId(jobId);
     var detectableObjectConfigurations =
         persistedObjectConfigurations.isEmpty()
             ? (optionalFullDetection
-                .map(
-                    fullDetection ->
-                        List.of(
-                            objectConfigurationMapper.toDomain(
-                                jobId, fullDetection.getDetectableObjectConfiguration())))
+                .map(Detection::getDetectableObjectConfigurations)
                 .orElseGet(List::of))
             : persistedObjectConfigurations;
 

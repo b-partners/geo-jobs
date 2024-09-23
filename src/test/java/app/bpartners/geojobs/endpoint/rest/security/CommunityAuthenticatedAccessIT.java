@@ -1,20 +1,18 @@
 package app.bpartners.geojobs.endpoint.rest.security;
 
-import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.PISCINE;
+import static app.bpartners.geojobs.endpoint.rest.model.BPToitureModel.ModelNameEnum.BP_TOITURE;
 import static app.bpartners.geojobs.endpoint.rest.security.authenticator.ApiKeyAuthenticator.API_KEY_HEADER;
 import static app.bpartners.geojobs.repository.model.SurfaceUnit.SQUARE_DEGREE;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.ARBRE;
 import static java.util.UUID.randomUUID;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.rest.api.DetectionApi;
 import app.bpartners.geojobs.endpoint.rest.client.ApiClient;
 import app.bpartners.geojobs.endpoint.rest.client.ApiException;
-import app.bpartners.geojobs.endpoint.rest.model.CreateFullDetection;
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.community.CommunityDetectableObjectType;
@@ -56,39 +54,15 @@ class CommunityAuthenticatedAccessIT extends FacadeIT {
 
   @Test
   void community_cannot_do_full_detection_with_wrong_authorization() {
+    var detectionId = randomUUID().toString();
+    var createMachineDetection = new CreateMachineDetection();
+    createMachineDetection.setActualInstance(new BPToitureModel().modelName(BP_TOITURE));
+    var createDetection =
+        new CreateDetection().detectableObjectConfiguration(createMachineDetection);
     var error =
         assertThrows(
-            ApiException.class,
-            () ->
-                detectionApi.processFullDetection(
-                    new CreateFullDetection()
-                        .endToEndId(randomUUID().toString())
-                        .features(List.of(new Feature()))
-                        .objectType(PISCINE)));
-    assertTrue(error.getMessage().contains(PISCINE.name()));
-  }
-
-  @Test
-  void community_cannot_do_full_detection_if_no_e2e_id_provided() {
-    var error =
-        assertThrows(
-            ApiException.class, () -> detectionApi.processFullDetection(new CreateFullDetection()));
-    assertEquals(BAD_REQUEST.value(), error.getCode());
-    assertTrue(error.getMessage().contains("You must provide an end-to-end id for your detection"));
-  }
-
-  @Test
-  void community_cannot_do_full_detection_if_no_features_provided() {
-    var error =
-        assertThrows(
-            ApiException.class,
-            () ->
-                detectionApi.processFullDetection(
-                    new CreateFullDetection()
-                        .endToEndId(randomUUID().toString())
-                        .objectType(PISCINE)));
-    assertEquals(BAD_REQUEST.value(), error.getCode());
-    assertTrue(error.getMessage().contains("You must provide features for your detection"));
+            ApiException.class, () -> detectionApi.processDetection(detectionId, createDetection));
+    assertTrue(error.getMessage().contains(ARBRE.name()));
   }
 
   void setupClientWithApiKey() {

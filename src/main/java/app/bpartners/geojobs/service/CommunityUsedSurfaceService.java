@@ -12,10 +12,10 @@ import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.CommunityUsedSurfaceRepository;
-import app.bpartners.geojobs.repository.FullDetectionRepository;
+import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.SurfaceUnit;
 import app.bpartners.geojobs.repository.model.community.CommunityUsedSurface;
-import app.bpartners.geojobs.repository.model.detection.FullDetection;
+import app.bpartners.geojobs.repository.model.detection.Detection;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
@@ -30,7 +30,7 @@ public class CommunityUsedSurfaceService {
   private final CommunityAuthorizationRepository communityAuthRepository;
   private final DetectionSurfaceValueMapper surfaceValueMapper;
   private final FeatureSurfaceService featureSurfaceService;
-  private final FullDetectionRepository fullDetectionRepository;
+  private final DetectionRepository detectionRepository;
   private static final double DEFAULT_USED_SURFACE_VALUE = 0.0;
 
   public Optional<CommunityUsedSurface> getTotalUsedSurfaceByCommunityId(
@@ -103,18 +103,18 @@ public class CommunityUsedSurfaceService {
   }
 
   @Transactional
-  public FullDetection persistFullDetectionWithSurfaceUsage(
-      FullDetection fullDetection, List<Feature> features) {
-    if (fullDetection.getCommunityOwnerId() != null) {
+  public Detection persistFullDetectionWithSurfaceUsage(
+      Detection detection, List<Feature> features) {
+    if (detection.getCommunityOwnerId() != null) {
       var newSurfaceUsage =
           CommunityUsedSurface.builder()
               .unit(SQUARE_DEGREE)
               .usedSurface(featureSurfaceService.getAreaValue(features))
-              .communityAuthorizationId(fullDetection.getCommunityOwnerId())
+              .communityAuthorizationId(detection.getCommunityOwnerId())
               .build();
       appendLastUsedSurface(newSurfaceUsage);
     }
 
-    return fullDetectionRepository.save(fullDetection);
+    return detectionRepository.save(detection);
   }
 }

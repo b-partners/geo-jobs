@@ -14,7 +14,6 @@ import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerifi
 import app.bpartners.geojobs.endpoint.event.model.parcel.ParcelDetectionTaskCreated;
 import app.bpartners.geojobs.endpoint.event.model.status.ZDJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobStatusChanged;
-import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectConfigurationMapper;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.Task;
@@ -49,7 +48,6 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
   private final TilingTaskRepository tilingTaskRepository;
   private final HumanDetectionJobRepository humanDetectionJobRepository;
   private final ZoneDetectionJobRepository zoneDetectionJobRepository;
-  private final DetectableObjectConfigurationMapper objectConfigurationMapper;
 
   public ZoneDetectionJobService(
       JpaRepository<ZoneDetectionJob, String> repository,
@@ -61,8 +59,7 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
       DetectableObjectConfigurationRepository objectConfigurationRepository,
       HumanDetectionJobRepository humanDetectionJobRepository,
       ZoneDetectionJobRepository zoneDetectionJobRepository,
-      TaskStatisticRepository taskStatisticRepository,
-      DetectableObjectConfigurationMapper objectConfigurationMapper) {
+      TaskStatisticRepository taskStatisticRepository) {
     super(
         repository,
         jobStatusRepository,
@@ -75,20 +72,11 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
     this.objectConfigurationRepository = objectConfigurationRepository;
     this.humanDetectionJobRepository = humanDetectionJobRepository;
     this.zoneDetectionJobRepository = zoneDetectionJobRepository;
-    this.objectConfigurationMapper = objectConfigurationMapper;
   }
 
-  // TODO: must be handle only domain models, set the mapping earlier
   @Transactional
   public ZoneDetectionJob processZDJ(
-      String jobId,
-      List<app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration>
-          detectableObjectConfigurations) {
-    List<app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration>
-        configurations =
-            detectableObjectConfigurations.stream()
-                .map(objectConf -> objectConfigurationMapper.toDomain(jobId, objectConf))
-                .toList();
+      String jobId, List<DetectableObjectConfiguration> configurations) {
     return fireTasks(jobId, configurations);
   }
 

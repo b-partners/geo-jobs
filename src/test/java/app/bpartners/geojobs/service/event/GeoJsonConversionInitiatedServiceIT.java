@@ -14,9 +14,9 @@ import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionInitiated;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
-import app.bpartners.geojobs.repository.FullDetectionRepository;
+import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.GeoJsonConversionTask;
-import app.bpartners.geojobs.repository.model.detection.FullDetection;
+import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.HumanDetectedTile;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
@@ -45,7 +45,7 @@ class GeoJsonConversionInitiatedServiceIT extends FacadeIT {
   @Autowired FileWriter writer;
   @MockBean BucketComponent bucketComponent;
   @Autowired GeoJsonConversionInitiatedService subject;
-  @MockBean FullDetectionRepository fullDetectionRepositoryMock;
+  @MockBean DetectionRepository detectionRepositoryMock;
 
   ZoneDetectionJob detectionJob() {
     return ZoneDetectionJob.builder().zoneName("Cannes").build();
@@ -81,7 +81,7 @@ class GeoJsonConversionInitiatedServiceIT extends FacadeIT {
     when(zoneDetectionJobService.getMachineZDJFromHumanZDJ(any())).thenReturn(detectionJob());
     when(humanDetectedTileService.getByJobId(MOCK_JOB_ID)).thenReturn(List.of(humanDetectedTile()));
 
-    when(fullDetectionRepositoryMock.save(any()))
+    when(detectionRepositoryMock.save(any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
 
     when(bucketComponent.presign(any(), any()))
@@ -90,15 +90,15 @@ class GeoJsonConversionInitiatedServiceIT extends FacadeIT {
 
   @Test
   void generate_geo_json_from_detected_tiles() {
-    var fullDetectionJobId = randomUUID().toString();
-    when(fullDetectionRepositoryMock.findByZdjId(any()))
-        .thenReturn(Optional.of(FullDetection.builder().id(fullDetectionJobId).build()));
+    var detectionId = randomUUID().toString();
+    when(detectionRepositoryMock.findByZdjId(any()))
+        .thenReturn(Optional.of(Detection.builder().id(detectionId).build()));
     taskService.save(conversionTask());
 
     subject.accept(initiated());
     var actual = taskService.getById(MOCK_TASK_ID);
 
-    assertEquals(fullDetectionJobId + "/Cannes.geojson", actual.getFileKey());
+    assertEquals(detectionId + "/Cannes.geojson", actual.getFileKey());
     assertEquals(FINISHED, actual.getStatus().getProgression());
     assertEquals(SUCCEEDED, actual.getStatus().getHealth());
   }

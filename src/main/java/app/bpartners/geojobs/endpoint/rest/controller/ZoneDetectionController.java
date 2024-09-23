@@ -13,18 +13,18 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionTaskMapper
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.TaskStatisticMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMapper;
-import app.bpartners.geojobs.endpoint.rest.model.CreateFullDetection;
+import app.bpartners.geojobs.endpoint.rest.model.CreateDetection;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration;
 import app.bpartners.geojobs.endpoint.rest.model.DetectedParcel;
+import app.bpartners.geojobs.endpoint.rest.model.Detection;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionSurfaceUnit;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionUsage;
 import app.bpartners.geojobs.endpoint.rest.model.FilteredDetectionJob;
-import app.bpartners.geojobs.endpoint.rest.model.FullDetectedZone;
 import app.bpartners.geojobs.endpoint.rest.model.GeoJsonsUrl;
 import app.bpartners.geojobs.endpoint.rest.model.Status;
 import app.bpartners.geojobs.endpoint.rest.model.TaskStatistic;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
-import app.bpartners.geojobs.endpoint.rest.validator.CreateFullDetectionValidator;
+import app.bpartners.geojobs.endpoint.rest.security.authorizer.DetectionAuthorizer;
 import app.bpartners.geojobs.endpoint.rest.validator.GetUsageValidator;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.job.model.JobStatus;
@@ -66,12 +66,12 @@ public class ZoneDetectionController {
   private final EventProducer eventProducer;
   private final GeoJsonConversionInitiationService geoJsonConversionInitiationService;
   private final ZoneService zoneService;
-  private final CreateFullDetectionValidator fullDetectionValidator;
   private final CommunityUsedSurfaceService communityUsedSurfaceService;
   private final GetUsageValidator getUsageValidator;
   private final CommunityAuthorizationRepository communityAuthRepository;
   private final AuthProvider authProvider;
   private final DetectionSurfaceUnitMapper unitMapper;
+  private final DetectionAuthorizer detectionAuthorizer;
 
   @PutMapping("/detectionJobs/{id}/taskFiltering")
   public List<FilteredDetectionJob> filteredDetectionJobs(@PathVariable String id) {
@@ -170,14 +170,14 @@ public class ZoneDetectionController {
     return geoJsonConversionInitiationService.initiateGeoJsonConversion(detectionJobId);
   }
 
-  @PutMapping("/fullDetection")
-  public FullDetectedZone processFullDetection(
-      @RequestBody CreateFullDetection createFullDetection) {
-    fullDetectionValidator.accept(createFullDetection, authProvider.getPrincipal());
+  @PutMapping("/detections/{id}")
+  public Detection processDetection(
+      @PathVariable(name = "id") String detectionId, @RequestBody CreateDetection createDetection) {
+    detectionAuthorizer.accept(detectionId, createDetection, authProvider.getPrincipal());
     var communityAuthorization =
         communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
     var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId);
-    return zoneService.processTilingAndDetection(createFullDetection, communityOwnerId);
+    return zoneService.processDetection(detectionId, createDetection, communityOwnerId);
   }
 
   @GetMapping("/usage")
@@ -189,14 +189,14 @@ public class ZoneDetectionController {
         authProvider.getPrincipal(), unitMapper.toDomain(surfaceUnit));
   }
 
-  @GetMapping("/fullDetections")
-  public List<FullDetectedZone> getFullDetections(
+  @GetMapping("/detections")
+  public List<Detection> getDetections(
       @RequestParam(name = "page", defaultValue = "1", required = false) PageFromOne page,
       @RequestParam(name = "pageSize", defaultValue = "10", required = false)
           BoundedPageSize pageSize) {
     var communityAuthorization =
         communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
     var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId);
-    return zoneService.getFullDetectionsByCriteria(communityOwnerId, page, pageSize);
+    return zoneService.getDetectionsByCriteria(communityOwnerId, page, pageSize);
   }
 }

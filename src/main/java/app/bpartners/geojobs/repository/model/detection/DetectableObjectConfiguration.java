@@ -24,7 +24,10 @@ public class DetectableObjectConfiguration {
   @Id private String id;
 
   @JoinColumn(referencedColumnName = "id")
-  private String detectionJobId;
+  private String detectionJobId; // TODO: rename to machineDetectionJobId
+
+  @JoinColumn(referencedColumnName = "id")
+  private String detectionId;
 
   @Enumerated(STRING)
   @JdbcTypeCode(NAMED_ENUM)

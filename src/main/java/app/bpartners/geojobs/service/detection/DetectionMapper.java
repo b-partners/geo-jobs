@@ -221,7 +221,7 @@ public class DetectionMapper {
     return switch (label.getName().toUpperCase()) {
       case "ROOF" -> create(objectId, TOITURE_REVETEMENT);
       case "SOLAR_PANEL" -> create(objectId, PANNEAU_PHOTOVOLTAIQUE);
-      case "POOL" -> create(objectId, PISCINE);
+      case "PISCINE" -> create(objectId, PISCINE);
       case "TREE" -> create(objectId, ARBRE);
       case "SIDEWALK" -> create(objectId, TROTTOIR);
       case "PATHWAY" -> create(objectId, PASSAGE_PIETON);

@@ -3,6 +3,7 @@ package app.bpartners.geojobs.endpoint.event.consumer.tile;
 import static app.bpartners.geojobs.file.hash.FileHashAlgorithm.SHA256;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.PISCINE;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static java.time.Instant.now;
@@ -22,14 +23,13 @@ import app.bpartners.geojobs.endpoint.event.model.status.ParcelDetectionStatusRe
 import app.bpartners.geojobs.endpoint.event.model.status.ZDJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.status.ZTJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobCreated;
-import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration;
-import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.hash.FileHash;
-import app.bpartners.geojobs.repository.FullDetectionRepository;
+import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
 import app.bpartners.geojobs.repository.model.annotation.AnnotationRetrievingTask;
-import app.bpartners.geojobs.repository.model.detection.FullDetection;
+import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
+import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.JobFinishedMailer;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
@@ -40,7 +40,6 @@ import app.bpartners.geojobs.sqs.LocalEventQueue;
 import app.bpartners.geojobs.utils.detection.DetectionIT;
 import app.bpartners.geojobs.utils.detection.ObjectsDetectorMockResponse;
 import app.bpartners.geojobs.utils.tiling.TilingTaskCreator;
-import java.math.BigDecimal;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -59,7 +58,7 @@ class ZoneTilingJobCreatedIT extends DetectionIT {
   private static final int DEFAULT_EVENT_DELAY_SPEED_FACTOR = 10;
   private static final double MOCK_DETECTION_RESPONSE_CONFIDENCE = 0.9;
   private static final String ANNOTATION_JOB_ID = "annotationJobId";
-  @Autowired FullDetectionRepository fullDetectionRepository;
+  @Autowired DetectionRepository detectionRepository;
   @Autowired TilingTaskRepository tilingTaskRepository;
   @Autowired LocalEventQueue localEventQueue;
   @MockBean EventProducer eventProducerMock;
@@ -83,7 +82,7 @@ class ZoneTilingJobCreatedIT extends DetectionIT {
     doNothing().when(mailerMock).accept(any());
     doNothing().when(tilingJobMailerMock).accept(any());
     new ObjectsDetectorMockResponse(objectsDetectorMock)
-        .apply(MOCK_DETECTION_RESPONSE_CONFIDENCE, "POOL", OBJECT_DETECTION_SUCCESS_RATE);
+        .apply(MOCK_DETECTION_RESPONSE_CONFIDENCE, "PISCINE", OBJECT_DETECTION_SUCCESS_RATE);
     when(tilesDownloaderMock.apply(any()))
         .thenAnswer(
             (i) ->
@@ -114,7 +113,7 @@ class ZoneTilingJobCreatedIT extends DetectionIT {
                     new Annotation()
                         .polygon(new Polygon().points(List.of(new Point().x(100.0).y(200.0))))
                         .comment("confidence=90.0")
-                        .label(new Label().name("POOL")))));
+                        .label(new Label().name("PISCINE")))));
   }
 
   @NonNull
@@ -203,7 +202,7 @@ class ZoneTilingJobCreatedIT extends DetectionIT {
 
   @NonNull
   private ZoneTilingJob zoneTilingJobId() {
-    var fullDetectionId = randomUUID().toString();
+    var detectionId = randomUUID().toString();
     var endToEndId = randomUUID().toString();
     var tilingJobId = randomUUID().toString();
     var tilingJob =
@@ -215,16 +214,18 @@ class ZoneTilingJobCreatedIT extends DetectionIT {
         tilingTaskCreator.create(
             randomUUID().toString(), tilingJob.getId(), parcel, PENDING, UNKNOWN);
     tilingTaskRepository.save(tilingTask);
-    fullDetectionRepository.save(
-        FullDetection.builder()
-            .id(fullDetectionId)
+    detectionRepository.save(
+        Detection.builder()
+            .id(detectionId)
             .endToEndId(endToEndId)
             .ztjId(tilingJobId)
-            .detectableObjectConfiguration(
-                new DetectableObjectConfiguration()
-                    .bucketStorageName(null)
-                    .type(DetectableObjectType.PISCINE)
-                    .confidence(new BigDecimal(1)))
+            .detectableObjectConfigurations(
+                List.of(
+                    DetectableObjectConfiguration.builder()
+                        .bucketStorageName(null)
+                        .objectType(PISCINE)
+                        .confidence(1.0)
+                        .build()))
             .build());
     return tilingJob;
   }

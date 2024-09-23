@@ -1,11 +1,12 @@
 package app.bpartners.geojobs.endpoint.rest.controller.mapper;
 
+import static app.bpartners.geojobs.endpoint.rest.model.CreateZoneTilingJob.ZoomLevelEnum.HOUSES_0;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
-import app.bpartners.geojobs.endpoint.rest.model.CreateFullDetection;
+import app.bpartners.geojobs.endpoint.rest.model.CreateDetection;
 import app.bpartners.geojobs.endpoint.rest.model.CreateZoneTilingJob;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.repository.model.ArcgisImageZoom;
@@ -81,17 +82,15 @@ public class ZoneTilingJobMapper {
         .status(statusMapper.toRest(domain.getStatus()));
   }
 
-  public CreateZoneTilingJob from(CreateFullDetection zoneToDetect) {
-    CreateFullDetection.ZoomLevelEnum zoom = zoneToDetect.getZoomLevel();
-    assert zoom != null;
-    CreateZoneTilingJob.ZoomLevelEnum zoomLevelEnum =
-        CreateZoneTilingJob.ZoomLevelEnum.valueOf(zoom.getValue());
+  public CreateZoneTilingJob from(CreateDetection zoneToDetect) {
+    var zoomLevelEnum = HOUSES_0; // TODO: default for now
+    var overallConfiguration = zoneToDetect.getOverallConfiguration();
     return new CreateZoneTilingJob()
-        .emailReceiver(zoneToDetect.getEmailReceiver())
-        .zoneName(zoneToDetect.getZoneName())
-        .geoServerParameter(zoneToDetect.getGeoServerParameter())
-        .geoServerUrl(zoneToDetect.getGeoServerUrl())
-        .features(zoneToDetect.getFeatures())
+        .emailReceiver(overallConfiguration.getEmailReceiver())
+        .zoneName(overallConfiguration.getZoneName())
+        .geoServerParameter(overallConfiguration.getGeoServerParameter())
+        .geoServerUrl(overallConfiguration.getGeoServerUrl())
+        .features(zoneToDetect.getGeoJsonZone())
         .zoomLevel(zoomLevelEnum);
   }
 }

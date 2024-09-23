@@ -27,7 +27,7 @@ import app.bpartners.geojobs.job.repository.TaskRepository;
 import app.bpartners.geojobs.job.service.JobService;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.exception.NotFoundException;
-import app.bpartners.geojobs.repository.FullDetectionRepository;
+import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.TaskStatisticRepository;
 import app.bpartners.geojobs.repository.model.FilteredTilingJob;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
@@ -51,7 +51,7 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
   private final NotFinishedTaskRetriever<TilingTask> notFinishedTaskRetriever;
   private static ZoomMapper zoomMapper;
   private static TilingTaskMapper tilingTaskMapper;
-  private final FullDetectionRepository fullDetectionRepository;
+  private final DetectionRepository detectionRepository;
 
   static {
     FeatureMapper featureMapper = new FeatureMapper();
@@ -70,7 +70,7 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
       ZoomMapper zoomMapper,
       TilingTaskMapper tilingTaskMapper,
       TaskStatisticRepository taskStatisticRepository,
-      FullDetectionRepository fullDetectionRepository) {
+      DetectionRepository detectionRepository) {
     super(
         repository,
         jobStatusRepository,
@@ -83,7 +83,7 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
     this.notFinishedTaskRetriever = notFinishedTaskRetriever;
     this.zoomMapper = zoomMapper;
     this.tilingTaskMapper = tilingTaskMapper;
-    this.fullDetectionRepository = fullDetectionRepository;
+    this.detectionRepository = detectionRepository;
   }
 
   public ZoneTilingJob importFromBucket(

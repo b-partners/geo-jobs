@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.endpoint.event.model;
 
-import app.bpartners.geojobs.repository.model.detection.FullDetection;
+import app.bpartners.geojobs.repository.model.detection.Detection;
 import java.time.Duration;
 import lombok.*;
 
@@ -10,8 +10,8 @@ import lombok.*;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @ToString
-public class FullDetectionSaved extends PojaEvent {
-  private FullDetection fullDetection;
+public class DetectionSaved extends PojaEvent {
+  private Detection detection;
 
   @Override
   public Duration maxConsumerDuration() {

@@ -1,13 +1,13 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.service.event.ZoneDetectionFinishedConsumer.DEFAULT_MIN_CONFIDENCE;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.model.annotation.JobAnnotationProcessed;
-import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectConfigurationMapper;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
-import app.bpartners.geojobs.repository.FullDetectionRepository;
+import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
-import app.bpartners.geojobs.repository.model.detection.FullDetection;
+import app.bpartners.geojobs.repository.model.detection.Detection;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -15,14 +15,10 @@ import org.junit.jupiter.api.Test;
 class JobAnnotationProcessedServiceTest {
   ZoneDetectionJobAnnotationProcessor jobAnnotationProcessorMock = mock();
   DetectableObjectConfigurationRepository objectConfigurationRepositoryMock = mock();
-  FullDetectionRepository fullDetectionRepositoryMock = mock();
-  DetectableObjectConfigurationMapper objectConfigurationMapperMock = mock();
+  DetectionRepository detectionRepositoryMock = mock();
   JobAnnotationProcessedService subject =
       new JobAnnotationProcessedService(
-          jobAnnotationProcessorMock,
-          objectConfigurationRepositoryMock,
-          fullDetectionRepositoryMock,
-          objectConfigurationMapperMock);
+          jobAnnotationProcessorMock, objectConfigurationRepositoryMock, detectionRepositoryMock);
 
   @Test
   void accept_with_persisted_object_conf_ok() {
@@ -60,13 +56,12 @@ class JobAnnotationProcessedServiceTest {
     List<DetectableObjectConfiguration> objectConfigurations =
         List.of(new DetectableObjectConfiguration());
     when(objectConfigurationRepositoryMock.findAllByDetectionJobId(any())).thenReturn(List.of());
-    when(fullDetectionRepositoryMock.findByZdjId(any()))
-        .thenReturn(Optional.of(FullDetection.builder().build()));
-    when(objectConfigurationMapperMock.toDomain(any(), any()))
-        .thenReturn(objectConfigurations.getFirst());
+    when(detectionRepositoryMock.findByZdjId(any()))
+        .thenReturn(
+            Optional.of(
+                Detection.builder().detectableObjectConfigurations(objectConfigurations).build()));
 
     String jobId = "jobId";
-    double minConfidence = 0.8;
     String truePositive = "truePositive";
     String falsePositive = "falsePositive";
     String withoutObjects = "withoutObjects";
@@ -74,7 +69,7 @@ class JobAnnotationProcessedServiceTest {
     subject.accept(
         JobAnnotationProcessed.builder()
             .jobId(jobId)
-            .minConfidence(minConfidence)
+            .minConfidence(DEFAULT_MIN_CONFIDENCE)
             .annotationJobWithObjectsIdTruePositive(truePositive)
             .annotationJobWithObjectsIdFalsePositive(falsePositive)
             .annotationJobWithoutObjectsId(withoutObjects)
@@ -83,7 +78,7 @@ class JobAnnotationProcessedServiceTest {
     verify(jobAnnotationProcessorMock, times(1))
         .accept(
             jobId,
-            minConfidence,
+            DEFAULT_MIN_CONFIDENCE,
             truePositive,
             falsePositive,
             withoutObjects,

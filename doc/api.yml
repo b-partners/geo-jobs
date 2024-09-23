@@ -484,11 +484,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/DetectionUsage'
 
-  '/fullDetections':
+  '/detections':
     get:
       tags:
         - Detection
-      operationId: getFullDetections
+      operationId: getDetections
       parameters:
         - in: query
           name: page
@@ -500,31 +500,37 @@ paths:
             $ref: "#/components/schemas/PageSize"
       responses:
         200:
-          description: List of fullDetections
+          description: List of detections
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/FullDetectedZone'
-
-  '/fullDetection':
+                  $ref: '#/components/schemas/Detection'
+  '/detections/{id}':
     put:
       tags:
         - Detection
-      operationId: processFullDetection
+      operationId: processDetection
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          description: Detection identifier
+          required: true
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateFullDetection'
+              $ref: '#/components/schemas/CreateDetection'
       responses:
         200:
-          description: Zone successfully detected
+          description: Detection result
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FullDetectedZone'
+                $ref: '#/components/schemas/Detection'
   '/parcelization':
     put:
       tags:
@@ -643,17 +649,17 @@ components:
     PageSize:
       type: integer
       description: Cannot exceed `500`
-    CreateZoneTilingJob:
+    ServerWMSInfos:
       type: object
       properties:
-        emailReceiver:
-          type: string
-        zoneName:
-          type: string
         geoServerUrl:
           type: string
         geoServerParameter:
           $ref: "#/components/schemas/GeoServerParameter"
+    CreateZoneTilingJob:
+      allOf:
+        - $ref: '#/components/schemas/DetectionOverallConfiguration'
+      properties:
         features:
           type: array
           items:
@@ -815,7 +821,7 @@ components:
           description: between 0 and 1
         bucketStorageName:
           type: string
-          description: | 
+          description: |
             Bucket where are stores images to be detected. 
             If null is provided, the default apps bucket is chosen.
     DetectableObjectType:
@@ -884,6 +890,9 @@ components:
           type: string
           format: date-time
     TaskStatusStatistic:
+      allOf:
+        - $ref: '#/components/schemas/StatusStatistic'
+    StatusStatistic:
       type: object
       properties:
         progression:
@@ -1089,38 +1098,126 @@ components:
       enum:
         - UNDERSCORE
         - SLASH
-
-    CreateFullDetection:
-      type: object
-      allOf:
-        - $ref: '#/components/schemas/CreateZoneTilingJob'
-      properties:
-        objectType:
-          $ref: '#/components/schemas/DetectableObjectType'
-        confidence:
-          type: number
-        endToEndId:
-          type: string
-        bucketStorage:
-          type: string
-    JobTypes:
+    DetectionStep:
       enum:
+        - CONFIGURING
+        - TILING
         - MACHINE_DETECTION
         - HUMAN_DETECTION
-        - TILING
-
-    FullDetectedZone:
+    DetectionStepStatistic:
+      allOf:
+        - $ref: '#/components/schemas/StatusStatistic'
+    CreateMachineDetection:
+      discriminator:
+        propertyName: modelName
+      oneOf:
+        - $ref: '#/components/schemas/BPToitureModel'
+        - $ref: '#/components/schemas/BPLomModel'
+    BPToitureModel:
       type: object
       properties:
-        endToEndId:
+        modelName:
           type: string
-        jobTypes:
+          enum: ['BP_TOITURE']
+          description: |
+            Détection du bâti (incluant typologies de revêtements) et des mutations entre 2 millésimes d'ortho 
+             - 
+             EVALUATION DE L'ETAT DU BATI
+        toitureRevetement:
+          type: boolean
+          default: true
+        arbre:
+          type: boolean
+          default: true
+        velux:
+          type: boolean
+          default: true
+        panneauPhotovoltaique:
+          type: boolean
+          default: true
+        moisissure:
+          type: boolean
+          default: true
+        usure:
+          type: boolean
+          default: true
+        fissureCassure:
+          type: boolean
+          default: true
+        obstacle:
+          type: boolean
+          default: true
+        cheminee:
+          type: boolean
+        humidite:
+          type: boolean
+          default: true
+        risqueFeu:
+          type: boolean
+          default: true
+    BPLomModel:
+      type: object
+      properties:
+        modelName:
+          type: string
+          enum: ['BP_LOM']
+        passagePieton:
+          type: boolean
+        voieCarrosable:
+          type: boolean
+        trottoir:
+          type: boolean
+        parking:
+          type: boolean
+    DetectionOverallConfiguration:
+      allOf:
+        - $ref: '#/components/schemas/ServerWMSInfos'
+      properties:
+        emailReceiver:
+          type: string
+          description: |
+            Email address that will be notified about detection steps evolution
+        zoneName:
+          type: string
+          description: |
+            Name that consumers provide to identify the zone
+    CreateDetection:
+      type: object
+      properties:
+        overallConfiguration:
+          $ref: '#/components/schemas/DetectionOverallConfiguration'
+        detectableObjectConfiguration:
+          $ref: '#/components/schemas/CreateMachineDetection'
+        geoJsonZone:
           type: array
           items:
-           $ref: '#/components/schemas/JobTypes'
+            $ref: '#/components/schemas/Feature'
+          description: |
+            Optional. If so, must provide zone by shape or excel file through its specific endpoint.
+    DetectionStepStatus:
+      properties:
+        step:
+          $ref: '#/components/schemas/DetectionStep'
+        status:
+          $ref: '#/components/schemas/Status'
         statistics:
           type: array
           items:
-           $ref: '#/components/schemas/TaskStatistic'
-        detectedGeojsonUrl:
-           type: string
+            $ref: '#/components/schemas/DetectionStepStatistic'
+        updatedAt:
+          type: string
+          format: date-time
+    Detection:
+      allOf:
+        - $ref: '#/components/schemas/CreateDetection'
+      properties:
+        id:
+          type: string
+        step:
+          $ref: '#/components/schemas/DetectionStepStatus'
+        geoJsonUrl:
+          type: string
+        shapeUrl:
+          type: string
+        excelUrl:
+          type: string
