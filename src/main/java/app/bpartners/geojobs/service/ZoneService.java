@@ -1,8 +1,9 @@
 package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStep.*;
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
-import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
@@ -20,6 +21,7 @@ import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.job.model.JobStatus;
+import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.model.exception.NotFoundException;
@@ -69,33 +71,33 @@ public class ZoneService {
     return List.of(new Feature().id("TODO: read features from shape"));
   }
 
-  public app.bpartners.geojobs.endpoint.rest.model.Detection finalizeShapeConfig(
+  public app.bpartners.geojobs.endpoint.rest.model.Detection finalizeGeoJsonConfig(
       String detectionId, File featuresFromShape) {
     var detection =
-        detectionRepository
-            .findById(detectionId)
-            .orElseThrow(
-                () -> new NotFoundException("Detection(id=" + detectionId + ") not found"));
+            getDetectionById(detectionId);
     var savedDetection =
         detectionRepository.save(
             detection.toBuilder().geoJsonZone(readFromFile(featuresFromShape)).build());
     eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
-    return computeFromConfiguring(savedDetection);
+    return computeFromConfiguring(savedDetection, FINISHED, SUCCEEDED);
+  }
+
+  private Detection getDetectionById(String detectionId) {
+    return detectionRepository
+            .findById(detectionId)
+            .orElseThrow(
+                    () -> new NotFoundException("Detection(id=" + detectionId + ") not found"));
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection configureShapeFile(
       String detectionId, File shapeFile) {
-    var detection =
-        detectionRepository
-            .findById(detectionId)
-            .orElseThrow(
-                () -> new NotFoundException("Detection(id=" + detectionId + ") not found"));
+    var detection = getDetectionById(detectionId);
     var bucketKey = "detections/shape/" + detectionId;
     bucketComponent.upload(shapeFile, bucketKey);
     var savedDetection =
         detectionRepository.save(detection.toBuilder().shapeFileKey(bucketKey).build());
     eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
-    return computeFromConfiguring(savedDetection);
+    return computeFromConfiguring(savedDetection, PROCESSING, UNKNOWN);
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection processDetection(
@@ -128,7 +130,7 @@ public class ZoneService {
                 });
 
     if (detection.getGeoJsonZone() == null || detection.getGeoJsonZone().isEmpty()) {
-      return computeFromConfiguring(detection);
+      return computeFromConfiguring(detection, PENDING, UNKNOWN);
     }
 
     if (detection.getZtjId() == null) {
@@ -202,7 +204,9 @@ public class ZoneService {
   }
 
   private app.bpartners.geojobs.endpoint.rest.model.Detection computeFromConfiguring(
-      Detection detection) {
+      Detection detection,
+      Status.ProgressionStatus progressionStatus,
+      Status.HealthStatus healthStatus) {
     var defaultConfiguringStatistic =
         TaskStatistic.builder()
             .jobType(GeoJobType.CONFIGURING)
@@ -210,10 +214,11 @@ public class ZoneService {
                 JobStatus.builder()
                     .id(randomUUID().toString())
                     .creationDatetime(now())
-                    .progression(PENDING)
-                    .health(UNKNOWN)
+                    .progression(progressionStatus)
+                    .health(healthStatus)
                     .jobType(GeoJobType.CONFIGURING)
                     .build())
+            .updatedAt(now())
             .taskStatusStatistics(List.of())
             .build();
     return createDetection(detection, defaultConfiguringStatistic, CONFIGURING);
