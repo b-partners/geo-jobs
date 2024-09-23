@@ -1108,6 +1108,8 @@ components:
       allOf:
         - $ref: '#/components/schemas/StatusStatistic'
     CreateMachineDetection:
+      discriminator:
+        propertyName: modelName
       oneOf:
         - $ref: '#/components/schemas/BPToitureModel'
         - $ref: '#/components/schemas/BPLomModel'
@@ -1116,7 +1118,7 @@ components:
       properties:
         modelName:
           type: string
-          example: BP_TOITURE
+          enum: ['BP_TOITURE']
           description: |
             Détection du bâti (incluant typologies de revêtements) et des mutations entre 2 millésimes d'ortho 
              - 
@@ -1158,7 +1160,7 @@ components:
       properties:
         modelName:
           type: string
-          example: BP_LOM
+          enum: ['BP_LOM']
         passagePieton:
           type: boolean
         voieCarrosable:
@@ -1184,8 +1186,8 @@ components:
       properties:
         overallConfiguration:
           $ref: '#/components/schemas/DetectionOverallConfiguration'
-        detectableObjectConfiguration: #TODO: rename when bp-models handled
-          $ref: '#/components/schemas/CreateMachineDetection' #TODO: rename when bp-models handled
+        detectableObjectConfiguration:
+          $ref: '#/components/schemas/CreateMachineDetection'
         geoJsonZone:
           type: array
           items:

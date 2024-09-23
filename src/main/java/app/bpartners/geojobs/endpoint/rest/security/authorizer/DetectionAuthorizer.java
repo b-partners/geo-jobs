@@ -3,7 +3,6 @@ package app.bpartners.geojobs.endpoint.rest.security.authorizer;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.model.CreateDetection;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
-import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
@@ -35,10 +34,6 @@ public class DetectionAuthorizer implements TriConsumer<String, CreateDetection,
 
   private void authorizeCommunity(
       String detectionId, CreateDetection createDetection, Principal principal) {
-    var features = createDetection.getGeoJsonZone();
-    if (features == null || features.isEmpty()) {
-      throw new BadRequestException("You must provide features for your detection");
-    }
     var communityAuthorization =
         caRepository.findByApiKey(principal.getPassword()).orElseThrow(ForbiddenException::new);
     var optionalDetection = detectionRepository.findByEndToEndId(detectionId);
@@ -47,8 +42,11 @@ public class DetectionAuthorizer implements TriConsumer<String, CreateDetection,
       return;
     }
 
-    communityZoneSurfaceAuthorizer.accept(communityAuthorization, features);
-    communityZoneAuthorizer.accept(communityAuthorization, features);
+    var features = createDetection.getGeoJsonZone();
+    if (features != null && !features.isEmpty()) {
+      communityZoneSurfaceAuthorizer.accept(communityAuthorization, features);
+      communityZoneAuthorizer.accept(communityAuthorization, features);
+    }
     var detectableObjects =
         detectableObjectTypeMapper.mapFromModel(
             Objects.requireNonNull(createDetection.getDetectableObjectConfiguration())
