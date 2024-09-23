@@ -11,7 +11,7 @@ import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.FullDetectionSaved;
+import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerificationSent;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionStepStatisticMapper;
@@ -52,7 +52,7 @@ public class ZoneService {
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final ZoneTilingJobService zoneTilingJobService;
   private final ZoneTilingJobMapper zoneTilingJobMapper;
-  private final ZoneDetectionJobValidator detectionjobValidator;
+  private final ZoneDetectionJobValidator detectionJobValidator;
   private final EventProducer eventProducer;
   private final DetectionStepStatisticMapper detectionStepStatisticMapper;
   private final ZoneDetectionJobRepository zoneDetectionJobRepository;
@@ -63,9 +63,8 @@ public class ZoneService {
   private final GeoJsonConversionInitiationService conversionInitiationService;
   private final DetectableObjectTypeMapper detectableObjectTypeMapper;
 
-  public app.bpartners.geojobs.endpoint.rest.model.Detection processTilingAndDetection(
+  public app.bpartners.geojobs.endpoint.rest.model.Detection processDetection(
       String detectionId, CreateDetection zoneToDetect, Optional<String> communityOwnerId) {
-
     var detection =
         detectionRepository
             .findByEndToEndId(detectionId)
@@ -89,7 +88,7 @@ public class ZoneService {
                       communityUsedSurfaceService.persistFullDetectionWithSurfaceUsage(
                           toSave, zoneToDetect.getGeoJsonZone());
                   eventProducer.accept(
-                      List.of(FullDetectionSaved.builder().detection(savedFullDetection).build()));
+                      List.of(DetectionSaved.builder().detection(savedFullDetection).build()));
                   return savedFullDetection;
                 });
 
@@ -99,9 +98,9 @@ public class ZoneService {
 
     if (detection.getZtjId() == null) {
       var ztj = processZoneTilingJob(zoneToDetect);
-      var fullDetectionWithZTJ =
+      var detectionWithZTJ =
           detectionRepository.save(detection.toBuilder().ztjId(ztj.getId()).build());
-      return getTilingStatistics(fullDetectionWithZTJ, ztj.getId());
+      return getTilingStatistics(detectionWithZTJ, ztj.getId());
     }
 
     var tilingJobId = detection.getZtjId();
@@ -141,14 +140,14 @@ public class ZoneService {
     return getDetectionStatistics(detection, detectionJobId);
   }
 
-  public List<app.bpartners.geojobs.endpoint.rest.model.Detection> getFullDetectionsByCriteria(
+  public List<app.bpartners.geojobs.endpoint.rest.model.Detection> getDetectionsByCriteria(
       Optional<String> communityId, PageFromOne page, BoundedPageSize pageSize) {
     Pageable pageable = PageRequest.of(page.getValue() - 1, pageSize.getValue());
-    var fullDetections =
+    var detections =
         communityId
             .map(ownerId -> detectionRepository.findByCommunityOwnerId(ownerId, pageable))
             .orElseGet(() -> detectionRepository.findAll(pageable).getContent());
-    return fullDetections.stream().map(this::addStatistics).toList();
+    return detections.stream().map(this::addStatistics).toList();
   }
 
   private app.bpartners.geojobs.endpoint.rest.model.Detection addStatistics(Detection detection) {
@@ -223,7 +222,7 @@ public class ZoneService {
   public ZoneDetectionJob processZoneDetectionJob(Detection detection, ZoneTilingJob job) {
     var zoneDetectionJob = zoneDetectionJobService.getByTilingJobId(job.getId(), MACHINE);
 
-    detectionjobValidator.accept(zoneDetectionJob.getId());
+    detectionJobValidator.accept(zoneDetectionJob.getId());
 
     return zoneDetectionJobService.processZDJ(
         zoneDetectionJob.getId(), detection.getDetectableObjectConfigurations());

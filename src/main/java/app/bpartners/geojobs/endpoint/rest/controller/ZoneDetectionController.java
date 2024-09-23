@@ -177,7 +177,7 @@ public class ZoneDetectionController {
     var communityAuthorization =
         communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
     var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId);
-    return zoneService.processTilingAndDetection(detectionId, createDetection, communityOwnerId);
+    return zoneService.processDetection(detectionId, createDetection, communityOwnerId);
   }
 
   @GetMapping("/usage")
@@ -190,13 +190,13 @@ public class ZoneDetectionController {
   }
 
   @GetMapping("/detections")
-  public List<Detection> getFullDetections(
+  public List<Detection> getDetections(
       @RequestParam(name = "page", defaultValue = "1", required = false) PageFromOne page,
       @RequestParam(name = "pageSize", defaultValue = "10", required = false)
           BoundedPageSize pageSize) {
     var communityAuthorization =
         communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
     var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId);
-    return zoneService.getFullDetectionsByCriteria(communityOwnerId, page, pageSize);
+    return zoneService.getDetectionsByCriteria(communityOwnerId, page, pageSize);
   }
 }

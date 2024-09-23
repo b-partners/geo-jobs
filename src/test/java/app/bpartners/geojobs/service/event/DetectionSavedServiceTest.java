@@ -3,7 +3,7 @@ package app.bpartners.geojobs.service.event;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
-import app.bpartners.geojobs.endpoint.event.model.FullDetectionSaved;
+import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
 import app.bpartners.geojobs.mail.Email;
 import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.repository.model.detection.Detection;
@@ -16,7 +16,7 @@ import org.mockito.ArgumentCaptor;
 
 class DetectionSavedServiceTest {
   Mailer mailerMock = mock();
-  FullDetectionSavedService subject = new FullDetectionSavedService(mailerMock);
+  DetectionSavedService subject = new DetectionSavedService(mailerMock);
 
   @SneakyThrows
   @Test
@@ -27,7 +27,7 @@ class DetectionSavedServiceTest {
     String htmlBody = "Éléments fournis par la communauté à afficher";
     List<File> attachments = List.of(); // TODO: add attachments, as provided shape or excel file
 
-    subject.accept(FullDetectionSaved.builder().detection(fullDetection).build());
+    subject.accept(DetectionSaved.builder().detection(fullDetection).build());
 
     var emailCaptor = ArgumentCaptor.forClass(Email.class);
     verify(mailerMock, only()).accept(emailCaptor.capture());

@@ -10,7 +10,7 @@ import lombok.*;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @ToString
-public class FullDetectionSaved extends PojaEvent {
+public class DetectionSaved extends PojaEvent {
   private Detection detection;
 
   @Override

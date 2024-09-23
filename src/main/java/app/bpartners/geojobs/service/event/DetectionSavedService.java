@@ -2,7 +2,7 @@ package app.bpartners.geojobs.service.event;
 
 import static java.time.Instant.now;
 
-import app.bpartners.geojobs.endpoint.event.model.FullDetectionSaved;
+import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
 import app.bpartners.geojobs.mail.Email;
 import app.bpartners.geojobs.mail.Mailer;
 import jakarta.mail.internet.InternetAddress;
@@ -15,13 +15,13 @@ import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
-public class FullDetectionSavedService implements Consumer<FullDetectionSaved> {
+public class DetectionSavedService implements Consumer<DetectionSaved> {
   private final Mailer mailer;
 
   @SneakyThrows
   @Override
-  public void accept(FullDetectionSaved fullDetectionSaved) {
-    var fullDetection = fullDetectionSaved.getDetection();
+  public void accept(DetectionSaved detectionSaved) {
+    var fullDetection = detectionSaved.getDetection();
     List<InternetAddress> cc = List.of(); // TODO: add admin emails here
     List<InternetAddress> bcc = List.of();
     String subject =
