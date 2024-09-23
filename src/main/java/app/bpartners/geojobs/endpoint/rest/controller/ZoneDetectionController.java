@@ -27,6 +27,7 @@ import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.authorizer.DetectionAuthorizer;
 import app.bpartners.geojobs.endpoint.rest.validator.GetUsageValidator;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
+import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.model.page.BoundedPageSize;
 import app.bpartners.geojobs.model.page.PageFromOne;
@@ -39,6 +40,7 @@ import app.bpartners.geojobs.service.ParcelService;
 import app.bpartners.geojobs.service.ZoneService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
+import java.io.File;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -72,6 +74,7 @@ public class ZoneDetectionController {
   private final AuthProvider authProvider;
   private final DetectionSurfaceUnitMapper unitMapper;
   private final DetectionAuthorizer detectionAuthorizer;
+  private final FileWriter fileWriter;
 
   @PutMapping("/detectionJobs/{id}/taskFiltering")
   public List<FilteredDetectionJob> filteredDetectionJobs(@PathVariable String id) {
@@ -168,6 +171,13 @@ public class ZoneDetectionController {
   @GetMapping("/detectionJobs/{id}/geojsonsUrl")
   public GeoJsonsUrl getZDJGeojsonsUrl(@PathVariable(value = "id") String detectionJobId) {
     return geoJsonConversionInitiationService.initiateGeoJsonConversion(detectionJobId);
+  }
+
+  @PostMapping("/detections/{id}/shape")
+  public Detection processDetection(
+      @PathVariable(name = "id") String detectionId, @RequestBody byte[] shapeFileAsBytes) {
+    File shapeFile = fileWriter.apply(shapeFileAsBytes, null);
+    return zoneService.configureShapeFile(detectionId, shapeFile);
   }
 
   @PutMapping("/detections/{id}")

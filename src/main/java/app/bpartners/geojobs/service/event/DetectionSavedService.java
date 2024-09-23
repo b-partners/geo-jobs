@@ -3,11 +3,13 @@ package app.bpartners.geojobs.service.event;
 import static java.time.Instant.now;
 
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
+import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.mail.Email;
 import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import jakarta.mail.internet.InternetAddress;
 import java.io.File;
+import java.time.Duration;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Service;
 @AllArgsConstructor
 public class DetectionSavedService implements Consumer<DetectionSaved> {
   private final Mailer mailer;
+  private final BucketComponent bucketComponent;
 
   @SneakyThrows
   @Override
@@ -34,7 +37,7 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
             + ") modifiée le "
             + now();
     // TODO: set as html parsed body
-    String htmlBody = computeStaticEmailBody(detection);
+    String htmlBody = computeStaticEmailBody(detection, bucketComponent);
     List<File> attachments = List.of(); // TODO: add attachments, as provided shape or excel file
     mailer.accept(
         new Email(
@@ -42,7 +45,8 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
   }
 
   @NonNull
-  public static String computeStaticEmailBody(Detection detection) {
+  public static String computeStaticEmailBody(
+      Detection detection, BucketComponent bucketComponent) {
     String htmlBody =
         "Éléments fournis par le consommateur d'API : \n"
             + "Configurations sur la détection : "
@@ -53,6 +57,11 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
             + "\n";
     if (detection.getGeoJsonZone() != null && !detection.getGeoJsonZone().isEmpty()) {
       htmlBody += "Zone en GeoJson fournis : " + detection.getGeoJsonZone();
+    }
+    if (detection.getShapeFileKey() != null) {
+      var shapeFilePresignURL =
+          bucketComponent.presign(detection.getShapeFileKey(), Duration.ofHours(2L)).toString();
+      htmlBody += "Fichier shape à traiter : " + shapeFilePresignURL;
     }
     return htmlBody;
   }

@@ -22,6 +22,7 @@ import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.model.exception.ApiException;
+import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.model.page.BoundedPageSize;
 import app.bpartners.geojobs.model.page.PageFromOne;
 import app.bpartners.geojobs.repository.DetectionRepository;
@@ -34,6 +35,7 @@ import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
+import java.io.File;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -62,6 +64,21 @@ public class ZoneService {
   private final BucketComponent bucketComponent;
   private final GeoJsonConversionInitiationService conversionInitiationService;
   private final DetectableObjectTypeMapper detectableObjectTypeMapper;
+
+  public app.bpartners.geojobs.endpoint.rest.model.Detection configureShapeFile(
+      String detectionId, File shapeFile) {
+    var detection =
+        detectionRepository
+            .findById(detectionId)
+            .orElseThrow(
+                () -> new NotFoundException("Detection(id=" + detectionId + ") not found"));
+    var bucketKey = "detections/shape/" + detectionId;
+    bucketComponent.upload(shapeFile, bucketKey);
+    var savedDetection =
+        detectionRepository.save(detection.toBuilder().shapeFileKey(bucketKey).build());
+    eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
+    return computeFromConfiguring(savedDetection);
+  }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection processDetection(
       String detectionId, CreateDetection zoneToDetect, Optional<String> communityOwnerId) {
@@ -203,7 +220,7 @@ public class ZoneService {
     return new app.bpartners.geojobs.endpoint.rest.model.Detection()
         .id(detection.getEndToEndId())
         .excelUrl(null) // TODO: not handle for now
-        .shapeUrl(null) // TODO: not handle for now
+        .shapeUrl(generatePresignedUrl(detection.getShapeFileKey()))
         .geoJsonZone(detection.getGeoJsonZone())
         .geoJsonUrl(generatePresignedUrl(detection.getGeojsonS3FileKey()))
         .overallConfiguration(detection.getDetectionOverallConfiguration())
