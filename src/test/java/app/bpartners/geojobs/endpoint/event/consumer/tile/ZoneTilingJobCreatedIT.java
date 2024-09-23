@@ -202,7 +202,7 @@ class ZoneTilingJobCreatedIT extends DetectionIT {
 
   @NonNull
   private ZoneTilingJob zoneTilingJobId() {
-    var fullDetectionId = randomUUID().toString();
+    var detectionId = randomUUID().toString();
     var endToEndId = randomUUID().toString();
     var tilingJobId = randomUUID().toString();
     var tilingJob =
@@ -216,7 +216,7 @@ class ZoneTilingJobCreatedIT extends DetectionIT {
     tilingTaskRepository.save(tilingTask);
     detectionRepository.save(
         Detection.builder()
-            .id(fullDetectionId)
+            .id(detectionId)
             .endToEndId(endToEndId)
             .ztjId(tilingJobId)
             .detectableObjectConfigurations(

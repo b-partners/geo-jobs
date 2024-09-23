@@ -26,9 +26,8 @@ class DetectionOwnerAuthorizerTest {
   void should_not_accept_if_the_given_community_is_the_owner() {
     var communityAuthorization =
         CommunityAuthorization.builder().id(randomUUID().toString()).build();
-    var fullDetection = Detection.builder().communityOwnerId(randomUUID().toString()).build();
+    var detection = Detection.builder().communityOwnerId(randomUUID().toString()).build();
 
-    assertThrows(
-        ForbiddenException.class, () -> subject.accept(communityAuthorization, fullDetection));
+    assertThrows(ForbiddenException.class, () -> subject.accept(communityAuthorization, detection));
   }
 }

@@ -64,16 +64,16 @@ public class GeoJsonConversionInitiatedService implements Consumer<GeoJsonConver
       var zoneName = event.getZoneName();
       var machineZDJ = detectionJobService.getMachineZDJFromHumanZDJ(humanZDJId);
       var machineZDJId = machineZDJ.getId();
-      var fullDetectionJob =
+      var detectionJob =
           detectionRepository
               .findByZdjId(machineZDJId)
               .orElseThrow(
                   () ->
                       new NotFoundException(
-                          "Any fullDetectionJob associated to ZDJ(type=MACHINE, id="
+                          "Any detectionJob associated to ZDJ(type=MACHINE, id="
                               + machineZDJId
                               + ")"));
-      var fileKey = fullDetectionJob.getId() + "/" + zoneName + GEO_JSON_EXTENSION;
+      var fileKey = detectionJob.getId() + "/" + zoneName + GEO_JSON_EXTENSION;
       var humanDetectedTiles = humanDetectedTileService.getByJobId(humanZDJId);
       var geoJson = geoJsonConverter.convert(humanDetectedTiles);
       var geoJsonAsByte = writer.writeAsByte(geoJson);
@@ -82,7 +82,7 @@ public class GeoJsonConversionInitiatedService implements Consumer<GeoJsonConver
       bucketComponent.upload(geoJsonAsFile, fileKey);
 
       var savedFullDetection =
-          detectionRepository.save(fullDetectionJob.toBuilder().geojsonS3FileKey(fileKey).build());
+          detectionRepository.save(detectionJob.toBuilder().geojsonS3FileKey(fileKey).build());
       return savedFullDetection.getGeojsonS3FileKey();
     } catch (RuntimeException e) {
       var failed = taskStatusService.fail(task);

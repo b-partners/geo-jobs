@@ -27,8 +27,8 @@ public class ZoneDetectionFinishedConsumer {
     List<DetectableObjectConfiguration> detectableObjectConfigurations =
         objectConfigurationRepository.findAllByDetectionJobId(jobId);
     if (optionalFullDetection.isPresent()) {
-      var fullDetection = optionalFullDetection.get();
-      detectableObjectConfigurations = fullDetection.getDetectableObjectConfigurations();
+      var detection = optionalFullDetection.get();
+      detectableObjectConfigurations = detection.getDetectableObjectConfigurations();
     }
 
     jobAnnotationProcessor.accept(

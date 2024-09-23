@@ -21,14 +21,14 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
   @SneakyThrows
   @Override
   public void accept(DetectionSaved detectionSaved) {
-    var fullDetection = detectionSaved.getDetection();
+    var detection = detectionSaved.getDetection();
     List<InternetAddress> cc = List.of(); // TODO: add admin emails here
     List<InternetAddress> bcc = List.of();
     String subject =
-        "FullDetection(id="
-            + fullDetection.getId()
+        "Detection(id="
+            + detection.getId()
             + ", communityOwnerId="
-            + fullDetection.getCommunityOwnerId()
+            + detection.getCommunityOwnerId()
             + ") crée le "
             + now();
     String htmlBody = "Éléments fournis par la communauté à afficher";

@@ -21,13 +21,13 @@ class DetectionSavedServiceTest {
   @SneakyThrows
   @Test
   void accept_ok() {
-    var fullDetection = new Detection();
+    var detection = new Detection();
     List<InternetAddress> cc = List.of(); // TODO: add admin emails here
     List<InternetAddress> bcc = List.of();
     String htmlBody = "Éléments fournis par la communauté à afficher";
     List<File> attachments = List.of(); // TODO: add attachments, as provided shape or excel file
 
-    subject.accept(DetectionSaved.builder().detection(fullDetection).build());
+    subject.accept(DetectionSaved.builder().detection(detection).build());
 
     var emailCaptor = ArgumentCaptor.forClass(Email.class);
     verify(mailerMock, only()).accept(emailCaptor.capture());

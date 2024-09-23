@@ -90,15 +90,15 @@ class GeoJsonConversionInitiatedServiceIT extends FacadeIT {
 
   @Test
   void generate_geo_json_from_detected_tiles() {
-    var fullDetectionJobId = randomUUID().toString();
+    var detectionId = randomUUID().toString();
     when(detectionRepositoryMock.findByZdjId(any()))
-        .thenReturn(Optional.of(Detection.builder().id(fullDetectionJobId).build()));
+        .thenReturn(Optional.of(Detection.builder().id(detectionId).build()));
     taskService.save(conversionTask());
 
     subject.accept(initiated());
     var actual = taskService.getById(MOCK_TASK_ID);
 
-    assertEquals(fullDetectionJobId + "/Cannes.geojson", actual.getFileKey());
+    assertEquals(detectionId + "/Cannes.geojson", actual.getFileKey());
     assertEquals(FINISHED, actual.getStatus().getProgression());
     assertEquals(SUCCEEDED, actual.getStatus().getHealth());
   }

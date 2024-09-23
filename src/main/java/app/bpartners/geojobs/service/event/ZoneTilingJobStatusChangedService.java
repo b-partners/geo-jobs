@@ -52,11 +52,10 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
     @Override
     public String performAction() {
       var zdj = zoneDetectionJobService.saveZDJFromZTJ(ztj);
-      var optionalFullDetection = detectionRepository.findByZtjId(ztj.getId());
-      // For now, only fullDetection process triggers ZDJ processing
-      if (optionalFullDetection.isPresent()) {
-        detectionRepository.save(
-            optionalFullDetection.get().toBuilder().zdjId(zdj.getId()).build());
+      var optionalDetection = detectionRepository.findByZtjId(ztj.getId());
+      // For now, only detection process triggers ZDJ processing
+      if (optionalDetection.isPresent()) {
+        detectionRepository.save(optionalDetection.get().toBuilder().zdjId(zdj.getId()).build());
         eventProducer.accept(
             List.of(ZoneDetectionJobCreated.builder().zoneDetectionJob(zdj).build()));
       }
