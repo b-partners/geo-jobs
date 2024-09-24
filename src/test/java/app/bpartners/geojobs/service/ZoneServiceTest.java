@@ -125,18 +125,19 @@ class ZoneServiceTest {
             .id(detectionId)
             .shapeUrl(shapeUrl)
             .geoJsonZone(detection.getGeoJsonZone())
-            .overallConfiguration(detection.getDetectionOverallConfiguration())
-            .detectableObjectConfiguration(detection.getCreateMachineDetection())
-            .step(
+            .geoServerProperties(detection.getGeoServerProperties())
+            .detectableObjectModel(detection.getDetectableObjectModel())
+            .actualStepStatus(
                 new DetectionStepStatus()
                     .step(CONFIGURING)
                     .status(
                         new Status()
                             .progression(PROCESSING)
                             .health(UNKNOWN)
-                            .creationDatetime(actual.getStep().getStatus().getCreationDatetime()))
+                            .creationDatetime(
+                                actual.getActualStepStatus().getStatus().getCreationDatetime()))
                     .statistics(List.of())
-                    .updatedAt(actual.getStep().getUpdatedAt()));
+                    .updatedAt(actual.getActualStepStatus().getUpdatedAt()));
     assertEquals(expectedDetectionSavedEvent, detectionSaved);
     assertEquals(expectedRestDetection, actual);
   }
@@ -185,18 +186,19 @@ class ZoneServiceTest {
         new Detection()
             .id(detectionId)
             .geoJsonZone(detection.getGeoJsonZone())
-            .overallConfiguration(detection.getDetectionOverallConfiguration())
-            .detectableObjectConfiguration(detection.getCreateMachineDetection())
-            .step(
+            .geoServerProperties(detection.getGeoServerProperties())
+            .detectableObjectModel(detection.getDetectableObjectModel())
+            .actualStepStatus(
                 new DetectionStepStatus()
                     .step(CONFIGURING)
                     .status(
                         new Status()
                             .progression(FINISHED)
                             .health(SUCCEEDED)
-                            .creationDatetime(actual.getStep().getStatus().getCreationDatetime()))
+                            .creationDatetime(
+                                actual.getActualStepStatus().getStatus().getCreationDatetime()))
                     .statistics(List.of())
-                    .updatedAt(actual.getStep().getUpdatedAt()));
+                    .updatedAt(actual.getActualStepStatus().getUpdatedAt()));
     assertEquals(
         DetectionSaved.builder().detection(expectedDetectionSaved).build(), detectionProvided);
     assertEquals(expectedDetectionSaved, savedDetection);

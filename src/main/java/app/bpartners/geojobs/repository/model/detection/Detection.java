@@ -40,6 +40,10 @@ public class Detection implements Serializable {
   @Column(name = "ztj_id")
   private String ztjId;
 
+  private String zoneName;
+
+  private String emailReceiver;
+
   @JoinColumn(referencedColumnName = "id", name = "community_owner_id")
   private String communityOwnerId;
 
@@ -55,20 +59,20 @@ public class Detection implements Serializable {
 
   // TODO: save as entity
   @JdbcTypeCode(JSON)
-  private DetectionOverallConfiguration detectionOverallConfiguration;
+  private GeoServerProperties geoServerProperties;
 
   @JdbcTypeCode(JSON)
   private List<Feature> geoJsonZone;
 
-  public CreateMachineDetection getCreateMachineDetection() {
-    CreateMachineDetection createMachineDetection = new CreateMachineDetection();
+  public DetectableObjectModel getDetectableObjectModel() {
+    DetectableObjectModel detectableObjectModel = new DetectableObjectModel();
     if (bpToitureModel != null) {
-      createMachineDetection.setActualInstance(bpToitureModel);
+      detectableObjectModel.setActualInstance(bpToitureModel);
     } else if (bpLomModel != null) {
-      createMachineDetection.setActualInstance(bpLomModel);
+      detectableObjectModel.setActualInstance(bpLomModel);
     } else {
       return null;
     }
-    return createMachineDetection;
+    return detectableObjectModel;
   }
 }

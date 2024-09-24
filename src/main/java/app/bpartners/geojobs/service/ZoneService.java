@@ -175,9 +175,9 @@ public class ZoneService {
   }
 
   private Detection mapFromRestCreateDetection(
-      String detectionId, CreateDetection zoneToDetect, Optional<String> communityOwnerId) {
-    var createMachineDetection = zoneToDetect.getDetectableObjectConfiguration();
-    var modelActualInstance = Objects.requireNonNull(createMachineDetection).getActualInstance();
+      String detectionId, CreateDetection createDetection, Optional<String> communityOwnerId) {
+    var detectableObjectModel = createDetection.getDetectableObjectModel();
+    var modelActualInstance = Objects.requireNonNull(detectableObjectModel).getActualInstance();
     var detectableObjectConfigurations =
         detectableObjectTypeMapper.mapDefaultConfigurationsFromModel(
             detectionId, modelActualInstance);
@@ -185,10 +185,12 @@ public class ZoneService {
         Detection.builder()
             .id(detectionId)
             .endToEndId(detectionId)
+            .emailReceiver(createDetection.getEmailReceiver())
+            .zoneName(createDetection.getZoneName())
             .communityOwnerId(communityOwnerId.orElse(null))
             .detectableObjectConfigurations(detectableObjectConfigurations)
-            .detectionOverallConfiguration(zoneToDetect.getOverallConfiguration())
-            .geoJsonZone(zoneToDetect.getGeoJsonZone());
+            .geoServerProperties(createDetection.getGeoServerProperties())
+            .geoJsonZone(createDetection.getGeoJsonZone());
     if (modelActualInstance instanceof BPToitureModel) {
       detectionBuilder.bpToitureModel((BPToitureModel) modelActualInstance);
     } else if (modelActualInstance instanceof BPLomModel) {
@@ -266,9 +268,10 @@ public class ZoneService {
         .shapeUrl(generatePresignedUrl(detection.getShapeFileKey()))
         .geoJsonZone(detection.getGeoJsonZone())
         .geoJsonUrl(generatePresignedUrl(detection.getGeojsonS3FileKey()))
-        .overallConfiguration(detection.getDetectionOverallConfiguration())
-        .detectableObjectConfiguration(detection.getCreateMachineDetection())
-        .step(detectionStepStatisticMapper.toRestDetectionStepStatus(statistic, detectionStep));
+        .geoServerProperties(detection.getGeoServerProperties())
+        .detectableObjectModel(detection.getDetectableObjectModel())
+        .actualStepStatus(
+            detectionStepStatisticMapper.toRestDetectionStepStatus(statistic, detectionStep));
   }
 
   private ZoneTilingJob processZoneTilingJob(CreateDetection zoneToDetect) {

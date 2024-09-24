@@ -49,8 +49,7 @@ public class DetectionAuthorizer implements TriConsumer<String, CreateDetection,
     }
     var detectableObjects =
         detectableObjectTypeMapper.mapFromModel(
-            Objects.requireNonNull(createDetection.getDetectableObjectConfiguration())
-                .getActualInstance());
+            Objects.requireNonNull(createDetection.getDetectableObjectModel()).getActualInstance());
     detectableObjects.forEach(
         candidateObjectType ->
             communityDetectableObjectTypeAuthorizer.accept(
