@@ -8,5 +8,7 @@ public enum DetectableType {
   ARBRE,
   TROTTOIR,
   LINE,
-  ESPACE_VERT
+  ESPACE_VERT,
+  VOIE_CARROSSABLE,
+  PARKING
 }

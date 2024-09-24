@@ -6,6 +6,7 @@ import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.model.BPLomModel;
 import app.bpartners.geojobs.endpoint.rest.model.BPToitureModel;
+import app.bpartners.geojobs.endpoint.rest.model.BPZanModel;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
@@ -95,6 +96,27 @@ public class DetectableObjectTypeMapper {
         objectTypes.add(TROTTOIR);
       }
       // TODO: add other detectableTypes in BPLomModel not handled yet
+    } else if (o instanceof BPZanModel) {
+      BPZanModel model = (BPZanModel) o;
+      if (model.getArbre().booleanValue()) {
+        objectTypes.add(ARBRE);
+      }
+      if (model.getEspaceVert().booleanValue()) {
+        objectTypes.add(ESPACE_VERT);
+      }
+
+      if (model.getToiture().booleanValue()) {
+        objectTypes.add(TOITURE_REVETEMENT);
+      }
+      if (model.getVoieCarrossable().booleanValue()) {
+        objectTypes.add(VOIE_CARROSSABLE);
+      }
+      if (model.getTrottoir().booleanValue()) {
+        objectTypes.add(TROTTOIR);
+      }
+      if (model.getParking().booleanValue()) {
+        objectTypes.add(PARKING);
+      }
     } else {
       throw new ApiException(SERVER_EXCEPTION, "Unknown instance of object " + o.getClass());
     }

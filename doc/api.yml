@@ -899,6 +899,8 @@ components:
         - TROTTOIR
         - LINE
         - ESPACE_VERT
+        - VOIE_CARROSSABLE
+        - PARKING
     ProcessJobAnnotation:
       type: object
       properties:
