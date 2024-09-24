@@ -75,49 +75,47 @@ public class DetectableObjectTypeMapper {
 
   public List<DetectableObjectType> mapFromModel(Object o) {
     var objectTypes = new ArrayList<DetectableObjectType>();
-    if (o instanceof BPToitureModel model) {
-      if (model.getArbre().booleanValue()) {
-        objectTypes.add(ARBRE);
-      }
-      if (model.getToitureRevetement().booleanValue()) {
-        objectTypes.add(TOITURE_REVETEMENT);
-      }
-      if (model.getPanneauPhotovoltaique().booleanValue()) {
-        objectTypes.add(PANNEAU_PHOTOVOLTAIQUE);
-      }
-      // TODO: add other detectableTypes in BPToitureModel not handled yet
-    } else if (o instanceof BPLomModel model) {
-      if (model.getPassagePieton().booleanValue()) {
-        objectTypes.add(PASSAGE_PIETON);
-      }
-      if (model.getTrottoir().booleanValue()) {
-        objectTypes.add(TROTTOIR);
-      }
-      // TODO: add other detectableTypes in BPLomModel not handled yet
-    } else if (o instanceof BPZanModel model) {
-      if (model.getArbre().booleanValue()) {
-        objectTypes.add(ARBRE);
-      }
-      if (model.getEspaceVert().booleanValue()) {
-        objectTypes.add(ESPACE_VERT);
-      }
 
-      if (model.getToiture().booleanValue()) {
-        objectTypes.add(TOITURE_REVETEMENT);
-      }
-      if (model.getVoieCarrossable().booleanValue()) {
-        objectTypes.add(VOIE_CARROSSABLE);
-      }
-      if (model.getTrottoir().booleanValue()) {
-        objectTypes.add(TROTTOIR);
-      }
-      if (model.getParking().booleanValue()) {
-        objectTypes.add(PARKING);
-      }
+    if (o instanceof BPToitureModel model) {
+      mapFromBPToitureModel(model, objectTypes);
+    } else if (o instanceof BPLomModel model) {
+      mapFromBPLomModel(model, objectTypes);
+    } else if (o instanceof BPZanModel model) {
+      mapFromBPZanModel(model, objectTypes);
     } else {
       throw new ApiException(SERVER_EXCEPTION, "Unknown instance of object " + o.getClass());
     }
+
     return objectTypes;
+  }
+
+  private void mapFromBPToitureModel(BPToitureModel model, List<DetectableObjectType> objectTypes) {
+    addIfTrue(model.getArbre(), objectTypes, ARBRE);
+    addIfTrue(model.getToitureRevetement(), objectTypes, TOITURE_REVETEMENT);
+    addIfTrue(model.getPanneauPhotovoltaique(), objectTypes, PANNEAU_PHOTOVOLTAIQUE);
+    // TODO: add other detectableTypes in BPToitureModel not handled yet
+  }
+
+  private void mapFromBPLomModel(BPLomModel model, List<DetectableObjectType> objectTypes) {
+    addIfTrue(model.getPassagePieton(), objectTypes, PASSAGE_PIETON);
+    addIfTrue(model.getTrottoir(), objectTypes, TROTTOIR);
+    // TODO: add other detectableTypes in BPLomModel not handled yet
+  }
+
+  private void mapFromBPZanModel(BPZanModel model, List<DetectableObjectType> objectTypes) {
+    addIfTrue(model.getArbre(), objectTypes, ARBRE);
+    addIfTrue(model.getEspaceVert(), objectTypes, ESPACE_VERT);
+    addIfTrue(model.getToiture(), objectTypes, TOITURE_REVETEMENT);
+    addIfTrue(model.getVoieCarrossable(), objectTypes, VOIE_CARROSSABLE);
+    addIfTrue(model.getTrottoir(), objectTypes, TROTTOIR);
+    addIfTrue(model.getParking(), objectTypes, PARKING);
+  }
+
+  private void addIfTrue(
+      Boolean condition, List<DetectableObjectType> objectTypes, DetectableObjectType objectType) {
+    if (Boolean.TRUE.equals(condition)) {
+      objectTypes.add(objectType);
+    }
   }
 
   public List<DetectableObjectConfiguration> mapDefaultConfigurationsFromModel(
