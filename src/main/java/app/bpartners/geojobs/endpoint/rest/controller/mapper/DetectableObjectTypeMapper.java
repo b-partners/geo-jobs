@@ -75,8 +75,7 @@ public class DetectableObjectTypeMapper {
 
   public List<DetectableObjectType> mapFromModel(Object o) {
     var objectTypes = new ArrayList<DetectableObjectType>();
-    if (o instanceof BPToitureModel) {
-      BPToitureModel model = (BPToitureModel) o;
+    if (o instanceof BPToitureModel model) {
       if (model.getArbre().booleanValue()) {
         objectTypes.add(ARBRE);
       }
@@ -87,8 +86,7 @@ public class DetectableObjectTypeMapper {
         objectTypes.add(PANNEAU_PHOTOVOLTAIQUE);
       }
       // TODO: add other detectableTypes in BPToitureModel not handled yet
-    } else if (o instanceof BPLomModel) {
-      BPLomModel model = (BPLomModel) o;
+    } else if (o instanceof BPLomModel model) {
       if (model.getPassagePieton().booleanValue()) {
         objectTypes.add(PASSAGE_PIETON);
       }
@@ -96,8 +94,7 @@ public class DetectableObjectTypeMapper {
         objectTypes.add(TROTTOIR);
       }
       // TODO: add other detectableTypes in BPLomModel not handled yet
-    } else if (o instanceof BPZanModel) {
-      BPZanModel model = (BPZanModel) o;
+    } else if (o instanceof BPZanModel model) {
       if (model.getArbre().booleanValue()) {
         objectTypes.add(ARBRE);
       }
