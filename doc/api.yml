@@ -1177,6 +1177,7 @@ components:
       oneOf:
         - $ref: '#/components/schemas/BPToitureModel'
         - $ref: '#/components/schemas/BPLomModel'
+        - $ref: '#/components/schemas/BPZanModel'
     BPToitureModel:
       type: object
       properties:
@@ -1228,6 +1229,24 @@ components:
         passagePieton:
           type: boolean
         voieCarrosable:
+          type: boolean
+        trottoir:
+          type: boolean
+        parking:
+          type: boolean
+    BPZanModel:
+      type: object
+      properties:
+        modelName:
+          type: string
+          enum: [ 'BP_ZAN' ]
+        arbre:
+          type: boolean
+        espaceVert:
+          type: boolean
+        toiture:
+          type: boolean
+        voieCarrossable:
           type: boolean
         trottoir:
           type: boolean
