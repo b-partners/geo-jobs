@@ -55,10 +55,9 @@ class CommunityAuthenticatedAccessIT extends FacadeIT {
   @Test
   void community_cannot_do_full_detection_with_wrong_authorization() {
     var detectionId = randomUUID().toString();
-    var createMachineDetection = new CreateMachineDetection();
-    createMachineDetection.setActualInstance(new BPToitureModel().modelName(BP_TOITURE));
-    var createDetection =
-        new CreateDetection().detectableObjectConfiguration(createMachineDetection);
+    var detectableObjectModel = new DetectableObjectModel();
+    detectableObjectModel.setActualInstance(new BPToitureModel().modelName(BP_TOITURE));
+    var createDetection = new CreateDetection().detectableObjectModel(detectableObjectModel);
     var error =
         assertThrows(
             ApiException.class, () -> detectionApi.processDetection(detectionId, createDetection));

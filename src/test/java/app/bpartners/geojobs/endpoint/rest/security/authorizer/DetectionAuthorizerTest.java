@@ -55,7 +55,7 @@ class DetectionAuthorizerTest {
     when(communityAuthRepository.findByApiKey(any()))
         .thenReturn(Optional.of(communityAuthorization));
     when(createDetection.getGeoJsonZone()).thenReturn(List.of(mock(Feature.class)));
-    when(createDetection.getDetectableObjectConfiguration()).thenReturn(mock());
+    when(createDetection.getDetectableObjectModel()).thenReturn(mock());
   }
 
   @Test

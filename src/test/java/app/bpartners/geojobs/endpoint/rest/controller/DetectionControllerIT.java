@@ -126,13 +126,13 @@ class DetectionControllerIT extends FacadeIT {
   }
 
   private CreateDetection createDetection() {
-    var createMachineDetection = new CreateMachineDetection(new BPToitureModel());
+    var detectableObjectModel = new DetectableObjectModel(new BPToitureModel());
     return new CreateDetection()
-        .detectableObjectConfiguration(createMachineDetection)
-        .overallConfiguration(
-            new DetectionOverallConfiguration()
-                .emailReceiver("mock@hotmail.com")
-                .zoneName("Lyon")
+        .emailReceiver("mock@hotmail.com")
+        .zoneName("Lyon")
+        .detectableObjectModel(detectableObjectModel)
+        .geoServerProperties(
+            new GeoServerProperties()
                 .geoServerUrl("https://data.grandlyon.com/fr/geoserv/grandlyon/ows")
                 .geoServerParameter(defaultGeoServerParameter()))
         .geoJsonZone(featureCreator.defaultFeatures());
@@ -289,7 +289,7 @@ class DetectionControllerIT extends FacadeIT {
         new app.bpartners.geojobs.endpoint.rest.model.Detection()
             .id(detection.getEndToEndId())
             .geoJsonZone(featureCreator.defaultFeatures())
-            .step(
+            .actualStepStatus(
                 detectionStepStatisticMapper.toRestDetectionStepStatus(
                     statistic, DetectionStep.MACHINE_DETECTION));
     assertEquals(List.of(expected), actual);
@@ -309,7 +309,7 @@ class DetectionControllerIT extends FacadeIT {
         new app.bpartners.geojobs.endpoint.rest.model.Detection()
             .id(detection.getEndToEndId())
             .geoJsonZone(featureCreator.defaultFeatures())
-            .step(
+            .actualStepStatus(
                 detectionStepStatisticMapper.toRestDetectionStepStatus(
                     statistic, DetectionStep.TILING));
     assertEquals(List.of(expected), actual);

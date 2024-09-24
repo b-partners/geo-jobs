@@ -649,7 +649,7 @@ components:
     PageSize:
       type: integer
       description: Cannot exceed `500`
-    ServerWMSInfos:
+    GeoServerProperties:
       type: object
       properties:
         geoServerUrl:
@@ -658,8 +658,16 @@ components:
           $ref: "#/components/schemas/GeoServerParameter"
     CreateZoneTilingJob:
       allOf:
-        - $ref: '#/components/schemas/DetectionOverallConfiguration'
+        - $ref: '#/components/schemas/GeoServerProperties'
       properties:
+        emailReceiver:
+          type: string
+          description: |
+            Email address that will be notified about detection steps evolution
+        zoneName:
+          type: string
+          description: |
+            Name that consumers provide to identify the zone
         features:
           type: array
           items:
@@ -1107,7 +1115,7 @@ components:
     DetectionStepStatistic:
       allOf:
         - $ref: '#/components/schemas/StatusStatistic'
-    CreateMachineDetection:
+    DetectableObjectModel:
       discriminator:
         propertyName: modelName
       oneOf:
@@ -1118,7 +1126,7 @@ components:
       properties:
         modelName:
           type: string
-          enum: ['BP_TOITURE']
+          enum: [ 'BP_TOITURE' ]
           description: |
             Détection du bâti (incluant typologies de revêtements) et des mutations entre 2 millésimes d'ortho 
              - 
@@ -1160,7 +1168,7 @@ components:
       properties:
         modelName:
           type: string
-          enum: ['BP_LOM']
+          enum: [ 'BP_LOM' ]
         passagePieton:
           type: boolean
         voieCarrosable:
@@ -1169,9 +1177,8 @@ components:
           type: boolean
         parking:
           type: boolean
-    DetectionOverallConfiguration:
-      allOf:
-        - $ref: '#/components/schemas/ServerWMSInfos'
+    CreateDetection:
+      type: object
       properties:
         emailReceiver:
           type: string
@@ -1181,13 +1188,10 @@ components:
           type: string
           description: |
             Name that consumers provide to identify the zone
-    CreateDetection:
-      type: object
-      properties:
-        overallConfiguration:
-          $ref: '#/components/schemas/DetectionOverallConfiguration'
-        detectableObjectConfiguration:
-          $ref: '#/components/schemas/CreateMachineDetection'
+        geoServerProperties:
+          $ref: '#/components/schemas/GeoServerProperties'
+        detectableObjectModel:
+          $ref: '#/components/schemas/DetectableObjectModel'
         geoJsonZone:
           type: array
           items:
@@ -1213,7 +1217,7 @@ components:
       properties:
         id:
           type: string
-        step:
+        actualStepStatus:
           $ref: '#/components/schemas/DetectionStepStatus'
         geoJsonUrl:
           type: string
