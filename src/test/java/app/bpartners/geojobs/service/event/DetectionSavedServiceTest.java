@@ -11,6 +11,8 @@ import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import jakarta.mail.internet.InternetAddress;
 import java.io.File;
+import java.net.URI;
+import java.time.Duration;
 import java.util.List;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
@@ -24,16 +26,21 @@ class DetectionSavedServiceTest {
   @SneakyThrows
   @Test
   void accept_ok() {
-    var detection = new Detection();
+    when(bucketComponentMock.presign(any(), any())).thenReturn(new URI("http://localhost").toURL());
+    var shapeFileKey = "dummy";
+    var detection = Detection.builder().shapeFileKey(shapeFileKey).build();
     List<InternetAddress> cc = List.of(); // TODO: add admin emails here
     List<InternetAddress> bcc = List.of();
     String htmlBody = computeStaticEmailBody(detection, bucketComponentMock);
-    List<File> attachments = List.of(); // TODO: add attachments, as provided shape or excel file
+    List<File> attachments = List.of();
 
     subject.accept(DetectionSaved.builder().detection(detection).build());
 
     var emailCaptor = ArgumentCaptor.forClass(Email.class);
+    var durationCaptor = ArgumentCaptor.forClass(Duration.class);
     verify(mailerMock, only()).accept(emailCaptor.capture());
+    verify(bucketComponentMock, times(2)).presign(eq(shapeFileKey), durationCaptor.capture());
+    var urlDurationValue = durationCaptor.getValue();
     var actualEmail = emailCaptor.getValue();
     var expectedMail =
         new Email(
@@ -44,5 +51,6 @@ class DetectionSavedServiceTest {
             htmlBody,
             attachments);
     assertEquals(expectedMail, actualEmail);
+    assertEquals(Duration.ofHours(24L), urlDurationValue);
   }
 }

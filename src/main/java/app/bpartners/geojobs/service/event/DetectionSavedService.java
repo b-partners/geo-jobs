@@ -7,6 +7,7 @@ import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.mail.Email;
 import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.repository.model.detection.Detection;
+import app.bpartners.geojobs.template.HTMLTemplateParser;
 import jakarta.mail.internet.InternetAddress;
 import java.io.File;
 import java.time.Duration;
@@ -16,10 +17,12 @@ import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.context.Context;
 
 @Service
 @AllArgsConstructor
 public class DetectionSavedService implements Consumer<DetectionSaved> {
+  private static final String DETECTION_SAVED_TEMPLATE = "detection_saved";
   private final Mailer mailer;
   private final BucketComponent bucketComponent;
 
@@ -36,9 +39,8 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
             + detection.getCommunityOwnerId()
             + ") modifiée le "
             + now();
-    // TODO: set as html parsed body
     String htmlBody = computeStaticEmailBody(detection, bucketComponent);
-    List<File> attachments = List.of(); // TODO: add attachments, as provided shape or excel file
+    List<File> attachments = List.of();
     mailer.accept(
         new Email(
             new InternetAddress("tech@bpartners.app"), cc, bcc, subject, htmlBody, attachments));
@@ -47,22 +49,16 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
   @NonNull
   public static String computeStaticEmailBody(
       Detection detection, BucketComponent bucketComponent) {
-    String htmlBody =
-        "Éléments fournis par le consommateur d'API : \n"
-            + "Configurations sur la détection : "
-            + detection.getDetectableObjectConfigurations()
-            + "\n"
-            + "Configuration globale : "
-            + detection.getDetectionOverallConfiguration()
-            + "\n";
-    if (detection.getGeoJsonZone() != null && !detection.getGeoJsonZone().isEmpty()) {
-      htmlBody += "Zone en GeoJson fournie : " + detection.getGeoJsonZone() + "\n";
-    }
-    if (detection.getShapeFileKey() != null) {
-      var shapeFilePresignURL =
-          bucketComponent.presign(detection.getShapeFileKey(), Duration.ofHours(2L)).toString();
-      htmlBody += "Fichier shape à traiter : " + shapeFilePresignURL;
-    }
-    return htmlBody;
+    var shapeFilePresignURL =
+        detection.getShapeFileKey() == null
+            ? null
+            : bucketComponent
+                .presign(detection.getShapeFileKey(), Duration.ofHours(24L))
+                .toString();
+    HTMLTemplateParser htmlTemplateParser = new HTMLTemplateParser();
+    Context context = new Context();
+    context.setVariable("detection", detection);
+    context.setVariable("shapeFileUrl", shapeFilePresignURL);
+    return htmlTemplateParser.apply(DETECTION_SAVED_TEMPLATE, context);
   }
 }

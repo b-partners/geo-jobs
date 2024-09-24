@@ -1,0 +1,25 @@
+<html lang="fr">
+<head>
+    <title>Detection saved</title>
+</head>
+<body>
+<section>
+    <p>Bonjour,</p>
+    <p>Voici les élements fournis par le consommateur d'API <span th:if="${detection.communityOwnerId != null}"
+                                                                  th:text="${detection.communityOwnerId}"></span> : </p>
+    <ul>
+        <li>Configurations de la détection : <br> <span th:text="${detection.getCreateMachineDetection()}"></span></li>
+        <li>Configuration du geoServeur : <br> <span th:text="${detection.getDetectionOverallConfiguration()}"></span>
+        </li>
+        <li>Zone en geoJson fournie : <br>
+            <span th:if="${detection.getGeoJsonZone() != null && !detection.getGeoJsonZone().isEmpty()}"
+                  th:text="${detection.getGeoJsonZone()}"></span>
+        </li>
+        <li>Fichier shape à convertir en geoJson : <br>
+            <span th:if="${detection.getShapeFileKey() != null}" th:text="${shapeFileUrl}"></span>
+        </li>
+    </ul>
+    <p>Cordialement.</p>
+</section>
+</body>
+</html>
