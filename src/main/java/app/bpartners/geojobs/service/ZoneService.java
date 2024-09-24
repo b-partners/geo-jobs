@@ -264,6 +264,8 @@ public class ZoneService {
       Detection detection, TaskStatistic statistic, DetectionStep detectionStep) {
     return new app.bpartners.geojobs.endpoint.rest.model.Detection()
         .id(detection.getEndToEndId())
+        .emailReceiver(detection.getEmailReceiver())
+        .zoneName(detection.getZoneName())
         .excelUrl(null) // TODO: not handle for now
         .shapeUrl(generatePresignedUrl(detection.getShapeFileKey()))
         .geoJsonZone(detection.getGeoJsonZone())
