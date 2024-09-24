@@ -71,6 +71,7 @@ public class ZoneService {
   private final GeoJsonConversionInitiationService conversionInitiationService;
   private final DetectableObjectTypeMapper detectableObjectTypeMapper;
   private final ObjectMapper objectMapper;
+  private final DetectionUpdateValidator detectionUpdateValidator;
 
   private List<Feature> readFromFile(File featuresFromShape) {
     try {
@@ -110,28 +111,28 @@ public class ZoneService {
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection processDetection(
-      String detectionId, CreateDetection zoneToDetect, Optional<String> communityOwnerId) {
+      String detectionId, CreateDetection createDetection, Optional<String> communityOwnerId) {
     var detection =
         detectionRepository
             .findByEndToEndId(detectionId)
             .orElseGet(
                 () -> {
                   var detectionToSave =
-                      mapFromRestCreateDetection(detectionId, zoneToDetect, communityOwnerId);
+                      mapFromRestCreateDetection(detectionId, createDetection, communityOwnerId);
                   var savedDetection =
                       communityUsedSurfaceService.persistFullDetectionWithSurfaceUsage(
-                          detectionToSave, zoneToDetect.getGeoJsonZone());
+                          detectionToSave, createDetection.getGeoJsonZone());
                   eventProducer.accept(
                       List.of(DetectionSaved.builder().detection(savedDetection).build()));
                   return savedDetection;
                 });
-
+    detectionUpdateValidator.accept(detection, createDetection);
     if (detection.getGeoJsonZone() == null || detection.getGeoJsonZone().isEmpty()) {
       return computeFromConfiguring(detection, PENDING, UNKNOWN);
     }
 
     if (detection.getZtjId() == null) {
-      var ztj = processZoneTilingJob(zoneToDetect);
+      var ztj = processZoneTilingJob(detection);
       var detectionWithZTJ =
           detectionRepository.save(detection.toBuilder().ztjId(ztj.getId()).build());
       return getTilingStatistics(detectionWithZTJ, ztj.getId());
@@ -276,8 +277,8 @@ public class ZoneService {
             detectionStepStatisticMapper.toRestDetectionStepStatus(statistic, detectionStep));
   }
 
-  private ZoneTilingJob processZoneTilingJob(CreateDetection zoneToDetect) {
-    var createJob = zoneTilingJobMapper.from(zoneToDetect);
+  private ZoneTilingJob processZoneTilingJob(Detection detection) {
+    var createJob = zoneTilingJobMapper.from(detection);
     var job = zoneTilingJobMapper.toDomain(createJob);
     var tilingTasks = getTilingTasks(createJob, job.getId());
 

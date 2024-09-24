@@ -57,6 +57,7 @@ class ZoneServiceTest {
   GeoJsonConversionInitiationService conversionInitiationServiceMock = mock();
   DetectableObjectTypeMapper detectableObjectTypeMapper = new DetectableObjectTypeMapper();
   ZoneDetectionJobService zoneDetectionJobServiceMock = mock();
+  DetectionUpdateValidator detectionUpdateValidatorMock = mock();
   FeatureCreator featureCreator = new FeatureCreator();
   DetectionCreator detectionCreator = new DetectionCreator(featureCreator);
   private static final String FEATURE_FILE_NAME_OK =
@@ -94,7 +95,8 @@ class ZoneServiceTest {
           bucketComponentMock,
           conversionInitiationServiceMock,
           detectableObjectTypeMapper,
-          new ObjectMapper().configure(FAIL_ON_UNKNOWN_PROPERTIES, false));
+          new ObjectMapper().configure(FAIL_ON_UNKNOWN_PROPERTIES, false),
+          detectionUpdateValidatorMock);
 
   @SneakyThrows
   @Test
