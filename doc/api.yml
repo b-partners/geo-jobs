@@ -901,6 +901,13 @@ components:
         - ESPACE_VERT
         - VOIE_CARROSSABLE
         - PARKING
+        - MOISISSURE
+        - USURE
+        - FISSURE_CASSURE
+        - OBSTACLE
+        - CHEMINEE
+        - HUMIDITE
+        - RISQUE_FEU
     ProcessJobAnnotation:
       type: object
       properties:

@@ -93,7 +93,13 @@ public class DetectableObjectTypeMapper {
     addIfTrue(model.getArbre(), objectTypes, ARBRE);
     addIfTrue(model.getToitureRevetement(), objectTypes, TOITURE_REVETEMENT);
     addIfTrue(model.getPanneauPhotovoltaique(), objectTypes, PANNEAU_PHOTOVOLTAIQUE);
-    // TODO: add other detectableTypes in BPToitureModel not handled yet
+    addIfTrue(model.getMoisissure(), objectTypes, MOISISSURE);
+    addIfTrue(model.getUsure(), objectTypes, USURE);
+    addIfTrue(model.getFissureCassure(), objectTypes, FISSURE_CASSURE);
+    addIfTrue(model.getObstacle(), objectTypes, OBSTACLE);
+    addIfTrue(model.getCheminee(), objectTypes, CHEMINEE);
+    addIfTrue(model.getHumidite(), objectTypes, HUMIDITE);
+    addIfTrue(model.getRisqueFeu(), objectTypes, RISQUE_FEU);
   }
 
   private void mapFromBPLomModel(BPLomModel model, List<DetectableObjectType> objectTypes) {
