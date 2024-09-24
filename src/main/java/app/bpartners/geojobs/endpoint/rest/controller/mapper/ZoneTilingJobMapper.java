@@ -6,11 +6,11 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
-import app.bpartners.geojobs.endpoint.rest.model.CreateDetection;
 import app.bpartners.geojobs.endpoint.rest.model.CreateZoneTilingJob;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.repository.model.ArcgisImageZoom;
 import app.bpartners.geojobs.repository.model.Parcel;
+import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.ParcelService;
@@ -82,15 +82,15 @@ public class ZoneTilingJobMapper {
         .status(statusMapper.toRest(domain.getStatus()));
   }
 
-  public CreateZoneTilingJob from(CreateDetection zoneToDetect) {
+  public CreateZoneTilingJob from(Detection detection) {
     var zoomLevelEnum = HOUSES_0; // TODO: default for now
-    var overallConfiguration = zoneToDetect.getGeoServerProperties();
+    var overallConfiguration = detection.getGeoServerProperties();
     return new CreateZoneTilingJob()
-        .emailReceiver(zoneToDetect.getEmailReceiver())
-        .zoneName(zoneToDetect.getZoneName())
+        .emailReceiver(detection.getEmailReceiver())
+        .zoneName(detection.getZoneName())
         .geoServerParameter(overallConfiguration.getGeoServerParameter())
         .geoServerUrl(overallConfiguration.getGeoServerUrl())
-        .features(zoneToDetect.getGeoJsonZone())
+        .features(detection.getGeoJsonZone())
         .zoomLevel(zoomLevelEnum);
   }
 }
