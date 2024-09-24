@@ -17,5 +17,5 @@ public enum DetectableType {
   OBSTACLE,
   CHEMINEE,
   HUMIDITE,
-  RISQUE_FEU
+  RISQUE_FEU,
 }

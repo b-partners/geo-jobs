@@ -105,7 +105,7 @@ public class DetectableObjectTypeMapper {
   private void mapFromBPLomModel(BPLomModel model, List<DetectableObjectType> objectTypes) {
     addIfTrue(model.getPassagePieton(), objectTypes, PASSAGE_PIETON);
     addIfTrue(model.getTrottoir(), objectTypes, TROTTOIR);
-    // TODO: add other detectableTypes in BPLomModel not handled yet
+    addIfTrue(model.getVoieCarrosable(), objectTypes, VOIE_CARROSSABLE);
   }
 
   private void mapFromBPZanModel(BPZanModel model, List<DetectableObjectType> objectTypes) {
