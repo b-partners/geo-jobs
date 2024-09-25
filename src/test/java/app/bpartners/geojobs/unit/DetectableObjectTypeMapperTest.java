@@ -5,8 +5,10 @@ import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.ESP
 import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.PANNEAU_PHOTOVOLTAIQUE;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.PARKING;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.PASSAGE_PIETON;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.PISCINE;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.TOITURE_REVETEMENT;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.TROTTOIR;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.VELUX;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.VOIE_CARROSSABLE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -96,6 +98,17 @@ class DetectableObjectTypeMapperTest {
 
     var expected =
         List.of(ARBRE, ESPACE_VERT, TOITURE_REVETEMENT, VOIE_CARROSSABLE, TROTTOIR, PARKING);
+    assertEquals(expected, actual);
+  }
+
+  @Test
+  void map_from_model_BP_Conformite_Plu_Model() {
+    var object = new BPConformitePlu();
+
+    var actual = subject.mapFromModel(object);
+
+    var expected =
+        List.of(TOITURE_REVETEMENT, ARBRE, VELUX, PANNEAU_PHOTOVOLTAIQUE, ESPACE_VERT, PISCINE);
     assertEquals(expected, actual);
   }
 

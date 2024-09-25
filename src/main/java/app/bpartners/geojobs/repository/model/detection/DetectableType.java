@@ -18,4 +18,5 @@ public enum DetectableType {
   CHEMINEE,
   HUMIDITE,
   RISQUE_FEU,
+  VELUX
 }

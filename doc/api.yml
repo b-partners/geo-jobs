@@ -908,6 +908,7 @@ components:
         - HUMIDITE
         - RISQUE_FEU
         - PARKING
+        - VELUX
     ProcessJobAnnotation:
       type: object
       properties:
@@ -1287,6 +1288,29 @@ components:
           type: boolean
           default: true
         espaceVert:
+          type: boolean
+          default: true
+    BPConformitePlu:
+      properties:
+        modelName:
+          type: string
+          enum: [ 'BP_CONFORMITE_PLU' ]
+        toiture:
+          type: boolean
+          default: true
+        arbre:
+          type: boolean
+          default: true
+        velux:
+          type: boolean
+          default: true
+        panneauPhotovoltaique:
+          type: boolean
+          default: true
+        espaceVert:
+          type: boolean
+          default: true
+        piscine:
           type: boolean
           default: true
     CreateDetection:

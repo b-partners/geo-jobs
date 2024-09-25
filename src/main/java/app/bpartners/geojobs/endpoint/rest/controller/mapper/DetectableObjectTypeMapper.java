@@ -81,6 +81,8 @@ public class DetectableObjectTypeMapper {
       objectTypes.addAll(detectableObjectTypeFromBPZanModel(model));
     } else if (o instanceof BPClimatREsilience model) {
       objectTypes.addAll(detectableObjectTypeFromBPClimatResilienceModel(model));
+    } else if (o instanceof BPConformitePlu model) {
+      objectTypes.addAll(detectableObjectTypeFromBPConformitePluModel(model));
     } else {
       throw new ApiException(SERVER_EXCEPTION, "Unknown instance of object " + o.getClass());
     }
@@ -129,6 +131,18 @@ public class DetectableObjectTypeMapper {
     addIfTrue(model.getVoieCarrossable(), objectTypes, VOIE_CARROSSABLE);
     addIfTrue(model.getTrottoir(), objectTypes, TROTTOIR);
     addIfTrue(model.getParking(), objectTypes, PARKING);
+    return objectTypes;
+  }
+
+  private List<DetectableObjectType> detectableObjectTypeFromBPConformitePluModel(
+      BPConformitePlu model) {
+    List<DetectableObjectType> objectTypes = new ArrayList<>();
+    addIfTrue(model.getToiture(), objectTypes, TOITURE_REVETEMENT);
+    addIfTrue(model.getArbre(), objectTypes, ARBRE);
+    addIfTrue(model.getVelux(), objectTypes, VELUX);
+    addIfTrue(model.getPanneauPhotovoltaique(), objectTypes, PANNEAU_PHOTOVOLTAIQUE);
+    addIfTrue(model.getEspaceVert(), objectTypes, ESPACE_VERT);
+    addIfTrue(model.getPiscine(), objectTypes, PISCINE);
     return objectTypes;
   }
 
