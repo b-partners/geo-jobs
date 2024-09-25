@@ -910,6 +910,7 @@ components:
         - PARKING
         - VELUX
         - ESPACE_VERT_PARKING
+        - RISQUE_FEU
     ProcessJobAnnotation:
       type: object
       properties:
@@ -1329,6 +1330,32 @@ components:
           type: boolean
           default: true
         espaceVertParking:
+          type: boolean
+          default: true
+    BPOldModel:
+      properties:
+        modelName:
+          type: string
+          enum: [ 'BP_OLD' ]
+        arbre:
+          type: boolean
+          default: true
+        espaceVert:
+          type: boolean
+          default: true
+        toiture:
+          type: boolean
+          default: true
+        voieCarrossable:
+          type: boolean
+          default: true
+        trottoir:
+          type: boolean
+          default: true
+        parking:
+          type: boolean
+          default: true
+        risqueFeu:
           type: boolean
           default: true
     CreateDetection:

@@ -7,6 +7,7 @@ import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.PAN
 import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.PARKING;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.PASSAGE_PIETON;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.PISCINE;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.RISQUE_FEU;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.TOITURE_REVETEMENT;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.TROTTOIR;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.VELUX;
@@ -71,7 +72,7 @@ class DetectableObjectTypeMapperTest {
             DetectableObjectType.OBSTACLE,
             DetectableObjectType.CHEMINEE,
             DetectableObjectType.HUMIDITE,
-            DetectableObjectType.RISQUE_FEU);
+            RISQUE_FEU);
     assertEquals(expected, actual);
   }
 
@@ -124,6 +125,24 @@ class DetectableObjectTypeMapperTest {
     var actual = subject.mapFromModel(object);
 
     var expected = List.of(TROTTOIR, VOIE_CARROSSABLE, ARBRE, ESPACE_VERT_PARKING);
+    assertEquals(expected, actual);
+  }
+
+  @Test
+  void map_from_modl_BP_Old_Model() {
+    var object = new BPOldModel();
+
+    var actual = subject.mapFromModel(object);
+
+    var expected =
+        List.of(
+            ARBRE,
+            ESPACE_VERT,
+            TOITURE_REVETEMENT,
+            VOIE_CARROSSABLE,
+            TROTTOIR,
+            PARKING,
+            RISQUE_FEU);
     assertEquals(expected, actual);
   }
 }

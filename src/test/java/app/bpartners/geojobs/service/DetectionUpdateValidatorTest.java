@@ -112,7 +112,7 @@ Detection.geoJsonZone can not be updated once it has values, otherwise actual va
         usure: true
         fissureCassure: true
         obstacle: true
-        cheminee: null
+        cheminee: true
         humidite: true
         risqueFeu: true
     }
@@ -121,10 +121,10 @@ Detection.geoJsonZone can not be updated once it has values, otherwise actual va
 } is not equals provided value class class app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel {
     instance: class BPLomModel {
         modelName: null
-        passagePieton: null
-        voieCarrosable: null
-        trottoir: null
-        parking: null
+        passagePieton: true
+        voieCarrosable: true
+        trottoir: true
+        parking: true
     }
     isNullable: false
     schemaType: oneOf
@@ -144,10 +144,10 @@ Detection.geoJsonZone can not be updated once it has values, otherwise actual va
 }] is not equals provided value null. Detection.detectableObjectModel can not be updated once it has values, otherwise actual value class class app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel {
     instance: class BPLomModel {
         modelName: null
-        passagePieton: null
-        voieCarrosable: null
-        trottoir: null
-        parking: null
+        passagePieton: true
+        voieCarrosable: true
+        trottoir: true
+        parking: true
     }
     isNullable: false
     schemaType: oneOf
@@ -162,7 +162,7 @@ Detection.geoJsonZone can not be updated once it has values, otherwise actual va
         usure: true
         fissureCassure: true
         obstacle: true
-        cheminee: null
+        cheminee: true
         humidite: true
         risqueFeu: true
     }

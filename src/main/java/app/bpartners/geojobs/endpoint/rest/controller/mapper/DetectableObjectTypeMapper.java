@@ -84,6 +84,7 @@ public class DetectableObjectTypeMapper {
           objectTypes.addAll(detectableObjectTypeFromBPConformitePluModel(model));
       case BPTrottoirsModel model ->
           objectTypes.addAll(detectableObjectTypeFromBPTrottoirsModel(model));
+      case BPOldModel model -> objectTypes.addAll(detectableObjectTypeFromBPOldModel(model));
       default ->
           throw new ApiException(SERVER_EXCEPTION, "Unknown instance of object " + o.getClass());
     }
@@ -154,6 +155,18 @@ public class DetectableObjectTypeMapper {
     addIfTrue(model.getVoieCarrossable(), objectTypes, VOIE_CARROSSABLE);
     addIfTrue(model.getArbre(), objectTypes, ARBRE);
     addIfTrue(model.getEspaceVertParking(), objectTypes, ESPACE_VERT_PARKING);
+    return objectTypes;
+  }
+
+  private List<DetectableObjectType> detectableObjectTypeFromBPOldModel(BPOldModel model) {
+    List<DetectableObjectType> objectTypes = new ArrayList<>();
+    addIfTrue(model.getArbre(), objectTypes, ARBRE);
+    addIfTrue(model.getEspaceVert(), objectTypes, ESPACE_VERT);
+    addIfTrue(model.getToiture(), objectTypes, TOITURE_REVETEMENT);
+    addIfTrue(model.getVoieCarrossable(), objectTypes, VOIE_CARROSSABLE);
+    addIfTrue(model.getTrottoir(), objectTypes, TROTTOIR);
+    addIfTrue(model.getParking(), objectTypes, PARKING);
+    addIfTrue(model.getRisqueFeu(), objectTypes, RISQUE_FEU);
     return objectTypes;
   }
 
