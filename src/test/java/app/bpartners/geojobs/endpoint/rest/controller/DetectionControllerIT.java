@@ -13,7 +13,7 @@ import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.
 import static app.bpartners.geojobs.service.event.ZoneDetectionFinishedConsumer.DEFAULT_MIN_CONFIDENCE;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
@@ -32,6 +32,7 @@ import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.authorizer.DetectionAuthorizer;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
+import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.statistic.HealthStatusStatistic;
@@ -58,6 +59,8 @@ import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import app.bpartners.geojobs.utils.FeatureCreator;
 import app.bpartners.geojobs.utils.detection.DetectionCreator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.File;
+import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -69,6 +72,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.core.io.ClassPathResource;
 
 @Slf4j
 class DetectionControllerIT extends FacadeIT {
@@ -87,7 +91,7 @@ class DetectionControllerIT extends FacadeIT {
   @MockBean EventProducer eventProducer;
   @MockBean AnnotationService annotationServiceMock;
   @MockBean HumanDetectionJobRepository humanDetectionJobRepositoryMock;
-  @MockBean BucketComponent bucketComponent;
+  @MockBean BucketComponent bucketComponentMock;
   @MockBean ZoneDetectionJobService zoneDetectionJobService;
   @MockBean StatusMapper statusMapper;
   @MockBean ZoneTilingJobService zoneTilingJobService;
@@ -95,6 +99,7 @@ class DetectionControllerIT extends FacadeIT {
   @MockBean DetectionAuthorizer detectionAuthorizer;
   @MockBean CommunityAuthorizationRepository communityAuthRepository;
   @MockBean AuthProvider authProviderMock;
+  @Autowired FileWriter fileWriter;
   FeatureCreator featureCreator = new FeatureCreator();
   DetectionCreator detectionCreator = new DetectionCreator(featureCreator);
 
@@ -313,5 +318,22 @@ class DetectionControllerIT extends FacadeIT {
                 detectionStepStatisticMapper.toRestDetectionStepStatus(
                     statistic, DetectionStep.TILING));
     assertEquals(List.of(expected), actual);
+  }
+
+  @SneakyThrows
+  @Test
+  void configure_file_shape_ok() {
+    var presignedUrl = "http://localhost/presignedShapeUrl";
+    File dummyShapeFile = new ClassPathResource("/shape/dummy.shape").getFile();
+    var zoneTilingJob = zoneTilingJobRepository.save(zoneTilingJob(randomUUID().toString()));
+    var detection = detectionRepository.save(detectionWithoutZdj(zoneTilingJob.getId()));
+    when(bucketComponentMock.presign(any(), any())).thenReturn(new URI(presignedUrl).toURL());
+
+    var actual =
+        subject.configureDetectionShapeFile(
+            detection.getId(), fileWriter.writeAsByte(dummyShapeFile));
+
+    assertNull(detection.getShapeFileKey());
+    assertEquals(presignedUrl, actual.getShapeUrl());
   }
 }
