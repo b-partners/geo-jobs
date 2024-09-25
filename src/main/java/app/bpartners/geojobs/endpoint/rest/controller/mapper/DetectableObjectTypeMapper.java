@@ -36,6 +36,42 @@ public class DetectableObjectTypeMapper {
       case PANNEAU_PHOTOVOLTAIQUE -> {
         return DetectableType.PANNEAU_PHOTOVOLTAIQUE;
       }
+      case TROTTOIR -> {
+        return DetectableType.TROTTOIR;
+      }
+      case LINE -> {
+        return DetectableType.LINE;
+      }
+      case ESPACE_VERT -> {
+        return DetectableType.ESPACE_VERT;
+      }
+      case VOIE_CARROSSABLE -> {
+        return DetectableType.VOIE_CARROSSABLE;
+      }
+      case MOISISSURE -> {
+        return DetectableType.MOISISSURE;
+      }
+      case USURE -> {
+        return DetectableType.USURE;
+      }
+      case FISSURE_CASSURE -> {
+        return DetectableType.FISSURE_CASSURE;
+      }
+      case OBSTACLE -> {
+        return DetectableType.OBSTACLE;
+      }
+      case CHEMINEE -> {
+        return DetectableType.CHEMINEE;
+      }
+      case HUMIDITE -> {
+        return DetectableType.HUMIDITE;
+      }
+      case RISQUE_FEU -> {
+        return DetectableType.RISQUE_FEU;
+      }
+      case VELUX -> {
+        return DetectableType.VELUX;
+      }
 
       default -> throw new NotImplementedException("Unknown detectable object type " + rest);
     }

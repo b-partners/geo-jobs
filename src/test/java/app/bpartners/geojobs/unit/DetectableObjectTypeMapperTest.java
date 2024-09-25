@@ -12,14 +12,11 @@ import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.TOI
 import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.TROTTOIR;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.VELUX;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.VOIE_CARROSSABLE;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.LINE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
-import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -34,13 +31,6 @@ class DetectableObjectTypeMapperTest {
     assertEquals(DetectableType.PISCINE, subject.toDomain(PISCINE));
     assertEquals(DetectableType.PASSAGE_PIETON, subject.toDomain(PASSAGE_PIETON));
     assertEquals(DetectableType.PANNEAU_PHOTOVOLTAIQUE, subject.toDomain(PANNEAU_PHOTOVOLTAIQUE));
-  }
-
-  @Test
-  void to_domain_ko() {
-    assertThrows(NotImplementedException.class, () -> subject.toDomain(TROTTOIR));
-    assertThrows(NotImplementedException.class, () -> subject.toDomain(DetectableObjectType.LINE));
-    assertThrows(NotImplementedException.class, () -> subject.toDomain(ESPACE_VERT));
   }
 
   @Test
