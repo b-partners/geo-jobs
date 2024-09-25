@@ -31,10 +31,10 @@ public class ParcelDetectionJobCreatedService implements Consumer<ParcelDetectio
     var tileDetectionTasks = tileDetectionTaskRepository.findAllByJobId(jobId);
     var persistedObjectConfigurations =
         objectConfigurationRepository.findAllByDetectionJobId(zdjId);
-    var optionalFullDetection = detectionRepository.findByZdjId(zdjId);
+    var optionalDetection = detectionRepository.findByZdjId(zdjId);
     var detectableObjectConfigurations =
         persistedObjectConfigurations.isEmpty()
-            ? (optionalFullDetection
+            ? (optionalDetection
                 .map(Detection::getDetectableObjectConfigurations)
                 .orElseGet(List::of))
             : persistedObjectConfigurations;

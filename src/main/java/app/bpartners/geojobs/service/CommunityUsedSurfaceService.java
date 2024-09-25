@@ -103,8 +103,7 @@ public class CommunityUsedSurfaceService {
   }
 
   @Transactional
-  public Detection persistFullDetectionWithSurfaceUsage(
-      Detection detection, List<Feature> features) {
+  public Detection persistDetectionWithSurfaceUsage(Detection detection, List<Feature> features) {
     if (detection.getCommunityOwnerId() != null) {
       var newSurfaceUsage =
           CommunityUsedSurface.builder()

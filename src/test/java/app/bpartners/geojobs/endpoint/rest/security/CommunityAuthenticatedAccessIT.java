@@ -47,13 +47,13 @@ class CommunityAuthenticatedAccessIT extends FacadeIT {
   }
 
   @Test
-  void community_cannot_access_endpoint_if_not_full_detection() {
+  void community_cannot_access_endpoint_if_not_detection() {
     var error = assertThrows(ApiException.class, () -> detectionApi.getDetectionJobs(1, 10));
     assertTrue(error.getMessage().contains("Access Denied"));
   }
 
   @Test
-  void community_cannot_do_full_detection_with_wrong_authorization() {
+  void community_cannot_do_detection_with_wrong_authorization() {
     var detectionId = randomUUID().toString();
     var detectableObjectModel = new DetectableObjectModel();
     detectableObjectModel.setActualInstance(new BPToitureModel().modelName(BP_TOITURE));

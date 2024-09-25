@@ -120,7 +120,7 @@ public class ZoneService {
                   var detectionToSave =
                       mapFromRestCreateDetection(detectionId, createDetection, communityOwnerId);
                   var savedDetection =
-                      communityUsedSurfaceService.persistFullDetectionWithSurfaceUsage(
+                      communityUsedSurfaceService.persistDetectionWithSurfaceUsage(
                           detectionToSave, createDetection.getGeoJsonZone());
                   eventProducer.accept(
                       List.of(DetectionSaved.builder().detection(savedDetection).build()));
@@ -285,7 +285,6 @@ public class ZoneService {
     return zoneTilingJobService.create(job, tilingTasks);
   }
 
-  // TODO: seems to be bad to handle FullDetection and CreateDetection together
   public ZoneDetectionJob processZoneDetectionJob(Detection detection, ZoneTilingJob job) {
     var zoneDetectionJob = zoneDetectionJobService.getByTilingJobId(job.getId(), MACHINE);
 

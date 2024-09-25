@@ -52,7 +52,7 @@ class JobAnnotationProcessedServiceTest {
   }
 
   @Test
-  void accept_with_full_detection_object_conf_ok() {
+  void accept_with_detection_object_conf_ok() {
     List<DetectableObjectConfiguration> objectConfigurations =
         List.of(new DetectableObjectConfiguration());
     when(objectConfigurationRepositoryMock.findAllByDetectionJobId(any())).thenReturn(List.of());

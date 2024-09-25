@@ -150,15 +150,15 @@ class CommunityUsedSurfaceServiceIT extends FacadeIT {
             .build();
     when(featureSurfaceServiceMock.getAreaValue(any(List.class))).thenReturn(LAST_SURFACE_VALUE);
 
-    subject.persistFullDetectionWithSurfaceUsage(detection, List.of(mock(Feature.class)));
+    subject.persistDetectionWithSurfaceUsage(detection, List.of(mock(Feature.class)));
     var expectedSurfaceValue = LAST_SURFACE_VALUE + LAST_SURFACE_VALUE;
 
     var actualUsedSurface =
         subject.getTotalUsedSurfaceByCommunityId(COMMUNITY_ID, SQUARE_DEGREE).orElseThrow();
-    var actualFullDetection = detectionRepository.findByEndToEndId(detectionId).orElseThrow();
+    var actualDetection = detectionRepository.findByEndToEndId(detectionId).orElseThrow();
 
     assertEquals(expectedSurfaceValue, actualUsedSurface.getUsedSurface());
-    assertEquals(detection, actualFullDetection);
+    assertEquals(detection, actualDetection);
   }
 
   private static CommunityUsedSurface formatUsedSurface(CommunityUsedSurface communityUsedSurface) {

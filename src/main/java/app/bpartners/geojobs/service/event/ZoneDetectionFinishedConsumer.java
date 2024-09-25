@@ -23,11 +23,11 @@ public class ZoneDetectionFinishedConsumer {
     var annotationJobWithObjectsIdTruePositive = randomUUID().toString();
     var annotationJobWithObjectsIdFalsePositive = randomUUID().toString();
     var annotationJobWithoutObjectsId = randomUUID().toString();
-    var optionalFullDetection = detectionRepository.findByZdjId(jobId);
+    var optionalDetection = detectionRepository.findByZdjId(jobId);
     List<DetectableObjectConfiguration> detectableObjectConfigurations =
         objectConfigurationRepository.findAllByDetectionJobId(jobId);
-    if (optionalFullDetection.isPresent()) {
-      var detection = optionalFullDetection.get();
+    if (optionalDetection.isPresent()) {
+      var detection = optionalDetection.get();
       detectableObjectConfigurations = detection.getDetectableObjectConfigurations();
     }
 

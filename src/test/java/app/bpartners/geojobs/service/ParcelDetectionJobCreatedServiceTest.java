@@ -74,7 +74,7 @@ public class ParcelDetectionJobCreatedServiceTest {
   }
 
   @Test
-  void accept_from_full_detection_ok_ok() {
+  void accept_from_detection_ok_ok() {
     var parcelDetectionJob = ParcelDetectionJob.builder().id(JOB_ID).build();
     var zoneDetectionJobId = "zoneDetectionJobId";
     when(taskRepositoryMock.findAllByJobId(JOB_ID))

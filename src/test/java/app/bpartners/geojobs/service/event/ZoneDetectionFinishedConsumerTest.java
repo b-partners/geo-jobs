@@ -25,7 +25,7 @@ class ZoneDetectionFinishedConsumerTest {
           jobAnnotationProcessorMock, detectionRepositoryMock, objectConfigurationRepositoryMock);
 
   @Test
-  void process_without_full_detection_ok() {
+  void process_without_detection_ok() {
     List<DetectableObjectConfiguration> objectConfigurations = getObjectConfigurations();
     when(objectConfigurationRepositoryMock.findAllByDetectionJobId(DETECTION_JOB_ID))
         .thenReturn(objectConfigurations);
@@ -57,7 +57,7 @@ class ZoneDetectionFinishedConsumerTest {
   }
 
   @Test
-  void process_with_full_detection_ok() {
+  void process_with_detection_ok() {
     var detectableObjectConfigurations = detectableObjectConfigurations();
     when(objectConfigurationRepositoryMock.findAllByDetectionJobId(DETECTION_JOB_ID))
         .thenReturn(getObjectConfigurations());

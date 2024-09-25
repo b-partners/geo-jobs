@@ -23,8 +23,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 @Getter
 @Setter
 @EqualsAndHashCode
-// TODO: rename full_detection to detection and detection to machine_detection
-@Table(name = "full_detection")
+@Table(name = "detection")
 public class Detection implements Serializable {
   @Id private String id;
   private String endToEndId;

@@ -27,10 +27,10 @@ public class JobAnnotationProcessedService implements Consumer<JobAnnotationProc
     var minConfidence = jobAnnotationProcessed.getMinConfidence();
     var persistedObjectConfigurations =
         objectConfigurationRepository.findAllByDetectionJobId(jobId);
-    var optionalFullDetection = detectionRepository.findByZdjId(jobId);
+    var optionalDetection = detectionRepository.findByZdjId(jobId);
     var detectableObjectConfigurations =
         persistedObjectConfigurations.isEmpty()
-            ? (optionalFullDetection
+            ? (optionalDetection
                 .map(Detection::getDetectableObjectConfigurations)
                 .orElseGet(List::of))
             : persistedObjectConfigurations;

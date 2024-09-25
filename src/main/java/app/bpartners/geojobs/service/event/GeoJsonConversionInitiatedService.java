@@ -81,9 +81,9 @@ public class GeoJsonConversionInitiatedService implements Consumer<GeoJsonConver
           writer.write(geoJsonAsByte, createTempDirectory(), zoneName + GEO_JSON_EXTENSION);
       bucketComponent.upload(geoJsonAsFile, fileKey);
 
-      var savedFullDetection =
+      var savedDetection =
           detectionRepository.save(detectionJob.toBuilder().geojsonS3FileKey(fileKey).build());
-      return savedFullDetection.getGeojsonS3FileKey();
+      return savedDetection.getGeojsonS3FileKey();
     } catch (RuntimeException e) {
       var failed = taskStatusService.fail(task);
       taskService.save(failed);
