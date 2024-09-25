@@ -26,12 +26,16 @@ class DetectableObjectTypeMapperTest {
 
   @Test
   void to_domain_ok() {
-    assertEquals(ARBRE, subject.toDomain(DetectableObjectType.ARBRE));
-    assertEquals(TOITURE_REVETEMENT, subject.toDomain(DetectableObjectType.TOITURE_REVETEMENT));
-    assertEquals(PISCINE, subject.toDomain(DetectableObjectType.PISCINE));
-    assertEquals(PASSAGE_PIETON, subject.toDomain(DetectableObjectType.PASSAGE_PIETON));
+    assertEquals(DetectableType.ARBRE, subject.toDomain(DetectableObjectType.ARBRE));
     assertEquals(
-        PANNEAU_PHOTOVOLTAIQUE, subject.toDomain(DetectableObjectType.PANNEAU_PHOTOVOLTAIQUE));
+        DetectableType.TOITURE_REVETEMENT,
+        subject.toDomain(DetectableObjectType.TOITURE_REVETEMENT));
+    assertEquals(DetectableType.PISCINE, subject.toDomain(DetectableObjectType.PISCINE));
+    assertEquals(
+        DetectableType.PASSAGE_PIETON, subject.toDomain(DetectableObjectType.PASSAGE_PIETON));
+    assertEquals(
+        DetectableType.PANNEAU_PHOTOVOLTAIQUE,
+        subject.toDomain(DetectableObjectType.PANNEAU_PHOTOVOLTAIQUE));
   }
 
   @Test
@@ -70,13 +74,13 @@ class DetectableObjectTypeMapperTest {
             ARBRE,
             TOITURE_REVETEMENT,
             PANNEAU_PHOTOVOLTAIQUE,
-            MOISISSURE,
-            USURE,
-            FISSURE_CASSURE,
-            OBSTACLE,
-            CHEMINEE,
-            HUMIDITE,
-            RISQUE_FEU);
+            DetectableObjectType.MOISISSURE,
+            DetectableObjectType.USURE,
+            DetectableObjectType.FISSURE_CASSURE,
+            DetectableObjectType.OBSTACLE,
+            DetectableObjectType.CHEMINEE,
+            DetectableObjectType.HUMIDITE,
+            DetectableObjectType.RISQUE_FEU);
     assertEquals(expected, actual);
   }
 
