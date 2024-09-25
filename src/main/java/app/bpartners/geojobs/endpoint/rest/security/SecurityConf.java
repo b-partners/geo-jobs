@@ -112,6 +112,8 @@ public class SecurityConf {
                     .hasAnyAuthority(ROLE_ADMIN.name())
                     .requestMatchers(POST, "/detections/*/shape")
                     .hasAnyAuthority(ROLE_ADMIN.name(), ROLE_COMMUNITY.name())
+                    .requestMatchers(POST, "/detections/*/excel")
+                    .hasAnyAuthority(ROLE_ADMIN.name(), ROLE_COMMUNITY.name())
                     .requestMatchers(GET, "/detections")
                     .hasAnyAuthority(ROLE_ADMIN.name(), ROLE_COMMUNITY.name())
                     .requestMatchers(GET, "/usage")

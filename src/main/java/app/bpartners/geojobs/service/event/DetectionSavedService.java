@@ -30,7 +30,7 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
   @Override
   public void accept(DetectionSaved detectionSaved) {
     var detection = detectionSaved.getDetection();
-    List<InternetAddress> cc = List.of(); // TODO: add admin emails here
+    List<InternetAddress> cc = List.of();
     List<InternetAddress> bcc = List.of();
     String subject =
         "Detection(id="
@@ -55,10 +55,17 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
             : bucketComponent
                 .presign(detection.getShapeFileKey(), Duration.ofHours(24L))
                 .toString();
+    var excelFilePresignURL =
+        detection.getShapeFileKey() == null
+            ? null
+            : bucketComponent
+                .presign(detection.getExcelFileKey(), Duration.ofHours(24L))
+                .toString();
     HTMLTemplateParser htmlTemplateParser = new HTMLTemplateParser();
     Context context = new Context();
     context.setVariable("detection", detection);
     context.setVariable("shapeFileUrl", shapeFilePresignURL);
+    context.setVariable("excelFileUrl", excelFilePresignURL);
     return htmlTemplateParser.apply(DETECTION_SAVED_TEMPLATE, context);
   }
 }

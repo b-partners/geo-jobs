@@ -181,10 +181,17 @@ public class ZoneDetectionController {
   }
 
   @PostMapping("/detections/{id}/shape")
-  public Detection processDetection(
+  public Detection configureDetectionShapeFile(
       @PathVariable(name = "id") String detectionId, @RequestBody byte[] shapeFileAsBytes) {
     File shapeFile = fileWriter.apply(shapeFileAsBytes, null);
     return zoneService.configureShapeFile(detectionId, shapeFile);
+  }
+
+  @PostMapping("/detections/{id}/excel")
+  public Detection configureDetectionExcelFile(
+      @PathVariable(name = "id") String detectionId, @RequestBody byte[] excelFileAsBytes) {
+    File excelFile = fileWriter.apply(excelFileAsBytes, null);
+    return zoneService.configureExcelFile(detectionId, excelFile);
   }
 
   @PutMapping("/detections/{id}")
