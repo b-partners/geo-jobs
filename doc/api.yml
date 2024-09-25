@@ -1273,7 +1273,7 @@ components:
         parking:
           type: boolean
           default: true
-    BPClimatREsilience:
+    BPClimatResilience:
       properties:
         modelName:
           type: string

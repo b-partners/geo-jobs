@@ -73,18 +73,17 @@ public class DetectableObjectTypeMapper {
   public List<DetectableObjectType> mapFromModel(Object o) {
     List<DetectableObjectType> objectTypes = new ArrayList<>();
 
-    if (o instanceof BPToitureModel model) {
-      objectTypes.addAll(detectableObjectTypeFromBPToitureModel(model));
-    } else if (o instanceof BPLomModel model) {
-      objectTypes.addAll(detectableObjectTypeFromBPLomModel(model));
-    } else if (o instanceof BPZanModel model) {
-      objectTypes.addAll(detectableObjectTypeFromBPZanModel(model));
-    } else if (o instanceof BPClimatREsilience model) {
-      objectTypes.addAll(detectableObjectTypeFromBPClimatResilienceModel(model));
-    } else if (o instanceof BPConformitePlu model) {
-      objectTypes.addAll(detectableObjectTypeFromBPConformitePluModel(model));
-    } else {
-      throw new ApiException(SERVER_EXCEPTION, "Unknown instance of object " + o.getClass());
+    switch (o) {
+      case BPToitureModel model ->
+          objectTypes.addAll(detectableObjectTypeFromBPToitureModel(model));
+      case BPLomModel model -> objectTypes.addAll(detectableObjectTypeFromBPLomModel(model));
+      case BPZanModel model -> objectTypes.addAll(detectableObjectTypeFromBPZanModel(model));
+      case BPClimatResilience model ->
+          objectTypes.addAll(detectableObjectTypeFromBPClimatResilienceModel(model));
+      case BPConformitePlu model ->
+          objectTypes.addAll(detectableObjectTypeFromBPConformitePluModel(model));
+      default ->
+          throw new ApiException(SERVER_EXCEPTION, "Unknown instance of object " + o.getClass());
     }
 
     return objectTypes;
@@ -114,7 +113,7 @@ public class DetectableObjectTypeMapper {
   }
 
   private List<DetectableObjectType> detectableObjectTypeFromBPClimatResilienceModel(
-      BPClimatREsilience model) {
+      BPClimatResilience model) {
     List<DetectableObjectType> objectTypes = new ArrayList<>();
     addIfTrue(model.getParking(), objectTypes, PARKING);
     addIfTrue(model.getPanneauPhotovoltaique(), objectTypes, PANNEAU_PHOTOVOLTAIQUE);

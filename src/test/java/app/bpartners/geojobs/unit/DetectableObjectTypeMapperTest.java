@@ -118,7 +118,7 @@ class DetectableObjectTypeMapperTest {
 
   @Test
   void map_from_model_BP_Climat_Resilience_Model() {
-    var object = new BPClimatREsilience();
+    var object = new BPClimatResilience();
 
     var actual = subject.mapFromModel(object);
 
