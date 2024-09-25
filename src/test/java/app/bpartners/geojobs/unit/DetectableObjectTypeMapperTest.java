@@ -48,7 +48,7 @@ class DetectableObjectTypeMapperTest {
     assertEquals(DetectableObjectType.ARBRE, subject.toRest(DetectableType.ARBRE));
     assertEquals(
         DetectableObjectType.TOITURE_REVETEMENT, subject.toRest(DetectableType.TOITURE_REVETEMENT));
-    assertEquals(DetectableObjectType.PISCINE, subject.toRest(PISCINE));
+    assertEquals(DetectableObjectType.PISCINE, subject.toRest(DetectableType.PISCINE));
     assertEquals(
         DetectableObjectType.PASSAGE_PIETON, subject.toRest(DetectableType.PASSAGE_PIETON));
     assertEquals(
