@@ -2,6 +2,7 @@ package app.bpartners.geojobs.unit;
 
 import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.ARBRE;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.ESPACE_VERT;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.PANNEAU_PHOTOVOLTAIQUE;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.PARKING;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.PASSAGE_PIETON;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.TOITURE_REVETEMENT;
@@ -12,10 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
-import app.bpartners.geojobs.endpoint.rest.model.BPLomModel;
-import app.bpartners.geojobs.endpoint.rest.model.BPToitureModel;
-import app.bpartners.geojobs.endpoint.rest.model.BPZanModel;
-import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType;
+import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import java.util.List;
@@ -52,7 +50,8 @@ class DetectableObjectTypeMapperTest {
     assertEquals(
         DetectableObjectType.PASSAGE_PIETON, subject.toRest(DetectableType.PASSAGE_PIETON));
     assertEquals(
-        DetectableObjectType.PANNEAU_PHOTOVOLTAIQUE, subject.toRest(PANNEAU_PHOTOVOLTAIQUE));
+        DetectableObjectType.PANNEAU_PHOTOVOLTAIQUE,
+        subject.toRest(DetectableType.PANNEAU_PHOTOVOLTAIQUE));
     assertEquals(DetectableObjectType.LINE, subject.toRest(LINE));
     assertEquals(DetectableObjectType.TROTTOIR, subject.toRest(DetectableType.TROTTOIR));
     assertEquals(DetectableObjectType.ESPACE_VERT, subject.toRest(DetectableType.ESPACE_VERT));
@@ -97,6 +96,16 @@ class DetectableObjectTypeMapperTest {
 
     var expected =
         List.of(ARBRE, ESPACE_VERT, TOITURE_REVETEMENT, VOIE_CARROSSABLE, TROTTOIR, PARKING);
+    assertEquals(expected, actual);
+  }
+
+  @Test
+  void map_from_model_BP_Climat_Resilience_Model() {
+    var object = new BPClimatREsilience();
+
+    var actual = subject.mapFromModel(object);
+
+    var expected = List.of(PARKING, PANNEAU_PHOTOVOLTAIQUE, ARBRE, ESPACE_VERT);
     assertEquals(expected, actual);
   }
 }

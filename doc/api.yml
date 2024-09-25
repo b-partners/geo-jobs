@@ -900,7 +900,6 @@ components:
         - LINE
         - ESPACE_VERT
         - VOIE_CARROSSABLE
-        - PARKING
         - MOISISSURE
         - USURE
         - FISSURE_CASSURE
@@ -908,6 +907,7 @@ components:
         - CHEMINEE
         - HUMIDITE
         - RISQUE_FEU
+        - PARKING
     ProcessJobAnnotation:
       type: object
       properties:
@@ -1270,6 +1270,23 @@ components:
           type: boolean
           default: true
         parking:
+          type: boolean
+          default: true
+    BPClimatREsilience:
+      properties:
+        modelName:
+          type: string
+          enum: ['BP_CLIMAT_RESILIENCE']
+        parking:
+          type: boolean
+          default: true
+        panneauPhotovoltaique:
+          type: boolean
+          default: true
+        arbre:
+          type: boolean
+          default: true
+        espaceVert:
           type: boolean
           default: true
     CreateDetection:

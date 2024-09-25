@@ -4,10 +4,7 @@ import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.*;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static java.util.UUID.randomUUID;
 
-import app.bpartners.geojobs.endpoint.rest.model.BPLomModel;
-import app.bpartners.geojobs.endpoint.rest.model.BPToitureModel;
-import app.bpartners.geojobs.endpoint.rest.model.BPZanModel;
-import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType;
+import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
@@ -82,6 +79,8 @@ public class DetectableObjectTypeMapper {
       objectTypes.addAll(detectableObjectTypeFromBPLomModel(model));
     } else if (o instanceof BPZanModel model) {
       objectTypes.addAll(detectableObjectTypeFromBPZanModel(model));
+    } else if (o instanceof BPClimatREsilience model) {
+      objectTypes.addAll(detectableObjectTypeFromBPClimatResilienceModel(model));
     } else {
       throw new ApiException(SERVER_EXCEPTION, "Unknown instance of object " + o.getClass());
     }
@@ -109,6 +108,16 @@ public class DetectableObjectTypeMapper {
     addIfTrue(model.getPassagePieton(), objectTypes, PASSAGE_PIETON);
     addIfTrue(model.getTrottoir(), objectTypes, TROTTOIR);
     addIfTrue(model.getVoieCarrosable(), objectTypes, VOIE_CARROSSABLE);
+    return objectTypes;
+  }
+
+  private List<DetectableObjectType> detectableObjectTypeFromBPClimatResilienceModel(
+      BPClimatREsilience model) {
+    List<DetectableObjectType> objectTypes = new ArrayList<>();
+    addIfTrue(model.getParking(), objectTypes, PARKING);
+    addIfTrue(model.getPanneauPhotovoltaique(), objectTypes, PANNEAU_PHOTOVOLTAIQUE);
+    addIfTrue(model.getArbre(), objectTypes, ARBRE);
+    addIfTrue(model.getEspaceVert(), objectTypes, ESPACE_VERT);
     return objectTypes;
   }
 
