@@ -2,6 +2,7 @@ package app.bpartners.geojobs.endpoint.rest.controller;
 
 import static app.bpartners.geojobs.endpoint.rest.model.SuccessStatus.NOT_SUCCEEDED;
 import static app.bpartners.geojobs.endpoint.rest.model.SuccessStatus.SUCCEEDED;
+import static app.bpartners.geojobs.file.ExtensionGuesser.OFFICE_OPEN_XML_FILE_MEDIA_TYPE;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
@@ -28,7 +29,9 @@ import app.bpartners.geojobs.endpoint.rest.security.authorizer.DetectionAuthoriz
 import app.bpartners.geojobs.endpoint.rest.validator.GetUsageValidator;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.file.FileWriter;
+import app.bpartners.geojobs.file.MediaTypeGuesser;
 import app.bpartners.geojobs.job.model.JobStatus;
+import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.page.BoundedPageSize;
 import app.bpartners.geojobs.model.page.PageFromOne;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
@@ -75,6 +78,7 @@ public class ZoneDetectionController {
   private final DetectionSurfaceUnitMapper unitMapper;
   private final DetectionAuthorizer detectionAuthorizer;
   private final FileWriter fileWriter;
+  private final MediaTypeGuesser mediaTypeGuesser;
 
   @PutMapping("/detectionJobs/{id}/taskFiltering")
   public List<FilteredDetectionJob> filteredDetectionJobs(@PathVariable String id) {
@@ -190,7 +194,13 @@ public class ZoneDetectionController {
   @PostMapping("/detections/{id}/excel")
   public Detection configureDetectionExcelFile(
       @PathVariable(name = "id") String detectionId, @RequestBody byte[] excelFileAsBytes) {
-    File excelFile = fileWriter.apply(excelFileAsBytes, null);
+    var excelFile = fileWriter.apply(excelFileAsBytes, null);
+    var guessedMediaType = mediaTypeGuesser.apply(excelFileAsBytes);
+    if (!OFFICE_OPEN_XML_FILE_MEDIA_TYPE.equals(guessedMediaType)) {
+      throw new BadRequestException(
+          "Only open office file (docx, xlsx, xls) media type is accepted but provided was : "
+              + guessedMediaType);
+    }
     return zoneService.configureExcelFile(detectionId, excelFile);
   }
 

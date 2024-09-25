@@ -39,6 +39,7 @@ import app.bpartners.geojobs.job.model.statistic.HealthStatusStatistic;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.job.model.statistic.TaskStatusStatistic;
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
+import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.page.BoundedPageSize;
 import app.bpartners.geojobs.model.page.PageFromOne;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
@@ -335,5 +336,38 @@ class DetectionControllerIT extends FacadeIT {
 
     assertNull(detection.getShapeFileKey());
     assertEquals(presignedUrl, actual.getShapeUrl());
+  }
+
+  @SneakyThrows
+  @Test
+  void configure_file_excel_ko() {
+    var dummyShapeFileBytes = new ClassPathResource("/shape/dummy.shape").getContentAsByteArray();
+    var zoneTilingJob = zoneTilingJobRepository.save(zoneTilingJob(randomUUID().toString()));
+    var detection = detectionRepository.save(detectionWithoutZdj(zoneTilingJob.getId()));
+
+    var actual =
+        assertThrows(
+            BadRequestException.class,
+            () -> subject.configureDetectionExcelFile(detection.getId(), dummyShapeFileBytes));
+
+    var expected =
+        "Only open office file (docx, xlsx, xls) media type is accepted but provided was :"
+            + " text/plain";
+    assertEquals(expected, actual.getMessage());
+  }
+
+  @SneakyThrows
+  @Test
+  void configure_file_modern_excel_ok() {
+    var presignedUrl = "http://localhost/presignedExcelUrl";
+    var modernExcelFile = new ClassPathResource("/excel/excelFile.xlsx").getContentAsByteArray();
+    var zoneTilingJob = zoneTilingJobRepository.save(zoneTilingJob(randomUUID().toString()));
+    var detection = detectionRepository.save(detectionWithoutZdj(zoneTilingJob.getId()));
+    when(bucketComponentMock.presign(any(), any())).thenReturn(new URI(presignedUrl).toURL());
+
+    var actual = subject.configureDetectionExcelFile(detection.getId(), modernExcelFile);
+
+    assertNull(detection.getExcelFileKey());
+    assertEquals(presignedUrl, actual.getExcelUrl());
   }
 }

@@ -8,6 +8,8 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class ExtensionGuesser implements Function<byte[], String> {
+  public static final String OFFICE_OPEN_XML_FILE_MEDIA_TYPE = "application/x-tika-ooxml";
+
   @SneakyThrows
   @Override
   public String apply(byte[] bytes) {
