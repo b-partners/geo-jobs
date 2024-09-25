@@ -531,6 +531,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Detection'
+  '/detections/{id}/shape':
+    post:
+      tags:
+        - Detection
+      operationId: configureDetectionShapeFile
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          description: Detection identifier
+          required: true
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        200:
+          description: Detection with updated shape file uploaded url
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detection'
   '/parcelization':
     put:
       tags:
