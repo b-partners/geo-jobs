@@ -1223,6 +1223,7 @@ components:
           default: true
         cheminee:
           type: boolean
+          default: true
         humidite:
           type: boolean
           default: true
@@ -1237,12 +1238,16 @@ components:
           enum: [ 'BP_LOM' ]
         passagePieton:
           type: boolean
+          default: true
         voieCarrosable:
           type: boolean
+          default: true
         trottoir:
           type: boolean
+          default: true
         parking:
           type: boolean
+          default: true
     BPZanModel:
       type: object
       properties:
@@ -1251,16 +1256,22 @@ components:
           enum: [ 'BP_ZAN' ]
         arbre:
           type: boolean
+          default: true
         espaceVert:
           type: boolean
+          default: true
         toiture:
           type: boolean
+          default: true
         voieCarrossable:
           type: boolean
+          default: true
         trottoir:
           type: boolean
+          default: true
         parking:
           type: boolean
+          default: true
     CreateDetection:
       type: object
       properties:

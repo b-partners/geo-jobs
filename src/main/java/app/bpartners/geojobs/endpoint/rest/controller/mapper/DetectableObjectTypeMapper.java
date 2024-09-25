@@ -74,14 +74,14 @@ public class DetectableObjectTypeMapper {
   }
 
   public List<DetectableObjectType> mapFromModel(Object o) {
-    var objectTypes = new ArrayList<DetectableObjectType>();
+    List<DetectableObjectType> objectTypes = new ArrayList<>();
 
     if (o instanceof BPToitureModel model) {
-      mapFromBPToitureModel(model, objectTypes);
+      objectTypes.addAll(detectableObjectTypeFromBPToitureModel(model));
     } else if (o instanceof BPLomModel model) {
-      mapFromBPLomModel(model, objectTypes);
+      objectTypes.addAll(detectableObjectTypeFromBPLomModel(model));
     } else if (o instanceof BPZanModel model) {
-      mapFromBPZanModel(model, objectTypes);
+      objectTypes.addAll(detectableObjectTypeFromBPZanModel(model));
     } else {
       throw new ApiException(SERVER_EXCEPTION, "Unknown instance of object " + o.getClass());
     }
@@ -89,7 +89,8 @@ public class DetectableObjectTypeMapper {
     return objectTypes;
   }
 
-  private void mapFromBPToitureModel(BPToitureModel model, List<DetectableObjectType> objectTypes) {
+  private List<DetectableObjectType> detectableObjectTypeFromBPToitureModel(BPToitureModel model) {
+    List<DetectableObjectType> objectTypes = new ArrayList<>();
     addIfTrue(model.getArbre(), objectTypes, ARBRE);
     addIfTrue(model.getToitureRevetement(), objectTypes, TOITURE_REVETEMENT);
     addIfTrue(model.getPanneauPhotovoltaique(), objectTypes, PANNEAU_PHOTOVOLTAIQUE);
@@ -100,21 +101,26 @@ public class DetectableObjectTypeMapper {
     addIfTrue(model.getCheminee(), objectTypes, CHEMINEE);
     addIfTrue(model.getHumidite(), objectTypes, HUMIDITE);
     addIfTrue(model.getRisqueFeu(), objectTypes, RISQUE_FEU);
+    return objectTypes;
   }
 
-  private void mapFromBPLomModel(BPLomModel model, List<DetectableObjectType> objectTypes) {
+  private List<DetectableObjectType> detectableObjectTypeFromBPLomModel(BPLomModel model) {
+    List<DetectableObjectType> objectTypes = new ArrayList<>();
     addIfTrue(model.getPassagePieton(), objectTypes, PASSAGE_PIETON);
     addIfTrue(model.getTrottoir(), objectTypes, TROTTOIR);
     addIfTrue(model.getVoieCarrosable(), objectTypes, VOIE_CARROSSABLE);
+    return objectTypes;
   }
 
-  private void mapFromBPZanModel(BPZanModel model, List<DetectableObjectType> objectTypes) {
+  private List<DetectableObjectType> detectableObjectTypeFromBPZanModel(BPZanModel model) {
+    List<DetectableObjectType> objectTypes = new ArrayList<>();
     addIfTrue(model.getArbre(), objectTypes, ARBRE);
     addIfTrue(model.getEspaceVert(), objectTypes, ESPACE_VERT);
     addIfTrue(model.getToiture(), objectTypes, TOITURE_REVETEMENT);
     addIfTrue(model.getVoieCarrossable(), objectTypes, VOIE_CARROSSABLE);
     addIfTrue(model.getTrottoir(), objectTypes, TROTTOIR);
     addIfTrue(model.getParking(), objectTypes, PARKING);
+    return objectTypes;
   }
 
   private void addIfTrue(

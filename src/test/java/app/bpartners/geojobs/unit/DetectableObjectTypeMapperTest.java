@@ -1,12 +1,24 @@
 package app.bpartners.geojobs.unit;
 
+import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.ARBRE;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.ESPACE_VERT;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.PARKING;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.PASSAGE_PIETON;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.TOITURE_REVETEMENT;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.TROTTOIR;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.VOIE_CARROSSABLE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
+import app.bpartners.geojobs.endpoint.rest.model.BPLomModel;
+import app.bpartners.geojobs.endpoint.rest.model.BPToitureModel;
+import app.bpartners.geojobs.endpoint.rest.model.BPZanModel;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
+import app.bpartners.geojobs.repository.model.detection.DetectableType;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class DetectableObjectTypeMapperTest {
@@ -33,14 +45,58 @@ class DetectableObjectTypeMapperTest {
 
   @Test
   void to_rest_ok() {
-    assertEquals(DetectableObjectType.ARBRE, subject.toRest(ARBRE));
-    assertEquals(DetectableObjectType.TOITURE_REVETEMENT, subject.toRest(TOITURE_REVETEMENT));
+    assertEquals(DetectableObjectType.ARBRE, subject.toRest(DetectableType.ARBRE));
+    assertEquals(
+        DetectableObjectType.TOITURE_REVETEMENT, subject.toRest(DetectableType.TOITURE_REVETEMENT));
     assertEquals(DetectableObjectType.PISCINE, subject.toRest(PISCINE));
-    assertEquals(DetectableObjectType.PASSAGE_PIETON, subject.toRest(PASSAGE_PIETON));
+    assertEquals(
+        DetectableObjectType.PASSAGE_PIETON, subject.toRest(DetectableType.PASSAGE_PIETON));
     assertEquals(
         DetectableObjectType.PANNEAU_PHOTOVOLTAIQUE, subject.toRest(PANNEAU_PHOTOVOLTAIQUE));
     assertEquals(DetectableObjectType.LINE, subject.toRest(LINE));
-    assertEquals(DetectableObjectType.TROTTOIR, subject.toRest(TROTTOIR));
-    assertEquals(DetectableObjectType.ESPACE_VERT, subject.toRest(ESPACE_VERT));
+    assertEquals(DetectableObjectType.TROTTOIR, subject.toRest(DetectableType.TROTTOIR));
+    assertEquals(DetectableObjectType.ESPACE_VERT, subject.toRest(DetectableType.ESPACE_VERT));
+  }
+
+  @Test
+  void map_from_model_BP_Toiture_Model() {
+    var object = new BPToitureModel();
+
+    var actual = subject.mapFromModel(object);
+
+    var expected =
+        List.of(
+            ARBRE,
+            TOITURE_REVETEMENT,
+            PANNEAU_PHOTOVOLTAIQUE,
+            MOISISSURE,
+            USURE,
+            FISSURE_CASSURE,
+            OBSTACLE,
+            CHEMINEE,
+            HUMIDITE,
+            RISQUE_FEU);
+    assertEquals(expected, actual);
+  }
+
+  @Test
+  void map_from_model_BP_Lom_Model() {
+    var object = new BPLomModel();
+
+    var actual = subject.mapFromModel(object);
+
+    var expected = List.of(PASSAGE_PIETON, TROTTOIR, VOIE_CARROSSABLE);
+    assertEquals(expected, actual);
+  }
+
+  @Test
+  void map_from_model_BP_Zan_Model() {
+    var object = new BPZanModel();
+
+    var actual = subject.mapFromModel(object);
+
+    var expected =
+        List.of(ARBRE, ESPACE_VERT, TOITURE_REVETEMENT, VOIE_CARROSSABLE, TROTTOIR, PARKING);
+    assertEquals(expected, actual);
   }
 }
