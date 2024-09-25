@@ -20,6 +20,9 @@
         <li>Fichier shape à convertir en geoJson : <br>
             <span th:if="${detection.getShapeFileKey() != null}" th:text="${shapeFileUrl}"></span>
         </li>
+        <li>Fichier excel à convertir en geoJson : <br>
+            <span th:if="${detection.getExcelFileKey() != null}" th:text="${excelFileUrl}"></span>
+        </li>
     </ul>
     <p>Cordialement.</p>
 </section>

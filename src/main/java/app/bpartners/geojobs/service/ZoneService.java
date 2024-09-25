@@ -99,6 +99,17 @@ public class ZoneService {
         .orElseThrow(() -> new NotFoundException("Detection(id=" + detectionId + ") not found"));
   }
 
+  public app.bpartners.geojobs.endpoint.rest.model.Detection configureExcelFile(
+      String detectionId, File excelFile) {
+    var detection = getDetectionById(detectionId);
+    var bucketKey = "detections/excel/" + detectionId;
+    bucketComponent.upload(excelFile, bucketKey);
+    var savedDetection =
+        detectionRepository.save(detection.toBuilder().excelFileKey(bucketKey).build());
+    eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
+    return computeFromConfiguring(savedDetection, PROCESSING, UNKNOWN);
+  }
+
   public app.bpartners.geojobs.endpoint.rest.model.Detection configureShapeFile(
       String detectionId, File shapeFile) {
     var detection = getDetectionById(detectionId);
@@ -267,7 +278,7 @@ public class ZoneService {
         .id(detection.getEndToEndId())
         .emailReceiver(detection.getEmailReceiver())
         .zoneName(detection.getZoneName())
-        .excelUrl(null) // TODO: not handle for now
+        .excelUrl(generatePresignedUrl(detection.getExcelFileKey()))
         .shapeUrl(generatePresignedUrl(detection.getShapeFileKey()))
         .geoJsonZone(detection.getGeoJsonZone())
         .geoJsonUrl(generatePresignedUrl(detection.getGeojsonS3FileKey()))

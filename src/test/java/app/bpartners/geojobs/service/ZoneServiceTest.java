@@ -126,6 +126,54 @@ class ZoneServiceTest {
         new Detection()
             .id(detectionId)
             .shapeUrl(shapeUrl)
+            .excelUrl(null)
+            .geoJsonZone(detection.getGeoJsonZone())
+            .geoServerProperties(detection.getGeoServerProperties())
+            .detectableObjectModel(detection.getDetectableObjectModel())
+            .actualStepStatus(
+                new DetectionStepStatus()
+                    .step(CONFIGURING)
+                    .status(
+                        new Status()
+                            .progression(PROCESSING)
+                            .health(UNKNOWN)
+                            .creationDatetime(
+                                actual.getActualStepStatus().getStatus().getCreationDatetime()))
+                    .statistics(List.of())
+                    .updatedAt(actual.getActualStepStatus().getUpdatedAt()));
+    assertEquals(expectedDetectionSavedEvent, detectionSaved);
+    assertEquals(expectedRestDetection, actual);
+  }
+
+  @Test
+  @SneakyThrows
+  void configure_excel_file_ok() {
+    var excelFile = File.createTempFile(randomUUID().toString(), randomUUID().toString());
+    var detection =
+        detectionCreator.createFromZTJAndZDJ(randomUUID().toString(), randomUUID().toString());
+    var detectionId = detection.getId();
+    var excelFileBucketKey = "detections/excel/" + detectionId;
+    var excelUrl = "https://localhost";
+    when(bucketComponentMock.upload(excelFile, excelFileBucketKey))
+        .thenReturn(new FileHash(SHA256, "dummy"));
+    when(bucketComponentMock.presign(any(), any())).thenReturn(new URI(excelUrl).toURL());
+    when(detectionRepositoryMock.save(any()))
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+    when(detectionRepositoryMock.findById(detectionId)).thenReturn(Optional.of(detection));
+
+    var actual = subject.configureExcelFile(detectionId, excelFile);
+
+    var listCaptor = ArgumentCaptor.forClass(List.class);
+    verify(eventProducerMock, only()).accept(listCaptor.capture());
+    var detectionSaved = (DetectionSaved) listCaptor.getValue().getFirst();
+    var expectedSavedDetection = detection.toBuilder().excelFileKey(excelFileBucketKey).build();
+    var expectedDetectionSavedEvent =
+        DetectionSaved.builder().detection(expectedSavedDetection).build();
+    var expectedRestDetection =
+        new Detection()
+            .id(detectionId)
+            .excelUrl(excelUrl)
+            .shapeUrl(null)
             .geoJsonZone(detection.getGeoJsonZone())
             .geoServerProperties(detection.getGeoServerProperties())
             .detectableObjectModel(detection.getDetectableObjectModel())
