@@ -8,3 +8,4 @@ alter type detectable_type add value  'CHEMINEE';
 alter type detectable_type add value  'HUMIDITE';
 alter type detectable_type add value  'RISQUE_FEU';
 alter type detectable_type add value  'VELUX';
+alter type detectable_type add value  'ESPACE_VERT_PARKING';

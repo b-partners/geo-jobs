@@ -909,6 +909,7 @@ components:
         - RISQUE_FEU
         - PARKING
         - VELUX
+        - ESPACE_VERT_PARKING
     ProcessJobAnnotation:
       type: object
       properties:
@@ -1273,7 +1274,7 @@ components:
         parking:
           type: boolean
           default: true
-    BPClimatResilience:
+    BPClimatResilienceModel:
       properties:
         modelName:
           type: string
@@ -1290,7 +1291,7 @@ components:
         espaceVert:
           type: boolean
           default: true
-    BPConformitePlu:
+    BPConformitePluModel:
       properties:
         modelName:
           type: string
@@ -1311,6 +1312,23 @@ components:
           type: boolean
           default: true
         piscine:
+          type: boolean
+          default: true
+    BPTrottoirsModel:
+      properties:
+        modelName:
+          type: string
+          enum: [ 'BP_TROTTOIRS' ]
+        trottoir:
+          type: boolean
+          default: true
+        voieCarrossable:
+          type: boolean
+          default: true
+        arbre:
+          type: boolean
+          default: true
+        espaceVertParking:
           type: boolean
           default: true
     CreateDetection:
