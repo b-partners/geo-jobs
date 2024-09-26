@@ -116,6 +116,10 @@ class DetectionControllerIT extends FacadeIT {
   }
 
   private Detection detectionWithoutZdj(String tilingJobId) {
+    return detectionWithoutZdj(tilingJobId, null);
+  }
+
+  private Detection detectionWithoutZdj(String tilingJobId, List<Feature> geoJson) {
     var detectionId = randomUUID().toString();
     return Detection.builder()
         .id(detectionId)
@@ -131,7 +135,7 @@ class DetectionControllerIT extends FacadeIT {
                     .objectType(DetectableType.TOITURE_REVETEMENT)
                     .confidence(DEFAULT_MIN_CONFIDENCE)
                     .build()))
-        .geoJsonZone(featureCreator.defaultFeatures())
+        .geoJsonZone(geoJson)
         .build();
   }
 
@@ -308,7 +312,9 @@ class DetectionControllerIT extends FacadeIT {
   @Test
   void get_detections_without_owner_and_without_zdj() {
     var zoneTilingJob = zoneTilingJobRepository.save(zoneTilingJob(randomUUID().toString()));
-    var detection = detectionRepository.save(detectionWithoutZdj(zoneTilingJob.getId()));
+    var detection =
+        detectionRepository.save(
+            detectionWithoutZdj(zoneTilingJob.getId(), featureCreator.defaultFeatures()));
     when(communityAuthRepository.findByApiKey(any())).thenReturn(Optional.empty());
     var statistic = defaultComputedStatistic(zoneTilingJob.getId(), TILING);
     when(zoneTilingJobService.getTaskStatistic(any(String.class))).thenReturn(statistic);
