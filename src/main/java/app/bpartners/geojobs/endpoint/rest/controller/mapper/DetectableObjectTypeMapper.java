@@ -20,118 +20,49 @@ public class DetectableObjectTypeMapper {
   public static final double DEFAULT_CONFIDENCE = 1.0;
 
   public DetectableType toDomain(DetectableObjectType rest) {
-    switch (rest) {
-      case PISCINE -> {
-        return DetectableType.PISCINE;
-      }
-      case TOITURE_REVETEMENT -> {
-        return DetectableType.TOITURE_REVETEMENT;
-      }
-      case ARBRE -> {
-        return DetectableType.ARBRE;
-      }
-      case PASSAGE_PIETON -> {
-        return DetectableType.PASSAGE_PIETON;
-      }
-      case PANNEAU_PHOTOVOLTAIQUE -> {
-        return DetectableType.PANNEAU_PHOTOVOLTAIQUE;
-      }
-      case TROTTOIR -> {
-        return DetectableType.TROTTOIR;
-      }
-      case LINE -> {
-        return DetectableType.LINE;
-      }
-      case ESPACE_VERT -> {
-        return DetectableType.ESPACE_VERT;
-      }
-      case VOIE_CARROSSABLE -> {
-        return DetectableType.VOIE_CARROSSABLE;
-      }
-      case MOISISSURE -> {
-        return DetectableType.MOISISSURE;
-      }
-      case USURE -> {
-        return DetectableType.USURE;
-      }
-      case FISSURE_CASSURE -> {
-        return DetectableType.FISSURE_CASSURE;
-      }
-      case OBSTACLE -> {
-        return DetectableType.OBSTACLE;
-      }
-      case CHEMINEE -> {
-        return DetectableType.CHEMINEE;
-      }
-      case HUMIDITE -> {
-        return DetectableType.HUMIDITE;
-      }
-      case RISQUE_FEU -> {
-        return DetectableType.RISQUE_FEU;
-      }
-      case VELUX -> {
-        return DetectableType.VELUX;
-      }
-
+    return switch (rest) {
+      case PISCINE -> DetectableType.PISCINE;
+      case TOITURE_REVETEMENT -> DetectableType.TOITURE_REVETEMENT;
+      case ARBRE -> DetectableType.ARBRE;
+      case PASSAGE_PIETON -> DetectableType.PASSAGE_PIETON;
+      case PANNEAU_PHOTOVOLTAIQUE -> DetectableType.PANNEAU_PHOTOVOLTAIQUE;
+      case TROTTOIR -> DetectableType.TROTTOIR;
+      case LINE -> DetectableType.LINE;
+      case ESPACE_VERT -> DetectableType.ESPACE_VERT;
+      case VOIE_CARROSSABLE -> DetectableType.VOIE_CARROSSABLE;
+      case MOISISSURE -> DetectableType.MOISISSURE;
+      case USURE -> DetectableType.USURE;
+      case FISSURE_CASSURE -> DetectableType.FISSURE_CASSURE;
+      case OBSTACLE -> DetectableType.OBSTACLE;
+      case CHEMINEE -> DetectableType.CHEMINEE;
+      case HUMIDITE -> DetectableType.HUMIDITE;
+      case RISQUE_FEU -> DetectableType.RISQUE_FEU;
+      case VELUX -> DetectableType.VELUX;
       default -> throw new NotImplementedException("Unknown detectable object type " + rest);
-    }
+    };
   }
 
   public DetectableObjectType toRest(DetectableType domain) {
-    switch (domain) {
-      case PISCINE -> {
-        return PISCINE;
-      }
-      case TOITURE_REVETEMENT -> {
-        return TOITURE_REVETEMENT;
-      }
-      case ARBRE -> {
-        return ARBRE;
-      }
-      case PASSAGE_PIETON -> {
-        return PASSAGE_PIETON;
-      }
-      case PANNEAU_PHOTOVOLTAIQUE -> {
-        return PANNEAU_PHOTOVOLTAIQUE;
-      }
-      case TROTTOIR -> {
-        return TROTTOIR;
-      }
-      case LINE -> {
-        return LINE;
-      }
-      case ESPACE_VERT -> {
-        return ESPACE_VERT;
-      }
-      case VOIE_CARROSSABLE -> {
-        return VOIE_CARROSSABLE;
-      }
-      case MOISISSURE -> {
-        return MOISISSURE;
-      }
-      case USURE -> {
-        return USURE;
-      }
-      case FISSURE_CASSURE -> {
-        return FISSURE_CASSURE;
-      }
-      case OBSTACLE -> {
-        return OBSTACLE;
-      }
-      case CHEMINEE -> {
-        return CHEMINEE;
-      }
-      case HUMIDITE -> {
-        return HUMIDITE;
-      }
-      case RISQUE_FEU -> {
-        return RISQUE_FEU;
-      }
-      case VELUX -> {
-        return VELUX;
-      }
+    return switch (domain) {
+      case PISCINE -> DetectableObjectType.PISCINE;
+      case TOITURE_REVETEMENT -> DetectableObjectType.TOITURE_REVETEMENT;
+      case ARBRE -> DetectableObjectType.ARBRE;
+      case PASSAGE_PIETON -> DetectableObjectType.PASSAGE_PIETON;
+      case PANNEAU_PHOTOVOLTAIQUE -> DetectableObjectType.PANNEAU_PHOTOVOLTAIQUE;
+      case TROTTOIR -> DetectableObjectType.TROTTOIR;
+      case LINE -> DetectableObjectType.LINE;
+      case ESPACE_VERT -> DetectableObjectType.ESPACE_VERT;
+      case VOIE_CARROSSABLE -> DetectableObjectType.VOIE_CARROSSABLE;
+      case MOISISSURE -> DetectableObjectType.MOISISSURE;
+      case USURE -> DetectableObjectType.USURE;
+      case FISSURE_CASSURE -> DetectableObjectType.FISSURE_CASSURE;
+      case OBSTACLE -> DetectableObjectType.OBSTACLE;
+      case CHEMINEE -> DetectableObjectType.CHEMINEE;
+      case HUMIDITE -> DetectableObjectType.HUMIDITE;
+      case RISQUE_FEU -> DetectableObjectType.RISQUE_FEU;
+      case VELUX -> DetectableObjectType.VELUX;
       default -> throw new NotImplementedException("Unknown detectable object type " + domain);
-    }
+    };
   }
 
   public List<DetectableObjectType> mapFromModel(Object o) {
