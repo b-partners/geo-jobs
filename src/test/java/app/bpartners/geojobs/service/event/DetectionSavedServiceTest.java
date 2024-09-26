@@ -1,10 +1,12 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.endpoint.rest.model.BPToitureModel.ModelNameEnum.BP_TOITURE;
 import static app.bpartners.geojobs.service.event.DetectionSavedService.computeStaticEmailBody;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
+import app.bpartners.geojobs.endpoint.rest.model.BPToitureModel;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.mail.Email;
 import app.bpartners.geojobs.mail.Mailer;
@@ -28,8 +30,12 @@ class DetectionSavedServiceTest {
   void accept_ok() {
     when(bucketComponentMock.presign(any(), any())).thenReturn(new URI("http://localhost").toURL());
     var shapeFileKey = "dummy";
-    var detection = Detection.builder().shapeFileKey(shapeFileKey).build();
-    List<InternetAddress> cc = List.of(); // TODO: add admin emails here
+    var detection =
+        Detection.builder()
+            .shapeFileKey(shapeFileKey)
+            .bpToitureModel(new BPToitureModel().modelName(BP_TOITURE))
+            .build();
+    List<InternetAddress> cc = List.of();
     List<InternetAddress> bcc = List.of();
     String htmlBody = computeStaticEmailBody(detection, bucketComponentMock);
     List<File> attachments = List.of();
