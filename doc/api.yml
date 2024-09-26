@@ -899,6 +899,18 @@ components:
         - TROTTOIR
         - LINE
         - ESPACE_VERT
+        - VOIE_CARROSSABLE
+        - MOISISSURE
+        - USURE
+        - FISSURE_CASSURE
+        - OBSTACLE
+        - CHEMINEE
+        - HUMIDITE
+        - RISQUE_FEU
+        - PARKING
+        - VELUX
+        - ESPACE_VERT_PARKING
+        - RISQUE_FEU
     ProcessJobAnnotation:
       type: object
       properties:
@@ -1177,6 +1189,7 @@ components:
       oneOf:
         - $ref: '#/components/schemas/BPToitureModel'
         - $ref: '#/components/schemas/BPLomModel'
+        - $ref: '#/components/schemas/BPZanModel'
     BPToitureModel:
       type: object
       properties:
@@ -1213,6 +1226,7 @@ components:
           default: true
         cheminee:
           type: boolean
+          default: true
         humidite:
           type: boolean
           default: true
@@ -1227,12 +1241,123 @@ components:
           enum: [ 'BP_LOM' ]
         passagePieton:
           type: boolean
+          default: true
         voieCarrosable:
           type: boolean
+          default: true
         trottoir:
           type: boolean
+          default: true
         parking:
           type: boolean
+          default: true
+    BPZanModel:
+      type: object
+      properties:
+        modelName:
+          type: string
+          enum: [ 'BP_ZAN' ]
+        arbre:
+          type: boolean
+          default: true
+        espaceVert:
+          type: boolean
+          default: true
+        toiture:
+          type: boolean
+          default: true
+        voieCarrossable:
+          type: boolean
+          default: true
+        trottoir:
+          type: boolean
+          default: true
+        parking:
+          type: boolean
+          default: true
+    BPClimatResilienceModel:
+      properties:
+        modelName:
+          type: string
+          enum: ['BP_CLIMAT_RESILIENCE']
+        parking:
+          type: boolean
+          default: true
+        panneauPhotovoltaique:
+          type: boolean
+          default: true
+        arbre:
+          type: boolean
+          default: true
+        espaceVert:
+          type: boolean
+          default: true
+    BPConformitePluModel:
+      properties:
+        modelName:
+          type: string
+          enum: [ 'BP_CONFORMITE_PLU' ]
+        toiture:
+          type: boolean
+          default: true
+        arbre:
+          type: boolean
+          default: true
+        velux:
+          type: boolean
+          default: true
+        panneauPhotovoltaique:
+          type: boolean
+          default: true
+        espaceVert:
+          type: boolean
+          default: true
+        piscine:
+          type: boolean
+          default: true
+    BPTrottoirsModel:
+      properties:
+        modelName:
+          type: string
+          enum: [ 'BP_TROTTOIRS' ]
+        trottoir:
+          type: boolean
+          default: true
+        voieCarrossable:
+          type: boolean
+          default: true
+        arbre:
+          type: boolean
+          default: true
+        espaceVertParking:
+          type: boolean
+          default: true
+    BPOldModel:
+      properties:
+        modelName:
+          type: string
+          enum: [ 'BP_OLD' ]
+        arbre:
+          type: boolean
+          default: true
+        espaceVert:
+          type: boolean
+          default: true
+        toiture:
+          type: boolean
+          default: true
+        voieCarrossable:
+          type: boolean
+          default: true
+        trottoir:
+          type: boolean
+          default: true
+        parking:
+          type: boolean
+          default: true
+        risqueFeu:
+          type: boolean
+          default: true
     CreateDetection:
       type: object
       properties:
