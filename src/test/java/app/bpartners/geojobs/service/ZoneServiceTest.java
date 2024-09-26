@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.service;
 
-import static app.bpartners.geojobs.endpoint.rest.model.DetectionStep.CONFIGURING;
-import static app.bpartners.geojobs.endpoint.rest.model.DetectionStep.TILING;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.CONFIGURING;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.TILING;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.SUCCEEDED;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.UNKNOWN;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.ProgressionEnum.*;
@@ -120,9 +120,9 @@ class ZoneServiceTest {
 
     var actual = subject.processDetection(detectionId, createDetection, communityOwnerId);
 
-    assertEquals(CONFIGURING, actual.getActualStepStatus().getStep());
-    assertEquals(FINISHED, actual.getActualStepStatus().getStatus().getProgression());
-    assertEquals(SUCCEEDED, actual.getActualStepStatus().getStatus().getHealth());
+    assertEquals(CONFIGURING, actual.getStep().getName());
+    assertEquals(FINISHED, actual.getStep().getStatus().getProgression());
+    assertEquals(SUCCEEDED, actual.getStep().getStatus().getHealth());
   }
 
   @Test
@@ -135,10 +135,9 @@ class ZoneServiceTest {
 
     var actual = subject.processDetection(detectionId, createDetection, communityOwnerId);
 
-    assertEquals(TILING, actual.getActualStepStatus().getStep());
-    assertEquals(
-        Status.ProgressionEnum.PENDING, actual.getActualStepStatus().getStatus().getProgression());
-    assertEquals(UNKNOWN, actual.getActualStepStatus().getStatus().getHealth());
+    assertEquals(TILING, actual.getStep().getName());
+    assertEquals(Status.ProgressionEnum.PENDING, actual.getStep().getStatus().getProgression());
+    assertEquals(UNKNOWN, actual.getStep().getStatus().getHealth());
   }
 
   private void setUpAdminRoleCanProcessTilingMock(
@@ -199,17 +198,16 @@ class ZoneServiceTest {
             .geoJsonZone(detection.getGeoJsonZone())
             .geoServerProperties(detection.getGeoServerProperties())
             .detectableObjectModel(detection.getDetectableObjectModel())
-            .actualStepStatus(
-                new DetectionStepStatus()
-                    .step(CONFIGURING)
+            .step(
+                new DetectionStep()
+                    .name(CONFIGURING)
                     .status(
                         new Status()
                             .progression(PROCESSING)
                             .health(UNKNOWN)
-                            .creationDatetime(
-                                actual.getActualStepStatus().getStatus().getCreationDatetime()))
+                            .creationDatetime(actual.getStep().getStatus().getCreationDatetime()))
                     .statistics(List.of())
-                    .updatedAt(actual.getActualStepStatus().getUpdatedAt()));
+                    .updatedAt(actual.getStep().getUpdatedAt()));
     assertEquals(expectedDetectionSavedEvent, detectionSaved);
     assertEquals(expectedRestDetection, actual);
   }
@@ -246,17 +244,16 @@ class ZoneServiceTest {
             .geoJsonZone(detection.getGeoJsonZone())
             .geoServerProperties(detection.getGeoServerProperties())
             .detectableObjectModel(detection.getDetectableObjectModel())
-            .actualStepStatus(
-                new DetectionStepStatus()
-                    .step(CONFIGURING)
+            .step(
+                new DetectionStep()
+                    .name(CONFIGURING)
                     .status(
                         new Status()
                             .progression(PROCESSING)
                             .health(UNKNOWN)
-                            .creationDatetime(
-                                actual.getActualStepStatus().getStatus().getCreationDatetime()))
+                            .creationDatetime(actual.getStep().getStatus().getCreationDatetime()))
                     .statistics(List.of())
-                    .updatedAt(actual.getActualStepStatus().getUpdatedAt()));
+                    .updatedAt(actual.getStep().getUpdatedAt()));
     assertEquals(expectedDetectionSavedEvent, detectionSaved);
     assertEquals(expectedRestDetection, actual);
   }
@@ -307,17 +304,16 @@ class ZoneServiceTest {
             .geoJsonZone(detection.getGeoJsonZone())
             .geoServerProperties(detection.getGeoServerProperties())
             .detectableObjectModel(detection.getDetectableObjectModel())
-            .actualStepStatus(
-                new DetectionStepStatus()
-                    .step(CONFIGURING)
+            .step(
+                new DetectionStep()
+                    .name(CONFIGURING)
                     .status(
                         new Status()
                             .progression(FINISHED)
                             .health(SUCCEEDED)
-                            .creationDatetime(
-                                actual.getActualStepStatus().getStatus().getCreationDatetime()))
+                            .creationDatetime(actual.getStep().getStatus().getCreationDatetime()))
                     .statistics(List.of())
-                    .updatedAt(actual.getActualStepStatus().getUpdatedAt()));
+                    .updatedAt(actual.getStep().getUpdatedAt()));
     assertEquals(
         DetectionSaved.builder().detection(expectedDetectionSaved).build(), detectionProvided);
     assertEquals(expectedDetectionSaved, savedDetection);

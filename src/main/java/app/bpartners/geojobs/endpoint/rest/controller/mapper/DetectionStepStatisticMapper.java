@@ -15,11 +15,11 @@ import org.springframework.stereotype.Component;
 public class DetectionStepStatisticMapper {
   private final StatusMapper<JobStatus> statusMapper;
 
-  public DetectionStepStatus toRestDetectionStepStatus(
+  public DetectionStep toRestDetectionStepStatus(
       app.bpartners.geojobs.job.model.statistic.TaskStatistic statistic,
-      DetectionStep detectionStep) {
-    return new DetectionStepStatus()
-        .step(detectionStep)
+      DetectionStepName detectionStepName) {
+    return new DetectionStep()
+        .name(detectionStepName)
         .status(statusMapper.toRest(statistic.getActualJobStatus()))
         .updatedAt(statistic.getUpdatedAt())
         .statistics(toRestDetectionStep(statistic));
