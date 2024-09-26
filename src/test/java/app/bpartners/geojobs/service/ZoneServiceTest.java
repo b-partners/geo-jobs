@@ -1,12 +1,16 @@
 package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStep.CONFIGURING;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectionStep.TILING;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.SUCCEEDED;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.UNKNOWN;
-import static app.bpartners.geojobs.endpoint.rest.model.Status.ProgressionEnum.FINISHED;
-import static app.bpartners.geojobs.endpoint.rest.model.Status.ProgressionEnum.PROCESSING;
+import static app.bpartners.geojobs.endpoint.rest.model.Status.ProgressionEnum.*;
+import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
+import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_COMMUNITY;
 import static app.bpartners.geojobs.file.hash.FileHashAlgorithm.SHA256;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
+import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -18,16 +22,21 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTyp
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionStepStatisticMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneTilingJobMapper;
-import app.bpartners.geojobs.endpoint.rest.model.Detection;
-import app.bpartners.geojobs.endpoint.rest.model.DetectionStepStatus;
-import app.bpartners.geojobs.endpoint.rest.model.Status;
+import app.bpartners.geojobs.endpoint.rest.model.*;
+import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
+import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
+import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.hash.FileHash;
+import app.bpartners.geojobs.job.model.JobStatus;
+import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
+import app.bpartners.geojobs.repository.model.GeoJobType;
+import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
@@ -36,8 +45,7 @@ import app.bpartners.geojobs.utils.detection.DetectionCreator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.net.URI;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -80,6 +88,7 @@ class ZoneServiceTest {
           + "features"
           + File.separator
           + "features-ko.json";
+  AuthProvider authProviderMock = mock();
   ZoneService subject =
       new ZoneService(
           zoneDetectionJobServiceMock,
@@ -96,7 +105,67 @@ class ZoneServiceTest {
           conversionInitiationServiceMock,
           detectableObjectTypeMapper,
           new ObjectMapper().configure(FAIL_ON_UNKNOWN_PROPERTIES, false),
-          detectionUpdateValidatorMock);
+          detectionUpdateValidatorMock,
+          authProviderMock);
+
+  @Test
+  void community_role_stuck_in_configuring() {
+    when(authProviderMock.getPrincipal())
+        .thenReturn(new Principal("mockApiKey", Set.of(new Authority(ROLE_COMMUNITY))));
+    var detectionId = randomUUID().toString();
+    var detection = detectionCreator.create(detectionId, null, null);
+    var createDetection = new CreateDetection().geoJsonZone(featureCreator.defaultFeatures());
+    when(detectionRepositoryMock.findByEndToEndId(detectionId)).thenReturn(Optional.of(detection));
+    Optional<String> communityOwnerId = Optional.empty();
+
+    var actual = subject.processDetection(detectionId, createDetection, communityOwnerId);
+
+    assertEquals(CONFIGURING, actual.getActualStepStatus().getStep());
+    assertEquals(FINISHED, actual.getActualStepStatus().getStatus().getProgression());
+    assertEquals(SUCCEEDED, actual.getActualStepStatus().getStatus().getHealth());
+  }
+
+  @Test
+  void admin_role_can_process_tiling() {
+    var detectionId = randomUUID().toString();
+    var detection = detectionCreator.create(detectionId, null, null);
+    var createDetection = new CreateDetection().geoJsonZone(featureCreator.defaultFeatures());
+    Optional<String> communityOwnerId = Optional.empty();
+    setUpAdminRoleCanProcessTilingMock(detectionId, detection);
+
+    var actual = subject.processDetection(detectionId, createDetection, communityOwnerId);
+
+    assertEquals(TILING, actual.getActualStepStatus().getStep());
+    assertEquals(
+        Status.ProgressionEnum.PENDING, actual.getActualStepStatus().getStatus().getProgression());
+    assertEquals(UNKNOWN, actual.getActualStepStatus().getStatus().getHealth());
+  }
+
+  private void setUpAdminRoleCanProcessTilingMock(
+      String detectionId, app.bpartners.geojobs.repository.model.detection.Detection detection) {
+    when(detectionRepositoryMock.findByEndToEndId(detectionId)).thenReturn(Optional.of(detection));
+    when(authProviderMock.getPrincipal())
+        .thenReturn(new Principal("mockApiKey", Set.of(new Authority(ROLE_ADMIN))));
+    when(tilingJobMapperMock.from(any()))
+        .thenReturn(new CreateZoneTilingJob().geoServerUrl("http://localhost"));
+    when(tilingJobMapperMock.toDomain(any())).thenReturn(new ZoneTilingJob());
+    when(tilingJobServiceMock.create(any(), any())).thenReturn(new ZoneTilingJob());
+    when(detectionRepositoryMock.save(any()))
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+    when(tilingJobServiceMock.computeTaskStatistics(any()))
+        .thenReturn(
+            TaskStatistic.builder()
+                .actualJobStatus(
+                    JobStatus.builder()
+                        .progression(PENDING)
+                        .health(app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN)
+                        .creationDatetime(now())
+                        .build())
+                .updatedAt(now())
+                .taskStatusStatistics(new ArrayList<>())
+                .jobType(GeoJobType.TILING)
+                .build());
+  }
 
   @SneakyThrows
   @Test

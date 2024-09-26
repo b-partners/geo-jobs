@@ -2,6 +2,7 @@ package app.bpartners.geojobs.endpoint.rest.controller;
 
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper.toHealthStatus;
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper.toProgressionEnum;
+import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
@@ -31,6 +32,7 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMap
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.authorizer.DetectionAuthorizer;
+import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
@@ -66,6 +68,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -106,7 +109,8 @@ class DetectionControllerIT extends FacadeIT {
 
   @BeforeEach
   void setUp() {
-    when(authProviderMock.getPrincipal()).thenReturn(mock(Principal.class));
+    when(authProviderMock.getPrincipal())
+        .thenReturn(new Principal("mockApiKey", Set.of(new Authority(ROLE_ADMIN))));
     doNothing().when(detectionAuthorizer).accept(any(), any(), any());
     detectionRepository.deleteAll();
   }
