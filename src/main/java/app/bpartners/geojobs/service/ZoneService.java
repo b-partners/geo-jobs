@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.service;
 
-import static app.bpartners.geojobs.endpoint.rest.model.DetectionStep.*;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.*;
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
@@ -28,6 +27,7 @@ import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.model.exception.ApiException;
+import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.model.page.BoundedPageSize;
 import app.bpartners.geojobs.model.page.PageFromOne;
@@ -38,6 +38,7 @@ import app.bpartners.geojobs.repository.model.GeoJobType;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
+import app.bpartners.geojobs.service.detection.DetectionGeoJsonUpdateValidator;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
@@ -76,6 +77,7 @@ public class ZoneService {
   private final ObjectMapper objectMapper;
   private final DetectionUpdateValidator detectionUpdateValidator;
   private final AuthProvider authProvider;
+  private final DetectionGeoJsonUpdateValidator detectionGeoJsonUpdateValidator;
 
   private List<Feature> readFromFile(File featuresFromShape) {
     try {
@@ -90,6 +92,10 @@ public class ZoneService {
   public app.bpartners.geojobs.endpoint.rest.model.Detection finalizeGeoJsonConfig(
       String detectionId, File featuresFromShape) {
     var detection = getDetectionById(detectionId);
+    if (detection.getGeoJsonZone() != null && !detection.getGeoJsonZone().isEmpty()) {
+      throw new BadRequestException(
+          "Unable to finalize Detection(id=" + detectionId + ") geoJson as it already has values");
+    }
     var savedDetection =
         detectionRepository.save(
             detection.toBuilder().geoJsonZone(readFromFile(featuresFromShape)).build());
@@ -106,6 +112,7 @@ public class ZoneService {
   public app.bpartners.geojobs.endpoint.rest.model.Detection configureExcelFile(
       String detectionId, File excelFile) {
     var detection = getDetectionById(detectionId);
+    detectionGeoJsonUpdateValidator.accept(detection);
     var bucketKey = "detections/excel/" + detectionId;
     bucketComponent.upload(excelFile, bucketKey);
     var savedDetection =
@@ -117,6 +124,7 @@ public class ZoneService {
   public app.bpartners.geojobs.endpoint.rest.model.Detection configureShapeFile(
       String detectionId, File shapeFile) {
     var detection = getDetectionById(detectionId);
+    detectionGeoJsonUpdateValidator.accept(detection);
     var bucketKey = "detections/shape/" + detectionId;
     bucketComponent.upload(shapeFile, bucketKey);
     var savedDetection =

@@ -32,11 +32,13 @@ import app.bpartners.geojobs.file.hash.FileHash;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.model.exception.ApiException;
+import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
 import app.bpartners.geojobs.repository.model.GeoJobType;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
+import app.bpartners.geojobs.service.detection.DetectionGeoJsonUpdateValidator;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
@@ -89,6 +91,8 @@ class ZoneServiceTest {
           + File.separator
           + "features-ko.json";
   AuthProvider authProviderMock = mock();
+  DetectionGeoJsonUpdateValidator detectionGeoJsonUpdateValidator =
+      new DetectionGeoJsonUpdateValidator();
   ZoneService subject =
       new ZoneService(
           zoneDetectionJobServiceMock,
@@ -106,7 +110,8 @@ class ZoneServiceTest {
           detectableObjectTypeMapper,
           new ObjectMapper().configure(FAIL_ON_UNKNOWN_PROPERTIES, false),
           detectionUpdateValidatorMock,
-          authProviderMock);
+          authProviderMock,
+          detectionGeoJsonUpdateValidator);
 
   @Test
   void community_role_stuck_in_configuring() {
@@ -171,7 +176,8 @@ class ZoneServiceTest {
   void configure_shape_file_ok() {
     var shapeFile = File.createTempFile(randomUUID().toString(), randomUUID().toString());
     var detection =
-        detectionCreator.createFromZTJAndZDJ(randomUUID().toString(), randomUUID().toString());
+        detectionCreator.create(
+            randomUUID().toString(), randomUUID().toString(), randomUUID().toString(), null);
     var detectionId = detection.getId();
     var shapeFileBucketKey = "detections/shape/" + detectionId;
     var shapeUrl = "https://localhost";
@@ -217,7 +223,8 @@ class ZoneServiceTest {
   void configure_excel_file_ok() {
     var excelFile = File.createTempFile(randomUUID().toString(), randomUUID().toString());
     var detection =
-        detectionCreator.createFromZTJAndZDJ(randomUUID().toString(), randomUUID().toString());
+        detectionCreator.create(
+            randomUUID().toString(), randomUUID().toString(), randomUUID().toString(), List.of());
     var detectionId = detection.getId();
     var excelFileBucketKey = "detections/excel/" + detectionId;
     var excelUrl = "https://localhost";
@@ -262,7 +269,8 @@ class ZoneServiceTest {
   void finalize_geo_json_configuring_ko() {
     var featuresFile = new File(FEATURE_FILE_NAME_KO);
     var detection =
-        detectionCreator.createFromZTJAndZDJ(randomUUID().toString(), randomUUID().toString());
+        detectionCreator.create(
+            randomUUID().toString(), randomUUID().toString(), randomUUID().toString(), null);
     var detectionId = detection.getId();
     when(detectionRepositoryMock.save(any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
@@ -281,7 +289,8 @@ class ZoneServiceTest {
   void finalize_geo_json_configuring_ok() {
     var featuresFile = new File(FEATURE_FILE_NAME_OK);
     var detection =
-        detectionCreator.createFromZTJAndZDJ(randomUUID().toString(), randomUUID().toString());
+        detectionCreator.create(
+            randomUUID().toString(), randomUUID().toString(), randomUUID().toString(), List.of());
     var detectionId = detection.getId();
     when(detectionRepositoryMock.save(any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
@@ -297,11 +306,11 @@ class ZoneServiceTest {
     var savedDetection = detectionCaptor.getValue();
     var detectionProvided = (DetectionSaved) listCaptor.getValue().getFirst();
     var expectedDetectionSaved =
-        detection.toBuilder().geoJsonZone(detection.getGeoJsonZone()).build();
+        detection.toBuilder().geoJsonZone(featureCreator.defaultFeatures()).build();
     var expectedRestDetection =
         new Detection()
             .id(detectionId)
-            .geoJsonZone(detection.getGeoJsonZone())
+            .geoJsonZone(featureCreator.defaultFeatures())
             .geoServerProperties(detection.getGeoServerProperties())
             .detectableObjectModel(detection.getDetectableObjectModel())
             .step(
@@ -318,5 +327,73 @@ class ZoneServiceTest {
         DetectionSaved.builder().detection(expectedDetectionSaved).build(), detectionProvided);
     assertEquals(expectedDetectionSaved, savedDetection);
     assertEquals(expectedRestDetection, actual);
+  }
+
+  @SneakyThrows
+  @Test
+  void unable_to_update_geo_json() {
+    var featuresFile = new File(FEATURE_FILE_NAME_OK);
+    var shapeFile = File.createTempFile(randomUUID().toString(), randomUUID().toString());
+    var excelFile = File.createTempFile(randomUUID().toString(), randomUUID().toString());
+    var detection1 =
+        detectionCreator.create(
+            randomUUID().toString(),
+            randomUUID().toString(),
+            randomUUID().toString(),
+            featureCreator.defaultFeatures());
+    var detection2 =
+        detectionCreator
+            .create(
+                randomUUID().toString(),
+                randomUUID().toString(),
+                randomUUID().toString(),
+                List.of())
+            .toBuilder()
+            .shapeFileKey("notNullShapeFileKey")
+            .build();
+    var detection3 =
+        detectionCreator
+            .create(
+                randomUUID().toString(),
+                randomUUID().toString(),
+                randomUUID().toString(),
+                List.of())
+            .toBuilder()
+            .excelFileKey("notNullExcelFileKey")
+            .build();
+    when(detectionRepositoryMock.save(any()))
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+    when(detectionRepositoryMock.findById(detection1.getId())).thenReturn(Optional.of(detection1));
+    when(detectionRepositoryMock.findById(detection2.getId())).thenReturn(Optional.of(detection2));
+    when(detectionRepositoryMock.findById(detection3.getId())).thenReturn(Optional.of(detection3));
+
+    var actual1 =
+        assertThrows(
+            BadRequestException.class,
+            () -> subject.finalizeGeoJsonConfig(detection1.getId(), featuresFile));
+    var actual2 =
+        assertThrows(
+            BadRequestException.class,
+            () -> subject.configureExcelFile(detection2.getId(), excelFile));
+    var actual3 =
+        assertThrows(
+            BadRequestException.class,
+            () -> subject.configureShapeFile(detection3.getId(), shapeFile));
+
+    assertEquals(
+        "Unable to finalize Detection(id="
+            + detection1.getId()
+            + ") geoJson as it already has values",
+        actual1.getMessage());
+    assertEquals(
+        "Unable to configure Detection(id="
+            + detection2.getId()
+            + ") geoJson as it is already being configuring",
+        actual2.getMessage());
+    assertEquals(
+        "Unable to configure Detection(id="
+            + detection3.getId()
+            + ") geoJson as it is already being configuring",
+        actual3.getMessage());
   }
 }
