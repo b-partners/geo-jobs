@@ -17,6 +17,10 @@ public class DetectionCreator {
 
   public Detection createFromZTJAndZDJ(String tilingJobId, String detectionJobId) {
     var detectionId = randomUUID().toString();
+    return create(detectionId, tilingJobId, detectionJobId);
+  }
+
+  public Detection create(String detectionId, String tilingJobId, String detectionJobId) {
     return Detection.builder()
         .id(detectionId)
         .endToEndId(detectionId)

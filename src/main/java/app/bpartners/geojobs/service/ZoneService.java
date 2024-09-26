@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStep.*;
+import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
@@ -19,6 +20,7 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTyp
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionStepStatisticMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneTilingJobMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
+import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.job.model.JobStatus;
@@ -72,6 +74,7 @@ public class ZoneService {
   private final DetectableObjectTypeMapper detectableObjectTypeMapper;
   private final ObjectMapper objectMapper;
   private final DetectionUpdateValidator detectionUpdateValidator;
+  private final AuthProvider authProvider;
 
   private List<Feature> readFromFile(File featuresFromShape) {
     try {
@@ -140,8 +143,11 @@ public class ZoneService {
     detectionUpdateValidator.accept(detection, createDetection);
     if (detection.getGeoJsonZone() == null || detection.getGeoJsonZone().isEmpty()) {
       return computeFromConfiguring(detection, PENDING, UNKNOWN);
+    } else {
+      if (!ROLE_ADMIN.equals(authProvider.getPrincipal().getRole())) {
+        return computeFromConfiguring(detection, FINISHED, SUCCEEDED);
+      }
     }
-
     if (detection.getZtjId() == null) {
       var ztj = processZoneTilingJob(detection);
       var detectionWithZTJ =
