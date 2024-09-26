@@ -299,9 +299,9 @@ class DetectionControllerIT extends FacadeIT {
         new app.bpartners.geojobs.endpoint.rest.model.Detection()
             .id(detection.getEndToEndId())
             .geoJsonZone(featureCreator.defaultFeatures())
-            .actualStepStatus(
+            .step(
                 detectionStepStatisticMapper.toRestDetectionStepStatus(
-                    statistic, DetectionStep.MACHINE_DETECTION));
+                    statistic, DetectionStepName.MACHINE_DETECTION));
     assertEquals(List.of(expected), actual);
   }
 
@@ -319,9 +319,9 @@ class DetectionControllerIT extends FacadeIT {
         new app.bpartners.geojobs.endpoint.rest.model.Detection()
             .id(detection.getEndToEndId())
             .geoJsonZone(featureCreator.defaultFeatures())
-            .actualStepStatus(
+            .step(
                 detectionStepStatisticMapper.toRestDetectionStepStatus(
-                    statistic, DetectionStep.TILING));
+                    statistic, DetectionStepName.TILING));
     assertEquals(List.of(expected), actual);
   }
 

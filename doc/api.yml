@@ -1174,7 +1174,7 @@ components:
       enum:
         - UNDERSCORE
         - SLASH
-    DetectionStep:
+    DetectionStepName:
       enum:
         - CONFIGURING
         - TILING
@@ -1279,7 +1279,7 @@ components:
       properties:
         modelName:
           type: string
-          enum: ['BP_CLIMAT_RESILIENCE']
+          enum: [ 'BP_CLIMAT_RESILIENCE' ]
         parking:
           type: boolean
           default: true
@@ -1379,10 +1379,10 @@ components:
             $ref: '#/components/schemas/Feature'
           description: |
             Optional. If so, must provide zone by shape or excel file through its specific endpoint.
-    DetectionStepStatus:
+    DetectionStep:
       properties:
-        step:
-          $ref: '#/components/schemas/DetectionStep'
+        name:
+          $ref: '#/components/schemas/DetectionStepName'
         status:
           $ref: '#/components/schemas/Status'
         statistics:
@@ -1398,8 +1398,8 @@ components:
       properties:
         id:
           type: string
-        actualStepStatus:
-          $ref: '#/components/schemas/DetectionStepStatus'
+        step:
+          $ref: '#/components/schemas/DetectionStep'
         geoJsonUrl:
           type: string
         shapeUrl:

@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStep.*;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.*;
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
@@ -228,11 +229,11 @@ public class ZoneService {
   }
 
   private app.bpartners.geojobs.endpoint.rest.model.Detection addStatistics(Detection detection) {
-    DetectionStep detectionStep = TILING;
+    DetectionStepName detectionStepName = TILING;
     TaskStatistic statistic;
     if (detection.getZdjId() != null) {
       statistic = zoneDetectionJobService.getTaskStatistic(detection.getZdjId());
-      detectionStep = MACHINE_DETECTION;
+      detectionStepName = MACHINE_DETECTION;
     } else if (detection.getZtjId() != null) {
       statistic = zoneTilingJobService.getTaskStatistic(detection.getZtjId());
     } else {
@@ -240,7 +241,7 @@ public class ZoneService {
           SERVER_EXCEPTION, "Unknown supported step for detection (id=" + detection.getId() + ")");
     }
 
-    return createDetection(detection, statistic, detectionStep);
+    return createDetection(detection, statistic, detectionStepName);
   }
 
   private app.bpartners.geojobs.endpoint.rest.model.Detection computeFromConfiguring(
@@ -279,7 +280,7 @@ public class ZoneService {
   }
 
   private app.bpartners.geojobs.endpoint.rest.model.Detection createDetection(
-      Detection detection, TaskStatistic statistic, DetectionStep detectionStep) {
+      Detection detection, TaskStatistic statistic, DetectionStepName detectionStepName) {
     return new app.bpartners.geojobs.endpoint.rest.model.Detection()
         .id(detection.getEndToEndId())
         .emailReceiver(detection.getEmailReceiver())
@@ -290,8 +291,7 @@ public class ZoneService {
         .geoJsonUrl(generatePresignedUrl(detection.getGeojsonS3FileKey()))
         .geoServerProperties(detection.getGeoServerProperties())
         .detectableObjectModel(detection.getDetectableObjectModel())
-        .actualStepStatus(
-            detectionStepStatisticMapper.toRestDetectionStepStatus(statistic, detectionStep));
+        .step(detectionStepStatisticMapper.toRestDetectionStepStatus(statistic, detectionStepName));
   }
 
   private ZoneTilingJob processZoneTilingJob(Detection detection) {
