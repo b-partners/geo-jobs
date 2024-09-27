@@ -12,12 +12,12 @@ public class DetectionGeoJsonUpdateValidator implements Consumer<Detection> {
     if (detection.getGeoJsonZone() != null && !detection.getGeoJsonZone().isEmpty()) {
       throw new BadRequestException(
           "Unable to finalize Detection(id="
-              + detection.getId()
+              + detection.getEndToEndId()
               + ") geoJson as it already has values");
     } else if (detection.getShapeFileKey() != null || detection.getExcelFileKey() != null) {
       throw new BadRequestException(
           "Unable to configure Detection(id="
-              + detection.getId()
+              + detection.getEndToEndId()
               + ") geoJson as it is already being configuring");
     }
   }
