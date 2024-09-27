@@ -14,4 +14,7 @@ public interface DetectionRepository extends JpaRepository<Detection, String> {
   Optional<Detection> findByZdjId(String ztjId);
 
   List<Detection> findByCommunityOwnerId(String communityOwnerId, Pageable pageable);
+
+  Optional<Detection> findByEndToEndIdAndCommunityOwnerId(
+      String endToEndId, String communityOwnerId);
 }

@@ -121,9 +121,10 @@ class DetectionControllerIT extends FacadeIT {
 
   private Detection detectionWithoutZdj(String tilingJobId, List<Feature> geoJson) {
     var detectionId = randomUUID().toString();
+    var endToEndId = randomUUID().toString();
     return Detection.builder()
         .id(detectionId)
-        .endToEndId(detectionId)
+        .endToEndId(endToEndId)
         .ztjId(tilingJobId)
         .zdjId(null)
         .geojsonS3FileKey(null)

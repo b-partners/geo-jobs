@@ -50,7 +50,10 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
+import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -134,21 +137,8 @@ public class ZoneService {
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection processDetection(
-      String detectionId, CreateDetection createDetection, Optional<String> communityOwnerId) {
-    var detection =
-        detectionRepository
-            .findByEndToEndId(detectionId)
-            .orElseGet(
-                () -> {
-                  var detectionToSave =
-                      mapFromRestCreateDetection(detectionId, createDetection, communityOwnerId);
-                  var savedDetection =
-                      communityUsedSurfaceService.persistDetectionWithSurfaceUsage(
-                          detectionToSave, createDetection.getGeoJsonZone());
-                  eventProducer.accept(
-                      List.of(DetectionSaved.builder().detection(savedDetection).build()));
-                  return savedDetection;
-                });
+      String e2Id, CreateDetection createDetection, Optional<String> optionalCommunityId) {
+    var detection = getOrCreateDetection(e2Id, createDetection, optionalCommunityId);
     detectionUpdateValidator.accept(detection, createDetection);
     if (detection.getGeoJsonZone() == null || detection.getGeoJsonZone().isEmpty()) {
       return computeFromConfiguring(detection, PENDING, UNKNOWN);
@@ -201,20 +191,47 @@ public class ZoneService {
     return getDetectionStatistics(detection, detectionJobId);
   }
 
+  private Detection getOrCreateDetection(
+      String endToEndId, CreateDetection createDetection, Optional<String> optionalCommunityId) {
+    if (optionalCommunityId.isPresent()) {
+      return detectionRepository
+          .findByEndToEndIdAndCommunityOwnerId(endToEndId, optionalCommunityId.get())
+          .orElseGet(saveDetection(endToEndId, createDetection, optionalCommunityId.get()));
+    }
+    return detectionRepository
+        .findByEndToEndId(endToEndId)
+        .orElseGet(saveDetection(endToEndId, createDetection, null));
+  }
+
+  @NonNull
+  private Supplier<Detection> saveDetection(
+      String endToEndId, CreateDetection createDetection, String communityOwnerId) {
+    return () -> {
+      var detectionToSave =
+          mapFromRestCreateDetection(endToEndId, createDetection, communityOwnerId);
+      var savedDetection =
+          communityUsedSurfaceService.persistDetectionWithSurfaceUsage(
+              detectionToSave, createDetection.getGeoJsonZone());
+      eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
+      return savedDetection;
+    };
+  }
+
   private Detection mapFromRestCreateDetection(
-      String detectionId, CreateDetection createDetection, Optional<String> communityOwnerId) {
+      String endToEndId, CreateDetection createDetection, @Nullable String communityOwnerId) {
     var detectableObjectModel = createDetection.getDetectableObjectModel();
     var modelActualInstance = Objects.requireNonNull(detectableObjectModel).getActualInstance();
+    var detectionId = randomUUID().toString();
     var detectableObjectConfigurations =
         detectableObjectTypeMapper.mapDefaultConfigurationsFromModel(
             detectionId, modelActualInstance);
     var detectionBuilder =
         Detection.builder()
             .id(detectionId)
-            .endToEndId(detectionId)
+            .endToEndId(endToEndId)
             .emailReceiver(createDetection.getEmailReceiver())
             .zoneName(createDetection.getZoneName())
-            .communityOwnerId(communityOwnerId.orElse(null))
+            .communityOwnerId(communityOwnerId)
             .detectableObjectConfigurations(detectableObjectConfigurations)
             .geoServerProperties(createDetection.getGeoServerProperties())
             .geoJsonZone(createDetection.getGeoJsonZone());

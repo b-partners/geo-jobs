@@ -142,10 +142,11 @@ class CommunityUsedSurfaceServiceIT extends FacadeIT {
   @Test
   void persist_detectionWithSurfaceUsage_ok() {
     var detectionId = randomUUID().toString();
+    var endToEndId = randomUUID().toString();
     var detection =
         Detection.builder()
             .id(detectionId)
-            .endToEndId(detectionId)
+            .endToEndId(endToEndId)
             .communityOwnerId(COMMUNITY_ID)
             .build();
     when(featureSurfaceServiceMock.getAreaValue(any(List.class))).thenReturn(LAST_SURFACE_VALUE);
@@ -155,7 +156,7 @@ class CommunityUsedSurfaceServiceIT extends FacadeIT {
 
     var actualUsedSurface =
         subject.getTotalUsedSurfaceByCommunityId(COMMUNITY_ID, SQUARE_DEGREE).orElseThrow();
-    var actualDetection = detectionRepository.findByEndToEndId(detectionId).orElseThrow();
+    var actualDetection = detectionRepository.findByEndToEndId(endToEndId).orElseThrow();
 
     assertEquals(expectedSurfaceValue, actualUsedSurface.getUsedSurface());
     assertEquals(detection, actualDetection);
