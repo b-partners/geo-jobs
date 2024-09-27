@@ -1237,6 +1237,10 @@ components:
         - $ref: '#/components/schemas/BPToitureModel'
         - $ref: '#/components/schemas/BPLomModel'
         - $ref: '#/components/schemas/BPZanModel'
+        - $ref: '#/components/schemas/BPClimatResilienceModel'
+        - $ref: '#/components/schemas/BPConformitePluModel'
+        - $ref: '#/components/schemas/BPOldModel'
+        - $ref: '#/components/schemas/BPTrottoirsModel'
     BPToitureModel:
       type: object
       properties:
