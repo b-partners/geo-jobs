@@ -27,7 +27,7 @@ paths:
     post:
       tags:
         - Tiling
-        - Detection
+        - MachineDetection
       operationId: processAnnotationJob
       description: |
         Send jobs tiles to bpartners-annotator.
@@ -266,7 +266,7 @@ paths:
   '/detectionJobs':
     get:
       tags:
-        - Detection
+        - MachineDetection
       operationId: getDetectionJobs
       description: List all ZDJ
       parameters:
@@ -292,7 +292,7 @@ paths:
   '/detectionJobs/{id}/recomputedStatus':
     get:
       tags:
-        - Detection
+        - MachineDetection
       parameters:
         - in: path
           name: id
@@ -314,7 +314,7 @@ paths:
   '/detectionJobs/{id}/taskStatistics':
     get:
       tags:
-        - Detection
+        - MachineDetection
       parameters:
         - in: path
           name: id
@@ -336,7 +336,7 @@ paths:
   '/detectionJobs/{id}/retry':
     put:
       tags:
-        - Detection
+        - MachineDetection
       operationId: processFailedDetectionJob
       parameters:
         - in: path
@@ -360,7 +360,7 @@ paths:
   '/detectionJobs/{id}/taskFiltering':
     put:
       tags:
-        - Detection
+        - MachineDetection
       operationId: filterDetectionTasks
       description: |
         Separate SUCCEEDED tasks into new detection job from not SUCCEEDED tile detection tasks inside another detection job, for the given ZDJ
@@ -390,7 +390,7 @@ paths:
   '/detectionJobs/{id}/detectedParcels':
     get:
       tags:
-        - Detection
+        - MachineDetection
       parameters:
         - in: path
           name: id
@@ -414,7 +414,7 @@ paths:
   '/detectionJobs/{id}/geojsonsUrl':
     get:
       tags:
-        - Detection
+        - MachineDetection
       parameters:
         - in: path
           name: id
@@ -438,7 +438,7 @@ paths:
   '/detectionJobs/{id}/process':
     post:
       tags:
-        - Detection
+        - MachineDetection
       parameters:
         - in: path
           name: id

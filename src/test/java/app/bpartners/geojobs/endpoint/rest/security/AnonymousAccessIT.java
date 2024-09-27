@@ -8,6 +8,7 @@ import static org.mockito.Mockito.mock;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.rest.api.DetectionApi;
+import app.bpartners.geojobs.endpoint.rest.api.MachineDetectionApi;
 import app.bpartners.geojobs.endpoint.rest.api.TilingApi;
 import app.bpartners.geojobs.endpoint.rest.client.ApiClient;
 import app.bpartners.geojobs.endpoint.rest.client.ApiException;
@@ -31,6 +32,7 @@ public class AnonymousAccessIT extends FacadeIT {
 
   TilingApi tilingApi;
   DetectionApi detectionApi;
+  MachineDetectionApi machineDetectionApi;
 
   @BeforeEach
   void setUp() {
@@ -41,6 +43,7 @@ public class AnonymousAccessIT extends FacadeIT {
 
     tilingApi = new TilingApi(anonymousClient);
     detectionApi = new DetectionApi(anonymousClient);
+    machineDetectionApi = new MachineDetectionApi(anonymousClient);
   }
 
   @Test
@@ -70,10 +73,10 @@ public class AnonymousAccessIT extends FacadeIT {
 
   @Test
   void anonymous_cannot_detect() {
-    var e = assertThrows(ApiException.class, () -> detectionApi.getDetectionJobs(1, 2));
+    var e = assertThrows(ApiException.class, () -> machineDetectionApi.getDetectionJobs(1, 2));
     assertTrue(e.getMessage().contains("Bad credentials"));
 
-    e = assertThrows(ApiException.class, () -> detectionApi.getZDJGeojsonsUrl("dummy"));
+    e = assertThrows(ApiException.class, () -> machineDetectionApi.getZDJGeojsonsUrl("dummy"));
     assertTrue(e.getMessage().contains("Bad credentials"));
   }
 }
