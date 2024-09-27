@@ -204,14 +204,21 @@ public class ZoneDetectionController {
     return zoneService.configureExcelFile(detectionId, excelFile);
   }
 
-  @PutMapping("/detections/{id}")
+  @PostMapping("/detections/{id}")
   public Detection processDetection(
       @PathVariable(name = "id") String detectionId, @RequestBody CreateDetection createDetection) {
     detectionAuthorizer.accept(detectionId, createDetection, authProvider.getPrincipal());
     var communityAuthorization =
         communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
     var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId);
-    return zoneService.processDetection(detectionId, createDetection, communityOwnerId);
+    return zoneService.processZoneDetection(detectionId, createDetection, communityOwnerId);
+  }
+
+  @GetMapping("/detections/{id}")
+  public Detection getProcessedDetection(
+      @PathVariable(name = "id") String detectionId, @RequestBody CreateDetection createDetection) {
+    detectionAuthorizer.accept(detectionId, createDetection, authProvider.getPrincipal());
+    return zoneService.getProcessedDetection(detectionId);
   }
 
   @GetMapping("/usage")
