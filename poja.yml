@@ -17,7 +17,7 @@ database:
   database_non_root_password: /geo-jobs/${Env}/db/user/password
   database_non_root_username: /geo-jobs/${Env}/db/user/username
   prod_db_cluster_timeout: '300'
-  with_database: non-poja-managed-postgres
+  with_database: None
 emailing:
   ses_source: lou@bpartners.app
 gen_api_client:
