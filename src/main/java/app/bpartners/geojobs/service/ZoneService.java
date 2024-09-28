@@ -1,10 +1,15 @@
 package app.bpartners.geojobs.service;
 
-import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.*;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.CONFIGURING;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.MACHINE_DETECTION;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.TILING;
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
+import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_COMMUNITY;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
-import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.CLIENT_EXCEPTION;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
@@ -19,7 +24,11 @@ import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerifi
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionStepStatisticMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneTilingJobMapper;
-import app.bpartners.geojobs.endpoint.rest.model.*;
+import app.bpartners.geojobs.endpoint.rest.model.BPLomModel;
+import app.bpartners.geojobs.endpoint.rest.model.BPToitureModel;
+import app.bpartners.geojobs.endpoint.rest.model.CreateDetection;
+import app.bpartners.geojobs.endpoint.rest.model.DetectionStepName;
+import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
@@ -131,6 +140,88 @@ public class ZoneService {
         detectionRepository.save(detection.toBuilder().shapeFileKey(bucketKey).build());
     eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
     return computeFromConfiguring(savedDetection, PROCESSING, UNKNOWN);
+  }
+
+  public app.bpartners.geojobs.endpoint.rest.model.Detection getProcessedDetection(
+      String detectionId) {
+    var detection =
+        detectionRepository
+            .findByEndToEndId(detectionId)
+            .orElseThrow(
+                () -> new NotFoundException("DetectionJob.id=" + detectionId + " is not found."));
+
+    if (detection.getGeoJsonZone() == null || detection.getGeoJsonZone().isEmpty()) {
+      return computeFromConfiguring(detection, PENDING, UNKNOWN);
+    } else {
+      if (!ROLE_ADMIN.equals(authProvider.getPrincipal().getRole())) {
+        return computeFromConfiguring(detection, FINISHED, SUCCEEDED);
+      }
+    }
+    return getDetectionStatistics(detection, detection.getZdjId());
+  }
+
+  public app.bpartners.geojobs.endpoint.rest.model.Detection processZoneDetection(
+      String detectionId, CreateDetection createDetection, Optional<String> communityOwnerId) {
+    Optional<Detection> optionalDetection = detectionRepository.findByEndToEndId(detectionId);
+    if (optionalDetection.isPresent()) {
+      var detection = optionalDetection.get();
+      var tilingJobId = detection.getZtjId();
+      var detectionJobId = detection.getZdjId();
+      if (ROLE_COMMUNITY.equals(authProvider.getPrincipal().getRole())) {
+        throw new BadRequestException(
+            String.format(
+                "A detectionJob with the specified id=(%s) "
+                    + "already exists and can not be updated.",
+                detectionId));
+      }
+      if (tilingJobId == null) {
+        var ztj = processZoneTilingJob(detection);
+        var detectionWithZTJ =
+            detectionRepository.save(detection.toBuilder().ztjId(ztj.getId()).build());
+        return getTilingStatistics(detectionWithZTJ, ztj.getId());
+      }
+      var zoneTilingJob = zoneTilingJobRepository.findById(tilingJobId).orElse(null);
+      var machineZoneDetectionJob =
+          detectionJobId == null
+              ? null
+              : zoneDetectionJobRepository.findById(detectionJobId).orElse(null);
+      assert zoneTilingJob != null;
+      if (!zoneTilingJob.isSucceeded()) {
+        return getTilingStatistics(detection, tilingJobId);
+      }
+      assert machineZoneDetectionJob != null;
+      if (machineZoneDetectionJob.isPending() && zoneTilingJob.isFinished()) {
+        var savedDetectionJob = processZoneDetectionJob(detection, zoneTilingJob);
+        return getDetectionStatistics(detection, savedDetectionJob.getId());
+      }
+
+      if (machineZoneDetectionJob.isFinished()) {
+        var humanZoneDetectionJob = zoneDetectionJobService.getByTilingJobId(tilingJobId, HUMAN);
+        if (!humanZoneDetectionJob.isFinished()) {
+          eventProducer.accept(
+              List.of(
+                  AnnotationJobVerificationSent.builder()
+                      .humanZdjId(humanZoneDetectionJob.getId())
+                      .build()));
+        } else {
+          conversionInitiationService.processConversionTask(
+              detection, humanZoneDetectionJob.getZoneName(), humanZoneDetectionJob.getId());
+        }
+      }
+    }
+    var savedDetection = createZoneDetectionJob(detectionId, createDetection, communityOwnerId);
+    return computeFromConfiguring(savedDetection, PENDING, UNKNOWN);
+  }
+
+  private Detection createZoneDetectionJob(
+      String detectionId, CreateDetection createDetection, Optional<String> communityOwnerId) {
+    var detectionToSave =
+        mapFromRestCreateDetection(detectionId, createDetection, communityOwnerId);
+    var savedDetection =
+        communityUsedSurfaceService.persistDetectionWithSurfaceUsage(
+            detectionToSave, createDetection.getGeoJsonZone());
+    eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
+    return savedDetection;
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection processDetection(
