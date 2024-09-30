@@ -8,7 +8,7 @@ info:
     # Security
     
     Get your **API key** by emailing **contact@bpartners.app**.
-    All of your requests must embed your API key in the header name: **x-api-key**.
+    All of your requests must embed your API key in the header named: **x-api-key**.
     
     # Usage
     
