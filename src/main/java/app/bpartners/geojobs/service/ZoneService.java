@@ -112,9 +112,16 @@ public class ZoneService {
         .orElseThrow(() -> new NotFoundException("Detection(id=" + detectionId + ") not found"));
   }
 
+  private Detection getDetectionByE2eId(String detectionId) {
+    return detectionRepository
+        .findByEndToEndId(detectionId)
+        .orElseThrow(
+            () -> new NotFoundException("Detection(e2e.id=" + detectionId + ") not found"));
+  }
+
   public app.bpartners.geojobs.endpoint.rest.model.Detection configureExcelFile(
       String detectionId, File excelFile) {
-    var detection = getDetectionById(detectionId);
+    var detection = getDetectionByE2eId(detectionId);
     detectionGeoJsonUpdateValidator.accept(detection);
     var bucketKey = "detections/excel/" + detectionId;
     bucketComponent.upload(excelFile, bucketKey);
@@ -126,7 +133,7 @@ public class ZoneService {
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection configureShapeFile(
       String detectionId, File shapeFile) {
-    var detection = getDetectionById(detectionId);
+    var detection = getDetectionByE2eId(detectionId);
     detectionGeoJsonUpdateValidator.accept(detection);
     var bucketKey = "detections/shape/" + detectionId;
     bucketComponent.upload(shapeFile, bucketKey);
