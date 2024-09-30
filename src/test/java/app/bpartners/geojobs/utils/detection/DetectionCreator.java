@@ -22,7 +22,10 @@ public class DetectionCreator {
   }
 
   public Detection create(String detectionId, String tilingJobId, String detectionJobId) {
-    return create(detectionId, tilingJobId, detectionJobId, featureCreator.defaultFeatures());
+    return create(detectionId, tilingJobId, detectionJobId, featureCreator.defaultFeatures())
+        .toBuilder()
+        .endToEndId(randomUUID().toString())
+        .build();
   }
 
   public Detection create(

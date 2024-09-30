@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.rest.api.DetectionApi;
+import app.bpartners.geojobs.endpoint.rest.api.MachineDetectionApi;
 import app.bpartners.geojobs.endpoint.rest.client.ApiClient;
 import app.bpartners.geojobs.endpoint.rest.client.ApiException;
 import app.bpartners.geojobs.endpoint.rest.model.*;
@@ -28,6 +29,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 class CommunityAuthenticatedAccessIT extends FacadeIT {
   private static final String APIKEY = "APIKEY";
 
+  MachineDetectionApi machineDetectionApi;
   DetectionApi detectionApi;
 
   @Autowired ObjectMapper om;
@@ -48,7 +50,7 @@ class CommunityAuthenticatedAccessIT extends FacadeIT {
 
   @Test
   void community_cannot_access_endpoint_if_not_detection() {
-    var error = assertThrows(ApiException.class, () -> detectionApi.getDetectionJobs(1, 10));
+    var error = assertThrows(ApiException.class, () -> machineDetectionApi.getDetectionJobs(1, 10));
     assertTrue(error.getMessage().contains("Access Denied"));
   }
 
@@ -72,6 +74,7 @@ class CommunityAuthenticatedAccessIT extends FacadeIT {
     authenticatedClient.setObjectMapper(om);
 
     detectionApi = new DetectionApi(authenticatedClient);
+    machineDetectionApi = new MachineDetectionApi(authenticatedClient);
   }
 
   private CommunityAuthorization communityAuthorization() {

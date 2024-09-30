@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.rest.api.DetectionApi;
+import app.bpartners.geojobs.endpoint.rest.api.MachineDetectionApi;
 import app.bpartners.geojobs.endpoint.rest.api.TilingApi;
 import app.bpartners.geojobs.endpoint.rest.client.ApiClient;
 import app.bpartners.geojobs.endpoint.rest.client.ApiException;
@@ -32,6 +33,7 @@ public class AdminAuthenticatedAccessIT extends FacadeIT {
 
   TilingApi tilingApi;
   DetectionApi detectionApi;
+  MachineDetectionApi machineDetectionApi;
 
   @MockBean ZoneTilingController tilingController;
   @MockBean ZoneDetectionController detectionController;
@@ -47,6 +49,7 @@ public class AdminAuthenticatedAccessIT extends FacadeIT {
 
     tilingApi = new TilingApi(authenticatedClient);
     detectionApi = new DetectionApi(authenticatedClient);
+    machineDetectionApi = new MachineDetectionApi(authenticatedClient);
   }
 
   @Test
@@ -64,7 +67,7 @@ public class AdminAuthenticatedAccessIT extends FacadeIT {
     var expected = new ZoneDetectionJob();
     when(detectionController.processZDJ(any(), any())).thenReturn(expected);
 
-    var actual = detectionApi.processZDJ("dummy", List.of());
+    var actual = machineDetectionApi.processZDJ("dummy", List.of());
 
     assertEquals(expected, actual);
   }

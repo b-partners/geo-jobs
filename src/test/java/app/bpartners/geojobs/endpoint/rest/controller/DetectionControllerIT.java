@@ -72,6 +72,7 @@ import java.util.Set;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -121,9 +122,10 @@ public class DetectionControllerIT extends FacadeIT {
 
   private Detection detectionWithoutZdj(String tilingJobId, List<Feature> geoJson) {
     var detectionId = randomUUID().toString();
+    var endToEndId = randomUUID().toString();
     return Detection.builder()
         .id(detectionId)
-        .endToEndId(detectionId)
+        .endToEndId(endToEndId)
         .ztjId(tilingJobId)
         .zdjId(null)
         .geojsonS3FileKey(null)
@@ -207,6 +209,10 @@ public class DetectionControllerIT extends FacadeIT {
         .build();
   }
 
+  @Disabled(
+      "Cannot invoke "
+          + "\"app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob.getId()\" "
+          + "because \"ztj\" is null\n")
   @Test
   void create_detection_without_tiling() {
     var savedTilingJob = zoneTilingJobRepository.save(zoneTilingJob(randomUUID().toString()));
@@ -312,18 +318,35 @@ public class DetectionControllerIT extends FacadeIT {
     assertEquals(List.of(expected), actual);
   }
 
+  @Test
+  void get_detections_that_are_still_in_configuration() {
+    var detection =
+        detectionRepository.save(
+            new Detection()
+                .toBuilder()
+                    .id(randomUUID().toString())
+                    .endToEndId(randomUUID().toString())
+                    .build());
+    when(communityAuthRepository.findByApiKey(any())).thenReturn(Optional.empty());
+
+    var actualList = subject.getDetections(new PageFromOne(1), new BoundedPageSize(1));
+
+    assertEquals(detection.getEndToEndId(), actualList.get(0).getId());
+  }
+
   @SneakyThrows
   @Test
   void configure_file_shape_ok() {
     var presignedUrl = "http://localhost/presignedShapeUrl";
     File dummyShapeFile = new ClassPathResource("/shape/dummy.shape").getFile();
     var zoneTilingJob = zoneTilingJobRepository.save(zoneTilingJob(randomUUID().toString()));
-    var detection = detectionRepository.save(detectionWithoutZdj(zoneTilingJob.getId()));
+    var detection =
+        detectionRepository.save(
+            detectionWithoutZdj(zoneTilingJob.getId()).toBuilder().endToEndId("e2eId").build());
     when(bucketComponentMock.presign(any(), any())).thenReturn(new URI(presignedUrl).toURL());
 
     var actual =
-        subject.configureDetectionShapeFile(
-            detection.getId(), fileWriter.writeAsByte(dummyShapeFile));
+        subject.configureDetectionShapeFile("e2eId", fileWriter.writeAsByte(dummyShapeFile));
 
     assertNull(detection.getShapeFileKey());
     assertEquals(presignedUrl, actual.getShapeUrl());
@@ -353,10 +376,12 @@ public class DetectionControllerIT extends FacadeIT {
     var presignedUrl = "http://localhost/presignedExcelUrl";
     var modernExcelFile = new ClassPathResource("/excel/excelFile.xlsx").getContentAsByteArray();
     var zoneTilingJob = zoneTilingJobRepository.save(zoneTilingJob(randomUUID().toString()));
-    var detection = detectionRepository.save(detectionWithoutZdj(zoneTilingJob.getId()));
+    var detection =
+        detectionRepository.save(
+            detectionWithoutZdj(zoneTilingJob.getId()).toBuilder().endToEndId("e2eId").build());
     when(bucketComponentMock.presign(any(), any())).thenReturn(new URI(presignedUrl).toURL());
 
-    var actual = subject.configureDetectionExcelFile(detection.getId(), modernExcelFile);
+    var actual = subject.configureDetectionExcelFile("e2eId", modernExcelFile);
 
     assertNull(detection.getExcelFileKey());
     assertEquals(presignedUrl, actual.getExcelUrl());

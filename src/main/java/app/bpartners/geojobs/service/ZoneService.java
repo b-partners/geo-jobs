@@ -11,7 +11,6 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.CLIENT_EXCEPTION;
-import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static app.bpartners.geojobs.service.tiling.ZoneTilingJobService.getTilingTasks;
@@ -59,7 +58,10 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
+import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -118,9 +120,16 @@ public class ZoneService {
         .orElseThrow(() -> new NotFoundException("Detection(id=" + detectionId + ") not found"));
   }
 
+  private Detection getDetectionByE2eId(String detectionId) {
+    return detectionRepository
+        .findByEndToEndId(detectionId)
+        .orElseThrow(
+            () -> new NotFoundException("Detection(e2e.id=" + detectionId + ") not found"));
+  }
+
   public app.bpartners.geojobs.endpoint.rest.model.Detection configureExcelFile(
       String detectionId, File excelFile) {
-    var detection = getDetectionById(detectionId);
+    var detection = getDetectionByE2eId(detectionId);
     detectionGeoJsonUpdateValidator.accept(detection);
     var bucketKey = "detections/excel/" + detectionId;
     bucketComponent.upload(excelFile, bucketKey);
@@ -132,7 +141,7 @@ public class ZoneService {
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection configureShapeFile(
       String detectionId, File shapeFile) {
-    var detection = getDetectionById(detectionId);
+    var detection = getDetectionByE2eId(detectionId);
     detectionGeoJsonUpdateValidator.accept(detection);
     var bucketKey = "detections/shape/" + detectionId;
     bucketComponent.upload(shapeFile, bucketKey);
@@ -225,21 +234,8 @@ public class ZoneService {
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection processDetection(
-      String detectionId, CreateDetection createDetection, Optional<String> communityOwnerId) {
-    var detection =
-        detectionRepository
-            .findByEndToEndId(detectionId)
-            .orElseGet(
-                () -> {
-                  var detectionToSave =
-                      mapFromRestCreateDetection(detectionId, createDetection, communityOwnerId);
-                  var savedDetection =
-                      communityUsedSurfaceService.persistDetectionWithSurfaceUsage(
-                          detectionToSave, createDetection.getGeoJsonZone());
-                  eventProducer.accept(
-                      List.of(DetectionSaved.builder().detection(savedDetection).build()));
-                  return savedDetection;
-                });
+      String e2Id, CreateDetection createDetection, Optional<String> optionalCommunityId) {
+    var detection = getOrCreateDetection(e2Id, createDetection, optionalCommunityId);
     detectionUpdateValidator.accept(detection, createDetection);
     if (detection.getGeoJsonZone() == null || detection.getGeoJsonZone().isEmpty()) {
       return computeFromConfiguring(detection, PENDING, UNKNOWN);
@@ -292,20 +288,47 @@ public class ZoneService {
     return getDetectionStatistics(detection, detectionJobId);
   }
 
+  private Detection getOrCreateDetection(
+      String endToEndId, CreateDetection createDetection, Optional<String> optionalCommunityId) {
+    if (optionalCommunityId.isPresent()) {
+      return detectionRepository
+          .findByEndToEndIdAndCommunityOwnerId(endToEndId, optionalCommunityId.get())
+          .orElseGet(saveDetection(endToEndId, createDetection, optionalCommunityId.get()));
+    }
+    return detectionRepository
+        .findByEndToEndId(endToEndId)
+        .orElseGet(saveDetection(endToEndId, createDetection, null));
+  }
+
+  @NonNull
+  private Supplier<Detection> saveDetection(
+      String endToEndId, CreateDetection createDetection, String communityOwnerId) {
+    return () -> {
+      var detectionToSave =
+          mapFromRestCreateDetection(endToEndId, createDetection, communityOwnerId);
+      var savedDetection =
+          communityUsedSurfaceService.persistDetectionWithSurfaceUsage(
+              detectionToSave, createDetection.getGeoJsonZone());
+      eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
+      return savedDetection;
+    };
+  }
+
   private Detection mapFromRestCreateDetection(
-      String detectionId, CreateDetection createDetection, Optional<String> communityOwnerId) {
+      String endToEndId, CreateDetection createDetection, @Nullable String communityOwnerId) {
     var detectableObjectModel = createDetection.getDetectableObjectModel();
     var modelActualInstance = Objects.requireNonNull(detectableObjectModel).getActualInstance();
+    var detectionId = randomUUID().toString();
     var detectableObjectConfigurations =
         detectableObjectTypeMapper.mapDefaultConfigurationsFromModel(
             detectionId, modelActualInstance);
     var detectionBuilder =
         Detection.builder()
             .id(detectionId)
-            .endToEndId(detectionId)
+            .endToEndId(endToEndId)
             .emailReceiver(createDetection.getEmailReceiver())
             .zoneName(createDetection.getZoneName())
-            .communityOwnerId(communityOwnerId.orElse(null))
+            .communityOwnerId(communityOwnerId)
             .detectableObjectConfigurations(detectableObjectConfigurations)
             .geoServerProperties(createDetection.getGeoServerProperties())
             .geoJsonZone(createDetection.getGeoJsonZone());
@@ -324,23 +347,27 @@ public class ZoneService {
         communityId
             .map(ownerId -> detectionRepository.findByCommunityOwnerId(ownerId, pageable))
             .orElseGet(() -> detectionRepository.findAll(pageable).getContent());
+
+    for (var detection : detections) {
+      detection.setId(detection.getEndToEndId());
+    }
     return detections.stream().map(this::addStatistics).toList();
   }
 
   private app.bpartners.geojobs.endpoint.rest.model.Detection addStatistics(Detection detection) {
-    DetectionStepName detectionStepName = TILING;
-    TaskStatistic statistic;
     if (detection.getZdjId() != null) {
-      statistic = zoneDetectionJobService.getTaskStatistic(detection.getZdjId());
-      detectionStepName = MACHINE_DETECTION;
-    } else if (detection.getZtjId() != null) {
-      statistic = zoneTilingJobService.getTaskStatistic(detection.getZtjId());
-    } else {
-      throw new ApiException(
-          SERVER_EXCEPTION, "Unknown supported step for detection (id=" + detection.getId() + ")");
+      return createDetection(
+          detection,
+          zoneDetectionJobService.getTaskStatistic(detection.getZdjId()),
+          MACHINE_DETECTION);
     }
 
-    return createDetection(detection, statistic, detectionStepName);
+    if (detection.getZtjId() != null) {
+      return createDetection(
+          detection, zoneTilingJobService.getTaskStatistic(detection.getZtjId()), TILING);
+    }
+
+    return createDetection(detection, new TaskStatistic(), CONFIGURING);
   }
 
   private app.bpartners.geojobs.endpoint.rest.model.Detection computeFromConfiguring(

@@ -14,6 +14,7 @@ import static app.bpartners.geojobs.file.hash.FileHashAlgorithm.SHA256;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
+import static java.io.File.createTempFile;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -222,21 +223,22 @@ class ZoneServiceTest {
   @SneakyThrows
   @Test
   void configure_shape_file_ok() {
-    var shapeFile = File.createTempFile(randomUUID().toString(), randomUUID().toString());
+    var shapeFile = createTempFile(randomUUID().toString(), randomUUID().toString());
     var detection =
         detectionCreator.create(
             randomUUID().toString(), randomUUID().toString(), randomUUID().toString(), null);
-    var detectionId = detection.getId();
-    var shapeFileBucketKey = "detections/shape/" + detectionId;
+    var detectionE2eId = detection.getEndToEndId();
+    var shapeFileBucketKey = "detections/shape/" + detectionE2eId;
     var shapeUrl = "https://localhost";
     when(bucketComponentMock.upload(shapeFile, shapeFileBucketKey))
         .thenReturn(new FileHash(SHA256, "dummy"));
     when(bucketComponentMock.presign(any(), any())).thenReturn(new URI(shapeUrl).toURL());
     when(detectionRepositoryMock.save(any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
-    when(detectionRepositoryMock.findById(detectionId)).thenReturn(Optional.of(detection));
+    when(detectionRepositoryMock.findByEndToEndId(detectionE2eId))
+        .thenReturn(Optional.of(detection));
 
-    var actual = subject.configureShapeFile(detectionId, shapeFile);
+    var actual = subject.configureShapeFile(detectionE2eId, shapeFile);
 
     var listCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducerMock, only()).accept(listCaptor.capture());
@@ -246,7 +248,7 @@ class ZoneServiceTest {
         DetectionSaved.builder().detection(expectedSavedDetection).build();
     var expectedRestDetection =
         new Detection()
-            .id(detectionId)
+            .id(detectionE2eId)
             .shapeUrl(shapeUrl)
             .excelUrl(null)
             .geoJsonZone(detection.getGeoJsonZone())
@@ -269,21 +271,22 @@ class ZoneServiceTest {
   @Test
   @SneakyThrows
   void configure_excel_file_ok() {
-    var excelFile = File.createTempFile(randomUUID().toString(), randomUUID().toString());
+    var excelFile = createTempFile(randomUUID().toString(), randomUUID().toString());
     var detection =
         detectionCreator.create(
             randomUUID().toString(), randomUUID().toString(), randomUUID().toString(), List.of());
-    var detectionId = detection.getId();
-    var excelFileBucketKey = "detections/excel/" + detectionId;
+    var detectionE2eId = detection.getEndToEndId();
+    var excelFileBucketKey = "detections/excel/" + detectionE2eId;
     var excelUrl = "https://localhost";
     when(bucketComponentMock.upload(excelFile, excelFileBucketKey))
         .thenReturn(new FileHash(SHA256, "dummy"));
     when(bucketComponentMock.presign(any(), any())).thenReturn(new URI(excelUrl).toURL());
     when(detectionRepositoryMock.save(any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
-    when(detectionRepositoryMock.findById(detectionId)).thenReturn(Optional.of(detection));
+    when(detectionRepositoryMock.findByEndToEndId(detectionE2eId))
+        .thenReturn(Optional.of(detection));
 
-    var actual = subject.configureExcelFile(detectionId, excelFile);
+    var actual = subject.configureExcelFile(detectionE2eId, excelFile);
 
     var listCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducerMock, only()).accept(listCaptor.capture());
@@ -293,7 +296,7 @@ class ZoneServiceTest {
         DetectionSaved.builder().detection(expectedSavedDetection).build();
     var expectedRestDetection =
         new Detection()
-            .id(detectionId)
+            .id(detectionE2eId)
             .excelUrl(excelUrl)
             .shapeUrl(null)
             .geoJsonZone(detection.getGeoJsonZone())
@@ -381,8 +384,8 @@ class ZoneServiceTest {
   @Test
   void unable_to_update_geo_json() {
     var featuresFile = new File(FEATURE_FILE_NAME_OK);
-    var shapeFile = File.createTempFile(randomUUID().toString(), randomUUID().toString());
-    var excelFile = File.createTempFile(randomUUID().toString(), randomUUID().toString());
+    var shapeFile = createTempFile(randomUUID().toString(), randomUUID().toString());
+    var excelFile = createTempFile(randomUUID().toString(), randomUUID().toString());
     var detection1 =
         detectionCreator.create(
             randomUUID().toString(),
@@ -412,8 +415,10 @@ class ZoneServiceTest {
     when(detectionRepositoryMock.save(any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
     when(detectionRepositoryMock.findById(detection1.getId())).thenReturn(Optional.of(detection1));
-    when(detectionRepositoryMock.findById(detection2.getId())).thenReturn(Optional.of(detection2));
-    when(detectionRepositoryMock.findById(detection3.getId())).thenReturn(Optional.of(detection3));
+    when(detectionRepositoryMock.findByEndToEndId(detection2.getEndToEndId()))
+        .thenReturn(Optional.of(detection2));
+    when(detectionRepositoryMock.findByEndToEndId(detection3.getEndToEndId()))
+        .thenReturn(Optional.of(detection3));
 
     var actual1 =
         assertThrows(
@@ -422,11 +427,11 @@ class ZoneServiceTest {
     var actual2 =
         assertThrows(
             BadRequestException.class,
-            () -> subject.configureExcelFile(detection2.getId(), excelFile));
+            () -> subject.configureExcelFile(detection2.getEndToEndId(), excelFile));
     var actual3 =
         assertThrows(
             BadRequestException.class,
-            () -> subject.configureShapeFile(detection3.getId(), shapeFile));
+            () -> subject.configureShapeFile(detection3.getEndToEndId(), shapeFile));
 
     assertEquals(
         "Unable to finalize Detection(id="
