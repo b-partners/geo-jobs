@@ -194,11 +194,11 @@ public class ZoneService {
           detectionJobId == null
               ? null
               : zoneDetectionJobRepository.findById(detectionJobId).orElse(null);
-      assert zoneTilingJob != null;
       if (!zoneTilingJob.isSucceeded()) {
         return getTilingStatistics(detection, tilingJobId);
       }
       assert machineZoneDetectionJob != null;
+      log.info("Machine detection {}", machineZoneDetectionJob);
       if (machineZoneDetectionJob.isPending() && zoneTilingJob.isFinished()) {
         var savedDetectionJob = processZoneDetectionJob(detection, zoneTilingJob);
         return getDetectionStatistics(detection, savedDetectionJob.getId());
@@ -225,8 +225,7 @@ public class ZoneService {
   private Detection createZoneDetectionJob(
       String detectionId, CreateDetection createDetection, Optional<String> communityOwnerId) {
     var communityId = communityOwnerId.orElse(null);
-    var detectionToSave =
-        mapFromRestCreateDetection(detectionId, createDetection, communityId);
+    var detectionToSave = mapFromRestCreateDetection(detectionId, createDetection, communityId);
     var savedDetection =
         communityUsedSurfaceService.persistDetectionWithSurfaceUsage(
             detectionToSave, createDetection.getGeoJsonZone());

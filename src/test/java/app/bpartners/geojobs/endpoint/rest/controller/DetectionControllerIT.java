@@ -72,7 +72,6 @@ import java.util.Set;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -209,10 +208,6 @@ public class DetectionControllerIT extends FacadeIT {
         .build();
   }
 
-  @Disabled(
-      "Cannot invoke "
-          + "\"app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob.getId()\" "
-          + "because \"ztj\" is null\n")
   @Test
   void create_detection_without_tiling() {
     var savedTilingJob = zoneTilingJobRepository.save(zoneTilingJob(randomUUID().toString()));
@@ -224,7 +219,6 @@ public class DetectionControllerIT extends FacadeIT {
             detectionCreator.createFromZTJAndZDJ(
                 savedTilingJob.getId(), savedDetectionJob.getId()));
     when(zoneDetectionJobService.getByTilingJobId(any(), any())).thenReturn(savedDetectionJob);
-    when(zoneDetectionJobService.processZDJ(any(), any())).thenReturn(savedDetectionJob);
     when(zoneDetectionJobService.computeTaskStatistics(any()))
         .thenReturn(defaultComputedStatistic(savedDetectionJob.getId(), DETECTION));
     when(statusMapper.toRest(any())).thenReturn(defaultSucceededStatus());

@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.endpoint.rest.controller.mapper;
 
-import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.CONFIGURING;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.UNKNOWN;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.ProgressionEnum.PENDING;
 
@@ -10,7 +9,6 @@ import app.bpartners.geojobs.endpoint.rest.model.DetectionStepStatistic;
 import app.bpartners.geojobs.endpoint.rest.model.HealthStatus;
 import app.bpartners.geojobs.endpoint.rest.model.HealthStatusStatistic;
 import app.bpartners.geojobs.endpoint.rest.model.ProgressionStatus;
-import app.bpartners.geojobs.endpoint.rest.model.Status;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import java.math.BigDecimal;
@@ -30,11 +28,7 @@ public class DetectionStepStatisticMapper {
       DetectionStepName detectionStepName) {
     return new DetectionStep()
         .name(detectionStepName)
-        // TODO: status is broken for CONFIGURING so has to set manually
-        .status(
-            CONFIGURING.equals(detectionStepName)
-                ? new Status().progression(PENDING).health(UNKNOWN)
-                : statusMapper.toRest(statistic.getActualJobStatus()))
+        .status(statusMapper.toRest(statistic.getActualJobStatus()))
         .updatedAt(statistic.getUpdatedAt())
         .statistics(toRestDetectionStep(statistic));
   }
