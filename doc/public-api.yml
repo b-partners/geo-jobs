@@ -1,8 +1,23 @@
 openapi: 3.0.3
 
 info:
-  title: Detections API
-  description: Launch object detections
+  title: Geo Detection API
+  description: |
+    Detect objects on large geographic zones.
+    
+    # Security
+    
+    Get your **API key** by emailing **contact@bpartners.app**.
+    All of your requests must embed your API key in the header name: **x-api-key**.
+    
+    # Usage
+    
+    Submit your detection request through `PUT /detections/{id}`
+    where `{id}` is yours to be created.
+    
+    1. If your zone is described by a **GeoJson**, then just set accordingly the `geoJsonZone` field in the payload.
+    2. If your zone is described by a **Shape file**, then upload it in a second call `POST /detections/{id}/shape`.
+    3. If your zone is described by a list of addresses in an **Excel file**, then upload it in a second call `POST /detections/{id}/excel`.
   version: 'latest'
 
 servers:
