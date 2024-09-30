@@ -1,12 +1,15 @@
 package app.bpartners.geojobs.service;
 
-import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.*;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.CONFIGURING;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.MACHINE_DETECTION;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.TILING;
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
-import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.CLIENT_EXCEPTION;
-import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static app.bpartners.geojobs.service.tiling.ZoneTilingJobService.getTilingTasks;
@@ -19,7 +22,11 @@ import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerifi
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionStepStatisticMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneTilingJobMapper;
-import app.bpartners.geojobs.endpoint.rest.model.*;
+import app.bpartners.geojobs.endpoint.rest.model.BPLomModel;
+import app.bpartners.geojobs.endpoint.rest.model.BPToitureModel;
+import app.bpartners.geojobs.endpoint.rest.model.CreateDetection;
+import app.bpartners.geojobs.endpoint.rest.model.DetectionStepName;
+import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
@@ -257,23 +264,27 @@ public class ZoneService {
         communityId
             .map(ownerId -> detectionRepository.findByCommunityOwnerId(ownerId, pageable))
             .orElseGet(() -> detectionRepository.findAll(pageable).getContent());
+
+    for (var detection : detections) {
+      detection.setId(detection.getEndToEndId());
+    }
     return detections.stream().map(this::addStatistics).toList();
   }
 
   private app.bpartners.geojobs.endpoint.rest.model.Detection addStatistics(Detection detection) {
-    DetectionStepName detectionStepName = TILING;
-    TaskStatistic statistic;
     if (detection.getZdjId() != null) {
-      statistic = zoneDetectionJobService.getTaskStatistic(detection.getZdjId());
-      detectionStepName = MACHINE_DETECTION;
-    } else if (detection.getZtjId() != null) {
-      statistic = zoneTilingJobService.getTaskStatistic(detection.getZtjId());
-    } else {
-      throw new ApiException(
-          SERVER_EXCEPTION, "Unknown supported step for detection (id=" + detection.getId() + ")");
+      return createDetection(
+          detection,
+          zoneDetectionJobService.getTaskStatistic(detection.getZdjId()),
+          MACHINE_DETECTION);
     }
 
-    return createDetection(detection, statistic, detectionStepName);
+    if (detection.getZtjId() != null) {
+      return createDetection(
+          detection, zoneTilingJobService.getTaskStatistic(detection.getZtjId()), TILING);
+    }
+
+    return createDetection(detection, new TaskStatistic(), CONFIGURING);
   }
 
   private app.bpartners.geojobs.endpoint.rest.model.Detection computeFromConfiguring(

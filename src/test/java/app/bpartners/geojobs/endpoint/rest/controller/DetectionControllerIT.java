@@ -337,6 +337,22 @@ class DetectionControllerIT extends FacadeIT {
     assertEquals(List.of(expected), actual);
   }
 
+  @Test
+  void get_detections_that_are_still_in_configuration() {
+    var detection =
+        detectionRepository.save(
+            new Detection()
+                .toBuilder()
+                    .id(randomUUID().toString())
+                    .endToEndId(randomUUID().toString())
+                    .build());
+    when(communityAuthRepository.findByApiKey(any())).thenReturn(Optional.empty());
+
+    var actualList = subject.getDetections(new PageFromOne(1), new BoundedPageSize(1));
+
+    assertEquals(detection.getEndToEndId(), actualList.get(0).getId());
+  }
+
   @SneakyThrows
   @Test
   void configure_file_shape_ok() {

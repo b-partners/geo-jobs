@@ -7,6 +7,7 @@ import app.bpartners.geojobs.job.model.JobType;
 import app.bpartners.geojobs.job.repository.JobTypeConverter;
 import jakarta.persistence.*;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.*;
 
@@ -30,7 +31,7 @@ public class TaskStatistic {
       fetch = EAGER,
       orphanRemoval = true,
       mappedBy = "taskStatistic")
-  private List<TaskStatusStatistic> taskStatusStatistics;
+  private List<TaskStatusStatistic> taskStatusStatistics = new ArrayList<>();
 
   private Integer tilesCount;
   @Transient private JobStatus actualJobStatus;
