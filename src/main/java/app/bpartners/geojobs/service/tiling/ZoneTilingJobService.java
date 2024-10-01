@@ -26,7 +26,6 @@ import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.job.repository.TaskRepository;
 import app.bpartners.geojobs.job.service.JobService;
 import app.bpartners.geojobs.model.exception.BadRequestException;
-import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.TaskStatisticRepository;
 import app.bpartners.geojobs.repository.model.FilteredTilingJob;
@@ -113,7 +112,7 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
 
   @Transactional
   public FilteredTilingJob dispatchTasksBySuccessStatus(String jobId) {
-    ZoneTilingJob job = getZoneTilingJob(jobId);
+    ZoneTilingJob job = findById(jobId);
     if (job.isSucceeded()) {
       throw new BadRequestException(
           "All job(id="
@@ -157,17 +156,9 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
     return filteredTilingJob;
   }
 
-  private ZoneTilingJob getZoneTilingJob(String jobId) {
-    ZoneTilingJob job =
-        repository
-            .findById(jobId)
-            .orElseThrow(() -> new NotFoundException("ZoneTilingJob(id=" + jobId + ") not found"));
-    return job;
-  }
-
   @Transactional
   public ZoneTilingJob retryFailedTask(String jobId) {
-    ZoneTilingJob job = getZoneTilingJob(jobId);
+    ZoneTilingJob job = findById(jobId);
     List<TilingTask> tilingTasks = taskRepository.findAllByJobId(jobId);
     if (!tilingTasks.stream()
         .allMatch(task -> task.getStatus().getProgression().equals(FINISHED))) {
@@ -218,7 +209,7 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
   @Transactional
   public ZoneTilingJob duplicate(String jobId) {
     String duplicatedJobId = randomUUID().toString();
-    ZoneTilingJob originalJob = getZoneTilingJob(jobId);
+    ZoneTilingJob originalJob = findById(jobId);
 
     eventProducer.accept(
         List.of(

@@ -46,7 +46,6 @@ import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
-import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
 import app.bpartners.geojobs.repository.model.GeoJobType;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.detection.DetectionGeoJsonUpdateValidator;
@@ -95,13 +94,11 @@ class ZoneServiceTest {
       new DetectionStepStatisticMapper(new StatusMapper<>());
   ZoneDetectionJobRepository zoneDetectionJobRepositoryMock = mock();
   DetectionRepository detectionRepositoryMock = mock();
-  ZoneTilingJobRepository tilingJobRepositoryMock = mock();
   CommunityUsedSurfaceService communityUsedSurfaceServiceMock = mock();
   BucketComponent bucketComponentMock = mock();
   GeoJsonConversionInitiationService conversionInitiationServiceMock = mock();
   DetectableObjectTypeMapper detectableObjectTypeMapper = new DetectableObjectTypeMapper();
   ZoneDetectionJobService zoneDetectionJobServiceMock = mock();
-  DetectionUpdateValidator detectionUpdateValidatorMock = mock();
   FeatureCreator featureCreator = new FeatureCreator();
   DetectionCreator detectionCreator = new DetectionCreator(featureCreator);
   AuthProvider authProviderMock = mock();
@@ -117,13 +114,11 @@ class ZoneServiceTest {
           stepStatisticMapper,
           zoneDetectionJobRepositoryMock,
           detectionRepositoryMock,
-          tilingJobRepositoryMock,
           communityUsedSurfaceServiceMock,
           bucketComponentMock,
           conversionInitiationServiceMock,
           detectableObjectTypeMapper,
           new ObjectMapper().configure(FAIL_ON_UNKNOWN_PROPERTIES, false),
-          detectionUpdateValidatorMock,
           authProviderMock,
           detectionGeoJsonUpdateValidator);
 
@@ -135,7 +130,7 @@ class ZoneServiceTest {
     var detection = detectionCreator.create(detectionId, null, null);
     var createDetection = new CreateDetection().geoJsonZone(featureCreator.defaultFeatures());
     when(detectionRepositoryMock.findByEndToEndId(detectionId)).thenReturn(Optional.of(detection));
-    Optional<String> communityOwnerId = Optional.empty();
+    String communityOwnerId = null;
 
     assertThrows(
         ApiException.class,
@@ -149,7 +144,7 @@ class ZoneServiceTest {
     var detectionId = randomUUID().toString();
     var detection = detectionCreator.create(detectionId, null, null);
     var createDetection = new CreateDetection().geoJsonZone(featureCreator.defaultFeatures());
-    Optional<String> communityOwnerId = Optional.empty();
+    String communityOwnerId = null;
     setUpAdminRoleCanProcessTilingMock(detectionId, detection);
 
     var actual = subject.processZoneDetection(detectionId, createDetection, communityOwnerId);
