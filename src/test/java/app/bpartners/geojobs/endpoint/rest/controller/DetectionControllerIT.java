@@ -80,7 +80,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.ClassPathResource;
 
 @Slf4j
-class DetectionControllerIT extends FacadeIT {
+public class DetectionControllerIT extends FacadeIT {
   @Autowired ZoneDetectionController subject;
   @Autowired ZoneDetectionJobRepository jobRepository;
   @Autowired JobStatusRepository jobStatusRepository;
@@ -241,7 +241,7 @@ class DetectionControllerIT extends FacadeIT {
         .creationDatetime(now());
   }
 
-  private TaskStatistic defaultComputedStatistic(
+  public static TaskStatistic defaultComputedStatistic(
       String jobId, app.bpartners.geojobs.job.model.JobType jobType) {
     return TaskStatistic.builder()
         .jobType(jobType)
@@ -258,29 +258,10 @@ class DetectionControllerIT extends FacadeIT {
   }
 
   @Test
-  void create_detection() {
-    var detectionId = randomUUID().toString();
-    var zoneTilingJob = zoneTilingJobRepository.save(zoneTilingJob(randomUUID().toString()));
-    when(zoneTilingJobService.create(any(), any())).thenReturn(zoneTilingJob);
-    when(zoneTilingJobService.computeTaskStatistics(any()))
-        .thenReturn(defaultComputedStatistic(zoneTilingJob.getId(), TILING));
-
-    subject.processDetection(detectionId, createDetection());
-
-    verify(zoneTilingJobService, times(1)).create(any(), any());
-  }
-
-  @Test
   void create_detection_from_scratch() {
-    var zoneTilingJob = zoneTilingJobRepository.save(zoneTilingJob(randomUUID().toString()));
-    when(zoneTilingJobService.create(any(), any())).thenReturn(zoneTilingJob);
-    when(zoneTilingJobService.computeTaskStatistics(any()))
-        .thenReturn(defaultComputedStatistic(zoneTilingJob.getId(), TILING));
-
     subject.processDetection(randomUUID().toString(), createDetection());
 
     var listCaptor = ArgumentCaptor.forClass(List.class);
-    verify(zoneTilingJobService, times(1)).create(any(), any());
     verify(eventProducer, only()).accept(listCaptor.capture());
     var detectionSavedEvent = (DetectionSaved) listCaptor.getValue().getFirst();
     assertEquals(

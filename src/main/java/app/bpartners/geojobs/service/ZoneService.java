@@ -4,6 +4,7 @@ import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.CONFIG
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.MACHINE_DETECTION;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.TILING;
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
+import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_COMMUNITY;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
@@ -150,10 +151,14 @@ public class ZoneService {
     return computeFromConfiguring(savedDetection, PROCESSING, UNKNOWN);
   }
 
-  public app.bpartners.geojobs.endpoint.rest.model.Detection processDetection(
-      String e2Id, CreateDetection createDetection, Optional<String> optionalCommunityId) {
-    var detection = getOrCreateDetection(e2Id, createDetection, optionalCommunityId);
-    detectionUpdateValidator.accept(detection, createDetection);
+  public app.bpartners.geojobs.endpoint.rest.model.Detection getProcessedDetection(
+      String detectionId) {
+    var detection =
+        detectionRepository
+            .findByEndToEndId(detectionId)
+            .orElseThrow(
+                () -> new NotFoundException("DetectionJob.id=" + detectionId + " is not found."));
+
     if (detection.getGeoJsonZone() == null || detection.getGeoJsonZone().isEmpty()) {
       return computeFromConfiguring(detection, PENDING, UNKNOWN);
     } else {
@@ -161,48 +166,71 @@ public class ZoneService {
         return computeFromConfiguring(detection, FINISHED, SUCCEEDED);
       }
     }
-    if (detection.getZtjId() == null) {
-      var ztj = processZoneTilingJob(detection);
-      var detectionWithZTJ =
-          detectionRepository.save(detection.toBuilder().ztjId(ztj.getId()).build());
-      return getTilingStatistics(detectionWithZTJ, ztj.getId());
-    }
+    return getDetectionStatistics(detection, detection.getZdjId());
+  }
 
-    var tilingJobId = detection.getZtjId();
-    var detectionJobId = detection.getZdjId();
-    var zoneTilingJob = zoneTilingJobRepository.findById(tilingJobId).orElse(null);
-    var machineZoneDetectionJob =
-        detectionJobId == null
-            ? null
-            : zoneDetectionJobRepository.findById(detectionJobId).orElse(null);
+  public app.bpartners.geojobs.endpoint.rest.model.Detection processZoneDetection(
+      String detectionId, CreateDetection createDetection, Optional<String> communityOwnerId) {
+    Optional<Detection> optionalDetection = detectionRepository.findByEndToEndId(detectionId);
+    if (optionalDetection.isPresent()) {
+      var detection = optionalDetection.get();
+      var tilingJobId = detection.getZtjId();
+      var detectionJobId = detection.getZdjId();
+      if (ROLE_COMMUNITY.equals(authProvider.getPrincipal().getRole())) {
+        throw new BadRequestException(
+            String.format(
+                "A detectionJob with the specified id=(%s) "
+                    + "already exists and can not be updated.",
+                detectionId));
+      }
+      if (tilingJobId == null) {
+        var ztj = processZoneTilingJob(detection);
+        var detectionWithZTJ =
+            detectionRepository.save(detection.toBuilder().ztjId(ztj.getId()).build());
+        return getTilingStatistics(detectionWithZTJ, ztj.getId());
+      }
+      var zoneTilingJob = zoneTilingJobRepository.findById(tilingJobId).orElse(null);
+      var machineZoneDetectionJob =
+          detectionJobId == null
+              ? null
+              : zoneDetectionJobRepository.findById(detectionJobId).orElse(null);
+      assert zoneTilingJob != null;
+      if (!zoneTilingJob.isSucceeded()) {
+        return getTilingStatistics(detection, tilingJobId);
+      }
+      assert machineZoneDetectionJob != null;
+      if (machineZoneDetectionJob.isPending() && zoneTilingJob.isFinished()) {
+        var savedDetectionJob = processZoneDetectionJob(detection, zoneTilingJob);
+        return getDetectionStatistics(detection, savedDetectionJob.getId());
+      }
 
-    assert zoneTilingJob != null;
-    if (!zoneTilingJob.isSucceeded()) {
-      return getTilingStatistics(detection, tilingJobId);
-    }
-
-    assert machineZoneDetectionJob != null;
-    if (machineZoneDetectionJob.isPending() && zoneTilingJob.isFinished()) {
-      var savedDetectionJob = processZoneDetectionJob(detection, zoneTilingJob);
-      return getDetectionStatistics(detection, savedDetectionJob.getId());
-    }
-
-    if (machineZoneDetectionJob.isFinished()) {
-      var humanZoneDetectionJob = zoneDetectionJobService.getByTilingJobId(tilingJobId, HUMAN);
-      if (!humanZoneDetectionJob.isFinished()) {
-        eventProducer.accept(
-            List.of(
-                AnnotationJobVerificationSent.builder()
-                    .humanZdjId(humanZoneDetectionJob.getId())
-                    .build()));
-        // TODO: return human zone detection job statistics
-      } else {
-        conversionInitiationService.processConversionTask(
-            detection, humanZoneDetectionJob.getZoneName(), humanZoneDetectionJob.getId());
-        // TODO: return human zone detection job statistics
+      if (machineZoneDetectionJob.isFinished()) {
+        var humanZoneDetectionJob = zoneDetectionJobService.getByTilingJobId(tilingJobId, HUMAN);
+        if (!humanZoneDetectionJob.isFinished()) {
+          eventProducer.accept(
+              List.of(
+                  AnnotationJobVerificationSent.builder()
+                      .humanZdjId(humanZoneDetectionJob.getId())
+                      .build()));
+        } else {
+          conversionInitiationService.processConversionTask(
+              detection, humanZoneDetectionJob.getZoneName(), humanZoneDetectionJob.getId());
+        }
       }
     }
-    return getDetectionStatistics(detection, detectionJobId);
+    var savedDetection = createZoneDetectionJob(detectionId, createDetection, communityOwnerId);
+    return computeFromConfiguring(savedDetection, PENDING, UNKNOWN);
+  }
+
+  private Detection createZoneDetectionJob(
+      String detectionId, CreateDetection createDetection, Optional<String> communityOwnerId) {
+    var communityId = communityOwnerId.orElse(null);
+    var detectionToSave = mapFromRestCreateDetection(detectionId, createDetection, communityId);
+    var savedDetection =
+        communityUsedSurfaceService.persistDetectionWithSurfaceUsage(
+            detectionToSave, createDetection.getGeoJsonZone());
+    eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
+    return savedDetection;
   }
 
   private Detection getOrCreateDetection(

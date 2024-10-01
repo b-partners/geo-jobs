@@ -1,21 +1,27 @@
 package app.bpartners.geojobs.service;
 
+import static app.bpartners.geojobs.endpoint.rest.controller.DetectionControllerIT.defaultComputedStatistic;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.CONFIGURING;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.MACHINE_DETECTION;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.TILING;
-import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.SUCCEEDED;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.UNKNOWN;
-import static app.bpartners.geojobs.endpoint.rest.model.Status.ProgressionEnum.*;
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_COMMUNITY;
 import static app.bpartners.geojobs.file.hash.FileHashAlgorithm.SHA256;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
+import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 import static java.io.File.createTempFile;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.only;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
@@ -23,7 +29,11 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTyp
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionStepStatisticMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneTilingJobMapper;
-import app.bpartners.geojobs.endpoint.rest.model.*;
+import app.bpartners.geojobs.endpoint.rest.model.CreateDetection;
+import app.bpartners.geojobs.endpoint.rest.model.CreateZoneTilingJob;
+import app.bpartners.geojobs.endpoint.rest.model.Detection;
+import app.bpartners.geojobs.endpoint.rest.model.DetectionStep;
+import app.bpartners.geojobs.endpoint.rest.model.Status;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
@@ -48,29 +58,15 @@ import app.bpartners.geojobs.utils.detection.DetectionCreator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 class ZoneServiceTest {
-  ZoneTilingJobService tilingJobServiceMock = mock();
-  ZoneTilingJobMapper tilingJobMapperMock = mock();
-  ZoneDetectionJobValidator detectionJobValidatorMock = mock();
-  EventProducer eventProducerMock = mock();
-  DetectionStepStatisticMapper stepStatisticMapper =
-      new DetectionStepStatisticMapper(new StatusMapper<>());
-  ZoneDetectionJobRepository zoneDetectionJobRepositoryMock = mock();
-  DetectionRepository detectionRepositoryMock = mock();
-  ZoneTilingJobRepository tilingJobRepositoryMock = mock();
-  CommunityUsedSurfaceService communityUsedSurfaceServiceMock = mock();
-  BucketComponent bucketComponentMock = mock();
-  GeoJsonConversionInitiationService conversionInitiationServiceMock = mock();
-  DetectableObjectTypeMapper detectableObjectTypeMapper = new DetectableObjectTypeMapper();
-  ZoneDetectionJobService zoneDetectionJobServiceMock = mock();
-  DetectionUpdateValidator detectionUpdateValidatorMock = mock();
-  FeatureCreator featureCreator = new FeatureCreator();
-  DetectionCreator detectionCreator = new DetectionCreator(featureCreator);
   private static final String FEATURE_FILE_NAME_OK =
       "src"
           + File.separator
@@ -91,6 +87,23 @@ class ZoneServiceTest {
           + "features"
           + File.separator
           + "features-ko.json";
+  ZoneTilingJobService tilingJobServiceMock = mock();
+  ZoneTilingJobMapper tilingJobMapperMock = mock();
+  ZoneDetectionJobValidator detectionJobValidatorMock = mock();
+  EventProducer eventProducerMock = mock();
+  DetectionStepStatisticMapper stepStatisticMapper =
+      new DetectionStepStatisticMapper(new StatusMapper<>());
+  ZoneDetectionJobRepository zoneDetectionJobRepositoryMock = mock();
+  DetectionRepository detectionRepositoryMock = mock();
+  ZoneTilingJobRepository tilingJobRepositoryMock = mock();
+  CommunityUsedSurfaceService communityUsedSurfaceServiceMock = mock();
+  BucketComponent bucketComponentMock = mock();
+  GeoJsonConversionInitiationService conversionInitiationServiceMock = mock();
+  DetectableObjectTypeMapper detectableObjectTypeMapper = new DetectableObjectTypeMapper();
+  ZoneDetectionJobService zoneDetectionJobServiceMock = mock();
+  DetectionUpdateValidator detectionUpdateValidatorMock = mock();
+  FeatureCreator featureCreator = new FeatureCreator();
+  DetectionCreator detectionCreator = new DetectionCreator(featureCreator);
   AuthProvider authProviderMock = mock();
   DetectionGeoJsonUpdateValidator detectionGeoJsonUpdateValidator =
       new DetectionGeoJsonUpdateValidator();
@@ -118,17 +131,17 @@ class ZoneServiceTest {
   void community_role_stuck_in_configuring() {
     when(authProviderMock.getPrincipal())
         .thenReturn(new Principal("mockApiKey", Set.of(new Authority(ROLE_COMMUNITY))));
-    var detectionId = randomUUID().toString();
+    var detectionId = "mockDetectionId";
     var detection = detectionCreator.create(detectionId, null, null);
     var createDetection = new CreateDetection().geoJsonZone(featureCreator.defaultFeatures());
     when(detectionRepositoryMock.findByEndToEndId(detectionId)).thenReturn(Optional.of(detection));
     Optional<String> communityOwnerId = Optional.empty();
 
-    var actual = subject.processDetection(detectionId, createDetection, communityOwnerId);
-
-    assertEquals(CONFIGURING, actual.getStep().getName());
-    assertEquals(FINISHED, actual.getStep().getStatus().getProgression());
-    assertEquals(SUCCEEDED, actual.getStep().getStatus().getHealth());
+    assertThrows(
+        ApiException.class,
+        () -> subject.processZoneDetection(detectionId, createDetection, communityOwnerId),
+        "A detectionJob with the specified id=(mockDetectionId) already exists and can not be"
+            + " updated.");
   }
 
   @Test
@@ -139,9 +152,41 @@ class ZoneServiceTest {
     Optional<String> communityOwnerId = Optional.empty();
     setUpAdminRoleCanProcessTilingMock(detectionId, detection);
 
-    var actual = subject.processDetection(detectionId, createDetection, communityOwnerId);
+    var actual = subject.processZoneDetection(detectionId, createDetection, communityOwnerId);
 
     assertEquals(TILING, actual.getStep().getName());
+    assertEquals(Status.ProgressionEnum.PENDING, actual.getStep().getStatus().getProgression());
+    assertEquals(UNKNOWN, actual.getStep().getStatus().getHealth());
+  }
+
+  @Test
+  void read_detection_ko() {
+    var detectionId = "NonExistentDetectionId";
+
+    assertThrows(
+        ApiException.class,
+        () -> subject.getProcessedDetection(detectionId),
+        "DetectionJob.id=NonExistentDetectionId is not found.");
+  }
+
+  @Test
+  void read_detection_ok() {
+    var detectionId = randomUUID().toString();
+    var tilingId = randomUUID().toString();
+    var detection = detectionCreator.create(detectionId, tilingId, null);
+    setUpAdminRoleCanProcessTilingMock(detectionId, detection);
+    var statistics = defaultComputedStatistic(detection.getId(), DETECTION);
+    statistics.setActualJobStatus(
+        JobStatus.builder()
+            .progression(PENDING)
+            .health(app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN)
+            .build());
+    when(zoneDetectionJobServiceMock.computeTaskStatistics(any())).thenReturn(statistics);
+    when(tilingJobServiceMock.computeTaskStatistics(any())).thenReturn(statistics);
+
+    var actual = subject.getProcessedDetection(detectionId);
+
+    assertEquals(MACHINE_DETECTION, actual.getStep().getName());
     assertEquals(Status.ProgressionEnum.PENDING, actual.getStep().getStatus().getProgression());
     assertEquals(UNKNOWN, actual.getStep().getStatus().getHealth());
   }
@@ -211,7 +256,7 @@ class ZoneServiceTest {
                     .name(CONFIGURING)
                     .status(
                         new Status()
-                            .progression(PROCESSING)
+                            .progression(Status.ProgressionEnum.PENDING)
                             .health(UNKNOWN)
                             .creationDatetime(actual.getStep().getStatus().getCreationDatetime()))
                     .statistics(List.of())
@@ -259,7 +304,7 @@ class ZoneServiceTest {
                     .name(CONFIGURING)
                     .status(
                         new Status()
-                            .progression(PROCESSING)
+                            .progression(Status.ProgressionEnum.PENDING)
                             .health(UNKNOWN)
                             .creationDatetime(actual.getStep().getStatus().getCreationDatetime()))
                     .statistics(List.of())
@@ -321,8 +366,8 @@ class ZoneServiceTest {
                     .name(CONFIGURING)
                     .status(
                         new Status()
-                            .progression(FINISHED)
-                            .health(SUCCEEDED)
+                            .progression(Status.ProgressionEnum.PENDING)
+                            .health(UNKNOWN)
                             .creationDatetime(actual.getStep().getStatus().getCreationDatetime()))
                     .statistics(List.of())
                     .updatedAt(actual.getStep().getUpdatedAt()));
