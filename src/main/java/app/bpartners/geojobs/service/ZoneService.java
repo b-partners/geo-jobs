@@ -234,61 +234,6 @@ public class ZoneService {
     return savedDetection;
   }
 
-  public app.bpartners.geojobs.endpoint.rest.model.Detection processDetection(
-      String e2Id, CreateDetection createDetection, Optional<String> optionalCommunityId) {
-    var detection = getOrCreateDetection(e2Id, createDetection, optionalCommunityId);
-    detectionUpdateValidator.accept(detection, createDetection);
-    if (detection.getGeoJsonZone() == null || detection.getGeoJsonZone().isEmpty()) {
-      return computeFromConfiguring(detection, PENDING, UNKNOWN);
-    } else {
-      if (!ROLE_ADMIN.equals(authProvider.getPrincipal().getRole())) {
-        return computeFromConfiguring(detection, FINISHED, SUCCEEDED);
-      }
-    }
-    if (detection.getZtjId() == null) {
-      var ztj = processZoneTilingJob(detection);
-      var detectionWithZTJ =
-          detectionRepository.save(detection.toBuilder().ztjId(ztj.getId()).build());
-      return getTilingStatistics(detectionWithZTJ, ztj.getId());
-    }
-
-    var tilingJobId = detection.getZtjId();
-    var detectionJobId = detection.getZdjId();
-    var zoneTilingJob = zoneTilingJobRepository.findById(tilingJobId).orElse(null);
-    var machineZoneDetectionJob =
-        detectionJobId == null
-            ? null
-            : zoneDetectionJobRepository.findById(detectionJobId).orElse(null);
-
-    assert zoneTilingJob != null;
-    if (!zoneTilingJob.isSucceeded()) {
-      return getTilingStatistics(detection, tilingJobId);
-    }
-
-    assert machineZoneDetectionJob != null;
-    if (machineZoneDetectionJob.isPending() && zoneTilingJob.isFinished()) {
-      var savedDetectionJob = processZoneDetectionJob(detection, zoneTilingJob);
-      return getDetectionStatistics(detection, savedDetectionJob.getId());
-    }
-
-    if (machineZoneDetectionJob.isFinished()) {
-      var humanZoneDetectionJob = zoneDetectionJobService.getByTilingJobId(tilingJobId, HUMAN);
-      if (!humanZoneDetectionJob.isFinished()) {
-        eventProducer.accept(
-            List.of(
-                AnnotationJobVerificationSent.builder()
-                    .humanZdjId(humanZoneDetectionJob.getId())
-                    .build()));
-        // TODO: return human zone detection job statistics
-      } else {
-        conversionInitiationService.processConversionTask(
-            detection, humanZoneDetectionJob.getZoneName(), humanZoneDetectionJob.getId());
-        // TODO: return human zone detection job statistics
-      }
-    }
-    return getDetectionStatistics(detection, detectionJobId);
-  }
-
   private Detection getOrCreateDetection(
       String endToEndId, CreateDetection createDetection, Optional<String> optionalCommunityId) {
     if (optionalCommunityId.isPresent()) {
