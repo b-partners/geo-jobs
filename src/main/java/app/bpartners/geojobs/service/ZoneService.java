@@ -225,8 +225,7 @@ public class ZoneService {
   private Detection createZoneDetectionJob(
       String detectionId, CreateDetection createDetection, Optional<String> communityOwnerId) {
     var communityId = communityOwnerId.orElse(null);
-    var detectionToSave =
-        mapFromRestCreateDetection(detectionId, createDetection, communityId);
+    var detectionToSave = mapFromRestCreateDetection(detectionId, createDetection, communityId);
     var savedDetection =
         communityUsedSurfaceService.persistDetectionWithSurfaceUsage(
             detectionToSave, createDetection.getGeoJsonZone());
