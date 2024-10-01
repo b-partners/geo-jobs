@@ -68,11 +68,30 @@ paths:
                 items:
                   $ref: '#/components/schemas/Detection'
   '/detections/{id}':
-    put:
+    get:
+      tags:
+        - Detection
+      operationId: getProcessedDetection
+      summary: View recently processed detection actual status
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          description: Detection identifier
+          required: true
+      responses:
+        200:
+          description: Detection result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detection'
+    post:
       tags:
         - Detection
       operationId: processDetection
-      summary: Process detection and view its actual status
+      summary: Process detection
       parameters:
         - in: path
           name: id

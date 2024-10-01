@@ -210,14 +210,12 @@ public class ZoneDetectionController {
     detectionAuthorizer.accept(detectionId, createDetection, authProvider.getPrincipal());
     var communityAuthorization =
         communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
-    var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId);
+    var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId).orElse(null);
     return zoneService.processZoneDetection(detectionId, createDetection, communityOwnerId);
   }
 
   @GetMapping("/detections/{id}")
-  public Detection getProcessedDetection(
-      @PathVariable(name = "id") String detectionId, @RequestBody CreateDetection createDetection) {
-    detectionAuthorizer.accept(detectionId, createDetection, authProvider.getPrincipal());
+  public Detection getProcessedDetection(@PathVariable(name = "id") String detectionId) {
     return zoneService.getProcessedDetection(detectionId);
   }
 
