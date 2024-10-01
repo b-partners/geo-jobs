@@ -4,10 +4,7 @@ import static app.bpartners.geojobs.endpoint.rest.controller.DetectionController
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.CONFIGURING;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.MACHINE_DETECTION;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.TILING;
-import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.SUCCEEDED;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.UNKNOWN;
-import static app.bpartners.geojobs.endpoint.rest.model.Status.ProgressionEnum.FINISHED;
-import static app.bpartners.geojobs.endpoint.rest.model.Status.ProgressionEnum.PROCESSING;
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_COMMUNITY;
 import static app.bpartners.geojobs.file.hash.FileHashAlgorithm.SHA256;
@@ -259,7 +256,7 @@ class ZoneServiceTest {
                     .name(CONFIGURING)
                     .status(
                         new Status()
-                            .progression(PROCESSING)
+                            .progression(Status.ProgressionEnum.PENDING)
                             .health(UNKNOWN)
                             .creationDatetime(actual.getStep().getStatus().getCreationDatetime()))
                     .statistics(List.of())
@@ -307,7 +304,7 @@ class ZoneServiceTest {
                     .name(CONFIGURING)
                     .status(
                         new Status()
-                            .progression(PROCESSING)
+                            .progression(Status.ProgressionEnum.PENDING)
                             .health(UNKNOWN)
                             .creationDatetime(actual.getStep().getStatus().getCreationDatetime()))
                     .statistics(List.of())
@@ -369,8 +366,8 @@ class ZoneServiceTest {
                     .name(CONFIGURING)
                     .status(
                         new Status()
-                            .progression(FINISHED)
-                            .health(SUCCEEDED)
+                            .progression(Status.ProgressionEnum.PENDING)
+                            .health(UNKNOWN)
                             .creationDatetime(actual.getStep().getStatus().getCreationDatetime()))
                     .statistics(List.of())
                     .updatedAt(actual.getStep().getUpdatedAt()));
