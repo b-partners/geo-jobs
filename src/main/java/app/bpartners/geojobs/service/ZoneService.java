@@ -104,9 +104,8 @@ public class ZoneService {
       throw new BadRequestException(
           "Unable to finalize Detection(id=" + detectionId + ") geoJson as it already has values");
     }
-    var savedDetection =
-        detectionRepository.save(
-            detection.toBuilder().geoJsonZone(readFromFile(featuresFromShape)).build());
+    detection.setGeoJsonZone(readFromFile(featuresFromShape));
+    var savedDetection = detectionRepository.save(detection);
     eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
     return computeFromConfiguring(savedDetection, FINISHED, SUCCEEDED);
   }
