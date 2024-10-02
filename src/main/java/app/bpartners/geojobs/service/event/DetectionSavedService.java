@@ -61,7 +61,7 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
                 .presign(detection.getShapeFileKey(), Duration.ofHours(24L))
                 .toString();
     var excelFilePresignURL =
-        detection.getShapeFileKey() == null
+        detection.getExcelFileKey() == null
             ? null
             : bucketComponent
                 .presign(detection.getExcelFileKey(), Duration.ofHours(24L))
