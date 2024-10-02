@@ -26,26 +26,6 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
   private final Mailer mailer;
   private final BucketComponent bucketComponent;
 
-  @SneakyThrows
-  @Override
-  public void accept(DetectionSaved detectionSaved) {
-    var detection = detectionSaved.getDetection();
-    List<InternetAddress> cc = List.of();
-    List<InternetAddress> bcc = List.of();
-    String subject =
-        "Detection(id="
-            + detection.getId()
-            + ", communityOwnerId="
-            + detection.getCommunityOwnerId()
-            + ") modifiée le "
-            + now();
-    String htmlBody = computeStaticEmailBody(detection, bucketComponent);
-    List<File> attachments = List.of();
-    mailer.accept(
-        new Email(
-            new InternetAddress("tech@bpartners.app"), cc, bcc, subject, htmlBody, attachments));
-  }
-
   @NonNull
   public static String computeStaticEmailBody(
       Detection detection, BucketComponent bucketComponent) {
@@ -67,5 +47,26 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
     context.setVariable("shapeFileUrl", shapeFilePresignURL);
     context.setVariable("excelFileUrl", excelFilePresignURL);
     return htmlTemplateParser.apply(DETECTION_SAVED_TEMPLATE, context);
+  }
+
+  @SneakyThrows
+  @Override
+  public void accept(DetectionSaved detectionSaved) {
+    var detection = detectionSaved.getDetection();
+    List<InternetAddress> cc = List.of();
+    List<InternetAddress> bcc = List.of();
+    var env = System.getenv("ENV");
+    String subject =
+        String.format(
+            "[%s]Detection(id=%s, communityOwnerId=%s) modifiée le %s",
+            env == null ? "" : env.toUpperCase(),
+            detection.getId(),
+            detection.getCommunityOwnerId(),
+            now());
+    String htmlBody = computeStaticEmailBody(detection, bucketComponent);
+    List<File> attachments = List.of();
+    mailer.accept(
+        new Email(
+            new InternetAddress("tech@bpartners.app"), cc, bcc, subject, htmlBody, attachments));
   }
 }
