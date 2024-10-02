@@ -99,7 +99,7 @@ public class ZoneService {
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection finalizeGeoJsonConfig(
       String detectionId, File featuresFromShape) {
-    var detection = getDetectionById(detectionId);
+    var detection = getDetectionByE2eId(detectionId);
     if (detection.getGeoJsonZone() != null && !detection.getGeoJsonZone().isEmpty()) {
       throw new BadRequestException(
           "Unable to finalize Detection(id=" + detectionId + ") geoJson as it already has values");
@@ -109,12 +109,6 @@ public class ZoneService {
             detection.toBuilder().geoJsonZone(readFromFile(featuresFromShape)).build());
     eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
     return computeFromConfiguring(savedDetection, FINISHED, SUCCEEDED);
-  }
-
-  private Detection getDetectionById(String detectionId) {
-    return detectionRepository
-        .findById(detectionId)
-        .orElseThrow(() -> new NotFoundException("Detection(id=" + detectionId + ") not found"));
   }
 
   private Detection getDetectionByE2eId(String detectionId) {
@@ -150,12 +144,7 @@ public class ZoneService {
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection getProcessedDetection(
       String detectionId) {
-    var detection =
-        detectionRepository
-            .findByEndToEndId(detectionId)
-            .orElseThrow(
-                () -> new NotFoundException("DetectionJob.id=" + detectionId + " is not found."));
-
+    var detection = getDetectionByE2eId(detectionId);
     if (detection.getGeoJsonZone() == null || detection.getGeoJsonZone().isEmpty()) {
       return computeFromConfiguring(detection, PENDING, UNKNOWN);
     } else {
