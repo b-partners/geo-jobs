@@ -59,4 +59,18 @@ class DetectionSavedServiceTest {
     assertEquals(expectedMail, actualEmail);
     assertEquals(Duration.ofHours(24L), urlDurationValue);
   }
+
+  @Test
+  void computeStaticEmail() {
+    var shapeFileKey = "dummy";
+    var detection =
+            Detection.builder()
+                    .shapeFileKey(shapeFileKey)
+                    .bpToitureModel(new BPToitureModel().modelName(BP_TOITURE))
+                    .build();
+    var actual = computeStaticEmailBody(detection, bucketComponentMock);
+
+    var expected = "";
+    assertEquals(expected, actual);
+  }
 }
