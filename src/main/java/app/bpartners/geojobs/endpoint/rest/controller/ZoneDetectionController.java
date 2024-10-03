@@ -32,6 +32,7 @@ import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.MediaTypeGuesser;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.model.exception.BadRequestException;
+import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.model.page.BoundedPageSize;
 import app.bpartners.geojobs.model.page.PageFromOne;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
@@ -216,6 +217,11 @@ public class ZoneDetectionController {
 
   @GetMapping("/detections/{id}")
   public Detection getProcessedDetection(@PathVariable(name = "id") String detectionId) {
+    var communityAuthorization =
+        communityAuthRepository
+            .findByApiKey(authProvider.getPrincipal().getPassword())
+            .orElseThrow(ForbiddenException::new);
+    detectionAuthorizer.authorizeCommunity(detectionId, communityAuthorization);
     return zoneService.getProcessedDetection(detectionId);
   }
 

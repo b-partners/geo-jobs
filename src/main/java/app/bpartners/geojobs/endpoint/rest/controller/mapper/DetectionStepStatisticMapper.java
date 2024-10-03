@@ -1,8 +1,5 @@
 package app.bpartners.geojobs.endpoint.rest.controller.mapper;
 
-import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.UNKNOWN;
-import static app.bpartners.geojobs.endpoint.rest.model.Status.ProgressionEnum.PENDING;
-
 import app.bpartners.geojobs.endpoint.rest.model.DetectionStep;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionStepName;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionStepStatistic;

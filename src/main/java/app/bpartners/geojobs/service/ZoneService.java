@@ -157,7 +157,7 @@ public class ZoneService {
       return computeFromConfiguring(detection, FINISHED, SUCCEEDED);
     }
     var detectionJobId = detection.getZdjId();
-    if (detectionJobId == null){
+    if (detectionJobId == null) {
       return getTilingStatistics(detection, detection.getZtjId());
     }
     return getDetectionStatistics(detection, detectionJobId);

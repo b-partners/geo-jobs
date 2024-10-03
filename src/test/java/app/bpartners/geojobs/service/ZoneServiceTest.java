@@ -2,7 +2,6 @@ package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.endpoint.rest.controller.DetectionControllerIT.defaultComputedStatistic;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.CONFIGURING;
-import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.MACHINE_DETECTION;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.TILING;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.UNKNOWN;
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
@@ -181,7 +180,7 @@ class ZoneServiceTest {
 
     var actual = subject.getProcessedDetection(detectionId);
 
-    assertEquals(MACHINE_DETECTION, actual.getStep().getName());
+    assertEquals(TILING, actual.getStep().getName());
     assertEquals(Status.ProgressionEnum.PENDING, actual.getStep().getStatus().getProgression());
     assertEquals(UNKNOWN, actual.getStep().getStatus().getHealth());
   }
