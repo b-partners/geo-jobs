@@ -6,6 +6,7 @@ import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
+import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.util.TriConsumer;
@@ -32,16 +33,19 @@ public class DetectionAuthorizer implements TriConsumer<String, CreateDetection,
     }
   }
 
+  public void authorizeCommunity(
+      String detectionId, CommunityAuthorization communityAuthorization) {
+    var optionalDetection = detectionRepository.findByEndToEndId(detectionId);
+    if (optionalDetection.isPresent()) {
+      detectionOwnerAuthorizer.accept(communityAuthorization, optionalDetection.get());
+    }
+  }
+
   private void authorizeCommunity(
       String detectionId, CreateDetection createDetection, Principal principal) {
     var communityAuthorization =
         caRepository.findByApiKey(principal.getPassword()).orElseThrow(ForbiddenException::new);
-    var optionalDetection = detectionRepository.findByEndToEndId(detectionId);
-    if (optionalDetection.isPresent()) {
-      detectionOwnerAuthorizer.accept(communityAuthorization, optionalDetection.get());
-      return;
-    }
-
+    authorizeCommunity(detectionId, communityAuthorization);
     var features = createDetection.getGeoJsonZone();
     if (features != null && !features.isEmpty()) {
       communityZoneSurfaceAuthorizer.accept(communityAuthorization, features);
