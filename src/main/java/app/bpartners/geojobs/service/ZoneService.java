@@ -107,7 +107,7 @@ public class ZoneService {
     detection.setGeoJsonZone(readFromFile(featuresFromShape));
     var savedDetection = detectionRepository.save(detection);
     eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
-    return computeFromConfiguring(savedDetection, FINISHED, SUCCEEDED);
+    return computeFromConfiguring(savedDetection, PROCESSING, UNKNOWN);
   }
 
   private Detection getDetectionById(String detectionId) {
@@ -132,7 +132,7 @@ public class ZoneService {
     var savedDetection =
         detectionRepository.save(detection.toBuilder().excelFileKey(bucketKey).build());
     eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
-    return computeFromConfiguring(savedDetection, PROCESSING, UNKNOWN);
+    return computeFromConfiguring(savedDetection, PENDING, UNKNOWN);
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection configureShapeFile(
@@ -144,23 +144,17 @@ public class ZoneService {
     var savedDetection =
         detectionRepository.save(detection.toBuilder().shapeFileKey(bucketKey).build());
     eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
-    return computeFromConfiguring(savedDetection, PROCESSING, UNKNOWN);
+    return computeFromConfiguring(savedDetection, PENDING, UNKNOWN);
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection getProcessedDetection(
       String detectionId) {
-    var detection =
-        detectionRepository
-            .findByEndToEndId(detectionId)
-            .orElseThrow(
-                () -> new NotFoundException("DetectionJob.id=" + detectionId + " is not found."));
-
+    var detection = getDetectionByE2eId(detectionId);
     if (detection.getGeoJsonZone() == null || detection.getGeoJsonZone().isEmpty()) {
       return computeFromConfiguring(detection, PENDING, UNKNOWN);
-    } else {
-      if (!ROLE_ADMIN.equals(authProvider.getPrincipal().getRole())) {
-        return computeFromConfiguring(detection, FINISHED, SUCCEEDED);
-      }
+    }
+    if (!ROLE_ADMIN.equals(authProvider.getPrincipal().getRole())) {
+      return computeFromConfiguring(detection, FINISHED, SUCCEEDED);
     }
     return getDetectionStatistics(detection, detection.getZdjId());
   }

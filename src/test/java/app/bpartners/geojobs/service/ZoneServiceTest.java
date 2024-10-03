@@ -361,7 +361,7 @@ class ZoneServiceTest {
                     .name(CONFIGURING)
                     .status(
                         new Status()
-                            .progression(Status.ProgressionEnum.PENDING)
+                            .progression(Status.ProgressionEnum.PROCESSING)
                             .health(UNKNOWN)
                             .creationDatetime(actual.getStep().getStatus().getCreationDatetime()))
                     .statistics(List.of())
