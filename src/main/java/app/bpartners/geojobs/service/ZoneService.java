@@ -156,7 +156,11 @@ public class ZoneService {
     if (!ROLE_ADMIN.equals(authProvider.getPrincipal().getRole())) {
       return computeFromConfiguring(detection, FINISHED, SUCCEEDED);
     }
-    return getDetectionStatistics(detection, detection.getZdjId());
+    var detectionJobId = detection.getZdjId();
+    if (detectionJobId == null) {
+      return getTilingStatistics(detection, detection.getZtjId());
+    }
+    return getDetectionStatistics(detection, detectionJobId);
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection processZoneDetection(
