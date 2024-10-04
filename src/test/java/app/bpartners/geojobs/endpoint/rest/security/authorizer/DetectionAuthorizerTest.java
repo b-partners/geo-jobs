@@ -83,7 +83,7 @@ class DetectionAuthorizerTest {
     when(detectionRepository.findByEndToEndId(any()))
         .thenReturn(Optional.of(Detection.builder().communityOwnerId(COMMUNITY_ID).build()));
     assertDoesNotThrow(
-        () -> subject.authorizeCommunity(randomUUID().toString(), communityAuthorization));
+        () -> subject.authorizeCommunity(randomUUID().toString(), useRole(ROLE_COMMUNITY)));
 
     verify(detectionOwnerAuthorizer, times(1)).accept(any(), any());
   }

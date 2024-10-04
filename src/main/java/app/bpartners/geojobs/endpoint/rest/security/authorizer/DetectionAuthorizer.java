@@ -35,28 +35,25 @@ public class DetectionAuthorizer implements TriConsumer<String, CreateDetection,
 
   public void accept(String detectionId, Principal principal) {
     var role = principal.getRole();
-    var communityAuthorization =
-        caRepository.findByApiKey(principal.getPassword()).orElseThrow(ForbiddenException::new);
     switch (role) {
       case ROLE_ADMIN -> {}
-      case ROLE_COMMUNITY -> authorizeCommunity(detectionId, communityAuthorization);
+      case ROLE_COMMUNITY -> authorizeCommunity(detectionId, principal);
       default -> throw new RuntimeException("Unexpected role: " + role);
     }
   }
 
-  public void authorizeCommunity(
-      String detectionId, CommunityAuthorization communityAuthorization) {
+  public CommunityAuthorization authorizeCommunity(String detectionId, Principal principal) {
+    var communityAuthorization =
+        caRepository.findByApiKey(principal.getPassword()).orElseThrow(ForbiddenException::new);
     var optionalDetection = detectionRepository.findByEndToEndId(detectionId);
-    if (optionalDetection.isPresent()) {
-      detectionOwnerAuthorizer.accept(communityAuthorization, optionalDetection.get());
-    }
+    optionalDetection.ifPresent(
+        detection -> detectionOwnerAuthorizer.accept(communityAuthorization, detection));
+    return communityAuthorization;
   }
 
   private void authorizeCommunity(
       String detectionId, CreateDetection createDetection, Principal principal) {
-    var communityAuthorization =
-        caRepository.findByApiKey(principal.getPassword()).orElseThrow(ForbiddenException::new);
-    authorizeCommunity(detectionId, communityAuthorization);
+    var communityAuthorization = authorizeCommunity(detectionId, principal);
     var features = createDetection.getGeoJsonZone();
     if (features != null && !features.isEmpty()) {
       communityZoneSurfaceAuthorizer.accept(communityAuthorization, features);
