@@ -8,12 +8,16 @@ import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
 import app.bpartners.geojobs.endpoint.rest.model.BPToitureModel;
+import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
+import app.bpartners.geojobs.endpoint.rest.model.GeoServerProperties;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.mail.Email;
 import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectModelStringMapValue;
 import app.bpartners.geojobs.repository.model.detection.Detection;
+import app.bpartners.geojobs.repository.model.detection.GeoServerParameterStringMapValue;
 import app.bpartners.geojobs.service.detection.DetectableObjectModelMapper;
+import app.bpartners.geojobs.service.detection.DetectionGeoServerParameterModelMapper;
 import app.bpartners.geojobs.template.HTMLTemplateParser;
 import jakarta.mail.internet.InternetAddress;
 import java.io.File;
@@ -30,8 +34,14 @@ class DetectionSavedServiceTest {
   BucketComponent bucketComponentMock = mock();
   Mailer mailerMock = mock();
   DetectableObjectModelMapper detectableObjectModelMapper = new DetectableObjectModelMapper();
+  DetectionGeoServerParameterModelMapper detectionGeoServerParameterModelMapper =
+      new DetectionGeoServerParameterModelMapper();
   DetectionSavedService subject =
-      new DetectionSavedService(mailerMock, bucketComponentMock, detectableObjectModelMapper);
+      new DetectionSavedService(
+          mailerMock,
+          bucketComponentMock,
+          detectableObjectModelMapper,
+          detectionGeoServerParameterModelMapper);
 
   @SneakyThrows
   @Test
@@ -42,11 +52,19 @@ class DetectionSavedServiceTest {
         Detection.builder()
             .shapeFileKey(shapeFileKey)
             .bpToitureModel(new BPToitureModel().modelName(BP_TOITURE))
+            .geoServerProperties(
+                new GeoServerProperties()
+                    .geoServerUrl("geoServerUrl")
+                    .geoServerParameter(new GeoServerParameter().layers("layers")))
             .build();
     List<InternetAddress> cc = List.of();
     List<InternetAddress> bcc = List.of();
     String htmlBody =
-        computeStaticEmailBody(detection, bucketComponentMock, detectableObjectModelMapper);
+        computeStaticEmailBody(
+            detection,
+            bucketComponentMock,
+            detectableObjectModelMapper,
+            detectionGeoServerParameterModelMapper);
     List<File> attachments = List.of();
 
     subject.accept(DetectionSaved.builder().detection(detection).build());
@@ -76,8 +94,17 @@ class DetectionSavedServiceTest {
     BPToitureModel modelInstance = new BPToitureModel().modelName(BP_TOITURE);
     List<DetectableObjectModelStringMapValue> detectableObjectModelStringMapValues =
         detectableObjectModelMapper.apply(modelInstance);
+    GeoServerProperties geoServerProperties =
+        new GeoServerProperties()
+            .geoServerUrl("url")
+            .geoServerParameter(new GeoServerParameter().format("json"));
+    List<GeoServerParameterStringMapValue> geoServerParameter =
+        detectionGeoServerParameterModelMapper.apply(geoServerProperties);
     context.setVariable(
         "detectableObjectModelStringMapValues", detectableObjectModelStringMapValues);
+    context.setVariable(
+        "geoServerParameterStringMapValues",
+        detectionGeoServerParameterModelMapper.apply(geoServerParameter));
     context.setVariable("detection", new Detection());
     context.setVariable("shapeFileUrl", null);
     context.setVariable("excelFileUrl", null);
@@ -218,7 +245,13 @@ class DetectionSavedServiceTest {
                            </li>
                        </ul>
                    </li>
-                   <li>Configuration du geoServeur : <br><span></span></li>
+                   <li>Configuration du geoServeur :
+                       <ul>
+                          \s
+                       </ul><ul>
+                          \s
+                       </ul>
+                   </li>
                    <li>Zone en geoJson fournie : <br>
                       \s
                    </li>

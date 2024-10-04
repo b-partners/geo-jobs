@@ -73,7 +73,14 @@
                 </li>
             </ul>
         </li>
-        <li>Configuration du geoServeur : <br><span th:text="${detection.getGeoServerProperties()}"></span></li>
+        <li>Configuration du geoServeur :
+            <ul th:each="item : ${geoServerParameterStringMapValues}">
+                <li th:each="item : ${GeoServerParameterStringMapValues}">
+                    <span class="indent" th:text="${item.key}"></span> :
+                    <span class="indent" th:text="${item.value}"></span>
+                </li>
+            </ul>
+        </li>
         <li>Zone en geoJson fournie : <br>
             <span th:if="${detection.getGeoJsonZone() != null && !detection.getGeoJsonZone().isEmpty()}"
                   th:text="${detection.getGeoJsonZone()}"></span>

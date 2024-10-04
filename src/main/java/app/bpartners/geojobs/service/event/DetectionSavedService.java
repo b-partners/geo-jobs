@@ -8,6 +8,7 @@ import app.bpartners.geojobs.mail.Email;
 import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.service.detection.DetectableObjectModelMapper;
+import app.bpartners.geojobs.service.detection.DetectionGeoServerParameterModelMapper;
 import app.bpartners.geojobs.template.HTMLTemplateParser;
 import jakarta.mail.internet.InternetAddress;
 import java.io.File;
@@ -27,6 +28,7 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
   private final Mailer mailer;
   private final BucketComponent bucketComponent;
   private final DetectableObjectModelMapper detectableObjectModelMapper;
+  private final DetectionGeoServerParameterModelMapper detectionGeoServerParameterModelMapper;
 
   @SneakyThrows
   @Override
@@ -43,7 +45,11 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
             detection.getCommunityOwnerId(),
             now());
     String htmlBody =
-        computeStaticEmailBody(detection, bucketComponent, detectableObjectModelMapper);
+        computeStaticEmailBody(
+            detection,
+            bucketComponent,
+            detectableObjectModelMapper,
+            detectionGeoServerParameterModelMapper);
     List<File> attachments = List.of();
     mailer.accept(
         new Email(
@@ -54,7 +60,8 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
   public static String computeStaticEmailBody(
       Detection detection,
       BucketComponent bucketComponent,
-      DetectableObjectModelMapper detectableObjectModelMapper) {
+      DetectableObjectModelMapper detectableObjectModelMapper,
+      DetectionGeoServerParameterModelMapper detectionGeoServerParameterModelMapper) {
     var shapeFilePresignURL =
         detection.getShapeFileKey() == null
             ? null
@@ -68,11 +75,18 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
                 .presign(detection.getExcelFileKey(), Duration.ofHours(24L))
                 .toString();
     var modelActualInstance = detection.getDetectableObjectModel().getActualInstance();
+    var geoServerUrl = detection.getGeoServerProperties().getGeoServerUrl();
+    var geoServerParameter = detection.getGeoServerProperties().getGeoServerParameter();
+    System.out.println(geoServerParameter);
     HTMLTemplateParser htmlTemplateParser = new HTMLTemplateParser();
     Context context = new Context();
     context.setVariable(
         "detectableObjectModelStringMapValues",
         detectableObjectModelMapper.apply(modelActualInstance));
+    context.setVariable(
+        "geoServerParameterStringMapValues",
+        detectionGeoServerParameterModelMapper.apply(geoServerParameter));
+    context.setVariable("geoServerUrl", geoServerUrl);
     context.setVariable("detection", detection);
     context.setVariable("shapeFileUrl", shapeFilePresignURL);
     context.setVariable("excelFileUrl", excelFilePresignURL);
