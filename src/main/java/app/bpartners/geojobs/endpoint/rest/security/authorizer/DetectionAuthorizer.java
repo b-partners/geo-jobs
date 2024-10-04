@@ -33,6 +33,17 @@ public class DetectionAuthorizer implements TriConsumer<String, CreateDetection,
     }
   }
 
+  public void accept(String detectionId, Principal principal) {
+    var role = principal.getRole();
+    var communityAuthorization =
+        caRepository.findByApiKey(principal.getPassword()).orElseThrow(ForbiddenException::new);
+    switch (role) {
+      case ROLE_ADMIN -> {}
+      case ROLE_COMMUNITY -> authorizeCommunity(detectionId, communityAuthorization);
+      default -> throw new RuntimeException("Unexpected role: " + role);
+    }
+  }
+
   public void authorizeCommunity(
       String detectionId, CommunityAuthorization communityAuthorization) {
     var optionalDetection = detectionRepository.findByEndToEndId(detectionId);

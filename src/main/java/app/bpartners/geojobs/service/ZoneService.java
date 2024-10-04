@@ -170,6 +170,10 @@ public class ZoneService {
       var savedDetection = createZoneDetectionJob(detectionId, createDetection, communityOwnerId);
       return computeFromConfiguring(savedDetection, PENDING, UNKNOWN);
     }
+    var detection = optionalDetection.get();
+    if (detection.getGeoJsonZone() == null || detection.getGeoJsonZone().isEmpty()) {
+      return computeFromConfiguring(detection, PENDING, UNKNOWN);
+    }
     if (ROLE_COMMUNITY.equals(authProvider.getPrincipal().getRole())) {
       throw new BadRequestException(
           String.format(
@@ -177,7 +181,7 @@ public class ZoneService {
                   + "already exists and can not be updated.",
               detectionId));
     }
-    return getProcessingJobStatistics(optionalDetection.get());
+    return getProcessingJobStatistics(detection);
   }
 
   private app.bpartners.geojobs.endpoint.rest.model.Detection getProcessingJobStatistics(
