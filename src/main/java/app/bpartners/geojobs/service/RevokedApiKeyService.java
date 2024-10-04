@@ -29,7 +29,7 @@ public class RevokedApiKeyService {
         RevokedApiKey.builder()
             .id(randomUUID().toString())
             .revokedAt(now())
-            .apiKey(communityAuthorization.getApiKey())
+            .revokedApiKeyValue(communityAuthorization.getApiKey())
             .communityOwnerId(communityAuthorization.getId())
             .build();
 

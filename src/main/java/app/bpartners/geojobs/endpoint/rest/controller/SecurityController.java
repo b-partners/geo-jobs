@@ -19,8 +19,9 @@ public class SecurityController {
   @DeleteMapping("/api/keys/revoke")
   public RevokeApiKeyResponse revokeApikey() {
     var communityAuthorization =
-        communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
-    return service.revokeCommunityApiKey(
-        communityAuthorization.orElseThrow(ForbiddenException::new));
+        communityAuthRepository
+            .findByApiKey(authProvider.getPrincipal().getPassword())
+            .orElseThrow(ForbiddenException::new);
+    return service.revokeCommunityApiKey(communityAuthorization);
   }
 }

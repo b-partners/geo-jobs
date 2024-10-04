@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 public class RevokedApiKey implements Serializable {
   @Id private String id;
 
-  @Column private String apiKey;
+  @Column private String revokedApiKeyValue;
 
   @Column private Instant revokedAt;
 
