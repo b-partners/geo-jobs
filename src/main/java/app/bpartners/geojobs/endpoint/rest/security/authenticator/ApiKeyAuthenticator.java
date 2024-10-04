@@ -31,7 +31,7 @@ public class ApiKeyAuthenticator implements UsernamePasswordAuthenticator {
   public UserDetails retrieveUser(
       String username, UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken) {
     String candidateApiKey = getApiKeyFromHeader(usernamePasswordAuthenticationToken);
-    if (existsAsApiKeyInCommunityKeys(candidateApiKey)) {
+    if (existsAsNotRevokedApiKeyInCommunityKeys(candidateApiKey)) {
       return new Principal(candidateApiKey, Set.of(new Authority(ROLE_COMMUNITY)));
     } else if (adminApiKey.equals(candidateApiKey)) {
       return new Principal(candidateApiKey, Set.of(new Authority(ROLE_ADMIN)));
@@ -39,8 +39,9 @@ public class ApiKeyAuthenticator implements UsernamePasswordAuthenticator {
     throw new BadCredentialsException("Bad credentials");
   }
 
-  private boolean existsAsApiKeyInCommunityKeys(String candidateApiKey) {
-    return caRepository.findByApiKey(candidateApiKey).isPresent();
+  private boolean existsAsNotRevokedApiKeyInCommunityKeys(String candidateApiKey) {
+    var communityAuthorization = caRepository.findByApiKey(candidateApiKey);
+    return communityAuthorization.filter(authorization -> !authorization.isRevoked()).isPresent();
   }
 
   private String getApiKeyFromHeader(

@@ -30,6 +30,8 @@ paths:
         - Detection
       operationId: getDetectionUsage
       summary: Get detection usage
+      security:
+        - ApiKeyAuth: []
       parameters:
         - in: query
           name: surfaceUnit
@@ -49,6 +51,8 @@ paths:
         - Detection
       operationId: getDetection
       summary: Get detections launched
+      security:
+        - ApiKeyAuth: []
       parameters:
         - in: query
           name: page
@@ -73,6 +77,8 @@ paths:
         - Detection
       operationId: getProcessedDetection
       summary: View recently processed detection actual status
+      security:
+        - ApiKeyAuth: []
       parameters:
         - in: path
           name: id
@@ -92,6 +98,8 @@ paths:
         - Detection
       operationId: processDetection
       summary: Process detection
+      security:
+        - ApiKeyAuth: []
       parameters:
         - in: path
           name: id
@@ -117,6 +125,8 @@ paths:
         - Detection
       operationId: configureDetectionShapeFile
       summary: Upload shape file to configure detection zone
+      security:
+        - ApiKeyAuth: []
       parameters:
         - in: path
           name: id
@@ -146,6 +156,8 @@ paths:
         - Detection
       operationId: configureDetectionExcelFile
       summary: Upload excel file to configure detection zone
+      security:
+        - ApiKeyAuth: []
       parameters:
         - in: path
           name: id
@@ -169,7 +181,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Detection'
+  '/api/keys/revoque':
+    delete:
+      tags:
+        - ApiKey
+      operationId: revokeApiKey
+      summary: Revoke apiKey access
+      security:
+        - ApiKeyAuth: []
+      responses:
+        200:
+          description: Statistics of detection usage
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevokeApiKeyResponse'
 components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: ApiKey
+      in: header
+      name: x-api-key
   schemas:
     Page:
       type: integer
@@ -184,6 +216,16 @@ components:
           type: string
         geoServerParameter:
           $ref: "#/components/schemas/GeoServerParameter"
+    RevokeApiKeyResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: string
+          enum:
+            - SUCCESS
+            - ERROR
     DetectionSurfaceUnit:
       type: string
       enum:
