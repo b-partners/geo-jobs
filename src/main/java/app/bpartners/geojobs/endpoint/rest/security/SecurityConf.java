@@ -120,6 +120,8 @@ public class SecurityConf {
                     .hasAnyAuthority(ROLE_ADMIN.name(), ROLE_COMMUNITY.name())
                     .requestMatchers(GET, "/usage")
                     .hasAnyAuthority(ROLE_ADMIN.name(), ROLE_COMMUNITY.name())
+                    .requestMatchers(DELETE, "/api/keys/revoke")
+                    .hasAnyAuthority(ROLE_COMMUNITY.name())
                     .anyRequest()
                     .denyAll())
         .csrf(AbstractHttpConfigurer::disable)

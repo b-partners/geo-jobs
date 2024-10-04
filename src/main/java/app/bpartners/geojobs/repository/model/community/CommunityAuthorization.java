@@ -29,7 +29,11 @@ public class CommunityAuthorization implements Serializable {
 
   @Column private String apiKey;
 
+  @Column private boolean isApiKeyRevoked;
+
   @Column private double maxSurface;
+
+  @Column private String email;
 
   @Enumerated(STRING)
   @JdbcTypeCode(NAMED_ENUM)
@@ -46,4 +50,7 @@ public class CommunityAuthorization implements Serializable {
 
   @OneToMany(mappedBy = "communityOwnerId", fetch = LAZY)
   private List<Detection> detections;
+
+  @OneToMany(mappedBy = "communityOwnerId", fetch = LAZY)
+  private List<RevokedApiKey> revokedApiKeys;
 }
