@@ -34,13 +34,14 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
     var detection = detectionSaved.getDetection();
     List<InternetAddress> cc = List.of();
     List<InternetAddress> bcc = List.of();
+    var env = System.getenv("ENV");
     String subject =
-        "Detection(id="
-            + detection.getId()
-            + ", communityOwnerId="
-            + detection.getCommunityOwnerId()
-            + ") modifiée le "
-            + now();
+        String.format(
+            "[%s]Detection(id=%s, communityOwnerId=%s) modifiée le %s",
+            env == null ? "" : env.toUpperCase(),
+            detection.getId(),
+            detection.getCommunityOwnerId(),
+            now());
     String htmlBody =
         computeStaticEmailBody(detection, bucketComponent, detectableObjectModelMapper);
     List<File> attachments = List.of();

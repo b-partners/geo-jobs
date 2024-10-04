@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.service.detection;
 
-import app.bpartners.geojobs.endpoint.rest.model.BPToitureModel;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectModelStringMapValue;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -12,27 +11,28 @@ import org.springframework.stereotype.Component;
 @Component
 public class DetectableObjectModelMapper
     implements Function<Object, List<DetectableObjectModelStringMapValue>> {
-  private static final String BP_MODEL_NAME_ATTRIBUTE_NAME = "modelName";
-  private static final String DEFAULT_MODEL_NAME_KEY = "Nom du modèle";
 
   @SneakyThrows
   @Override
   public List<DetectableObjectModelStringMapValue> apply(Object modelInstance) {
     var detectableObjectStringValues = new ArrayList<DetectableObjectModelStringMapValue>();
-    Field[] fields = modelInstance.getClass().getFields();
-    for (Field field : fields) {
-      field.setAccessible(true);
-      String fieldName = field.getName();
-      if (field.getType().equals(Boolean.class)) {
-        var value = field.getBoolean(modelInstance) ? "oui" : "non";
-        detectableObjectStringValues.add(new DetectableObjectModelStringMapValue(fieldName, value));
-      } else if (BP_MODEL_NAME_ATTRIBUTE_NAME.equals(fieldName)
-          && field.getType().equals(BPToitureModel.ModelNameEnum.class)) {
-        detectableObjectStringValues.add(
-            new DetectableObjectModelStringMapValue(
-                DEFAULT_MODEL_NAME_KEY,
-                ((BPToitureModel.ModelNameEnum) field.get(modelInstance)).getValue()));
-      }
+    Class clazz = modelInstance.getClass();
+    List<Field> fields = List.of(clazz.getDeclaredFields());
+    var modelName = fields.get(1);
+    modelName.setAccessible(true);
+    var instance = fields.get(2);
+    instance.setAccessible(true);
+    detectableObjectStringValues.add(
+        new DetectableObjectModelStringMapValue(
+            modelName.get(modelInstance).toString(), instance.get(modelInstance).toString()));
+    for (int i = 3; i < fields.size() - 1; i += 2) {
+      Field fieldName = fields.get(i);
+      Field fieldValue = fields.get(i + 1);
+      fieldName.setAccessible(true);
+      fieldValue.setAccessible(true);
+      var name = fieldName.get(modelInstance).toString();
+      var value = fieldValue.get(modelInstance).toString().equals("true") ? "oui" : "non";
+      detectableObjectStringValues.add(new DetectableObjectModelStringMapValue(name, value));
     }
     return detectableObjectStringValues;
   }

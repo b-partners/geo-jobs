@@ -90,88 +90,149 @@ class DetectionSavedServiceTest {
 
   private String expectedEmailBody() {
     return """
-<html lang="fr">
-<head>
-    <title>Detection saved</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #F1E4E7; /* BP_COLOR[40] */
-            color: #582d37; /* BP_COLOR[30] */
-            margin: 0;
-            padding: 20px;
-        }
+           <html lang="fr">
+           <head>
+               <title>Detection saved</title>
+               <style>
+                   body {
+                       font-family: Arial, sans-serif;
+                       background-color: #F1E4E7;
+                       color: #582d37;
+                       margin: 0;
+                       padding: 20px;
+                   }
 
-        section {
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            max-width: 600px;
-            margin: auto;
-            border-left: 6px solid rgba(171, 0, 86, 0.2); /* Atténuation de BP_COLOR[2] */
-        }
+                   section {
+                       background-color: white;
+                       border-radius: 8px;
+                       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                       padding: 20px;
+                       max-width: 600px;
+                       margin: auto;
+                       border-left: 6px solid rgba(171, 0, 86, 0.2);
+                   }
 
-        p {
-            font-size: 16px;
-            line-height: 1.6;
-            color: #660033; /* BP_COLOR[20] */
-        }
+                   p {
+                       font-size: 16px;
+                       line-height: 1.6;
+                       color: #660033;
+                   }
 
-        ul {
-            list-style-type: none;
-            padding: 0;
-        }
+                   ul {
+                       list-style-type: none;
+                       padding: 0;
+                   }
 
-        ul li {
-            background-color: rgba(0, 0, 0, 0.05); /* BP_COLOR.solid_grey */
-            margin: 10px 0;
-            padding: 10px;
-            border-left: 4px solid rgba(171, 0, 86, 0.5); /* Atténuation de BP_COLOR[5] */
-            border-radius: 4px;
-        }
+                   ul li {
+                       background-color: rgba(0, 0, 0, 0.05);
+                       margin: 10px 0;
+                       padding: 10px;
+                       border-left: 4px solid rgba(171, 0, 86, 0.5);
+                       border-radius: 4px;
+                   }
 
-        ul li span {
-            font-weight: bold;
-            color: rgba(122, 0, 61, 0.7); /* Atténuation de BP_COLOR[10] */
-        }
+                   ul li span {
+                       font-weight: bold;
+                       color: rgba(122, 0, 61, 0.7);
+                   }
 
-        ul li:not(:last-child) {
-            margin-bottom: 10px;
-        }
+                   ul li:not(:last-child) {
+                       margin-bottom: 10px;
+                   }
 
-        h1 {
-            font-size: 24px;
-            color: rgba(171, 0, 86, 0.7); /* Atténuation de BP_COLOR[5] */
-            text-align: center;
-        }
-    </style>
-</head>
-<body>
-<section>
-    <h1>Informations de Détection</h1>
-    <p>Bonjour,</p>
-    <p>Voici les éléments fournis par le consommateur d'API  :</p>
-    <ul>
-        <li>Email associé : <span></span></li>
-        <li>Nom de zone fournie par le consommateur : <span></span></li>
-        <li>Configurations de la détection :
-           TODO: must have values
-        </li>
-        <li>Configuration du geoServeur : <br><span></span></li>
-        <li>Zone en geoJson fournie : <br>
-           \s
-        </li>
-        <li>Fichier shape à convertir en geoJson : <br>
-           \s
-        </li>
-        <li>Fichier excel à convertir en geoJson : <br>
-           \s
-        </li>
-    </ul>
-    <p>Cordialement,</p>
-</section>
-</body>
-</html>""";
+                   h1 {
+                       font-size: 24px;
+                       color: rgba(171, 0, 86, 0.7);
+                       text-align: center;
+                   }
+               </style>
+           </head>
+           <body>
+           <section>
+               <h1>Informations de Détection</h1>
+               <p>Bonjour,</p>
+               <p>Voici les éléments fournis par le consommateur d'API  :</p>
+               <ul>
+                   <li>Email associé : <span></span></li>
+                   <li>Nom de zone fournie par le consommateur : <span></span></li>
+                   <li>Configurations de la détection :
+                       <ul>
+                           <li>
+                               <span class="indent">modelName</span> :
+                               <span class="indent">BP_TOITURE</span>
+                           </li>
+                       </ul><ul>
+                           <li>
+                               <span class="indent">toitureRevetement</span> :
+                               <span class="indent">oui</span>
+                           </li>
+                       </ul><ul>
+                           <li>
+                               <span class="indent">arbre</span> :
+                               <span class="indent">oui</span>
+                           </li>
+                       </ul><ul>
+                           <li>
+                               <span class="indent">velux</span> :
+                               <span class="indent">oui</span>
+                           </li>
+                       </ul><ul>
+                           <li>
+                               <span class="indent">panneauPhotovoltaique</span> :
+                               <span class="indent">oui</span>
+                           </li>
+                       </ul><ul>
+                           <li>
+                               <span class="indent">moisissure</span> :
+                               <span class="indent">oui</span>
+                           </li>
+                       </ul><ul>
+                           <li>
+                               <span class="indent">usure</span> :
+                               <span class="indent">oui</span>
+                           </li>
+                       </ul><ul>
+                           <li>
+                               <span class="indent">fissureCassure</span> :
+                               <span class="indent">oui</span>
+                           </li>
+                       </ul><ul>
+                           <li>
+                               <span class="indent">obstacle</span> :
+                               <span class="indent">oui</span>
+                           </li>
+                       </ul><ul>
+                           <li>
+                               <span class="indent">cheminee</span> :
+                               <span class="indent">oui</span>
+                           </li>
+                       </ul><ul>
+                           <li>
+                               <span class="indent">humidite</span> :
+                               <span class="indent">oui</span>
+                           </li>
+                       </ul><ul>
+                           <li>
+                               <span class="indent">risqueFeu</span> :
+                               <span class="indent">oui</span>
+                           </li>
+                       </ul>
+                   </li>
+                   <li>Configuration du geoServeur : <br><span></span></li>
+                   <li>Zone en geoJson fournie : <br>
+                      \s
+                   </li>
+                   <li>Fichier shape à convertir en geoJson : <br>
+                      \s
+                   </li>
+                   <li>Fichier excel à convertir en geoJson : <br>
+                      \s
+                   </li>
+               </ul>
+               <p>Cordialement,</p>
+           </section>
+           </body>
+           </html>
+           """;
   }
 }
