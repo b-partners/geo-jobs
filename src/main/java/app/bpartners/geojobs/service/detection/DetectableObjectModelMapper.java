@@ -15,7 +15,7 @@ public class DetectableObjectModelMapper
   @SneakyThrows
   @Override
   public List<DetectableObjectModelStringMapValue> apply(Object modelInstance) {
-    var detectableObjectStringValues = new ArrayList<DetectableObjectModelStringMapValue>();
+    List<DetectableObjectModelStringMapValue> detectableObjectStringValues = new ArrayList<>();
     Class clazz = modelInstance.getClass();
     List<Field> fields = List.of(clazz.getDeclaredFields());
     var modelName = fields.get(1);
