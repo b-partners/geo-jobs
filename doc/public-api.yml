@@ -181,7 +181,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Detection'
-  '/api/keys/revoque':
+  '/api/keys/revoke':
     delete:
       tags:
         - Security
