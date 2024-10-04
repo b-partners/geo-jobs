@@ -29,7 +29,7 @@ public class CommunityAuthorization implements Serializable {
 
   @Column private String apiKey;
 
-  @Column private boolean isRevoked;
+  @Column private boolean isApiKeyRevoked;
 
   @Column private double maxSurface;
 

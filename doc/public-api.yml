@@ -184,7 +184,7 @@ paths:
   '/api/keys/revoque':
     delete:
       tags:
-        - ApiKey
+        - Security
       operationId: revokeApiKey
       summary: Revoke apiKey access
       security:
@@ -221,11 +221,6 @@ components:
       properties:
         message:
           type: string
-        status:
-          type: string
-          enum:
-            - SUCCESS
-            - ERROR
     DetectionSurfaceUnit:
       type: string
       enum:

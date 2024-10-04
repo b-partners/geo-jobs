@@ -41,7 +41,9 @@ public class ApiKeyAuthenticator implements UsernamePasswordAuthenticator {
 
   private boolean existsAsNotRevokedApiKeyInCommunityKeys(String candidateApiKey) {
     var communityAuthorization = caRepository.findByApiKey(candidateApiKey);
-    return communityAuthorization.filter(authorization -> !authorization.isRevoked()).isPresent();
+    return communityAuthorization
+        .filter(authorization -> !authorization.isApiKeyRevoked())
+        .isPresent();
   }
 
   private String getApiKeyFromHeader(

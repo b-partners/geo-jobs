@@ -675,6 +675,21 @@ paths:
         '500':
           description: Internal Server Error
           $ref: '#/components/responses/500'
+  '/api/keys/revoque':
+    delete:
+      tags:
+        - Security
+      operationId: revokeApiKey
+      summary: Revoke apiKey access
+      security:
+        - ApiKeyAuth: []
+      responses:
+        200:
+          description: Statistics of detection usage
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevokeApiKeyResponse'
 
 components:
   responses:
@@ -802,6 +817,11 @@ components:
             - HOUSES_1
             - HOUSES_2
             - HOUSE_PROPERTY
+    RevokeApiKeyResponse:
+      type: object
+      properties:
+        message:
+          type: string
     DetectionSurfaceUnit:
       type: string
       enum:
@@ -1121,7 +1141,6 @@ components:
     ###########################################################################################################
     ###  GeoJSON objects. Modified from: https://gist.github.com/bubbobne/fe5f2db65acf039be6a9fd92fc9c7233  ###
     ###########################################################################################################
-
     GeoServerParameter:
       type: object
       properties:
