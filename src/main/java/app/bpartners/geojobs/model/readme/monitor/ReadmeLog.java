@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.endpoint.rest.security.readme.monitor.model;
+package app.bpartners.geojobs.model.readme.monitor;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;

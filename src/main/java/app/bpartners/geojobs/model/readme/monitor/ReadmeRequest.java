@@ -1,6 +1,6 @@
-package app.bpartners.geojobs.endpoint.rest.security.readme.monitor.model;
+package app.bpartners.geojobs.model.readme.monitor;
 
-import app.bpartners.geojobs.endpoint.rest.security.readme.monitor.model.entry.ReadmeEntry;
+import app.bpartners.geojobs.model.readme.monitor.entry.ReadmeEntry;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 
@@ -18,7 +18,6 @@ public record ReadmeRequest(
     @Builder
     @JsonInclude(NON_NULL)
     public record ReadmeRequestLog(
-        ReadmeRequestCreator creator,
         List<ReadmeEntry> entries
     ) implements Serializable {}
 }

@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.endpoint.rest.security.readme.monitor.model.entry;
+package app.bpartners.geojobs.model.readme.monitor.entry;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
