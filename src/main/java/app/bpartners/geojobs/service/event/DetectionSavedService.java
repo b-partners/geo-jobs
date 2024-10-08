@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service.event;
 import static java.time.Instant.now;
 
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
+import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.mail.Email;
 import app.bpartners.geojobs.mail.Mailer;
@@ -76,8 +77,8 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
                 .toString();
     var modelActualInstance = detection.getDetectableObjectModel().getActualInstance();
     var geoServerUrl = detection.getGeoServerProperties().getGeoServerUrl();
-    var geoServerParameter = detection.getGeoServerProperties().getGeoServerParameter();
-    System.out.println(geoServerParameter);
+    GeoServerParameter geoServerParameter =
+        detection.getGeoServerProperties().getGeoServerParameter();
     HTMLTemplateParser htmlTemplateParser = new HTMLTemplateParser();
     Context context = new Context();
     context.setVariable(

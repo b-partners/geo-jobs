@@ -74,8 +74,9 @@
             </ul>
         </li>
         <li>Configuration du geoServeur :
-            <ul th:each="item : ${geoServerParameterStringMapValues}">
-                <li th:each="item : ${GeoServerParameterStringMapValues}">
+            <ul>
+                <li>geoServerUrl: <span th:text="${geoServerUrl}"></span></li>
+                <li th:each="item : ${geoServerParameterStringMapValues}">
                     <span class="indent" th:text="${item.key}"></span> :
                     <span class="indent" th:text="${item.value}"></span>
                 </li>
