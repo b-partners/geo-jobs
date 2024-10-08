@@ -9,4 +9,6 @@ import org.springframework.stereotype.Repository;
 public interface CommunityAuthorizationRepository
     extends JpaRepository<CommunityAuthorization, String> {
   Optional<CommunityAuthorization> findByApiKey(String apiKey);
+
+  Optional<CommunityAuthorization> findByEmail(String email);
 }
