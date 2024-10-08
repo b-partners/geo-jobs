@@ -1,12 +1,12 @@
-package app.bpartners.geojobs.model.readme.monitor.entry;
+package app.bpartners.readme.monitor.model.entry;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Builder;
 import java.io.Serializable;
 import java.time.Instant;
-
-import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
+import lombok.Builder;
 
 @Builder
 @JsonInclude(NON_NULL)
@@ -15,5 +15,5 @@ public record ReadmeEntry(
     Long time,
     Instant startedDateTime,
     ReadmeEntryRequest request,
-    ReadmeEntryResponse response
-) implements Serializable {}
+    ReadmeEntryResponse response)
+    implements Serializable {}
