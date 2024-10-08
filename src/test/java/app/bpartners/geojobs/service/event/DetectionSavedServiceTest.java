@@ -8,12 +8,16 @@ import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
 import app.bpartners.geojobs.endpoint.rest.model.BPToitureModel;
+import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
+import app.bpartners.geojobs.endpoint.rest.model.GeoServerProperties;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.mail.Email;
 import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectModelStringMapValue;
 import app.bpartners.geojobs.repository.model.detection.Detection;
+import app.bpartners.geojobs.repository.model.detection.GeoServerParameterStringMapValue;
 import app.bpartners.geojobs.service.detection.DetectableObjectModelMapper;
+import app.bpartners.geojobs.service.detection.DetectionGeoServerParameterModelMapper;
 import app.bpartners.geojobs.template.HTMLTemplateParser;
 import jakarta.mail.internet.InternetAddress;
 import java.io.File;
@@ -30,23 +34,49 @@ class DetectionSavedServiceTest {
   BucketComponent bucketComponentMock = mock();
   Mailer mailerMock = mock();
   DetectableObjectModelMapper detectableObjectModelMapper = new DetectableObjectModelMapper();
+  DetectionGeoServerParameterModelMapper detectionGeoServerParameterModelMapper =
+      new DetectionGeoServerParameterModelMapper();
   DetectionSavedService subject =
-      new DetectionSavedService(mailerMock, bucketComponentMock, detectableObjectModelMapper);
+      new DetectionSavedService(
+          mailerMock,
+          bucketComponentMock,
+          detectableObjectModelMapper,
+          detectionGeoServerParameterModelMapper);
 
   @SneakyThrows
   @Test
   void accept_ok() {
     when(bucketComponentMock.presign(any(), any())).thenReturn(new URI("http://localhost").toURL());
     var shapeFileKey = "dummy";
+    var geoServerParameter =
+        new GeoServerParameter()
+            .service("service_value_test")
+            .request("request_value_test")
+            .layers("layers_value_test")
+            .styles("styles_value_test")
+            .format("format_value_test")
+            .transparent(true)
+            .version("version_value_test")
+            .width(1)
+            .height(1)
+            .srs("srs_value_test");
     var detection =
         Detection.builder()
             .shapeFileKey(shapeFileKey)
             .bpToitureModel(new BPToitureModel().modelName(BP_TOITURE))
+            .geoServerProperties(
+                new GeoServerProperties()
+                    .geoServerUrl("geoServerUrl")
+                    .geoServerParameter(geoServerParameter))
             .build();
     List<InternetAddress> cc = List.of();
     List<InternetAddress> bcc = List.of();
     String htmlBody =
-        computeStaticEmailBody(detection, bucketComponentMock, detectableObjectModelMapper);
+        computeStaticEmailBody(
+            detection,
+            bucketComponentMock,
+            detectableObjectModelMapper,
+            detectionGeoServerParameterModelMapper);
     List<File> attachments = List.of();
 
     subject.accept(DetectionSaved.builder().detection(detection).build());
@@ -76,8 +106,29 @@ class DetectionSavedServiceTest {
     BPToitureModel modelInstance = new BPToitureModel().modelName(BP_TOITURE);
     List<DetectableObjectModelStringMapValue> detectableObjectModelStringMapValues =
         detectableObjectModelMapper.apply(modelInstance);
+    GeoServerProperties geoServerProperties =
+        new GeoServerProperties()
+            .geoServerUrl("url")
+            .geoServerParameter(new GeoServerParameter().format("json"));
+    var geoServerParameter =
+        new GeoServerParameter()
+            .service("service_value_test")
+            .request("request_value_test")
+            .layers("layers_value_test")
+            .styles("styles_value_test")
+            .format("format_value_test")
+            .transparent(true)
+            .version("version_value_test")
+            .width(1)
+            .height(1)
+            .srs("srs_value_test");
+    List<GeoServerParameterStringMapValue> detectionGeoServerParameterStringMapValues =
+        detectionGeoServerParameterModelMapper.apply(geoServerParameter);
     context.setVariable(
         "detectableObjectModelStringMapValues", detectableObjectModelStringMapValues);
+    context.setVariable(
+        "geoServerParameterStringMapValues", detectionGeoServerParameterStringMapValues);
+    context.setVariable("geoServerUrl", "geo_server_value_test");
     context.setVariable("detection", new Detection());
     context.setVariable("shapeFileUrl", null);
     context.setVariable("excelFileUrl", null);
@@ -218,7 +269,51 @@ class DetectionSavedServiceTest {
                            </li>
                        </ul>
                    </li>
-                   <li>Configuration du geoServeur : <br><span></span></li>
+                   <li>Configuration du geoServeur :
+                       <ul>
+                           <li>geoServerUrl: <span>geo_server_value_test</span></li>
+                           <li>
+                               <span class="indent">service</span> :
+                               <span class="indent">service_value_test</span>
+                           </li>
+                           <li>
+                               <span class="indent">request</span> :
+                               <span class="indent">request_value_test</span>
+                           </li>
+                           <li>
+                               <span class="indent">layers</span> :
+                               <span class="indent">layers_value_test</span>
+                           </li>
+                           <li>
+                               <span class="indent">styles</span> :
+                               <span class="indent">styles_value_test</span>
+                           </li>
+                           <li>
+                               <span class="indent">format</span> :
+                               <span class="indent">format_value_test</span>
+                           </li>
+                           <li>
+                               <span class="indent">transparent</span> :
+                               <span class="indent">true</span>
+                           </li>
+                           <li>
+                               <span class="indent">version</span> :
+                               <span class="indent">version_value_test</span>
+                           </li>
+                           <li>
+                               <span class="indent">width</span> :
+                               <span class="indent">1</span>
+                           </li>
+                           <li>
+                               <span class="indent">height</span> :
+                               <span class="indent">1</span>
+                           </li>
+                           <li>
+                               <span class="indent">srs</span> :
+                               <span class="indent">srs_value_test</span>
+                           </li>
+                       </ul>
+                   </li>
                    <li>Zone en geoJson fournie : <br>
                       \s
                    </li>
