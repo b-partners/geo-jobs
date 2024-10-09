@@ -1,4 +1,4 @@
-package app.bpartners.readme.monitor.model.entry;
+package app.bpartners.geojobs.endpoint.rest.readme.monitor.model.entry;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
@@ -8,5 +8,4 @@ import lombok.Builder;
 
 @Builder
 @JsonInclude(NON_NULL)
-public record ReadmeEntryResponseContent(
-    Integer size, String mimeType, String text, String encoding) implements Serializable {}
+public record ReadmeEntryHeader(String name, String value) implements Serializable {}

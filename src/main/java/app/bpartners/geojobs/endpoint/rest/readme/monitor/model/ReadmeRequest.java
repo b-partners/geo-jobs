@@ -1,8 +1,8 @@
-package app.bpartners.readme.monitor.model;
+package app.bpartners.geojobs.endpoint.rest.readme.monitor.model;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
-import app.bpartners.readme.monitor.model.entry.ReadmeEntry;
+import app.bpartners.geojobs.endpoint.rest.readme.monitor.model.entry.ReadmeEntry;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.io.Serializable;
 import java.util.List;

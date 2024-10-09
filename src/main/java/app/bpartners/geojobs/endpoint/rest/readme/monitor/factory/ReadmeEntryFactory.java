@@ -1,7 +1,8 @@
-package app.bpartners.readme.monitor.factory;
+package app.bpartners.geojobs.endpoint.rest.readme.monitor.factory;
 
 import static java.net.http.HttpClient.Version.HTTP_2;
 
+import app.bpartners.geojobs.endpoint.rest.readme.monitor.model.entry.*;
 import app.bpartners.readme.monitor.model.entry.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

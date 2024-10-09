@@ -1,4 +1,4 @@
-package app.bpartners.readme.monitor.model.entry;
+package app.bpartners.geojobs.endpoint.rest.readme.monitor.model.entry;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 

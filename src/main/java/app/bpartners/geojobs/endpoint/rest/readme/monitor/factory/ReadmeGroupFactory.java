@@ -1,11 +1,11 @@
-package app.bpartners.readme.monitor.factory;
+package app.bpartners.geojobs.endpoint.rest.readme.monitor.factory;
 
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
 
+import app.bpartners.geojobs.endpoint.rest.readme.monitor.model.ReadmeGroup;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
-import app.bpartners.readme.monitor.model.ReadmeGroup;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

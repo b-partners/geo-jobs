@@ -1,4 +1,4 @@
-package app.bpartners.readme.monitor;
+package app.bpartners.geojobs.endpoint.rest.readme.monitor;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

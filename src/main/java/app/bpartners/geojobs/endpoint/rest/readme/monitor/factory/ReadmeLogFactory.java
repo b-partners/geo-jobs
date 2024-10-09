@@ -1,9 +1,9 @@
-package app.bpartners.readme.monitor.factory;
+package app.bpartners.geojobs.endpoint.rest.readme.monitor.factory;
 
+import app.bpartners.geojobs.endpoint.rest.readme.monitor.ReadmeMonitorConf;
+import app.bpartners.geojobs.endpoint.rest.readme.monitor.model.ReadmeLog;
+import app.bpartners.geojobs.endpoint.rest.readme.monitor.model.ReadmeRequest;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
-import app.bpartners.readme.monitor.ReadmeMonitorConf;
-import app.bpartners.readme.monitor.model.ReadmeLog;
-import app.bpartners.readme.monitor.model.ReadmeRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Instant;
