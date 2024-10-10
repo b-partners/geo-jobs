@@ -17,8 +17,7 @@ public class ZoneTilingJobValidatorTest {
             subject.accept(
                 new ImportZoneTilingJob()
                     .createZoneTilingJob(new CreateZoneTilingJob())
-                    .bucketName("dummy")
-                    .bucketPathPrefix("dummy")));
+                    .bucketName("dummy")));
   }
 
   @Test

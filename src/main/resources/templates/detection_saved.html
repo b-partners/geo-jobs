@@ -1,17 +1,86 @@
 <html lang="fr">
 <head>
     <title>Detection saved</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #F1E4E7;
+            color: #582d37;
+            margin: 0;
+            padding: 20px;
+        }
+
+        section {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            max-width: 600px;
+            margin: auto;
+            border-left: 6px solid rgba(171, 0, 86, 0.2);
+        }
+
+        p {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #660033;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        ul li {
+            background-color: rgba(0, 0, 0, 0.05);
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 4px solid rgba(171, 0, 86, 0.5);
+            border-radius: 4px;
+        }
+
+        ul li span {
+            font-weight: bold;
+            color: rgba(122, 0, 61, 0.7);
+        }
+
+        ul li:not(:last-child) {
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            font-size: 24px;
+            color: rgba(171, 0, 86, 0.7);
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
 <section>
+    <h1>Informations de Détection</h1>
     <p>Bonjour,</p>
-    <p>Voici les élements fournis par le consommateur d'API <span th:if="${detection.communityOwnerId != null}"
-                                                                  th:text="${detection.communityOwnerId}"></span> : </p>
+    <p>Voici les éléments fournis par le consommateur d'API <span
+            th:if="${detection.communityOwnerId != null}"
+            th:text="${detection.communityOwnerId}"></span> :</p>
     <ul>
         <li>Email associé : <span th:text="${detection.getEmailReceiver()}"></span></li>
         <li>Nom de zone fournie par le consommateur : <span th:text="${detection.getZoneName()}"></span></li>
-        <li>Configurations de la détection : <br> <span th:text="${detection.getDetectableObjectModel()}"></span></li>
-        <li>Configuration du geoServeur : <br> <span th:text="${detection.getGeoServerProperties()}"></span>
+        <li>Configurations de la détection :
+            <ul th:each="item : ${detectableObjectModelStringMapValues}">
+                <li>
+                    <span class="indent" th:text="${item.key}"></span> :
+                    <span class="indent" th:text="${item.value}"></span>
+                </li>
+            </ul>
+        </li>
+        <li>Configuration du geoServeur :
+            <ul>
+                <li>geoServerUrl: <span th:text="${geoServerUrl}"></span></li>
+                <li th:each="item : ${geoServerParameterStringMapValues}">
+                    <span class="indent" th:text="${item.key}"></span> :
+                    <span class="indent" th:text="${item.value}"></span>
+                </li>
+            </ul>
         </li>
         <li>Zone en geoJson fournie : <br>
             <span th:if="${detection.getGeoJsonZone() != null && !detection.getGeoJsonZone().isEmpty()}"
@@ -24,7 +93,7 @@
             <span th:if="${detection.getExcelFileKey() != null}" th:text="${excelFileUrl}"></span>
         </li>
     </ul>
-    <p>Cordialement.</p>
+    <p>Cordialement,</p>
 </section>
 </body>
 </html>

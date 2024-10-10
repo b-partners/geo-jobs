@@ -85,4 +85,12 @@ public class CustomBucketComponentIT extends FacadeIT {
         actual2.stream()
             .anyMatch(s3Object -> s3Object.key().equals("draft_copy/20/544785/383262.jpg")));
   }
+
+  @Test
+  void list_objects_with_prefix_null_ok() {
+    List<S3Object> actual = subject.listObjects("lyon-toiture-revetement-50-images", null);
+
+    assertTrue(actual.stream().allMatch(s3Object -> s3Object.key().contains("Lyon-Toiture/20")));
+    assertEquals(50, actual.size());
+  }
 }

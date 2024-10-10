@@ -39,7 +39,7 @@ class CommunityAuthenticatedAccessIT extends FacadeIT {
 
   @BeforeEach
   void setup() {
-    caRepository.save(communityAuthorization());
+    caRepository.save(communityAuthorization(false));
     setupClientWithApiKey();
   }
 
@@ -52,6 +52,17 @@ class CommunityAuthenticatedAccessIT extends FacadeIT {
   void community_cannot_access_endpoint_if_not_detection() {
     var error = assertThrows(ApiException.class, () -> machineDetectionApi.getDetectionJobs(1, 10));
     assertTrue(error.getMessage().contains("Access Denied"));
+  }
+
+  @Test
+  void community_cannot_access_endpoint_if_api_key_is_revoked() {
+    caRepository.save(communityAuthorization(true));
+    var detectionId = randomUUID().toString();
+    var createDetection = new CreateDetection();
+    var error =
+        assertThrows(
+            ApiException.class, () -> detectionApi.processDetection(detectionId, createDetection));
+    assertTrue(error.getMessage().contains("Bad credentials"));
   }
 
   @Test
@@ -77,7 +88,7 @@ class CommunityAuthenticatedAccessIT extends FacadeIT {
     machineDetectionApi = new MachineDetectionApi(authenticatedClient);
   }
 
-  private CommunityAuthorization communityAuthorization() {
+  private CommunityAuthorization communityAuthorization(boolean isApiKeyRevoked) {
     var communityDetectableType =
         CommunityDetectableObjectType.builder()
             .id("dummyId")
@@ -91,6 +102,7 @@ class CommunityAuthenticatedAccessIT extends FacadeIT {
         .name("communityName")
         .maxSurface(5_000)
         .maxSurfaceUnit(SQUARE_DEGREE)
+        .isApiKeyRevoked(isApiKeyRevoked)
         .authorizedZones(List.of())
         .usedSurfaces(List.of())
         .detectableObjectTypes(List.of(communityDetectableType))

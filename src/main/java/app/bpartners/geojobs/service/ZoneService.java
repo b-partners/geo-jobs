@@ -41,7 +41,6 @@ import app.bpartners.geojobs.model.page.BoundedPageSize;
 import app.bpartners.geojobs.model.page.PageFromOne;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
-import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
 import app.bpartners.geojobs.repository.model.GeoJobType;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
@@ -80,13 +79,11 @@ public class ZoneService {
   private final DetectionStepStatisticMapper detectionStepStatisticMapper;
   private final ZoneDetectionJobRepository zoneDetectionJobRepository;
   private final DetectionRepository detectionRepository;
-  private final ZoneTilingJobRepository zoneTilingJobRepository;
   private final CommunityUsedSurfaceService communityUsedSurfaceService;
   private final BucketComponent bucketComponent;
   private final GeoJsonConversionInitiationService conversionInitiationService;
   private final DetectableObjectTypeMapper detectableObjectTypeMapper;
   private final ObjectMapper objectMapper;
-  private final DetectionUpdateValidator detectionUpdateValidator;
   private final AuthProvider authProvider;
   private final DetectionGeoJsonUpdateValidator detectionGeoJsonUpdateValidator;
 
@@ -107,11 +104,10 @@ public class ZoneService {
       throw new BadRequestException(
           "Unable to finalize Detection(id=" + detectionId + ") geoJson as it already has values");
     }
-    var savedDetection =
-        detectionRepository.save(
-            detection.toBuilder().geoJsonZone(readFromFile(featuresFromShape)).build());
+    detection.setGeoJsonZone(readFromFile(featuresFromShape));
+    var savedDetection = detectionRepository.save(detection);
     eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
-    return computeFromConfiguring(savedDetection, FINISHED, SUCCEEDED);
+    return computeFromConfiguring(savedDetection, PROCESSING, UNKNOWN);
   }
 
   private Detection getDetectionById(String detectionId) {
@@ -136,7 +132,7 @@ public class ZoneService {
     var savedDetection =
         detectionRepository.save(detection.toBuilder().excelFileKey(bucketKey).build());
     eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
-    return computeFromConfiguring(savedDetection, PROCESSING, UNKNOWN);
+    return computeFromConfiguring(savedDetection, PENDING, UNKNOWN);
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection configureShapeFile(
@@ -148,101 +144,95 @@ public class ZoneService {
     var savedDetection =
         detectionRepository.save(detection.toBuilder().shapeFileKey(bucketKey).build());
     eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
-    return computeFromConfiguring(savedDetection, PROCESSING, UNKNOWN);
+    return computeFromConfiguring(savedDetection, PENDING, UNKNOWN);
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection getProcessedDetection(
       String detectionId) {
-    var detection =
-        detectionRepository
-            .findByEndToEndId(detectionId)
-            .orElseThrow(
-                () -> new NotFoundException("DetectionJob.id=" + detectionId + " is not found."));
-
+    var detection = getDetectionByE2eId(detectionId);
     if (detection.getGeoJsonZone() == null || detection.getGeoJsonZone().isEmpty()) {
       return computeFromConfiguring(detection, PENDING, UNKNOWN);
-    } else {
-      if (!ROLE_ADMIN.equals(authProvider.getPrincipal().getRole())) {
-        return computeFromConfiguring(detection, FINISHED, SUCCEEDED);
-      }
     }
-    return getDetectionStatistics(detection, detection.getZdjId());
+    if (!ROLE_ADMIN.equals(authProvider.getPrincipal().getRole())) {
+      return computeFromConfiguring(detection, FINISHED, SUCCEEDED);
+    }
+    var detectionJobId = detection.getZdjId();
+    if (detectionJobId == null) {
+      return getTilingStatistics(detection, detection.getZtjId());
+    }
+    return getDetectionStatistics(detection, detectionJobId);
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection processZoneDetection(
-      String detectionId, CreateDetection createDetection, Optional<String> communityOwnerId) {
+      String detectionId, CreateDetection createDetection, @Nullable String communityOwnerId) {
     Optional<Detection> optionalDetection = detectionRepository.findByEndToEndId(detectionId);
-    if (optionalDetection.isPresent()) {
-      var detection = optionalDetection.get();
-      var tilingJobId = detection.getZtjId();
-      var detectionJobId = detection.getZdjId();
-      if (ROLE_COMMUNITY.equals(authProvider.getPrincipal().getRole())) {
-        throw new BadRequestException(
-            String.format(
-                "A detectionJob with the specified id=(%s) "
-                    + "already exists and can not be updated.",
-                detectionId));
-      }
-      if (tilingJobId == null) {
-        var ztj = processZoneTilingJob(detection);
-        var detectionWithZTJ =
-            detectionRepository.save(detection.toBuilder().ztjId(ztj.getId()).build());
-        return getTilingStatistics(detectionWithZTJ, ztj.getId());
-      }
-      var zoneTilingJob = zoneTilingJobRepository.findById(tilingJobId).orElse(null);
-      var machineZoneDetectionJob =
-          detectionJobId == null
-              ? null
-              : zoneDetectionJobRepository.findById(detectionJobId).orElse(null);
-      assert zoneTilingJob != null;
-      if (!zoneTilingJob.isSucceeded()) {
-        return getTilingStatistics(detection, tilingJobId);
-      }
-      assert machineZoneDetectionJob != null;
-      if (machineZoneDetectionJob.isPending() && zoneTilingJob.isFinished()) {
-        var savedDetectionJob = processZoneDetectionJob(detection, zoneTilingJob);
-        return getDetectionStatistics(detection, savedDetectionJob.getId());
-      }
-
-      if (machineZoneDetectionJob.isFinished()) {
-        var humanZoneDetectionJob = zoneDetectionJobService.getByTilingJobId(tilingJobId, HUMAN);
-        if (!humanZoneDetectionJob.isFinished()) {
-          eventProducer.accept(
-              List.of(
-                  AnnotationJobVerificationSent.builder()
-                      .humanZdjId(humanZoneDetectionJob.getId())
-                      .build()));
-        } else {
-          conversionInitiationService.processConversionTask(
-              detection, humanZoneDetectionJob.getZoneName(), humanZoneDetectionJob.getId());
-        }
-      }
+    if (optionalDetection.isEmpty()) {
+      var savedDetection = createZoneDetectionJob(detectionId, createDetection, communityOwnerId);
+      return computeFromConfiguring(savedDetection, PENDING, UNKNOWN);
     }
-    var savedDetection = createZoneDetectionJob(detectionId, createDetection, communityOwnerId);
-    return computeFromConfiguring(savedDetection, PENDING, UNKNOWN);
+    if (ROLE_COMMUNITY.equals(authProvider.getPrincipal().getRole())) {
+      throw new BadRequestException(
+          String.format(
+              "A detectionJob with the specified id=(%s) "
+                  + "already exists and can not be updated.",
+              detectionId));
+    }
+    return getProcessingJobStatistics(optionalDetection.get());
+  }
+
+  private app.bpartners.geojobs.endpoint.rest.model.Detection getProcessingJobStatistics(
+      Detection detection) {
+    var tilingJobId = detection.getZtjId();
+    var detectionJobId = detection.getZdjId();
+    if (detection.getGeoJsonZone() == null || detection.getGeoJsonZone().isEmpty()) {
+      return computeFromConfiguring(detection, PENDING, UNKNOWN);
+    }
+    if (tilingJobId == null) {
+      var ztj = processZoneTilingJob(detection);
+      var detectionWithZTJ =
+          detectionRepository.save(detection.toBuilder().ztjId(ztj.getId()).build());
+      return getTilingStatistics(detectionWithZTJ, ztj.getId());
+    }
+    var zoneTilingJob = zoneTilingJobService.findById(tilingJobId);
+    if (!zoneTilingJob.isSucceeded()) {
+      return getTilingStatistics(detection, tilingJobId);
+    }
+    var machineZoneDetectionJob = zoneDetectionJobService.findById(detectionJobId);
+
+    if (machineZoneDetectionJob.isPending() && zoneTilingJob.isFinished()) {
+      var savedDetectionJob = processZoneDetectionJob(detection, zoneTilingJob);
+      return getDetectionStatistics(detection, savedDetectionJob.getId());
+    }
+    if (machineZoneDetectionJob.isFinished()) {
+      var humanZoneDetectionJob = zoneDetectionJobService.getByTilingJobId(tilingJobId, HUMAN);
+      processVerificationOrGenerateGeoJson(detection, humanZoneDetectionJob);
+    }
+    return getDetectionStatistics(detection, machineZoneDetectionJob.getId());
+  }
+
+  private void processVerificationOrGenerateGeoJson(
+      Detection detection, ZoneDetectionJob humanZoneDetectionJob) {
+    if (!humanZoneDetectionJob.isFinished()) {
+      eventProducer.accept(
+          List.of(
+              AnnotationJobVerificationSent.builder()
+                  .humanZdjId(humanZoneDetectionJob.getId())
+                  .build()));
+    } else {
+      conversionInitiationService.processConversionTask(
+          detection, humanZoneDetectionJob.getZoneName(), humanZoneDetectionJob.getId());
+    }
   }
 
   private Detection createZoneDetectionJob(
-      String detectionId, CreateDetection createDetection, Optional<String> communityOwnerId) {
-    var communityId = communityOwnerId.orElse(null);
-    var detectionToSave = mapFromRestCreateDetection(detectionId, createDetection, communityId);
+      String detectionId, CreateDetection createDetection, @Nullable String communityOwnerId) {
+    var detectionToSave =
+        mapFromRestCreateDetection(detectionId, createDetection, communityOwnerId);
     var savedDetection =
         communityUsedSurfaceService.persistDetectionWithSurfaceUsage(
             detectionToSave, createDetection.getGeoJsonZone());
     eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
     return savedDetection;
-  }
-
-  private Detection getOrCreateDetection(
-      String endToEndId, CreateDetection createDetection, Optional<String> optionalCommunityId) {
-    if (optionalCommunityId.isPresent()) {
-      return detectionRepository
-          .findByEndToEndIdAndCommunityOwnerId(endToEndId, optionalCommunityId.get())
-          .orElseGet(saveDetection(endToEndId, createDetection, optionalCommunityId.get()));
-    }
-    return detectionRepository
-        .findByEndToEndId(endToEndId)
-        .orElseGet(saveDetection(endToEndId, createDetection, null));
   }
 
   @NonNull
@@ -301,18 +291,18 @@ public class ZoneService {
 
   private app.bpartners.geojobs.endpoint.rest.model.Detection addStatistics(Detection detection) {
     if (detection.getZdjId() != null) {
-      return createDetection(
+      return toRestDetection(
           detection,
           zoneDetectionJobService.getTaskStatistic(detection.getZdjId()),
           MACHINE_DETECTION);
     }
 
     if (detection.getZtjId() != null) {
-      return createDetection(
+      return toRestDetection(
           detection, zoneTilingJobService.getTaskStatistic(detection.getZtjId()), TILING);
     }
 
-    return createDetection(detection, new TaskStatistic(), CONFIGURING);
+    return toRestDetection(detection, new TaskStatistic(), CONFIGURING);
   }
 
   private app.bpartners.geojobs.endpoint.rest.model.Detection computeFromConfiguring(
@@ -333,24 +323,24 @@ public class ZoneService {
             .updatedAt(now())
             .taskStatusStatistics(List.of())
             .build();
-    return createDetection(detection, defaultConfiguringStatistic, CONFIGURING);
+    return toRestDetection(detection, defaultConfiguringStatistic, CONFIGURING);
   }
 
   private app.bpartners.geojobs.endpoint.rest.model.Detection getTilingStatistics(
       Detection detection, String tilingJobId) {
-    return createDetection(
+    return toRestDetection(
         detection, zoneTilingJobService.computeTaskStatistics(tilingJobId), TILING);
   }
 
   private app.bpartners.geojobs.endpoint.rest.model.Detection getDetectionStatistics(
       Detection detection, String detectionJobId) {
-    return createDetection(
+    return toRestDetection(
         detection,
         zoneDetectionJobService.computeTaskStatistics(detectionJobId),
         MACHINE_DETECTION);
   }
 
-  private app.bpartners.geojobs.endpoint.rest.model.Detection createDetection(
+  private app.bpartners.geojobs.endpoint.rest.model.Detection toRestDetection(
       Detection detection, TaskStatistic statistic, DetectionStepName detectionStepName) {
     return new app.bpartners.geojobs.endpoint.rest.model.Detection()
         .id(detection.getEndToEndId())

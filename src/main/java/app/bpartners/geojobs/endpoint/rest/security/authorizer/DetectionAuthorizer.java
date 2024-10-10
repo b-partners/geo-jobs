@@ -6,6 +6,7 @@ import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
+import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.util.TriConsumer;
@@ -32,16 +33,27 @@ public class DetectionAuthorizer implements TriConsumer<String, CreateDetection,
     }
   }
 
-  private void authorizeCommunity(
-      String detectionId, CreateDetection createDetection, Principal principal) {
+  public void accept(String detectionId, Principal principal) {
+    var role = principal.getRole();
+    switch (role) {
+      case ROLE_ADMIN -> {}
+      case ROLE_COMMUNITY -> authorizeCommunity(detectionId, principal);
+      default -> throw new RuntimeException("Unexpected role: " + role);
+    }
+  }
+
+  public CommunityAuthorization authorizeCommunity(String detectionId, Principal principal) {
     var communityAuthorization =
         caRepository.findByApiKey(principal.getPassword()).orElseThrow(ForbiddenException::new);
     var optionalDetection = detectionRepository.findByEndToEndId(detectionId);
-    if (optionalDetection.isPresent()) {
-      detectionOwnerAuthorizer.accept(communityAuthorization, optionalDetection.get());
-      return;
-    }
+    optionalDetection.ifPresent(
+        detection -> detectionOwnerAuthorizer.accept(communityAuthorization, detection));
+    return communityAuthorization;
+  }
 
+  private void authorizeCommunity(
+      String detectionId, CreateDetection createDetection, Principal principal) {
+    var communityAuthorization = authorizeCommunity(detectionId, principal);
     var features = createDetection.getGeoJsonZone();
     if (features != null && !features.isEmpty()) {
       communityZoneSurfaceAuthorizer.accept(communityAuthorization, features);

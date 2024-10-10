@@ -3,10 +3,13 @@ package app.bpartners.geojobs.service.event;
 import static java.time.Instant.now;
 
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
+import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.mail.Email;
 import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.repository.model.detection.Detection;
+import app.bpartners.geojobs.service.detection.DetectableObjectModelMapper;
+import app.bpartners.geojobs.service.detection.DetectionGeoServerParameterModelMapper;
 import app.bpartners.geojobs.template.HTMLTemplateParser;
 import jakarta.mail.internet.InternetAddress;
 import java.io.File;
@@ -22,9 +25,11 @@ import org.thymeleaf.context.Context;
 @Service
 @AllArgsConstructor
 public class DetectionSavedService implements Consumer<DetectionSaved> {
-  private static final String DETECTION_SAVED_TEMPLATE = "detection_saved";
+  public static final String DETECTION_SAVED_TEMPLATE = "detection_saved";
   private final Mailer mailer;
   private final BucketComponent bucketComponent;
+  private final DetectableObjectModelMapper detectableObjectModelMapper;
+  private final DetectionGeoServerParameterModelMapper detectionGeoServerParameterModelMapper;
 
   @SneakyThrows
   @Override
@@ -32,14 +37,20 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
     var detection = detectionSaved.getDetection();
     List<InternetAddress> cc = List.of();
     List<InternetAddress> bcc = List.of();
+    var env = System.getenv("ENV");
     String subject =
-        "Detection(id="
-            + detection.getId()
-            + ", communityOwnerId="
-            + detection.getCommunityOwnerId()
-            + ") modifiée le "
-            + now();
-    String htmlBody = computeStaticEmailBody(detection, bucketComponent);
+        String.format(
+            "[%s]Detection(id=%s, communityOwnerId=%s) modifiée le %s",
+            env == null ? "" : env.toUpperCase(),
+            detection.getId(),
+            detection.getCommunityOwnerId(),
+            now());
+    String htmlBody =
+        computeStaticEmailBody(
+            detection,
+            bucketComponent,
+            detectableObjectModelMapper,
+            detectionGeoServerParameterModelMapper);
     List<File> attachments = List.of();
     mailer.accept(
         new Email(
@@ -48,7 +59,10 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
 
   @NonNull
   public static String computeStaticEmailBody(
-      Detection detection, BucketComponent bucketComponent) {
+      Detection detection,
+      BucketComponent bucketComponent,
+      DetectableObjectModelMapper detectableObjectModelMapper,
+      DetectionGeoServerParameterModelMapper detectionGeoServerParameterModelMapper) {
     var shapeFilePresignURL =
         detection.getShapeFileKey() == null
             ? null
@@ -56,16 +70,28 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
                 .presign(detection.getShapeFileKey(), Duration.ofHours(24L))
                 .toString();
     var excelFilePresignURL =
-        detection.getShapeFileKey() == null
+        detection.getExcelFileKey() == null
             ? null
             : bucketComponent
                 .presign(detection.getExcelFileKey(), Duration.ofHours(24L))
                 .toString();
+    var modelActualInstance = detection.getDetectableObjectModel().getActualInstance();
+    var geoServerUrl = detection.getGeoServerProperties().getGeoServerUrl();
+    GeoServerParameter geoServerParameter =
+        detection.getGeoServerProperties().getGeoServerParameter();
     HTMLTemplateParser htmlTemplateParser = new HTMLTemplateParser();
     Context context = new Context();
+    context.setVariable(
+        "detectableObjectModelStringMapValues",
+        detectableObjectModelMapper.apply(modelActualInstance));
+    context.setVariable(
+        "geoServerParameterStringMapValues",
+        detectionGeoServerParameterModelMapper.apply(geoServerParameter));
+    context.setVariable("geoServerUrl", geoServerUrl);
     context.setVariable("detection", detection);
     context.setVariable("shapeFileUrl", shapeFilePresignURL);
     context.setVariable("excelFileUrl", excelFilePresignURL);
+
     return htmlTemplateParser.apply(DETECTION_SAVED_TEMPLATE, context);
   }
 }
