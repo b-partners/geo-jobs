@@ -15,9 +15,6 @@ public class ZoneTilingJobValidator {
     if (rest.getBucketName() == null) {
       stringBuilder.append("bucketName is mandatory. ");
     }
-    if (rest.getBucketPathPrefix() == null) {
-      stringBuilder.append("bucketPathPrefix is mandatory. ");
-    }
     String exceptionMsg = stringBuilder.toString();
     if (!exceptionMsg.isEmpty()) {
       throw new BadRequestException(exceptionMsg);
