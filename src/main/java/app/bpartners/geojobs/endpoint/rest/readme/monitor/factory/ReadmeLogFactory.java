@@ -2,12 +2,8 @@ package app.bpartners.geojobs.endpoint.rest.readme.monitor.factory;
 
 import app.bpartners.geojobs.endpoint.rest.readme.monitor.ReadmeMonitorConf;
 import app.bpartners.geojobs.endpoint.rest.readme.monitor.model.ReadmeLog;
-import app.bpartners.geojobs.endpoint.rest.readme.monitor.model.ReadmeRequest;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import java.time.Instant;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -15,29 +11,13 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ReadmeLogFactory {
   private final ReadmeGroupFactory readmeGroupFactory;
-  private final ReadmeEntryFactory readmeEntryFactory;
 
   public ReadmeLog createReadmeLog(
-      HttpServletRequest request,
-      HttpServletResponse response,
-      Instant startedDatetime,
-      Instant endedDatetime,
-      ReadmeMonitorConf readmeMonitorConf,
-      Principal principal) {
+      HttpServletRequest request, Principal principal, ReadmeMonitorConf readmeMonitorConf) {
     return ReadmeLog.builder()
         .clientIPAddress(request.getRemoteAddr())
         .development(readmeMonitorConf.isDevelopment())
         .group(readmeGroupFactory.createReadmeGroup(principal))
-        .request(
-            ReadmeRequest.builder()
-                .log(
-                    ReadmeRequest.ReadmeRequestLog.builder()
-                        .entries(
-                            List.of(
-                                readmeEntryFactory.createReadmeEntry(
-                                    request, response, startedDatetime, endedDatetime)))
-                        .build())
-                .build())
         .build();
   }
 }

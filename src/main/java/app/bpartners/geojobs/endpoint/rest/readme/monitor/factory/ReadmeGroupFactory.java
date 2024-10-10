@@ -6,18 +6,29 @@ import app.bpartners.geojobs.endpoint.rest.readme.monitor.model.ReadmeGroup;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 public class ReadmeGroupFactory {
-  private static final String ADMIN_LABEL_NAME = "admin";
+  public static final String ADMIN_LABEL_NAME = "admin";
+  private final String adminEmail;
   private final CommunityAuthorizationRepository communityAuthRepository;
+
+  public ReadmeGroupFactory(
+      @Value("${admin.email}") String adminEmail,
+      CommunityAuthorizationRepository communityAuthRepository) {
+    this.adminEmail = adminEmail;
+    this.communityAuthRepository = communityAuthRepository;
+  }
 
   public ReadmeGroup createReadmeGroup(Principal principal) {
     if (ROLE_ADMIN.equals(principal.getRole())) {
-      return ReadmeGroup.builder().label(ADMIN_LABEL_NAME).apiKey(principal.getPassword()).build();
+      return ReadmeGroup.builder()
+          .label(ADMIN_LABEL_NAME)
+          .apiKey(principal.getPassword())
+          .email(adminEmail)
+          .build();
     }
     var communityAuthorization =
         communityAuthRepository
