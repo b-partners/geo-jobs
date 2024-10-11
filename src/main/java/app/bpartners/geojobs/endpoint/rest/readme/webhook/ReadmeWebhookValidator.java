@@ -98,19 +98,20 @@ public class ReadmeWebhookValidator
     return Arrays.stream(signature.split(WEBHOOK_SIGNATURE_SEPARATOR))
         .map(item -> SignatureWithTime.builder().signature(item).build())
         .reduce(
-            SignatureWithTime.builder().signature("").time(-1).build(),
-            (accum, item) -> {
-              final var kv = item.signature().split(WEBHOOK_ITEM_SEPARATOR);
-              long time = accum.time();
-              String readmeSignature = accum.signature();
+            SignatureWithTime.builder().signature("").time(-1).build(), this::processSignatureItem);
+  }
 
-              if (kv[0].equals(WEBHOOK_ITEM_TIME_PREFIX)) {
-                time = parseLong(kv[1]);
-              } else if (kv[0].equals(WEBHOOK_EXPECTED_SCHEME)) {
-                readmeSignature = kv[1];
-              }
+  private SignatureWithTime processSignatureItem(SignatureWithTime accum, SignatureWithTime item) {
+    final var kv = item.signature().split(WEBHOOK_ITEM_SEPARATOR);
+    long time = accum.time();
+    String readmeSignature = accum.signature();
 
-              return SignatureWithTime.builder().time(time).signature(readmeSignature).build();
-            });
+    if (kv[0].equals(WEBHOOK_ITEM_TIME_PREFIX)) {
+      time = parseLong(kv[1]);
+    } else if (kv[0].equals(WEBHOOK_EXPECTED_SCHEME)) {
+      readmeSignature = kv[1];
+    }
+
+    return SignatureWithTime.builder().time(time).signature(readmeSignature).build();
   }
 }
