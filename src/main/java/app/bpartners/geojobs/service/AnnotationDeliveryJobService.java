@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryJobCreated;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryJobStatusChanged;
+import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryJobStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryTaskCreated;
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.job.repository.TaskRepository;
@@ -44,7 +45,7 @@ public class AnnotationDeliveryJobService
         task ->
             eventProducer.accept(
                 List.of(AnnotationDeliveryTaskCreated.builder().deliveryTask(task).build())));
-
+    eventProducer.accept(List.of(new AnnotationDeliveryJobStatusRecomputingSubmitted(jobId)));
     return job;
   }
 

@@ -52,9 +52,9 @@ class AnnotationDeliveryJobServiceTest {
     var actual = subject.fireTasks(jobId);
 
     var listCaptor = ArgumentCaptor.forClass(List.class);
-    verify(eventProducerMock, only()).accept(listCaptor.capture());
+    verify(eventProducerMock, times(2)).accept(listCaptor.capture());
     var deliveryTaskCreated =
-        ((List<AnnotationDeliveryTaskCreated>) listCaptor.getValue()).getFirst();
+        ((List<AnnotationDeliveryTaskCreated>) listCaptor.getAllValues().getFirst()).getFirst();
     assertEquals(deliveryJob, actual);
     assertEquals(new AnnotationDeliveryTaskCreated(deliveryTask), deliveryTaskCreated);
     assertEquals(Duration.ofMinutes(10L), deliveryTaskCreated.maxConsumerDuration());

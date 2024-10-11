@@ -12,6 +12,7 @@ import static org.mockito.Mockito.*;
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryJobCreated;
+import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryJobStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryTaskCreated;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.repository.AnnotationDeliveryJobRepository;
@@ -91,9 +92,14 @@ class AnnotationDeliveryJobServiceIT extends FacadeIT {
 
     var actual = subject.fireTasks(jobId);
 
+    int jobStatusSubmittedEventCount = 1;
     var listCaptor = ArgumentCaptor.forClass(List.class);
-    verify(eventProducer, times(tasksNb)).accept(listCaptor.capture());
-    List<List> deliveryTasksCreated = listCaptor.getAllValues();
+    verify(eventProducer, times(tasksNb + jobStatusSubmittedEventCount))
+        .accept(listCaptor.capture());
+    List<List> allValues = listCaptor.getAllValues();
+    List<List> deliveryTasksCreated = allValues.subList(0, allValues.size() - 1);
+    AnnotationDeliveryJobStatusRecomputingSubmitted jobStatusRecomputingSubmitted =
+        (AnnotationDeliveryJobStatusRecomputingSubmitted) allValues.getLast().getFirst();
     assertTrue(
         deliveryTasksCreated.stream()
             .allMatch(
@@ -106,6 +112,8 @@ class AnnotationDeliveryJobServiceIT extends FacadeIT {
                   return deliveryTaskCreated.getDeliveryTask() != null;
                 }));
     assertEquals(deliveryJob, actual);
+    assertEquals(
+        new AnnotationDeliveryJobStatusRecomputingSubmitted(jobId), jobStatusRecomputingSubmitted);
   }
 
   private List<AnnotationDeliveryTask> someDeliveryTasks(
