@@ -6,11 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import java.io.Serializable;
 import lombok.Builder;
 
-/*
- *   docs: https://docs.readme.com/main/reference/post_request
- * */
 @Builder
 @JsonInclude(NON_NULL)
-public record ReadmeLog(
-    String clientIPAddress, Boolean development, ReadmeGroup group, ReadmeRequest request)
+public record ReadmeRequestCreator(String name, String version, String comment)
     implements Serializable {}

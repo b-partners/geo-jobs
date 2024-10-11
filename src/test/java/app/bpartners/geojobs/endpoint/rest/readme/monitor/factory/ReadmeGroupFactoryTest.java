@@ -56,7 +56,7 @@ class ReadmeGroupFactoryTest {
     assertEquals(expected, actual);
   }
 
-  CommunityAuthorization communityAuthorization() {
+  private CommunityAuthorization communityAuthorization() {
     return CommunityAuthorization.builder()
         .email("dummy@gmail.com")
         .name("dummyName")
