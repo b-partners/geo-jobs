@@ -105,7 +105,6 @@ public class ReadmeWebhookValidator
               String readmeSignature = accum.signature();
 
               if (kv[0].equals(WEBHOOK_ITEM_TIME_PREFIX)) {
-                System.out.println(kv[1]);
                 time = parseLong(kv[1]);
               } else if (kv[0].equals(WEBHOOK_EXPECTED_SCHEME)) {
                 readmeSignature = kv[1];
