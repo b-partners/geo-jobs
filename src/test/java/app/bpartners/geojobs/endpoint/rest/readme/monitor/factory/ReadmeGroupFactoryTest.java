@@ -1,7 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.readme.monitor.factory;
 
 import static app.bpartners.geojobs.conf.EnvConf.ADMIN_EMAIL;
-import static app.bpartners.geojobs.endpoint.rest.readme.monitor.factory.ReadmeGroupFactory.ADMIN_LABEL_NAME;
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_COMMUNITY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -18,6 +17,7 @@ import org.junit.jupiter.api.Test;
 
 class ReadmeGroupFactoryTest {
   private static final String ADMIN_API_KEY = "the-admin-api-key";
+  private static final String ADMIN_LABEL_NAME = "admin";
   CommunityAuthorizationRepository communityAuthRepositoryMock = mock();
   Principal principalMock = mock();
   ReadmeGroupFactory subject = new ReadmeGroupFactory(ADMIN_EMAIL, communityAuthRepositoryMock);
