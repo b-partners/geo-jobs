@@ -3,7 +3,6 @@ package app.bpartners.geojobs.service.event.readme;
 import app.bpartners.geojobs.endpoint.event.model.readme.ReadmeLogCreated;
 import app.bpartners.geojobs.endpoint.rest.readme.monitor.ReadmeMonitorConf;
 import app.bpartners.geojobs.endpoint.rest.readme.monitor.factory.ReadmeLogFactory;
-import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Base64;
@@ -24,19 +23,18 @@ public class ReadmeLogCreatedService implements Consumer<ReadmeLogCreated> {
   private static final OkHttpClient README_CLIENT = new OkHttpClient();
   private final ObjectMapper objectMapper;
   private final ReadmeLogFactory readmeLogFactory;
-  private final AuthProvider authProvider;
-  private final ReadmeMonitorConf readmeMonitorConf;
 
   @Override
   @SneakyThrows
   public void accept(ReadmeLogCreated readmeLogCreated) {
+    var readmeMonitorConf = readmeLogCreated.getReadmeMonitorConf();
     var readmeLog =
         readmeLogFactory.createReadmeLog(
             readmeLogCreated.getRequest(),
             readmeLogCreated.getResponse(),
             readmeLogCreated.getStartedDatetime(),
             readmeLogCreated.getEndedDatetime(),
-            authProvider.getPrincipal(),
+            readmeLogCreated.getPrincipal(),
             readmeMonitorConf);
 
     if (readmeMonitorConf.isDevelopment() != readmeLog.development()) {
@@ -51,7 +49,7 @@ public class ReadmeLogCreatedService implements Consumer<ReadmeLogCreated> {
         new Request.Builder()
             .url(readmeMonitorConf.getUrl())
             .header("Content-Type", README_API_MIME_TYPE)
-            .header("Authorization", getBasicAuthValue())
+            .header("Authorization", getBasicAuthValue(readmeMonitorConf))
             .post(requestBody)
             .build();
     Response readmeResponse = README_CLIENT.newCall(readmeRequest).execute();
@@ -61,7 +59,7 @@ public class ReadmeLogCreatedService implements Consumer<ReadmeLogCreated> {
     log.info("readme.monitor.responseStatus : {}", readmeResponse.code());
   }
 
-  private String getBasicAuthValue() {
+  private String getBasicAuthValue(ReadmeMonitorConf readmeMonitorConf) {
     String authInfo = readmeMonitorConf.getApiKey() + ":";
     return README_AUTH_PREFIX + Base64.getEncoder().encodeToString(authInfo.getBytes());
   }

@@ -4,6 +4,7 @@ import static java.time.Instant.now;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.readme.ReadmeLogCreated;
+import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -17,8 +18,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Slf4j
 @RequiredArgsConstructor
 public class ReadmeMonitorFilter extends OncePerRequestFilter {
-  private final EventProducer eventProducer;
   private final RequestMatcher requestMatcher;
+  private final ReadmeMonitorConf readmeMonitorConf;
+  private final EventProducer eventProducer;
+  private final AuthProvider authProvider;
 
   @Override
   @SneakyThrows
@@ -44,6 +47,8 @@ public class ReadmeMonitorFilter extends OncePerRequestFilter {
                 .response(response)
                 .startedDatetime(startedDatetime)
                 .endedDatetime(now())
+                .principal(authProvider.getPrincipal())
+                .readmeMonitorConf(readmeMonitorConf)
                 .build()));
 
     if (exception != null) {
