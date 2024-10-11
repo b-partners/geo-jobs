@@ -80,7 +80,7 @@ public class ReadmeWebhookValidator
     }
   }
 
-  private static String calculateHmacSHA256(String data, String secret)
+  public static String calculateHmacSHA256(String data, String secret)
       throws NoSuchAlgorithmException, InvalidKeyException {
     var mac = getInstance(CRYPTO_SHA_TYPE);
     var secretKeySpec = new SecretKeySpec(secret.getBytes(UTF_8), CRYPTO_SHA_TYPE);
@@ -105,6 +105,7 @@ public class ReadmeWebhookValidator
               String readmeSignature = accum.signature();
 
               if (kv[0].equals(WEBHOOK_ITEM_TIME_PREFIX)) {
+                System.out.println(kv[1]);
                 time = parseLong(kv[1]);
               } else if (kv[0].equals(WEBHOOK_EXPECTED_SCHEME)) {
                 readmeSignature = kv[1];
