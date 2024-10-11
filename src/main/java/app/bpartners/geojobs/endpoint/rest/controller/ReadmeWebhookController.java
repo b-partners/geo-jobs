@@ -18,8 +18,8 @@ public class ReadmeWebhookController {
   private final ReadmeWebhookConf readmeWebhookConf;
   private final ReadmeWebhookService service;
 
-  @PostMapping("/webhook/apiKey")
-  SingleUserInfo webhook(@RequestBody CreateWebhook body, HttpServletRequest request) {
+  @PostMapping("/readme/webhook/apiKey")
+  public SingleUserInfo readmeWebhook(@RequestBody CreateWebhook body, HttpServletRequest request) {
     readmeWebhookValidator.accept(body, request, readmeWebhookConf);
     return service.retrieveUserInfoByEmail(body.email());
   }

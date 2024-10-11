@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.endpoint.rest.validator;
+package app.bpartners.geojobs.endpoint.rest.readme.webhook;
 
 import static app.bpartners.geojobs.endpoint.rest.readme.webhook.ReadmeWebhookValidator.calculateHmacSHA256;
 import static org.junit.jupiter.api.Assertions.*;
@@ -6,8 +6,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import app.bpartners.geojobs.endpoint.rest.readme.webhook.ReadmeWebhookConf;
-import app.bpartners.geojobs.endpoint.rest.readme.webhook.ReadmeWebhookValidator;
 import app.bpartners.geojobs.endpoint.rest.readme.webhook.model.CreateWebhook;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
 import com.fasterxml.jackson.core.JsonProcessingException;
