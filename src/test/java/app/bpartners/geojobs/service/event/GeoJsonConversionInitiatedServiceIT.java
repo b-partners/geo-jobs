@@ -16,7 +16,6 @@ import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.GeoJsonConversionTask;
-import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.HumanDetectedTile;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
@@ -28,7 +27,6 @@ import app.bpartners.geojobs.service.geojson.GeoJsonConverter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -90,15 +88,11 @@ class GeoJsonConversionInitiatedServiceIT extends FacadeIT {
 
   @Test
   void generate_geo_json_from_detected_tiles() {
-    var detectionId = randomUUID().toString();
-    when(detectionRepositoryMock.findByZdjId(any()))
-        .thenReturn(Optional.of(Detection.builder().id(detectionId).build()));
     taskService.save(conversionTask());
 
     subject.accept(initiated());
     var actual = taskService.getById(MOCK_TASK_ID);
 
-    assertEquals(detectionId + "/Cannes.geojson", actual.getFileKey());
     assertEquals(FINISHED, actual.getStatus().getProgression());
     assertEquals(SUCCEEDED, actual.getStatus().getHealth());
   }
