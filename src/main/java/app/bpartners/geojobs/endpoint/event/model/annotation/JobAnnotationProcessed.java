@@ -1,5 +1,8 @@
 package app.bpartners.geojobs.endpoint.event.model.annotation;
 
+import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
+
+import app.bpartners.geojobs.endpoint.event.EventStack;
 import app.bpartners.geojobs.endpoint.event.model.PojaEvent;
 import java.time.Duration;
 import javax.annotation.processing.Generated;
@@ -27,5 +30,10 @@ public class JobAnnotationProcessed extends PojaEvent {
   @Override
   public Duration maxConsumerBackoffBetweenRetries() {
     return Duration.ofMinutes(1L);
+  }
+
+  @Override
+  public EventStack getEventStack() {
+    return EVENT_STACK_2;
   }
 }
