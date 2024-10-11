@@ -53,7 +53,7 @@ class ReadmeEntryFactoryTest {
     assertEquals(expected, actual);
   }
 
-  void setupHttpServletRequest() {
+  private void setupHttpServletRequest() {
     when(request.getMethod()).thenReturn(REQUEST_METHOD);
     when(request.getRequestURI()).thenReturn(REQUEST_URI);
     when(request.getHeaderNames()).thenReturn(HEADER_NAMES);
@@ -62,14 +62,14 @@ class ReadmeEntryFactoryTest {
     when(request.getParameterNames()).thenReturn(new Vector<String>().elements());
   }
 
-  void setupHttpServletResponse() {
+  private void setupHttpServletResponse() {
     when(response.getHeaderNames()).thenReturn(new ArrayList<>(List.of(HEADER_NAME)));
     when(response.getStatus()).thenReturn(RESPONSE_STATUS);
     when(response.getHeader(HEADER_NAME)).thenReturn(HEADER_VALUE);
     when(response.getContentType()).thenReturn(RESPONSE_CONTENT_TYPE);
   }
 
-  ReadmeEntry expected() {
+  private ReadmeEntry expected() {
     var headers =
         List.of(ReadmeEntryHeader.builder().name(HEADER_NAME).value(HEADER_VALUE).build());
 

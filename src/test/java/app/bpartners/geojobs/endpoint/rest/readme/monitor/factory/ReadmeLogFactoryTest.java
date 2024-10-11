@@ -52,7 +52,7 @@ class ReadmeLogFactoryTest {
     assertEquals(expected, actual);
   }
 
-  ReadmeLog expectedReadmeLog(
+  private ReadmeLog expectedReadmeLog(
       ReadmeGroup readmeGroup, ReadmeEntry readmeEntry, ReadmeMonitorConf conf) {
     return ReadmeLog.builder()
         .group(readmeGroup)
@@ -73,7 +73,7 @@ class ReadmeLogFactoryTest {
         .build();
   }
 
-  ReadmeMonitorConf readmeMonitorConf() {
+  private ReadmeMonitorConf readmeMonitorConf() {
     return ReadmeMonitorConf.builder()
         .name("readmeio")
         .version("0.0.1")
