@@ -219,14 +219,14 @@ public class DetectionMapper {
       throw new IllegalArgumentException("label.name cannot be null");
     }
     return switch (label.getName().toUpperCase()) {
-      case "ROOF" -> create(objectId, TOITURE_REVETEMENT);
-      case "SOLAR_PANEL" -> create(objectId, PANNEAU_PHOTOVOLTAIQUE);
+      case "TOITURE_REVETEMENT" -> create(objectId, TOITURE_REVETEMENT);
+      case "PANNEAU_PHOTOVOLTAIQUE" -> create(objectId, PANNEAU_PHOTOVOLTAIQUE);
       case "PISCINE" -> create(objectId, PISCINE);
-      case "TREE" -> create(objectId, ARBRE);
-      case "SIDEWALK" -> create(objectId, TROTTOIR);
-      case "PATHWAY" -> create(objectId, PASSAGE_PIETON);
+      case "ARBRE" -> create(objectId, ARBRE);
+      case "TROTTOIR" -> create(objectId, TROTTOIR);
+      case "PASSAGE_PIETON" -> create(objectId, PASSAGE_PIETON);
       case "LINE" -> create(objectId, LINE);
-      case "GREEN_SPACE" -> create(objectId, ESPACE_VERT);
+      case "ESPACE_VERT" -> create(objectId, ESPACE_VERT);
       default ->
           throw new IllegalStateException("Unexpected value: " + label.getName().toUpperCase());
     };

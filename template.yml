@@ -64,7 +64,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: app.bpartners.geojobs.ApiEventHandler::handleRequest
-      MemorySize: 2048
+      MemorySize: 512
       Timeout: 300
       Role: !Sub '{{resolve:ssm:/geo-jobs/${Env}/execution/role-arn}}'
       
@@ -81,7 +81,8 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: app.bpartners.geojobs.MailboxEventHandler::handleRequest
-      MemorySize: 2048
+#      TODO: changed directly in this template not from poja because it doesnt support different workers conf
+      MemorySize: 512
       Timeout: 600 #note(sqs-visibility)
       Role: !Sub '{{resolve:ssm:/geo-jobs/${Env}/execution/role-arn}}'
       
