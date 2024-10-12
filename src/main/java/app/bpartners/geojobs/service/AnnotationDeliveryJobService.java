@@ -38,24 +38,22 @@ public class AnnotationDeliveryJobService
   }
 
   @Transactional
-  public AnnotationDeliveryJob fireTasks(String jobId) {
-    var job = findById(jobId);
+  public void fireTasks(AnnotationDeliveryJob job) {
     List<AnnotationDeliveryTask> tasks = getTasks(job);
     tasks.forEach(
         task ->
             eventProducer.accept(
                 List.of(AnnotationDeliveryTaskCreated.builder().deliveryTask(task).build())));
-    eventProducer.accept(List.of(new AnnotationDeliveryJobStatusRecomputingSubmitted(jobId)));
-    return job;
   }
 
   @Override
-  @Transactional
   public AnnotationDeliveryJob create(
       AnnotationDeliveryJob job, List<AnnotationDeliveryTask> tasks) {
-    AnnotationDeliveryJob newJob = super.create(job, tasks);
+    var newJob = super.create(job, tasks);
     eventProducer.accept(
         List.of(AnnotationDeliveryJobCreated.builder().deliveryJob(newJob).build()));
+    eventProducer.accept(
+        List.of(new AnnotationDeliveryJobStatusRecomputingSubmitted(newJob.getId())));
     return newJob;
   }
 

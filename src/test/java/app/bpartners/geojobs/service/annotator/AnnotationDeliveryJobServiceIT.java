@@ -63,14 +63,18 @@ class AnnotationDeliveryJobServiceIT extends FacadeIT {
     var actual = subject.create(deliveryJob, deliveryTasks);
 
     var listCaptor = ArgumentCaptor.forClass(List.class);
-    verify(eventProducer, only()).accept(listCaptor.capture());
-    var deliveryJobCreated =
-        ((List<AnnotationDeliveryJobCreated>) listCaptor.getValue()).getFirst();
+    verify(eventProducer, times(2)).accept(listCaptor.capture());
+    List<List> allValues = listCaptor.getAllValues();
+    var deliveryJobCreated = ((List<AnnotationDeliveryJobCreated>) allValues.getFirst()).getFirst();
+    AnnotationDeliveryJobStatusRecomputingSubmitted jobStatusRecomputingSubmitted =
+        (AnnotationDeliveryJobStatusRecomputingSubmitted) allValues.getLast().getFirst();
     assertEquals(
         AnnotationDeliveryJobCreated.builder().deliveryJob(actual).build(), deliveryJobCreated);
     assertEquals(deliveryJob, actual);
     assertEquals(Duration.ofMinutes(3L), deliveryJobCreated.maxConsumerDuration());
     assertEquals(Duration.ofMinutes(3L), deliveryJobCreated.maxConsumerBackoffBetweenRetries());
+    assertEquals(
+        new AnnotationDeliveryJobStatusRecomputingSubmitted(jobId), jobStatusRecomputingSubmitted);
   }
 
   @Test
@@ -90,16 +94,13 @@ class AnnotationDeliveryJobServiceIT extends FacadeIT {
         someDeliveryTasks(
             tasksNb, deliveryJob.getId(), deliveryJob.getAnnotationJobId(), PENDING, UNKNOWN));
 
-    var actual = subject.fireTasks(jobId);
+    subject.fireTasks(deliveryJob);
 
-    int jobStatusSubmittedEventCount = 1;
     var listCaptor = ArgumentCaptor.forClass(List.class);
-    verify(eventProducer, times(tasksNb + jobStatusSubmittedEventCount))
-        .accept(listCaptor.capture());
+    verify(eventProducer, times(tasksNb)).accept(listCaptor.capture());
     List<List> allValues = listCaptor.getAllValues();
     List<List> deliveryTasksCreated = allValues.subList(0, allValues.size() - 1);
-    AnnotationDeliveryJobStatusRecomputingSubmitted jobStatusRecomputingSubmitted =
-        (AnnotationDeliveryJobStatusRecomputingSubmitted) allValues.getLast().getFirst();
+
     assertTrue(
         deliveryTasksCreated.stream()
             .allMatch(
@@ -111,9 +112,6 @@ class AnnotationDeliveryJobServiceIT extends FacadeIT {
                   var deliveryTaskCreated = (AnnotationDeliveryTaskCreated) list.getFirst();
                   return deliveryTaskCreated.getDeliveryTask() != null;
                 }));
-    assertEquals(deliveryJob, actual);
-    assertEquals(
-        new AnnotationDeliveryJobStatusRecomputingSubmitted(jobId), jobStatusRecomputingSubmitted);
   }
 
   private List<AnnotationDeliveryTask> someDeliveryTasks(
