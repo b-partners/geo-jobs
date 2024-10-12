@@ -1,12 +1,12 @@
 package app.bpartners.geojobs.endpoint.event.model.annotation;
 
+import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
+
 import app.bpartners.geojobs.endpoint.event.EventStack;
 import app.bpartners.geojobs.endpoint.event.model.PojaEvent;
 import app.bpartners.geojobs.repository.model.annotation.AnnotationDeliveryJob;
 import java.time.Duration;
 import lombok.*;
-
-import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
 
 @NoArgsConstructor
 @AllArgsConstructor
