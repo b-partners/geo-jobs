@@ -12,11 +12,13 @@ import app.bpartners.geojobs.repository.TaskStatisticRepository;
 import app.bpartners.geojobs.repository.model.annotation.AnnotationDeliveryJob;
 import app.bpartners.geojobs.repository.model.annotation.AnnotationDeliveryTask;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 public class AnnotationDeliveryJobService
     extends JobService<AnnotationDeliveryTask, AnnotationDeliveryJob> {
   private final EventProducer eventProducer;
@@ -47,11 +49,13 @@ public class AnnotationDeliveryJobService
   }
 
   @Override
+  @Transactional
   public AnnotationDeliveryJob create(
       AnnotationDeliveryJob job, List<AnnotationDeliveryTask> tasks) {
     var newJob = super.create(job, tasks);
-    eventProducer.accept(
-        List.of(AnnotationDeliveryJobCreated.builder().deliveryJob(newJob).build()));
+    log.info("DEBUG AnnotationDeliveryJob.old={}, new={}", job, newJob);
+    log.info("DEBUG AnnotationDeliveryTasks size ={}", getTasks(newJob).size());
+    eventProducer.accept(List.of(new AnnotationDeliveryJobCreated(newJob)));
     eventProducer.accept(
         List.of(new AnnotationDeliveryJobStatusRecomputingSubmitted(newJob.getId())));
     return newJob;

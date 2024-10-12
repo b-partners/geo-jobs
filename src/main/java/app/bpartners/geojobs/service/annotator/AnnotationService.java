@@ -97,6 +97,9 @@ public class AnnotationService {
                 annotatedTask ->
                     fromAnnotatedTask(annotationDeliveryJobId, annotationJobId, annotatedTask))
             .collect(Collectors.toList());
+    log.info("DEBUG annotationDeliveryJobId={} for jobName={}", annotationDeliveryJobId, jobName);
+    log.info(
+        "DEBUG annotationDeliveryJob.id={} for jobName={}", annotationDeliveryJob.getId(), jobName);
 
     annotationDeliveryJobService.create(annotationDeliveryJob, annotationDeliveryTasks);
   }
