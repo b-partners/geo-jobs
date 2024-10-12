@@ -95,20 +95,20 @@ public class ZoneDetectionJobAnnotationProcessor {
             annotationJobId, humanDetectionJobId, falsePositiveTiles, humanZDJ.getId());
     hdjFalsePositiveDetectedObjects.setDetectableObjectConfigurations(
         detectableObjectConfigurations);
-    var detectedTiles = hdjFalsePositiveDetectedObjects.getMachineDetectedTiles();
-    if (detectedTiles.isEmpty()) {
+    if (falsePositiveTiles.isEmpty()) {
       log.warn("No potential false positive objects found from ZDJ(id=" + zoneDetectionJobId + ")");
     } else {
       annotationService.createAnnotationJob(
           hdjFalsePositiveDetectedObjects,
           humanZDJ.getZoneName()
               + " - "
-              + detectedTiles.size()
+              + falsePositiveTiles.size()
               + " tiles with detection confidence < "
               + minConfidence * 100
               + "%"
               + " "
-              + now());
+              + now(),
+          falsePositiveTiles);
     }
   }
 
@@ -134,20 +134,20 @@ public class ZoneDetectionJobAnnotationProcessor {
             annotationJobId, humanDetectionJobId, truePositiveDetectedTiles, humanZDJ.getId());
     hdjTruePositiveDetectedObjects.setDetectableObjectConfigurations(
         detectableObjectConfigurations);
-    var detectedTiles = hdjTruePositiveDetectedObjects.getMachineDetectedTiles();
-    if (detectedTiles.isEmpty()) {
+    if (truePositiveDetectedTiles.isEmpty()) {
       log.warn("No potential true positive objects found from ZDJ(id=" + zoneDetectionJobId + ")");
     } else {
       annotationService.createAnnotationJob(
           hdjTruePositiveDetectedObjects,
           humanZDJ.getZoneName()
               + " - "
-              + detectedTiles.size()
+              + truePositiveDetectedTiles.size()
               + " tiles with detection confidence >= "
               + minConfidence * 100
               + "%"
               + " "
-              + now());
+              + now(),
+          truePositiveDetectedTiles);
     }
   }
 
@@ -169,18 +169,18 @@ public class ZoneDetectionJobAnnotationProcessor {
         humanDetectionJobService.create(
             annotationJobId, humanDetectionJobId, tilesWithoutObject, humanZDJ.getId());
     hdjWithoutDetectedObjects.setDetectableObjectConfigurations(detectableObjectConfigurations);
-    List<MachineDetectedTile> detectedTiles = hdjWithoutDetectedObjects.getMachineDetectedTiles();
-    if (detectedTiles.isEmpty()) {
+    if (tilesWithoutObject.isEmpty()) {
       log.warn("No tiles without objects found from ZDJ(id=" + zoneDetectionJobId + ")");
     } else {
       annotationService.createAnnotationJob(
           hdjWithoutDetectedObjects,
           humanZDJ.getZoneName()
               + " - "
-              + detectedTiles.size()
+              + tilesWithoutObject.size()
               + " tiles without detected objects"
               + " "
-              + now());
+              + now(),
+          tilesWithoutObject);
     }
   }
 

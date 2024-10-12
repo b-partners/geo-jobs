@@ -75,8 +75,10 @@ public class AnnotationService {
   }
 
   @SneakyThrows
-  public void createAnnotationJob(HumanDetectionJob humanDetectionJob, String jobName) {
-    var machineDetectedTiles = humanDetectionJob.getMachineDetectedTiles();
+  public void createAnnotationJob(
+      HumanDetectionJob humanDetectionJob,
+      String jobName,
+      List<MachineDetectedTile> machineDetectedTiles) {
     var detectableObjectConfigurations = humanDetectionJob.getDetectableObjectConfigurations();
     var expectedLabels =
         retrieveExpectedLabelsFromObjectConfiguration(detectableObjectConfigurations);
@@ -166,7 +168,8 @@ public class AnnotationService {
   }
 
   public void createAnnotationJob(HumanDetectionJob humanDetectionJob) throws ApiException {
-    createAnnotationJob(humanDetectionJob, "geo-jobs" + now());
+    createAnnotationJob(
+        humanDetectionJob, "geo-jobs" + now(), humanDetectionJob.getMachineDetectedTiles());
   }
 
   public void addAnnotationTask(String jobId, CreateAnnotatedTask annotatedTask) {

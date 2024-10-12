@@ -90,7 +90,7 @@ class ZoneTilingJobCreatedIT extends DetectionIT {
                     .toFile());
     when(bucketComponentMock.upload(any(), any())).thenReturn(new FileHash(SHA256, "mock"));
 
-    doNothing().when(annotationServiceMock).createAnnotationJob(any(), any());
+    doNothing().when(annotationServiceMock).createAnnotationJob(any(), any(), any());
     when(annotationServiceMock.getAnnotationJobById(any())).thenReturn(annotationJob());
     when(annotationServiceMock.retrieveTasksFromAnnotationJob(
             any(), any(), eq(ANNOTATION_JOB_ID), eq(null), eq(null), eq(null)))
@@ -182,7 +182,7 @@ class ZoneTilingJobCreatedIT extends DetectionIT {
     assertTrue(actualTilingJob.isSucceeded());
     assertTrue(actualDetectionJob.isSucceeded());
 
-    verify(annotationServiceMock, times(1)).createAnnotationJob(any(), any());
+    verify(annotationServiceMock, times(1)).createAnnotationJob(any(), any(), any());
     var defaultDetectionJobHuman = zdjService.getByTilingJobId(tilingJob.getId(), HUMAN);
     eventProducerMock.accept(
         List.of(
