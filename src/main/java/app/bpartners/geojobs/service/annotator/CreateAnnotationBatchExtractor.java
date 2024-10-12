@@ -22,30 +22,15 @@ public class CreateAnnotationBatchExtractor {
 
   public CreateAnnotationBatch apply(
       MachineDetectedTile machineDetectedTile, String annotatorId, List<Label> existingLabels) {
-    CreateAnnotationBatch annotations =
-        new CreateAnnotationBatch()
-            .id(randomUUID().toString())
-            .creationDatetime(Instant.now())
-            .annotations(
-                machineDetectedTile.getDetectedObjects().stream()
-                    .map(
-                        detectedObject ->
-                            extractAnnotation(detectedObject, annotatorId, existingLabels))
-                    .toList());
-    log.info(
-        "[DEBUG] CreateAnnotationBatchExtractor Annotations [{}]",
-        annotations.getAnnotations().stream()
-            .map(
-                annotation ->
-                    "AnnotationBaseFields(id="
-                        + annotation.getId()
-                        + ", label="
-                        + annotation.getLabel()
-                        + ", polygonPointsSize="
-                        + annotation.getPolygon().getPoints().size()
-                        + ")")
-            .toList());
-    return annotations;
+    return new CreateAnnotationBatch()
+        .id(randomUUID().toString())
+        .creationDatetime(Instant.now())
+        .annotations(
+            machineDetectedTile.getDetectedObjects().stream()
+                .map(
+                    detectedObject ->
+                        extractAnnotation(detectedObject, annotatorId, existingLabels))
+                .toList());
   }
 
   private AnnotationBaseFields extractAnnotation(
