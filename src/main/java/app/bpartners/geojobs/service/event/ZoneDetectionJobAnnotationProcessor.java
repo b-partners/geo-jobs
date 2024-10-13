@@ -3,6 +3,8 @@ package app.bpartners.geojobs.service.event;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
+import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.HumanDetectionJobCreated;
 import app.bpartners.geojobs.repository.DetectedTileRepository;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.HumanDetectionJob;
@@ -29,6 +31,7 @@ public class ZoneDetectionJobAnnotationProcessor {
   private final HumanDetectionJobService humanDetectionJobService;
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final KeyPredicateFunction keyPredicateFunction;
+  private final EventProducer eventProducer;
 
   @Transactional
   public AnnotationJobIds accept(
@@ -92,14 +95,15 @@ public class ZoneDetectionJobAnnotationProcessor {
             .toList();
     var hdjFalsePositiveDetectedObjects =
         humanDetectionJobService.create(
-            annotationJobId, humanDetectionJobId, falsePositiveTiles, humanZDJ.getId());
-    hdjFalsePositiveDetectedObjects.setDetectableObjectConfigurations(
-        detectableObjectConfigurations);
+            annotationJobId,
+            humanDetectionJobId,
+            falsePositiveTiles,
+            humanZDJ.getId(),
+            detectableObjectConfigurations);
     if (falsePositiveTiles.isEmpty()) {
       log.warn("No potential false positive objects found from ZDJ(id=" + zoneDetectionJobId + ")");
     } else {
-      annotationService.createAnnotationJob(
-          hdjFalsePositiveDetectedObjects,
+      var jobName =
           humanZDJ.getZoneName()
               + " - "
               + falsePositiveTiles.size()
@@ -107,8 +111,10 @@ public class ZoneDetectionJobAnnotationProcessor {
               + minConfidence * 100
               + "%"
               + " "
-              + now(),
-          falsePositiveTiles);
+              + now();
+
+      eventProducer.accept(
+          List.of(new HumanDetectionJobCreated(hdjFalsePositiveDetectedObjects.getId(), jobName)));
     }
   }
 
@@ -131,14 +137,15 @@ public class ZoneDetectionJobAnnotationProcessor {
             .toList();
     var hdjTruePositiveDetectedObjects =
         humanDetectionJobService.create(
-            annotationJobId, humanDetectionJobId, truePositiveDetectedTiles, humanZDJ.getId());
-    hdjTruePositiveDetectedObjects.setDetectableObjectConfigurations(
-        detectableObjectConfigurations);
+            annotationJobId,
+            humanDetectionJobId,
+            truePositiveDetectedTiles,
+            humanZDJ.getId(),
+            detectableObjectConfigurations);
     if (truePositiveDetectedTiles.isEmpty()) {
       log.warn("No potential true positive objects found from ZDJ(id=" + zoneDetectionJobId + ")");
     } else {
-      annotationService.createAnnotationJob(
-          hdjTruePositiveDetectedObjects,
+      var jobName =
           humanZDJ.getZoneName()
               + " - "
               + truePositiveDetectedTiles.size()
@@ -146,8 +153,10 @@ public class ZoneDetectionJobAnnotationProcessor {
               + minConfidence * 100
               + "%"
               + " "
-              + now(),
-          truePositiveDetectedTiles);
+              + now();
+
+      eventProducer.accept(
+          List.of(new HumanDetectionJobCreated(hdjTruePositiveDetectedObjects.getId(), jobName)));
     }
   }
 
@@ -167,20 +176,24 @@ public class ZoneDetectionJobAnnotationProcessor {
             .toList();
     HumanDetectionJob hdjWithoutDetectedObjects =
         humanDetectionJobService.create(
-            annotationJobId, humanDetectionJobId, tilesWithoutObject, humanZDJ.getId());
-    hdjWithoutDetectedObjects.setDetectableObjectConfigurations(detectableObjectConfigurations);
+            annotationJobId,
+            humanDetectionJobId,
+            tilesWithoutObject,
+            humanZDJ.getId(),
+            detectableObjectConfigurations);
     if (tilesWithoutObject.isEmpty()) {
       log.warn("No tiles without objects found from ZDJ(id=" + zoneDetectionJobId + ")");
     } else {
-      annotationService.createAnnotationJob(
-          hdjWithoutDetectedObjects,
+      var jobName =
           humanZDJ.getZoneName()
               + " - "
               + tilesWithoutObject.size()
               + " tiles without detected objects"
               + " "
-              + now(),
-          tilesWithoutObject);
+              + now();
+
+      eventProducer.accept(
+          List.of(new HumanDetectionJobCreated(hdjWithoutDetectedObjects.getId(), jobName)));
     }
   }
 
