@@ -42,6 +42,11 @@ public class AnnotationDeliveryJobService
   @Transactional
   public void fireTasks(AnnotationDeliveryJob job) {
     List<AnnotationDeliveryTask> tasks = getTasks(job);
+    log.info("DEBUG processing AnnotationDeliveryTasks size ={}", tasks.size());
+    if (tasks.isEmpty()) {
+      throw new IllegalStateException(
+          "Unable to fire empty tasks for AnnotationDeliveryJob(id=" + job.getId() + ")");
+    }
     tasks.forEach(
         task ->
             eventProducer.accept(

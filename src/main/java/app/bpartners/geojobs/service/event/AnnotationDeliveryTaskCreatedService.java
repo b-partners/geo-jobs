@@ -30,7 +30,7 @@ public class AnnotationDeliveryTaskCreatedService
     try {
       taskStatusService.process(task);
     } catch (IllegalArgumentException e) {
-      //TODO: find why duplicated task created
+      // TODO: find why duplicated task created
       var errorMsg = e.getMessage();
       if (errorMsg.contains("old=Status{progression=FINISHED")
           && errorMsg.contains("new=Status{progression=PROCESSING")) {
