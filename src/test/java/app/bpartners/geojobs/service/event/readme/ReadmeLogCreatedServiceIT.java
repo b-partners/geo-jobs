@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
 import static app.bpartners.geojobs.conf.EnvConf.ADMIN_EMAIL;
@@ -21,7 +22,7 @@ import static org.mockito.Mockito.*;
 public class ReadmeLogCreatedServiceIT extends FacadeIT {
   @LocalServerPort private int port;
   @Autowired ObjectMapper objectMapper;
-  @Autowired CommunityUsedSurfaceService communityUsedSurfaceService;
+  @MockBean CommunityUsedSurfaceService communityUsedSurfaceServiceMock;
   DetectionApi detectionApi;
   DetectionUsage expectedDetectionUsage = mock();
 
@@ -35,7 +36,7 @@ public class ReadmeLogCreatedServiceIT extends FacadeIT {
     authenticatedClient.setObjectMapper(objectMapper);
 
     detectionApi = new DetectionApi(authenticatedClient);
-    when(communityUsedSurfaceService.getUsage(any(), any())).thenReturn(expectedDetectionUsage);
+    when(communityUsedSurfaceServiceMock.getUsage(any(), any())).thenReturn(expectedDetectionUsage);
   }
 
   @Test
