@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.endpoint.rest.readme.webhook;
 
 import static app.bpartners.geojobs.endpoint.rest.readme.webhook.ReadmeWebhookValidator.calculateHmacSHA256;
+import static java.time.Instant.now;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -13,46 +14,67 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.time.Instant;
+import java.time.Duration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class ReadmeWebhookValidatorTest {
-  ReadmeWebhookConf readmeWebhookConf = new ReadmeWebhookConf();
+  private static final String README_WEBHOOK_SECRET = "valid-secret";
+  ReadmeWebhookConf readmeWebhookConfMock = mock();
+  HttpServletRequest httpServletRequestMock = mock();
   ObjectMapper objectMapper = new ObjectMapper();
-  ReadmeWebhookValidator subject = new ReadmeWebhookValidator(objectMapper, readmeWebhookConf);
+  ReadmeWebhookValidator subject = new ReadmeWebhookValidator(objectMapper, readmeWebhookConfMock);
 
   @BeforeEach
   void setUp() {
-    readmeWebhookConf.setSecret("secret");
+    when(readmeWebhookConfMock.getSecret()).thenReturn(README_WEBHOOK_SECRET);
   }
 
   @Test
   void accept_ok() throws JsonProcessingException, NoSuchAlgorithmException, InvalidKeyException {
-    var body = new CreateWebhook("email", "readmeProject");
-    var request = mock(HttpServletRequest.class);
-    var validTime = Instant.now().toEpochMilli();
-    var validV0 = validTime + "." + objectMapper.writeValueAsString(body);
-    var validSignature =
-        "t=" + validTime + ",v0=" + calculateHmacSHA256(validV0, readmeWebhookConf.getSecret());
-    when(request.getHeader(any())).thenReturn(validSignature);
+    var createWebhook =
+        CreateWebhook.builder().email("email").readmeProject("readmeProject").build();
+    var signatureTime = now().toEpochMilli();
+    setupRequest(createWebhook, README_WEBHOOK_SECRET, signatureTime);
 
-    assertDoesNotThrow(() -> subject.accept(body, request, readmeWebhookConf));
+    assertDoesNotThrow(
+        () -> subject.accept(createWebhook, httpServletRequestMock, readmeWebhookConfMock));
   }
 
   @Test
-  void accept_throws_error_invalid_signature()
+  void throws_error_invalid_secret()
       throws JsonProcessingException, NoSuchAlgorithmException, InvalidKeyException {
-    var body = new CreateWebhook("email", "readmeProject");
-    var request = mock(HttpServletRequest.class);
-    var validTime = Instant.now().toEpochMilli();
-    var validV0 = validTime + "." + objectMapper.writeValueAsString(body);
-    var validSignature = "t=" + validTime + ",v0=" + calculateHmacSHA256(validV0, "invalid_secret");
-    when(request.getHeader(any())).thenReturn(validSignature);
+    var createWebhook =
+        CreateWebhook.builder().email("email").readmeProject("readmeProject").build();
+    var signatureTime = now().toEpochMilli();
+    setupRequest(createWebhook, "invalid-secret", signatureTime);
 
-    Exception exception =
+    var exception =
         assertThrows(
-            ForbiddenException.class, () -> subject.accept(body, request, readmeWebhookConf));
+            ForbiddenException.class,
+            () -> subject.accept(createWebhook, httpServletRequestMock, readmeWebhookConfMock));
     assertEquals("Webhook not valid", exception.getMessage());
+  }
+
+  @Test
+  void throws_error_expired_time()
+      throws JsonProcessingException, NoSuchAlgorithmException, InvalidKeyException {
+    var createWebhook =
+        CreateWebhook.builder().email("email").readmeProject("readmeProject").build();
+    var signatureTime = now().minus(Duration.ofMinutes(31)).toEpochMilli();
+    setupRequest(createWebhook, README_WEBHOOK_SECRET, signatureTime);
+
+    var exception =
+        assertThrows(
+            ForbiddenException.class,
+            () -> subject.accept(createWebhook, httpServletRequestMock, readmeWebhookConfMock));
+    assertEquals("Webhook not valid", exception.getMessage());
+  }
+
+  private void setupRequest(CreateWebhook createWebhook, String secret, long time)
+      throws JsonProcessingException, NoSuchAlgorithmException, InvalidKeyException {
+    var v0 = time + "." + objectMapper.writeValueAsString(createWebhook);
+    var readmeSignature = "t=" + time + ",v0=" + calculateHmacSHA256(v0, secret);
+    when(httpServletRequestMock.getHeader(any())).thenReturn(readmeSignature);
   }
 }

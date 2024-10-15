@@ -23,7 +23,7 @@ paths:
               schema:
                 type: string
                 example: pong
-  '/readme/webhook/apiKey':
+  '/readme/webhook':
     post:
       tags:
         - ReadmeWeb

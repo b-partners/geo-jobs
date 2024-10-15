@@ -4,8 +4,8 @@ import static app.bpartners.geojobs.endpoint.rest.readme.monitor.factory.ReadmeG
 
 import app.bpartners.geojobs.endpoint.rest.readme.webhook.model.SingleUserInfo;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
+import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
-import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -26,23 +26,22 @@ public class ReadmeWebhookService {
   }
 
   public SingleUserInfo retrieveUserInfoByEmail(String email) {
-    if (email.equals(adminEmail)) {
+    if (adminEmail.equals(email)) {
       return SingleUserInfo.builder()
-          .name(ADMIN_LABEL_NAME)
-          .email(email)
-          .apiKey(authProvider.getPrincipal().getPassword())
           .isAdmin(true)
+          .email(email)
+          .name(ADMIN_LABEL_NAME)
+          .apiKey(authProvider.getPrincipal().getPassword())
           .build();
     }
+
     var user =
-        communityAuthorizationRepository
-            .findByEmail(email)
-            .orElse(CommunityAuthorization.builder().name(email).email(email).build());
+        communityAuthorizationRepository.findByEmail(email).orElseThrow(ForbiddenException::new);
     return SingleUserInfo.builder()
+        .isAdmin(false)
         .name(user.getName())
         .email(user.getEmail())
         .apiKey(user.getApiKey())
-        .isAdmin(false)
         .build();
   }
 }

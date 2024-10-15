@@ -13,12 +13,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-public class ReadmeWebhookController {
+public class ReadmeController {
   private final ReadmeWebhookValidator readmeWebhookValidator;
-  private final ReadmeWebhookConf readmeWebhookConf;
   private final ReadmeWebhookService service;
+  private final ReadmeWebhookConf readmeWebhookConf;
 
-  @PostMapping("/readme/webhook/apiKey")
+  @PostMapping("/readme/webhook")
   public SingleUserInfo readmeWebhook(@RequestBody CreateWebhook body, HttpServletRequest request) {
     readmeWebhookValidator.accept(body, request, readmeWebhookConf);
     return service.retrieveUserInfoByEmail(body.email());
