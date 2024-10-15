@@ -61,7 +61,7 @@ class ReadmeWebhookValidatorTest {
       throws JsonProcessingException, NoSuchAlgorithmException, InvalidKeyException {
     var createWebhook =
         CreateWebhook.builder().email("email").readmeProject("readmeProject").build();
-    var signatureTime = now().minus(Duration.ofMinutes(31)).toEpochMilli();
+    var signatureTime = now().minus(Duration.ofMinutes(35)).toEpochMilli();
     setupRequest(createWebhook, README_WEBHOOK_SECRET, signatureTime);
 
     var exception =

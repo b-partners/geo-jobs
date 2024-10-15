@@ -7,29 +7,17 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.endpoint.rest.readme.webhook.model.SingleUserInfo;
-import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
-import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import java.util.Optional;
-
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class ReadmeWebhookServiceTest {
   private static final String ADMIN_EMAIL = "admin@gmail.com";
   private static final String ADMIN_API_KEY = "adminApiKey";
   CommunityAuthorizationRepository communityAuthRepositoryMock = mock();
-  AuthProvider authProviderMock = mock();
-  Principal principalMock = mock();
   ReadmeWebhookService subject =
-      new ReadmeWebhookService(ADMIN_EMAIL, communityAuthRepositoryMock, authProviderMock);
-
-  @BeforeEach
-  void setup(){
-    when(authProviderMock.getPrincipal()).thenReturn(principalMock);
-    when(principalMock.getPassword()).thenReturn(ADMIN_API_KEY);
-  }
+      new ReadmeWebhookService(ADMIN_EMAIL, ADMIN_API_KEY, communityAuthRepositoryMock);
 
   @Test
   void retrieve_community_info() {

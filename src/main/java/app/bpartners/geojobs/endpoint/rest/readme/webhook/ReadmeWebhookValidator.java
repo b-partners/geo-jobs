@@ -17,7 +17,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.Arrays;
 import javax.crypto.spec.SecretKeySpec;
 import lombok.RequiredArgsConstructor;
@@ -62,10 +61,13 @@ public class ReadmeWebhookValidator
       throw new WebhookVerificationException("Missing signature");
     }
 
+    var now = now();
     var signatureValue = retrieveSignatureValueWithTime(signature);
-    Instant signatureDateTime = ofEpochMilli(signatureValue.time());
+    var signatureDateTime = ofEpochMilli(signatureValue.time());
     var thirtyMinutes = Duration.ofMinutes(30).toSeconds();
-    if (Duration.between(now(), signatureDateTime).getSeconds() > thirtyMinutes) {
+
+    if (signatureDateTime.isBefore(now)
+        && Duration.between(signatureDateTime, now).getSeconds() > thirtyMinutes) {
       throw new WebhookVerificationException("Expired Signature");
     }
 
