@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class ReadmeGroupFactory {
-  private static final String ADMIN_LABEL_NAME = "admin";
+  public static final String ADMIN_LABEL_NAME = "admin";
   private final String adminEmail;
   private final CommunityAuthorizationRepository communityAuthRepository;
 
