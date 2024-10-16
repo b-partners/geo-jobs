@@ -1,9 +1,10 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.service.event.ZoneDetectionFinishedConsumer.DEFAULT_MIN_CONFIDENCE;
+import static app.bpartners.geojobs.service.event.ZoneDetectionJobSucceededService.DEFAULT_MINIMUM_CONFIDENCE_FOR_DELIVERY;
 import static org.mockito.Mockito.*;
 
-import app.bpartners.geojobs.endpoint.event.model.annotation.JobAnnotationProcessed;
+import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryJobRequested;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
@@ -12,13 +13,13 @@ import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
-class JobAnnotationProcessedServiceTest {
-  ZoneDetectionJobAnnotationProcessor jobAnnotationProcessorMock = mock();
+class AnnotationDeliveryJobRequestedServiceTest {
   DetectableObjectConfigurationRepository objectConfigurationRepositoryMock = mock();
   DetectionRepository detectionRepositoryMock = mock();
-  JobAnnotationProcessedService subject =
-      new JobAnnotationProcessedService(
-          jobAnnotationProcessorMock, objectConfigurationRepositoryMock, detectionRepositoryMock);
+  EventProducer eventProducerMock = mock();
+  AnnotationDeliveryJobRequestedService subject =
+      new AnnotationDeliveryJobRequestedService(
+          eventProducerMock, objectConfigurationRepositoryMock, detectionRepositoryMock);
 
   @Test
   void accept_with_persisted_object_conf_ok() {
@@ -33,22 +34,15 @@ class JobAnnotationProcessedServiceTest {
     String withoutObjects = "withoutObjects";
 
     subject.accept(
-        JobAnnotationProcessed.builder()
+        AnnotationDeliveryJobRequested.builder()
             .jobId(jobId)
-            .minConfidence(minConfidence)
+            .minimumConfidenceForDelivery(minConfidence)
             .annotationJobWithObjectsIdTruePositive(truePositive)
             .annotationJobWithObjectsIdFalsePositive(falsePositive)
             .annotationJobWithoutObjectsId(withoutObjects)
             .build());
 
-    verify(jobAnnotationProcessorMock, times(1))
-        .accept(
-            jobId,
-            minConfidence,
-            truePositive,
-            falsePositive,
-            withoutObjects,
-            objectConfigurations);
+    verify(eventProducerMock, times(3)).accept(any());
   }
 
   @Test
@@ -67,21 +61,14 @@ class JobAnnotationProcessedServiceTest {
     String withoutObjects = "withoutObjects";
 
     subject.accept(
-        JobAnnotationProcessed.builder()
+        AnnotationDeliveryJobRequested.builder()
             .jobId(jobId)
-            .minConfidence(DEFAULT_MIN_CONFIDENCE)
+            .minimumConfidenceForDelivery(DEFAULT_MINIMUM_CONFIDENCE_FOR_DELIVERY)
             .annotationJobWithObjectsIdTruePositive(truePositive)
             .annotationJobWithObjectsIdFalsePositive(falsePositive)
             .annotationJobWithoutObjectsId(withoutObjects)
             .build());
 
-    verify(jobAnnotationProcessorMock, times(1))
-        .accept(
-            jobId,
-            DEFAULT_MIN_CONFIDENCE,
-            truePositive,
-            falsePositive,
-            withoutObjects,
-            objectConfigurations);
+    verify(eventProducerMock, times(3)).accept(any());
   }
 }

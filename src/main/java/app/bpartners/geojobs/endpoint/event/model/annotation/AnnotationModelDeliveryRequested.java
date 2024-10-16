@@ -4,27 +4,24 @@ import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
 
 import app.bpartners.geojobs.endpoint.event.EventStack;
 import app.bpartners.geojobs.endpoint.event.model.PojaEvent;
+import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import java.time.Duration;
-import javax.annotation.processing.Generated;
+import java.util.List;
 import lombok.*;
 
-@Generated("EventBridge")
-@NoArgsConstructor
 @AllArgsConstructor
-@Builder(toBuilder = true)
 @Data
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = false)
 @ToString
-public class JobAnnotationProcessed extends PojaEvent {
-  private String jobId;
-  private Double minConfidence;
-  private String annotationJobWithObjectsIdTruePositive;
-  private String annotationJobWithObjectsIdFalsePositive;
-  private String annotationJobWithoutObjectsId;
+public abstract class AnnotationModelDeliveryRequested extends PojaEvent {
+  protected String zoneDetectionJobId;
+  protected String annotationJobId;
+  protected Double minimumConfidenceForDelivery;
+  protected List<DetectableObjectConfiguration> detectableObjectConfigurations;
 
   @Override
   public Duration maxConsumerDuration() {
-    return Duration.ofMinutes(10L);
+    return Duration.ofMinutes(5L);
   }
 
   @Override
@@ -36,4 +33,6 @@ public class JobAnnotationProcessed extends PojaEvent {
   public EventStack getEventStack() {
     return EVENT_STACK_2;
   }
+
+  public abstract AnnotationModelDeliveryType getAnnotationModelDeliveryType();
 }

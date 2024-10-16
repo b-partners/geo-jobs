@@ -3,7 +3,7 @@ package app.bpartners.geojobs.job.service;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.annotation.JobAnnotationProcessed;
+import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryJobRequested;
 import app.bpartners.geojobs.endpoint.rest.model.AnnotationJobProcessing;
 import app.bpartners.geojobs.endpoint.rest.model.JobType;
 import app.bpartners.geojobs.model.exception.NotFoundException;
@@ -37,9 +37,9 @@ public class JobAnnotationService {
 
     eventProducer.accept(
         List.of(
-            JobAnnotationProcessed.builder()
+            AnnotationDeliveryJobRequested.builder()
                 .jobId(zoneDetectionJob.getId())
-                .minConfidence(minConfidence)
+                .minimumConfidenceForDelivery(minConfidence)
                 .annotationJobWithObjectsIdTruePositive(annotationJobWithObjectsIdTruePositive)
                 .annotationJobWithObjectsIdFalsePositive(annotationJobWithObjectsIdFalsePositive)
                 .annotationJobWithoutObjectsId(annotationJobWithoutObjectsId)

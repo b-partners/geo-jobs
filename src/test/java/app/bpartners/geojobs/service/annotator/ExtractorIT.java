@@ -5,8 +5,6 @@ import static app.bpartners.geojobs.repository.model.detection.DetectableType.PA
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PISCINE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
 import static app.bpartners.geojobs.service.AnnotationServiceIT.inDoubtTile;
-import static app.bpartners.geojobs.service.event.ZoneDetectionAnnotationProcessorTest.LAYER_20_10_1_PNG;
-import static app.bpartners.geojobs.service.event.ZoneDetectionAnnotationProcessorTest.MOCK_JOB_ID;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -55,9 +53,9 @@ public class ExtractorIT extends FacadeIT {
   public static MachineDetectedTile detectedTile(List<DetectedObject> detectedObjects) {
     return MachineDetectedTile.builder()
         .id(randomUUID().toString())
-        .bucketPath(LAYER_20_10_1_PNG)
+        .bucketPath("LAYER_20_10_1_PNG") // TODO
         .tile(Tile.builder().build())
-        .zdjJobId(MOCK_JOB_ID)
+        .zdjJobId("MOCK_JOB_ID") // TODO
         .parcelId(PARCEL_MOCK_ID)
         .creationDatetime(Instant.now())
         .detectedObjects(detectedObjects)

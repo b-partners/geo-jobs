@@ -37,7 +37,6 @@ class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
   @Autowired private HumanDetectionJobRepository humanDetectionJobRepository;
   @Autowired private ParcelDetectionTaskRepository parcelDetectionTaskRepository;
   @Autowired private ParcelRepository parcelRepository;
-  @MockBean ZoneDetectionJobAnnotationProcessor zoneDetectionJobAnnotationProcessorMock;
 
   @BeforeEach
   void setUp() {
