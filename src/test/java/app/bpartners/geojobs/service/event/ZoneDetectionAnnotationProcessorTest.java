@@ -143,6 +143,6 @@ public class ZoneDetectionAnnotationProcessorTest extends FacadeIT {
         annotationJobWithoutObjectsId,
         getObjectConfigurations());
 
-    verify(annotationServiceMock, times(2)).createAnnotationJob(any(), any());
+    verify(eventProducerMock, times(2)).accept(any());
   }
 }

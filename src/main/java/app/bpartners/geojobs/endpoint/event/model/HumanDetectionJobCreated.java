@@ -4,12 +4,7 @@ import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
 
 import app.bpartners.geojobs.endpoint.event.EventStack;
 import java.time.Duration;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,19 +12,18 @@ import lombok.ToString;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @ToString
-public class AutoTaskStatisticRecomputingSubmitted extends PojaEvent {
-  private static final long MAX_CONSUMER_DURATION_VALUE = 300L;
-  private static final long DEFAULT_BACK_OFF_VALUE = 120L;
-  protected String jobId;
+public class HumanDetectionJobCreated extends PojaEvent {
+  private String humanDetectionJobId;
+  private String jobName;
 
   @Override
   public Duration maxConsumerDuration() {
-    return Duration.ofSeconds(MAX_CONSUMER_DURATION_VALUE);
+    return Duration.ofMinutes(5L);
   }
 
   @Override
   public Duration maxConsumerBackoffBetweenRetries() {
-    return Duration.ofSeconds(DEFAULT_BACK_OFF_VALUE * (int) Math.pow(2, getAttemptNb()));
+    return Duration.ofMinutes(1L);
   }
 
   @Override

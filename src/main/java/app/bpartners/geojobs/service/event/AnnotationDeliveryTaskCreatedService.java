@@ -27,7 +27,18 @@ public class AnnotationDeliveryTaskCreatedService
   @Override
   public void accept(AnnotationDeliveryTaskCreated event) {
     var task = event.getDeliveryTask();
-    taskStatusService.process(task);
+    try {
+      taskStatusService.process(task);
+    } catch (IllegalArgumentException e) {
+      // TODO: find why duplicated task created
+      var errorMsg = e.getMessage();
+      if (errorMsg.contains("old=Status{progression=FINISHED")
+          && errorMsg.contains("new=Status{progression=PROCESSING")) {
+        log.error(errorMsg);
+        // skip and do nothing
+        return;
+      }
+    }
 
     consumer.accept(task);
 

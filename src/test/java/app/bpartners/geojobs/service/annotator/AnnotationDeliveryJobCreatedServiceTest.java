@@ -18,11 +18,10 @@ class AnnotationDeliveryJobCreatedServiceTest {
   @Test
   void accept_ok() {
     var deliveryJob = new AnnotationDeliveryJob();
-    when(deliveryJobServiceMock.fireTasks(deliveryJob.getId())).thenReturn(deliveryJob);
 
     subject.accept(AnnotationDeliveryJobCreated.builder().deliveryJob(deliveryJob).build());
 
-    verify(deliveryJobServiceMock, only()).fireTasks(deliveryJob.getId());
+    verify(deliveryJobServiceMock, only()).fireTasks(deliveryJob);
     verify(annotationServiceMock, only())
         .saveAnnotationJob(
             deliveryJob.getDetectionJobId(),

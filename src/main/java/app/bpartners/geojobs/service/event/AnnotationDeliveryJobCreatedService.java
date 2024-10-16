@@ -28,6 +28,6 @@ public class AnnotationDeliveryJobCreatedService implements Consumer<AnnotationD
     annotationService.saveAnnotationJob(
         detectionJobId, annotationJobId, annotationJobName, labels, PENDING);
 
-    annotationDeliveryJobService.fireTasks(deliveryJob.getId());
+    annotationDeliveryJobService.fireTasks(deliveryJob);
   }
 }

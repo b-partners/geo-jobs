@@ -9,7 +9,6 @@ import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionInitiated;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.exception.ApiException;
-import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.GeoJsonConversionTask;
 import app.bpartners.geojobs.service.detection.HumanDetectedTileService;
@@ -64,16 +63,16 @@ public class GeoJsonConversionInitiatedService implements Consumer<GeoJsonConver
       var zoneName = event.getZoneName();
       var machineZDJ = detectionJobService.getMachineZDJFromHumanZDJ(humanZDJId);
       var machineZDJId = machineZDJ.getId();
-      var detectionJob =
-          detectionRepository
-              .findByZdjId(machineZDJId)
-              .orElseThrow(
-                  () ->
-                      new NotFoundException(
-                          "Any detectionJob associated to ZDJ(type=MACHINE, id="
-                              + machineZDJId
-                              + ")"));
-      var fileKey = detectionJob.getId() + "/" + zoneName + GEO_JSON_EXTENSION;
+      //      var detectionJob =
+      //          detectionRepository
+      //              .findByZdjId(machineZDJId)
+      //              .orElseThrow(
+      //                  () ->
+      //                      new NotFoundException(
+      //                          "Any detectionJob associated to ZDJ(type=MACHINE, id="
+      //                              + machineZDJId
+      //                              + ")"));
+      var fileKey = machineZDJId + "/" + zoneName + GEO_JSON_EXTENSION;
       var humanDetectedTiles = humanDetectedTileService.getByJobId(humanZDJId);
       var geoJson = geoJsonConverter.convert(humanDetectedTiles);
       var geoJsonAsByte = writer.writeAsByte(geoJson);
@@ -81,9 +80,11 @@ public class GeoJsonConversionInitiatedService implements Consumer<GeoJsonConver
           writer.write(geoJsonAsByte, createTempDirectory(), zoneName + GEO_JSON_EXTENSION);
       bucketComponent.upload(geoJsonAsFile, fileKey);
 
-      var savedDetection =
-          detectionRepository.save(detectionJob.toBuilder().geojsonS3FileKey(fileKey).build());
-      return savedDetection.getGeojsonS3FileKey();
+      //      var savedDetection =
+      //
+      // detectionRepository.save(detectionJob.toBuilder().geojsonS3FileKey(fileKey).build());
+      //      return savedDetection.getGeojsonS3FileKey();
+      return fileKey;
     } catch (RuntimeException e) {
       var failed = taskStatusService.fail(task);
       taskService.save(failed);

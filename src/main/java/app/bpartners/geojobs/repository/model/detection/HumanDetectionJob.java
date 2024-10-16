@@ -2,11 +2,13 @@ package app.bpartners.geojobs.repository.model.detection;
 
 import static jakarta.persistence.CascadeType.ALL;
 import static jakarta.persistence.FetchType.EAGER;
+import static org.hibernate.type.SqlTypes.JSON;
 
 import jakarta.persistence.*;
 import java.util.List;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.JdbcTypeCode;
 
 @Entity
 @Data
@@ -25,6 +27,6 @@ public class HumanDetectionJob {
   @JoinColumn(name = "human_detection_job_id")
   private List<MachineDetectedTile> machineDetectedTiles;
 
-  // TODO: must be persisted but can be retrieved by zoneDetectionJobId
-  @Transient private List<DetectableObjectConfiguration> detectableObjectConfigurations;
+  @JdbcTypeCode(JSON)
+  private List<DetectableObjectConfiguration> detectableObjectConfigurations;
 }

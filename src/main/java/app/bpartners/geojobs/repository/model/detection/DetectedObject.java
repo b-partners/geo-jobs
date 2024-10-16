@@ -2,7 +2,7 @@ package app.bpartners.geojobs.repository.model.detection;
 
 import static jakarta.persistence.CascadeType.ALL;
 import static jakarta.persistence.EnumType.STRING;
-import static jakarta.persistence.FetchType.LAZY;
+import static jakarta.persistence.FetchType.EAGER;
 import static org.hibernate.type.SqlTypes.JSON;
 import static org.hibernate.type.SqlTypes.NAMED_ENUM;
 
@@ -43,7 +43,7 @@ public class DetectedObject implements Serializable {
   @JoinColumn(referencedColumnName = "id")
   private String detectedTileId;
 
-  @OneToOne(cascade = ALL, fetch = LAZY)
+  @OneToOne(cascade = ALL, fetch = EAGER)
   private DetectableObjectType detectedObjectType;
 
   private Double computedConfidence;

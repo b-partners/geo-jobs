@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service;
 
 import app.bpartners.geojobs.repository.HumanDetectionJobRepository;
+import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.HumanDetectionJob;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import java.util.List;
@@ -18,13 +19,15 @@ public class HumanDetectionJobService {
       String annotationJobId,
       String humanDetectionJobId,
       List<MachineDetectedTile> machineDetectedTiles,
-      String humanZDJId) {
+      String humanZDJId,
+      List<DetectableObjectConfiguration> detectableObjectConfigurations) {
     return humanDetectionJobRepository.save(
         HumanDetectionJob.builder()
             .id(humanDetectionJobId)
             .annotationJobId(annotationJobId)
             .machineDetectedTiles(machineDetectedTiles)
             .zoneDetectionJobId(humanZDJId)
+            .detectableObjectConfigurations(detectableObjectConfigurations)
             .build());
   }
 }
