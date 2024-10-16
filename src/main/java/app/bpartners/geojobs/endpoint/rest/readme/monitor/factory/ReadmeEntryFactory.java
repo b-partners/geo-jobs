@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.readme.monitor.factory;
 
-import static java.net.http.HttpClient.Version.HTTP_2;
+import static app.bpartners.geojobs.service.event.readme.ReadmeLogCreatedService.getClientVersion;
 
 import app.bpartners.geojobs.endpoint.rest.readme.monitor.model.entry.*;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,7 +26,7 @@ public class ReadmeEntryFactory {
         .request(
             ReadmeEntryRequest.builder()
                 .method(request.getMethod())
-                .httpVersion(HTTP_2.toString())
+                .httpVersion(getClientVersion().toString())
                 .url(request.getRequestURL().toString())
                 .headers(retrieveRequestHeaders(request))
                 .queryString(retrieveRequestQueries(request))

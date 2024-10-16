@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.readme.monitor;
 
+import java.io.Serializable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,7 +14,7 @@ import org.springframework.stereotype.Component;
 @NoArgsConstructor
 @AllArgsConstructor
 @ConfigurationProperties("readme.monitor")
-public class ReadmeMonitorConf {
+public class ReadmeMonitorConf implements Serializable {
   private String apiKey;
   private String version;
   private String url;

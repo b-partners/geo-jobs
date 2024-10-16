@@ -6,6 +6,7 @@ public class EnvConf {
 
   public static final String ANNOTATOR_USER_ID_FOR_GEOJOBS = "geo-jobs_user_id";
   public static final String ADMIN_EMAIL = "admin@gmail.com";
+  public static final String ADMIN_API_KEY = "the-admin-api-key";
 
   void configureProperties(DynamicPropertyRegistry registry) {
     registry.add("annotator.api.url", () -> "http://dummy.com");
@@ -29,8 +30,8 @@ public class EnvConf {
                 + " \"url\": \"https://line-api.azurewebsites.net/api\" }, { \"objectType\":"
                 + " \"ESPACE_VERT\", \"url\": \"https://greenspace-api.azurewebsites.net/api\" }"
                 + " ]");
-    registry.add("admin.api.key", () -> "the-admin-api-key");
-    registry.add("annotator.api.key", () -> "the-admin-api-key");
+    registry.add("admin.api.key", () -> ADMIN_API_KEY);
+    registry.add("annotator.api.key", () -> ADMIN_API_KEY);
     registry.add(
         "annotator.geojobs.user.info",
         () ->
@@ -42,5 +43,6 @@ public class EnvConf {
     registry.add("readme.monitor.url", () -> "https://dummy.com");
     registry.add("readme.monitor.api-key", () -> "the-readme-monitor-api-key");
     registry.add("readme.monitor.development", () -> "true");
+    registry.add("readme.webhook.secret", () -> "the-readme-webhook-secret");
   }
 }
