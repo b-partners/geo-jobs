@@ -4,6 +4,7 @@ import static java.time.Instant.now;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.readme.ReadmeLogCreated;
+import app.bpartners.geojobs.endpoint.rest.readme.monitor.factory.ReadmeLogFactory;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,6 +21,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class ReadmeMonitorFilter extends OncePerRequestFilter {
   private final RequestMatcher requestMatcher;
   private final ReadmeMonitorConf readmeMonitorConf;
+  private final ReadmeLogFactory readmeLogFactory;
   private final EventProducer eventProducer;
   private final AuthProvider authProvider;
 
@@ -40,16 +42,24 @@ public class ReadmeMonitorFilter extends OncePerRequestFilter {
       exception = error;
     }
 
-    eventProducer.accept(
-        List.of(
-            ReadmeLogCreated.builder()
-                .request(request)
-                .response(response)
-                .startedDatetime(startedDatetime)
-                .endedDatetime(now())
-                .principal(authProvider.getPrincipal())
-                .readmeMonitorConf(readmeMonitorConf)
-                .build()));
+    try {
+      var readmeLog =
+          readmeLogFactory.createReadmeLog(
+              request,
+              response,
+              startedDatetime,
+              now(),
+              authProvider.getPrincipal(),
+              readmeMonitorConf);
+      eventProducer.accept(
+          List.of(
+              ReadmeLogCreated.builder()
+                  .readmeMonitorConf(readmeMonitorConf)
+                  .readmeLog(readmeLog)
+                  .build()));
+    } catch (Exception e) {
+      log.error("Cannot create readmeLog: {}", e.getMessage());
+    }
 
     if (exception != null) {
       log.info("Exception found={}", exception.toString());

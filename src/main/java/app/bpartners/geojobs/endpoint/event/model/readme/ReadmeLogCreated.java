@@ -2,11 +2,8 @@ package app.bpartners.geojobs.endpoint.event.model.readme;
 
 import app.bpartners.geojobs.endpoint.event.model.PojaEvent;
 import app.bpartners.geojobs.endpoint.rest.readme.monitor.ReadmeMonitorConf;
-import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import app.bpartners.geojobs.endpoint.rest.readme.monitor.model.ReadmeLog;
 import java.time.Duration;
-import java.time.Instant;
 import lombok.*;
 
 @Data
@@ -16,11 +13,7 @@ import lombok.*;
 @Builder(toBuilder = true)
 @EqualsAndHashCode(callSuper = false)
 public class ReadmeLogCreated extends PojaEvent {
-  private HttpServletRequest request;
-  private HttpServletResponse response;
-  private Instant startedDatetime;
-  private Instant endedDatetime;
-  private Principal principal;
+  private ReadmeLog readmeLog;
   private ReadmeMonitorConf readmeMonitorConf;
 
   @Override

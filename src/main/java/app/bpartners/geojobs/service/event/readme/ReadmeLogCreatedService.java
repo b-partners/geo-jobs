@@ -1,10 +1,16 @@
 package app.bpartners.geojobs.service.event.readme;
 
+import static java.net.http.HttpClient.Version;
+import static java.net.http.HttpClient.newHttpClient;
+import static java.net.http.HttpRequest.BodyPublishers;
+import static java.net.http.HttpResponse.BodyHandlers;
+
 import app.bpartners.geojobs.endpoint.event.model.readme.ReadmeLogCreated;
 import app.bpartners.geojobs.endpoint.rest.readme.monitor.ReadmeMonitorConf;
-import app.bpartners.geojobs.endpoint.rest.readme.monitor.factory.ReadmeLogFactory;
+import app.bpartners.geojobs.endpoint.rest.readme.monitor.model.ReadmeLog;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -12,49 +18,46 @@ import java.net.http.HttpResponse;
 import java.util.Base64;
 import java.util.List;
 import java.util.function.Consumer;
-import lombok.SneakyThrows;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import static java.net.http.HttpClient.Version;
-import static java.net.http.HttpResponse.BodyHandlers;
-import static java.net.http.HttpRequest.BodyPublishers;
-import static java.net.http.HttpClient.newHttpClient;
-
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class ReadmeLogCreatedService implements Consumer<ReadmeLogCreated> {
   private static final String README_AUTH_PREFIX = "Basic ";
   private static final String README_API_MIME_TYPE = "application/json";
   private final ObjectMapper objectMapper;
-  private final ReadmeLogFactory readmeLogFactory;
   private static final HttpClient httpClient = newHttpClient();
-
-  public ReadmeLogCreatedService(ObjectMapper objectMapper, ReadmeLogFactory readmeLogFactory) {
-    this.objectMapper = objectMapper;
-    this.readmeLogFactory = readmeLogFactory;
-  }
+  private final ReadmeMonitorConf readmeMonitorConf;
 
   @Override
-  @SneakyThrows
   public void accept(ReadmeLogCreated readmeLogCreated) {
     var readmeMonitorConf = readmeLogCreated.getReadmeMonitorConf();
-    var readmeLog =
-        readmeLogFactory.createReadmeLog(
-            readmeLogCreated.getRequest(),
-            readmeLogCreated.getResponse(),
-            readmeLogCreated.getStartedDatetime(),
-            readmeLogCreated.getEndedDatetime(),
-            readmeLogCreated.getPrincipal(),
-            readmeMonitorConf);
+    var readmeLog = readmeLogCreated.getReadmeLog();
 
     if (readmeMonitorConf.isDevelopment() != readmeLog.development()) {
       throw new BadRequestException(
           "readmeLog.development should be " + readmeMonitorConf.isDevelopment());
     }
 
+    try {
+      saveReadmeLog(readmeLog);
+    } catch (IOException | InterruptedException e) {
+      log.error(e.getMessage());
+    }
+  }
+
+  private String getBasicAuthValue(ReadmeMonitorConf readmeMonitorConf) {
+    String authInfo = readmeMonitorConf.getApiKey() + ":";
+    return README_AUTH_PREFIX + Base64.getEncoder().encodeToString(authInfo.getBytes());
+  }
+
+  private void saveReadmeLog(ReadmeLog readmeLog) throws IOException, InterruptedException {
     String requestBody = objectMapper.writeValueAsString(List.of(readmeLog));
-    HttpRequest httpRequest = HttpRequest.newBuilder()
+    HttpRequest httpRequest =
+        HttpRequest.newBuilder()
             .uri(URI.create(readmeMonitorConf.getUrl()))
             .header("Content-Type", README_API_MIME_TYPE)
             .header("Authorization", getBasicAuthValue(readmeMonitorConf))
@@ -67,12 +70,7 @@ public class ReadmeLogCreatedService implements Consumer<ReadmeLogCreated> {
     log.info("readme.monitor.responseStatus : {}", readmeResponse.statusCode());
   }
 
-  private String getBasicAuthValue(ReadmeMonitorConf readmeMonitorConf) {
-    String authInfo = readmeMonitorConf.getApiKey() + ":";
-    return README_AUTH_PREFIX + Base64.getEncoder().encodeToString(authInfo.getBytes());
-  }
-
-  public static Version getClientVersion(){
+  public static Version getClientVersion() {
     return httpClient.version();
   }
 }

@@ -199,7 +199,7 @@ paths:
 components:
   securitySchemes:
     ApiKeyAuth:
-      type: ApiKey
+      type: apiKey
       in: header
       name: x-api-key
   schemas:
