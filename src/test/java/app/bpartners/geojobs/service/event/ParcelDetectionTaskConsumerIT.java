@@ -86,7 +86,7 @@ public class ParcelDetectionTaskConsumerIT extends FacadeIT {
     objectConfigurationRepository.save(
         DetectableObjectConfiguration.builder()
             .id("detectableObjectConfigurationId1")
-            .confidence(0.70)
+            .minConfidenceForDetection(0.70)
             .objectType(DetectableType.TOITURE_REVETEMENT)
             .detectionJobId(JOB_ID)
             .build());

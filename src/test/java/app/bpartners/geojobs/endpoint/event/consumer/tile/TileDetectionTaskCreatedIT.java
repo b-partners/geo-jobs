@@ -58,7 +58,7 @@ class TileDetectionTaskCreatedIT extends DetectionIT {
     return List.of(
         DetectableObjectConfiguration.builder()
             .objectType(PISCINE)
-            .confidence(MOCK_DETECTION_RESPONSE_CONFIDENCE)
+            .minConfidenceForDetection(MOCK_DETECTION_RESPONSE_CONFIDENCE)
             .build());
   }
 

@@ -99,14 +99,14 @@ class ZoneDetectionFinishedConsumerTest {
     return List.of(
         DetectableObjectConfiguration.builder()
             .objectType(TOITURE_REVETEMENT)
-            .confidence(DEFAULT_MIN_CONFIDENCE)
+            .minConfidenceForDetection(DEFAULT_MIN_CONFIDENCE)
             .build());
   }
 
   private DetectableObjectConfiguration customDetectableObjectConfiguration() {
     return DetectableObjectConfiguration.builder()
         .objectType(TOITURE_REVETEMENT)
-        .confidence(DEFAULT_MIN_CONFIDENCE)
+        .minConfidenceForDetection(DEFAULT_MIN_CONFIDENCE)
         .build();
   }
 
