@@ -11,7 +11,7 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSIN
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
 import static app.bpartners.geojobs.repository.model.GeoJobType.TILING;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
-import static app.bpartners.geojobs.service.event.ZoneDetectionFinishedConsumer.DEFAULT_MIN_CONFIDENCE;
+import static app.bpartners.geojobs.service.event.ZoneDetectionJobSucceededService.DEFAULT_MINIMUM_CONFIDENCE_FOR_DELIVERY;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
@@ -135,7 +135,8 @@ public class DetectionControllerIT extends FacadeIT {
                     .builder()
                     .bucketStorageName(null)
                     .objectType(DetectableType.TOITURE_REVETEMENT)
-                    .confidence(DEFAULT_MIN_CONFIDENCE)
+                    .minConfidenceForDetection(
+                        DEFAULT_MINIMUM_CONFIDENCE_FOR_DELIVERY) // TODO do not confuse
                     .build()))
         .geoJsonZone(geoJson)
         .build();

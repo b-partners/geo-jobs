@@ -14,7 +14,6 @@ import app.bpartners.geojobs.endpoint.event.model.status.ParcelDetectionStatusRe
 import app.bpartners.geojobs.endpoint.event.model.status.ZDJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionJob;
 import app.bpartners.geojobs.service.AnnotationRetrievingJobService;
-import app.bpartners.geojobs.service.event.ZoneDetectionJobAnnotationProcessor;
 import app.bpartners.geojobs.sqs.EventProducerInvocationMock;
 import app.bpartners.geojobs.sqs.LocalEventQueue;
 import app.bpartners.geojobs.utils.detection.DetectionIT;
@@ -32,7 +31,6 @@ class ParcelDetectionJobCreatedIT extends DetectionIT {
   private static final double OBJECT_DETECTION_SUCCESS_RATE = 100.0;
   private static final int DEFAULT_EVENT_DELAY_SPEED_FACTOR = 10;
   private static final double MOCK_DETECTION_RESPONSE_CONFIDENCE = 1.0;
-  @MockBean protected ZoneDetectionJobAnnotationProcessor jobAnnotationProcessorMock;
   @MockBean protected AnnotationRetrievingJobService annotationRetrievingJobServiceMock;
   @Autowired LocalEventQueue localEventQueue;
   @MockBean EventProducer eventProducerMock;
@@ -49,8 +47,6 @@ class ParcelDetectionJobCreatedIT extends DetectionIT {
     when(jobAnnotationServiceMock.processAnnotationJob(any(), any())).thenReturn(null);
     when(annotationRetrievingJobServiceMock.findAllByDetectionJobId(any())).thenReturn(List.of());
     doNothing().when(mailerMock).accept(any());
-    when(jobAnnotationProcessorMock.accept(any(), any(), any(), any(), any(), any()))
-        .thenReturn(ZoneDetectionJobAnnotationProcessor.AnnotationJobIds.builder().build());
     new ObjectsDetectorMockResponse(objectsDetectorMock)
         .apply(MOCK_DETECTION_RESPONSE_CONFIDENCE, "PISCINE", OBJECT_DETECTION_SUCCESS_RATE);
   }
