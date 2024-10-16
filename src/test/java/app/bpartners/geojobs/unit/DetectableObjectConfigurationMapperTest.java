@@ -35,14 +35,14 @@ class DetectableObjectConfigufrationMapperTest {
     var actual1 =
         subject.toRest(
             DetectableObjectConfiguration.builder()
-                .confidence(0.5)
+                .minConfidenceForDetection(0.5)
                 .objectType(TOITURE_REVETEMENT)
                 .bucketStorageName(dummyBucket)
                 .build());
     var actual2 =
         subject.toRest(
             DetectableObjectConfiguration.builder()
-                .confidence(null)
+                .minConfidenceForDetection(null)
                 .objectType(LINE)
                 .bucketStorageName(dummyBucket)
                 .build());

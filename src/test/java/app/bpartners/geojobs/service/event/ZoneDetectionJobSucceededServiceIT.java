@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.service.ParcelDetectionTaskServiceIT.detectedTile;
 import static org.junit.jupiter.api.Assertions.*;
 
 import app.bpartners.geojobs.conf.FacadeIT;
@@ -11,6 +10,7 @@ import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.repository.*;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.detection.*;
+import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +37,6 @@ class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
   @Autowired private HumanDetectionJobRepository humanDetectionJobRepository;
   @Autowired private ParcelDetectionTaskRepository parcelDetectionTaskRepository;
   @Autowired private ParcelRepository parcelRepository;
-  @MockBean ZoneDetectionJobAnnotationProcessor zoneDetectionJobAnnotationProcessorMock;
 
   @BeforeEach
   void setUp() {
@@ -106,16 +105,36 @@ class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
         List.of(
             DetectableObjectConfiguration.builder()
                 .id("detectableObjectConfigurationId")
-                .confidence(0.8)
+                .minConfidenceForDetection(0.8)
                 .objectType(DetectableType.TOITURE_REVETEMENT)
                 .detectionJobId(SUCCEEDED_JOB_ID)
                 .build(),
             DetectableObjectConfiguration.builder()
                 .id("detectableObjectConfigurationId2")
-                .confidence(0.8)
+                .minConfidenceForDetection(0.8)
                 .objectType(DetectableType.TOITURE_REVETEMENT)
                 .detectionJobId(SUCCEEDED_JOB_ID_2)
                 .build()));
+  }
+
+  private MachineDetectedTile detectedTile(
+      String succeededJobId,
+      String tileId,
+      String parcelId,
+      String detectedObjectId,
+      double confidence) {
+    return MachineDetectedTile.builder()
+        .zdjJobId(succeededJobId)
+        .tile(Tile.builder().id(tileId).build())
+        .parcelId(parcelId)
+        .detectedObjects(
+            List.of(
+                DetectedObject.builder()
+                    .id(detectedObjectId)
+                    .detectedTileId(tileId)
+                    .computedConfidence(confidence)
+                    .build()))
+        .build();
   }
 
   @NotNull
