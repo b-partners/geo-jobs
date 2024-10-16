@@ -35,12 +35,7 @@ public class ReadmeMonitorFilter extends OncePerRequestFilter {
     }
 
     var startedDatetime = now();
-    Exception exception = null;
-    try {
-      filterChain.doFilter(request, response);
-    } catch (Exception error) {
-      exception = error;
-    }
+    filterChain.doFilter(request, response);
 
     try {
       var readmeLog =
@@ -59,11 +54,6 @@ public class ReadmeMonitorFilter extends OncePerRequestFilter {
                   .build()));
     } catch (Exception e) {
       log.error("Cannot create readmeLog: {}", e.getMessage());
-    }
-
-    if (exception != null) {
-      log.info("Exception found={}", exception.toString());
-      throw exception;
     }
   }
 }

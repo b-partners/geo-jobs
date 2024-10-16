@@ -30,7 +30,6 @@ public class ReadmeLogCreatedService implements Consumer<ReadmeLogCreated> {
   private static final String README_API_MIME_TYPE = "application/json";
   private final ObjectMapper objectMapper;
   private static final HttpClient httpClient = newHttpClient();
-  private final ReadmeMonitorConf readmeMonitorConf;
 
   @Override
   public void accept(ReadmeLogCreated readmeLogCreated) {
@@ -43,9 +42,14 @@ public class ReadmeLogCreatedService implements Consumer<ReadmeLogCreated> {
     }
 
     try {
-      saveReadmeLog(readmeLog);
-    } catch (IOException | InterruptedException e) {
+      saveReadmeLog(readmeLog, readmeMonitorConf);
+    } catch (IOException e) {
       log.error(e.getMessage());
+      throw new RuntimeException("Cannot save readmeLog");
+    } catch (InterruptedException e) {
+      log.error(e.getMessage());
+      Thread.currentThread().interrupt();
+      throw new RuntimeException("Cannot save readmeLog");
     }
   }
 
@@ -54,7 +58,8 @@ public class ReadmeLogCreatedService implements Consumer<ReadmeLogCreated> {
     return README_AUTH_PREFIX + Base64.getEncoder().encodeToString(authInfo.getBytes());
   }
 
-  private void saveReadmeLog(ReadmeLog readmeLog) throws IOException, InterruptedException {
+  private void saveReadmeLog(ReadmeLog readmeLog, ReadmeMonitorConf readmeMonitorConf)
+      throws IOException, InterruptedException {
     String requestBody = objectMapper.writeValueAsString(List.of(readmeLog));
     HttpRequest httpRequest =
         HttpRequest.newBuilder()
