@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.service.event.readme;
+package app.bpartners.geojobs.service.event;
 
 import static java.net.http.HttpClient.Version;
 import static java.net.http.HttpClient.newHttpClient;

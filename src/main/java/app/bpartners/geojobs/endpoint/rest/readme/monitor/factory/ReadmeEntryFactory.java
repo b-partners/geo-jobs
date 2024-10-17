@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.readme.monitor.factory;
 
-import static app.bpartners.geojobs.service.event.readme.ReadmeLogCreatedService.getClientVersion;
+import static app.bpartners.geojobs.service.event.ReadmeLogCreatedService.getClientVersion;
 
 import app.bpartners.geojobs.endpoint.rest.readme.monitor.model.entry.*;
 import jakarta.servlet.http.HttpServletRequest;
