@@ -77,7 +77,7 @@ public class ParcelDetectionTaskServiceIT extends FacadeIT {
   private static DetectableObjectConfiguration detectableObjectConfigurations() {
     return DetectableObjectConfiguration.builder()
         .id("detectableObjectConfigurationId")
-        .confidence(MIN_CONFIDENCE)
+        .minConfidenceForDetection(MIN_CONFIDENCE)
         .objectType(DetectableType.TOITURE_REVETEMENT)
         .detectionJobId(JOB_ID)
         .build();

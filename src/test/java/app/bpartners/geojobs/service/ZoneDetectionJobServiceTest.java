@@ -360,7 +360,7 @@ public class ZoneDetectionJobServiceTest {
             .detectionJobId(jobId)
             .bucketStorageName("bucketStorageName")
             .objectType(TOITURE_REVETEMENT)
-            .confidence(1.0)
+            .minConfidenceForDetection(1.0)
             .build();
 
     assertDoesNotThrow(() -> subject.fireTasks(jobId, List.of(objectConfiguration)));

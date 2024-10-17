@@ -224,7 +224,7 @@ class ZoneTilingJobCreatedIT extends DetectionIT {
                     DetectableObjectConfiguration.builder()
                         .bucketStorageName(null)
                         .objectType(PISCINE)
-                        .confidence(1.0)
+                        .minConfidenceForDetection(1.0)
                         .build()))
             .build());
     return tilingJob;

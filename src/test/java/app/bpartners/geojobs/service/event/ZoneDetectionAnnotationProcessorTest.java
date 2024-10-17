@@ -108,12 +108,15 @@ public class ZoneDetectionAnnotationProcessorTest extends FacadeIT {
     return List.of(
         DetectableObjectConfiguration.builder()
             .objectType(TOITURE_REVETEMENT)
-            .confidence(0.8)
+            .minConfidenceForDetection(0.8)
             .build(),
-        DetectableObjectConfiguration.builder().objectType(ARBRE).confidence(0.8).build(),
+        DetectableObjectConfiguration.builder()
+            .objectType(ARBRE)
+            .minConfidenceForDetection(0.8)
+            .build(),
         DetectableObjectConfiguration.builder()
             .objectType(PANNEAU_PHOTOVOLTAIQUE)
-            .confidence(0.8)
+            .minConfidenceForDetection(0.8)
             .build());
   }
 

@@ -34,14 +34,14 @@ public class DetectableObjectConfiguration {
   private DetectableType objectType;
 
   private String bucketStorageName;
-  private Double confidence;
+  private Double minConfidenceForDetection;
 
   public DetectableObjectConfiguration duplicate(String id, String detectionJobId) {
     return DetectableObjectConfiguration.builder()
         .id(id)
         .detectionJobId(detectionJobId)
         .objectType(this.getObjectType())
-        .confidence(this.confidence)
+        .minConfidenceForDetection(this.minConfidenceForDetection)
         .build();
   }
 }

@@ -35,7 +35,7 @@ class JobAnnotationProcessedServiceTest {
     subject.accept(
         JobAnnotationProcessed.builder()
             .jobId(jobId)
-            .minConfidence(minConfidence)
+            .minConfidenceForDelivery(minConfidence)
             .annotationJobWithObjectsIdTruePositive(truePositive)
             .annotationJobWithObjectsIdFalsePositive(falsePositive)
             .annotationJobWithoutObjectsId(withoutObjects)
@@ -69,7 +69,7 @@ class JobAnnotationProcessedServiceTest {
     subject.accept(
         JobAnnotationProcessed.builder()
             .jobId(jobId)
-            .minConfidence(DEFAULT_MIN_CONFIDENCE)
+            .minConfidenceForDelivery(DEFAULT_MIN_CONFIDENCE)
             .annotationJobWithObjectsIdTruePositive(truePositive)
             .annotationJobWithObjectsIdFalsePositive(falsePositive)
             .annotationJobWithoutObjectsId(withoutObjects)

@@ -106,13 +106,13 @@ class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
         List.of(
             DetectableObjectConfiguration.builder()
                 .id("detectableObjectConfigurationId")
-                .confidence(0.8)
+                .minConfidenceForDetection(0.8)
                 .objectType(DetectableType.TOITURE_REVETEMENT)
                 .detectionJobId(SUCCEEDED_JOB_ID)
                 .build(),
             DetectableObjectConfiguration.builder()
                 .id("detectableObjectConfigurationId2")
-                .confidence(0.8)
+                .minConfidenceForDetection(0.8)
                 .objectType(DetectableType.TOITURE_REVETEMENT)
                 .detectionJobId(SUCCEEDED_JOB_ID_2)
                 .build()));

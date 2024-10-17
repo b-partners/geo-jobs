@@ -61,9 +61,9 @@ public class DetectedObject implements Serializable {
                     detectableObjectConfiguration.getObjectType().equals(detectableObjectType))
             .findFirst();
     return optionalConfiguration.isPresent()
-        && optionalConfiguration.get().getConfidence() != null
+        && optionalConfiguration.get().getMinConfidenceForDetection() != null
         && computedConfidence != null
-        && optionalConfiguration.get().getConfidence() >= computedConfidence;
+        && optionalConfiguration.get().getMinConfidenceForDetection() >= computedConfidence;
   }
 
   public DetectableType getDetectableObjectType() {

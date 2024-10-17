@@ -17,7 +17,7 @@ import lombok.*;
 @ToString
 public class JobAnnotationProcessed extends PojaEvent {
   private String jobId;
-  private Double minConfidence;
+  private Double minConfidenceForDelivery;
   private String annotationJobWithObjectsIdTruePositive;
   private String annotationJobWithObjectsIdFalsePositive;
   private String annotationJobWithoutObjectsId;

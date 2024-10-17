@@ -24,7 +24,7 @@ public class JobAnnotationProcessedService implements Consumer<JobAnnotationProc
     var annotationJobWithObjectsIdFalsePositive =
         jobAnnotationProcessed.getAnnotationJobWithObjectsIdFalsePositive();
     var annotationJobWithoutObjectsId = jobAnnotationProcessed.getAnnotationJobWithoutObjectsId();
-    var minConfidence = jobAnnotationProcessed.getMinConfidence();
+    var minConfidence = jobAnnotationProcessed.getMinConfidenceForDelivery();
     var persistedObjectConfigurations =
         objectConfigurationRepository.findAllByDetectionJobId(jobId);
     var optionalDetection = detectionRepository.findByZdjId(jobId);

@@ -183,7 +183,7 @@ public class DetectableObjectTypeMapper {
                     .detectionId(detectionId)
                     .objectType(toDomain(objectType))
                     .detectionJobId(null)
-                    .confidence(DEFAULT_CONFIDENCE)
+                    .minConfidenceForDetection(DEFAULT_CONFIDENCE)
                     .bucketStorageName(null) // default bucket storage
                     .build())
         .collect(Collectors.toList());

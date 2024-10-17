@@ -1,0 +1,1 @@
+ALTER TABLE IF EXISTS "detectable_object_configuration" RENAME COLUMN confidence TO min_confidence_for_detection;
