@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.service.event.readme;
+package app.bpartners.geojobs.service.event;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
