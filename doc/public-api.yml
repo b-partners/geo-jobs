@@ -12,7 +12,7 @@ info:
     
     # Usage
     
-    Submit your detection request through `PUT /detections/{id}`
+    Submit your detection request through `POST /detections/{id}`
     where `{id}` is yours to be created.
     
     1. If your zone is described by a **GeoJson**, then just set accordingly the `geoJsonZone` field in the payload.
