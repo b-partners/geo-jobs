@@ -65,7 +65,8 @@
     <ul>
         <li>Email associé : <span th:text="${detection.getEmailReceiver()}"></span></li>
         <li>Nom de zone fournie par le consommateur : <span th:text="${detection.getZoneName()}"></span></li>
-        <li>Configurations de la détection :
+        <span th:if="${!detectableObjectModelStringMapValues.isEmpty()}">
+            <li>Configurations de la détection :
             <ul th:each="item : ${detectableObjectModelStringMapValues}">
                 <li>
                     <span class="indent" th:text="${item.key}"></span> :
@@ -73,6 +74,7 @@
                 </li>
             </ul>
         </li>
+        </span>
         <li>Configuration du geoServeur :
             <ul>
                 <li>geoServerUrl: <span th:text="${geoServerUrl}"></span></li>
