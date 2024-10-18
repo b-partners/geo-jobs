@@ -32,6 +32,7 @@ import app.bpartners.geojobs.endpoint.rest.model.CreateDetection;
 import app.bpartners.geojobs.endpoint.rest.model.CreateZoneTilingJob;
 import app.bpartners.geojobs.endpoint.rest.model.Detection;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionStep;
+import app.bpartners.geojobs.endpoint.rest.model.GeoServerProperties;
 import app.bpartners.geojobs.endpoint.rest.model.Status;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
@@ -142,6 +143,7 @@ class ZoneServiceTest {
   void admin_role_can_process_tiling() {
     var detectionId = randomUUID().toString();
     var detection = detectionCreator.create(detectionId, null, null);
+    detection.setGeoServerProperties(new GeoServerProperties());
     var createDetection = new CreateDetection().geoJsonZone(featureCreator.defaultFeatures());
     String communityOwnerId = null;
     setUpAdminRoleCanProcessTilingMock(detectionId, detection);
