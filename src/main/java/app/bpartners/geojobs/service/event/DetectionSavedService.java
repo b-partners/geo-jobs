@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service.event;
 
 import static java.time.Instant.now;
+import static java.util.Objects.requireNonNullElse;
 
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
@@ -26,6 +27,7 @@ import org.thymeleaf.context.Context;
 @AllArgsConstructor
 public class DetectionSavedService implements Consumer<DetectionSaved> {
   public static final String DETECTION_SAVED_TEMPLATE = "detection_saved";
+  private static final String DEFAULT_PLACEHOLDER = "not provided";
   private final Mailer mailer;
   private final BucketComponent bucketComponent;
   private final DetectableObjectModelMapper detectableObjectModelMapper;
@@ -76,9 +78,10 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
                 .presign(detection.getExcelFileKey(), Duration.ofHours(24L))
                 .toString();
     var modelActualInstance = detection.getDetectableObjectModel().getActualInstance();
-    var geoServerUrl = detection.getGeoServerProperties().getGeoServerUrl();
+    var geoServerProperties = detection.getGeoServerProperties();
+    var geoServerUrl = geoServerProperties == null ? null : geoServerProperties.getGeoServerUrl();
     GeoServerParameter geoServerParameter =
-        detection.getGeoServerProperties().getGeoServerParameter();
+        geoServerProperties == null ? null : geoServerProperties.getGeoServerParameter();
     HTMLTemplateParser htmlTemplateParser = new HTMLTemplateParser();
     Context context = new Context();
     context.setVariable(
@@ -86,8 +89,9 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
         detectableObjectModelMapper.apply(modelActualInstance));
     context.setVariable(
         "geoServerParameterStringMapValues",
-        detectionGeoServerParameterModelMapper.apply(geoServerParameter));
-    context.setVariable("geoServerUrl", geoServerUrl);
+        detectionGeoServerParameterModelMapper.apply(
+            requireNonNullElse(geoServerParameter, DEFAULT_PLACEHOLDER)));
+    context.setVariable("geoServerUrl", requireNonNullElse(geoServerUrl, DEFAULT_PLACEHOLDER));
     context.setVariable("detection", detection);
     context.setVariable("shapeFileUrl", shapeFilePresignURL);
     context.setVariable("excelFileUrl", excelFilePresignURL);

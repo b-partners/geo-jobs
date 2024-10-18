@@ -199,7 +199,7 @@ paths:
 components:
   securitySchemes:
     ApiKeyAuth:
-      type: ApiKey
+      type: apiKey
       in: header
       name: x-api-key
   schemas:
@@ -574,6 +574,7 @@ components:
             Name that consumers provide to identify the zone
         geoServerProperties:
           $ref: '#/components/schemas/GeoServerProperties'
+          description: Optional Configuration properties for the GeoServer.
         detectableObjectModel:
           $ref: '#/components/schemas/DetectableObjectModel'
         geoJsonZone:

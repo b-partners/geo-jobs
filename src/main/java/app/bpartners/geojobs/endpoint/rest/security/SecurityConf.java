@@ -5,6 +5,10 @@ import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.
 import static org.springframework.http.HttpMethod.*;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
+import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.rest.readme.monitor.ReadmeMonitorConf;
+import app.bpartners.geojobs.endpoint.rest.readme.monitor.ReadmeMonitorFilter;
+import app.bpartners.geojobs.endpoint.rest.readme.monitor.factory.ReadmeLogFactory;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -24,19 +28,31 @@ import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
-@Configuration
 @Slf4j
+@Configuration
 @EnableWebSecurity
 public class SecurityConf {
   private final HandlerExceptionResolver exceptionResolver;
   private final AuthenticationManager authenticationManager;
+  private final EventProducer eventProducer;
+  private final ReadmeMonitorConf readmeMonitorConf;
+  private final ReadmeLogFactory readmeLogFactory;
+  private final AuthProvider authProvider;
 
   public SecurityConf(
       // InternalToExternalErrorHandler behind
       @Qualifier("handlerExceptionResolver") HandlerExceptionResolver exceptionResolver,
-      AuthenticationManager authenticationManager) {
+      AuthenticationManager authenticationManager,
+      EventProducer eventProducer,
+      ReadmeMonitorConf readmeMonitorConf,
+      ReadmeLogFactory readmeLogFactory,
+      AuthProvider authProvider) {
     this.exceptionResolver = exceptionResolver;
     this.authenticationManager = authenticationManager;
+    this.eventProducer = eventProducer;
+    this.readmeMonitorConf = readmeMonitorConf;
+    this.readmeLogFactory = readmeLogFactory;
+    this.authProvider = authProvider;
   }
 
   @Bean
@@ -46,7 +62,8 @@ public class SecurityConf {
             new AntPathRequestMatcher("/**", OPTIONS.toString()),
             new AntPathRequestMatcher("/ping", GET.name()),
             new AntPathRequestMatcher("/health/event/uuids", POST.name()),
-            new AntPathRequestMatcher("/health/**", GET.name()));
+            new AntPathRequestMatcher("/health/**", GET.name()),
+            new AntPathRequestMatcher("/readme/webhook", POST.name()));
     httpSecurity
         .exceptionHandling(
             (exceptionHandler) ->
@@ -66,6 +83,10 @@ public class SecurityConf {
                                 req, res, null, forbiddenWithRemoteInfo(e, req))))
         .addFilterBefore(
             apiKeyAuthFilter(new NegatedRequestMatcher(anonymousPath)),
+            AnonymousAuthenticationFilter.class)
+        .addFilterAfter(
+            // TODO: Activate monitoring on all authenticated endpoints after test
+            readmeMonitorFilter(new AntPathRequestMatcher("/usage", GET.name())),
             AnonymousAuthenticationFilter.class)
         .authorizeHttpRequests(
             authorizationManagerRequestMatcherRegistry ->
@@ -155,5 +176,10 @@ public class SecurityConf {
             // not handled by AccessDeniedException and AuthenticationEntryPoint
             exceptionResolver.resolveException(req, res, null, forbiddenWithRemoteInfo(e, req)));
     return apiKeyFilter;
+  }
+
+  private ReadmeMonitorFilter readmeMonitorFilter(RequestMatcher requestMatcher) {
+    return new ReadmeMonitorFilter(
+        requestMatcher, readmeMonitorConf, readmeLogFactory, eventProducer, authProvider);
   }
 }
