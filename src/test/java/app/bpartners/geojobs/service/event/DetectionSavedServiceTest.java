@@ -206,7 +206,8 @@ class DetectionSavedServiceTest {
                <ul>
                    <li>Email associé : <span></span></li>
                    <li>Nom de zone fournie par le consommateur : <span></span></li>
-                   <li>Configurations de la détection :
+                   <span>
+                       <li>Configurations de la détection :
                        <ul>
                            <li>
                                <span class="indent">modelName</span> :
@@ -269,6 +270,7 @@ class DetectionSavedServiceTest {
                            </li>
                        </ul>
                    </li>
+                   </span>
                    <li>Configuration du geoServeur :
                        <ul>
                            <li>geoServerUrl: <span>geo_server_value_test</span></li>
