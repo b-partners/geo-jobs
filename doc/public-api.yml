@@ -574,6 +574,7 @@ components:
             Name that consumers provide to identify the zone
         geoServerProperties:
           $ref: '#/components/schemas/GeoServerProperties'
+          description: Optional Configuration properties for the GeoServer.
         detectableObjectModel:
           $ref: '#/components/schemas/DetectableObjectModel'
         geoJsonZone:
