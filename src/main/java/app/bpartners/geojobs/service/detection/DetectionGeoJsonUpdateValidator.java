@@ -9,7 +9,8 @@ import org.springframework.stereotype.Component;
 public class DetectionGeoJsonUpdateValidator implements Consumer<Detection> {
   @Override
   public void accept(Detection detection) {
-    if (detection.getGeoJsonZone() != null && !detection.getGeoJsonZone().isEmpty()) {
+    if (detection.getProvidedGeoJsonZone() != null
+        && !detection.getProvidedGeoJsonZone().isEmpty()) {
       throw new BadRequestException(
           "Unable to finalize Detection(id="
               + detection.getEndToEndId()

@@ -30,7 +30,7 @@ class DetectionUpdateValidatorTest {
         () ->
             subject.accept(
                 Detection.builder()
-                    .geoJsonZone(geoJsonZone)
+                    .providedGeoJsonZone(geoJsonZone)
                     .geoServerProperties(geoServerProperties)
                     .bpLomModel(new BPLomModel())
                     .build(),
@@ -42,7 +42,7 @@ class DetectionUpdateValidatorTest {
         () ->
             subject.accept(
                 Detection.builder()
-                    .geoJsonZone(geoJsonZone)
+                    .providedGeoJsonZone(geoJsonZone)
                     .geoServerProperties(geoServerProperties)
                     .bpToitureModel(new BPToitureModel())
                     .build(),
@@ -63,7 +63,7 @@ class DetectionUpdateValidatorTest {
             () ->
                 subject.accept(
                     Detection.builder()
-                        .geoJsonZone(geoJsonZone)
+                        .providedGeoJsonZone(geoJsonZone)
                         .geoServerProperties(geoServerProperties)
                         .bpLomModel(new BPLomModel())
                         .build(),
@@ -77,7 +77,7 @@ class DetectionUpdateValidatorTest {
             () ->
                 subject.accept(
                     Detection.builder()
-                        .geoJsonZone(List.of(new Feature()))
+                        .providedGeoJsonZone(List.of(new Feature()))
                         .geoServerProperties(geoServerProperties)
                         .bpToitureModel(new BPToitureModel())
                         .build(),

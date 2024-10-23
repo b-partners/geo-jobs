@@ -61,8 +61,12 @@ public class Detection implements Serializable {
   @JdbcTypeCode(JSON)
   private GeoServerProperties geoServerProperties;
 
+  @Column(name = "geo_json_zone")
   @JdbcTypeCode(JSON)
-  private List<Feature> geoJsonZone;
+  private List<Feature> providedGeoJsonZone;
+
+  @JdbcTypeCode(JSON)
+  private List<Feature> multiPolygonGeoJsonZone;
 
   public DetectableObjectModel getDetectableObjectModel() {
     DetectableObjectModel detectableObjectModel = new DetectableObjectModel();

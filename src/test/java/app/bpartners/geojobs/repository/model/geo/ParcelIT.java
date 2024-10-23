@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.repository.model.ParcelContent;
@@ -24,7 +25,8 @@ class ParcelIT extends FacadeIT {
     var parcel =
         ParcelContent.builder()
             .geoServerUrl(new URL("https://nowhere.com"))
-            .feature(new Feature().geometry(new MultiPolygon().type(MULTI_POLYGON)))
+            .feature(
+                new Feature().geometry(new FeatureGeometry(new MultiPolygon().type(MULTI_POLYGON))))
             .geoServerParameter(new GeoServerParameter().height(1024))
             .build();
 

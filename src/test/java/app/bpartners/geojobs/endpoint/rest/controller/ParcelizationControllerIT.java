@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import java.math.BigDecimal;
 import java.util.List;
@@ -79,7 +80,7 @@ class ParcelizationControllerIT extends FacadeIT {
   private Feature featureFromCoordinates(List<List<List<List<BigDecimal>>>> coordinates) {
     MultiPolygon multiPolygon = new MultiPolygon().coordinates(coordinates);
     multiPolygon.setType(MULTI_POLYGON);
-    return new Feature().geometry(multiPolygon).id(null).zoom(null);
+    return new Feature().geometry(new FeatureGeometry(multiPolygon)).id(null).zoom(null);
   }
 
   @Test

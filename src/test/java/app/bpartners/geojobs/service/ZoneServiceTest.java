@@ -37,6 +37,7 @@ import app.bpartners.geojobs.endpoint.rest.model.Status;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
+import app.bpartners.geojobs.endpoint.rest.validator.FeatureMultiPolygonChecker;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.hash.FileHash;
@@ -104,6 +105,7 @@ class ZoneServiceTest {
   AuthProvider authProviderMock = mock();
   DetectionGeoJsonUpdateValidator detectionGeoJsonUpdateValidator =
       new DetectionGeoJsonUpdateValidator();
+  FeatureMultiPolygonChecker featureMultiPolygonCheckerMock = mock();
   ZoneService subject =
       new ZoneService(
           zoneDetectionJobServiceMock,
@@ -120,7 +122,8 @@ class ZoneServiceTest {
           detectableObjectTypeMapper,
           new ObjectMapper().configure(FAIL_ON_UNKNOWN_PROPERTIES, false),
           authProviderMock,
-          detectionGeoJsonUpdateValidator);
+          detectionGeoJsonUpdateValidator,
+          featureMultiPolygonCheckerMock);
 
   @Test
   void community_role_stuck_in_configuring() {
@@ -134,7 +137,7 @@ class ZoneServiceTest {
 
     assertThrows(
         ApiException.class,
-        () -> subject.processZoneDetection(detectionId, createDetection, communityOwnerId),
+        () -> subject.processDetection(detectionId, createDetection, communityOwnerId),
         "A detectionJob with the specified id=(mockDetectionId) already exists and can not be"
             + " updated.");
   }
@@ -148,7 +151,7 @@ class ZoneServiceTest {
     String communityOwnerId = null;
     setUpAdminRoleCanProcessTilingMock(detectionId, detection);
 
-    var actual = subject.processZoneDetection(detectionId, createDetection, communityOwnerId);
+    var actual = subject.processDetection(detectionId, createDetection, communityOwnerId);
 
     assertEquals(TILING, actual.getStep().getName());
     assertEquals(Status.ProgressionEnum.PENDING, actual.getStep().getStatus().getProgression());
@@ -244,7 +247,7 @@ class ZoneServiceTest {
             .id(detectionE2eId)
             .shapeUrl(shapeUrl)
             .excelUrl(null)
-            .geoJsonZone(detection.getGeoJsonZone())
+            .geoJsonZone(detection.getProvidedGeoJsonZone())
             .geoServerProperties(detection.getGeoServerProperties())
             .detectableObjectModel(detection.getDetectableObjectModel())
             .step(
@@ -292,7 +295,7 @@ class ZoneServiceTest {
             .id(detectionE2eId)
             .excelUrl(excelUrl)
             .shapeUrl(null)
-            .geoJsonZone(detection.getGeoJsonZone())
+            .geoJsonZone(detection.getProvidedGeoJsonZone())
             .geoServerProperties(detection.getGeoServerProperties())
             .detectableObjectModel(detection.getDetectableObjectModel())
             .step(
@@ -350,7 +353,7 @@ class ZoneServiceTest {
     var savedDetection = detectionCaptor.getValue();
     var detectionProvided = (DetectionSaved) listCaptor.getValue().getFirst();
     var expectedDetectionSaved =
-        detection.toBuilder().geoJsonZone(featureCreator.defaultFeatures()).build();
+        detection.toBuilder().providedGeoJsonZone(featureCreator.defaultFeatures()).build();
     var expectedRestDetection =
         new Detection()
             .id(detectionId)

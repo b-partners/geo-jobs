@@ -83,8 +83,8 @@
             </ul>
         </li>
         <li>Zone en geoJson fournie : <br>
-            <span th:if="${detection.getGeoJsonZone() != null && !detection.getGeoJsonZone().isEmpty()}"
-                  th:text="${detection.getGeoJsonZone()}"></span>
+            <span th:if="${detection.getProvidedGeoJsonZone() != null && !detection.getProvidedGeoJsonZone().isEmpty()}"
+                  th:text="${detection.getProvidedGeoJsonZone()}"></span>
         </li>
         <li>Fichier shape à convertir en geoJson : <br>
             <span th:if="${detection.getShapeFileKey() != null}" th:text="${shapeFileUrl}"></span>

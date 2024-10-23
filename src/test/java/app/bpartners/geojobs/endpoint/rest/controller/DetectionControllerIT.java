@@ -137,7 +137,7 @@ public class DetectionControllerIT extends FacadeIT {
                     .objectType(DetectableType.TOITURE_REVETEMENT)
                     .confidence(DEFAULT_MIN_CONFIDENCE)
                     .build()))
-        .geoJsonZone(geoJson)
+        .providedGeoJsonZone(geoJson)
         .build();
   }
 

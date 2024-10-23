@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectType;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
@@ -27,7 +28,7 @@ public class GeoJsonMapperTest {
                 List.of(List.of(new BigDecimal("1022.0"), new BigDecimal("1010.0"))),
                 List.of(List.of(new BigDecimal("6.0"), new BigDecimal("43.0")))));
 
-    return new Feature().geometry(new MultiPolygon().coordinates(coordinates));
+    return new Feature().geometry(new FeatureGeometry(new MultiPolygon().coordinates(coordinates)));
   }
 
   public static DetectedObject detectedObject() {

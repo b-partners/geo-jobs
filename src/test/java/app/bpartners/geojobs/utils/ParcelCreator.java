@@ -4,6 +4,7 @@ import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.PO
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.repository.model.Parcel;
@@ -47,15 +48,16 @@ public class ParcelCreator {
                         .id(randomUUID().toString())
                         .zoom(20)
                         .geometry(
-                            new MultiPolygon()
-                                .type(POLYGON)
-                                .coordinates(
-                                    List.of(
+                            new FeatureGeometry(
+                                new MultiPolygon()
+                                    .type(POLYGON)
+                                    .coordinates(
                                         List.of(
                                             List.of(
                                                 List.of(
-                                                    new BigDecimal("0.0"),
-                                                    new BigDecimal("0.0"))))))))
+                                                    List.of(
+                                                        new BigDecimal("0.0"),
+                                                        new BigDecimal("0.0")))))))))
                 .geoServerParameter(
                     om.readValue(
                         "{\n"

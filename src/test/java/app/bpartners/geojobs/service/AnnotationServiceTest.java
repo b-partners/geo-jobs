@@ -10,6 +10,7 @@ import app.bpartners.gen.annotator.endpoint.rest.client.ApiClient;
 import app.bpartners.gen.annotator.endpoint.rest.model.Job;
 import app.bpartners.gen.annotator.endpoint.rest.model.Label;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
@@ -72,14 +73,15 @@ class AnnotationServiceTest {
                         .feature(
                             new Feature()
                                 .geometry(
-                                    new MultiPolygon()
-                                        .coordinates(
-                                            List.of(
+                                    new FeatureGeometry(
+                                        new MultiPolygon()
+                                            .coordinates(
                                                 List.of(
                                                     List.of(
                                                         List.of(
-                                                            new BigDecimal("0.8"),
-                                                            new BigDecimal("0.9"))))))))
+                                                            List.of(
+                                                                new BigDecimal("0.8"),
+                                                                new BigDecimal("0.9")))))))))
                         .computedConfidence(0.8)
                         .build()))
             .build());

@@ -1209,7 +1209,10 @@ components:
         zoom:
           type: integer
         geometry:
-          $ref: "#/components/schemas/MultiPolygon"
+          oneOf:
+            - $ref: '#/components/schemas/Point'
+            - $ref: '#/components/schemas/Polygon'
+            - $ref: '#/components/schemas/MultiPolygon'
 
     Geometry:
       type: object
@@ -1220,7 +1223,6 @@ components:
           type: string
           enum:
             - Point
-            - LineString
             - Polygon
             - MultiPolygon
 
