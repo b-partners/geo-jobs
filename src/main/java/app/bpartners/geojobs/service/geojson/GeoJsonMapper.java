@@ -4,6 +4,7 @@ import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.MU
 import static app.bpartners.geojobs.service.geojson.GeoReferencer.toGeographicalCoordinates;
 
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
+import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -21,12 +22,27 @@ public class GeoJsonMapper {
         object -> {
           var feature = object.getFeature();
           var geometry = feature.getGeometry();
-          if (geometry == null || geometry.getCoordinates() == null) {
-            throw new IllegalArgumentException("Multipolygon coordinates should not be null");
+          if (geometry == null) {
+            throw new IllegalArgumentException("Geometry must not be null");
           }
-          var geoFeature =
-              mapToFeature(xTile, yTile, zoom, imageWidth, object, geometry.getCoordinates());
-          geoFeatures.add(geoFeature);
+          var actualGeometryInstance = geometry.getActualInstance();
+          if (actualGeometryInstance.getClass().equals(MultiPolygon.class)) {
+            var multiPolygon = geometry.getMultiPolygon();
+            if (multiPolygon.getCoordinates() == null) {
+              throw new IllegalArgumentException("Multipolygon coordinates should not be null");
+            }
+            geoFeatures.add(
+                mapToFeature(
+                    xTile, yTile, zoom, imageWidth, object, multiPolygon.getCoordinates()));
+          } else {
+            throw new NotImplementedException(
+                "Only MultiPolygon geometry is supported for now but actual geometry class : "
+                    + geometry.getActualInstance().getClass()
+                    + " for detectedObject(id="
+                    + object.getId()
+                    + ", type="
+                    + object.getDetectedObjectType().getDetectableType());
+          }
         });
     return geoFeatures;
   }

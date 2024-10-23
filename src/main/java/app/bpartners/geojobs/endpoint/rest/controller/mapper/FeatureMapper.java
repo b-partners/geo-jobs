@@ -4,8 +4,10 @@ import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.MU
 import static java.time.Instant.now;
 
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
+import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
@@ -14,6 +16,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import javax.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -46,12 +49,7 @@ public class FeatureMapper {
   }
 
   public Polygon toDomain(Feature feature) {
-    if (feature.getGeometry() == null) {
-      throw new IllegalArgumentException("Multipolygon coordinates should not be null");
-    }
-
-    List<List<List<List<BigDecimal>>>> multiPolygonCoordinates =
-        feature.getGeometry().getCoordinates();
+    List<List<List<List<BigDecimal>>>> multiPolygonCoordinates = validateFeature(feature);
     GeometryFactory geometryFactory = new GeometryFactory();
     List<Coordinate> polygonCoords = new ArrayList<>();
 
@@ -75,6 +73,23 @@ public class FeatureMapper {
     return geometryFactory.createPolygon(linearRing);
   }
 
+  @Nullable
+  private List<List<List<List<BigDecimal>>>> validateFeature(Feature feature) {
+    if (feature.getGeometry() == null) {
+      throw new IllegalArgumentException("Geometry must not be null");
+    }
+
+    FeatureGeometry geometry = feature.getGeometry();
+    if (!geometry.getActualInstance().getClass().equals(MultiPolygon.class)) {
+      throw new NotImplementedException(
+          "Only MultiPolygon geometry is supported for now when mapping feature to Polygon, but"
+              + " actual geometry class is : "
+              + geometry.getActualInstance().getClass());
+    }
+
+    return geometry.getMultiPolygon().getCoordinates();
+  }
+
   public Feature toRest(Polygon domain, String id) {
     List<List<List<List<BigDecimal>>>> multiPolygonCoordinates = new ArrayList<>();
     Coordinate[] polygonCoordinates = domain.getCoordinates();
@@ -94,7 +109,7 @@ public class FeatureMapper {
     Feature feature = new Feature();
     feature.setId(id);
     multiPolygon.setType(MULTI_POLYGON);
-    feature.setGeometry(multiPolygon);
+    feature.setGeometry(new FeatureGeometry(multiPolygon));
 
     return feature;
   }

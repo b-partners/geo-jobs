@@ -12,13 +12,13 @@ public class DetectionUpdateValidator implements BiConsumer<Detection, CreateDet
   @Override
   public void accept(Detection detection, CreateDetection createDetection) {
     StringBuilder messageBuilder = new StringBuilder();
-    if (detection.getGeoJsonZone() != null
-        && !detection.getGeoJsonZone().equals(createDetection.getGeoJsonZone())) {
+    if (detection.getProvidedGeoJsonZone() != null
+        && !detection.getProvidedGeoJsonZone().equals(createDetection.getGeoJsonZone())) {
       messageBuilder
           .append(
               "Detection.geoJsonZone can not be updated once it has values, otherwise actual value"
                   + " ")
-          .append(detection.getGeoJsonZone())
+          .append(detection.getProvidedGeoJsonZone())
           .append(" is not equals provided value ")
           .append(createDetection.getGeoJsonZone())
           .append(". ");

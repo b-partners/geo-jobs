@@ -11,6 +11,7 @@ import app.bpartners.gen.annotator.endpoint.rest.model.Job;
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectType;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
@@ -82,7 +83,7 @@ public class AnnotationServiceIT extends FacadeIT {
                     .id(detectedObjectId)
                     .computedConfidence(0.0)
                     .detectedTileId(tileId)
-                    .feature(new Feature().id("featureId").geometry(geometry))
+                    .feature(new Feature().id("featureId").geometry(new FeatureGeometry(geometry)))
                     .detectedObjectType(
                         DetectableObjectType.builder()
                             .id(detectedObjectId)

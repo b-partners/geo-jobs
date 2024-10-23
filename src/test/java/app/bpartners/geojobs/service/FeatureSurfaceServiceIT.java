@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import java.math.BigDecimal;
 import java.util.List;
@@ -55,7 +56,7 @@ class FeatureSurfaceServiceIT extends FacadeIT {
                         BigDecimal.valueOf(-41.617914502878186)),
                     List.of(BigDecimal.valueOf(48.05622828269508), BigDecimal.valueOf(0)))));
     MultiPolygon multiPolygon = new MultiPolygon().coordinates(coordinates);
-    feature.setGeometry(multiPolygon);
+    feature.setGeometry(new FeatureGeometry(multiPolygon));
     return feature;
   }
 }

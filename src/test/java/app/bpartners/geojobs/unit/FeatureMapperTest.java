@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import java.math.BigDecimal;
 import java.util.List;
@@ -50,7 +51,7 @@ class FeatureMapperTest {
                         BigDecimal.valueOf(43.543013820437459)))));
     MultiPolygon multiPolygon = new MultiPolygon().coordinates(coordinates);
     multiPolygon.setType(MULTI_POLYGON);
-    feature.setGeometry(multiPolygon);
+    feature.setGeometry(new FeatureGeometry(multiPolygon));
     feature.setId(id);
     return feature;
   }

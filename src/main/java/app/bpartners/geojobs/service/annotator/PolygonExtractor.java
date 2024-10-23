@@ -2,6 +2,8 @@ package app.bpartners.geojobs.service.annotator;
 
 import app.bpartners.gen.annotator.endpoint.rest.model.Point;
 import app.bpartners.gen.annotator.endpoint.rest.model.Polygon;
+import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
+import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import java.math.BigDecimal;
 import java.util.List;
@@ -29,11 +31,22 @@ public class PolygonExtractor implements Function<DetectedObject, Polygon> {
 
   @Override
   public Polygon apply(DetectedObject machineDetectedObject) {
-    return machineDetectedObject.getFeature().getGeometry().getCoordinates().stream()
-        .map(
-            multipolygonCoordinates ->
-                new Polygon().points(extractMultipolygonPoints(multipolygonCoordinates).getFirst()))
-        .toList()
-        .getFirst();
+    var geometry = machineDetectedObject.getFeature().getGeometry();
+    if (geometry.getActualInstance().equals(MultiPolygon.class)) {
+      return geometry.getMultiPolygon().getCoordinates().stream()
+          .map(
+              multipolygonCoordinates ->
+                  new Polygon()
+                      .points(extractMultipolygonPoints(multipolygonCoordinates).getFirst()))
+          .toList()
+          .getFirst();
+    }
+    throw new NotImplementedException(
+        "Only MultiPolygon geometry is supported for now but actual geometry class : "
+            + geometry.getActualInstance().getClass()
+            + " for detectedObject(id="
+            + machineDetectedObject.getId()
+            + ", type="
+            + machineDetectedObject.getDetectedObjectType().getDetectableType());
   }
 }
