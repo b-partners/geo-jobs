@@ -12,6 +12,7 @@ import app.bpartners.gen.annotator.endpoint.rest.model.Label;
 import app.bpartners.gen.annotator.endpoint.rest.model.Point;
 import app.bpartners.gen.annotator.endpoint.rest.model.Polygon;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
@@ -102,6 +103,9 @@ class DetectionMapperTest {
   private Feature feature() {
     var coordinates =
         List.of(List.of(List.of(List.of(new BigDecimal("147.5"), new BigDecimal("500.0")))));
-    return new Feature().id(null).zoom(20).geometry(new MultiPolygon().coordinates(coordinates));
+    return new Feature()
+        .id(null)
+        .zoom(20)
+        .geometry(new FeatureGeometry(new MultiPolygon().coordinates(coordinates)));
   }
 }

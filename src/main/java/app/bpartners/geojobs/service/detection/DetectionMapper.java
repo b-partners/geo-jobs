@@ -24,6 +24,7 @@ import app.bpartners.gen.annotator.endpoint.rest.model.Annotation;
 import app.bpartners.gen.annotator.endpoint.rest.model.Label;
 import app.bpartners.gen.annotator.endpoint.rest.model.Polygon;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
@@ -124,7 +125,9 @@ public class DetectionMapper {
     return new Feature()
         .id(randomUUID().toString())
         .zoom(zoom)
-        .geometry(new MultiPolygon().type(POLYGON).coordinates(List.of(List.of(coordinates))));
+        .geometry(
+            new FeatureGeometry(
+                new MultiPolygon().type(POLYGON).coordinates(List.of(List.of(coordinates)))));
   }
 
   /*
@@ -261,6 +264,6 @@ public class DetectionMapper {
     return new Feature()
         .id(randomUUID().toString())
         .zoom(zoom)
-        .geometry(new MultiPolygon().coordinates(coordinates));
+        .geometry(new FeatureGeometry(new MultiPolygon().coordinates(coordinates)));
   }
 }

@@ -2,6 +2,7 @@ package app.bpartners.geojobs.endpoint.rest.security.authorizer;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
@@ -47,7 +48,7 @@ public class CommunityZoneAuthorizer implements BiConsumer<CommunityAuthorizatio
 
   private Feature convertPolygonToFeature(MultiPolygon multiPolygon) {
     var feature = new Feature();
-    feature.setGeometry(multiPolygon);
+    feature.setGeometry(new FeatureGeometry(multiPolygon));
     return feature;
   }
 }

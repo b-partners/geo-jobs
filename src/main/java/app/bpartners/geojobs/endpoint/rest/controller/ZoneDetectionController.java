@@ -211,7 +211,7 @@ public class ZoneDetectionController {
     var communityAuthorization =
         communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
     var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId).orElse(null);
-    return zoneService.processZoneDetection(detectionId, createDetection, communityOwnerId);
+    return zoneService.processDetection(detectionId, createDetection, communityOwnerId);
   }
 
   @GetMapping("/detections/{id}")
