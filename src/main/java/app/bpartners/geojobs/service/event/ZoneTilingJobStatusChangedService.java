@@ -1,8 +1,11 @@
 package app.bpartners.geojobs.service.event;
 
+import static java.util.UUID.randomUUID;
+
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobCreated;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobStatusChanged;
+import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.JobFinishedMailer;
@@ -24,6 +27,7 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
   private final StatusChangedHandler statusChangedHandler;
   private final DetectionRepository detectionRepository;
   private final EventProducer eventProducer;
+  private final DetectableObjectConfigurationRepository objectConfigurationRepository;
 
   @Override
   public void accept(ZoneTilingJobStatusChanged event) {
@@ -36,7 +40,8 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
             tilingFinishedMailer,
             zoneDetectionJobService,
             newJob,
-            detectionRepository);
+            detectionRepository,
+            objectConfigurationRepository);
     statusChangedHandler.handle(
         event, newJob.getStatus(), oldJob.getStatus(), onFinishHandler, onFinishHandler);
   }
@@ -46,7 +51,8 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
       JobFinishedMailer<ZoneTilingJob> tilingFinishedMailer,
       ZoneDetectionJobService zoneDetectionJobService,
       ZoneTilingJob ztj,
-      DetectionRepository detectionRepository)
+      DetectionRepository detectionRepository,
+      DetectableObjectConfigurationRepository objectConfigurationRepository)
       implements StatusHandler {
 
     @Override
@@ -55,7 +61,15 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
       var optionalDetection = detectionRepository.findByZtjId(ztj.getId());
       // For now, only detection process triggers ZDJ processing
       if (optionalDetection.isPresent()) {
-        detectionRepository.save(optionalDetection.get().toBuilder().zdjId(zdj.getId()).build());
+        var savedDetection =
+            detectionRepository.save(
+                optionalDetection.get().toBuilder().zdjId(zdj.getId()).build());
+        objectConfigurationRepository.saveAll(
+            savedDetection.getDetectableObjectConfigurations().stream()
+                .map(
+                    objectConfiguration ->
+                        objectConfiguration.duplicate(randomUUID().toString(), zdj.getId()))
+                .toList());
         eventProducer.accept(
             List.of(ZoneDetectionJobCreated.builder().zoneDetectionJob(zdj).build()));
       }

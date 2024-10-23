@@ -14,6 +14,7 @@ import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobStatusChange
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status.HealthStatus;
 import app.bpartners.geojobs.job.model.Status.ProgressionStatus;
+import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
@@ -33,9 +34,15 @@ class ZoneTilingJobStatusChangedServiceTest {
   StatusChangedHandler statusChangedHandler = new StatusChangedHandler();
   DetectionRepository detectionRepository = mock();
   EventProducer eventProducerMock = mock();
+  DetectableObjectConfigurationRepository objectConfigurationRepositoryMock = mock();
   ZoneTilingJobStatusChangedService subject =
       new ZoneTilingJobStatusChangedService(
-          mailer, jobService, statusChangedHandler, detectionRepository, eventProducerMock);
+          mailer,
+          jobService,
+          statusChangedHandler,
+          detectionRepository,
+          eventProducerMock,
+          objectConfigurationRepositoryMock);
 
   @Test
   void do_not_mail_if_old_fails_and_new_fails() {
