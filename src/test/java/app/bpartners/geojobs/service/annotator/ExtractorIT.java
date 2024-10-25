@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.annotator;
 
+import static app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.MULTI_POLYGON;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PANNEAU_PHOTOVOLTAIQUE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PASSAGE_PIETON;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PISCINE;
@@ -13,14 +14,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import app.bpartners.gen.annotator.endpoint.rest.model.*;
 import app.bpartners.geojobs.conf.FacadeIT;
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectType;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.util.List;
 import lombok.SneakyThrows;
@@ -29,28 +28,20 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public class ExtractorIT extends FacadeIT {
-  private static final String MOCK_FEATURE_AS_STRING =
+  private static final String GEOMETRY_MOCK =
       """
-      { "type": "Feature",
-        "properties": {
-          "code": "69",
-          "nom": "Rhône",
-          "id": 30251921,
-          "CLUSTER_ID": 99520,
-          "CLUSTER_SIZE": 386884 },
-        "geometry": {
-          "type": "MultiPolygon",
-          "coordinates": [ [ [
-            [ 4.459648282829194, 45.904988912620688 ]
-            ] ] ] } }""";
+      {
+        "type": "MultiPolygon",
+        "coordinates": [ [ [
+        [ 4.459648282829194, 45.904988912620688 ]
+        ] ] ] }""";
   public static final String PARCEL_MOCK_ID = "parcel1";
-  @Autowired ObjectMapper om;
   @Autowired LabelConverter labelConverter;
   @Autowired LabelExtractor labelExtractor;
   @Autowired PolygonExtractor polygonExtractor;
   @Autowired CreateAnnotationBatchExtractor createAnnotationBatchExtractor;
 
-  private Feature feature;
+  private app.bpartners.geojobs.repository.model.Feature feature;
 
   public static MachineDetectedTile detectedTile(List<DetectedObject> detectedObjects) {
     return MachineDetectedTile.builder()
@@ -80,8 +71,15 @@ public class ExtractorIT extends FacadeIT {
   }
 
   @BeforeEach
-  void setup() throws JsonProcessingException {
-    feature = om.readValue(MOCK_FEATURE_AS_STRING, Feature.class);
+  void setup() {
+    feature =
+        Feature.builder()
+            .geometry(
+                Feature.FeatureGeometry.builder()
+                    .geometryType(MULTI_POLYGON)
+                    .actualInstanceStringValue(GEOMETRY_MOCK)
+                    .build())
+            .build();
   }
 
   @Test

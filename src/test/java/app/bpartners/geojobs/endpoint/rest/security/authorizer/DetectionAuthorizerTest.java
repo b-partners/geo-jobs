@@ -17,6 +17,7 @@ import app.bpartners.geojobs.endpoint.rest.model.CreateDetection;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
+import app.bpartners.geojobs.endpoint.rest.validator.FeatureMultiPolygonChecker;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
@@ -37,6 +38,7 @@ class DetectionAuthorizerTest {
   DetectionRepository detectionRepository = mock();
   DetectionOwnerAuthorizer detectionOwnerAuthorizer = mock();
   DetectableObjectTypeMapper detectableObjectTypeMapperMock = mock();
+  FeatureMultiPolygonChecker featureMultiPolygonCheckerMock = mock();
   DetectionAuthorizer subject =
       new DetectionAuthorizer(
           communityDetectableObjectTypeAuthorizer,
@@ -45,7 +47,8 @@ class DetectionAuthorizerTest {
           communityZoneSurfaceAuthorizer,
           detectionOwnerAuthorizer,
           detectionRepository,
-          detectableObjectTypeMapperMock);
+          detectableObjectTypeMapperMock,
+          featureMultiPolygonCheckerMock);
 
   CommunityAuthorization communityAuthorization =
       CommunityAuthorization.builder().id(COMMUNITY_ID).authorizedZones(List.of()).build();

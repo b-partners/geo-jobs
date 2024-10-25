@@ -4,9 +4,9 @@ import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import app.bpartners.geojobs.conf.FacadeIT;
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.service.tiling.downloader.TilesDownloader;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -46,7 +46,8 @@ public class TilesDownloaderIT extends FacadeIT {
                 }""",
                 GeoServerParameter.class))
         .feature(
-            om.readValue(
+            om
+                .readValue(
                     """
                     { "type": "Feature",
                       "properties": {
@@ -65,9 +66,11 @@ public class TilesDownloaderIT extends FacadeIT {
                           [ 4.803576766482497, 45.73258632485657 ],
                           [ 4.803576472461046, 45.73258224786219 ],
                           [ 4.803193184300449, 45.732156868763205 ] ] ] ] } }""",
-                    Feature.class)
+                    app.bpartners.geojobs.repository.model.Feature.class)
+                .toBuilder()
                 .zoom(zoom)
-                .id("feature_1_id"))
+                .id("feature_1_id")
+                .build())
         .build();
   }
 
@@ -95,7 +98,8 @@ public class TilesDownloaderIT extends FacadeIT {
                 }""",
                 GeoServerParameter.class))
         .feature(
-            om.readValue(
+            om
+                .readValue(
                     """
                                         {
                         "type": "Feature",
@@ -143,9 +147,11 @@ public class TilesDownloaderIT extends FacadeIT {
                             ]
                         }
                     }""",
-                    Feature.class)
+                    app.bpartners.geojobs.repository.model.Feature.class)
+                .toBuilder()
                 .zoom(zoom)
-                .id("feature_1_id"))
+                .id("feature_1_id")
+                .build())
         .build();
   }
 
@@ -171,7 +177,8 @@ public class TilesDownloaderIT extends FacadeIT {
                 }""",
                 GeoServerParameter.class))
         .feature(
-            om.readValue(
+            om
+                .readValue(
                     """
                                         {
                         "type": "Feature",
@@ -220,8 +227,10 @@ public class TilesDownloaderIT extends FacadeIT {
                         }
                     }""",
                     Feature.class)
+                .toBuilder()
                 .zoom(zoom)
-                .id(randomUUID().toString()))
+                .id(randomUUID().toString())
+                .build())
         .build();
   }
 

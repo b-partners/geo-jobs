@@ -4,8 +4,8 @@ import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import app.bpartners.geojobs.conf.FacadeIT;
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.repository.*;
+import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.detection.*;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
@@ -44,7 +44,11 @@ public class ParcelDetectionTaskServiceIT extends FacadeIT {
                     .id(detectedObjectId)
                     .computedConfidence(confidence)
                     .detectedTileId(tileId)
-                    .feature(new Feature().id("featureId"))
+                    .feature(
+                        Feature.builder()
+                            .id("featureId")
+                            .geometry(Feature.FeatureGeometry.builder().build())
+                            .build())
                     .type(MACHINE)
                     .detectedObjectType(
                         DetectableObjectType.builder()

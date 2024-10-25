@@ -3,6 +3,7 @@ package app.bpartners.geojobs.utils.detection;
 import static app.bpartners.geojobs.service.event.ZoneDetectionFinishedConsumer.DEFAULT_MIN_CONFIDENCE;
 import static java.util.UUID.randomUUID;
 
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.Detection;
@@ -30,6 +31,8 @@ public class DetectionCreator {
 
   public Detection create(
       String detectionId, String tilingJobId, String detectionJobId, List<Feature> geoJson) {
+    var domainFeature =
+        geoJson == null ? null : geoJson.stream().map(FeatureMapper::toDomainFeature).toList();
     return Detection.builder()
         .id(detectionId)
         .endToEndId(detectionId)
@@ -44,7 +47,7 @@ public class DetectionCreator {
                     .objectType(DetectableType.TOITURE_REVETEMENT)
                     .confidence(DEFAULT_MIN_CONFIDENCE)
                     .build()))
-        .geoJsonZone(geoJson)
+        .providedGeoJsonZone(domainFeature)
         .build();
   }
 }

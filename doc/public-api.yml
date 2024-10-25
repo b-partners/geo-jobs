@@ -31,7 +31,7 @@ paths:
       operationId: getDetectionUsage
       summary: Get detection usage
       security:
-        - ApiKeyAuth: []
+        - ApiKeyAuth: [ ]
       parameters:
         - in: query
           name: surfaceUnit
@@ -52,7 +52,7 @@ paths:
       operationId: getDetection
       summary: Get detections launched
       security:
-        - ApiKeyAuth: []
+        - ApiKeyAuth: [ ]
       parameters:
         - in: query
           name: page
@@ -78,7 +78,7 @@ paths:
       operationId: getProcessedDetection
       summary: View recently processed detection actual status
       security:
-        - ApiKeyAuth: []
+        - ApiKeyAuth: [ ]
       parameters:
         - in: path
           name: id
@@ -99,7 +99,7 @@ paths:
       operationId: processDetection
       summary: Process detection
       security:
-        - ApiKeyAuth: []
+        - ApiKeyAuth: [ ]
       parameters:
         - in: path
           name: id
@@ -126,7 +126,7 @@ paths:
       operationId: configureDetectionShapeFile
       summary: Upload shape file to configure detection zone
       security:
-        - ApiKeyAuth: []
+        - ApiKeyAuth: [ ]
       parameters:
         - in: path
           name: id
@@ -157,7 +157,7 @@ paths:
       operationId: configureDetectionExcelFile
       summary: Upload excel file to configure detection zone
       security:
-        - ApiKeyAuth: []
+        - ApiKeyAuth: [ ]
       parameters:
         - in: path
           name: id
@@ -188,7 +188,7 @@ paths:
       operationId: revokeApiKey
       summary: Revoke apiKey access
       security:
-        - ApiKeyAuth: []
+        - ApiKeyAuth: [ ]
       responses:
         200:
           description: Statistics of detection usage
@@ -337,7 +337,10 @@ components:
         zoom:
           type: integer
         geometry:
-          $ref: "#/components/schemas/MultiPolygon"
+          oneOf:
+            - $ref: '#/components/schemas/Point'
+            - $ref: '#/components/schemas/Polygon'
+            - $ref: '#/components/schemas/MultiPolygon'
     Geometry:
       type: object
       required:
@@ -347,7 +350,6 @@ components:
           type: string
           enum:
             - Point
-            - LineString
             - Polygon
             - MultiPolygon
     Point2D:
@@ -376,6 +378,17 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/Point2D'
+    Polygon:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/Geometry"
+      properties:
+        coordinates:
+          type: array
+          items:
+            type: array
+            items:
+              $ref: '#/components/schemas/Point2D'
     GeoJsonsUrl:
       type: object
       properties:
