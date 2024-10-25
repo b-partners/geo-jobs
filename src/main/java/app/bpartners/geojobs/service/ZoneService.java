@@ -156,7 +156,8 @@ public class ZoneService {
   public app.bpartners.geojobs.endpoint.rest.model.Detection getProcessedDetection(
       String detectionId) {
     var detection = getDetectionByE2eId(detectionId);
-    if (detection.getMultiPolygonGeoJsonZone() == null) {
+    if (detection.getMultiPolygonGeoJsonZone() == null
+        || detection.getMultiPolygonGeoJsonZone().isEmpty()) {
       return computeFromConfiguring(detection, PENDING, UNKNOWN);
     }
     if (!ROLE_ADMIN.equals(authProvider.getPrincipal().getRole())) {
