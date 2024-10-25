@@ -194,7 +194,7 @@ public class ZoneService {
       return computeFromConfiguring(detection, PENDING, UNKNOWN);
     }
     if (detection.getGeoServerProperties() == null) {
-      return computeFromConfiguring(detection, PROCESSING, UNKNOWN);
+      return computeFromConfiguring(detection, PENDING, UNKNOWN);
     }
     if (tilingJobId == null) {
       var ztj = processZoneTilingJob(detection);
