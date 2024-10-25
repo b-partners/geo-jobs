@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service.detection;
 import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.POLYGON;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.*;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
+import static app.bpartners.geojobs.model.CustomObjectMapper.objectMapper;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.ARBRE;
@@ -23,12 +24,11 @@ import static java.util.UUID.randomUUID;
 import app.bpartners.gen.annotator.endpoint.rest.model.Annotation;
 import app.bpartners.gen.annotator.endpoint.rest.model.Label;
 import app.bpartners.gen.annotator.endpoint.rest.model.Polygon;
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
-import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.model.exception.ApiException;
+import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.*;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
@@ -39,6 +39,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -104,7 +105,7 @@ public class DetectionMapper {
         .build();
   }
 
-  private static DetectableType toDetectableType(String label) {
+  private DetectableType toDetectableType(String label) {
     return switch (label.toUpperCase()) {
       case "ROOF", "TOITURE_REVETEMENT" -> DetectableType.TOITURE_REVETEMENT;
       case "SOLAR_PANEL", "PANNEAU_PHOTOVOLTAIQUE" -> DetectableType.PANNEAU_PHOTOVOLTAIQUE;
@@ -115,19 +116,27 @@ public class DetectionMapper {
     };
   }
 
-  private static Feature toFeature(
+  @SneakyThrows
+  private app.bpartners.geojobs.repository.model.Feature toFeature(
       DetectionResponse.ImageData.ShapeAttributes shapeAttributes, int zoom) {
     List<List<BigDecimal>> coordinates = new ArrayList<>();
     var allX = shapeAttributes.getAllPointsX();
     var allY = shapeAttributes.getAllPointsY();
     IntStream.range(0, allX.size())
         .forEach(i -> coordinates.add(List.of(allX.get(i), allY.get(i))));
-    return new Feature()
+    return app.bpartners.geojobs.repository.model.Feature.builder()
         .id(randomUUID().toString())
         .zoom(zoom)
         .geometry(
-            new FeatureGeometry(
-                new MultiPolygon().type(POLYGON).coordinates(List.of(List.of(coordinates)))));
+            app.bpartners.geojobs.repository.model.Feature.FeatureGeometry.builder()
+                .actualInstanceStringValue(
+                    objectMapper()
+                        .writeValueAsString(
+                            new MultiPolygon()
+                                .type(POLYGON)
+                                .coordinates(List.of(List.of(coordinates)))))
+                .build())
+        .build();
   }
 
   /*
@@ -248,7 +257,8 @@ public class DetectionMapper {
         .build();
   }
 
-  private Feature toFeature(int zoom, Polygon polygon) {
+  @SneakyThrows
+  private app.bpartners.geojobs.repository.model.Feature toFeature(int zoom, Polygon polygon) {
     if (polygon.getPoints() == null) return null;
     var coordinates =
         polygon.getPoints().stream()
@@ -261,9 +271,14 @@ public class DetectionMapper {
                               BigDecimal.valueOf(point.getX()), BigDecimal.valueOf(point.getY()))));
                 })
             .toList();
-    return new Feature()
+    return Feature.builder()
         .id(randomUUID().toString())
         .zoom(zoom)
-        .geometry(new FeatureGeometry(new MultiPolygon().coordinates(coordinates)));
+        .geometry(
+            Feature.FeatureGeometry.builder()
+                .actualInstanceStringValue(
+                    objectMapper().writeValueAsString(new MultiPolygon().coordinates(coordinates)))
+                .build())
+        .build();
   }
 }

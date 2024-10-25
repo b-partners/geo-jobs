@@ -22,6 +22,7 @@ import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerificationSent;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionStepStatisticMapper;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneTilingJobMapper;
 import app.bpartners.geojobs.endpoint.rest.model.BPLomModel;
 import app.bpartners.geojobs.endpoint.rest.model.BPToitureModel;
@@ -107,7 +108,9 @@ public class ZoneService {
       throw new BadRequestException(
           "Unable to finalize Detection(id=" + detectionId + ") geoJson as it already has values");
     }
-    detection.setProvidedGeoJsonZone(readFromFile(featuresFromShape));
+    var features =
+        readFromFile(featuresFromShape).stream().map(FeatureMapper::toDomainFeature).toList();
+    detection.setProvidedGeoJsonZone(features);
     var savedDetection = detectionRepository.save(detection);
     eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
     return computeFromConfiguring(savedDetection, PROCESSING, UNKNOWN);
@@ -263,9 +266,11 @@ public class ZoneService {
     var detectableObjectConfigurations =
         detectableObjectTypeMapper.mapDefaultConfigurationsFromModel(
             detectionId, modelActualInstance);
-    var providedGeoJsonZone = createDetection.getGeoJsonZone();
+    var providedGeoJsonZone =
+        createDetection.getGeoJsonZone().stream().map(FeatureMapper::toDomainFeature).toList();
     var featuresHasAllMultiPolygonInstances =
-        providedGeoJsonZone != null && featureMultiPolygonChecker.apply(providedGeoJsonZone);
+        providedGeoJsonZone != null
+            && featureMultiPolygonChecker.apply(createDetection.getGeoJsonZone());
     var detectionBuilder =
         Detection.builder()
             .id(detectionId)
@@ -354,13 +359,15 @@ public class ZoneService {
 
   private app.bpartners.geojobs.endpoint.rest.model.Detection toRestDetection(
       Detection detection, TaskStatistic statistic, DetectionStepName detectionStepName) {
+    var features =
+        detection.getProvidedGeoJsonZone() == null ? null : detection.getProvidedGeoJsonZone();
     return new app.bpartners.geojobs.endpoint.rest.model.Detection()
         .id(detection.getEndToEndId())
         .emailReceiver(detection.getEmailReceiver())
         .zoneName(detection.getZoneName())
         .excelUrl(generatePresignedUrl(detection.getExcelFileKey()))
         .shapeUrl(generatePresignedUrl(detection.getShapeFileKey()))
-        .geoJsonZone(detection.getProvidedGeoJsonZone())
+        .geoJsonZone(features)
         .geoJsonUrl(generatePresignedUrl(detection.getGeojsonS3FileKey()))
         .geoServerProperties(detection.getGeoServerProperties())
         .detectableObjectModel(detection.getDetectableObjectModel())

@@ -1,12 +1,13 @@
 package app.bpartners.geojobs.repository.model.detection;
 
+import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
 import static jakarta.persistence.CascadeType.ALL;
 import static jakarta.persistence.EnumType.STRING;
 import static jakarta.persistence.FetchType.EAGER;
 import static org.hibernate.type.SqlTypes.JSON;
 import static org.hibernate.type.SqlTypes.NAMED_ENUM;
 
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import app.bpartners.geojobs.repository.model.Feature;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
@@ -16,13 +17,7 @@ import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Optional;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 
 @Entity
@@ -38,6 +33,7 @@ public class DetectedObject implements Serializable {
   @Id private String id;
 
   @JdbcTypeCode(JSON)
+  @Getter(AccessLevel.NONE)
   private Feature feature;
 
   @JoinColumn(referencedColumnName = "id")
@@ -51,6 +47,10 @@ public class DetectedObject implements Serializable {
   @Enumerated(STRING)
   @JdbcTypeCode(NAMED_ENUM)
   private ZoneDetectionJob.DetectionType type;
+
+  public app.bpartners.geojobs.endpoint.rest.model.Feature getFeature() {
+    return toRestFeature(feature);
+  }
 
   public boolean isInDoubt(List<DetectableObjectConfiguration> objectConfigurations) {
     DetectableType detectableObjectType = getDetectableObjectType();

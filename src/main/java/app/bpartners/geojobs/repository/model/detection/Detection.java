@@ -2,17 +2,13 @@ package app.bpartners.geojobs.repository.model.detection;
 
 import static org.hibernate.type.SqlTypes.JSON;
 
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
+import app.bpartners.geojobs.repository.model.Feature;
 import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 
 @Entity
@@ -63,10 +59,24 @@ public class Detection implements Serializable {
 
   @Column(name = "geo_json_zone")
   @JdbcTypeCode(JSON)
+  @Getter(AccessLevel.NONE)
   private List<Feature> providedGeoJsonZone;
 
   @JdbcTypeCode(JSON)
+  @Getter(AccessLevel.NONE)
   private List<Feature> multiPolygonGeoJsonZone;
+
+  public List<app.bpartners.geojobs.endpoint.rest.model.Feature> getProvidedGeoJsonZone() {
+    return providedGeoJsonZone == null
+        ? null
+        : providedGeoJsonZone.stream().map(FeatureMapper::toRestFeature).toList();
+  }
+
+  public List<app.bpartners.geojobs.endpoint.rest.model.Feature> getMultiPolygonGeoJsonZone() {
+    return multiPolygonGeoJsonZone == null
+        ? null
+        : multiPolygonGeoJsonZone.stream().map(FeatureMapper::toRestFeature).toList();
+  }
 
   public DetectableObjectModel getDetectableObjectModel() {
     DetectableObjectModel detectableObjectModel = new DetectableObjectModel();

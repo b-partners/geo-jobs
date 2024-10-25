@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service;
 
+import static app.bpartners.geojobs.model.CustomObjectMapper.objectMapper;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -10,9 +11,8 @@ import app.bpartners.gen.annotator.endpoint.rest.client.ApiException;
 import app.bpartners.gen.annotator.endpoint.rest.model.Job;
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
-import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
+import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectType;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
@@ -23,6 +23,7 @@ import app.bpartners.geojobs.service.annotator.AnnotationService;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -61,6 +62,7 @@ public class AnnotationServiceIT extends FacadeIT {
     verify(eventProducerMock, times(inDoubtTiles.size())).accept(anyList());
   }
 
+  @SneakyThrows
   public static MachineDetectedTile inDoubtTile(
       String jobId,
       String tileId,
@@ -83,7 +85,15 @@ public class AnnotationServiceIT extends FacadeIT {
                     .id(detectedObjectId)
                     .computedConfidence(0.0)
                     .detectedTileId(tileId)
-                    .feature(new Feature().id("featureId").geometry(new FeatureGeometry(geometry)))
+                    .feature(
+                        Feature.builder()
+                            .id("featureId")
+                            .geometry(
+                                Feature.FeatureGeometry.builder()
+                                    .actualInstanceStringValue(
+                                        objectMapper().writeValueAsString(geometry))
+                                    .build())
+                            .build())
                     .detectedObjectType(
                         DetectableObjectType.builder()
                             .id(detectedObjectId)

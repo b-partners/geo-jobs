@@ -27,6 +27,7 @@ import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionStepStatisticMapper;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
@@ -123,6 +124,8 @@ public class DetectionControllerIT extends FacadeIT {
   private Detection detectionWithoutZdj(String tilingJobId, List<Feature> geoJson) {
     var detectionId = randomUUID().toString();
     var endToEndId = randomUUID().toString();
+    var domainFeature =
+        geoJson == null ? null : geoJson.stream().map(FeatureMapper::toDomainFeature).toList();
     return Detection.builder()
         .id(detectionId)
         .endToEndId(endToEndId)
@@ -137,7 +140,7 @@ public class DetectionControllerIT extends FacadeIT {
                     .objectType(DetectableType.TOITURE_REVETEMENT)
                     .confidence(DEFAULT_MIN_CONFIDENCE)
                     .build()))
-        .providedGeoJsonZone(geoJson)
+        .providedGeoJsonZone(domainFeature)
         .build();
   }
 

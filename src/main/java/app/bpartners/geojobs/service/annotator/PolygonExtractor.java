@@ -32,8 +32,10 @@ public class PolygonExtractor implements Function<DetectedObject, Polygon> {
   @Override
   public Polygon apply(DetectedObject machineDetectedObject) {
     var geometry = machineDetectedObject.getFeature().getGeometry();
-    if (geometry.getActualInstance().equals(MultiPolygon.class)) {
-      return geometry.getMultiPolygon().getCoordinates().stream()
+    var actualInstance = geometry.getActualInstance();
+    if (actualInstance.getClass().equals(MultiPolygon.class)) {
+      var polygon = (MultiPolygon) actualInstance;
+      return polygon.getCoordinates().stream()
           .map(
               multipolygonCoordinates ->
                   new Polygon()

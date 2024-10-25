@@ -27,7 +27,7 @@ public class GeoJsonMapper {
           }
           var actualGeometryInstance = geometry.getActualInstance();
           if (actualGeometryInstance.getClass().equals(MultiPolygon.class)) {
-            var multiPolygon = geometry.getMultiPolygon();
+            var multiPolygon = (MultiPolygon) actualGeometryInstance;
             if (multiPolygon.getCoordinates() == null) {
               throw new IllegalArgumentException("Multipolygon coordinates should not be null");
             }

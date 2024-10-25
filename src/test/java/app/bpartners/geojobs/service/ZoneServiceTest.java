@@ -26,6 +26,7 @@ import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionStepStatisticMapper;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneTilingJobMapper;
 import app.bpartners.geojobs.endpoint.rest.model.CreateDetection;
@@ -147,6 +148,7 @@ class ZoneServiceTest {
     var detectionId = randomUUID().toString();
     var detection = detectionCreator.create(detectionId, null, null);
     detection.setGeoServerProperties(new GeoServerProperties());
+    detection.setMultiPolygonGeoJsonZone(List.of());
     var createDetection = new CreateDetection().geoJsonZone(featureCreator.defaultFeatures());
     String communityOwnerId = null;
     setUpAdminRoleCanProcessTilingMock(detectionId, detection);
@@ -173,6 +175,7 @@ class ZoneServiceTest {
     var detectionId = randomUUID().toString();
     var tilingId = randomUUID().toString();
     var detection = detectionCreator.create(detectionId, tilingId, null);
+    detection.setMultiPolygonGeoJsonZone(List.of());
     setUpAdminRoleCanProcessTilingMock(detectionId, detection);
     var statistics = defaultComputedStatistic(detection.getId(), DETECTION);
     statistics.setActualJobStatus(
@@ -247,7 +250,7 @@ class ZoneServiceTest {
             .id(detectionE2eId)
             .shapeUrl(shapeUrl)
             .excelUrl(null)
-            .geoJsonZone(detection.getProvidedGeoJsonZone())
+            .geoJsonZone(null)
             .geoServerProperties(detection.getGeoServerProperties())
             .detectableObjectModel(detection.getDetectableObjectModel())
             .step(
@@ -353,7 +356,12 @@ class ZoneServiceTest {
     var savedDetection = detectionCaptor.getValue();
     var detectionProvided = (DetectionSaved) listCaptor.getValue().getFirst();
     var expectedDetectionSaved =
-        detection.toBuilder().providedGeoJsonZone(featureCreator.defaultFeatures()).build();
+        detection.toBuilder()
+            .providedGeoJsonZone(
+                featureCreator.defaultFeatures().stream()
+                    .map(FeatureMapper::toDomainFeature)
+                    .toList())
+            .build();
     var expectedRestDetection =
         new Detection()
             .id(detectionId)
