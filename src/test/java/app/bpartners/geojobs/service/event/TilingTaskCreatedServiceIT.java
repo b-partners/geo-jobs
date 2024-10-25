@@ -19,7 +19,6 @@ import app.bpartners.geojobs.endpoint.event.consumer.EventConsumer;
 import app.bpartners.geojobs.endpoint.event.model.tile.TilingTaskCreated;
 import app.bpartners.geojobs.endpoint.event.model.tile.TilingTaskSucceeded;
 import app.bpartners.geojobs.endpoint.rest.controller.ZoneTilingController;
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.hash.FileHash;
@@ -27,6 +26,7 @@ import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
+import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
@@ -37,7 +37,6 @@ import app.bpartners.geojobs.service.tiling.downloader.TilesDownloader;
 import app.bpartners.geojobs.sqs.EventProducerInvocationMock;
 import app.bpartners.geojobs.sqs.LocalEventQueue;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,15 +50,8 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 
 @Slf4j
 class TilingTaskCreatedServiceIT extends FacadeIT {
-  public static final String MOCK_FEATURE_AS_STRING =
-      "{ \"type\": \"Feature\",\n"
-          + "  \"properties\": {\n"
-          + "    \"code\": \"69\",\n"
-          + "    \"nom\": \"Rh\u00f4ne\",\n"
-          + "    \"id\": 30251921,\n"
-          + "    \"CLUSTER_ID\": 99520,\n"
-          + "    \"CLUSTER_SIZE\": 386884 },\n"
-          + "  \"geometry\": {\n"
+  public static final String GEOMETRY_MOCK =
+      "{\n"
           + "    \"type\": \"MultiPolygon\",\n"
           + "    \"coordinates\": [ [ [\n"
           + "      [ 4.459648282829194, 45.904988912620688 ],\n"
@@ -69,7 +61,7 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
           + "      [ 4.518386257467152, 45.912888345521047 ],\n"
           + "      [ 4.496344031095243, 45.883438201401809 ],\n"
           + "      [ 4.479593950305621, 45.882900828315755 ],\n"
-          + "      [ 4.459648282829194, 45.904988912620688 ] ] ] ] } }";
+          + "      [ 4.459648282829194, 45.904988912620688 ] ] ] ] }";
   @Autowired TilingTaskCreatedService subject;
   @Autowired ZoneTilingController zoneTilingController;
   @MockBean BucketComponent bucketComponent;
@@ -78,13 +70,12 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
   @Autowired ZoneTilingJobRepository zoneTilingJobRepository;
   @Autowired ZoneTilingJobService zoneTilingJobService;
   @MockBean EventProducer eventProducer;
-  @Autowired ObjectMapper om;
   @Autowired TilingTaskStatusService tilingTaskStatusService;
   @Autowired TilingTaskSucceededService tilingTaskSucceededService;
   @Autowired LocalEventQueue localEventQueue;
   @Autowired EventConsumer eventConsumer;
   EventProducerInvocationMock eventProducerInvocationMock = new EventProducerInvocationMock();
-  private Feature lyonFeature;
+  private app.bpartners.geojobs.repository.model.Feature lyonFeature;
 
   @BeforeEach
   void setUp() throws JsonProcessingException {
@@ -99,29 +90,7 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
                 Paths.get(this.getClass().getClassLoader().getResource("mockData/lyon").toURI())
                     .toFile());
     when(bucketComponent.upload(any(), any())).thenReturn(new FileHash(SHA256, "mock"));
-    lyonFeature =
-        om.readValue(
-                "{ \"type\": \"Feature\",\n"
-                    + "  \"properties\": {\n"
-                    + "    \"code\": \"69\",\n"
-                    + "    \"nom\": \"Rh\u00f4ne\",\n"
-                    + "    \"id\": 30251921,\n"
-                    + "    \"CLUSTER_ID\": 99520,\n"
-                    + "    \"CLUSTER_SIZE\": 386884 },\n"
-                    + "  \"geometry\": {\n"
-                    + "    \"type\": \"MultiPolygon\",\n"
-                    + "    \"coordinates\": [ [ [\n"
-                    + "        [ 4.459648282829194, 45.904988912620688 ],\n"
-                    + "        [ 4.464709510872551, 45.928950368349426 ],\n"
-                    + "        [ 4.490816965688656, 45.941784543770964 ],\n"
-                    + "        [ 4.510354299995861, 45.933697132664598 ],\n"
-                    + "        [ 4.518386257467152, 45.912888345521047 ],\n"
-                    + "        [ 4.496344031095243, 45.883438201401809 ],\n"
-                    + "        [ 4.479593950305621, 45.882900828315755 ],\n"
-                    + "        [ 4.459648282829194, 45.904988912620688 ] ] ] ] } }",
-                Feature.class)
-            .zoom(10)
-            .id("feature_1_id");
+    lyonFeature = defaultFeature();
   }
 
   private ZoneTilingJob aZTJ(String jobId) {
@@ -182,10 +151,7 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
                         ParcelContent.builder()
                             .id(randomUUID().toString())
                             .geoServerParameter(new GeoServerParameter().layers("grand-lyon"))
-                            .feature(
-                                om.readValue(MOCK_FEATURE_AS_STRING, Feature.class)
-                                    .zoom(10)
-                                    .id("feature_1_id"))
+                            .feature(defaultFeature())
                             .build())
                     .build()))
         .statusHistory(
@@ -196,6 +162,15 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
                     .progression(PROCESSING)
                     .health(UNKNOWN)
                     .build()))
+        .build();
+  }
+
+  public static Feature defaultFeature() {
+    return Feature.builder()
+        .id("feature_1_id")
+        .zoom(10)
+        .geometry(
+            Feature.FeatureGeometry.builder().actualInstanceStringValue(GEOMETRY_MOCK).build())
         .build();
   }
 

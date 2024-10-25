@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service;
 
+import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toDomainFeature;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
@@ -107,7 +108,7 @@ public class ParcelService {
             .map(
                 feat ->
                     app.bpartners.geojobs.repository.model.ParcelizedPolygon.builder()
-                        .feature(feat)
+                        .feature(toDomainFeature(feat))
                         .id(randomUUID().toString())
                         .build())
             .toList();

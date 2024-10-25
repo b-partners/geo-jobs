@@ -1,24 +1,28 @@
 package app.bpartners.geojobs.unit;
 
+import static app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.MULTI_POLYGON;
+import static app.bpartners.geojobs.model.CustomObjectMapper.objectMapper;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PASSAGE_PIETON;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
+import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectType;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.service.geojson.GeoJson;
 import app.bpartners.geojobs.service.geojson.GeoJsonMapper;
 import java.math.BigDecimal;
 import java.util.List;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 
 public class GeoJsonMapperTest {
   private final GeoJsonMapper subject = new GeoJsonMapper();
 
-  public static Feature feature() {
+  @SneakyThrows
+  public static app.bpartners.geojobs.repository.model.Feature feature() {
     var coordinates =
         List.of(
             List.of(
@@ -27,7 +31,14 @@ public class GeoJsonMapperTest {
                 List.of(List.of(new BigDecimal("1022.0"), new BigDecimal("1010.0"))),
                 List.of(List.of(new BigDecimal("6.0"), new BigDecimal("43.0")))));
 
-    return new Feature().geometry(new MultiPolygon().coordinates(coordinates));
+    return Feature.builder()
+        .geometry(
+            Feature.FeatureGeometry.builder()
+                .geometryType(MULTI_POLYGON)
+                .actualInstanceStringValue(
+                    objectMapper().writeValueAsString(new MultiPolygon().coordinates(coordinates)))
+                .build())
+        .build();
   }
 
   public static DetectedObject detectedObject() {

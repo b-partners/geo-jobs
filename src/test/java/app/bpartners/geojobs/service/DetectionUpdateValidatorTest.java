@@ -2,6 +2,7 @@ package app.bpartners.geojobs.service;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.utils.FeatureCreator;
@@ -16,6 +17,8 @@ class DetectionUpdateValidatorTest {
   @Test
   void do_nothing_with_same_attributes() {
     List<Feature> geoJsonZone = featureCreator.defaultFeatures();
+    List<app.bpartners.geojobs.repository.model.Feature> domainFeoJsonZone =
+        geoJsonZone.stream().map(FeatureMapper::toDomainFeature).toList();
     GeoServerProperties geoServerProperties = new GeoServerProperties();
 
     assertDoesNotThrow(
@@ -30,7 +33,7 @@ class DetectionUpdateValidatorTest {
         () ->
             subject.accept(
                 Detection.builder()
-                    .geoJsonZone(geoJsonZone)
+                    .providedGeoJsonZone(domainFeoJsonZone)
                     .geoServerProperties(geoServerProperties)
                     .bpLomModel(new BPLomModel())
                     .build(),
@@ -42,7 +45,7 @@ class DetectionUpdateValidatorTest {
         () ->
             subject.accept(
                 Detection.builder()
-                    .geoJsonZone(geoJsonZone)
+                    .providedGeoJsonZone(domainFeoJsonZone)
                     .geoServerProperties(geoServerProperties)
                     .bpToitureModel(new BPToitureModel())
                     .build(),
@@ -55,6 +58,8 @@ class DetectionUpdateValidatorTest {
   @Test
   void throws_exception_with_updated_attributes() {
     List<Feature> geoJsonZone = featureCreator.defaultFeatures();
+    List<app.bpartners.geojobs.repository.model.Feature> domainFeoJsonZone =
+        geoJsonZone.stream().map(FeatureMapper::toDomainFeature).toList();
     GeoServerProperties geoServerProperties = new GeoServerProperties();
 
     var geoServerAndBPLomModelUpdateAttemptException =
@@ -63,7 +68,7 @@ class DetectionUpdateValidatorTest {
             () ->
                 subject.accept(
                     Detection.builder()
-                        .geoJsonZone(geoJsonZone)
+                        .providedGeoJsonZone(domainFeoJsonZone)
                         .geoServerProperties(geoServerProperties)
                         .bpLomModel(new BPLomModel())
                         .build(),
@@ -77,7 +82,8 @@ class DetectionUpdateValidatorTest {
             () ->
                 subject.accept(
                     Detection.builder()
-                        .geoJsonZone(List.of(new Feature()))
+                        .providedGeoJsonZone(
+                            List.of(new app.bpartners.geojobs.repository.model.Feature()))
                         .geoServerProperties(geoServerProperties)
                         .bpToitureModel(new BPToitureModel())
                         .build(),
@@ -97,11 +103,7 @@ class DetectionUpdateValidatorTest {
   @NonNull
   private String expectedGeoJsonAndBPToitureModelUpdateAttemptException() {
     return """
-Detection.geoJsonZone can not be updated once it has values, otherwise actual value [class Feature {
-    id: null
-    zoom: null
-    geometry: null
-}] is not equals provided value null. Detection.detectableObjectModel can not be updated once it has values, otherwise actual value class class app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel {
+Detection.geoJsonZone can not be updated once it has values, otherwise actual value [null] is not equals provided value null. Detection.detectableObjectModel can not be updated once it has values, otherwise actual value class class app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel {
     instance: class BPToitureModel {
         modelName: null
         toitureRevetement: true
@@ -137,9 +139,13 @@ Detection.geoJsonZone can not be updated once it has values, otherwise actual va
 Detection.geoJsonZone can not be updated once it has values, otherwise actual value [class Feature {
     id: feature_1_id
     zoom: null
-    geometry: class MultiPolygon {
-        coordinates: [[[[4.459648282829194, 45.904988912620688], [4.464709510872551, 45.928950368349426], [4.490816965688656, 45.941784543770964], [4.510354299995861, 45.933697132664598], [4.518386257467152, 45.912888345521047], [4.496344031095243, 45.883438201401809], [4.479593950305621, 45.882900828315755], [4.459648282829194, 45.904988912620688]]]]
-        type: MultiPolygon
+    geometry: class class app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry {
+        instance: class MultiPolygon {
+            coordinates: [[[[4.459648282829194, 45.90498891262069], [4.464709510872551, 45.928950368349426], [4.490816965688656, 45.941784543770964], [4.510354299995861, 45.9336971326646], [4.518386257467152, 45.91288834552105], [4.496344031095243, 45.88343820140181], [4.479593950305621, 45.882900828315755], [4.459648282829194, 45.90498891262069]]]]
+            type: MultiPolygon
+        }
+        isNullable: false
+        schemaType: oneOf
     }
 }] is not equals provided value null. Detection.detectableObjectModel can not be updated once it has values, otherwise actual value class class app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel {
     instance: class BPLomModel {

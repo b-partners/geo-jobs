@@ -90,7 +90,7 @@ public class ZoneTilingJobMapper {
         .zoneName(detection.getZoneName())
         .geoServerParameter(overallConfiguration.getGeoServerParameter())
         .geoServerUrl(overallConfiguration.getGeoServerUrl())
-        .features(detection.getGeoJsonZone())
+        .features(detection.getMultiPolygonGeoJsonZone())
         .zoomLevel(zoomLevelEnum);
   }
 }

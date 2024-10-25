@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service;
 
+import static app.bpartners.geojobs.model.CustomObjectMapper.objectMapper;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PASSAGE_PIETON;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
 import static org.mockito.Mockito.*;
@@ -9,7 +10,7 @@ import app.bpartners.gen.annotator.endpoint.rest.api.JobsApi;
 import app.bpartners.gen.annotator.endpoint.rest.client.ApiClient;
 import app.bpartners.gen.annotator.endpoint.rest.model.Job;
 import app.bpartners.gen.annotator.endpoint.rest.model.Label;
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import app.bpartners.geojobs.endpoint.rest.model.Geometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
@@ -58,6 +59,7 @@ class AnnotationServiceTest {
         DetectableObjectConfiguration.builder().objectType(TOITURE_REVETEMENT).build());
   }
 
+  @SneakyThrows
   @NonNull
   private static List<MachineDetectedTile> detectedTiles() {
     return List.of(
@@ -70,16 +72,25 @@ class AnnotationServiceTest {
                         .detectedObjectType(
                             DetectableObjectType.builder().detectableType(PASSAGE_PIETON).build())
                         .feature(
-                            new Feature()
+                            app.bpartners.geojobs.repository.model.Feature.builder()
                                 .geometry(
-                                    new MultiPolygon()
-                                        .coordinates(
-                                            List.of(
-                                                List.of(
-                                                    List.of(
-                                                        List.of(
-                                                            new BigDecimal("0.8"),
-                                                            new BigDecimal("0.9"))))))))
+                                    app.bpartners.geojobs.repository.model.Feature.FeatureGeometry
+                                        .builder()
+                                        .geometryType(Geometry.TypeEnum.MULTI_POLYGON)
+                                        .actualInstanceStringValue(
+                                            objectMapper()
+                                                .writeValueAsString(
+                                                    new MultiPolygon()
+                                                        .coordinates(
+                                                            List.of(
+                                                                List.of(
+                                                                    List.of(
+                                                                        List.of(
+                                                                            new BigDecimal("0.8"),
+                                                                            new BigDecimal(
+                                                                                "0.9"))))))))
+                                        .build())
+                                .build())
                         .computedConfidence(0.8)
                         .build()))
             .build());

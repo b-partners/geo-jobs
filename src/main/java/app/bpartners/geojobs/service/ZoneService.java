@@ -22,6 +22,7 @@ import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerificationSent;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionStepStatisticMapper;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneTilingJobMapper;
 import app.bpartners.geojobs.endpoint.rest.model.BPLomModel;
 import app.bpartners.geojobs.endpoint.rest.model.BPToitureModel;
@@ -29,6 +30,7 @@ import app.bpartners.geojobs.endpoint.rest.model.CreateDetection;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionStepName;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
+import app.bpartners.geojobs.endpoint.rest.validator.FeatureMultiPolygonChecker;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.job.model.JobStatus;
@@ -86,6 +88,7 @@ public class ZoneService {
   private final ObjectMapper objectMapper;
   private final AuthProvider authProvider;
   private final DetectionGeoJsonUpdateValidator detectionGeoJsonUpdateValidator;
+  private final FeatureMultiPolygonChecker featureMultiPolygonChecker;
 
   private List<Feature> readFromFile(File featuresFromShape) {
     try {
@@ -100,11 +103,14 @@ public class ZoneService {
   public app.bpartners.geojobs.endpoint.rest.model.Detection finalizeGeoJsonConfig(
       String detectionId, File featuresFromShape) {
     var detection = getDetectionById(detectionId);
-    if (detection.getGeoJsonZone() != null && !detection.getGeoJsonZone().isEmpty()) {
+    if (detection.getProvidedGeoJsonZone() != null
+        && !detection.getProvidedGeoJsonZone().isEmpty()) {
       throw new BadRequestException(
           "Unable to finalize Detection(id=" + detectionId + ") geoJson as it already has values");
     }
-    detection.setGeoJsonZone(readFromFile(featuresFromShape));
+    var features =
+        readFromFile(featuresFromShape).stream().map(FeatureMapper::toDomainFeature).toList();
+    detection.setProvidedGeoJsonZone(features);
     var savedDetection = detectionRepository.save(detection);
     eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
     return computeFromConfiguring(savedDetection, PROCESSING, UNKNOWN);
@@ -150,7 +156,7 @@ public class ZoneService {
   public app.bpartners.geojobs.endpoint.rest.model.Detection getProcessedDetection(
       String detectionId) {
     var detection = getDetectionByE2eId(detectionId);
-    if (detection.getGeoJsonZone() == null || detection.getGeoJsonZone().isEmpty()) {
+    if (detection.getMultiPolygonGeoJsonZone() == null) {
       return computeFromConfiguring(detection, PENDING, UNKNOWN);
     }
     if (!ROLE_ADMIN.equals(authProvider.getPrincipal().getRole())) {
@@ -163,11 +169,11 @@ public class ZoneService {
     return getDetectionStatistics(detection, detectionJobId);
   }
 
-  public app.bpartners.geojobs.endpoint.rest.model.Detection processZoneDetection(
+  public app.bpartners.geojobs.endpoint.rest.model.Detection processDetection(
       String detectionId, CreateDetection createDetection, @Nullable String communityOwnerId) {
     Optional<Detection> optionalDetection = detectionRepository.findByEndToEndId(detectionId);
     if (optionalDetection.isEmpty()) {
-      var savedDetection = createZoneDetectionJob(detectionId, createDetection, communityOwnerId);
+      var savedDetection = createDetectionJob(detectionId, createDetection, communityOwnerId);
       return computeFromConfiguring(savedDetection, PENDING, UNKNOWN);
     }
     if (ROLE_COMMUNITY.equals(authProvider.getPrincipal().getRole())) {
@@ -184,7 +190,7 @@ public class ZoneService {
       Detection detection) {
     var tilingJobId = detection.getZtjId();
     var detectionJobId = detection.getZdjId();
-    if (detection.getGeoJsonZone() == null || detection.getGeoJsonZone().isEmpty()) {
+    if (detection.getMultiPolygonGeoJsonZone() == null) {
       return computeFromConfiguring(detection, PENDING, UNKNOWN);
     }
     if (detection.getGeoServerProperties() == null) {
@@ -227,7 +233,7 @@ public class ZoneService {
     }
   }
 
-  private Detection createZoneDetectionJob(
+  private Detection createDetectionJob(
       String detectionId, CreateDetection createDetection, @Nullable String communityOwnerId) {
     var detectionToSave =
         mapFromRestCreateDetection(detectionId, createDetection, communityOwnerId);
@@ -260,6 +266,11 @@ public class ZoneService {
     var detectableObjectConfigurations =
         detectableObjectTypeMapper.mapDefaultConfigurationsFromModel(
             detectionId, modelActualInstance);
+    var providedGeoJsonZone =
+        createDetection.getGeoJsonZone().stream().map(FeatureMapper::toDomainFeature).toList();
+    var featuresHasAllMultiPolygonInstances =
+        providedGeoJsonZone != null
+            && featureMultiPolygonChecker.apply(createDetection.getGeoJsonZone());
     var detectionBuilder =
         Detection.builder()
             .id(detectionId)
@@ -269,7 +280,10 @@ public class ZoneService {
             .communityOwnerId(communityOwnerId)
             .detectableObjectConfigurations(detectableObjectConfigurations)
             .geoServerProperties(createDetection.getGeoServerProperties())
-            .geoJsonZone(createDetection.getGeoJsonZone());
+            .providedGeoJsonZone(providedGeoJsonZone);
+    if (featuresHasAllMultiPolygonInstances) {
+      detectionBuilder.multiPolygonGeoJsonZone(providedGeoJsonZone);
+    }
     if (modelActualInstance instanceof BPToitureModel) {
       detectionBuilder.bpToitureModel((BPToitureModel) modelActualInstance);
     } else if (modelActualInstance instanceof BPLomModel) {
@@ -345,13 +359,15 @@ public class ZoneService {
 
   private app.bpartners.geojobs.endpoint.rest.model.Detection toRestDetection(
       Detection detection, TaskStatistic statistic, DetectionStepName detectionStepName) {
+    var features =
+        detection.getProvidedGeoJsonZone() == null ? null : detection.getProvidedGeoJsonZone();
     return new app.bpartners.geojobs.endpoint.rest.model.Detection()
         .id(detection.getEndToEndId())
         .emailReceiver(detection.getEmailReceiver())
         .zoneName(detection.getZoneName())
         .excelUrl(generatePresignedUrl(detection.getExcelFileKey()))
         .shapeUrl(generatePresignedUrl(detection.getShapeFileKey()))
-        .geoJsonZone(detection.getGeoJsonZone())
+        .geoJsonZone(features)
         .geoJsonUrl(generatePresignedUrl(detection.getGeojsonS3FileKey()))
         .geoServerProperties(detection.getGeoServerProperties())
         .detectableObjectModel(detection.getDetectableObjectModel())

@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.unit;
 
+import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
+import static app.bpartners.geojobs.model.CustomObjectMapper.objectMapper;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PISCINE;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static java.util.UUID.randomUUID;
@@ -11,9 +13,9 @@ import app.bpartners.gen.annotator.endpoint.rest.model.Annotation;
 import app.bpartners.gen.annotator.endpoint.rest.model.Label;
 import app.bpartners.gen.annotator.endpoint.rest.model.Point;
 import app.bpartners.gen.annotator.endpoint.rest.model.Polygon;
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
+import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.detection.DetectionMapper;
 import app.bpartners.geojobs.service.detection.DetectionResponse;
@@ -21,6 +23,7 @@ import app.bpartners.geojobs.service.tiling.TileValidator;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 
 class DetectionMapperTest {
@@ -89,7 +92,7 @@ class DetectionMapperTest {
     assertEquals(HUMAN, detectedObject.getType());
     assertEquals(tileId, detectedObject.getDetectedTileId());
     assertEquals(0.9515481, detectedObject.getComputedConfidence());
-    assertEquals(feature(), detectedObject.getFeature().id(null));
+    assertEquals(feature().id(detectedObject.getFeature().getId()), detectedObject.getFeature());
   }
 
   private Annotation annotation() {
@@ -99,9 +102,20 @@ class DetectionMapperTest {
         .polygon(new Polygon().points(List.of(new Point().y(500.0).x(147.5))));
   }
 
-  private Feature feature() {
+  @SneakyThrows
+  private app.bpartners.geojobs.endpoint.rest.model.Feature feature() {
     var coordinates =
         List.of(List.of(List.of(List.of(new BigDecimal("147.5"), new BigDecimal("500.0")))));
-    return new Feature().id(null).zoom(20).geometry(new MultiPolygon().coordinates(coordinates));
+    return toRestFeature(
+        Feature.builder()
+            .id(null)
+            .zoom(20)
+            .geometry(
+                Feature.FeatureGeometry.builder()
+                    .actualInstanceStringValue(
+                        objectMapper()
+                            .writeValueAsString(new MultiPolygon().coordinates(coordinates)))
+                    .build())
+            .build());
   }
 }

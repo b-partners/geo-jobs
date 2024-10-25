@@ -2,7 +2,6 @@ package app.bpartners.geojobs.repository.model;
 
 import static org.hibernate.type.SqlTypes.JSON;
 
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;

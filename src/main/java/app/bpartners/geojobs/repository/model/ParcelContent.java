@@ -1,9 +1,9 @@
 package app.bpartners.geojobs.repository.model;
 
+import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
 import static java.util.UUID.randomUUID;
 import static org.hibernate.type.SqlTypes.JSON;
 
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
@@ -28,7 +28,10 @@ import org.hibernate.annotations.JdbcTypeCode;
 @JsonIgnoreProperties({"tilingStatus", "firstTile"})
 public class ParcelContent implements Serializable {
   private String id;
+
+  @Getter(AccessLevel.NONE)
   private Feature feature;
+
   private URL geoServerUrl;
   private GeoServerParameter geoServerParameter;
 
@@ -41,6 +44,10 @@ public class ParcelContent implements Serializable {
   private Status detectionStatus; // computed value only
 
   private Instant creationDatetime;
+
+  public app.bpartners.geojobs.endpoint.rest.model.Feature getFeature() {
+    return toRestFeature(feature);
+  }
 
   public void setTiles(List<Tile> tiles) {
     if (tiles == null) {

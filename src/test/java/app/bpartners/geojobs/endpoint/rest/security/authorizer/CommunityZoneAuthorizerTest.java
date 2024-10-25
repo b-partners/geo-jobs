@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
@@ -58,7 +59,7 @@ class CommunityZoneAuthorizerTest {
 
   private CommunityAuthorizedZone communityAuthorizedZone() {
     return CommunityAuthorizedZone.builder()
-        .multiPolygon(feature2000Surface().getGeometry())
+        .multiPolygon(feature2000Surface().getGeometry().getMultiPolygon())
         .build();
   }
 
@@ -82,7 +83,7 @@ class CommunityZoneAuthorizerTest {
                 List.of(sideLength.add(BigDecimal.valueOf(2.675)), BigDecimal.valueOf(2.675)),
                 List.of(BigDecimal.valueOf(2.675), BigDecimal.valueOf(2.675))));
     MultiPolygon multiPolygon = new MultiPolygon().coordinates(List.of(coordinates));
-    feature.setGeometry(multiPolygon);
+    feature.setGeometry(new FeatureGeometry(multiPolygon));
     return feature;
   }
 
@@ -98,7 +99,7 @@ class CommunityZoneAuthorizerTest {
                 List.of(BigDecimal.valueOf(40 + sideLength), BigDecimal.valueOf(-5)),
                 List.of(BigDecimal.valueOf(40), BigDecimal.valueOf(-5))));
     MultiPolygon multiPolygon = new MultiPolygon().coordinates(List.of(coordinates));
-    feature.setGeometry(multiPolygon);
+    feature.setGeometry(new FeatureGeometry(multiPolygon));
     return feature;
   }
 
@@ -113,7 +114,7 @@ class CommunityZoneAuthorizerTest {
                 List.of(BigDecimal.valueOf(44.72), BigDecimal.valueOf(0)),
                 List.of(BigDecimal.valueOf(0), BigDecimal.valueOf(0))));
     MultiPolygon multiPolygon = new MultiPolygon().coordinates(List.of(coordinates));
-    feature.setGeometry(multiPolygon);
+    feature.setGeometry(new FeatureGeometry(multiPolygon));
     return feature;
   }
 }
