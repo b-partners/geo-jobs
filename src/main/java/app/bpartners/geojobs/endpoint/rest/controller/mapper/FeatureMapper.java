@@ -153,8 +153,8 @@ public class FeatureMapper {
     }
     if (clazz.equals(Point.class)) {
       // Repeat the same point on itself to stay within the area
-      var point = List.of(List.of(Objects.requireNonNull(geometry.getPoint().getCoordinates())));
-      return List.of(point, point, point, point);
+      var point = Objects.requireNonNull(geometry.getPoint().getCoordinates());
+      return List.of(List.of(List.of(point, point, point, point)));
     }
     throw new NotImplementedException(
         "Only MultiPolygon, Polygon, Point geometry is supported for now when mapping feature to"
