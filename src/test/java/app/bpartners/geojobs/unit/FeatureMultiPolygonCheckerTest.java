@@ -16,7 +16,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-public class FeatureMultiPolygonCheckerTest {
+class FeatureMultiPolygonCheckerTest {
   private final FeatureMultiPolygonChecker subject = new FeatureMultiPolygonChecker();
 
   private Feature multipolygon() {

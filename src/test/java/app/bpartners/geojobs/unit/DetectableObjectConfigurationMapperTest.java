@@ -13,7 +13,7 @@ import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfigur
 import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
 
-class DetectableObjectConfigufrationMapperTest {
+class DetectableObjectConfigurationMapperTest {
   BucketConf bucketConf = mock();
   DetectableObjectConfigurationMapper subject =
       new DetectableObjectConfigurationMapper(new DetectableObjectTypeMapper(), bucketConf);

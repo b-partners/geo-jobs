@@ -161,6 +161,21 @@ class ZoneServiceTest {
   }
 
   @Test
+  void stuck_at_configuring_when_multipolygon_geojson_or_geoserver_properties_are_null() {
+    var detectionId = randomUUID().toString();
+    var detection = detectionCreator.create(detectionId, null, null);
+    var createDetection = new CreateDetection().geoJsonZone(featureCreator.defaultFeatures());
+    String communityOwnerId = null;
+    setUpAdminRoleCanProcessTilingMock(detectionId, detection);
+
+    var actual = subject.processDetection(detectionId, createDetection, communityOwnerId);
+
+    assertEquals(CONFIGURING, actual.getStep().getName());
+    assertEquals(Status.ProgressionEnum.PENDING, actual.getStep().getStatus().getProgression());
+    assertEquals(UNKNOWN, actual.getStep().getStatus().getHealth());
+  }
+
+  @Test
   void read_detection_ko() {
     var detectionId = "NonExistentDetectionId";
 
