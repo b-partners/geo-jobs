@@ -121,15 +121,25 @@ public class AnnotationModelDeliveryRequestedService<T extends AnnotationModelDe
         "Unknown AnnotationModelDeliveryType " + event.getAnnotationModelDeliveryType());
   }
 
+  private List<MachineDetectedTile> findAllInDoubtByZdjJobIdGreaterThanOrEquals(
+      String zoneDetectionJobId, double minConfidenceForDelivery) {
+    return detectedTileRepository.findAllInDoubtByZdjJobId(
+        zoneDetectionJobId, minConfidenceForDelivery, true);
+  }
+
+  private List<MachineDetectedTile> findAllInDoubtByZdjJobIdLessThan(
+      String zoneDetectionJobId, double minConfidenceForDelivery) {
+    return detectedTileRepository.findAllInDoubtByZdjJobId(
+        zoneDetectionJobId, minConfidenceForDelivery, false);
+  }
+
   private List<MachineDetectedTile> getMachineDetectedTiles(T event, String zoneDetectionJobId) {
-    boolean isGreater = true;
-    boolean isNotGreater = !isGreater;
+    var minConfidenceForDelivery = event.getMinimumConfidenceForDelivery();
     return switch (event.getAnnotationModelDeliveryType()) {
       case TRUE_POSITIVE ->
-          detectedTileRepository.findAllInDoubtByZdjJobIdGreaterThan(zoneDetectionJobId, isGreater);
+          findAllInDoubtByZdjJobIdGreaterThanOrEquals(zoneDetectionJobId, minConfidenceForDelivery);
       case FALSE_POSITIVE ->
-          detectedTileRepository.findAllInDoubtByZdjJobIdGreaterThan(
-              zoneDetectionJobId, isNotGreater);
+          findAllInDoubtByZdjJobIdLessThan(zoneDetectionJobId, minConfidenceForDelivery);
       case WITHOUT_DETECTED_OBJECT ->
           detectedTileRepository.findAllInDoubtTilesWithoutObjectByZdjJobId(zoneDetectionJobId);
     };

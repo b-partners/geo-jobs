@@ -20,9 +20,12 @@ public interface DetectedTileRepository extends JpaRepository<MachineDetectedTil
       @Param("zoneDetectionJobId") String zoneDetectionJobId);
 
   @Query(
-      value = "select * from get_in_doubt_detected_tiles(:zoneDetectionJobId, :isGreater)",
+      value =
+          "select * from get_in_doubt_detected_tiles(:zoneDetectionJobId,:minConfidenceForDelivery,"
+              + " :isGreater)",
       nativeQuery = true)
-  List<MachineDetectedTile> findAllInDoubtByZdjJobIdGreaterThan(
+  List<MachineDetectedTile> findAllInDoubtByZdjJobId(
       @Param("zoneDetectionJobId") String zoneDetectionJobId,
+      @Param("minConfidenceForDelivery") double minConfidenceForDelivery,
       @Param("isGreater") Boolean isGreater);
 }
