@@ -14,7 +14,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import javax.annotation.Nullable;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -148,16 +147,8 @@ public class FeatureMapper {
     if (clazz.equals(MultiPolygon.class)) {
       return geometry.getMultiPolygon().getCoordinates();
     }
-    if (clazz.equals(Polygon.class)) {
-      return List.of(Objects.requireNonNull(geometry.getPolygon().getCoordinates()));
-    }
-    if (clazz.equals(Point.class)) {
-      // Repeat the same point on itself to stay within the area
-      var point = Objects.requireNonNull(geometry.getPoint().getCoordinates());
-      return List.of(List.of(List.of(point, point, point, point)));
-    }
     throw new NotImplementedException(
-        "Only MultiPolygon, Polygon, Point geometry is supported for now when mapping feature to"
+        "Only MultiPolygon geometry is supported for now when mapping feature to"
             + " Polygon, but actual geometry class is : "
             + geometry.getActualInstance().getClass());
   }

@@ -14,7 +14,8 @@ public class FeatureMultiPolygonChecker implements Function<List<Feature>, Boole
         .allMatch(
             feature -> {
               var geometry = feature.getGeometry();
-              return geometry != null && geometry.getActualInstance().equals(MultiPolygon.class);
+              return geometry != null
+                  && geometry.getActualInstance().getClass().equals(MultiPolygon.class);
             });
   }
 }
