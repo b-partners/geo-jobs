@@ -1,8 +1,16 @@
 package app.bpartners.geojobs.service.event;
 
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.junit.jupiter.api.Disabled;
+import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobFailed;
+import app.bpartners.geojobs.model.exception.NotImplementedException;
+import org.junit.jupiter.api.Test;
 
-@Disabled
-class ZoneDetectionJobFailedServiceTest {}
+class ZoneDetectionJobFailedServiceTest {
+  ZoneDetectionJobFailedService subject = new ZoneDetectionJobFailedService();
+
+  @Test
+  void accept_ko() {
+    assertThrows(NotImplementedException.class, () -> subject.accept(new ZoneDetectionJobFailed()));
+  }
+}

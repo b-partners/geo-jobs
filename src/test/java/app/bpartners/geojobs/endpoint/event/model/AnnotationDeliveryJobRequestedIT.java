@@ -10,7 +10,7 @@ import java.time.Duration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class AnnotationDeliveryJobRequestedIT extends FacadeIT {
+class AnnotationDeliveryJobRequestedIT extends FacadeIT {
   @Autowired ObjectMapper om;
 
   private AnnotationDeliveryJobRequested annotationDeliveryJobRequested() {

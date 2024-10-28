@@ -62,12 +62,8 @@ public class AnnotationDeliveryJobRequestedService
     var persistedObjectConfigurations =
         objectConfigurationRepository.findAllByDetectionJobId(jobId);
     var optionalDetection = detectionRepository.findByZdjId(jobId);
-    var detectableObjectConfigurations =
-        persistedObjectConfigurations.isEmpty()
-            ? (optionalDetection
-                .map(Detection::getDetectableObjectConfigurations)
-                .orElseGet(List::of))
-            : persistedObjectConfigurations;
-    return detectableObjectConfigurations;
+    return persistedObjectConfigurations.isEmpty()
+        ? (optionalDetection.map(Detection::getDetectableObjectConfigurations).orElseGet(List::of))
+        : persistedObjectConfigurations;
   }
 }
