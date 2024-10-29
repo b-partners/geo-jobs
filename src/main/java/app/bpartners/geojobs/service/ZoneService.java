@@ -191,10 +191,8 @@ public class ZoneService {
       Detection detection) {
     var tilingJobId = detection.getZtjId();
     var detectionJobId = detection.getZdjId();
-    if (detection.getMultiPolygonGeoJsonZone() == null) {
-      return computeFromConfiguring(detection, PENDING, UNKNOWN);
-    }
-    if (detection.getGeoServerProperties() == null) {
+    if (detection.getMultiPolygonGeoJsonZone() == null
+        || detection.getGeoServerProperties() == null) {
       return computeFromConfiguring(detection, PENDING, UNKNOWN);
     }
     if (tilingJobId == null) {
