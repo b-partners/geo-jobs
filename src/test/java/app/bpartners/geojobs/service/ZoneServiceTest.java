@@ -1,13 +1,13 @@
 package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.endpoint.rest.controller.DetectionControllerIT.defaultComputedStatistic;
-import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.CONFIGURING;
-import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.TILING;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.*;
+import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.SUCCEEDED;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.UNKNOWN;
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_COMMUNITY;
 import static app.bpartners.geojobs.file.hash.FileHashAlgorithm.SHA256;
-import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 import static java.io.File.createTempFile;
@@ -48,6 +48,7 @@ import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
+import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.GeoJobType;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.detection.DetectionGeoJsonUpdateValidator;
@@ -56,6 +57,7 @@ import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import app.bpartners.geojobs.utils.FeatureCreator;
 import app.bpartners.geojobs.utils.detection.DetectionCreator;
+import app.bpartners.geojobs.utils.detection.ZoneDetectionJobCreator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.net.URI;
@@ -107,6 +109,7 @@ class ZoneServiceTest {
   DetectionGeoJsonUpdateValidator detectionGeoJsonUpdateValidator =
       new DetectionGeoJsonUpdateValidator();
   FeatureMultiPolygonChecker featureMultiPolygonCheckerMock = mock();
+  ZoneDetectionJobCreator zoneDetectionJobCreator = new ZoneDetectionJobCreator();
   ZoneService subject =
       new ZoneService(
           zoneDetectionJobServiceMock,
@@ -151,7 +154,7 @@ class ZoneServiceTest {
     detection.setMultiPolygonGeoJsonZone(List.of());
     var createDetection = new CreateDetection().geoJsonZone(featureCreator.defaultFeatures());
     String communityOwnerId = null;
-    setUpAdminRoleCanProcessTilingMock(detectionId, detection);
+    setUpAuthorityRoleProcessingMock(detectionId, detection, ROLE_ADMIN);
 
     var actual = subject.processDetection(detectionId, createDetection, communityOwnerId);
 
@@ -166,7 +169,7 @@ class ZoneServiceTest {
     var detection = detectionCreator.create(detectionId, null, null);
     var createDetection = new CreateDetection().geoJsonZone(featureCreator.defaultFeatures());
     String communityOwnerId = null;
-    setUpAdminRoleCanProcessTilingMock(detectionId, detection);
+    setUpAuthorityRoleProcessingMock(detectionId, detection, ROLE_ADMIN);
 
     var actual = subject.processDetection(detectionId, createDetection, communityOwnerId);
 
@@ -191,7 +194,7 @@ class ZoneServiceTest {
     var tilingId = randomUUID().toString();
     var detection = detectionCreator.create(detectionId, tilingId, null);
     detection.setMultiPolygonGeoJsonZone(List.of());
-    setUpAdminRoleCanProcessTilingMock(detectionId, detection);
+    setUpAuthorityRoleProcessingMock(detectionId, detection, ROLE_ADMIN);
     var statistics = defaultComputedStatistic(detection.getId(), DETECTION);
     statistics.setActualJobStatus(
         JobStatus.builder()
@@ -208,11 +211,122 @@ class ZoneServiceTest {
     assertEquals(UNKNOWN, actual.getStep().getStatus().getHealth());
   }
 
-  private void setUpAdminRoleCanProcessTilingMock(
-      String detectionId, app.bpartners.geojobs.repository.model.detection.Detection detection) {
+  @Test
+  void community_role_stuck_in_configuring_finished_reading_detection_ok() {
+    var detectionId = randomUUID().toString();
+    var tilingId = randomUUID().toString();
+    var detection = detectionCreator.create(detectionId, tilingId, null);
+    detection.setMultiPolygonGeoJsonZone(List.of(new Feature()));
+    setUpAuthorityRoleProcessingMock(detectionId, detection, ROLE_COMMUNITY);
+
+    var actual = subject.getProcessedDetection(detectionId);
+
+    assertEquals(CONFIGURING, actual.getStep().getName());
+    assertEquals(Status.ProgressionEnum.FINISHED, actual.getStep().getStatus().getProgression());
+    assertEquals(SUCCEEDED, actual.getStep().getStatus().getHealth());
+  }
+
+  @Test
+  void admin_role_read_detection_with_tiling_statistics() {
+    var detectionId = randomUUID().toString();
+    var tilingId = randomUUID().toString();
+    var detection = detectionCreator.create(detectionId, tilingId, null);
+    detection.setMultiPolygonGeoJsonZone(List.of(new Feature()));
+    setUpAuthorityRoleProcessingMock(detectionId, detection, ROLE_ADMIN);
+
+    var actual = subject.getProcessedDetection(detectionId);
+
+    assertEquals(TILING, actual.getStep().getName());
+    assertEquals(Status.ProgressionEnum.PENDING, actual.getStep().getStatus().getProgression());
+    assertEquals(UNKNOWN, actual.getStep().getStatus().getHealth());
+  }
+
+  @Test
+  void admin_role_read_detection_with_machine_detection_statistics() {
+    var detectionId = randomUUID().toString();
+    var tilingId = randomUUID().toString();
+    var detectionJobId = randomUUID().toString();
+    var detection = detectionCreator.create(detectionId, tilingId, detectionJobId);
+    detection.setMultiPolygonGeoJsonZone(List.of(new Feature()));
+    setUpAuthorityRoleProcessingMock(detectionId, detection, ROLE_ADMIN);
+    when(zoneDetectionJobServiceMock.findById(detectionJobId))
+        .thenReturn(
+            zoneDetectionJobCreator.create(
+                detectionJobId,
+                null,
+                null,
+                PENDING,
+                app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN,
+                new ZoneTilingJob()));
+
+    var actual = subject.getProcessedDetection(detectionId);
+
+    assertEquals(MACHINE_DETECTION, actual.getStep().getName());
+    assertEquals(Status.ProgressionEnum.PENDING, actual.getStep().getStatus().getProgression());
+    assertEquals(UNKNOWN, actual.getStep().getStatus().getHealth());
+  }
+
+  @Test
+  void admin_role_read_detection_with_human_detection_statistics() {
+    var detectionId = randomUUID().toString();
+    var tilingId = randomUUID().toString();
+    var detectionJobId = randomUUID().toString();
+    var detection = detectionCreator.create(detectionId, tilingId, detectionJobId);
+    detection.setMultiPolygonGeoJsonZone(List.of(new Feature()));
+    setUpAuthorityRoleProcessingMock(detectionId, detection, ROLE_ADMIN);
+    when(zoneDetectionJobServiceMock.findById(detectionJobId))
+        .thenReturn(
+            zoneDetectionJobCreator.create(
+                detectionJobId,
+                null,
+                null,
+                FINISHED,
+                app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED,
+                new ZoneTilingJob()));
+
+    var actual = subject.getProcessedDetection(detectionId);
+
+    assertEquals(HUMAN_DETECTION, actual.getStep().getName());
+    assertEquals(Status.ProgressionEnum.PROCESSING, actual.getStep().getStatus().getProgression());
+    assertEquals(UNKNOWN, actual.getStep().getStatus().getHealth());
+  }
+
+  @SneakyThrows
+  @Test
+  void admin_role_read_detection_with_generated_geo_json() {
+    var detectionId = randomUUID().toString();
+    var tilingId = randomUUID().toString();
+    var detectionJobId = randomUUID().toString();
+    var detection = detectionCreator.create(detectionId, tilingId, detectionJobId);
+    var geoJsonS3FileKey = "https://dummyGeoJsonFileKey.com";
+    detection.setGeojsonS3FileKey(geoJsonS3FileKey);
+    detection.setMultiPolygonGeoJsonZone(List.of(new Feature()));
+    setUpAuthorityRoleProcessingMock(detectionId, detection, ROLE_ADMIN);
+    when(zoneDetectionJobServiceMock.findById(detectionJobId))
+        .thenReturn(
+            zoneDetectionJobCreator.create(
+                detectionJobId,
+                null,
+                null,
+                FINISHED,
+                app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED,
+                new ZoneTilingJob()));
+    when(bucketComponentMock.presign(any(), any())).thenReturn(new URI(geoJsonS3FileKey).toURL());
+
+    var actual = subject.getProcessedDetection(detectionId);
+
+    assertEquals(HUMAN_DETECTION, actual.getStep().getName());
+    assertEquals(Status.ProgressionEnum.FINISHED, actual.getStep().getStatus().getProgression());
+    assertEquals(SUCCEEDED, actual.getStep().getStatus().getHealth());
+  }
+
+  private void setUpAuthorityRoleProcessingMock(
+      String detectionId,
+      app.bpartners.geojobs.repository.model.detection.Detection detection,
+      Authority.Role authorityRole) {
     when(detectionRepositoryMock.findByEndToEndId(detectionId)).thenReturn(Optional.of(detection));
     when(authProviderMock.getPrincipal())
-        .thenReturn(new Principal("mockApiKey", Set.of(new Authority(ROLE_ADMIN))));
+        .thenReturn(new Principal("mockApiKey", Set.of(new Authority(authorityRole))));
     when(tilingJobMapperMock.from(any()))
         .thenReturn(new CreateZoneTilingJob().geoServerUrl("http://localhost"));
     when(tilingJobMapperMock.toDomain(any())).thenReturn(new ZoneTilingJob());
@@ -220,18 +334,23 @@ class ZoneServiceTest {
     when(detectionRepositoryMock.save(any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
     when(tilingJobServiceMock.computeTaskStatistics(any()))
-        .thenReturn(
-            TaskStatistic.builder()
-                .actualJobStatus(
-                    JobStatus.builder()
-                        .progression(PENDING)
-                        .health(app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN)
-                        .creationDatetime(now())
-                        .build())
-                .updatedAt(now())
-                .taskStatusStatistics(new ArrayList<>())
-                .jobType(GeoJobType.TILING)
-                .build());
+        .thenReturn(somePendingTaskStatistic(GeoJobType.TILING));
+    when(zoneDetectionJobServiceMock.computeTaskStatistics(any()))
+        .thenReturn(somePendingTaskStatistic(DETECTION));
+  }
+
+  private static TaskStatistic somePendingTaskStatistic(GeoJobType geoJobType) {
+    return TaskStatistic.builder()
+        .actualJobStatus(
+            JobStatus.builder()
+                .progression(PENDING)
+                .health(app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN)
+                .creationDatetime(now())
+                .build())
+        .updatedAt(now())
+        .taskStatusStatistics(new ArrayList<>())
+        .jobType(geoJobType)
+        .build();
   }
 
   @SneakyThrows
