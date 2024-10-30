@@ -3,7 +3,7 @@ package app.bpartners.geojobs.job.service;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.annotation.JobAnnotationProcessed;
+import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryJobRequested;
 import app.bpartners.geojobs.endpoint.rest.model.AnnotationJobProcessing;
 import app.bpartners.geojobs.endpoint.rest.model.JobType;
 import app.bpartners.geojobs.model.exception.NotFoundException;
@@ -22,7 +22,8 @@ public class JobAnnotationService {
   private final ZoneTilingJobRepository tilingJobRepository;
   private final EventProducer eventProducer;
 
-  public AnnotationJobProcessing processAnnotationJob(String jobId, Double minConfidence) {
+  public AnnotationJobProcessing processAnnotationJob(
+      String jobId, Double minConfidenceForDelivery) {
     if (tilingJobRepository.findById(jobId).isPresent()) {
       throw new NotImplementedException("Only DETECTION job is handle for now");
     }
@@ -37,9 +38,9 @@ public class JobAnnotationService {
 
     eventProducer.accept(
         List.of(
-            JobAnnotationProcessed.builder()
+            AnnotationDeliveryJobRequested.builder()
                 .jobId(zoneDetectionJob.getId())
-                .minConfidence(minConfidence)
+                .minimumConfidenceForDelivery(minConfidenceForDelivery)
                 .annotationJobWithObjectsIdTruePositive(annotationJobWithObjectsIdTruePositive)
                 .annotationJobWithObjectsIdFalsePositive(annotationJobWithObjectsIdFalsePositive)
                 .annotationJobWithoutObjectsId(annotationJobWithoutObjectsId)
