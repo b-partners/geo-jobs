@@ -170,7 +170,7 @@ public class ZoneService {
     } else if (detection.getGeojsonS3FileKey() == null) {
       return computeEmptyStatisticFromStep(detection, PROCESSING, UNKNOWN, HUMAN_DETECTION);
     }
-    return computeEmptyStatisticFromStep(detection, FINISHED, UNKNOWN, HUMAN_DETECTION);
+    return computeEmptyStatisticFromStep(detection, FINISHED, SUCCEEDED, HUMAN_DETECTION);
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection processDetection(
