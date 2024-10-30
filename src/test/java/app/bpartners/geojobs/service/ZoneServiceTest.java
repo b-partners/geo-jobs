@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service;
 import static app.bpartners.geojobs.endpoint.rest.controller.DetectionControllerIT.defaultComputedStatistic;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.CONFIGURING;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.TILING;
+import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.SUCCEEDED;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.UNKNOWN;
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_COMMUNITY;
@@ -48,6 +49,7 @@ import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
+import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.GeoJobType;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.detection.DetectionGeoJsonUpdateValidator;
@@ -151,7 +153,7 @@ class ZoneServiceTest {
     detection.setMultiPolygonGeoJsonZone(List.of());
     var createDetection = new CreateDetection().geoJsonZone(featureCreator.defaultFeatures());
     String communityOwnerId = null;
-    setUpAdminRoleCanProcessTilingMock(detectionId, detection);
+    setUpAuthorityRoleProcessingMock(detectionId, detection, ROLE_ADMIN);
 
     var actual = subject.processDetection(detectionId, createDetection, communityOwnerId);
 
@@ -166,7 +168,7 @@ class ZoneServiceTest {
     var detection = detectionCreator.create(detectionId, null, null);
     var createDetection = new CreateDetection().geoJsonZone(featureCreator.defaultFeatures());
     String communityOwnerId = null;
-    setUpAdminRoleCanProcessTilingMock(detectionId, detection);
+    setUpAuthorityRoleProcessingMock(detectionId, detection, ROLE_ADMIN);
 
     var actual = subject.processDetection(detectionId, createDetection, communityOwnerId);
 
@@ -191,7 +193,7 @@ class ZoneServiceTest {
     var tilingId = randomUUID().toString();
     var detection = detectionCreator.create(detectionId, tilingId, null);
     detection.setMultiPolygonGeoJsonZone(List.of());
-    setUpAdminRoleCanProcessTilingMock(detectionId, detection);
+    setUpAuthorityRoleProcessingMock(detectionId, detection, ROLE_ADMIN);
     var statistics = defaultComputedStatistic(detection.getId(), DETECTION);
     statistics.setActualJobStatus(
         JobStatus.builder()
@@ -208,11 +210,28 @@ class ZoneServiceTest {
     assertEquals(UNKNOWN, actual.getStep().getStatus().getHealth());
   }
 
-  private void setUpAdminRoleCanProcessTilingMock(
-      String detectionId, app.bpartners.geojobs.repository.model.detection.Detection detection) {
+  @Test
+  void community_role_stuck_in_configuring_finished_reading_detection_ok() {
+    var detectionId = randomUUID().toString();
+    var tilingId = randomUUID().toString();
+    var detection = detectionCreator.create(detectionId, tilingId, null);
+    detection.setMultiPolygonGeoJsonZone(List.of(new Feature()));
+    setUpAuthorityRoleProcessingMock(detectionId, detection, ROLE_COMMUNITY);
+
+    var actual = subject.getProcessedDetection(detectionId);
+
+    assertEquals(CONFIGURING, actual.getStep().getName());
+    assertEquals(Status.ProgressionEnum.FINISHED, actual.getStep().getStatus().getProgression());
+    assertEquals(SUCCEEDED, actual.getStep().getStatus().getHealth());
+  }
+
+  private void setUpAuthorityRoleProcessingMock(
+      String detectionId,
+      app.bpartners.geojobs.repository.model.detection.Detection detection,
+      Authority.Role authorityRole) {
     when(detectionRepositoryMock.findByEndToEndId(detectionId)).thenReturn(Optional.of(detection));
     when(authProviderMock.getPrincipal())
-        .thenReturn(new Principal("mockApiKey", Set.of(new Authority(ROLE_ADMIN))));
+        .thenReturn(new Principal("mockApiKey", Set.of(new Authority(authorityRole))));
     when(tilingJobMapperMock.from(any()))
         .thenReturn(new CreateZoneTilingJob().geoServerUrl("http://localhost"));
     when(tilingJobMapperMock.toDomain(any())).thenReturn(new ZoneTilingJob());
