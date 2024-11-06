@@ -1,9 +1,7 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
 import static app.bpartners.geojobs.model.page.BoundedPageSize.MAX_SIZE;
-import static java.nio.file.attribute.PosixFilePermissions.asFileAttribute;
-import static java.nio.file.attribute.PosixFilePermissions.fromString;
-import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
@@ -17,22 +15,17 @@ import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionTask;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConverter;
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 public class GeoJsonConversionTaskConsumer implements Consumer<GeoJsonConversionTask> {
-  private static final String TEMP_FOLDER_PERMISSION = "rwx------";
-  private static final String GEO_JSON_EXTENSION = ".geojson";
-  private static final String GEO_JSON_BUCKET_FOLDER = "geoJson/";
+  public static final String GEO_JSON_EXTENSION = ".geojson";
+  public static final String GEO_JSON_BUCKET_FOLDER = "geoJson/";
   private final MachineDetectedTileRepository machineDetectedTileRepository;
   private final HumanDetectedTileRepository humanDetectedTileRepository;
   private final GeoJsonConversionJobRepository geoJsonConversionJobRepository;
@@ -54,19 +47,29 @@ public class GeoJsonConversionTaskConsumer implements Consumer<GeoJsonConversion
                         "GeoConversionJob(id=" + conversionJobId + ") not found"));
     var zoneDetectionType = geoJsonConversionJob.getZoneDetectionJobType();
     var zoneDetectionJobId = geoJsonConversionJob.getZoneDetectionJobId();
-    var zoneDetectionJob = zoneDetectionJobService.getHumanZdjFromZdjId(zoneDetectionJobId);
+    var zoneDetectionJob = zoneDetectionJobService.findById(zoneDetectionJobId);
     int pageNumber = geoJsonConversionTask.getPage() - 1;
     var paginatedDetectedTiles =
         computeDetectedTile(zoneDetectionType, zoneDetectionJobId, pageNumber);
 
     var zoneName = zoneDetectionJob.getZoneName();
-    var fileKey = zoneDetectionJobId + "/" + zoneName + GEO_JSON_EXTENSION;
+    var fileKey =
+        GEO_JSON_BUCKET_FOLDER
+            + zoneDetectionJobId
+            + "/"
+            + zoneName
+            + "-part"
+            + pageNumber
+            + GEO_JSON_EXTENSION;
     var geoJson = geoJsonConverter.convert(paginatedDetectedTiles);
     var geoJsonAsByte = writer.writeAsByte(geoJson);
     var geoJsonAsFile =
-        writer.write(geoJsonAsByte, createTempDirectory(), zoneName + GEO_JSON_EXTENSION);
+        writer.write(
+            geoJsonAsByte,
+            createTempDirectory(),
+            zoneName + "-part" + pageNumber + GEO_JSON_EXTENSION);
 
-    bucketComponent.upload(geoJsonAsFile, GEO_JSON_BUCKET_FOLDER + fileKey);
+    bucketComponent.upload(geoJsonAsFile, fileKey);
 
     geoJsonConversionTaskRepository.save(
         geoJsonConversionTask.toBuilder().fileKey(fileKey).build());
@@ -102,15 +105,5 @@ public class GeoJsonConversionTaskConsumer implements Consumer<GeoJsonConversion
       default ->
           throw new IllegalArgumentException("Unknown zoneDetectionType " + zoneDetectionType);
     }
-  }
-
-  @SneakyThrows
-  public File createTempDirectory() {
-    Path tempDir =
-        Files.createTempDirectory(
-            randomUUID().toString(), asFileAttribute(fromString(TEMP_FOLDER_PERMISSION)));
-    var dirFile = tempDir.toFile();
-    dirFile.deleteOnExit();
-    return dirFile;
   }
 }

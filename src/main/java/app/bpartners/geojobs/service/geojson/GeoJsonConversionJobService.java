@@ -140,4 +140,9 @@ public class GeoJsonConversionJobService
             .build());
     return geoJsonConversionJob;
   }
+
+  @Override
+  protected void onStatusChanged(GeoJsonConversionJob oldJob, GeoJsonConversionJob newJob) {
+    super.onStatusChanged(oldJob, newJob);
+  }
 }

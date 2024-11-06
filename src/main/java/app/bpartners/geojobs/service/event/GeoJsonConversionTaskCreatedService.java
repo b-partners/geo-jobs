@@ -2,8 +2,10 @@ package app.bpartners.geojobs.service.event;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionTaskCreated;
+import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionTaskSucceeded;
 import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionTask;
+import java.util.List;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,5 +23,8 @@ public class GeoJsonConversionTaskCreatedService implements Consumer<GeoJsonConv
     taskStatusService.process(task);
 
     geoJsonConversionTaskConsumer.accept(task);
+
+    eventProducer.accept(
+        List.of(GeoJsonConversionTaskSucceeded.builder().geoJsonConversionTask(task).build()));
   }
 }
