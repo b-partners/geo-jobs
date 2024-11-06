@@ -6,12 +6,12 @@ import static java.util.UUID.randomUUID;
 import app.bpartners.gen.annotator.endpoint.rest.model.AnnotationBatch;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.job.model.Status;
+import app.bpartners.geojobs.repository.HumanDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.annotation.AnnotationRetrievingTask;
 import app.bpartners.geojobs.repository.model.detection.HumanDetectedTile;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
 import app.bpartners.geojobs.service.detection.DetectionMapper;
-import app.bpartners.geojobs.service.detection.HumanDetectedTileService;
 import java.util.Objects;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 @AllArgsConstructor
 public class AnnotationRetrievingTaskConsumer implements Consumer<AnnotationRetrievingTask> {
   private final AnnotationService annotationService;
-  private final HumanDetectedTileService humanDetectedTileService;
+  private final HumanDetectedTileRepository humanDetectedTileRepository;
   private final DetectionMapper detectionMapper;
 
   @Override
@@ -57,7 +57,7 @@ public class AnnotationRetrievingTaskConsumer implements Consumer<AnnotationRetr
                       .build();
                 })
             .toList();
-    humanDetectedTileService.saveAll(humanDetectedTiles);
+    humanDetectedTileRepository.saveAll(humanDetectedTiles);
   }
 
   public static AnnotationRetrievingTask withNewStatus(

@@ -53,7 +53,7 @@ import app.bpartners.geojobs.repository.model.GeoJobType;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.detection.DetectionGeoJsonUpdateValidator;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
-import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
+import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import app.bpartners.geojobs.utils.FeatureCreator;
 import app.bpartners.geojobs.utils.detection.DetectionCreator;
@@ -100,7 +100,7 @@ class ZoneServiceTest {
   DetectionRepository detectionRepositoryMock = mock();
   CommunityUsedSurfaceService communityUsedSurfaceServiceMock = mock();
   BucketComponent bucketComponentMock = mock();
-  GeoJsonConversionInitiationService conversionInitiationServiceMock = mock();
+  GeoJsonConversionJobService conversionInitiationServiceMock = mock();
   DetectableObjectTypeMapper detectableObjectTypeMapper = new DetectableObjectTypeMapper();
   ZoneDetectionJobService zoneDetectionJobServiceMock = mock();
   FeatureCreator featureCreator = new FeatureCreator();

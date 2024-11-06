@@ -11,7 +11,7 @@ import app.bpartners.geojobs.endpoint.rest.model.DetectedParcel;
 import app.bpartners.geojobs.endpoint.rest.model.DetectedTile;
 import app.bpartners.geojobs.endpoint.rest.model.Status;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
-import app.bpartners.geojobs.repository.DetectedTileRepository;
+import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import java.math.BigDecimal;
@@ -23,11 +23,13 @@ import org.springframework.stereotype.Component;
 @Component
 @AllArgsConstructor
 public class DetectionTaskMapper {
-  private final DetectedTileRepository detectedTileRepository;
+  private final MachineDetectedTileRepository machineDetectedTileRepository;
 
   public DetectedParcel toRest(String jobId, Parcel parcel) {
     List<MachineDetectedTile> machineDetectedTiles =
-        parcel == null ? List.of() : detectedTileRepository.findAllByParcelId(parcel.getId());
+        parcel == null
+            ? List.of()
+            : machineDetectedTileRepository.findAllByParcelId(parcel.getId());
     var lastDetectedTileCreationDatetime =
         machineDetectedTiles.stream()
             .max(Comparator.comparing(MachineDetectedTile::getCreationDatetime))
