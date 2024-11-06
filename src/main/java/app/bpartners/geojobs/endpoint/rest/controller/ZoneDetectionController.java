@@ -42,7 +42,7 @@ import app.bpartners.geojobs.service.CommunityUsedSurfaceService;
 import app.bpartners.geojobs.service.ParcelService;
 import app.bpartners.geojobs.service.ZoneService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
-import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
+import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import java.io.File;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -69,7 +69,7 @@ public class ZoneDetectionController {
   private final TaskStatisticMapper taskStatisticMapper;
   private final StatusMapper<JobStatus> jobStatusMapper;
   private final EventProducer eventProducer;
-  private final GeoJsonConversionInitiationService geoJsonConversionInitiationService;
+  private final GeoJsonConversionJobService geoJsonConversionJobService;
   private final ZoneService zoneService;
   private final CommunityUsedSurfaceService communityUsedSurfaceService;
   private final GetUsageValidator getUsageValidator;
@@ -174,7 +174,7 @@ public class ZoneDetectionController {
 
   @GetMapping("/detectionJobs/{id}/geojsonsUrl")
   public GeoJsonsUrl getZDJGeojsonsUrl(@PathVariable(value = "id") String detectionJobId) {
-    return geoJsonConversionInitiationService.initiateGeoJsonConversion(detectionJobId);
+    return geoJsonConversionJobService.getOrComputeGeoJsonUrl(detectionJobId);
   }
 
   @PostMapping("/detections/{id}/geojson")

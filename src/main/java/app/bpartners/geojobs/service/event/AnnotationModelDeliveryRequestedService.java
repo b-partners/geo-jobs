@@ -6,7 +6,7 @@ import static java.util.UUID.randomUUID;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.HumanDetectionJobCreated;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationModelDeliveryRequested;
-import app.bpartners.geojobs.repository.DetectedTileRepository;
+import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.HumanDetectionJob;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
@@ -29,7 +29,7 @@ import org.springframework.stereotype.Service;
 public class AnnotationModelDeliveryRequestedService<T extends AnnotationModelDeliveryRequested>
     implements Consumer<T> {
   private final ZoneDetectionJobService zoneDetectionJobService;
-  private final DetectedTileRepository detectedTileRepository;
+  private final MachineDetectedTileRepository machineDetectedTileRepository;
   private final HumanDetectionJobService humanDetectionJobService;
   private final EventProducer eventProducer;
 
@@ -123,13 +123,13 @@ public class AnnotationModelDeliveryRequestedService<T extends AnnotationModelDe
 
   private List<MachineDetectedTile> findAllInDoubtByZdjJobIdGreaterThanOrEquals(
       String zoneDetectionJobId, double minConfidenceForDelivery) {
-    return detectedTileRepository.findAllInDoubtByZdjJobId(
+    return machineDetectedTileRepository.findAllInDoubtByZdjJobId(
         zoneDetectionJobId, minConfidenceForDelivery, true);
   }
 
   private List<MachineDetectedTile> findAllInDoubtByZdjJobIdLessThan(
       String zoneDetectionJobId, double minConfidenceForDelivery) {
-    return detectedTileRepository.findAllInDoubtByZdjJobId(
+    return machineDetectedTileRepository.findAllInDoubtByZdjJobId(
         zoneDetectionJobId, minConfidenceForDelivery, false);
   }
 
@@ -141,7 +141,8 @@ public class AnnotationModelDeliveryRequestedService<T extends AnnotationModelDe
       case FALSE_POSITIVE ->
           findAllInDoubtByZdjJobIdLessThan(zoneDetectionJobId, minConfidenceForDelivery);
       case WITHOUT_DETECTED_OBJECT ->
-          detectedTileRepository.findAllInDoubtTilesWithoutObjectByZdjJobId(zoneDetectionJobId);
+          machineDetectedTileRepository.findAllInDoubtTilesWithoutObjectByZdjJobId(
+              zoneDetectionJobId);
     };
   }
 }

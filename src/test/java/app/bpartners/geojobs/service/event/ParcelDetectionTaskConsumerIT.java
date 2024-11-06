@@ -44,7 +44,7 @@ public class ParcelDetectionTaskConsumerIT extends FacadeIT {
   @Autowired DetectableObjectConfigurationRepository objectConfigurationRepository;
   @Autowired ParcelDetectionTaskRepository parcelDetectionTaskRepository;
   @Autowired ZoneDetectionJobRepository jobRepository;
-  @Autowired DetectedTileRepository detectedTileRepository;
+  @Autowired MachineDetectedTileRepository machineDetectedTileRepository;
   @Autowired ParcelRepository parcelRepository;
 
   private static ParcelDetectionTask detectionTask() {

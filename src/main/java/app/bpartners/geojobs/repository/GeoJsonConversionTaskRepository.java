@@ -1,12 +1,8 @@
 package app.bpartners.geojobs.repository;
 
-import app.bpartners.geojobs.repository.model.GeoJsonConversionTask;
-import java.util.Optional;
-import org.springframework.data.jpa.repository.JpaRepository;
+import app.bpartners.geojobs.job.repository.TaskRepository;
+import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionTask;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface GeoJsonConversionTaskRepository
-    extends JpaRepository<GeoJsonConversionTask, String> {
-  Optional<GeoJsonConversionTask> findByJobId(String jobId);
-}
+public interface GeoJsonConversionTaskRepository extends TaskRepository<GeoJsonConversionTask> {}

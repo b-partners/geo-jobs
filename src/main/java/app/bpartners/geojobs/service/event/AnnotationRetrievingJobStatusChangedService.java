@@ -9,7 +9,7 @@ import app.bpartners.geojobs.service.AnnotationRetrievingJobService;
 import app.bpartners.geojobs.service.StatusChangedHandler;
 import app.bpartners.geojobs.service.StatusHandler;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
-import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
+import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
@@ -26,7 +26,7 @@ public class AnnotationRetrievingJobStatusChangedService
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final AnnotationRetrievingJobService retrievingJobService;
   private final JobStatusRepository jobStatusRepository;
-  private final GeoJsonConversionInitiationService geoJsonConversionInitiationService;
+  private final GeoJsonConversionJobService geoJsonConversionJobService;
 
   @Override
   public void accept(AnnotationRetrievingJobStatusChanged event) {

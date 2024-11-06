@@ -32,7 +32,7 @@ class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
   @MockBean EventProducer eventProducer;
   @Autowired ZoneDetectionJobSucceededService subject;
   @Autowired private ZoneDetectionJobRepository jobRepository;
-  @Autowired private DetectedTileRepository detectedTileRepository;
+  @Autowired private MachineDetectedTileRepository machineDetectedTileRepository;
   @Autowired private DetectableObjectConfigurationRepository objectConfigurationRepository;
   @Autowired private HumanDetectionJobRepository humanDetectionJobRepository;
   @Autowired private ParcelDetectionTaskRepository parcelDetectionTaskRepository;
@@ -96,7 +96,7 @@ class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
                 .jobId(SUCCEEDED_JOB_ID_2)
                 .parcels(getJob2Parcels())
                 .build()));
-    detectedTileRepository.saveAll(
+    machineDetectedTileRepository.saveAll(
         List.of(
             detectedTile(SUCCEEDED_JOB_ID, "tile2Id", "parcel2Id", "detectedObjectId2", 0.5),
             detectedTile(SUCCEEDED_JOB_ID, "tile1Id", "parcel1Id", "detectedObjectId1", 0.8),

@@ -14,7 +14,7 @@ import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.service.AnnotationRetrievingJobService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
-import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
+import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.util.function.Consumer;
@@ -30,7 +30,7 @@ public class HumanZDJStatusRecomputingSubmittedService
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final AnnotationRetrievingJobService retrievingJobService;
   private final JobStatusRepository jobStatusRepository;
-  private final GeoJsonConversionInitiationService geoJsonConversionInitiationService;
+  private final GeoJsonConversionJobService geoJsonConversionJobService;
   @PersistenceContext EntityManager em;
 
   @Override
@@ -56,8 +56,7 @@ public class HumanZDJStatusRecomputingSubmittedService
     }
     if (!oldHumanZDJ.isFinished() && newZDJ.isFinished()) {
       log.info("Job(type=HUMAN, id={}) finished, oldStatus={}", newZDJ.getId(), newStatus);
-      geoJsonConversionInitiationService.processConversionTask(
-          newZDJ.getZoneName(), newZDJ.getId());
+      geoJsonConversionJobService.getOrComputeGeoJsonUrl(newZDJ.getId());
     }
     throw new RuntimeException("Fail on purpose so that message is not ack, causing retry");
   }

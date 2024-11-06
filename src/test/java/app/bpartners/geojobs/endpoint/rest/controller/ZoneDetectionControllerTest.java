@@ -52,7 +52,7 @@ import app.bpartners.geojobs.service.CommunityUsedSurfaceService;
 import app.bpartners.geojobs.service.ParcelService;
 import app.bpartners.geojobs.service.ZoneService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
-import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
+import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -75,7 +75,7 @@ class ZoneDetectionControllerTest {
   ZoneDetectionJobValidator jobValidator = new ZoneDetectionJobValidator(mock());
   TaskStatisticMapper taskStatisticMapper = new TaskStatisticMapper(statusMapper);
   EventProducer eventProducerMock = mock();
-  GeoJsonConversionInitiationService geoJsonConversionInitiationServiceMock = mock();
+  GeoJsonConversionJobService geoJsonConversionJobServiceMock = mock();
   ZoneService zoneServiceMock = mock();
   CommunityUsedSurfaceService communityUsedSurfaceServiceMock = mock();
   GetUsageValidator getUsageValidatorMock = mock();
@@ -97,7 +97,7 @@ class ZoneDetectionControllerTest {
           taskStatisticMapper,
           statusMapper,
           eventProducerMock,
-          geoJsonConversionInitiationServiceMock,
+          geoJsonConversionJobServiceMock,
           zoneServiceMock,
           communityUsedSurfaceServiceMock,
           getUsageValidatorMock,

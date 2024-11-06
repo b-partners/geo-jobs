@@ -47,7 +47,7 @@ import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.detection.DetectionGeoJsonUpdateValidator;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
-import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
+import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -81,7 +81,7 @@ public class ZoneService {
   private final DetectionRepository detectionRepository;
   private final CommunityUsedSurfaceService communityUsedSurfaceService;
   private final BucketComponent bucketComponent;
-  private final GeoJsonConversionInitiationService conversionInitiationService;
+  private final GeoJsonConversionJobService conversionInitiationService;
   private final DetectableObjectTypeMapper detectableObjectTypeMapper;
   private final ObjectMapper objectMapper;
   private final AuthProvider authProvider;
@@ -230,8 +230,8 @@ public class ZoneService {
                   .humanZdjId(humanZoneDetectionJob.getId())
                   .build()));
     } else {
-      conversionInitiationService.processConversionTask(
-          detection, humanZoneDetectionJob.getZoneName(), humanZoneDetectionJob.getId());
+      conversionInitiationService.getOrComputeGeoJsonConversionJob(
+          detection, humanZoneDetectionJob.getId());
     }
   }
 

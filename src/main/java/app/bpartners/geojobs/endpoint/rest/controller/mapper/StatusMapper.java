@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @AllArgsConstructor
-public class StatusMapper<T extends app.bpartners.geojobs.job.model.Status> {
+public class StatusMapper<S extends app.bpartners.geojobs.job.model.Status> {
 
   public static Status.ProgressionEnum toProgressionEnum(
       app.bpartners.geojobs.job.model.Status.ProgressionStatus domain) {
@@ -27,10 +27,10 @@ public class StatusMapper<T extends app.bpartners.geojobs.job.model.Status> {
     };
   }
 
-  public Status toRest(T tilingJobStatus) {
+  public Status toRest(S status) {
     return new Status()
-        .progression(toProgressionEnum(tilingJobStatus.getProgression()))
-        .health(toHealthStatus(tilingJobStatus.getHealth()))
-        .creationDatetime(tilingJobStatus.getCreationDatetime());
+        .progression(toProgressionEnum(status.getProgression()))
+        .health(toHealthStatus(status.getHealth()))
+        .creationDatetime(status.getCreationDatetime());
   }
 }
