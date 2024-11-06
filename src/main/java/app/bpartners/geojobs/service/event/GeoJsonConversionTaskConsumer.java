@@ -8,7 +8,6 @@ import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.DetectedTile;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.GeoJsonConversionJobRepository;
-import app.bpartners.geojobs.repository.GeoJsonConversionTaskRepository;
 import app.bpartners.geojobs.repository.HumanDetectedTileRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
@@ -29,7 +28,6 @@ public class GeoJsonConversionTaskConsumer implements Consumer<GeoJsonConversion
   private final MachineDetectedTileRepository machineDetectedTileRepository;
   private final HumanDetectedTileRepository humanDetectedTileRepository;
   private final GeoJsonConversionJobRepository geoJsonConversionJobRepository;
-  private final GeoJsonConversionTaskRepository geoJsonConversionTaskRepository;
   private final GeoJsonConverter geoJsonConverter;
   private final BucketComponent bucketComponent;
   private final FileWriter writer;
@@ -71,16 +69,15 @@ public class GeoJsonConversionTaskConsumer implements Consumer<GeoJsonConversion
 
     bucketComponent.upload(geoJsonAsFile, fileKey);
 
-    geoJsonConversionTaskRepository.save(
-        geoJsonConversionTask.toBuilder().fileKey(fileKey).build());
+    geoJsonConversionTask.setFileKey(fileKey);
   }
 
   private List<DetectedTile> computeDetectedTile(
       ZoneDetectionJob.DetectionType zoneDetectionType, String zoneDetectionJobId, int pageNumber) {
     switch (zoneDetectionType) {
       case MACHINE -> {
-        return humanDetectedTileRepository
-            .findAllByJobId(zoneDetectionJobId, PageRequest.of(pageNumber, MAX_SIZE))
+        return machineDetectedTileRepository
+            .findAllByZdjJobId(zoneDetectionJobId, PageRequest.of(pageNumber, MAX_SIZE))
             .stream()
             .map(
                 detectedTile ->
@@ -91,8 +88,8 @@ public class GeoJsonConversionTaskConsumer implements Consumer<GeoJsonConversion
             .toList();
       }
       case HUMAN -> {
-        return machineDetectedTileRepository
-            .findAllByZdjJobId(zoneDetectionJobId, PageRequest.of(pageNumber, MAX_SIZE))
+        return humanDetectedTileRepository
+            .findAllByJobId(zoneDetectionJobId, PageRequest.of(pageNumber, MAX_SIZE))
             .stream()
             .map(
                 detectedTile ->

@@ -60,7 +60,7 @@ public class FileWriter implements BiFunction<byte[], File, File> {
   }
 
   public File combineContent(List<File> files, String outputFileName) {
-    var outputFile = createTempDirectory();
+    var outputFile = new File(createTempDirectory(), outputFileName);
     try (BufferedWriter writer = new BufferedWriter(new java.io.FileWriter(outputFile))) {
       for (File file : files) {
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {

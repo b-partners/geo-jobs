@@ -56,7 +56,7 @@ public class HumanZDJStatusRecomputingSubmittedService
     }
     if (!oldHumanZDJ.isFinished() && newZDJ.isFinished()) {
       log.info("Job(type=HUMAN, id={}) finished, oldStatus={}", newZDJ.getId(), newStatus);
-      geoJsonConversionJobService.getOrComputeGeoJsonConversionJob(newZDJ.getId());
+      geoJsonConversionJobService.getOrComputeGeoJsonUrl(newZDJ.getId());
     }
     throw new RuntimeException("Fail on purpose so that message is not ack, causing retry");
   }

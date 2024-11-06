@@ -1,7 +1,8 @@
-package app.bpartners.geojobs.endpoint.event;
+package app.bpartners.geojobs.endpoint.event.model;
 
 import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
 
+import app.bpartners.geojobs.endpoint.event.EventStack;
 import app.bpartners.geojobs.endpoint.event.model.status.JobStatusRecomputingSubmitted;
 import java.time.Duration;
 import lombok.AllArgsConstructor;

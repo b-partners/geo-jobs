@@ -174,7 +174,7 @@ public class ZoneDetectionController {
 
   @GetMapping("/detectionJobs/{id}/geojsonsUrl")
   public GeoJsonsUrl getZDJGeojsonsUrl(@PathVariable(value = "id") String detectionJobId) {
-    return geoJsonConversionJobService.getOrComputeGeoJsonConversionJob(detectionJobId);
+    return geoJsonConversionJobService.getOrComputeGeoJsonUrl(detectionJobId);
   }
 
   @PostMapping("/detections/{id}/geojson")

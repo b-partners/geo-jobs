@@ -195,7 +195,7 @@ class ZoneTilingJobCreatedIT extends DetectionIT {
     var actualDetectionJobHuman = zdjService.getByTilingJobId(tilingJob.getId(), HUMAN);
 
     verify(geoJsonConversionJobServiceMock, times(1))
-        .getOrComputeGeoJsonConversionJob(actualDetectionJobHuman.getId());
+        .getOrComputeGeoJsonUrl(actualDetectionJobHuman.getId());
 
     assertTrue(actualDetectionJobHuman.isSucceeded());
   }

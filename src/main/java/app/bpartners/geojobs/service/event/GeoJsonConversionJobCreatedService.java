@@ -7,8 +7,8 @@ import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.GeoJsonConversionJobStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionJobCreated;
+import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionJobStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionTaskCreated;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.repository.GeoJsonConversionTaskRepository;
@@ -23,7 +23,6 @@ import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @AllArgsConstructor
@@ -36,7 +35,6 @@ public class GeoJsonConversionJobCreatedService implements Consumer<GeoJsonConve
   private final EventProducer eventProducer;
 
   @Override
-  @Transactional
   public void accept(GeoJsonConversionJobCreated event) {
     var geoJsonConversionJob = event.getGeoJsonConversionJob();
     var zoneDetectionJobId = geoJsonConversionJob.getZoneDetectionJobId();
@@ -80,7 +78,7 @@ public class GeoJsonConversionJobCreatedService implements Consumer<GeoJsonConve
     return geoJsonConversionTask;
   }
 
-  private Integer computeDetectedTilesCount(
+  private Long computeDetectedTilesCount(
       ZoneDetectionJob.DetectionType zoneDetectionJobType, String zoneDetectionJobId) {
     switch (zoneDetectionJobType) {
       case HUMAN -> {

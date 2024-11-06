@@ -8,6 +8,7 @@ import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionJobCreated;
+import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionJobStatusChanged;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
 import app.bpartners.geojobs.endpoint.rest.model.GeoJsonsUrl;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
@@ -60,7 +61,7 @@ public class GeoJsonConversionJobService
     this.geoJsonConversionJobRepository = geoJsonConversionJobRepository1;
   }
 
-  public GeoJsonsUrl getOrComputeGeoJsonConversionJob(String detectionJobId) {
+  public GeoJsonsUrl getOrComputeGeoJsonUrl(String detectionJobId) {
     var zoneDetectionJob = zoneDetectionJobService.findById(detectionJobId);
     var jobStatus = zoneDetectionJob.getStatus();
     var restJobStatus = jobStatusMapper.toRest(jobStatus);
@@ -143,6 +144,7 @@ public class GeoJsonConversionJobService
 
   @Override
   protected void onStatusChanged(GeoJsonConversionJob oldJob, GeoJsonConversionJob newJob) {
-    super.onStatusChanged(oldJob, newJob);
+    eventProducer.accept(
+        List.of(GeoJsonConversionJobStatusChanged.builder().oldJob(oldJob).newJob(newJob).build()));
   }
 }

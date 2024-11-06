@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.service;
+package app.bpartners.geojobs.service.event;
 
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_BUCKET_FOLDER;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_EXTENSION;

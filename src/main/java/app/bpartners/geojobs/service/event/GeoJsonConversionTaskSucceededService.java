@@ -18,7 +18,7 @@ public class GeoJsonConversionTaskSucceededService
   @Override
   public void accept(GeoJsonConversionTaskSucceeded geoJsonConversionTaskSucceeded) {
     var task = geoJsonConversionTaskSucceeded.getGeoJsonConversionTask();
-    conversionTaskRepository.save(task);
-    taskStatusService.succeed(task);
+    var savedTask = conversionTaskRepository.save(task);
+    taskStatusService.succeed(savedTask);
   }
 }

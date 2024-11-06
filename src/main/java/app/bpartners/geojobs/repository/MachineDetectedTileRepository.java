@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface MachineDetectedTileRepository extends JpaRepository<MachineDetectedTile, String> {
-  Integer countByZdjJobId(String jobId);
+  Long countByZdjJobId(String jobId);
 
   List<MachineDetectedTile> findAllByZdjJobId(String id, Pageable pageable);
 

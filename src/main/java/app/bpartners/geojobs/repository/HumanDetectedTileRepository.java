@@ -10,5 +10,5 @@ import org.springframework.stereotype.Repository;
 public interface HumanDetectedTileRepository extends JpaRepository<HumanDetectedTile, String> {
   List<HumanDetectedTile> findAllByJobId(String zoneDetectionJobId, Pageable pageable);
 
-  Integer countByJobId(String jobId);
+  Long countByJobId(String jobId);
 }
