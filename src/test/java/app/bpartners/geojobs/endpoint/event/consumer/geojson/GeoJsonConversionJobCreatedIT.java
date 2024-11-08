@@ -7,6 +7,8 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.model.page.BoundedPageSize.MAX_SIZE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.ARBRE;
 import static java.time.Instant.now;
+import static java.util.Comparator.comparing;
+import static java.util.Comparator.naturalOrder;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -171,7 +173,11 @@ class GeoJsonConversionJobCreatedIT extends DetectionIT {
     if (localEventQueue != null) localEventQueue.attemptSchedulerShutDown();
 
     var actualGeoJsonConversionJob =
-        geoJsonConversionJobRepository.findByZoneDetectionJobId(zoneDetectionJobId).orElseThrow();
+        geoJsonConversionJobRepository.findByZoneDetectionJobId(zoneDetectionJobId).stream()
+            .sorted(
+                comparing(GeoJsonConversionJob::getSubmissionInstant, naturalOrder()).reversed())
+            .toList()
+            .getFirst();
     assertNotNull(actualGeoJsonConversionJob.getFileKey());
   }
 

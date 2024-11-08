@@ -4,6 +4,8 @@ import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static app.bpartners.geojobs.repository.model.GeoJobType.GEO_JSON_CONVERSION;
 import static java.time.Instant.now;
+import static java.util.Comparator.comparing;
+import static java.util.Comparator.naturalOrder;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
@@ -84,28 +86,36 @@ public class GeoJsonConversionJobService
 
   public GeoJsonConversionJob getOrComputeGeoJsonConversionJob(
       Detection detection, String zoneDetectionJobId) {
-    var optionalConversionJob =
+    var geoJsonConversionJobs =
         geoJsonConversionJobRepository.findByZoneDetectionJobId(zoneDetectionJobId);
     var zoneDetectionJob = zoneDetectionJobService.findById(zoneDetectionJobId);
-    if (optionalConversionJob.isPresent()) {
-      var geoJsonConversionJob = optionalConversionJob.get();
+    if (!geoJsonConversionJobs.isEmpty()) {
+      var geoJsonConversionJob =
+          geoJsonConversionJobs.stream()
+              .sorted(
+                  comparing(GeoJsonConversionJob::getSubmissionInstant, naturalOrder()).reversed())
+              .toList()
+              .getFirst();
       if (detection.getGeojsonS3FileKey() != null && geoJsonConversionJob.isSucceeded()) {
         return geoJsonConversionJob;
       }
-      geoJsonConversionJobRepository.delete(geoJsonConversionJob);
     }
     return create(zoneDetectionJob);
   }
 
   public GeoJsonConversionJob getOrComputeGeoJsonConversionJob(ZoneDetectionJob zoneDetectionJob) {
-    var optionalConversionJob =
+    var geoJsonConversionJobs =
         geoJsonConversionJobRepository.findByZoneDetectionJobId(zoneDetectionJob.getId());
-    if (optionalConversionJob.isPresent()) {
-      var geoJsonConversionJob = optionalConversionJob.get();
+    if (!geoJsonConversionJobs.isEmpty()) {
+      var geoJsonConversionJob =
+          geoJsonConversionJobs.stream()
+              .sorted(
+                  comparing(GeoJsonConversionJob::getSubmissionInstant, naturalOrder()).reversed())
+              .toList()
+              .getFirst();
       if (geoJsonConversionJob.isSucceeded()) {
         return geoJsonConversionJob;
       }
-      // geoJsonConversionJobRepository.delete(geoJsonConversionJob);
     }
     return create(zoneDetectionJob);
   }
