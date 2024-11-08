@@ -66,11 +66,13 @@ public class FeatureMapper {
   private static app.bpartners.geojobs.repository.model.Feature.FeatureGeometry
       toDomainFeatureGeometry(FeatureGeometry featureGeometry) {
     var actualInstance = featureGeometry.getActualInstance();
-    return app.bpartners.geojobs.repository.model.Feature.FeatureGeometry.builder()
-        .geometryType(getGeometryType(actualInstance))
-        .actualInstanceStringValue(
-            objectMapper().writeValueAsString(featureGeometry.getActualInstance()))
-        .build();
+    var featureDomain = app.bpartners.geojobs.repository.model.Feature.FeatureGeometry.builder()
+            .geometryType(getGeometryType(actualInstance))
+            .actualInstanceStringValue(
+                    objectMapper().writeValueAsString(featureGeometry.getActualInstance()))
+            .build();
+    log.info("domain={}, rest={}", featureDomain, featureGeometry);
+    return featureDomain;
   }
 
   private static Geometry.TypeEnum getGeometryType(Object actualInstance) {
