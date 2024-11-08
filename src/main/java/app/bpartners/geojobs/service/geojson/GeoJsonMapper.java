@@ -23,7 +23,8 @@ public class GeoJsonMapper {
           var feature = object.getFeature();
           var geometry = feature.getGeometry();
           if (geometry == null) {
-            throw new IllegalArgumentException("Geometry must not be null");
+            throw new IllegalArgumentException(
+                "Geometry must not be null for detectedObject=" + object);
           }
           var actualGeometryInstance = geometry.getActualInstance();
           if (actualGeometryInstance.getClass().equals(MultiPolygon.class)) {
