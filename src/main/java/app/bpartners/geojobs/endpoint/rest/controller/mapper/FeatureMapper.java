@@ -95,6 +95,7 @@ public class FeatureMapper {
       app.bpartners.geojobs.repository.model.Feature.FeatureGeometry featureGeometry) {
     var actualInstanceStringValue = featureGeometry.getActualInstanceStringValue();
     var type = featureGeometry.getGeometryType();
+    log.info("debug domainFeatureGeometry={}", featureGeometry);
     if (actualInstanceStringValue == null || type == null) {
       return null;
     }
@@ -110,7 +111,6 @@ public class FeatureMapper {
       case MULTI_POLYGON ->
           new FeatureGeometry(
               objectMapper().readValue(actualInstanceStringValue, MultiPolygon.class));
-      default -> throw new IllegalArgumentException("Unknown geometry " + type);
     };
   }
 
