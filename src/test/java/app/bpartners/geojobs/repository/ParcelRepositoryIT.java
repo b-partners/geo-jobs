@@ -6,12 +6,14 @@ import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class ParcelRepositoryIT extends FacadeIT {
+@Slf4j
+class ParcelRepositoryIT extends FacadeIT {
   @Autowired ParcelRepository subject;
 
   Parcel toSave(){
@@ -43,7 +45,6 @@ public class ParcelRepositoryIT extends FacadeIT {
   }
 
   private Parcel getById(String id){
-    System.out.println("Start retrieving ");
     return subject.findById(id).orElseThrow(() -> new NotFoundException("Parcel not found"));
   }
 }

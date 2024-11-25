@@ -9,6 +9,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.hibernate.annotations.JdbcTypeCode;
+
+import static org.hibernate.type.SqlTypes.JSON;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -20,6 +23,7 @@ public class Feature implements Serializable {
   private String id;
   private Integer zoom;
 
+  @JdbcTypeCode(JSON)
   private FeatureGeometry geometry;
 
   @NoArgsConstructor

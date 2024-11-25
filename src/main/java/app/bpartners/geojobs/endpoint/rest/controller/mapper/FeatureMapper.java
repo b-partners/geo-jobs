@@ -56,10 +56,11 @@ public class FeatureMapper {
     if (domain == null || domain.getGeometry() == null) {
       return null;
     }
+    var restFeatureGeometry = toRestFeatureGeometry(domain.getGeometry());
     return new Feature()
         .id(domain.getId())
         .zoom(domain.getZoom())
-        .geometry(toRestFeatureGeometry(domain.getGeometry()));
+        .geometry(restFeatureGeometry);
   }
 
   @SneakyThrows

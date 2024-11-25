@@ -46,7 +46,8 @@ public class ParcelContent implements Serializable {
   private Instant creationDatetime;
 
   public app.bpartners.geojobs.endpoint.rest.model.Feature getFeature() {
-    return toRestFeature(feature);
+    var restFeature = toRestFeature(feature);
+    return restFeature;
   }
 
   public void setTiles(List<Tile> tiles) {
