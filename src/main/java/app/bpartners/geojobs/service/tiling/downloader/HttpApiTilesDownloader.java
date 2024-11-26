@@ -60,7 +60,7 @@ public class HttpApiTilesDownloader implements TilesDownloader {
     UriComponentsBuilder builder =
         UriComponentsBuilder.fromHttpUrl(tilesDownloaderApiURl)
             .path("/geo-tiles")
-            .queryParam("zoom_size", parcelContent.getFeature().getZoom());
+            .queryParam("zoom_size", parcelContent.restFeatures().getZoom());
 
     ResponseEntity<byte[]> responseEntity;
     try {
@@ -134,7 +134,7 @@ public class HttpApiTilesDownloader implements TilesDownloader {
   private FileSystemResource getGeojson(ParcelContent parcelContent) {
     Map<String, Object> feature = new HashMap<>();
     feature.put("type", "Feature");
-    feature.put("geometry", parcelContent.getFeature().getGeometry());
+    feature.put("geometry", parcelContent.restFeatures().getGeometry());
 
     var featuresList = new ArrayList<>();
     featuresList.add(feature);

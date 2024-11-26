@@ -69,10 +69,10 @@ public class ZoneTilingJobMapper {
         .zoomLevel(
             parcel0 == null
                 ? null
-                : (parcelContent.getFeature() == null
+                : (parcelContent.restFeatures() == null
                     ? null
                     : zoomMapper.toRest(
-                        ArcgisImageZoom.fromZoomLevel(parcelContent.getFeature().getZoom()))))
+                        ArcgisImageZoom.fromZoomLevel(parcelContent.restFeatures().getZoom()))))
 
         // All parcels of the same job have same geoServer url and parameter
         .geoServerUrl(parcel0 == null ? null : parcelContent.getGeoServerUrl().toString())

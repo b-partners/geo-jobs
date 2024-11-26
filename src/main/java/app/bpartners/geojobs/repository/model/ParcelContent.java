@@ -29,7 +29,6 @@ import org.hibernate.annotations.JdbcTypeCode;
 public class ParcelContent implements Serializable {
   private String id;
 
-  @Getter(AccessLevel.NONE)
   private Feature feature;
 
   private URL geoServerUrl;
@@ -45,7 +44,7 @@ public class ParcelContent implements Serializable {
 
   private Instant creationDatetime;
 
-  public app.bpartners.geojobs.endpoint.rest.model.Feature getFeature() {
+  public app.bpartners.geojobs.endpoint.rest.model.Feature restFeatures() {
     var restFeature = toRestFeature(feature);
     return restFeature;
   }
