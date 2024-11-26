@@ -41,7 +41,7 @@ public class FeatureMapper {
   }
 
   public static Feature from(TilingTask domainTask) {
-    return domainTask.getParcelContent().getFeature();
+    return domainTask.getParcelContent().restFeatures();
   }
 
   public static app.bpartners.geojobs.repository.model.Feature toDomainFeature(Feature rest) {
@@ -56,10 +56,8 @@ public class FeatureMapper {
     if (domain == null || domain.getGeometry() == null) {
       return null;
     }
-    return new Feature()
-        .id(domain.getId())
-        .zoom(domain.getZoom())
-        .geometry(toRestFeatureGeometry(domain.getGeometry()));
+    var restFeatureGeometry = toRestFeatureGeometry(domain.getGeometry());
+    return new Feature().id(domain.getId()).zoom(domain.getZoom()).geometry(restFeatureGeometry);
   }
 
   @SneakyThrows

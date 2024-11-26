@@ -1,7 +1,10 @@
 package app.bpartners.geojobs.repository.model;
 
+import static org.hibernate.type.SqlTypes.JSON;
+
 import app.bpartners.geojobs.endpoint.rest.model.Geometry;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serializable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,6 +12,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.hibernate.annotations.JdbcTypeCode;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -20,6 +24,7 @@ public class Feature implements Serializable {
   private String id;
   private Integer zoom;
 
+  @JdbcTypeCode(JSON)
   private FeatureGeometry geometry;
 
   @NoArgsConstructor
@@ -30,7 +35,10 @@ public class Feature implements Serializable {
   @EqualsAndHashCode
   @JsonIgnoreProperties(ignoreUnknown = true)
   public static class FeatureGeometry implements Serializable {
+    @JsonProperty("geometryType")
     private Geometry.TypeEnum geometryType;
+
+    @JsonProperty("actualInstanceStringValue")
     private String actualInstanceStringValue;
   }
 }

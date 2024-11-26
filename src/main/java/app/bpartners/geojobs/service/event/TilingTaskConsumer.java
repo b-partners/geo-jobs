@@ -33,7 +33,7 @@ public class TilingTaskConsumer implements Consumer<TilingTask> {
     var parcel = tilingTask.getParcelContent();
     log.info(
         "DEBUG: parcel.content.feature={} for tilingTask.id={}",
-        parcel.getFeature(),
+        parcel.restFeatures(),
         tilingTask.getId());
     File downloadedTiles = tilesDownloader.apply(parcel);
     String bucketKey = downloadedTiles.getName();
