@@ -22,7 +22,8 @@ public class DetectableObjectConfigurationMapper {
         .id(randomUUID().toString())
         .detectionJobId(jobId)
         .objectType(typeMapper.toDomain(Objects.requireNonNull(rest.getType())))
-        .confidence(rest.getConfidence() != null ? rest.getConfidence().doubleValue() : 1)
+        .minConfidenceForDetection(
+            rest.getConfidence() != null ? rest.getConfidence().doubleValue() : 1)
         .bucketStorageName(
             rest.getBucketStorageName() != null
                 ? rest.getBucketStorageName()
@@ -34,9 +35,9 @@ public class DetectableObjectConfigurationMapper {
       DetectableObjectConfiguration domain) {
     return new app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration()
         .confidence(
-            domain.getConfidence() == null
+            domain.getMinConfidenceForDetection() == null
                 ? BigDecimal.valueOf(DEFAULT_CONFIDENCE)
-                : BigDecimal.valueOf(domain.getConfidence()))
+                : BigDecimal.valueOf(domain.getMinConfidenceForDetection()))
         .type(typeMapper.toRest(domain.getObjectType()))
         .bucketStorageName(domain.getBucketStorageName());
   }

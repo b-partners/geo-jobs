@@ -1,17 +1,12 @@
-package app.bpartners.geojobs.endpoint.event.model;
+package app.bpartners.geojobs.endpoint.event.model.annotation;
 
 import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
 
 import app.bpartners.geojobs.endpoint.event.EventStack;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import app.bpartners.geojobs.endpoint.event.model.PojaEvent;
 import java.time.Duration;
 import javax.annotation.processing.Generated;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 @Generated("EventBridge")
 @NoArgsConstructor
@@ -20,24 +15,21 @@ import lombok.ToString;
 @Data
 @EqualsAndHashCode
 @ToString
-public class GeoJsonConversionInitiated extends PojaEvent {
-  @JsonProperty("jobId")
+public class AnnotationDeliveryJobRequested extends PojaEvent {
   private String jobId;
-
-  @JsonProperty("conversionTaskId")
-  private String conversionTaskId;
-
-  @JsonProperty("zoneName")
-  private String zoneName;
+  private Double minimumConfidenceForDelivery;
+  private String annotationJobWithObjectsIdTruePositive;
+  private String annotationJobWithObjectsIdFalsePositive;
+  private String annotationJobWithoutObjectsId;
 
   @Override
   public Duration maxConsumerDuration() {
-    return Duration.ofMinutes(5);
+    return Duration.ofMinutes(10L);
   }
 
   @Override
   public Duration maxConsumerBackoffBetweenRetries() {
-    return Duration.ofMinutes(1);
+    return Duration.ofMinutes(1L);
   }
 
   @Override

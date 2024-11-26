@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.utils.detection;
 
-import static app.bpartners.geojobs.service.event.ZoneDetectionFinishedConsumer.DEFAULT_MIN_CONFIDENCE;
+import static app.bpartners.geojobs.service.event.ZoneDetectionJobSucceededService.DEFAULT_MINIMUM_CONFIDENCE_FOR_DELIVERY;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
@@ -45,7 +45,8 @@ public class DetectionCreator {
                     .builder()
                     .bucketStorageName(null)
                     .objectType(DetectableType.TOITURE_REVETEMENT)
-                    .confidence(DEFAULT_MIN_CONFIDENCE)
+                    .minConfidenceForDetection(
+                        DEFAULT_MINIMUM_CONFIDENCE_FOR_DELIVERY) // TODO do not confuse
                     .build()))
         .providedGeoJsonZone(domainFeature)
         .build();

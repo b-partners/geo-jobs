@@ -33,7 +33,7 @@ import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.JobFinishedMailer;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
-import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
+import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import app.bpartners.geojobs.service.tiling.downloader.TilesDownloader;
 import app.bpartners.geojobs.sqs.EventProducerInvocationMock;
 import app.bpartners.geojobs.sqs.LocalEventQueue;
@@ -66,7 +66,7 @@ class ZoneTilingJobCreatedIT extends DetectionIT {
   @MockBean BucketComponent bucketComponentMock;
   @MockBean JobFinishedMailer<ZoneTilingJob> tilingJobMailerMock;
   @MockBean AnnotationService annotationServiceMock;
-  @MockBean GeoJsonConversionInitiationService geoJsonConversionInitiationServiceMock;
+  @MockBean GeoJsonConversionJobService geoJsonConversionJobServiceMock;
   EventProducerInvocationMock eventProducerInvocationMock = new EventProducerInvocationMock();
   TilingTaskCreator tilingTaskCreator = new TilingTaskCreator();
 
@@ -194,9 +194,9 @@ class ZoneTilingJobCreatedIT extends DetectionIT {
     if (localEventQueue != null) localEventQueue.attemptSchedulerShutDown();
     var actualDetectionJobHuman = zdjService.getByTilingJobId(tilingJob.getId(), HUMAN);
 
-    verify(geoJsonConversionInitiationServiceMock, times(1))
-        .processConversionTask(
-            actualDetectionJobHuman.getZoneName(), actualDetectionJobHuman.getId());
+    verify(geoJsonConversionJobServiceMock, times(1))
+        .getOrComputeGeoJsonUrl(actualDetectionJobHuman.getId());
+
     assertTrue(actualDetectionJobHuman.isSucceeded());
   }
 
@@ -224,7 +224,7 @@ class ZoneTilingJobCreatedIT extends DetectionIT {
                     DetectableObjectConfiguration.builder()
                         .bucketStorageName(null)
                         .objectType(PISCINE)
-                        .confidence(1.0)
+                        .minConfidenceForDetection(1.0)
                         .build()))
             .build());
     return tilingJob;

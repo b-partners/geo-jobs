@@ -1,8 +1,6 @@
 package app.bpartners.geojobs.service;
 
-import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.CONFIGURING;
-import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.MACHINE_DETECTION;
-import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.TILING;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.*;
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_COMMUNITY;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
@@ -49,7 +47,7 @@ import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.detection.DetectionGeoJsonUpdateValidator;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
-import app.bpartners.geojobs.service.geojson.GeoJsonConversionInitiationService;
+import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -83,7 +81,7 @@ public class ZoneService {
   private final DetectionRepository detectionRepository;
   private final CommunityUsedSurfaceService communityUsedSurfaceService;
   private final BucketComponent bucketComponent;
-  private final GeoJsonConversionInitiationService conversionInitiationService;
+  private final GeoJsonConversionJobService conversionInitiationService;
   private final DetectableObjectTypeMapper detectableObjectTypeMapper;
   private final ObjectMapper objectMapper;
   private final AuthProvider authProvider;
@@ -113,7 +111,7 @@ public class ZoneService {
     detection.setProvidedGeoJsonZone(features);
     var savedDetection = detectionRepository.save(detection);
     eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
-    return computeFromConfiguring(savedDetection, PROCESSING, UNKNOWN);
+    return computeEmptyStatisticFromStep(savedDetection, PROCESSING, UNKNOWN, CONFIGURING);
   }
 
   private Detection getDetectionById(String detectionId) {
@@ -138,7 +136,7 @@ public class ZoneService {
     var savedDetection =
         detectionRepository.save(detection.toBuilder().excelFileKey(bucketKey).build());
     eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
-    return computeFromConfiguring(savedDetection, PENDING, UNKNOWN);
+    return computeEmptyStatisticFromStep(savedDetection, PENDING, UNKNOWN, CONFIGURING);
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection configureShapeFile(
@@ -150,7 +148,7 @@ public class ZoneService {
     var savedDetection =
         detectionRepository.save(detection.toBuilder().shapeFileKey(bucketKey).build());
     eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
-    return computeFromConfiguring(savedDetection, PENDING, UNKNOWN);
+    return computeEmptyStatisticFromStep(savedDetection, PENDING, UNKNOWN, CONFIGURING);
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection getProcessedDetection(
@@ -158,16 +156,21 @@ public class ZoneService {
     var detection = getDetectionByE2eId(detectionId);
     if (detection.getMultiPolygonGeoJsonZone() == null
         || detection.getMultiPolygonGeoJsonZone().isEmpty()) {
-      return computeFromConfiguring(detection, PENDING, UNKNOWN);
+      return computeEmptyStatisticFromStep(detection, PENDING, UNKNOWN, CONFIGURING);
     }
     if (!ROLE_ADMIN.equals(authProvider.getPrincipal().getRole())) {
-      return computeFromConfiguring(detection, FINISHED, SUCCEEDED);
+      return computeEmptyStatisticFromStep(detection, FINISHED, SUCCEEDED, CONFIGURING);
     }
     var detectionJobId = detection.getZdjId();
+    var zoneDetectionJob = zoneDetectionJobService.findById(detectionJobId);
     if (detectionJobId == null) {
       return getTilingStatistics(detection, detection.getZtjId());
+    } else if (!zoneDetectionJob.isFinished()) {
+      return getDetectionStatistics(detection, detectionJobId);
+    } else if (detection.getGeojsonS3FileKey() == null) {
+      return computeEmptyStatisticFromStep(detection, PROCESSING, UNKNOWN, HUMAN_DETECTION);
     }
-    return getDetectionStatistics(detection, detectionJobId);
+    return computeEmptyStatisticFromStep(detection, FINISHED, SUCCEEDED, HUMAN_DETECTION);
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection processDetection(
@@ -175,7 +178,7 @@ public class ZoneService {
     Optional<Detection> optionalDetection = detectionRepository.findByEndToEndId(detectionId);
     if (optionalDetection.isEmpty()) {
       var savedDetection = createDetectionJob(detectionId, createDetection, communityOwnerId);
-      return computeFromConfiguring(savedDetection, PENDING, UNKNOWN);
+      return computeEmptyStatisticFromStep(savedDetection, PENDING, UNKNOWN, CONFIGURING);
     }
     if (ROLE_COMMUNITY.equals(authProvider.getPrincipal().getRole())) {
       throw new BadRequestException(
@@ -193,7 +196,7 @@ public class ZoneService {
     var detectionJobId = detection.getZdjId();
     if (detection.getMultiPolygonGeoJsonZone() == null
         || detection.getGeoServerProperties() == null) {
-      return computeFromConfiguring(detection, PENDING, UNKNOWN);
+      return computeEmptyStatisticFromStep(detection, PENDING, UNKNOWN, CONFIGURING);
     }
     if (tilingJobId == null) {
       var ztj = processZoneTilingJob(detection);
@@ -227,8 +230,8 @@ public class ZoneService {
                   .humanZdjId(humanZoneDetectionJob.getId())
                   .build()));
     } else {
-      conversionInitiationService.processConversionTask(
-          detection, humanZoneDetectionJob.getZoneName(), humanZoneDetectionJob.getId());
+      conversionInitiationService.getOrComputeGeoJsonConversionJob(
+          detection, humanZoneDetectionJob.getId());
     }
   }
 
@@ -321,25 +324,42 @@ public class ZoneService {
     return toRestDetection(detection, new TaskStatistic(), CONFIGURING);
   }
 
-  private app.bpartners.geojobs.endpoint.rest.model.Detection computeFromConfiguring(
+  private app.bpartners.geojobs.endpoint.rest.model.Detection computeEmptyStatisticFromStep(
       Detection detection,
       Status.ProgressionStatus progressionStatus,
-      Status.HealthStatus healthStatus) {
-    var defaultConfiguringStatistic =
+      Status.HealthStatus healthStatus,
+      DetectionStepName detectionStepName) {
+    var geoJobType = fromDetectionStep(detectionStepName);
+    var emptyStatistic =
         TaskStatistic.builder()
-            .jobType(GeoJobType.CONFIGURING)
+            .jobType(geoJobType)
             .actualJobStatus(
                 JobStatus.builder()
                     .id(randomUUID().toString())
                     .creationDatetime(now())
                     .progression(progressionStatus)
                     .health(healthStatus)
-                    .jobType(GeoJobType.CONFIGURING)
+                    .jobType(geoJobType)
                     .build())
             .updatedAt(now())
             .taskStatusStatistics(List.of())
             .build();
-    return toRestDetection(detection, defaultConfiguringStatistic, CONFIGURING);
+    return toRestDetection(detection, emptyStatistic, detectionStepName);
+  }
+
+  private GeoJobType fromDetectionStep(DetectionStepName stepName) {
+    switch (stepName) {
+      case TILING -> {
+        return GeoJobType.TILING;
+      }
+      case CONFIGURING -> {
+        return GeoJobType.CONFIGURING;
+      }
+      case MACHINE_DETECTION, HUMAN_DETECTION -> {
+        return GeoJobType.DETECTION;
+      }
+      default -> throw new IllegalArgumentException("Unknown DetectionStepName " + stepName);
+    }
   }
 
   private app.bpartners.geojobs.endpoint.rest.model.Detection getTilingStatistics(

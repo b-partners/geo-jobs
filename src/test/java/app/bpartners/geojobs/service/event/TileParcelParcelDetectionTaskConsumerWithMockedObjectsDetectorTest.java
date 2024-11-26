@@ -7,7 +7,7 @@ import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.endpoint.event.model.tile.TileDetectionTaskCreated;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
-import app.bpartners.geojobs.repository.DetectedTileRepository;
+import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
@@ -20,14 +20,14 @@ class TileParcelParcelDetectionTaskConsumerWithMockedObjectsDetectorTest {
 
   @Test
   void can_consume_with_no_error() {
-    DetectedTileRepository detectedTileRepositoryMock = mock();
+    MachineDetectedTileRepository machineDetectedTileRepositoryMock = mock();
     DetectionMapper detectionMapperMock = mock();
-    when(detectedTileRepositoryMock.save(any())).thenReturn(new MachineDetectedTile());
+    when(machineDetectedTileRepositoryMock.save(any())).thenReturn(new MachineDetectedTile());
     when(detectionMapperMock.toDetectedTile(any(), any(), any(), any(), any()))
         .thenReturn(new MachineDetectedTile());
     var subject =
         new TileDetectionTaskCreatedConsumer(
-            detectedTileRepositoryMock, new MockedTileObjectDetector(), detectionMapperMock);
+            machineDetectedTileRepositoryMock, new MockedTileObjectDetector(), detectionMapperMock);
 
     subject.accept(
         new TileDetectionTaskCreated(
@@ -44,12 +44,12 @@ class TileParcelParcelDetectionTaskConsumerWithMockedObjectsDetectorTest {
 
   @Test
   void can_consume_with_some_errors() {
-    DetectedTileRepository detectedTileRepositoryMock = mock();
+    MachineDetectedTileRepository machineDetectedTileRepositoryMock = mock();
     DetectionMapper detectionMapperMock = mock();
-    when(detectedTileRepositoryMock.save(any())).thenReturn(new MachineDetectedTile());
+    when(machineDetectedTileRepositoryMock.save(any())).thenReturn(new MachineDetectedTile());
     var subject =
         new TileDetectionTaskCreatedConsumer(
-            detectedTileRepositoryMock, new MockedTileObjectDetector(), detectionMapperMock);
+            machineDetectedTileRepositoryMock, new MockedTileObjectDetector(), detectionMapperMock);
 
     try {
       for (int i = 0; i < 10; i++) {

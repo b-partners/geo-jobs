@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.service.ParcelDetectionTaskServiceIT.detectedTile;
 import static org.junit.jupiter.api.Assertions.*;
 
 import app.bpartners.geojobs.conf.FacadeIT;
@@ -11,6 +10,7 @@ import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.repository.*;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.detection.*;
+import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
@@ -32,12 +32,11 @@ class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
   @MockBean EventProducer eventProducer;
   @Autowired ZoneDetectionJobSucceededService subject;
   @Autowired private ZoneDetectionJobRepository jobRepository;
-  @Autowired private DetectedTileRepository detectedTileRepository;
+  @Autowired private MachineDetectedTileRepository machineDetectedTileRepository;
   @Autowired private DetectableObjectConfigurationRepository objectConfigurationRepository;
   @Autowired private HumanDetectionJobRepository humanDetectionJobRepository;
   @Autowired private ParcelDetectionTaskRepository parcelDetectionTaskRepository;
   @Autowired private ParcelRepository parcelRepository;
-  @MockBean ZoneDetectionJobAnnotationProcessor zoneDetectionJobAnnotationProcessorMock;
 
   @BeforeEach
   void setUp() {
@@ -97,7 +96,7 @@ class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
                 .jobId(SUCCEEDED_JOB_ID_2)
                 .parcels(getJob2Parcels())
                 .build()));
-    detectedTileRepository.saveAll(
+    machineDetectedTileRepository.saveAll(
         List.of(
             detectedTile(SUCCEEDED_JOB_ID, "tile2Id", "parcel2Id", "detectedObjectId2", 0.5),
             detectedTile(SUCCEEDED_JOB_ID, "tile1Id", "parcel1Id", "detectedObjectId1", 0.8),
@@ -106,16 +105,36 @@ class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
         List.of(
             DetectableObjectConfiguration.builder()
                 .id("detectableObjectConfigurationId")
-                .confidence(0.8)
+                .minConfidenceForDetection(0.8)
                 .objectType(DetectableType.TOITURE_REVETEMENT)
                 .detectionJobId(SUCCEEDED_JOB_ID)
                 .build(),
             DetectableObjectConfiguration.builder()
                 .id("detectableObjectConfigurationId2")
-                .confidence(0.8)
+                .minConfidenceForDetection(0.8)
                 .objectType(DetectableType.TOITURE_REVETEMENT)
                 .detectionJobId(SUCCEEDED_JOB_ID_2)
                 .build()));
+  }
+
+  private MachineDetectedTile detectedTile(
+      String succeededJobId,
+      String tileId,
+      String parcelId,
+      String detectedObjectId,
+      double confidence) {
+    return MachineDetectedTile.builder()
+        .zdjJobId(succeededJobId)
+        .tile(Tile.builder().id(tileId).build())
+        .parcelId(parcelId)
+        .detectedObjects(
+            List.of(
+                DetectedObject.builder()
+                    .id(detectedObjectId)
+                    .detectedTileId(tileId)
+                    .computedConfidence(confidence)
+                    .build()))
+        .build();
   }
 
   @NotNull

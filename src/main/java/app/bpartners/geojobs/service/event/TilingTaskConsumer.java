@@ -31,6 +31,10 @@ public class TilingTaskConsumer implements Consumer<TilingTask> {
   @Override
   public void accept(TilingTask tilingTask) {
     var parcel = tilingTask.getParcelContent();
+    log.info(
+        "DEBUG: parcel.content.feature={} for tilingTask.id={}",
+        parcel.restFeatures(),
+        tilingTask.getId());
     File downloadedTiles = tilesDownloader.apply(parcel);
     String bucketKey = downloadedTiles.getName();
 

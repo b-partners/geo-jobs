@@ -4,7 +4,7 @@ import static java.time.Instant.now;
 
 import app.bpartners.geojobs.endpoint.event.model.tile.TileDetectionTaskCreated;
 import app.bpartners.geojobs.job.model.Status;
-import app.bpartners.geojobs.repository.DetectedTileRepository;
+import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.service.detection.DetectionMapper;
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 @AllArgsConstructor
 @Slf4j
 public class TileDetectionTaskCreatedConsumer implements Consumer<TileDetectionTaskCreated> {
-  private final DetectedTileRepository detectedTileRepository;
+  private final MachineDetectedTileRepository machineDetectedTileRepository;
   private final TileObjectDetector objectsDetector;
   private final DetectionMapper detectionMapper;
 
@@ -41,7 +41,7 @@ public class TileDetectionTaskCreatedConsumer implements Consumer<TileDetectionT
             parcelJobId);
     log.info(
         "[DEBUG] TileDetectionTaskCreatedConsumer to save tile {}", machineDetectedTile.describe());
-    detectedTileRepository.save(machineDetectedTile);
+    machineDetectedTileRepository.save(machineDetectedTile);
   }
 
   public static TileDetectionTask withNewStatus(

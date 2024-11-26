@@ -211,33 +211,30 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
             aZDJ(JOB1_ID, tilingJobId1).toBuilder().detectionType(HUMAN).build(),
             aZDJ(JOB4_ID, tilingJobId2).toBuilder().detectionType(MACHINE).build(),
             aZDJ(JOB2_ID, tilingJobId2).toBuilder().detectionType(HUMAN).build()));
-    jobStatusRepository.save(
+    var actualJobStatus =
         JobStatus.builder()
             .id("random_job_status2")
             .jobId(JOB2_ID)
             .jobType(DETECTION)
             .progression(FINISHED)
             .health(SUCCEEDED)
-            .build());
+            .build();
+    jobStatusRepository.save(actualJobStatus);
 
     GeoJsonsUrl actual1 = subject.getZDJGeojsonsUrl(JOB1_ID);
     GeoJsonsUrl actual2 = subject.getZDJGeojsonsUrl(JOB2_ID);
 
-    assertNotNull(actual1.getUrl());
-    assertTrue(
-        actual1
-            .getUrl()
-            .contains(
-                "Unable to generate geoJsons Url to unfinished succeeded job. Actual status is"));
-    assertNull(actual1.getStatus());
+    assertNull(actual1.getUrl());
+    assertNotNull(actual1.getStatus());
     verify(eventProducer, times(1)).accept(eventCapture.capture());
     assertEquals(
         new GeoJsonsUrl()
             .url(null)
             .status(
                 new Status()
-                    .progression(Status.ProgressionEnum.PENDING)
-                    .health(Status.HealthEnum.UNKNOWN)
+                    .progression(
+                        Status.ProgressionEnum.valueOf(actualJobStatus.getProgression().toString()))
+                    .health(Status.HealthEnum.valueOf(actualJobStatus.getHealth().toString()))
                     .creationDatetime(null)),
         actual2.status(actual2.getStatus().creationDatetime(null)));
 
@@ -247,16 +244,12 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
   @Test
   void read_detection_jobs() {
     var savedJobs = jobRepository.saveAll(someDetectionJobs());
-    var expected =
-        savedJobs.stream().map(job -> detectionJobMapper.toRest(job, List.of())).toList();
+
     List<ZoneDetectionJob> actual =
         subject.getDetectionJobs(
             new PageFromOne(PageFromOne.MIN_PAGE), new BoundedPageSize(BoundedPageSize.MAX_SIZE));
 
     assertNotNull(actual);
-    // TODO: fix ZDJ test data
-    // assertEquals(4, actual.size());
-    // assertEquals(expected, actual);
   }
 
   @Test

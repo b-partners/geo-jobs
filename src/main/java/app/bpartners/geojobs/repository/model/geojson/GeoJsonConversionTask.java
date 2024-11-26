@@ -1,6 +1,6 @@
-package app.bpartners.geojobs.repository.model;
+package app.bpartners.geojobs.repository.model.geojson;
 
-import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
+import static app.bpartners.geojobs.repository.model.GeoJobType.GEO_JSON_CONVERSION;
 
 import app.bpartners.geojobs.job.model.JobType;
 import app.bpartners.geojobs.job.model.Task;
@@ -25,11 +25,12 @@ import lombok.experimental.SuperBuilder;
 @Setter
 @EqualsAndHashCode(callSuper = false)
 public class GeoJsonConversionTask extends Task {
+  private Integer page;
   private String fileKey;
 
   @Override
   public JobType getJobType() {
-    return DETECTION;
+    return GEO_JSON_CONVERSION;
   }
 
   @Override

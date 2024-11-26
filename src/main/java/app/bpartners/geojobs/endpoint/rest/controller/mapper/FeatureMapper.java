@@ -41,7 +41,7 @@ public class FeatureMapper {
   }
 
   public static Feature from(TilingTask domainTask) {
-    return domainTask.getParcelContent().getFeature();
+    return domainTask.getParcelContent().restFeatures();
   }
 
   public static app.bpartners.geojobs.repository.model.Feature toDomainFeature(Feature rest) {
@@ -56,21 +56,22 @@ public class FeatureMapper {
     if (domain == null || domain.getGeometry() == null) {
       return null;
     }
-    return new Feature()
-        .id(domain.getId())
-        .zoom(domain.getZoom())
-        .geometry(toRestFeatureGeometry(domain.getGeometry()));
+    var restFeatureGeometry = toRestFeatureGeometry(domain.getGeometry());
+    return new Feature().id(domain.getId()).zoom(domain.getZoom()).geometry(restFeatureGeometry);
   }
 
   @SneakyThrows
   private static app.bpartners.geojobs.repository.model.Feature.FeatureGeometry
       toDomainFeatureGeometry(FeatureGeometry featureGeometry) {
     var actualInstance = featureGeometry.getActualInstance();
-    return app.bpartners.geojobs.repository.model.Feature.FeatureGeometry.builder()
-        .geometryType(getGeometryType(actualInstance))
-        .actualInstanceStringValue(
-            objectMapper().writeValueAsString(featureGeometry.getActualInstance()))
-        .build();
+    var featureDomain =
+        app.bpartners.geojobs.repository.model.Feature.FeatureGeometry.builder()
+            .geometryType(getGeometryType(actualInstance))
+            .actualInstanceStringValue(
+                objectMapper().writeValueAsString(featureGeometry.getActualInstance()))
+            .build();
+    log.info("domain={}, rest={}", featureDomain, featureGeometry);
+    return featureDomain;
   }
 
   private static Geometry.TypeEnum getGeometryType(Object actualInstance) {
@@ -92,6 +93,7 @@ public class FeatureMapper {
       app.bpartners.geojobs.repository.model.Feature.FeatureGeometry featureGeometry) {
     var actualInstanceStringValue = featureGeometry.getActualInstanceStringValue();
     var type = featureGeometry.getGeometryType();
+    log.info("debug domainFeatureGeometry={}", featureGeometry);
     if (actualInstanceStringValue == null || type == null) {
       return null;
     }
@@ -107,7 +109,6 @@ public class FeatureMapper {
       case MULTI_POLYGON ->
           new FeatureGeometry(
               objectMapper().readValue(actualInstanceStringValue, MultiPolygon.class));
-      default -> throw new IllegalArgumentException("Unknown geometry " + type);
     };
   }
 

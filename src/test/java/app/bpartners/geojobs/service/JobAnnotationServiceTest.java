@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.annotation.JobAnnotationProcessed;
+import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryJobRequested;
 import app.bpartners.geojobs.endpoint.rest.model.AnnotationJobProcessing;
 import app.bpartners.geojobs.job.service.JobAnnotationService;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
@@ -47,8 +47,9 @@ public class JobAnnotationServiceTest {
 
     var eventCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducerMock, times(1)).accept(eventCaptor.capture());
-    List<JobAnnotationProcessed> events = (List<JobAnnotationProcessed>) eventCaptor.getValue();
-    JobAnnotationProcessed event = events.getFirst();
+    List<AnnotationDeliveryJobRequested> events =
+        (List<AnnotationDeliveryJobRequested>) eventCaptor.getValue();
+    AnnotationDeliveryJobRequested event = events.getFirst();
     assertEquals(
         event.getAnnotationJobWithObjectsIdTruePositive(),
         actual.getAnnotationWithObjectTruePositive());
@@ -59,6 +60,6 @@ public class JobAnnotationServiceTest {
         actual.getAnnotationWithObjectFalsePositive());
     assertEquals(event.getJobId(), actual.getJobId());
     assertEquals(DETECTION_JOB_ID, actual.getJobId());
-    assertEquals(MIN_CONFIDENCE, event.getMinConfidence());
+    assertEquals(MIN_CONFIDENCE, event.getMinimumConfidenceForDelivery());
   }
 }

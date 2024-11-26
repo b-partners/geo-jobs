@@ -67,7 +67,7 @@ public class TilingTaskMapper {
                             .progression(StatusMapper.toProgressionEnum(status.getProgression()))
                             .creationDatetime(status.getCreationDatetime()))
                 .orElse(null))
-        .feature(parcelContent.getFeature());
+        .feature(parcelContent.restFeatures());
   }
 
   public Tile toRest(app.bpartners.geojobs.repository.model.tiling.Tile model) {

@@ -11,7 +11,7 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionTaskMapper
 import app.bpartners.geojobs.endpoint.rest.model.DetectedObject;
 import app.bpartners.geojobs.endpoint.rest.model.DetectedParcel;
 import app.bpartners.geojobs.endpoint.rest.model.DetectedTile;
-import app.bpartners.geojobs.repository.DetectedTileRepository;
+import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectType;
@@ -23,8 +23,8 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class DetectionTaskMapperTest {
-  DetectedTileRepository detectedTileRepositoryMock = mock();
-  DetectionTaskMapper subject = new DetectionTaskMapper(detectedTileRepositoryMock);
+  MachineDetectedTileRepository machineDetectedTileRepositoryMock = mock();
+  DetectionTaskMapper subject = new DetectionTaskMapper(machineDetectedTileRepositoryMock);
 
   @Test
   void map_with_detected_tile_ok() {
@@ -44,7 +44,7 @@ class DetectionTaskMapperTest {
             .creationDatetime(now())
             .build();
     ParcelContent parcelContentMock = mock();
-    when(detectedTileRepositoryMock.findAllByParcelId(parcelId))
+    when(machineDetectedTileRepositoryMock.findAllByParcelId(parcelId))
         .thenReturn(List.of(machineDetectedTile));
 
     DetectedParcel actual =
