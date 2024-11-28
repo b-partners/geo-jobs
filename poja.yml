@@ -4,7 +4,8 @@ compute:
   worker_batch: 1
   worker_function_1_timeout: 900
   worker_function_2_timeout: 900
-  worker_memory: 512
+#  todo: workers memory are set manually because 18.1.1 does not support different value, upgrade poja
+  worker_memory: 1024
 concurrency:
   frontal_reserved_concurrent_executions_nb: null
   worker_reserved_concurrent_executions_nb: 2
