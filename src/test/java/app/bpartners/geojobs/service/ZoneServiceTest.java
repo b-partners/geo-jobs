@@ -9,14 +9,14 @@ import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.
 import static app.bpartners.geojobs.file.hash.FileHashAlgorithm.SHA256;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
+import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_BUCKET_FOLDER;
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 import static java.io.File.createTempFile;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.verify;
@@ -209,6 +209,25 @@ class ZoneServiceTest {
     assertEquals(CONFIGURING, actual.getStep().getName());
     assertEquals(Status.ProgressionEnum.PENDING, actual.getStep().getStatus().getProgression());
     assertEquals(UNKNOWN, actual.getStep().getStatus().getHealth());
+  }
+
+  @SneakyThrows
+  @Test
+  void read_detection_with_geo_json_file() {
+    var detectionId = randomUUID().toString();
+    when(detectionRepositoryMock.findByEndToEndId(detectionId))
+        .thenReturn(
+            Optional.of(
+                app.bpartners.geojobs.repository.model.detection.Detection.builder()
+                    .geojsonS3FileKey("notNullKey")
+                    .build()));
+    when(bucketComponentMock.presign(any(), any())).thenReturn(new URI("http://localhost").toURL());
+
+    var actual = subject.getProcessedDetection(detectionId);
+
+    assertEquals(HUMAN_DETECTION, actual.getStep().getName());
+    assertEquals(Status.ProgressionEnum.FINISHED, actual.getStep().getStatus().getProgression());
+    assertEquals(SUCCEEDED, actual.getStep().getStatus().getHealth());
   }
 
   @Test
@@ -516,6 +535,26 @@ class ZoneServiceTest {
         DetectionSaved.builder().detection(expectedDetectionSaved).build(), detectionProvided);
     assertEquals(expectedDetectionSaved, savedDetection);
     assertEquals(expectedRestDetection, actual);
+  }
+
+  @Test
+  void configure_geo_json_result() {
+    var detectionId = randomUUID().toString();
+    var fileMock = mock(File.class);
+    when(detectionRepositoryMock.findByEndToEndId(detectionId))
+        .thenReturn(Optional.of(new app.bpartners.geojobs.repository.model.detection.Detection()));
+    when(detectionRepositoryMock.save(any()))
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+
+    var actual = subject.configureGeoJsonResult(detectionId, fileMock);
+
+    assertEquals(HUMAN_DETECTION, actual.getStep().getName());
+    assertEquals(Status.ProgressionEnum.FINISHED, actual.getStep().getStatus().getProgression());
+    assertEquals(SUCCEEDED, actual.getStep().getStatus().getHealth());
+    var stringCaptor = ArgumentCaptor.forClass(String.class);
+    verify(bucketComponentMock, only()).upload(eq(fileMock), stringCaptor.capture());
+    verify(detectionRepositoryMock).save(any());
+    assertTrue(stringCaptor.getValue().contains(GEO_JSON_BUCKET_FOLDER));
   }
 
   @SneakyThrows

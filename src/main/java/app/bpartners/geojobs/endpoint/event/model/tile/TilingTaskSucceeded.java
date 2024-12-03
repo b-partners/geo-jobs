@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.endpoint.event.model.tile;
 
+import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
+
 import app.bpartners.geojobs.endpoint.event.EventStack;
 import app.bpartners.geojobs.endpoint.event.model.PojaEvent;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
@@ -11,9 +13,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-
-import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_1;
-import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
 
 @Generated("EventBridge")
 @NoArgsConstructor

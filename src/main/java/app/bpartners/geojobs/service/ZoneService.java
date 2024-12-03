@@ -11,6 +11,8 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSIN
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.CLIENT_EXCEPTION;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
+import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_BUCKET_FOLDER;
+import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_EXTENSION;
 import static app.bpartners.geojobs.service.tiling.ZoneTilingJobService.getTilingTasks;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
@@ -151,9 +153,29 @@ public class ZoneService {
     return computeEmptyStatisticFromStep(savedDetection, PENDING, UNKNOWN, CONFIGURING);
   }
 
+  public app.bpartners.geojobs.endpoint.rest.model.Detection configureGeoJsonResult(
+      String detectionId, File geoJsonFile) {
+    var detection = getDetectionByE2eId(detectionId);
+    var geoJsonResultFileKey =
+        GEO_JSON_BUCKET_FOLDER
+            + detection.getId()
+            + "/"
+            + detection.getZoneName()
+            + GEO_JSON_EXTENSION;
+    bucketComponent.upload(geoJsonFile, geoJsonResultFileKey);
+    var savedDetection =
+        detectionRepository.save(
+            detection.toBuilder().geojsonS3FileKey(geoJsonResultFileKey).build());
+    eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
+    return computeEmptyStatisticFromStep(detection, FINISHED, SUCCEEDED, HUMAN_DETECTION);
+  }
+
   public app.bpartners.geojobs.endpoint.rest.model.Detection getProcessedDetection(
       String detectionId) {
     var detection = getDetectionByE2eId(detectionId);
+    if (detection.getGeojsonS3FileKey() != null) {
+      return computeEmptyStatisticFromStep(detection, FINISHED, SUCCEEDED, HUMAN_DETECTION);
+    }
     if (detection.getMultiPolygonGeoJsonZone() == null
         || detection.getMultiPolygonGeoJsonZone().isEmpty()) {
       return computeEmptyStatisticFromStep(detection, PENDING, UNKNOWN, CONFIGURING);
