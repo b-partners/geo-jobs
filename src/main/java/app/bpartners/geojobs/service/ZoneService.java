@@ -155,7 +155,7 @@ public class ZoneService {
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection configureGeoJsonResult(
       String detectionId, File geoJsonFile) {
-    var detection = getDetectionByE2eId(detectionId);
+    var detection = getDetectionById(detectionId);
     var geoJsonResultFileKey =
         GEO_JSON_BUCKET_FOLDER
             + detection.getId()

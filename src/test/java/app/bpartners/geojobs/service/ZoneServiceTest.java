@@ -541,7 +541,7 @@ class ZoneServiceTest {
   void configure_geo_json_result() {
     var detectionId = randomUUID().toString();
     var fileMock = mock(File.class);
-    when(detectionRepositoryMock.findByEndToEndId(detectionId))
+    when(detectionRepositoryMock.findById(detectionId))
         .thenReturn(Optional.of(new app.bpartners.geojobs.repository.model.detection.Detection()));
     when(detectionRepositoryMock.save(any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
