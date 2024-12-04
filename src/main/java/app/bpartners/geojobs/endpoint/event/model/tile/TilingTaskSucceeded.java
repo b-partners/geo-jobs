@@ -1,5 +1,8 @@
 package app.bpartners.geojobs.endpoint.event.model.tile;
 
+import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
+
+import app.bpartners.geojobs.endpoint.event.EventStack;
 import app.bpartners.geojobs.endpoint.event.model.PojaEvent;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import java.time.Duration;
@@ -29,5 +32,10 @@ public class TilingTaskSucceeded extends PojaEvent {
   @Override
   public Duration maxConsumerBackoffBetweenRetries() {
     return Duration.ofMinutes(1);
+  }
+
+  @Override
+  public EventStack getEventStack() {
+    return EVENT_STACK_2;
   }
 }
