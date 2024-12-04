@@ -7,9 +7,12 @@ import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.zip.FileUnzipper;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.model.ParcelContent;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -62,21 +65,25 @@ public class HttpApiTilesDownloader implements TilesDownloader {
             .path("/geo-tiles")
             .queryParam("zoom_size", parcelContent.restFeatures().getZoom());
 
-    ResponseEntity<byte[]> responseEntity;
+    ResponseEntity<TilerResponse> responseEntity;
     try {
-      responseEntity = restTemplate.postForEntity(builder.toUriString(), request, byte[].class);
+      responseEntity =
+          restTemplate.postForEntity(builder.toUriString(), request, TilerResponse.class);
+      log.info("Zip file url={}", responseEntity.getBody());
     } catch (RestClientException e) {
       throw new ApiException(SERVER_EXCEPTION, e);
     }
-    if (responseEntity.getStatusCode().value() == 200) {
+    if (responseEntity.getStatusCode().value() == 200 && responseEntity.getBody() != null) {
       try {
-        var zip = fileWriter.apply(responseEntity.getBody(), null);
+        ResponseEntity<byte[]> file =
+            restTemplate.getForEntity(new URI(responseEntity.getBody().fileUrl), byte[].class);
+        var zip = fileWriter.apply(file.getBody(), null);
 
         var unzipped = unzip(zip, parcelContent);
         zip.delete();
 
         return unzipped;
-      } catch (IOException e) {
+      } catch (IOException | URISyntaxException e) {
         throw new RuntimeException(e);
       }
     }
@@ -89,6 +96,8 @@ public class HttpApiTilesDownloader implements TilesDownloader {
     Path unzippedPath = fileUnzipper.apply(asZipFile, layer);
     return unzippedPath.toFile();
   }
+
+  private record TilerResponse(@JsonProperty("file_url") String fileUrl) {}
 
   @SneakyThrows
   private File getServerInfoFile(ParcelContent parcelContent) {
