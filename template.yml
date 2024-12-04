@@ -88,7 +88,7 @@ Resources:
       Handler: app.bpartners.geojobs.MailboxEventHandler::handleRequest
 #      TODO: changed directly in this template not from poja because it doesnt support different workers conf
       MemorySize: 2048
-      Timeout: 300 #note(sqs-visibility)
+      Timeout: 900 #note(sqs-visibility)
       Role: !Sub '{{resolve:ssm:/geo-jobs/${Env}/execution/role-arn}}'
       
       Events:
