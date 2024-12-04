@@ -14,7 +14,7 @@ public class EnvConf {
     registry.add("objects.detector.mock.activated", () -> "false");
     registry.add(
         "tiles.downloader.api.url",
-        () -> "https://r7e7c5gzxuhzdvudjreormg4ja0afglo.lambda-url.eu-west-3.on.aws");
+        () -> "https://qbzvaia3tcgkigveg3jh6zruge0kbjld.lambda-url.eu-west-3.on.aws");
     registry.add(
         "tile.detection.api.urls",
         () ->
