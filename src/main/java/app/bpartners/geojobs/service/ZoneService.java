@@ -39,11 +39,13 @@ import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.exception.NotFoundException;
+import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.model.page.BoundedPageSize;
 import app.bpartners.geojobs.model.page.PageFromOne;
+import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
-import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.GeoJobType;
+import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
@@ -79,7 +81,6 @@ public class ZoneService {
   private final ZoneDetectionJobValidator detectionJobValidator;
   private final EventProducer eventProducer;
   private final DetectionStepStatisticMapper detectionStepStatisticMapper;
-  private final ZoneDetectionJobRepository zoneDetectionJobRepository;
   private final DetectionRepository detectionRepository;
   private final CommunityUsedSurfaceService communityUsedSurfaceService;
   private final BucketComponent bucketComponent;
@@ -89,6 +90,7 @@ public class ZoneService {
   private final AuthProvider authProvider;
   private final DetectionGeoJsonUpdateValidator detectionGeoJsonUpdateValidator;
   private final FeatureMultiPolygonChecker featureMultiPolygonChecker;
+  private final CommunityAuthorizationRepository communityAuthRepository;
 
   private List<Feature> readFromFile(File featuresFromShape) {
     try {
@@ -122,16 +124,21 @@ public class ZoneService {
         .orElseThrow(() -> new NotFoundException("Detection(id=" + detectionId + ") not found"));
   }
 
-  private Detection getDetectionByE2eId(String detectionId) {
+  private Detection getDetectionByE2eId(String detectionId, String communityOwnerId) {
     return detectionRepository
-        .findByEndToEndId(detectionId)
+        .findByEndToEndIdAndCommunityOwnerId(detectionId, communityOwnerId)
         .orElseThrow(
-            () -> new NotFoundException("Detection(e2e.id=" + detectionId + ") not found"));
+            () ->
+                new NotFoundException(
+                    "Detection(e2e.id="
+                        + detectionId
+                        + ") not found for communityOwnerId="
+                        + communityOwnerId));
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection configureExcelFile(
       String detectionId, File excelFile) {
-    var detection = getDetectionByE2eId(detectionId);
+    var detection = getDetectionByE2IdOrId(detectionId);
     detectionGeoJsonUpdateValidator.accept(detection);
     var bucketKey = "detections/excel/" + detectionId;
     bucketComponent.upload(excelFile, bucketKey);
@@ -143,7 +150,7 @@ public class ZoneService {
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection configureShapeFile(
       String detectionId, File shapeFile) {
-    var detection = getDetectionByE2eId(detectionId);
+    var detection = getDetectionByE2IdOrId(detectionId);
     detectionGeoJsonUpdateValidator.accept(detection);
     var bucketKey = "detections/shape/" + detectionId;
     bucketComponent.upload(shapeFile, bucketKey);
@@ -172,7 +179,7 @@ public class ZoneService {
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection getProcessedDetection(
       String detectionId) {
-    var detection = getDetectionByE2eId(detectionId);
+    var detection = getDetectionByE2IdOrId(detectionId);
     if (detection.getGeojsonS3FileKey() != null) {
       return computeEmptyStatisticFromStep(detection, FINISHED, SUCCEEDED, HUMAN_DETECTION);
     }
@@ -195,21 +202,40 @@ public class ZoneService {
     return computeEmptyStatisticFromStep(detection, FINISHED, SUCCEEDED, HUMAN_DETECTION);
   }
 
+  private Detection getDetectionByE2IdOrId(String detectionId) {
+    var communityAuthorization =
+        communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
+    var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId).orElse(null);
+    return communityOwnerId != null
+        ? getDetectionByE2eId(detectionId, communityOwnerId)
+        : getDetectionById(detectionId);
+  }
+
   public app.bpartners.geojobs.endpoint.rest.model.Detection processDetection(
       String detectionId, CreateDetection createDetection, @Nullable String communityOwnerId) {
-    Optional<Detection> optionalDetection = detectionRepository.findByEndToEndId(detectionId);
-    if (optionalDetection.isEmpty()) {
-      var savedDetection = createDetectionJob(detectionId, createDetection, communityOwnerId);
-      return computeEmptyStatisticFromStep(savedDetection, PENDING, UNKNOWN, CONFIGURING);
-    }
-    if (ROLE_COMMUNITY.equals(authProvider.getPrincipal().getRole())) {
+    var consumerIsCommunity = ROLE_COMMUNITY.equals(authProvider.getPrincipal().getRole());
+    if (consumerIsCommunity) {
+      var optionalDetection =
+          detectionRepository.findByEndToEndIdAndCommunityOwnerId(detectionId, communityOwnerId);
+      if (optionalDetection.isEmpty()) {
+        var savedDetection = createDetectionJob(detectionId, createDetection, communityOwnerId);
+        return computeEmptyStatisticFromStep(savedDetection, PENDING, UNKNOWN, CONFIGURING);
+      }
       throw new BadRequestException(
           String.format(
-              "A detectionJob with the specified id=(%s) "
+              "A detection job with the specified id=(%s) "
                   + "already exists and can not be updated.",
               detectionId));
     }
-    return getProcessingJobStatistics(optionalDetection.get());
+    return getProcessingJobStatistics(
+        detectionRepository
+            .findById(detectionId)
+            .orElseThrow(
+                () ->
+                    new NotImplementedException(
+                        "Unable to process Detection(id="
+                            + detectionId
+                            + ") for ADMIN role for now")));
   }
 
   private app.bpartners.geojobs.endpoint.rest.model.Detection getProcessingJobStatistics(

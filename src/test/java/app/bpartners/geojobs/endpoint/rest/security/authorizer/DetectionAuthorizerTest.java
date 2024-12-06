@@ -69,7 +69,8 @@ class DetectionAuthorizerTest {
 
   @Test
   void should_accept_community_if_authorization_is_correct() {
-    when(detectionRepository.findByEndToEndId(any())).thenReturn(Optional.empty());
+    when(detectionRepository.findByEndToEndIdAndCommunityOwnerId(any(), any()))
+        .thenReturn(Optional.empty());
     doNothing().when(communityZoneSurfaceAuthorizer).accept(any(), any());
     doNothing().when(communityZoneAuthorizer).accept(any(), any());
     doNothing().when(communityDetectableObjectTypeAuthorizer).accept(any(), any());
@@ -83,7 +84,7 @@ class DetectionAuthorizerTest {
 
   @Test
   void should_check_only_owner_if_endToEndId_already_exist_and_accept_it() {
-    when(detectionRepository.findByEndToEndId(any()))
+    when(detectionRepository.findByEndToEndIdAndCommunityOwnerId(any(), any()))
         .thenReturn(Optional.of(Detection.builder().communityOwnerId(COMMUNITY_ID).build()));
     assertDoesNotThrow(
         () -> subject.authorizeCommunity(randomUUID().toString(), useRole(ROLE_COMMUNITY)));
