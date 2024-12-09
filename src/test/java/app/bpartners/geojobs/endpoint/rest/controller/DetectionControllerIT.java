@@ -2,7 +2,7 @@ package app.bpartners.geojobs.endpoint.rest.controller;
 
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper.toHealthStatus;
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper.toProgressionEnum;
-import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
+import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_COMMUNITY;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
@@ -10,6 +10,7 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
 import static app.bpartners.geojobs.repository.model.GeoJobType.TILING;
+import static app.bpartners.geojobs.repository.model.SurfaceUnit.SQUARE_DEGREE;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static app.bpartners.geojobs.service.event.ZoneDetectionJobSucceededService.DEFAULT_MINIMUM_CONFIDENCE_FOR_DELIVERY;
 import static java.time.Instant.now;
@@ -33,7 +34,6 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMap
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.authorizer.DetectionAuthorizer;
-import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
@@ -53,6 +53,7 @@ import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;
 import app.bpartners.geojobs.repository.ParcelRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
+import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
@@ -68,8 +69,6 @@ import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -103,16 +102,18 @@ public class DetectionControllerIT extends FacadeIT {
   @MockBean ZoneTilingJobService zoneTilingJobService;
   @MockBean DetectableObjectConfigurationRepository detectableObjectConfigurationRepository;
   @MockBean DetectionAuthorizer detectionAuthorizer;
-  @MockBean CommunityAuthorizationRepository communityAuthRepository;
   @MockBean AuthProvider authProviderMock;
+  @Autowired CommunityAuthorizationRepository communityAuthRepository;
   @Autowired FileWriter fileWriter;
   FeatureCreator featureCreator = new FeatureCreator();
   DetectionCreator detectionCreator = new DetectionCreator(featureCreator);
 
   @BeforeEach
   void setUp() {
-    when(authProviderMock.getPrincipal())
-        .thenReturn(new Principal("mockApiKey", Set.of(new Authority(ROLE_ADMIN))));
+    var principalMock = mock(Principal.class);
+    when(principalMock.getPassword()).thenReturn("dummy");
+    when(principalMock.getRole()).thenReturn(ROLE_COMMUNITY);
+    when(authProviderMock.getPrincipal()).thenReturn(principalMock);
     doNothing().when(detectionAuthorizer).accept(any(), any(), any());
     detectionRepository.deleteAll();
   }
@@ -284,7 +285,6 @@ public class DetectionControllerIT extends FacadeIT {
     var detection =
         detectionRepository.save(
             detectionCreator.createFromZTJAndZDJ(zoneTilingJob.getId(), zoneDetectionJob.getId()));
-    when(communityAuthRepository.findByApiKey(any())).thenReturn(Optional.of(mock()));
     var statistic = defaultComputedStatistic(zoneDetectionJob.getId(), DETECTION);
     when(zoneDetectionJobService.getTaskStatistic(any(String.class))).thenReturn(statistic);
 
@@ -306,7 +306,6 @@ public class DetectionControllerIT extends FacadeIT {
     var detection =
         detectionRepository.save(
             detectionWithoutZdj(zoneTilingJob.getId(), featureCreator.defaultFeatures()));
-    when(communityAuthRepository.findByApiKey(any())).thenReturn(Optional.empty());
     var statistic = defaultComputedStatistic(zoneTilingJob.getId(), TILING);
     when(zoneTilingJobService.getTaskStatistic(any(String.class))).thenReturn(statistic);
 
@@ -331,7 +330,6 @@ public class DetectionControllerIT extends FacadeIT {
                     .id(randomUUID().toString())
                     .endToEndId(randomUUID().toString())
                     .build());
-    when(communityAuthRepository.findByApiKey(any())).thenReturn(Optional.empty());
 
     var actualList = subject.getDetections(new PageFromOne(1), new BoundedPageSize(1));
 
@@ -344,16 +342,32 @@ public class DetectionControllerIT extends FacadeIT {
     var presignedUrl = "http://localhost/presignedShapeUrl";
     File dummyShapeFile = new ClassPathResource("/shape/dummy.shape").getFile();
     var zoneTilingJob = zoneTilingJobRepository.save(zoneTilingJob(randomUUID().toString()));
+    var communityOwnerId = randomUUID().toString();
+    var savedCommunity =
+        communityAuthRepository.save(
+            CommunityAuthorization.builder()
+                .id(communityOwnerId)
+                .name("dummy")
+                .apiKey("dummy")
+                .maxSurfaceUnit(SQUARE_DEGREE)
+                .maxSurface(10)
+                .build());
+    var e2Id = randomUUID().toString();
     var detection =
         detectionRepository.save(
-            detectionWithoutZdj(zoneTilingJob.getId()).toBuilder().endToEndId("e2eId").build());
+            detectionWithoutZdj(zoneTilingJob.getId()).toBuilder()
+                .endToEndId(e2Id)
+                .communityOwnerId(communityOwnerId)
+                .build());
     when(bucketComponentMock.presign(any(), any())).thenReturn(new URI(presignedUrl).toURL());
 
-    var actual =
-        subject.configureDetectionShapeFile("e2eId", fileWriter.writeAsByte(dummyShapeFile));
+    var actual = subject.configureDetectionShapeFile(e2Id, fileWriter.writeAsByte(dummyShapeFile));
 
     assertNull(detection.getShapeFileKey());
     assertEquals(presignedUrl, actual.getShapeUrl());
+
+    detectionRepository.delete(detection);
+    communityAuthRepository.delete(savedCommunity);
   }
 
   @SneakyThrows
@@ -380,14 +394,31 @@ public class DetectionControllerIT extends FacadeIT {
     var presignedUrl = "http://localhost/presignedExcelUrl";
     var modernExcelFile = new ClassPathResource("/excel/excelFile.xlsx").getContentAsByteArray();
     var zoneTilingJob = zoneTilingJobRepository.save(zoneTilingJob(randomUUID().toString()));
+    var communityOwnerId = randomUUID().toString();
+    var savedCommunity =
+        communityAuthRepository.save(
+            CommunityAuthorization.builder()
+                .id(communityOwnerId)
+                .name("dummy")
+                .apiKey("dummy")
+                .maxSurfaceUnit(SQUARE_DEGREE)
+                .maxSurface(10)
+                .build());
+    var endToEndDetectionId = randomUUID().toString();
     var detection =
         detectionRepository.save(
-            detectionWithoutZdj(zoneTilingJob.getId()).toBuilder().endToEndId("e2eId").build());
+            detectionWithoutZdj(zoneTilingJob.getId()).toBuilder()
+                .endToEndId(endToEndDetectionId)
+                .communityOwnerId(communityOwnerId)
+                .build());
     when(bucketComponentMock.presign(any(), any())).thenReturn(new URI(presignedUrl).toURL());
 
-    var actual = subject.configureDetectionExcelFile("e2eId", modernExcelFile);
+    var actual = subject.configureDetectionExcelFile(endToEndDetectionId, modernExcelFile);
 
     assertNull(detection.getExcelFileKey());
     assertEquals(presignedUrl, actual.getExcelUrl());
+
+    detectionRepository.delete(detection);
+    communityAuthRepository.delete(savedCommunity);
   }
 }

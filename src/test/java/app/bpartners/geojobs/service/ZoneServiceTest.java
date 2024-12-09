@@ -46,10 +46,12 @@ import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.model.exception.BadRequestException;
+import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.GeoJobType;
+import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.detection.DetectionGeoJsonUpdateValidator;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
@@ -66,6 +68,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import lombok.SneakyThrows;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -110,6 +113,7 @@ class ZoneServiceTest {
       new DetectionGeoJsonUpdateValidator();
   FeatureMultiPolygonChecker featureMultiPolygonCheckerMock = mock();
   ZoneDetectionJobCreator zoneDetectionJobCreator = new ZoneDetectionJobCreator();
+  CommunityAuthorizationRepository communityAuthRepositoryMock = mock();
   ZoneService subject =
       new ZoneService(
           zoneDetectionJobServiceMock,
@@ -118,7 +122,6 @@ class ZoneServiceTest {
           detectionJobValidatorMock,
           eventProducerMock,
           stepStatisticMapper,
-          zoneDetectionJobRepositoryMock,
           detectionRepositoryMock,
           communityUsedSurfaceServiceMock,
           bucketComponentMock,
@@ -127,22 +130,31 @@ class ZoneServiceTest {
           new ObjectMapper().configure(FAIL_ON_UNKNOWN_PROPERTIES, false),
           authProviderMock,
           detectionGeoJsonUpdateValidator,
-          featureMultiPolygonCheckerMock);
+          featureMultiPolygonCheckerMock,
+          communityAuthRepositoryMock);
+
+  @BeforeEach
+  void setUp() {
+    when(communityAuthRepositoryMock.findByApiKey(any()))
+        .thenReturn(
+            Optional.of(CommunityAuthorization.builder().id(randomUUID().toString()).build()));
+  }
 
   @Test
   void community_role_stuck_in_configuring() {
     when(authProviderMock.getPrincipal())
         .thenReturn(new Principal("mockApiKey", Set.of(new Authority(ROLE_COMMUNITY))));
     var detectionId = "mockDetectionId";
+    String communityOwnerId = "communityOwnerId";
     var detection = detectionCreator.create(detectionId, null, null);
     var createDetection = new CreateDetection().geoJsonZone(featureCreator.defaultFeatures());
-    when(detectionRepositoryMock.findByEndToEndId(detectionId)).thenReturn(Optional.of(detection));
-    String communityOwnerId = null;
+    when(detectionRepositoryMock.findByEndToEndIdAndCommunityOwnerId(detectionId, communityOwnerId))
+        .thenReturn(Optional.of(detection));
 
     assertThrows(
         ApiException.class,
         () -> subject.processDetection(detectionId, createDetection, communityOwnerId),
-        "A detectionJob with the specified id=(mockDetectionId) already exists and can not be"
+        "A detection job with the specified id=(mockDetectionId) already exists and can not be"
             + " updated.");
   }
 
@@ -181,6 +193,7 @@ class ZoneServiceTest {
   @Test
   void read_detection_ko() {
     var detectionId = "NonExistentDetectionId";
+    setUpAuthorityRoleProcessingMock(null, null, ROLE_ADMIN);
 
     assertThrows(
         ApiException.class,
@@ -215,13 +228,16 @@ class ZoneServiceTest {
   @Test
   void read_detection_with_geo_json_file() {
     var detectionId = randomUUID().toString();
-    when(detectionRepositoryMock.findByEndToEndId(detectionId))
+    when(detectionRepositoryMock.findByEndToEndIdAndCommunityOwnerId(eq(detectionId), any()))
         .thenReturn(
             Optional.of(
                 app.bpartners.geojobs.repository.model.detection.Detection.builder()
                     .geojsonS3FileKey("notNullKey")
                     .build()));
     when(bucketComponentMock.presign(any(), any())).thenReturn(new URI("http://localhost").toURL());
+    var principalMock = mock(Principal.class);
+    when(principalMock.getPassword()).thenReturn("dummy");
+    when(authProviderMock.getPrincipal()).thenReturn(principalMock);
 
     var actual = subject.getProcessedDetection(detectionId);
 
@@ -343,7 +359,11 @@ class ZoneServiceTest {
       String detectionId,
       app.bpartners.geojobs.repository.model.detection.Detection detection,
       Authority.Role authorityRole) {
-    when(detectionRepositoryMock.findByEndToEndId(detectionId)).thenReturn(Optional.of(detection));
+    if (detectionId != null && detection != null) {
+      when(detectionRepositoryMock.findByEndToEndIdAndCommunityOwnerId(eq(detectionId), any()))
+          .thenReturn(Optional.of(detection));
+      when(detectionRepositoryMock.findById(detectionId)).thenReturn(Optional.of(detection));
+    }
     when(authProviderMock.getPrincipal())
         .thenReturn(new Principal("mockApiKey", Set.of(new Authority(authorityRole))));
     when(tilingJobMapperMock.from(any()))
@@ -387,8 +407,11 @@ class ZoneServiceTest {
     when(bucketComponentMock.presign(any(), any())).thenReturn(new URI(shapeUrl).toURL());
     when(detectionRepositoryMock.save(any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
-    when(detectionRepositoryMock.findByEndToEndId(detectionE2eId))
+    when(detectionRepositoryMock.findByEndToEndIdAndCommunityOwnerId(eq(detectionE2eId), any()))
         .thenReturn(Optional.of(detection));
+    var principalMock = mock(Principal.class);
+    when(principalMock.getPassword()).thenReturn("dummy");
+    when(authProviderMock.getPrincipal()).thenReturn(principalMock);
 
     var actual = subject.configureShapeFile(detectionE2eId, shapeFile);
 
@@ -435,8 +458,11 @@ class ZoneServiceTest {
     when(bucketComponentMock.presign(any(), any())).thenReturn(new URI(excelUrl).toURL());
     when(detectionRepositoryMock.save(any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
-    when(detectionRepositoryMock.findByEndToEndId(detectionE2eId))
+    when(detectionRepositoryMock.findByEndToEndIdAndCommunityOwnerId(eq(detectionE2eId), any()))
         .thenReturn(Optional.of(detection));
+    var principalMock = mock(Principal.class);
+    when(principalMock.getPassword()).thenReturn("dummy");
+    when(authProviderMock.getPrincipal()).thenReturn(principalMock);
 
     var actual = subject.configureExcelFile(detectionE2eId, excelFile);
 
@@ -592,10 +618,15 @@ class ZoneServiceTest {
     when(detectionRepositoryMock.save(any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
     when(detectionRepositoryMock.findById(detection1.getId())).thenReturn(Optional.of(detection1));
-    when(detectionRepositoryMock.findByEndToEndId(detection2.getEndToEndId()))
+    when(detectionRepositoryMock.findByEndToEndIdAndCommunityOwnerId(
+            eq(detection2.getEndToEndId()), any()))
         .thenReturn(Optional.of(detection2));
-    when(detectionRepositoryMock.findByEndToEndId(detection3.getEndToEndId()))
+    when(detectionRepositoryMock.findByEndToEndIdAndCommunityOwnerId(
+            eq(detection3.getEndToEndId()), any()))
         .thenReturn(Optional.of(detection3));
+    var principalMock = mock(Principal.class);
+    when(principalMock.getPassword()).thenReturn("dummy");
+    when(authProviderMock.getPrincipal()).thenReturn(principalMock);
 
     var actual1 =
         assertThrows(

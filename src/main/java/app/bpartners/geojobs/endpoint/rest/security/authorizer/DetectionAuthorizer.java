@@ -47,7 +47,9 @@ public class DetectionAuthorizer implements TriConsumer<String, CreateDetection,
   public CommunityAuthorization authorizeCommunity(String detectionId, Principal principal) {
     var communityAuthorization =
         caRepository.findByApiKey(principal.getPassword()).orElseThrow(ForbiddenException::new);
-    var optionalDetection = detectionRepository.findByEndToEndId(detectionId);
+    var optionalDetection =
+        detectionRepository.findByEndToEndIdAndCommunityOwnerId(
+            detectionId, communityAuthorization.getId());
     optionalDetection.ifPresent(
         detection -> detectionOwnerAuthorizer.accept(communityAuthorization, detection));
     return communityAuthorization;
