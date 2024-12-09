@@ -25,7 +25,7 @@ public class TilingTaskCreated extends PojaEvent {
 
   @Override
   public Duration maxConsumerDuration() {
-    return Duration.ofMinutes(13);
+    return Duration.ofMinutes(10);
   }
 
   @Override
