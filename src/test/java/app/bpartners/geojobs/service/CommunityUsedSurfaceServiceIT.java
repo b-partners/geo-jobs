@@ -156,7 +156,10 @@ class CommunityUsedSurfaceServiceIT extends FacadeIT {
 
     var actualUsedSurface =
         subject.getTotalUsedSurfaceByCommunityId(COMMUNITY_ID, SQUARE_DEGREE).orElseThrow();
-    var actualDetection = detectionRepository.findByEndToEndId(endToEndId).orElseThrow();
+    var actualDetection =
+        detectionRepository
+            .findByEndToEndIdAndCommunityOwnerId(endToEndId, COMMUNITY_ID)
+            .orElseThrow();
 
     assertEquals(expectedSurfaceValue, actualUsedSurface.getUsedSurface());
     assertEquals(detection, actualDetection);

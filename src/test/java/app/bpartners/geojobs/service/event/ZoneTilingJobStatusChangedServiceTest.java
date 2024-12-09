@@ -48,7 +48,7 @@ class ZoneTilingJobStatusChangedServiceTest {
   void do_not_mail_if_old_fails_and_new_fails() {
     when(jobService.saveZDJFromZTJ(any()))
         .thenReturn(ZoneDetectionJob.builder().id("zdj_id").build());
-    when(detectionRepository.findByEndToEndId(any()))
+    when(detectionRepository.findByEndToEndIdAndCommunityOwnerId(any(), any()))
         .thenReturn(Optional.ofNullable(Detection.builder().build()));
     var ztjStatusChanged = new ZoneTilingJobStatusChanged();
     ztjStatusChanged.setOldJob(aZTJ(FINISHED, FAILED));
@@ -64,7 +64,7 @@ class ZoneTilingJobStatusChangedServiceTest {
     var ztjStatusChanged = new ZoneTilingJobStatusChanged();
     ztjStatusChanged.setOldJob(aZTJ(PROCESSING, UNKNOWN));
     ztjStatusChanged.setNewJob(aZTJ(FINISHED, FAILED));
-    when(detectionRepository.findByEndToEndId(any()))
+    when(detectionRepository.findByEndToEndIdAndCommunityOwnerId(any(), any()))
         .thenReturn(
             Optional.ofNullable(
                 Detection.builder()

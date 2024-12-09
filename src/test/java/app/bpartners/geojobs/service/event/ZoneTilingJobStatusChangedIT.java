@@ -51,7 +51,7 @@ public class ZoneTilingJobStatusChangedIT extends FacadeIT {
         ZoneTilingJobStatusChanged.builder().oldJob(new ZoneTilingJob()).newJob(newZtj).build();
     when(zdjService.saveZDJFromZTJ(any()))
         .thenReturn(ZoneDetectionJob.builder().id("zdj_id").build());
-    when(detectionRepository.findByEndToEndId(any()))
+    when(detectionRepository.findByEndToEndIdAndCommunityOwnerId(any(), any()))
         .thenReturn(Optional.ofNullable(Detection.builder().build()));
     subject.accept(zoneTilingJobStatusChanged);
 
