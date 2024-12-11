@@ -2,7 +2,7 @@ name: Redrive DLQ to its source
 
 on:
   schedule:
-    - cron: "0 * * * *"
+    - cron: "*/1 * * * *"
   workflow_dispatch:
 
 jobs:
