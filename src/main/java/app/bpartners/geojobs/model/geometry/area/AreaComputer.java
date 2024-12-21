@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.model.parcelization.area;
+package app.bpartners.geojobs.model.geometry.area;
 
 import java.util.function.Function;
 import org.locationtech.jts.geom.Geometry;
