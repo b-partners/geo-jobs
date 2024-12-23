@@ -28,8 +28,7 @@ class SubAlphaTest {
 
   @Test
   void subAplha_longPolygon() throws IOException {
-    var expected =
-        ImageIO.read(this.getClass().getResourceAsStream("/geometry/longPolygon-subAlpha.png"));
+    var expected = ImageIO.read(this.getClass().getResourceAsStream("/geometry/long-subAlpha.png"));
 
     var polygon = longPolygon();
     var actual =
@@ -45,8 +44,7 @@ class SubAlphaTest {
   @Test
   void subAplha_croissant1Polygon() throws IOException {
     var expected =
-        ImageIO.read(
-            this.getClass().getResourceAsStream("/geometry/croissant1Polygon-subAlpha.png"));
+        ImageIO.read(this.getClass().getResourceAsStream("/geometry/croissant1-subAlpha.png"));
 
     var polygon = croissant1Polygon();
     var actual =
@@ -62,8 +60,7 @@ class SubAlphaTest {
   @Test
   void subAplha_croissant2Polygon() throws IOException {
     var expected =
-        ImageIO.read(
-            this.getClass().getResourceAsStream("/geometry/croissant2Polygon-subAlpha.png"));
+        ImageIO.read(this.getClass().getResourceAsStream("/geometry/croissant2-subAlpha.png"));
 
     var polygon = croissant2Polygon();
     var actual =
@@ -80,7 +77,7 @@ class SubAlphaTest {
   void plot_subAlpha_steps_croissant1() throws IOException {
     var expected =
         ImageIO.read(
-            this.getClass().getResourceAsStream("/geometry/croissant1Polygon-subAlpha-steps.png"));
+            this.getClass().getResourceAsStream("/geometry/croissant1-subAlpha-steps.png"));
 
     var polygon = croissant1Polygon();
     var actual = subAlphaSteps(polygon, 512, 512);
@@ -91,8 +88,7 @@ class SubAlphaTest {
   @Test
   void plot_subAlpha_steps_longPolygon() throws IOException {
     var expected =
-        ImageIO.read(
-            this.getClass().getResourceAsStream("/geometry/longPolygon-subAlpha-steps.png"));
+        ImageIO.read(this.getClass().getResourceAsStream("/geometry/long-subAlpha-steps.png"));
 
     var polygon = longPolygon();
     var actual = subAlphaSteps(polygon, 512, 512);
@@ -117,8 +113,7 @@ class SubAlphaTest {
   @Test
   void plot_subAlpha_compass1() throws IOException {
     var expected =
-        ImageIO.read(
-            this.getClass().getResourceAsStream("/geometry/croissant1Polygon-subAlpha-steps.png"));
+        ImageIO.read(this.getClass().getResourceAsStream("/geometry/compass1-subAlpha.png"));
 
     var polygon = compass1Polygon();
     var actual =
@@ -134,8 +129,7 @@ class SubAlphaTest {
   @Test
   void plot_subAlpha_steps_compass1() throws IOException {
     var expected =
-        ImageIO.read(
-            this.getClass().getResourceAsStream("/geometry/compass1Polygon-subAlpha-steps.png"));
+        ImageIO.read(this.getClass().getResourceAsStream("/geometry/compass1-subAlpha-steps.png"));
 
     var polygon = compass1Polygon();
     var actual = subAlphaSteps(polygon, 1024, 1024);

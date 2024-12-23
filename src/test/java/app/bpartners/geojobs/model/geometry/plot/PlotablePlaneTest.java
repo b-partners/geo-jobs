@@ -50,7 +50,7 @@ class PlotablePlaneTest {
 
   @Test
   void plot_polygon() throws IOException {
-    var expected = ImageIO.read(this.getClass().getResourceAsStream("/geometry/longPolygon.png"));
+    var expected = ImageIO.read(this.getClass().getResourceAsStream("/geometry/long.png"));
 
     var actual = new PlotablePlane(512, 512).plot(Set.of(new PlotablePolygon(longPolygon(), RED)));
 
@@ -59,8 +59,7 @@ class PlotablePlaneTest {
 
   @Test
   void plot_croissant1() throws IOException {
-    var expected =
-        ImageIO.read(this.getClass().getResourceAsStream("/geometry/croissant1Polygon.png"));
+    var expected = ImageIO.read(this.getClass().getResourceAsStream("/geometry/croissant1.png"));
 
     var actual =
         new PlotablePlane(512, 512).plot(Set.of(new PlotablePolygon(croissant1Polygon(), BLACK)));
@@ -70,8 +69,7 @@ class PlotablePlaneTest {
 
   @Test
   void plot_croissant2() throws IOException {
-    var expected =
-        ImageIO.read(this.getClass().getResourceAsStream("/geometry/croissant1Polygon.png"));
+    var expected = ImageIO.read(this.getClass().getResourceAsStream("/geometry/croissant1.png"));
 
     var actual =
         new PlotablePlane(512, 512).plot(Set.of(new PlotablePolygon(croissant2Polygon(), BLACK)));
@@ -81,8 +79,7 @@ class PlotablePlaneTest {
 
   @Test
   void plot_compass1() throws IOException {
-    var expected =
-        ImageIO.read(this.getClass().getResourceAsStream("/geometry/compass1Polygon.png"));
+    var expected = ImageIO.read(this.getClass().getResourceAsStream("/geometry/compass1.png"));
 
     var actual =
         new PlotablePlane(1024, 1024).plot(Set.of(new PlotablePolygon(compass1Polygon(), BLACK)));
