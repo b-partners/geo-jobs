@@ -1,6 +1,8 @@
 package app.bpartners.geojobs.model.geometry;
 
+import static java.lang.Math.PI;
 import static org.locationtech.jts.geom.util.AffineTransformation.rotationInstance;
+import static org.locationtech.jts.geom.util.AffineTransformation.translationInstance;
 
 import app.bpartners.geojobs.model.geometry.quadrilateral.model.Quadrilateral;
 import java.util.Set;
@@ -59,9 +61,7 @@ public class TestData {
                   new Coordinate(190, 190),
                   new Coordinate(140, 300)
                 }));
-    var rotation = rotationInstance(Math.PI / 4, 200, 200);
-
-    return (Polygon) rotation.transform(unrotated);
+    return rotate(unrotated, PI / 4, 200, 200);
   }
 
   public static Polygon croissant2Polygon() {
@@ -80,9 +80,7 @@ public class TestData {
                   new Coordinate(160, 160),
                   new Coordinate(140, 300)
                 }));
-    var rotation = rotationInstance(Math.PI / 4, 200, 200);
-
-    return (Polygon) rotation.transform(unrotated);
+    return rotate(unrotated, PI / 4, 200, 200);
   }
 
   public static Polygon compass1Polygon() {
@@ -103,8 +101,25 @@ public class TestData {
                   new Coordinate(50, 300),
                   new Coordinate(30, 250)
                 }));
-    var rotation = rotationInstance(Math.PI / 8, 0, 500);
 
-    return (Polygon) rotation.transform(unrotated);
+    return rotate(unrotated, PI / 8, 0, 500);
+  }
+
+  private static Polygon rotate(Polygon p, double theta, double x, double y) {
+    var rotation = rotationInstance(theta, x, y);
+    return (Polygon) rotation.transform(p);
+  }
+
+  private static Polygon translate(Polygon p, double x, double y) {
+    var translation = translationInstance(x, y);
+    return (Polygon) translation.transform(p);
+  }
+
+  public static Polygon compass2Polygon() {
+    return translate(compass1Polygon(), -50, -100);
+  }
+
+  public static Polygon long2Polygon() {
+    return rotate(translate(longPolygon(), 500, 550), -PI / 30, 0, 0);
   }
 }

@@ -14,7 +14,7 @@ public class PlotablePolygon implements Plotable {
   @Override
   public void plot(Graphics2D g2d) {
     g2d.setColor(color);
-    var coordinates = polygon.getCoordinates();
+    var coordinates = polygon.getExteriorRing().getCoordinates();
     g2d.drawPolygon(
         Arrays.stream(coordinates).mapToInt(c -> (int) c.x).toArray(),
         Arrays.stream(coordinates).mapToInt(c -> (int) c.y).toArray(),
