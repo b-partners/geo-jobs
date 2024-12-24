@@ -4,16 +4,16 @@ import static app.bpartners.geojobs.model.geometry.TestData.compass1Polygon;
 import static app.bpartners.geojobs.model.geometry.TestData.croissant1Polygon;
 import static app.bpartners.geojobs.model.geometry.TestData.croissant2Polygon;
 import static app.bpartners.geojobs.model.geometry.TestData.longPolygon;
+import static app.bpartners.geojobs.model.geometry.TestData.quadrilateral1;
+import static app.bpartners.geojobs.model.geometry.TestData.quadrilateral2;
 import static java.awt.Color.BLACK;
 import static java.awt.Color.RED;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import app.bpartners.geojobs.model.geometry.quadrilateral.Quadrilateral;
 import java.io.IOException;
 import java.util.Set;
 import javax.imageio.ImageIO;
 import org.junit.jupiter.api.Test;
-import org.locationtech.jts.geom.Coordinate;
 
 class PlotablePlaneTest {
 
@@ -25,25 +25,11 @@ class PlotablePlaneTest {
 
   @Test
   void plot_quadrilaterals() throws IOException {
-    var expected =
-        ImageIO.read(this.getClass().getResourceAsStream("/geometry/two-quadrilaterals.png"));
+    var expected = ImageIO.read(this.getClass().getResourceAsStream("/geometry/q1-q2.png"));
 
     var actual =
         new PlotablePlane(1024, 1024)
-            .plotQuadrilaterals(
-                Set.of(
-                    new Quadrilateral(
-                        Set.of(
-                            new Coordinate(10, 10),
-                            new Coordinate(300, 100),
-                            new Coordinate(100, 200),
-                            new Coordinate(400, 400))),
-                    new Quadrilateral(
-                        Set.of(
-                            new Coordinate(500, 510),
-                            new Coordinate(400, 700),
-                            new Coordinate(910, 1000),
-                            new Coordinate(800, 690)))));
+            .plotQuadrilaterals(Set.of(quadrilateral1(), quadrilateral2()));
 
     assertTrue(areImagesEqual.apply(expected, actual));
   }

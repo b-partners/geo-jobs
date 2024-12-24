@@ -10,6 +10,8 @@ import app.bpartners.geojobs.model.geometry.plot.Plotable;
 import app.bpartners.geojobs.model.geometry.plot.PlotablePlane;
 import app.bpartners.geojobs.model.geometry.plot.PlotablePolygon;
 import app.bpartners.geojobs.model.geometry.plot.PlotableQuadrilateral;
+import app.bpartners.geojobs.model.geometry.quadrilateral.Alpha.AlphaConf;
+import app.bpartners.geojobs.model.geometry.quadrilateral.model.OrientedQuadrilateral;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
@@ -28,8 +30,11 @@ class AlphaTest {
     Set<Plotable> plotables = new HashSet<>();
     plotables.add(new PlotablePolygon(polygon, BLACK));
     plotables.addAll(
-        new Alpha(polygon, 0.95, 100)
-            .get().stream().map(PlotableQuadrilateral::new).collect(toSet()));
+        new Alpha(polygon, new AlphaConf(0.95, 100))
+            .get().stream()
+                .map(OrientedQuadrilateral::quadrilateral)
+                .map(PlotableQuadrilateral::new)
+                .collect(toSet()));
     var actual = new PlotablePlane(1024, 1024).plot(plotables);
 
     assertTrue(areImagesEqual.apply(expected, actual));

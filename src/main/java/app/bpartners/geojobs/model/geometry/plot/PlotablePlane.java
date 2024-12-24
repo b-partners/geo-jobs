@@ -5,7 +5,7 @@ import static java.awt.image.BufferedImage.TYPE_INT_ARGB;
 import static java.nio.file.Files.createTempFile;
 import static java.util.stream.Collectors.toSet;
 
-import app.bpartners.geojobs.model.geometry.quadrilateral.Quadrilateral;
+import app.bpartners.geojobs.model.geometry.quadrilateral.model.Quadrilateral;
 import java.awt.image.BufferedImage;
 import java.util.Set;
 import javax.imageio.ImageIO;

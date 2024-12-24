@@ -4,7 +4,7 @@ import static java.awt.Color.BLACK;
 import static java.awt.Color.RED;
 
 import app.bpartners.geojobs.model.geometry.IntXY;
-import app.bpartners.geojobs.model.geometry.quadrilateral.Quadrilateral;
+import app.bpartners.geojobs.model.geometry.quadrilateral.model.Quadrilateral;
 import java.awt.*;
 
 public class PlotableQuadrilateral implements Plotable {

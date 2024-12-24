@@ -2,6 +2,8 @@ package app.bpartners.geojobs.model.geometry;
 
 import static org.locationtech.jts.geom.util.AffineTransformation.rotationInstance;
 
+import app.bpartners.geojobs.model.geometry.quadrilateral.model.Quadrilateral;
+import java.util.Set;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Polygon;
@@ -10,19 +12,35 @@ public class TestData {
 
   private static final GeometryFactory geometryFactory = new GeometryFactory();
 
+  public static Quadrilateral quadrilateral1() {
+    return new Quadrilateral(
+        Set.of(
+            new Coordinate(10, 10),
+            new Coordinate(300, 100),
+            new Coordinate(100, 200),
+            new Coordinate(400, 400)));
+  }
+
+  public static Quadrilateral quadrilateral2() {
+    return new Quadrilateral(
+        Set.of(
+            new Coordinate(500, 510),
+            new Coordinate(400, 700),
+            new Coordinate(910, 1000),
+            new Coordinate(800, 690)));
+  }
+
   public static Polygon longPolygon() {
-    var polygon =
-        geometryFactory.createPolygon(
-            geometryFactory.createLinearRing(
-                new Coordinate[] {
-                  new Coordinate(40, 40),
-                  new Coordinate(60, 60),
-                  new Coordinate(100, 30),
-                  new Coordinate(200, 400),
-                  new Coordinate(200, 500),
-                  new Coordinate(40, 40) // Close the ring
-                }));
-    return polygon;
+    return geometryFactory.createPolygon(
+        geometryFactory.createLinearRing(
+            new Coordinate[] {
+              new Coordinate(40, 40),
+              new Coordinate(60, 60),
+              new Coordinate(100, 30),
+              new Coordinate(200, 400),
+              new Coordinate(200, 500),
+              new Coordinate(40, 40) // Close the ring
+            }));
   }
 
   public static Polygon croissant1Polygon() {

@@ -6,6 +6,7 @@ import app.bpartners.geojobs.model.geometry.polygon.EnvelopeAsPolygon;
 import app.bpartners.geojobs.model.geometry.polygon.LongestInteriorLine;
 import app.bpartners.geojobs.model.geometry.polygon.MaximalPolygonFromEdges;
 import app.bpartners.geojobs.model.geometry.polygon.OrientedBoundingBox;
+import app.bpartners.geojobs.model.geometry.quadrilateral.model.Quadrilateral;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -25,13 +26,13 @@ public class SubAlpha implements Supplier<Quadrilateral> {
   public SubAlpha(Polygon polygon) {
     this.p = geometryFactory.createMultiPolygon(new Polygon[] {polygon});
     this.obb_inter_p = obb_inter_p(polygon);
-    this.quadrilateral = computeQuadrilateral();
+    this.quadrilateral = quadrilateralFromObbInterP(obb_inter_p);
   }
 
   public SubAlpha(MultiPolygon polygons) {
     this.p = polygons;
     this.obb_inter_p = obb_inter_p(polygons);
-    this.quadrilateral = computeQuadrilateral();
+    this.quadrilateral = quadrilateralFromObbInterP(obb_inter_p);
   }
 
   @Override
@@ -56,10 +57,7 @@ public class SubAlpha implements Supplier<Quadrilateral> {
     return (Polygon) obb.intersection(p);
   }
 
-  private Quadrilateral computeQuadrilateral() {
+  private static Quadrilateral quadrilateralFromObbInterP(Polygon obb_inter_p) {
     return new Quadrilateral(new MaximalPolygonFromEdges(obb_inter_p, 4).get());
-    // TODO(enhancement): minimize holes, if any, by moving inwards the edges of obtained
-    // quadrilateral.
-    //  Do it in a binary-search fashion until fixpoint is found.
   }
 }
