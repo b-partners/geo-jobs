@@ -27,13 +27,13 @@ public class Alpha implements Supplier<Set<OrientedQuadrilateral>> {
 
   @Override
   public Set<OrientedQuadrilateral> get() {
-    Set<OrientedQuadrilateral> oqList = new HashSet<>();
+    Set<OrientedQuadrilateral> oqSet = new HashSet<>();
 
     var pMinus = p;
     var unionOf_obbInterP = geometryFactory.createMultiPolygon();
     do {
       var subAplha = new SubAlpha(pMinus);
-      oqList.add(
+      oqSet.add(
           // For now, all orientations are on length
           // But later on, considering permitting {length, width} to allow
           // continuation both on length and width for small enough,
@@ -43,6 +43,6 @@ public class Alpha implements Supplier<Set<OrientedQuadrilateral>> {
       pMinus = new GeometryDiff(conf.minAbstractArea).apply(p, unionOf_obbInterP);
     } while (unionOf_obbInterP.getArea() / p.getArea() < conf.minCoverageOfAbstractedArea);
 
-    return oqList;
+    return oqSet;
   }
 }
