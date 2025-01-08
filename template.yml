@@ -58,13 +58,22 @@ Parameters:
     Type: String
 
 Resources:
-  FrontalServerlessRestApi:
-    Type: AWS::Serverless::Api
+  FrontalServerlessHttpApi:
+    Type: AWS::Serverless::HttpApi
     Properties:
       StageName: Prod
-      BinaryMediaTypes:
-        - "*~1*"
-
+      CorsConfiguration:
+        AllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        AllowHeaders:
+          - "*"
+        AllowOrigins:
+          - "*"
+          
   FrontalFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -75,19 +84,18 @@ Resources:
       
       Events:
         ApiCall:
-          Type: Api
+          Type: HttpApi
           Properties:
             Path: /{proxy+}
             Method: ANY
-            RestApiId:
-              Ref: FrontalServerlessRestApi
+            ApiId:
+              Ref: FrontalServerlessHttpApi
 
   WorkerFunction1:
     Type: AWS::Serverless::Function
     Properties:
       Handler: app.bpartners.geojobs.MailboxEventHandler::handleRequest
-#      TODO: changed directly in this template not from poja because it doesnt support different workers conf
-      MemorySize: 2048
+      MemorySize: 1024
       Timeout: 900 #note(sqs-visibility)
       Role: !Sub '{{resolve:ssm:/geo-jobs/${Env}/execution/role-arn}}'
       
@@ -133,7 +141,7 @@ Resources:
     Properties:
       Name: !Join [ '', [ /geo-jobs/, !Ref Env, /api/url ] ]
       Type: String
-      Value: !Sub "https://${FrontalServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
+      Value: !Sub "https://${FrontalServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
 
 Outputs:
   ApiUrl:
