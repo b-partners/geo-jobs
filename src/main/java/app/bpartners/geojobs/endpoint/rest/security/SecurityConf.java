@@ -63,6 +63,7 @@ public class SecurityConf {
             new AntPathRequestMatcher("/ping", GET.name()),
             new AntPathRequestMatcher("/health/event/uuids", POST.name()),
             new AntPathRequestMatcher("/health/**", GET.name()),
+            new AntPathRequestMatcher("/**", OPTIONS.toString()),
             new AntPathRequestMatcher("/readme/webhook", POST.name()));
     httpSecurity
         .exceptionHandling(
@@ -93,6 +94,7 @@ public class SecurityConf {
                 authorizationManagerRequestMatcherRegistry
                     .requestMatchers(anonymousPath)
                     .anonymous()
+                    .requestMatchers(OPTIONS, "/**").permitAll()
                     .requestMatchers("/jobs/*/annotationProcessing")
                     .hasAuthority(ROLE_ADMIN.name())
                     .requestMatchers(GET, "/tilingJobs", "/tilingJobs/**")
