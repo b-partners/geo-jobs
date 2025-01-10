@@ -2,7 +2,7 @@ package app.bpartners.geojobs.service;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
-import app.bpartners.geojobs.model.parcelization.area.AreaComputer;
+import app.bpartners.geojobs.model.geometry.area.AreaComputer;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

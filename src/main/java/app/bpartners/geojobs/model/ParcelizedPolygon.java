@@ -1,10 +1,10 @@
-package app.bpartners.geojobs.model.parcelization;
+package app.bpartners.geojobs.model;
 
 import static java.lang.Math.pow;
 
-import app.bpartners.geojobs.model.ArcgisRasterZoom;
-import app.bpartners.geojobs.model.parcelization.area.IsAreaOfParcel;
-import app.bpartners.geojobs.model.parcelization.area.SquareDegree;
+import app.bpartners.geojobs.model.geometry.Envelope;
+import app.bpartners.geojobs.model.geometry.area.IsAreaOfParcel;
+import app.bpartners.geojobs.model.geometry.area.SquareDegree;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
