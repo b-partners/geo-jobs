@@ -24,6 +24,7 @@ class AbstractedAbstractedLineContinuationTest {
     var expected =
         ImageIO.read(this.getClass().getResourceAsStream("/geometry/long2-compass2-continued.png"));
     var directionThreshold = PI / 4;
+    var distanceThreshold = 1000;
     var alphaConf = new AlphaConf(0.95, 100);
 
     var long2 = long2Polygon();
@@ -32,7 +33,7 @@ class AbstractedAbstractedLineContinuationTest {
         new AbstractedLineContinuation(
             new AbstractedLine(compass2, alphaConf),
             new AbstractedLine(long2, alphaConf),
-            directionThreshold);
+            directionThreshold, distanceThreshold);
     var actual =
         new PlotablePlane(1024, 1024)
             .plot(Set.of(new PlotablePolygon(lineContinuation.get().get(), BLACK)));
@@ -43,6 +44,7 @@ class AbstractedAbstractedLineContinuationTest {
   @Test
   void long2_compass2_not_continued() throws IOException {
     var directionThreshold = PI / 6; // !!!!! Tolerance is too small: direction condition will fail
+    var distanceThreshold = 1000;
     var alphaConf = new AlphaConf(0.95, 100);
 
     var long2 = long2Polygon();
@@ -51,7 +53,7 @@ class AbstractedAbstractedLineContinuationTest {
         new AbstractedLineContinuation(
             new AbstractedLine(compass2, alphaConf),
             new AbstractedLine(long2, alphaConf),
-            directionThreshold);
+            directionThreshold, distanceThreshold);
     assertTrue(lineContinuation.get().isEmpty());
   }
 }

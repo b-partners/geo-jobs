@@ -7,14 +7,15 @@ import org.locationtech.jts.geom.Polygon;
 public class AbstractedLineContinuation implements Supplier<Optional<Polygon>> {
 
   private final AbstractedLine l1, l2;
-  private final double directionThreshold;
+  private final double directionThreshold, distanceThreshold;
   private final Optional<Polygon> continuationOpt;
 
   public AbstractedLineContinuation(
-      AbstractedLine l1, AbstractedLine l2, double directionThreshold) {
+      AbstractedLine l1, AbstractedLine l2, double directionThreshold, double distanceThreshold) {
     this.l1 = l1;
     this.l2 = l2;
     this.directionThreshold = directionThreshold;
+    this.distanceThreshold = distanceThreshold;
     this.continuationOpt = continueLine();
   }
 
@@ -25,7 +26,7 @@ public class AbstractedLineContinuation implements Supplier<Optional<Polygon>> {
     var res = l1.line().union(l2.line());
     for (var oq1 : oqSet1) {
       for (var oq2 : oqSet2) {
-        var continuationOpt = oq1.continueWith(oq2, directionThreshold);
+        var continuationOpt = oq1.continueWith(oq2, directionThreshold, distanceThreshold);
         if (continuationOpt.isPresent()) {
           res = res.union(continuationOpt.get().quadrilateral().polygon());
         }

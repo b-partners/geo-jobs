@@ -5,17 +5,19 @@ import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFacto
 import app.bpartners.geojobs.model.geometry.HaveAnglesSameDirection;
 import java.util.Optional;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
 
+@Slf4j
 public record OrientedQuadrilateral(Quadrilateral quadrilateral, Orientation orientation) {
   public Optional<OrientedQuadrilateral> continueWith(
-      OrientedQuadrilateral that, double directionThreshold) {
+      OrientedQuadrilateral that, double directionThreshold, double distanceThreshold) {
     var origin = geometryFactory.createPoint(new Coordinate(0, 0));
     if (that.quadrilateral.centroid().distance(origin)
-        < quadrilateral.centroid().distance(origin)) {
-      return that.continueWith(this, directionThreshold);
+        < quadrilateral.centroid().distance(origin) & closeEnoughWith(that, distanceThreshold)) {
+      return that.continueWith(this, directionThreshold, distanceThreshold);
     }
-    if (!closeEnoughWith(that) || !colinearEnoughWith(that, directionThreshold)) {
+    if (!closeEnoughWith(that, distanceThreshold) || !colinearEnoughWith(that, directionThreshold)) {
       return Optional.empty();
     }
 
@@ -40,7 +42,9 @@ public record OrientedQuadrilateral(Quadrilateral quadrilateral, Orientation ori
             .test(quadrilateral().angle(), that.quadrilateral.angle());
   }
 
-  private boolean closeEnoughWith(OrientedQuadrilateral that) {
-    return true;
+  private boolean closeEnoughWith(OrientedQuadrilateral that, double distanceThreshold) {
+    var distance = quadrilateral.polygon().distance(that.quadrilateral.polygon());
+    log.info("Distance between polygons={}", distance);
+    return distance < distanceThreshold;
   }
 }

@@ -18,23 +18,25 @@ class OrientedQuadrilateralTest {
 
   @Test
   void do_not_continue_with_q1_and_q2() throws IOException {
+    var distanceThreshold = 200;
     var expected =
         ImageIO.read(this.getClass().getResourceAsStream("/geometry/q1-q2-continued.png"));
 
     var q1 = new OrientedQuadrilateral(quadrilateral1(), length);
     var q2 = new OrientedQuadrilateral(quadrilateral2(), length);
-    var continuation = q1.continueWith(q2, PI / 50);
+    var continuation = q1.continueWith(q2, PI / 50, distanceThreshold);
     assertTrue(continuation.isEmpty());
   }
 
   @Test
   void continue_with_q1_and_q2() throws IOException {
+    var distanceThreshold = 200;
     var expected =
         ImageIO.read(this.getClass().getResourceAsStream("/geometry/q1-q2-continued.png"));
 
     var q1 = new OrientedQuadrilateral(quadrilateral1(), length);
     var q2 = new OrientedQuadrilateral(quadrilateral2(), length);
-    var continuation = q1.continueWith(q2, PI / 40).get();
+    var continuation = q1.continueWith(q2, PI / 40, distanceThreshold).get();
     var actual =
         new PlotablePlane(1024, 1024)
             .plotQuadrilaterals(
@@ -45,12 +47,13 @@ class OrientedQuadrilateralTest {
 
   @Test
   void continue_with_q2_and_q1() throws IOException {
+    var distanceThreshold = 200;
     var expected =
         ImageIO.read(this.getClass().getResourceAsStream("/geometry/q1-q2-continued.png"));
 
     var q1 = new OrientedQuadrilateral(quadrilateral1(), length);
     var q2 = new OrientedQuadrilateral(quadrilateral2(), length);
-    var continuation = q2.continueWith(q1, PI / 40).get();
+    var continuation = q2.continueWith(q1, PI / 40, distanceThreshold).get();
     var actual =
         new PlotablePlane(1024, 1024)
             .plotQuadrilaterals(
