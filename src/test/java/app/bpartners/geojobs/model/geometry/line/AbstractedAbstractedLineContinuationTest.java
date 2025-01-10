@@ -9,15 +9,51 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import app.bpartners.geojobs.model.geometry.plot.AreImagesEqual;
 import app.bpartners.geojobs.model.geometry.plot.PlotablePlane;
 import app.bpartners.geojobs.model.geometry.plot.PlotablePolygon;
+import app.bpartners.geojobs.model.geometry.polygon.FeatureCollection;
+import app.bpartners.geojobs.model.geometry.polygon.VGG;
 import app.bpartners.geojobs.model.geometry.quadrilateral.Alpha.AlphaConf;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Set;
 import javax.imageio.ImageIO;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.io.ClassPathResource;
+import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
 class AbstractedAbstractedLineContinuationTest {
+  private final static ObjectMapper om = new ObjectMapper().findAndRegisterModules();
 
   AreImagesEqual areImagesEqual = new AreImagesEqual(0.00005); // note(numeric-instability)
+
+  private FeatureCollection getVGGAnnotation(String vggFilename) {
+    InputStream vggAnnotationResource =
+        this.getClass().getResourceAsStream("/geometry/vggfile/" + vggFilename);
+    try {
+      String vgg = new String(vggAnnotationResource.readAllBytes(), StandardCharsets.UTF_8);
+      var vggAnnotations = om.readValue(vgg, VGG.class);
+      return FeatureCollection.from(vggAnnotations);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Test
+  void test(){
+    var featureCollection = getVGGAnnotation("annotation_test.json");
+    var features = featureCollection.features();
+    var length = features.size();
+    var directionThreshold = PI / 4;
+    var distanceThreshold = 10;
+    var alphaConf = new AlphaConf(0.95, 100);
+
+    for (int i = 0; i < length - 1; i++) {
+      var current = features.get(i);
+      for (int j = i+1; j < length; j++) {
+        var next = features.get(j);
+      }
+    }
+  }
 
   @Test
   void long2_compass2_continued() throws IOException {

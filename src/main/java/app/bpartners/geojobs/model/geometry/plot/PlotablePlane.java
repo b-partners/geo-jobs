@@ -7,6 +7,7 @@ import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.geojobs.model.geometry.quadrilateral.model.Quadrilateral;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.Set;
 import javax.imageio.ImageIO;
 import lombok.SneakyThrows;
@@ -28,7 +29,10 @@ public record PlotablePlane(int width, int height) {
 
     g2d.dispose();
 
-    var outputfile = createTempFile("plane", ".png").toFile();
+    String currentDir = "/Users/numer-mobile-2/geo-jobs/src/test/resources/geometry/output";
+
+    File outputfile = new File(currentDir, "plane_" + System.nanoTime() + ".png");
+
     ImageIO.write(bufferedImage, "png", outputfile);
     System.out.println("Plane plotted in: " + outputfile);
     return bufferedImage;
