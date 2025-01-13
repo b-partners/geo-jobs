@@ -27,8 +27,8 @@ public class LongestInteriorLine implements Supplier<LineString> {
   @Override
   public LineString get() {
     Coordinate[] coordinates = polygon.getExteriorRing().getCoordinates();
-    double maxLength = 0;
-    LineString longestLine = null;
+    LineString longestLine = createLine(coordinates[0], coordinates[1]);
+    double maxLength = longestLine.getLength();
 
     // Iterate through all pairs of coordinates
     for (int i = 0; i < coordinates.length; i++) {

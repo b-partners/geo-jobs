@@ -13,11 +13,12 @@ public record OrientedQuadrilateral(Quadrilateral quadrilateral, Orientation ori
   public Optional<OrientedQuadrilateral> continueWith(
       OrientedQuadrilateral that, double directionThreshold, double distanceThreshold) {
     var origin = geometryFactory.createPoint(new Coordinate(0, 0));
-    if (that.quadrilateral.centroid().distance(origin)
-        < quadrilateral.centroid().distance(origin) & closeEnoughWith(that, distanceThreshold)) {
+    if (that.quadrilateral.centroid().distance(origin) < quadrilateral.centroid().distance(origin)
+        & closeEnoughWith(that, distanceThreshold)) {
       return that.continueWith(this, directionThreshold, distanceThreshold);
     }
-    if (!closeEnoughWith(that, distanceThreshold) || !colinearEnoughWith(that, directionThreshold)) {
+    if (!closeEnoughWith(that, distanceThreshold)
+        || !colinearEnoughWith(that, directionThreshold)) {
       return Optional.empty();
     }
 

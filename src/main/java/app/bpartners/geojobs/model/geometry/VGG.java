@@ -1,6 +1,5 @@
-package app.bpartners.geojobs.model.geometry.polygon;
+package app.bpartners.geojobs.model.geometry;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.HashMap;
 import java.util.List;
@@ -22,8 +21,10 @@ public class VGG extends HashMap<String, VGG.Annotation> {
   public static class Annotation {
     @JsonProperty("size")
     private Integer size;
+
     @JsonProperty("filename")
     private String filename;
+
     @JsonProperty("base64_img_data")
     private String base64ImgData;
 
@@ -66,4 +67,3 @@ public class VGG extends HashMap<String, VGG.Annotation> {
     }
   }
 }
-

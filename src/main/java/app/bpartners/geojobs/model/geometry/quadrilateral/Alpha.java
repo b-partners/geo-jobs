@@ -10,9 +10,11 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Supplier;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
 
+@Slf4j
 @AllArgsConstructor
 public class Alpha implements Supplier<Set<OrientedQuadrilateral>> {
 
@@ -27,19 +29,28 @@ public class Alpha implements Supplier<Set<OrientedQuadrilateral>> {
 
   @Override
   public Set<OrientedQuadrilateral> get() {
+    try {
+      return fallibleAplha();
+    } catch (Exception e) {
+      log.error(String.format("Alpha failed: p=%s", p), e);
+      return Set.of();
+    }
+  }
+
+  private Set<OrientedQuadrilateral> fallibleAplha() {
     Set<OrientedQuadrilateral> oqSet = new HashSet<>();
 
     var pMinus = p;
     var unionOf_obbInterP = geometryFactory.createMultiPolygon();
     do {
-      var subAplha = new SubAlpha(pMinus);
+      var subAlpha = new SubAlpha(pMinus);
       oqSet.add(
           // For now, all orientations are on length
           // But later on, considering permitting {length, width} to allow
           // continuation both on length and width for small enough,
           // not reliable enough quadrilateral
-          new OrientedQuadrilateral(subAplha.get(), length));
-      unionOf_obbInterP = new MultiPolygonUnion().apply(unionOf_obbInterP, subAplha.obb_inter_p());
+          new OrientedQuadrilateral(subAlpha.get(), length));
+      unionOf_obbInterP = new MultiPolygonUnion().apply(unionOf_obbInterP, subAlpha.obb_inter_p());
       pMinus = new GeometryDiff(conf.minAbstractArea).apply(p, unionOf_obbInterP);
     } while (unionOf_obbInterP.getArea() / p.getArea() < conf.minCoverageOfAbstractedArea);
 
