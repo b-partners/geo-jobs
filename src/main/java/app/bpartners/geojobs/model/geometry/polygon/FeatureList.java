@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.model.geometry.feature;
+package app.bpartners.geojobs.model.geometry.polygon;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 

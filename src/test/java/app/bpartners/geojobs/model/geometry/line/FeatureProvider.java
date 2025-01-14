@@ -3,7 +3,7 @@ package app.bpartners.geojobs.model.geometry.line;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import app.bpartners.geojobs.model.geometry.VGG;
-import app.bpartners.geojobs.model.geometry.feature.FeatureList;
+import app.bpartners.geojobs.model.geometry.polygon.FeatureList;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.function.Function;
