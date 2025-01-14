@@ -6,10 +6,12 @@ import static java.nio.file.Files.createTempFile;
 import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.geojobs.model.geometry.quadrilateral.model.Quadrilateral;
+import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.util.Set;
 import javax.imageio.ImageIO;
 import lombok.SneakyThrows;
+import org.locationtech.jts.geom.Polygon;
 
 public record PlotablePlane(int width, int height) {
 
@@ -32,5 +34,9 @@ public record PlotablePlane(int width, int height) {
     ImageIO.write(bufferedImage, "png", outputfile);
     System.out.println("Plane plotted in: " + outputfile);
     return bufferedImage;
+  }
+
+  public BufferedImage plot(Set<Polygon> polygons, Color color) {
+    return plot(polygons.stream().map(p -> new PlotablePolygon(p, color)).collect(toSet()));
   }
 }
