@@ -25,7 +25,7 @@ import org.locationtech.jts.geom.Polygon;
 
 class AlphaTest {
   AreImagesEqual areImagesEqual = new AreImagesEqual(0.005); // note(numeric-instability)
-  FeatureProvider featureProvider = new FeatureProvider();
+  FeatureProvider featureProvider = new FeatureProvider("/geometry/vgg/dijon.json");
 
   @Test
   void vgg1() {
