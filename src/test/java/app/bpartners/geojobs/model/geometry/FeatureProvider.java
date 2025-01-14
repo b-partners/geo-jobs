@@ -1,10 +1,13 @@
 package app.bpartners.geojobs.model.geometry;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.stream.Collectors.toSet;
 
+import app.bpartners.geojobs.model.geometry.polygon.Feature;
 import app.bpartners.geojobs.model.geometry.polygon.FeatureList;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Set;
 import java.util.function.Function;
 import org.locationtech.jts.geom.Polygon;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,5 +39,9 @@ public class FeatureProvider implements Function<Integer, Polygon> {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public Set<Polygon> getFeaturesGeometry() {
+    return featureList.get().stream().map(Feature::geometry).collect(toSet());
   }
 }

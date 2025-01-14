@@ -54,7 +54,8 @@ class AlphaTest {
 
   @Test
   void vgg22() {
-    isAbstractionCorrect(featureProvider.apply(22), "/geometry/vgg/vgg22-alpha-can-be-problematic.png");
+    isAbstractionCorrect(
+        featureProvider.apply(22), "/geometry/vgg/vgg22-alpha-can-be-problematic.png");
   }
 
   @Test
