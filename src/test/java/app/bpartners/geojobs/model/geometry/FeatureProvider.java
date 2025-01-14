@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.model.geometry.line;
+package app.bpartners.geojobs.model.geometry;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 

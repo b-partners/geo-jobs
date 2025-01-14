@@ -6,7 +6,7 @@ import static java.util.stream.Collectors.toSet;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import app.bpartners.geojobs.model.geometry.line.FeatureProvider;
+import app.bpartners.geojobs.model.geometry.FeatureProvider;
 import app.bpartners.geojobs.model.geometry.plot.AreImagesEqual;
 import app.bpartners.geojobs.model.geometry.plot.Plotable;
 import app.bpartners.geojobs.model.geometry.plot.PlotablePlane;
