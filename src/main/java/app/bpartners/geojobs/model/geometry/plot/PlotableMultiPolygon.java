@@ -11,9 +11,9 @@ public class PlotableMultiPolygon implements Plotable {
   private final Color color;
 
   @Override
-  public void plot(Graphics2D g2d) {
+  public void plot(Graphics2D g2d, double scale) {
     for (int n = 0; n < polygons.getNumGeometries(); n++) {
-      new PlotablePolygon((Polygon) polygons.getGeometryN(n), color).plot(g2d);
+      new PlotablePolygon((Polygon) polygons.getGeometryN(n), color).plot(g2d, scale);
     }
   }
 }

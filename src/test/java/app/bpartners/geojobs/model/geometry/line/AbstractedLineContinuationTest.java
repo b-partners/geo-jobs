@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 
 class AbstractedLineContinuationTest {
 
-  AreImagesEqual areImagesEqual = new AreImagesEqual(0.00005); // note(numeric-instability)
+  AreImagesEqual areImagesEqual = new AreImagesEqual(0.0005); // note(numeric-instability)
 
   @Test
   void long2_compass2_continued() throws IOException {

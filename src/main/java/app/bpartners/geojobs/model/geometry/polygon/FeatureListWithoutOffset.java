@@ -7,18 +7,20 @@ import app.bpartners.geojobs.model.geometry.VGG;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
+import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Polygon;
 
-public class FeatureList implements Supplier<List<Feature>> {
+@Slf4j
+public class FeatureListWithoutOffset implements Supplier<List<Feature>> {
 
   private final List<Feature> features;
 
-  public FeatureList(VGG vgg) {
-    features = toFeatures(vgg);
+  public FeatureListWithoutOffset(VGG vgg, IntXY imageResolution) {
+    this.features = features(vgg, imageResolution);
   }
 
-  public static List<Feature> toFeatures(VGG vgg) {
+  public static List<Feature> features(VGG vgg, IntXY imageResolution) {
     List<Feature> features = new ArrayList<>();
 
     for (String key : vgg.keySet()) {
@@ -29,7 +31,7 @@ public class FeatureList implements Supplier<List<Feature>> {
         var xList = region.getShapeAttribute().getAllPointsX();
         var yList = region.getShapeAttribute().getAllPointsY();
         var polygon = polygonFrom(toDistinctIntXY(xList, yList));
-        features.add(new Feature(key, label, confidence, polygon));
+        features.add(new Feature(key, label, confidence, polygon, imageResolution));
       }
     }
 

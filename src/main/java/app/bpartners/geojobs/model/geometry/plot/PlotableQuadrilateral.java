@@ -21,7 +21,11 @@ public class PlotableQuadrilateral implements Plotable {
   }
 
   @Override
-  public void plot(Graphics2D g2d) {
+  public void plot(Graphics2D g2d, double scale) {
+    if (scale != 1) {
+      throw new RuntimeException("Drawing quadrilateral with scale!=1 is not supported yet");
+    }
+
     g2d.setColor(RED);
     g2d.drawPolygon(
         new int[] {a.x(), b.x(), c.x(), d.x()}, new int[] {a.y(), b.y(), c.y(), d.y()}, 4);

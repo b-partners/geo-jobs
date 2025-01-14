@@ -12,12 +12,12 @@ public class PlotablePolygon implements Plotable {
   private final Color color;
 
   @Override
-  public void plot(Graphics2D g2d) {
+  public void plot(Graphics2D g2d, double scale) {
     g2d.setColor(color);
     var coordinates = polygon.getExteriorRing().getCoordinates();
     g2d.drawPolygon(
-        Arrays.stream(coordinates).mapToInt(c -> (int) c.x).toArray(),
-        Arrays.stream(coordinates).mapToInt(c -> (int) c.y).toArray(),
+        Arrays.stream(coordinates).mapToInt(c -> (int) (c.x * scale)).toArray(),
+        Arrays.stream(coordinates).mapToInt(c -> (int) (c.y * scale)).toArray(),
         coordinates.length);
   }
 }

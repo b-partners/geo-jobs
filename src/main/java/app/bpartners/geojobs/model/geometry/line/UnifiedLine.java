@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.model.geometry.line;
 
+import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
+
 import app.bpartners.geojobs.model.geometry.polygon.MultiPolygonUnion;
 import java.util.HashSet;
 import java.util.Set;
@@ -7,7 +9,6 @@ import lombok.Getter;
 import lombok.experimental.Accessors;
 import org.locationtech.jts.geom.Polygon;
 
-import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 @Accessors(fluent = true)
 @Getter
 public class UnifiedLine {
@@ -18,10 +19,10 @@ public class UnifiedLine {
     this.unified = unify(toUnify);
   }
 
-  private static Set<Polygon> unify(Set<Polygon> toUnify){
+  private static Set<Polygon> unify(Set<Polygon> toUnify) {
     var multiPolygon = geometryFactory.createMultiPolygon();
     for (Polygon polygon : toUnify) {
-        multiPolygon = new MultiPolygonUnion().apply(multiPolygon, polygon);
+      multiPolygon = new MultiPolygonUnion().apply(multiPolygon, polygon);
     }
 
     var unified = new HashSet<Polygon>();

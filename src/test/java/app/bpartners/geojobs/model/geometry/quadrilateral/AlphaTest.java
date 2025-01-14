@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import app.bpartners.geojobs.model.geometry.FeatureProvider;
+import app.bpartners.geojobs.model.geometry.IntXY;
 import app.bpartners.geojobs.model.geometry.plot.AreImagesEqual;
 import app.bpartners.geojobs.model.geometry.plot.Plotable;
 import app.bpartners.geojobs.model.geometry.plot.PlotablePlane;
@@ -25,7 +26,8 @@ import org.locationtech.jts.geom.Polygon;
 
 class AlphaTest {
   AreImagesEqual areImagesEqual = new AreImagesEqual(0.005); // note(numeric-instability)
-  FeatureProvider featureProvider = new FeatureProvider("/geometry/vgg/dijon.json");
+  FeatureProvider featureProvider =
+      new FeatureProvider("/geometry/vgg/dijon.json", false, new IntXY(1024, 1024));
 
   @Test
   void vgg1() {
