@@ -1,20 +1,22 @@
 package app.bpartners.geojobs.model.geometry.line;
 
+import app.bpartners.geojobs.model.geometry.FeatureProvider;
+import app.bpartners.geojobs.model.geometry.IntXY;
+import app.bpartners.geojobs.model.geometry.plot.AreImagesEqual;
+import app.bpartners.geojobs.model.geometry.plot.PlotConf;
+import app.bpartners.geojobs.model.geometry.plot.PlotablePlane;
+import org.junit.jupiter.api.Test;
+
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.io.IOException;
+import java.util.Set;
+
 import static app.bpartners.geojobs.model.geometry.TestData.compass1Polygon;
 import static app.bpartners.geojobs.model.geometry.TestData.longPolygon;
 import static java.awt.Color.BLACK;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import app.bpartners.geojobs.model.geometry.FeatureProvider;
-import app.bpartners.geojobs.model.geometry.IntXY;
-import app.bpartners.geojobs.model.geometry.plot.AreImagesEqual;
-import app.bpartners.geojobs.model.geometry.plot.PlotablePlane;
-import java.awt.*;
-import java.io.IOException;
-import java.util.Set;
-import javax.imageio.ImageIO;
-import org.junit.jupiter.api.Test;
 
 public class UnifiedLineTest {
   AreImagesEqual areImagesEqual = new AreImagesEqual(0.00005);
@@ -42,7 +44,7 @@ public class UnifiedLineTest {
 
     var unified = new UnifiedLine(toUnify, new UnificationConf(5)).unified();
     var unifiedImage =
-        new PlotablePlane(1_024, 1_024).plot(unified, BLACK, new BasicStroke(1), 0.1);
+        new PlotablePlane(1_024, 1_024).plotPolygons(unified, new PlotConf(BLACK, new BasicStroke(1), 0.1));
 
     assertEquals(27, unified.size());
     var expectedOutput =
