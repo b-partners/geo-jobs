@@ -28,7 +28,7 @@ public class UnifiedLineTest {
     var long1 = longPolygon();
     var compass1 = compass1Polygon();
 
-    var unifiedLine = new UnifiedLine(Set.of(long1, compass1));
+    var unifiedLine = new UnifiedLine(Set.of(long1, compass1), new UnificationConf(0));
     var actual = new PlotablePlane(1024, 1024).plot(unifiedLine.unified(), BLACK);
 
     assertEquals(1, unifiedLine.unified().size());
@@ -38,11 +38,13 @@ public class UnifiedLineTest {
   @Test
   void rond_point_is_unified() throws IOException {
     var toUnify = featureProvider.getFeaturesGeometry();
+    assertEquals(89, toUnify.size());
 
-    var unified = new UnifiedLine(toUnify);
+    var unified = new UnifiedLine(toUnify, new UnificationConf(5)).unified();
     var unifiedImage =
-        new PlotablePlane(1_024, 1_024).plot(unified.unified(), BLACK, new BasicStroke(1), 0.1);
+        new PlotablePlane(1_024, 1_024).plot(unified, BLACK, new BasicStroke(1), 0.1);
 
+    assertEquals(27, unified.size());
     var expectedOutput =
         ImageIO.read(this.getClass().getResourceAsStream("/geometry/vgg/rond-point-unified.png"));
     assertTrue(areImagesEqual.apply(expectedOutput, unifiedImage));

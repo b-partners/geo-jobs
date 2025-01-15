@@ -12,20 +12,21 @@ import org.locationtech.jts.geom.Polygon;
 @Accessors(fluent = true)
 @Getter
 public class UnifiedLine {
-  private static final int MIN_BUFFER_REQUIRED = 20;
   private final Set<Polygon> toUnify, unified;
+  private final UnificationConf unificationConf;
 
-  public UnifiedLine(Set<Polygon> toUnify) {
+  public UnifiedLine(Set<Polygon> toUnify, UnificationConf unificationConf) {
+    this.unificationConf = unificationConf;
     this.toUnify = toUnify;
-    this.unified = unify(toUnify);
+    this.unified = unify(toUnify, unificationConf);
   }
 
-  private static Set<Polygon> unify(Set<Polygon> toUnify) {
+  private static Set<Polygon> unify(Set<Polygon> toUnify, UnificationConf unificationConf) {
     var multiPolygon = geometryFactory.createMultiPolygon();
     for (Polygon polygon : toUnify) {
       multiPolygon =
           new MultiPolygonUnion()
-              .apply(multiPolygon, (Polygon) polygon.buffer(MIN_BUFFER_REQUIRED));
+              .apply(multiPolygon, (Polygon) polygon.buffer(unificationConf.buffer()));
     }
 
     var unified = new HashSet<Polygon>();
