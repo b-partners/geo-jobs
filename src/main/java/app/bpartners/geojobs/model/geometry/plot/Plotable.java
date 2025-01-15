@@ -1,11 +1,18 @@
 package app.bpartners.geojobs.model.geometry.plot;
 
 import java.awt.*;
+import lombok.AllArgsConstructor;
 
-public interface Plotable {
-  default void plot(Graphics2D g2d) {
-    plot(g2d, 1);
+@AllArgsConstructor
+public abstract sealed class Plotable permits PlotableQuadrilateral, PlotablePolygon {
+
+  protected final PlotConf plotConf;
+
+  public final void plot(Graphics2D g2d) {
+    g2d.setColor(plotConf.color());
+    g2d.setStroke(plotConf.stroke());
+    draw(g2d);
   }
 
-  void plot(Graphics2D g2d, double scale);
+  protected abstract void draw(Graphics2D g2d);
 }

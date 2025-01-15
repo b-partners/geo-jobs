@@ -1,8 +1,8 @@
 package app.bpartners.geojobs.model.geometry.plot;
 
-import java.awt.*;
-
 import static java.awt.Color.BLACK;
+
+import java.awt.*;
 
 public record PlotConf(Color color, Stroke stroke, double scale) {
   public static final Color DEFAULT_COLOR = BLACK;

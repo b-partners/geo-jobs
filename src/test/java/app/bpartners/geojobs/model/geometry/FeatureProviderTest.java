@@ -1,16 +1,15 @@
 package app.bpartners.geojobs.model.geometry;
 
+import static java.awt.Color.BLACK;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import app.bpartners.geojobs.model.geometry.plot.AreImagesEqual;
 import app.bpartners.geojobs.model.geometry.plot.PlotConf;
 import app.bpartners.geojobs.model.geometry.plot.PlotablePlane;
-import org.junit.jupiter.api.Test;
-
-import javax.imageio.ImageIO;
 import java.awt.*;
 import java.io.IOException;
-
-import static java.awt.Color.BLACK;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import javax.imageio.ImageIO;
+import org.junit.jupiter.api.Test;
 
 public class FeatureProviderTest {
   AreImagesEqual areImagesEqual = new AreImagesEqual(0.00005);
@@ -22,7 +21,8 @@ public class FeatureProviderTest {
     var toUnify = featureProvider.getFeaturesGeometry();
 
     var toUnifyImage =
-        new PlotablePlane(1_024, 1_024).plotPolygons(toUnify, new PlotConf(BLACK, new BasicStroke(1), 0.1));
+        new PlotablePlane(1_024, 1_024)
+            .plotPolygons(toUnify, new PlotConf(BLACK, new BasicStroke(1), 0.1));
 
     var expectedInput =
         ImageIO.read(this.getClass().getResourceAsStream("/geometry/vgg/rond-point.png"));

@@ -7,13 +7,14 @@ import app.bpartners.geojobs.model.geometry.IntXY;
 import app.bpartners.geojobs.model.geometry.quadrilateral.model.Quadrilateral;
 import java.awt.*;
 
-public class PlotableQuadrilateral implements Plotable {
+public final class PlotableQuadrilateral extends Plotable {
   private final IntXY a;
   private final IntXY b;
   private final IntXY c;
   private final IntXY d;
 
   public PlotableQuadrilateral(Quadrilateral quadrilateral) {
+    super(new PlotConf());
     this.a = new IntXY((int) quadrilateral.a().x, (int) quadrilateral.a().y);
     this.b = new IntXY((int) quadrilateral.b().x, (int) quadrilateral.b().y);
     this.c = new IntXY((int) quadrilateral.c().x, (int) quadrilateral.c().y);
@@ -21,8 +22,8 @@ public class PlotableQuadrilateral implements Plotable {
   }
 
   @Override
-  public void plot(Graphics2D g2d, double scale) {
-    if (scale != 1) {
+  public void draw(Graphics2D g2d) {
+    if (plotConf.scale() != 1) {
       throw new RuntimeException("Drawing quadrilateral with scale!=1 is not supported yet");
     }
 
