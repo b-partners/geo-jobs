@@ -12,6 +12,7 @@ import org.locationtech.jts.geom.Polygon;
 @Accessors(fluent = true)
 @Getter
 public class UnifiedLine {
+  private static final int MIN_BUFFER_REQUIRED = 20;
   private final Set<Polygon> toUnify, unified;
 
   public UnifiedLine(Set<Polygon> toUnify) {
@@ -22,7 +23,9 @@ public class UnifiedLine {
   private static Set<Polygon> unify(Set<Polygon> toUnify) {
     var multiPolygon = geometryFactory.createMultiPolygon();
     for (Polygon polygon : toUnify) {
-      multiPolygon = new MultiPolygonUnion().apply(multiPolygon, polygon);
+      multiPolygon =
+          new MultiPolygonUnion()
+              .apply(multiPolygon, (Polygon) polygon.buffer(MIN_BUFFER_REQUIRED));
     }
 
     var unified = new HashSet<Polygon>();

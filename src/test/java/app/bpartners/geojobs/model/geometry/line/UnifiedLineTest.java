@@ -1,21 +1,20 @@
 package app.bpartners.geojobs.model.geometry.line;
 
-import app.bpartners.geojobs.model.geometry.FeatureProvider;
-import app.bpartners.geojobs.model.geometry.IntXY;
-import app.bpartners.geojobs.model.geometry.plot.AreImagesEqual;
-import app.bpartners.geojobs.model.geometry.plot.PlotablePlane;
-import org.junit.jupiter.api.Test;
-
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.io.IOException;
-import java.util.Set;
-
 import static app.bpartners.geojobs.model.geometry.TestData.compass1Polygon;
 import static app.bpartners.geojobs.model.geometry.TestData.longPolygon;
 import static java.awt.Color.BLACK;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import app.bpartners.geojobs.model.geometry.FeatureProvider;
+import app.bpartners.geojobs.model.geometry.IntXY;
+import app.bpartners.geojobs.model.geometry.plot.AreImagesEqual;
+import app.bpartners.geojobs.model.geometry.plot.PlotablePlane;
+import java.awt.*;
+import java.io.IOException;
+import java.util.Set;
+import javax.imageio.ImageIO;
+import org.junit.jupiter.api.Test;
 
 public class UnifiedLineTest {
   AreImagesEqual areImagesEqual = new AreImagesEqual(0.00005);
@@ -45,7 +44,7 @@ public class UnifiedLineTest {
         new PlotablePlane(1_024, 1_024).plot(unified.unified(), BLACK, new BasicStroke(1), 0.1);
 
     var expectedOutput =
-        ImageIO.read(this.getClass().getResourceAsStream("/geometry/vgg/rond-point.png"));
+        ImageIO.read(this.getClass().getResourceAsStream("/geometry/vgg/rond-point-unified.png"));
     assertTrue(areImagesEqual.apply(expectedOutput, unifiedImage));
   }
 }
