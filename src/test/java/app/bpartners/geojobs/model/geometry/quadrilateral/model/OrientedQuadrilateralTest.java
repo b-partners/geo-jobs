@@ -22,7 +22,7 @@ class OrientedQuadrilateralTest {
     var distanceThreshold = 200;
     var q1 = new OrientedQuadrilateral(quadrilateral1(), lengthOnly);
     var q2 = new OrientedQuadrilateral(quadrilateral2(), lengthOnly);
-    var continuation = q1.continueWith(q2, new ContinuationConf(PI / 50, distanceThreshold));
+    var continuation = q1.continueWith(q2, new ContinuationConf(PI / 40, distanceThreshold));
     assertTrue(continuation.isEmpty());
   }
 
@@ -34,7 +34,7 @@ class OrientedQuadrilateralTest {
 
     var q1 = new OrientedQuadrilateral(quadrilateral1(), lengthOnly);
     var q2 = new OrientedQuadrilateral(quadrilateral2(), lengthOnly);
-    var continuation = q1.continueWith(q2, new ContinuationConf(PI / 40, distanceThreshold)).get();
+    var continuation = q1.continueWith(q2, new ContinuationConf(PI / 30, distanceThreshold)).get();
     var actual =
         new PlotablePlane(1024, 1024)
             .plotQuadrilaterals(
@@ -51,7 +51,7 @@ class OrientedQuadrilateralTest {
 
     var q1 = new OrientedQuadrilateral(quadrilateral1(), lengthOnly);
     var q2 = new OrientedQuadrilateral(quadrilateral2(), lengthOnly);
-    var continuation = q2.continueWith(q1, new ContinuationConf(PI / 40, distanceThreshold)).get();
+    var continuation = q2.continueWith(q1, new ContinuationConf(PI / 30, distanceThreshold)).get();
     var actual =
         new PlotablePlane(1024, 1024)
             .plotQuadrilaterals(
