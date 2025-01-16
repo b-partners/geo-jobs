@@ -1,5 +1,13 @@
 package app.bpartners.geojobs.model.geometry.route;
 
+import static app.bpartners.geojobs.model.geometry.plot.PlotConf.DEFAULT_STROKE;
+import static java.awt.Color.BLACK;
+import static java.awt.Color.GREEN;
+import static java.awt.Color.RED;
+import static java.lang.Math.PI;
+import static java.util.stream.Collectors.toSet;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import app.bpartners.geojobs.model.geometry.FeatureProvider;
 import app.bpartners.geojobs.model.geometry.IntXY;
 import app.bpartners.geojobs.model.geometry.plot.AreImagesEqual;
@@ -8,21 +16,12 @@ import app.bpartners.geojobs.model.geometry.plot.Plotable;
 import app.bpartners.geojobs.model.geometry.plot.PlotablePlane;
 import app.bpartners.geojobs.model.geometry.plot.PlotablePolygon;
 import app.bpartners.geojobs.model.geometry.quadrilateral.model.AlphaConf;
-import org.junit.jupiter.api.Test;
-
-import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.Set;
-
-import static app.bpartners.geojobs.model.geometry.plot.PlotConf.DEFAULT_STROKE;
-import static java.awt.Color.BLACK;
-import static java.awt.Color.GREEN;
-import static java.awt.Color.RED;
-import static java.lang.Math.PI;
-import static java.util.stream.Collectors.toSet;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import javax.imageio.ImageIO;
+import org.junit.jupiter.api.Test;
 
 class RoutesContinuationTest {
 
@@ -39,7 +38,7 @@ class RoutesContinuationTest {
   }
 
   private ContinuationConf continuationConf() {
-    return new ContinuationConf(PI / 6, 500);
+    return new ContinuationConf(PI / 12, PI / 6, 500);
   }
 
   @Test
@@ -99,7 +98,8 @@ class RoutesContinuationTest {
     Set<Plotable> plotables =
         continuations.continuations().stream()
             .map(
-                p -> new PlotablePolygon(p, new PlotConf(GREEN, new BasicStroke(10), scale, offset)))
+                p ->
+                    new PlotablePolygon(p, new PlotConf(GREEN, new BasicStroke(50), scale, offset)))
             .collect(toSet());
 
     plotables.addAll(
