@@ -8,9 +8,12 @@ import app.bpartners.geojobs.model.geometry.plot.AreImagesEqual;
 import app.bpartners.geojobs.model.geometry.plot.PlotConf;
 import app.bpartners.geojobs.model.geometry.plot.PlotablePlane;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.Set;
 import javax.imageio.ImageIO;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.Polygon;
 
 public class FeatureProviderTest {
   AreImagesEqual areImagesEqual = new AreImagesEqual(0.00005);
@@ -22,13 +25,24 @@ public class FeatureProviderTest {
   @Test
   void rond_point_is_displayed() throws IOException {
     var toUnify = lineProvider.getPolygons();
-
-    var toUnifyImage =
-        new PlotablePlane(1_024, 1_024)
-            .plotPolygons(toUnify, new PlotConf(BLACK, new BasicStroke(1), 0.1, DEFAULT_OFFSET));
-
     var expectedInput =
         ImageIO.read(this.getClass().getResourceAsStream("/geometry/vgg/rond-point.png"));
+    isdDislayCorrect(toUnify, expectedInput, 0.1, DEFAULT_OFFSET);
+  }
+
+  @Test
+  void t_like_is_displayed() throws IOException {
+    var toUnify = lineProvider.getPolygons();
+    var expectedInput =
+        ImageIO.read(this.getClass().getResourceAsStream("/geometry/vgg/t-like.png"));
+    isdDislayCorrect(toUnify, expectedInput, 0.1, new IntXY(-221_000, 109_000));
+  }
+
+  private void isdDislayCorrect(
+      Set<Polygon> toUnify, BufferedImage expectedInput, double scale, IntXY offset) {
+    var toUnifyImage =
+        new PlotablePlane(1_024, 1_024)
+            .plotPolygons(toUnify, new PlotConf(BLACK, new BasicStroke(1), scale, offset));
     assertTrue(areImagesEqual.apply(expectedInput, toUnifyImage));
   }
 

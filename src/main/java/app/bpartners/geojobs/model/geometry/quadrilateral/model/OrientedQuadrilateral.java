@@ -5,6 +5,7 @@ import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFacto
 import app.bpartners.geojobs.model.geometry.HaveAnglesSameDirection;
 import app.bpartners.geojobs.model.geometry.IntXY;
 import app.bpartners.geojobs.model.geometry.LineInt;
+import app.bpartners.geojobs.model.geometry.TwoLineInt;
 import app.bpartners.geojobs.model.geometry.route.ContinuationConf;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -16,6 +17,7 @@ import org.locationtech.jts.geom.Coordinate;
 @Slf4j
 public record OrientedQuadrilateral(
     Quadrilateral quadrilateral, ContinuationOrientation continuationOrientation) {
+
   public Optional<OrientedQuadrilateral> continueWith(
       OrientedQuadrilateral that, ContinuationConf continuationConf) {
     var origin = geometryFactory.createPoint(new Coordinate(0, 0));
@@ -30,25 +32,33 @@ public record OrientedQuadrilateral(
     }
 
     var continuedQuadrilateral =
-        Quadrilateral.fromIntXYCoordinates(continuationCoordinatesFrom(this, that));
+        Quadrilateral.fromIntXYCoordinates(continuationCoordinatesFrom(that));
     return Optional.of(new OrientedQuadrilateral(continuedQuadrilateral, continuationOrientation));
   }
 
-  private static Set<IntXY> continuationCoordinatesFrom(
-      OrientedQuadrilateral oq1, OrientedQuadrilateral oq2) {
-    var removableCoordinates1 =
-        new HashSet<>(
-            Arrays.stream(oq1.quadrilateral.polygon().getCoordinates()).map(IntXY::new).toList());
-    var removableCoordinates2 =
-        new HashSet<>(
-            Arrays.stream(oq2.quadrilateral.polygon().getCoordinates()).map(IntXY::new).toList());
+  private Set<IntXY> continuationCoordinatesFrom(OrientedQuadrilateral that) {
+    var twoShortestBetween = getTwoSortestBetween(that);
+    var shortestBetween1 = twoShortestBetween.first();
+    var shortestBetween2 = twoShortestBetween.second();
+    return Set.of(
+        shortestBetween1.a(), shortestBetween1.b(), shortestBetween2.a(), shortestBetween2.b());
+  }
 
-    var shortest1 = shortestLineFrom(removableCoordinates1, removableCoordinates2);
-    removableCoordinates1.remove(shortest1.a());
-    removableCoordinates2.remove(shortest1.b());
-    var shortest2 = shortestLineFrom(removableCoordinates1, removableCoordinates2);
+  private TwoLineInt getTwoSortestBetween(OrientedQuadrilateral that) {
+    var removableCoordinates1 = this.getRemovableCoordinates();
+    var removableCoordinates2 = that.getRemovableCoordinates();
+    var shortestBetween1 = shortestLineFrom(removableCoordinates1, removableCoordinates2);
 
-    return Set.of(shortest1.a(), shortest1.b(), shortest2.a(), shortest2.b());
+    removableCoordinates1.remove(shortestBetween1.a());
+    removableCoordinates2.remove(shortestBetween1.b());
+    var shortestBetween2 = shortestLineFrom(removableCoordinates1, removableCoordinates2);
+
+    return new TwoLineInt(shortestBetween1, shortestBetween2);
+  }
+
+  private HashSet<IntXY> getRemovableCoordinates() {
+    return new HashSet<>(
+        Arrays.stream(quadrilateral.polygon().getCoordinates()).map(IntXY::new).toList());
   }
 
   private static LineInt shortestLineFrom(Set<IntXY> xy1, Set<IntXY> xy2) {
@@ -72,9 +82,7 @@ public record OrientedQuadrilateral(
     return switch (continuationOrientation) {
       case lengthOnly ->
           switch (that.continuationOrientation) {
-            case lengthOnly, lengthOrWidth ->
-                new HaveAnglesSameDirection(directionThreshold)
-                    .test(quadrilateral().angle(), that.quadrilateral.angle());
+            case lengthOnly, lengthOrWidth -> hasContinuableDirection(that, directionThreshold);
           };
       case lengthOrWidth ->
           switch (that.continuationOrientation) {
@@ -82,6 +90,29 @@ public record OrientedQuadrilateral(
             case lengthOrWidth -> false;
           };
     };
+  }
+
+  private boolean hasContinuableDirection(OrientedQuadrilateral that, double directionThreshold) {
+    var haveAnglesSameDirection = new HaveAnglesSameDirection(directionThreshold);
+
+    var twoShortestBetween = getTwoSortestBetween(that);
+    var shortestBetween1 = twoShortestBetween.first();
+    var shortestBetween2 = twoShortestBetween.second();
+    var areShortestBetweenContinuable =
+        areShortestBetweenContinuable(haveAnglesSameDirection, shortestBetween1, shortestBetween2)
+            || that.areShortestBetweenContinuable(
+                haveAnglesSameDirection, shortestBetween1, shortestBetween2);
+
+    return haveAnglesSameDirection.test(quadrilateral.angle(), that.quadrilateral.angle())
+        && areShortestBetweenContinuable;
+  }
+
+  private boolean areShortestBetweenContinuable(
+      HaveAnglesSameDirection haveAnglesSameDirection,
+      LineInt shortestBetween1,
+      LineInt shortestBetween2) {
+    return haveAnglesSameDirection.test(quadrilateral.angle(), shortestBetween1.angle())
+        || haveAnglesSameDirection.test(quadrilateral.angle(), shortestBetween2.angle());
   }
 
   private boolean isCloseEnoughWith(OrientedQuadrilateral that, double distanceThreshold) {
