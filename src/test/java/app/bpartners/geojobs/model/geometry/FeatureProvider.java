@@ -46,7 +46,7 @@ public class FeatureProvider implements Function<Integer, Polygon> {
     }
   }
 
-  public Set<Polygon> getFeaturesGeometry() {
+  public Set<Polygon> getPolygons() {
     return features.stream().map(Feature::geometry).collect(toSet());
   }
 }

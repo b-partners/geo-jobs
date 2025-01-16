@@ -21,7 +21,7 @@ public class FeatureProviderTest {
 
   @Test
   void rond_point_is_displayed() throws IOException {
-    var toUnify = lineProvider.getFeaturesGeometry();
+    var toUnify = lineProvider.getPolygons();
 
     var toUnifyImage =
         new PlotablePlane(1_024, 1_024)
@@ -34,7 +34,7 @@ public class FeatureProviderTest {
 
   @Test
   void pathway_is_displayed() throws IOException {
-    var featuresGeometry = pathProvider.getFeaturesGeometry();
+    var featuresGeometry = pathProvider.getPolygons();
 
     var toUnifyImage =
         new PlotablePlane(512, 512)

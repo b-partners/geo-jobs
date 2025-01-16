@@ -5,6 +5,7 @@ import static app.bpartners.geojobs.model.geometry.quadrilateral.model.Continuat
 
 import app.bpartners.geojobs.model.geometry.GeometryDiff;
 import app.bpartners.geojobs.model.geometry.polygon.MultiPolygonUnion;
+import app.bpartners.geojobs.model.geometry.quadrilateral.model.AlphaConf;
 import app.bpartners.geojobs.model.geometry.quadrilateral.model.OrientedQuadrilateral;
 import java.util.HashSet;
 import java.util.Set;
@@ -23,8 +24,6 @@ public class Alpha implements Supplier<Set<OrientedQuadrilateral>> {
   private final MultiPolygon p;
   private final AlphaConf conf;
   private final Set<OrientedQuadrilateral> oqSet;
-
-  public record AlphaConf(double minCoverageOfAbstractedArea, double minAbstractArea) {}
 
   public Alpha(Polygon p, AlphaConf conf) {
     var multipolygon = geometryFactory.createMultiPolygon(new Polygon[] {p});
@@ -61,8 +60,8 @@ public class Alpha implements Supplier<Set<OrientedQuadrilateral>> {
           // not reliable enough quadrilateral
           new OrientedQuadrilateral(subAlpha.get(), lengthOnly));
       unionOf_obbInterP = new MultiPolygonUnion().apply(unionOf_obbInterP, subAlpha.obb_inter_p());
-      pMinus = new GeometryDiff(conf.minAbstractArea).apply(p, unionOf_obbInterP);
-    } while (unionOf_obbInterP.getArea() / p.getArea() < conf.minCoverageOfAbstractedArea);
+      pMinus = new GeometryDiff(conf.minAbstractArea()).apply(p, unionOf_obbInterP);
+    } while (unionOf_obbInterP.getArea() / p.getArea() < conf.minCoverageOfAbstractedArea());
 
     return oqSet;
   }

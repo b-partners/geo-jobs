@@ -16,10 +16,10 @@ import app.bpartners.geojobs.model.geometry.plot.Plotable;
 import app.bpartners.geojobs.model.geometry.plot.PlotablePlane;
 import app.bpartners.geojobs.model.geometry.plot.PlotablePolygon;
 import app.bpartners.geojobs.model.geometry.plot.PlotableQuadrilateral;
-import app.bpartners.geojobs.model.geometry.quadrilateral.Alpha.AlphaConf;
+import app.bpartners.geojobs.model.geometry.quadrilateral.model.AlphaConf;
 import app.bpartners.geojobs.model.geometry.quadrilateral.model.OrientedQuadrilateral;
-import app.bpartners.geojobs.model.geometry.route.UnificationConf;
 import app.bpartners.geojobs.model.geometry.route.UnifiedRoute;
+import app.bpartners.geojobs.model.geometry.route.UnionConf;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -96,7 +96,7 @@ class AlphaTest {
 
   @Test
   void rond_point_is_correctly_abstracted() throws IOException {
-    var features = rondPointFeatureProvider.getFeaturesGeometry();
+    var features = rondPointFeatureProvider.getPolygons();
     var scale = 0.1;
     var offset = new IntXY(2_000, 1_000);
 
@@ -104,6 +104,7 @@ class AlphaTest {
     for (var p : features) {
       var conf =
           new AlphaConf(
+              // note(alpha-minCoverage)
               // If greater minCoverageOfAbstractedArea is used
               // then will result in many subAlpha failures,
               // which in turn will counter-intuitively result in less quadrilaterals abstracted.
@@ -118,7 +119,7 @@ class AlphaTest {
     }
     Set<Plotable> plotables = new HashSet<>(plotablesQ);
 
-    var unified = new UnifiedRoute(features, new UnificationConf(5)).unified().stream().toList();
+    var unified = new UnifiedRoute(features, new UnionConf(5)).unified().stream().toList();
     var pPlotConf = new PlotConf(BLACK, DEFAULT_STROKE, scale, offset);
     plotables.addAll(
         unified.stream().map(polygon -> new PlotablePolygon(polygon, pPlotConf)).collect(toSet()));

@@ -13,20 +13,19 @@ import org.locationtech.jts.geom.Polygon;
 @Getter
 public class UnifiedRoute {
   private final Set<Polygon> toUnify, unified;
-  private final UnificationConf unificationConf;
+  private final UnionConf unionConf;
 
-  public UnifiedRoute(Set<Polygon> toUnify, UnificationConf unificationConf) {
-    this.unificationConf = unificationConf;
+  public UnifiedRoute(Set<Polygon> toUnify, UnionConf unionConf) {
+    this.unionConf = unionConf;
     this.toUnify = toUnify;
-    this.unified = unify(toUnify, unificationConf);
+    this.unified = unify(toUnify, unionConf);
   }
 
-  private static Set<Polygon> unify(Set<Polygon> toUnify, UnificationConf unificationConf) {
+  private static Set<Polygon> unify(Set<Polygon> toUnify, UnionConf unionConf) {
     var multiPolygon = geometryFactory.createMultiPolygon();
     for (Polygon polygon : toUnify) {
       multiPolygon =
-          new MultiPolygonUnion()
-              .apply(multiPolygon, (Polygon) polygon.buffer(unificationConf.buffer()));
+          new MultiPolygonUnion().apply(multiPolygon, (Polygon) polygon.buffer(unionConf.buffer()));
     }
 
     var unified = new HashSet<Polygon>();

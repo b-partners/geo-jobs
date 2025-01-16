@@ -31,7 +31,7 @@ public class UnifiedRouteTest {
     var long1 = longPolygon();
     var compass1 = compass1Polygon();
 
-    var unifiedLine = new UnifiedRoute(Set.of(long1, compass1), new UnificationConf(0));
+    var unifiedLine = new UnifiedRoute(Set.of(long1, compass1), new UnionConf(0));
     var actual = new PlotablePlane(1024, 1024).plot(unifiedLine.unified(), BLACK);
 
     assertEquals(1, unifiedLine.unified().size());
@@ -40,10 +40,10 @@ public class UnifiedRouteTest {
 
   @Test
   void rond_point_is_unified() throws IOException {
-    var toUnify = lineProvider.getFeaturesGeometry();
+    var toUnify = lineProvider.getPolygons();
     assertEquals(89, toUnify.size());
 
-    var unified = new UnifiedRoute(toUnify, new UnificationConf(5)).unified();
+    var unified = new UnifiedRoute(toUnify, new UnionConf(5)).unified();
     var unifiedImage =
         new PlotablePlane(1_024, 1_024)
             .plotPolygons(
@@ -57,10 +57,10 @@ public class UnifiedRouteTest {
 
   @Test
   void pathway_is_unified() throws IOException {
-    var toUnify = pathwayProvider.getFeaturesGeometry();
+    var toUnify = pathwayProvider.getPolygons();
     assertEquals(8, toUnify.size());
 
-    var unified = new UnifiedRoute(toUnify, new UnificationConf(5)).unified();
+    var unified = new UnifiedRoute(toUnify, new UnionConf(5)).unified();
     var unifiedImage =
         new PlotablePlane(512, 512)
             .plotPolygons(
