@@ -27,7 +27,7 @@ public record OrientedQuadrilateral(
       return that.continueWith(this, continuationConf);
     }
     if (!isCloseEnoughWith(that, distanceThreshold)
-        || !hasContinuableDirectionWith(that, continuationConf.directionThreshold())) {
+        || !hasContinuableDirectionWith(that, continuationConf)) {
       return Optional.empty();
     }
 
@@ -78,41 +78,55 @@ public record OrientedQuadrilateral(
   }
 
   private boolean hasContinuableDirectionWith(
-      OrientedQuadrilateral that, double directionThreshold) {
+      OrientedQuadrilateral that, ContinuationConf continuationConf) {
     return switch (continuationOrientation) {
       case lengthOnly ->
           switch (that.continuationOrientation) {
-            case lengthOnly, lengthOrWidth -> hasContinuableDirection(that, directionThreshold);
+            case lengthOnly, lengthOrWidth -> hasContinuableDirection(that, continuationConf);
           };
       case lengthOrWidth ->
           switch (that.continuationOrientation) {
-            case lengthOnly -> that.hasContinuableDirectionWith(this, directionThreshold);
+            case lengthOnly -> that.hasContinuableDirectionWith(this, continuationConf);
             case lengthOrWidth -> false;
           };
     };
   }
 
-  private boolean hasContinuableDirection(OrientedQuadrilateral that, double directionThreshold) {
-    var haveAnglesSameDirection = new HaveAnglesSameDirection(directionThreshold);
-
+  private boolean hasContinuableDirection(
+      OrientedQuadrilateral that, ContinuationConf continuationConf) {
     var twoShortestBetween = getTwoSortestBetween(that);
     var shortestBetween1 = twoShortestBetween.first();
     var shortestBetween2 = twoShortestBetween.second();
     var areShortestBetweenContinuable =
-        areShortestBetweenContinuable(haveAnglesSameDirection, shortestBetween1, shortestBetween2)
+        areShortestBetweenContinuable(shortestBetween1, shortestBetween2, continuationConf)
             || that.areShortestBetweenContinuable(
-                haveAnglesSameDirection, shortestBetween1, shortestBetween2);
+                shortestBetween1, shortestBetween2, continuationConf);
 
+    var directionThreshold = directionThreshold(continuationConf, shortestBetween1);
+    var haveAnglesSameDirection = new HaveAnglesSameDirection(directionThreshold);
     return haveAnglesSameDirection.test(quadrilateral.angle(), that.quadrilateral.angle())
         && areShortestBetweenContinuable;
   }
 
+  private static double directionThreshold(
+      ContinuationConf continuationConf, LineInt shortestBetween) {
+    double minDirectionThreshold = continuationConf.minDirectionThreshold();
+    var directionRatio = 1 - shortestBetween.length() / continuationConf.distanceThreshold();
+    return minDirectionThreshold
+        + (continuationConf.maxDirectionThreshold() - minDirectionThreshold) * directionRatio;
+  }
+
   private boolean areShortestBetweenContinuable(
-      HaveAnglesSameDirection haveAnglesSameDirection,
-      LineInt shortestBetween1,
-      LineInt shortestBetween2) {
-    return haveAnglesSameDirection.test(quadrilateral.angle(), shortestBetween1.angle())
-        || haveAnglesSameDirection.test(quadrilateral.angle(), shortestBetween2.angle());
+      LineInt shortestBetween1, LineInt shortestBetween2, ContinuationConf continuationConf) {
+
+    var directionThreshold1 = directionThreshold(continuationConf, shortestBetween1);
+    var haveAnglesSameDirection1 = new HaveAnglesSameDirection(directionThreshold1);
+
+    var directionThreshold2 = directionThreshold(continuationConf, shortestBetween2);
+    var haveAnglesSameDirection2 = new HaveAnglesSameDirection(directionThreshold2);
+
+    return haveAnglesSameDirection1.test(quadrilateral.angle(), shortestBetween1.angle())
+        || haveAnglesSameDirection2.test(quadrilateral.angle(), shortestBetween2.angle());
   }
 
   private boolean isCloseEnoughWith(OrientedQuadrilateral that, double distanceThreshold) {

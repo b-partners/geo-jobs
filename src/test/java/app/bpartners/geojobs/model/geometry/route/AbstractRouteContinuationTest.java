@@ -33,7 +33,7 @@ class AbstractRouteContinuationTest {
         new AbstractRouteContinuation(
             new AbstractRoute(compass2, alphaConf),
             new AbstractRoute(long2, alphaConf),
-            new ContinuationConf(directionThreshold, distanceThreshold));
+            new ContinuationConf(directionThreshold, directionThreshold, distanceThreshold));
     var actual =
         new PlotablePlane(1024, 1024)
             .plot(Set.of(new PlotablePolygon(lineContinuation.unionOpt().get(), BLACK)));
@@ -53,7 +53,7 @@ class AbstractRouteContinuationTest {
         new AbstractRouteContinuation(
             new AbstractRoute(compass2, alphaConf),
             new AbstractRoute(long2, alphaConf),
-            new ContinuationConf(directionThreshold, distanceThreshold));
+            new ContinuationConf(directionThreshold, directionThreshold, distanceThreshold));
     assertTrue(lineContinuation.unionOpt().isEmpty());
   }
 }
