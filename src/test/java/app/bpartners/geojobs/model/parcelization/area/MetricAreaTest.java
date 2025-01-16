@@ -1,13 +1,15 @@
 package app.bpartners.geojobs.model.parcelization.area;
 
-import static app.bpartners.geojobs.model.parcelization.area.MetricArea.MetricAreaUnit.are;
-import static app.bpartners.geojobs.model.parcelization.area.MetricArea.MetricAreaUnit.ha;
-import static app.bpartners.geojobs.model.parcelization.area.MetricArea.MetricAreaUnit.km2;
-import static app.bpartners.geojobs.model.parcelization.area.MetricArea.MetricAreaUnit.m2;
+import static app.bpartners.geojobs.model.geometry.area.MetricArea.MetricAreaUnit.are;
+import static app.bpartners.geojobs.model.geometry.area.MetricArea.MetricAreaUnit.ha;
+import static app.bpartners.geojobs.model.geometry.area.MetricArea.MetricAreaUnit.km2;
+import static app.bpartners.geojobs.model.geometry.area.MetricArea.MetricAreaUnit.m2;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import app.bpartners.geojobs.model.geometry.area.MetricArea;
+import app.bpartners.geojobs.model.geometry.area.SquareDegree;
 import org.junit.jupiter.api.Test;
 
 class MetricAreaTest {

@@ -4,7 +4,8 @@ import static java.lang.Math.pow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import app.bpartners.geojobs.model.ArcgisRasterZoom;
-import app.bpartners.geojobs.model.parcelization.area.SquareDegree;
+import app.bpartners.geojobs.model.ParcelizedPolygon;
+import app.bpartners.geojobs.model.geometry.area.SquareDegree;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
