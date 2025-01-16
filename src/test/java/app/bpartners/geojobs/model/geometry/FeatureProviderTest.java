@@ -22,6 +22,9 @@ public class FeatureProviderTest {
   FeatureProvider pathProvider =
       new FeatureProvider("/geometry/vgg/pathway.json", true, new IntXY(1024, 1024));
 
+  FeatureProvider lineAndPathProvider =
+      new FeatureProvider("/geometry/vgg/line-pathway.json", true, new IntXY(1024, 1024));
+
   @Test
   void rond_point_is_displayed() throws IOException {
     var toUnify = lineProvider.getPolygons();
@@ -58,6 +61,21 @@ public class FeatureProviderTest {
 
     var expectedInput =
         ImageIO.read(this.getClass().getResourceAsStream("/geometry/vgg/pathway.png"));
+    assertTrue(areImagesEqual.apply(expectedInput, toUnifyImage));
+  }
+
+  @Test
+  void line_and_pathway_is_displayed() throws IOException {
+    var featuresGeometry = lineAndPathProvider.getPolygons();
+
+    var toUnifyImage =
+        new PlotablePlane(1024, 1024)
+            .plotPolygons(
+                featuresGeometry,
+                new PlotConf(BLACK, new BasicStroke(1), 0.1, new IntXY(2_000, 1_200)));
+
+    var expectedInput =
+        ImageIO.read(this.getClass().getResourceAsStream("/geometry/vgg/line-pathway.png"));
     assertTrue(areImagesEqual.apply(expectedInput, toUnifyImage));
   }
 }
