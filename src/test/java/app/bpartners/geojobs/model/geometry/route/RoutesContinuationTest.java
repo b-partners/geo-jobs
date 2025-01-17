@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.Set;
 import javax.imageio.ImageIO;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.Polygon;
 
 class RoutesContinuationTest {
 
@@ -29,6 +30,8 @@ class RoutesContinuationTest {
       new FeatureProvider("/geometry/vgg/rond-point.json", true, new IntXY(1024, 1024));
   FeatureProvider dijonFeatureProvider =
       new FeatureProvider("/geometry/vgg/dijon.json", true, new IntXY(1024, 1024));
+  FeatureProvider fullParcelFeatureProvider =
+      new FeatureProvider("/geometry/vgg/full-parcel.json", true, new IntXY(1024, 1024));
 
   private AlphaConf alphaConf() {
     return new AlphaConf(0.5 /*note(alpha-minCoverage)*/, 1);
@@ -40,6 +43,10 @@ class RoutesContinuationTest {
 
   private ContinuationConf continuationConf() {
     return new ContinuationConf(PI / 12, PI / 6, 500);
+  }
+
+  private PrettyConf prettyConf() {
+    return new PrettyConf(0);
   }
 
   @Test
@@ -97,8 +104,23 @@ class RoutesContinuationTest {
     assertEquals(324, polygons.size());
   }
 
+  @Test
+  void full_parcel_continued() throws IOException {
+    var polygons = fullParcelFeatureProvider.getPolygons();
+    var scale = 0.07;
+    var offset = new IntXY(3500, 5500);
+
+    isContinuedCorrect(
+        polygons,
+        new PrettyConf(50),
+        scale,
+        offset,
+        "/geometry/vgg/full-parcel-continued.png",
+        0.0005);
+  }
+
   private RoutesContinuation areContinuationsCorrectWithDetails(
-      Set<org.locationtech.jts.geom.Polygon> polygons,
+      Set<Polygon> polygons,
       double scale,
       IntXY offset,
       String expectedImagePath,
@@ -107,7 +129,9 @@ class RoutesContinuationTest {
     var alphaConf = alphaConf();
     var continuationConf = continuationConf();
     var unionConf = unionConf();
-    var continuations = new RoutesContinuation(polygons, alphaConf, unionConf, continuationConf);
+    var prettyConf = prettyConf();
+    var continuations =
+        new RoutesContinuation(polygons, alphaConf, unionConf, continuationConf, prettyConf);
     Set<Plotable> plotables =
         continuations.continuations().stream()
             .map(
@@ -134,7 +158,8 @@ class RoutesContinuationTest {
   }
 
   private void isContinuedCorrect(
-      Set<org.locationtech.jts.geom.Polygon> polygons,
+      Set<Polygon> polygons,
+      PrettyConf prettyConf,
       double scale,
       IntXY offset,
       String expectedImagePath,
@@ -143,7 +168,8 @@ class RoutesContinuationTest {
     var alphaConf = alphaConf();
     var continuationConf = continuationConf();
     var unionConf = unionConf();
-    var continuations = new RoutesContinuation(polygons, alphaConf, unionConf, continuationConf);
+    var continuations =
+        new RoutesContinuation(polygons, alphaConf, unionConf, continuationConf, prettyConf);
     Set<Plotable> plotables =
         continuations.continued().stream()
             .map(
@@ -154,5 +180,16 @@ class RoutesContinuationTest {
 
     var expectedImage = ImageIO.read(this.getClass().getResourceAsStream(expectedImagePath));
     assertTrue(new AreImagesEqual(imageEqualityThreshold).apply(expectedImage, actualImage));
+  }
+
+  private void isContinuedCorrect(
+      Set<Polygon> polygons,
+      double scale,
+      IntXY offset,
+      String expectedImagePath,
+      double imageEqualityThreshold)
+      throws IOException {
+    isContinuedCorrect(
+        polygons, prettyConf(), scale, offset, expectedImagePath, imageEqualityThreshold);
   }
 }
