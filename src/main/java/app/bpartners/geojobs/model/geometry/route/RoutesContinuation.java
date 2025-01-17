@@ -11,6 +11,7 @@ import java.util.Set;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.simplify.DouglasPeuckerSimplifier;
 
 @Accessors(fluent = true)
 @Getter
@@ -24,17 +25,20 @@ public class RoutesContinuation {
   private final Set<OrientedQuadrilateral> abstractContinuations;
 
   private final Set<Polygon> continuations;
+  private final PrettyConf prettyConf;
   private final Set<Polygon> continued;
 
   public RoutesContinuation(
       Set<Polygon> routes,
       AlphaConf alphaConf,
       UnionConf unionConf,
-      ContinuationConf continuationConf) {
+      ContinuationConf continuationConf,
+      PrettyConf prettyConf) {
     this.routes = routes;
     this.alphaConf = alphaConf;
     this.unionConf = unionConf;
     this.continuationConf = continuationConf;
+    this.prettyConf = prettyConf;
 
     var abstractRoutesByPolygon = alpha(routes, alphaConf);
     this.abstractions = new HashSet<>(abstractRoutesByPolygon.values());
@@ -43,7 +47,14 @@ public class RoutesContinuation {
 
     var toUnify = new HashSet<>(routes);
     toUnify.addAll(continuations);
-    this.continued = new UnifiedRoute(toUnify, unionConf).unified();
+    var unified = new UnifiedRoute(toUnify, unionConf).unified();
+    this.continued = pretty(unified, prettyConf);
+  }
+
+  private Set<Polygon> pretty(Set<Polygon> unified, PrettyConf prettyConf) {
+    return unified.stream()
+        .map(p -> (Polygon) DouglasPeuckerSimplifier.simplify(p, prettyConf().dpbThreshold()))
+        .collect(toSet());
   }
 
   private Set<Polygon> continuations(Set<OrientedQuadrilateral> abstractContinuations) {
