@@ -112,8 +112,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: app.bpartners.geojobs.MailboxEventHandler::handleRequest
-#      TODO: changed directly in this template not from poja because it doesnt support different workers conf
-      MemorySize: 2048
+      MemorySize: 1024
       Timeout: 900 #note(sqs-visibility)
       Role: !Sub '{{resolve:ssm:/geo-jobs/${Env}/execution/role-arn}}'
       
@@ -129,7 +128,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: app.bpartners.geojobs.MailboxEventHandler::handleRequest
-      MemorySize: 2048
+      MemorySize: 1024
       Timeout: 900 #note(sqs-visibility)
       Role: !Sub '{{resolve:ssm:/geo-jobs/${Env}/execution/role-arn}}'
       
@@ -139,7 +138,7 @@ Resources:
           Properties:
             Queue: !Sub '{{resolve:ssm:/geo-jobs/${Env}/2/sqs/mailbox-queue-arn}}'
             BatchSize: 1
-      ReservedConcurrentExecutions: 1250
+      ReservedConcurrentExecutions: 2
 
   ApplicationResourceGroup:
     Type: AWS::ResourceGroups::Group

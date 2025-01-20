@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.endpoint.event.model;
 
 import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_1;
+import static java.lang.Math.random;
 
 import app.bpartners.geojobs.PojaGenerated;
 import app.bpartners.geojobs.endpoint.event.EventStack;
@@ -18,16 +19,17 @@ public abstract class PojaEvent implements Serializable {
   public abstract Duration maxConsumerDuration();
 
   private Duration randomConsumerBackoffBetweenRetries() {
-    //    TODO: set random value
-    return Duration.ofSeconds((int) (maxConsumerBackoffBetweenRetries().toSeconds()));
+    return Duration.ofSeconds((int) (random() * maxConsumerBackoffBetweenRetries().toSeconds()));
   }
 
   public abstract Duration maxConsumerBackoffBetweenRetries();
 
   public final Duration randomVisibilityTimeout() {
     var eventHandlerInitMaxDuration = Duration.ofSeconds(90); // note(init-visibility)
-    //    TODO: add eventHandlerInitMaxDuration.toSeconds()+ maxConsumerDuration().toSeconds()
-    return Duration.ofSeconds(randomConsumerBackoffBetweenRetries().toSeconds());
+    return Duration.ofSeconds(
+        eventHandlerInitMaxDuration.toSeconds()
+            + maxConsumerDuration().toSeconds()
+            + randomConsumerBackoffBetweenRetries().toSeconds());
   }
 
   public EventStack getEventStack() {
