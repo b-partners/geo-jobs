@@ -2,11 +2,15 @@ package app.bpartners.geojobs.model.geometry;
 
 import static app.bpartners.geojobs.model.geometry.plot.PlotConf.DEFAULT_OFFSET;
 import static java.awt.Color.BLACK;
+import static java.util.stream.Collectors.toSet;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import app.bpartners.geojobs.model.geometry.plot.AreImagesEqual;
 import app.bpartners.geojobs.model.geometry.plot.PlotConf;
 import app.bpartners.geojobs.model.geometry.plot.PlotablePlane;
+import app.bpartners.geojobs.model.geometry.polygon.Feature;
+import app.bpartners.geojobs.model.geometry.polygon.FeatureListOffsetRestorer;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -17,8 +21,11 @@ import org.locationtech.jts.geom.Polygon;
 
 public class FeatureProviderTest {
   AreImagesEqual areImagesEqual = new AreImagesEqual(0.00005);
-  FeatureProvider lineProvider =
+  FeatureProvider lineProviderWithOffset =
       new FeatureProvider("/geometry/vgg/rond-point.json", true, new IntXY(1024, 1024));
+
+  FeatureProvider lineProviderWithOutOffset =
+      new FeatureProvider("/geometry/vgg/rond-point.json", false, new IntXY(1024, 1024));
   FeatureProvider pathProvider =
       new FeatureProvider("/geometry/vgg/pathway.json", true, new IntXY(1024, 1024));
 
@@ -27,7 +34,7 @@ public class FeatureProviderTest {
 
   @Test
   void rond_point_is_displayed() throws IOException {
-    var toUnify = lineProvider.getPolygons();
+    var toUnify = lineProviderWithOffset.getPolygons();
     var expectedInput =
         ImageIO.read(this.getClass().getResourceAsStream("/geometry/vgg/rond-point.png"));
     isdDislayCorrect(toUnify, expectedInput, 0.1, DEFAULT_OFFSET);
@@ -35,7 +42,7 @@ public class FeatureProviderTest {
 
   @Test
   void t_like_is_displayed() throws IOException {
-    var toUnify = lineProvider.getPolygons();
+    var toUnify = lineProviderWithOffset.getPolygons();
     var expectedInput =
         ImageIO.read(this.getClass().getResourceAsStream("/geometry/vgg/t-like.png"));
     isdDislayCorrect(toUnify, expectedInput, 0.1, new IntXY(-221_000, 109_000));
@@ -77,5 +84,18 @@ public class FeatureProviderTest {
     var expectedInput =
         ImageIO.read(this.getClass().getResourceAsStream("/geometry/vgg/line-pathway.png"));
     assertTrue(areImagesEqual.apply(expectedInput, toUnifyImage));
+  }
+
+  @Test
+  void restore_offset() {
+    var featureWithOffset = lineProviderWithOffset.getFeatures();
+
+    var actualWithoutOffset =
+        new FeatureListOffsetRestorer(featureWithOffset)
+            .get().stream().map(Feature::geometry).collect(toSet());
+
+    var expected = lineProviderWithOutOffset.getPolygons();
+
+    assertEquals(expected, actualWithoutOffset);
   }
 }
