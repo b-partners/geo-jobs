@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
+import lombok.Getter;
 import org.locationtech.jts.geom.Polygon;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -18,7 +19,7 @@ public class FeatureProvider implements Function<Integer, Polygon> {
   private static final ObjectMapper om = new ObjectMapper().findAndRegisterModules();
 
   private final boolean withOffset;
-  private final List<Feature> features;
+  @Getter private final List<Feature> features;
 
   public FeatureProvider(String vggFilePath, boolean withOffset, IntXY imageResolution) {
     this.withOffset = withOffset;
