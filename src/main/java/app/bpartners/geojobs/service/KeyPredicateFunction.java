@@ -9,11 +9,11 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 
-// TODO: check the adequate Function<?,?>
 @Component
 public class KeyPredicateFunction {
 
-  public <T> Predicate<T> apply(Function<? super T, ?>... keyExtractors) {
+  @SafeVarargs
+  public final <T> Predicate<T> apply(Function<? super T, ?>... keyExtractors) {
     final Map<List<?>, Boolean> seen = new ConcurrentHashMap<>();
     return elt -> {
       final List<?> keys =
