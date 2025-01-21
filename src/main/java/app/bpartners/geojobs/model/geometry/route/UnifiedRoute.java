@@ -30,7 +30,13 @@ public class UnifiedRoute {
 
     var unified = new HashSet<Polygon>();
     for (int p = 0; p < multiPolygon.getNumGeometries(); p++) {
-      unified.add((Polygon) multiPolygon.getGeometryN(p));
+      var unifiedPolygon = (Polygon) multiPolygon.getGeometryN(p);
+      for (Polygon polygon : toUnify) {
+        if (unifiedPolygon.intersects(polygon)) {
+          unifiedPolygon.setUserData(polygon.getUserData());
+        }
+      }
+      unified.add(unifiedPolygon);
     }
     return unified;
   }

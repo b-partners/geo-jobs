@@ -13,11 +13,12 @@ public class VGGFactoryTest {
 
   @Test
   void features_to_vgg_ok() {
-    var features = featureProvider.getFeatures();
+    var features = featureProvider.getPolygons();
+    var expectedFilename = "5cm3346073745629231615_20_538860_367572.jpg";
 
     var actual = subject.convert(features);
 
     assertEquals(5, actual.size());
-    assertEquals(2, actual.get("5cm3346073745629231615_20_538860_367572.jpg").getRegions().size());
+    assertEquals(2, actual.get(expectedFilename).getRegions().size());
   }
 }

@@ -1,26 +1,27 @@
 package app.bpartners.geojobs.model.geometry;
 
-import app.bpartners.geojobs.model.geometry.polygon.Feature;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.locationtech.jts.geom.Polygon;
 import org.springframework.core.convert.converter.Converter;
 
-public class VGGFactory implements Converter<List<Feature>, VGG> {
+public class VGGFactory implements Converter<Set<Polygon>, VGG> {
   @Override
-  public VGG convert(List<Feature> features) {
+  public VGG convert(Set<Polygon> polygons) {
     var vgg = new VGG();
-    for (Feature f : features) {
-      var key = f.filename();
+    for (Polygon p : polygons) {
+      var metadata = (HashMap) p.getUserData();
+      var key = metadata.get("filename").toString();
+      var label = metadata.get("label").toString();
+      var confidence = Double.parseDouble(metadata.get("confidence").toString());
       Map<String, VGG.Annotation.Region> newRegions = new HashMap<>();
-      newRegions.put(
-          String.valueOf(Instant.now().getNano()),
-          toVGGRegion(f.label(), f.confidence(), f.geometry()));
+      newRegions.put(String.valueOf(Instant.now().getNano()), toVGGRegion(label, confidence, p));
       if (vgg.containsKey(key)) {
-        var annotation = vgg.get(f.filename());
+        var annotation = vgg.get(key);
         newRegions.putAll(annotation.getRegions());
         annotation.setRegions(newRegions);
         vgg.put(key, annotation);

@@ -53,7 +53,13 @@ public class RoutesContinuation {
 
   private Set<Polygon> pretty(Set<Polygon> unified, PrettyConf prettyConf) {
     return unified.stream()
-        .map(p -> (Polygon) DouglasPeuckerSimplifier.simplify(p, prettyConf().dpbThreshold()))
+        .map(
+            p -> {
+              var prettyP =
+                  (Polygon) DouglasPeuckerSimplifier.simplify(p, prettyConf().dpbThreshold());
+              prettyP.setUserData(p.getUserData());
+              return prettyP;
+            })
         .collect(toSet());
   }
 

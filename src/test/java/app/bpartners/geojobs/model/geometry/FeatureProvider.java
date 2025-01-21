@@ -7,6 +7,7 @@ import app.bpartners.geojobs.model.geometry.polygon.Feature;
 import app.bpartners.geojobs.model.geometry.polygon.FeatureListWithOffset;
 import app.bpartners.geojobs.model.geometry.polygon.FeatureListWithoutOffset;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -48,6 +49,17 @@ public class FeatureProvider implements Function<Integer, Polygon> {
   }
 
   public Set<Polygon> getPolygons() {
-    return features.stream().map(Feature::geometry).collect(toSet());
+    return features.stream()
+        .map(
+            feature -> {
+              var polygon = feature.geometry();
+              var metadata = new HashMap<String, Object>();
+              metadata.put("filename", feature.filename());
+              metadata.put("label", feature.label());
+              metadata.put("confidence", feature.confidence());
+              polygon.setUserData(metadata);
+              return polygon;
+            })
+        .collect(toSet());
   }
 }
