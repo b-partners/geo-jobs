@@ -25,7 +25,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class ExtractorIT extends FacadeIT {
+class ExtractorIT extends FacadeIT {
   private static final String GEOMETRY_MOCK =
       """
       {
@@ -33,21 +33,19 @@ public class ExtractorIT extends FacadeIT {
         "coordinates": [ [ [
         [ 4.459648282829194, 45.904988912620688 ]
         ] ] ] }""";
-  public static final String PARCEL_MOCK_ID = "parcel1";
   @Autowired LabelConverter labelConverter;
   @Autowired LabelExtractor labelExtractor;
   @Autowired PolygonExtractor polygonExtractor;
   @Autowired CreateAnnotationBatchExtractor createAnnotationBatchExtractor;
-
   private app.bpartners.geojobs.repository.model.Feature feature;
 
-  public static MachineDetectedTile detectedTile(List<DetectedObject> detectedObjects) {
+  private static MachineDetectedTile detectedTile(List<DetectedObject> detectedObjects) {
     return MachineDetectedTile.builder()
         .id(randomUUID().toString())
-        .bucketPath("LAYER_20_10_1_PNG") // TODO
+        .bucketPath("dummyBucketPath")
         .tile(Tile.builder().build())
-        .zdjJobId("MOCK_JOB_ID") // TODO
-        .parcelId(PARCEL_MOCK_ID)
+        .zdjJobId(randomUUID().toString())
+        .parcelId(randomUUID().toString())
         .creationDatetime(Instant.now())
         .detectedObjects(detectedObjects)
         .build();
