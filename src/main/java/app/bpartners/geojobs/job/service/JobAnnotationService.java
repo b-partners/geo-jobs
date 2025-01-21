@@ -24,8 +24,9 @@ public class JobAnnotationService {
 
   public AnnotationJobProcessing processAnnotationJob(
       String jobId, Double minConfidenceForDelivery) {
+    var defaultJobType = JobType.DETECTION;
     if (tilingJobRepository.findById(jobId).isPresent()) {
-      throw new NotImplementedException("Only DETECTION job is handle for now");
+      throw new NotImplementedException("Only DETECTION job is handle for now. JobType could be TILING otherwise");
     }
     var zoneDetectionJob =
         zoneDetectionJobRepository
@@ -51,7 +52,7 @@ public class JobAnnotationService {
         .annotationWithObjectTruePositive(annotationJobWithObjectsIdTruePositive)
         .annotationWithObjectFalsePositive(annotationJobWithObjectsIdFalsePositive)
         .annotationWithoutObjectJobId(annotationJobWithoutObjectsId)
-        .jobType(JobType.DETECTION) // As check below, only DETECTION jobType supported
+        .jobType(defaultJobType)
         .creationDatetime(Instant.now());
   }
 }
