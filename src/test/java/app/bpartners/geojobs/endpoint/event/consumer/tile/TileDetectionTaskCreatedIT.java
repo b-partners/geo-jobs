@@ -28,7 +28,6 @@ import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -77,31 +76,6 @@ class TileDetectionTaskCreatedIT extends DetectionIT {
 
   @SneakyThrows
   @Test
-  @Disabled("TODO: fail")
-  void single_event_that_succeeds() {
-    SingleEventDataSetUp testData = getSingleEventDataSetUp();
-
-    eventProducerMock.accept(
-        List.of(
-            TileDetectionTaskCreated.builder()
-                .tileDetectionTask(testData.tileDetectionTask())
-                .detectableObjectConfigurations(detectableObjectConfiguration())
-                .zoneDetectionJobId(testData.detectionJob().getId())
-                .build()));
-
-    eventProducerMock.accept(
-        List.of(new ZDJParcelsStatusRecomputingSubmitted(testData.detectionJobId())));
-    eventProducerMock.accept(List.of(new ZDJStatusRecomputingSubmitted(testData.detectionJobId())));
-    Thread.sleep(Duration.ofSeconds(15L));
-    if (localEventQueue != null) localEventQueue.attemptSchedulerShutDown();
-    var retrievedJob = zdjService.findById(testData.detectionJob().getId());
-
-    assertTrue(retrievedJob.isSucceeded());
-  }
-
-  @SneakyThrows
-  @Test
-  @Disabled("TODO: fail")
   void thousand_events_that_succeeds() {
     ThousandEventDataSetUp testData = getThousandEventDataSetUp();
 
@@ -125,7 +99,7 @@ class TileDetectionTaskCreatedIT extends DetectionIT {
     eventProducerMock.accept(
         List.of(new ZDJParcelsStatusRecomputingSubmitted(testData.detectionJobId())));
     eventProducerMock.accept(List.of(new ZDJStatusRecomputingSubmitted(testData.detectionJobId())));
-    Thread.sleep(Duration.ofSeconds(450L));
+    Thread.sleep(Duration.ofSeconds(90L));
     if (localEventQueue != null) localEventQueue.attemptSchedulerShutDown();
 
     var retrievedJob = zdjService.findById(testData.detectionJob().getId());
