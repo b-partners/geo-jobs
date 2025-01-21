@@ -5,14 +5,15 @@ import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionAssemblyIniti
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionJobStatusChanged;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionJob;
 import app.bpartners.geojobs.service.StatusChangedHandler;
-import app.bpartners.geojobs.service.StatusHandler;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class GeoJsonConversionJobStatusChangedService
     implements Consumer<GeoJsonConversionJobStatusChanged> {
   private final StatusChangedHandler statusChangedHandler;
@@ -30,16 +31,16 @@ public class GeoJsonConversionJobStatusChangedService
   }
 
   private record OnFinishedHandler(GeoJsonConversionJob newJob, EventProducer eventProducer)
-      implements StatusHandler {
+      implements Runnable {
 
     @Override
-    public String performAction() {
+    public void run() {
       eventProducer.accept(
           List.of(
               GeoJsonConversionAssemblyInitiated.builder()
                   .geoJsonConversionJobId(newJob.getId())
                   .build()));
-      return "GeoJsonConversionJob(id=" + newJob.getId() + ") finished, assembly initiated";
+      log.info("GeoJsonConversionJob(id=" + newJob.getId() + ") finished, assembly initiated");
     }
   }
 }

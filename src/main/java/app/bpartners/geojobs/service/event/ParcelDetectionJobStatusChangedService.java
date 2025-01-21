@@ -7,14 +7,14 @@ import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionJob;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.service.StatusChangedHandler;
-import app.bpartners.geojobs.service.StatusHandler;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class ParcelDetectionJobStatusChangedService
     implements Consumer<ParcelDetectionJobStatusChanged> {
   private final StatusChangedHandler statusChangedHandler;
@@ -38,10 +38,10 @@ public class ParcelDetectionJobStatusChangedService
       ParcelDetectionJob newJob,
       ParcelDetectionTaskRepository parcelDetectionTaskRepository,
       TaskStatusService<ParcelDetectionTask> taskStatusService)
-      implements StatusHandler {
+      implements Runnable {
+
     @Override
-    @Transactional
-    public String performAction() {
+    public void run() {
       var taskFromJob =
           parcelDetectionTaskRepository
               .findByAsJobId(newJob.getId())
@@ -52,7 +52,7 @@ public class ParcelDetectionJobStatusChangedService
                               + newJob.getId()
                               + ")"));
       taskStatusService.succeed(taskFromJob);
-      return "ParcelDetectionTask(id=" + taskFromJob.getId() + ") successfully finished";
+      log.info("ParcelDetectionTask(id=" + taskFromJob.getId() + ") successfully finished");
     }
   }
 
@@ -60,10 +60,10 @@ public class ParcelDetectionJobStatusChangedService
       ParcelDetectionJob newJob,
       ParcelDetectionTaskRepository parcelDetectionTaskRepository,
       TaskStatusService<ParcelDetectionTask> taskStatusService)
-      implements StatusHandler {
+      implements Runnable {
+
     @Override
-    @Transactional
-    public String performAction() {
+    public void run() {
       var taskFromJob =
           parcelDetectionTaskRepository
               .findByAsJobId(newJob.getId())
@@ -74,7 +74,7 @@ public class ParcelDetectionJobStatusChangedService
                               + newJob.getId()
                               + ")"));
       taskStatusService.fail(taskFromJob);
-      return "Failed to process ParcelDetectionTask(id=" + taskFromJob.getId() + ")";
+      log.info("Failed to process ParcelDetectionTask(id=" + taskFromJob.getId() + ")");
     }
   }
 }

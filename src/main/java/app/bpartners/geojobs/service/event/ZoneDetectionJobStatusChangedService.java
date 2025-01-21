@@ -7,7 +7,6 @@ import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobSucceeded
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.service.JobFinishedMailer;
 import app.bpartners.geojobs.service.StatusChangedHandler;
-import app.bpartners.geojobs.service.StatusHandler;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
@@ -38,27 +37,27 @@ public class ZoneDetectionJobStatusChangedService
 
   private record OnSucceededHandler(
       JobFinishedMailer<ZoneDetectionJob> mailer, EventProducer eventProducer, ZoneDetectionJob zdj)
-      implements StatusHandler {
+      implements Runnable {
 
     @Override
-    public String performAction() {
+    public void run() {
       mailer.accept(zdj);
       eventProducer.accept(
           List.of(ZoneDetectionJobSucceeded.builder().succeededJobId(zdj.getId()).build()));
-      return "Finished, mail sent, ztj=" + zdj;
+      log.info("Finished, mail sent, ztj=" + zdj);
     }
   }
 
   private record OnFailedHandler(
       JobFinishedMailer<ZoneDetectionJob> mailer, EventProducer eventProducer, ZoneDetectionJob zdj)
-      implements StatusHandler {
+      implements Runnable {
 
     @Override
-    public String performAction() {
+    public void run() {
       mailer.accept(zdj);
       eventProducer.accept(
           List.of(ZoneDetectionJobFailed.builder().failedJobId(zdj.getId()).build()));
-      return "Failed to process ZDJ {}, mail sent, processing annotator triggered anyway";
+      log.info("Failed to process ZDJ {}, mail sent, processing annotator triggered anyway", zdj);
     }
   }
 }
