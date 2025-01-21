@@ -12,6 +12,8 @@ import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
+
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -20,39 +22,25 @@ import org.springframework.stereotype.Service;
 public class JobAnnotationService {
   private final ZoneDetectionJobRepository zoneDetectionJobRepository;
   private final ZoneTilingJobRepository tilingJobRepository;
-  private final EventProducer eventProducer;
+  private final AnnotationDetectionJobProcessing annotationDetectionJobProcessing;
 
   public AnnotationJobProcessing processAnnotationJob(
       String jobId, Double minConfidenceForDelivery) {
-    var defaultJobType = JobType.DETECTION;
-    if (tilingJobRepository.findById(jobId).isPresent()) {
-      throw new NotImplementedException("Only DETECTION job is handle for now. JobType could be TILING otherwise");
+    var jobType = getJobType(jobId);
+    if (JobType.DETECTION.equals(jobType)) {
+        return annotationDetectionJobProcessing.apply(jobId, minConfidenceForDelivery);
     }
-    var zoneDetectionJob =
-        zoneDetectionJobRepository
-            .findById(jobId)
-            .orElseThrow(() -> new NotFoundException("ZoneDetection(id=" + jobId + ")"));
+    throw new NotImplementedException("Only DETECTION JobType is supported for annotation job processing");
+  }
 
-    var annotationJobWithoutObjectsId = randomUUID().toString();
-    var annotationJobWithObjectsIdTruePositive = randomUUID().toString();
-    var annotationJobWithObjectsIdFalsePositive = randomUUID().toString();
-
-    eventProducer.accept(
-        List.of(
-            AnnotationDeliveryJobRequested.builder()
-                .jobId(zoneDetectionJob.getId())
-                .minimumConfidenceForDelivery(minConfidenceForDelivery)
-                .annotationJobWithObjectsIdTruePositive(annotationJobWithObjectsIdTruePositive)
-                .annotationJobWithObjectsIdFalsePositive(annotationJobWithObjectsIdFalsePositive)
-                .annotationJobWithoutObjectsId(annotationJobWithoutObjectsId)
-                .build()));
-
-    return new AnnotationJobProcessing()
-        .jobId(jobId)
-        .annotationWithObjectTruePositive(annotationJobWithObjectsIdTruePositive)
-        .annotationWithObjectFalsePositive(annotationJobWithObjectsIdFalsePositive)
-        .annotationWithoutObjectJobId(annotationJobWithoutObjectsId)
-        .jobType(defaultJobType)
-        .creationDatetime(Instant.now());
+  private JobType getJobType(String jobId) {
+    if (zoneDetectionJobRepository.findById(jobId).isPresent()) {
+      return JobType.DETECTION;
+    }
+    else if (tilingJobRepository.findById(jobId).isPresent()) {
+      return JobType.TILING;
+    } else {
+      throw new NotImplementedException("Unable to retrieve jobType for Job(id="+jobId+")");
+    }
   }
 }

@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryJobRequested;
 import app.bpartners.geojobs.endpoint.rest.model.AnnotationJobProcessing;
+import app.bpartners.geojobs.job.service.AnnotationDetectionJobProcessing;
 import app.bpartners.geojobs.job.service.JobAnnotationService;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
@@ -18,16 +19,15 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
-public class JobAnnotationServiceTest {
-  public static final String TILING_JOB = "tilingJob";
-  public static final String DETECTION_JOB_ID = "detectionJobId";
+class JobAnnotationServiceTest {
+  private static final String TILING_JOB = "tilingJob";
+  private static final String DETECTION_JOB_ID = "detectionJobId";
   private static final double MIN_CONFIDENCE = 0.8;
   ZoneTilingJobRepository tilingJobRepositoryMock = mock();
   ZoneDetectionJobRepository zoneDetectionJobRepositoryMock = mock();
   EventProducer eventProducerMock = mock();
-  JobAnnotationService subject =
-      new JobAnnotationService(
-          zoneDetectionJobRepositoryMock, tilingJobRepositoryMock, eventProducerMock);
+  JobAnnotationService subject = new JobAnnotationService(
+        zoneDetectionJobRepositoryMock, tilingJobRepositoryMock, new AnnotationDetectionJobProcessing(eventProducerMock));
 
   @Test
   void process_annotation_job_ko() {
