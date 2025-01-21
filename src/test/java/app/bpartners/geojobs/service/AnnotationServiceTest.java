@@ -3,6 +3,8 @@ package app.bpartners.geojobs.service;
 import static app.bpartners.geojobs.model.CustomObjectMapper.objectMapper;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PASSAGE_PIETON;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.gen.annotator.endpoint.rest.api.AdminApi;
@@ -14,6 +16,7 @@ import app.bpartners.geojobs.endpoint.rest.model.Geometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
+import app.bpartners.geojobs.repository.model.annotation.AnnotationDeliveryJob;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectType;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
@@ -33,6 +36,7 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.MockedConstruction;
 
 class AnnotationServiceTest {
@@ -45,11 +49,11 @@ class AnnotationServiceTest {
   DetectableObjectConfigurationRepository objectConfigurationRepositoryMock = mock();
   AnnotationDeliveryJobService deliverJobServiceMock = mock();
   BucketComponent bucketComponentMock = mock();
-  LabelExtractor labelExtractorMock =
+  LabelExtractor labelExtractor =
       new LabelExtractor(new KeyPredicateFunction(), labelConverterMock);
-  CreateAnnotationBatchExtractor batchExtractorMock =
-      new CreateAnnotationBatchExtractor(labelExtractorMock, new PolygonExtractor());
-  TaskExtractor taskExtractorMock = new TaskExtractor(batchExtractorMock, labelExtractorMock);
+  CreateAnnotationBatchExtractor batchExtractor =
+      new CreateAnnotationBatchExtractor(labelExtractor, new PolygonExtractor());
+  TaskExtractor taskExtractor = new TaskExtractor(batchExtractor, labelExtractor);
   AnnotationService subject;
 
   @NonNull
@@ -103,9 +107,9 @@ class AnnotationServiceTest {
     subject =
         new AnnotationService(
             annotatorApiConfMock,
-            taskExtractorMock,
+            taskExtractor,
             labelConverterMock,
-            labelExtractorMock,
+            labelExtractor,
             mock(),
             deliverJobServiceMock,
             objectConfigurationRepositoryMock,
@@ -129,17 +133,29 @@ class AnnotationServiceTest {
   void createAnnotationJob_with_some_un_found_objects() {
     var jobsApi = jobsApiMockedConstruction.constructed().getFirst();
     when(jobsApi.saveJob(any(), any())).thenReturn(new Job().id("annotatorJobId"));
+    var annotationDeliveryJobCapture = ArgumentCaptor.forClass(AnnotationDeliveryJob.class);
+    var annotationDeliveryTasksCapture = ArgumentCaptor.forClass(List.class);
 
-    subject.createAnnotationJob(
-        HumanDetectionJob.builder()
-            .id("humanDetectionJob")
-            .zoneDetectionJobId(ZONE_DETECTION_JOB_ID)
-            .annotationJobId("annotationJobId")
-            .machineDetectedTiles(detectedTiles())
-            .detectableObjectConfigurations(detectableObjects())
-            .build());
+    subject.createAnnotationJob(humanDetectionJob());
 
-    // TODO: complete assertions
-    verify(deliverJobServiceMock, only()).create(any(), any());
+    verify(deliverJobServiceMock, only())
+        .create(annotationDeliveryJobCapture.capture(), annotationDeliveryTasksCapture.capture());
+
+    var annotationDeliveryJobValue = annotationDeliveryJobCapture.getValue();
+    var annotationDeliveryTaskValues = annotationDeliveryJobCapture.getAllValues();
+
+    assertEquals(
+        humanDetectionJob().getAnnotationJobId(), annotationDeliveryJobValue.getAnnotationJobId());
+    assertFalse(annotationDeliveryTaskValues.isEmpty());
+  }
+
+  private HumanDetectionJob humanDetectionJob() {
+    return HumanDetectionJob.builder()
+        .id("humanDetectionJob")
+        .zoneDetectionJobId(ZONE_DETECTION_JOB_ID)
+        .annotationJobId("annotationJobId")
+        .machineDetectedTiles(detectedTiles())
+        .detectableObjectConfigurations(detectableObjects())
+        .build();
   }
 }
