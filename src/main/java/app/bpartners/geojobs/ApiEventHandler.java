@@ -1,7 +1,6 @@
 package app.bpartners.geojobs;
 
 import com.amazonaws.serverless.exceptions.ContainerInitializationException;
-import com.amazonaws.serverless.proxy.model.AwsProxyRequest;
 import com.amazonaws.serverless.proxy.model.AwsProxyResponse;
 import com.amazonaws.serverless.proxy.model.HttpApiV2ProxyRequest;
 import com.amazonaws.serverless.proxy.spring.SpringBootLambdaContainerHandler;
@@ -14,7 +13,8 @@ import java.io.OutputStream;
 @PojaGenerated
 @SuppressWarnings("all")
 public class ApiEventHandler implements RequestStreamHandler {
-  private static final SpringBootLambdaContainerHandler<HttpApiV2ProxyRequest, AwsProxyResponse> handler;
+  private static final SpringBootLambdaContainerHandler<HttpApiV2ProxyRequest, AwsProxyResponse>
+      handler;
 
   static {
     try {
