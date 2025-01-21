@@ -26,8 +26,11 @@ import org.locationtech.jts.geom.Polygon;
 
 class RoutesContinuationTest {
 
+  AreImagesEqual areImagesEqual = new AreImagesEqual(0.002); // note(numeric-instability)
   FeatureProvider rondPointFeatureProvider =
       new FeatureProvider("/geometry/vgg/rond-point.json", true, new IntXY(1024, 1024));
+  FeatureProvider rondPointWithPathFeatureProvider =
+      new FeatureProvider("/geometry/vgg/line-pathway.json", true, new IntXY(1024, 1024));
   FeatureProvider dijonFeatureProvider =
       new FeatureProvider("/geometry/vgg/dijon.json", true, new IntXY(1024, 1024));
   FeatureProvider fullParcelFeatureProvider =
@@ -56,7 +59,7 @@ class RoutesContinuationTest {
     var offset = new IntXY(2_000, 1_000);
 
     areContinuationsCorrectWithDetails(
-        polygons, scale, offset, "/geometry/vgg/rond-point-continuations.png", 0.005);
+        polygons, scale, offset, "/geometry/vgg/rond-point-continuations.png", 0.002);
   }
 
   @Test
@@ -191,5 +194,20 @@ class RoutesContinuationTest {
       throws IOException {
     isContinuedCorrect(
         polygons, prettyConf(), scale, offset, expectedImagePath, imageEqualityThreshold);
+  }
+
+  @Test
+  void rond_point_with_pathway_continued() throws IOException {
+    var polygons = rondPointWithPathFeatureProvider.getPolygons();
+    var scale = 0.07;
+    var offset = new IntXY(2_000, 1_000);
+
+    isContinuedCorrect(
+        polygons,
+        new PrettyConf(50),
+        scale,
+        offset,
+        "/geometry/vgg/line-pathway-continued.png",
+        0.0005);
   }
 }

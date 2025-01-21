@@ -38,6 +38,16 @@ public class Feature {
     this.tileCoordinate = new IntXY(intFromFilename(filename, 3), intFromFilename(filename, 4));
   }
 
+  public Feature(String filename, String label, double confidence, Polygon geometry) {
+    this.filename = filename;
+    this.label = label;
+    this.confidence = confidence;
+    this.geometry = geometry;
+    this.imageResolution = new IntXY(1024, 1024);
+    this.zoom = intFromFilename(filename, 2);
+    this.tileCoordinate = new IntXY(intFromFilename(filename, 3), intFromFilename(filename, 4));
+  }
+
   private int intFromFilename(String filename, int groupPosition) {
     var matcher = filenamePattern.matcher(filename);
     if (!matcher.matches()) {
