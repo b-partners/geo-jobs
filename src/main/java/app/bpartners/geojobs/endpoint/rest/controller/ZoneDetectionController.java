@@ -1,7 +1,5 @@
 package app.bpartners.geojobs.endpoint.rest.controller;
 
-import static app.bpartners.geojobs.endpoint.rest.model.SuccessStatus.NOT_SUCCEEDED;
-import static app.bpartners.geojobs.endpoint.rest.model.SuccessStatus.SUCCEEDED;
 import static app.bpartners.geojobs.file.ExtensionGuesser.OFFICE_OPEN_XML_FILE_MEDIA_TYPE;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 
@@ -20,7 +18,6 @@ import app.bpartners.geojobs.endpoint.rest.model.DetectedParcel;
 import app.bpartners.geojobs.endpoint.rest.model.Detection;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionSurfaceUnit;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionUsage;
-import app.bpartners.geojobs.endpoint.rest.model.FilteredDetectionJob;
 import app.bpartners.geojobs.endpoint.rest.model.GeoJsonsUrl;
 import app.bpartners.geojobs.endpoint.rest.model.Status;
 import app.bpartners.geojobs.endpoint.rest.model.TaskStatistic;
@@ -50,7 +47,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -80,18 +76,6 @@ public class ZoneDetectionController {
   private final FileWriter fileWriter;
   private final MediaTypeGuesser mediaTypeGuesser;
 
-  @PutMapping("/detectionJobs/{id}/taskFiltering")
-  public List<FilteredDetectionJob> filteredDetectionJobs(@PathVariable String id) {
-    var filteredTilingJob = service.dispatchTasksBySucceededStatus(id);
-    return List.of(
-        new FilteredDetectionJob()
-            .status(SUCCEEDED)
-            .job(mapper.toRest(filteredTilingJob.getSucceededJob(), List.of())),
-        new FilteredDetectionJob()
-            .status(NOT_SUCCEEDED)
-            .job(mapper.toRest(filteredTilingJob.getNotSucceededJob(), List.of())));
-  }
-
   @GetMapping("/detectionJobs/{id}/recomputedParcelsStatuses")
   public Status getZDJTasksRecomputedStatus(@PathVariable String id) {
     var detectionJob = service.findById(id);
@@ -115,13 +99,6 @@ public class ZoneDetectionController {
   @GetMapping("/detectionJobs/{id}/taskStatistics")
   public TaskStatistic getDetectionTaskStatistics(@PathVariable String id) {
     return taskStatisticMapper.toRest(service.computeTaskStatistics(id));
-  }
-
-  @PutMapping("/detectionJobs/{id}/retry")
-  public app.bpartners.geojobs.endpoint.rest.model.ZoneDetectionJob processFailedDetectionJob(
-      @PathVariable String id) {
-    return mapper.toRest(
-        service.retryFailedTask(id), List.of()); // TODO: check if features must be returned
   }
 
   @PostMapping("/detectionJobs/{annotationJobId}/humanVerificationStatus")

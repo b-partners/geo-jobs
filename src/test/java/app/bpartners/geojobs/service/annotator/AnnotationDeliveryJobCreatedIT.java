@@ -41,7 +41,7 @@ class AnnotationDeliveryJobCreatedIT extends DetectionIT {
   @BeforeEach
   void setUp() {
     localEventQueue.configure(new ArrayList<>(), DEFAULT_EVENT_DELAY_SPEED_FACTOR);
-    // TODO: set random failure if necessary here
+    // Set random failure if necessary here
     doNothing().when(annotationServiceMock).saveAnnotationJob(any(), any(), any(), any(), any());
     doNothing().when(annotationServiceMock).addAnnotationTask(any(), any());
     doAnswer(

@@ -116,27 +116,6 @@ class ZoneDetectionControllerTest {
   }
 
   @Test
-  void task_filtering_ok() {
-    String jobId = "jobId";
-    var succeededJob = aZDJ("succeededJob", FINISHED, SUCCEEDED);
-    var notSucceededJob = aZDJ("notSucceededJob", PENDING, UNKNOWN);
-    when(detectionJobServiceMock.dispatchTasksBySucceededStatus(jobId))
-        .thenReturn(new FilteredDetectionJob(jobId, succeededJob, notSucceededJob));
-
-    var actual = subject.filteredDetectionJobs(jobId);
-
-    var restSucceededJob =
-        new app.bpartners.geojobs.endpoint.rest.model.FilteredDetectionJob()
-            .status(SuccessStatus.SUCCEEDED)
-            .job(detectionJobMapper.toRest(succeededJob, List.of()));
-    var restNotSucceededJob =
-        new app.bpartners.geojobs.endpoint.rest.model.FilteredDetectionJob()
-            .status(SuccessStatus.NOT_SUCCEEDED)
-            .job(detectionJobMapper.toRest(notSucceededJob, List.of()));
-    assertEquals(List.of(restSucceededJob, restNotSucceededJob), actual);
-  }
-
-  @Test
   void get_zdj_recomputed_status_ok() {
     String jobId = "jobId";
     when(detectionJobServiceMock.findById(jobId))
@@ -194,18 +173,6 @@ class ZoneDetectionControllerTest {
     when(detectionJobServiceMock.computeTaskStatistics(jobId)).thenReturn(domainStatistic);
 
     var actual = subject.getDetectionTaskStatistics(jobId);
-
-    assertEquals(expected, actual);
-  }
-
-  @Test
-  void process_failed_detection_job() {
-    String jobId = "jobId";
-    var failedJob = aZDJ(jobId, FINISHED, FAILED);
-    ZoneDetectionJob expected = detectionJobMapper.toRest(failedJob, List.of());
-    when(detectionJobServiceMock.retryFailedTask(jobId)).thenReturn(failedJob);
-
-    var actual = subject.processFailedDetectionJob(jobId);
 
     assertEquals(expected, actual);
   }
