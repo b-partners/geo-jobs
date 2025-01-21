@@ -120,8 +120,7 @@ public class ZoneTilingController {
 
   @PutMapping("/tilingJobs/{id}/retry")
   public ZoneTilingJob processFailedTilingJob(@PathVariable String id) {
-    return mapper.toRest(
-        service.retryFailedTask(id), List.of());
+    return mapper.toRest(service.retryFailedTask(id), List.of());
   }
 
   @GetMapping("/tilingJobs")

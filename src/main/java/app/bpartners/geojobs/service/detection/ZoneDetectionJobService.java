@@ -2,9 +2,7 @@ package app.bpartners.geojobs.service.detection;
 
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.*;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
-import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
-import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
@@ -14,22 +12,15 @@ import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerifi
 import app.bpartners.geojobs.endpoint.event.model.parcel.ParcelDetectionTaskCreated;
 import app.bpartners.geojobs.endpoint.event.model.status.ZDJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobStatusChanged;
-import app.bpartners.geojobs.job.model.JobStatus;
-import app.bpartners.geojobs.job.model.Status;
-import app.bpartners.geojobs.job.model.Task;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.job.service.JobService;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.*;
-import app.bpartners.geojobs.repository.model.FilteredDetectionJob;
-import app.bpartners.geojobs.repository.model.Parcel;
-import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.*;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
-import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import java.util.*;
