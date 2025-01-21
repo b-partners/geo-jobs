@@ -1,26 +1,23 @@
 package app.bpartners.geojobs;
 
 import com.amazonaws.serverless.exceptions.ContainerInitializationException;
+import com.amazonaws.serverless.proxy.model.AwsProxyRequest;
 import com.amazonaws.serverless.proxy.model.AwsProxyResponse;
-import com.amazonaws.serverless.proxy.model.HttpApiV2ProxyRequest;
 import com.amazonaws.serverless.proxy.spring.SpringBootLambdaContainerHandler;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import lombok.extern.slf4j.Slf4j;
 
 @PojaGenerated
 @SuppressWarnings("all")
-@Slf4j
 public class ApiEventHandler implements RequestStreamHandler {
-  private static final SpringBootLambdaContainerHandler<HttpApiV2ProxyRequest, AwsProxyResponse>
-      handler;
+  private static final SpringBootLambdaContainerHandler<AwsProxyRequest, AwsProxyResponse> handler;
 
   static {
     try {
-      handler = SpringBootLambdaContainerHandler.getHttpApiV2ProxyHandler(PojaApplication.class);
+      handler = SpringBootLambdaContainerHandler.getAwsProxyHandler(PojaApplication.class);
     } catch (ContainerInitializationException e) {
       throw new RuntimeException("Initialization of Spring Boot Application failed", e);
     }
@@ -29,7 +26,6 @@ public class ApiEventHandler implements RequestStreamHandler {
   @Override
   public void handleRequest(InputStream input, OutputStream output, Context context)
       throws IOException {
-    log.info("Input={}, Output={}, Context={}", input, output, context);
     handler.proxyStream(input, output, context);
   }
 }
