@@ -121,7 +121,7 @@ public class ZoneTilingController {
   @PutMapping("/tilingJobs/{id}/retry")
   public ZoneTilingJob processFailedTilingJob(@PathVariable String id) {
     return mapper.toRest(
-        service.retryFailedTask(id), List.of()); // TODO: check if features must be returned
+        service.retryFailedTask(id), List.of());
   }
 
   @GetMapping("/tilingJobs")
