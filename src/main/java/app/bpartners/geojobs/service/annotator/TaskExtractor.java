@@ -5,16 +5,18 @@ import app.bpartners.gen.annotator.endpoint.rest.model.Label;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import java.util.List;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.function.TriFunction;
 import org.springframework.stereotype.Component;
 
 @Component
 @AllArgsConstructor
-// TODO: check the appropriate Java function to implement
-public class TaskExtractor {
+public class TaskExtractor
+    implements TriFunction<
+        List<MachineDetectedTile>, String, List<Label>, List<CreateAnnotatedTask>> {
   private final CreateAnnotationBatchExtractor createAnnotationBatchExtractor;
   private final LabelExtractor labelExtractor;
 
-  private CreateAnnotatedTask extractTask(
+  private CreateAnnotatedTask annotatedTaskFrom(
       MachineDetectedTile machineDetectedTile, String annotatorId, List<Label> existingLabels) {
     return new CreateAnnotatedTask()
         .id(machineDetectedTile.getId())
@@ -24,6 +26,7 @@ public class TaskExtractor {
             createAnnotationBatchExtractor.apply(machineDetectedTile, annotatorId, existingLabels));
   }
 
+  @Override
   public List<CreateAnnotatedTask> apply(
       List<MachineDetectedTile> machineDetectedTiles,
       String annotatorId,
@@ -32,7 +35,7 @@ public class TaskExtractor {
     return machineDetectedTiles.stream()
         .map(
             tile ->
-                extractTask(
+                annotatedTaskFrom(
                     tile, annotatorId, existingLabels.isEmpty() ? expectedLabels : existingLabels))
         .toList();
   }

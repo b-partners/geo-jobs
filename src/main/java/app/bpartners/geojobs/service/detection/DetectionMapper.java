@@ -139,27 +139,6 @@ public class DetectionMapper {
         .build();
   }
 
-  /*
-  TODO: custom for saving detection task
-  public DetectionTask toDomain(Tile tile, String zoneDetectionJobId) {
-    String taskId = randomUUID().toString();
-    return DetectionTask.builder()
-        .id(taskId)
-        .jobId(zoneDetectionJobId)
-        .tile(tile)
-        .statusHistory(
-            List.of(
-                TaskStatus.builder()
-                    .health(UNKNOWN)
-                    .progression(PENDING)
-                    .jobType(DETECTION)
-                    .creationDatetime(now())
-                    .taskId(taskId)
-                    .build()))
-        .submissionInstant(now())
-        .build();
-  }*/
-
   public ZoneDetectionJob fromTilingJob(ZoneTilingJob tilingJob) {
     String zoneDetectionJobId = randomUUID().toString();
     var detectionJob =
