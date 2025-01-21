@@ -10,7 +10,6 @@ import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.JobFinishedMailer;
 import app.bpartners.geojobs.service.StatusChangedHandler;
-import app.bpartners.geojobs.service.StatusHandler;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import java.util.List;
 import java.util.function.Consumer;
@@ -53,10 +52,10 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
       ZoneTilingJob ztj,
       DetectionRepository detectionRepository,
       DetectableObjectConfigurationRepository objectConfigurationRepository)
-      implements StatusHandler {
+      implements Runnable {
 
     @Override
-    public String performAction() {
+    public void run() {
       var zdj = zoneDetectionJobService.saveZDJFromZTJ(ztj);
       var optionalDetection = detectionRepository.findByZtjId(ztj.getId());
       // For now, only detection process triggers ZDJ processing
@@ -74,7 +73,7 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
             List.of(ZoneDetectionJobCreated.builder().zoneDetectionJob(zdj).build()));
       }
       tilingFinishedMailer.accept(ztj);
-      return "Finished, mail sent, ztj=" + ztj;
+      log.info("Finished, mail sent, ztj=" + ztj);
     }
   }
 }

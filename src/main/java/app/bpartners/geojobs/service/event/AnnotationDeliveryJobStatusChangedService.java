@@ -13,7 +13,6 @@ import app.bpartners.geojobs.mail.Email;
 import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.repository.model.annotation.AnnotationDeliveryJob;
 import app.bpartners.geojobs.service.StatusChangedHandler;
-import app.bpartners.geojobs.service.StatusHandler;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import jakarta.mail.internet.AddressException;
@@ -53,11 +52,11 @@ public class AnnotationDeliveryJobStatusChangedService
       AnnotationService annotationService,
       Mailer mailer,
       AnnotationDeliveryJob newJob)
-      implements StatusHandler {
+      implements Runnable {
 
-    @SneakyThrows
     @Override
-    public String performAction() {
+    @SneakyThrows
+    public void run() {
       var detectionJobId = newJob.getDetectionJobId();
       var annotationJobId = newJob.getAnnotationJobId();
       var annotationJobName = newJob.getAnnotationJobName();
@@ -68,10 +67,11 @@ public class AnnotationDeliveryJobStatusChangedService
       updateZDJStatus(detectionJobId);
       notifyAdminByEmail(newJob);
 
-      return "Annotation Delivery Job (id"
-          + newJob.getId()
-          + ") finished with status "
-          + newJob.getStatus();
+      log.info(
+          "Annotation Delivery Job (id"
+              + newJob.getId()
+              + ") finished with status "
+              + newJob.getStatus());
     }
 
     private void notifyAdminByEmail(AnnotationDeliveryJob deliveryJob) throws AddressException {
