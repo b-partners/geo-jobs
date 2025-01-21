@@ -183,25 +183,5 @@ class ParcelDetectionTaskCreatedServiceIT extends FacadeIT {
 
     var eventsCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducer, times(1)).accept(eventsCaptor.capture());
-
-    /*
-    TODO: must be inside TileDetectionTaskCreatedServiceTest
-    verify(detectedTileRepository).save(detectedTileCaptor.capture());
-
-
-    DetectedTile detectedTile = detectedTileCaptor.getValue();
-
-    List<DetectedObject> actualObjects = detectedTile.getDetectedObjects();
-    assertNotNull(detectedTile.getId());
-    assertNotNull(detectedTile.getTile());
-    assertNotNull(actualObjects);
-    assertFalse(actualObjects.isEmpty());
-    assertTrue(
-        actualObjects.stream()
-            .allMatch(
-                detectedObject ->
-                    detectedObject.getComputedConfidence() != null
-                        && detectedObject.getComputedConfidence() > 0));
-    assertFalse(actualObjects.get(0).getFeature().getGeometry().getCoordinates().isEmpty()); */
   }
 }
