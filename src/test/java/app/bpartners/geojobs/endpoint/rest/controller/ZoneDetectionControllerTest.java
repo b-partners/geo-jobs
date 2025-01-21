@@ -27,8 +27,6 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMap
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionSurfaceUnit;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionUsage;
-import app.bpartners.geojobs.endpoint.rest.model.SuccessStatus;
-import app.bpartners.geojobs.endpoint.rest.model.ZoneDetectionJob;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.authorizer.DetectionAuthorizer;
 import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
@@ -45,7 +43,6 @@ import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.job.model.statistic.TaskStatusStatistic;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
-import app.bpartners.geojobs.repository.model.FilteredDetectionJob;
 import app.bpartners.geojobs.repository.model.GeoJobType;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.CommunityUsedSurfaceService;

@@ -26,8 +26,11 @@ class JobAnnotationServiceTest {
   ZoneTilingJobRepository tilingJobRepositoryMock = mock();
   ZoneDetectionJobRepository zoneDetectionJobRepositoryMock = mock();
   EventProducer eventProducerMock = mock();
-  JobAnnotationService subject = new JobAnnotationService(
-        zoneDetectionJobRepositoryMock, tilingJobRepositoryMock, new AnnotationDetectionJobProcessing(eventProducerMock));
+  JobAnnotationService subject =
+      new JobAnnotationService(
+          zoneDetectionJobRepositoryMock,
+          tilingJobRepositoryMock,
+          new AnnotationDetectionJobProcessing(eventProducerMock));
 
   @Test
   void process_annotation_job_ko() {
