@@ -46,7 +46,7 @@ public class DetectionCreator {
                     .bucketStorageName(null)
                     .objectType(DetectableType.TOITURE_REVETEMENT)
                     .minConfidenceForDetection(
-                        DEFAULT_MINIMUM_CONFIDENCE_FOR_DELIVERY) // TODO do not confuse
+                        DEFAULT_MINIMUM_CONFIDENCE_FOR_DELIVERY)
                     .build()))
         .providedGeoJsonZone(domainFeature)
         .build();
