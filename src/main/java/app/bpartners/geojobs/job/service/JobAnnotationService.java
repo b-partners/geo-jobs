@@ -51,7 +51,7 @@ public class JobAnnotationService {
         .annotationWithObjectTruePositive(annotationJobWithObjectsIdTruePositive)
         .annotationWithObjectFalsePositive(annotationJobWithObjectsIdFalsePositive)
         .annotationWithoutObjectJobId(annotationJobWithoutObjectsId)
-        .jobType(JobType.DETECTION) // TODO: only DETECTION is handle but must be computed
+        .jobType(JobType.DETECTION) // As check below, only DETECTION jobType supported
         .creationDatetime(Instant.now());
   }
 }
