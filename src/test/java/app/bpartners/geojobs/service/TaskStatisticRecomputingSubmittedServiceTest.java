@@ -4,8 +4,11 @@ import static app.bpartners.geojobs.job.model.Status.HealthStatus.*;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
+import static app.bpartners.geojobs.repository.model.GeoJobType.TILING;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
 
@@ -20,6 +23,7 @@ import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
+import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.event.TaskStatisticRecomputingSubmittedService;
 import java.util.ArrayList;
@@ -65,33 +69,37 @@ public class TaskStatisticRecomputingSubmittedServiceTest {
         .thenReturn(Optional.of(aZTJ(TILING_JOB_ID, PROCESSING, UNKNOWN)));
     when(tilingTaskRepositoryMock.findAllByJobId(TILING_JOB_ID))
         .thenReturn(
-            // TODO add TilingDetectionTask
-            List.of());
+            List.of(
+                TilingTask.builder()
+                    .jobId(TILING_JOB_ID)
+                    .statusHistory(List.of())
+                    .parcels(List.of())
+                    .build()));
   }
 
   @Test
   void accept_detection_job_id_ok() {
-    var expectedStatistic = TaskStatistic.builder().build(); // TODO
-
     subject.accept(new TaskStatisticRecomputingSubmitted(DETECTION_JOB_ID));
 
     var taskStatisticCapture = ArgumentCaptor.forClass(TaskStatistic.class);
     verify(taskStatisticRepositoryMock, times(1)).save(taskStatisticCapture.capture());
     var actualStatistic = taskStatisticCapture.getValue();
-    // TODO assertEquals(expectedStatistic, actualStatistic);
+    assertEquals(DETECTION_JOB_ID, actualStatistic.getJobId());
+    assertEquals(DETECTION, actualStatistic.getJobType());
+    assertFalse(actualStatistic.getTaskStatusStatistics().isEmpty());
     assertNotNull(actualStatistic);
   }
 
   @Test
   void accept_tiling_job_id_ok() {
-    var expectedStatistic = TaskStatistic.builder().build(); // TODO
-
     subject.accept(new TaskStatisticRecomputingSubmitted(TILING_JOB_ID));
 
     var taskStatisticCapture = ArgumentCaptor.forClass(TaskStatistic.class);
     verify(taskStatisticRepositoryMock, times(1)).save(taskStatisticCapture.capture());
     var actualStatistic = taskStatisticCapture.getValue();
-    // TODO assertEquals(expectedStatistic, actualStatistic);
+    assertEquals(TILING_JOB_ID, actualStatistic.getJobId());
+    assertEquals(TILING, actualStatistic.getJobType());
+    assertFalse(actualStatistic.getTaskStatusStatistics().isEmpty());
     assertNotNull(actualStatistic);
   }
 
