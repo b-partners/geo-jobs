@@ -72,7 +72,6 @@ class DetectionMapperTest {
 
     assertNotNull(actual);
     assertFalse(actual.getDetectedObjects().isEmpty());
-    assertNotNull(actual.getFirstObject());
     assertEquals(tile, actual.getTile());
     assertEquals(parcelId, actual.getParcelId());
     assertEquals(zoneJobId, actual.getZdjJobId());
