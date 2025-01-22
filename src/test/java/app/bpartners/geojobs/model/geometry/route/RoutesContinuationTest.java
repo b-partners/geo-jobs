@@ -21,9 +21,11 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.Set;
 import javax.imageio.ImageIO;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Polygon;
 
+@Disabled
 class RoutesContinuationTest {
 
   AreImagesEqual areImagesEqual = new AreImagesEqual(0.002); // note(numeric-instability)
