@@ -72,11 +72,8 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
   }
 
   private String retrieveBaseUrl(List<DetectableType> types) {
-    if (types.size() != 1) {
-      throw new NotImplementedException(
-          "Only one object detection per task is implemented for now but wanted detectable types"
-              + " are "
-              + types.size());
+    if (types.size() > 1) {
+      throw new NotImplementedException("TODO: multiclass detection API not available");
     }
     var type = types.getFirst();
     List<TileDetectorUrl> tileDetectionBaseUrls = getDetectorUrls();
