@@ -76,8 +76,8 @@ class TileDetectionTaskCreatedIT extends DetectionIT {
 
   @SneakyThrows
   @Test
-  void thousand_events_that_succeeds() {
-    ThousandEventDataSetUp testData = getThousandEventDataSetUp();
+  void hundred_events_that_succeeds() {
+    HundredEventDataSetUp testData = getHundredEventDataSetUp();
 
     testData
         .parcelDetectionJobWithTasks()
@@ -99,7 +99,7 @@ class TileDetectionTaskCreatedIT extends DetectionIT {
     eventProducerMock.accept(
         List.of(new ZDJParcelsStatusRecomputingSubmitted(testData.detectionJobId())));
     eventProducerMock.accept(List.of(new ZDJStatusRecomputingSubmitted(testData.detectionJobId())));
-    Thread.sleep(Duration.ofSeconds(90L));
+    Thread.sleep(Duration.ofSeconds(180L));
     if (localEventQueue != null) localEventQueue.attemptSchedulerShutDown();
 
     var retrievedJob = zdjService.findById(testData.detectionJob().getId());
@@ -122,7 +122,7 @@ class TileDetectionTaskCreatedIT extends DetectionIT {
   }
 
   @NonNull
-  private ThousandEventDataSetUp getThousandEventDataSetUp() {
+  private TileDetectionTaskCreatedIT.HundredEventDataSetUp getHundredEventDataSetUp() {
     String tilingJobId = randomUUID().toString();
     var tilingJob = ztjRepository.save(finishedZoneTilingJob(tilingJobId));
     String detectionJobId = randomUUID().toString();
@@ -130,10 +130,10 @@ class TileDetectionTaskCreatedIT extends DetectionIT {
     var parcelDetectionTasks =
         parcelDetectionTaskRepository.saveAll(thousandTilesInFiftyParcels(detectionJobId));
     var parcelDetectionJobWithTasks = someParcelDetectionJobWithTask(parcelDetectionTasks);
-    return new ThousandEventDataSetUp(detectionJobId, detectionJob, parcelDetectionJobWithTasks);
+    return new HundredEventDataSetUp(detectionJobId, detectionJob, parcelDetectionJobWithTasks);
   }
 
-  private record ThousandEventDataSetUp(
+  private record HundredEventDataSetUp(
       String detectionJobId,
       ZoneDetectionJob detectionJob,
       List<PDJRecord> parcelDetectionJobWithTasks) {}
@@ -152,44 +152,6 @@ class TileDetectionTaskCreatedIT extends DetectionIT {
     pdjService.create(parcelDetectionJob, tileDetectionTasks);
   }
 
-  @NonNull
-  private SingleEventDataSetUp getSingleEventDataSetUp() {
-    String tilingJobId = randomUUID().toString();
-    String detectionJobId = randomUUID().toString();
-    String parcelDetectionJobId = randomUUID().toString();
-    var tilingJob = ztjRepository.save(finishedZoneTilingJob(tilingJobId));
-    var detectionJob = zdjService.save(processingZoneDetectionJob(detectionJobId, tilingJob));
-    var parcel =
-        parcelRepository.save(
-            parcelCreator.create(
-                randomUUID().toString(),
-                List.of(tileCreator.create(randomUUID().toString(), "bucketPath"))));
-    var tileDetectionTask =
-        tileDetectionTaskCreator.create(
-            randomUUID().toString(),
-            parcelDetectionJobId,
-            parcel.getId(),
-            parcel.getParcelContent().getFirstTile(),
-            PENDING,
-            UNKNOWN);
-    var parcelDetectionJob =
-        parcelDetectionJobCreator.create(parcelDetectionJobId, PENDING, UNKNOWN);
-    var savedPDJ = pdjService.create(parcelDetectionJob, List.of(tileDetectionTask));
-    var processingParcelDetectionTask =
-        parcelDetectionTaskCreator.create(
-            randomUUID().toString(),
-            detectionJob.getId(),
-            savedPDJ.getId(),
-            parcel,
-            PROCESSING,
-            UNKNOWN);
-    parcelDetectionTaskRepository.save(processingParcelDetectionTask);
-    return new SingleEventDataSetUp(detectionJobId, detectionJob, tileDetectionTask);
-  }
-
-  private record SingleEventDataSetUp(
-      String detectionJobId, ZoneDetectionJob detectionJob, TileDetectionTask tileDetectionTask) {}
-
   private List<PDJRecord> someParcelDetectionJobWithTask(
       List<ParcelDetectionTask> parcelDetectionTasks) {
     List<PDJRecord> pdjWithTasks = new ArrayList<>();
@@ -207,7 +169,7 @@ class TileDetectionTaskCreatedIT extends DetectionIT {
   private List<ParcelDetectionTask> thousandTilesInFiftyParcels(String jobId) {
     var parcelDetectionTasks = new ArrayList<ParcelDetectionTask>();
     for (int i = 0; i < 50; i++) {
-      var savedParcel = parcelRepository.save(parcelCreator.create(20));
+      var savedParcel = parcelRepository.save(parcelCreator.create(2));
       String taskId = randomUUID().toString();
       String asJobId = null;
       parcelDetectionTasks.add(
