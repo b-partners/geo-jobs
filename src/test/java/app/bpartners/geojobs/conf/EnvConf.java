@@ -20,7 +20,8 @@ public class EnvConf {
         () ->
             "[ { \"objectType\": \"TOITURE_REVETEMENT\", \"url\":"
                 + " \"https://roof-api.azurewebsites.net/api\" }, { \"objectType\":"
-                + " \"PASSAGE_PIETON\", \"url\": \"https://pathway-api.azurewebsites.net/api\" }, {"
+                + " \"PASSAGE_PIETON\", \"url\":"
+                + " \"https://zjjhl54scfpztssyvodvjbk54q0naxgw.lambda-url.eu-west-3.on.aws\" }, {"
                 + " \"objectType\": \"PANNEAU_PHOTOVOLTAIQUE\", \"url\":"
                 + " \"https://solarpanel-api.azurewebsites.net/api\" }, { \"objectType\":"
                 + " \"PISCINE\", \"url\": \"https://pool-api.azurewebsites.net/api\" }, {"
