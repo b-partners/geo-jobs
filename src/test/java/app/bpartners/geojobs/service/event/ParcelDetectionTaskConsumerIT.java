@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.endpoint.rest.controller.ZoneDetectionJobControllerIT.someDetectionTask;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
@@ -20,6 +19,7 @@ import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.detection.DetectionMapper;
 import app.bpartners.geojobs.service.detection.DetectionResponse;
 import app.bpartners.geojobs.service.detection.TileObjectDetector;
+import app.bpartners.geojobs.utils.detection.SpecificDetectionTaskCreator;
 import java.time.Instant;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +44,7 @@ class ParcelDetectionTaskConsumerIT extends FacadeIT {
   @Autowired ParcelDetectionTaskRepository parcelDetectionTaskRepository;
   @Autowired ZoneDetectionJobRepository jobRepository;
   @Autowired ParcelRepository parcelRepository;
+  SpecificDetectionTaskCreator specificDetectionTaskCreator = new SpecificDetectionTaskCreator();
 
   ParcelDetectionTaskConsumerIT() {
     this.jobId = randomUUID().toString();
@@ -98,7 +99,9 @@ class ParcelDetectionTaskConsumerIT extends FacadeIT {
 
   @Test
   void accept_ok() {
-    subject.accept(someDetectionTask(jobId, detectionTaskId, parcelId));
+    subject.accept(
+        specificDetectionTaskCreator.createPendingTask(
+            jobId, detectionTaskId, parcelId, randomUUID().toString(), randomUUID().toString()));
 
     var eventsCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducer, times(detectionTask().getParcels().size()))

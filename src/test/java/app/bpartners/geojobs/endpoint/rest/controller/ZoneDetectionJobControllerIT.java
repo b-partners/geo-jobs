@@ -21,7 +21,6 @@ import app.bpartners.geojobs.endpoint.event.model.status.ZDJStatusRecomputingSub
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.job.model.JobStatus;
-import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.model.page.BoundedPageSize;
 import app.bpartners.geojobs.model.page.PageFromOne;
@@ -30,12 +29,11 @@ import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;
 import app.bpartners.geojobs.repository.ParcelRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.Parcel;
-import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.detection.HumanDetectionJob;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
-import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
+import app.bpartners.geojobs.utils.detection.SpecificDetectionTaskCreator;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,12 +49,13 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
-public class ZoneDetectionJobControllerIT extends FacadeIT {
-  public static final String JOB1_ID = "job1";
-  public static final String JOB2_ID = "job2";
-  public static final String JOB3_ID = "job3";
-  public static final String JOB4_ID = "job4";
-  public static final String ANNOTATION_JOB_ID = "annotationJobId";
+class ZoneDetectionJobControllerIT extends FacadeIT {
+  public final String randomJobStatusId;
+  private final String job1Id;
+  private final String job2Id;
+  private final String job3Id;
+  private final String job4Id;
+  private final String annotationJobId;
   @Autowired ZoneDetectionController subject;
   @Autowired ZoneDetectionJobRepository jobRepository;
   @Autowired JobStatusRepository jobStatusRepository;
@@ -66,8 +65,18 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
   @MockBean EventProducer eventProducer;
   @MockBean AnnotationService annotationServiceMock;
   @MockBean HumanDetectionJobRepository humanDetectionJobRepositoryMock;
+  SpecificDetectionTaskCreator specificDetectionTaskCreator = new SpecificDetectionTaskCreator();
 
-  static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob aZDJ(
+  ZoneDetectionJobControllerIT() {
+    this.randomJobStatusId = randomUUID().toString();
+    this.job1Id = randomUUID().toString();
+    this.job2Id = randomUUID().toString();
+    this.job3Id = randomUUID().toString();
+    this.job4Id = randomUUID().toString();
+    this.annotationJobId = randomUUID().toString();
+  }
+
+  private app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob aZDJ(
       String jobId, String tilingJobId) {
     var statusHistory = new ArrayList<JobStatus>();
     statusHistory.add(
@@ -93,83 +102,39 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
   }
 
   @NotNull
-  private static List<app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob>
+  private List<app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob>
       someDetectionJobs() {
     String tilingJobId1 = randomUUID().toString();
     String tilingJobId2 = randomUUID().toString();
     return List.of(
-        aZDJ(JOB1_ID, tilingJobId1),
-        aZDJ(JOB2_ID, tilingJobId2),
+        aZDJ(job1Id, tilingJobId1),
+        aZDJ(job2Id, tilingJobId2),
         aZDJ(randomUUID().toString(), tilingJobId1).toBuilder().detectionType(HUMAN).build(),
         aZDJ(randomUUID().toString(), tilingJobId2).toBuilder().detectionType(HUMAN).build());
   }
 
-  public static ParcelDetectionTask someDetectionTask(
-      String jobId, String taskId, String parcelId, String parcelContentId, String tileId) {
-    return ParcelDetectionTask.builder()
-        .id(taskId)
-        .jobId(jobId)
-        .parcels(List.of(someParcel(parcelId, parcelContentId, tileId)))
-        .statusHistory(
-            List.of(
-                TaskStatus.builder()
-                    .id(randomUUID().toString())
-                    .progression(PENDING)
-                    .jobType(DETECTION)
-                    .health(UNKNOWN)
-                    .build()))
-        .build();
+  private ParcelDetectionTask someDetectionTask(String jobId, String taskId) {
+    return specificDetectionTaskCreator.createPendingTask(
+        jobId, taskId, randomUUID().toString(), randomUUID().toString(), randomUUID().toString());
   }
 
-  public static ParcelDetectionTask someDetectionTask(String jobId, String taskId) {
-    return someDetectionTask(jobId, taskId, randomUUID().toString());
+  private ParcelDetectionTask detectionTask2(String jobId) {
+    return someDetectionTask(jobId, randomUUID().toString());
   }
 
-  public static ParcelDetectionTask someDetectionTask(
-      String jobId, String taskId, String parcelId) {
-    return ParcelDetectionTask.builder()
-        .id(taskId)
-        .jobId(jobId)
-        .parcels(List.of(someParcel(parcelId, randomUUID().toString(), randomUUID().toString())))
-        .statusHistory(
-            List.of(
-                TaskStatus.builder()
-                    .id(randomUUID().toString())
-                    .progression(PENDING)
-                    .jobType(DETECTION)
-                    .health(UNKNOWN)
-                    .build()))
-        .build();
-  }
-
-  private static Parcel someParcel(String parcelId, String parcelContentId, String tileId) {
-    return Parcel.builder()
-        .id(parcelId)
-        .parcelContent(
-            ParcelContent.builder()
-                .id(parcelContentId)
-                .tiles(List.of(Tile.builder().id(tileId).bucketPath("dummyBucketPath").build()))
-                .build())
-        .build();
-  }
-
-  private static ParcelDetectionTask detectionTask2(String jobId) {
-    return someDetectionTask(jobId, "detection_task2");
-  }
-
-  private static ParcelDetectionTask detectionTask1(String jobId) {
-    return someDetectionTask(jobId, "detection_task1");
+  private ParcelDetectionTask detectionTask1(String jobId) {
+    return someDetectionTask(jobId, randomUUID().toString());
   }
 
   @NotNull
-  private static List<ParcelDetectionTask> randomDetectionTasks(String jobId) {
+  private List<ParcelDetectionTask> randomDetectionTasks(String jobId) {
     return List.of(detectionTask1(jobId), detectionTask2(jobId));
   }
 
   @AfterEach
   void tearDown() {
     jobRepository.deleteAll(someDetectionJobs());
-    jobRepository.deleteById("random_job_status2");
+    jobRepository.deleteById(randomUUID().toString());
   }
 
   @Test
@@ -177,18 +142,18 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
     var tilingJobId = randomUUID().toString();
     jobRepository.saveAll(
         List.of(
-            aZDJ(JOB3_ID, tilingJobId).toBuilder().detectionType(MACHINE).build(),
-            aZDJ(JOB1_ID, tilingJobId).toBuilder().detectionType(HUMAN).build()));
-    when(humanDetectionJobRepositoryMock.findByAnnotationJobId(ANNOTATION_JOB_ID))
+            aZDJ(job3Id, tilingJobId).toBuilder().detectionType(MACHINE).build(),
+            aZDJ(job1Id, tilingJobId).toBuilder().detectionType(HUMAN).build()));
+    when(humanDetectionJobRepositoryMock.findByAnnotationJobId(annotationJobId))
         .thenReturn(
             Optional.of(
                 HumanDetectionJob.builder()
-                    .zoneDetectionJobId(JOB1_ID)
-                    .annotationJobId(ANNOTATION_JOB_ID)
+                    .zoneDetectionJobId(job1Id)
+                    .annotationJobId(annotationJobId)
                     .build()));
-    ZoneDetectionJob actual = subject.checkHumanDetectionJobStatus(ANNOTATION_JOB_ID);
+    ZoneDetectionJob actual = subject.checkHumanDetectionJobStatus(annotationJobId);
 
-    assertEquals(JOB1_ID, actual.getId());
+    assertEquals(job1Id, actual.getId());
     assertEquals(
         new Status()
             .progression(Status.ProgressionEnum.PENDING)
@@ -196,7 +161,7 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
             .creationDatetime(actual.getStatus().getCreationDatetime()),
         actual.getStatus());
 
-    jobRepository.deleteAllById(List.of(JOB1_ID, JOB3_ID));
+    jobRepository.deleteAllById(List.of(job1Id, job3Id));
   }
 
   @Test
@@ -207,22 +172,22 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
 
     jobRepository.saveAll(
         List.of(
-            aZDJ(JOB3_ID, tilingJobId1).toBuilder().detectionType(MACHINE).build(),
-            aZDJ(JOB1_ID, tilingJobId1).toBuilder().detectionType(HUMAN).build(),
-            aZDJ(JOB4_ID, tilingJobId2).toBuilder().detectionType(MACHINE).build(),
-            aZDJ(JOB2_ID, tilingJobId2).toBuilder().detectionType(HUMAN).build()));
+            aZDJ(job3Id, tilingJobId1).toBuilder().detectionType(MACHINE).build(),
+            aZDJ(job1Id, tilingJobId1).toBuilder().detectionType(HUMAN).build(),
+            aZDJ(job4Id, tilingJobId2).toBuilder().detectionType(MACHINE).build(),
+            aZDJ(job2Id, tilingJobId2).toBuilder().detectionType(HUMAN).build()));
     var actualJobStatus =
         JobStatus.builder()
-            .id("random_job_status2")
-            .jobId(JOB2_ID)
+            .id(randomJobStatusId)
+            .jobId(job2Id)
             .jobType(DETECTION)
             .progression(FINISHED)
             .health(SUCCEEDED)
             .build();
     jobStatusRepository.save(actualJobStatus);
 
-    GeoJsonsUrl actual1 = subject.getZDJGeojsonsUrl(JOB1_ID);
-    GeoJsonsUrl actual2 = subject.getZDJGeojsonsUrl(JOB2_ID);
+    GeoJsonsUrl actual1 = subject.getZDJGeojsonsUrl(job1Id);
+    GeoJsonsUrl actual2 = subject.getZDJGeojsonsUrl(job2Id);
 
     assertNull(actual1.getUrl());
     assertNotNull(actual1.getStatus());
@@ -238,7 +203,7 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
                     .creationDatetime(null)),
         actual2.status(actual2.getStatus().creationDatetime(null)));
 
-    jobRepository.deleteAllById(List.of(JOB1_ID, JOB2_ID, JOB3_ID, JOB4_ID));
+    jobRepository.deleteAllById(List.of(job1Id, job2Id, job3Id, job4Id));
   }
 
   @Test
@@ -255,7 +220,7 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
   @Test
   @Transactional
   void process_zdj() {
-    var job1 = jobRepository.saveAll(someDetectionJobs()).get(0);
+    var job1 = jobRepository.saveAll(someDetectionJobs()).getFirst();
     List<ParcelDetectionTask> parcelDetectionTasks = randomDetectionTasks(job1.getId());
     List<Parcel> parcels =
         parcelDetectionTasks.stream()
@@ -282,11 +247,11 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
             times(configuredTasks.size() + zdjStatusEventNb + taskStatusComputingEvent))
         .accept(eventsCaptor.capture());
     var events = eventsCaptor.getAllValues();
-    var capturedEvent1 = events.get(0).getFirst();
+    var capturedEvent1 = events.getFirst().getFirst();
     var capturedEvent2 = events.get(1).getFirst();
     var capturedEvent3 = events.get(2).getFirst();
     var capturedEvent4 = events.get(3).getFirst();
-    assertEquals(new ParcelDetectionTaskCreated(configuredTasks.get(0)), capturedEvent1);
+    assertEquals(new ParcelDetectionTaskCreated(configuredTasks.getFirst()), capturedEvent1);
     assertEquals(new ParcelDetectionTaskCreated(configuredTasks.get(1)), capturedEvent2);
     assertEquals(new ZDJStatusRecomputingSubmitted(job1.getId()), capturedEvent3);
     assertEquals(new AutoTaskStatisticRecomputingSubmitted(job1.getId()), capturedEvent4);
@@ -296,35 +261,39 @@ public class ZoneDetectionJobControllerIT extends FacadeIT {
   @Transactional
   void read_zdj_parcels() {
     jobRepository.saveAll(someDetectionJobs());
-    ParcelDetectionTask parcelDetectionTask =
-        someDetectionTask(JOB1_ID, "task1", "parcel1", "parcelContent1", "tile1");
+    var parcelDetectionTask =
+        specificDetectionTaskCreator.createPendingTask(
+            job1Id,
+            randomUUID().toString(),
+            randomUUID().toString(),
+            randomUUID().toString(),
+            randomUUID().toString());
     parcelRepository.saveAll(parcelDetectionTask.getParcels());
     var savedTask = parcelDetectionTaskRepository.save(parcelDetectionTask);
     var status =
         new Status().progression(Status.ProgressionEnum.PENDING).health(Status.HealthEnum.UNKNOWN);
     var expected =
         new DetectedParcel()
-            .id(null) // TODO: actually randomly computed
-            .detectionJobIb(JOB1_ID)
-            .parcelId("parcel1")
-            // .detectedTiles(List.of(new
-            // DetectedTile().tileId("tile1").bucketPath("dummyBucketPath"))) TODO: link to Parcel
-            // Detection Task
+            .id(null)
+            .detectionJobIb(job1Id)
             .detectedTiles(List.of())
             .status(status);
 
-    List<DetectedParcel> actual = subject.getZDJParcels(JOB1_ID);
+    List<DetectedParcel> actual = subject.getZDJParcels(job1Id);
 
+    var actualParcel = actual.getFirst();
     assertNotNull(actual);
     assertEquals(
         expected
+            .id(actualParcel.getId())
+            .parcelId(actualParcel.getParcelId())
             .status(
-                status.creationDatetime(actual.get(0).getStatus().getCreationDatetime())) // ignore
-            .creationDatetime(actual.get(0).getCreationDatetime()), // ignore
-        actual.get(0).id(expected.getId()) // TODO: actually randomly computed
-        );
+                status.creationDatetime(actualParcel.getStatus().getCreationDatetime())) // ignore
+            .creationDatetime(actualParcel.getCreationDatetime()), // ignore
+        actualParcel);
+    assertNotNull(actualParcel.getId());
+    assertNotNull(actualParcel.getParcelId());
 
-    // TODO: reset database correctly
     parcelDetectionTaskRepository.delete(savedTask);
   }
 }
