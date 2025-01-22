@@ -24,7 +24,6 @@ import java.time.Instant;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,10 +31,10 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.transaction.annotation.Transactional;
 
 @Transactional
-public class ParcelDetectionTaskConsumerIT extends FacadeIT {
-  public static final String JOB_ID = "JOB_ID";
-  public static final String DETECTION_TASK_ID = "detection_task1";
-  public static final String PARCEL_ID = "parcelId";
+class ParcelDetectionTaskConsumerIT extends FacadeIT {
+  private final String jobId;
+  private final String detectionTaskId;
+  private final String parcelId;
   @MockBean TileObjectDetector objectDetector;
   @MockBean DetectionMapper detectionMapper;
   @MockBean EventProducer eventProducer;
@@ -44,14 +43,19 @@ public class ParcelDetectionTaskConsumerIT extends FacadeIT {
   @Autowired DetectableObjectConfigurationRepository objectConfigurationRepository;
   @Autowired ParcelDetectionTaskRepository parcelDetectionTaskRepository;
   @Autowired ZoneDetectionJobRepository jobRepository;
-  @Autowired MachineDetectedTileRepository machineDetectedTileRepository;
   @Autowired ParcelRepository parcelRepository;
 
-  private static ParcelDetectionTask detectionTask() {
+  ParcelDetectionTaskConsumerIT() {
+    this.jobId = randomUUID().toString();
+    this.detectionTaskId = randomUUID().toString();
+    this.parcelId = randomUUID().toString();
+  }
+
+  private ParcelDetectionTask detectionTask() {
     List<Parcel> parcels = getParcels();
     return ParcelDetectionTask.builder()
-        .id(DETECTION_TASK_ID)
-        .jobId(JOB_ID)
+        .id(detectionTaskId)
+        .jobId(jobId)
         .parcels(parcels)
         .statusHistory(
             List.of(
@@ -66,10 +70,10 @@ public class ParcelDetectionTaskConsumerIT extends FacadeIT {
   }
 
   @NotNull
-  private static List<Parcel> getParcels() {
+  private List<Parcel> getParcels() {
     return List.of(
         Parcel.builder()
-            .id("parcelId")
+            .id(parcelId)
             .parcelContent(ParcelContent.builder().tiles(List.of(new Tile())).build())
             .build());
   }
@@ -80,22 +84,21 @@ public class ParcelDetectionTaskConsumerIT extends FacadeIT {
     when(detectionMapper.toDetectedTile(any(), any(), any(), any(), any()))
         .thenReturn(new MachineDetectedTile());
     when(tileDetectionTaskRepository.saveAll(any())).thenReturn(List.of(new TileDetectionTask()));
-    jobRepository.save(ZoneDetectionJob.builder().id(JOB_ID).build());
+    jobRepository.save(ZoneDetectionJob.builder().id(jobId).build());
     parcelRepository.saveAll(getParcels());
     parcelDetectionTaskRepository.save(detectionTask());
     objectConfigurationRepository.save(
         DetectableObjectConfiguration.builder()
-            .id("detectableObjectConfigurationId1")
+            .id(randomUUID().toString())
             .minConfidenceForDetection(0.70)
             .objectType(DetectableType.TOITURE_REVETEMENT)
-            .detectionJobId(JOB_ID)
+            .detectionJobId(jobId)
             .build());
   }
 
   @Test
-  @Disabled("TODO: update data")
   void accept_ok() {
-    subject.accept(someDetectionTask(JOB_ID, DETECTION_TASK_ID, PARCEL_ID));
+    subject.accept(someDetectionTask(jobId, detectionTaskId, parcelId));
 
     var eventsCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducer, times(detectionTask().getParcels().size()))
