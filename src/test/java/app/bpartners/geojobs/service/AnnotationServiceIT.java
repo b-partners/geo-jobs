@@ -77,7 +77,7 @@ public class AnnotationServiceIT extends FacadeIT {
     return MachineDetectedTile.builder()
         .id(tileId)
         .zdjJobId(jobId)
-        // TODO: .parcelJobId(parcelJobId)
+        .parcelJobId(null)
         .parcelId(parcelId)
         .detectedObjects(
             List.of(

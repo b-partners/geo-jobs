@@ -57,7 +57,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.nio.file.Files;
-import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -74,7 +73,6 @@ import org.springframework.stereotype.Service;
 @AllArgsConstructor
 @Slf4j
 public class ZoneService {
-  private static final Duration PRE_SIGNED_URL_DURATION = Duration.ofHours(1L);
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final ZoneTilingJobService zoneTilingJobService;
   private final ZoneTilingJobMapper zoneTilingJobMapper;
@@ -428,14 +426,17 @@ public class ZoneService {
       Detection detection, TaskStatistic statistic, DetectionStepName detectionStepName) {
     var features =
         detection.getProvidedGeoJsonZone() == null ? null : detection.getProvidedGeoJsonZone();
+    var excelUrl = bucketComponent.presign(detection.getExcelFileKey());
+    var shapeUrl = bucketComponent.presign(detection.getShapeFileKey());
+    var geojsonUrl = bucketComponent.presign(detection.getGeojsonS3FileKey());
     return new app.bpartners.geojobs.endpoint.rest.model.Detection()
         .id(detection.getEndToEndId())
         .emailReceiver(detection.getEmailReceiver())
         .zoneName(detection.getZoneName())
-        .excelUrl(generatePresignedUrl(detection.getExcelFileKey()))
-        .shapeUrl(generatePresignedUrl(detection.getShapeFileKey()))
+        .excelUrl(excelUrl)
+        .shapeUrl(shapeUrl)
         .geoJsonZone(features)
-        .geoJsonUrl(generatePresignedUrl(detection.getGeojsonS3FileKey()))
+        .geoJsonUrl(geojsonUrl)
         .geoServerProperties(detection.getGeoServerProperties())
         .detectableObjectModel(detection.getDetectableObjectModel())
         .step(detectionStepStatisticMapper.toRestDetectionStepStatus(statistic, detectionStepName));
@@ -456,13 +457,5 @@ public class ZoneService {
 
     return zoneDetectionJobService.processZDJ(
         zoneDetectionJob.getId(), detection.getDetectableObjectConfigurations());
-  }
-
-  // TODO: set in S3
-  private String generatePresignedUrl(String fileKey) {
-    if (fileKey == null) {
-      return null;
-    }
-    return bucketComponent.presign(fileKey, PRE_SIGNED_URL_DURATION).toString();
   }
 }
