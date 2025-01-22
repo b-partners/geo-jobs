@@ -9,7 +9,6 @@ import jakarta.persistence.*;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.List;
-import java.util.NoSuchElementException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -51,13 +50,5 @@ public class MachineDetectedTile implements Serializable {
 
   public String describe() {
     return "DetectedTile(id=" + id + ",tile=" + tile + "," + "jobId=" + zdjJobId + ")";
-  }
-
-  public DetectedObject getFirstObject() {
-    try {
-      return detectedObjects == null ? null : detectedObjects.getFirst();
-    } catch (NoSuchElementException e) {
-      return null;
-    }
   }
 }
