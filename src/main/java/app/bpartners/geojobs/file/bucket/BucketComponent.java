@@ -25,6 +25,7 @@ import software.amazon.awssdk.transfer.s3.progress.LoggingTransferListener;
 @Component
 @AllArgsConstructor
 public class BucketComponent {
+  private static final Duration DEFAULT_PRE_SIGNED_URL_DURATION = Duration.ofHours(1L);
 
   private final BucketConf bucketConf;
 
@@ -106,6 +107,13 @@ public class BucketComponent {
                     .getObjectRequest(getObjectRequest)
                     .build());
     return presignedRequest.url();
+  }
+
+  public String presign(String bucketKey) {
+    if (bucketKey == null) {
+      return null;
+    }
+    return presign(bucketKey, DEFAULT_PRE_SIGNED_URL_DURATION).toString();
   }
 
   public String getBucketName() {

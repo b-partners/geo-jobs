@@ -19,6 +19,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.only;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -62,7 +63,6 @@ import app.bpartners.geojobs.utils.detection.DetectionCreator;
 import app.bpartners.geojobs.utils.detection.ZoneDetectionJobCreator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -234,7 +234,7 @@ class ZoneServiceTest {
                 app.bpartners.geojobs.repository.model.detection.Detection.builder()
                     .geojsonS3FileKey("notNullKey")
                     .build()));
-    when(bucketComponentMock.presign(any(), any())).thenReturn(new URI("http://localhost").toURL());
+    when(bucketComponentMock.presign(any())).thenReturn("http://localhost");
     var principalMock = mock(Principal.class);
     when(principalMock.getPassword()).thenReturn("dummy");
     when(authProviderMock.getPrincipal()).thenReturn(principalMock);
@@ -346,7 +346,7 @@ class ZoneServiceTest {
                 FINISHED,
                 app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED,
                 new ZoneTilingJob()));
-    when(bucketComponentMock.presign(any(), any())).thenReturn(new URI(geoJsonS3FileKey).toURL());
+    when(bucketComponentMock.presign(any())).thenReturn(geoJsonS3FileKey);
 
     var actual = subject.getProcessedDetection(detectionId);
 
@@ -404,7 +404,7 @@ class ZoneServiceTest {
     var shapeUrl = "https://localhost";
     when(bucketComponentMock.upload(shapeFile, shapeFileBucketKey))
         .thenReturn(new FileHash(SHA256, "dummy"));
-    when(bucketComponentMock.presign(any(), any())).thenReturn(new URI(shapeUrl).toURL());
+    when(bucketComponentMock.presign(shapeFileBucketKey)).thenReturn(shapeUrl);
     when(detectionRepositoryMock.save(any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
     when(detectionRepositoryMock.findByEndToEndIdAndCommunityOwnerId(eq(detectionE2eId), any()))
@@ -455,7 +455,7 @@ class ZoneServiceTest {
     var excelUrl = "https://localhost";
     when(bucketComponentMock.upload(excelFile, excelFileBucketKey))
         .thenReturn(new FileHash(SHA256, "dummy"));
-    when(bucketComponentMock.presign(any(), any())).thenReturn(new URI(excelUrl).toURL());
+    when(bucketComponentMock.presign(excelFileBucketKey)).thenReturn(excelUrl);
     when(detectionRepositoryMock.save(any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
     when(detectionRepositoryMock.findByEndToEndIdAndCommunityOwnerId(eq(detectionE2eId), any()))
@@ -578,7 +578,7 @@ class ZoneServiceTest {
     assertEquals(Status.ProgressionEnum.FINISHED, actual.getStep().getStatus().getProgression());
     assertEquals(SUCCEEDED, actual.getStep().getStatus().getHealth());
     var stringCaptor = ArgumentCaptor.forClass(String.class);
-    verify(bucketComponentMock, only()).upload(eq(fileMock), stringCaptor.capture());
+    verify(bucketComponentMock, times(1)).upload(eq(fileMock), stringCaptor.capture());
     verify(detectionRepositoryMock).save(any());
     assertTrue(stringCaptor.getValue().contains(GEO_JSON_BUCKET_FOLDER));
   }

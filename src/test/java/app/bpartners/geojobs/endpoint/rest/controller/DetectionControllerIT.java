@@ -65,7 +65,6 @@ import app.bpartners.geojobs.utils.FeatureCreator;
 import app.bpartners.geojobs.utils.detection.DetectionCreator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
-import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -359,7 +358,7 @@ public class DetectionControllerIT extends FacadeIT {
                 .endToEndId(e2Id)
                 .communityOwnerId(communityOwnerId)
                 .build());
-    when(bucketComponentMock.presign(any(), any())).thenReturn(new URI(presignedUrl).toURL());
+    when(bucketComponentMock.presign(any())).thenReturn(presignedUrl);
 
     var actual = subject.configureDetectionShapeFile(e2Id, fileWriter.writeAsByte(dummyShapeFile));
 
@@ -411,7 +410,7 @@ public class DetectionControllerIT extends FacadeIT {
                 .endToEndId(endToEndDetectionId)
                 .communityOwnerId(communityOwnerId)
                 .build());
-    when(bucketComponentMock.presign(any(), any())).thenReturn(new URI(presignedUrl).toURL());
+    when(bucketComponentMock.presign(any())).thenReturn(presignedUrl);
 
     var actual = subject.configureDetectionExcelFile(endToEndDetectionId, modernExcelFile);
 
