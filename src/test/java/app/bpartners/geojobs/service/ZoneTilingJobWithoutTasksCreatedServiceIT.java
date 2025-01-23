@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static java.time.Instant.now;
+import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -34,11 +35,11 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Transactional(isolation = Isolation.SERIALIZABLE)
-public class ZoneTilingJobWithoutTasksCreatedServiceIT extends FacadeIT {
-  private static final String JOB_ID = "someTilingJob";
-  private static final String TILING_TASK1_ID = "tilingTask1_id";
-  private static final String TILING_TASK2_ID = "tilingTask2_id";
-  private static final String DUPLICATED_JOB_ID = "duplicatedJobId";
+class ZoneTilingJobWithoutTasksCreatedServiceIT extends FacadeIT {
+  private final String jobId;
+  private final String tilingTask1Id;
+  private final String tilingTask2Id;
+  private final String duplicatedJobId;
   @Autowired ZoneTilingJobWithoutTasksCreatedService subject;
   @Autowired ZoneTilingJobRepository zoneTilingJobRepository;
   @Autowired TilingTaskRepository taskRepository;
@@ -46,24 +47,31 @@ public class ZoneTilingJobWithoutTasksCreatedServiceIT extends FacadeIT {
   @MockBean EventProducer eventProducer;
   @MockBean TilingJobDuplicatedMailer tilingJobDuplicatedMailerMock;
 
+  public ZoneTilingJobWithoutTasksCreatedServiceIT() {
+    this.jobId = randomUUID().toString();
+    this.tilingTask1Id = randomUUID().toString();
+    this.tilingTask2Id = randomUUID().toString();
+    this.duplicatedJobId = randomUUID().toString();
+  }
+
   @BeforeEach
   void setUp() {
     zoneTilingJobRepository.save(
         ZoneTilingJob.builder()
-            .id(JOB_ID)
+            .id(jobId)
             .emailReceiver("dummy@email.com")
             .zoneName("dummyZoneName")
             .build());
     TilingTask taskWithoutParcel =
         TilingTask.builder()
-            .id(TILING_TASK1_ID)
-            .jobId(JOB_ID)
+            .id(tilingTask1Id)
+            .jobId(jobId)
             .parcels(List.of())
             .statusHistory(
                 List.of(
                     TaskStatus.builder()
-                        .id("taskStatus1_id")
-                        .taskId(TILING_TASK2_ID)
+                        .id(randomUUID().toString())
+                        .taskId(tilingTask2Id)
                         .progression(Status.ProgressionStatus.PENDING)
                         .health(Status.HealthStatus.UNKNOWN)
                         .creationDatetime(now())
@@ -71,13 +79,13 @@ public class ZoneTilingJobWithoutTasksCreatedServiceIT extends FacadeIT {
             .build();
     TilingTask taskWithParcel =
         TilingTask.builder()
-            .id(TILING_TASK2_ID)
-            .jobId(JOB_ID)
+            .id(tilingTask2Id)
+            .jobId(jobId)
             .statusHistory(
                 List.of(
                     TaskStatus.builder()
-                        .id("taskStatus1_id")
-                        .taskId(TILING_TASK2_ID)
+                        .id(randomUUID().toString())
+                        .taskId(tilingTask2Id)
                         .progression(Status.ProgressionStatus.PENDING)
                         .health(Status.HealthStatus.UNKNOWN)
                         .creationDatetime(now())
@@ -85,10 +93,10 @@ public class ZoneTilingJobWithoutTasksCreatedServiceIT extends FacadeIT {
             .parcels(
                 List.of(
                     Parcel.builder()
-                        .id("parcel1_id")
+                        .id(randomUUID().toString())
                         .parcelContent(
                             ParcelContent.builder()
-                                .id("parcelContent1_id")
+                                .id(randomUUID().toString())
                                 .tiles(List.of(new Tile()))
                                 .build())
                         .build()))
@@ -98,32 +106,30 @@ public class ZoneTilingJobWithoutTasksCreatedServiceIT extends FacadeIT {
 
   @AfterEach
   void tearDown() {
-    taskRepository.deleteAllById(List.of(TILING_TASK1_ID, TILING_TASK2_ID));
-    zoneTilingJobRepository.deleteById(JOB_ID);
+    taskRepository.deleteAllById(List.of(tilingTask1Id, tilingTask2Id));
+    zoneTilingJobRepository.deleteById(jobId);
   }
 
   @Test
   void accept_ok() {
-    var ztj = zoneTilingJobRepository.getById(JOB_ID);
-    var emptyInitialJob = zoneTilingJobRepository.findById(DUPLICATED_JOB_ID);
-    var emptyInitialTasks = taskRepository.findAllByJobId(DUPLICATED_JOB_ID);
-    var expectedTasks = taskRepository.findAllByJobId(JOB_ID);
+    var ztj = zoneTilingJobRepository.getById(jobId);
+    var emptyInitialJob = zoneTilingJobRepository.findById(duplicatedJobId);
+    var emptyInitialTasks = taskRepository.findAllByJobId(duplicatedJobId);
+    var expectedTasks = taskRepository.findAllByJobId(jobId);
 
     subject.accept(
         ZoneTilingJobWithoutTasksCreated.builder()
             .originalJob(ztj)
-            .duplicatedJobId(DUPLICATED_JOB_ID)
+            .duplicatedJobId(duplicatedJobId)
             .build());
 
-    var actualDuplicatedJob = zoneTilingJobRepository.findById(DUPLICATED_JOB_ID).orElseThrow();
-    var actualDuplicatedTasks = taskRepository.findAllByJobId(DUPLICATED_JOB_ID);
-    var associatedDetectionJobs =
-        detectionJobRepository.findAllByZoneTilingJob_Id(DUPLICATED_JOB_ID);
+    var actualDuplicatedJob = zoneTilingJobRepository.findById(duplicatedJobId).orElseThrow();
+    var actualDuplicatedTasks = taskRepository.findAllByJobId(duplicatedJobId);
+    var associatedDetectionJobs = detectionJobRepository.findAllByZoneTilingJob_Id(duplicatedJobId);
     assertTrue(emptyInitialJob.isEmpty());
     assertTrue(emptyInitialTasks.isEmpty());
     assertEquals(expectedTasks.size(), actualDuplicatedTasks.size());
-    // TODO: submissionInstant not identical for nanoseconds
-    // assertEquals(ztj.duplicate(DUPLICATED_JOB_ID), actualDuplicatedJob);
+    assertEquals(ztj.duplicate(duplicatedJobId), actualDuplicatedJob);
     assertEquals(2, associatedDetectionJobs.size());
     assertTrue(
         associatedDetectionJobs.stream().anyMatch(job -> job.getDetectionType().equals(HUMAN)));
