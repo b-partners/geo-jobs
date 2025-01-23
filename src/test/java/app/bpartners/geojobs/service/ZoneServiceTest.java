@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.service;
 
-import static app.bpartners.geojobs.endpoint.rest.controller.DetectionControllerIT.defaultComputedStatistic;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.*;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.SUCCEEDED;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.UNKNOWN;
@@ -59,6 +58,7 @@ import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import app.bpartners.geojobs.utils.FeatureCreator;
+import app.bpartners.geojobs.utils.TaskStatisticCreator;
 import app.bpartners.geojobs.utils.detection.DetectionCreator;
 import app.bpartners.geojobs.utils.detection.ZoneDetectionJobCreator;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -114,6 +114,7 @@ class ZoneServiceTest {
   FeatureMultiPolygonChecker featureMultiPolygonCheckerMock = mock();
   ZoneDetectionJobCreator zoneDetectionJobCreator = new ZoneDetectionJobCreator();
   CommunityAuthorizationRepository communityAuthRepositoryMock = mock();
+  TaskStatisticCreator taskStatisticCreator = new TaskStatisticCreator();
   ZoneService subject =
       new ZoneService(
           zoneDetectionJobServiceMock,
@@ -208,7 +209,7 @@ class ZoneServiceTest {
     var detection = detectionCreator.create(detectionId, tilingId, null);
     detection.setMultiPolygonGeoJsonZone(List.of());
     setUpAuthorityRoleProcessingMock(detectionId, detection, ROLE_ADMIN);
-    var statistics = defaultComputedStatistic(detection.getId(), DETECTION);
+    var statistics = taskStatisticCreator.createProcessingTask(detection.getId(), DETECTION);
     statistics.setActualJobStatus(
         JobStatus.builder()
             .progression(PENDING)
