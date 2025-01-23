@@ -7,12 +7,10 @@ import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
-import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
 import static app.bpartners.geojobs.repository.model.GeoJobType.TILING;
 import static app.bpartners.geojobs.repository.model.SurfaceUnit.SQUARE_DEGREE;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
-import static app.bpartners.geojobs.service.event.ZoneDetectionJobSucceededService.DEFAULT_MINIMUM_CONFIDENCE_FOR_DELIVERY;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
@@ -30,7 +28,6 @@ import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionStepStatisticMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
-import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.authorizer.DetectionAuthorizer;
@@ -38,10 +35,6 @@ import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.job.model.JobStatus;
-import app.bpartners.geojobs.job.model.statistic.HealthStatusStatistic;
-import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
-import app.bpartners.geojobs.job.model.statistic.TaskStatusStatistic;
-import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.page.BoundedPageSize;
 import app.bpartners.geojobs.model.page.PageFromOne;
@@ -49,19 +42,17 @@ import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.HumanDetectionJobRepository;
-import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;
-import app.bpartners.geojobs.repository.ParcelRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
-import app.bpartners.geojobs.service.ZoneService;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import app.bpartners.geojobs.utils.FeatureCreator;
+import app.bpartners.geojobs.utils.TaskStatisticCreator;
 import app.bpartners.geojobs.utils.detection.DetectionCreator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
@@ -79,18 +70,14 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.ClassPathResource;
 
 @Slf4j
-public class DetectionControllerIT extends FacadeIT {
+class DetectionControllerIT extends FacadeIT {
+  // IMPORTANT NOTE : do not confuse with confidence for delivery
+  private static final double MIN_CONFIDENCE_FOR_DETECTION = 0.95;
   @Autowired ZoneDetectionController subject;
-  @Autowired ZoneDetectionJobRepository jobRepository;
-  @Autowired JobStatusRepository jobStatusRepository;
-  @Autowired ParcelDetectionTaskRepository parcelDetectionTaskRepository;
-  @Autowired ZoneDetectionJobMapper detectionJobMapper;
-  @Autowired ParcelRepository parcelRepository;
   @Autowired ObjectMapper om;
   @Autowired DetectionRepository detectionRepository;
   @Autowired ZoneTilingJobRepository zoneTilingJobRepository;
   @Autowired ZoneDetectionJobRepository zoneDetectionJobRepository;
-  @Autowired ZoneService zoneService;
   @Autowired DetectionStepStatisticMapper detectionStepStatisticMapper;
   @MockBean EventProducer eventProducer;
   @MockBean AnnotationService annotationServiceMock;
@@ -106,6 +93,7 @@ public class DetectionControllerIT extends FacadeIT {
   @Autowired FileWriter fileWriter;
   FeatureCreator featureCreator = new FeatureCreator();
   DetectionCreator detectionCreator = new DetectionCreator(featureCreator);
+  TaskStatisticCreator taskStatisticCreator = new TaskStatisticCreator();
 
   @BeforeEach
   void setUp() {
@@ -138,8 +126,7 @@ public class DetectionControllerIT extends FacadeIT {
                     .builder()
                     .bucketStorageName(null)
                     .objectType(DetectableType.TOITURE_REVETEMENT)
-                    .minConfidenceForDetection(
-                        DEFAULT_MINIMUM_CONFIDENCE_FOR_DELIVERY) // TODO do not confuse
+                    .minConfidenceForDetection(MIN_CONFIDENCE_FOR_DETECTION)
                     .build()))
         .providedGeoJsonZone(domainFeature)
         .build();
@@ -230,7 +217,8 @@ public class DetectionControllerIT extends FacadeIT {
     when(zoneDetectionJobService.getByTilingJobId(any(), any())).thenReturn(savedDetectionJob);
     when(zoneDetectionJobService.processZDJ(any(), any())).thenReturn(savedDetectionJob);
     when(zoneDetectionJobService.computeTaskStatistics(any()))
-        .thenReturn(defaultComputedStatistic(savedDetectionJob.getId(), DETECTION));
+        .thenReturn(
+            taskStatisticCreator.createProcessingTask(savedDetectionJob.getId(), DETECTION));
     when(statusMapper.toRest(any())).thenReturn(defaultSucceededStatus());
 
     subject.processDetection(detection.getId(), createDetection());
@@ -243,22 +231,6 @@ public class DetectionControllerIT extends FacadeIT {
         .progression(toProgressionEnum(FINISHED))
         .health(toHealthStatus(SUCCEEDED))
         .creationDatetime(now());
-  }
-
-  public static TaskStatistic defaultComputedStatistic(
-      String jobId, app.bpartners.geojobs.job.model.JobType jobType) {
-    return TaskStatistic.builder()
-        .jobType(jobType)
-        .jobId(jobId)
-        .taskStatusStatistics(
-            List.of(
-                TaskStatusStatistic.builder()
-                    .progression(PROCESSING)
-                    .healthStatusStatistics(
-                        List.of(HealthStatusStatistic.builder().healthStatus(UNKNOWN).build()))
-                    .taskStatistic(TaskStatistic.builder().jobId(jobId).jobType(jobType).build())
-                    .build()))
-        .build();
   }
 
   @Test
@@ -284,7 +256,7 @@ public class DetectionControllerIT extends FacadeIT {
     var detection =
         detectionRepository.save(
             detectionCreator.createFromZTJAndZDJ(zoneTilingJob.getId(), zoneDetectionJob.getId()));
-    var statistic = defaultComputedStatistic(zoneDetectionJob.getId(), DETECTION);
+    var statistic = taskStatisticCreator.createProcessingTask(zoneDetectionJob.getId(), DETECTION);
     when(zoneDetectionJobService.getTaskStatistic(any(String.class))).thenReturn(statistic);
 
     var actual = subject.getDetections(new PageFromOne(1), new BoundedPageSize(10));
@@ -305,7 +277,7 @@ public class DetectionControllerIT extends FacadeIT {
     var detection =
         detectionRepository.save(
             detectionWithoutZdj(zoneTilingJob.getId(), featureCreator.defaultFeatures()));
-    var statistic = defaultComputedStatistic(zoneTilingJob.getId(), TILING);
+    var statistic = taskStatisticCreator.createProcessingTask(zoneTilingJob.getId(), TILING);
     when(zoneTilingJobService.getTaskStatistic(any(String.class))).thenReturn(statistic);
 
     var actual = subject.getDetections(new PageFromOne(1), new BoundedPageSize(10));
