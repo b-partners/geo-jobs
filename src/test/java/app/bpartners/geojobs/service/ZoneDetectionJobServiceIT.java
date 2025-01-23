@@ -1,6 +1,8 @@
 package app.bpartners.geojobs.service;
 
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
 import static java.time.Instant.now;
@@ -19,7 +21,9 @@ import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
+import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
+import app.bpartners.geojobs.utils.tiling.ZoneTilingJobCreator;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +35,7 @@ class ZoneDetectionJobServiceIT extends FacadeIT {
   @Autowired ZoneDetectionJobService service;
   @Autowired ParcelDetectionTaskRepository taskRepository;
   @Autowired ParcelRepository parcelRepository;
+  ZoneTilingJobCreator zoneTilingJobCreator = new ZoneTilingJobCreator();
 
   @Test
   void save_and_read_zdj_with_tasks() {
@@ -54,31 +59,39 @@ class ZoneDetectionJobServiceIT extends FacadeIT {
     parcelRepository.saveAll(parcels);
     List<TilingTask> tilingTasks = List.of(new TilingTask().toBuilder().parcels(parcels).build());
 
+    String jobId = randomUUID().toString();
+    ZoneTilingJob zoneTilingJob = getZoneTilingJob();
     ZoneDetectionJob jobToSave =
         ZoneDetectionJob.builder()
-            .id("jobToSave")
+            .id(jobId)
             .zoneName("dummyZoneName")
             .submissionInstant(now())
             .statusHistory(
                 List.of(
                     JobStatus.builder()
                         .id(randomUUID().toString())
-                        .jobId("jobToSave")
+                        .jobId(jobId)
                         .jobType(DETECTION)
                         .progression(PENDING)
                         .health(UNKNOWN)
                         .build()))
             .detectionType(ZoneDetectionJob.DetectionType.MACHINE)
             .emailReceiver("ryan@hei.school")
-            .zoneTilingJob(null) // TODO
+            .zoneTilingJob(zoneTilingJob)
             .build();
 
     ZoneDetectionJob actual = service.saveWithTasks(tilingTasks, jobToSave);
 
     List<ParcelDetectionTask> savedTasks = taskRepository.findAllByJobId(actual.getId());
     assertNotNull(actual);
+    assertEquals(zoneTilingJob, actual.getZoneTilingJob());
     assertEquals(1, savedTasks.size());
-    assertEquals(parcels, savedTasks.get(0).getParcels());
-    assertNotNull(savedTasks.get(0).getParcel().getParcelContent().getFirstTile());
+    assertEquals(parcels, savedTasks.getFirst().getParcels());
+    assertNotNull(savedTasks.getFirst().getParcel().getParcelContent().getFirstTile());
+  }
+
+  private ZoneTilingJob getZoneTilingJob() {
+    return zoneTilingJobCreator.create(
+        randomUUID().toString(), "dummy", "dummy", FINISHED, SUCCEEDED);
   }
 }
