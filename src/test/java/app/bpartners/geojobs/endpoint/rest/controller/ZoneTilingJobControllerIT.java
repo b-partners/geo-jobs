@@ -3,6 +3,7 @@ package app.bpartners.geojobs.endpoint.rest.controller;
 import static app.bpartners.geojobs.endpoint.rest.model.CreateZoneTilingJob.ZoomLevelEnum.TOWN;
 import static app.bpartners.geojobs.endpoint.rest.model.ZoneTilingJob.ZoomLevelEnum;
 import static java.time.Instant.now;
+import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -20,14 +21,12 @@ import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.model.page.BoundedPageSize;
 import app.bpartners.geojobs.model.page.PageFromOne;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
-import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
-import app.bpartners.geojobs.service.tiling.TilingJobDuplicatedMailer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
@@ -43,36 +42,40 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Transactional(isolation = Isolation.SERIALIZABLE)
 class ZoneTilingJobControllerIT extends FacadeIT {
-  private static final String JOB_ID = "randomTilingJobId";
-  public static final String TILING_TASK1_ID = "tilingTask1_id";
-  public static final String TILING_TASK2_ID = "tilingTask2_id";
+  private final String jobId;
+  private final String tilingTask1Id;
+  private final String tilingTask2Id;
   @Autowired ZoneTilingController controller;
   @Autowired ZoneTilingJobRepository zoneTilingJobRepository;
   @Autowired TilingTaskRepository taskRepository;
   @MockBean EventProducer eventProducer;
   @Autowired ObjectMapper om;
   @Autowired ZoneTilingJobMapper tilingJobMapper;
-  @Autowired ZoneDetectionJobRepository detectionJobRepository;
-  @MockBean TilingJobDuplicatedMailer tilingJobDuplicatedMailerMock;
+
+  ZoneTilingJobControllerIT() {
+    this.jobId = randomUUID().toString();
+    this.tilingTask1Id = randomUUID().toString();
+    this.tilingTask2Id = randomUUID().toString();
+  }
 
   @BeforeEach
   void setUp() {
     zoneTilingJobRepository.save(
         ZoneTilingJob.builder()
-            .id(JOB_ID)
+            .id(jobId)
             .emailReceiver("dummy@email.com")
             .zoneName("dummyZoneName")
             .build());
     TilingTask taskWithoutParcel =
         TilingTask.builder()
-            .id(TILING_TASK1_ID)
-            .jobId(JOB_ID)
+            .id(tilingTask1Id)
+            .jobId(jobId)
             .parcels(List.of())
             .statusHistory(
                 List.of(
                     TaskStatus.builder()
                         .id("taskStatus1_id")
-                        .taskId(TILING_TASK2_ID)
+                        .taskId(tilingTask2Id)
                         .progression(Status.ProgressionStatus.PENDING)
                         .health(Status.HealthStatus.UNKNOWN)
                         .creationDatetime(now())
@@ -80,13 +83,13 @@ class ZoneTilingJobControllerIT extends FacadeIT {
             .build();
     TilingTask taskWithParcel =
         TilingTask.builder()
-            .id(TILING_TASK2_ID)
-            .jobId(JOB_ID)
+            .id(tilingTask2Id)
+            .jobId(jobId)
             .statusHistory(
                 List.of(
                     TaskStatus.builder()
                         .id("taskStatus1_id")
-                        .taskId(TILING_TASK2_ID)
+                        .taskId(tilingTask2Id)
                         .progression(Status.ProgressionStatus.PENDING)
                         .health(Status.HealthStatus.UNKNOWN)
                         .creationDatetime(now())
@@ -107,16 +110,16 @@ class ZoneTilingJobControllerIT extends FacadeIT {
 
   @AfterEach
   void tearDown() {
-    taskRepository.deleteAllById(List.of(TILING_TASK1_ID, TILING_TASK2_ID));
-    zoneTilingJobRepository.deleteById(JOB_ID);
+    taskRepository.deleteAllById(List.of(tilingTask1Id, tilingTask2Id));
+    zoneTilingJobRepository.deleteById(jobId);
   }
 
   @Test
   void duplicate_tiling_job_ok() {
-    var ztj = zoneTilingJobRepository.getById(JOB_ID);
-    var existingTasks = taskRepository.findAllByJobId(JOB_ID);
+    var ztj = zoneTilingJobRepository.getById(jobId);
+    var existingTasks = taskRepository.findAllByJobId(jobId);
 
-    var actual = controller.duplicateTilingJob(JOB_ID);
+    var actual = controller.duplicateTilingJob(jobId);
 
     var restExpectedJob =
         tilingJobMapper.toRest(ztj.toBuilder().id(actual.getId()).build(), List.of(), true);
@@ -128,37 +131,6 @@ class ZoneTilingJobControllerIT extends FacadeIT {
                     .getStatus()
                     .creationDatetime(actual.getStatus().getCreationDatetime()));
     assertEquals(expectedJob.id(actual.getId()), actual);
-    /*TODO: set into ZoneTilingJobWithoutTasksCreated IT
-    var duplicatedTasks = taskRepository.findAllByJobId(actual.getId());
-    assertEquals(
-        existingTasks.stream().map(ZoneTilingJobControllerIT::ignoreGeneratedIds).toList(),
-        duplicatedTasks.stream().map(ZoneTilingJobControllerIT::ignoreGeneratedIds).toList());
-    var associatedDetectionJobs = detectionJobRepository.findAllByZoneTilingJob_Id(actual.getId());
-    assertEquals(2, associatedDetectionJobs.size());
-    assertTrue(
-        associatedDetectionJobs.stream().anyMatch(job -> job.getDetectionType().equals(HUMAN)));
-    assertTrue(
-        associatedDetectionJobs.stream().anyMatch(job -> job.getDetectionType().equals(MACHINE)));
-    verify(tilingJobDuplicatedMailerMock, times(1)).accept(any());
-    taskRepository.deleteAllById(duplicatedTasks.stream().map(TilingTask::getId).toList());
-    zoneTilingJobRepository.deleteById(actual.getId());*/
-  }
-
-  private static TilingTask ignoreGeneratedIds(TilingTask task) {
-    task.setId(null);
-    if (!task.getParcels().isEmpty()) {
-      var parcel = task.getParcel();
-      parcel.setId(null);
-      var parcelContent = parcel.getParcelContent();
-      parcelContent.setId(null);
-      parcelContent.setCreationDatetime(null);
-      if (!parcelContent.getTiles().isEmpty()) {
-        var tile = parcelContent.getFirstTile();
-        tile.setId(null);
-        tile.setCreationDatetime(null);
-      }
-    }
-    return task;
   }
 
   CreateZoneTilingJob creatableJob() throws JsonProcessingException {
