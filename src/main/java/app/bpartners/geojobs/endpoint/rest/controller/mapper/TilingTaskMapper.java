@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 public class TilingTaskMapper {
   private final FeatureMapper featureMapper;
 
+  // One feature corresponding to one parcel
   public TilingTask from(
       Feature createFeature,
       URL geoServerUrl,
@@ -48,7 +49,7 @@ public class TilingTaskMapper {
                     generatedParcelId,
                     createFeature,
                     geoServerUrl,
-                    geoServerParameter))) // TODO: check when multiple parcels for tiling task
+                    geoServerParameter)))
         .build();
   }
 
