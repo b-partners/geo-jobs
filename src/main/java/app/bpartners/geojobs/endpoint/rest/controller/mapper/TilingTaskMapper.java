@@ -46,10 +46,7 @@ public class TilingTaskMapper {
         .parcels(
             List.of(
                 featureMapper.toDomain(
-                    generatedParcelId,
-                    createFeature,
-                    geoServerUrl,
-                    geoServerParameter)))
+                    generatedParcelId, createFeature, geoServerUrl, geoServerParameter)))
         .build();
   }
 

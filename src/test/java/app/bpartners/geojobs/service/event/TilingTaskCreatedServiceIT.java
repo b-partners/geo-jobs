@@ -231,7 +231,7 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
     verify(eventProducer, times(2)).accept(eventsCaptor.capture());
     var sentEvents = eventsCaptor.getAllValues().stream().flatMap(List::stream).toList();
     assertEquals(2, sentEvents.size());
-    var tilingTaskSucceeded = (TilingTaskSucceeded) sentEvents.get(0);
+    var tilingTaskSucceeded = (TilingTaskSucceeded) sentEvents.getFirst();
     assertEquals(2, tilingTaskSucceeded.getTask().getParcelContent().getTiles().size());
   }
 
@@ -302,11 +302,11 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
     var eventsCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducer, times(2)).accept(eventsCaptor.capture());
     var events = eventsCaptor.getAllValues();
-    var taskSucceeded = (TilingTaskSucceeded) events.get(0).get(0);
+    var taskSucceeded = (TilingTaskSucceeded) events.getFirst().getFirst();
     tilingTaskSucceededService.accept(taskSucceeded);
     List<app.bpartners.geojobs.endpoint.rest.model.Parcel> parcels =
         zoneTilingController.getZTJParcels(jobId);
     assertEquals(1, parcels.size());
-    assertEquals(2, parcels.get(0).getTiles().size());
+    assertEquals(2, parcels.getFirst().getTiles().size());
   }
 }

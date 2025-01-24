@@ -59,7 +59,7 @@ public class ParcelContent implements Serializable {
 
   public Tile getFirstTile() {
     if (tiles.isEmpty()) return null;
-    var chosenTile = tiles.get(0);
+    var chosenTile = tiles.getFirst();
     if (tiles.size() > 1) {
       log.info(
           "ParcelContent(id={}) contains multiple tiles but only one Tile(id={}) is handle for"

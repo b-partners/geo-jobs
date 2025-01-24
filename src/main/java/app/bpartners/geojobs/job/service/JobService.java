@@ -136,7 +136,9 @@ public abstract class JobService<T extends Task, J extends Job> {
         taskStatuses.stream()
             .sorted(comparing(Status::getCreationDatetime, naturalOrder()).reversed())
             .toList();
-    return sortedInstants.isEmpty() ? defaultInstant : sortedInstants.get(0).getCreationDatetime();
+    return sortedInstants.isEmpty()
+        ? defaultInstant
+        : sortedInstants.getFirst().getCreationDatetime();
   }
 
   private Status.HealthStatus healthFromTaskStatuses(

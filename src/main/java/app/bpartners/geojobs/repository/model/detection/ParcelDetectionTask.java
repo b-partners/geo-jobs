@@ -46,7 +46,7 @@ public class ParcelDetectionTask extends Task implements Serializable {
 
   public Parcel getParcel() {
     if (parcels == null || parcels.isEmpty()) return null;
-    var chosenParcel = parcels.get(0);
+    var chosenParcel = parcels.getFirst();
     if (parcels.size() > 1) {
       log.error(
           "DetectionTask(id={}) contains multiple parcels but only one Parcel(id={}) is handle for"

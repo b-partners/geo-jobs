@@ -57,7 +57,7 @@ public class ConsumableEventTyperTest extends FacadeIT {
         new TypedEvent("app.bpartners.geojobs.endpoint.event.model.UuidCreated", payload);
 
     var actualAcknowledgeableEvents = subject.apply(List.of(sqsMessageFrom(typedEvent)));
-    var actualAcknowledgeableEvent = actualAcknowledgeableEvents.get(0);
+    var actualAcknowledgeableEvent = actualAcknowledgeableEvents.getFirst();
     actualAcknowledgeableEvent.ack();
 
     verify(sqsClient, times(1)).deleteMessage(any(DeleteMessageRequest.class));

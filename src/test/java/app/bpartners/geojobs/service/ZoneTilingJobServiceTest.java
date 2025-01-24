@@ -155,7 +155,7 @@ public class ZoneTilingJobServiceTest {
     verify(eventProducerMock, times(1)).accept(eventCaptor.capture());
     List<ImportedZoneTilingJobSaved> events =
         (List<ImportedZoneTilingJobSaved>) eventCaptor.getValue();
-    var importedZoneTilingJobSaved = events.get(0);
+    var importedZoneTilingJobSaved = events.getFirst();
     assertEquals(importedJobId, importedZoneTilingJobSaved.getJobId());
     assertEquals(geoServerParameter, importedZoneTilingJobSaved.getGeoServerParameter());
     assertEquals(geoServerUrlDummy, importedZoneTilingJobSaved.getGeoServerUrl());
@@ -229,7 +229,7 @@ public class ZoneTilingJobServiceTest {
 
     var listEventCapture = ArgumentCaptor.forClass(List.class);
     verify(taskRepositoryMock, times(2)).saveAll(listEventCapture.capture());
-    var succeededTasks = (List<TilingTask>) listEventCapture.getAllValues().get(0);
+    var succeededTasks = (List<TilingTask>) listEventCapture.getAllValues().getFirst();
     var notSucceededTasks = (List<TilingTask>) listEventCapture.getAllValues().get(1);
     assertEquals(2, succeededTasks.size());
     assertTrue(succeededTasks.stream().allMatch(TilingTask::isSucceeded));

@@ -19,7 +19,7 @@ class ListGrouperTest {
     var grouped = subject.apply(numbers, 3);
 
     assertEquals(3, grouped.size());
-    assertEquals(List.of(1, 2, 3), grouped.get(0));
+    assertEquals(List.of(1, 2, 3), grouped.getFirst());
     assertEquals(List.of(4, 5, 6), grouped.get(1));
     assertEquals(List.of(7, 8), grouped.get(2));
   }
