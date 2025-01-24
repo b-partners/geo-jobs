@@ -83,7 +83,6 @@ public class ZoneTilingJobMapper {
   }
 
   public CreateZoneTilingJob from(Detection detection) {
-    var zoomLevelEnum = HOUSES_0; // TODO: default for now
     var overallConfiguration = detection.getGeoServerProperties();
     return new CreateZoneTilingJob()
         .emailReceiver(detection.getEmailReceiver())
@@ -91,6 +90,6 @@ public class ZoneTilingJobMapper {
         .geoServerParameter(overallConfiguration.getGeoServerParameter())
         .geoServerUrl(overallConfiguration.getGeoServerUrl())
         .features(detection.getMultiPolygonGeoJsonZone())
-        .zoomLevel(zoomLevelEnum);
+        .zoomLevel(HOUSES_0);
   }
 }
