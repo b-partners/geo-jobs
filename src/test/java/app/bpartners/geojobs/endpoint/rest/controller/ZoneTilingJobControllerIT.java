@@ -193,7 +193,7 @@ class ZoneTilingJobControllerIT extends FacadeIT {
   void read_parcels_right_after_job_creation() throws JsonProcessingException {
     var createdJob = controller.tileZone(creatableJob());
     var parcels = controller.getZTJParcels(createdJob.getId());
-    var parcel = parcels.get(0);
+    var parcel = parcels.getFirst();
     assertEquals(ZoomLevelEnum.TOWN, createdJob.getZoomLevel());
     assertEquals(1, parcels.size());
     assertNotNull(parcel.getId());
@@ -220,11 +220,11 @@ class ZoneTilingJobControllerIT extends FacadeIT {
     var parcels2 = controller.getZTJParcels(jobId2);
 
     assertEquals(1, parcels1.size());
-    assertEquals(1, parcels1.get(0).getTiles().size());
-    assertNotNull(parcels1.get(0).getTiles().get(0).getId());
+    assertEquals(1, parcels1.getFirst().getTiles().size());
+    assertNotNull(parcels1.getFirst().getTiles().getFirst().getId());
     assertEquals(1, parcels2.size());
-    assertEquals(1, parcels2.get(0).getTiles().size());
-    assertNotNull(parcels2.get(0).getTiles().get(0).getId());
+    assertEquals(1, parcels2.getFirst().getTiles().size());
+    assertNotNull(parcels2.getFirst().getTiles().getFirst().getId());
   }
 
   @NotNull

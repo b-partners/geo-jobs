@@ -47,7 +47,7 @@ public class FeatureListWithoutOffset implements Supplier<List<Feature>> {
       }
     }
 
-    res.add(res.get(0)); // to close the ring
+    res.add(res.getFirst()); // to close the ring
     return res;
   }
 

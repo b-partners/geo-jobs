@@ -304,7 +304,7 @@ class DetectionControllerIT extends FacadeIT {
 
     var actualList = subject.getDetections(new PageFromOne(1), new BoundedPageSize(1));
 
-    assertEquals(detection.getEndToEndId(), actualList.get(0).getId());
+    assertEquals(detection.getEndToEndId(), actualList.getFirst().getId());
   }
 
   @SneakyThrows

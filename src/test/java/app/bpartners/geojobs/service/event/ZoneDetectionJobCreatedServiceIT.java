@@ -84,7 +84,8 @@ class ZoneDetectionJobCreatedServiceIT extends FacadeIT {
     ArgumentCaptor<List> listCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducer, times(3)).accept(listCaptor.capture());
     assertEquals(
-        ParcelDetectionTaskCreated.class, (listCaptor.getAllValues().get(0).getFirst()).getClass());
+        ParcelDetectionTaskCreated.class,
+        (listCaptor.getAllValues().getFirst().getFirst()).getClass());
     assertEquals(
         ZDJStatusRecomputingSubmitted.class,
         (listCaptor.getAllValues().get(1).getFirst()).getClass());

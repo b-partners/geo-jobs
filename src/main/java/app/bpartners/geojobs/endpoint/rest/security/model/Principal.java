@@ -55,6 +55,6 @@ public class Principal implements UserDetails {
       throw new RuntimeException("Only one role per principal expected but got: " + authorities);
     }
 
-    return ((Authority) authorities.stream().toList().get(0)).value();
+    return ((Authority) authorities.stream().toList().getFirst()).value();
   }
 }

@@ -26,7 +26,7 @@ public class PolygonExtractor implements Function<DetectedObject, Polygon> {
   }
 
   private static Point extractPoint(List<BigDecimal> cor) {
-    return new Point().x(cor.get(0).doubleValue()).y(cor.get(1).doubleValue());
+    return new Point().x(cor.getFirst().doubleValue()).y(cor.get(1).doubleValue());
   }
 
   @Override

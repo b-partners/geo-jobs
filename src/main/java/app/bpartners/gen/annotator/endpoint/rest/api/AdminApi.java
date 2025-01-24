@@ -515,7 +515,7 @@ public class AdminApi {
                         .headers()
                         .map()
                         .get("Content-Type")
-                        .get(0)
+                        .getFirst()
                         .split(";")[0]
                         .trim())) {
           java.util.Scanner s = new java.util.Scanner(localVarResponse.body()).useDelimiter("\\A");

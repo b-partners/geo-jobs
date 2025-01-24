@@ -31,7 +31,7 @@ public class MaximalPolygonFromEdges implements Supplier<Polygon> {
 
     for (List<Coordinate> subset : subsets) {
       // Ensure the subset forms a valid closed polygon
-      subset.add(subset.get(0)); // Close the ring
+      subset.add(subset.getFirst()); // Close the ring
       Polygon candidate = geometryFactory.createPolygon(subset.toArray(new Coordinate[0]));
 
       // Check if it's valid

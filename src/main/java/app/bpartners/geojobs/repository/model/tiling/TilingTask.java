@@ -60,7 +60,7 @@ public class TilingTask extends Task implements Serializable {
 
   public Parcel getParcel() {
     if (parcels == null || parcels.isEmpty()) return null;
-    var chosenParcel = parcels.get(0);
+    var chosenParcel = parcels.getFirst();
     if (parcels.size() > 1) {
       log.error(
           "[DEBUG] TilingTask(id={}) contains multiple parcels (size= {}) but only one"
