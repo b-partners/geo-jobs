@@ -10,6 +10,7 @@ import app.bpartners.geojobs.endpoint.rest.model.CreateZoneTilingJob;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.repository.model.ArcgisImageZoom;
 import app.bpartners.geojobs.repository.model.Parcel;
+import app.bpartners.geojobs.repository.model.ParcelTask;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
@@ -46,14 +47,21 @@ public class ZoneTilingJobMapper {
 
   public app.bpartners.geojobs.endpoint.rest.model.ZoneTilingJob toRest(
       ZoneTilingJob domain, List<TilingTask> tilingTaskList) {
-    var parcels = parcelService.getParcelsByJobId(domain.getId());
+    var parcels =
+        parcelService.getParcelsByJobId(domain.getId()).stream()
+            .map(ParcelTask::getParcel)
+            .toList();
     return toRest(domain, tilingTaskList, parcels);
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.ZoneTilingJob toRest(
       ZoneTilingJob domain, List<TilingTask> tilingTaskList, boolean jobNotSaved) {
     List<Parcel> parcels =
-        jobNotSaved ? List.of() : parcelService.getParcelsByJobId(domain.getId());
+        jobNotSaved
+            ? List.of()
+            : parcelService.getParcelsByJobId(domain.getId()).stream()
+                .map(ParcelTask::getParcel)
+                .toList();
     return toRest(domain, tilingTaskList, parcels);
   }
 

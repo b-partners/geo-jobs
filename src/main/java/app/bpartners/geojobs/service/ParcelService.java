@@ -10,7 +10,7 @@ import app.bpartners.geojobs.model.ParcelizedPolygon;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.model.geometry.area.SquareDegree;
 import app.bpartners.geojobs.repository.*;
-import app.bpartners.geojobs.repository.model.Parcel;
+import app.bpartners.geojobs.repository.model.ParcelTask;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,56 +33,52 @@ public class ParcelService {
   private final ParcelizedPolygonRepository parcelizedPolygonRepository;
 
   @Transactional
-  public List<Parcel> getParcelsByJobId(String jobId) {
-    // TODO: refactor duplicated computing
+  public List<ParcelTask> getParcelsByJobId(String jobId) {
     var zoneTilingJob = tilingJobRepository.findById(jobId);
     if (zoneTilingJob.isPresent()) {
-      List<TilingTask> duplicatedTilingTasks =
-          tilingTaskRepository.findAllByJobId(jobId).stream()
-              .map(
-                  task -> {
-                    boolean hasSameStatuses = true;
-                    boolean hasSameTile = true;
-                    return task.duplicate(
-                        task.getId(),
-                        task.getJobId(),
-                        task.getParcelId(),
-                        task.getParcelContentId(),
-                        hasSameStatuses,
-                        hasSameTile);
-                  })
-              .toList();
+      var duplicatedTilingTasks = getDuplicatedTilingTasks(jobId);
       return duplicatedTilingTasks.stream()
           .map(
-              tilingTask -> {
-                var parcel = tilingTask.getParcel();
-                if (parcel != null) {
-                  var parcelContent = parcel.getParcelContent();
-                  parcelContent.setTilingStatus(tilingTask.getStatus());
-                  return parcel;
-                }
-                return null;
-              })
+              task ->
+                  task.getParcels().stream()
+                      .map(
+                          parcel ->
+                              ParcelTask.builder().parcel(parcel).status(task.getStatus()).build())
+                      .toList())
+          .flatMap(List::stream)
           .toList();
     }
-
     var zoneDetectionJob = detectionJobRepository.findById(jobId);
     if (zoneDetectionJob.isPresent()) {
       return parcelDetectionTaskRepository.findAllByJobId(jobId).stream()
           .map(
-              detectionTask -> {
-                var parcel = detectionTask.getParcel();
-                if (parcel != null) {
-                  var parcelContent = parcel.getParcelContent();
-                  parcelContent.setDetectionStatus(detectionTask.getStatus());
-                  return parcel;
-                }
-                return null;
-              })
+              task ->
+                  task.getParcels().stream()
+                      .map(
+                          parcel ->
+                              ParcelTask.builder().parcel(parcel).status(task.getStatus()).build())
+                      .toList())
+          .flatMap(List::stream)
           .toList();
     }
-
     throw new NotFoundException("jobId=" + jobId);
+  }
+
+  private List<TilingTask> getDuplicatedTilingTasks(String jobId) {
+    return tilingTaskRepository.findAllByJobId(jobId).stream()
+        .map(
+            task -> {
+              boolean hasSameStatuses = true;
+              boolean hasSameTile = true;
+              return task.duplicate(
+                  task.getId(),
+                  task.getJobId(),
+                  task.getParcelId(),
+                  task.getParcelContentId(),
+                  hasSameStatuses,
+                  hasSameTile);
+            })
+        .toList();
   }
 
   public List<Feature> parcelizeFeature(

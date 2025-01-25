@@ -15,10 +15,12 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.*;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneTilingJobValidator;
 import app.bpartners.geojobs.job.model.JobStatus;
+import app.bpartners.geojobs.repository.TilingTaskRepository;
 import app.bpartners.geojobs.repository.model.FilteredTilingJob;
 import app.bpartners.geojobs.service.ParcelService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -32,6 +34,7 @@ class ZoneTilingControllerTest {
   TaskStatisticMapper taskStatisticMapper = new TaskStatisticMapper(statusMapper);
   ZoneTilingJobValidator zoneTilingJobValidator = new ZoneTilingJobValidator();
   EventProducer eventProducerMock = mock();
+  TilingTaskRepository tilingTaskRepository = mock();
   ZoneTilingJobMapper tilingJobMapper =
       new ZoneTilingJobMapper(parcelServiceMock, statusMapper, zoomMapper);
   ZoneTilingController subject =
@@ -44,7 +47,13 @@ class ZoneTilingControllerTest {
           taskStatisticMapper,
           zoneTilingJobValidator,
           statusMapper,
-          eventProducerMock);
+          eventProducerMock,
+          tilingTaskRepository);
+
+  @BeforeEach
+  void setUp() {
+    when(tilingTaskRepository.findAllByJobId(any())).thenReturn(List.of());
+  }
 
   @Test
   void import_tiling_ok() {

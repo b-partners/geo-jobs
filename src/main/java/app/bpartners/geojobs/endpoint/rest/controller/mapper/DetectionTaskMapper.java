@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.endpoint.rest.controller.mapper;
 
 import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.*;
+import static app.bpartners.geojobs.endpoint.rest.model.Status.ProgressionEnum.PENDING;
 import static java.time.Instant.now;
 import static java.util.Optional.ofNullable;
 import static java.util.UUID.randomUUID;
@@ -12,7 +13,7 @@ import app.bpartners.geojobs.endpoint.rest.model.DetectedTile;
 import app.bpartners.geojobs.endpoint.rest.model.Status;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
-import app.bpartners.geojobs.repository.model.Parcel;
+import app.bpartners.geojobs.repository.model.ParcelTask;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import java.math.BigDecimal;
 import java.util.Comparator;
@@ -25,31 +26,38 @@ import org.springframework.stereotype.Component;
 public class DetectionTaskMapper {
   private final MachineDetectedTileRepository machineDetectedTileRepository;
 
-  public DetectedParcel toRest(String jobId, Parcel parcel) {
+  public DetectedParcel toRest(String jobId, ParcelTask parcelTask) {
+    var parcel = parcelTask.getParcel();
+    if (parcel == null) {
+      return null;
+    }
     List<MachineDetectedTile> machineDetectedTiles =
-        parcel == null
-            ? List.of()
-            : machineDetectedTileRepository.findAllByParcelId(parcel.getId());
+        machineDetectedTileRepository.findAllByParcelId(parcel.getId());
     var lastDetectedTileCreationDatetime =
         machineDetectedTiles.stream()
             .max(Comparator.comparing(MachineDetectedTile::getCreationDatetime))
             .orElse(MachineDetectedTile.builder().creationDatetime(now()).build())
             .getCreationDatetime();
+    var parcelTaskStatus = parcelTask.getStatus();
     return new DetectedParcel()
-        .id(randomUUID().toString()) // TODO DetectedParcel must be persisted
-        .creationDatetime(
-            lastDetectedTileCreationDatetime) // TODO change when DetectedParcel is persisted
+        .id(randomUUID().toString())
+        .creationDatetime(lastDetectedTileCreationDatetime)
         .detectionJobIb(jobId)
-        .parcelId(parcel == null ? null : parcel.getId())
+        .parcelId(parcel.getId())
         .status(
-            ofNullable(parcel == null ? null : parcel.getParcelContent().getDetectionStatus())
+            ofNullable(parcelTaskStatus)
                 .map(
                     status ->
                         new Status()
-                            .health(StatusMapper.toHealthStatus(status.getHealth()))
-                            .progression(StatusMapper.toProgressionEnum(status.getProgression()))
-                            .creationDatetime(status.getCreationDatetime()))
-                .orElse(null))
+                            .health(StatusMapper.toHealthStatus(parcelTaskStatus.getHealth()))
+                            .progression(
+                                StatusMapper.toProgressionEnum(parcelTaskStatus.getProgression()))
+                            .creationDatetime(parcelTaskStatus.getCreationDatetime()))
+                .orElse(
+                    new Status()
+                        .progression(PENDING)
+                        .health(Status.HealthEnum.UNKNOWN)
+                        .creationDatetime(lastDetectedTileCreationDatetime)))
         .detectedTiles(machineDetectedTiles.stream().map(this::toRest).toList());
   }
 

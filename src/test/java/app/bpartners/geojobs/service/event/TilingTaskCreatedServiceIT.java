@@ -20,6 +20,7 @@ import app.bpartners.geojobs.endpoint.event.model.tile.TilingTaskCreated;
 import app.bpartners.geojobs.endpoint.event.model.tile.TilingTaskSucceeded;
 import app.bpartners.geojobs.endpoint.rest.controller.ZoneTilingController;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
+import app.bpartners.geojobs.endpoint.rest.model.TiledParcel;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.hash.FileHash;
 import app.bpartners.geojobs.job.model.Status;
@@ -256,7 +257,7 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
     var tasksAfterFail = zoneTilingController.getZTJParcels(jobId);
     assertTrue(
         tasksAfterFail.stream()
-            .map(app.bpartners.geojobs.endpoint.rest.model.Parcel::getTilingStatus)
+            .map(TiledParcel::getStatus)
             .allMatch(
                 (status) ->
                     app.bpartners.geojobs.endpoint.rest.model.Status.ProgressionEnum.PROCESSING
@@ -304,8 +305,7 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
     var events = eventsCaptor.getAllValues();
     var taskSucceeded = (TilingTaskSucceeded) events.getFirst().getFirst();
     tilingTaskSucceededService.accept(taskSucceeded);
-    List<app.bpartners.geojobs.endpoint.rest.model.Parcel> parcels =
-        zoneTilingController.getZTJParcels(jobId);
+    List<TiledParcel> parcels = zoneTilingController.getZTJParcels(jobId);
     assertEquals(1, parcels.size());
     assertEquals(2, parcels.getFirst().getTiles().size());
   }

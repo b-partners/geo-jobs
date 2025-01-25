@@ -47,7 +47,7 @@ public class TilingTask extends Task implements Serializable {
   }
 
   public ParcelContent getParcelContent() {
-    return getParcel().getParcelContent();
+    return getParcel() == null ? null : getParcel().getParcelContent();
   }
 
   public String getParcelId() {

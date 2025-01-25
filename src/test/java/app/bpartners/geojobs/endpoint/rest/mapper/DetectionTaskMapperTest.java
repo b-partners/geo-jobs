@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.endpoint.rest.mapper;
 
+import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.UNKNOWN;
+import static app.bpartners.geojobs.endpoint.rest.model.Status.ProgressionEnum.PENDING;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
@@ -11,9 +13,11 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionTaskMapper
 import app.bpartners.geojobs.endpoint.rest.model.DetectedObject;
 import app.bpartners.geojobs.endpoint.rest.model.DetectedParcel;
 import app.bpartners.geojobs.endpoint.rest.model.DetectedTile;
+import app.bpartners.geojobs.endpoint.rest.model.Status;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
+import app.bpartners.geojobs.repository.model.ParcelTask;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectType;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
@@ -49,13 +53,22 @@ class DetectionTaskMapperTest {
 
     DetectedParcel actual =
         subject.toRest(
-            jobId, Parcel.builder().id(parcelId).parcelContent(parcelContentMock).build());
+            jobId,
+            ParcelTask.builder()
+                .parcel(Parcel.builder().id(parcelId).parcelContent(parcelContentMock).build())
+                .status(null)
+                .build());
 
     assertEquals(
         new DetectedParcel()
             .id(actual.getId())
             .detectionJobIb(actual.getDetectionJobIb())
             .parcelId(parcelId)
+            .status(
+                new Status()
+                    .creationDatetime(actual.getCreationDatetime())
+                    .progression(PENDING)
+                    .health(UNKNOWN))
             .creationDatetime(actual.getCreationDatetime())
             .detectedTiles(
                 List.of(

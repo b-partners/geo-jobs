@@ -279,7 +279,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Parcel"
+                  $ref: "#/components/schemas/TiledParcel"
         '500':
           $ref: '#/components/responses/500'
 
@@ -1020,7 +1020,7 @@ components:
         minimumConfidence:
           type: number
           format: double
-    Parcel:
+    TiledParcel:
       properties:
         id:
           type: string
@@ -1033,7 +1033,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Tile"
-        tilingStatus:
+        status:
           $ref: "#/components/schemas/Status"
     DetectedParcel:
       properties:
