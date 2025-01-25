@@ -30,7 +30,9 @@ import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
+import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -58,6 +60,7 @@ class ZoneTilingJobControllerIT extends FacadeIT {
     this.tilingTask2Id = randomUUID().toString();
   }
 
+  @SneakyThrows
   @BeforeEach
   void setUp() {
     zoneTilingJobRepository.save(
@@ -74,7 +77,7 @@ class ZoneTilingJobControllerIT extends FacadeIT {
             .statusHistory(
                 List.of(
                     TaskStatus.builder()
-                        .id("taskStatus1_id")
+                        .id(randomUUID().toString())
                         .taskId(tilingTask2Id)
                         .progression(Status.ProgressionStatus.PENDING)
                         .health(Status.HealthStatus.UNKNOWN)
@@ -88,7 +91,7 @@ class ZoneTilingJobControllerIT extends FacadeIT {
             .statusHistory(
                 List.of(
                     TaskStatus.builder()
-                        .id("taskStatus1_id")
+                        .id(randomUUID().toString())
                         .taskId(tilingTask2Id)
                         .progression(Status.ProgressionStatus.PENDING)
                         .health(Status.HealthStatus.UNKNOWN)
@@ -97,10 +100,13 @@ class ZoneTilingJobControllerIT extends FacadeIT {
             .parcels(
                 List.of(
                     Parcel.builder()
-                        .id("parcel1_id")
+                        .id(randomUUID().toString())
                         .parcelContent(
                             ParcelContent.builder()
-                                .id("parcelContent1_id")
+                                .id(randomUUID().toString())
+                                .geoServerUrl(
+                                    new URI("https://data.grandlyon.com/fr/geoserv/grandlyon/ows")
+                                        .toURL())
                                 .tiles(List.of(new Tile()))
                                 .build())
                         .build()))
@@ -117,7 +123,6 @@ class ZoneTilingJobControllerIT extends FacadeIT {
   @Test
   void duplicate_tiling_job_ok() {
     var ztj = zoneTilingJobRepository.getById(jobId);
-    var existingTasks = taskRepository.findAllByJobId(jobId);
 
     var actual = controller.duplicateTilingJob(jobId);
 
@@ -183,9 +188,9 @@ class ZoneTilingJobControllerIT extends FacadeIT {
   void create_tiling_job_ok() throws IOException {
     var created = controller.tileZone(creatableJob());
 
-    var createdList = controller.getTilingJobs(new PageFromOne(1), new BoundedPageSize(30));
+    var actualJobs = controller.getTilingJobs(new PageFromOne(1), new BoundedPageSize(30));
     assertNotNull(created.getId());
-    assertTrue(createdList.stream().anyMatch((z) -> z.equals(created.features(List.of()))));
+    assertTrue(actualJobs.contains(created));
     verify(eventProducer, times(2)).accept(any());
   }
 
@@ -207,12 +212,14 @@ class ZoneTilingJobControllerIT extends FacadeIT {
 
   @Test
   void read_parcel_with_non_emptyTiles() {
-    var jobId1 = "job1";
-    var jobId2 = "job2";
+    var jobId1 = randomUUID().toString();
+    var jobId2 = randomUUID().toString();
     var job1 = aZTJ(jobId1);
     var job2 = aZTJ(jobId2);
-    var task1 = aTask(jobId1, "task1", "tile1", "parcel1");
-    var task2 = aTask(jobId2, "task2", "tile2", "parcel2");
+    var task1 =
+        aTask(jobId1, randomUUID().toString(), randomUUID().toString(), randomUUID().toString());
+    var task2 =
+        aTask(jobId2, randomUUID().toString(), randomUUID().toString(), randomUUID().toString());
     tilingJobRepository.saveAll(List.of(job1, job2));
     taskRepository.saveAll(List.of(task1, task2));
 
@@ -236,6 +243,7 @@ class ZoneTilingJobControllerIT extends FacadeIT {
     return job;
   }
 
+  @SneakyThrows
   private static TilingTask aTask(String jobId, String taskId, String tileId, String parcelId) {
     var now = now();
     return TilingTask.builder()
@@ -248,6 +256,11 @@ class ZoneTilingJobControllerIT extends FacadeIT {
                     .id(parcelId)
                     .parcelContent(
                         ParcelContent.builder()
+                            .geoServerUrl(
+                                new URI("https://data.grandlyon.com/fr/geoserv/grandlyon/ows")
+                                    .toURL())
+                            .feature(
+                                app.bpartners.geojobs.repository.model.Feature.builder().build())
                             .tiles(List.of(Tile.builder().id(tileId).creationDatetime(now).build()))
                             .creationDatetime(now)
                             .build())

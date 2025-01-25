@@ -6,7 +6,6 @@ import static org.hibernate.type.SqlTypes.JSON;
 
 import app.bpartners.geojobs.job.model.*;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import java.io.Serializable;
@@ -24,7 +23,6 @@ import org.hibernate.annotations.JdbcTypeCode;
 @Getter
 @Setter
 @EqualsAndHashCode
-@JsonIgnoreProperties({"tilingStatus"}) // TODO: must not be here
 public class TileDetectionTask extends Task implements Serializable {
   @Id private String id;
   private String parcelId;

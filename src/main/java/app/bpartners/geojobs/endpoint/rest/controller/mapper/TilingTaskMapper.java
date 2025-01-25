@@ -6,11 +6,8 @@ import static java.time.Instant.now;
 import static java.util.Optional.ofNullable;
 import static java.util.UUID.randomUUID;
 
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
-import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
-import app.bpartners.geojobs.endpoint.rest.model.Parcel;
-import app.bpartners.geojobs.endpoint.rest.model.Status;
-import app.bpartners.geojobs.endpoint.rest.model.Tile;
+import app.bpartners.geojobs.endpoint.rest.model.*;
+import app.bpartners.geojobs.endpoint.rest.model.TiledParcel;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import java.net.URL;
@@ -50,21 +47,32 @@ public class TilingTaskMapper {
         .build();
   }
 
-  public Parcel toRest(app.bpartners.geojobs.repository.model.Parcel model) {
-    var parcelContent = model.getParcelContent();
-    return new Parcel()
-        .id(model.getId())
-        .creationDatetime(parcelContent.getCreationDatetime())
+  public TiledParcel toRest(app.bpartners.geojobs.repository.model.ParcelTask parcelTask) {
+    var parcel = parcelTask.getParcel();
+    if (parcel == null) {
+      return null;
+    }
+    var parcelTaskStatus = parcelTask.getStatus();
+    var parcelContent = parcel.getParcelContent();
+    var parcelCreationDatetime = parcelContent.getCreationDatetime();
+    return new TiledParcel()
+        .id(parcel.getId())
+        .creationDatetime(parcelCreationDatetime)
         .tiles(parcelContent.getTiles().stream().map(this::toRest).toList())
-        .tilingStatus(
-            ofNullable(parcelContent.getTilingStatus())
+        .status(
+            ofNullable(parcelTaskStatus)
                 .map(
                     status ->
                         new Status()
-                            .health(StatusMapper.toHealthStatus(status.getHealth()))
-                            .progression(StatusMapper.toProgressionEnum(status.getProgression()))
-                            .creationDatetime(status.getCreationDatetime()))
-                .orElse(null))
+                            .health(StatusMapper.toHealthStatus(parcelTaskStatus.getHealth()))
+                            .progression(
+                                StatusMapper.toProgressionEnum(parcelTaskStatus.getProgression()))
+                            .creationDatetime(parcelTaskStatus.getCreationDatetime()))
+                .orElse(
+                    new Status()
+                        .progression(Status.ProgressionEnum.PENDING)
+                        .health(Status.HealthEnum.UNKNOWN)
+                        .creationDatetime(parcelCreationDatetime)))
         .feature(parcelContent.restFeatures());
   }
 

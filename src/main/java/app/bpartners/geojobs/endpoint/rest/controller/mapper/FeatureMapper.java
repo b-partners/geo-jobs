@@ -41,7 +41,9 @@ public class FeatureMapper {
   }
 
   public static Feature from(TilingTask domainTask) {
-    return domainTask.getParcelContent().restFeatures();
+    return domainTask.getParcelContent() == null
+        ? null
+        : domainTask.getParcelContent().restFeatures();
   }
 
   public static app.bpartners.geojobs.repository.model.Feature toDomainFeature(Feature rest) {

@@ -12,17 +12,13 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.TaskStatisticMapper
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.TilingTaskMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneTilingJobMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoomMapper;
-import app.bpartners.geojobs.endpoint.rest.model.CreateZoneTilingJob;
-import app.bpartners.geojobs.endpoint.rest.model.FilteredTilingJob;
-import app.bpartners.geojobs.endpoint.rest.model.ImportZoneTilingJob;
-import app.bpartners.geojobs.endpoint.rest.model.Parcel;
-import app.bpartners.geojobs.endpoint.rest.model.Status;
-import app.bpartners.geojobs.endpoint.rest.model.TaskStatistic;
-import app.bpartners.geojobs.endpoint.rest.model.ZoneTilingJob;
+import app.bpartners.geojobs.endpoint.rest.model.*;
+import app.bpartners.geojobs.endpoint.rest.model.TiledParcel;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneTilingJobValidator;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.model.page.BoundedPageSize;
 import app.bpartners.geojobs.model.page.PageFromOne;
+import app.bpartners.geojobs.repository.TilingTaskRepository;
 import app.bpartners.geojobs.service.ParcelService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import java.util.List;
@@ -49,6 +45,7 @@ public class ZoneTilingController {
   private final ZoneTilingJobValidator zoneTilingJobValidator;
   private final StatusMapper<JobStatus> jobStatusMapper;
   private final EventProducer eventProducer;
+  private final TilingTaskRepository tilingTaskRepository;
 
   @PostMapping("/tilingJobs/import")
   public ZoneTilingJob importZTJ(@RequestBody ImportZoneTilingJob importZoneTilingJob) {
@@ -120,7 +117,7 @@ public class ZoneTilingController {
 
   @PutMapping("/tilingJobs/{id}/retry")
   public ZoneTilingJob processFailedTilingJob(@PathVariable String id) {
-    return mapper.toRest(service.retryFailedTask(id), List.of());
+    return mapper.toRest(service.retryFailedTask(id), tilingTaskRepository.findAllByJobId(id));
   }
 
   @GetMapping("/tilingJobs")
@@ -128,12 +125,12 @@ public class ZoneTilingController {
       @RequestParam(required = false, defaultValue = "1") PageFromOne page,
       @RequestParam(required = false, defaultValue = "30") BoundedPageSize pageSize) {
     return service.findAll(page, pageSize).stream()
-        .map(job -> mapper.toRest(job, List.of())) // Features ignored when listing tiling jobs
+        .map(job -> mapper.toRest(job, tilingTaskRepository.findAllByJobId(job.getId())))
         .toList();
   }
 
   @GetMapping("/tilingJobs/{id}/parcels")
-  public List<Parcel> getZTJParcels(@PathVariable("id") String jobId) {
+  public List<TiledParcel> getZTJParcels(@PathVariable("id") String jobId) {
     return parcelService.getParcelsByJobId(jobId).stream().map(tilingTaskMapper::toRest).toList();
   }
 }

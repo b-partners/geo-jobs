@@ -5,7 +5,6 @@ import static java.util.UUID.randomUUID;
 import static org.hibernate.type.SqlTypes.JSON;
 
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
-import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.io.Serializable;
@@ -25,7 +24,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 @Getter
 @Setter
 @EqualsAndHashCode
-@JsonIgnoreProperties({"tilingStatus", "firstTile"})
+@JsonIgnoreProperties({"firstTile"})
 public class ParcelContent implements Serializable {
   private String id;
 
@@ -37,10 +36,6 @@ public class ParcelContent implements Serializable {
   @Builder.Default
   @JdbcTypeCode(JSON)
   private List<Tile> tiles = new ArrayList<>();
-
-  // TODO !!! VERY BAD ! Statuses must be separated from Parcel
-  private Status tilingStatus; // computed value only
-  private Status detectionStatus; // computed value only
 
   private Instant creationDatetime;
 
@@ -81,8 +76,6 @@ public class ParcelContent implements Serializable {
         .creationDatetime(this.creationDatetime)
         .geoServerParameter(geoServerParameter)
         .geoServerUrl(geoServerUrl)
-        .tilingStatus(null)
-        .detectionStatus(null)
         .build();
   }
 
@@ -94,8 +87,6 @@ public class ParcelContent implements Serializable {
         .creationDatetime(this.creationDatetime)
         .geoServerParameter(geoServerParameter)
         .geoServerUrl(geoServerUrl)
-        .tilingStatus(null)
-        .detectionStatus(null)
         .build();
   }
 }
