@@ -6,13 +6,9 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.model.exception.ApiException;
-import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
-import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.util.Base64;
@@ -34,25 +30,18 @@ import org.springframework.web.util.UriComponentsBuilder;
 public class HttpApiTileObjectDetector implements TileObjectDetector {
   private final ObjectMapper om;
   private final CustomBucketComponent bucketComponent;
-  private final String tileDetectionRawBaseUrls;
+  private final String tileDetectionApiUrl;
 
   public HttpApiTileObjectDetector(
       ObjectMapper om,
       CustomBucketComponent bucketComponent,
-      @Value("${tile.detection.api.urls}") String tileDetectionRawBaseUrls) {
+      @Value("${tile.detection.api.url}") String tileDetectionApiUrl) {
     this.om = om;
     this.bucketComponent = bucketComponent;
-    this.tileDetectionRawBaseUrls = tileDetectionRawBaseUrls;
+    this.tileDetectionApiUrl = tileDetectionApiUrl;
   }
 
-  private List<TileDetectorUrl> getDetectorUrls() {
-    try {
-      return om.readValue(tileDetectionRawBaseUrls, new TypeReference<>() {});
-    } catch (JsonProcessingException e) {
-      throw new ApiException(SERVER_EXCEPTION, e.getMessage());
-    }
-  }
-
+  // TODO: custom bucket still needed ?
   private String retrieveBucket(
       List<DetectableObjectConfiguration> detectableObjectConfigurations) {
     DetectableObjectConfiguration objectConfiguration;
@@ -71,31 +60,11 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
     return bucketComponent.getBucketConf().getBucketName();
   }
 
-  private String retrieveBaseUrl(List<DetectableType> types) {
-    if (types.size() > 1) {
-      throw new NotImplementedException("TODO: multiclass detection API not available");
-    }
-    var type = types.getFirst();
-    List<TileDetectorUrl> tileDetectionBaseUrls = getDetectorUrls();
-    var optionalBaseUrl =
-        tileDetectionBaseUrls.stream()
-            .filter(tileDetectorUrl -> tileDetectorUrl.getObjectType().equals(type))
-            .findAny();
-    if (optionalBaseUrl.isEmpty()) {
-      throw new ApiException(SERVER_EXCEPTION, "Unknown DetectableType " + type);
-    }
-    return optionalBaseUrl.get().getUrl();
-  }
-
   @SneakyThrows
   @Override
   public DetectionResponse apply(
       TileDetectionTask tileDetectionTask,
       List<DetectableObjectConfiguration> detectableObjectConfigurations) {
-    var detectableTypes =
-        detectableObjectConfigurations.stream()
-            .map(DetectableObjectConfiguration::getObjectType)
-            .toList();
     Tile tile = tileDetectionTask.getTile();
     if (tile == null) {
       return null;
@@ -119,8 +88,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
 
     HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
 
-    UriComponentsBuilder builder =
-        UriComponentsBuilder.fromHttpUrl(retrieveBaseUrl(detectableTypes) + "/detection");
+    UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(tileDetectionApiUrl);
     ResponseEntity<DetectionResponse> responseEntity =
         restTemplate.postForEntity(builder.toUriString(), request, DetectionResponse.class);
 
