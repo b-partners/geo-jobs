@@ -142,24 +142,6 @@ class ZoneServiceTest {
   }
 
   @Test
-  void community_role_stuck_in_configuring() {
-    when(authProviderMock.getPrincipal())
-        .thenReturn(new Principal("mockApiKey", Set.of(new Authority(ROLE_COMMUNITY))));
-    var detectionId = "mockDetectionId";
-    String communityOwnerId = "communityOwnerId";
-    var detection = detectionCreator.create(detectionId, null, null);
-    var createDetection = new CreateDetection().geoJsonZone(featureCreator.defaultFeatures());
-    when(detectionRepositoryMock.findByEndToEndIdAndCommunityOwnerId(detectionId, communityOwnerId))
-        .thenReturn(Optional.of(detection));
-
-    assertThrows(
-        ApiException.class,
-        () -> subject.processDetection(detectionId, createDetection, communityOwnerId),
-        "A detection job with the specified id=(mockDetectionId) already exists and can not be"
-            + " updated.");
-  }
-
-  @Test
   void admin_role_can_process_tiling() {
     var detectionId = randomUUID().toString();
     var detection = detectionCreator.create(detectionId, null, null);

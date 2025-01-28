@@ -2,7 +2,6 @@ package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.*;
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
-import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_COMMUNITY;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
@@ -39,7 +38,6 @@ import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.exception.NotFoundException;
-import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.model.page.BoundedPageSize;
 import app.bpartners.geojobs.model.page.PageFromOne;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
@@ -210,30 +208,18 @@ public class ZoneService {
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection processDetection(
-      String detectionId, CreateDetection createDetection, @Nullable String communityOwnerId) {
-    var consumerIsCommunity = ROLE_COMMUNITY.equals(authProvider.getPrincipal().getRole());
-    if (consumerIsCommunity) {
-      var optionalDetection =
-          detectionRepository.findByEndToEndIdAndCommunityOwnerId(detectionId, communityOwnerId);
-      if (optionalDetection.isEmpty()) {
-        var savedDetection = createDetectionJob(detectionId, createDetection, communityOwnerId);
-        return computeEmptyStatisticFromStep(savedDetection, PENDING, UNKNOWN, CONFIGURING);
-      }
-      throw new BadRequestException(
-          String.format(
-              "A detection job with the specified id=(%s) "
-                  + "already exists and can not be updated.",
-              detectionId));
+      String detectionId, CreateDetection createDetection, String communityOwnerId) {
+    var optionalDetection =
+        detectionRepository.findByEndToEndIdAndCommunityOwnerId(detectionId, communityOwnerId);
+    if (optionalDetection.isEmpty()) {
+      var savedDetection = createDetectionJob(detectionId, createDetection, communityOwnerId);
+      return computeEmptyStatisticFromStep(savedDetection, PENDING, UNKNOWN, CONFIGURING);
     }
     return getProcessingJobStatistics(
         detectionRepository
             .findById(detectionId)
             .orElseThrow(
-                () ->
-                    new NotImplementedException(
-                        "Unable to process Detection(id="
-                            + detectionId
-                            + ") for ADMIN role for now")));
+                () -> new NotFoundException("Detection(id=" + detectionId + ") not found")));
   }
 
   private app.bpartners.geojobs.endpoint.rest.model.Detection getProcessingJobStatistics(
