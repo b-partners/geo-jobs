@@ -34,7 +34,7 @@ Globals:
         SENTRY_DSN: !Sub '{{resolve:ssm:/geo-jobs/sentry/dsn}}'
         SENTRY_ENVIRONMENT: !Ref Env
         TILES_DOWNLOADER_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/tiles/downloader/url}}'
-        TILE_DETECTION_API_URLS: !Sub '{{resolve:ssm:/geo-jobs/${Env}/tiles/detection/urls}}'
+        TILE_DETECTION_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/tiles/detection/url}}'
         ADMIN_API_KEY: !Sub '{{resolve:ssm:/bpartners-geo-jobs/${Env}/admin/api-key}}'
         ANNOTATOR_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/annotator/url}}'
         ANNOTATOR_API_KEY: !Sub '{{resolve:ssm:/geo-jobs/${Env}/annotator/api/key}}'

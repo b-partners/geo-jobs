@@ -16,21 +16,8 @@ public class EnvConf {
         "tiles.downloader.api.url",
         () -> "https://qbzvaia3tcgkigveg3jh6zruge0kbjld.lambda-url.eu-west-3.on.aws");
     registry.add(
-        "tile.detection.api.urls",
-        () ->
-            "[ { \"objectType\": \"TOITURE_REVETEMENT\", \"url\":"
-                + " \"https://roof-api.azurewebsites.net/api\" }, { \"objectType\":"
-                + " \"PASSAGE_PIETON\", \"url\":"
-                + " \"https://zjjhl54scfpztssyvodvjbk54q0naxgw.lambda-url.eu-west-3.on.aws\" }, {"
-                + " \"objectType\": \"PANNEAU_PHOTOVOLTAIQUE\", \"url\":"
-                + " \"https://solarpanel-api.azurewebsites.net/api\" }, { \"objectType\":"
-                + " \"PISCINE\", \"url\": \"https://pool-api.azurewebsites.net/api\" }, {"
-                + " \"objectType\": \"ARBRE\", \"url\": \"https://trees-api.azurewebsites.net/api\""
-                + " }, { \"objectType\": \"TROTTOIR\", \"url\":"
-                + " \"https://sidewalk-api.azurewebsites.net/api\" }, { \"objectType\": \"LINE\","
-                + " \"url\": \"https://line-api.azurewebsites.net/api\" }, { \"objectType\":"
-                + " \"ESPACE_VERT\", \"url\": \"https://greenspace-api.azurewebsites.net/api\" }"
-                + " ]");
+        "tile.detection.api.url",
+        () -> "https://jgzoqzwhm6r3oxcovqidd5onvm0sipnc.lambda-url.eu-west-3.on.aws/");
     registry.add("admin.api.key", () -> ADMIN_API_KEY);
     registry.add("annotator.api.key", () -> ADMIN_API_KEY);
     registry.add(
