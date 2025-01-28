@@ -27,7 +27,8 @@ public class ParcelizationController {
       @RequestParam(name = "targetZoom", required = false) Integer targetZoom,
       @RequestParam(name = "maxParcelAreaAtReferenceZoom", required = false)
           Double maxParcelAreaAtReferenceZoom) {
-    List<Polygon> polygons = features.stream().map(featureMapper::toDomain).toList();
+    List<Polygon> polygons =
+        features.stream().map(featureMapper::toDomainList).flatMap(List::stream).toList();
     String polygonsId = randomUUID().toString();
     return polygons.stream()
         .map(

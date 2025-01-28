@@ -140,6 +140,38 @@ public class FeatureMapper {
     return geometryFactory.createPolygon(linearRing);
   }
 
+  public List<org.locationtech.jts.geom.Polygon> toDomainList(Feature feature) {
+    List<List<List<List<BigDecimal>>>> multiPolygonCoordinates = validateFeature(feature);
+    GeometryFactory geometryFactory = new GeometryFactory();
+    List<List<Coordinate>> polygonCoords = new ArrayList<>();
+
+    multiPolygonCoordinates.forEach(
+        ring -> {
+          List<Coordinate> coords = new ArrayList<>();
+          ring.forEach(
+              geo -> {
+                Coordinate[] ringCoords =
+                    geo.stream()
+                        .map(
+                            point ->
+                                new Coordinate(
+                                    point.getFirst().doubleValue(), point.getLast().doubleValue()))
+                        .toArray(Coordinate[]::new);
+                coords.addAll(List.of(ringCoords));
+              });
+          polygonCoords.add(coords);
+        });
+
+    return polygonCoords.stream()
+        .map(
+            coordinates -> {
+              LinearRing linearRing =
+                  geometryFactory.createLinearRing(coordinates.toArray(new Coordinate[0]));
+              return geometryFactory.createPolygon(linearRing);
+            })
+        .toList();
+  }
+
   @Nullable
   private List<List<List<List<BigDecimal>>>> validateFeature(Feature feature) {
     if (feature.getGeometry() == null) {
