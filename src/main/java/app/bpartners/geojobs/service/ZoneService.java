@@ -215,11 +215,13 @@ public class ZoneService {
       var savedDetection = createDetectionJob(detectionId, createDetection, communityOwnerId);
       return computeEmptyStatisticFromStep(savedDetection, PENDING, UNKNOWN, CONFIGURING);
     }
-    return getProcessingJobStatistics(
+    var detection =
         detectionRepository
             .findById(detectionId)
+            .or(() -> detectionRepository.findByEndToEndId(detectionId))
             .orElseThrow(
-                () -> new NotFoundException("Detection(id=" + detectionId + ") not found")));
+                () -> new NotFoundException("Detection(id=" + detectionId + ") not found"));
+    return getProcessingJobStatistics(detection);
   }
 
   private app.bpartners.geojobs.endpoint.rest.model.Detection getProcessingJobStatistics(
