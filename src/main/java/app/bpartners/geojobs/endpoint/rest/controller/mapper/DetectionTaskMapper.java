@@ -1,6 +1,14 @@
 package app.bpartners.geojobs.endpoint.rest.controller.mapper;
 
-import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.*;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.ARBRE;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.BATI_ARDOISE;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.BATI_AUTRES;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.BATI_BETON;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.BATI_TUILES;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.PANNEAU_PHOTOVOLTAIQUE;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.PASSAGE_PIETON;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.PISCINE;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.TOITURE_REVETEMENT;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.ProgressionEnum.PENDING;
 import static java.time.Instant.now;
 import static java.util.Optional.ofNullable;
@@ -14,6 +22,7 @@ import app.bpartners.geojobs.endpoint.rest.model.Status;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.ParcelTask;
+import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import java.math.BigDecimal;
 import java.util.Comparator;
@@ -81,39 +90,32 @@ public class DetectionTaskMapper {
         .detectorVersion("TODO"); // TODO
   }
 
-  private DetectableObjectType toRest(
-      app.bpartners.geojobs.repository.model.detection.DetectableType detectableType) {
+  private DetectableObjectType toRest(DetectableType detectableType) {
     if (detectableType == null) return null;
-    switch (detectableType) {
-      case PANNEAU_PHOTOVOLTAIQUE -> {
-        return PANNEAU_PHOTOVOLTAIQUE;
-      }
-      case TOITURE_REVETEMENT -> {
-        return TOITURE_REVETEMENT;
-      }
-      case ARBRE -> {
-        return ARBRE;
-      }
-      case PISCINE -> {
-        return PISCINE;
-      }
-      case PASSAGE_PIETON -> {
-        return PASSAGE_PIETON;
-      }
-      case BATI_TUILES -> {
-        return BATI_TUILES;
-      }
-      case BATI_BETON -> {
-        return BATI_BETON;
-      }
-      case BATI_ARDOISE -> {
-        return BATI_ARDOISE;
-      }
-      case BATI_AUTRES -> {
-        return BATI_AUTRES;
-      }
-      default ->
-          throw new NotImplementedException("Unknown Detectable Object Type " + detectableType);
-    }
+    return switch (detectableType) {
+      case PANNEAU_PHOTOVOLTAIQUE -> PANNEAU_PHOTOVOLTAIQUE;
+      case TOITURE_REVETEMENT -> TOITURE_REVETEMENT;
+      case ARBRE -> ARBRE;
+      case PISCINE -> PISCINE;
+      case PASSAGE_PIETON -> PASSAGE_PIETON;
+      case BATI_TUILES -> BATI_TUILES;
+      case BATI_BETON -> BATI_BETON;
+      case BATI_ARDOISE -> BATI_ARDOISE;
+      case BATI_AUTRES -> BATI_AUTRES;
+      case TROTTOIR,
+              LINE,
+              ESPACE_VERT,
+              VOIE_CARROSSABLE,
+              PARKING,
+              MOISISSURE,
+              USURE,
+              FISSURE_CASSURE,
+              OBSTACLE,
+              CHEMINEE,
+              HUMIDITE,
+              RISQUE_FEU,
+              VELUX ->
+          throw new NotImplementedException("Unsupported detection: " + detectableType);
+    };
   }
 }
