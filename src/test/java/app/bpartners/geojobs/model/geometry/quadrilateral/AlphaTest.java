@@ -8,8 +8,8 @@ import static java.util.stream.Collectors.toSet;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import app.bpartners.geojobs.model.geometry.FeatureProvider;
 import app.bpartners.geojobs.model.geometry.IntXY;
+import app.bpartners.geojobs.model.geometry.PolygonProvider;
 import app.bpartners.geojobs.model.geometry.plot.AreImagesEqual;
 import app.bpartners.geojobs.model.geometry.plot.PlotConf;
 import app.bpartners.geojobs.model.geometry.plot.Plotable;
@@ -32,59 +32,60 @@ import org.locationtech.jts.geom.Polygon;
 
 class AlphaTest {
   AreImagesEqual areImagesEqual = new AreImagesEqual(0.005); // note(numeric-instability)
-  FeatureProvider dijonFeatureProvider =
-      new FeatureProvider("/geometry/vgg/dijon.json", false, new IntXY(1024, 1024));
-  FeatureProvider rondPointFeatureProvider =
-      new FeatureProvider("/geometry/vgg/rond-point.json", true, new IntXY(1024, 1024));
+  PolygonProvider dijonPolygonProvider =
+      new PolygonProvider("/geometry/vgg/dijon.json", null, new IntXY(1024, 1024));
+  PolygonProvider rondPointPolygonProvider =
+      new PolygonProvider(
+          "/geometry/vgg/rond-point.json", new IntXY(538860, 367567), new IntXY(1024, 1024));
 
   @Test
   void vgg1() {
-    isAbstractionCorrect(dijonFeatureProvider.apply(1), "/geometry/vgg/vgg1-alpha.png");
+    isAbstractionCorrect(dijonPolygonProvider.apply(1), "/geometry/vgg/vgg1-alpha.png");
   }
 
   @Test
   void vgg2() {
-    isAbstractionCorrect(dijonFeatureProvider.apply(2), "/geometry/vgg/vgg2-alpha-ko.png");
+    isAbstractionCorrect(dijonPolygonProvider.apply(2), "/geometry/vgg/vgg2-alpha-ko.png");
   }
 
   @Test
   void vgg4() {
-    isAbstractionCorrect(dijonFeatureProvider.apply(4), "/geometry/vgg/vgg4-alpha.png");
+    isAbstractionCorrect(dijonPolygonProvider.apply(4), "/geometry/vgg/vgg4-alpha.png");
   }
 
   @Test
   void vgg5() {
-    isAbstractionCorrect(dijonFeatureProvider.apply(5), "/geometry/vgg/vgg5-alpha.png");
+    isAbstractionCorrect(dijonPolygonProvider.apply(5), "/geometry/vgg/vgg5-alpha.png");
   }
 
   @Test
   void vgg11() {
-    isAbstractionCorrect(dijonFeatureProvider.apply(11), "/geometry/vgg/vgg11-alpha.png");
+    isAbstractionCorrect(dijonPolygonProvider.apply(11), "/geometry/vgg/vgg11-alpha.png");
   }
 
   @Test
   void vgg22() {
     isAbstractionCorrect(
-        dijonFeatureProvider.apply(22), "/geometry/vgg/vgg22-alpha-can-be-problematic.png");
+        dijonPolygonProvider.apply(22), "/geometry/vgg/vgg22-alpha-can-be-problematic.png");
   }
 
   @Test
   void vgg101() {
-    isAbstractionCorrect(dijonFeatureProvider.apply(101), "/geometry/vgg/vgg101-alpha.png");
+    isAbstractionCorrect(dijonPolygonProvider.apply(101), "/geometry/vgg/vgg101-alpha.png");
   }
 
   @Test
   void vgg247() {
-    isAbstractionCorrect(dijonFeatureProvider.apply(247), "/geometry/vgg/vgg247-alpha.png");
+    isAbstractionCorrect(dijonPolygonProvider.apply(247), "/geometry/vgg/vgg247-alpha.png");
   }
 
   @Test
   void abstraction_failures_are_infrequent_enough() {
-    var featuresNb = dijonFeatureProvider.featuresNb();
+    var featuresNb = dijonPolygonProvider.featuresNb();
     var failedN = new ArrayList<>();
     for (int n = 0; n < featuresNb; n++) {
       System.out.println(n);
-      var alpha = alpha(dijonFeatureProvider.apply(n));
+      var alpha = alpha(dijonPolygonProvider.apply(n));
       if (alpha.get().isEmpty()) {
         failedN.add(n);
       }
@@ -96,12 +97,12 @@ class AlphaTest {
 
   @Test
   void rond_point_is_correctly_abstracted() throws IOException {
-    var features = rondPointFeatureProvider.getPolygons();
-    var scale = 0.1;
-    var offset = new IntXY(2_000, 1_000);
+    var polygons = rondPointPolygonProvider.getPolygons();
+    var plotScale = 0.1;
+    var plotOffset = new IntXY(2_000, 1_000);
 
     Set<Plotable> plotablesQ = new HashSet<>();
-    for (var p : features) {
+    for (var p : polygons) {
       var conf =
           new AlphaConf(
               // note(alpha-minCoverage)
@@ -111,7 +112,7 @@ class AlphaTest {
               // Indeed, we purposefully make the whole alpha fail if at least 1 subAlpha fails.
               0.5, 1);
       var oqList = new Alpha(p, conf).get();
-      var qPlotConf = new PlotConf(RED, DEFAULT_STROKE, scale, offset);
+      var qPlotConf = new PlotConf(RED, DEFAULT_STROKE, plotScale, plotOffset);
       plotablesQ.addAll(
           oqList.stream()
               .map(oq -> new PlotableQuadrilateral(oq.quadrilateral(), qPlotConf))
@@ -119,8 +120,8 @@ class AlphaTest {
     }
     Set<Plotable> plotables = new HashSet<>(plotablesQ);
 
-    var unified = new UnifiedRoute(features, new UnionConf(5)).unified().stream().toList();
-    var pPlotConf = new PlotConf(BLACK, DEFAULT_STROKE, scale, offset);
+    var unified = new UnifiedRoute(polygons, new UnionConf(5)).unified().stream().toList();
+    var pPlotConf = new PlotConf(BLACK, DEFAULT_STROKE, plotScale, plotOffset);
     plotables.addAll(
         unified.stream().map(polygon -> new PlotablePolygon(polygon, pPlotConf)).collect(toSet()));
     var image = new PlotablePlane(1_024, 1_024).plot(plotables);

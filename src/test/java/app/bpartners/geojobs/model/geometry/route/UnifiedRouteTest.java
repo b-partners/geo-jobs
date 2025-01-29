@@ -6,8 +6,8 @@ import static java.awt.Color.BLACK;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import app.bpartners.geojobs.model.geometry.FeatureProvider;
 import app.bpartners.geojobs.model.geometry.IntXY;
+import app.bpartners.geojobs.model.geometry.PolygonProvider;
 import app.bpartners.geojobs.model.geometry.plot.AreImagesEqual;
 import app.bpartners.geojobs.model.geometry.plot.PlotConf;
 import app.bpartners.geojobs.model.geometry.plot.PlotablePlane;
@@ -19,10 +19,12 @@ import org.junit.jupiter.api.Test;
 
 public class UnifiedRouteTest {
   AreImagesEqual areImagesEqual = new AreImagesEqual(0.00005);
-  FeatureProvider lineProvider =
-      new FeatureProvider("/geometry/vgg/rond-point.json", true, new IntXY(1024, 1024));
-  FeatureProvider pathwayProvider =
-      new FeatureProvider("/geometry/vgg/pathway.json", true, new IntXY(1024, 1024));
+  PolygonProvider lineProvider =
+      new PolygonProvider(
+          "/geometry/vgg/rond-point.json", new IntXY(538860, 367567), new IntXY(1024, 1024));
+  PolygonProvider pathwayProvider =
+      new PolygonProvider(
+          "/geometry/vgg/pathway.json", new IntXY(538860, 367571), new IntXY(1024, 1024));
 
   @Test
   void long1_compass1_unified() throws IOException {

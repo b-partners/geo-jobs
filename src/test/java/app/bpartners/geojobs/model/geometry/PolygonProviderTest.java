@@ -2,15 +2,11 @@ package app.bpartners.geojobs.model.geometry;
 
 import static app.bpartners.geojobs.model.geometry.plot.PlotConf.DEFAULT_OFFSET;
 import static java.awt.Color.BLACK;
-import static java.util.stream.Collectors.toSet;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import app.bpartners.geojobs.model.geometry.plot.AreImagesEqual;
 import app.bpartners.geojobs.model.geometry.plot.PlotConf;
 import app.bpartners.geojobs.model.geometry.plot.PlotablePlane;
-import app.bpartners.geojobs.model.geometry.polygon.Feature;
-import app.bpartners.geojobs.model.geometry.polygon.FeatureListOffsetRestorer;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -19,18 +15,17 @@ import javax.imageio.ImageIO;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Polygon;
 
-public class FeatureProviderTest {
+public class PolygonProviderTest {
   AreImagesEqual areImagesEqual = new AreImagesEqual(0.00005);
-  FeatureProvider lineProviderWithOffset =
-      new FeatureProvider("/geometry/vgg/rond-point.json", true, new IntXY(1024, 1024));
-
-  FeatureProvider lineProviderWithOutOffset =
-      new FeatureProvider("/geometry/vgg/rond-point.json", false, new IntXY(1024, 1024));
-  FeatureProvider pathProvider =
-      new FeatureProvider("/geometry/vgg/pathway.json", true, new IntXY(1024, 1024));
-
-  FeatureProvider lineAndPathProvider =
-      new FeatureProvider("/geometry/vgg/line-pathway.json", true, new IntXY(1024, 1024));
+  PolygonProvider lineProviderWithOffset =
+      new PolygonProvider(
+          "/geometry/vgg/rond-point.json", new IntXY(538860, 367567), new IntXY(1024, 1024));
+  PolygonProvider pathProvider =
+      new PolygonProvider(
+          "/geometry/vgg/pathway.json", new IntXY(538860, 367571), new IntXY(1024, 1024));
+  PolygonProvider lineAndPathProvider =
+      new PolygonProvider(
+          "/geometry/vgg/line-pathway.json", new IntXY(538860, 367567), new IntXY(1024, 1024));
 
   @Test
   void rond_point_is_displayed() throws IOException {
@@ -84,18 +79,5 @@ public class FeatureProviderTest {
     var expectedInput =
         ImageIO.read(this.getClass().getResourceAsStream("/geometry/vgg/line-pathway.png"));
     assertTrue(areImagesEqual.apply(expectedInput, toUnifyImage));
-  }
-
-  @Test
-  void restore_offset() {
-    var featureWithOffset = lineProviderWithOffset.getFeatures();
-
-    var actualWithoutOffset =
-        new FeatureListOffsetRestorer(featureWithOffset)
-            .get().stream().map(Feature::geometry).collect(toSet());
-
-    var expected = lineProviderWithOutOffset.getPolygons();
-
-    assertEquals(expected, actualWithoutOffset);
   }
 }
