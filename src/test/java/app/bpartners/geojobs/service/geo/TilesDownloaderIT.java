@@ -57,7 +57,7 @@ class TilesDownloaderIT extends FacadeIT {
                 {
                     "service": "WMS",
                     "request": "GetMap",
-                    "layers": "cite:cannes_2020",
+                    "layers": "cite:ALPES-MARITIMES_CANNES_2020_5cm",
                     "styles": "",
                     "format": "image/jpeg",
                     "version": "1.1.0",
