@@ -100,6 +100,18 @@ public class DetectionTaskMapper {
       case PASSAGE_PIETON -> {
         return PASSAGE_PIETON;
       }
+      case BATI_TUILES -> {
+        return BATI_TUILES;
+      }
+      case BATI_BETON -> {
+        return BATI_BETON;
+      }
+      case BATI_ARDOISE -> {
+        return BATI_ARDOISE;
+      }
+      case BATI_AUTRES -> {
+        return BATI_AUTRES;
+      }
       default ->
           throw new NotImplementedException("Unknown Detectable Object Type " + detectableType);
     }

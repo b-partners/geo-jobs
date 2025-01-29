@@ -25,6 +25,14 @@ public class LabelConverter implements Function<DetectableType, Label> {
       case PISCINE -> "#0DCBD2";
       case PASSAGE_PIETON -> "#F5F586";
       case ARBRE -> "#4BFF33";
+      case LINE -> "#ff3388";
+      case BATI_TUILES -> "#47e66c";
+      case BATI_BETON -> "#425c20";
+      case BATI_ARDOISE -> "#5299bf";
+      case BATI_AUTRES -> "#de6ce0";
+      case TROTTOIR -> "#54deb7";
+      case PARKING -> "#8c463e";
+      case ESPACE_VERT -> "#e39724";
       default -> throw new IllegalArgumentException("unexpected value");
     };
   }
