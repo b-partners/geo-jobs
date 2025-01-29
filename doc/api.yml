@@ -1014,6 +1014,10 @@ components:
         - VELUX
         - ESPACE_VERT_PARKING
         - RISQUE_FEU
+        - BATI_TUILES
+        - BATI_BETON
+        - BATI_ARDOISE
+        - BATI_AUTRES
     ProcessJobAnnotation:
       type: object
       properties:
