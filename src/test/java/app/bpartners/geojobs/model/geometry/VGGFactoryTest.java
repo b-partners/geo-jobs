@@ -6,14 +6,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 public class VGGFactoryTest {
-  private final FeatureProvider featureProvider =
-      new FeatureProvider("/geometry/vgg/pathway.json", false, new IntXY(1024, 1024));
+  private final PolygonProvider polygonProvider =
+      new PolygonProvider("/geometry/vgg/pathway.json", null, new IntXY(1024, 1024));
   private final ObjectMapper om = new ObjectMapper().findAndRegisterModules();
   private final VGGFactory subject = new VGGFactory();
 
   @Test
   void features_to_vgg_ok() {
-    var features = featureProvider.getPolygons();
+    var features = polygonProvider.getPolygons();
     var expectedFilename = "5cm3346073745629231615_20_538860_367572.jpg";
 
     var actual = subject.convert(features);
