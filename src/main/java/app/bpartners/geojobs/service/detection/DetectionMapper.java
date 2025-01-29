@@ -112,6 +112,14 @@ public class DetectionMapper {
       case "TREE", "ARBRE" -> DetectableType.ARBRE;
       case "PATHWAY", "PASSAGE_PIETON" -> DetectableType.PASSAGE_PIETON;
       case "POOL", "PISCINE" -> DetectableType.PISCINE;
+      case "BATI_TUILES" -> DetectableType.BATI_TUILES;
+      case "BATI_BETON" -> DetectableType.BATI_BETON;
+      case "BATI_ARDOISE" -> DetectableType.BATI_ARDOISE;
+      case "BATI_AUTRES" -> DetectableType.BATI_AUTRES;
+      case "LINE" -> DetectableType.LINE;
+      case "TROTTOIR" -> DetectableType.TROTTOIR;
+      case "PARKING" -> DetectableType.PARKING;
+      case "ESPACE_VERT" -> DetectableType.ESPACE_VERT;
       default -> throw new IllegalStateException("Unexpected value: " + label.toLowerCase());
     };
   }

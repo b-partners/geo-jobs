@@ -1,14 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.controller.mapper;
 
-import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.ARBRE;
-import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.BATI_ARDOISE;
-import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.BATI_AUTRES;
-import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.BATI_BETON;
-import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.BATI_TUILES;
-import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.PANNEAU_PHOTOVOLTAIQUE;
-import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.PASSAGE_PIETON;
-import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.PISCINE;
-import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.TOITURE_REVETEMENT;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.*;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.ProgressionEnum.PENDING;
 import static java.time.Instant.now;
 import static java.util.Optional.ofNullable;
@@ -102,11 +94,11 @@ public class DetectionTaskMapper {
       case BATI_BETON -> BATI_BETON;
       case BATI_ARDOISE -> BATI_ARDOISE;
       case BATI_AUTRES -> BATI_AUTRES;
-      case TROTTOIR,
-              LINE,
-              ESPACE_VERT,
-              VOIE_CARROSSABLE,
-              PARKING,
+      case LINE -> LINE;
+      case ESPACE_VERT -> ESPACE_VERT;
+      case PARKING -> PARKING;
+      case TROTTOIR -> TROTTOIR;
+      case VOIE_CARROSSABLE,
               MOISISSURE,
               USURE,
               FISSURE_CASSURE,
