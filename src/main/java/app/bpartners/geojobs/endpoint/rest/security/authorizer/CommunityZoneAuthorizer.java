@@ -4,23 +4,30 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
+import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorizedZone;
 import java.util.List;
-import java.util.function.BiConsumer;
 import lombok.RequiredArgsConstructor;
+import org.apache.logging.log4j.util.TriConsumer;
 import org.locationtech.jts.geom.Polygon;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class CommunityZoneAuthorizer implements BiConsumer<CommunityAuthorization, List<Feature>> {
+public class CommunityZoneAuthorizer
+    implements TriConsumer<CommunityAuthorization, List<Feature>, Principal> {
   private final FeatureMapper featureMapper;
 
   @Override
   public void accept(
-      CommunityAuthorization communityAuthorization, List<Feature> candidateFeatures) {
+      CommunityAuthorization communityAuthorization,
+      List<Feature> candidateFeatures,
+      Principal principal) {
+    if (principal.isAdmin()) {
+      return;
+    }
     var candidateFeaturesPolygon =
         candidateFeatures.stream()
             .map(featureMapper::toDomain)

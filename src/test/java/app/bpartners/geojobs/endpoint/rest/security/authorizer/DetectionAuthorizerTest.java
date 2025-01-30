@@ -72,7 +72,7 @@ class DetectionAuthorizerTest {
     when(detectionRepository.findByEndToEndIdAndCommunityOwnerId(any(), any()))
         .thenReturn(Optional.empty());
     doNothing().when(communityZoneSurfaceAuthorizer).accept(any(), any());
-    doNothing().when(communityZoneAuthorizer).accept(any(), any());
+    doNothing().when(communityZoneAuthorizer).accept(any(), any(), any());
     doNothing().when(communityDetectableObjectTypeAuthorizer).accept(any(), any());
     when(detectableObjectTypeMapperMock.mapDefaultConfigurationsFromModel(any(), any()))
         .thenReturn(List.of());

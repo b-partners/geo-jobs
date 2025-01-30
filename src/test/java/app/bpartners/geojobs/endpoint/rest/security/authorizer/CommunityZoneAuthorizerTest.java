@@ -1,21 +1,39 @@
 package app.bpartners.geojobs.endpoint.rest.security.authorizer;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
+import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorizedZone;
 import java.math.BigDecimal;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class CommunityZoneAuthorizerTest {
   FeatureMapper featureMapper = new FeatureMapper();
   CommunityZoneAuthorizer subject = new CommunityZoneAuthorizer(featureMapper);
+  Principal principalMock = mock(Principal.class);
+
+  @BeforeEach
+  void setUp() {
+    when(principalMock.isAdmin()).thenReturn(false);
+  }
+
+  @Test
+  void do_nothing_where_admin() {
+    var principal = mock(Principal.class);
+    when(principal.isAdmin()).thenReturn(true);
+
+    assertDoesNotThrow(() -> subject.accept(new CommunityAuthorization(), List.of(), principal));
+    verify(principal, only()).isAdmin();
+  }
 
   @Test
   void should_throws_if_community_does_not_have_authorized_zone() {
@@ -27,7 +45,7 @@ class CommunityZoneAuthorizerTest {
         assertThrows(
             ForbiddenException.class,
             () -> {
-              subject.accept(communityAuthorization, features);
+              subject.accept(communityAuthorization, features, principalMock);
             });
     assertTrue(error.getMessage().contains("There is no zone authorized"));
   }
@@ -41,7 +59,7 @@ class CommunityZoneAuthorizerTest {
         assertThrows(
             ForbiddenException.class,
             () -> {
-              subject.accept(communityAuthorization, features);
+              subject.accept(communityAuthorization, features, principalMock);
             });
     assertTrue(error.getMessage().contains("Some given feature is not allowed"));
   }
@@ -53,7 +71,7 @@ class CommunityZoneAuthorizerTest {
 
     assertDoesNotThrow(
         () -> {
-          subject.accept(communityAuthorization, features);
+          subject.accept(communityAuthorization, features, principalMock);
         });
   }
 
