@@ -1,8 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.readme.monitor.factory;
 
 import static app.bpartners.geojobs.conf.EnvConf.ADMIN_EMAIL;
-import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
-import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_COMMUNITY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -27,7 +25,7 @@ class ReadmeGroupFactoryTest {
     var communityAuthorization = communityAuthorization();
     when(communityAuthRepositoryMock.findByApiKey(any()))
         .thenReturn(Optional.of(communityAuthorization));
-    when(principalMock.getRole()).thenReturn(ROLE_COMMUNITY);
+    when(principalMock.isAdmin()).thenReturn(false);
     var expected =
         ReadmeGroup.builder()
             .email(communityAuthorization.getEmail())
@@ -42,7 +40,7 @@ class ReadmeGroupFactoryTest {
 
   @Test
   void create_readme_group_from_admin_principal_ok() {
-    when(principalMock.getRole()).thenReturn(ROLE_ADMIN);
+    when(principalMock.isAdmin()).thenReturn(true);
     when(principalMock.getPassword()).thenReturn(ADMIN_API_KEY);
     var expected =
         ReadmeGroup.builder()

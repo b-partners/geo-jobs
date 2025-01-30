@@ -1,7 +1,5 @@
 package app.bpartners.geojobs.endpoint.rest.readme.monitor.factory;
 
-import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
-
 import app.bpartners.geojobs.endpoint.rest.readme.monitor.model.ReadmeGroup;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
@@ -23,7 +21,7 @@ public class ReadmeGroupFactory {
   }
 
   public ReadmeGroup createReadmeGroup(Principal principal) {
-    if (ROLE_ADMIN.equals(principal.getRole())) {
+    if (principal.isAdmin()) {
       return ReadmeGroup.builder()
           .label(ADMIN_LABEL_NAME)
           .apiKey(principal.getPassword())

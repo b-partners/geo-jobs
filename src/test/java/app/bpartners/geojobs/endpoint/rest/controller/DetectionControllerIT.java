@@ -99,7 +99,8 @@ class DetectionControllerIT extends FacadeIT {
   void setUp() {
     var principalMock = mock(Principal.class);
     when(principalMock.getPassword()).thenReturn("dummy");
-    when(principalMock.getRole()).thenReturn(ROLE_COMMUNITY);
+    when(principalMock.getRoles()).thenReturn(List.of(ROLE_COMMUNITY));
+    when(principalMock.isAdmin()).thenReturn(false);
     when(authProviderMock.getPrincipal()).thenReturn(principalMock);
     doNothing().when(detectionAuthorizer).accept(any(), any(), any());
     detectionRepository.deleteAll();

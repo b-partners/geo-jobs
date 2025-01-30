@@ -27,20 +27,14 @@ public class DetectionAuthorizer implements TriConsumer<String, CreateDetection,
 
   @Override
   public void accept(String detectionId, CreateDetection createDetection, Principal principal) {
-    var role = principal.getRole();
-    switch (role) {
-      case ROLE_ADMIN -> {}
-      case ROLE_COMMUNITY -> authorizeCommunity(detectionId, createDetection, principal);
-      default -> throw new RuntimeException("Unexpected role: " + role);
+    if (!principal.isAdmin()) {
+      authorizeCommunity(detectionId, createDetection, principal);
     }
   }
 
   public void accept(String detectionId, Principal principal) {
-    var role = principal.getRole();
-    switch (role) {
-      case ROLE_ADMIN -> {}
-      case ROLE_COMMUNITY -> authorizeCommunity(detectionId, principal);
-      default -> throw new RuntimeException("Unexpected role: " + role);
+    if (!principal.isAdmin()) {
+      authorizeCommunity(detectionId, principal);
     }
   }
 

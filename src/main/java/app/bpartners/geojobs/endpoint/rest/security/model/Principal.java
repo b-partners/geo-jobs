@@ -1,7 +1,10 @@
 package app.bpartners.geojobs.endpoint.rest.security.model;
 
+import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
+
 import app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role;
 import java.util.Collection;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
@@ -50,11 +53,13 @@ public class Principal implements UserDetails {
     return true;
   }
 
-  public Role getRole() {
-    if (authorities.size() != 1) {
-      throw new RuntimeException("Only one role per principal expected but got: " + authorities);
-    }
+  public List<Role> getRoles() {
+    return authorities.stream()
+        .map(grantedAuthority -> Role.valueOf(grantedAuthority.getAuthority()))
+        .toList();
+  }
 
-    return ((Authority) authorities.stream().toList().getFirst()).value();
+  public boolean isAdmin() {
+    return getRoles().contains(ROLE_ADMIN);
   }
 }

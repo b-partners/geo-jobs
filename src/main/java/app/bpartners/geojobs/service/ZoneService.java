@@ -1,7 +1,6 @@
 package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.*;
-import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
@@ -183,7 +182,7 @@ public class ZoneService {
         || detection.getMultiPolygonGeoJsonZone().isEmpty()) {
       return computeEmptyStatisticFromStep(detection, PENDING, UNKNOWN, CONFIGURING);
     }
-    if (!ROLE_ADMIN.equals(authProvider.getPrincipal().getRole())) {
+    if (!authProvider.getPrincipal().isAdmin()) {
       return computeEmptyStatisticFromStep(detection, FINISHED, SUCCEEDED, CONFIGURING);
     }
     var detectionJobId = detection.getZdjId();
