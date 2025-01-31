@@ -16,14 +16,12 @@ import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LinearRing;
 import org.springframework.stereotype.Component;
 
 @Component
-@Slf4j
 public class FeatureMapper {
   public Parcel toDomain(
       String parcelId, Feature rest, URL geoServerUrl, GeoServerParameter GeoServerParameter) {
@@ -72,7 +70,6 @@ public class FeatureMapper {
             .actualInstanceStringValue(
                 objectMapper().writeValueAsString(featureGeometry.getActualInstance()))
             .build();
-    log.info("domain={}, rest={}", featureDomain, featureGeometry);
     return featureDomain;
   }
 
@@ -95,7 +92,6 @@ public class FeatureMapper {
       app.bpartners.geojobs.repository.model.Feature.FeatureGeometry featureGeometry) {
     var actualInstanceStringValue = featureGeometry.getActualInstanceStringValue();
     var type = featureGeometry.getGeometryType();
-    log.info("debug domainFeatureGeometry={}", featureGeometry);
     if (actualInstanceStringValue == null || type == null) {
       return null;
     }
@@ -133,7 +129,6 @@ public class FeatureMapper {
               polygonCoords.addAll(List.of(ringCoords));
             });
 
-    log.info("To be linear {}", Arrays.deepToString(polygonCoords.toArray(new Coordinate[0])));
     LinearRing linearRing =
         geometryFactory.createLinearRing(polygonCoords.toArray(new Coordinate[0]));
 
