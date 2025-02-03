@@ -29,6 +29,7 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionStepStatis
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneTilingJobMapper;
+import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
 import app.bpartners.geojobs.endpoint.rest.model.CreateDetection;
 import app.bpartners.geojobs.endpoint.rest.model.CreateZoneTilingJob;
 import app.bpartners.geojobs.endpoint.rest.model.Detection;
@@ -53,8 +54,7 @@ import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.GeoJobType;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
-import app.bpartners.geojobs.service.detection.DetectionGeoJsonUpdateValidator;
-import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
+import app.bpartners.geojobs.service.detection.*;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import app.bpartners.geojobs.utils.FeatureCreator;
@@ -115,14 +115,30 @@ class ZoneServiceTest {
   ZoneDetectionJobCreator zoneDetectionJobCreator = new ZoneDetectionJobCreator();
   CommunityAuthorizationRepository communityAuthRepositoryMock = mock();
   TaskStatisticCreator taskStatisticCreator = new TaskStatisticCreator();
+  DetectionFromStatisticRestMapper detectionFromStatisticRestMapperMock =
+      new DetectionFromStatisticRestMapper(bucketComponentMock, stepStatisticMapper);
+  DetectionTilingStatisticsComputer detectionTilingStatisticsComputerMock =
+      new DetectionTilingStatisticsComputer(
+          tilingJobServiceMock, detectionFromStatisticRestMapperMock);
+  DetectionTilingCreation detectionTilingCreationMock =
+      new DetectionTilingCreation(
+          tilingJobMapperMock,
+          tilingJobServiceMock,
+          detectionRepositoryMock,
+          detectionTilingStatisticsComputerMock);
+  DetectionMachineDetectionStatisticsComputer detectionMachineDetectionStatisticsComputerMock =
+      new DetectionMachineDetectionStatisticsComputer(
+          detectionFromStatisticRestMapperMock, zoneDetectionJobServiceMock);
+  DetectionMachineDetectionCreation detectionMachineDetectionCreationMock =
+      new DetectionMachineDetectionCreation(
+          zoneDetectionJobServiceMock,
+          detectionJobValidatorMock,
+          detectionMachineDetectionStatisticsComputerMock);
   ZoneService subject =
       new ZoneService(
           zoneDetectionJobServiceMock,
           tilingJobServiceMock,
-          tilingJobMapperMock,
-          detectionJobValidatorMock,
           eventProducerMock,
-          stepStatisticMapper,
           detectionRepositoryMock,
           communityUsedSurfaceServiceMock,
           bucketComponentMock,
@@ -132,7 +148,12 @@ class ZoneServiceTest {
           authProviderMock,
           detectionGeoJsonUpdateValidator,
           featureMultiPolygonCheckerMock,
-          communityAuthRepositoryMock);
+          communityAuthRepositoryMock,
+          detectionTilingCreationMock,
+          detectionFromStatisticRestMapperMock,
+          detectionTilingStatisticsComputerMock,
+          detectionMachineDetectionStatisticsComputerMock,
+          detectionMachineDetectionCreationMock);
 
   @BeforeEach
   void setUp() {
