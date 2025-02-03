@@ -186,10 +186,11 @@ public class ZoneService {
       return computeEmptyStatisticFromStep(detection, FINISHED, SUCCEEDED, CONFIGURING);
     }
     var detectionJobId = detection.getZdjId();
-    var zoneDetectionJob = zoneDetectionJobService.findById(detectionJobId);
     if (detectionJobId == null) {
       return getTilingStatistics(detection, detection.getZtjId());
-    } else if (!zoneDetectionJob.isFinished()) {
+    }
+    var zoneDetectionJob = zoneDetectionJobService.findById(detectionJobId);
+    if (!zoneDetectionJob.isFinished()) {
       return getDetectionStatistics(detection, detectionJobId);
     } else if (detection.getGeojsonS3FileKey() == null) {
       return computeEmptyStatisticFromStep(detection, PROCESSING, UNKNOWN, HUMAN_DETECTION);
