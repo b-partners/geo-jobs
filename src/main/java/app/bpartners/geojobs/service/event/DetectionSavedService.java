@@ -11,6 +11,7 @@ import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.GeoServerParameterStringMapValue;
 import app.bpartners.geojobs.service.detection.DetectableObjectModelMapper;
 import app.bpartners.geojobs.service.detection.DetectionGeoServerParameterModelMapper;
+import app.bpartners.geojobs.service.detection.DetectionTilingCreation;
 import app.bpartners.geojobs.template.HTMLTemplateParser;
 import jakarta.mail.internet.InternetAddress;
 import java.io.File;
@@ -32,6 +33,7 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
   private final BucketComponent bucketComponent;
   private final DetectableObjectModelMapper detectableObjectModelMapper;
   private final DetectionGeoServerParameterModelMapper detectionGeoServerParameterModelMapper;
+  private final DetectionTilingCreation detectionTilingCreation;
 
   @SneakyThrows
   @Override
@@ -57,6 +59,8 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
     mailer.accept(
         new Email(
             new InternetAddress("tech@bpartners.app"), cc, bcc, subject, htmlBody, attachments));
+
+    detectionTilingCreation.apply(detection);
   }
 
   @NonNull

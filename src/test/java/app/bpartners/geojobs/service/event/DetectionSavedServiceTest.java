@@ -18,6 +18,7 @@ import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.GeoServerParameterStringMapValue;
 import app.bpartners.geojobs.service.detection.DetectableObjectModelMapper;
 import app.bpartners.geojobs.service.detection.DetectionGeoServerParameterModelMapper;
+import app.bpartners.geojobs.service.detection.DetectionTilingCreation;
 import app.bpartners.geojobs.template.HTMLTemplateParser;
 import jakarta.mail.internet.InternetAddress;
 import java.io.File;
@@ -25,6 +26,7 @@ import java.net.URI;
 import java.time.Duration;
 import java.util.List;
 import lombok.SneakyThrows;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.thymeleaf.context.Context;
@@ -34,6 +36,7 @@ class DetectionSavedServiceTest {
   BucketComponent bucketComponentMock = mock();
   Mailer mailerMock = mock();
   DetectableObjectModelMapper detectableObjectModelMapper = new DetectableObjectModelMapper();
+  DetectionTilingCreation detectionTilingCreation = mock();
   DetectionGeoServerParameterModelMapper detectionGeoServerParameterModelMapper =
       new DetectionGeoServerParameterModelMapper();
   DetectionSavedService subject =
@@ -41,7 +44,13 @@ class DetectionSavedServiceTest {
           mailerMock,
           bucketComponentMock,
           detectableObjectModelMapper,
-          detectionGeoServerParameterModelMapper);
+          detectionGeoServerParameterModelMapper,
+          detectionTilingCreation);
+
+  @BeforeEach
+  void setUp() {
+    when(detectionTilingCreation.apply(any())).thenReturn(mock());
+  }
 
   @SneakyThrows
   @Test
@@ -97,6 +106,7 @@ class DetectionSavedServiceTest {
             attachments);
     assertEquals(expectedMail, actualEmail);
     assertEquals(Duration.ofHours(24L), urlDurationValue);
+    verify(detectionTilingCreation, only()).apply(detection);
   }
 
   @Test
