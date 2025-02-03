@@ -22,18 +22,18 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.SneakyThrows;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 class AnnotationDeliveryJobCreatedIT extends DetectionIT {
   private static final int DEFAULT_EVENT_DELAY_SPEED_FACTOR = 10;
-  @Autowired ZoneDetectionJobService detectionJobService;
+  @Autowired ZoneDetectionJobService zoneDetectionJobService;
   @MockBean EventProducer eventProducerMock;
   @MockBean AnnotationService annotationServiceMock;
-  @Autowired AnnotationDeliveryJobService deliveryJobService;
+  @Autowired AnnotationDeliveryJobService subject;
   @Autowired LocalEventQueue localEventQueue;
   EventProducerInvocationMock eventProducerInvocationMock = new EventProducerInvocationMock();
   AnnotationDeliveryTaskCreator annotationDeliveryTaskCreator = new AnnotationDeliveryTaskCreator();
@@ -53,12 +53,27 @@ class AnnotationDeliveryJobCreatedIT extends DetectionIT {
 
   @SneakyThrows
   @Test
-  @Disabled
-  void single_event_succeeded() {
+  void single_job_with_thousand_tasks_succeeded() {
+    var deliveryJobId = randomUUID().toString();
+    var deliveryJob = pendingAnnotationDeliveryJob(deliveryJobId);
+    int tasksNb = 1000;
+    var deliveryTasks =
+        annotationDeliveryTaskCreator.someDeliveryTasks(
+            tasksNb, deliveryJob.getId(), deliveryJob.getAnnotationJobId(), PENDING, UNKNOWN);
+
+    var savedDeliveryJob = subject.create(deliveryJob, deliveryTasks);
+
+    Thread.sleep(Duration.ofSeconds(90L));
+    if (localEventQueue != null) localEventQueue.attemptSchedulerShutDown();
+    var retrievedDeliveryJob = subject.findById(savedDeliveryJob.getId());
+
+    assertTrue(retrievedDeliveryJob.isSucceeded());
+  }
+
+  private @NotNull AnnotationDeliveryJob pendingAnnotationDeliveryJob(String deliveryJobId) {
     var tilingJob = finishedZoneTilingJob(randomUUID().toString());
     var zdj =
-        detectionJobService.save(succeededZoneDetectionJob(randomUUID().toString(), tilingJob));
-    var deliveryJobId = randomUUID().toString();
+            zoneDetectionJobService.save(succeededZoneDetectionJob(randomUUID().toString(), tilingJob));
     var deliveryJob =
         AnnotationDeliveryJob.builder()
             .id(deliveryJobId)
@@ -77,17 +92,6 @@ class AnnotationDeliveryJobCreatedIT extends DetectionIT {
             .progression(PENDING)
             .health(UNKNOWN)
             .build());
-    int tasksNb = 10;
-    var deliveryTasks =
-        annotationDeliveryTaskCreator.someDeliveryTasks(
-            tasksNb, deliveryJob.getId(), deliveryJob.getAnnotationJobId(), PENDING, UNKNOWN);
-
-    var savedDeliveryJob = deliveryJobService.create(deliveryJob, deliveryTasks);
-
-    Thread.sleep(Duration.ofSeconds(30L));
-    if (localEventQueue != null) localEventQueue.attemptSchedulerShutDown();
-    var retrievedDeliveryJob = deliveryJobService.findById(savedDeliveryJob.getId());
-
-    assertTrue(retrievedDeliveryJob.isSucceeded());
+    return deliveryJob;
   }
 }

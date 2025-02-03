@@ -39,27 +39,19 @@ public class AnnotationDeliveryJobService
     this.eventProducer = eventProducer;
   }
 
-  @Transactional
+  //@Transactional
   public void fireTasks(AnnotationDeliveryJob job) {
-    List<AnnotationDeliveryTask> tasks = getTasks(job);
-    log.info("DEBUG processing AnnotationDeliveryTasks size ={}", tasks.size());
-    if (tasks.isEmpty()) {
-      throw new IllegalStateException(
-          "Unable to fire empty tasks for AnnotationDeliveryJob(id=" + job.getId() + ")");
-    }
-    tasks.forEach(
+    getTasks(job).forEach(
         task ->
             eventProducer.accept(
                 List.of(AnnotationDeliveryTaskCreated.builder().deliveryTask(task).build())));
   }
 
   @Override
-  @Transactional
+  //@Transactional
   public AnnotationDeliveryJob create(
       AnnotationDeliveryJob job, List<AnnotationDeliveryTask> tasks) {
     var newJob = super.create(job, tasks);
-    log.info("DEBUG AnnotationDeliveryJob.old={}, new={}", job, newJob);
-    log.info("DEBUG AnnotationDeliveryTasks size ={}", getTasks(newJob).size());
     eventProducer.accept(List.of(new AnnotationDeliveryJobCreated(newJob)));
     eventProducer.accept(
         List.of(new AnnotationDeliveryJobStatusRecomputingSubmitted(newJob.getId())));
