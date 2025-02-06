@@ -6,6 +6,7 @@ import static app.bpartners.geojobs.service.event.DetectionSavedService.computeS
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
+import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
 import app.bpartners.geojobs.endpoint.rest.model.BPToitureModel;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
@@ -18,7 +19,6 @@ import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.GeoServerParameterStringMapValue;
 import app.bpartners.geojobs.service.detection.DetectableObjectModelMapper;
 import app.bpartners.geojobs.service.detection.DetectionGeoServerParameterModelMapper;
-import app.bpartners.geojobs.service.detection.DetectionTilingCreation;
 import app.bpartners.geojobs.template.HTMLTemplateParser;
 import jakarta.mail.internet.InternetAddress;
 import java.io.File;
@@ -26,17 +26,15 @@ import java.net.URI;
 import java.time.Duration;
 import java.util.List;
 import lombok.SneakyThrows;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.thymeleaf.context.Context;
 
 class DetectionSavedServiceTest {
-  HTMLTemplateParser htmlTemplateParser = new HTMLTemplateParser();
+  EventProducer eventProducerMock = mock();
   BucketComponent bucketComponentMock = mock();
   Mailer mailerMock = mock();
   DetectableObjectModelMapper detectableObjectModelMapper = new DetectableObjectModelMapper();
-  DetectionTilingCreation detectionTilingCreation = mock();
   DetectionGeoServerParameterModelMapper detectionGeoServerParameterModelMapper =
       new DetectionGeoServerParameterModelMapper();
   DetectionSavedService subject =
@@ -45,12 +43,7 @@ class DetectionSavedServiceTest {
           bucketComponentMock,
           detectableObjectModelMapper,
           detectionGeoServerParameterModelMapper,
-          detectionTilingCreation);
-
-  @BeforeEach
-  void setUp() {
-    when(detectionTilingCreation.apply(any())).thenReturn(mock());
-  }
+          eventProducerMock);
 
   @SneakyThrows
   @Test
@@ -106,7 +99,7 @@ class DetectionSavedServiceTest {
             attachments);
     assertEquals(expectedMail, actualEmail);
     assertEquals(Duration.ofHours(24L), urlDurationValue);
-    verify(detectionTilingCreation, only()).apply(detection);
+    verify(eventProducerMock, only()).accept(any());
   }
 
   @Test
