@@ -171,27 +171,30 @@ public class ZoneService {
   public app.bpartners.geojobs.endpoint.rest.model.Detection getProcessedDetection(
       String detectionId) {
     var detection = getDetectionByE2IdOrId(detectionId);
-    if (detection.getGeojsonS3FileKey() != null) {
+    if (detection.isSucceeded()) {
       return computeEmptyStatisticFromStep(detection, FINISHED, SUCCEEDED, HUMAN_DETECTION);
     }
-    if (detection.getMultiPolygonGeoJsonZone() == null
-        || detection.getMultiPolygonGeoJsonZone().isEmpty()) {
+    if (detection.isStillOnConfiguringStep()) {
       return computeEmptyStatisticFromStep(detection, PENDING, UNKNOWN, CONFIGURING);
     }
-    if (!authProvider.getPrincipal().isAdmin()) {
+    if (!communityHasAdminRole()) {
       return computeEmptyStatisticFromStep(detection, FINISHED, SUCCEEDED, CONFIGURING);
     }
-    var detectionJobId = detection.getZdjId();
-    if (detectionJobId == null) {
+    if (detection.isStillOnTilingStep()) {
+      if (detection.isTilingPending()) {
+        return computeEmptyStatisticFromStep(detection, PENDING, UNKNOWN, TILING);
+      }
       return detectionTilingStatisticsComputer.apply(detection, detection.getZtjId());
     }
-    var zoneDetectionJob = zoneDetectionJobService.findById(detectionJobId);
-    if (!zoneDetectionJob.isFinished()) {
-      return detectionMachineDetectionStatisticsComputer.apply(detection, detectionJobId);
-    } else if (detection.getGeojsonS3FileKey() == null) {
+    var zoneDetectionJob = zoneDetectionJobService.findById(detection.getZdjId());
+    if (detection.isMachineDetectionStepProcessing(zoneDetectionJob)) {
+      return detectionMachineDetectionStatisticsComputer.apply(detection, detection.getZdjId());
+    }
+    if (detection.isHumanDetectionStepProcessing(zoneDetectionJob)) {
       return computeEmptyStatisticFromStep(detection, PROCESSING, UNKNOWN, HUMAN_DETECTION);
     }
-    return computeEmptyStatisticFromStep(detection, FINISHED, SUCCEEDED, HUMAN_DETECTION);
+    throw new IllegalStateException(
+        "Detection(id=" + detection.getId() + ") processing failed on illegal state");
   }
 
   private Detection getDetectionByE2IdOrId(String detectionId) {
@@ -364,5 +367,9 @@ public class ZoneService {
       case CONFIGURING -> GeoJobType.CONFIGURING;
       case MACHINE_DETECTION, HUMAN_DETECTION -> GeoJobType.DETECTION;
     };
+  }
+
+  private boolean communityHasAdminRole() {
+    return authProvider.getPrincipal().isAdmin();
   }
 }

@@ -89,4 +89,32 @@ public class Detection implements Serializable {
     }
     return detectableObjectModel;
   }
+
+  public boolean isSucceeded() {
+    return getGeojsonS3FileKey() != null;
+  }
+
+  public boolean isStillOnConfiguringStep() {
+    return getMultiPolygonGeoJsonZone() == null || getMultiPolygonGeoJsonZone().isEmpty();
+  }
+
+  public boolean isStillOnTilingStep() {
+    return getZdjId() == null;
+  }
+
+  public boolean isTilingPending() {
+    return getZtjId() == null && !isStillOnConfiguringStep();
+  }
+
+  public boolean isMachineDetectionStepProcessing(ZoneDetectionJob zoneDetectionJob) {
+    return !zoneDetectionJob.isFinished();
+  }
+
+  private boolean isMachineDetectionFinished(ZoneDetectionJob zoneDetectionJob) {
+    return zoneDetectionJob.isFinished();
+  }
+
+  public boolean isHumanDetectionStepProcessing(ZoneDetectionJob zoneDetectionJob) {
+    return isMachineDetectionFinished(zoneDetectionJob) && geojsonS3FileKey == null;
+  }
 }
