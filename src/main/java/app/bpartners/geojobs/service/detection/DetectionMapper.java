@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.service.detection;
 
-import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.POLYGON;
+import static app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.MULTI_POLYGON;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.*;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
 import static app.bpartners.geojobs.model.CustomObjectMapper.objectMapper;
@@ -137,11 +137,12 @@ public class DetectionMapper {
         .zoom(zoom)
         .geometry(
             app.bpartners.geojobs.repository.model.Feature.FeatureGeometry.builder()
+                .geometryType(MULTI_POLYGON)
                 .actualInstanceStringValue(
                     objectMapper()
                         .writeValueAsString(
                             new MultiPolygon()
-                                .type(POLYGON)
+                                .type(MultiPolygon.TypeEnum.MULTI_POLYGON)
                                 .coordinates(List.of(List.of(coordinates)))))
                 .build())
         .build();

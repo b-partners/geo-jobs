@@ -35,6 +35,7 @@ class DetectionTaskMapperTest {
     var parcelId = randomUUID().toString();
     var jobId = randomUUID().toString();
     var tile = Tile.builder().id(randomUUID().toString()).creationDatetime(now()).build();
+
     MachineDetectedTile machineDetectedTile =
         MachineDetectedTile.builder()
             .tile(tile)
@@ -59,22 +60,23 @@ class DetectionTaskMapperTest {
                 .status(null)
                 .build());
 
+    var status = new Status()
+            .creationDatetime(actual.getCreationDatetime())
+            .progression(PENDING)
+            .health(UNKNOWN);
     assertEquals(
         new DetectedParcel()
             .id(actual.getId())
             .detectionJobIb(actual.getDetectionJobIb())
             .parcelId(parcelId)
-            .status(
-                new Status()
-                    .creationDatetime(actual.getCreationDatetime())
-                    .progression(PENDING)
-                    .health(UNKNOWN))
+            .status(status)
             .creationDatetime(actual.getCreationDatetime())
             .detectedTiles(
                 List.of(
                     new DetectedTile()
                         .tileId(tile.getId())
                         .creationDatetime(tile.getCreationDatetime())
+                        .status(status)
                         .detectedObjects(
                             List.of(
                                 someRestDetectedObject(

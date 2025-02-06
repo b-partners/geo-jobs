@@ -17,6 +17,7 @@ import app.bpartners.geojobs.repository.model.ParcelTask;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -39,37 +40,47 @@ public class DetectionTaskMapper {
             .max(Comparator.comparing(MachineDetectedTile::getCreationDatetime))
             .orElse(MachineDetectedTile.builder().creationDatetime(now()).build())
             .getCreationDatetime();
-    var parcelTaskStatus = parcelTask.getStatus();
+    var detectedParcelStatus =
+        computeStatusFromTaskStatus(parcelTask.getStatus(), lastDetectedTileCreationDatetime);
     return new DetectedParcel()
         .id(randomUUID().toString())
         .creationDatetime(lastDetectedTileCreationDatetime)
         .detectionJobIb(jobId)
         .parcelId(parcel.getId())
-        .status(
-            ofNullable(parcelTaskStatus)
-                .map(
-                    status ->
-                        new Status()
-                            .health(StatusMapper.toHealthStatus(parcelTaskStatus.getHealth()))
-                            .progression(
-                                StatusMapper.toProgressionEnum(parcelTaskStatus.getProgression()))
-                            .creationDatetime(parcelTaskStatus.getCreationDatetime()))
-                .orElse(
-                    new Status()
-                        .progression(PENDING)
-                        .health(Status.HealthEnum.UNKNOWN)
-                        .creationDatetime(lastDetectedTileCreationDatetime)))
-        .detectedTiles(machineDetectedTiles.stream().map(this::toRest).toList());
+        .status(detectedParcelStatus)
+        .detectedTiles(
+            machineDetectedTiles.stream()
+                .map(machineDetectedTile -> toRest(machineDetectedTile, detectedParcelStatus))
+                .toList());
   }
 
-  private DetectedTile toRest(MachineDetectedTile machineDetectedTile) {
+  private Status computeStatusFromTaskStatus(
+      app.bpartners.geojobs.job.model.TaskStatus parcelTaskStatus,
+      Instant lastDetectedTileCreationDatetime) {
+    return ofNullable(parcelTaskStatus)
+        .map(status -> getRestTaskStatus(parcelTaskStatus))
+        .orElse(
+            new Status()
+                .progression(PENDING)
+                .health(Status.HealthEnum.UNKNOWN)
+                .creationDatetime(lastDetectedTileCreationDatetime));
+  }
+
+  private Status getRestTaskStatus(app.bpartners.geojobs.job.model.TaskStatus parcelTaskStatus) {
+    return new Status()
+        .health(StatusMapper.toHealthStatus(parcelTaskStatus.getHealth()))
+        .progression(StatusMapper.toProgressionEnum(parcelTaskStatus.getProgression()))
+        .creationDatetime(parcelTaskStatus.getCreationDatetime());
+  }
+
+  private DetectedTile toRest(MachineDetectedTile machineDetectedTile, Status status) {
     var tile = machineDetectedTile.getTile();
     var detectedObjects = machineDetectedTile.getDetectedObjects();
     return new DetectedTile()
         .tileId(tile.getId())
         .creationDatetime(tile.getCreationDatetime())
         .detectedObjects(detectedObjects.stream().map(this::toRest).toList())
-        .status(null) // TODO: status of detection task already given before or tiling status ?
+        .status(status)
         .bucketPath(tile.getBucketPath());
   }
 
