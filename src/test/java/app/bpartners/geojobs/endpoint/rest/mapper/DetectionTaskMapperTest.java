@@ -60,7 +60,8 @@ class DetectionTaskMapperTest {
                 .status(null)
                 .build());
 
-    var status = new Status()
+    var status =
+        new Status()
             .creationDatetime(actual.getCreationDatetime())
             .progression(PENDING)
             .health(UNKNOWN);
