@@ -9,10 +9,12 @@ import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DetectionTilingCreation
     implements Function<Detection, app.bpartners.geojobs.endpoint.rest.model.Detection> {
   private final ZoneTilingJobMapper zoneTilingJobMapper;
@@ -30,7 +32,9 @@ public class DetectionTilingCreation
 
   private ZoneTilingJob processZoneTilingJob(Detection detection) {
     var createJob = zoneTilingJobMapper.from(detection);
+    log.info("DEBUG create ZTJ: {}", createJob);
     var job = zoneTilingJobMapper.toDomain(createJob);
+    log.info("DEBUG ZTJ: {}", job);
     var tilingTasks = getTilingTasks(createJob, job.getId());
 
     return zoneTilingJobService.create(job, tilingTasks);
