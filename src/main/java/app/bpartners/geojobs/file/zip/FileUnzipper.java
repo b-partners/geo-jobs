@@ -22,7 +22,7 @@ public class FileUnzipper implements BiFunction<ZipFile, String, Path> {
   @Override
   public Path apply(ZipFile zipFile, String mainDir) {
     try {
-      Path extractDirectoryPath = Files.createTempDirectory(mainDir);
+      Path extractDirectoryPath = createTmpDirectoryWithoutRandomSuffix(mainDir);
       Enumeration<? extends ZipEntry> entries = zipFile.entries();
 
       while (entries.hasMoreElements()) {
@@ -43,6 +43,12 @@ public class FileUnzipper implements BiFunction<ZipFile, String, Path> {
     } catch (IOException e) {
       throw new ApiException(ApiException.ExceptionType.SERVER_EXCEPTION, e);
     }
+  }
+
+  private static Path createTmpDirectoryWithoutRandomSuffix(String mainDir) throws IOException {
+    Path extractDirectoryPath = Path.of(System.getProperty("java.io.tmpdir"), mainDir);
+    Files.createDirectories(extractDirectoryPath);
+    return extractDirectoryPath;
   }
 
   private static String getFolderPath(ZipEntry zipEntry) {
