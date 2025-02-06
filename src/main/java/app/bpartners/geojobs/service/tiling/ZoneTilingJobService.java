@@ -39,13 +39,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Slf4j
 public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> {
   private final ZoneDetectionJobService detectionJobService;
   private final JobFilteredMailer<ZoneTilingJob> tilingFilteredMailer;
@@ -264,9 +262,7 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
   @SneakyThrows
   public static List<TilingTask> getTilingTasks(CreateZoneTilingJob job, String jobId) {
     var serverUrl = new URL(Objects.requireNonNull(job.getGeoServerUrl()));
-    var features = job.getFeatures();
-    log.info("DEBUG features to be created from ZTJ: {}", features);
-    return Objects.requireNonNull(features).stream()
+    return Objects.requireNonNull(job.getFeatures()).stream()
         .map(
             feature -> {
               feature.setZoom(
