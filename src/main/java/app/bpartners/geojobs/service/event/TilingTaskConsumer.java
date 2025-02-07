@@ -3,7 +3,9 @@ package app.bpartners.geojobs.service.event;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
+import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
+import app.bpartners.geojobs.endpoint.rest.model.TileInfoSize;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.zip.FileUnzipper;
 import app.bpartners.geojobs.job.model.Status;
@@ -25,12 +27,14 @@ import org.springframework.stereotype.Component;
 @Component
 @Slf4j
 public class TilingTaskConsumer implements Consumer<TilingTask> {
+  private static final int DEFAULT_TILE_SIZE = 1024;
   private final TilesDownloader tilesDownloader;
   private final BucketComponent bucketComponent;
 
   @Override
   public void accept(TilingTask tilingTask) {
     var parcel = tilingTask.getParcelContent();
+
     log.info(
         "DEBUG: parcel.content.feature={} for tilingTask.id={}",
         parcel.restFeatures(),
@@ -45,11 +49,17 @@ public class TilingTaskConsumer implements Consumer<TilingTask> {
   }
 
   private void setParcelTiles(File tilesDir, ParcelContent parcelContent, String bucketKey) {
-    List<Tile> extractedTiles = getParcelTiles(new ArrayList<>(), tilesDir, bucketKey);
+    var serverParameter = parcelContent.getGeoServerParameter();
+    List<Tile> extractedTiles = getParcelTiles(serverParameter, tilesDir, bucketKey);
     parcelContent.setTiles(extractedTiles);
   }
 
-  private List<Tile> getParcelTiles(List<Tile> accumulator, File tilesFile, String bucketKey) {
+  private List<Tile> getParcelTiles(
+      GeoServerParameter serverParameter, File tilesFile, String bucketKey) {
+    List<Tile> accumulator = new ArrayList<>();
+    var tileWidth = serverParameter == null ? DEFAULT_TILE_SIZE : serverParameter.getWidth();
+    var tileHeight = serverParameter == null ? DEFAULT_TILE_SIZE : serverParameter.getWidth();
+
     if (!tilesFile.isDirectory()) {
       var enrichedAccumulator = new ArrayList<>(accumulator);
 
@@ -74,6 +84,7 @@ public class TilingTaskConsumer implements Consumer<TilingTask> {
       Tile extractedTile =
           Tile.builder()
               .id(randomUUID().toString())
+              .size(new TileInfoSize().width(tileWidth).height(tileHeight))
               .creationDatetime(now())
               .coordinates(new TileCoordinates().x(x).y(y).z(z))
               .bucketPath(bucketKey + filePath)
@@ -84,7 +95,7 @@ public class TilingTaskConsumer implements Consumer<TilingTask> {
     }
 
     return Arrays.stream(tilesFile.listFiles())
-        .flatMap(subFile -> getParcelTiles(accumulator, subFile, bucketKey).stream())
+        .flatMap(subFile -> getParcelTiles(serverParameter, subFile, bucketKey).stream())
         .collect(Collectors.toList());
   }
 

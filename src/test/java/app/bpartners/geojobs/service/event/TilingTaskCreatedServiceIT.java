@@ -119,7 +119,11 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
                         ParcelContent.builder()
                             .id(randomUUID().toString())
                             .creationDatetime(now())
-                            .geoServerParameter(new GeoServerParameter().layers("grand-lyon"))
+                            .geoServerParameter(
+                                new GeoServerParameter()
+                                    .layers("grand-lyon")
+                                    .height(1024)
+                                    .width(1024))
                             .feature(lyonFeature)
                             .build())
                     .build()))
@@ -151,7 +155,11 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
                     .parcelContent(
                         ParcelContent.builder()
                             .id(randomUUID().toString())
-                            .geoServerParameter(new GeoServerParameter().layers("grand-lyon"))
+                            .geoServerParameter(
+                                new GeoServerParameter()
+                                    .layers("grand-lyon")
+                                    .width(1024)
+                                    .height(1024))
                             .feature(defaultFeature())
                             .build())
                     .build()))
@@ -197,7 +205,11 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
                         .id(parcelId)
                         .parcelContent(
                             ParcelContent.builder()
-                                .geoServerParameter(new GeoServerParameter().layers("grand-lyon"))
+                                .geoServerParameter(
+                                    new GeoServerParameter()
+                                        .layers("grand-lyon")
+                                        .width(1024)
+                                        .height(1024))
                                 .id(randomUUID().toString())
                                 .build())
                         .build()))
