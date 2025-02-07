@@ -11,6 +11,7 @@ import app.bpartners.geojobs.endpoint.rest.model.DetectedObject;
 import app.bpartners.geojobs.endpoint.rest.model.DetectedParcel;
 import app.bpartners.geojobs.endpoint.rest.model.DetectedTile;
 import app.bpartners.geojobs.endpoint.rest.model.Status;
+import app.bpartners.geojobs.endpoint.rest.model.TileInfo;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.ParcelTask;
@@ -78,6 +79,7 @@ public class DetectionTaskMapper {
     var detectedObjects = machineDetectedTile.getDetectedObjects();
     return new DetectedTile()
         .tileId(tile.getId())
+        .tileInfo(new TileInfo().size(tile.getSize()).coordinates(tile.getCoordinates()))
         .creationDatetime(tile.getCreationDatetime())
         .detectedObjects(detectedObjects.stream().map(this::toRest).toList())
         .status(status)

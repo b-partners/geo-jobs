@@ -14,6 +14,9 @@ import app.bpartners.geojobs.endpoint.rest.model.DetectedObject;
 import app.bpartners.geojobs.endpoint.rest.model.DetectedParcel;
 import app.bpartners.geojobs.endpoint.rest.model.DetectedTile;
 import app.bpartners.geojobs.endpoint.rest.model.Status;
+import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
+import app.bpartners.geojobs.endpoint.rest.model.TileInfo;
+import app.bpartners.geojobs.endpoint.rest.model.TileInfoSize;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
@@ -34,7 +37,13 @@ class DetectionTaskMapperTest {
   void map_with_detected_tile_ok() {
     var parcelId = randomUUID().toString();
     var jobId = randomUUID().toString();
-    var tile = Tile.builder().id(randomUUID().toString()).creationDatetime(now()).build();
+    var tile =
+        Tile.builder()
+            .id(randomUUID().toString())
+            .size(new TileInfoSize().height(1024).width(1024))
+            .coordinates(new TileCoordinates().x(1234).y(5678).z(20))
+            .creationDatetime(now())
+            .build();
 
     MachineDetectedTile machineDetectedTile =
         MachineDetectedTile.builder()
@@ -76,6 +85,8 @@ class DetectionTaskMapperTest {
                 List.of(
                     new DetectedTile()
                         .tileId(tile.getId())
+                        .tileInfo(
+                            new TileInfo().size(tile.getSize()).coordinates(tile.getCoordinates()))
                         .creationDatetime(tile.getCreationDatetime())
                         .status(status)
                         .detectedObjects(
