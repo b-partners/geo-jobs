@@ -1114,6 +1114,24 @@ components:
               type: integer
         bucketPath:
           type: string
+    TileInfo:
+      properties:
+        size:
+          type: object
+          properties:
+            width:
+              type: integer
+            height:
+              type: integer
+        coordinates:
+          type: object
+          properties:
+            x:
+              type: integer
+            y:
+              type: integer
+            z:
+              type: integer
     DetectedTile:
       properties:
         tileId:
@@ -1121,6 +1139,8 @@ components:
         creationDatetime:
           type: string
           format: date-time
+        tileInfo:
+          $ref: "#/components/schemas/TileInfo"
         detectedObjects:
           type: array
           items:
