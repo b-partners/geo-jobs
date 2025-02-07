@@ -1,16 +1,21 @@
 package app.bpartners.geojobs.file.zip;
 
 import app.bpartners.geojobs.file.FileWriter;
+import app.bpartners.geojobs.file.ImageValidator;
 import app.bpartners.geojobs.model.exception.ApiException;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Enumeration;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import javax.imageio.ImageIO;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -18,6 +23,7 @@ import org.springframework.stereotype.Component;
 @AllArgsConstructor
 public class FileUnzipper implements BiFunction<ZipFile, String, Path> {
   private final FileWriter fileWriter;
+  private final ImageValidator imageValidator;
 
   @Override
   public Path apply(ZipFile zipFile, String mainDir) {
@@ -34,7 +40,10 @@ public class FileUnzipper implements BiFunction<ZipFile, String, Path> {
             String extensionlessEntryFilename = stripExtension(entryFilename);
             Path destinationPath = extractDirectoryPath.resolve(entryParentPath);
             byte[] bytes = is.readAllBytes();
-            fileWriter.write(bytes, destinationPath.toFile(), extensionlessEntryFilename);
+            Optional.of(
+                    fileWriter.write(bytes, destinationPath.toFile(), extensionlessEntryFilename))
+                .map(this::fromFile)
+                .ifPresent(imageValidator);
           }
         }
       }
@@ -70,5 +79,13 @@ public class FileUnzipper implements BiFunction<ZipFile, String, Path> {
 
   public static String stripExtension(String filename) {
     return filename.substring(0, filename.lastIndexOf("."));
+  }
+
+  private BufferedImage fromFile(File file) {
+    try {
+      return ImageIO.read(file);
+    } catch (IOException e) {
+      return null;
+    }
   }
 }
