@@ -24,7 +24,9 @@ import org.hibernate.annotations.JdbcTypeCode;
 @Getter
 @Setter
 @EqualsAndHashCode
-@JsonIgnoreProperties({"firstTile"})
+@JsonIgnoreProperties(
+    value = {"firstTile"},
+    ignoreUnknown = true)
 public class ParcelContent implements Serializable {
   private String id;
 

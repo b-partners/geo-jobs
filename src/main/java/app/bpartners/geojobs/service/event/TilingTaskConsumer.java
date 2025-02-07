@@ -58,7 +58,7 @@ public class TilingTaskConsumer implements Consumer<TilingTask> {
       GeoServerParameter serverParameter, File tilesFile, String bucketKey) {
     List<Tile> accumulator = new ArrayList<>();
     var tileWidth = serverParameter == null ? DEFAULT_TILE_SIZE : serverParameter.getWidth();
-    var tileHeight = serverParameter == null ? DEFAULT_TILE_SIZE : serverParameter.getWidth();
+    var tileHeight = serverParameter == null ? DEFAULT_TILE_SIZE : serverParameter.getHeight();
 
     if (!tilesFile.isDirectory()) {
       var enrichedAccumulator = new ArrayList<>(accumulator);
