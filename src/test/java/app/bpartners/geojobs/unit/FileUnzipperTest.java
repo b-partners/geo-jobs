@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.file.FileWriter;
+import app.bpartners.geojobs.file.ImageValidator;
 import app.bpartners.geojobs.file.zip.FileUnzipper;
 import app.bpartners.geojobs.model.exception.ApiException;
 import java.io.*;
@@ -21,11 +22,13 @@ import org.mockito.MockitoAnnotations;
 class FileUnzipperTest extends FacadeIT {
   @Mock FileUnzipper fileUnzipper;
   @Mock FileWriter fileWriter;
+  @Mock ImageValidator imageValidatorMock;
 
   @BeforeEach
   void setUp() {
     MockitoAnnotations.openMocks(this);
-    fileUnzipper = new FileUnzipper(fileWriter);
+    doNothing().when(imageValidatorMock).accept(any());
+    fileUnzipper = new FileUnzipper(fileWriter, imageValidatorMock);
   }
 
   ZipFile zipFileIllegalArgumentException() throws IOException {
