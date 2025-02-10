@@ -6,7 +6,7 @@ import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.model.tile.TilingTaskSucceeded;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
-import app.bpartners.geojobs.repository.model.tiling.TilingTask;
+import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Duration;
@@ -15,13 +15,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-public class TilingTaskSucceededIT extends FacadeIT {
+public class ParcelTilingTaskSucceededIT extends FacadeIT {
   @Autowired ObjectMapper om;
   @MockBean Parcel parcel;
-  @MockBean TilingTask tilingTask;
+  @MockBean ParcelTilingTask parcelTilingTask;
 
-  private TilingTask tilingTask() {
-    return TilingTask.builder()
+  private ParcelTilingTask tilingTask() {
+    return ParcelTilingTask.builder()
         .parcels(List.of(Parcel.builder().parcelContent(ParcelContent.builder().build()).build()))
         .build();
   }

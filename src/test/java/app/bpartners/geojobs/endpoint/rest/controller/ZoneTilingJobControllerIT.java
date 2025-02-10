@@ -24,8 +24,8 @@ import app.bpartners.geojobs.repository.TilingTaskRepository;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
+import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
-import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -69,8 +69,8 @@ class ZoneTilingJobControllerIT extends FacadeIT {
             .emailReceiver("dummy@email.com")
             .zoneName("dummyZoneName")
             .build());
-    TilingTask taskWithoutParcel =
-        TilingTask.builder()
+    ParcelTilingTask taskWithoutParcel =
+        ParcelTilingTask.builder()
             .id(tilingTask1Id)
             .jobId(jobId)
             .parcels(List.of())
@@ -84,8 +84,8 @@ class ZoneTilingJobControllerIT extends FacadeIT {
                         .creationDatetime(now())
                         .build()))
             .build();
-    TilingTask taskWithParcel =
-        TilingTask.builder()
+    ParcelTilingTask taskWithParcel =
+        ParcelTilingTask.builder()
             .id(tilingTask2Id)
             .jobId(jobId)
             .statusHistory(
@@ -244,9 +244,10 @@ class ZoneTilingJobControllerIT extends FacadeIT {
   }
 
   @SneakyThrows
-  private static TilingTask aTask(String jobId, String taskId, String tileId, String parcelId) {
+  private static ParcelTilingTask aTask(
+      String jobId, String taskId, String tileId, String parcelId) {
     var now = now();
-    return TilingTask.builder()
+    return ParcelTilingTask.builder()
         .id(taskId)
         .jobId(jobId)
         .submissionInstant(now)

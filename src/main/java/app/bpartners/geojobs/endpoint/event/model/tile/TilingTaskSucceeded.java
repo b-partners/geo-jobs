@@ -4,7 +4,7 @@ import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
 
 import app.bpartners.geojobs.endpoint.event.EventStack;
 import app.bpartners.geojobs.endpoint.event.model.PojaEvent;
-import app.bpartners.geojobs.repository.model.tiling.TilingTask;
+import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import java.time.Duration;
 import javax.annotation.processing.Generated;
 import lombok.AllArgsConstructor;
@@ -22,7 +22,7 @@ import lombok.ToString;
 @EqualsAndHashCode
 @ToString
 public class TilingTaskSucceeded extends PojaEvent {
-  private TilingTask task;
+  private ParcelTilingTask task;
 
   @Override
   public Duration maxConsumerDuration() {

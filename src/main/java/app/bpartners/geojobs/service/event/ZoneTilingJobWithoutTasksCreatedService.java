@@ -4,7 +4,7 @@ import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobWithoutTasks
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
 import app.bpartners.geojobs.repository.model.DuplicatedTilingJob;
-import app.bpartners.geojobs.repository.model.tiling.TilingTask;
+import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.tiling.TilingJobDuplicatedMailer;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
@@ -28,12 +28,12 @@ public class ZoneTilingJobWithoutTasksCreatedService
     ZoneTilingJob originalJob = zoneTilingJobWithoutTasksCreated.getOriginalJob();
     String jobId = originalJob.getId();
     String duplicatedJobId = zoneTilingJobWithoutTasksCreated.getDuplicatedJobId();
-    List<TilingTask> tilingTasks = taskRepository.findAllByJobId(jobId);
+    List<ParcelTilingTask> parcelTilingTasks = taskRepository.findAllByJobId(jobId);
     boolean saveZDJ = true;
     JobStatus newStatus = null;
     ZoneTilingJob duplicatedJob =
         jobService.duplicateWithNewStatus(
-            duplicatedJobId, originalJob, tilingTasks, saveZDJ, newStatus);
+            duplicatedJobId, originalJob, parcelTilingTasks, saveZDJ, newStatus);
     tilingJobDuplicatedMailer.accept(new DuplicatedTilingJob(originalJob, duplicatedJob));
   }
 }

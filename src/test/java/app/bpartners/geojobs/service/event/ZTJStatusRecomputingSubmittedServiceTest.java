@@ -22,7 +22,7 @@ import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.job.repository.TaskRepository;
 import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
-import app.bpartners.geojobs.repository.model.tiling.TilingTask;
+import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import java.util.List;
@@ -32,8 +32,8 @@ import org.mockito.ArgumentCaptor;
 
 class ZTJStatusRecomputingSubmittedServiceTest {
   ZoneTilingJobService tilingJobServiceMock = mock();
-  TaskStatusService<TilingTask> taskStatusServiceMock = mock();
-  TaskRepository<TilingTask> taskRepositoryMock = mock();
+  TaskStatusService<ParcelTilingTask> taskStatusServiceMock = mock();
+  TaskRepository<ParcelTilingTask> taskRepositoryMock = mock();
   ZoneTilingJobRepository zoneTilingJobRepository = mock();
   ZTJStatusRecomputingSubmittedService subject =
       new ZTJStatusRecomputingSubmittedService(
@@ -64,9 +64,9 @@ class ZTJStatusRecomputingSubmittedServiceTest {
     assertFalse(jobCaptor.getValue().isFinished());
   }
 
-  private static TilingTask aTilingTask(
+  private static ParcelTilingTask aTilingTask(
       ProgressionStatus progressionStatus, HealthStatus healthStatus) {
-    return TilingTask.builder()
+    return ParcelTilingTask.builder()
         .id(randomUUID().toString())
         .statusHistory(
             List.of(

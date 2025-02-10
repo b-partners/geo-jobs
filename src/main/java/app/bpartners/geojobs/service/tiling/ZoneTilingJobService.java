@@ -29,7 +29,7 @@ import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.TaskStatisticRepository;
 import app.bpartners.geojobs.repository.model.FilteredTilingJob;
-import app.bpartners.geojobs.repository.model.tiling.TilingTask;
+import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.JobFilteredMailer;
 import app.bpartners.geojobs.service.NotFinishedTaskRetriever;
@@ -44,10 +44,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> {
+public class ZoneTilingJobService extends JobService<ParcelTilingTask, ZoneTilingJob> {
   private final ZoneDetectionJobService detectionJobService;
   private final JobFilteredMailer<ZoneTilingJob> tilingFilteredMailer;
-  private final NotFinishedTaskRetriever<TilingTask> notFinishedTaskRetriever;
+  private final NotFinishedTaskRetriever<ParcelTilingTask> notFinishedTaskRetriever;
   private static ZoomMapper zoomMapper;
   private static TilingTaskMapper tilingTaskMapper;
   private final DetectionRepository detectionRepository;
@@ -61,11 +61,11 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
   public ZoneTilingJobService(
       JpaRepository<ZoneTilingJob, String> repository,
       JobStatusRepository jobStatusRepository,
-      TaskRepository<TilingTask> taskRepository,
+      TaskRepository<ParcelTilingTask> taskRepository,
       EventProducer eventProducer,
       ZoneDetectionJobService detectionJobService,
       JobFilteredMailer<ZoneTilingJob> tilingFilteredMailer,
-      NotFinishedTaskRetriever<TilingTask> notFinishedTaskRetriever,
+      NotFinishedTaskRetriever<ParcelTilingTask> notFinishedTaskRetriever,
       ZoomMapper zoomMapper,
       TilingTaskMapper tilingTaskMapper,
       TaskStatisticRepository taskStatisticRepository,
@@ -120,10 +120,11 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
               + ") tasks are SUCCEEDED. "
               + "Use POST /tiling/id/duplications to duplicate job instead");
     }
-    List<TilingTask> tilingTasks = taskRepository.findAllByJobId(jobId);
-    List<TilingTask> succeededTasks = tilingTasks.stream().filter(Task::isSucceeded).toList();
-    List<TilingTask> notSucceededTasks =
-        tilingTasks.stream().filter(task -> !task.isSucceeded()).toList();
+    List<ParcelTilingTask> parcelTilingTasks = taskRepository.findAllByJobId(jobId);
+    List<ParcelTilingTask> succeededTasks =
+        parcelTilingTasks.stream().filter(Task::isSucceeded).toList();
+    List<ParcelTilingTask> notSucceededTasks =
+        parcelTilingTasks.stream().filter(task -> !task.isSucceeded()).toList();
     String succeededJobId = randomUUID().toString();
     String notSucceededJobId = randomUUID().toString();
     var succeededJob =
@@ -159,18 +160,20 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
   @Transactional
   public ZoneTilingJob retryFailedTask(String jobId) {
     ZoneTilingJob job = findById(jobId);
-    List<TilingTask> tilingTasks = taskRepository.findAllByJobId(jobId);
-    if (!tilingTasks.stream()
+    List<ParcelTilingTask> parcelTilingTasks = taskRepository.findAllByJobId(jobId);
+    if (!parcelTilingTasks.stream()
         .allMatch(task -> task.getStatus().getProgression().equals(FINISHED))) {
       throw new BadRequestException("Only job with all finished tasks can be retry");
     }
-    List<TilingTask> failedTasks =
-        tilingTasks.stream().filter(task -> task.getStatus().getHealth().equals(FAILED)).toList();
+    List<ParcelTilingTask> failedTasks =
+        parcelTilingTasks.stream()
+            .filter(task -> task.getStatus().getHealth().equals(FAILED))
+            .toList();
     if (failedTasks.isEmpty()) {
       throw new BadRequestException(
           "All tilling tasks of job(id=" + jobId + ") are already SUCCEEDED");
     }
-    List<TilingTask> savedFailedTasks =
+    List<ParcelTilingTask> savedFailedTasks =
         taskRepository.saveAll(failedTasks.stream().map(notFinishedTaskRetriever).toList());
     savedFailedTasks.forEach(task -> eventProducer.accept(List.of(new TilingTaskCreated(task))));
     // /!\ Force job status to status PROCESSING again
@@ -188,7 +191,7 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
 
   @Transactional
   @Override
-  public ZoneTilingJob create(ZoneTilingJob job, List<TilingTask> tasks) {
+  public ZoneTilingJob create(ZoneTilingJob job, List<ParcelTilingTask> tasks) {
     var saved = super.create(job, tasks);
     eventProducer.accept(List.of(new ZoneTilingJobCreated(saved)));
     eventProducer.accept(List.of(new ZTJStatusRecomputingSubmitted(saved.getId())));
@@ -224,10 +227,10 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
   public ZoneTilingJob duplicateWithNewStatus(
       String duplicatedJobId,
       ZoneTilingJob job,
-      List<TilingTask> tasks,
+      List<ParcelTilingTask> tasks,
       boolean saveZDJ,
       JobStatus newStatus) {
-    List<TilingTask> duplicatedTasks =
+    List<ParcelTilingTask> duplicatedTasks =
         tasks.stream()
             .map(
                 task -> {
@@ -260,7 +263,7 @@ public class ZoneTilingJobService extends JobService<TilingTask, ZoneTilingJob> 
   }
 
   @SneakyThrows
-  public static List<TilingTask> getTilingTasks(CreateZoneTilingJob job, String jobId) {
+  public static List<ParcelTilingTask> getTilingTasks(CreateZoneTilingJob job, String jobId) {
     var serverUrl = new URL(Objects.requireNonNull(job.getGeoServerUrl()));
     return Objects.requireNonNull(job.getFeatures()).stream()
         .map(

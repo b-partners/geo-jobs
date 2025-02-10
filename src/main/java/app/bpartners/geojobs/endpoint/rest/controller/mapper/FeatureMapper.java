@@ -8,7 +8,7 @@ import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
-import app.bpartners.geojobs.repository.model.tiling.TilingTask;
+import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.util.ArrayList;
@@ -38,7 +38,7 @@ public class FeatureMapper {
         .build();
   }
 
-  public static Feature from(TilingTask domainTask) {
+  public static Feature from(ParcelTilingTask domainTask) {
     return domainTask.getParcelContent() == null
         ? null
         : domainTask.getParcelContent().restFeatures();

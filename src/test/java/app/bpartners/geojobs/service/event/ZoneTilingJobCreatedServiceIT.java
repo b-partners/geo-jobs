@@ -21,7 +21,7 @@ import app.bpartners.geojobs.repository.TilingTaskRepository;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
-import app.bpartners.geojobs.repository.model.tiling.TilingTask;
+import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import java.util.ArrayList;
@@ -64,7 +64,7 @@ class ZoneTilingJobCreatedServiceIT extends FacadeIT {
     when(taskRepository.findAllByJobId(created.getId()))
         .thenReturn(
             List.of(
-                TilingTask.builder()
+                ParcelTilingTask.builder()
                     .id(taskId)
                     .jobId(jobId)
                     .submissionInstant(now())

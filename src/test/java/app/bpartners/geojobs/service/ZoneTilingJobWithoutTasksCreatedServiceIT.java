@@ -20,8 +20,8 @@ import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
+import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
-import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.event.ZoneTilingJobWithoutTasksCreatedService;
 import app.bpartners.geojobs.service.tiling.TilingJobDuplicatedMailer;
@@ -62,8 +62,8 @@ class ZoneTilingJobWithoutTasksCreatedServiceIT extends FacadeIT {
             .emailReceiver("dummy@email.com")
             .zoneName("dummyZoneName")
             .build());
-    TilingTask taskWithoutParcel =
-        TilingTask.builder()
+    ParcelTilingTask taskWithoutParcel =
+        ParcelTilingTask.builder()
             .id(tilingTask1Id)
             .jobId(jobId)
             .parcels(List.of())
@@ -77,8 +77,8 @@ class ZoneTilingJobWithoutTasksCreatedServiceIT extends FacadeIT {
                         .creationDatetime(now())
                         .build()))
             .build();
-    TilingTask taskWithParcel =
-        TilingTask.builder()
+    ParcelTilingTask taskWithParcel =
+        ParcelTilingTask.builder()
             .id(tilingTask2Id)
             .jobId(jobId)
             .statusHistory(

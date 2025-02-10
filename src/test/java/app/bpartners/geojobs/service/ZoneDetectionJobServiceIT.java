@@ -19,8 +19,8 @@ import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
+import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
-import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.utils.tiling.ZoneTilingJobCreator;
@@ -57,7 +57,8 @@ class ZoneDetectionJobServiceIT extends FacadeIT {
                         .build())
                 .build());
     parcelRepository.saveAll(parcels);
-    List<TilingTask> tilingTasks = List.of(new TilingTask().toBuilder().parcels(parcels).build());
+    List<ParcelTilingTask> parcelTilingTasks =
+        List.of(new ParcelTilingTask().toBuilder().parcels(parcels).build());
 
     String jobId = randomUUID().toString();
     ZoneTilingJob zoneTilingJob = getZoneTilingJob();
@@ -80,7 +81,7 @@ class ZoneDetectionJobServiceIT extends FacadeIT {
             .zoneTilingJob(zoneTilingJob)
             .build();
 
-    ZoneDetectionJob actual = service.saveWithTasks(tilingTasks, jobToSave);
+    ZoneDetectionJob actual = service.saveWithTasks(parcelTilingTasks, jobToSave);
 
     List<ParcelDetectionTask> savedTasks = taskRepository.findAllByJobId(actual.getId());
     assertNotNull(actual);

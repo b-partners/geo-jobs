@@ -17,8 +17,8 @@ import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
+import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
-import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import java.net.MalformedURLException;
@@ -69,20 +69,21 @@ public class ImportedZoneTilingJobSavedService implements Consumer<ImportedZoneT
       log.error("Exception was thrown on getGroupedTiles method: {}", e.getMessage());
       throw new ApiException(SERVER_EXCEPTION, e.getMessage());
     }
-    List<TilingTask> tilingTasks = new ArrayList<>();
+    List<ParcelTilingTask> parcelTilingTasks = new ArrayList<>();
     for (Map.Entry<Integer, List<Tile>> entry : groupedTilesByX.entrySet()) {
       List<Tile> groupedTiles = entry.getValue();
-      tilingTasks.add(getFinishedTasks(job, geoServerUrlValue, geoServerParameter, groupedTiles));
+      parcelTilingTasks.add(
+          getFinishedTasks(job, geoServerUrlValue, geoServerParameter, groupedTiles));
     }
     log.info(
         "[DEBUG] TilingTasks size {}, values {}",
-        tilingTasks.size(),
-        tilingTasks.stream().map(TilingTask::describe).toList());
-    var savedTilingTasks = tilingTaskRepository.saveAll(tilingTasks);
+        parcelTilingTasks.size(),
+        parcelTilingTasks.stream().map(ParcelTilingTask::describe).toList());
+    var savedTilingTasks = tilingTaskRepository.saveAll(parcelTilingTasks);
     log.info(
         "[DEBUG] Saved TilingTasks size {}, values {}",
         savedTilingTasks.size(),
-        savedTilingTasks.stream().map(TilingTask::describe).toList());
+        savedTilingTasks.stream().map(ParcelTilingTask::describe).toList());
     var savedJob = tilingJobService.recomputeStatus(job);
     log.info("[DEBUG] Saved ZoneTilingJob {}", savedJob);
   }
@@ -102,7 +103,7 @@ public class ImportedZoneTilingJobSavedService implements Consumer<ImportedZoneT
     return groupedByX;
   }
 
-  private TilingTask getFinishedTasks(
+  private ParcelTilingTask getFinishedTasks(
       ZoneTilingJob job,
       String geoServerUrlValue,
       GeoServerParameter geoServerParameter,
@@ -111,7 +112,7 @@ public class ImportedZoneTilingJobSavedService implements Consumer<ImportedZoneT
       String jobId = job.getId();
       URL geoServerUrl = new URL(geoServerUrlValue);
       String taskId = randomUUID().toString();
-      return TilingTask.builder()
+      return ParcelTilingTask.builder()
           .id(taskId)
           .jobId(jobId)
           .statusHistory(

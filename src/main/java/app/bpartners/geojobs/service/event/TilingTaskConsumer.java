@@ -10,8 +10,8 @@ import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.zip.FileUnzipper;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.repository.model.ParcelContent;
+import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
-import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.service.tiling.downloader.TilesDownloader;
 import java.io.File;
 import java.util.ArrayList;
@@ -26,19 +26,19 @@ import org.springframework.stereotype.Component;
 @AllArgsConstructor
 @Component
 @Slf4j
-public class TilingTaskConsumer implements Consumer<TilingTask> {
+public class TilingTaskConsumer implements Consumer<ParcelTilingTask> {
   private static final int DEFAULT_TILE_SIZE = 1024;
   private final TilesDownloader tilesDownloader;
   private final BucketComponent bucketComponent;
 
   @Override
-  public void accept(TilingTask tilingTask) {
-    var parcel = tilingTask.getParcelContent();
+  public void accept(ParcelTilingTask parcelTilingTask) {
+    var parcel = parcelTilingTask.getParcelContent();
 
     log.info(
         "DEBUG: parcel.content.feature={} for tilingTask.id={}",
         parcel.restFeatures(),
-        tilingTask.getId());
+        parcelTilingTask.getId());
     File downloadedTiles = tilesDownloader.apply(parcel);
     String bucketKey = downloadedTiles.getName();
 
@@ -99,12 +99,12 @@ public class TilingTaskConsumer implements Consumer<TilingTask> {
         .collect(Collectors.toList());
   }
 
-  public static TilingTask withNewStatus(
-      TilingTask task,
+  public static ParcelTilingTask withNewStatus(
+      ParcelTilingTask task,
       Status.ProgressionStatus progression,
       Status.HealthStatus health,
       String message) {
-    return (TilingTask)
+    return (ParcelTilingTask)
         task.hasNewStatus(
             Status.builder()
                 .progression(progression)

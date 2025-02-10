@@ -11,7 +11,7 @@ import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.model.geometry.area.SquareDegree;
 import app.bpartners.geojobs.repository.*;
 import app.bpartners.geojobs.repository.model.ParcelTask;
-import app.bpartners.geojobs.repository.model.tiling.TilingTask;
+import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -64,7 +64,7 @@ public class ParcelService {
     throw new NotFoundException("jobId=" + jobId);
   }
 
-  private List<TilingTask> getDuplicatedTilingTasks(String jobId) {
+  private List<ParcelTilingTask> getDuplicatedTilingTasks(String jobId) {
     return tilingTaskRepository.findAllByJobId(jobId).stream()
         .map(
             task -> {

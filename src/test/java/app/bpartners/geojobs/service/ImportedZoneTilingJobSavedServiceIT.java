@@ -16,7 +16,7 @@ import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
-import app.bpartners.geojobs.repository.model.tiling.TilingTask;
+import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.event.ImportedZoneTilingJobSavedService;
 import java.time.temporal.ChronoUnit;
@@ -70,7 +70,7 @@ public class ImportedZoneTilingJobSavedServiceIT extends FacadeIT {
     String dummyBucketPathPrefix = "draft_layer";
     GeoServerParameter geoServerParameter = new GeoServerParameter();
     String dummyGeoServerUrl = "https://dummyGeoServerUrl.com";
-    List<TilingTask> tasksBefore = tilingTaskRepository.findAllByJobId(JOB_ID);
+    List<ParcelTilingTask> tasksBefore = tilingTaskRepository.findAllByJobId(JOB_ID);
     ZoneTilingJob jobBefore = tilingJobRepository.findById(JOB_ID).orElseThrow();
 
     subject.accept(
@@ -84,7 +84,7 @@ public class ImportedZoneTilingJobSavedServiceIT extends FacadeIT {
             dummyGeoServerUrl,
             BucketSeparatorType.SLASH));
 
-    List<TilingTask> tasksActual = tilingTaskRepository.findAllByJobId(JOB_ID);
+    List<ParcelTilingTask> tasksActual = tilingTaskRepository.findAllByJobId(JOB_ID);
     ZoneTilingJob jobActual = tilingJobRepository.findById(JOB_ID).orElseThrow();
     assertTrue(tasksBefore.isEmpty());
     assertEquals(

@@ -9,7 +9,7 @@ import static java.util.UUID.randomUUID;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.model.TiledParcel;
 import app.bpartners.geojobs.job.model.TaskStatus;
-import app.bpartners.geojobs.repository.model.tiling.TilingTask;
+import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import java.net.URL;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -21,14 +21,14 @@ public class TilingTaskMapper {
   private final FeatureMapper featureMapper;
 
   // One feature corresponding to one parcel
-  public TilingTask from(
+  public ParcelTilingTask from(
       Feature createFeature,
       URL geoServerUrl,
       GeoServerParameter geoServerParameter,
       String jobId) {
     String generatedTaskId = randomUUID().toString();
     String generatedParcelId = randomUUID().toString();
-    return TilingTask.builder()
+    return ParcelTilingTask.builder()
         .id(generatedTaskId)
         .jobId(jobId)
         .statusHistory(

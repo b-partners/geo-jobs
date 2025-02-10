@@ -8,7 +8,7 @@ import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.tile.TilingTaskCreated;
 import app.bpartners.geojobs.endpoint.event.model.tile.TilingTaskSucceeded;
 import app.bpartners.geojobs.job.service.TaskStatusService;
-import app.bpartners.geojobs.repository.model.tiling.TilingTask;
+import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
@@ -17,13 +17,13 @@ import org.springframework.stereotype.Service;
 @Service
 @AllArgsConstructor
 public class TilingTaskCreatedService implements Consumer<TilingTaskCreated> {
-  private final TaskStatusService<TilingTask> tilingTaskStatusService;
+  private final TaskStatusService<ParcelTilingTask> tilingTaskStatusService;
   private final TilingTaskConsumer tilingTaskConsumer;
   private final EventProducer eventProducer;
 
   @Override
   public void accept(TilingTaskCreated tilingTaskCreated) {
-    TilingTask task = tilingTaskCreated.getTask();
+    ParcelTilingTask task = tilingTaskCreated.getTask();
     tilingTaskStatusService.process(task);
 
     tilingTaskConsumer.accept(task);

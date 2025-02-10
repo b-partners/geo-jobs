@@ -20,7 +20,7 @@ import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Entity
+@Entity(name = "parcel_tiling_task")
 @AllArgsConstructor
 @NoArgsConstructor
 @SuperBuilder(toBuilder = true)
@@ -28,10 +28,10 @@ import lombok.extern.slf4j.Slf4j;
 @Setter
 @JsonIgnoreProperties({"status"})
 @ToString
-public class TilingTask extends Task implements Serializable {
+public class ParcelTilingTask extends Task implements Serializable {
   @ManyToMany(cascade = ALL, fetch = EAGER)
   @JoinTable(
-      name = "parcel_tiling_task",
+      name = "parcel_with_tiling_task",
       joinColumns = @JoinColumn(name = "id_tiling_task"),
       inverseJoinColumns = @JoinColumn(name = "id_parcel"))
   private List<Parcel> parcels;
@@ -76,14 +76,14 @@ public class TilingTask extends Task implements Serializable {
     return getParcel() == null ? null : getParcel().getParcelContent().getTiles();
   }
 
-  public TilingTask duplicate(
+  public ParcelTilingTask duplicate(
       String taskId,
       String jobId,
       String parcelId,
       String parcelContentId,
       boolean hasSameStatuses,
       boolean hasSameTile) {
-    return TilingTask.builder()
+    return ParcelTilingTask.builder()
         .id(taskId)
         .jobId(jobId)
         .parcels(
@@ -106,7 +106,7 @@ public class TilingTask extends Task implements Serializable {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    TilingTask that = (TilingTask) o;
+    ParcelTilingTask that = (ParcelTilingTask) o;
     return Objects.equals(parcels, that.parcels)
         && Objects.equals(getJobId(), that.getJobId())
         && Objects.equals(getStatusHistory(), that.getStatusHistory());

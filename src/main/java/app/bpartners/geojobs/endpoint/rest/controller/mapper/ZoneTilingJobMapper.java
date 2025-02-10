@@ -12,7 +12,7 @@ import app.bpartners.geojobs.repository.model.ArcgisImageZoom;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelTask;
 import app.bpartners.geojobs.repository.model.detection.Detection;
-import app.bpartners.geojobs.repository.model.tiling.TilingTask;
+import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.ParcelService;
 import java.util.List;
@@ -46,27 +46,27 @@ public class ZoneTilingJobMapper {
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.ZoneTilingJob toRest(
-      ZoneTilingJob domain, List<TilingTask> tilingTaskList) {
+      ZoneTilingJob domain, List<ParcelTilingTask> parcelTilingTaskList) {
     var parcels =
         parcelService.getParcelsByJobId(domain.getId()).stream()
             .map(ParcelTask::getParcel)
             .toList();
-    return toRest(domain, tilingTaskList, parcels);
+    return toRest(domain, parcelTilingTaskList, parcels);
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.ZoneTilingJob toRest(
-      ZoneTilingJob domain, List<TilingTask> tilingTaskList, boolean jobNotSaved) {
+      ZoneTilingJob domain, List<ParcelTilingTask> parcelTilingTaskList, boolean jobNotSaved) {
     List<Parcel> parcels =
         jobNotSaved
             ? List.of()
             : parcelService.getParcelsByJobId(domain.getId()).stream()
                 .map(ParcelTask::getParcel)
                 .toList();
-    return toRest(domain, tilingTaskList, parcels);
+    return toRest(domain, parcelTilingTaskList, parcels);
   }
 
   private app.bpartners.geojobs.endpoint.rest.model.ZoneTilingJob toRest(
-      ZoneTilingJob domain, List<TilingTask> tilingTaskList, List<Parcel> parcels) {
+      ZoneTilingJob domain, List<ParcelTilingTask> parcelTilingTaskList, List<Parcel> parcels) {
     var parcel0 = parcels.isEmpty() ? null : parcels.getFirst(); // only need one
     var parcelContent = parcel0 == null ? null : parcel0.getParcelContent();
 
@@ -86,7 +86,7 @@ public class ZoneTilingJobMapper {
         .geoServerUrl(parcel0 == null ? null : parcelContent.getGeoServerUrl().toString())
         .geoServerParameter(parcel0 == null ? null : parcelContent.getGeoServerParameter())
         .emailReceiver(domain.getEmailReceiver())
-        .features(tilingTaskList.stream().map(FeatureMapper::from).toList())
+        .features(parcelTilingTaskList.stream().map(FeatureMapper::from).toList())
         .status(statusMapper.toRest(domain.getStatus()));
   }
 

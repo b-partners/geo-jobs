@@ -24,7 +24,7 @@ import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Entity(name = "parcel_detection_task_entity")
+@Entity(name = "parcel_detection_task")
 @AllArgsConstructor
 @NoArgsConstructor
 @SuperBuilder(toBuilder = true)
@@ -35,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ParcelDetectionTask extends Task implements Serializable {
   @ManyToMany(fetch = EAGER)
   @JoinTable(
-      name = "parcel_detection_task",
+      name = "parcel_with_detection_task",
       joinColumns = @JoinColumn(name = "id_detection_task"),
       inverseJoinColumns = @JoinColumn(name = "id_parcel"))
   private List<Parcel> parcels;

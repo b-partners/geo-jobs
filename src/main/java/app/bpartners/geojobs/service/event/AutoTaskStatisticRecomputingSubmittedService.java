@@ -10,7 +10,7 @@ import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.*;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
-import app.bpartners.geojobs.repository.model.tiling.TilingTask;
+import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import java.util.function.Consumer;
 import org.springframework.stereotype.Service;
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Service;
 public class AutoTaskStatisticRecomputingSubmittedService
     implements Consumer<AutoTaskStatisticRecomputingSubmitted> {
   private static final int ATTEMPT_FOR_256_MINUTES_DURATION = 6;
-  private final TaskStatisticRecomputingSubmittedConsumer<TilingTask, ZoneTilingJob>
+  private final TaskStatisticRecomputingSubmittedConsumer<ParcelTilingTask, ZoneTilingJob>
       tilingStatisticConsumer;
   private final TaskStatisticRecomputingSubmittedConsumer<ParcelDetectionTask, ZoneDetectionJob>
       zoneDetectionStatisticConsumer;

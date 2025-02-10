@@ -21,7 +21,7 @@ import app.bpartners.geojobs.repository.*;
 import app.bpartners.geojobs.repository.model.detection.*;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
-import app.bpartners.geojobs.repository.model.tiling.TilingTask;
+import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -176,9 +176,9 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
   }
 
   public ZoneDetectionJob saveWithTasks(
-      List<TilingTask> tilingTasks, ZoneDetectionJob zoneDetectionJob) {
+      List<ParcelTilingTask> parcelTilingTasks, ZoneDetectionJob zoneDetectionJob) {
     List<ParcelDetectionTask> parcelDetectionTasks =
-        tilingTasks.stream()
+        parcelTilingTasks.stream()
             .map(
                 tilingTask -> {
                   var parcels = tilingTask.getParcels();

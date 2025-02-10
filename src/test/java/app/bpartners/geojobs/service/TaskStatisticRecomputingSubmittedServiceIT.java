@@ -18,8 +18,8 @@ import app.bpartners.geojobs.repository.TilingTaskRepository;
 import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
+import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
-import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.event.TaskStatisticRecomputingSubmittedService;
 import java.util.List;
@@ -83,12 +83,12 @@ public class TaskStatisticRecomputingSubmittedServiceIT extends FacadeIT {
         .build();
   }
 
-  private static TilingTask aTilingTask(
+  private static ParcelTilingTask aTilingTask(
       String jobId,
       String taskId,
       Status.ProgressionStatus progressionStatus,
       Status.HealthStatus healthStatus) {
-    return TilingTask.builder()
+    return ParcelTilingTask.builder()
         .id(taskId)
         .jobId(jobId)
         .parcels(

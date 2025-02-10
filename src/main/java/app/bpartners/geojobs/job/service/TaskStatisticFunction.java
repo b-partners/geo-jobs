@@ -8,7 +8,7 @@ import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.job.repository.TaskRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
-import app.bpartners.geojobs.repository.model.tiling.TilingTask;
+import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import java.time.Instant;
 import java.util.function.Function;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +32,7 @@ public class TaskStatisticFunction<T extends Task, J extends Job>
         tasks.stream()
             .map(
                 task -> {
-                  if (task instanceof TilingTask tilingTask) {
+                  if (task instanceof ParcelTilingTask tilingTask) {
                     return tilingTask.getParcel() == null ? 0 : tilingTask.getTiles().size();
                   } else if (task instanceof ParcelDetectionTask parcelDetectionTask) {
                     return parcelDetectionTask.getParcel() == null

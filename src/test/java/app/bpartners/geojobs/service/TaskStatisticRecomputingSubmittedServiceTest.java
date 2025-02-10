@@ -22,8 +22,8 @@ import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
+import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
-import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.event.TaskStatisticRecomputingSubmittedService;
 import java.util.ArrayList;
@@ -70,7 +70,7 @@ public class TaskStatisticRecomputingSubmittedServiceTest {
     when(tilingTaskRepositoryMock.findAllByJobId(TILING_JOB_ID))
         .thenReturn(
             List.of(
-                TilingTask.builder()
+                ParcelTilingTask.builder()
                     .jobId(TILING_JOB_ID)
                     .statusHistory(List.of())
                     .parcels(List.of())

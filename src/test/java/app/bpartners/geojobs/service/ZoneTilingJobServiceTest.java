@@ -31,7 +31,7 @@ import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.TaskStatisticRepository;
 import app.bpartners.geojobs.repository.model.FilteredTilingJob;
 import app.bpartners.geojobs.repository.model.Parcel;
-import app.bpartners.geojobs.repository.model.tiling.TilingTask;
+import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
@@ -56,10 +56,11 @@ public class ZoneTilingJobServiceTest {
   public static final String TO_DUPLICATE_JOB = "toDuplicateJob";
   JpaRepository<ZoneTilingJob, String> jobRepositoryMock = mock();
   JobStatusRepository jobStatusRepositoryMock = mock();
-  TaskRepository<TilingTask> taskRepositoryMock = mock();
+  TaskRepository<ParcelTilingTask> taskRepositoryMock = mock();
   EventProducer eventProducerMock = mock();
   ZoneDetectionJobService detectionJobServiceMock = mock();
-  NotFinishedTaskRetriever<TilingTask> notFinishedTaskRetriever = new NotFinishedTaskRetriever<>();
+  NotFinishedTaskRetriever<ParcelTilingTask> notFinishedTaskRetriever =
+      new NotFinishedTaskRetriever<>();
   TaskStatisticRepository taskStatisticRepositoryMock = mock();
   ZoomMapper zoomMapper = mock();
   TilingTaskMapper tilingTaskMapper = mock();
@@ -229,10 +230,10 @@ public class ZoneTilingJobServiceTest {
 
     var listEventCapture = ArgumentCaptor.forClass(List.class);
     verify(taskRepositoryMock, times(2)).saveAll(listEventCapture.capture());
-    var succeededTasks = (List<TilingTask>) listEventCapture.getAllValues().getFirst();
-    var notSucceededTasks = (List<TilingTask>) listEventCapture.getAllValues().get(1);
+    var succeededTasks = (List<ParcelTilingTask>) listEventCapture.getAllValues().getFirst();
+    var notSucceededTasks = (List<ParcelTilingTask>) listEventCapture.getAllValues().get(1);
     assertEquals(2, succeededTasks.size());
-    assertTrue(succeededTasks.stream().allMatch(TilingTask::isSucceeded));
+    assertTrue(succeededTasks.stream().allMatch(ParcelTilingTask::isSucceeded));
     assertEquals(4, notSucceededTasks.size());
     assertEquals(
         2L,
@@ -325,9 +326,9 @@ public class ZoneTilingJobServiceTest {
     assertThrows(BadRequestException.class, () -> subject.retryFailedTask(JOB2_ID));
   }
 
-  static TilingTask taskWithStatus(
+  static ParcelTilingTask taskWithStatus(
       Status.ProgressionStatus progressionStatus, Status.HealthStatus healthStatus) {
-    return TilingTask.builder()
+    return ParcelTilingTask.builder()
         .statusHistory(
             List.of(
                 TaskStatus.builder()
@@ -339,9 +340,9 @@ public class ZoneTilingJobServiceTest {
         .build();
   }
 
-  static TilingTask taskWithStatus(
+  static ParcelTilingTask taskWithStatus(
       Status.ProgressionStatus progressionStatus, Status.HealthStatus healthStatus, Parcel parcel) {
-    return TilingTask.builder()
+    return ParcelTilingTask.builder()
         .statusHistory(
             List.of(
                 TaskStatus.builder()
@@ -367,7 +368,7 @@ public class ZoneTilingJobServiceTest {
     when(taskRepositoryMock.saveAll(ArgumentMatchers.any()))
         .thenReturn(
             List.of(
-                TilingTask.builder()
+                ParcelTilingTask.builder()
                     .statusHistory(
                         List.of(
                             TaskStatus.builder()
@@ -386,7 +387,7 @@ public class ZoneTilingJobServiceTest {
     when(taskRepositoryMock.findAllByJobId(JOB_ID))
         .thenReturn(
             List.of(
-                TilingTask.builder()
+                ParcelTilingTask.builder()
                     .statusHistory(
                         List.of(
                             TaskStatus.builder()
@@ -396,7 +397,7 @@ public class ZoneTilingJobServiceTest {
                                 .health(SUCCEEDED)
                                 .build()))
                     .build(),
-                TilingTask.builder()
+                ParcelTilingTask.builder()
                     .statusHistory(
                         List.of(
                             TaskStatus.builder()

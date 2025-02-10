@@ -30,7 +30,7 @@ import app.bpartners.geojobs.repository.ZoneTilingJobRepository;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
-import app.bpartners.geojobs.repository.model.tiling.TilingTask;
+import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.tiling.TilingTaskStatusService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
@@ -50,7 +50,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 @Slf4j
-class TilingTaskCreatedServiceIT extends FacadeIT {
+class ParcelTilingTaskCreatedServiceIT extends FacadeIT {
   public static final String GEOMETRY_MOCK =
       "{\n"
           + "    \"type\": \"MultiPolygon\",\n"
@@ -102,13 +102,13 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
         .build();
   }
 
-  private TilingTask aZTT(
+  private ParcelTilingTask aZTT(
       String jobId,
       String taskId,
       String parcelId,
       Status.ProgressionStatus progression,
       Status.HealthStatus health) {
-    return TilingTask.builder()
+    return ParcelTilingTask.builder()
         .id(taskId)
         .jobId(jobId)
         .parcels(
@@ -139,13 +139,13 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
   }
 
   @SneakyThrows
-  private TilingTask aZTT(String jobId, String taskId, String parcelId) {
+  private ParcelTilingTask aZTT(String jobId, String taskId, String parcelId) {
     return aZTT(jobId, taskId, parcelId, PENDING, UNKNOWN);
   }
 
   @SneakyThrows
-  private TilingTask aZTT_processing(String jobId, String taskId, String parcelId) {
-    return TilingTask.builder()
+  private ParcelTilingTask aZTT_processing(String jobId, String taskId, String parcelId) {
+    return ParcelTilingTask.builder()
         .id(taskId)
         .jobId(jobId)
         .parcels(
@@ -195,8 +195,8 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
                 .build());
     String taskId = randomUUID().toString();
     String parcelId = randomUUID().toString();
-    TilingTask toCreate =
-        TilingTask.builder()
+    ParcelTilingTask toCreate =
+        ParcelTilingTask.builder()
             .id(taskId)
             .jobId(job.getId())
             .parcels(
@@ -222,7 +222,7 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
                         .health(UNKNOWN)
                         .build()))
             .build();
-    TilingTask created = tilingTaskRepository.save(toCreate);
+    ParcelTilingTask created = tilingTaskRepository.save(toCreate);
     TilingTaskCreated createdEventPayload = TilingTaskCreated.builder().task(created).build();
     subject.accept(createdEventPayload);
     int numberOfDirectoryToUpload = 1;
@@ -235,8 +235,8 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
     zoneTilingJobRepository.save(aZTJ(jobId));
     String taskId = randomUUID().toString();
     String parcelId = randomUUID().toString();
-    TilingTask toCreate = aZTT(jobId, taskId, parcelId);
-    TilingTask created = tilingTaskRepository.save(toCreate);
+    ParcelTilingTask toCreate = aZTT(jobId, taskId, parcelId);
+    ParcelTilingTask created = tilingTaskRepository.save(toCreate);
     TilingTaskCreated createdEventPayload = TilingTaskCreated.builder().task(created).build();
     subject.accept(createdEventPayload);
     zoneTilingJobService.recomputeStatus(zoneTilingJobRepository.findById(jobId).get());
@@ -252,7 +252,7 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
   @Test
   void fail_on_of_several_tasks() {
     var callersNb = 40;
-    var tasks = new ArrayList<TilingTask>();
+    var tasks = new ArrayList<ParcelTilingTask>();
     var jobId = randomUUID().toString();
     zoneTilingJobRepository.save(aZTJ(jobId));
     for (int i = 0; i < callersNb; i++) {
@@ -288,8 +288,8 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
     zoneTilingJobRepository.save(aZTJ(jobId));
     String taskId = randomUUID().toString();
     String parcelId = randomUUID().toString();
-    TilingTask toCreate = aZTT_processing(jobId, taskId, parcelId);
-    TilingTask created = tilingTaskRepository.save(toCreate);
+    ParcelTilingTask toCreate = aZTT_processing(jobId, taskId, parcelId);
+    ParcelTilingTask created = tilingTaskRepository.save(toCreate);
     List<TaskStatus> statuses =
         tilingTaskRepository.findById(created.getId()).orElseThrow().getStatusHistory().stream()
             .toList();
@@ -307,8 +307,8 @@ class TilingTaskCreatedServiceIT extends FacadeIT {
     zoneTilingJobRepository.save(aZTJ(jobId));
     String taskId = randomUUID().toString();
     String parcelId = randomUUID().toString();
-    TilingTask toCreate = aZTT(jobId, taskId, parcelId);
-    TilingTask created = tilingTaskRepository.save(toCreate);
+    ParcelTilingTask toCreate = aZTT(jobId, taskId, parcelId);
+    ParcelTilingTask created = tilingTaskRepository.save(toCreate);
     TilingTaskCreated ztjCreated = TilingTaskCreated.builder().task(created).build();
     subject.accept(ztjCreated);
     zoneTilingJobService.recomputeStatus(zoneTilingJobRepository.findById(jobId).get());

@@ -6,19 +6,19 @@ import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import app.bpartners.geojobs.job.model.Status;
-import app.bpartners.geojobs.repository.model.tiling.TilingTask;
+import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
 public class NotFinishedTaskRetrieverTest {
-  NotFinishedTaskRetriever<TilingTask> tilingSubject = new NotFinishedTaskRetriever<>();
+  NotFinishedTaskRetriever<ParcelTilingTask> tilingSubject = new NotFinishedTaskRetriever<>();
 
   @Test
   void not_finished_tiling_task_ok() {
-    TilingTask tilingTask =
-        TilingTask.builder().id("tilingTaskId").statusHistory(List.of()).build();
+    ParcelTilingTask parcelTilingTask =
+        ParcelTilingTask.builder().id("tilingTaskId").statusHistory(List.of()).build();
 
-    TilingTask actual = tilingSubject.apply(tilingTask);
+    ParcelTilingTask actual = tilingSubject.apply(parcelTilingTask);
 
     assertEquals(
         Status.builder()

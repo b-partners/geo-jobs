@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.endpoint.event.model.tile;
 
 import app.bpartners.geojobs.endpoint.event.model.PojaEvent;
-import app.bpartners.geojobs.repository.model.tiling.TilingTask;
+import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Duration;
 import javax.annotation.processing.Generated;
@@ -21,7 +21,7 @@ import lombok.ToString;
 @ToString
 public class TilingTaskCreated extends PojaEvent {
   @JsonProperty("tilingTask")
-  private TilingTask task;
+  private ParcelTilingTask task;
 
   @Override
   public Duration maxConsumerDuration() {

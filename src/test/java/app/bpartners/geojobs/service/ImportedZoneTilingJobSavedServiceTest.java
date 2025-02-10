@@ -14,8 +14,8 @@ import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
+import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
-import app.bpartners.geojobs.repository.model.tiling.TilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.event.ImportedZoneTilingJobSavedService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
@@ -79,14 +79,14 @@ public class ImportedZoneTilingJobSavedServiceTest {
 
     var listCaptor = ArgumentCaptor.forClass(List.class);
     verify(tilingTaskRepositoryMock, times(1)).saveAll(listCaptor.capture());
-    List<TilingTask> savedTilingTasks = (List<TilingTask>) listCaptor.getValue();
-    var firstTask = savedTilingTasks.getFirst();
-    var lastTask = savedTilingTasks.getLast();
-    assertEquals(1, savedTilingTasks.size());
+    List<ParcelTilingTask> savedParcelTilingTasks = (List<ParcelTilingTask>) listCaptor.getValue();
+    var firstTask = savedParcelTilingTasks.getFirst();
+    var lastTask = savedParcelTilingTasks.getLast();
+    assertEquals(1, savedParcelTilingTasks.size());
     Tile firstTile = firstTask.getParcelContent().getFirstTile();
     Tile lastTile = lastTask.getParcelContent().getFirstTile();
-    assertEquals(s3Objects.size(), savedTilingTasks.size());
-    assertTrue(savedTilingTasks.stream().allMatch(TilingTask::isSucceeded));
+    assertEquals(s3Objects.size(), savedParcelTilingTasks.size());
+    assertTrue(savedParcelTilingTasks.stream().allMatch(ParcelTilingTask::isSucceeded));
     assertEquals(
         Tile.builder()
             .id(firstTile.getId())
@@ -149,14 +149,14 @@ public class ImportedZoneTilingJobSavedServiceTest {
 
     var listCaptor = ArgumentCaptor.forClass(List.class);
     verify(tilingTaskRepositoryMock, times(1)).saveAll(listCaptor.capture());
-    List<TilingTask> savedTilingTasks = (List<TilingTask>) listCaptor.getValue();
-    var firstTask = savedTilingTasks.getFirst();
-    var lastTask = savedTilingTasks.getLast();
-    assertEquals(1, savedTilingTasks.size());
+    List<ParcelTilingTask> savedParcelTilingTasks = (List<ParcelTilingTask>) listCaptor.getValue();
+    var firstTask = savedParcelTilingTasks.getFirst();
+    var lastTask = savedParcelTilingTasks.getLast();
+    assertEquals(1, savedParcelTilingTasks.size());
     Tile firstTile = firstTask.getParcelContent().getFirstTile();
     Tile lastTile = lastTask.getParcelContent().getFirstTile();
-    assertEquals(s3Objects.size(), savedTilingTasks.size());
-    assertTrue(savedTilingTasks.stream().allMatch(TilingTask::isSucceeded));
+    assertEquals(s3Objects.size(), savedParcelTilingTasks.size());
+    assertTrue(savedParcelTilingTasks.stream().allMatch(ParcelTilingTask::isSucceeded));
     assertEquals(
         Tile.builder()
             .id(firstTile.getId())
@@ -219,12 +219,12 @@ public class ImportedZoneTilingJobSavedServiceTest {
 
     var listCaptor = ArgumentCaptor.forClass(List.class);
     verify(tilingTaskRepositoryMock, times(1)).saveAll(listCaptor.capture());
-    List<TilingTask> savedTilingTasks = (List<TilingTask>) listCaptor.getValue();
-    var firstTask = savedTilingTasks.getFirst();
-    assertEquals(1, savedTilingTasks.size());
+    List<ParcelTilingTask> savedParcelTilingTasks = (List<ParcelTilingTask>) listCaptor.getValue();
+    var firstTask = savedParcelTilingTasks.getFirst();
+    assertEquals(1, savedParcelTilingTasks.size());
     Tile firstTile = firstTask.getParcelContent().getFirstTile();
-    assertEquals(1, savedTilingTasks.size());
-    assertTrue(savedTilingTasks.stream().allMatch(TilingTask::isSucceeded));
+    assertEquals(1, savedParcelTilingTasks.size());
+    assertTrue(savedParcelTilingTasks.stream().allMatch(ParcelTilingTask::isSucceeded));
     assertEquals(
         Tile.builder()
             .id(firstTile.getId())
@@ -280,12 +280,12 @@ public class ImportedZoneTilingJobSavedServiceTest {
 
     var listCaptor = ArgumentCaptor.forClass(List.class);
     verify(tilingTaskRepositoryMock, times(1)).saveAll(listCaptor.capture());
-    List<TilingTask> savedTilingTasks = (List<TilingTask>) listCaptor.getValue();
-    assertEquals(2, savedTilingTasks.size());
-    assertEquals(2, savedTilingTasks.size());
-    assertTrue(savedTilingTasks.stream().allMatch(TilingTask::isSucceeded));
-    assertEquals(1, savedTilingTasks.getFirst().getParcelContent().getTiles().size());
-    assertEquals(1, savedTilingTasks.getLast().getParcelContent().getTiles().size());
+    List<ParcelTilingTask> savedParcelTilingTasks = (List<ParcelTilingTask>) listCaptor.getValue();
+    assertEquals(2, savedParcelTilingTasks.size());
+    assertEquals(2, savedParcelTilingTasks.size());
+    assertTrue(savedParcelTilingTasks.stream().allMatch(ParcelTilingTask::isSucceeded));
+    assertEquals(1, savedParcelTilingTasks.getFirst().getParcelContent().getTiles().size());
+    assertEquals(1, savedParcelTilingTasks.getLast().getParcelContent().getTiles().size());
   }
 
   @Test
