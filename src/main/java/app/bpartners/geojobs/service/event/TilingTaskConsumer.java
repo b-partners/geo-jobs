@@ -20,12 +20,10 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 @AllArgsConstructor
 @Component
-@Slf4j
 public class TilingTaskConsumer implements Consumer<ParcelTilingTask> {
   private static final int DEFAULT_TILE_SIZE = 1024;
   private final TilesDownloader tilesDownloader;
@@ -35,10 +33,6 @@ public class TilingTaskConsumer implements Consumer<ParcelTilingTask> {
   public void accept(ParcelTilingTask parcelTilingTask) {
     var parcel = parcelTilingTask.getParcelContent();
 
-    log.info(
-        "DEBUG: parcel.content.feature={} for tilingTask.id={}",
-        parcel.restFeatures(),
-        parcelTilingTask.getId());
     File downloadedTiles = tilesDownloader.apply(parcel);
     String bucketKey = downloadedTiles.getName();
 
