@@ -19,12 +19,10 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
-@Slf4j
 public class HumanZDJStatusRecomputingSubmittedService
     implements Consumer<HumanZDJStatusRecomputingSubmitted> {
   private final ZoneDetectionJobService zoneDetectionJobService;
@@ -35,7 +33,6 @@ public class HumanZDJStatusRecomputingSubmittedService
 
   @Override
   public void accept(HumanZDJStatusRecomputingSubmitted event) {
-    log.info("Accepting HumanZDJStatusRecomputingSubmitted event={}", event);
     var detectionJobId = event.getJobId();
     var oldHumanZDJ = zoneDetectionJobService.findById(detectionJobId);
     em.detach(oldHumanZDJ);
@@ -49,13 +46,11 @@ public class HumanZDJStatusRecomputingSubmittedService
       newZDJ.hasNewStatus(getJobStatus(newZDJ, FINISHED, SUCCEEDED));
     }
     var newStatus = newZDJ.getStatus();
-    log.info("oldJob.status={}, newJob.status={}", oldHumanZDJStatus, newStatus);
     if (!oldHumanZDJStatus.getProgression().equals(newStatus.getProgression())
         || !oldHumanZDJStatus.getHealth().equals(newStatus.getHealth())) {
       jobStatusRepository.save(newStatus);
     }
     if (!oldHumanZDJ.isFinished() && newZDJ.isFinished()) {
-      log.info("Job(type=HUMAN, id={}) finished, oldStatus={}", newZDJ.getId(), newStatus);
       geoJsonConversionJobService.getOrComputeGeoJsonUrl(newZDJ.getId());
     }
     throw new RuntimeException("Fail on purpose so that message is not ack, causing retry");
