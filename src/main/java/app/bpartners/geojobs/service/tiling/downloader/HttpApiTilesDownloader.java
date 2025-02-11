@@ -19,7 +19,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.ZipFile;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.FileSystemResource;
@@ -34,7 +33,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
 @ConditionalOnProperty(value = "tiles.downloader.mock.activated", havingValue = "false")
-@Slf4j
 public class HttpApiTilesDownloader implements TilesDownloader {
   private final ObjectMapper om;
   private final String tilesDownloaderApiURl;
@@ -69,7 +67,6 @@ public class HttpApiTilesDownloader implements TilesDownloader {
     try {
       responseEntity =
           restTemplate.postForEntity(builder.toUriString(), request, TilerResponse.class);
-      log.info("Zip file url={}", responseEntity.getBody());
     } catch (RestClientException e) {
       throw new ApiException(SERVER_EXCEPTION, e);
     }
