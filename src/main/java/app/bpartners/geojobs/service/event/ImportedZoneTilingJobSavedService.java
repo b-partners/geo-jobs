@@ -31,14 +31,12 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import software.amazon.awssdk.services.s3.model.S3Object;
 
 @Service
 @AllArgsConstructor
-@Slf4j
 public class ImportedZoneTilingJobSavedService implements Consumer<ImportedZoneTilingJobSaved> {
   public static final int DEFAULT_Z_VALUE = 20;
   private static final String UNDERSCORE = "_";
@@ -61,12 +59,10 @@ public class ImportedZoneTilingJobSavedService implements Consumer<ImportedZoneT
     List<S3Object> s3Objects =
         getS3Objects(importedZoneTilingJobSaved, bucketName, bucketPathPrefix);
 
-    log.info("[DEBUG] S3 objects size {}", s3Objects.size());
     Map<Integer, List<Tile>> groupedTilesByX = new HashMap<>();
     try {
       groupedTilesByX = getGroupedTiles(s3Objects, bucketSeparator);
     } catch (RuntimeException e) {
-      log.error("Exception was thrown on getGroupedTiles method: {}", e.getMessage());
       throw new ApiException(SERVER_EXCEPTION, e.getMessage());
     }
     List<ParcelTilingTask> parcelTilingTasks = new ArrayList<>();
@@ -75,23 +71,13 @@ public class ImportedZoneTilingJobSavedService implements Consumer<ImportedZoneT
       parcelTilingTasks.add(
           getFinishedTasks(job, geoServerUrlValue, geoServerParameter, groupedTiles));
     }
-    log.info(
-        "[DEBUG] TilingTasks size {}, values {}",
-        parcelTilingTasks.size(),
-        parcelTilingTasks.stream().map(ParcelTilingTask::describe).toList());
-    var savedTilingTasks = tilingTaskRepository.saveAll(parcelTilingTasks);
-    log.info(
-        "[DEBUG] Saved TilingTasks size {}, values {}",
-        savedTilingTasks.size(),
-        savedTilingTasks.stream().map(ParcelTilingTask::describe).toList());
-    var savedJob = tilingJobService.recomputeStatus(job);
-    log.info("[DEBUG] Saved ZoneTilingJob {}", savedJob);
+    tilingTaskRepository.saveAll(parcelTilingTasks);
+    tilingJobService.recomputeStatus(job);
   }
 
   @NonNull
   private Map<Integer, List<Tile>> getGroupedTiles(
       List<S3Object> s3Objects, BucketSeparatorType bucketSeparatorType) {
-    log.info("Object keys found: {}", s3Objects.stream().map(S3Object::key).toList());
     var tiles =
         s3Objects.subList(1, s3Objects.size()).stream()
             .map(s3Object -> mapFromKey(s3Object.key(), bucketSeparatorType))
