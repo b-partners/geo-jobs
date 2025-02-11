@@ -9,12 +9,10 @@ import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.service.StatusChangedHandler;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
-@Slf4j
 public class ParcelDetectionJobStatusChangedService
     implements Consumer<ParcelDetectionJobStatusChanged> {
   private final StatusChangedHandler statusChangedHandler;
@@ -52,7 +50,6 @@ public class ParcelDetectionJobStatusChangedService
                               + newJob.getId()
                               + ")"));
       taskStatusService.succeed(taskFromJob);
-      log.info("ParcelDetectionTask(id=" + taskFromJob.getId() + ") successfully finished");
     }
   }
 
@@ -74,7 +71,6 @@ public class ParcelDetectionJobStatusChangedService
                               + newJob.getId()
                               + ")"));
       taskStatusService.fail(taskFromJob);
-      log.info("Failed to process ParcelDetectionTask(id=" + taskFromJob.getId() + ")");
     }
   }
 }
