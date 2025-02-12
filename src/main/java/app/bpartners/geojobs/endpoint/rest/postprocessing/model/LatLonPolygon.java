@@ -31,6 +31,7 @@ public record LatLonPolygon(Polygon polygon) {
             .map(m -> originTile(m, tilingConf.z()))
             .map(tileXY -> new Position2D(tileXY.x(), tileXY.y()))
             .collect(toSet());
+
     if (origins.size() != 1) {
       throw new IllegalArgumentException(
           String.format("origins.size=1 expected: origins=%s, p=%s", origins, polygon));
