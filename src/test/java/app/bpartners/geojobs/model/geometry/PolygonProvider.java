@@ -24,8 +24,7 @@ public class PolygonProvider implements Function<Integer, Polygon> {
   private static final ObjectMapper om = new ObjectMapper().findAndRegisterModules();
 
   private final IntXY origin;
-  @Getter
-  private final VGG vggAnnotations;
+  @Getter private final VGG vggAnnotations;
   private final List<Feature> features;
 
   public PolygonProvider(
@@ -54,6 +53,12 @@ public class PolygonProvider implements Function<Integer, Polygon> {
     this.features = features(imageResolution, false);
   }
 
+  public PolygonProvider(String vggFilePath) {
+    this.origin = null;
+    this.vggAnnotations = vgg(vggFilePath);
+    this.features = null;
+  }
+
   @Override
   public Polygon apply(Integer n) {
     return features.get(n).geometry();
@@ -66,7 +71,8 @@ public class PolygonProvider implements Function<Integer, Polygon> {
   private List<Feature> features(IntXY imageResolution, boolean is_z_x_y_dot_filetype) {
     return origin == null
         ? new FeatureListWithoutOffset(vggAnnotations, imageResolution, is_z_x_y_dot_filetype).get()
-        : new FeatureListWithOffset(vggAnnotations, imageResolution, is_z_x_y_dot_filetype, origin).get();
+        : new FeatureListWithOffset(vggAnnotations, imageResolution, is_z_x_y_dot_filetype, origin)
+            .get();
   }
 
   public Set<Polygon> getPolygons() {

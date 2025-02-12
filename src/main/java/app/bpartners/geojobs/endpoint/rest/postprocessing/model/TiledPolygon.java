@@ -46,12 +46,12 @@ public record TiledPolygon(Polygon polygon, IntXY originTile, TilingConf tilingC
   public static Set<TiledPolygon> newTiledPolygons(
       String filename,
       Map<String, VGG.Annotation.Region> vggRegions,
-      int imgSize,
+      TilingConf tilingConf,
       boolean isZXYDotFiletype) {
     Set<TiledPolygon> res = new HashSet<>();
     var regions = vggRegions.values();
     for (var r : regions) {
-      res.add(tiledPolygon(filename, r, imgSize, isZXYDotFiletype));
+      res.add(tiledPolygon(filename, r, tilingConf, isZXYDotFiletype));
     }
     return res;
   }
@@ -67,12 +67,14 @@ public record TiledPolygon(Polygon polygon, IntXY originTile, TilingConf tilingC
   }
 
   private static TiledPolygon tiledPolygon(
-      String filename, VGG.Annotation.Region vggRegion, int imgSize, boolean isZXYDotFiletype) {
+      String filename,
+      VGG.Annotation.Region vggRegion,
+      TilingConf tilingConf,
+      boolean isZXYDotFiletype) {
     var shapeAttribute = vggRegion.getShapeAttribute();
     var coordsExtractor = new TileCoordinatesFromFileName(isZXYDotFiletype);
     var originTile = new IntXY(coordsExtractor.x(filename), coordsExtractor.y(filename));
-    return new TiledPolygon(
-        polygon(shapeAttribute), originTile, new TilingConf(coordsExtractor.z(filename), imgSize));
+    return new TiledPolygon(polygon(shapeAttribute), originTile, tilingConf);
   }
 
   private static Polygon polygon(app.bpartners.geojobs.endpoint.rest.model.Polygon restP) {
@@ -94,7 +96,8 @@ public record TiledPolygon(Polygon polygon, IntXY originTile, TilingConf tilingC
     var polygonLength = allX.size();
     Coordinate[] coordinates = new Coordinate[polygonLength];
     for (int i = 0; i < polygonLength; i++) {
-      coordinates[i] = new Coordinate(allX.get(i), allY.get(i));
+      var pixel = new IntXY(allX.get(i).intValue(), allY.get(i).intValue());
+      coordinates[i] = new Coordinate(pixel.x(), pixel.y());
     }
     return geometryFactory.createPolygon(coordinates);
   }
@@ -113,6 +116,6 @@ public record TiledPolygon(Polygon polygon, IntXY originTile, TilingConf tilingC
     double lon = (originTile.x() + tilePX / tileSize) / n * 360.0 - 180.0;
     double lat = toDegrees(atan(sinh(PI * (1 - 2 * (originTile.y() + tilePY / tileSize) / n))));
 
-    return new Coordinate(lat, lon);
+    return new Coordinate(lon, lat);
   }
 }
