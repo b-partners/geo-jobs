@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.model.geometry.feature;
+package app.bpartners.geojobs.model.geometry;
 
 import static java.lang.Integer.parseInt;
 

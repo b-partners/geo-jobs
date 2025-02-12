@@ -5,7 +5,6 @@ import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFacto
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.model.geometry.feature.FeatureListWithOffset;
-import app.bpartners.geojobs.model.geometry.feature.TileCoordinatesFromFileName;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.function.Function;
