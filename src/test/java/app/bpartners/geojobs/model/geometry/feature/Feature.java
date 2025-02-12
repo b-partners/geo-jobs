@@ -3,6 +3,7 @@ package app.bpartners.geojobs.model.geometry.feature;
 import static lombok.AccessLevel.PRIVATE;
 
 import app.bpartners.geojobs.model.geometry.IntXY;
+import app.bpartners.geojobs.model.geometry.TileCoordinatesFromFileName;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

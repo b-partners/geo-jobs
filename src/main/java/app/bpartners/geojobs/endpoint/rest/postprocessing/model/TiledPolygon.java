@@ -10,10 +10,13 @@ import static java.lang.Math.toDegrees;
 import app.bpartners.geojobs.endpoint.rest.model.DetectedObject;
 import app.bpartners.geojobs.endpoint.rest.model.DetectedTile;
 import app.bpartners.geojobs.model.geometry.IntXY;
+import app.bpartners.geojobs.model.geometry.TileCoordinatesFromFileName;
+import app.bpartners.geojobs.model.geometry.VGG;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Polygon;
@@ -40,6 +43,19 @@ public record TiledPolygon(Polygon polygon, IntXY originTile, TilingConf tilingC
     return res;
   }
 
+  public static Set<TiledPolygon> newTiledPolygons(
+      String filename,
+      Map<String, VGG.Annotation.Region> vggRegions,
+      int imgSize,
+      boolean isZXYDotFiletype) {
+    Set<TiledPolygon> res = new HashSet<>();
+    var regions = vggRegions.values();
+    for (var r : regions) {
+      res.add(tiledPolygon(filename, r, imgSize, isZXYDotFiletype));
+    }
+    return res;
+  }
+
   private static TiledPolygon tiledPolygon(
       DetectedTile detectedTile, DetectedObject detectedObject, int imgSize) {
     var restPolygon = detectedObject.getFeature().getGeometry().getPolygon();
@@ -48,6 +64,15 @@ public record TiledPolygon(Polygon polygon, IntXY originTile, TilingConf tilingC
     var originTile = new IntXY(tileCoordinates.getX(), tileCoordinates.getZ());
     return new TiledPolygon(
         polygon(restPolygon), originTile, new TilingConf(tileCoordinates.getZ(), imgSize));
+  }
+
+  private static TiledPolygon tiledPolygon(
+      String filename, VGG.Annotation.Region vggRegion, int imgSize, boolean isZXYDotFiletype) {
+    var shapeAttribute = vggRegion.getShapeAttribute();
+    var coordsExtractor = new TileCoordinatesFromFileName(isZXYDotFiletype);
+    var originTile = new IntXY(coordsExtractor.x(filename), coordsExtractor.y(filename));
+    return new TiledPolygon(
+        polygon(shapeAttribute), originTile, new TilingConf(coordsExtractor.z(filename), imgSize));
   }
 
   private static Polygon polygon(app.bpartners.geojobs.endpoint.rest.model.Polygon restP) {
@@ -61,6 +86,17 @@ public record TiledPolygon(Polygon polygon, IntXY originTile, TilingConf tilingC
         onlyPolygonCoordinates.stream()
             .map(c -> new Coordinate(c.get(0).doubleValue(), c.get(1).doubleValue()))
             .toArray(Coordinate[]::new));
+  }
+
+  private static Polygon polygon(VGG.Annotation.Region.ShapeAttribute vggShapeAttribute) {
+    var allX = vggShapeAttribute.getAllPointsX();
+    var allY = vggShapeAttribute.getAllPointsY();
+    var polygonLength = allX.size();
+    Coordinate[] coordinates = new Coordinate[polygonLength];
+    for (int i = 0; i < polygonLength; i++) {
+      coordinates[i] = new Coordinate(allX.get(i), allY.get(i));
+    }
+    return geometryFactory.createPolygon(coordinates);
   }
 
   // Mostly ChatGPT-generated
