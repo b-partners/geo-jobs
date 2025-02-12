@@ -80,7 +80,9 @@ public record TiledPolygon(Polygon polygon, IntXY originTile, TilingConf tilingC
     var shapeAttribute = vggRegion.getShapeAttribute();
     var coordsExtractor = new TileCoordinatesFromFileName(isZXYDotFiletype);
     var originTile = new IntXY(coordsExtractor.x(filename), coordsExtractor.y(filename));
-    return new TiledPolygon(polygon(shapeAttribute), originTile, tilingConf);
+    return new TiledPolygon(polygon(shapeAttribute),
+        originTile,
+        tilingConf);
   }
 
   private static Polygon polygon(app.bpartners.geojobs.endpoint.rest.model.Polygon restP) {
