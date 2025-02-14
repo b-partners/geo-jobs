@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.service.event.ZoneDetectionJobSucceededService.DEFAULT_MINIMUM_CONFIDENCE_FOR_DELIVERY;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
@@ -14,6 +13,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 class AnnotationDeliveryJobRequestedServiceTest {
+  private static final double MINIMUM_CONFIDENCE_FOR_DELIVERY = 0.95;
   DetectableObjectConfigurationRepository objectConfigurationRepositoryMock = mock();
   DetectionRepository detectionRepositoryMock = mock();
   EventProducer eventProducerMock = mock();
@@ -63,7 +63,7 @@ class AnnotationDeliveryJobRequestedServiceTest {
     subject.accept(
         AnnotationDeliveryJobRequested.builder()
             .jobId(jobId)
-            .minimumConfidenceForDelivery(DEFAULT_MINIMUM_CONFIDENCE_FOR_DELIVERY)
+            .minimumConfidenceForDelivery(MINIMUM_CONFIDENCE_FOR_DELIVERY)
             .annotationJobWithObjectsIdTruePositive(truePositive)
             .annotationJobWithObjectsIdFalsePositive(falsePositive)
             .annotationJobWithoutObjectsId(withoutObjects)

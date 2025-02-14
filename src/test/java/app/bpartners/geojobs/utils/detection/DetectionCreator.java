@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.utils.detection;
 
-import static app.bpartners.geojobs.service.event.ZoneDetectionJobSucceededService.DEFAULT_MINIMUM_CONFIDENCE_FOR_DELIVERY;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
@@ -11,6 +10,7 @@ import app.bpartners.geojobs.utils.FeatureCreator;
 import java.util.List;
 
 public class DetectionCreator {
+  private static final double MIN_CONFIDENCE_FOR_DETECTION = 0.95;
   private final FeatureCreator featureCreator;
 
   public DetectionCreator(FeatureCreator featureCreator) {
@@ -45,7 +45,7 @@ public class DetectionCreator {
                     .builder()
                     .bucketStorageName(null)
                     .objectType(DetectableType.TOITURE_REVETEMENT)
-                    .minConfidenceForDetection(DEFAULT_MINIMUM_CONFIDENCE_FOR_DELIVERY)
+                    .minConfidenceForDetection(MIN_CONFIDENCE_FOR_DETECTION)
                     .build()))
         .providedGeoJsonZone(domainFeature)
         .build();
