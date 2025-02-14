@@ -41,25 +41,6 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
     this.tileDetectionApiUrl = tileDetectionApiUrl;
   }
 
-  // TODO: custom bucket still needed ?
-  private String retrieveBucket(
-      List<DetectableObjectConfiguration> detectableObjectConfigurations) {
-    DetectableObjectConfiguration objectConfiguration;
-    if (detectableObjectConfigurations.size() > 1) {
-      objectConfiguration = detectableObjectConfigurations.getFirst();
-      log.error(
-          "Only one detectableObject per detection is supported for now. {} chosen.",
-          objectConfiguration);
-      return objectConfiguration.getBucketStorageName();
-    } else if (!detectableObjectConfigurations.isEmpty()) {
-      objectConfiguration = detectableObjectConfigurations.getFirst();
-      return objectConfiguration.getBucketStorageName() == null
-          ? bucketComponent.getBucketConf().getBucketName()
-          : objectConfiguration.getBucketStorageName();
-    }
-    return bucketComponent.getBucketConf().getBucketName();
-  }
-
   @SneakyThrows
   @Override
   public DetectionResponse apply(
@@ -75,7 +56,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
 
     File file =
         bucketComponent.download(
-            retrieveBucket(detectableObjectConfigurations), tile.getBucketPath());
+            bucketComponent.getBucketConf().getBucketName(), tile.getBucketPath());
     String base64ImgData = Base64.getEncoder().encodeToString(readFileToByteArray(file));
 
     var payload =
