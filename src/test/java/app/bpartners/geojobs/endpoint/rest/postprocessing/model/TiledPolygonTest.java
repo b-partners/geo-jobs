@@ -15,6 +15,6 @@ class TiledPolygonTest {
     var pixel = new IntXY(322, 385);
     var actual = toLatLon(originTile, new TilingConf(20, 1_024), pixel);
 
-    assertEquals(new Coordinate(4.899666979908943, 45.82129270556462), actual);
+    assertEquals(new Coordinate(45.82129270556462, 4.899666979908943), actual);
   }
 }
