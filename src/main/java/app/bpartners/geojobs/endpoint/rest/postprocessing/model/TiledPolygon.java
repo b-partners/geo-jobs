@@ -18,7 +18,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Polygon;
@@ -32,9 +31,10 @@ public record TiledPolygon(Polygon polygon, IntXY originTile, TilingConf tilingC
         Arrays.stream(polygon.getCoordinates())
             .map(c -> toLatLon(originTile, tilingConf, new IntXY((int) c.x, (int) c.y)))
             .toArray(Coordinate[]::new);
+    var currentLength = latLonCoordinates.length;
     var firstLatLon = latLonCoordinates[0];
-    var copyOfLatLonCoordinates = Arrays.copyOf(latLonCoordinates, latLonCoordinates.length + 1);
-    copyOfLatLonCoordinates[latLonCoordinates.length] = firstLatLon;
+    var copyOfLatLonCoordinates = Arrays.copyOf(latLonCoordinates, currentLength + 1);
+    copyOfLatLonCoordinates[currentLength] = firstLatLon;
     return new LatLonPolygon(geometryFactory.createPolygon(copyOfLatLonCoordinates));
   }
 

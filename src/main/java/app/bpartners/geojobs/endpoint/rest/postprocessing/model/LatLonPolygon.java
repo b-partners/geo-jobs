@@ -14,7 +14,6 @@ import static java.util.stream.Collectors.toSet;
 import app.bpartners.geojobs.model.geometry.IntXY;
 import java.util.ArrayList;
 import java.util.Arrays;
-
 import lombok.extern.slf4j.Slf4j;
 import org.geotools.geometry.Position2D;
 import org.locationtech.jts.geom.Coordinate;

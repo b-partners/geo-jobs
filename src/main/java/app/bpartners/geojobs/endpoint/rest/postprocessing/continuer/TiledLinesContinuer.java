@@ -30,13 +30,12 @@ public class TiledLinesContinuer implements Function<Set<TiledPolygon>, Set<Tile
   @Override
   public Set<TiledPolygon> apply(Set<TiledPolygon> polygons) {
     var originTile = new ArrayList<>(polygons).getFirst().originTile();
-    var polygonsWithOffset = polygons.stream().map(p -> withOffset(p, originTile, p.originTile())).collect(toSet());
+    var polygonsWithOffset =
+        polygons.stream().map(p -> withOffset(p, originTile, p.originTile())).collect(toSet());
     var continuedWithOffset =
         new RoutesContinuation(polygonsWithOffset, routesContinuationConf).continued();
     return continuedWithOffset.stream()
-        .map(
-            pWithOffset ->
-                new TiledPolygon(pWithOffset, originTile, tilingConf))
+        .map(pWithOffset -> new TiledPolygon(pWithOffset, originTile, tilingConf))
         .collect(toSet());
   }
 
@@ -46,8 +45,7 @@ public class TiledLinesContinuer implements Function<Set<TiledPolygon>, Set<Tile
     var yFactor = currentTile.y() - originTile.y();
     return geometryFactory.createPolygon(
         Arrays.stream(p.polygon().getCoordinates())
-            .map(
-                c -> new Coordinate(c.x + xFactor * imgSize, c.y + yFactor * imgSize))
+            .map(c -> new Coordinate(c.x + xFactor * imgSize, c.y + yFactor * imgSize))
             .toArray(Coordinate[]::new));
   }
 }
