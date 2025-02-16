@@ -32,7 +32,10 @@ public record TiledPolygon(Polygon polygon, IntXY originTile, TilingConf tilingC
         Arrays.stream(polygon.getCoordinates())
             .map(c -> toLatLon(originTile, tilingConf, new IntXY((int) c.x, (int) c.y)))
             .toArray(Coordinate[]::new);
-    return new LatLonPolygon(geometryFactory.createPolygon(latLonCoordinates));
+    var firstLatLon = latLonCoordinates[0];
+    var copyOfLatLonCoordinates = Arrays.copyOf(latLonCoordinates, latLonCoordinates.length + 1);
+    copyOfLatLonCoordinates[latLonCoordinates.length] = firstLatLon;
+    return new LatLonPolygon(geometryFactory.createPolygon(copyOfLatLonCoordinates));
   }
 
   public static Set<TiledPolygon> newTiledPolygons(Set<DetectedTile> tiles, int imgSize) {

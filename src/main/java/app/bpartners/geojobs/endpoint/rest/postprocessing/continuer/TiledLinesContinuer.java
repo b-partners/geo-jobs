@@ -30,31 +30,24 @@ public class TiledLinesContinuer implements Function<Set<TiledPolygon>, Set<Tile
   @Override
   public Set<TiledPolygon> apply(Set<TiledPolygon> polygons) {
     var originTile = new ArrayList<>(polygons).getFirst().originTile();
-    var polygonsWithOffset = polygons.stream().map(p -> withOffset(p, originTile)).collect(toSet());
+    var polygonsWithOffset = polygons.stream().map(p -> withOffset(p, originTile, p.originTile())).collect(toSet());
     var continuedWithOffset =
         new RoutesContinuation(polygonsWithOffset, routesContinuationConf).continued();
     return continuedWithOffset.stream()
         .map(
             pWithOffset ->
-                new TiledPolygon(withoutOffset(pWithOffset, originTile), originTile, tilingConf))
+                new TiledPolygon(pWithOffset, originTile, tilingConf))
         .collect(toSet());
   }
 
-  private Polygon withoutOffset(Polygon p, IntXY originTile) {
+  private Polygon withOffset(TiledPolygon p, IntXY originTile, IntXY currentTile) {
     var imgSize = tilingConf.imgSize();
-    return geometryFactory.createPolygon(
-        Arrays.stream(p.getCoordinates())
-            .map(
-                c -> new Coordinate(c.x - originTile.x() * imgSize, c.y - originTile.y() * imgSize))
-            .toArray(Coordinate[]::new));
-  }
-
-  private Polygon withOffset(TiledPolygon p, IntXY originTile) {
-    var imgSize = tilingConf.imgSize();
+    var xFactor = currentTile.x() - originTile.x();
+    var yFactor = currentTile.y() - originTile.y();
     return geometryFactory.createPolygon(
         Arrays.stream(p.polygon().getCoordinates())
             .map(
-                c -> new Coordinate(c.x + originTile.x() * imgSize, c.y + originTile.y() * imgSize))
+                c -> new Coordinate(c.x + xFactor * imgSize, c.y + yFactor * imgSize))
             .toArray(Coordinate[]::new));
   }
 }
