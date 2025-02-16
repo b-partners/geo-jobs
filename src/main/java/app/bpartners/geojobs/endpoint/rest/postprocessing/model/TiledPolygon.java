@@ -18,9 +18,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Polygon;
 
+@Slf4j
 // projected: in meter, such as CRS_CODE = "EPSG:3857"
 public record TiledPolygon(Polygon polygon, IntXY originTile, TilingConf tilingConf) {
 
@@ -104,7 +107,7 @@ public record TiledPolygon(Polygon polygon, IntXY originTile, TilingConf tilingC
 
   // Mostly ChatGPT-generated
   public static Coordinate toLatLon(IntXY originTile, TilingConf tilingConf, IntXY pixel) {
-    int tileSize = 256;
+    int tileSize = tilingConf.imgSize();
     int scale = tilingConf.imgSize() / tileSize; // Scale factor (4x)
 
     // Convert image pixel to tile pixel
@@ -116,6 +119,6 @@ public record TiledPolygon(Polygon polygon, IntXY originTile, TilingConf tilingC
     double lon = (originTile.x() + tilePX / tileSize) / n * 360.0 - 180.0;
     double lat = toDegrees(atan(sinh(PI * (1 - 2 * (originTile.y() + tilePY / tileSize) / n))));
 
-    return new Coordinate(lon, lat);
+    return new Coordinate(lat, lon);
   }
 }
