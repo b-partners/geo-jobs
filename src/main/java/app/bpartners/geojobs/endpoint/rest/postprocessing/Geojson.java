@@ -55,7 +55,7 @@ public class Geojson {
       List<List<Double>> outerRing = new ArrayList<>();
 
       for (Coordinate coord : polygon.getExteriorRing().getCoordinates()) {
-        outerRing.add(Arrays.asList(coord.y, coord.x));
+        outerRing.add(Arrays.asList(coord.x, coord.y));
       }
       coordinates.add(outerRing);
 

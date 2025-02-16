@@ -14,11 +14,14 @@ import static java.util.stream.Collectors.toSet;
 import app.bpartners.geojobs.model.geometry.IntXY;
 import java.util.ArrayList;
 import java.util.Arrays;
+
+import lombok.extern.slf4j.Slf4j;
 import org.geotools.geometry.Position2D;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Polygon;
 
 // unprojected: in degree, such as CRS_CODE = "EPSG:4326"
+@Slf4j
 public record LatLonPolygon(Polygon polygon) {
   public TiledPolygon tiledPolygon(TilingConf tilingConf) {
     var originXY = uniqueOrigin(tilingConf);
@@ -33,8 +36,7 @@ public record LatLonPolygon(Polygon polygon) {
             .collect(toSet());
 
     if (origins.size() != 1) {
-      throw new IllegalArgumentException(
-          String.format("origins.size=1 expected: origins=%s, p=%s", origins, polygon));
+      log.warn(String.format("origins.size=1 expected: origins=%s, p=%s", origins, polygon));
     }
     var origin = new ArrayList<>(origins).getFirst();
     var originXY = new IntXY((int) origin.x, (int) origin.y);
