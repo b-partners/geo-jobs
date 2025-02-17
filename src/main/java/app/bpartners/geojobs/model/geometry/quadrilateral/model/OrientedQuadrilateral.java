@@ -20,11 +20,21 @@ public record OrientedQuadrilateral(
 
   public Optional<OrientedQuadrilateral> continueWith(
       OrientedQuadrilateral that, ContinuationConf continuationConf) {
+    try {
+      return fallibleContinueWith(that, continuationConf);
+    } catch (Exception e) {
+      log.error(String.format("Continuation failed: this=%s , that=%s", this, that), e);
+      return Optional.empty();
+    }
+  }
+
+  public Optional<OrientedQuadrilateral> fallibleContinueWith(
+      OrientedQuadrilateral that, ContinuationConf continuationConf) {
     var origin = geometryFactory.createPoint(new Coordinate(0, 0));
     var distanceThreshold = continuationConf.distanceThreshold();
     if (that.quadrilateral.centroid().distance(origin) < quadrilateral.centroid().distance(origin)
         & isCloseEnoughWith(that, distanceThreshold)) {
-      return that.continueWith(this, continuationConf);
+      return that.fallibleContinueWith(this, continuationConf);
     }
     if (!isCloseEnoughWith(that, distanceThreshold)
         || !hasContinuableDirectionWith(that, continuationConf)) {
