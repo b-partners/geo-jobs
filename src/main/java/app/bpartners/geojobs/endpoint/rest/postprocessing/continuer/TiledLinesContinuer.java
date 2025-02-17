@@ -11,7 +11,6 @@ import app.bpartners.geojobs.model.geometry.route.RoutesContinuationConf;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Set;
-import java.util.function.Function;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.experimental.Accessors;
@@ -19,7 +18,7 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Polygon;
 
 @AllArgsConstructor
-public class TiledLinesContinuer implements Function<Set<TiledPolygon>, Set<TiledPolygon>> {
+public final class TiledLinesContinuer extends LinesContinuer<TiledPolygon> {
 
   private final RoutesContinuationConf routesContinuationConf;
 

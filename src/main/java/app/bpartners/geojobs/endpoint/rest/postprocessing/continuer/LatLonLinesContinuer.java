@@ -11,12 +11,11 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.Function;
 import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.geojson.feature.FeatureJSON;
 import org.locationtech.jts.geom.Polygon;
 
-public class LatLonLinesContinuer implements Function<Set<LatLonPolygon>, Set<LatLonPolygon>> {
+public final class LatLonLinesContinuer extends LinesContinuer<LatLonPolygon> {
 
   private final TiledLinesContinuer tiledLinesContinuer;
 
