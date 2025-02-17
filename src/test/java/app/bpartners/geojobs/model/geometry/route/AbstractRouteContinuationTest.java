@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.model.geometry.route;
 
-import static app.bpartners.geojobs.model.geometry.TestData.compass2Polygon;
-import static app.bpartners.geojobs.model.geometry.TestData.long2Polygon;
+import static app.bpartners.geojobs.model.geometry.TestData.compass2Route;
+import static app.bpartners.geojobs.model.geometry.TestData.long2Route;
 import static java.awt.Color.BLACK;
 import static java.lang.Math.PI;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -27,8 +27,8 @@ class AbstractRouteContinuationTest {
     var distanceThreshold = 1000;
     var alphaConf = new AlphaConf(0.95, 100);
 
-    var long2 = long2Polygon();
-    var compass2 = compass2Polygon();
+    var long2 = long2Route();
+    var compass2 = compass2Route();
     var lineContinuation =
         new AbstractRouteContinuation(
             new AbstractRoute(compass2, alphaConf),
@@ -47,8 +47,8 @@ class AbstractRouteContinuationTest {
     var distanceThreshold = 1000;
     var alphaConf = new AlphaConf(0.95, 100);
 
-    var long2 = long2Polygon();
-    var compass2 = compass2Polygon();
+    var long2 = long2Route();
+    var compass2 = compass2Route();
     var lineContinuation =
         new AbstractRouteContinuation(
             new AbstractRoute(compass2, alphaConf),

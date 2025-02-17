@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.model.geometry.route;
 
 import static app.bpartners.geojobs.model.geometry.plot.PlotConf.DEFAULT_STROKE;
+import static app.bpartners.geojobs.model.geometry.route.RouteType.road;
 import static java.awt.Color.BLACK;
 import static java.awt.Color.GREEN;
 import static java.awt.Color.RED;
@@ -138,7 +139,7 @@ class RoutesContinuationTest {
     var prettyConf = prettyConf();
     var continuations =
         new RoutesContinuation(
-            polygons,
+            polygons.stream().map(p -> new Route(p, road /*TODO(routeType)*/)).collect(toSet()),
             new RoutesContinuationConf(alphaConf, unionConf, continuationConf, prettyConf));
     Set<Plotable> plotables =
         continuations.continuations().stream()
@@ -185,7 +186,7 @@ class RoutesContinuationTest {
     var unionConf = unionConf();
     var continuations =
         new RoutesContinuation(
-            polygons,
+            polygons.stream().map(p -> new Route(p, road /*TODO(routeType)*/)).collect(toSet()),
             new RoutesContinuationConf(alphaConf, unionConf, continuationConf, prettyConf));
     var continued = continuations.continued();
     Set<Plotable> plotables =

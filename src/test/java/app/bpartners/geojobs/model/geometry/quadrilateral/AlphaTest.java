@@ -2,6 +2,7 @@ package app.bpartners.geojobs.model.geometry.quadrilateral;
 
 import static app.bpartners.geojobs.model.geometry.TestData.compass1Polygon;
 import static app.bpartners.geojobs.model.geometry.plot.PlotConf.DEFAULT_STROKE;
+import static app.bpartners.geojobs.model.geometry.route.RouteType.road;
 import static java.awt.Color.BLACK;
 import static java.awt.Color.RED;
 import static java.util.stream.Collectors.toSet;
@@ -18,6 +19,7 @@ import app.bpartners.geojobs.model.geometry.plot.PlotablePolygon;
 import app.bpartners.geojobs.model.geometry.plot.PlotableQuadrilateral;
 import app.bpartners.geojobs.model.geometry.quadrilateral.model.AlphaConf;
 import app.bpartners.geojobs.model.geometry.quadrilateral.model.OrientedQuadrilateral;
+import app.bpartners.geojobs.model.geometry.route.Route;
 import app.bpartners.geojobs.model.geometry.route.UnifiedRoute;
 import app.bpartners.geojobs.model.geometry.route.UnionConf;
 import java.awt.image.BufferedImage;
@@ -111,7 +113,7 @@ class AlphaTest {
               // which in turn will counter-intuitively result in less quadrilaterals abstracted.
               // Indeed, we purposefully make the whole alpha fail if at least 1 subAlpha fails.
               0.5, 1);
-      var oqList = new Alpha(p, conf).get();
+      var oqList = new Alpha(new Route(p, road /*TODO(routeType)*/), conf).get();
       var qPlotConf = new PlotConf(RED, DEFAULT_STROKE, plotScale, plotOffset);
       plotablesQ.addAll(
           oqList.stream()
@@ -152,7 +154,7 @@ class AlphaTest {
   }
 
   private static Alpha alpha(Polygon p) {
-    return new Alpha(p, new AlphaConf(0.95, 100));
+    return new Alpha(new Route(p, road /*TODO(routeType)*/), new AlphaConf(0.95, 100));
   }
 
   @SneakyThrows

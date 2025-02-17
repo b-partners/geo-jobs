@@ -1,10 +1,12 @@
 package app.bpartners.geojobs.model.geometry;
 
+import static app.bpartners.geojobs.model.geometry.route.RouteType.road;
 import static java.lang.Math.PI;
 import static org.locationtech.jts.geom.util.AffineTransformation.rotationInstance;
 import static org.locationtech.jts.geom.util.AffineTransformation.translationInstance;
 
 import app.bpartners.geojobs.model.geometry.quadrilateral.model.Quadrilateral;
+import app.bpartners.geojobs.model.geometry.route.Route;
 import java.util.Set;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -115,11 +117,12 @@ public class TestData {
     return (Polygon) translation.transform(p);
   }
 
-  public static Polygon compass2Polygon() {
-    return translate(compass1Polygon(), -50, -100);
+  public static Route compass2Route() {
+    return new Route(translate(compass1Polygon(), -50, -100), road /*TODO(routeType)*/);
   }
 
-  public static Polygon long2Polygon() {
-    return rotate(translate(longPolygon(), 500, 550), -PI / 30, 0, 0);
+  public static Route long2Route() {
+    return new Route(
+        rotate(translate(longPolygon(), 500, 550), -PI / 30, 0, 0), road /*TODO(routeType)*/);
   }
 }

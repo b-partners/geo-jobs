@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.model.geometry.route;
 
+import static app.bpartners.geojobs.model.geometry.route.RouteType.road;
 import static java.awt.Color.BLACK;
 import static java.lang.Math.PI;
 import static java.util.stream.Collectors.toSet;
@@ -75,7 +76,7 @@ class DijonRoutesContinuationTest {
     var unionConf = unionConf();
     var continuations =
         new RoutesContinuation(
-            polygons,
+            polygons.stream().map(p -> new Route(p, road /*TODO(routeType)*/)).collect(toSet()),
             new RoutesContinuationConf(alphaConf, unionConf, continuationConf, prettyConf));
     Set<Plotable> plotables =
         continuations.continued().stream()

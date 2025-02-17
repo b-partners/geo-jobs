@@ -6,6 +6,8 @@ import static java.util.stream.Collectors.toSet;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.model.geometry.IntXY;
+import app.bpartners.geojobs.model.geometry.route.Route;
+import app.bpartners.geojobs.model.geometry.route.RouteType;
 import app.bpartners.geojobs.model.geometry.route.RoutesContinuation;
 import app.bpartners.geojobs.model.geometry.route.RoutesContinuationConf;
 import java.util.ArrayList;
@@ -29,10 +31,16 @@ public final class TiledLinesContinuer extends LinesContinuer<TiledPolygon> {
   @Override
   public Set<TiledPolygon> apply(Set<TiledPolygon> polygons) {
     var originTile = new ArrayList<>(polygons).getFirst().originTile();
-    var polygonsWithOffset =
-        polygons.stream().map(p -> withOffset(p, originTile, p.originTile())).collect(toSet());
+    var routessWithOffset =
+        polygons.stream()
+            .map(
+                p ->
+                    new Route(
+                        withOffset(p, originTile, p.originTile()),
+                        RouteType.road /*TODO(routeType)*/))
+            .collect(toSet());
     var continuedWithOffset =
-        new RoutesContinuation(polygonsWithOffset, routesContinuationConf).continued();
+        new RoutesContinuation(routessWithOffset, routesContinuationConf).continued();
     return continuedWithOffset.stream()
         .map(pWithOffset -> new TiledPolygon(pWithOffset, originTile, tilingConf))
         .collect(toSet());

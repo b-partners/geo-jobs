@@ -18,7 +18,7 @@ import org.locationtech.jts.simplify.DouglasPeuckerSimplifier;
 @Accessors(fluent = true)
 @Getter
 public class RoutesContinuation {
-  private final Set<Polygon> routes;
+  private final Set<Route> routes;
 
   private final AlphaConf alphaConf;
   private final Set<AbstractRoute> abstractions;
@@ -30,7 +30,7 @@ public class RoutesContinuation {
   private final PrettyConf prettyConf;
   private final Set<Polygon> continued;
 
-  public RoutesContinuation(Set<Polygon> routes, RoutesContinuationConf conf) {
+  public RoutesContinuation(Set<Route> routes, RoutesContinuationConf conf) {
     this.routes = routes;
     this.alphaConf = conf.alphaConf();
     this.unionConf = conf.unionConf();
@@ -42,7 +42,7 @@ public class RoutesContinuation {
     this.abstractContinuations = abstractContinuations(abstractRoutesByPolygon, continuationConf);
     this.continuations = continuations(abstractContinuations);
 
-    var toUnify = new HashSet<>(routes);
+    var toUnify = new HashSet<>(routes.stream().map(Route::polygon).toList());
     toUnify.addAll(continuations);
     var unified = new UnifiedRoute(toUnify, unionConf).unified();
     this.continued = pretty(unified);
@@ -64,12 +64,12 @@ public class RoutesContinuation {
     return abstractContinuations.stream().map(oq -> oq.quadrilateral().polygon()).collect(toSet());
   }
 
-  private static Map<Polygon, AbstractRoute> alpha(Set<Polygon> routes, AlphaConf alphaConf) {
+  private static Map<Route, AbstractRoute> alpha(Set<Route> routes, AlphaConf alphaConf) {
     var abstractedNb = 0;
     var routesSize = routes.size();
 
-    Map<Polygon, AbstractRoute> res = new HashMap<>();
-    for (Polygon r : routes) {
+    Map<Route, AbstractRoute> res = new HashMap<>();
+    for (var r : routes) {
       res.put(r, new AbstractRoute(r, alphaConf));
       abstractedNb++;
       if (abstractedNb % 1_000 == 0 || abstractedNb == routesSize) {
@@ -80,7 +80,7 @@ public class RoutesContinuation {
   }
 
   private Set<OrientedQuadrilateral> abstractContinuations(
-      Map<Polygon, AbstractRoute> abstractRoutesByPolygon, ContinuationConf continuationConf) {
+      Map<Route, AbstractRoute> abstractRoutesByPolygon, ContinuationConf continuationConf) {
     Set<OrientedQuadrilateral> res = new HashSet<>();
 
     var routesAsList = abstractRoutesByPolygon.keySet().stream().toList();
@@ -88,8 +88,10 @@ public class RoutesContinuation {
       for (int j = i + 1; j < routesAsList.size(); j++) {
         var ri = routesAsList.get(i);
         var rj = routesAsList.get(j);
-        if (ri.distance(rj) > continuationConf.distanceThreshold()
-            || new UnifiedRoute(Set.of(ri, rj), unionConf).unified().size() == 1) {
+        var pi = ri.polygon();
+        var pj = rj.polygon();
+        if (pi.distance(pj) > continuationConf.distanceThreshold()
+            || new UnifiedRoute(Set.of(pi, pj), unionConf).unified().size() == 1) {
           continue;
         }
 

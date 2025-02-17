@@ -23,6 +23,8 @@ import app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.tile.TypedTilesExtractor;
+import app.bpartners.geojobs.model.geometry.route.Route;
+import app.bpartners.geojobs.model.geometry.route.RouteType;
 import app.bpartners.geojobs.model.geometry.route.RoutesContinuation;
 import app.bpartners.geojobs.model.geometry.route.RoutesContinuationConf;
 import java.util.List;
@@ -68,7 +70,9 @@ public class DetectedLinesContinuer implements Function<DetectedParcel, Detected
     var tiledRoutes = newTiledPolygons(routes, imgSize);
     var routesContinuation =
         new RoutesContinuation(
-            tiledRoutes.stream().map(TiledPolygon::polygon).collect(toSet()),
+            tiledRoutes.stream()
+                .map(t -> new Route(t.polygon(), RouteType.road /*TODO(routeType)*/) /*TODO*/)
+                .collect(toSet()),
             routesContinuationConf);
     var continuedRoutes = routesContinuation.continued();
 
