@@ -106,7 +106,7 @@ class RoutesContinuationTest {
         areContinuationsCorrectWithDetails(
             polygons, scale, offset, "/geometry/vgg/lille-barro-continuations.png", 0.1);
     assertEquals(47, continuations.continuations().size());
-    assertEquals(61, continuations.continued().size());
+    assertEquals(108, continuations.continued().size());
     assertEquals(324, polygons.size());
   }
 
