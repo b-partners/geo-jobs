@@ -17,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 public class VGGLinesContinuer implements Function<VGG, Geojson> {
   private final boolean isZXYDotFiletype;
   private final TilingConf tilingConf;
-  private final LatLonLinesContinuer latLonLinesContinuer;
+  private final TiledLinesContinuer tiledLinesContinuer;
 
   public VGGLinesContinuer(
       RoutesContinuationConf routesContinuationConf,
@@ -25,14 +25,16 @@ public class VGGLinesContinuer implements Function<VGG, Geojson> {
       boolean isZXYDotFiletype) {
     this.isZXYDotFiletype = isZXYDotFiletype;
     this.tilingConf = tilingConf;
-    this.latLonLinesContinuer = new LatLonLinesContinuer(routesContinuationConf, tilingConf);
+    this.tiledLinesContinuer = new TiledLinesContinuer(routesContinuationConf, tilingConf);
   }
 
   @Override
   public Geojson apply(VGG vgg) {
     var tiledPolygons = toTiledPolygons(tilingConf, vgg);
-    var latLonPolygons = tiledPolygons.stream().map(TiledPolygon::latLonPolygon).collect(toSet());
-    var latLonPolygonsContinued = latLonLinesContinuer.apply(latLonPolygons);
+    var latLonPolygonsContinued =
+        tiledLinesContinuer.apply(tiledPolygons).stream()
+            .map(TiledPolygon::latLonPolygon)
+            .collect(toSet());
     return new Geojson(latLonPolygonsContinued);
   }
 
