@@ -159,8 +159,8 @@ public class JSON {
   /**
    * Returns true if inst is an instance of modelClass in the OpenAPI model hierarchy.
    *
-   * <p>The Java class hierarchy is not implemented the same way as the OpenAPI model hierarchy, so
-   * it's not possible to use the instanceof keyword.
+   * <p><polygon>The Java class hierarchy is not implemented the same way as the OpenAPI model
+   * hierarchy, so it's not possible to use the instanceof keyword.
    *
    * @param modelClass A OpenAPI model class.
    * @param inst The instance object.

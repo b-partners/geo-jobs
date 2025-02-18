@@ -36,7 +36,7 @@ public class Alpha implements Supplier<Set<OrientedQuadrilateral>> {
     try {
       return fallibleAplha(p, conf);
     } catch (Exception e) {
-      log.error(String.format("Alpha failed: p=%s", p), e);
+      log.error(String.format("Alpha failed: polygon=%s", p), e);
       return Set.of();
     }
   }

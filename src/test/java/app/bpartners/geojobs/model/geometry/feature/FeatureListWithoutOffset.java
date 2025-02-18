@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.model.geometry.polygon;
+package app.bpartners.geojobs.model.geometry.feature;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 
@@ -16,11 +16,12 @@ public class FeatureListWithoutOffset implements Supplier<List<Feature>> {
 
   private final List<Feature> features;
 
-  public FeatureListWithoutOffset(VGG vgg, IntXY imageResolution) {
-    this.features = features(vgg, imageResolution);
+  public FeatureListWithoutOffset(VGG vgg, IntXY imageResolution, boolean is_z_x_y_dot_filetype) {
+    this.features = features(vgg, imageResolution, is_z_x_y_dot_filetype);
   }
 
-  public static List<Feature> features(VGG vgg, IntXY imageResolution) {
+  public static List<Feature> features(
+      VGG vgg, IntXY imageResolution, boolean is_z_x_y_dot_filetype) {
     List<Feature> features = new ArrayList<>();
 
     for (String key : vgg.keySet()) {
@@ -31,7 +32,8 @@ public class FeatureListWithoutOffset implements Supplier<List<Feature>> {
         var xList = region.getShapeAttribute().getAllPointsX();
         var yList = region.getShapeAttribute().getAllPointsY();
         var polygon = polygonFrom(toDistinctIntXY(xList, yList));
-        features.add(new Feature(key, label, confidence, polygon, imageResolution));
+        features.add(
+            new Feature(key, label, confidence, polygon, imageResolution, is_z_x_y_dot_filetype));
       }
     }
 

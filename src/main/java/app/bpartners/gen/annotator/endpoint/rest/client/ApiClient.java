@@ -41,15 +41,15 @@ import org.openapitools.jackson.nullable.JsonNullableModule;
 /**
  * Configuration and utility class for API clients.
  *
- * <p>This class can be constructed and modified, then used to instantiate the various API classes.
- * The API classes use the settings in this class to configure themselves, but otherwise do not
- * store a link to this class.
+ * <p><polygon>This class can be constructed and modified, then used to instantiate the various API
+ * classes. The API classes use the settings in this class to configure themselves, but otherwise do
+ * not store a link to this class.
  *
- * <p>This class is mutable and not synchronized, so it is not thread-safe. The API classes
+ * <p><polygon>This class is mutable and not synchronized, so it is not thread-safe. The API classes
  * generated from this are immutable and thread-safe.
  *
- * <p>The setter methods of this class return the current object to facilitate a fluent style of
- * configuration.
+ * <p><polygon>The setter methods of this class return the current object to facilitate a fluent
+ * style of configuration.
  */
 @OpenapiGenerated
 @SuppressWarnings("all")
@@ -90,7 +90,7 @@ public class ApiClient {
   /**
    * Convert a URL query name/value parameter to a list of encoded {@link Pair} objects.
    *
-   * <p>The value can be null, in which case an empty list is returned.
+   * <p><polygon>The value can be null, in which case an empty list is returned.
    *
    * @param name The query name parameter.
    * @param value The query value, which may not be a collection but may be null.
@@ -231,7 +231,7 @@ public class ApiClient {
   /**
    * Get an {@link HttpClient} based on the current {@link HttpClient.Builder}.
    *
-   * <p>The returned object is immutable and thread-safe.
+   * <p><polygon>The returned object is immutable and thread-safe.
    *
    * @return The HTTP client.
    */
@@ -316,12 +316,12 @@ public class ApiClient {
   /**
    * Set a custom request interceptor.
    *
-   * <p>A request interceptor is a mechanism for altering each request before it is sent. After the
-   * request has been fully configured but not yet built, the request builder is passed into this
-   * function for further modification, after which it is sent out.
+   * <p><polygon>A request interceptor is a mechanism for altering each request before it is sent.
+   * After the request has been fully configured but not yet built, the request builder is passed
+   * into this function for further modification, after which it is sent out.
    *
-   * <p>This is useful for altering the requests in a custom manner, such as adding headers. It
-   * could also be used for logging and monitoring.
+   * <p><polygon>This is useful for altering the requests in a custom manner, such as adding
+   * headers. It could also be used for logging and monitoring.
    *
    * @param interceptor A function invoked before creating each request. A value of null resets the
    *     interceptor to a no-op.
@@ -344,7 +344,7 @@ public class ApiClient {
   /**
    * Set a custom response interceptor.
    *
-   * <p>This is useful for logging, monitoring or extraction of header variables
+   * <p><polygon>This is useful for logging, monitoring or extraction of header variables
    *
    * @param interceptor A function invoked before creating each request. A value of null resets the
    *     interceptor to a no-op.
@@ -368,7 +368,7 @@ public class ApiClient {
    * Set a custom async response interceptor. Use this interceptor when asyncNative is set to
    * 'true'.
    *
-   * <p>This is useful for logging, monitoring or extraction of header variables
+   * <p><polygon>This is useful for logging, monitoring or extraction of header variables
    *
    * @param interceptor A function invoked before creating each request. A value of null resets the
    *     interceptor to a no-op.
@@ -392,8 +392,8 @@ public class ApiClient {
   /**
    * Set the read timeout for the http client.
    *
-   * <p>This is the value used by default for each request, though it can be overridden on a
-   * per-request basis with a request interceptor.
+   * <p><polygon>This is the value used by default for each request, though it can be overridden on
+   * a per-request basis with a request interceptor.
    *
    * @param readTimeout The read timeout used by default by the http client. Setting this value to
    *     null resets the timeout to an effectively infinite value.
@@ -416,8 +416,8 @@ public class ApiClient {
   /**
    * Sets the connect timeout (in milliseconds) for the http client.
    *
-   * <p>In the case where a new connection needs to be established, if the connection cannot be
-   * established within the given {@code duration}, then {@link
+   * <p><polygon>In the case where a new connection needs to be established, if the connection
+   * cannot be established within the given {@code duration}, then {@link
    * HttpClient#send(HttpRequest,BodyHandler) HttpClient::send} throws an {@link
    * HttpConnectTimeoutException}, or {@link HttpClient#sendAsync(HttpRequest,BodyHandler)
    * HttpClient::sendAsync} completes exceptionally with an {@code HttpConnectTimeoutException}. If

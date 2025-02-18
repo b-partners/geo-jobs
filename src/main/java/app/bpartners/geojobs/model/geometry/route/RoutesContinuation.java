@@ -10,9 +10,11 @@ import java.util.Map;
 import java.util.Set;
 import lombok.Getter;
 import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.simplify.DouglasPeuckerSimplifier;
 
+@Slf4j
 @Accessors(fluent = true)
 @Getter
 public class RoutesContinuation {
@@ -28,17 +30,12 @@ public class RoutesContinuation {
   private final PrettyConf prettyConf;
   private final Set<Polygon> continued;
 
-  public RoutesContinuation(
-      Set<Polygon> routes,
-      AlphaConf alphaConf,
-      UnionConf unionConf,
-      ContinuationConf continuationConf,
-      PrettyConf prettyConf) {
+  public RoutesContinuation(Set<Polygon> routes, RoutesContinuationConf conf) {
     this.routes = routes;
-    this.alphaConf = alphaConf;
-    this.unionConf = unionConf;
-    this.continuationConf = continuationConf;
-    this.prettyConf = prettyConf;
+    this.alphaConf = conf.alphaConf();
+    this.unionConf = conf.unionConf();
+    this.continuationConf = conf.continuationConf();
+    this.prettyConf = conf.prettyConf();
 
     var abstractRoutesByPolygon = alpha(routes, alphaConf);
     this.abstractions = new HashSet<>(abstractRoutesByPolygon.values());
@@ -48,10 +45,10 @@ public class RoutesContinuation {
     var toUnify = new HashSet<>(routes);
     toUnify.addAll(continuations);
     var unified = new UnifiedRoute(toUnify, unionConf).unified();
-    this.continued = pretty(unified, prettyConf);
+    this.continued = pretty(unified);
   }
 
-  private Set<Polygon> pretty(Set<Polygon> unified, PrettyConf prettyConf) {
+  private Set<Polygon> pretty(Set<Polygon> unified) {
     return unified.stream()
         .map(
             p -> {
@@ -68,9 +65,16 @@ public class RoutesContinuation {
   }
 
   private static Map<Polygon, AbstractRoute> alpha(Set<Polygon> routes, AlphaConf alphaConf) {
+    var abstractedNb = 0;
+    var routesSize = routes.size();
+
     Map<Polygon, AbstractRoute> res = new HashMap<>();
     for (Polygon r : routes) {
       res.put(r, new AbstractRoute(r, alphaConf));
+      abstractedNb++;
+      if (abstractedNb % 1_000 == 0 || abstractedNb == routesSize) {
+        log.info(String.format("Abstracted=%d/%d", abstractedNb, routesSize));
+      }
     }
     return res;
   }
