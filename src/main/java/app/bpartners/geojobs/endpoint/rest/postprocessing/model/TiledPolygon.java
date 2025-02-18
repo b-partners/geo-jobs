@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Polygon;
 
 @Slf4j
@@ -27,15 +28,37 @@ import org.locationtech.jts.geom.Polygon;
 public record TiledPolygon(Polygon polygon, IntXY originTile, TilingConf tilingConf) {
 
   public LatLonPolygon latLonPolygon() {
-    var latLonCoordinates =
-        Arrays.stream(polygon.getCoordinates())
-            .map(c -> toLatLon(originTile, tilingConf, new IntXY((int) c.x, (int) c.y)))
-            .toArray(Coordinate[]::new);
-    var currentLength = latLonCoordinates.length;
-    var firstLatLon = latLonCoordinates[0];
-    var copyOfLatLonCoordinates = Arrays.copyOf(latLonCoordinates, currentLength + 1);
-    copyOfLatLonCoordinates[currentLength] = firstLatLon;
-    return new LatLonPolygon(geometryFactory.createPolygon(copyOfLatLonCoordinates));
+    var exteriorLatLonCoordinates = getExteriorLatLonCoordinates(polygon);
+    LinearRing exteriorRing = geometryFactory.createLinearRing(exteriorLatLonCoordinates);
+
+    var latLonHolesCoordinates = getHolesLatLonCoordinates(polygon);
+    LinearRing[] holes = new LinearRing[latLonHolesCoordinates.length];
+    for (int i = 0; i < latLonHolesCoordinates.length; i++) {
+      holes[i] = geometryFactory.createLinearRing(latLonHolesCoordinates[i]);
+    }
+
+    return new LatLonPolygon(geometryFactory.createPolygon(exteriorRing, holes));
+  }
+
+  private Coordinate[] getExteriorLatLonCoordinates(Polygon polygon) {
+    return Arrays.stream(polygon.getExteriorRing().getCoordinates())
+        .map(c -> toLatLon(originTile, tilingConf, new IntXY((int) c.x, (int) c.y)))
+        .toArray(Coordinate[]::new);
+  }
+
+  private Coordinate[][] getHolesLatLonCoordinates(Polygon polygon) {
+    int holesNb = polygon.getNumInteriorRing();
+    LinearRing[] holes = new LinearRing[holesNb];
+    for (int n = 0; n < holesNb; n++) {
+      holes[n] = geometryFactory.createLinearRing(polygon.getInteriorRingN(n).getCoordinates());
+    }
+    return Arrays.stream(holes)
+        .map(
+            hole ->
+                Arrays.stream(hole.getCoordinates())
+                    .map(c -> toLatLon(originTile, tilingConf, new IntXY((int) c.x, (int) c.y)))
+                    .toArray(Coordinate[]::new))
+        .toArray(Coordinate[][]::new);
   }
 
   public static Set<TiledPolygon> newTiledPolygons(Set<DetectedTile> tiles, int imgSize) {

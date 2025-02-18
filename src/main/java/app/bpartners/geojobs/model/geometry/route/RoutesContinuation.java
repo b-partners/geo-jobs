@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.model.geometry.route;
 
-import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.geojobs.model.geometry.quadrilateral.model.AlphaConf;
@@ -50,7 +49,7 @@ public class RoutesContinuation {
   }
 
   private Set<Polygon> pretty(Set<Polygon> unified) {
-    var prettied = unified.stream()
+    return unified.stream()
         .map(
             p -> {
               var prettyP =
@@ -59,19 +58,6 @@ public class RoutesContinuation {
               return prettyP;
             })
         .collect(toSet());
-    return plotable(prettied);
-  }
-
-  private Set<Polygon> plotable(Set<Polygon> polygons){
-    var plotablePolygonsSet = new HashSet<Polygon>();
-    for (var p : polygons){
-      plotablePolygonsSet.add(geometryFactory.createPolygon(p.getExteriorRing()));
-      var holesNb = p.getNumInteriorRing();
-      for (int n = 0; n < holesNb; n++) {
-        plotablePolygonsSet.add(geometryFactory.createPolygon(p.getInteriorRingN(n)));
-      }
-    }
-    return plotablePolygonsSet;
   }
 
   private Set<Polygon> continuations(Set<OrientedQuadrilateral> abstractContinuations) {
