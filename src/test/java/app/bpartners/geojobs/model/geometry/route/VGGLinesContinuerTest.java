@@ -34,9 +34,9 @@ public class VGGLinesContinuerTest {
 
   private static RoutesContinuationConf routesContinuationConf() {
     var alphaConf = new AlphaConf(0.5, 1);
-    var unionConf = new UnionConf(4);
+    var unionConf = new UnionConf(5);
     var continuationConf = new ContinuationConf(PI / 12, PI / 6, 500);
-    var prettyConf = new PrettyConf(0);
+    var prettyConf = new PrettyConf(50);
     return new RoutesContinuationConf(alphaConf, unionConf, continuationConf, prettyConf);
   }
 }
