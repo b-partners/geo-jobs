@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.ZipFile;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.FileSystemResource;
@@ -31,6 +32,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+@Slf4j
 @Component
 @ConditionalOnProperty(value = "tiles.downloader.mock.activated", havingValue = "false")
 public class HttpApiTilesDownloader implements TilesDownloader {
@@ -68,6 +70,7 @@ public class HttpApiTilesDownloader implements TilesDownloader {
       responseEntity =
           restTemplate.postForEntity(builder.toUriString(), request, TilerResponse.class);
     } catch (RestClientException e) {
+      log.error("Error downloading tiles : {}", e.getMessage());
       throw new ApiException(SERVER_EXCEPTION, e);
     }
     if (responseEntity.getStatusCode().value() == 200 && responseEntity.getBody() != null) {
@@ -81,6 +84,7 @@ public class HttpApiTilesDownloader implements TilesDownloader {
 
         return unzipped;
       } catch (IOException | URISyntaxException e) {
+        log.error("Error zipping downloaded tiles : {}", e.getMessage());
         throw new RuntimeException(e);
       }
     }
