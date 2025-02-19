@@ -53,6 +53,18 @@ class DetectionUpdateValidatorTest {
                     .geoServerProperties(geoServerProperties)
                     .detectableObjectModel(new DetectableObjectModel(new BPToitureModel()))
                     .geoJsonZone(geoJsonZone)));
+    assertDoesNotThrow(
+        () ->
+            subject.accept(
+                Detection.builder()
+                    .providedGeoJsonZone(domainFeoJsonZone)
+                    .geoServerProperties(geoServerProperties)
+                    .bpZanModel(new BPZanModel())
+                    .build(),
+                new CreateDetection()
+                    .geoServerProperties(geoServerProperties)
+                    .detectableObjectModel(new DetectableObjectModel(new BPZanModel()))
+                    .geoJsonZone(geoJsonZone)));
   }
 
   @Test

@@ -53,6 +53,9 @@ public class Detection implements Serializable {
   @JdbcTypeCode(JSON)
   private BPLomModel bpLomModel;
 
+  @JdbcTypeCode(JSON)
+  private BPZanModel bpZanModel;
+
   // TODO: save as entity
   @JdbcTypeCode(JSON)
   private GeoServerProperties geoServerProperties;
@@ -84,6 +87,8 @@ public class Detection implements Serializable {
       detectableObjectModel.setActualInstance(bpToitureModel);
     } else if (bpLomModel != null) {
       detectableObjectModel.setActualInstance(bpLomModel);
+    } else if (bpZanModel != null) {
+      detectableObjectModel.setActualInstance(bpZanModel);
     } else {
       return null;
     }

@@ -2,6 +2,7 @@ package app.bpartners.geojobs.service;
 
 import app.bpartners.geojobs.endpoint.rest.model.BPLomModel;
 import app.bpartners.geojobs.endpoint.rest.model.BPToitureModel;
+import app.bpartners.geojobs.endpoint.rest.model.BPZanModel;
 import app.bpartners.geojobs.endpoint.rest.model.CreateDetection;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import java.util.function.BiConsumer;
@@ -36,7 +37,12 @@ public class DetectionUpdateValidator implements BiConsumer<Detection, CreateDet
                 || !detectableObjectModel
                     .getBPToitureModel()
                     .equals(detection.getBpToitureModel()));
-    if (bpLomModelIsToBeUpdated || bpToitureModelIsToBeUpdated) {
+    boolean bpZanModelIsToBeUpdated =
+        detection.getBpZanModel() != null
+            && (detectableObjectModel == null
+                || !(detectableObjectModel.getActualInstance() instanceof BPZanModel)
+                || !detectableObjectModel.getBPZanModel().equals(detection.getBpZanModel()));
+    if (bpLomModelIsToBeUpdated || bpToitureModelIsToBeUpdated || bpZanModelIsToBeUpdated) {
       messageBuilder
           .append(
               "Detection.detectableObjectModel can not be updated once it has values, otherwise"

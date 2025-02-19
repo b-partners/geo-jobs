@@ -19,11 +19,7 @@ import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerifi
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
-import app.bpartners.geojobs.endpoint.rest.model.BPLomModel;
-import app.bpartners.geojobs.endpoint.rest.model.BPToitureModel;
-import app.bpartners.geojobs.endpoint.rest.model.CreateDetection;
-import app.bpartners.geojobs.endpoint.rest.model.DetectionStepName;
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.validator.FeatureMultiPolygonChecker;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
@@ -305,6 +301,8 @@ public class ZoneService {
       detectionBuilder.bpToitureModel((BPToitureModel) modelActualInstance);
     } else if (modelActualInstance instanceof BPLomModel) {
       detectionBuilder.bpLomModel((BPLomModel) modelActualInstance);
+    } else if (modelActualInstance instanceof BPZanModel) {
+      detectionBuilder.bpZanModel((BPZanModel) modelActualInstance);
     }
     return detectionBuilder.build();
   }
