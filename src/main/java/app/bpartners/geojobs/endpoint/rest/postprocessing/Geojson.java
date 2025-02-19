@@ -9,31 +9,71 @@ import app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import lombok.Getter;
 import lombok.experimental.Accessors;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.geojson.feature.FeatureJSON;
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
 
+@Accessors(fluent = true)
+@Getter
 public class Geojson {
 
-  @Accessors(fluent = true)
-  @Getter
   private final String stringValue;
+  private final Set<LatLonPolygon> polygons;
 
   public Geojson(Set<LatLonPolygon> polygons) {
+    this.polygons = polygons;
     this.stringValue =
         geojsonString(
             polygons.stream().map(LatLonPolygon::polygon).map(Polygon::toString).collect(toSet()));
+  }
+
+  public Geojson(File geojsonPath) {
+    this(latLonPolygon(geojsonPath));
+  }
+
+  private static Set<LatLonPolygon> latLonPolygon(File geojsonPath) {
+    Set<LatLonPolygon> latLonPolygons = new HashSet<>();
+
+    var featureJson = new FeatureJSON();
+    try (FileReader reader = new FileReader(geojsonPath)) {
+      var featureCollection = featureJson.readFeatureCollection(reader);
+      try (var featuresIterator = featureCollection.features()) {
+        while (featuresIterator.hasNext()) {
+          SimpleFeature feature = (SimpleFeature) featuresIterator.next();
+          Polygon polygon;
+          try {
+            polygon = (Polygon) feature.getDefaultGeometry();
+          } catch (ClassCastException e) {
+            var multiPolygon = (MultiPolygon) feature.getDefaultGeometry();
+            if (multiPolygon.getNumGeometries() != 1) {
+              throw new RuntimeException(
+                  "Only mulitpolygons with single polygon supported but got: " + multiPolygon);
+            }
+            polygon = (Polygon) multiPolygon.getGeometryN(0);
+          }
+          latLonPolygons.add(new LatLonPolygon(polygon));
+        }
+      }
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    return latLonPolygons;
   }
 
   // Mostly ChatGPT-generated
