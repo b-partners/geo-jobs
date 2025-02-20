@@ -38,7 +38,7 @@ public class Alpha implements Supplier<Set<OrientedQuadrilateral>> {
   private static Set<OrientedQuadrilateral> oqSet(
       MultiPolygon p, ContinuationOrientation continuationOrientation, AlphaConf conf) {
     try {
-      return fallibleAplha(p, continuationOrientation, conf);
+      return fallibleAlpha(p, continuationOrientation, conf);
     } catch (Exception e) {
       log.error(String.format("Alpha failed: polygon=%s", p), e);
       return Set.of();
@@ -50,7 +50,7 @@ public class Alpha implements Supplier<Set<OrientedQuadrilateral>> {
     return oqSet;
   }
 
-  private static Set<OrientedQuadrilateral> fallibleAplha(
+  private static Set<OrientedQuadrilateral> fallibleAlpha(
       MultiPolygon p, ContinuationOrientation continuationOrientation, AlphaConf conf) {
     Set<OrientedQuadrilateral> oqSet = new HashSet<>();
 

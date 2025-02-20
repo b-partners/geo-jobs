@@ -3,6 +3,7 @@ package app.bpartners.geojobs.model.geometry.route;
 import static app.bpartners.geojobs.model.geometry.quadrilateral.model.ContinuationOrientation.lengthOnly;
 import static app.bpartners.geojobs.model.geometry.quadrilateral.model.ContinuationOrientation.lengthOrWidth;
 
+import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType;
 import app.bpartners.geojobs.model.geometry.quadrilateral.model.ContinuationOrientation;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -15,4 +16,42 @@ public enum RouteType {
   road(lengthOnly),
   pathway(lengthOrWidth);
   private final ContinuationOrientation continuationOrientation;
+
+  public static RouteType routeTypeFrom(DetectableObjectType detectableType) {
+    return switch (detectableType) {
+      case PASSAGE_PIETON -> pathway;
+      case LINE -> road;
+      case TROTTOIR,
+              RISQUE_FEU,
+              TOITURE_REVETEMENT,
+              ESPACE_VERT_PARKING,
+              RISQUE_FEU2,
+              PANNEAU_PHOTOVOLTAIQUE,
+              PISCINE,
+              ARBRE,
+              ESPACE_VERT,
+              VOIE_CARROSSABLE,
+              PARKING,
+              MOISISSURE,
+              USURE,
+              FISSURE_CASSURE,
+              OBSTACLE,
+              CHEMINEE,
+              HUMIDITE,
+              VELUX,
+              BATI_TUILES,
+              BATI_BETON,
+              BATI_ARDOISE,
+              BATI_AUTRES ->
+          throw new IllegalArgumentException("Unsupported continuation on " + detectableType);
+    };
+  }
+
+  public static RouteType routeTypeFrom(String label) {
+    return switch (label.toLowerCase()) {
+      case "pathway", "passage_pieton" -> pathway;
+      case "line" -> road;
+      default -> throw new IllegalArgumentException("Unsupported continuation on " + label);
+    };
+  }
 }

@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.endpoint.rest.postprocessing.model;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
+import static app.bpartners.geojobs.model.geometry.route.RouteType.routeTypeFrom;
 import static java.lang.Math.PI;
 import static java.lang.Math.atan;
 import static java.lang.Math.pow;
@@ -12,6 +13,7 @@ import app.bpartners.geojobs.endpoint.rest.model.DetectedTile;
 import app.bpartners.geojobs.model.geometry.IntXY;
 import app.bpartners.geojobs.model.geometry.TileCoordinatesFromFileName;
 import app.bpartners.geojobs.model.geometry.VGG;
+import app.bpartners.geojobs.model.geometry.route.RouteType;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -25,7 +27,8 @@ import org.locationtech.jts.geom.Polygon;
 
 @Slf4j
 // projected: in meter, such as CRS_CODE = "EPSG:3857"
-public record TiledPolygon(Polygon polygon, IntXY originTile, TilingConf tilingConf) {
+public record TiledPolygon(
+    Polygon polygon, RouteType type, IntXY originTile, TilingConf tilingConf) {
 
   public LatLonPolygon latLonPolygon() {
     var exteriorLatLonCoordinates = getExteriorLatLonCoordinates(polygon);
@@ -92,7 +95,10 @@ public record TiledPolygon(Polygon polygon, IntXY originTile, TilingConf tilingC
     var tileCoordinates = tileInfo.getCoordinates();
     var originTile = new IntXY(tileCoordinates.getX(), tileCoordinates.getZ());
     return new TiledPolygon(
-        polygon(restPolygon), originTile, new TilingConf(tileCoordinates.getZ(), imgSize));
+        polygon(restPolygon),
+        routeTypeFrom(detectedObject.getDetectedObjectType()),
+        originTile,
+        new TilingConf(tileCoordinates.getZ(), imgSize));
   }
 
   private static TiledPolygon tiledPolygon(
@@ -101,9 +107,10 @@ public record TiledPolygon(Polygon polygon, IntXY originTile, TilingConf tilingC
       TilingConf tilingConf,
       boolean isZXYDotFiletype) {
     var shapeAttribute = vggRegion.getShapeAttribute();
+    var label = vggRegion.getRegionAttribute().getLabel();
     var coordsExtractor = new TileCoordinatesFromFileName(isZXYDotFiletype);
     var originTile = new IntXY(coordsExtractor.x(filename), coordsExtractor.y(filename));
-    return new TiledPolygon(polygon(shapeAttribute), originTile, tilingConf);
+    return new TiledPolygon(polygon(shapeAttribute), routeTypeFrom(label), originTile, tilingConf);
   }
 
   private static Polygon polygon(app.bpartners.geojobs.endpoint.rest.model.Polygon restP) {

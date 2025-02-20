@@ -80,10 +80,10 @@ public class PolygonProvider implements Function<Integer, Polygon> {
         .map(
             feature -> {
               var polygon = feature.geometry();
-              var metadata = new HashMap<String, Object>();
+              var metadata = new HashMap<String, String>();
               metadata.put("filename", feature.filename());
               metadata.put("label", feature.label());
-              metadata.put("confidence", feature.confidence());
+              metadata.put("confidence", Double.toString(feature.confidence()));
               polygon.setUserData(metadata);
               return polygon;
             })

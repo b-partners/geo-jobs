@@ -10,12 +10,14 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.geojson.feature.FeatureJSON;
 import org.locationtech.jts.geom.Polygon;
 
 public final class LatLonLinesContinuer extends LinesContinuer<LatLonPolygon> {
+  private static final String DEFAULT_ROUTE_TYPE = "line";
 
   private final TiledLinesContinuer tiledLinesContinuer;
 
@@ -42,7 +44,13 @@ public final class LatLonLinesContinuer extends LinesContinuer<LatLonPolygon> {
       try (var featuresIterator = featureCollection.features()) {
         while (featuresIterator.hasNext()) {
           SimpleFeature feature = (SimpleFeature) featuresIterator.next();
-          latLonPolygons.add(new LatLonPolygon((Polygon) feature.getDefaultGeometry()));
+          var polygon = (Polygon) feature.getDefaultGeometry();
+          var label =
+              feature.getProperty("label") == null
+                  ? DEFAULT_ROUTE_TYPE
+                  : feature.getProperty("label").getValue();
+          polygon.setUserData(Map.of("label", label));
+          latLonPolygons.add(new LatLonPolygon(polygon));
         }
       }
     } catch (IOException e) {

@@ -42,7 +42,10 @@ public final class TiledLinesContinuer extends LinesContinuer<TiledPolygon> {
     var continuedWithOffset =
         new RoutesContinuation(routessWithOffset, routesContinuationConf).continued();
     return continuedWithOffset.stream()
-        .map(pWithOffset -> new TiledPolygon(pWithOffset, originTile, tilingConf))
+        .map(
+            pWithOffset ->
+                new TiledPolygon(
+                    pWithOffset, (RouteType) pWithOffset.getUserData(), originTile, tilingConf))
         .collect(toSet());
   }
 
@@ -50,9 +53,12 @@ public final class TiledLinesContinuer extends LinesContinuer<TiledPolygon> {
     var imgSize = tilingConf.imgSize();
     var xFactor = currentTile.x() - originTile.x();
     var yFactor = currentTile.y() - originTile.y();
-    return geometryFactory.createPolygon(
-        Arrays.stream(p.polygon().getCoordinates())
-            .map(c -> new Coordinate(c.x + xFactor * imgSize, c.y + yFactor * imgSize))
-            .toArray(Coordinate[]::new));
+    var polygon =
+        geometryFactory.createPolygon(
+            Arrays.stream(p.polygon().getCoordinates())
+                .map(c -> new Coordinate(c.x + xFactor * imgSize, c.y + yFactor * imgSize))
+                .toArray(Coordinate[]::new));
+    polygon.setUserData(p.type());
+    return polygon;
   }
 }
