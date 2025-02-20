@@ -25,7 +25,9 @@ import java.util.Set;
 import javax.imageio.ImageIO;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Polygon;
+import org.springframework.test.context.ActiveProfiles;
 
+@ActiveProfiles("local")
 class RoutesContinuationTest {
 
   PolygonProvider rondPointPolygonProvider =

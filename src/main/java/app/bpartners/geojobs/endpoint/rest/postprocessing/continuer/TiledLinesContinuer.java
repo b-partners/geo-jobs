@@ -33,11 +33,7 @@ public final class TiledLinesContinuer extends LinesContinuer<TiledPolygon> {
     var originTile = new ArrayList<>(polygons).getFirst().originTile();
     var routessWithOffset =
         polygons.stream()
-            .map(
-                p ->
-                    new Route(
-                        withOffset(p, originTile, p.originTile()),
-                        RouteType.road /*TODO(routeType)*/))
+            .map(p -> new Route(withOffset(p, originTile, p.originTile()), p.type()))
             .collect(toSet());
     var continuedWithOffset =
         new RoutesContinuation(routessWithOffset, routesContinuationConf).continued();
