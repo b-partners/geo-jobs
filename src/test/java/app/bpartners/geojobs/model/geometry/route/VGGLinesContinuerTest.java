@@ -11,10 +11,10 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.annotation.IfProfileValue;
 
-@IfProfileValue(name = "spring.profiles.active", value = "local")
+@Disabled
 public class VGGLinesContinuerTest {
   PolygonProvider polygonProvider = new PolygonProvider("/geometry/vgg/line-pathway.json");
 

@@ -5,7 +5,9 @@ import static java.util.concurrent.Executors.newFixedThreadPool;
 import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon;
+import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.model.geometry.IntXY;
+import app.bpartners.geojobs.model.geometry.route.RoutesContinuationConf;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -16,9 +18,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
-import lombok.AllArgsConstructor;
 
-@AllArgsConstructor
 public final class ParallelTiledLinesContinuer extends LinesContinuer<TiledPolygon> {
   private final TiledLinesContinuer tiledLinesContinuer;
 
@@ -27,6 +27,14 @@ public final class ParallelTiledLinesContinuer extends LinesContinuer<TiledPolyg
 
   private final ExecutorService executorService =
       newFixedThreadPool(getRuntime().availableProcessors());
+
+  public ParallelTiledLinesContinuer(
+      RoutesContinuationConf continuationConf,
+      TilingConf tilingConf,
+      int neighbourhoodTileDistance) {
+    this.tiledLinesContinuer = new TiledLinesContinuer(continuationConf, tilingConf);
+    this.neighbourhoodTileDistance = neighbourhoodTileDistance;
+  }
 
   @Override
   public Set<TiledPolygon> apply(Set<TiledPolygon> polygons) {

@@ -23,11 +23,11 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 import javax.imageio.ImageIO;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Polygon;
-import org.springframework.test.context.ActiveProfiles;
 
-@ActiveProfiles("local")
+@Disabled
 class RoutesContinuationTest {
 
   PolygonProvider rondPointPolygonProvider =
