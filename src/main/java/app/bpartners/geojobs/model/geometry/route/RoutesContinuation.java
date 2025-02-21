@@ -49,15 +49,18 @@ public class RoutesContinuation {
   }
 
   private Set<Polygon> pretty(Set<Polygon> unified) {
-    return unified.stream()
-        .map(
-            p -> {
-              var prettyP =
-                  (Polygon) DouglasPeuckerSimplifier.simplify(p, prettyConf().dpbThreshold());
-              prettyP.setUserData(p.getUserData());
-              return prettyP;
-            })
-        .collect(toSet());
+    return unified.stream().map(this::simplify).collect(toSet());
+  }
+
+  private Polygon simplify(Polygon p) {
+    try {
+      var prettyP = (Polygon) DouglasPeuckerSimplifier.simplify(p, prettyConf().dpbThreshold());
+      prettyP.setUserData(p.getUserData());
+      return prettyP;
+    } catch (Exception e) {
+      log.error(String.format("Error simplifying polygon=%s", p), e);
+      return p;
+    }
   }
 
   private Set<Polygon> continuations(Set<OrientedQuadrilateral> abstractContinuations) {
