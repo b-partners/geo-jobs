@@ -6,16 +6,15 @@ import app.bpartners.geojobs.model.geometry.quadrilateral.model.OrientedQuadrila
 import java.util.Set;
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import org.locationtech.jts.geom.Polygon;
 
 @Accessors(fluent = true)
 @Getter
 public class AbstractRoute {
-  private final Polygon route;
+  private final Route route;
   private final AlphaConf alphaConf;
   private final Set<OrientedQuadrilateral> abstraction;
 
-  public AbstractRoute(Polygon route, AlphaConf alphaConf) {
+  public AbstractRoute(Route route, AlphaConf alphaConf) {
     this.route = route;
     this.alphaConf = alphaConf;
     this.abstraction = new Alpha(route, alphaConf).get();

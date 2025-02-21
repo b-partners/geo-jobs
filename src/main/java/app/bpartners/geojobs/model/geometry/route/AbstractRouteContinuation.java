@@ -65,11 +65,11 @@ public class AbstractRouteContinuation {
       return Optional.empty();
     }
 
-    var res = r1.route();
+    var res = r1.route().polygon();
     for (var oq : oqList) {
       res = (Polygon) res.union(oq.quadrilateral().polygon().buffer(1 /*TODO*/));
     }
-    res = (Polygon) res.union(r2.route());
+    res = (Polygon) res.union(r2.route().polygon());
     return Optional.of(res);
   }
 }

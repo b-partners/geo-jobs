@@ -1,6 +1,9 @@
 package app.bpartners.geojobs.model.geometry.quadrilateral.model;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
+import static app.bpartners.geojobs.model.geometry.quadrilateral.model.ContinuationOrientation.lengthOnly;
+import static app.bpartners.geojobs.model.geometry.quadrilateral.model.ContinuationOrientation.lengthOrWidth;
+import static java.lang.Math.PI;
 
 import app.bpartners.geojobs.model.geometry.HaveAnglesSameDirection;
 import app.bpartners.geojobs.model.geometry.IntXY;
@@ -11,6 +14,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import javax.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
 
@@ -92,7 +96,8 @@ public record OrientedQuadrilateral(
     return switch (continuationOrientation) {
       case lengthOnly ->
           switch (that.continuationOrientation) {
-            case lengthOnly, lengthOrWidth -> hasContinuableDirection(that, continuationConf);
+            case lengthOnly -> hasContinuableDirection(that, continuationConf, lengthOnly);
+            case lengthOrWidth -> hasContinuableDirection(that, continuationConf, lengthOrWidth);
           };
       case lengthOrWidth ->
           switch (that.continuationOrientation) {
@@ -103,7 +108,9 @@ public record OrientedQuadrilateral(
   }
 
   private boolean hasContinuableDirection(
-      OrientedQuadrilateral that, ContinuationConf continuationConf) {
+      OrientedQuadrilateral that,
+      ContinuationConf continuationConf,
+      ContinuationOrientation orientation) {
     var twoShortestBetween = getTwoSortestBetween(that);
     var shortestBetween1 = twoShortestBetween.first();
     var shortestBetween2 = twoShortestBetween.second();
@@ -112,27 +119,34 @@ public record OrientedQuadrilateral(
             || that.areShortestBetweenContinuable(
                 shortestBetween1, shortestBetween2, continuationConf);
 
-    var directionThreshold = directionThreshold(continuationConf, shortestBetween1);
+    var directionThreshold = directionThreshold(continuationConf, shortestBetween1, orientation);
     var haveAnglesSameDirection = new HaveAnglesSameDirection(directionThreshold);
     return haveAnglesSameDirection.test(quadrilateral.angle(), that.quadrilateral.angle())
         && areShortestBetweenContinuable;
   }
 
   private static double directionThreshold(
-      ContinuationConf continuationConf, LineInt shortestBetween) {
+      ContinuationConf continuationConf,
+      LineInt shortestBetween,
+      @Nullable ContinuationOrientation orientation) {
     double minDirectionThreshold = continuationConf.minDirectionThreshold();
+    double maxDirectionThreshold =
+        lengthOrWidth.equals(orientation)
+            ? PI / 2
+            : continuationConf
+                .maxDirectionThreshold(); // PI/2 because the lines and the pathway are nearly
+    // perpendicular
     var directionRatio = 1 - shortestBetween.length() / continuationConf.distanceThreshold();
-    return minDirectionThreshold
-        + (continuationConf.maxDirectionThreshold() - minDirectionThreshold) * directionRatio;
+    return minDirectionThreshold + (maxDirectionThreshold - minDirectionThreshold) * directionRatio;
   }
 
   private boolean areShortestBetweenContinuable(
       LineInt shortestBetween1, LineInt shortestBetween2, ContinuationConf continuationConf) {
 
-    var directionThreshold1 = directionThreshold(continuationConf, shortestBetween1);
+    var directionThreshold1 = directionThreshold(continuationConf, shortestBetween1, null);
     var haveAnglesSameDirection1 = new HaveAnglesSameDirection(directionThreshold1);
 
-    var directionThreshold2 = directionThreshold(continuationConf, shortestBetween2);
+    var directionThreshold2 = directionThreshold(continuationConf, shortestBetween2, null);
     var haveAnglesSameDirection2 = new HaveAnglesSameDirection(directionThreshold2);
 
     return haveAnglesSameDirection1.test(quadrilateral.angle(), shortestBetween1.angle())

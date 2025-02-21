@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.endpoint.rest.postprocessing.model;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
+import static app.bpartners.geojobs.model.geometry.route.RouteType.routeTypeFrom;
 import static java.lang.Math.PI;
 import static java.lang.Math.cos;
 import static java.lang.Math.floor;
@@ -14,6 +15,7 @@ import static java.util.stream.Collectors.toSet;
 import app.bpartners.geojobs.model.geometry.IntXY;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.geotools.geometry.Position2D;
 import org.locationtech.jts.geom.Coordinate;
@@ -23,8 +25,11 @@ import org.locationtech.jts.geom.Polygon;
 @Slf4j
 public record LatLonPolygon(Polygon polygon) {
   public TiledPolygon tiledPolygon(TilingConf tilingConf) {
+    Map<String, String> userData = (Map) polygon.getUserData();
+    var label = userData.get("label");
     var originXY = uniqueOrigin(tilingConf);
-    return new TiledPolygon(toPixelPolygon(polygon, tilingConf, originXY), originXY, tilingConf);
+    return new TiledPolygon(
+        toPixelPolygon(polygon, tilingConf, originXY), routeTypeFrom(label), originXY, tilingConf);
   }
 
   private IntXY uniqueOrigin(TilingConf tilingConf) {

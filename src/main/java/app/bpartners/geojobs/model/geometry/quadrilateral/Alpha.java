@@ -1,12 +1,13 @@
 package app.bpartners.geojobs.model.geometry.quadrilateral;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
-import static app.bpartners.geojobs.model.geometry.quadrilateral.model.ContinuationOrientation.lengthOnly;
 
 import app.bpartners.geojobs.model.geometry.GeometryDiff;
 import app.bpartners.geojobs.model.geometry.polygon.MultiPolygonUnion;
 import app.bpartners.geojobs.model.geometry.quadrilateral.model.AlphaConf;
+import app.bpartners.geojobs.model.geometry.quadrilateral.model.ContinuationOrientation;
 import app.bpartners.geojobs.model.geometry.quadrilateral.model.OrientedQuadrilateral;
+import app.bpartners.geojobs.model.geometry.route.Route;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -22,19 +23,22 @@ import org.locationtech.jts.geom.Polygon;
 public class Alpha implements Supplier<Set<OrientedQuadrilateral>> {
 
   private final MultiPolygon p;
+  private final ContinuationOrientation continuationOrientation;
   private final AlphaConf conf;
   private final Set<OrientedQuadrilateral> oqSet;
 
-  public Alpha(Polygon p, AlphaConf conf) {
-    var multipolygon = geometryFactory.createMultiPolygon(new Polygon[] {p});
+  public Alpha(Route route, AlphaConf conf) {
+    var multipolygon = geometryFactory.createMultiPolygon(new Polygon[] {route.polygon()});
     this.p = multipolygon;
+    this.continuationOrientation = route.type().continuationOrientation();
     this.conf = conf;
-    oqSet = oqSet(multipolygon, conf);
+    oqSet = oqSet(multipolygon, continuationOrientation, conf);
   }
 
-  private static Set<OrientedQuadrilateral> oqSet(MultiPolygon p, AlphaConf conf) {
+  private static Set<OrientedQuadrilateral> oqSet(
+      MultiPolygon p, ContinuationOrientation continuationOrientation, AlphaConf conf) {
     try {
-      return fallibleAplha(p, conf);
+      return fallibleAlpha(p, continuationOrientation, conf);
     } catch (Exception e) {
       log.error(String.format("Alpha failed: polygon=%s", p), e);
       return Set.of();
@@ -46,19 +50,15 @@ public class Alpha implements Supplier<Set<OrientedQuadrilateral>> {
     return oqSet;
   }
 
-  private static Set<OrientedQuadrilateral> fallibleAplha(MultiPolygon p, AlphaConf conf) {
+  private static Set<OrientedQuadrilateral> fallibleAlpha(
+      MultiPolygon p, ContinuationOrientation continuationOrientation, AlphaConf conf) {
     Set<OrientedQuadrilateral> oqSet = new HashSet<>();
 
     var pMinus = p;
     var unionOf_obbInterP = geometryFactory.createMultiPolygon();
     do {
       var subAlpha = new SubAlpha(pMinus);
-      oqSet.add(
-          // For now, all orientations are on length
-          // But later on, considering permitting {length, width} to allow
-          // continuation both on length and width for small enough,
-          // not reliable enough quadrilateral
-          new OrientedQuadrilateral(subAlpha.get(), lengthOnly));
+      oqSet.add(new OrientedQuadrilateral(subAlpha.get(), continuationOrientation));
       unionOf_obbInterP = new MultiPolygonUnion().apply(unionOf_obbInterP, subAlpha.obb_inter_p());
       pMinus = new GeometryDiff(conf.minAbstractArea()).apply(p, unionOf_obbInterP);
     } while (unionOf_obbInterP.getArea() / p.getArea() < conf.minCoverageOfAbstractedArea());

@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.model.geometry;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
+import static app.bpartners.geojobs.model.geometry.route.RouteType.routeTypeFrom;
 
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
@@ -21,14 +22,15 @@ public class PolygonWithOffsetToTiled implements Function<Polygon, TiledPolygon>
 
   @Override
   public TiledPolygon apply(Polygon p) {
-    return new TiledPolygon(unapplyOffset(p), origin, tilingConf);
+    Map<String, String> userData = (Map) p.getUserData();
+    var label = userData.get("label");
+    var tileXY = tileXY(userData.get("filename"));
+    return new TiledPolygon(unapplyOffset(p, tileXY), routeTypeFrom(label), origin, tilingConf);
   }
 
-  private Polygon unapplyOffset(Polygon p) {
+  private Polygon unapplyOffset(Polygon p, IntXY tileXY) {
     var imgSize = tilingConf.imgSize();
     var imgSizeXY = new IntXY(imgSize, imgSize);
-    Map<String, String> userData = (Map) p.getUserData();
-    var tileXY = tileXY(userData.get("filename"));
     return geometryFactory.createPolygon(
         Arrays.stream(p.getCoordinates())
             .map(c -> FeatureListWithOffset.unapplyOffset(c, tileXY, origin, imgSizeXY))
