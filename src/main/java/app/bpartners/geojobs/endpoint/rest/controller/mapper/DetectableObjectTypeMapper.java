@@ -61,7 +61,11 @@ public class DetectableObjectTypeMapper {
       case HUMIDITE -> DetectableObjectType.HUMIDITE;
       case RISQUE_FEU -> DetectableObjectType.RISQUE_FEU;
       case VELUX -> DetectableObjectType.VELUX;
-      default -> throw new NotImplementedException("Unknown detectable object type " + domain);
+      case BATI_TUILES -> DetectableObjectType.BATI_TUILES;
+      case PARKING -> DetectableObjectType.PARKING;
+      case BATI_BETON -> DetectableObjectType.BATI_BETON;
+      case BATI_AUTRES -> DetectableObjectType.BATI_AUTRES;
+      case BATI_ARDOISE -> DetectableObjectType.BATI_ARDOISE;
     };
   }
 
