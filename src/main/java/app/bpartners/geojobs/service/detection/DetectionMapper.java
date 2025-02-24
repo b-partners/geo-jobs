@@ -6,14 +6,7 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
 import static app.bpartners.geojobs.model.CustomObjectMapper.objectMapper;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.ARBRE;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.ESPACE_VERT;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.LINE;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.PANNEAU_PHOTOVOLTAIQUE;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.PASSAGE_PIETON;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.PISCINE;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.TROTTOIR;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static app.bpartners.geojobs.service.detection.DetectionResponse.REGION_CONFIDENCE_PROPERTY;
@@ -45,6 +38,19 @@ import org.springframework.stereotype.Component;
 @Component
 @AllArgsConstructor
 public class DetectionMapper {
+  public static final String TOITURE_REVETEMENT_STRING_VALUE = "TOITURE_REVETEMENT";
+  public static final String PANNEAU_PHOTOVOLTAIQUE_STRING_VALUE = "PANNEAU_PHOTOVOLTAIQUE";
+  public static final String ARBRE_STRING_VALUE = "ARBRE";
+  public static final String PASSAGE_PIETON_STRING_VALUE = "PASSAGE_PIETON";
+  public static final String PISCINE_STRING_VALUE = "PISCINE";
+  public static final String BATI_TUILES_STRING_VALUE = "BATI_TUILES";
+  public static final String BATI_BETON_STRING_VALUE = "BATI_BETON";
+  public static final String BATI_ARDOISE_STRING_VALUE = "BATI_ARDOISE";
+  public static final String BATI_AUTRES_STRING_VALUE = "BATI_AUTRES";
+  public static final String LINE_STRING_VALUE = "LINE";
+  public static final String TROTTOIR_STRING_VALUE = "TROTTOIR";
+  public static final String PARKING_STRING_VALUE = "PARKING";
+  public static final String ESPACE_VERT_STRING_VALUE = "ESPACE_VERT";
   private final TileValidator tileValidator;
 
   public MachineDetectedTile toDetectedTile(
@@ -107,19 +113,20 @@ public class DetectionMapper {
 
   private DetectableType toDetectableType(String label) {
     return switch (label.toUpperCase()) {
-      case "ROOF", "TOITURE_REVETEMENT" -> DetectableType.TOITURE_REVETEMENT;
-      case "SOLAR_PANEL", "PANNEAU_PHOTOVOLTAIQUE" -> DetectableType.PANNEAU_PHOTOVOLTAIQUE;
-      case "TREE", "ARBRE" -> DetectableType.ARBRE;
-      case "PATHWAY", "PASSAGE_PIETON" -> DetectableType.PASSAGE_PIETON;
-      case "POOL", "PISCINE" -> DetectableType.PISCINE;
-      case "BATI_TUILES" -> DetectableType.BATI_TUILES;
-      case "BATI_BETON" -> DetectableType.BATI_BETON;
-      case "BATI_ARDOISE" -> DetectableType.BATI_ARDOISE;
-      case "BATI_AUTRES" -> DetectableType.BATI_AUTRES;
-      case "LINE" -> DetectableType.LINE;
-      case "TROTTOIR" -> DetectableType.TROTTOIR;
-      case "PARKING" -> DetectableType.PARKING;
-      case "ESPACE_VERT" -> DetectableType.ESPACE_VERT;
+      case "ROOF", TOITURE_REVETEMENT_STRING_VALUE -> DetectableType.TOITURE_REVETEMENT;
+      case "SOLAR_PANEL", PANNEAU_PHOTOVOLTAIQUE_STRING_VALUE ->
+          DetectableType.PANNEAU_PHOTOVOLTAIQUE;
+      case "TREE", ARBRE_STRING_VALUE -> DetectableType.ARBRE;
+      case "PATHWAY", PASSAGE_PIETON_STRING_VALUE -> DetectableType.PASSAGE_PIETON;
+      case "POOL", PISCINE_STRING_VALUE -> DetectableType.PISCINE;
+      case BATI_TUILES_STRING_VALUE -> DetectableType.BATI_TUILES;
+      case BATI_BETON_STRING_VALUE -> DetectableType.BATI_BETON;
+      case BATI_ARDOISE_STRING_VALUE -> DetectableType.BATI_ARDOISE;
+      case BATI_AUTRES_STRING_VALUE -> DetectableType.BATI_AUTRES;
+      case LINE_STRING_VALUE -> DetectableType.LINE;
+      case TROTTOIR_STRING_VALUE -> DetectableType.TROTTOIR;
+      case PARKING_STRING_VALUE -> DetectableType.PARKING;
+      case ESPACE_VERT_STRING_VALUE -> DetectableType.ESPACE_VERT;
       default -> throw new IllegalStateException("Unexpected value: " + label.toLowerCase());
     };
   }
@@ -219,14 +226,19 @@ public class DetectionMapper {
       throw new IllegalArgumentException("label.name cannot be null");
     }
     return switch (label.getName().toUpperCase()) {
-      case "TOITURE_REVETEMENT" -> create(objectId, TOITURE_REVETEMENT);
-      case "PANNEAU_PHOTOVOLTAIQUE" -> create(objectId, PANNEAU_PHOTOVOLTAIQUE);
-      case "PISCINE" -> create(objectId, PISCINE);
-      case "ARBRE" -> create(objectId, ARBRE);
-      case "TROTTOIR" -> create(objectId, TROTTOIR);
-      case "PASSAGE_PIETON" -> create(objectId, PASSAGE_PIETON);
-      case "LINE" -> create(objectId, LINE);
-      case "ESPACE_VERT" -> create(objectId, ESPACE_VERT);
+      case TOITURE_REVETEMENT_STRING_VALUE -> create(objectId, TOITURE_REVETEMENT);
+      case PANNEAU_PHOTOVOLTAIQUE_STRING_VALUE -> create(objectId, PANNEAU_PHOTOVOLTAIQUE);
+      case ARBRE_STRING_VALUE -> create(objectId, ARBRE);
+      case PASSAGE_PIETON_STRING_VALUE -> create(objectId, PASSAGE_PIETON);
+      case PISCINE_STRING_VALUE -> create(objectId, PISCINE);
+      case BATI_TUILES_STRING_VALUE -> create(objectId, BATI_TUILES);
+      case BATI_BETON_STRING_VALUE -> create(objectId, BATI_BETON);
+      case BATI_ARDOISE_STRING_VALUE -> create(objectId, BATI_ARDOISE);
+      case BATI_AUTRES_STRING_VALUE -> create(objectId, BATI_AUTRES);
+      case LINE_STRING_VALUE -> create(objectId, LINE);
+      case TROTTOIR_STRING_VALUE -> create(objectId, TROTTOIR);
+      case PARKING_STRING_VALUE -> create(objectId, PARKING);
+      case ESPACE_VERT_STRING_VALUE -> create(objectId, ESPACE_VERT);
       default ->
           throw new IllegalStateException("Unexpected value: " + label.getName().toUpperCase());
     };
