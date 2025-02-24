@@ -6,7 +6,6 @@ import static app.bpartners.geojobs.service.event.DetectionSavedService.computeS
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
-import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
 import app.bpartners.geojobs.endpoint.rest.model.BPToitureModel;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
@@ -31,7 +30,6 @@ import org.mockito.ArgumentCaptor;
 import org.thymeleaf.context.Context;
 
 class DetectionSavedServiceTest {
-  EventProducer eventProducerMock = mock();
   BucketComponent bucketComponentMock = mock();
   Mailer mailerMock = mock();
   DetectableObjectModelMapper detectableObjectModelMapper = new DetectableObjectModelMapper();
@@ -42,8 +40,7 @@ class DetectionSavedServiceTest {
           mailerMock,
           bucketComponentMock,
           detectableObjectModelMapper,
-          detectionGeoServerParameterModelMapper,
-          eventProducerMock);
+          detectionGeoServerParameterModelMapper);
 
   @SneakyThrows
   @Test
@@ -99,7 +96,6 @@ class DetectionSavedServiceTest {
             attachments);
     assertEquals(expectedMail, actualEmail);
     assertEquals(Duration.ofHours(24L), urlDurationValue);
-    verify(eventProducerMock, only()).accept(any());
   }
 
   @Test

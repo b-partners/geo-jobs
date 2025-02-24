@@ -3,8 +3,6 @@ package app.bpartners.geojobs.service.event;
 import static java.time.Instant.now;
 import static java.util.Objects.requireNonNullElse;
 
-import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.DetectionCreated;
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.mail.Email;
@@ -17,7 +15,6 @@ import app.bpartners.geojobs.template.HTMLTemplateParser;
 import jakarta.mail.internet.InternetAddress;
 import java.io.File;
 import java.time.Duration;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
@@ -35,7 +32,6 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
   private final BucketComponent bucketComponent;
   private final DetectableObjectModelMapper detectableObjectModelMapper;
   private final DetectionGeoServerParameterModelMapper detectionGeoServerParameterModelMapper;
-  private final EventProducer eventProducer;
 
   @SneakyThrows
   @Override
@@ -61,9 +57,6 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
     mailer.accept(
         new Email(
             new InternetAddress("tech@bpartners.app"), cc, bcc, subject, htmlBody, attachments));
-
-    eventProducer.accept(
-        Collections.singleton(DetectionCreated.builder().detection(detection).build()));
   }
 
   @NonNull
