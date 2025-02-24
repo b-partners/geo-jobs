@@ -6,6 +6,7 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.status.ZDJParcelsStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.status.ZDJStatusRecomputingSubmitted;
+import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobSucceeded;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectConfigurationMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionSurfaceUnitMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionTaskMapper;
@@ -41,6 +42,7 @@ import app.bpartners.geojobs.service.ZoneService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -75,6 +77,22 @@ public class ZoneDetectionController {
   private final DetectionAuthorizer detectionAuthorizer;
   private final FileWriter fileWriter;
   private final MediaTypeGuesser mediaTypeGuesser;
+
+  @PostMapping("/detectionJobs/{id}/succeed")
+  public app.bpartners.geojobs.endpoint.rest.model.ZoneDetectionJob succeedJob(
+      @PathVariable String id) {
+    var zoneDetectionJob = service.findById(id);
+    if (zoneDetectionJob.isSucceeded()) {
+      eventProducer.accept(
+          Collections.singleton(ZoneDetectionJobSucceeded.builder().succeededJobId(id).build()));
+      var objectConfigurations =
+          objectConfigurationRepository.findAllByDetectionJobId(zoneDetectionJob.getId()).stream()
+              .map(objectConfigurationMapper::toRest)
+              .toList();
+      return mapper.toRest(zoneDetectionJob, objectConfigurations);
+    }
+    throw new BadRequestException("Zone detection on status : " + zoneDetectionJob.getStatus());
+  }
 
   @GetMapping("/detectionJobs/{id}/recomputedParcelsStatuses")
   public Status getZDJTasksRecomputedStatus(@PathVariable String id) {
