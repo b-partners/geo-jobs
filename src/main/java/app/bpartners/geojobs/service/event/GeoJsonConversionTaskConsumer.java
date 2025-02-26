@@ -19,9 +19,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class GeoJsonConversionTaskConsumer implements Consumer<GeoJsonConversionTask> {
@@ -110,6 +112,7 @@ public class GeoJsonConversionTaskConsumer implements Consumer<GeoJsonConversion
                           .tile(detectedTile.getTile())
                           .detectedObjects(detectedTile.getDetectedObjects())
                           .build();
+                  log.debug("debug detected tile: {}", baseDetectedTile);
                   if (!hasEmptyFeatureOrGeometryNull(baseDetectedTile)) {
                     return DetectedTile.builder()
                         .tile(detectedTile.getTile())
