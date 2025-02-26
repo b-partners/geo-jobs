@@ -18,33 +18,34 @@ public class GeoJsonMapper {
   public List<GeoJson.GeoFeature> toGeoFeatures(
       int xTile, int yTile, int zoom, int imageWidth, List<DetectedObject> detectedObjects) {
     var geoFeatures = new ArrayList<GeoJson.GeoFeature>();
-    detectedObjects.forEach(
-        object -> {
-          var feature = object.getFeature();
-          var geometry = feature.getGeometry();
-          if (geometry == null) {
-            throw new IllegalArgumentException(
-                "Geometry must not be null for detectedObject=" + object);
-          }
-          var actualGeometryInstance = geometry.getActualInstance();
-          if (actualGeometryInstance.getClass().equals(MultiPolygon.class)) {
-            var multiPolygon = (MultiPolygon) actualGeometryInstance;
-            if (multiPolygon.getCoordinates() == null) {
-              throw new IllegalArgumentException("Multipolygon coordinates should not be null");
-            }
-            geoFeatures.add(
-                mapToFeature(
-                    xTile, yTile, zoom, imageWidth, object, multiPolygon.getCoordinates()));
-          } else {
-            throw new NotImplementedException(
-                "Only MultiPolygon geometry is supported for now but actual geometry class : "
-                    + geometry.getActualInstance().getClass()
-                    + " for detectedObject(id="
-                    + object.getId()
-                    + ", type="
-                    + object.getDetectedObjectType().getDetectableType());
-          }
-        });
+    detectedObjects.stream()
+        .filter(
+            detectedObject ->
+                detectedObject.getFeature() != null
+                    && detectedObject.getFeature().getGeometry() != null)
+        .forEach(
+            object -> {
+              var feature = object.getFeature();
+              var geometry = feature.getGeometry();
+              var actualGeometryInstance = geometry.getActualInstance();
+              if (actualGeometryInstance.getClass().equals(MultiPolygon.class)) {
+                var multiPolygon = (MultiPolygon) actualGeometryInstance;
+                if (multiPolygon.getCoordinates() == null) {
+                  throw new IllegalArgumentException("Multipolygon coordinates should not be null");
+                }
+                geoFeatures.add(
+                    mapToFeature(
+                        xTile, yTile, zoom, imageWidth, object, multiPolygon.getCoordinates()));
+              } else {
+                throw new NotImplementedException(
+                    "Only MultiPolygon geometry is supported for now but actual geometry class : "
+                        + geometry.getActualInstance().getClass()
+                        + " for detectedObject(id="
+                        + object.getId()
+                        + ", type="
+                        + object.getDetectedObjectType().getDetectableType());
+              }
+            });
     return geoFeatures;
   }
 
