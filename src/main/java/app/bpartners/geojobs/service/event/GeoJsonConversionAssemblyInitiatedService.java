@@ -6,6 +6,7 @@ import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionAssemblyInitiated;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.GeoJsonConversionJobRepository;
 import app.bpartners.geojobs.repository.GeoJsonConversionTaskRepository;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
@@ -22,6 +23,7 @@ public class GeoJsonConversionAssemblyInitiatedService
   private final BucketComponent bucketComponent;
   private final FileWriter fileWriter;
   private final ZoneDetectionJobService zoneDetectionJobService;
+  private final DetectionRepository detectionRepository;
 
   @Override
   public void accept(GeoJsonConversionAssemblyInitiated event) {
@@ -42,7 +44,12 @@ public class GeoJsonConversionAssemblyInitiatedService
 
     bucketComponent.upload(combinedConvertedGeoJsonFile, combinedFileKey);
 
-    geoJsonConversionJobRepository.save(
-        geoJsonConversionJob.toBuilder().fileKey(combinedFileKey).build());
+    var savedConversionJob =
+        geoJsonConversionJobRepository.save(
+            geoJsonConversionJob.toBuilder().fileKey(combinedFileKey).build());
+
+    var detection = detectionRepository.findByZdjId(zoneDetectionJob.getId()).orElseThrow();
+    detectionRepository.save(
+        detection.toBuilder().geojsonS3FileKey(savedConversionJob.getFileKey()).build());
   }
 }
