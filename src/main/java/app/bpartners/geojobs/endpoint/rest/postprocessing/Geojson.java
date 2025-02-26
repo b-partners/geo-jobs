@@ -1,11 +1,16 @@
 package app.bpartners.geojobs.endpoint.rest.postprocessing;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
+import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -87,6 +92,15 @@ public class Geojson {
     try {
       return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(geoJson);
     } catch (JsonProcessingException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public void saveAsFile(String outputFile) {
+    try {
+      Files.write(
+          new File(outputFile).toPath(), this.stringValue.getBytes(), CREATE, TRUNCATE_EXISTING);
+    } catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
