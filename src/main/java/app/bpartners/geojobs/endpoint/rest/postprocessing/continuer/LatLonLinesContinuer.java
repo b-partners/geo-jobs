@@ -14,24 +14,28 @@ import java.util.Map;
 import java.util.Set;
 import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.geojson.feature.FeatureJSON;
+import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
 
 public final class LatLonLinesContinuer extends LinesContinuer<LatLonPolygon> {
   private static final String DEFAULT_ROUTE_TYPE = "line";
 
-  private final TiledLinesContinuer tiledLinesContinuer;
+  private final ParallelTiledLinesContinuer parallelTiledLinesContinuer;
 
   public LatLonLinesContinuer(
-      RoutesContinuationConf routesContinuationConf, TilingConf tilingConf) {
-    this.tiledLinesContinuer = new TiledLinesContinuer(routesContinuationConf, tilingConf);
+      RoutesContinuationConf routesContinuationConf,
+      TilingConf tilingConf,
+      int neighboorHoodThreshold) {
+    this.parallelTiledLinesContinuer =
+        new ParallelTiledLinesContinuer(routesContinuationConf, tilingConf, neighboorHoodThreshold);
   }
 
   @Override
   public Set<LatLonPolygon> apply(Set<LatLonPolygon> latLonPolygons) {
-    var tilingConf = tiledLinesContinuer.tilingConf();
+    var tilingConf = parallelTiledLinesContinuer.getTiledLinesContinuer().tilingConf();
     var tiledPolygons =
         latLonPolygons.stream().map(p -> p.tiledPolygon(tilingConf)).collect(toSet());
-    var continuedTiledPolygons = tiledLinesContinuer.apply(tiledPolygons);
+    var continuedTiledPolygons = parallelTiledLinesContinuer.apply(tiledPolygons);
     return continuedTiledPolygons.stream().map(TiledPolygon::latLonPolygon).collect(toSet());
   }
 
@@ -44,7 +48,17 @@ public final class LatLonLinesContinuer extends LinesContinuer<LatLonPolygon> {
       try (var featuresIterator = featureCollection.features()) {
         while (featuresIterator.hasNext()) {
           SimpleFeature feature = (SimpleFeature) featuresIterator.next();
-          var polygon = (Polygon) feature.getDefaultGeometry();
+          Polygon polygon;
+          try {
+            polygon = (Polygon) feature.getDefaultGeometry();
+          } catch (ClassCastException e) {
+            var multiPolygon = (MultiPolygon) feature.getDefaultGeometry();
+            if (multiPolygon.getNumGeometries() != 1) {
+              throw new RuntimeException(
+                  "Only mulitpolygons with single polygon supported but got: " + multiPolygon);
+            }
+            polygon = (Polygon) multiPolygon.getGeometryN(0);
+          }
           var label =
               feature.getProperty("label") == null
                   ? DEFAULT_ROUTE_TYPE

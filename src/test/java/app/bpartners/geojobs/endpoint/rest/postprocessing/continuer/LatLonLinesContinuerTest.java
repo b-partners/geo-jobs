@@ -26,7 +26,7 @@ class LatLonLinesContinuerTest {
 
     var routesContinuationConf = routesContinuationConf();
     var tilingConf = new TilingConf(17, 1_024);
-    var latLonLinesContinuer = new LatLonLinesContinuer(routesContinuationConf, tilingConf);
+    var latLonLinesContinuer = new LatLonLinesContinuer(routesContinuationConf, tilingConf, 10);
     var continued = latLonLinesContinuer.apply(ivandryGeojson);
 
     var expectedURI =
