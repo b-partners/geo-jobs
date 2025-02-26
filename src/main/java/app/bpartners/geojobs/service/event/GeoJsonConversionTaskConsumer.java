@@ -10,11 +10,13 @@ import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.GeoJsonConversionJobRepository;
 import app.bpartners.geojobs.repository.HumanDetectedTileRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
+import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionTask;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConverter;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -80,11 +82,21 @@ public class GeoJsonConversionTaskConsumer implements Consumer<GeoJsonConversion
             .findAllByZdjJobId(zoneDetectionJobId, PageRequest.of(pageNumber, MAX_SIZE))
             .stream()
             .map(
-                detectedTile ->
-                    DetectedTile.builder()
+                detectedTile -> {
+                  var baseDetectedTile =
+                      DetectedTile.builder()
+                          .tile(detectedTile.getTile())
+                          .detectedObjects(detectedTile.getDetectedObjects())
+                          .build();
+                  if (!hasEmptyFeatureOrGeometryNull(baseDetectedTile)) {
+                    return DetectedTile.builder()
                         .tile(detectedTile.getTile())
                         .detectedObjects(detectedTile.getDetectedObjects())
-                        .build())
+                        .build();
+                  }
+                  return null;
+                })
+            .filter(Objects::nonNull)
             .toList();
       }
       case HUMAN -> {
@@ -92,15 +104,36 @@ public class GeoJsonConversionTaskConsumer implements Consumer<GeoJsonConversion
             .findAllByJobId(zoneDetectionJobId, PageRequest.of(pageNumber, MAX_SIZE))
             .stream()
             .map(
-                detectedTile ->
-                    DetectedTile.builder()
+                detectedTile -> {
+                  var baseDetectedTile =
+                      DetectedTile.builder()
+                          .tile(detectedTile.getTile())
+                          .detectedObjects(detectedTile.getDetectedObjects())
+                          .build();
+                  if (!hasEmptyFeatureOrGeometryNull(baseDetectedTile)) {
+                    return DetectedTile.builder()
                         .tile(detectedTile.getTile())
                         .detectedObjects(detectedTile.getDetectedObjects())
-                        .build())
+                        .build();
+                  }
+                  return null;
+                })
+            .filter(Objects::nonNull)
             .toList();
       }
       default ->
           throw new IllegalArgumentException("Unknown zoneDetectionType " + zoneDetectionType);
     }
+  }
+
+  private static boolean hasEmptyFeatureOrGeometryNull(DetectedTile detectedTile) {
+    return detectedTile.getDetectedObjects().isEmpty()
+        || detectedTile.getDetectedObjects().stream()
+            .anyMatch(detectedObject -> detectedObject.getFeature() == null)
+        || detectedTile.getDetectedObjects().stream()
+            .map(DetectedObject::getFeature)
+            .toList()
+            .stream()
+            .anyMatch(feature -> feature.getGeometry() == null);
   }
 }
