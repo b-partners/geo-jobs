@@ -10,8 +10,10 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 public class GeoJsonMapper {
 
@@ -27,6 +29,7 @@ public class GeoJsonMapper {
             object -> {
               var feature = object.getFeature();
               var geometry = feature.getGeometry();
+              log.debug("detected object geometry: {}", geometry);
               var actualGeometryInstance = geometry.getActualInstance();
               if (actualGeometryInstance.getClass().equals(MultiPolygon.class)) {
                 var multiPolygon = (MultiPolygon) actualGeometryInstance;
