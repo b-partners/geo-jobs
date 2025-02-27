@@ -64,7 +64,7 @@ public class GeoJsonConversionTaskConsumer implements Consumer<GeoJsonConversion
             + pageNumber
             + GEO_JSON_EXTENSION;
     var geoJson = geoJsonConverter.convert(paginatedDetectedTiles);
-    var geoJsonAsByte = writer.writeAsByte(geoJson);
+    var geoJsonAsByte = writer.writeAsByte(geoJson.getStringValue());
     var geoJsonAsFile =
         writer.write(
             geoJsonAsByte,

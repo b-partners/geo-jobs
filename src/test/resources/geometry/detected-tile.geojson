@@ -1,0 +1,14 @@
+{
+  "features" : [ {
+    "properties" : {
+      "confidence" : "0.9",
+      "label" : "LINE"
+    },
+    "type" : "Feature",
+    "geometry" : {
+      "coordinates" : [ [ [ [ 5.078807026147842, 47.26017169752776 ] ] ] ],
+      "type" : "MultiPolygon"
+    }
+  } ],
+  "type" : "FeatureCollection"
+}

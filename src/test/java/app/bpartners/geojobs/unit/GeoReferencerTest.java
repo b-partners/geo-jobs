@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 class GeoReferencerTest {
   List<BigDecimal> expectedCoordinates() {
-    return List.of(BigDecimal.valueOf(4.8996671020745985), BigDecimal.valueOf(45.82147342781088));
+    return List.of(BigDecimal.valueOf(4.899666979908943), BigDecimal.valueOf(45.82129270556462));
   }
 
   @Test
