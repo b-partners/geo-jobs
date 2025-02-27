@@ -91,10 +91,7 @@ public class GeoJsonConversionTaskConsumer implements Consumer<GeoJsonConversion
                           .detectedObjects(detectedTile.getDetectedObjects())
                           .build();
                   if (!hasEmptyFeatureOrGeometryNull(baseDetectedTile)) {
-                    return DetectedTile.builder()
-                        .tile(detectedTile.getTile())
-                        .detectedObjects(detectedTile.getDetectedObjects())
-                        .build();
+                    return baseDetectedTile;
                   }
                   return null;
                 })

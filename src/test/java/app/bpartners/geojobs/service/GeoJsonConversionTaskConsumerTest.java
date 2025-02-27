@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service;
 
+import static app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.POLYGON;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static org.junit.jupiter.api.Assertions.*;
@@ -14,6 +15,7 @@ import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.GeoJsonConversionJobRepository;
 import app.bpartners.geojobs.repository.HumanDetectedTileRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
+import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.detection.HumanDetectedTile;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
@@ -128,21 +130,66 @@ class GeoJsonConversionTaskConsumerTest {
   private static DetectedTile expectedDetectedTile() {
     return DetectedTile.builder()
         .tile(humanDetectedTile().getTile())
-        .detectedObjects(humanDetectedTile().getDetectedObjects())
+        .detectedObjects(
+            List.of(
+                DetectedObject.builder()
+                    .detectedTileId("detectedTileId")
+                    .computedConfidence(0.9)
+                    .feature(
+                        Feature.builder()
+                            .id("feature_id")
+                            .zoom(20)
+                            .geometry(
+                                Feature.FeatureGeometry.builder()
+                                    .geometryType(POLYGON)
+                                    .actualInstanceStringValue("{}")
+                                    .build())
+                            .build())
+                    .build()))
         .build();
   }
 
   private static HumanDetectedTile humanDetectedTile() {
     return HumanDetectedTile.builder()
         .tile(new Tile())
-        .detectedObjects(List.of(new DetectedObject()))
+        .detectedObjects(
+            List.of(
+                DetectedObject.builder()
+                    .detectedTileId("detectedTileId")
+                    .computedConfidence(0.9)
+                    .feature(
+                        Feature.builder()
+                            .id("feature_id")
+                            .zoom(20)
+                            .geometry(
+                                Feature.FeatureGeometry.builder()
+                                    .geometryType(POLYGON)
+                                    .actualInstanceStringValue("{}")
+                                    .build())
+                            .build())
+                    .build()))
         .build();
   }
 
   private static MachineDetectedTile machineDetectedTile() {
     return MachineDetectedTile.builder()
         .tile(new Tile())
-        .detectedObjects(List.of(new DetectedObject()))
+        .detectedObjects(
+            List.of(
+                DetectedObject.builder()
+                    .detectedTileId("detectedTileId")
+                    .computedConfidence(0.9)
+                    .feature(
+                        Feature.builder()
+                            .id("feature_id")
+                            .zoom(20)
+                            .geometry(
+                                Feature.FeatureGeometry.builder()
+                                    .geometryType(POLYGON)
+                                    .actualInstanceStringValue("{}")
+                                    .build())
+                            .build())
+                    .build()))
         .build();
   }
 }
