@@ -17,15 +17,18 @@ import lombok.extern.slf4j.Slf4j;
 public class VGGLinesContinuer implements Function<VGG, Geojson> {
   private final boolean isZXYDotFiletype;
   private final TilingConf tilingConf;
-  private final TiledLinesContinuer tiledLinesContinuer;
+  private final ParallelTiledLinesContinuer tiledLinesContinuer;
 
   public VGGLinesContinuer(
       RoutesContinuationConf routesContinuationConf,
       TilingConf tilingConf,
+      int neighBoorHoodTileDistance,
       boolean isZXYDotFiletype) {
     this.isZXYDotFiletype = isZXYDotFiletype;
     this.tilingConf = tilingConf;
-    this.tiledLinesContinuer = new TiledLinesContinuer(routesContinuationConf, tilingConf);
+    this.tiledLinesContinuer =
+        new ParallelTiledLinesContinuer(
+            routesContinuationConf, tilingConf, neighBoorHoodTileDistance);
   }
 
   @Override

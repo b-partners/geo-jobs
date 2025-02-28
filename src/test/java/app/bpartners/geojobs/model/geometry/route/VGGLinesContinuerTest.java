@@ -19,7 +19,7 @@ public class VGGLinesContinuerTest {
   PolygonProvider polygonProvider = new PolygonProvider("/geometry/vgg/line-pathway.json");
 
   VGGLinesContinuer subject =
-      new VGGLinesContinuer(routesContinuationConf(), new TilingConf(20, 1_024), false);
+      new VGGLinesContinuer(routesContinuationConf(), new TilingConf(20, 1_024), 10, false);
 
   @Test
   void generate_continued_geojson_from_vgg() throws IOException, URISyntaxException {

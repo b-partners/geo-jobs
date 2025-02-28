@@ -18,9 +18,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
+import lombok.Getter;
 
 public final class ParallelTiledLinesContinuer extends LinesContinuer<TiledPolygon> {
-  private final TiledLinesContinuer tiledLinesContinuer;
+  @Getter private final TiledLinesContinuer tiledLinesContinuer;
 
   private final int neighbourhoodTileDistance;
   // e.g.: if equals 10, then will have 10*10=100 tiles in neighbourhood

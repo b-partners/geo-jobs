@@ -7,10 +7,12 @@ import java.util.HashSet;
 import java.util.Set;
 import lombok.Getter;
 import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Polygon;
 
 @Accessors(fluent = true)
 @Getter
+@Slf4j
 public class UnifiedRoute {
   private final Set<Polygon> toUnify, unified;
   private final UnionConf unionConf;
@@ -24,16 +26,27 @@ public class UnifiedRoute {
   private static Set<Polygon> unify(Set<Polygon> toUnify, UnionConf unionConf) {
     var multiPolygon = geometryFactory.createMultiPolygon();
     for (Polygon polygon : toUnify) {
-      multiPolygon =
-          new MultiPolygonUnion().apply(multiPolygon, (Polygon) polygon.buffer(unionConf.buffer()));
+      var buffered = polygon.buffer(unionConf.buffer());
+      Polygon casted;
+      try {
+        casted = (Polygon) buffered;
+      } catch (Exception e) {
+        log.error("Only mulitpolygons with single polygon supported but got: " + buffered);
+        casted = (Polygon) buffered.getGeometryN(0);
+      }
+      multiPolygon = new MultiPolygonUnion().apply(multiPolygon, casted);
     }
 
     var unified = new HashSet<Polygon>();
     for (int p = 0; p < multiPolygon.getNumGeometries(); p++) {
       var unifiedPolygon = (Polygon) multiPolygon.getGeometryN(p);
       for (Polygon polygon : toUnify) {
-        if (unifiedPolygon.intersects(polygon)) {
-          unifiedPolygon.setUserData(polygon.getUserData());
+        try {
+          if (unifiedPolygon.intersects(polygon)) {
+            unifiedPolygon.setUserData(polygon.getUserData());
+          }
+        } catch (Exception e) {
+          log.error(e.getMessage());
         }
       }
       unified.add(unifiedPolygon);
