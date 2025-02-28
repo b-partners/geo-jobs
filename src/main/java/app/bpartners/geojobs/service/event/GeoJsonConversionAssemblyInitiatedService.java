@@ -48,7 +48,12 @@ public class GeoJsonConversionAssemblyInitiatedService
         geoJsonConversionJobRepository.save(
             geoJsonConversionJob.toBuilder().fileKey(combinedFileKey).build());
 
-    var detection = detectionRepository.findByZdjId(zoneDetectionJob.getId()).orElseThrow();
+    var humanZDJ = zoneDetectionJobService.getHumanZdjFromZdjId(zoneDetectionJob.getId());
+    var machineZDJ = zoneDetectionJobService.getHumanZdjFromZdjId(zoneDetectionJob.getId());
+    var detection =
+        detectionRepository
+            .findByZdjId(humanZDJ.getId())
+            .orElse(detectionRepository.findByZdjId(machineZDJ.getId()).orElseThrow());
     detectionRepository.save(
         detection.toBuilder().geojsonS3FileKey(savedConversionJob.getFileKey()).build());
   }

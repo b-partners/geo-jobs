@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service.detection;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.*;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
+import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
@@ -102,28 +103,40 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
   }
 
   @Transactional
-  public ZoneDetectionJob getHumanZdjFromZdjId(String jobId) {
+  public ZoneDetectionJob getByIdAndDetectionType(
+      String jobId, ZoneDetectionJob.DetectionType detectionType) {
     var zoneDetectionJob =
         repository
             .findById(jobId)
             .orElseThrow(
                 () -> new NotFoundException("ZoneDetectionJob(id=" + jobId + ") not found"));
-    if (zoneDetectionJob.getDetectionType() == HUMAN) {
+    if (zoneDetectionJob.getDetectionType() == detectionType) {
       return zoneDetectionJob;
     }
     var associatedZdj =
         zoneDetectionJobRepository.findAllByZoneTilingJob_Id(
             zoneDetectionJob.getZoneTilingJob().getId());
     return associatedZdj.stream()
-        .filter(job -> job.getDetectionType() == ZoneDetectionJob.DetectionType.HUMAN)
+        .filter(job -> job.getDetectionType() == detectionType)
         .findAny()
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
                     "ZoneDetectionJob(id="
                         + jobId
-                        + ", type=MACHINE) is not associated to any"
-                        + " ZoneDetectionJob.type=HUMAN"));
+                        + " is not associated to any"
+                        + " ZoneDetectionJob.type="
+                        + detectionType));
+  }
+
+  @Transactional
+  public ZoneDetectionJob getMachineZdjFromZdjId(String jobId) {
+    return getByIdAndDetectionType(jobId, MACHINE);
+  }
+
+  @Transactional
+  public ZoneDetectionJob getHumanZdjFromZdjId(String jobId) {
+    return getByIdAndDetectionType(jobId, HUMAN);
   }
 
   public ZoneDetectionJob fireTasks(String jobId) {
