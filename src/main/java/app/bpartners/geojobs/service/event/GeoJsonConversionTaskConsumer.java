@@ -99,11 +99,11 @@ public class GeoJsonConversionTaskConsumer implements Consumer<GeoJsonConversion
             .toList();
       }
       case HUMAN -> {
-          var humanDetectedTiles = humanDetectedTileRepository
-                  .findAllByJobId(zoneDetectionJobId, PageRequest.of(pageNumber, MAX_SIZE));
-          log.debug("debug HumanDetectedTiles.size {}", humanDetectedTiles);
-          return humanDetectedTiles
-            .stream()
+        var humanDetectedTiles =
+            humanDetectedTileRepository.findAllByJobId(
+                zoneDetectionJobId, PageRequest.of(pageNumber, MAX_SIZE));
+        log.debug("debug HumanDetectedTiles.size {}", humanDetectedTiles);
+        return humanDetectedTiles.stream()
             .map(
                 detectedTile -> {
                   var baseDetectedTile =
