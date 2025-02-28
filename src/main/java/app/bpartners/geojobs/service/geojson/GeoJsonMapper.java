@@ -29,7 +29,7 @@ public class GeoJsonMapper {
             object -> {
               var feature = object.getFeature();
               var geometry = feature.getGeometry();
-              log.debug("detected object geometry: {}", geometry);
+              log.info("detected object geometry: {}", geometry);
               var actualGeometryInstance = geometry.getActualInstance();
               if (actualGeometryInstance.getClass().equals(MultiPolygon.class)) {
                 var multiPolygon = (MultiPolygon) actualGeometryInstance;

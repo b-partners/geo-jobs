@@ -33,10 +33,10 @@ public class PolygonExtractor implements Function<DetectedObject, Polygon> {
   public Polygon apply(DetectedObject machineDetectedObject) {
     var geometry = machineDetectedObject.getFeature().getGeometry();
     var actualInstance = geometry.getActualInstance();
-    log.debug("DEBUG detected object instance : {}", actualInstance);
+    log.info("DEBUG detected object instance : {}", actualInstance);
     if (actualInstance.getClass().equals(MultiPolygon.class)) {
       var multiPolygon = (MultiPolygon) actualInstance;
-      log.debug(
+      log.info(
           "DEBUG detected object feature.multiPolygon.coordinates : {}",
           multiPolygon.getCoordinates());
       return multiPolygon.getCoordinates().stream()
@@ -45,7 +45,7 @@ public class PolygonExtractor implements Function<DetectedObject, Polygon> {
                 Polygon points =
                     new Polygon()
                         .points(extractMultipolygonPoints(multipolygonCoordinates).getFirst());
-                log.debug("DEBUG computed points to send to annotator: {}", points.getPoints());
+                log.info("DEBUG computed points to send to annotator: {}", points.getPoints());
                 return points;
               })
           .toList()

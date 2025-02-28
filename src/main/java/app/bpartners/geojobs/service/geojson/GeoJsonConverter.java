@@ -16,7 +16,7 @@ public class GeoJsonConverter implements Converter<List<DetectedTile>, GeoJson> 
 
   @Override
   public GeoJson convert(List<DetectedTile> detectedTiles) {
-    log.debug(
+    log.info(
         "debug detected tiles objects: {}",
         detectedTiles.stream().map(DetectedTile::getDetectedObjects).toList());
     List<GeoJson.GeoFeature> geoFeatures =

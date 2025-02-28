@@ -80,9 +80,11 @@ public class GeoJsonConversionTaskConsumer implements Consumer<GeoJsonConversion
       ZoneDetectionJob.DetectionType zoneDetectionType, String zoneDetectionJobId, int pageNumber) {
     switch (zoneDetectionType) {
       case MACHINE -> {
-        return machineDetectedTileRepository
-            .findAllByZdjJobId(zoneDetectionJobId, PageRequest.of(pageNumber, MAX_SIZE))
-            .stream()
+        var machineDetectedTiles =
+            machineDetectedTileRepository.findAllByZdjJobId(
+                zoneDetectionJobId, PageRequest.of(pageNumber, MAX_SIZE));
+        log.info("debug MachineDetectedTiles.size {}", machineDetectedTiles);
+        return machineDetectedTiles.stream()
             .map(
                 detectedTile -> {
                   var baseDetectedTile =
@@ -90,6 +92,7 @@ public class GeoJsonConversionTaskConsumer implements Consumer<GeoJsonConversion
                           .tile(detectedTile.getTile())
                           .detectedObjects(detectedTile.getDetectedObjects())
                           .build();
+                  log.info("debug detected tile: {}", baseDetectedTile);
                   if (!hasEmptyFeatureOrGeometryNull(baseDetectedTile)) {
                     return baseDetectedTile;
                   }
@@ -102,7 +105,7 @@ public class GeoJsonConversionTaskConsumer implements Consumer<GeoJsonConversion
         var humanDetectedTiles =
             humanDetectedTileRepository.findAllByJobId(
                 zoneDetectionJobId, PageRequest.of(pageNumber, MAX_SIZE));
-        log.debug("debug HumanDetectedTiles.size {}", humanDetectedTiles);
+        log.info("debug HumanDetectedTiles.size {}", humanDetectedTiles);
         return humanDetectedTiles.stream()
             .map(
                 detectedTile -> {
@@ -111,7 +114,7 @@ public class GeoJsonConversionTaskConsumer implements Consumer<GeoJsonConversion
                           .tile(detectedTile.getTile())
                           .detectedObjects(detectedTile.getDetectedObjects())
                           .build();
-                  log.debug("debug detected tile: {}", baseDetectedTile);
+                  log.info("debug detected tile: {}", baseDetectedTile);
                   if (!hasEmptyFeatureOrGeometryNull(baseDetectedTile)) {
                     return DetectedTile.builder()
                         .tile(detectedTile.getTile())
