@@ -276,8 +276,13 @@ public class DetectionMapper {
         .zoom(zoom)
         .geometry(
             Feature.FeatureGeometry.builder()
+                .geometryType(MULTI_POLYGON)
                 .actualInstanceStringValue(
-                    objectMapper().writeValueAsString(new MultiPolygon().coordinates(coordinates)))
+                    objectMapper()
+                        .writeValueAsString(
+                            new MultiPolygon()
+                                .coordinates(coordinates)
+                                .type(MultiPolygon.TypeEnum.MULTI_POLYGON)))
                 .build())
         .build();
   }

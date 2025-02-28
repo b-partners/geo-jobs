@@ -13,6 +13,7 @@ import app.bpartners.gen.annotator.endpoint.rest.model.Annotation;
 import app.bpartners.gen.annotator.endpoint.rest.model.Label;
 import app.bpartners.gen.annotator.endpoint.rest.model.Point;
 import app.bpartners.gen.annotator.endpoint.rest.model.Polygon;
+import app.bpartners.geojobs.endpoint.rest.model.Geometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.repository.model.Feature;
@@ -111,9 +112,13 @@ class DetectionMapperTest {
             .zoom(20)
             .geometry(
                 Feature.FeatureGeometry.builder()
+                    .geometryType(Geometry.TypeEnum.MULTI_POLYGON)
                     .actualInstanceStringValue(
                         objectMapper()
-                            .writeValueAsString(new MultiPolygon().coordinates(coordinates)))
+                            .writeValueAsString(
+                                new MultiPolygon()
+                                    .coordinates(coordinates)
+                                    .type(MultiPolygon.TypeEnum.MULTI_POLYGON)))
                     .build())
             .build());
   }
