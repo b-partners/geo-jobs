@@ -85,10 +85,9 @@ public class GeoJsonConversionJobService
   }
 
   public GeoJsonConversionJob getOrComputeGeoJsonConversionJob(
-      Detection detection, String zoneDetectionJobId) {
+      Detection detection, ZoneDetectionJob zoneDetectionJob) {
     var geoJsonConversionJobs =
-        geoJsonConversionJobRepository.findByZoneDetectionJobId(zoneDetectionJobId);
-    var zoneDetectionJob = zoneDetectionJobService.findById(zoneDetectionJobId);
+        geoJsonConversionJobRepository.findByZoneDetectionJobId(zoneDetectionJob.getId());
     if (!geoJsonConversionJobs.isEmpty()) {
       var geoJsonConversionJob =
           geoJsonConversionJobs.stream()

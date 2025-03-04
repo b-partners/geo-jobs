@@ -58,7 +58,9 @@ class ZoneDetectionJobServiceTest {
           mock(),
           mock(),
           zoneDetectionJobRepositoryMock,
-          taskStatisticRepositoryMock);
+          taskStatisticRepositoryMock,
+          mock(),
+          mock());
 
   @BeforeEach
   void setUp() {

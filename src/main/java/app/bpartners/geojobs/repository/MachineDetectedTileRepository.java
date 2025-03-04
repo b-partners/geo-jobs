@@ -31,4 +31,13 @@ public interface MachineDetectedTileRepository extends JpaRepository<MachineDete
       @Param("zoneDetectionJobId") String zoneDetectionJobId,
       @Param("minConfidenceForDelivery") double minConfidenceForDelivery,
       @Param("isGreater") Boolean isGreater);
+
+  @Query(
+      value =
+          "select * from get_in_doubt_detected_tiles(:zoneDetectionJobId,:minConfidenceForDelivery,"
+              + " true)",
+      nativeQuery = true)
+  Long countInDoubtDetectedTileToDeliveryByZdjJobId(
+      @Param("zoneDetectionJobId") String zoneDetectionJobId,
+      @Param("minConfidenceForDelivery") double minConfidenceForDelivery);
 }

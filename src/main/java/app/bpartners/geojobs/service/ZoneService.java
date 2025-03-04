@@ -242,24 +242,27 @@ public class ZoneService {
       detectionMachineDetectionCreation.apply(detection, zoneTilingJob);
     }
     if (machineZoneDetectionJob.isFinished()) {
-      var humanZoneDetectionJob = zoneDetectionJobService.getByTilingJobId(tilingJobId, HUMAN);
-      processVerificationOrGenerateGeoJson(detection, humanZoneDetectionJob);
+      if (zoneDetectionJobService.countInDoubtDetectedTileToDeliveryById(detectionJobId) == 0L) {
+        processVerificationOrGenerateGeoJson(detection, machineZoneDetectionJob);
+      } else {
+        var humanZoneDetectionJob = zoneDetectionJobService.getByTilingJobId(tilingJobId, HUMAN);
+        processVerificationOrGenerateGeoJson(detection, humanZoneDetectionJob);
+      }
     }
     return detectionMachineDetectionStatisticsComputer.apply(
         detection, machineZoneDetectionJob.getId());
   }
 
   private void processVerificationOrGenerateGeoJson(
-      Detection detection, ZoneDetectionJob humanZoneDetectionJob) {
-    if (!humanZoneDetectionJob.isFinished()) {
+      Detection detection, ZoneDetectionJob zoneDetectionJob) {
+    if (HUMAN.equals(zoneDetectionJob.getDetectionType()) && !zoneDetectionJob.isSucceeded()) {
       eventProducer.accept(
           List.of(
               AnnotationJobVerificationSent.builder()
-                  .humanZdjId(humanZoneDetectionJob.getId())
+                  .humanZdjId(zoneDetectionJob.getId())
                   .build()));
     } else {
-      conversionInitiationService.getOrComputeGeoJsonConversionJob(
-          detection, humanZoneDetectionJob.getId());
+      conversionInitiationService.getOrComputeGeoJsonConversionJob(detection, zoneDetectionJob);
     }
   }
 
