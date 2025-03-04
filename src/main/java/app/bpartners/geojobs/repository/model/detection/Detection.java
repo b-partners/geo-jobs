@@ -100,7 +100,9 @@ public class Detection implements Serializable {
   }
 
   public boolean isStillOnConfiguringStep() {
-    return getMultiPolygonGeoJsonZone() == null || getMultiPolygonGeoJsonZone().isEmpty();
+    return getMultiPolygonGeoJsonZone() == null
+        || getMultiPolygonGeoJsonZone().isEmpty()
+        || getGeoServerProperties() == null;
   }
 
   public boolean isStillOnTilingStep() {

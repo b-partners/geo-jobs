@@ -30,12 +30,7 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneTilingJobMapper;
 import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
-import app.bpartners.geojobs.endpoint.rest.model.CreateDetection;
-import app.bpartners.geojobs.endpoint.rest.model.CreateZoneTilingJob;
-import app.bpartners.geojobs.endpoint.rest.model.Detection;
-import app.bpartners.geojobs.endpoint.rest.model.DetectionStep;
-import app.bpartners.geojobs.endpoint.rest.model.GeoServerProperties;
-import app.bpartners.geojobs.endpoint.rest.model.Status;
+import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
@@ -163,11 +158,35 @@ class ZoneServiceTest {
   }
 
   @Test
+  void admin_role_process_tiling_when_all_data_ok() {
+    var detectionId = randomUUID().toString();
+    var tilingJobId = randomUUID().toString();
+    var createDetection =
+        new CreateDetection()
+            .detectableObjectModel(new DetectableObjectModel(new BPToitureModel()))
+            .geoServerProperties(new GeoServerProperties())
+            .geoJsonZone(featureCreator.defaultFeatures());
+    String communityOwnerId = null;
+    var createdDetectionMock = detectionCreator.create(detectionId, tilingJobId, communityOwnerId);
+    createdDetectionMock.setGeoServerProperties(new GeoServerProperties());
+    createdDetectionMock.setMultiPolygonGeoJsonZone(List.of(new Feature()));
+    setUpAuthorityRoleProcessingMock(detectionId, null, ROLE_ADMIN);
+    when(communityUsedSurfaceServiceMock.persistDetectionWithSurfaceUsage(any(), any()))
+        .thenReturn(createdDetectionMock);
+
+    var actual = subject.processDetection(detectionId, createDetection, communityOwnerId);
+
+    assertEquals(TILING, actual.getStep().getName());
+    assertEquals(Status.ProgressionEnum.PENDING, actual.getStep().getStatus().getProgression());
+    assertEquals(UNKNOWN, actual.getStep().getStatus().getHealth());
+  }
+
+  @Test
   void admin_role_can_process_tiling() {
     var detectionId = randomUUID().toString();
     var detection = detectionCreator.create(detectionId, null, null);
     detection.setGeoServerProperties(new GeoServerProperties());
-    detection.setMultiPolygonGeoJsonZone(List.of());
+    detection.setMultiPolygonGeoJsonZone(List.of(new Feature()));
     var createDetection = new CreateDetection().geoJsonZone(featureCreator.defaultFeatures());
     String communityOwnerId = null;
     setUpAuthorityRoleProcessingMock(detectionId, detection, ROLE_ADMIN);
@@ -255,6 +274,7 @@ class ZoneServiceTest {
     var detectionId = randomUUID().toString();
     var tilingId = randomUUID().toString();
     var detection = detectionCreator.create(detectionId, tilingId, null);
+    detection.setGeoServerProperties(new GeoServerProperties());
     detection.setMultiPolygonGeoJsonZone(List.of(new Feature()));
     setUpAuthorityRoleProcessingMock(detectionId, detection, ROLE_COMMUNITY);
 
@@ -270,6 +290,7 @@ class ZoneServiceTest {
     var detectionId = randomUUID().toString();
     var tilingId = randomUUID().toString();
     var detection = detectionCreator.create(detectionId, tilingId, null);
+    detection.setGeoServerProperties(new GeoServerProperties());
     detection.setMultiPolygonGeoJsonZone(List.of(new Feature()));
     setUpAuthorityRoleProcessingMock(detectionId, detection, ROLE_ADMIN);
 
@@ -286,6 +307,7 @@ class ZoneServiceTest {
     var tilingId = randomUUID().toString();
     var detectionJobId = randomUUID().toString();
     var detection = detectionCreator.create(detectionId, tilingId, detectionJobId);
+    detection.setGeoServerProperties(new GeoServerProperties());
     detection.setMultiPolygonGeoJsonZone(List.of(new Feature()));
     setUpAuthorityRoleProcessingMock(detectionId, detection, ROLE_ADMIN);
     when(zoneDetectionJobServiceMock.findById(detectionJobId))
@@ -312,6 +334,7 @@ class ZoneServiceTest {
     var detectionJobId = randomUUID().toString();
     var detection = detectionCreator.create(detectionId, tilingId, detectionJobId);
     detection.setMultiPolygonGeoJsonZone(List.of(new Feature()));
+    detection.setGeoServerProperties(new GeoServerProperties());
     setUpAuthorityRoleProcessingMock(detectionId, detection, ROLE_ADMIN);
     when(zoneDetectionJobServiceMock.findById(detectionJobId))
         .thenReturn(
@@ -363,10 +386,17 @@ class ZoneServiceTest {
       String detectionId,
       app.bpartners.geojobs.repository.model.detection.Detection detection,
       Authority.Role authorityRole) {
-    if (detectionId != null && detection != null) {
-      when(detectionRepositoryMock.findByEndToEndIdAndCommunityOwnerId(eq(detectionId), any()))
-          .thenReturn(Optional.of(detection));
-      when(detectionRepositoryMock.findById(detectionId)).thenReturn(Optional.of(detection));
+    if (detectionId != null) {
+      if (detection != null) {
+        when(detectionRepositoryMock.findByEndToEndIdAndCommunityOwnerId(eq(detectionId), any()))
+            .thenReturn(Optional.of(detection));
+        when(detectionRepositoryMock.findById(detectionId)).thenReturn(Optional.of(detection));
+      } else {
+        when(detectionRepositoryMock.findById(detectionId)).thenReturn(Optional.empty());
+        when(detectionRepositoryMock.findByEndToEndIdAndCommunityOwnerId(
+                eq(detectionId), any(String.class)))
+            .thenReturn(Optional.empty());
+      }
     }
     when(authProviderMock.getPrincipal())
         .thenReturn(new Principal("mockApiKey", Set.of(new Authority(authorityRole))));

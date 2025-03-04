@@ -208,7 +208,10 @@ public class ZoneService {
         detectionRepository.findByEndToEndIdAndCommunityOwnerId(detectionId, communityOwnerId);
     if (optionalDetection.isEmpty()) {
       var savedDetection = createDetectionJob(detectionId, createDetection, communityOwnerId);
-      return computeEmptyStatisticFromStep(savedDetection, PENDING, UNKNOWN, CONFIGURING);
+      if (savedDetection.isStillOnConfiguringStep()) {
+        return computeEmptyStatisticFromStep(savedDetection, PENDING, UNKNOWN, CONFIGURING);
+      }
+      return detectionTilingCreation.apply(savedDetection);
     }
     var detection =
         detectionRepository
@@ -223,8 +226,7 @@ public class ZoneService {
       Detection detection) {
     var tilingJobId = detection.getZtjId();
     var detectionJobId = detection.getZdjId();
-    if (detection.getMultiPolygonGeoJsonZone() == null
-        || detection.getGeoServerProperties() == null) {
+    if (detection.isStillOnConfiguringStep()) {
       return computeEmptyStatisticFromStep(detection, PENDING, UNKNOWN, CONFIGURING);
     }
     if (tilingJobId == null) {
