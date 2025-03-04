@@ -40,6 +40,8 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
   private final TilingTaskRepository tilingTaskRepository;
   private final HumanDetectionJobRepository humanDetectionJobRepository;
   private final ZoneDetectionJobRepository zoneDetectionJobRepository;
+  private final MachineDetectedTileRepository machineDetectedTileRepository;
+  private final AnnotationDeliveryConfigurationRepository annotationDeliveryConfigurationRepository;
 
   public ZoneDetectionJobService(
       JpaRepository<ZoneDetectionJob, String> repository,
@@ -51,7 +53,9 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
       DetectableObjectConfigurationRepository objectConfigurationRepository,
       HumanDetectionJobRepository humanDetectionJobRepository,
       ZoneDetectionJobRepository zoneDetectionJobRepository,
-      TaskStatisticRepository taskStatisticRepository) {
+      TaskStatisticRepository taskStatisticRepository,
+      MachineDetectedTileRepository machineDetectedTileRepository,
+      AnnotationDeliveryConfigurationRepository annotationDeliveryConfigurationRepository) {
     super(
         repository,
         jobStatusRepository,
@@ -64,6 +68,8 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
     this.objectConfigurationRepository = objectConfigurationRepository;
     this.humanDetectionJobRepository = humanDetectionJobRepository;
     this.zoneDetectionJobRepository = zoneDetectionJobRepository;
+    this.machineDetectedTileRepository = machineDetectedTileRepository;
+    this.annotationDeliveryConfigurationRepository = annotationDeliveryConfigurationRepository;
   }
 
   @Transactional
@@ -215,6 +221,13 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
             .toList();
 
     return super.create(zoneDetectionJob, parcelDetectionTasks);
+  }
+
+  public Long countInDoubtDetectedTileToDeliveryById(String jobId) {
+    var latestConfiguration =
+        annotationDeliveryConfigurationRepository.findLatestConfiguration().orElseThrow();
+    return machineDetectedTileRepository.countInDoubtDetectedTileToDeliveryByZdjJobId(
+        jobId, latestConfiguration.getMinimumConfidenceForDelivery());
   }
 
   public ZoneDetectionJob save(ZoneDetectionJob job) {
