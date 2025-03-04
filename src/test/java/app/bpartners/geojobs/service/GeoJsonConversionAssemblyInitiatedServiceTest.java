@@ -5,8 +5,7 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.repository.model.GeoJobType.GEO_JSON_CONVERSION;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -17,6 +16,7 @@ import app.bpartners.geojobs.file.hash.FileHash;
 import app.bpartners.geojobs.file.hash.FileHashAlgorithm;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.TaskStatus;
+import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.GeoJsonConversionJobRepository;
 import app.bpartners.geojobs.repository.GeoJsonConversionTaskRepository;
@@ -83,7 +83,7 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
     when(geoJsonConversionTaskRepositoryMock.findAllByJobId(GEO_JSON_CONVERSION_JOB_ID))
         .thenReturn(List.of(conversionTask1, conversionTask2));
     when(zoneDetectionJobServiceMock.findById(ZONE_DETECTION_JOB_ID))
-        .thenReturn(dummyZoneDetectionJob());
+        .thenReturn(dummyZoneDetectionJob(ZONE_DETECTION_JOB_ID));
     when(bucketComponentMock.download(conversionTask1.getFileKey())).thenReturn(mock(File.class));
     when(bucketComponentMock.download(conversionTask2.getFileKey())).thenReturn(mock(File.class));
     var combinedConvertedGeoJsonFileMock = mock(File.class);
@@ -96,7 +96,8 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
     when(detectionRepositoryMock.save(any(Detection.class)))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
     when(zoneDetectionJobServiceMock.getHumanZdjFromZdjId(any()))
-        .thenReturn(dummyZoneDetectionJob());
+        .thenReturn(dummyZoneDetectionJob(ZONE_DETECTION_JOB_ID));
+    when(zoneDetectionJobServiceMock.getMachineZdjFromZdjId(any())).thenReturn(null);
 
     assertDoesNotThrow(
         () ->
@@ -125,14 +126,76 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
         geoJsonConversionJob.toBuilder().fileKey(fileKey).build(), savedGeoJsonConversionJob);
 
     var eventCaptor = ArgumentCaptor.forClass(Detection.class);
-    verify(detectionRepositoryMock, times(2)).findByZdjId(ZONE_DETECTION_JOB_ID);
+    verify(detectionRepositoryMock, times(1)).findByZdjId(ZONE_DETECTION_JOB_ID);
     verify(detectionRepositoryMock).save(eventCaptor.capture());
     var savedDetection = eventCaptor.getValue();
     assertEquals(fileKey, savedDetection.getGeojsonS3FileKey());
   }
 
-  private static ZoneDetectionJob dummyZoneDetectionJob() {
-    return ZoneDetectionJob.builder().id(ZONE_DETECTION_JOB_ID).zoneName("dummyZoneName").build();
+  @SneakyThrows
+  @Test
+  void throw_exception_when_any_zdj_associated_to_detection() {
+    var geoJsonConversionJobId = randomUUID().toString();
+    var zoneDetectionJobId = randomUUID().toString();
+    var geoJsonConversionJob =
+        GeoJsonConversionJob.builder()
+            .id(geoJsonConversionJobId)
+            .zoneDetectionJobId(zoneDetectionJobId)
+            .build();
+    var conversionTask1 =
+        create(
+            "conversionTask1",
+            geoJsonConversionJobId,
+            "conversionTaskFileKey1",
+            1,
+            FINISHED,
+            SUCCEEDED);
+    var conversionTask2 =
+        create(
+            "conversionTask2",
+            geoJsonConversionJobId,
+            "conversionTaskFileKey2",
+            2,
+            FINISHED,
+            SUCCEEDED);
+    when(geoJsonConversionJobRepositoryMock.findById(geoJsonConversionJobId))
+        .thenReturn(Optional.of(geoJsonConversionJob));
+    when(geoJsonConversionJobRepositoryMock.save(any()))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+    when(geoJsonConversionTaskRepositoryMock.findAllByJobId(geoJsonConversionJobId))
+        .thenReturn(List.of(conversionTask1, conversionTask2));
+    when(zoneDetectionJobServiceMock.findById(zoneDetectionJobId))
+        .thenReturn(dummyZoneDetectionJob(zoneDetectionJobId));
+    when(bucketComponentMock.download(conversionTask1.getFileKey())).thenReturn(mock(File.class));
+    when(bucketComponentMock.download(conversionTask2.getFileKey())).thenReturn(mock(File.class));
+    var combinedConvertedGeoJsonFileMock = mock(File.class);
+    when(fileWriterMock.combineContent(any(), any())).thenReturn(combinedConvertedGeoJsonFileMock);
+    when(bucketComponentMock.upload(any(), any()))
+        .thenReturn(new FileHash(FileHashAlgorithm.SHA256, "dummy"));
+    when(detectionRepositoryMock.findByZdjId(any())).thenReturn(Optional.empty());
+    when(detectionRepositoryMock.save(any(Detection.class)))
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+    when(zoneDetectionJobServiceMock.getHumanZdjFromZdjId(any()))
+        .thenReturn(dummyZoneDetectionJob(zoneDetectionJobId));
+    when(zoneDetectionJobServiceMock.getMachineZdjFromZdjId(any()))
+        .thenReturn(dummyZoneDetectionJob(zoneDetectionJobId));
+
+    var actual =
+        assertThrows(
+            NotFoundException.class,
+            () ->
+                subject.accept(
+                    GeoJsonConversionAssemblyInitiated.builder()
+                        .geoJsonConversionJobId(geoJsonConversionJobId)
+                        .build()));
+
+    assertEquals(
+        "Any detection found associated to ZDJ(id=" + zoneDetectionJobId + ")",
+        actual.getMessage());
+  }
+
+  private static ZoneDetectionJob dummyZoneDetectionJob(String jobId) {
+    return ZoneDetectionJob.builder().id(jobId).zoneName("dummyZoneName").build();
   }
 
   GeoJsonConversionTask create(
