@@ -27,7 +27,7 @@ public final class ParallelTiledLinesContinuer extends LinesContinuer<TiledPolyg
   // e.g.: if equals 10, then will have 10*10=100 tiles in neighbourhood
 
   private final ExecutorService executorService =
-      newFixedThreadPool(getRuntime().availableProcessors());
+      newFixedThreadPool(Math.max(1, getRuntime().availableProcessors() / 2));
 
   public ParallelTiledLinesContinuer(
       RoutesContinuationConf continuationConf,

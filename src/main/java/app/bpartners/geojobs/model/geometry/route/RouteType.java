@@ -14,15 +14,17 @@ import lombok.experimental.Accessors;
 @Getter
 public enum RouteType {
   road(lengthOnly),
-  pathway(lengthOrWidth);
+  pathway(lengthOrWidth),
+  sidewalk(lengthOnly);
+
   private final ContinuationOrientation continuationOrientation;
 
   public static RouteType routeTypeFrom(DetectableObjectType detectableType) {
     return switch (detectableType) {
       case PASSAGE_PIETON -> pathway;
       case LINE -> road;
-      case TROTTOIR,
-              RISQUE_FEU,
+      case TROTTOIR -> sidewalk;
+      case RISQUE_FEU,
               TOITURE_REVETEMENT,
               ESPACE_VERT_PARKING,
               RISQUE_FEU2,
@@ -51,6 +53,7 @@ public enum RouteType {
     return switch (label.toLowerCase()) {
       case "pathway", "passage_pieton" -> pathway;
       case "line" -> road;
+      case "sidewalk" -> sidewalk;
       default -> throw new IllegalArgumentException("Unsupported continuation on " + label);
     };
   }
