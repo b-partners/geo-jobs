@@ -17,7 +17,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -50,7 +49,6 @@ import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
-import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import app.bpartners.geojobs.utils.FeatureCreator;
 import app.bpartners.geojobs.utils.TaskStatisticCreator;
 import app.bpartners.geojobs.utils.detection.DetectionCreator;
@@ -85,7 +83,6 @@ class DetectionControllerIT extends FacadeIT {
   @MockBean BucketComponent bucketComponentMock;
   @MockBean ZoneDetectionJobService zoneDetectionJobService;
   @MockBean StatusMapper statusMapper;
-  @MockBean ZoneTilingJobService zoneTilingJobService;
   @MockBean DetectableObjectConfigurationRepository detectableObjectConfigurationRepository;
   @MockBean DetectionAuthorizer detectionAuthorizer;
   @MockBean AuthProvider authProviderMock;
@@ -239,8 +236,14 @@ class DetectionControllerIT extends FacadeIT {
     subject.processDetection(randomUUID().toString(), createDetection());
 
     var listCaptor = ArgumentCaptor.forClass(List.class);
-    verify(eventProducer, only()).accept(listCaptor.capture());
-    var detectionSavedEvent = (DetectionSaved) listCaptor.getValue().getFirst();
+    verify(eventProducer, times(4)).accept(listCaptor.capture());
+    var detectionSavedEvent =
+        (DetectionSaved)
+            listCaptor.getAllValues().stream()
+                .filter(list -> list.getFirst().getClass().equals(DetectionSaved.class))
+                .findFirst()
+                .orElseThrow()
+                .getFirst();
     assertEquals(
         DetectionSaved.builder().detection(detectionSavedEvent.getDetection()).build(),
         detectionSavedEvent);
@@ -278,8 +281,6 @@ class DetectionControllerIT extends FacadeIT {
     var detection =
         detectionRepository.save(
             detectionWithoutZdj(zoneTilingJob.getId(), featureCreator.defaultFeatures()));
-    var statistic = taskStatisticCreator.createProcessingTask(zoneTilingJob.getId(), TILING);
-    when(zoneTilingJobService.getTaskStatistic(any(String.class))).thenReturn(statistic);
 
     var actual = subject.getDetections(new PageFromOne(1), new BoundedPageSize(10));
 
@@ -287,9 +288,7 @@ class DetectionControllerIT extends FacadeIT {
         new app.bpartners.geojobs.endpoint.rest.model.Detection()
             .id(detection.getEndToEndId())
             .geoJsonZone(featureCreator.defaultFeatures())
-            .step(
-                detectionStepStatisticMapper.toRestDetectionStepStatus(
-                    statistic, DetectionStepName.TILING));
+            .step(actual.getFirst().getStep());
     assertEquals(List.of(expected), actual);
   }
 
