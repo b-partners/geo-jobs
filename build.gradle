@@ -96,9 +96,6 @@ tasks.compileJava.dependsOn publishJavaClientToMavenLocal
 
 
 test {
-    maxHeapSize = "4g"  // Explicit max heap size
-    forkEvery = 1       // Prevents multiple test processes eating memory
-
     maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
     useJUnitPlatform()
     finalizedBy jacocoTestCoverageVerification
@@ -220,9 +217,10 @@ implementation 'app.bpartners:geo-jobs-gen:latest'
 implementation 'org.thymeleaf:thymeleaf:3.1.1.RELEASE'
 implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.1'
 implementation 'org.geotools:gt-api:31.2'
-    implementation 'org.geotools:gt-geojson:31.2'
-    implementation 'org.geotools:gt-main:31.2'
+implementation 'org.geotools:gt-geojson:31.2'
+implementation 'org.geotools:gt-main:31.2'
 implementation 'org.geotools:gt-referencing:31.2'
 implementation 'org.geotools:gt-epsg-hsql:31.2'
+    
 
 }
