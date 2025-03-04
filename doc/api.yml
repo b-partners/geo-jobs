@@ -1617,6 +1617,8 @@ components:
           $ref: "#/components/schemas/Zoom"
         fileUrl:
           type: string
+        isExtended:
+          type: boolean
         createdAt:
           type: string
           format: date-time
@@ -1637,7 +1639,11 @@ components:
       properties:
         id:
           type: string
+        userId:
+          type: string
         currentTile:
+          $ref: "#/components/schemas/TileInfo"
+        referenceTile:
           $ref: "#/components/schemas/TileInfo"
         geoPosition:
           $ref: "#/components/schemas/GeoPosition"
