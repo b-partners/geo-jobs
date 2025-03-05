@@ -19,8 +19,11 @@ public class PolygonPrettier implements Function<Set<Polygon>, Set<Polygon>> {
   }
 
   private Polygon simplify(Polygon p) {
+    var buffer = prettyConf.dpbThreshold() / 2;
+    var distanceThreshold = prettyConf.dpbThreshold();
     try {
-      var prettyP = (Polygon) DouglasPeuckerSimplifier.simplify(p, prettyConf.dpbThreshold());
+      var prettyP =
+          (Polygon) DouglasPeuckerSimplifier.simplify(p.buffer(buffer), distanceThreshold);
       prettyP.setUserData(p.getUserData());
       return prettyP;
     } catch (Exception e) {
