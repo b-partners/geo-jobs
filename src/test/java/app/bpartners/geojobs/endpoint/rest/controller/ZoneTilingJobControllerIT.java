@@ -1,7 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.controller;
 
-import static app.bpartners.geojobs.endpoint.rest.model.CreateZoneTilingJob.ZoomLevelEnum.TOWN;
-import static app.bpartners.geojobs.endpoint.rest.model.ZoneTilingJob.ZoomLevelEnum;
+import static app.bpartners.geojobs.endpoint.rest.model.ZoomLevel.TOWN;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -199,7 +198,7 @@ class ZoneTilingJobControllerIT extends FacadeIT {
     var createdJob = controller.tileZone(creatableJob());
     var parcels = controller.getZTJParcels(createdJob.getId());
     var parcel = parcels.getFirst();
-    assertEquals(ZoomLevelEnum.TOWN, createdJob.getZoomLevel());
+    assertEquals(TOWN, createdJob.getZoomLevel());
     assertEquals(1, parcels.size());
     assertNotNull(parcel.getId());
     assertNotNull(parcel.getCreationDatetime());
