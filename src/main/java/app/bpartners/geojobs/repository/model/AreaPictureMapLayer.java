@@ -3,6 +3,7 @@ package app.bpartners.geojobs.repository.model;
 import static org.hibernate.type.SqlTypes.JSON;
 
 import app.bpartners.geojobs.endpoint.rest.model.AreaPictureImageSource;
+import app.bpartners.geojobs.endpoint.rest.model.Zoom;
 import app.bpartners.geojobs.endpoint.rest.model.ZoomLevel;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -22,7 +23,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 @Data
 @EqualsAndHashCode
 @ToString
-public class AreaPictureMapLayer implements Serializable {
+public class AreaPictureMapLayer implements Serializable, Comparable<AreaPictureMapLayer> {
   @Id private String id;
 
   @JdbcTypeCode(JSON)
@@ -36,4 +37,17 @@ public class AreaPictureMapLayer implements Serializable {
   private ZoomLevel maxZoomLevel;
 
   private int precisionLevelInCm;
+
+  @Override
+  public int compareTo(AreaPictureMapLayer o2) {
+    var precisionComparison = Integer.compare(o2.precisionLevelInCm, this.precisionLevelInCm);
+    if (precisionComparison == 0) {
+      return Integer.compare(this.year, o2.year);
+    }
+    return precisionComparison;
+  }
+
+  public Zoom getMaxZoom() {
+    return new Zoom().level(maxZoomLevel).number(ArcgisImageZoom.from(maxZoomLevel));
+  }
 }

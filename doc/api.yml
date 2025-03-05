@@ -1594,7 +1594,7 @@ components:
           type: int
         source:
           $ref: "#/components/schemas/AreaPictureImageSource"
-        departementName:
+        departmentName:
           type: string
         maximumZoomLevel:
           $ref: "#/components/schemas/ZoomLevel"
@@ -1615,8 +1615,6 @@ components:
           type: string
         zoom:
           $ref: "#/components/schemas/Zoom"
-        fileUrl:
-          type: string
         isExtended:
           type: boolean
         createdAt:
@@ -1640,6 +1638,8 @@ components:
         id:
           type: string
         userId:
+          type: string
+        fileUrl:
           type: string
         currentTile:
           $ref: "#/components/schemas/TileInfo"

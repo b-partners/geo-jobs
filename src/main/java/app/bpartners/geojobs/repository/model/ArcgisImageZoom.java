@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.repository.model;
 
+import app.bpartners.geojobs.endpoint.rest.model.ZoomLevel;
 import lombok.Getter;
 
 /**
@@ -39,6 +40,10 @@ public enum ArcgisImageZoom {
 
   ArcgisImageZoom(int zoomLevel) {
     this.zoomLevel = zoomLevel;
+  }
+
+  public static int from(ZoomLevel zoom){
+    return valueOf(zoom.name()).zoomLevel;
   }
 
   public static ArcgisImageZoom fromZoomLevel(int z) {
