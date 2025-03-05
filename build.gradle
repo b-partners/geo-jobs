@@ -224,5 +224,5 @@ implementation 'org.geotools:gt-api:31.2'
     implementation 'org.geotools:gt-main:31.2'
 implementation 'org.geotools:gt-referencing:31.2'
 implementation 'org.geotools:gt-epsg-hsql:31.2'
-
+    implementation 'com.google.maps:google-maps-services:2.2.0'
 }
