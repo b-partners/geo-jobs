@@ -17,10 +17,9 @@ import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
-import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;
-import app.bpartners.geojobs.repository.TaskStatisticRepository;
-import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
+import app.bpartners.geojobs.repository.*;
 import app.bpartners.geojobs.repository.model.Parcel;
+import app.bpartners.geojobs.repository.model.annotation.AnnotationDeliveryConfiguration;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
@@ -47,6 +46,8 @@ class ZoneDetectionJobServiceTest {
   EntityManager entityManagerMock = mock();
   ZoneDetectionJobRepository zoneDetectionJobRepositoryMock = mock();
   TaskStatisticRepository taskStatisticRepositoryMock = mock();
+  AnnotationDeliveryConfigurationRepository deliveryConfigurationRepositoryMock = mock();
+  MachineDetectedTileRepository machineDetectedTileRepositoryMock = mock();
   ZoneDetectionJobService subject =
       new ZoneDetectionJobService(
           jobRepositoryMock,
@@ -59,8 +60,8 @@ class ZoneDetectionJobServiceTest {
           mock(),
           zoneDetectionJobRepositoryMock,
           taskStatisticRepositoryMock,
-          mock(),
-          mock());
+          machineDetectedTileRepositoryMock,
+          deliveryConfigurationRepositoryMock);
 
   @BeforeEach
   void setUp() {
@@ -185,5 +186,25 @@ class ZoneDetectionJobServiceTest {
                     .build()))
         .parcels(parcel == null ? null : List.of(parcel))
         .build();
+  }
+
+  @Test
+  void count_in_doubt_machine_detected_tiles() {
+    var jobId = randomUUID().toString();
+    var minimumConfidenceForDelivery = 1.0;
+    when(deliveryConfigurationRepositoryMock.findLatestConfiguration())
+        .thenReturn(
+            Optional.of(
+                AnnotationDeliveryConfiguration.builder()
+                    .minimumConfidenceForDelivery(minimumConfidenceForDelivery)
+                    .build()));
+    var expected = 0L;
+    when(machineDetectedTileRepositoryMock.countInDoubtDetectedTileToDeliveryByZdjJobId(
+            jobId, minimumConfidenceForDelivery))
+        .thenReturn(expected);
+
+    var actual = subject.countInDoubtDetectedTileToDeliveryById(jobId);
+
+    assertEquals(expected, actual);
   }
 }
