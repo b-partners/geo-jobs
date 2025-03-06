@@ -181,15 +181,92 @@ public class DetectableObjectTypeMapper {
     var objectTypes = mapFromModel(o);
     return objectTypes.stream()
         .map(
-            objectType ->
-                DetectableObjectConfiguration.builder()
-                    .id(randomUUID().toString())
-                    .detectionId(detectionId)
-                    .objectType(toDomain(objectType))
-                    .detectionJobId(null)
-                    .minConfidenceForDetection(DEFAULT_CONFIDENCE)
-                    .bucketStorageName(null) // default bucket storage
-                    .build())
+            detectableObjectType ->
+            {
+              var objectType = toDomain(detectableObjectType);
+              return DetectableObjectConfiguration.builder()
+                  .id(randomUUID().toString())
+                  .detectionId(detectionId)
+                  .objectType(objectType)
+                  .detectionJobId(null)
+                  .minConfidenceForDetection(minimumConfidenceForDetection(detectableObjectType))
+                  .bucketStorageName(null) // default bucket storage
+                  .build();
+            })
         .collect(Collectors.toList());
+  }
+
+  private Double minimumConfidenceForDetection(DetectableObjectType objectType) {
+    switch (objectType) {
+      case DetectableObjectType.PISCINE -> {
+        return 1.0;
+      }
+      case DetectableObjectType.TOITURE_REVETEMENT -> {
+        return 1.0;
+      }
+      case DetectableObjectType.ARBRE -> {
+        return 1.0;
+      }
+      case DetectableObjectType.PASSAGE_PIETON-> {
+        return 1.0;
+      }
+      case DetectableObjectType.PANNEAU_PHOTOVOLTAIQUE-> {
+        return 1.0;
+      }
+      case DetectableObjectType.TROTTOIR-> {
+        return 1.0;
+      }
+      case DetectableObjectType.LINE-> {
+        return 1.0;
+      }
+      case DetectableObjectType.ESPACE_VERT-> {
+        return 1.0;
+      }
+      case DetectableObjectType.VOIE_CARROSSABLE-> {
+        return 1.0;
+      }
+      case DetectableObjectType.MOISISSURE-> {
+        return 1.0;
+      }
+      case DetectableObjectType.USURE-> {
+        return 1.0;
+      }
+      case DetectableObjectType.FISSURE_CASSURE-> {
+        return 1.0;
+      }
+      case DetectableObjectType.OBSTACLE-> {
+        return 1.0;
+      }
+      case DetectableObjectType.CHEMINEE-> {
+        return 1.0;
+      }
+      case DetectableObjectType.HUMIDITE-> {
+        return 1.0;
+      }
+      case DetectableObjectType.RISQUE_FEU-> {
+        return 1.0;
+      }
+      case DetectableObjectType.VELUX-> {
+        return 1.0;
+      }
+      case DetectableObjectType.BATI_TUILES-> {
+        return 1.0;
+      }
+      case DetectableObjectType.PARKING-> {
+        return 1.0;
+      }
+      case DetectableObjectType.BATI_BETON-> {
+        return 1.0;
+      }
+      case DetectableObjectType.BATI_AUTRES-> {
+        return 1.0;
+      }
+      case DetectableObjectType.BATI_ARDOISE-> {
+        return 1.0;
+      }
+      default -> {
+        return DEFAULT_CONFIDENCE;
+      }
+    }
   }
 }
