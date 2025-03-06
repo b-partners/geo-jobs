@@ -187,7 +187,12 @@ public class ZoneService {
       return detectionMachineDetectionStatisticsComputer.apply(detection, detection.getZdjId());
     }
     if (detection.isHumanDetectionStepProcessing(zoneDetectionJob)) {
-      return computeEmptyStatisticFromStep(detection, PROCESSING, UNKNOWN, HUMAN_DETECTION);
+      var inDoubtDetectedTileToDelivery =
+          zoneDetectionJobService.countInDoubtDetectedTileToDeliveryById(zoneDetectionJob.getId());
+      if (inDoubtDetectedTileToDelivery > 0) {
+        return computeEmptyStatisticFromStep(detection, PROCESSING, UNKNOWN, HUMAN_DETECTION);
+      }
+      return detectionMachineDetectionStatisticsComputer.apply(detection, detection.getZdjId());
     }
     throw new IllegalStateException(
         "Detection(id=" + detection.getId() + ") processing failed on illegal state");

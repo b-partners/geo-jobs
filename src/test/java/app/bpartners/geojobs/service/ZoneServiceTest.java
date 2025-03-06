@@ -443,6 +443,8 @@ class ZoneServiceTest {
     detection.setMultiPolygonGeoJsonZone(List.of(new Feature()));
     detection.setGeoServerProperties(new GeoServerProperties());
     setUpAuthorityRoleProcessingMock(detectionId, detection, ROLE_ADMIN);
+    when(zoneDetectionJobServiceMock.countInDoubtDetectedTileToDeliveryById(detectionJobId))
+        .thenReturn(1L);
     when(zoneDetectionJobServiceMock.findById(detectionJobId))
         .thenReturn(
             zoneDetectionJobCreator.create(
@@ -458,6 +460,44 @@ class ZoneServiceTest {
     assertEquals(HUMAN_DETECTION, actual.getStep().getName());
     assertEquals(Status.ProgressionEnum.PROCESSING, actual.getStep().getStatus().getProgression());
     assertEquals(UNKNOWN, actual.getStep().getStatus().getHealth());
+  }
+
+  @Test
+  void admin_role_read_detection_with_finished_machine_detection_statistics() {
+    var detectionId = randomUUID().toString();
+    var tilingId = randomUUID().toString();
+    var detectionJobId = randomUUID().toString();
+    var detection = detectionCreator.create(detectionId, tilingId, detectionJobId);
+    detection.setMultiPolygonGeoJsonZone(List.of(new Feature()));
+    detection.setGeoServerProperties(new GeoServerProperties());
+    setUpAuthorityRoleProcessingMock(detectionId, detection, ROLE_ADMIN);
+    when(zoneDetectionJobServiceMock.countInDoubtDetectedTileToDeliveryById(detectionJobId))
+        .thenReturn(0L);
+    when(zoneDetectionJobServiceMock.computeTaskStatistics(detectionJobId))
+        .thenReturn(
+            TaskStatistic.builder()
+                .actualJobStatus(
+                    JobStatus.builder()
+                        .progression(FINISHED)
+                        .health(app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED)
+                        .build())
+                .taskStatusStatistics(new ArrayList<>())
+                .build());
+    when(zoneDetectionJobServiceMock.findById(detectionJobId))
+        .thenReturn(
+            zoneDetectionJobCreator.create(
+                detectionJobId,
+                null,
+                null,
+                FINISHED,
+                app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED,
+                new ZoneTilingJob()));
+
+    var actual = subject.getProcessedDetection(detectionId);
+
+    assertEquals(MACHINE_DETECTION, actual.getStep().getName());
+    assertEquals(Status.ProgressionEnum.FINISHED, actual.getStep().getStatus().getProgression());
+    assertEquals(SUCCEEDED, actual.getStep().getStatus().getHealth());
   }
 
   @SneakyThrows
