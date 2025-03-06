@@ -48,6 +48,7 @@ import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.GeoJobType;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
+import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.detection.*;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
@@ -179,6 +180,52 @@ class ZoneServiceTest {
     assertEquals(TILING, actual.getStep().getName());
     assertEquals(Status.ProgressionEnum.PENDING, actual.getStep().getStatus().getProgression());
     assertEquals(UNKNOWN, actual.getStep().getStatus().getHealth());
+  }
+
+  @Test
+  void get_geo_json_conversion_when_machine_zdj_finished() {
+    var detectionId = randomUUID().toString();
+    var tilingJobId = randomUUID().toString();
+    var machineDetectionJobId = randomUUID().toString();
+    var detection = detectionCreator.create(detectionId, tilingJobId, machineDetectionJobId);
+    detection.setGeoServerProperties(new GeoServerProperties());
+    detection.setMultiPolygonGeoJsonZone(List.of(new Feature()));
+    var createDetection = new CreateDetection().geoJsonZone(featureCreator.defaultFeatures());
+    String communityOwnerId = null;
+    setUpAuthorityRoleProcessingMock(detectionId, detection, ROLE_ADMIN);
+    var zoneTilingJobMock = mock(ZoneTilingJob.class);
+    var zoneDetectionJobMock =
+        mock(app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.class);
+    when(zoneTilingJobMock.isSucceeded()).thenReturn(true);
+    when(tilingJobServiceMock.findById(detection.getZtjId())).thenReturn(zoneTilingJobMock);
+    when(zoneDetectionJobServiceMock.findById(detection.getZdjId()))
+        .thenReturn(zoneDetectionJobMock);
+    when(zoneDetectionJobMock.isPending()).thenReturn(false);
+    when(zoneTilingJobMock.isFinished()).thenReturn(true);
+    when(zoneDetectionJobMock.isFinished()).thenReturn(true);
+    when(zoneDetectionJobServiceMock.countInDoubtDetectedTileToDeliveryById(
+            zoneTilingJobMock.getId()))
+        .thenReturn(0L);
+    var geoJsonConversionJobMock = mock(GeoJsonConversionJob.class);
+    when(conversionInitiationServiceMock.getOrComputeGeoJsonConversionJob(
+            detection, zoneDetectionJobMock))
+        .thenReturn(geoJsonConversionJobMock);
+    when(zoneDetectionJobServiceMock.computeTaskStatistics(any()))
+        .thenReturn(
+            TaskStatistic.builder()
+                .taskStatusStatistics(List.of())
+                .actualJobStatus(
+                    JobStatus.builder()
+                        .progression(FINISHED)
+                        .health(app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED)
+                        .build())
+                .build());
+
+    var actual = subject.processDetection(detectionId, createDetection, communityOwnerId);
+
+    assertEquals(MACHINE_DETECTION, actual.getStep().getName());
+    assertEquals(Status.ProgressionEnum.FINISHED, actual.getStep().getStatus().getProgression());
+    assertEquals(SUCCEEDED, actual.getStep().getStatus().getHealth());
   }
 
   @Test
