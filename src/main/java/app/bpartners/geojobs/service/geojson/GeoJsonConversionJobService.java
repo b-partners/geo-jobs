@@ -40,7 +40,7 @@ public class GeoJsonConversionJobService
   private final BucketComponent bucketComponent;
   private final GeoJsonConversionJobRepository geoJsonConversionJobRepository;
 
-  protected GeoJsonConversionJobService(
+  public GeoJsonConversionJobService(
       JpaRepository<GeoJsonConversionJob, String> geoJsonConversionJobRepository,
       JobStatusRepository jobStatusRepository,
       TaskStatisticRepository taskStatisticRepository,
