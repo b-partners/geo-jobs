@@ -8,6 +8,7 @@ import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.
 import static app.bpartners.geojobs.file.hash.FileHashAlgorithm.SHA256;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
+import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_BUCKET_FOLDER;
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 import static java.io.File.createTempFile;
@@ -16,14 +17,11 @@ import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.only;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
+import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerificationSent;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionStepStatisticMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
@@ -223,6 +221,68 @@ class ZoneServiceTest {
 
     var actual = subject.processDetection(detectionId, createDetection, communityOwnerId);
 
+    verify(conversionInitiationServiceMock, only())
+        .getOrComputeGeoJsonConversionJob(detection, zoneDetectionJobMock);
+    assertEquals(MACHINE_DETECTION, actual.getStep().getName());
+    assertEquals(Status.ProgressionEnum.FINISHED, actual.getStep().getStatus().getProgression());
+    assertEquals(SUCCEEDED, actual.getStep().getStatus().getHealth());
+  }
+
+  @Test
+  void compute_annotation_verification_conversion_when_human_zdj_not_finished() {
+    var detectionId = randomUUID().toString();
+    var tilingJobId = randomUUID().toString();
+    var humanZoneDetectionJobId = randomUUID().toString();
+    var machineDetectionJobId = randomUUID().toString();
+    var detection = detectionCreator.create(detectionId, tilingJobId, machineDetectionJobId);
+    detection.setGeoServerProperties(new GeoServerProperties());
+    detection.setMultiPolygonGeoJsonZone(List.of(new Feature()));
+    var createDetection = new CreateDetection().geoJsonZone(featureCreator.defaultFeatures());
+    String communityOwnerId = null;
+    setUpAuthorityRoleProcessingMock(detectionId, detection, ROLE_ADMIN);
+    var zoneTilingJobMock = mock(ZoneTilingJob.class);
+    var machineZoneDetectionJobMock =
+        mock(app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.class);
+    var humanZoneDetectionJob =
+        mock(app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.class);
+
+    when(zoneTilingJobMock.getId()).thenReturn(tilingJobId);
+    when(machineZoneDetectionJobMock.getId()).thenReturn(machineDetectionJobId);
+    when(humanZoneDetectionJob.getId()).thenReturn(humanZoneDetectionJobId);
+    when(humanZoneDetectionJob.getDetectionType()).thenReturn(HUMAN);
+    when(humanZoneDetectionJob.isSucceeded()).thenReturn(false);
+    when(machineZoneDetectionJobMock.isPending()).thenReturn(false);
+    when(zoneTilingJobMock.isFinished()).thenReturn(true);
+    when(machineZoneDetectionJobMock.isFinished()).thenReturn(true);
+    when(zoneTilingJobMock.isSucceeded()).thenReturn(true);
+    when(tilingJobServiceMock.findById(detection.getZtjId())).thenReturn(zoneTilingJobMock);
+    when(zoneDetectionJobServiceMock.findById(detection.getZdjId()))
+        .thenReturn(machineZoneDetectionJobMock);
+    when(zoneDetectionJobServiceMock.getByTilingJobId(zoneTilingJobMock.getId(), HUMAN))
+        .thenReturn(humanZoneDetectionJob);
+    when(zoneDetectionJobServiceMock.countInDoubtDetectedTileToDeliveryById(machineDetectionJobId))
+        .thenReturn(1L);
+    when(zoneDetectionJobServiceMock.computeTaskStatistics(any()))
+        .thenReturn(
+            TaskStatistic.builder()
+                .taskStatusStatistics(List.of())
+                .actualJobStatus(
+                    JobStatus.builder()
+                        .progression(FINISHED)
+                        .health(app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED)
+                        .build())
+                .build());
+
+    var actual = subject.processDetection(detectionId, createDetection, communityOwnerId);
+
+    var eventCaptor = ArgumentCaptor.forClass(List.class);
+    verify(conversionInitiationServiceMock, never()).getOrComputeGeoJsonConversionJob(any(), any());
+    verify(eventProducerMock, times(1)).accept(eventCaptor.capture());
+    var annotationJobVerificationSent =
+        (AnnotationJobVerificationSent) eventCaptor.getValue().getFirst();
+    assertEquals(
+        AnnotationJobVerificationSent.builder().humanZdjId(humanZoneDetectionJob.getId()).build(),
+        annotationJobVerificationSent);
     assertEquals(MACHINE_DETECTION, actual.getStep().getName());
     assertEquals(Status.ProgressionEnum.FINISHED, actual.getStep().getStatus().getProgression());
     assertEquals(SUCCEEDED, actual.getStep().getStatus().getHealth());
