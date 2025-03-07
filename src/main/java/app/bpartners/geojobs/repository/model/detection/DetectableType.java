@@ -22,5 +22,6 @@ public enum DetectableType {
   BATI_TUILES,
   BATI_BETON,
   BATI_ARDOISE,
-  BATI_AUTRES
+  BATI_AUTRES,
+  ESPACE_VERT_PARKING
 }

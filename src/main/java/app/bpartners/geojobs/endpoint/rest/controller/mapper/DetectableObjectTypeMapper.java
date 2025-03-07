@@ -38,34 +38,37 @@ public class DetectableObjectTypeMapper {
       case HUMIDITE -> DetectableType.HUMIDITE;
       case RISQUE_FEU -> DetectableType.RISQUE_FEU;
       case VELUX -> DetectableType.VELUX;
+      case PARKING -> DetectableType.PARKING;
+      case ESPACE_VERT_PARKING -> DetectableType.ESPACE_VERT_PARKING;
       default -> throw new NotImplementedException("Unknown detectable object type " + rest);
     };
   }
 
   public DetectableObjectType toRest(DetectableType domain) {
     return switch (domain) {
-      case PISCINE -> DetectableObjectType.PISCINE;
-      case TOITURE_REVETEMENT -> DetectableObjectType.TOITURE_REVETEMENT;
-      case ARBRE -> DetectableObjectType.ARBRE;
-      case PASSAGE_PIETON -> DetectableObjectType.PASSAGE_PIETON;
-      case PANNEAU_PHOTOVOLTAIQUE -> DetectableObjectType.PANNEAU_PHOTOVOLTAIQUE;
-      case TROTTOIR -> DetectableObjectType.TROTTOIR;
-      case LINE -> DetectableObjectType.LINE;
-      case ESPACE_VERT -> DetectableObjectType.ESPACE_VERT;
-      case VOIE_CARROSSABLE -> DetectableObjectType.VOIE_CARROSSABLE;
-      case MOISISSURE -> DetectableObjectType.MOISISSURE;
-      case USURE -> DetectableObjectType.USURE;
-      case FISSURE_CASSURE -> DetectableObjectType.FISSURE_CASSURE;
-      case OBSTACLE -> DetectableObjectType.OBSTACLE;
-      case CHEMINEE -> DetectableObjectType.CHEMINEE;
-      case HUMIDITE -> DetectableObjectType.HUMIDITE;
-      case RISQUE_FEU -> DetectableObjectType.RISQUE_FEU;
-      case VELUX -> DetectableObjectType.VELUX;
-      case BATI_TUILES -> DetectableObjectType.BATI_TUILES;
-      case PARKING -> DetectableObjectType.PARKING;
-      case BATI_BETON -> DetectableObjectType.BATI_BETON;
-      case BATI_AUTRES -> DetectableObjectType.BATI_AUTRES;
-      case BATI_ARDOISE -> DetectableObjectType.BATI_ARDOISE;
+      case PISCINE -> PISCINE;
+      case TOITURE_REVETEMENT -> TOITURE_REVETEMENT;
+      case ARBRE -> ARBRE;
+      case PASSAGE_PIETON -> PASSAGE_PIETON;
+      case PANNEAU_PHOTOVOLTAIQUE -> PANNEAU_PHOTOVOLTAIQUE;
+      case TROTTOIR -> TROTTOIR;
+      case LINE -> LINE;
+      case ESPACE_VERT -> ESPACE_VERT;
+      case VOIE_CARROSSABLE -> VOIE_CARROSSABLE;
+      case MOISISSURE -> MOISISSURE;
+      case USURE -> USURE;
+      case FISSURE_CASSURE -> FISSURE_CASSURE;
+      case OBSTACLE -> OBSTACLE;
+      case CHEMINEE -> CHEMINEE;
+      case HUMIDITE -> HUMIDITE;
+      case RISQUE_FEU -> RISQUE_FEU;
+      case VELUX -> VELUX;
+      case BATI_TUILES -> BATI_TUILES;
+      case PARKING -> PARKING;
+      case BATI_BETON -> BATI_BETON;
+      case BATI_AUTRES -> BATI_AUTRES;
+      case BATI_ARDOISE -> BATI_ARDOISE;
+      case ESPACE_VERT_PARKING -> ESPACE_VERT_PARKING;
     };
   }
 
@@ -181,8 +184,7 @@ public class DetectableObjectTypeMapper {
     var objectTypes = mapFromModel(o);
     return objectTypes.stream()
         .map(
-            detectableObjectType ->
-            {
+            detectableObjectType -> {
               var objectType = toDomain(detectableObjectType);
               return DetectableObjectConfiguration.builder()
                   .id(randomUUID().toString())
@@ -198,70 +200,52 @@ public class DetectableObjectTypeMapper {
 
   private Double minimumConfidenceForDetection(DetectableObjectType objectType) {
     switch (objectType) {
-      case DetectableObjectType.PISCINE -> {
+      case PISCINE, PANNEAU_PHOTOVOLTAIQUE -> {
+        return 0.27;
+      }
+      case TOITURE_REVETEMENT, TROTTOIR, LINE, BATI_TUILES, PARKING, BATI_BETON, BATI_AUTRES -> {
+        return 0.252;
+      }
+      case ARBRE -> {
+        return 0.2504;
+      }
+      case PASSAGE_PIETON -> {
+        return 0.29;
+      }
+      case ESPACE_VERT -> {
+        return 0.251;
+      }
+      case BATI_ARDOISE -> {
+        return 0.255;
+      }
+      case VOIE_CARROSSABLE -> {
         return 1.0;
       }
-      case DetectableObjectType.TOITURE_REVETEMENT -> {
+      case MOISISSURE -> {
         return 1.0;
       }
-      case DetectableObjectType.ARBRE -> {
+      case USURE -> {
         return 1.0;
       }
-      case DetectableObjectType.PASSAGE_PIETON-> {
+      case FISSURE_CASSURE -> {
         return 1.0;
       }
-      case DetectableObjectType.PANNEAU_PHOTOVOLTAIQUE-> {
+      case OBSTACLE -> {
         return 1.0;
       }
-      case DetectableObjectType.TROTTOIR-> {
+      case CHEMINEE -> {
         return 1.0;
       }
-      case DetectableObjectType.LINE-> {
+      case HUMIDITE -> {
         return 1.0;
       }
-      case DetectableObjectType.ESPACE_VERT-> {
+      case RISQUE_FEU -> {
         return 1.0;
       }
-      case DetectableObjectType.VOIE_CARROSSABLE-> {
+      case VELUX -> {
         return 1.0;
       }
-      case DetectableObjectType.MOISISSURE-> {
-        return 1.0;
-      }
-      case DetectableObjectType.USURE-> {
-        return 1.0;
-      }
-      case DetectableObjectType.FISSURE_CASSURE-> {
-        return 1.0;
-      }
-      case DetectableObjectType.OBSTACLE-> {
-        return 1.0;
-      }
-      case DetectableObjectType.CHEMINEE-> {
-        return 1.0;
-      }
-      case DetectableObjectType.HUMIDITE-> {
-        return 1.0;
-      }
-      case DetectableObjectType.RISQUE_FEU-> {
-        return 1.0;
-      }
-      case DetectableObjectType.VELUX-> {
-        return 1.0;
-      }
-      case DetectableObjectType.BATI_TUILES-> {
-        return 1.0;
-      }
-      case DetectableObjectType.PARKING-> {
-        return 1.0;
-      }
-      case DetectableObjectType.BATI_BETON-> {
-        return 1.0;
-      }
-      case DetectableObjectType.BATI_AUTRES-> {
-        return 1.0;
-      }
-      case DetectableObjectType.BATI_ARDOISE-> {
+      case ESPACE_VERT_PARKING -> {
         return 1.0;
       }
       default -> {
