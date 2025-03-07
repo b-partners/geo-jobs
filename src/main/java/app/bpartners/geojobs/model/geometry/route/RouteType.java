@@ -27,7 +27,6 @@ public enum RouteType {
       case RISQUE_FEU,
               TOITURE_REVETEMENT,
               ESPACE_VERT_PARKING,
-              RISQUE_FEU2,
               PANNEAU_PHOTOVOLTAIQUE,
               PISCINE,
               ARBRE,
