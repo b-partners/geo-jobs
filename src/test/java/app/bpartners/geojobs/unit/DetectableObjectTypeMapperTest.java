@@ -13,7 +13,9 @@ import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.TRO
 import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.VELUX;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.VOIE_CARROSSABLE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.LINE;
+import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
@@ -135,4 +137,250 @@ class DetectableObjectTypeMapperTest {
             RISQUE_FEU);
     assertEquals(expected, actual);
   }
+
+  @Test
+  void map_bp_zan_model_object_type_with_its_variable_reference_confidence() {
+    var detectionId = randomUUID().toString();
+
+    var actual = subject.mapDefaultConfigurationsFromModel(detectionId, new BPZanModel());
+
+    var detectableObjectWithReferenceConfidences =
+        actual.stream()
+            .map(
+                objectConfiguration ->
+                    new DetectableObjectWithReferenceConfidence(
+                        objectConfiguration.getObjectType(),
+                        objectConfiguration.getMinConfidenceForDetection()))
+            .toList();
+    assertEquals(6, detectableObjectWithReferenceConfidences.size());
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.ARBRE, 0.2504)));
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.ESPACE_VERT, 0.251)));
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.TOITURE_REVETEMENT, 0.252)));
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.VOIE_CARROSSABLE, 1.0)));
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.TROTTOIR, 0.252)));
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.PARKING, 0.252)));
+  }
+
+  @Test
+  void map_bp_confirmite_plu_model_object_type_with_its_variable_reference_confidence() {
+    var detectionId = randomUUID().toString();
+
+    var actual = subject.mapDefaultConfigurationsFromModel(detectionId, new BPConformitePluModel());
+
+    var detectableObjectWithReferenceConfidences =
+        actual.stream()
+            .map(
+                objectConfiguration ->
+                    new DetectableObjectWithReferenceConfidence(
+                        objectConfiguration.getObjectType(),
+                        objectConfiguration.getMinConfidenceForDetection()))
+            .toList();
+    assertEquals(6, detectableObjectWithReferenceConfidences.size());
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.TOITURE_REVETEMENT, 0.252)));
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.ARBRE, 0.2504)));
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.VELUX, 1.0)));
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(
+                DetectableType.PANNEAU_PHOTOVOLTAIQUE, 0.27)));
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.ESPACE_VERT, 0.251)));
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.PISCINE, 0.27)));
+  }
+
+  @Test
+  void map_bp_trottoirs_model_object_type_with_its_variable_reference_confidence() {
+    var detectionId = randomUUID().toString();
+
+    var actual = subject.mapDefaultConfigurationsFromModel(detectionId, new BPTrottoirsModel());
+
+    var detectableObjectWithReferenceConfidences =
+        actual.stream()
+            .map(
+                objectConfiguration ->
+                    new DetectableObjectWithReferenceConfidence(
+                        objectConfiguration.getObjectType(),
+                        objectConfiguration.getMinConfidenceForDetection()))
+            .toList();
+    assertEquals(4, detectableObjectWithReferenceConfidences.size());
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.TROTTOIR, 0.252)));
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.ARBRE, 0.2504)));
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.VOIE_CARROSSABLE, 1.0)));
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.ESPACE_VERT_PARKING, 1.0)));
+  }
+
+  @Test
+  void map_bp_climat_resilience_model_object_type_with_its_variable_reference_confidence() {
+    var detectionId = randomUUID().toString();
+
+    var actual =
+        subject.mapDefaultConfigurationsFromModel(detectionId, new BPClimatResilienceModel());
+
+    var detectableObjectWithReferenceConfidences =
+        actual.stream()
+            .map(
+                objectConfiguration ->
+                    new DetectableObjectWithReferenceConfidence(
+                        objectConfiguration.getObjectType(),
+                        objectConfiguration.getMinConfidenceForDetection()))
+            .toList();
+    assertEquals(4, detectableObjectWithReferenceConfidences.size());
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.ARBRE, 0.2504)));
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.ESPACE_VERT, 0.251)));
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(
+                DetectableType.PANNEAU_PHOTOVOLTAIQUE, 0.27)));
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.PARKING, 0.252)));
+  }
+
+  @Test
+  void map_bp_toiture_model_object_type_with_its_variable_reference_confidence() {
+    var detectionId = randomUUID().toString();
+
+    var actual = subject.mapDefaultConfigurationsFromModel(detectionId, new BPToitureModel());
+
+    var detectableObjectWithReferenceConfidences =
+        actual.stream()
+            .map(
+                objectConfiguration ->
+                    new DetectableObjectWithReferenceConfidence(
+                        objectConfiguration.getObjectType(),
+                        objectConfiguration.getMinConfidenceForDetection()))
+            .toList();
+    assertEquals(10, detectableObjectWithReferenceConfidences.size());
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.ARBRE, 0.2504)));
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.TOITURE_REVETEMENT, 0.252)));
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(
+                DetectableType.PANNEAU_PHOTOVOLTAIQUE, 0.27)));
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.MOISISSURE, 1.0)));
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.USURE, 1.0)));
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.FISSURE_CASSURE, 1.0)));
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.OBSTACLE, 1.0)));
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.CHEMINEE, 1.0)));
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.HUMIDITE, 1.0)));
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.RISQUE_FEU, 1.0)));
+  }
+
+  @Test
+  void map_bp_lom_model_object_type_with_its_variable_reference_confidence() {
+    var detectionId = randomUUID().toString();
+
+    var actual = subject.mapDefaultConfigurationsFromModel(detectionId, new BPLomModel());
+
+    var detectableObjectWithReferenceConfidences =
+        actual.stream()
+            .map(
+                objectConfiguration ->
+                    new DetectableObjectWithReferenceConfidence(
+                        objectConfiguration.getObjectType(),
+                        objectConfiguration.getMinConfidenceForDetection()))
+            .toList();
+
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.PASSAGE_PIETON, 0.29)));
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.TROTTOIR, 0.252)));
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.VOIE_CARROSSABLE, 1.0)));
+  }
+
+  @Test
+  void map_bp_old_model_object_type_with_its_variable_reference_confidence() {
+    var detectionId = randomUUID().toString();
+
+    var actual = subject.mapDefaultConfigurationsFromModel(detectionId, new BPOldModel());
+
+    var detectableObjectWithReferenceConfidences =
+        actual.stream()
+            .map(
+                objectConfiguration ->
+                    new DetectableObjectWithReferenceConfidence(
+                        objectConfiguration.getObjectType(),
+                        objectConfiguration.getMinConfidenceForDetection()))
+            .toList();
+
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.ARBRE, 0.2504)));
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.ESPACE_VERT, 0.251)));
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.TOITURE_REVETEMENT, 0.252)));
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.VOIE_CARROSSABLE, 1.0)));
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.TROTTOIR, 0.252)));
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.PARKING, 0.252)));
+    assertTrue(
+        detectableObjectWithReferenceConfidences.contains(
+            new DetectableObjectWithReferenceConfidence(DetectableType.RISQUE_FEU, 1.0)));
+  }
+
+  private record DetectableObjectWithReferenceConfidence(
+      DetectableType detectableType, Double referenceConfidence) {}
 }

@@ -12,7 +12,7 @@ import app.bpartners.geojobs.endpoint.rest.model.DetectedParcel;
 import app.bpartners.geojobs.endpoint.rest.model.DetectedTile;
 import app.bpartners.geojobs.endpoint.rest.model.Status;
 import app.bpartners.geojobs.endpoint.rest.model.TileInfo;
-import app.bpartners.geojobs.model.exception.NotImplementedException;
+import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.ParcelTask;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
@@ -56,8 +56,7 @@ public class DetectionTaskMapper {
   }
 
   private Status computeStatusFromTaskStatus(
-      app.bpartners.geojobs.job.model.TaskStatus parcelTaskStatus,
-      Instant lastDetectedTileCreationDatetime) {
+      TaskStatus parcelTaskStatus, Instant lastDetectedTileCreationDatetime) {
     return ofNullable(parcelTaskStatus)
         .map(status -> getRestTaskStatus(parcelTaskStatus))
         .orElse(
@@ -67,7 +66,7 @@ public class DetectionTaskMapper {
                 .creationDatetime(lastDetectedTileCreationDatetime));
   }
 
-  private Status getRestTaskStatus(app.bpartners.geojobs.job.model.TaskStatus parcelTaskStatus) {
+  private Status getRestTaskStatus(TaskStatus parcelTaskStatus) {
     return new Status()
         .health(StatusMapper.toHealthStatus(parcelTaskStatus.getHealth()))
         .progression(StatusMapper.toProgressionEnum(parcelTaskStatus.getProgression()))
@@ -111,16 +110,16 @@ public class DetectionTaskMapper {
       case ESPACE_VERT -> ESPACE_VERT;
       case PARKING -> PARKING;
       case TROTTOIR -> TROTTOIR;
-      case VOIE_CARROSSABLE,
-              MOISISSURE,
-              USURE,
-              FISSURE_CASSURE,
-              OBSTACLE,
-              CHEMINEE,
-              HUMIDITE,
-              RISQUE_FEU,
-              VELUX ->
-          throw new NotImplementedException("Unsupported detection: " + detectableType);
+      case MOISISSURE -> MOISISSURE;
+      case USURE -> USURE;
+      case FISSURE_CASSURE -> FISSURE_CASSURE;
+      case VOIE_CARROSSABLE -> VOIE_CARROSSABLE;
+      case OBSTACLE -> OBSTACLE;
+      case CHEMINEE -> CHEMINEE;
+      case HUMIDITE -> HUMIDITE;
+      case RISQUE_FEU -> RISQUE_FEU;
+      case VELUX -> VELUX;
+      case ESPACE_VERT_PARKING -> ESPACE_VERT_PARKING;
     };
   }
 }
