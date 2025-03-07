@@ -6,6 +6,8 @@ import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -26,7 +28,9 @@ import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import org.junit.jupiter.api.Test;
 
 class DetectionTaskMapperTest {
@@ -57,17 +61,10 @@ class DetectionTaskMapperTest {
                     someDetectedObject(PASSAGE_PIETON)))
             .creationDatetime(now())
             .build();
-    ParcelContent parcelContentMock = mock();
     when(machineDetectedTileRepositoryMock.findAllByParcelId(parcelId))
         .thenReturn(List.of(machineDetectedTile));
 
-    DetectedParcel actual =
-        subject.toRest(
-            jobId,
-            ParcelTask.builder()
-                .parcel(Parcel.builder().id(parcelId).parcelContent(parcelContentMock).build())
-                .status(null)
-                .build());
+    DetectedParcel actual = subject.toRest(jobId, someParcelTask(parcelId));
 
     var status =
         new Status()
@@ -107,6 +104,57 @@ class DetectionTaskMapperTest {
                                     app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType
                                         .PASSAGE_PIETON))))),
         actual);
+  }
+
+  private ParcelTask someParcelTask(String parcelId) {
+    return ParcelTask.builder()
+        .parcel(Parcel.builder().id(parcelId).parcelContent(mock(ParcelContent.class)).build())
+        .status(null)
+        .build();
+  }
+
+  @Test
+  void map_detected_tile_with_all_detectable_objects_type_ok() {
+    when(machineDetectedTileRepositoryMock.findAllByParcelId(any()))
+        .thenReturn(
+            List.of(
+                MachineDetectedTile.builder()
+                    .tile(Tile.builder().build())
+                    .detectedObjects(detectedObjectWithAllTypes())
+                    .build()));
+
+    var actual = subject.toRest(randomUUID().toString(), someParcelTask(randomUUID().toString()));
+
+    var restDetectableObjectTypes =
+        Objects.requireNonNull(actual.getDetectedTiles()).stream()
+            .map(
+                detectedTile ->
+                    Objects.requireNonNull(detectedTile.getDetectedObjects()).stream()
+                        .map(DetectedObject::getDetectedObjectType)
+                        .toList())
+            .flatMap(List::stream)
+            .toList();
+    assertEquals(restDetectableObjectTypes().size(), restDetectableObjectTypes.size());
+    assertTrue(restDetectableObjectTypes().containsAll(restDetectableObjectTypes));
+  }
+
+  private List<app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType>
+      restDetectableObjectTypes() {
+    return Arrays.asList(app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.values());
+  }
+
+  private List<app.bpartners.geojobs.repository.model.detection.DetectedObject>
+      detectedObjectWithAllTypes() {
+    var detectableTypes = Arrays.asList(DetectableType.values());
+    return detectableTypes.stream()
+        .map(
+            detectableType ->
+                app.bpartners.geojobs.repository.model.detection.DetectedObject.builder()
+                    .computedConfidence(1.0) // Not nullable
+                    .detectedObjectType(
+                        DetectableObjectType.builder().detectableType(detectableType).build())
+                    .build())
+        .toList();
   }
 
   private static DetectedObject someRestDetectedObject(
