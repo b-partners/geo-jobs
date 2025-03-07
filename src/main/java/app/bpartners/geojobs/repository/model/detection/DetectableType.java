@@ -23,5 +23,5 @@ public enum DetectableType {
   BATI_BETON,
   BATI_ARDOISE,
   BATI_AUTRES,
-  ESPACE_VERT_PARKING
+  ESPACE_VERT_PARKING //TODO: to delete and separate
 }
