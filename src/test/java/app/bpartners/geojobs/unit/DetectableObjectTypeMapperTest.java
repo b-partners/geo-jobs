@@ -164,7 +164,7 @@ class DetectableObjectTypeMapperTest {
             new DetectableObjectWithReferenceConfidence(DetectableType.TOITURE_REVETEMENT, 0.252)));
     assertTrue(
         detectableObjectWithReferenceConfidences.contains(
-            new DetectableObjectWithReferenceConfidence(DetectableType.VOIE_CARROSSABLE, 1.0)));
+            new DetectableObjectWithReferenceConfidence(DetectableType.VOIE_CARROSSABLE, 0.0)));
     assertTrue(
         detectableObjectWithReferenceConfidences.contains(
             new DetectableObjectWithReferenceConfidence(DetectableType.TROTTOIR, 0.252)));
@@ -196,7 +196,7 @@ class DetectableObjectTypeMapperTest {
             new DetectableObjectWithReferenceConfidence(DetectableType.ARBRE, 0.2504)));
     assertTrue(
         detectableObjectWithReferenceConfidences.contains(
-            new DetectableObjectWithReferenceConfidence(DetectableType.VELUX, 1.0)));
+            new DetectableObjectWithReferenceConfidence(DetectableType.VELUX, 0.0)));
     assertTrue(
         detectableObjectWithReferenceConfidences.contains(
             new DetectableObjectWithReferenceConfidence(
@@ -232,10 +232,10 @@ class DetectableObjectTypeMapperTest {
             new DetectableObjectWithReferenceConfidence(DetectableType.ARBRE, 0.2504)));
     assertTrue(
         detectableObjectWithReferenceConfidences.contains(
-            new DetectableObjectWithReferenceConfidence(DetectableType.VOIE_CARROSSABLE, 1.0)));
+            new DetectableObjectWithReferenceConfidence(DetectableType.VOIE_CARROSSABLE, 0.0)));
     assertTrue(
         detectableObjectWithReferenceConfidences.contains(
-            new DetectableObjectWithReferenceConfidence(DetectableType.ESPACE_VERT_PARKING, 1.0)));
+            new DetectableObjectWithReferenceConfidence(DetectableType.ESPACE_VERT_PARKING, 0.0)));
   }
 
   @Test
@@ -296,25 +296,25 @@ class DetectableObjectTypeMapperTest {
                 DetectableType.PANNEAU_PHOTOVOLTAIQUE, 0.27)));
     assertTrue(
         detectableObjectWithReferenceConfidences.contains(
-            new DetectableObjectWithReferenceConfidence(DetectableType.MOISISSURE, 1.0)));
+            new DetectableObjectWithReferenceConfidence(DetectableType.MOISISSURE, 0.0)));
     assertTrue(
         detectableObjectWithReferenceConfidences.contains(
-            new DetectableObjectWithReferenceConfidence(DetectableType.USURE, 1.0)));
+            new DetectableObjectWithReferenceConfidence(DetectableType.USURE, 0.0)));
     assertTrue(
         detectableObjectWithReferenceConfidences.contains(
-            new DetectableObjectWithReferenceConfidence(DetectableType.FISSURE_CASSURE, 1.0)));
+            new DetectableObjectWithReferenceConfidence(DetectableType.FISSURE_CASSURE, 0.0)));
     assertTrue(
         detectableObjectWithReferenceConfidences.contains(
-            new DetectableObjectWithReferenceConfidence(DetectableType.OBSTACLE, 1.0)));
+            new DetectableObjectWithReferenceConfidence(DetectableType.OBSTACLE, 0.0)));
     assertTrue(
         detectableObjectWithReferenceConfidences.contains(
-            new DetectableObjectWithReferenceConfidence(DetectableType.CHEMINEE, 1.0)));
+            new DetectableObjectWithReferenceConfidence(DetectableType.CHEMINEE, 0.0)));
     assertTrue(
         detectableObjectWithReferenceConfidences.contains(
-            new DetectableObjectWithReferenceConfidence(DetectableType.HUMIDITE, 1.0)));
+            new DetectableObjectWithReferenceConfidence(DetectableType.HUMIDITE, 0.0)));
     assertTrue(
         detectableObjectWithReferenceConfidences.contains(
-            new DetectableObjectWithReferenceConfidence(DetectableType.RISQUE_FEU, 1.0)));
+            new DetectableObjectWithReferenceConfidence(DetectableType.RISQUE_FEU, 0.0)));
   }
 
   @Test
@@ -340,7 +340,7 @@ class DetectableObjectTypeMapperTest {
             new DetectableObjectWithReferenceConfidence(DetectableType.TROTTOIR, 0.252)));
     assertTrue(
         detectableObjectWithReferenceConfidences.contains(
-            new DetectableObjectWithReferenceConfidence(DetectableType.VOIE_CARROSSABLE, 1.0)));
+            new DetectableObjectWithReferenceConfidence(DetectableType.VOIE_CARROSSABLE, 0.0)));
   }
 
   @Test
@@ -369,7 +369,7 @@ class DetectableObjectTypeMapperTest {
             new DetectableObjectWithReferenceConfidence(DetectableType.TOITURE_REVETEMENT, 0.252)));
     assertTrue(
         detectableObjectWithReferenceConfidences.contains(
-            new DetectableObjectWithReferenceConfidence(DetectableType.VOIE_CARROSSABLE, 1.0)));
+            new DetectableObjectWithReferenceConfidence(DetectableType.VOIE_CARROSSABLE, 0.0)));
     assertTrue(
         detectableObjectWithReferenceConfidences.contains(
             new DetectableObjectWithReferenceConfidence(DetectableType.TROTTOIR, 0.252)));
@@ -378,7 +378,7 @@ class DetectableObjectTypeMapperTest {
             new DetectableObjectWithReferenceConfidence(DetectableType.PARKING, 0.252)));
     assertTrue(
         detectableObjectWithReferenceConfidences.contains(
-            new DetectableObjectWithReferenceConfidence(DetectableType.RISQUE_FEU, 1.0)));
+            new DetectableObjectWithReferenceConfidence(DetectableType.RISQUE_FEU, 0.0)));
   }
 
   private record DetectableObjectWithReferenceConfidence(

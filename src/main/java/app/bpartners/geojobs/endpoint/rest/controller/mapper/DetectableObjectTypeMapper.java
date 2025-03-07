@@ -219,34 +219,34 @@ public class DetectableObjectTypeMapper {
         return 0.255;
       }
       case VOIE_CARROSSABLE -> {
-        return 1.0;
+        return 0.0;
       }
       case MOISISSURE -> {
-        return 1.0;
+        return 0.0;
       }
       case USURE -> {
-        return 1.0;
+        return 0.0;
       }
       case FISSURE_CASSURE -> {
-        return 1.0;
+        return 0.0;
       }
       case OBSTACLE -> {
-        return 1.0;
+        return 0.0;
       }
       case CHEMINEE -> {
-        return 1.0;
+        return 0.0;
       }
       case HUMIDITE -> {
-        return 1.0;
+        return 0.0;
       }
       case RISQUE_FEU -> {
-        return 1.0;
+        return 0.0;
       }
       case VELUX -> {
-        return 1.0;
+        return 0.0;
       }
       case ESPACE_VERT_PARKING -> {
-        return 1.0;
+        return 0.0;
       }
       default -> {
         return DEFAULT_CONFIDENCE;
