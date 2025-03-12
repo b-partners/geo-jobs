@@ -19,7 +19,7 @@ import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 
-@Entity
+@Entity(name = "detected_tile")
 @Table(name = "detected_tile")
 @AllArgsConstructor
 @NoArgsConstructor

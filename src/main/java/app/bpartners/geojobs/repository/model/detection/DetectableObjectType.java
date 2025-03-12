@@ -17,7 +17,7 @@ import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.JdbcTypeCode;
 
-@Entity
+@Entity(name = "detectable_object_type")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
