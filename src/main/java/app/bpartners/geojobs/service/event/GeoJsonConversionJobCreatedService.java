@@ -47,7 +47,7 @@ public class GeoJsonConversionJobCreatedService implements Consumer<GeoJsonConve
         detectableObjectConfiguration -> {
           var detectableType = detectableObjectConfiguration.getObjectType();
           var tilesCountByDetectableType =
-              computeDetectedTilesCountByDetectebleType(
+              computeDetectedTilesCountByDetectableType(
                   zoneDetectionJobType, zoneDetectionJobId, detectableType);
           int pageSize =
               tilesCountByDetectableType == 0
@@ -102,7 +102,7 @@ public class GeoJsonConversionJobCreatedService implements Consumer<GeoJsonConve
     return geoJsonConversionTask;
   }
 
-  private Long computeDetectedTilesCountByDetectebleType(
+  private Long computeDetectedTilesCountByDetectableType(
       ZoneDetectionJob.DetectionType zoneDetectionJobType,
       String zoneDetectionJobId,
       DetectableType detectableType) {
@@ -112,7 +112,7 @@ public class GeoJsonConversionJobCreatedService implements Consumer<GeoJsonConve
       }
       case MACHINE -> {
         return machineDetectedTileRepository.countByZdjJobIdAndDetectableType(
-            zoneDetectionJobId, detectableType);
+            zoneDetectionJobId, detectableType.name());
       }
       default ->
           throw new IllegalArgumentException("Unknown zoneDetectionType " + zoneDetectionJobType);

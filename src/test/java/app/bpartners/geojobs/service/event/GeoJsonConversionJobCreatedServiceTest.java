@@ -65,13 +65,13 @@ class GeoJsonConversionJobCreatedServiceTest {
                 DetectableObjectConfiguration.builder().objectType(HUMIDITE).build(),
                 DetectableObjectConfiguration.builder().objectType(USURE).build()));
     when(machineDetectedTileRepositoryMock.countByZdjJobIdAndDetectableType(
-            zoneDetectionJobId, DetectableType.TOITURE_REVETEMENT))
+            zoneDetectionJobId, DetectableType.TOITURE_REVETEMENT.name()))
         .thenReturn(0L);
     when(machineDetectedTileRepositoryMock.countByZdjJobIdAndDetectableType(
-            zoneDetectionJobId, HUMIDITE))
+            zoneDetectionJobId, HUMIDITE.name()))
         .thenReturn(100L);
     when(machineDetectedTileRepositoryMock.countByZdjJobIdAndDetectableType(
-            zoneDetectionJobId, USURE))
+            zoneDetectionJobId, USURE.name()))
         .thenReturn(600L);
     when(geoJsonConversionTaskRepositoryMock.saveAll(any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
