@@ -25,8 +25,10 @@ import app.bpartners.geojobs.endpoint.event.model.status.ZTJStatusRecomputingSub
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobCreated;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.hash.FileHash;
+import app.bpartners.geojobs.repository.AnnotationDeliveryConfigurationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
+import app.bpartners.geojobs.repository.model.annotation.AnnotationDeliveryConfiguration;
 import app.bpartners.geojobs.repository.model.annotation.AnnotationRetrievingTask;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.Detection;
@@ -44,6 +46,7 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -67,11 +70,18 @@ class ZoneTilingJobCreatedIT extends DetectionIT {
   @MockBean JobFinishedMailer<ZoneTilingJob> tilingJobMailerMock;
   @MockBean AnnotationService annotationServiceMock;
   @MockBean GeoJsonConversionJobService geoJsonConversionJobServiceMock;
+  @MockBean AnnotationDeliveryConfigurationRepository annotationDeliveryConfigurationRepositoryMock;
   EventProducerInvocationMock eventProducerInvocationMock = new EventProducerInvocationMock();
   TilingTaskCreator tilingTaskCreator = new TilingTaskCreator();
 
   @BeforeEach
   void setUp() {
+    when(annotationDeliveryConfigurationRepositoryMock.findLatestConfiguration())
+        .thenReturn(
+            Optional.of(
+                AnnotationDeliveryConfiguration.builder()
+                    .minimumConfidenceForDelivery(0.0)
+                    .build()));
     localEventQueue.configure(customEventConfigList(), DEFAULT_EVENT_DELAY_SPEED_FACTOR);
     doAnswer(
             invocationOnMock ->
