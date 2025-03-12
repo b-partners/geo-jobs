@@ -35,37 +35,35 @@ class TilesDownloaderIT extends FacadeIT {
             List.of(
                 List.of(
                     List.of(
-                        new BigDecimal("7.053824189976548"), new BigDecimal("43.519987765025689")),
+                        new BigDecimal("4.825981555776383"), new BigDecimal("45.733401843736686")),
                     List.of(
-                        new BigDecimal("7.053391928619927"), new BigDecimal("43.520444122594547")),
+                        new BigDecimal("4.826104636117987"), new BigDecimal("45.733393355437265")),
                     List.of(
-                        new BigDecimal("7.053925229491217"), new BigDecimal("43.520622151393155")),
+                        new BigDecimal("4.826096147818566"), new BigDecimal("45.733285129619645")),
                     List.of(
-                        new BigDecimal("7.054267541263264"), new BigDecimal("43.520400341083466")),
+                        new BigDecimal("4.825981555776383"), new BigDecimal("45.733291495844213")),
                     List.of(
-                        new BigDecimal("7.054065923731642"), new BigDecimal("43.519992299731342")),
-                    List.of(
-                        new BigDecimal("7.053824189976548"),
-                        new BigDecimal("43.519987765025689")))));
+                        new BigDecimal("4.825981555776383"),
+                        new BigDecimal("45.733401843736686")))));
 
     return ParcelContent.builder()
         .id(randomUUID().toString())
-        .geoServerUrl(new URL("http://35.181.83.111:80/geoserver/cite/wms"))
+        .geoServerUrl(new URL("https://data.grandlyon.com/fr/geoserv/grandlyon/ows"))
         .geoServerParameter(
             om.readValue(
                 """
                 {
-                    "service": "WMS",
-                    "request": "GetMap",
-                    "layers": "cite:ALPES-MARITIMES_CANNES_2020_5cm",
-                    "styles": "",
-                    "format": "image/jpeg",
-                    "version": "1.1.0",
-                    "transparent": true,
-                    "width": 1024,
-                    "height": 1024,
-                    "srs": "EPSG:4326"
-                }""",
+                             "service": "WMS",
+                             "request": "GetMap",
+                             "layers": "ortho_2018",
+                             "styles": "",
+                             "format": "image/jpeg",
+                             "transparent": true,
+                             "version": "1.3.0",
+                             "width": 1024,
+                             "height": 1024,
+                             "srs": "EPSG:3857"
+                         }""",
                 GeoServerParameter.class))
         .feature(
             Feature.builder()
@@ -85,11 +83,11 @@ class TilesDownloaderIT extends FacadeIT {
   }
 
   @Test
-  void download_tiles_cannes_ok() throws IOException {
+  void download_tiles_lyon_ok() throws IOException {
     var zoom = 20;
 
     var tilesDir = httpApiTilesDownloader.apply(a_parcel_from_cannes(zoom));
 
-    assertEquals(4, new File(tilesDir.getAbsolutePath() + "/" + zoom).listFiles().length);
+    assertEquals(2, new File(tilesDir.getAbsolutePath() + "/" + zoom).listFiles().length);
   }
 }
