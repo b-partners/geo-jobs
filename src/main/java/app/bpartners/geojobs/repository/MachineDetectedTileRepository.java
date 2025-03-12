@@ -34,8 +34,8 @@ public interface MachineDetectedTileRepository extends JpaRepository<MachineDete
 
   @Query(
       value =
-          "select * from get_in_doubt_detected_tiles(:zoneDetectionJobId,:minConfidenceForDelivery,"
-              + " true)",
+          "select count(*) from"
+              + " get_in_doubt_detected_tiles(:zoneDetectionJobId,:minConfidenceForDelivery, true)",
       nativeQuery = true)
   Long countInDoubtDetectedTileToDeliveryByZdjJobId(
       @Param("zoneDetectionJobId") String zoneDetectionJobId,
