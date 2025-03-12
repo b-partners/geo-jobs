@@ -98,7 +98,7 @@ class GeoJsonConversionTaskConsumerTest {
     when(zoneDetectionJobServiceMock.findById(ZONE_DETECTION_JOB_ID))
         .thenReturn(
             ZoneDetectionJob.builder().id(ZONE_DETECTION_JOB_ID).zoneName("dummyZoneName").build());
-    when(machineDetectedTileRepositoryMock.findAllByZdjJobId(any(), any()))
+    when(machineDetectedTileRepositoryMock.findAllByZdjJobIdAndDetectableType(any(), any(), any()))
         .thenReturn(List.of(machineDetectedTile()));
     when(geoJsonConverterMock.convert(any())).thenReturn(new GeoJson(List.of()));
     when(fileWriterMock.writeAsByte(any())).thenReturn(null);
@@ -111,7 +111,8 @@ class GeoJsonConversionTaskConsumerTest {
                 GeoJsonConversionTask.builder().page(1).jobId(CONVERSION_JOB_ID).build()));
     var listCaptor = ArgumentCaptor.forClass(List.class);
     verify(humanDetectedTileRepositoryMock, never()).findAllByJobId(any(), any());
-    verify(machineDetectedTileRepositoryMock, only()).findAllByZdjJobId(any(), any());
+    verify(machineDetectedTileRepositoryMock, only())
+        .findAllByZdjJobIdAndDetectableType(any(), any(), any());
     verify(geoJsonConverterMock, only()).convert(listCaptor.capture());
     var detectedTile = (DetectedTile) listCaptor.getValue().getFirst();
     assertEquals(expectedDetectedTile(), detectedTile);

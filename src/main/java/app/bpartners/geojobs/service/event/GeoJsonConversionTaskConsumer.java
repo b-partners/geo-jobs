@@ -10,6 +10,7 @@ import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.GeoJsonConversionJobRepository;
 import app.bpartners.geojobs.repository.HumanDetectedTileRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
+import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionTask;
@@ -47,29 +48,21 @@ public class GeoJsonConversionTaskConsumer implements Consumer<GeoJsonConversion
                 () ->
                     new NotFoundException(
                         "GeoConversionJob(id=" + conversionJobId + ") not found"));
+    var detectableType = geoJsonConversionTask.getDetectableType();
     var zoneDetectionType = geoJsonConversionJob.getZoneDetectionJobType();
     var zoneDetectionJobId = geoJsonConversionJob.getZoneDetectionJobId();
     var zoneDetectionJob = zoneDetectionJobService.findById(zoneDetectionJobId);
     int pageNumber = geoJsonConversionTask.getPage() - 1;
     var paginatedDetectedTiles =
-        computeDetectedTile(zoneDetectionType, zoneDetectionJobId, pageNumber);
+        computeDetectedTile(zoneDetectionType, zoneDetectionJobId, pageNumber, detectableType);
 
     var zoneName = zoneDetectionJob.getZoneName();
-    var fileKey =
-        GEO_JSON_BUCKET_FOLDER
-            + zoneDetectionJobId
-            + "/"
-            + zoneName
-            + "-part"
-            + pageNumber
-            + GEO_JSON_EXTENSION;
+    var fileName = zoneName + "_" + detectableType + "-part" + "-" + pageNumber;
+    var fileKey = GEO_JSON_BUCKET_FOLDER + zoneDetectionJobId + "/" + fileName + GEO_JSON_EXTENSION;
     var geoJson = geoJsonConverter.convert(paginatedDetectedTiles);
     var geoJsonAsByte = writer.writeAsByte(geoJson.getStringValue());
     var geoJsonAsFile =
-        writer.write(
-            geoJsonAsByte,
-            createTempDirectory(),
-            zoneName + "-part" + pageNumber + GEO_JSON_EXTENSION);
+        writer.write(geoJsonAsByte, createTempDirectory(), fileName + GEO_JSON_EXTENSION);
 
     bucketComponent.upload(geoJsonAsFile, fileKey);
 
@@ -77,13 +70,15 @@ public class GeoJsonConversionTaskConsumer implements Consumer<GeoJsonConversion
   }
 
   private List<DetectedTile> computeDetectedTile(
-      ZoneDetectionJob.DetectionType zoneDetectionType, String zoneDetectionJobId, int pageNumber) {
+      ZoneDetectionJob.DetectionType zoneDetectionType,
+      String zoneDetectionJobId,
+      int pageNumber,
+      DetectableType detectableType) {
     switch (zoneDetectionType) {
       case MACHINE -> {
         var machineDetectedTiles =
-            machineDetectedTileRepository.findAllByZdjJobId(
-                zoneDetectionJobId, PageRequest.of(pageNumber, MAX_SIZE));
-        log.info("debug MachineDetectedTiles.size {}", machineDetectedTiles);
+            machineDetectedTileRepository.findAllByZdjJobIdAndDetectableType(
+                zoneDetectionJobId, detectableType, PageRequest.of(pageNumber, MAX_SIZE));
         return machineDetectedTiles.stream()
             .map(
                 detectedTile -> {
@@ -92,7 +87,6 @@ public class GeoJsonConversionTaskConsumer implements Consumer<GeoJsonConversion
                           .tile(detectedTile.getTile())
                           .detectedObjects(detectedTile.getDetectedObjects())
                           .build();
-                  log.info("debug detected tile: {}", baseDetectedTile);
                   if (!hasEmptyFeatureOrGeometryNull(baseDetectedTile)) {
                     return baseDetectedTile;
                   }

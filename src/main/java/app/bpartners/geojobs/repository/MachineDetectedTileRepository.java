@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.repository;
 
+import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import java.util.List;
 import org.springframework.data.domain.Pageable;
@@ -10,6 +11,24 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface MachineDetectedTileRepository extends JpaRepository<MachineDetectedTile, String> {
+
+  @Query(
+      "select distinct d from detected_tile d join d.detectedObjects do join do.detectedObjectType"
+          + " detectable_object_type where d.zdjJobId = :zoneDetectionJobId and"
+          + " detectable_object_type.detectableType = :detectableType")
+  List<MachineDetectedTile> findAllByZdjJobIdAndDetectableType(
+      @Param("zoneDetectionJobId") String zoneDetectionJobId,
+      @Param("detectableType") DetectableType detectableType,
+      Pageable pageable);
+
+  @Query(
+      "select count(distinct d) from detected_tile d join d.detectedObjects do join"
+          + " do.detectedObjectType detectable_object_type where d.zdjJobId = :zoneDetectionJobId"
+          + " and detectable_object_type.detectableType = :detectableType")
+  Long countByZdjJobIdAndDetectableType(
+      @Param("zoneDetectionJobId") String zoneDetectionJobId,
+      @Param("detectableType") DetectableType detectableType);
+
   Long countByZdjJobId(String jobId);
 
   List<MachineDetectedTile> findAllByZdjJobId(String id, Pageable pageable);

@@ -4,6 +4,7 @@ import static app.bpartners.geojobs.repository.model.GeoJobType.GEO_JSON_CONVERS
 
 import app.bpartners.geojobs.job.model.JobType;
 import app.bpartners.geojobs.job.model.Task;
+import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
@@ -27,6 +28,7 @@ import lombok.experimental.SuperBuilder;
 public class GeoJsonConversionTask extends Task {
   private Integer page;
   private String fileKey;
+  private DetectableType detectableType;
 
   @Override
   public JobType getJobType() {
