@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.POLYGON;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.HUMIDITE;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static org.junit.jupiter.api.Assertions.*;
@@ -108,7 +109,11 @@ class GeoJsonConversionTaskConsumerTest {
     assertDoesNotThrow(
         () ->
             subject.accept(
-                GeoJsonConversionTask.builder().page(1).jobId(CONVERSION_JOB_ID).build()));
+                GeoJsonConversionTask.builder()
+                    .page(1)
+                    .jobId(CONVERSION_JOB_ID)
+                    .detectableType(HUMIDITE)
+                    .build()));
     var listCaptor = ArgumentCaptor.forClass(List.class);
     verify(humanDetectedTileRepositoryMock, never()).findAllByJobId(any(), any());
     verify(machineDetectedTileRepositoryMock, only())
