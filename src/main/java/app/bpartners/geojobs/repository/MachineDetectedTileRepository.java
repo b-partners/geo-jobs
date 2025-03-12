@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.repository;
 
-import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import java.util.List;
 import org.springframework.data.domain.Pageable;
@@ -12,22 +11,32 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface MachineDetectedTileRepository extends JpaRepository<MachineDetectedTile, String> {
 
+  // TODO: use JPQL instead
   @Query(
-      "select distinct d from detected_tile d join d.detectedObjects do join do.detectedObjectType"
-          + " detectable_object_type where d.zdjJobId = :zoneDetectionJobId and"
-          + " detectable_object_type.detectableType = :detectableType")
+      value =
+          "select distinct d.* from detected_tile d"
+              + " join detected_object dobj on dobj.detected_tile_id=d.id"
+              + " join detectable_object_type dot on dobj.id = dot.object_id"
+              + " where d.zdj_job_id = :zoneDetectionJobId"
+              + " and dot.detectable_type = cast(:detectableType as detectable_type)",
+      nativeQuery = true)
   List<MachineDetectedTile> findAllByZdjJobIdAndDetectableType(
       @Param("zoneDetectionJobId") String zoneDetectionJobId,
-      @Param("detectableType") DetectableType detectableType,
+      @Param("detectableType") String detectableType,
       Pageable pageable);
 
+  // TODO: use JPQL instead
   @Query(
-      "select count(distinct d) from detected_tile d join d.detectedObjects do join"
-          + " do.detectedObjectType detectable_object_type where d.zdjJobId = :zoneDetectionJobId"
-          + " and detectable_object_type.detectableType = :detectableType")
+      value =
+          "select count(distinct d.id) from detected_tile d"
+              + " join detected_object dobj on dobj.detected_tile_id=d.id"
+              + " join detectable_object_type dot on dobj.id = dot.object_id"
+              + " where d.zdj_job_id = :zoneDetectionJobId"
+              + " and dot.detectable_type = cast(:detectableType as detectable_type)",
+      nativeQuery = true)
   Long countByZdjJobIdAndDetectableType(
       @Param("zoneDetectionJobId") String zoneDetectionJobId,
-      @Param("detectableType") DetectableType detectableType);
+      @Param("detectableType") String detectableType);
 
   Long countByZdjJobId(String jobId);
 

@@ -23,6 +23,7 @@ import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.hash.FileHash;
 import app.bpartners.geojobs.model.exception.NotFoundException;
+import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.GeoJsonConversionJobRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
@@ -60,6 +61,7 @@ class GeoJsonConversionJobCreatedIT extends DetectionIT {
   @MockBean BucketComponent bucketComponentMock;
   @Autowired MachineDetectedTileRepository machineDetectedTileRepository;
   @Autowired GeoJsonConversionJobRepository geoJsonConversionJobRepository;
+  @Autowired DetectableObjectConfigurationRepository objectConfigurationRepository;
 
   @BeforeEach
   void setUp() {
@@ -130,7 +132,7 @@ class GeoJsonConversionJobCreatedIT extends DetectionIT {
                     .health(Status.HealthEnum.SUCCEEDED)
                     .creationDatetime(actualGeoJsonUrl.getStatus().getCreationDatetime())),
         actualGeoJsonUrl);
-    verify(eventProducerMock, times(6)).accept(eventListCaptor.capture());
+    verify(eventProducerMock, times(2)).accept(eventListCaptor.capture());
     var geoJsonConversionJobCreated =
         (GeoJsonConversionJobCreated) eventListCaptor.getAllValues().getFirst().getFirst();
     var geoJsonConversionJob = geoJsonConversionJobCreated.getGeoJsonConversionJob();
@@ -154,6 +156,13 @@ class GeoJsonConversionJobCreatedIT extends DetectionIT {
   void create_geo_json_conversion_and_get_geo_json_url_ok() {
     var zoneDetectionJob = randomMachineZDJ();
     var zoneDetectionJobId = zoneDetectionJob.getId();
+    objectConfigurationRepository.saveAll(
+        List.of(
+            DetectableObjectConfiguration.builder()
+                .id(randomUUID().toString())
+                .detectionJobId(zoneDetectionJobId)
+                .objectType(ARBRE)
+                .build()));
     machineDetectedTileRepository.saveAll(
         someMachineDetectedTile(MAX_SIZE + 1, zoneDetectionJobId));
 
@@ -192,7 +201,7 @@ class GeoJsonConversionJobCreatedIT extends DetectionIT {
             .creationDatetime(now())
             .build();
     return MachineDetectedTile.builder()
-        .id(randomUUID().toString())
+        .id(detectedTileId)
         .tile(dummyTile)
         .zdjJobId(zoneDetectionJobId)
         .detectedObjects(detectedObjects)
@@ -201,13 +210,16 @@ class GeoJsonConversionJobCreatedIT extends DetectionIT {
         .build();
   }
 
-  DetectedObject someDetectedObject(DetectableType detectableType) {
+  DetectedObject someDetectedObject(String detectedTile, DetectableType detectableType) {
+    var detectedObjectId = randomUUID().toString();
     return DetectedObject.builder()
-        .id(randomUUID().toString())
+        .id(detectedObjectId)
+        .detectedTileId(detectedTile)
         .detectedObjectType(
             DetectableObjectType.builder()
                 .id(randomUUID().toString())
                 .detectableType(detectableType)
+                .objectId(detectedObjectId)
                 .build())
         .computedConfidence(DEFAULT_COMPUTED_CONFIDENCE)
         .feature(new Feature())
@@ -217,9 +229,12 @@ class GeoJsonConversionJobCreatedIT extends DetectionIT {
   List<MachineDetectedTile> someMachineDetectedTile(Integer nb, String zoneDetectionJobId) {
     var list = new ArrayList<MachineDetectedTile>();
     for (int i = 0; i < nb; i++) {
+      var detectedTileId = randomUUID().toString();
       list.add(
           randomMachineDetectedTile(
-              randomUUID().toString(), zoneDetectionJobId, List.of(someDetectedObject(ARBRE))));
+              detectedTileId,
+              zoneDetectionJobId,
+              List.of(someDetectedObject(detectedTileId, ARBRE))));
     }
     return list;
   }

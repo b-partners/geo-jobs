@@ -78,7 +78,7 @@ public class GeoJsonConversionTaskConsumer implements Consumer<GeoJsonConversion
       case MACHINE -> {
         var machineDetectedTiles =
             machineDetectedTileRepository.findAllByZdjJobIdAndDetectableType(
-                zoneDetectionJobId, detectableType, PageRequest.of(pageNumber, MAX_SIZE));
+                zoneDetectionJobId, detectableType.name(), PageRequest.of(pageNumber, MAX_SIZE));
         return machineDetectedTiles.stream()
             .map(
                 detectedTile -> {
