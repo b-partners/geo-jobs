@@ -28,7 +28,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 public class DetectableObjectType implements Serializable {
   @Id private String id;
 
-  @JoinColumn(referencedColumnName = "id")
+  @JoinColumn(referencedColumnName = "id", table = "\"detected_object\"")
   private String objectId;
 
   @Enumerated(STRING)
