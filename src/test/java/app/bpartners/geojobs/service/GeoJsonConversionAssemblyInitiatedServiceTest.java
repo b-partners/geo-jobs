@@ -13,6 +13,8 @@ import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionAssemblyInitiated;
+import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
+import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionAssemblySucceeded;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
@@ -61,8 +63,9 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
           fileWriterMock,
           zoneDetectionJobServiceMock,
           detectionRepositoryMock,
-          subscriptionConsumptionLogServiceMock,
-          eventProducerMock);
+              eventProducerMock,
+              detectionRepositoryMock,
+              subscriptionConsumptionLogServiceMock);
 
   @SneakyThrows
   @Test
@@ -112,6 +115,8 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
         .thenReturn(dummyZoneDetectionJob(ZONE_DETECTION_JOB_ID));
     when(zoneDetectionJobServiceMock.getMachineZdjFromZdjId(any())).thenReturn(null);
     when(authProviderMock.getPrincipal()).thenReturn(principalMock);
+    when(subscriptionConsumptionLogServiceMock.addSubscriptionConsumptionLog(anyString(), any()))
+        .thenReturn(SubscriptionConsumptionLog.builder().build());
 
     assertDoesNotThrow(
         () ->

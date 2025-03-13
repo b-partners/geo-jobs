@@ -92,7 +92,7 @@ public class GeoJsonConversionAssemblyInitiatedService
             .usageMetric(1L)
             .creationDatetime(now())
             .build();
-    subscriptionConsumptionLogService.sendSubscriptionConsumptionLog(
+      subscriptionConsumptionLogService.sendSubscriptionConsumptionLog(
         saved.getCommunityOwnerId(), consumptionLog);
   }
 }
