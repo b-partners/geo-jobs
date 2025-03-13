@@ -2,8 +2,7 @@ package app.bpartners.geojobs.service.event;
 
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.HUMIDITE;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.USURE;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
@@ -23,13 +22,17 @@ import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfigur
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionJob;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionTask;
+import app.bpartners.geojobs.utils.logger.InMemoryAppender;
+import ch.qos.logback.classic.Logger;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.slf4j.LoggerFactory;
 
 class GeoJsonConversionJobCreatedServiceTest {
   HumanDetectedTileRepository humanDetectedTileRepositoryMock = mock();
@@ -44,6 +47,50 @@ class GeoJsonConversionJobCreatedServiceTest {
           machineDetectedTileRepositoryMock,
           eventProducerMock,
           objectConfigurationRepositoryMock);
+  private InMemoryAppender inMemoryAppender;
+
+  @BeforeEach
+  void setUp() {
+    Logger logger = (Logger) LoggerFactory.getLogger(GeoJsonConversionJobCreatedService.class);
+    inMemoryAppender = new InMemoryAppender();
+    logger.addAppender(inMemoryAppender);
+    inMemoryAppender.start();
+  }
+
+  @Test
+  void do_not_compute_job_status_recomputing_submitted_when_empty_tasks() {
+    var zoneDetectionJobId = randomUUID().toString();
+    var geoJsonConversionJobId = randomUUID().toString();
+    var zoneDetectionJobType = MACHINE;
+    var geoJsonConversionJobMock = mock(GeoJsonConversionJob.class);
+
+    when(geoJsonConversionJobMock.getId()).thenReturn(geoJsonConversionJobId);
+    when(geoJsonConversionJobMock.getZoneDetectionJobId()).thenReturn(zoneDetectionJobId);
+    when(geoJsonConversionJobMock.getZoneDetectionJobType()).thenReturn(zoneDetectionJobType);
+    when(objectConfigurationRepositoryMock.findAllByDetectionJobId(zoneDetectionJobId))
+        .thenReturn(
+            List.of(
+                DetectableObjectConfiguration.builder().objectType(TOITURE_REVETEMENT).build()));
+    when(machineDetectedTileRepositoryMock.countByZdjJobIdAndDetectableType(
+            zoneDetectionJobId, TOITURE_REVETEMENT.name()))
+        .thenReturn(0L);
+
+    assertDoesNotThrow(
+        () -> subject.accept(new GeoJsonConversionJobCreated(geoJsonConversionJobMock)));
+
+    verify(eventProducerMock, never()).accept(any());
+    assertEquals(1, inMemoryAppender.getLogEvents().size());
+    assertTrue(
+        inMemoryAppender
+            .getLogEvents()
+            .getFirst()
+            .getFormattedMessage()
+            .contains(
+                String.format(
+                    "Any geo json task generated for ZoneDetectionJob(id=%s, type=%s) with"
+                        + " detectableTypes %s",
+                    zoneDetectionJobId, zoneDetectionJobType, List.of(TOITURE_REVETEMENT))));
+  }
 
   @Test
   void
@@ -59,13 +106,11 @@ class GeoJsonConversionJobCreatedServiceTest {
     when(objectConfigurationRepositoryMock.findAllByDetectionJobId(zoneDetectionJobId))
         .thenReturn(
             List.of(
-                DetectableObjectConfiguration.builder()
-                    .objectType(DetectableType.TOITURE_REVETEMENT)
-                    .build(),
+                DetectableObjectConfiguration.builder().objectType(TOITURE_REVETEMENT).build(),
                 DetectableObjectConfiguration.builder().objectType(HUMIDITE).build(),
                 DetectableObjectConfiguration.builder().objectType(USURE).build()));
     when(machineDetectedTileRepositoryMock.countByZdjJobIdAndDetectableType(
-            zoneDetectionJobId, DetectableType.TOITURE_REVETEMENT.name()))
+            zoneDetectionJobId, TOITURE_REVETEMENT.name()))
         .thenReturn(0L);
     when(machineDetectedTileRepositoryMock.countByZdjJobIdAndDetectableType(
             zoneDetectionJobId, HUMIDITE.name()))

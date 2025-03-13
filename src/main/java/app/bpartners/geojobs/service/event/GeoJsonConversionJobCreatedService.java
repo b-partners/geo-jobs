@@ -15,12 +15,14 @@ import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.GeoJsonConversionTaskRepository;
 import app.bpartners.geojobs.repository.HumanDetectedTileRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
+import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionJob;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionTask;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +43,7 @@ public class GeoJsonConversionJobCreatedService implements Consumer<GeoJsonConve
     var geoJsonConversionJob = event.getGeoJsonConversionJob();
     var zoneDetectionJobId = geoJsonConversionJob.getZoneDetectionJobId();
     var zoneDetectionJobType = geoJsonConversionJob.getZoneDetectionJobType();
+    var tasksCount = new AtomicLong(0L);
     var detectableObjectConfigurations =
         objectConfigurationRepository.findAllByDetectionJobId(zoneDetectionJobId);
     detectableObjectConfigurations.forEach(
@@ -58,6 +61,7 @@ public class GeoJsonConversionJobCreatedService implements Consumer<GeoJsonConve
               getGeoJsonConversionTasksFromJobAndDetectableType(
                   pageSize, geoJsonConversionJob, detectableType);
           var savedConversionTasks = geoJsonConversionTaskRepository.saveAll(conversionTasks);
+          tasksCount.getAndAccumulate(savedConversionTasks.size(), Long::sum);
           savedConversionTasks.forEach(
               conversionTask ->
                   eventProducer.accept(
@@ -67,6 +71,17 @@ public class GeoJsonConversionJobCreatedService implements Consumer<GeoJsonConve
                               .build())));
         });
 
+    if (tasksCount.get() == 0) {
+      log.info(
+          "Any geo json task generated for ZoneDetectionJob(id={}, type={}) with detectableTypes"
+              + " {}",
+          zoneDetectionJobId,
+          zoneDetectionJobType,
+          detectableObjectConfigurations.stream()
+              .map(DetectableObjectConfiguration::getObjectType)
+              .toList());
+      return;
+    }
     eventProducer.accept(
         List.of(new GeoJsonConversionJobStatusRecomputingSubmitted(geoJsonConversionJob.getId())));
   }
