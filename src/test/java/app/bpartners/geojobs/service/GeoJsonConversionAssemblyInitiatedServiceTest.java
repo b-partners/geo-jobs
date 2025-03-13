@@ -10,12 +10,15 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionAssemblyInitiated;
+import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
+import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.hash.FileHash;
 import app.bpartners.geojobs.file.hash.FileHashAlgorithm;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.TaskStatus;
+import app.bpartners.geojobs.model.SubscriptionConsumptionLog;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.GeoJsonConversionJobRepository;
@@ -43,6 +46,8 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
   FileWriter fileWriterMock = mock();
   ZoneDetectionJobService zoneDetectionJobServiceMock = mock();
   DetectionRepository detectionRepositoryMock = mock();
+  AuthProvider authProviderMock = mock();
+  SubscriptionConsumptionLogService subscriptionConsumptionLogServiceMock = mock();
   GeoJsonConversionAssemblyInitiatedService subject =
       new GeoJsonConversionAssemblyInitiatedService(
           geoJsonConversionTaskRepositoryMock,
@@ -50,7 +55,8 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
           bucketComponentMock,
           fileWriterMock,
           zoneDetectionJobServiceMock,
-          detectionRepositoryMock);
+          detectionRepositoryMock,
+          subscriptionConsumptionLogServiceMock);
 
   @SneakyThrows
   @Test
@@ -92,12 +98,16 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
         .thenReturn(new FileHash(FileHashAlgorithm.SHA256, "dummy"));
     var detectionMock = new Detection();
     var optionalDetection = Optional.of(detectionMock);
+    var principalMock = mock(Principal.class);
     when(detectionRepositoryMock.findByZdjId(ZONE_DETECTION_JOB_ID)).thenReturn(optionalDetection);
     when(detectionRepositoryMock.save(any(Detection.class)))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
     when(zoneDetectionJobServiceMock.getHumanZdjFromZdjId(any()))
         .thenReturn(dummyZoneDetectionJob(ZONE_DETECTION_JOB_ID));
     when(zoneDetectionJobServiceMock.getMachineZdjFromZdjId(any())).thenReturn(null);
+    when(authProviderMock.getPrincipal()).thenReturn(principalMock);
+    when(subscriptionConsumptionLogServiceMock.addSubscriptionConsumptionLog(anyString(), any()))
+        .thenReturn(SubscriptionConsumptionLog.builder().build());
 
     assertDoesNotThrow(
         () ->

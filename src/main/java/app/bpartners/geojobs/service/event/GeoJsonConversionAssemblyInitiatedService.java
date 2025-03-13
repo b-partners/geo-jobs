@@ -1,16 +1,22 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.model.SubscriptionConsumptionType.ROOF_ANALYSIS;
+import static app.bpartners.geojobs.model.SubscriptionConsumptionUnit.UNIT;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_BUCKET_FOLDER;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_EXTENSION;
+import static java.time.Instant.now;
 
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionAssemblyInitiated;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.model.SubscriptionConsumptionLog;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.GeoJsonConversionJobRepository;
 import app.bpartners.geojobs.repository.GeoJsonConversionTaskRepository;
+import app.bpartners.geojobs.service.SubscriptionConsumptionLogService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
+import java.util.UUID;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,6 +31,7 @@ public class GeoJsonConversionAssemblyInitiatedService
   private final FileWriter fileWriter;
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final DetectionRepository detectionRepository;
+  private final SubscriptionConsumptionLogService subscriptionConsumptionLogService;
 
   @Override
   public void accept(GeoJsonConversionAssemblyInitiated event) {
@@ -64,7 +71,18 @@ public class GeoJsonConversionAssemblyInitiatedService
                   throw new NotFoundException(
                       "Any detection found associated to ZDJ(id=" + zoneDetectionJob.getId() + ")");
                 });
-    detectionRepository.save(
-        detection.toBuilder().geojsonS3FileKey(savedConversionJob.getFileKey()).build());
+    var saved =
+        detectionRepository.save(
+            detection.toBuilder().geojsonS3FileKey(savedConversionJob.getFileKey()).build());
+    var consumptionLog =
+        SubscriptionConsumptionLog.builder()
+            .id(UUID.randomUUID().toString())
+            .consumptionType(ROOF_ANALYSIS)
+            .consumptionUnit(UNIT)
+            .usageMetric(1L)
+            .creationDatetime(now())
+            .build();
+    subscriptionConsumptionLogService.addSubscriptionConsumptionLog(
+        saved.getCommunityOwnerId(), consumptionLog);
   }
 }
