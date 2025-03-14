@@ -82,10 +82,19 @@ public class GeoJsonConversionTaskConsumer implements Consumer<GeoJsonConversion
         return machineDetectedTiles.stream()
             .map(
                 detectedTile -> {
+                  var detectedObjects =
+                      detectedTile.getDetectedObjects().stream()
+                          .filter(
+                              detectedObject ->
+                                  detectedObject
+                                      .getDetectedObjectType()
+                                      .getDetectableType()
+                                      .equals(detectableType))
+                          .toList();
                   var baseDetectedTile =
                       DetectedTile.builder()
                           .tile(detectedTile.getTile())
-                          .detectedObjects(detectedTile.getDetectedObjects())
+                          .detectedObjects(detectedObjects)
                           .build();
                   if (!hasEmptyFeatureOrGeometryNull(baseDetectedTile)) {
                     return baseDetectedTile;
