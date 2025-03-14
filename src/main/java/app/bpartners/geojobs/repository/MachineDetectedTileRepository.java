@@ -60,10 +60,15 @@ public interface MachineDetectedTileRepository extends JpaRepository<MachineDete
       @Param("minConfidenceForDelivery") double minConfidenceForDelivery,
       @Param("isGreater") Boolean isGreater);
 
+  // TODO : use JPQL and retrieve in doubt detected tiles without filter
   @Query(
       value =
-          "select count(*) from"
-              + " get_in_doubt_detected_tiles(:zoneDetectionJobId,:minConfidenceForDelivery, true)",
+          "select case when true_positive_count = 0 then false_positive_count else"
+              + " true_positive_count end from (select count(id) as true_positive_count from"
+              + " get_in_doubt_detected_tiles(:zoneDetectionJobId, :minConfidenceForDelivery,"
+              + " true)) as true_positive,(select count(id) as false_positive_count from"
+              + " get_in_doubt_detected_tiles(:zoneDetectionJobId, :minConfidenceForDelivery,"
+              + " false)) as false_positive",
       nativeQuery = true)
   Long countInDoubtDetectedTileToDeliveryByZdjJobId(
       @Param("zoneDetectionJobId") String zoneDetectionJobId,
