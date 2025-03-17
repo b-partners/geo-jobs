@@ -70,7 +70,7 @@ public class GeoJsonMapper {
             .map(
                 coor -> {
                   var x = coor.getFirst().doubleValue();
-                  var y = -coor.getLast().doubleValue();
+                  var y = coor.getLast().doubleValue();
                   return toGeographicalCoordinates(xTile, yTile, x, y, zoom, imageWidth);
                 })
             .toList();
