@@ -3,7 +3,9 @@ package app.bpartners.geojobs.service.event;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_BUCKET_FOLDER;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_EXTENSION;
 
+import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionAssemblyInitiated;
+import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionAssemblySucceeded;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.exception.NotFoundException;
@@ -11,6 +13,8 @@ import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.GeoJsonConversionJobRepository;
 import app.bpartners.geojobs.repository.GeoJsonConversionTaskRepository;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
+
+import java.util.List;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,6 +29,7 @@ public class GeoJsonConversionAssemblyInitiatedService
   private final FileWriter fileWriter;
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final DetectionRepository detectionRepository;
+  private final EventProducer eventProducer;
 
   @Override
   public void accept(GeoJsonConversionAssemblyInitiated event) {
@@ -66,5 +71,8 @@ public class GeoJsonConversionAssemblyInitiatedService
                 });
     detectionRepository.save(
         detection.toBuilder().geojsonS3FileKey(savedConversionJob.getFileKey()).build());
+    eventProducer.accept(List.of(GeoJsonConversionAssemblySucceeded.builder()
+                    .geoJsonConversionJob(savedConversionJob)
+            .build()));
   }
 }
