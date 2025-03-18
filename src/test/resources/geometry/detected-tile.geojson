@@ -6,7 +6,7 @@
     },
     "type" : "Feature",
     "geometry" : {
-      "coordinates" : [ [ [ [ 5.078807026147842, 47.26017169752776 ] ] ] ],
+      "coordinates" : [ [ [ [ 5.078807026147842, 47.26008068066018 ] ] ] ],
       "type" : "MultiPolygon"
     }
   } ],
