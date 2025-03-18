@@ -63,9 +63,8 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
           fileWriterMock,
           zoneDetectionJobServiceMock,
           detectionRepositoryMock,
-              eventProducerMock,
-              detectionRepositoryMock,
-              subscriptionConsumptionLogServiceMock);
+              subscriptionConsumptionLogServiceMock,
+          eventProducerMock);
 
   @SneakyThrows
   @Test
@@ -115,7 +114,7 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
         .thenReturn(dummyZoneDetectionJob(ZONE_DETECTION_JOB_ID));
     when(zoneDetectionJobServiceMock.getMachineZdjFromZdjId(any())).thenReturn(null);
     when(authProviderMock.getPrincipal()).thenReturn(principalMock);
-    when(subscriptionConsumptionLogServiceMock.addSubscriptionConsumptionLog(anyString(), any()))
+    when(subscriptionConsumptionLogServiceMock.sendSubscriptionConsumptionLog(anyString(), any()))
         .thenReturn(SubscriptionConsumptionLog.builder().build());
 
     assertDoesNotThrow(
@@ -152,7 +151,7 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
 
     var eventCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducerMock, only()).accept(eventCaptor.capture());
-    var geoJsonConversionAssemblySucceededEvent = (GeoJsonConversionAssemblySucceeded) eventCaptor.getValue().getFirst();
+    var geoJsonConversionAssemblySucceededEvent = (GeoJsonConversionAssemblySucceeded) eventCaptor.getValue().get(0);
     assertEquals(GeoJsonConversionAssemblySucceeded.builder()
             .geoJsonConversionJob(savedGeoJsonConversionJob)
             .build(), geoJsonConversionAssemblySucceededEvent);
