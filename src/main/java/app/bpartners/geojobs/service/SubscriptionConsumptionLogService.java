@@ -20,7 +20,7 @@ public class SubscriptionConsumptionLogService {
   public SubscriptionConsumptionLogService(
       RestTemplate restTemplate,
       AuthProvider authProvider,
-      @Value("${bpartnersApi.url}") String bpartnersApiUrl) {
+      @Value("${bpartners.api.url}") String bpartnersApiUrl) {
     this.restTemplate = restTemplate;
     this.authProvider = authProvider;
     this.bpartnersApiUrl = bpartnersApiUrl;
