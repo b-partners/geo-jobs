@@ -11,7 +11,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionAssemblyInitiated;
+import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionAssemblySucceeded;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.file.FileWriter;
@@ -46,6 +48,7 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
   GeoJsonConversionJobRepository geoJsonConversionJobRepositoryMock = mock();
   BucketComponent bucketComponentMock = mock();
   FileWriter fileWriterMock = mock();
+  EventProducer eventProducerMock = mock();
   ZoneDetectionJobService zoneDetectionJobServiceMock = mock();
   DetectionRepository detectionRepositoryMock = mock();
   AuthProvider authProviderMock = mock();
@@ -58,7 +61,8 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
           fileWriterMock,
           zoneDetectionJobServiceMock,
           detectionRepositoryMock,
-          subscriptionConsumptionLogServiceMock);
+          subscriptionConsumptionLogServiceMock,
+          eventProducerMock);
 
   @SneakyThrows
   @Test
@@ -135,11 +139,18 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
     assertEquals(
         geoJsonConversionJob.toBuilder().fileKey(fileKey).build(), savedGeoJsonConversionJob);
 
-    var eventCaptor = ArgumentCaptor.forClass(Detection.class);
+    var detectionCaptor = ArgumentCaptor.forClass(Detection.class);
     verify(detectionRepositoryMock, times(1)).findByZdjId(ZONE_DETECTION_JOB_ID);
-    verify(detectionRepositoryMock).save(eventCaptor.capture());
-    var savedDetection = eventCaptor.getValue();
+    verify(detectionRepositoryMock).save(detectionCaptor.capture());
+    var savedDetection = detectionCaptor.getValue();
     assertEquals(fileKey, savedDetection.getGeojsonS3FileKey());
+
+    var eventCaptor = ArgumentCaptor.forClass(List.class);
+    verify(eventProducerMock, only()).accept(eventCaptor.capture());
+    var geoJsonConversionAssemblySucceededEvent = (GeoJsonConversionAssemblySucceeded) eventCaptor.getValue().getFirst();
+    assertEquals(GeoJsonConversionAssemblySucceeded.builder()
+            .geoJsonConversionJob(savedGeoJsonConversionJob)
+            .build(), geoJsonConversionAssemblySucceededEvent);
 
     var subscriptionConsumptionCaptor = ArgumentCaptor.forClass(SubscriptionConsumptionLog.class);
     var consumptionExpected =

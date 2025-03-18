@@ -134,6 +134,8 @@ public class GeoJsonConversionJobService
     var geoJsonConversionJob =
         GeoJsonConversionJob.builder()
             .id(geoJsonConversionJobId)
+            .emailReceiver(zoneDetectionJob.getEmailReceiver())
+            .zoneName(zoneDetectionJob.getZoneName())
             .zoneDetectionJobId(zoneDetectionJob.getId())
             .zoneDetectionJobType(jobDetectionType)
             .submissionInstant(now())
