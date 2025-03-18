@@ -165,7 +165,7 @@ public class ZoneService {
         detectionRepository.save(
             detection.toBuilder().geojsonS3FileKey(geoJsonResultFileKey).build());
     eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
-    return computeEmptyStatisticFromStep(detection, FINISHED, SUCCEEDED, HUMAN_DETECTION);
+    return computeEmptyStatisticFromStep(detection, FINISHED, SUCCEEDED, GEO_JSON_CONVERSION);
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection getProcessedDetection(
