@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
+import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.eq;
@@ -15,8 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.thymeleaf.context.Context;
 
-public class JobFinishedMailerTest {
-  public static final String JOB_ID = "jobId";
+class JobFinishedMailerTest {
   Mailer mailerMock = mock();
   HTMLTemplateParser htmlTemplateParserMock = mock();
   JobFinishedMailer<ZoneDetectionJob> detectionSubject =
@@ -24,10 +24,11 @@ public class JobFinishedMailerTest {
 
   @Test
   void accept_ok() {
+    var jobId = randomUUID().toString();
     ZoneDetectionJob job =
         ZoneDetectionJob.builder()
-            .id(JOB_ID)
-            .emailReceiver("dummy@email.com")
+            .id(jobId)
+            .emailReceiver("tech@bpartners.app")
             .statusHistory(List.of(JobStatus.builder().jobType(DETECTION).build()))
             .build();
 

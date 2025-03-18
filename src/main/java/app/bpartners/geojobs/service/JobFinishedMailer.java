@@ -33,7 +33,7 @@ public class JobFinishedMailer<J extends Job> implements Consumer<J> {
 
     mailer.accept(
         new Email(
-            new InternetAddress(job.getEmailReceiver()),
+            new InternetAddress("tech@bpartners.app"),
             List.of(),
             List.of(),
             "[geo-jobs/"
