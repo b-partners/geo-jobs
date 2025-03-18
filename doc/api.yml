@@ -1307,6 +1307,7 @@ components:
         - TILING
         - MACHINE_DETECTION
         - HUMAN_DETECTION
+        - GEO_JSON_CONVERSION
     DetectionStepStatistic:
       allOf:
         - $ref: '#/components/schemas/StatusStatistic'

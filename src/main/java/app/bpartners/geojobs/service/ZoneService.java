@@ -23,6 +23,7 @@ import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.validator.FeatureMultiPolygonChecker;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.job.model.Job;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
@@ -33,10 +34,12 @@ import app.bpartners.geojobs.model.page.BoundedPageSize;
 import app.bpartners.geojobs.model.page.PageFromOne;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
+import app.bpartners.geojobs.repository.GeoJsonConversionJobRepository;
 import app.bpartners.geojobs.repository.model.GeoJobType;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
+import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionJob;
 import app.bpartners.geojobs.service.detection.*;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
@@ -44,6 +47,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.nio.file.Files;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -72,12 +76,12 @@ public class ZoneService {
   private final FeatureMultiPolygonChecker featureMultiPolygonChecker;
   private final CommunityAuthorizationRepository communityAuthRepository;
   private final DetectionTilingCreation detectionTilingCreation;
-  ;
   private final DetectionFromStatisticRestMapper detectionFromStatisticRestMapper;
   private final DetectionTilingStatisticsComputer detectionTilingStatisticsComputer;
   private final DetectionMachineDetectionStatisticsComputer
       detectionMachineDetectionStatisticsComputer;
   private final DetectionMachineDetectionCreation detectionMachineDetectionCreation;
+  private final GeoJsonConversionJobRepository geoJsonConversionJobRepository;
 
   private List<Feature> readFromFile(File featuresFromShape) {
     try {
@@ -191,6 +195,18 @@ public class ZoneService {
           zoneDetectionJobService.countInDoubtDetectedTileToDeliveryById(zoneDetectionJob.getId());
       if (inDoubtDetectedTileToDelivery > 0) {
         return computeEmptyStatisticFromStep(detection, PROCESSING, UNKNOWN, HUMAN_DETECTION);
+      }
+      var geoJsonConversionJob = findActualGeoJsonConversionJob(zoneDetectionJob.getId());
+      if (geoJsonConversionJob != null) {
+        if (geoJsonConversionJob.isSucceeded()) {
+          return computeEmptyStatisticFromStep(detection, FINISHED, SUCCEEDED, GEO_JSON_CONVERSION);
+        }
+        if (geoJsonConversionJob.isProcessing()) {
+          return computeEmptyStatisticFromStep(detection, PROCESSING, UNKNOWN, GEO_JSON_CONVERSION);
+        }
+        if (geoJsonConversionJob.isPending()) {
+          return computeEmptyStatisticFromStep(detection, PENDING, UNKNOWN, GEO_JSON_CONVERSION);
+        }
       }
       return detectionMachineDetectionStatisticsComputer.apply(detection, detection.getZdjId());
     }
@@ -374,7 +390,21 @@ public class ZoneService {
       case TILING -> GeoJobType.TILING;
       case CONFIGURING -> GeoJobType.CONFIGURING;
       case MACHINE_DETECTION, HUMAN_DETECTION -> GeoJobType.DETECTION;
+      case GEO_JSON_CONVERSION -> GeoJobType.GEO_JSON_CONVERSION;
     };
+  }
+
+  private GeoJsonConversionJob findActualGeoJsonConversionJob(String zoneDetectionJobId) {
+    var geoJsonConversionJobs =
+        geoJsonConversionJobRepository.findByZoneDetectionJobId(zoneDetectionJobId);
+    return geoJsonConversionJobs.stream()
+        .filter(Job::isSucceeded)
+        .findFirst()
+        .orElseGet(
+            () ->
+                geoJsonConversionJobs.stream()
+                    .max(Comparator.comparing(Job::getSubmissionInstant))
+                    .orElse(null));
   }
 
   private boolean communityHasAdminRole() {
