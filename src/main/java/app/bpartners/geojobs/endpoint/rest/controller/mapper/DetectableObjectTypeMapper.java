@@ -201,8 +201,7 @@ public class DetectableObjectTypeMapper {
   private Double minimumConfidenceForDetection(DetectableObjectType objectType) {
     switch (objectType) {
       case TROTTOIR -> {
-        // TODO: must return 0.252;
-        return 1.0;
+        return 0.252;
       }
       case PISCINE, PANNEAU_PHOTOVOLTAIQUE -> {
         return 0.27;
@@ -217,8 +216,7 @@ public class DetectableObjectTypeMapper {
         return 0.29;
       }
       case ESPACE_VERT -> {
-        return 1.0;
-        // TODO : must return 0.251;
+        return 0.251;
       }
       case BATI_ARDOISE -> {
         return 0.255;
