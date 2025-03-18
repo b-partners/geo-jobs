@@ -5,37 +5,33 @@ import app.bpartners.geojobs.model.SubscriptionConsumptionLog;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 @Service
 public class SubscriptionConsumptionLogService {
+  private static final String API_KEY_HEADER = "x-api-key";
   private final RestTemplate restTemplate;
   private final AuthProvider authProvider;
 
   private final String bpartnersApiUrl;
 
   public SubscriptionConsumptionLogService(
-      RestTemplate restTemplate,
-      AuthProvider authProvider,
-      @Value("${bpartners.api.url}") String bpartnersApiUrl) {
-    this.restTemplate = restTemplate;
+      AuthProvider authProvider, @Value("${bpartners.api.url}") String bpartnersApiUrl) {
+    this.restTemplate = new RestTemplate();
     this.authProvider = authProvider;
     this.bpartnersApiUrl = bpartnersApiUrl;
   }
 
-  public SubscriptionConsumptionLog addSubscriptionConsumptionLog(
+  public SubscriptionConsumptionLog sendSubscriptionConsumptionLog(
       String userId, SubscriptionConsumptionLog subscriptionConsumptionLog) {
     var apiKey = authProvider.getPrincipal().getApiKey();
-    String url = String.format("%s/users/%s/subscriptionConsumptionLogs", bpartnersApiUrl, userId);
+    String apiUrl =
+        String.format("%s/users/%s/subscriptionConsumptionLogs", bpartnersApiUrl, userId);
     HttpHeaders headers = new HttpHeaders();
-    headers.set("x-api-key", apiKey);
-    HttpEntity<SubscriptionConsumptionLog> entity =
+    headers.add(API_KEY_HEADER, apiKey);
+    HttpEntity<SubscriptionConsumptionLog> payload =
         new HttpEntity<>(subscriptionConsumptionLog, headers);
-    ResponseEntity<SubscriptionConsumptionLog> response =
-        restTemplate.exchange(url, HttpMethod.POST, entity, SubscriptionConsumptionLog.class);
-    return response.getBody();
+    return restTemplate.postForObject(apiUrl, payload, SubscriptionConsumptionLog.class);
   }
 }

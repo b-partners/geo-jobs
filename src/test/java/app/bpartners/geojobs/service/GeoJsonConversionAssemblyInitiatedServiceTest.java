@@ -2,6 +2,8 @@ package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
+import static app.bpartners.geojobs.model.SubscriptionConsumptionType.ROOF_ANALYSIS;
+import static app.bpartners.geojobs.model.SubscriptionConsumptionUnit.UNIT;
 import static app.bpartners.geojobs.repository.model.GeoJobType.GEO_JSON_CONVERSION;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
@@ -106,8 +108,6 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
         .thenReturn(dummyZoneDetectionJob(ZONE_DETECTION_JOB_ID));
     when(zoneDetectionJobServiceMock.getMachineZdjFromZdjId(any())).thenReturn(null);
     when(authProviderMock.getPrincipal()).thenReturn(principalMock);
-    when(subscriptionConsumptionLogServiceMock.addSubscriptionConsumptionLog(anyString(), any()))
-        .thenReturn(SubscriptionConsumptionLog.builder().build());
 
     assertDoesNotThrow(
         () ->
@@ -140,6 +140,24 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
     verify(detectionRepositoryMock).save(eventCaptor.capture());
     var savedDetection = eventCaptor.getValue();
     assertEquals(fileKey, savedDetection.getGeojsonS3FileKey());
+
+    var subscriptionConsumptionCaptor = ArgumentCaptor.forClass(SubscriptionConsumptionLog.class);
+    var consumptionExpected =
+        SubscriptionConsumptionLog.builder()
+            .id(null)
+            .consumptionType(ROOF_ANALYSIS)
+            .consumptionUnit(UNIT)
+            .usageMetric(1L)
+            .creationDatetime(null)
+            .build();
+
+    verify(subscriptionConsumptionLogServiceMock, times(1))
+        .sendSubscriptionConsumptionLog(any(), subscriptionConsumptionCaptor.capture());
+    var actual = subscriptionConsumptionCaptor.getValue();
+    actual.setId(null);
+    actual.setCreationDatetime(null);
+
+    assertEquals(consumptionExpected, actual);
   }
 
   @SneakyThrows

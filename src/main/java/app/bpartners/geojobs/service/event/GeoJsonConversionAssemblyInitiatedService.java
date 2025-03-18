@@ -5,6 +5,7 @@ import static app.bpartners.geojobs.model.SubscriptionConsumptionUnit.UNIT;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_BUCKET_FOLDER;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_EXTENSION;
 import static java.time.Instant.now;
+import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionAssemblyInitiated;
 import app.bpartners.geojobs.file.FileWriter;
@@ -16,7 +17,6 @@ import app.bpartners.geojobs.repository.GeoJsonConversionJobRepository;
 import app.bpartners.geojobs.repository.GeoJsonConversionTaskRepository;
 import app.bpartners.geojobs.service.SubscriptionConsumptionLogService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
-import java.util.UUID;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -76,13 +76,13 @@ public class GeoJsonConversionAssemblyInitiatedService
             detection.toBuilder().geojsonS3FileKey(savedConversionJob.getFileKey()).build());
     var consumptionLog =
         SubscriptionConsumptionLog.builder()
-            .id(UUID.randomUUID().toString())
+            .id(randomUUID().toString())
             .consumptionType(ROOF_ANALYSIS)
             .consumptionUnit(UNIT)
             .usageMetric(1L)
             .creationDatetime(now())
             .build();
-    subscriptionConsumptionLogService.addSubscriptionConsumptionLog(
+    subscriptionConsumptionLogService.sendSubscriptionConsumptionLog(
         saved.getCommunityOwnerId(), consumptionLog);
   }
 }
