@@ -1,9 +1,8 @@
 package app.bpartners.geojobs.endpoint.event.model;
 
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionJob;
-import lombok.*;
-
 import java.time.Duration;
+import lombok.*;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -11,16 +10,17 @@ import java.time.Duration;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @ToString
-public class GeoJsonConversionAssemblySucceeded extends PojaEvent{
-    private GeoJsonConversionJob geoJsonConversionJob;
+public class GeoJsonConversionAssemblySucceeded extends PojaEvent {
+  private GeoJsonConversionJob geoJsonConversionJob;
 
-    @Override
-    public Duration maxConsumerDuration() {
-        return Duration.ofMinutes(1L);
-    }
 
-    @Override
-    public Duration maxConsumerBackoffBetweenRetries() {
-        return Duration.ofMinutes(1L);
-    }
+  @Override
+  public Duration maxConsumerDuration() {
+    return Duration.ofMinutes(1L);
+  }
+
+  @Override
+  public Duration maxConsumerBackoffBetweenRetries() {
+    return Duration.ofMinutes(1L);
+  }
 }

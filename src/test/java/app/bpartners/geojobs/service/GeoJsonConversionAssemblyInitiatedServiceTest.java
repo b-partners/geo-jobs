@@ -137,10 +137,13 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
 
     var eventCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducerMock, only()).accept(eventCaptor.capture());
-    var geoJsonConversionAssemblySucceededEvent = (GeoJsonConversionAssemblySucceeded) eventCaptor.getValue().getFirst();
-    assertEquals(GeoJsonConversionAssemblySucceeded.builder()
+    var geoJsonConversionAssemblySucceededEvent =
+        (GeoJsonConversionAssemblySucceeded) eventCaptor.getValue().getFirst();
+    assertEquals(
+        GeoJsonConversionAssemblySucceeded.builder()
             .geoJsonConversionJob(savedGeoJsonConversionJob)
-            .build(), geoJsonConversionAssemblySucceededEvent);
+            .build(),
+        geoJsonConversionAssemblySucceededEvent);
   }
 
   @SneakyThrows

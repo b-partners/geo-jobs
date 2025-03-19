@@ -13,7 +13,6 @@ import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.GeoJsonConversionJobRepository;
 import app.bpartners.geojobs.repository.GeoJsonConversionTaskRepository;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
-
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
@@ -71,8 +70,10 @@ public class GeoJsonConversionAssemblyInitiatedService
                 });
     detectionRepository.save(
         detection.toBuilder().geojsonS3FileKey(savedConversionJob.getFileKey()).build());
-    eventProducer.accept(List.of(GeoJsonConversionAssemblySucceeded.builder()
-                    .geoJsonConversionJob(savedConversionJob)
-            .build()));
+    eventProducer.accept(
+        List.of(
+            GeoJsonConversionAssemblySucceeded.builder()
+                .geoJsonConversionJob(savedConversionJob)
+                .build()));
   }
 }
