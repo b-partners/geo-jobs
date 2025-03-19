@@ -13,7 +13,6 @@ import lombok.*;
 public class GeoJsonConversionAssemblySucceeded extends PojaEvent {
   private GeoJsonConversionJob geoJsonConversionJob;
 
-
   @Override
   public Duration maxConsumerDuration() {
     return Duration.ofMinutes(1L);
