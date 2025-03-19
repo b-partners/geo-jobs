@@ -33,5 +33,6 @@ public class EnvConf {
     registry.add("readme.monitor.api-key", () -> "the-readme-monitor-api-key");
     registry.add("readme.monitor.development", () -> "true");
     registry.add("readme.webhook.secret", () -> "the-readme-webhook-secret");
+    registry.add("bpartners.api.url", () -> "https://dummy.com");
   }
 }
