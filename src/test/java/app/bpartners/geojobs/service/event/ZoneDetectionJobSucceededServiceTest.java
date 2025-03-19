@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.MOISISSURE;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.USURE;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -7,13 +9,21 @@ import static org.mockito.Mockito.*;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryJobRequested;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobSucceeded;
+import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.repository.AnnotationDeliveryConfigurationRepository;
+import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
+import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.annotation.AnnotationDeliveryConfiguration;
+import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
+import app.bpartners.geojobs.service.DetectionFinishedMailer;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -23,12 +33,64 @@ class ZoneDetectionJobSucceededServiceTest {
   EventProducer eventProducerMock = mock();
   GeoJsonConversionJobService geoJsonConversionJobServiceMock = mock();
   ZoneDetectionJobService zoneDetectionJobServiceMock = mock();
+  MachineDetectedTileRepository machineDetectedTileRepositoryMock = mock();
+  DetectableObjectConfigurationRepository detectableObjectConfigurationRepositoryMock = mock();
+  DetectionFinishedMailer detectionFinishedMailerMock = mock();
   ZoneDetectionJobSucceededService subject =
       new ZoneDetectionJobSucceededService(
           configurationRepositoryMock,
           zoneDetectionJobServiceMock,
           geoJsonConversionJobServiceMock,
-          eventProducerMock);
+          eventProducerMock,
+          machineDetectedTileRepositoryMock,
+          detectableObjectConfigurationRepositoryMock,
+          detectionFinishedMailerMock);
+
+  @BeforeEach
+  void setUp() {
+    // so that detection always has detected tile - must be overridden for specific test
+    when(machineDetectedTileRepositoryMock.countByZdjJobIdAndDetectableType(any(), any()))
+        .thenReturn(1L);
+    when(detectableObjectConfigurationRepositoryMock.findAllByDetectionJobId(any()))
+        .thenReturn(someObjectConfigurations());
+  }
+
+  private @NotNull List<DetectableObjectConfiguration> someObjectConfigurations() {
+    return List.of(
+        DetectableObjectConfiguration.builder().objectType(USURE).build(),
+        DetectableObjectConfiguration.builder().objectType(MOISISSURE).build());
+  }
+
+  @Test
+  void trigger_detection_finished_mailer_when_no_detect_tile_found() {
+    var succeededJobId = randomUUID().toString();
+    var succeededZoneDetectionJobMock = mock(ZoneDetectionJob.class);
+    var jobStatus = mock(JobStatus.class);
+    reset(machineDetectedTileRepositoryMock);
+    when(machineDetectedTileRepositoryMock.countByZdjJobIdAndDetectableType(
+            succeededJobId, USURE.name()))
+        .thenReturn(0L);
+    when(machineDetectedTileRepositoryMock.countByZdjJobIdAndDetectableType(
+            succeededJobId, MOISISSURE.name()))
+        .thenReturn(0L);
+    when(zoneDetectionJobServiceMock.countInDoubtDetectedTileToDeliveryById(succeededJobId))
+        .thenReturn(1L);
+    var emailReceiver = "email@email.com";
+    var zoneName = "My address";
+    var creationDatetime = Instant.parse("2025-03-01T03:00:00Z");
+    when(succeededZoneDetectionJobMock.getEmailReceiver()).thenReturn(emailReceiver);
+    when(succeededZoneDetectionJobMock.getZoneName()).thenReturn(zoneName);
+    when(jobStatus.getCreationDatetime()).thenReturn(creationDatetime);
+    when(succeededZoneDetectionJobMock.getStatus()).thenReturn(jobStatus);
+    when(zoneDetectionJobServiceMock.findById(succeededJobId))
+        .thenReturn(succeededZoneDetectionJobMock);
+
+    assertDoesNotThrow(() -> subject.accept(new ZoneDetectionJobSucceeded(succeededJobId)));
+
+    verify(detectionFinishedMailerMock, only()).accept(emailReceiver, zoneName, creationDatetime);
+    verify(configurationRepositoryMock, never()).findLatestConfiguration();
+    verify(eventProducerMock, never()).accept(any());
+  }
 
   @Test
   void succeeded_and_triggers_annotation_delivery_job_requested() {
