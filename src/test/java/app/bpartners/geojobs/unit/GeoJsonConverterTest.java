@@ -18,10 +18,12 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
+
+import app.bpartners.geojobs.service.geojson.GeoJsonMultiPolygonCorrector;
 import org.junit.jupiter.api.Test;
 
-public class GeoJsonConverterTest {
-  private final GeoJsonMapper mapper = new GeoJsonMapper();
+class GeoJsonConverterTest {
+  private final GeoJsonMapper mapper = new GeoJsonMapper(new GeoJsonMultiPolygonCorrector());
   private final GeoJsonConverter subject = new GeoJsonConverter(mapper);
 
   @Test
@@ -58,9 +60,10 @@ public class GeoJsonConverterTest {
                                     .actualInstanceStringValue(
                                         "{\n"
                                             + "        \"type\": \"MultiPolygon\",\n"
-                                            + "        \"coordinates\": [ [ [\n"
-                                            + "        [ 100.0, 200.0 ]\n"
-                                            + "        ] ] ] }")
+                                            + "        \"coordinates\": [ [ \n"
+                                            + "        [[30, 10], [10, 20], [20, 40], [40, 40], [30, 10]],"
+                                            + "        [[20, 20], [25, 30], [15, 30], [20, 20]]"
+                                            + " ] ] }")
                                     .build())
                             .build())
                     .build()))

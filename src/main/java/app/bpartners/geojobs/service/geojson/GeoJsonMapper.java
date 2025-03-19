@@ -10,12 +10,17 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
+
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class GeoJsonMapper {
+    private final GeoJsonMultiPolygonCorrector geoJsonMultiPolygonCorrector;
 
   public List<GeoJson.GeoFeature> toGeoFeatures(
       int xTile, int yTile, int zoom, int imageWidth, List<DetectedObject> detectedObjects) {
@@ -36,9 +41,10 @@ public class GeoJsonMapper {
                 if (multiPolygon.getCoordinates() == null) {
                   throw new IllegalArgumentException("Multipolygon coordinates should not be null");
                 }
+                var fixedMultiPolygon = geoJsonMultiPolygonCorrector.apply(multiPolygon);
                 geoFeatures.add(
                     mapToFeature(
-                        xTile, yTile, zoom, imageWidth, object, multiPolygon.getCoordinates()));
+                        xTile, yTile, zoom, imageWidth, object, Objects.requireNonNull(fixedMultiPolygon.getCoordinates())));
               } else {
                 throw new NotImplementedException(
                     "Only MultiPolygon geometry is supported for now but actual geometry class : "

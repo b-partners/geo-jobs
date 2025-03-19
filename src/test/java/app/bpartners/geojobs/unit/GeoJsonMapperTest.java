@@ -15,11 +15,13 @@ import app.bpartners.geojobs.service.geojson.GeoJson;
 import app.bpartners.geojobs.service.geojson.GeoJsonMapper;
 import java.math.BigDecimal;
 import java.util.List;
+
+import app.bpartners.geojobs.service.geojson.GeoJsonMultiPolygonCorrector;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 
-public class GeoJsonMapperTest {
-  private final GeoJsonMapper subject = new GeoJsonMapper();
+class GeoJsonMapperTest {
+  private final GeoJsonMapper subject = new GeoJsonMapper(new GeoJsonMultiPolygonCorrector());
 
   @SneakyThrows
   public static app.bpartners.geojobs.repository.model.Feature feature() {
