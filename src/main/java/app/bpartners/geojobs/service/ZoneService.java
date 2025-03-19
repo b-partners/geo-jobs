@@ -172,7 +172,7 @@ public class ZoneService {
       String detectionId) {
     var detection = getDetectionByE2IdOrId(detectionId);
     if (detection.isSucceeded()) {
-      return computeEmptyStatisticFromStep(detection, FINISHED, SUCCEEDED, HUMAN_DETECTION);
+      return computeEmptyStatisticFromStep(detection, FINISHED, SUCCEEDED, GEO_JSON_CONVERSION);
     }
     if (detection.isStillOnConfiguringStep()) {
       return computeEmptyStatisticFromStep(detection, PENDING, UNKNOWN, CONFIGURING);

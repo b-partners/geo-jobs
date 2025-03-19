@@ -377,7 +377,7 @@ class ZoneServiceTest {
 
     var actual = subject.getProcessedDetection(detectionId);
 
-    assertEquals(HUMAN_DETECTION, actual.getStep().getName());
+    assertEquals(GEO_JSON_CONVERSION, actual.getStep().getName());
     assertEquals(Status.ProgressionEnum.FINISHED, actual.getStep().getStatus().getProgression());
     assertEquals(SUCCEEDED, actual.getStep().getStatus().getHealth());
   }
@@ -692,7 +692,7 @@ class ZoneServiceTest {
 
     var actual = subject.getProcessedDetection(detectionId);
 
-    assertEquals(HUMAN_DETECTION, actual.getStep().getName());
+    assertEquals(GEO_JSON_CONVERSION, actual.getStep().getName());
     assertEquals(Status.ProgressionEnum.FINISHED, actual.getStep().getStatus().getProgression());
     assertEquals(SUCCEEDED, actual.getStep().getStatus().getHealth());
   }
