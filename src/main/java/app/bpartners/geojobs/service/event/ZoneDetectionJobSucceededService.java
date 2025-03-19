@@ -6,6 +6,9 @@ import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryJobRequested;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobSucceeded;
 import app.bpartners.geojobs.repository.AnnotationDeliveryConfigurationRepository;
+import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
+import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
+import app.bpartners.geojobs.service.DetectionFinishedMailer;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import java.util.List;
@@ -21,14 +24,33 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final GeoJsonConversionJobService geoJsonConversionJobService;
   private final EventProducer eventProducer;
+  private final MachineDetectedTileRepository machineDetectedTileRepository;
+  private final DetectableObjectConfigurationRepository detectableObjectConfigurationRepository;
+  private final DetectionFinishedMailer detectionFinishedMailer;
 
   @Override
   @Transactional
   public void accept(ZoneDetectionJobSucceeded event) {
     var succeededJobId = event.getSucceededJobId();
+    var succeededZoneDetectionJob = zoneDetectionJobService.findById(succeededJobId);
     if (zoneDetectionJobService.countInDoubtDetectedTileToDeliveryById(succeededJobId) == 0L) {
-      geoJsonConversionJobService.getOrComputeGeoJsonConversionJob(
-          zoneDetectionJobService.findById(succeededJobId));
+      geoJsonConversionJobService.getOrComputeGeoJsonConversionJob(succeededZoneDetectionJob);
+      return;
+    }
+    var detectableObjectConfigurations =
+        detectableObjectConfigurationRepository.findAllByDetectionJobId(succeededJobId);
+    boolean machineDetectionFoundAnyDetectedTileFromDetectableConfiguration =
+        detectableObjectConfigurations.stream()
+            .anyMatch(
+                detectableConfiguration ->
+                    machineDetectedTileRepository.countByZdjJobIdAndDetectableType(
+                            succeededJobId, detectableConfiguration.getObjectType().name())
+                        > 0);
+    if (!machineDetectionFoundAnyDetectedTileFromDetectableConfiguration) {
+      detectionFinishedMailer.accept(
+          succeededZoneDetectionJob.getEmailReceiver(),
+          succeededZoneDetectionJob.getZoneName(),
+          succeededZoneDetectionJob.getStatus().getCreationDatetime());
       return;
     }
     var minimumConfidenceForDelivery =
