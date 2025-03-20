@@ -75,14 +75,14 @@ public class GeoJsonConversionAssemblyInitiatedService
                   throw new NotFoundException(
                       "Any detection found associated to ZDJ(id=" + zoneDetectionJob.getId() + ")");
                 });
+    var saved =
+            detectionRepository.save(
+                    detection.toBuilder().geojsonS3FileKey(savedConversionJob.getFileKey()).build());
     eventProducer.accept(
         List.of(
             GeoJsonConversionAssemblySucceeded.builder()
                 .geoJsonConversionJob(savedConversionJob)
                 .build()));
-    var saved =
-        detectionRepository.save(
-            detection.toBuilder().geojsonS3FileKey(savedConversionJob.getFileKey()).build());
     var consumptionLog =
         SubscriptionConsumptionLog.builder()
             .id(randomUUID().toString())
