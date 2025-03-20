@@ -25,11 +25,11 @@ public class ZoneDetectionJobCreated extends PojaEvent {
 
   @Override
   public Duration maxConsumerDuration() {
-    return Duration.ofMinutes(3);
+    return Duration.ofMinutes(1);
   }
 
   @Override
   public Duration maxConsumerBackoffBetweenRetries() {
-    return Duration.ofMinutes(1);
+    return Duration.ofSeconds(15);
   }
 }

@@ -23,12 +23,12 @@ public class GeoJsonConversionJobCreated extends PojaEvent {
 
   @Override
   public Duration maxConsumerDuration() {
-    return Duration.ofMinutes(5);
+    return Duration.ofMinutes(1);
   }
 
   @Override
   public Duration maxConsumerBackoffBetweenRetries() {
-    return Duration.ofMinutes(1);
+    return Duration.ofSeconds(15);
   }
 
   @Override

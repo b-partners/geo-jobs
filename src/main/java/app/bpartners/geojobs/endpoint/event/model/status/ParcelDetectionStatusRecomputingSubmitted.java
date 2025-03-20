@@ -14,8 +14,8 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = false)
 @ToString(callSuper = true)
 public class ParcelDetectionStatusRecomputingSubmitted extends JobStatusRecomputingSubmitted {
-  private static final long MAX_CONSUMER_DURATION_IN_SECONDS = Duration.ofMinutes(2).toSeconds();
-  public static final long INITIAL_BACKOFF_IN_SECONDS = Duration.ofMinutes(2).toSeconds();
+  private static final long MAX_CONSUMER_DURATION_IN_SECONDS = Duration.ofMinutes(1).toSeconds();
+  public static final long INITIAL_BACKOFF_IN_SECONDS = Duration.ofSeconds(15).toSeconds();
 
   public ParcelDetectionStatusRecomputingSubmitted(String parcelDetectionJobId) {
     super(parcelDetectionJobId, MAX_CONSUMER_DURATION_IN_SECONDS, INITIAL_BACKOFF_IN_SECONDS);

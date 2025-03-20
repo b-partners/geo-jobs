@@ -17,12 +17,12 @@ public class GeoJsonConversionAssemblyInitiated extends PojaEvent {
 
   @Override
   public Duration maxConsumerDuration() {
-    return Duration.ofMinutes(5L);
+    return Duration.ofMinutes(1L);
   }
 
   @Override
   public Duration maxConsumerBackoffBetweenRetries() {
-    return Duration.ofMinutes(1L);
+    return Duration.ofSeconds(15L);
   }
 
   @Override

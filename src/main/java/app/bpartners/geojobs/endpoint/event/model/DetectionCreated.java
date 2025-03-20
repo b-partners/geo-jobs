@@ -15,11 +15,11 @@ public class DetectionCreated extends PojaEvent {
 
   @Override
   public Duration maxConsumerDuration() {
-    return Duration.ofMinutes(3L);
+    return Duration.ofMinutes(1L);
   }
 
   @Override
   public Duration maxConsumerBackoffBetweenRetries() {
-    return Duration.ofMinutes(1L);
+    return Duration.ofSeconds(15L);
   }
 }

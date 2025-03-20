@@ -31,7 +31,7 @@ public class TilingTaskSucceeded extends PojaEvent {
 
   @Override
   public Duration maxConsumerBackoffBetweenRetries() {
-    return Duration.ofMinutes(1);
+    return Duration.ofSeconds(15);
   }
 
   @Override
