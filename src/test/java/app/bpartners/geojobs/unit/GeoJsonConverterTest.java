@@ -13,13 +13,13 @@ import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.geojson.GeoJsonConverter;
 import app.bpartners.geojobs.service.geojson.GeoJsonMapper;
+import app.bpartners.geojobs.service.geojson.GeoJsonMultiPolygonCorrector;
+import com.google.gson.JsonParser;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
-
-import app.bpartners.geojobs.service.geojson.GeoJsonMultiPolygonCorrector;
 import org.junit.jupiter.api.Test;
 
 class GeoJsonConverterTest {
@@ -33,8 +33,8 @@ class GeoJsonConverterTest {
     var actual = subject.convert(detectedTiles);
 
     var expectedURI = Paths.get(getClass().getResource("/geometry/detected-tile.geojson").toURI());
-    var expected = Files.readString(expectedURI);
-    assertEquals(expected, actual.getStringValue());
+    var expected = JsonParser.parseString(Files.readString(expectedURI));
+    assertEquals(expected, JsonParser.parseString(actual.getStringValue()));
   }
 
   private static DetectedTile detectedTile() {
@@ -58,12 +58,13 @@ class GeoJsonConverterTest {
                                 Feature.FeatureGeometry.builder()
                                     .geometryType(MULTI_POLYGON)
                                     .actualInstanceStringValue(
-                                        "{\n"
-                                            + "        \"type\": \"MultiPolygon\",\n"
-                                            + "        \"coordinates\": [ [ \n"
-                                            + "        [[30, 10], [10, 20], [20, 40], [40, 40], [30, 10]],"
-                                            + "        [[20, 20], [25, 30], [15, 30], [20, 20]]"
-                                            + " ] ] }")
+                                        """
+{
+        "type": "MultiPolygon",
+        "coordinates": [ [\s
+        [[30, 10], [10, 20], [20, 40], [40, 40], [30, 10]],\
+        [[20, 20], [25, 30], [15, 30], [20, 20]]\
+ ] ] }""")
                                     .build())
                             .build())
                     .build()))

@@ -13,10 +13,9 @@ import app.bpartners.geojobs.repository.model.detection.DetectableObjectType;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.service.geojson.GeoJson;
 import app.bpartners.geojobs.service.geojson.GeoJsonMapper;
+import app.bpartners.geojobs.service.geojson.GeoJsonMultiPolygonCorrector;
 import java.math.BigDecimal;
 import java.util.List;
-
-import app.bpartners.geojobs.service.geojson.GeoJsonMultiPolygonCorrector;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 

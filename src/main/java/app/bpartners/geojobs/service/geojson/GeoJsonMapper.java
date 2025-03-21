@@ -7,11 +7,7 @@ import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
-
+import java.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -20,7 +16,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class GeoJsonMapper {
-    private final GeoJsonMultiPolygonCorrector geoJsonMultiPolygonCorrector;
+  private final GeoJsonMultiPolygonCorrector geoJsonMultiPolygonCorrector;
 
   public List<GeoJson.GeoFeature> toGeoFeatures(
       int xTile, int yTile, int zoom, int imageWidth, List<DetectedObject> detectedObjects) {
@@ -44,7 +40,12 @@ public class GeoJsonMapper {
                 var fixedMultiPolygon = geoJsonMultiPolygonCorrector.apply(multiPolygon);
                 geoFeatures.add(
                     mapToFeature(
-                        xTile, yTile, zoom, imageWidth, object, Objects.requireNonNull(fixedMultiPolygon.getCoordinates())));
+                        xTile,
+                        yTile,
+                        zoom,
+                        imageWidth,
+                        object,
+                        Objects.requireNonNull(fixedMultiPolygon.getCoordinates())));
               } else {
                 throw new NotImplementedException(
                     "Only MultiPolygon geometry is supported for now but actual geometry class : "
@@ -69,19 +70,26 @@ public class GeoJsonMapper {
     properties.put("confidence", object.getComputedConfidence().toString());
     properties.put("label", object.getDetectedObjectType().getDetectableType().name());
     var multipolygon = new MultiPolygon();
-    List<List<BigDecimal>> coordinates =
+    List<List<List<List<BigDecimal>>>> multipolygonCoordinates =
         geometryCoordinates.stream()
-            .flatMap(List::stream)
-            .flatMap(List::stream)
             .map(
-                coor -> {
-                  var x = coor.getFirst().doubleValue();
-                  var y = coor.getLast().doubleValue();
-                  return toGeographicalCoordinates(xTile, yTile, x, y, zoom, imageWidth);
-                })
+                polygon ->
+                    polygon.stream()
+                        .map(
+                            ring ->
+                                ring.stream()
+                                    .map(
+                                        coor -> {
+                                          var x = coor.getFirst().doubleValue();
+                                          var y = coor.getLast().doubleValue();
+                                          return toGeographicalCoordinates(
+                                              xTile, yTile, x, y, zoom, imageWidth);
+                                        })
+                                    .toList())
+                        .toList())
             .toList();
     multipolygon.setType(MULTI_POLYGON);
-    multipolygon.setCoordinates(List.of(List.of(coordinates)));
+    multipolygon.setCoordinates(multipolygonCoordinates);
     return new GeoJson.GeoFeature(properties, multipolygon);
   }
 }
