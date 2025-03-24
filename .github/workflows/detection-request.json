@@ -1,0 +1,64 @@
+{
+  "emailReceiver": "tech@bpartners.app",
+  "zoneName": "github-actions-it",
+  "geoServerProperties": {
+    "geoServerUrl": "https://data.grandlyon.com/fr/geoserv/grandlyon/ows",
+    "geoServerParameter": {
+      "service": "WMS",
+      "request": "GetMap",
+      "layers": "ortho_2018",
+      "styles": "",
+      "format": "image/jpeg",
+      "transparent": true,
+      "version": "1.3.0",
+      "width": 1024,
+      "height": 1024,
+      "srs": "EPSG:3857"
+    }
+  },
+  "detectableObjectModel": {
+    "modelName": "BP_ZAN",
+    "arbre": false,
+    "espaceVert": true,
+    "toiture": false,
+    "voieCarrosable": false,
+    "trottoir": true,
+    "parking": false
+  },
+  "geoJsonZone": [
+    {
+      "id": "91ab8210-8743-4f6f-873c-d955ccfb154c",
+      "zoom": 20,
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                4.825981555776383,
+                45.733401843736686
+              ],
+              [
+                4.826104636117987,
+                45.733393355437265
+              ],
+              [
+                4.826096147818566,
+                45.733285129619645
+              ],
+              [
+                4.825981555776383,
+                45.733291495844213
+              ],
+              [
+                4.825981555776383,
+                45.733401843736686
+              ]
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}
