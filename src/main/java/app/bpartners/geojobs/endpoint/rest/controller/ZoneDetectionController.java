@@ -208,12 +208,15 @@ public class ZoneDetectionController {
 
   @PostMapping("/detections/{id}")
   public Detection processDetection(
-      @PathVariable(name = "id") String detectionId, @RequestBody CreateDetection createDetection) {
+      @PathVariable(name = "id") String detectionId,
+      @RequestParam(name = "isRooferMade") boolean isRooferMade,
+      @RequestBody CreateDetection createDetection) {
     detectionAuthorizer.accept(detectionId, createDetection, authProvider.getPrincipal());
     var communityAuthorization =
         communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
     var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId).orElse(null);
-    return zoneService.processDetection(detectionId, createDetection, communityOwnerId);
+    return zoneService.processDetection(
+        detectionId, createDetection, communityOwnerId, isRooferMade);
   }
 
   @GetMapping("/detections/{id}")

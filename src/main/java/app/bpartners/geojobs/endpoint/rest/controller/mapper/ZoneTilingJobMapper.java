@@ -26,13 +26,14 @@ public class ZoneTilingJobMapper {
   private final StatusMapper<JobStatus> statusMapper;
   private final ZoomMapper zoomMapper;
 
-  public ZoneTilingJob toDomain(CreateZoneTilingJob rest) {
+  public ZoneTilingJob toDomain(CreateZoneTilingJob rest, Boolean isRooferMade) {
     var generatedId = randomUUID();
     var job =
         ZoneTilingJob.builder()
             .id(generatedId.toString())
             .zoneName(rest.getZoneName())
             .emailReceiver(rest.getEmailReceiver())
+            .isRooferMade(isRooferMade != null && isRooferMade)
             .submissionInstant(now())
             .build();
     job.hasNewStatus(
