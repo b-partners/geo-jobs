@@ -193,15 +193,6 @@ public class ZoneTilingJobService extends JobService<ParcelTilingTask, ZoneTilin
   @Override
   public ZoneTilingJob create(ZoneTilingJob job, List<ParcelTilingTask> tasks) {
     if (job.isRooferMade()) {
-      job.hasNewStatus(
-          JobStatus.builder()
-              .id(randomUUID().toString())
-              .jobId(job.getId())
-              .jobType(TILING)
-              .progression(FINISHED)
-              .health(SUCCEEDED)
-              .creationDatetime(now())
-              .build());
       return super.create(job, tasks);
     }
 
