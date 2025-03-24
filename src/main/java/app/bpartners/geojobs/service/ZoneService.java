@@ -224,7 +224,8 @@ public class ZoneService {
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection processDetection(
-      String detectionId, CreateDetection createDetection, String communityOwnerId) {
+      String detectionId, CreateDetection createDetection, String communityOwnerId, boolean isRooferMade
+  ){
     var optionalDetection =
         detectionRepository.findByEndToEndIdAndCommunityOwnerId(detectionId, communityOwnerId);
     if (optionalDetection.isEmpty()) {
@@ -234,6 +235,17 @@ public class ZoneService {
       }
       return detectionTilingCreation.apply(savedDetection);
     }
+    if (isRooferMade){
+      return processRooferDetection(detectionId);
+    }
+    return processCommunityDetection(detectionId);
+  }
+
+  public app.bpartners.geojobs.endpoint.rest.model.Detection processRooferDetection(String detectionId){
+    return null;
+  }
+
+  public app.bpartners.geojobs.endpoint.rest.model.Detection processCommunityDetection(String detectionId) {
     var detection =
         detectionRepository
             .findById(detectionId)

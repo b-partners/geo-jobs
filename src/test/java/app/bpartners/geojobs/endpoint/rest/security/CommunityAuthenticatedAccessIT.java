@@ -58,22 +58,24 @@ class CommunityAuthenticatedAccessIT extends FacadeIT {
   void community_cannot_access_endpoint_if_api_key_is_revoked() {
     caRepository.save(communityAuthorization(true));
     var detectionId = randomUUID().toString();
+    var isRooferMade = false;
     var createDetection = new CreateDetection();
     var error =
         assertThrows(
-            ApiException.class, () -> detectionApi.processDetection(detectionId, createDetection));
+            ApiException.class, () -> detectionApi.processDetection(detectionId, isRooferMade, createDetection));
     assertTrue(error.getMessage().contains("Bad credentials"));
   }
 
   @Test
   void community_cannot_do_detection_with_wrong_authorization() {
     var detectionId = randomUUID().toString();
+    var isRooferMade = false;
     var detectableObjectModel = new DetectableObjectModel();
     detectableObjectModel.setActualInstance(new BPToitureModel().modelName(BP_TOITURE));
     var createDetection = new CreateDetection().detectableObjectModel(detectableObjectModel);
     var error =
         assertThrows(
-            ApiException.class, () -> detectionApi.processDetection(detectionId, createDetection));
+            ApiException.class, () -> detectionApi.processDetection(detectionId, isRooferMade, createDetection));
     assertTrue(error.getMessage().contains(ARBRE.name()));
   }
 

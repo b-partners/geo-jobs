@@ -166,6 +166,7 @@ class ZoneServiceTest {
   void admin_role_process_tiling_when_all_data_ok() {
     var detectionId = randomUUID().toString();
     var tilingJobId = randomUUID().toString();
+    var isRooferMade = false;
     var createDetection =
         new CreateDetection()
             .detectableObjectModel(new DetectableObjectModel(new BPToitureModel()))
@@ -179,7 +180,7 @@ class ZoneServiceTest {
     when(communityUsedSurfaceServiceMock.persistDetectionWithSurfaceUsage(any(), any()))
         .thenReturn(createdDetectionMock);
 
-    var actual = subject.processDetection(detectionId, createDetection, communityOwnerId);
+    var actual = subject.processDetection(detectionId, createDetection, communityOwnerId, isRooferMade);
 
     assertEquals(TILING, actual.getStep().getName());
     assertEquals(Status.ProgressionEnum.PENDING, actual.getStep().getStatus().getProgression());
@@ -191,6 +192,7 @@ class ZoneServiceTest {
     var detectionId = randomUUID().toString();
     var tilingJobId = randomUUID().toString();
     var machineDetectionJobId = randomUUID().toString();
+    var isRooferMade = false;
     var detection = detectionCreator.create(detectionId, tilingJobId, machineDetectionJobId);
     detection.setGeoServerProperties(new GeoServerProperties());
     detection.setMultiPolygonGeoJsonZone(List.of(new Feature()));
@@ -225,7 +227,7 @@ class ZoneServiceTest {
                         .build())
                 .build());
 
-    var actual = subject.processDetection(detectionId, createDetection, communityOwnerId);
+    var actual = subject.processDetection(detectionId, createDetection, communityOwnerId, isRooferMade);
 
     verify(conversionInitiationServiceMock, only())
         .getOrComputeGeoJsonConversionJob(detection, zoneDetectionJobMock);
@@ -240,6 +242,8 @@ class ZoneServiceTest {
     var tilingJobId = randomUUID().toString();
     var humanZoneDetectionJobId = randomUUID().toString();
     var machineDetectionJobId = randomUUID().toString();
+    var isRooferMade = false;
+
     var detection = detectionCreator.create(detectionId, tilingJobId, machineDetectionJobId);
     detection.setGeoServerProperties(new GeoServerProperties());
     detection.setMultiPolygonGeoJsonZone(List.of(new Feature()));
@@ -279,7 +283,7 @@ class ZoneServiceTest {
                         .build())
                 .build());
 
-    var actual = subject.processDetection(detectionId, createDetection, communityOwnerId);
+    var actual = subject.processDetection(detectionId, createDetection, communityOwnerId, isRooferMade);
 
     var eventCaptor = ArgumentCaptor.forClass(List.class);
     verify(conversionInitiationServiceMock, never()).getOrComputeGeoJsonConversionJob(any(), any());
@@ -297,6 +301,7 @@ class ZoneServiceTest {
   @Test
   void admin_role_can_process_tiling() {
     var detectionId = randomUUID().toString();
+    var isRooferMade = false;
     var detection = detectionCreator.create(detectionId, null, null);
     detection.setGeoServerProperties(new GeoServerProperties());
     detection.setMultiPolygonGeoJsonZone(List.of(new Feature()));
@@ -304,7 +309,7 @@ class ZoneServiceTest {
     String communityOwnerId = null;
     setUpAuthorityRoleProcessingMock(detectionId, detection, ROLE_ADMIN);
 
-    var actual = subject.processDetection(detectionId, createDetection, communityOwnerId);
+    var actual = subject.processDetection(detectionId, createDetection, communityOwnerId, isRooferMade);
 
     assertEquals(TILING, actual.getStep().getName());
     assertEquals(Status.ProgressionEnum.PENDING, actual.getStep().getStatus().getProgression());
@@ -314,12 +319,13 @@ class ZoneServiceTest {
   @Test
   void stuck_at_configuring_when_multipolygon_geojson_or_geoserver_properties_are_null() {
     var detectionId = randomUUID().toString();
+    var isRooferMade = false;
     var detection = detectionCreator.create(detectionId, null, null);
     var createDetection = new CreateDetection().geoJsonZone(featureCreator.defaultFeatures());
     String communityOwnerId = null;
     setUpAuthorityRoleProcessingMock(detectionId, detection, ROLE_ADMIN);
 
-    var actual = subject.processDetection(detectionId, createDetection, communityOwnerId);
+    var actual = subject.processDetection(detectionId, createDetection, communityOwnerId, isRooferMade);
 
     assertEquals(CONFIGURING, actual.getStep().getName());
     assertEquals(Status.ProgressionEnum.PENDING, actual.getStep().getStatus().getProgression());
