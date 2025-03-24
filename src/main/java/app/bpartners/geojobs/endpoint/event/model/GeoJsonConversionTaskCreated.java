@@ -15,11 +15,11 @@ public class GeoJsonConversionTaskCreated extends PojaEvent {
 
   @Override
   public Duration maxConsumerDuration() {
-    return Duration.ofMinutes(1);
+    return Duration.ofMinutes(5);
   }
 
   @Override
   public Duration maxConsumerBackoffBetweenRetries() {
-    return Duration.ofSeconds(15);
+    return Duration.ofMinutes(1);
   }
 }

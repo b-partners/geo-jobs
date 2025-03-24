@@ -33,6 +33,6 @@ public class ZoneTilingJobStatusChanged extends PojaEvent {
 
   @Override
   public Duration maxConsumerBackoffBetweenRetries() {
-    return Duration.ofSeconds(15);
+    return Duration.ofMinutes(1);
   }
 }

@@ -17,11 +17,11 @@ public class ParcelDetectionJobCreated extends PojaEvent {
 
   @Override
   public Duration maxConsumerDuration() {
-    return Duration.ofMinutes(1L);
+    return Duration.ofMinutes(5L);
   }
 
   @Override
   public Duration maxConsumerBackoffBetweenRetries() {
-    return Duration.ofSeconds(15L);
+    return Duration.ofMinutes(1L);
   }
 }

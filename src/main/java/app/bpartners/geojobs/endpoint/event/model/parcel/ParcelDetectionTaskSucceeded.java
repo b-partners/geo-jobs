@@ -23,6 +23,6 @@ public class ParcelDetectionTaskSucceeded extends PojaEvent {
 
   @Override
   public Duration maxConsumerBackoffBetweenRetries() {
-    return Duration.ofSeconds(15);
+    return Duration.ofMinutes(1);
   }
 }
