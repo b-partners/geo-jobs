@@ -1,0 +1,50 @@
+name: Detection creation IT
+
+on:
+  schedule:
+    - cron: '30 8 * * *'
+    - cron: '30 11 * * *'
+    - cron: '30 15 * * *'
+  workflow_dispatch:
+
+env:
+  API_URL: ${{ secrets.DETECTION_API_URL }}
+  API_KEY: ${{ secrets.DETECTION_API_KEY }}
+
+jobs:
+  detection-creation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate detection_e2_id
+        run: |
+          detection_e2_id=$(uuidgen)
+          echo "Generated detection_e2_id: $detection_e2_id"
+          echo "detection_e2_id=$detection_e2_id" >> $GITHUB_ENV
+
+      - name: Store detection_e2_id inside cache
+        uses: actions/cache@v4
+        with:
+          path: detection_e2_id.txt
+          key: detection_e2_id-cache
+
+      - name: Send POST /detections/* request
+        run: |
+          detection_e2_id=$(uuidgen)
+          echo "Generated detection_e2_id: $detection_e2_id"
+          echo "detection_e2_id=$detection_e2_id" >> $GITHUB_ENV
+          
+          response=$(curl -s -o detection-response.json -w "%{http_code}" -X POST "$DETECTION_API_URL/detections/$detection_e2_id" \
+               -H "Content-Type: application/json" \
+               -H "x-api-key: $API_KEY" \
+               --data "@detection-request.json")
+
+          echo "HTTP Response Code: $response"
+
+          if [ "$response" -ne 200 ]; then
+            echo "Detection request test failed: HTTP error '$response'"
+            exit 1
+          fi
