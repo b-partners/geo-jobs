@@ -224,28 +224,34 @@ public class ZoneService {
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection processDetection(
-      String detectionId, CreateDetection createDetection, String communityOwnerId, boolean isRooferMade
-  ){
+      String detectionId,
+      CreateDetection createDetection,
+      String communityOwnerId,
+      boolean isRooferMade) {
     var optionalDetection =
         detectionRepository.findByEndToEndIdAndCommunityOwnerId(detectionId, communityOwnerId);
     if (optionalDetection.isEmpty()) {
-      var savedDetection = createDetectionJob(detectionId, createDetection, communityOwnerId);
+      var savedDetection =
+          createDetectionJob(detectionId, createDetection, communityOwnerId, isRooferMade);
       if (savedDetection.isStillOnConfiguringStep()) {
         return computeEmptyStatisticFromStep(savedDetection, PENDING, UNKNOWN, CONFIGURING);
       }
       return detectionTilingCreation.apply(savedDetection);
     }
-    if (isRooferMade){
+    if (isRooferMade) {
       return processRooferDetection(detectionId);
     }
     return processCommunityDetection(detectionId);
   }
 
-  public app.bpartners.geojobs.endpoint.rest.model.Detection processRooferDetection(String detectionId){
-    return null;
+  public app.bpartners.geojobs.endpoint.rest.model.Detection processRooferDetection(
+      String detectionId) {
+    return new app.bpartners.geojobs.endpoint.rest.model
+        .Detection(); // TODO: detection logic after tiling
   }
 
-  public app.bpartners.geojobs.endpoint.rest.model.Detection processCommunityDetection(String detectionId) {
+  public app.bpartners.geojobs.endpoint.rest.model.Detection processCommunityDetection(
+      String detectionId) {
     var detection =
         detectionRepository
             .findById(detectionId)
@@ -300,9 +306,12 @@ public class ZoneService {
   }
 
   private Detection createDetectionJob(
-      String detectionId, CreateDetection createDetection, @Nullable String communityOwnerId) {
+      String detectionId,
+      CreateDetection createDetection,
+      @Nullable String communityOwnerId,
+      boolean isRooferMade) {
     var detectionToSave =
-        mapFromRestCreateDetection(detectionId, createDetection, communityOwnerId);
+        mapFromRestCreateDetection(detectionId, createDetection, communityOwnerId, isRooferMade);
     var savedDetection =
         communityUsedSurfaceService.persistDetectionWithSurfaceUsage(
             detectionToSave, createDetection.getGeoJsonZone());
@@ -311,7 +320,10 @@ public class ZoneService {
   }
 
   private Detection mapFromRestCreateDetection(
-      String endToEndId, CreateDetection createDetection, @Nullable String communityOwnerId) {
+      String endToEndId,
+      CreateDetection createDetection,
+      @Nullable String communityOwnerId,
+      boolean isRooferMade) {
     var detectableObjectModel = createDetection.getDetectableObjectModel();
     var modelActualInstance = Objects.requireNonNull(detectableObjectModel).getActualInstance();
     var detectionId = randomUUID().toString();
@@ -328,6 +340,7 @@ public class ZoneService {
             .endToEndId(endToEndId)
             .emailReceiver(createDetection.getEmailReceiver())
             .zoneName(createDetection.getZoneName())
+            .isRooferMade(isRooferMade)
             .communityOwnerId(communityOwnerId)
             .detectableObjectConfigurations(detectableObjectConfigurations)
             .geoServerProperties(createDetection.getGeoServerProperties())

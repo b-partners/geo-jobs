@@ -62,7 +62,8 @@ class CommunityAuthenticatedAccessIT extends FacadeIT {
     var createDetection = new CreateDetection();
     var error =
         assertThrows(
-            ApiException.class, () -> detectionApi.processDetection(detectionId, isRooferMade, createDetection));
+            ApiException.class,
+            () -> detectionApi.processDetection(detectionId, isRooferMade, createDetection));
     assertTrue(error.getMessage().contains("Bad credentials"));
   }
 
@@ -75,7 +76,8 @@ class CommunityAuthenticatedAccessIT extends FacadeIT {
     var createDetection = new CreateDetection().detectableObjectModel(detectableObjectModel);
     var error =
         assertThrows(
-            ApiException.class, () -> detectionApi.processDetection(detectionId, isRooferMade, createDetection));
+            ApiException.class,
+            () -> detectionApi.processDetection(detectionId, isRooferMade, createDetection));
     assertTrue(error.getMessage().contains(ARBRE.name()));
   }
 

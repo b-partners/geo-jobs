@@ -192,6 +192,19 @@ public class ZoneTilingJobService extends JobService<ParcelTilingTask, ZoneTilin
   @Transactional
   @Override
   public ZoneTilingJob create(ZoneTilingJob job, List<ParcelTilingTask> tasks) {
+    if (job.isRooferMade()) {
+      job.hasNewStatus(
+          JobStatus.builder()
+              .id(randomUUID().toString())
+              .jobId(job.getId())
+              .jobType(TILING)
+              .progression(FINISHED)
+              .health(SUCCEEDED)
+              .creationDatetime(now())
+              .build());
+      return super.create(job, tasks);
+    }
+
     var saved = super.create(job, tasks);
     eventProducer.accept(List.of(new ZoneTilingJobCreated(saved)));
     eventProducer.accept(List.of(new ZTJStatusRecomputingSubmitted(saved.getId())));

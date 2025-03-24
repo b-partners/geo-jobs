@@ -24,6 +24,7 @@ import lombok.experimental.SuperBuilder;
 @Setter
 public class ZoneTilingJob extends Job {
   private boolean isRooferMade;
+
   @Override
   protected JobType getType() {
     return TILING;

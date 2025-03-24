@@ -50,7 +50,7 @@ public class ZoneTilingController {
   @PostMapping("/tilingJobs/import")
   public ZoneTilingJob importZTJ(@RequestBody ImportZoneTilingJob importZoneTilingJob) {
     zoneTilingJobValidator.accept(importZoneTilingJob);
-    var job = mapper.toDomain(importZoneTilingJob.getCreateZoneTilingJob());
+    var job = mapper.toDomain(importZoneTilingJob.getCreateZoneTilingJob(), false);
     var bucketName = importZoneTilingJob.getBucketName();
     var bucketPathPrefix = importZoneTilingJob.getBucketPathPrefix();
     var geoServerParameter = importZoneTilingJob.getCreateZoneTilingJob().getGeoServerParameter();
@@ -92,7 +92,7 @@ public class ZoneTilingController {
 
   @PostMapping("/tilingJobs")
   public ZoneTilingJob tileZone(@RequestBody CreateZoneTilingJob createJob) {
-    var job = mapper.toDomain(createJob);
+    var job = mapper.toDomain(createJob, false);
     var tilingTasks = getTilingTasks(createJob, job.getId());
     return mapper.toRest(service.create(job, tilingTasks), tilingTasks);
   }
