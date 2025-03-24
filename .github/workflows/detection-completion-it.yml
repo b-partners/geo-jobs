@@ -1,0 +1,56 @@
+name: Detection completion verification IT
+
+on:
+  schedule:
+    - cron: '0 21 * * *'
+  workflow_dispatch:
+
+env:
+  API_URL: ${{ secrets.DETECTION_API_URL }}
+  API_KEY: ${{ secrets.DETECTION_API_KEY }}
+
+jobs:
+  detection-completion-verification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Retrieve detection_e2_id from cache
+        id: restore-detection_e2_id
+        uses: actions/cache@v4
+        with:
+          path: detection_e2_id.txt
+          key: detection_e2_id-cache-${{ runner.os }}-${{ github.sha }}
+
+      - name: Read detection_e2_id from file
+        run: |
+          detection_e2_id=$(cat detection_e2_id.txt)
+          echo "Reusing detection_e2_id: $detection_e2_id"
+          echo "detection_e2_id=$detection_e2_id" >> $GITHUB_ENV
+
+
+      - name: Send POST /detections/* request for retrieving result
+        run: |
+          response=$(curl -s -o detection-response.json -w "%{http_code}" -X POST "$API_URL/detections/$detection_e2_id" \
+               -H "Content-Type: application/json" \
+               -H "x-api-key: $API_KEY" \
+               --data "@.github/workflows/detection-request.json")
+
+          echo "HTTP Response Code: $response"
+          cat detection-response.json
+
+          if [ "$response" -ne 200 ]; then
+            echo "Detection request test failed: HTTP error '$response'"
+            exit 1
+          fi
+
+          geoJsonUrl=$(jq -r '.geoJsonUrl' detection-response.json)
+
+          if [ -z "$geoJsonUrl" ] || [ "$geoJsonUrl" == "null" ]; then
+            echo "Detection test failed: 'geoJsonUrl' is still empty or null"
+            exit 1
+          fi
+
+          echo "Detection test passed: geoJsonUrl='$geoJsonUrl'"

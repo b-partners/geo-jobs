@@ -1,0 +1,45 @@
+name: Detection creation IT
+
+on:
+  schedule:
+    - cron: '30 20 * * *'
+  workflow_dispatch:
+
+env:
+  API_URL: ${{ secrets.DETECTION_API_URL }}
+  API_KEY: ${{ secrets.DETECTION_API_KEY }}
+
+jobs:
+  detection-creation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate detection_e2_id and store inside file
+        run: |
+          detection_e2_id=$(uuidgen)
+          echo "$detection_e2_id" > detection_e2_id.txt
+          echo "detection_e2_id=$detection_e2_id" >> $GITHUB_ENV
+          echo "Generated detection_e2_id: '$detection_e2_id'"
+
+      - name: Cache detection_e2_id for next run
+        uses: actions/cache@v4
+        with:
+          path: detection_e2_id.txt
+          key: detection_e2_id-cache-${{ runner.os }}-${{ github.sha }}
+
+      - name: Send POST /detections/* request
+        run: |
+          response=$(curl -s -o detection-response.json -w "%{http_code}" -X POST "$API_URL/detections/$detection_e2_id" \
+               -H "Content-Type: application/json" \
+               -H "x-api-key: $API_KEY" \
+               --data "@.github/workflows/detection-request.json")
+
+          echo "HTTP Response Code: $response"
+
+          if [ "$response" -ne 200 ]; then
+            echo "Detection request test failed: HTTP error '$response'"
+            exit 1
+          fi
