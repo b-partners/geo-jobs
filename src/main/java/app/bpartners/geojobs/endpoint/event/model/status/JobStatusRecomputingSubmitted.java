@@ -16,37 +16,17 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = false)
 @ToString
 public class JobStatusRecomputingSubmitted extends PojaEvent {
-  private static final int MAX_BACKOFF_BEFORE_RENEW = 10;
   protected String jobId;
   protected long maxConsumerDurationInSeconds;
   protected long initialConsumerBackoffBetweenRetriesInSeconds;
-  protected long initialCumulatedConsumerDuration;
-
-  public JobStatusRecomputingSubmitted(
-      String jobId,
-      long maxConsumerDurationInSeconds,
-      long initialConsumerBackoffBetweenRetriesInSeconds) {
-    this.jobId = jobId;
-    this.maxConsumerDurationInSeconds = maxConsumerDurationInSeconds;
-    this.initialConsumerBackoffBetweenRetriesInSeconds =
-        initialConsumerBackoffBetweenRetriesInSeconds;
-    this.initialCumulatedConsumerDuration = getCumulatedConsumerDuration();
-  }
 
   @Override
   public Duration maxConsumerDuration() {
     return Duration.ofSeconds(maxConsumerDurationInSeconds);
   }
 
-  public long getCumulatedConsumerDuration() {
-    return getAttemptNb() * maxConsumerDurationInSeconds;
-  }
-
   @Override
   public Duration maxConsumerBackoffBetweenRetries() {
-    if (initialCumulatedConsumerDuration < MAX_BACKOFF_BEFORE_RENEW) {
-      return Duration.ofSeconds(initialConsumerBackoffBetweenRetriesInSeconds);
-    }
     // u_n = u_0 * q^n
     // u_0: maxConsumerBackoffBetweenRetriesDurationValue
     // q: 2
