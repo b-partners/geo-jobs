@@ -50,8 +50,8 @@ import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.detection.*;
-import app.bpartners.geojobs.service.event.TilingTaskConsumer;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
+import app.bpartners.geojobs.service.tiling.RooferMadeTilingService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import app.bpartners.geojobs.utils.FeatureCreator;
 import app.bpartners.geojobs.utils.TaskStatisticCreator;
@@ -114,7 +114,7 @@ class ZoneServiceTest {
   ZoneDetectionJobCreator zoneDetectionJobCreator = new ZoneDetectionJobCreator();
   CommunityAuthorizationRepository communityAuthRepositoryMock = mock();
   TaskStatisticCreator taskStatisticCreator = new TaskStatisticCreator();
-  TilingTaskConsumer tilingTaskConsumer = mock();
+  RooferMadeTilingService rooferMadeTilingService = mock();
   DetectionFromStatisticRestMapper detectionFromStatisticRestMapperMock =
       new DetectionFromStatisticRestMapper(bucketComponentMock, stepStatisticMapper);
   DetectionTilingStatisticsComputer detectionTilingStatisticsComputerMock =
@@ -126,7 +126,7 @@ class ZoneServiceTest {
           tilingJobServiceMock,
           detectionRepositoryMock,
           detectionTilingStatisticsComputerMock,
-          tilingTaskConsumer);
+          rooferMadeTilingService);
   DetectionMachineDetectionStatisticsComputer detectionMachineDetectionStatisticsComputerMock =
       new DetectionMachineDetectionStatisticsComputer(
           detectionFromStatisticRestMapperMock, zoneDetectionJobServiceMock);
@@ -222,6 +222,7 @@ class ZoneServiceTest {
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
     when(tilingJobServiceMock.getTaskStatistic(any(String.class)))
         .thenReturn(someFinishedTaskStatistic(GeoJobType.TILING));
+    when(rooferMadeTilingService.apply(any(), any())).thenReturn(zoneTilingJob);
 
     var actual =
         subject.processDetection(detectionId, createDetection, communityOwnerId, isRooferMade);
