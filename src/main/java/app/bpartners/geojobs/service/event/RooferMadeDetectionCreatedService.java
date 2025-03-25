@@ -39,7 +39,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class RooferMadeDetectionCreatedConsumer implements Consumer<RooferMadeDetectionCreated> {
+public class RooferMadeDetectionCreatedService implements Consumer<RooferMadeDetectionCreated> {
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final DetectionRepository detectionRepository;
   private final TileObjectDetector detector;
