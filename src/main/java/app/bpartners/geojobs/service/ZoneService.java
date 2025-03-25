@@ -239,15 +239,14 @@ public class ZoneService {
       return detectionTilingCreation.apply(savedDetection);
     }
     if (isRooferMade) {
-      return processRooferDetection(detectionId);
+      return processRooferDetection(optionalDetection.get());
     }
     return processCommunityDetection(detectionId);
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection processRooferDetection(
-      String detectionId) {
-    return new app.bpartners.geojobs.endpoint.rest.model
-        .Detection(); // TODO: detection logic after tiling
+      Detection detection) {
+    return detectionMachineDetectionStatisticsComputer.apply(detection, detection.getZdjId());
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection processCommunityDetection(

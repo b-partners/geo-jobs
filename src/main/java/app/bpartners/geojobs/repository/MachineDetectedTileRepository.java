@@ -42,6 +42,8 @@ public interface MachineDetectedTileRepository extends JpaRepository<MachineDete
 
   List<MachineDetectedTile> findAllByZdjJobId(String id, Pageable pageable);
 
+  List<MachineDetectedTile> findAllByZdjJobId(String id);
+
   List<MachineDetectedTile> findAllByParcelId(String parcelId);
 
   @Query(
