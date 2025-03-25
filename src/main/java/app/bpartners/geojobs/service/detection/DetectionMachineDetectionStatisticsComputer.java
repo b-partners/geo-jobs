@@ -17,14 +17,12 @@ public class DetectionMachineDetectionStatisticsComputer
 
   @Override
   public app.bpartners.geojobs.endpoint.rest.model.Detection apply(
-      Detection detection, String detectionJobId) {
+      Detection detection, String zdjId) {
     if (detection.isRooferMade()) {
-      var statistics = zoneDetectionJobService.getTaskStatistic(detectionJobId);
+      var statistics = zoneDetectionJobService.getTaskStatistic(zdjId);
       return detectionFromStatisticRestMapper.apply(detection, statistics, MACHINE_DETECTION);
     }
     return detectionFromStatisticRestMapper.apply(
-        detection,
-        zoneDetectionJobService.computeTaskStatistics(detectionJobId),
-        MACHINE_DETECTION);
+        detection, zoneDetectionJobService.computeTaskStatistics(zdjId), MACHINE_DETECTION);
   }
 }

@@ -105,14 +105,16 @@ public class RooferMadeDetectionCreatedService implements Consumer<RooferMadeDet
 
   private void processGeoJsonConversion(
       Detection detection, ZoneDetectionJob zdj, List<DetectedTile> detectedTiles) {
+    var zdjId = zdj.getId();
     var geoJson = geoJsonConverter.convert(detectedTiles);
     var zoneName = zdj.getZoneName();
-    var fileKey = GEO_JSON_BUCKET_FOLDER + zdj.getId() + "/" + zoneName + GEO_JSON_EXTENSION;
+    var fileKey = GEO_JSON_BUCKET_FOLDER + zdjId + "/" + zoneName + GEO_JSON_EXTENSION;
     var geoJsonAsByte = fileWriter.writeAsByte(geoJson.getStringValue());
     var geoJsonAsFile =
         fileWriter.write(geoJsonAsByte, createTempDirectory(), zoneName + GEO_JSON_EXTENSION);
     bucketComponent.upload(geoJsonAsFile, fileKey);
     detection.setGeojsonS3FileKey(fileKey);
+    detection.setZdjId(zdjId);
     detectionRepository.save(detection);
   }
 

@@ -246,6 +246,14 @@ public class ZoneService {
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection processRooferDetection(
       Detection detection) {
+    var ztjId = detection.getZtjId();
+    var zdjId = detection.getZdjId();
+    if (ztjId == null) {
+      return detectionTilingCreation.apply(detection);
+    }
+    if (zdjId == null) {
+      return detectionTilingStatisticsComputer.apply(detection, ztjId);
+    }
     return detectionMachineDetectionStatisticsComputer.apply(detection, detection.getZdjId());
   }
 
