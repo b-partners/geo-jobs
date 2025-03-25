@@ -65,7 +65,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
             .projectName(tileDetectionTask.getJobId())
             .fileName(file.getName())
             .base64ImgData(base64ImgData)
-            .base64MaskData(base64MaskData)
+            .base64MaskData(null)
             .build();
     String requestBody = om.writeValueAsString(payload);
 
