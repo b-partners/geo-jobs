@@ -5,6 +5,8 @@ import static java.lang.Runtime.getRuntime;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import static java.util.stream.Collectors.toSet;
 
+import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.RooferMadeDetectionCreated;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
@@ -24,6 +26,7 @@ public class RooferMadeTilingService
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final TilingTaskConsumer tilingTaskConsumer;
   private final ZoneTilingJobService zoneTilingJobService;
+  private final EventProducer<RooferMadeDetectionCreated> eventProducer;
   private final ExecutorService executorService =
       newFixedThreadPool(Math.max(1, getRuntime().availableProcessors() - 1));
 
@@ -41,7 +44,9 @@ public class RooferMadeTilingService
                           }))
               .collect(toSet()));
       var ztj = zoneTilingJobService.create(job, tilingTasks);
-      zoneDetectionJobService.saveZDJFromZTJ(ztj);
+      var zdj = zoneDetectionJobService.saveZDJFromZTJ(ztj);
+      eventProducer.accept(
+          List.of(RooferMadeDetectionCreated.builder().zdjId(zdj.getId()).build()));
       return ztj;
     } catch (InterruptedException e) {
       throw new ApiException(SERVER_EXCEPTION, e.getMessage());
