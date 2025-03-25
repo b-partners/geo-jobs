@@ -230,6 +230,10 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
         jobId, latestConfiguration.getMinimumConfidenceForDelivery());
   }
 
+  public List<ParcelDetectionTask> getTasks(ZoneDetectionJob job) {
+    return super.getTasks(job);
+  }
+
   public ZoneDetectionJob save(ZoneDetectionJob job) {
     return repository.save(job);
   }

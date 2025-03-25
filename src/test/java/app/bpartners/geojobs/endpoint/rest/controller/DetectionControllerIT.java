@@ -205,7 +205,6 @@ class DetectionControllerIT extends FacadeIT {
   @Test
   void create_detection_without_tiling() {
     var savedTilingJob = zoneTilingJobRepository.save(zoneTilingJob(randomUUID().toString()));
-    var isRooferMade = false;
 
     var savedDetectionJob =
         zoneDetectionJobRepository.save(
@@ -221,7 +220,7 @@ class DetectionControllerIT extends FacadeIT {
             taskStatisticCreator.createProcessingTask(savedDetectionJob.getId(), DETECTION));
     when(statusMapper.toRest(any())).thenReturn(defaultSucceededStatus());
 
-    subject.processDetection(detection.getId(), isRooferMade, createDetection());
+    subject.processDetection(detection.getId(), createDetection());
 
     verify(zoneDetectionJobService, times(1)).processZDJ(any(), any());
   }
@@ -235,8 +234,7 @@ class DetectionControllerIT extends FacadeIT {
 
   @Test
   void create_detection_from_scratch() {
-    var isRooferMade = false;
-    subject.processDetection(randomUUID().toString(), isRooferMade, createDetection());
+    subject.processDetection(randomUUID().toString(), createDetection());
 
     var listCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducer, times(4)).accept(listCaptor.capture());

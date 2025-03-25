@@ -557,11 +557,6 @@ paths:
             type: string
           description: Detection identifier
           required: true
-        - in: query
-          name: isRooferMade
-          schema:
-            type: boolean
-          required: true
       requestBody:
         content:
           application/json:
