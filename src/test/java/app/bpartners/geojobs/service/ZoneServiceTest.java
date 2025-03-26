@@ -21,6 +21,7 @@ import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
+import app.bpartners.geojobs.endpoint.event.model.RooferMadeDetectionCreated;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerificationSent;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionStepStatisticMapper;
@@ -115,6 +116,8 @@ class ZoneServiceTest {
   CommunityAuthorizationRepository communityAuthRepositoryMock = mock();
   TaskStatisticCreator taskStatisticCreator = new TaskStatisticCreator();
   RooferMadeTilingService rooferMadeTilingService = mock();
+  EventProducer<RooferMadeDetectionCreated> eventProducer = mock();
+  ZoneDetectionJobService detectionJobService = mock();
   DetectionFromStatisticRestMapper detectionFromStatisticRestMapperMock =
       new DetectionFromStatisticRestMapper(bucketComponentMock, stepStatisticMapper);
   DetectionTilingStatisticsComputer detectionTilingStatisticsComputerMock =
@@ -126,7 +129,9 @@ class ZoneServiceTest {
           tilingJobServiceMock,
           detectionRepositoryMock,
           detectionTilingStatisticsComputerMock,
-          rooferMadeTilingService);
+          rooferMadeTilingService,
+          eventProducer,
+          detectionJobService);
   DetectionMachineDetectionStatisticsComputer detectionMachineDetectionStatisticsComputerMock =
       new DetectionMachineDetectionStatisticsComputer(
           detectionFromStatisticRestMapperMock, zoneDetectionJobServiceMock);
@@ -223,10 +228,16 @@ class ZoneServiceTest {
     when(tilingJobServiceMock.getTaskStatistic(any(String.class)))
         .thenReturn(someFinishedTaskStatistic(GeoJobType.TILING));
     when(rooferMadeTilingService.apply(any(), any())).thenReturn(zoneTilingJob);
+    when(detectionJobService.saveZDJFromZTJ(any()))
+        .thenReturn(
+            app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.builder()
+                .id(randomUUID().toString())
+                .build());
 
     var actual =
         subject.processDetection(detectionId, createDetection, communityOwnerId, isRooferMade);
 
+    verify(eventProducer, times(1)).accept(any());
     assertEquals(TILING, actual.getStep().getName());
     assertEquals(Status.ProgressionEnum.FINISHED, actual.getStep().getStatus().getProgression());
     assertEquals(SUCCEEDED, actual.getStep().getStatus().getHealth());

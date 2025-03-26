@@ -53,7 +53,7 @@ public class RooferMadeDetectionCreatedService implements Consumer<RooferMadeDet
 
   @Override
   public void accept(RooferMadeDetectionCreated event) {
-    var detection = detectionRepository.findByZdjId(event.getZdjId()).orElseThrow();
+    var detection = detectionRepository.findById(event.getDetectionId()).orElseThrow();
     var detectionConf = detection.getDetectableObjectConfigurations();
 
     var zdj = zoneDetectionJobService.getMachineZdjFromZdjId(event.getZdjId());
@@ -114,7 +114,6 @@ public class RooferMadeDetectionCreatedService implements Consumer<RooferMadeDet
         fileWriter.write(geoJsonAsByte, createTempDirectory(), zoneName + GEO_JSON_EXTENSION);
     bucketComponent.upload(geoJsonAsFile, fileKey);
     detection.setGeojsonS3FileKey(fileKey);
-    detection.setZdjId(zdjId);
     detectionRepository.save(detection);
   }
 
