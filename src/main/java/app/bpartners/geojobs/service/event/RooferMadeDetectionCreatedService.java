@@ -54,6 +54,7 @@ public class RooferMadeDetectionCreatedService implements Consumer<RooferMadeDet
   @Override
   public void accept(RooferMadeDetectionCreated event) {
     var detection = detectionRepository.findById(event.getDetectionId()).orElseThrow();
+    var mask = detection.getProvidedGeoJsonZone();
     var detectionConf = detection.getDetectableObjectConfigurations();
 
     var zdj = zoneDetectionJobService.getMachineZdjFromZdjId(event.getZdjId());
