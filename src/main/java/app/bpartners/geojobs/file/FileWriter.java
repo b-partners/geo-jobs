@@ -1,6 +1,8 @@
 package app.bpartners.geojobs.file;
 
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
+import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import static java.nio.file.attribute.PosixFilePermissions.asFileAttribute;
 import static java.nio.file.attribute.PosixFilePermissions.fromString;
 import static java.util.UUID.randomUUID;
@@ -53,7 +55,7 @@ public class FileWriter implements BiFunction<byte[], File, File> {
       String suffix = extensionGuesser.apply(bytes);
       File newFile = new File(directory, filename + suffix);
       Files.createDirectories(newFile.toPath().getParent());
-      return Files.write(newFile.toPath(), bytes).toFile();
+      return Files.write(newFile.toPath(), bytes, CREATE, TRUNCATE_EXISTING).toFile();
     } catch (IOException e) {
       throw new ApiException(SERVER_EXCEPTION, e);
     }

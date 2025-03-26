@@ -60,7 +60,7 @@ public class GeoJsonConversionTaskConsumer implements Consumer<GeoJsonConversion
     var fileName = zoneName + "_" + detectableType + "-part" + "-" + pageNumber;
     var fileKey = GEO_JSON_BUCKET_FOLDER + zoneDetectionJobId + "/" + fileName + GEO_JSON_EXTENSION;
     var geoJson = geoJsonConverter.convert(paginatedDetectedTiles);
-    var geoJsonAsByte = writer.writeAsByte(geoJson.getStringValue());
+    var geoJsonAsByte = geoJson.getStringValue().getBytes();
     var geoJsonAsFile =
         writer.write(geoJsonAsByte, createTempDirectory(), fileName + GEO_JSON_EXTENSION);
 
