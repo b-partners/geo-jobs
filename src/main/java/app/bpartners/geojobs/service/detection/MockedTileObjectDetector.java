@@ -6,6 +6,7 @@ import static app.bpartners.geojobs.service.detection.DetectionResponse.REGION_L
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
+import java.io.File;
 import java.math.BigDecimal;
 import java.security.SecureRandom;
 import java.util.List;
@@ -19,6 +20,7 @@ public class MockedTileObjectDetector implements TileObjectDetector {
   @Override
   public DetectionResponse apply(
       TileDetectionTask tileDetectionTask,
+      File mask,
       List<DetectableObjectConfiguration> detectableObjectConfigurations) {
     double randomConfidence = new SecureRandom().nextDouble();
     var detectableTypes =

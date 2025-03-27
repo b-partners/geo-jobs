@@ -1,14 +1,15 @@
 package app.bpartners.geojobs.endpoint.rest.postprocessing;
 
+import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
 import static app.bpartners.geojobs.model.CustomObjectMapper.objectMapper;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.Geometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.model.geometry.IntXY;
 import app.bpartners.geojobs.model.geometry.plot.AreImagesEqual;
-import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.service.detection.DetectionMaskCreator;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -42,15 +43,16 @@ public class DetectionMaskCreatorTest {
         ImageIO.read(this.getClass().getResourceAsStream("/geometry/bottomCenter.png"));
     var expectedBottomRight =
         ImageIO.read(this.getClass().getResourceAsStream("/geometry/bottomRight.png"));
-    var topLeft = ImageIO.read(actual.get(new IntXY(1061466, 721743)));
-    var topCenter = ImageIO.read(actual.get(new IntXY(1061467, 721743)));
-    var topRight = ImageIO.read(actual.get(new IntXY(1061468, 721743)));
-    var centerLeft = ImageIO.read(actual.get(new IntXY(1061466, 721744)));
-    var centerCenter = ImageIO.read(actual.get(new IntXY(1061467, 721744)));
-    var centerRight = ImageIO.read(actual.get(new IntXY(1061468, 721744)));
-    var bottomLeft = ImageIO.read(actual.get(new IntXY(1061466, 721745)));
-    var bottomCenter = ImageIO.read(actual.get(new IntXY(1061467, 721745)));
-    var bottomRight = ImageIO.read(actual.get(new IntXY(1061468, 721745)));
+
+    var topLeft = ImageIO.read(actual.get(new IntXY(530798, 360453)));
+    var topCenter = ImageIO.read(actual.get(new IntXY(530799, 360453)));
+    var topRight = ImageIO.read(actual.get(new IntXY(530800, 360453)));
+    var centerLeft = ImageIO.read(actual.get(new IntXY(530798, 360454)));
+    var centerCenter = ImageIO.read(actual.get(new IntXY(530799, 360454)));
+    var centerRight = ImageIO.read(actual.get(new IntXY(530800, 360454)));
+    var bottomLeft = ImageIO.read(actual.get(new IntXY(530798, 360455)));
+    var bottomCenter = ImageIO.read(actual.get(new IntXY(530799, 360455)));
+    var bottomRight = ImageIO.read(actual.get(new IntXY(530800, 360455)));
 
     assertEquals(9, actual.size());
     assertTrue(areImagesEqual.apply(expectedTopLeft, topLeft));
@@ -71,29 +73,34 @@ public class DetectionMaskCreatorTest {
             List.of(
                 List.of(
                     List.of(
-                        new BigDecimal("2.212835046198338"), new BigDecimal("48.82678284991411")),
+                        new BigDecimal("2.2351245768056716"), new BigDecimal("48.92126795344402")),
                     List.of(
-                        new BigDecimal("2.212352902647264"), new BigDecimal("48.826611613518985")),
+                        new BigDecimal("2.2351695178681674"), new BigDecimal("48.92119716835145")),
                     List.of(
-                        new BigDecimal("2.212543222470057"), new BigDecimal("48.826444553057378")),
+                        new BigDecimal("2.2353000609544655"), new BigDecimal("48.921232560897735")),
                     List.of(
-                        new BigDecimal("2.213076117973874"), new BigDecimal("48.826586554485246")),
+                        new BigDecimal("2.235278660448515"), new BigDecimal("48.92126653774217")),
                     List.of(
-                        new BigDecimal("2.212835046198338"),
-                        new BigDecimal("48.82678284991411")))));
-    return Feature.builder()
-        .id(null)
-        .zoom(21)
-        .geometry(
-            Feature.FeatureGeometry.builder()
-                .geometryType(Geometry.TypeEnum.MULTI_POLYGON)
-                .actualInstanceStringValue(
-                    objectMapper()
-                        .writeValueAsString(
-                            new MultiPolygon()
-                                .coordinates(coordinates)
-                                .type(MultiPolygon.TypeEnum.MULTI_POLYGON)))
-                .build())
-        .build();
+                        new BigDecimal("2.235243706288796"), new BigDecimal("48.9212589873323")),
+                    List.of(
+                        new BigDecimal("2.2352165989812587"), new BigDecimal("48.921296267481054")),
+                    List.of(
+                        new BigDecimal("2.2351245768056716"),
+                        new BigDecimal("48.92126795344402")))));
+    return toRestFeature(
+        app.bpartners.geojobs.repository.model.Feature.builder()
+            .id(null)
+            .zoom(20)
+            .geometry(
+                app.bpartners.geojobs.repository.model.Feature.FeatureGeometry.builder()
+                    .geometryType(Geometry.TypeEnum.MULTI_POLYGON)
+                    .actualInstanceStringValue(
+                        objectMapper()
+                            .writeValueAsString(
+                                new MultiPolygon()
+                                    .coordinates(coordinates)
+                                    .type(MultiPolygon.TypeEnum.MULTI_POLYGON)))
+                    .build())
+            .build());
   }
 }

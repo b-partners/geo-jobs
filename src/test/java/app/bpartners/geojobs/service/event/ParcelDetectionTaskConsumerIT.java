@@ -81,7 +81,7 @@ class ParcelDetectionTaskConsumerIT extends FacadeIT {
 
   @BeforeEach
   void setUp() {
-    when(objectDetector.apply(any(), any())).thenReturn(DetectionResponse.builder().build());
+    when(objectDetector.apply(any(), any(), any())).thenReturn(DetectionResponse.builder().build());
     when(detectionMapper.toDetectedTile(any(), any(), any(), any(), any()))
         .thenReturn(new MachineDetectedTile());
     when(tileDetectionTaskRepository.saveAll(any())).thenReturn(List.of(new TileDetectionTask()));

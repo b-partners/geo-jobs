@@ -7,17 +7,17 @@ import static java.awt.Color.BLACK;
 import static java.awt.Color.WHITE;
 import static java.util.UUID.randomUUID;
 
-import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
+import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.model.geometry.IntXY;
-import app.bpartners.geojobs.repository.model.Feature;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,13 +34,16 @@ import org.springframework.stereotype.Component;
 public class DetectionMaskCreator implements Function<List<Feature>, Map<IntXY, File>> {
   private static final int DEFAULT_IMAGE_SIZE = 1024 * 3;
 
-  private List<IntXY> mapToPixel(List<List<BigDecimal>> providedGeojson, TilingConf tilingConf) {
+  private List<IntXY> mapToPixel(
+      List<List<BigDecimal>> providedGeojson, IntXY originTile, TilingConf tilingConf) {
     var typedMercatorCoords =
         providedGeojson.stream()
-            .map(list -> new LatLon(list.get(1).doubleValue(), list.get(0).doubleValue()))
+            .map(list -> new LatLon(list.get(1).doubleValue(), list.getFirst().doubleValue()))
             .toList();
 
-    return typedMercatorCoords.stream().map(latLon -> toPixel(latLon, tilingConf)).toList();
+    return typedMercatorCoords.stream()
+        .map(latLon -> toPixel(latLon, tilingConf, originTile))
+        .toList();
   }
 
   @SneakyThrows
@@ -70,16 +73,16 @@ public class DetectionMaskCreator implements Function<List<Feature>, Map<IntXY, 
 
   @SneakyThrows
   private Map<IntXY, File> split_image(
-      IntXY originTile, BufferedImage fullImage, int subImageSize) {
-    var divider = fullImage.getWidth() / subImageSize;
+      IntXY originTile, BufferedImage fullImage) {
+    var divider = fullImage.getWidth() / 1024;
     var outputFiles = new HashMap<IntXY, File>();
 
     for (int row = 0; row < divider; row++) {
       for (int col = 0; col < divider; col++) {
-        int x = col * subImageSize;
-        int y = row * subImageSize;
+        int x = col * 1024;
+        int y = row * 1024;
 
-        BufferedImage subImage = fullImage.getSubimage(x, y, subImageSize, subImageSize);
+        BufferedImage subImage = fullImage.getSubimage(x, y, 1024, 1024);
 
         File output =
             File.createTempFile(
@@ -95,10 +98,9 @@ public class DetectionMaskCreator implements Function<List<Feature>, Map<IntXY, 
 
   @Override
   public Map<IntXY, File> apply(List<Feature> providedGeoJson) {
-    int zoom = providedGeoJson.get(0).getZoom();
+    int zoom = providedGeoJson.getFirst().getZoom();
     var flattedFeatures =
         providedGeoJson.stream()
-            .map(FeatureMapper::toRestFeature)
             .map(app.bpartners.geojobs.endpoint.rest.model.Feature::getGeometry)
             .filter(Objects::nonNull)
             .map(FeatureGeometry::getMultiPolygon)
@@ -108,11 +110,14 @@ public class DetectionMaskCreator implements Function<List<Feature>, Map<IntXY, 
             .flatMap(List::stream)
             .flatMap(List::stream)
             .toList();
-    var refLat = flattedFeatures.stream().flatMap(List::stream).toList().get(1).doubleValue();
-    var refLon = flattedFeatures.stream().flatMap(List::stream).toList().get(0).doubleValue();
+    var refLat =
+        Collections.max(flattedFeatures.stream().map(list -> list.get(1)).toList()).doubleValue();
+    var refLon =
+        Collections.min(flattedFeatures.stream().map(List::getFirst).toList()).doubleValue();
+    var originTile = originTile(new Coordinate(refLat, refLon), zoom);
     var tilingConf = new TilingConf(zoom, DEFAULT_IMAGE_SIZE);
-    var pixels = mapToPixel(flattedFeatures, tilingConf);
+    var pixels = mapToPixel(flattedFeatures, originTile, tilingConf);
     var fullImage = drawImage(pixels);
-    return split_image(originTile(new Coordinate(refLat, refLon), zoom), fullImage, 1024);
+    return split_image(originTile, fullImage);
   }
 }

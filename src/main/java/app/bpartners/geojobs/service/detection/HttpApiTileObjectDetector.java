@@ -45,6 +45,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
   @Override
   public DetectionResponse apply(
       TileDetectionTask tileDetectionTask,
+      File mask,
       List<DetectableObjectConfiguration> detectableObjectConfigurations) {
     Tile tile = tileDetectionTask.getTile();
     if (tile == null) {
@@ -58,14 +59,15 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
         bucketComponent.download(
             bucketComponent.getBucketConf().getBucketName(), tile.getBucketPath());
     String base64ImgData = Base64.getEncoder().encodeToString(readFileToByteArray(file));
-    String base64MaskData = Base64.getEncoder().encodeToString(readFileToByteArray(file));
+    String base64MaskData =
+        mask == null ? null : Base64.getEncoder().encodeToString(readFileToByteArray(mask));
 
     var payload =
         DetectionPayload.builder()
             .projectName(tileDetectionTask.getJobId())
             .fileName(file.getName())
             .base64ImgData(base64ImgData)
-            .base64MaskData(null)
+            .base64MaskData(base64MaskData)
             .build();
     String requestBody = om.writeValueAsString(payload);
 
