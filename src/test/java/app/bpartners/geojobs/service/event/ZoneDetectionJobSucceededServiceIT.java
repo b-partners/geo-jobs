@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.USURE;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -30,6 +31,8 @@ class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
   @MockBean EventProducer eventProducer;
   @Autowired ZoneDetectionJobSucceededService subject;
   @Autowired private ZoneDetectionJobRepository jobRepository;
+  @MockBean DetectableObjectConfigurationRepository detectableObjectConfigurationRepositoryMock;
+  @MockBean MachineDetectedTileRepository machineDetectedTileRepositoryMock;
 
   ZoneDetectionJobSucceededServiceIT() {
     this.succeededJobId = randomUUID().toString();
@@ -43,6 +46,8 @@ class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
             ZoneDetectionJob.builder()
                 .id(succeededJobId)
                 .detectionType(ZoneDetectionJob.DetectionType.MACHINE)
+                .emailReceiver("emailReceiver")
+                .zoneName("zoneName")
                 .zoneTilingJob(
                     ZoneTilingJob.builder()
                         .id(zoneTilingJobId)
@@ -60,6 +65,12 @@ class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
   @Test
   void zdj_succeeds_trigger_delivery_job() {
     when(zoneDetectionJobService.countInDoubtDetectedTileToDeliveryById(any())).thenReturn(1L);
+    when(machineDetectedTileRepositoryMock.countByZdjJobIdAndDetectableType(
+            eq(succeededJobId), eq(USURE.name())))
+        .thenReturn(1L);
+    when(detectableObjectConfigurationRepositoryMock.findAllByDetectionJobId(succeededJobId))
+        .thenReturn(List.of(DetectableObjectConfiguration.builder().objectType(USURE).build()));
+
     assertDoesNotThrow(() -> subject.accept(new ZoneDetectionJobSucceeded(succeededJobId)));
 
     var eventCaptor = ArgumentCaptor.forClass(List.class);
