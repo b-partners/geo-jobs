@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.detection;
 
+import static app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon.originTile;
 import static app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon.toPixel;
 import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
 import static java.awt.Color.BLACK;
@@ -16,43 +17,34 @@ import app.bpartners.geojobs.repository.model.Feature;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import javax.imageio.ImageIO;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.locationtech.jts.geom.Coordinate;
 import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
-public class DetectionMaskCreator implements Function<List<Feature>, File> {
-  private static final int DEFAULT_IMAGE_SIZE = 1024;
+public class DetectionMaskCreator implements Function<List<Feature>, Map<IntXY, File>> {
+  private static final int DEFAULT_IMAGE_SIZE = 1024 * 3;
 
-  private List<IntXY> mapToPixel(List<Feature> providedGeojson) {
-    int zoom = providedGeojson.get(0).getZoom();
-
+  private List<IntXY> mapToPixel(List<List<BigDecimal>> providedGeojson, TilingConf tilingConf) {
     var typedMercatorCoords =
         providedGeojson.stream()
-            .map(FeatureMapper::toRestFeature)
-            .map(app.bpartners.geojobs.endpoint.rest.model.Feature::getGeometry)
-            .filter(Objects::nonNull)
-            .map(FeatureGeometry::getMultiPolygon)
-            .map(MultiPolygon::getCoordinates)
-            .filter(Objects::nonNull)
-            .flatMap(List::stream)
-            .flatMap(List::stream)
-            .flatMap(List::stream)
             .map(list -> new LatLon(list.get(1).doubleValue(), list.get(0).doubleValue()))
             .toList();
 
-    return typedMercatorCoords.stream()
-        .map(latLon -> toPixel(latLon, new TilingConf(zoom, DEFAULT_IMAGE_SIZE)))
-        .toList();
+    return typedMercatorCoords.stream().map(latLon -> toPixel(latLon, tilingConf)).toList();
   }
 
   @SneakyThrows
-  private File drawImage(List<IntXY> pixels) {
+  private BufferedImage drawImage(List<IntXY> pixels) {
     BufferedImage image =
         new BufferedImage(DEFAULT_IMAGE_SIZE, DEFAULT_IMAGE_SIZE, BufferedImage.TYPE_INT_RGB);
     Graphics2D g2d = image.createGraphics();
@@ -73,16 +65,54 @@ public class DetectionMaskCreator implements Function<List<Feature>, File> {
       }
     }
     g2d.dispose();
+    return image;
+  }
 
-    File output = File.createTempFile("mask" + randomUUID(), ".png", createTempDirectory());
-    ImageIO.write(image, "png", output);
-    log.info("Mask saved at {}", output.getAbsolutePath());
-    return output;
+  @SneakyThrows
+  private Map<IntXY, File> split_image(
+      IntXY originTile, BufferedImage fullImage, int subImageSize) {
+    var divider = fullImage.getWidth() / subImageSize;
+    var outputFiles = new HashMap<IntXY, File>();
+
+    for (int row = 0; row < divider; row++) {
+      for (int col = 0; col < divider; col++) {
+        int x = col * subImageSize;
+        int y = row * subImageSize;
+
+        BufferedImage subImage = fullImage.getSubimage(x, y, subImageSize, subImageSize);
+
+        File output =
+            File.createTempFile(
+                "mask_" + row + "_" + col + "_" + randomUUID(), ".png", createTempDirectory());
+        ImageIO.write(subImage, "png", output);
+        var tile = new IntXY(originTile.x() + col, originTile.y() + row);
+        log.info("Sub-image {} saved at {}", tile, output.getAbsolutePath());
+        outputFiles.put(tile, output);
+      }
+    }
+    return outputFiles;
   }
 
   @Override
-  public File apply(List<Feature> features) {
-    var pixels = mapToPixel(features);
-    return drawImage(pixels);
+  public Map<IntXY, File> apply(List<Feature> providedGeoJson) {
+    int zoom = providedGeoJson.get(0).getZoom();
+    var flattedFeatures =
+        providedGeoJson.stream()
+            .map(FeatureMapper::toRestFeature)
+            .map(app.bpartners.geojobs.endpoint.rest.model.Feature::getGeometry)
+            .filter(Objects::nonNull)
+            .map(FeatureGeometry::getMultiPolygon)
+            .map(MultiPolygon::getCoordinates)
+            .filter(Objects::nonNull)
+            .flatMap(List::stream)
+            .flatMap(List::stream)
+            .flatMap(List::stream)
+            .toList();
+    var refLat = flattedFeatures.stream().flatMap(List::stream).toList().get(1).doubleValue();
+    var refLon = flattedFeatures.stream().flatMap(List::stream).toList().get(0).doubleValue();
+    var tilingConf = new TilingConf(zoom, DEFAULT_IMAGE_SIZE);
+    var pixels = mapToPixel(flattedFeatures, tilingConf);
+    var fullImage = drawImage(pixels);
+    return split_image(originTile(new Coordinate(refLat, refLon), zoom), fullImage, 1024);
   }
 }
