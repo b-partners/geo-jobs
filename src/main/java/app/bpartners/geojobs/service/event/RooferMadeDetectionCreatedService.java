@@ -79,12 +79,12 @@ public class RooferMadeDetectionCreatedService implements Consumer<RooferMadeDet
                                     var tile = new IntXY(coords.getX(), coords.getY());
                                     var mask = tileMasks.getOrDefault(tile, null);
                                     var response = detector.apply(task, mask, detectionConf);
-                                      return detectionMapper.toDetectedTile(
-                                          response,
-                                          task.getTile(),
-                                          task.getParcelId(),
-                                          zdj.getId(),
-                                          null);
+                                    return detectionMapper.toDetectedTile(
+                                        response,
+                                        task.getTile(),
+                                        task.getParcelId(),
+                                        zdj.getId(),
+                                        null);
                                   }))
                       .collect(toSet()))
               .stream()

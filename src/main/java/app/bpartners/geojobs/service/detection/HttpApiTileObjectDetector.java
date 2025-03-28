@@ -8,7 +8,9 @@ import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
+import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.util.Base64;
@@ -30,15 +32,16 @@ import org.springframework.web.util.UriComponentsBuilder;
 public class HttpApiTileObjectDetector implements TileObjectDetector {
   private final ObjectMapper om;
   private final CustomBucketComponent bucketComponent;
-  private final String tileDetectionApiUrl;
+  private final List<DetectionUrl> tileDetectionApiUrl;
 
+  @SneakyThrows
   public HttpApiTileObjectDetector(
       ObjectMapper om,
       CustomBucketComponent bucketComponent,
-      @Value("${tile.detection.api.url}") String tileDetectionApiUrl) {
+      @Value("${tile.detection.api.urls}") String tileDetectionApiUrls) {
     this.om = om;
     this.bucketComponent = bucketComponent;
-    this.tileDetectionApiUrl = tileDetectionApiUrl;
+    this.tileDetectionApiUrl = om.readValue(tileDetectionApiUrls, new TypeReference<>() {});
   }
 
   @SneakyThrows
@@ -73,7 +76,8 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
 
     HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
 
-    UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(tileDetectionApiUrl);
+    UriComponentsBuilder builder =
+        UriComponentsBuilder.fromHttpUrl(getApiUrl(detectableObjectConfigurations));
     ResponseEntity<DetectionResponse> responseEntity =
         restTemplate.postForEntity(builder.toUriString(), request, DetectionResponse.class);
 
@@ -82,4 +86,17 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
     }
     throw new ApiException(SERVER_EXCEPTION, "Server error");
   }
+
+  private String getApiUrl(List<DetectableObjectConfiguration> objectConfigurations) {
+    for (var conf : objectConfigurations) {
+      for (var url : tileDetectionApiUrl) {
+        if (conf.getObjectType().equals(url.objectType)) {
+          return url.url;
+        }
+      }
+    }
+    return tileDetectionApiUrl.getFirst().url;
+  }
+
+  public record DetectionUrl(String url, DetectableType objectType) {}
 }

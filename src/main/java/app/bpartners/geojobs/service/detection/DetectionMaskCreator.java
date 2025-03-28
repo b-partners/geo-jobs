@@ -72,8 +72,7 @@ public class DetectionMaskCreator implements Function<List<Feature>, Map<IntXY, 
   }
 
   @SneakyThrows
-  private Map<IntXY, File> split_image(
-      IntXY originTile, BufferedImage fullImage) {
+  private Map<IntXY, File> split_image(IntXY originTile, BufferedImage fullImage) {
     var divider = fullImage.getWidth() / 1024;
     var outputFiles = new HashMap<IntXY, File>();
 
