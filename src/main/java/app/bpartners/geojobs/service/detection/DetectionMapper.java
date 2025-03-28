@@ -115,7 +115,8 @@ public class DetectionMapper {
 
   private DetectableType toDetectableType(String label) {
     return switch (label.toUpperCase()) {
-      case "ROOF", TOITURE_REVETEMENT_STRING_VALUE -> DetectableType.TOITURE_REVETEMENT;
+      case "ROOF", TOITURE_REVETEMENT_STRING_VALUE, "BACKGROUND" ->
+          DetectableType.TOITURE_REVETEMENT;
       case "SOLAR_PANEL", PANNEAU_PHOTOVOLTAIQUE_STRING_VALUE ->
           DetectableType.PANNEAU_PHOTOVOLTAIQUE;
       case "TREE", ARBRE_STRING_VALUE -> DetectableType.ARBRE;
