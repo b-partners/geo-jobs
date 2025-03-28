@@ -54,9 +54,12 @@ public class FileWriter implements BiFunction<byte[], File, File> {
     try {
       String suffix = extensionGuesser.apply(bytes);
       File newFile = new File(directory, filename + suffix);
-      Files.createDirectories(newFile.toPath().getParent());
-      return Files.write(newFile.toPath(), bytes, CREATE, TRUNCATE_EXISTING).toFile();
-    } catch (IOException e) {
+      Path newFilePath = newFile.toPath();
+      Path parent = newFilePath.getParent();
+      Files.createDirectories(parent);
+      Path path = Files.write(newFilePath, bytes, CREATE, TRUNCATE_EXISTING);
+      return path.toFile();
+    } catch (IOException | NullPointerException e) {
       throw new ApiException(SERVER_EXCEPTION, e);
     }
   }
