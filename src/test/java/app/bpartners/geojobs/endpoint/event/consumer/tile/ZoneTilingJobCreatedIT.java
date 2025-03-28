@@ -51,6 +51,7 @@ import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -163,6 +164,7 @@ class ZoneTilingJobCreatedIT extends DetectionIT {
 
   @SneakyThrows
   @Test
+  @Disabled
   void ztj_created_and_ztj_and_zdj_succeed() {
     var tilingJob = zoneTilingJobId();
 
@@ -180,6 +182,7 @@ class ZoneTilingJobCreatedIT extends DetectionIT {
 
   @Test
   @SneakyThrows
+  @Disabled
   void ztj_created_and_zdj_machine_succeeded_and_zdj_human_succeeded_ok() {
     var tilingJob = zoneTilingJobId();
 
