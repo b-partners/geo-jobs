@@ -34,7 +34,7 @@ public class ObjectsDetectorMockResponse {
               }
             })
         .when(objectsDetector)
-        .apply(any(), any());
+        .apply(any(), any(), any());
   }
 
   private DetectionResponse aDetectionResponse(Double confidence, String objectType) {

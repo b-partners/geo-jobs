@@ -28,7 +28,7 @@ public class TileParcelParcelDetectionTaskCreatedConsumerTest {
   @Test
   void accept_ok() {
     when(machineDetectedTileRepositoryMock.save(any())).thenReturn(new MachineDetectedTile());
-    when(objectDetectorMock.apply(any(), any())).thenReturn(new DetectionResponse());
+    when(objectDetectorMock.apply(any(), any(), any())).thenReturn(new DetectionResponse());
     when(detectionMapperMock.toDetectedTile(any(), any(), any(), any(), any()))
         .thenReturn(new MachineDetectedTile());
 

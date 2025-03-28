@@ -31,7 +31,7 @@ public class TileDetectionTaskCreatedConsumer implements Consumer<TileDetectionT
     var zoneDetectionJobId = tileDetectionTaskCreated.getZoneDetectionJobId();
     var parcelJobId = tileDetectionTask.getJobId();
     DetectionResponse response =
-        objectsDetector.apply(tileDetectionTask, detectableObjectConfigurations);
+        objectsDetector.apply(tileDetectionTask, null, detectableObjectConfigurations);
     MachineDetectedTile machineDetectedTile =
         detectionMapper.toDetectedTile(
             response,

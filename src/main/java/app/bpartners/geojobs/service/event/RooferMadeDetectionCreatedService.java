@@ -14,6 +14,7 @@ import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.DetectedTile;
 import app.bpartners.geojobs.model.exception.ApiException;
+import app.bpartners.geojobs.model.geometry.IntXY;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.Parcel;
@@ -23,6 +24,7 @@ import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.service.detection.DetectionMapper;
+import app.bpartners.geojobs.service.detection.DetectionMaskCreator;
 import app.bpartners.geojobs.service.detection.TileObjectDetector;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConverter;
@@ -48,12 +50,14 @@ public class RooferMadeDetectionCreatedService implements Consumer<RooferMadeDet
   private final BucketComponent bucketComponent;
   private final DetectionMapper detectionMapper;
   private final FileWriter fileWriter;
+  private final DetectionMaskCreator detectionMaskCreator;
   private final ExecutorService executorService =
       newFixedThreadPool(Math.max(1, getRuntime().availableProcessors() - 1));
 
   @Override
   public void accept(RooferMadeDetectionCreated event) {
     var detection = detectionRepository.findById(event.getDetectionId()).orElseThrow();
+    var tileMasks = detectionMaskCreator.apply(detection.getProvidedGeoJsonZone());
     var detectionConf = detection.getDetectableObjectConfigurations();
 
     var zdj = zoneDetectionJobService.getMachineZdjFromZdjId(event.getZdjId());
@@ -71,15 +75,16 @@ public class RooferMadeDetectionCreatedService implements Consumer<RooferMadeDet
                           task ->
                               ((Callable<MachineDetectedTile>)
                                   () -> {
-                                    var response = detector.apply(task, detectionConf);
-                                    var detectedTile =
-                                        detectionMapper.toDetectedTile(
-                                            response,
-                                            task.getTile(),
-                                            task.getParcelId(),
-                                            zdj.getId(),
-                                            null);
-                                    return detectedTile;
+                                    var coords = task.getTile().getCoordinates();
+                                    var tile = new IntXY(coords.getX(), coords.getY());
+                                    var mask = tileMasks.getOrDefault(tile, null);
+                                    var response = detector.apply(task, mask, detectionConf);
+                                    return detectionMapper.toDetectedTile(
+                                        response,
+                                        task.getTile(),
+                                        task.getParcelId(),
+                                        zdj.getId(),
+                                        null);
                                   }))
                       .collect(toSet()))
               .stream()

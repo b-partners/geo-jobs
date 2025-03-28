@@ -47,6 +47,7 @@ class ObjectsDetectorIT extends FacadeIT {
     var actual =
         objectsDetector.apply(
             detectionTask(),
+            null,
             List.of(DetectableObjectConfiguration.builder().objectType(PASSAGE_PIETON).build()));
 
     assertNotNull(actual);
@@ -63,6 +64,7 @@ class ObjectsDetectorIT extends FacadeIT {
         () ->
             objectsDetector.apply(
                 detectionTask(),
+                null,
                 List.of(
                     DetectableObjectConfiguration.builder().objectType(TOITURE_REVETEMENT).build(),
                     DetectableObjectConfiguration.builder().objectType(PASSAGE_PIETON).build())));

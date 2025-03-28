@@ -73,7 +73,7 @@ public record LatLonPolygon(Polygon polygon) {
         latLon, tilingConf, originTile(new Coordinate(latLon.lat(), latLon.lon()), tilingConf.z()));
   }
 
-  private static IntXY toPixel(LatLon latLon, TilingConf tilingConf, IntXY originTile) {
+  public static IntXY toPixel(LatLon latLon, TilingConf tilingConf, IntXY originTile) {
     int tileSize = 256; // Default tile size
     int scale = tilingConf.imgSize() / tileSize; // Scale factor (4x)
     int z = tilingConf.z();
