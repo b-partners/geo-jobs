@@ -88,11 +88,13 @@ public class DetectionMapper {
       DetectionResponse.ImageData.Region region, String detectedTileId, Integer zoom) {
     var regionAttributes = region.getRegionAttributes();
     var label = regionAttributes.get(REGION_LABEL_PROPERTY);
-    Double confidence;
+    Double confidence = null;
     try {
-      confidence = Double.valueOf(regionAttributes.get(REGION_CONFIDENCE_PROPERTY));
-    } catch (NumberFormatException e) {
-      confidence = null;
+      if (regionAttributes.containsKey(REGION_CONFIDENCE_PROPERTY)) {
+        confidence = Double.valueOf(regionAttributes.get(REGION_CONFIDENCE_PROPERTY));
+      }
+
+    } catch (NumberFormatException ignored) {
     }
     var polygon = region.getShapeAttributes();
     var objectId = randomUUID().toString();
