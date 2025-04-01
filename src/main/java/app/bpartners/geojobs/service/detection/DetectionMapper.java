@@ -138,13 +138,12 @@ public class DetectionMapper {
               "USURE_LEGERE_ARDOISE",
               "USURE_LEGERE_AUTRES" ->
           USURE;
-      case "HUMIDITE_COULEUR_ARDOISE",
-              "HUMIDITE_COULEUR_TUILES",
-              "HUMIDITE_NOIRCIE_TUILES",
-              "HUMIDITE_CLAIR_TUILES",
-              "HUMIDITE_CLAIR_AUTRES",
-              "HUMIDITE_INTENSE_AUTRES" ->
-          HUMIDITE;
+      case "MOISISSURE_COULEUR_ARDOISE",
+              "MOISISSURE_COULEUR_TUILES",
+              "MOISISSURE_NOIRCIE_TUILES",
+              "MOISISSURE_CLAIR_TUILES" ->
+          MOISISSURE;
+      case "HUMIDITE_CLAIR_AUTRES", "HUMIDITE_INTENSE_AUTRES" -> HUMIDITE;
       default -> throw new IllegalStateException("Unexpected value: " + label.toLowerCase());
     };
   }
