@@ -67,7 +67,9 @@ public class GeoJsonMapper {
       DetectedObject object,
       List<List<List<List<BigDecimal>>>> geometryCoordinates) {
     var properties = new HashMap<String, String>();
-    properties.put("confidence", object.getComputedConfidence().toString());
+    var confidence =
+        object.getComputedConfidence() != null ? object.getComputedConfidence().toString() : null;
+    properties.put("confidence", confidence);
     properties.put("label", object.getDetectedObjectType().getDetectableType().name());
     var multipolygon = new MultiPolygon();
     List<List<List<List<BigDecimal>>>> multipolygonCoordinates =
