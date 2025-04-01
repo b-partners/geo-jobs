@@ -33,14 +33,17 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
   private final ObjectMapper om;
   private final CustomBucketComponent bucketComponent;
   private final List<DetectionUrl> tileDetectionApiUrl;
+  private final String defaultDetectionApiUrl;
 
   @SneakyThrows
   public HttpApiTileObjectDetector(
       ObjectMapper om,
       CustomBucketComponent bucketComponent,
-      @Value("${tile.detection.api.urls}") String tileDetectionApiUrls) {
+      @Value("${tile.detection.api.urls}") String tileDetectionApiUrls,
+      @Value("${tile.detection.api.url}") String defaultApiUrl) {
     this.om = om;
     this.bucketComponent = bucketComponent;
+    this.defaultDetectionApiUrl = defaultApiUrl;
     this.tileDetectionApiUrl = om.readValue(tileDetectionApiUrls, new TypeReference<>() {});
   }
 
@@ -95,7 +98,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
         }
       }
     }
-    return tileDetectionApiUrl.getFirst().url;
+    return defaultDetectionApiUrl;
   }
 
   public record DetectionUrl(String url, DetectableType objectType) {}

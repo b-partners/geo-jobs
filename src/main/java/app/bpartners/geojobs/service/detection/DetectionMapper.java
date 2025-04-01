@@ -115,13 +115,10 @@ public class DetectionMapper {
 
   private DetectableType toDetectableType(String label) {
     return switch (label.toUpperCase()) {
-      case "ROOF",
-          "ROOF_ARDOISE",
-          "ROOF_AUTRES",
-          "ROOF_TUILES",
-          TOITURE_REVETEMENT_STRING_VALUE -> DetectableType.TOITURE_REVETEMENT;
-      case "SOLAR_PANEL", PANNEAU_PHOTOVOLTAIQUE_STRING_VALUE -> DetectableType
-          .PANNEAU_PHOTOVOLTAIQUE;
+      case "ROOF", "ROOF_ARDOISE", "ROOF_AUTRES", "ROOF_TUILES", TOITURE_REVETEMENT_STRING_VALUE ->
+          DetectableType.TOITURE_REVETEMENT;
+      case "SOLAR_PANEL", "PV", PANNEAU_PHOTOVOLTAIQUE_STRING_VALUE ->
+          DetectableType.PANNEAU_PHOTOVOLTAIQUE;
       case "TREE", ARBRE_STRING_VALUE -> DetectableType.ARBRE;
       case "PATHWAY", PASSAGE_PIETON_STRING_VALUE -> DetectableType.PASSAGE_PIETON;
       case "POOL", PISCINE_STRING_VALUE -> DetectableType.PISCINE;
@@ -137,15 +134,17 @@ public class DetectionMapper {
       case "CHEMINEE" -> CHEMINEE;
       case "VELUX" -> VELUX;
       case "USURE_IMPORTANTE_ARDOISE",
-          "USURE_IMPORTANTE_TUILES",
-          "USURE_LEGERE_ARDOISE",
-          "USURE_LEGERE_AUTRES" -> USURE;
+              "USURE_IMPORTANTE_TUILES",
+              "USURE_LEGERE_ARDOISE",
+              "USURE_LEGERE_AUTRES" ->
+          USURE;
       case "HUMIDITE_COULEUR_ARDOISE",
-          "HUMIDITE_COULEUR_TUILES",
-          "HUMIDITE_NOIRCIE_TUILES",
-          "HUMIDITE_CLAIR_TUILES",
-          "HUMIDITE_CLAIR_AUTRES",
-          "HUMIDITE_INTENSE_AUTRES" -> HUMIDITE;
+              "HUMIDITE_COULEUR_TUILES",
+              "HUMIDITE_NOIRCIE_TUILES",
+              "HUMIDITE_CLAIR_TUILES",
+              "HUMIDITE_CLAIR_AUTRES",
+              "HUMIDITE_INTENSE_AUTRES" ->
+          HUMIDITE;
       default -> throw new IllegalStateException("Unexpected value: " + label.toLowerCase());
     };
   }
@@ -204,8 +203,9 @@ public class DetectionMapper {
       case "COMPLETED", "FAILED" -> FINISHED;
       case "STARTED" -> PROCESSING;
       case "PENDING", "READY", "TO_REVIEW", "TO_CORRECT" -> PENDING;
-      default -> throw new ApiException(
-          SERVER_EXCEPTION, "Unknown annotationJobStatus " + annotationJobStatus.getValue());
+      default ->
+          throw new ApiException(
+              SERVER_EXCEPTION, "Unknown annotationJobStatus " + annotationJobStatus.getValue());
     };
   }
 
@@ -257,8 +257,8 @@ public class DetectionMapper {
       case TROTTOIR_STRING_VALUE -> create(objectId, TROTTOIR);
       case PARKING_STRING_VALUE -> create(objectId, PARKING);
       case ESPACE_VERT_STRING_VALUE -> create(objectId, ESPACE_VERT);
-      default -> throw new IllegalStateException(
-          "Unexpected value: " + label.getName().toUpperCase());
+      default ->
+          throw new IllegalStateException("Unexpected value: " + label.getName().toUpperCase());
     };
   }
 
