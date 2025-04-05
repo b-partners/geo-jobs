@@ -126,7 +126,7 @@ public record TiledPolygon(
             .toArray(Coordinate[]::new));
   }
 
-  private static Polygon polygon(VGG.Annotation.Region.ShapeAttribute vggShapeAttribute) {
+  public static Polygon polygon(VGG.Annotation.Region.ShapeAttribute vggShapeAttribute) {
     var allX = vggShapeAttribute.getAllPointsX();
     var allY = vggShapeAttribute.getAllPointsY();
     var polygonLength = allX.size();

@@ -2,6 +2,7 @@ package app.bpartners.geojobs.model.geometry.route;
 
 import static java.util.stream.Collectors.toSet;
 
+import app.bpartners.geojobs.endpoint.rest.postprocessing.PolygonPrettier;
 import app.bpartners.geojobs.model.geometry.quadrilateral.model.AlphaConf;
 import app.bpartners.geojobs.model.geometry.quadrilateral.model.OrientedQuadrilateral;
 import java.util.HashMap;
@@ -12,7 +13,6 @@ import lombok.Getter;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Polygon;
-import org.locationtech.jts.simplify.DouglasPeuckerSimplifier;
 
 @Slf4j
 @Accessors(fluent = true)
@@ -27,7 +27,7 @@ public class RoutesContinuation {
   private final Set<OrientedQuadrilateral> abstractContinuations;
 
   private final Set<Polygon> continuations;
-  private final PrettyConf prettyConf;
+  private final PolygonPrettier prettier;
   private final Set<Polygon> continued;
 
   public RoutesContinuation(Set<Route> routes, RoutesContinuationConf conf) {
@@ -35,7 +35,7 @@ public class RoutesContinuation {
     this.alphaConf = conf.alphaConf();
     this.unionConf = conf.unionConf();
     this.continuationConf = conf.continuationConf();
-    this.prettyConf = conf.prettyConf();
+    this.prettier = new PolygonPrettier(conf.prettyConf());
 
     var abstractRoutesByPolygon = alpha(routes, alphaConf);
     this.abstractions = new HashSet<>(abstractRoutesByPolygon.values());
@@ -45,22 +45,7 @@ public class RoutesContinuation {
     var toUnify = new HashSet<>(routes.stream().map(Route::polygon).toList());
     toUnify.addAll(continuations);
     var unified = new UnifiedRoute(toUnify, unionConf).unified();
-    this.continued = pretty(unified);
-  }
-
-  private Set<Polygon> pretty(Set<Polygon> unified) {
-    return unified.stream().map(this::simplify).collect(toSet());
-  }
-
-  private Polygon simplify(Polygon p) {
-    try {
-      var prettyP = (Polygon) DouglasPeuckerSimplifier.simplify(p, prettyConf().dpbThreshold());
-      prettyP.setUserData(p.getUserData());
-      return prettyP;
-    } catch (Exception e) {
-      log.error(String.format("Error simplifying polygon=%s", p), e);
-      return p;
-    }
+    this.continued = prettier.apply(unified);
   }
 
   private Set<Polygon> continuations(Set<OrientedQuadrilateral> abstractContinuations) {

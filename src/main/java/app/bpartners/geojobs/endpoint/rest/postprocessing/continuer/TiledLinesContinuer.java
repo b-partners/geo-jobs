@@ -3,6 +3,7 @@ package app.bpartners.geojobs.endpoint.rest.postprocessing.continuer;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static java.util.stream.Collectors.toSet;
 
+import app.bpartners.geojobs.endpoint.rest.postprocessing.PolygonPrettier;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.model.geometry.IntXY;
@@ -13,30 +14,36 @@ import app.bpartners.geojobs.model.geometry.route.RoutesContinuationConf;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Set;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Polygon;
 
-@AllArgsConstructor
 public final class TiledLinesContinuer extends LinesContinuer<TiledPolygon> {
 
   private final RoutesContinuationConf routesContinuationConf;
+  private final PolygonPrettier prettier;
 
   @Accessors(fluent = true)
   @Getter
   private final TilingConf tilingConf;
 
+  public TiledLinesContinuer(RoutesContinuationConf continuationConf, TilingConf tilingConf) {
+    this.routesContinuationConf = continuationConf;
+    this.prettier = new PolygonPrettier(continuationConf.prettyConf());
+    this.tilingConf = tilingConf;
+  }
+
   @Override
   public Set<TiledPolygon> apply(Set<TiledPolygon> polygons) {
     var originTile = new ArrayList<>(polygons).getFirst().originTile();
-    var routessWithOffset =
+    var routesWithOffset =
         polygons.stream()
             .map(p -> new Route(withOffset(p, originTile, p.originTile()), p.type()))
             .collect(toSet());
+    var prettiesRoutesWithOffSet = prettier.pretty(routesWithOffset);
     var continuedWithOffset =
-        new RoutesContinuation(routessWithOffset, routesContinuationConf).continued();
+        new RoutesContinuation(prettiesRoutesWithOffSet, routesContinuationConf).continued();
     return continuedWithOffset.stream()
         .map(
             pWithOffset ->
