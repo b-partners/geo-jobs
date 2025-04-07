@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.endpoint.rest.postprocessing.continuer;
 
 import static app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon.newTiledPolygons;
+import static app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon.toTiledPolygons;
 import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.geojobs.endpoint.rest.postprocessing.Geojson;
@@ -33,24 +34,11 @@ public class VGGLinesContinuer implements Function<VGG, Geojson> {
 
   @Override
   public Geojson apply(VGG vgg) {
-    var tiledPolygons = toTiledPolygons(tilingConf, vgg);
+    var tiledPolygons = toTiledPolygons(tilingConf, vgg, isZXYDotFiletype);
     var latLonPolygonsContinued =
         tiledLinesContinuer.apply(tiledPolygons).stream()
             .map(TiledPolygon::latLonPolygon)
             .collect(toSet());
     return new Geojson(latLonPolygonsContinued);
-  }
-
-  private Set<TiledPolygon> toTiledPolygons(TilingConf tilingConf, VGG vgg) {
-    var annotations = vgg.values();
-    return annotations.stream()
-        .map(
-            annotation -> {
-              var filename = annotation.getFilename();
-              var regions = annotation.getRegions();
-              return newTiledPolygons(filename, regions, tilingConf, isZXYDotFiletype);
-            })
-        .flatMap(Collection::stream)
-        .collect(toSet());
   }
 }

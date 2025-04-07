@@ -26,7 +26,7 @@ import org.locationtech.jts.geom.Polygon;
 public record LatLonPolygon(Polygon polygon) {
   public TiledPolygon tiledPolygon(TilingConf tilingConf) {
     Map<String, String> userData = (Map) polygon.getUserData();
-    var label = userData.get("label");
+    var label = userData == null ? "line" : userData.get("label");
     var originXY = uniqueOrigin(tilingConf);
     return new TiledPolygon(
         toPixelPolygon(polygon, tilingConf, originXY), routeTypeFrom(label), originXY, tilingConf);
