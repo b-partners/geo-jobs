@@ -7,6 +7,7 @@ import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_COMMUNITY;
 import static app.bpartners.geojobs.file.hash.FileHashAlgorithm.SHA256;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
+import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_BUCKET_FOLDER;
@@ -120,6 +121,7 @@ class ZoneServiceTest {
   ZoneDetectionJobService detectionJobService = mock();
   DetectionFromStatisticRestMapper detectionFromStatisticRestMapperMock =
       new DetectionFromStatisticRestMapper(bucketComponentMock, stepStatisticMapper);
+  FeatureMapper featureMapperMock = mock();
   DetectionTilingStatisticsComputer detectionTilingStatisticsComputerMock =
       new DetectionTilingStatisticsComputer(
           tilingJobServiceMock, detectionFromStatisticRestMapperMock);
@@ -131,7 +133,8 @@ class ZoneServiceTest {
           detectionTilingStatisticsComputerMock,
           rooferMadeTilingService,
           eventProducer,
-          detectionJobService);
+          detectionJobService,
+          featureMapperMock);
   DetectionMachineDetectionStatisticsComputer detectionMachineDetectionStatisticsComputerMock =
       new DetectionMachineDetectionStatisticsComputer(
           detectionFromStatisticRestMapperMock, zoneDetectionJobServiceMock);
@@ -168,6 +171,9 @@ class ZoneServiceTest {
         .thenReturn(
             Optional.of(CommunityAuthorization.builder().id(randomUUID().toString()).build()));
     when(geoJsonConversionJobRepositoryMock.findByZoneDetectionJobId(any())).thenReturn(List.of());
+    when(featureMapperMock.toDomain(any())).thenReturn(geometryFactory.createPolygon());
+    when(featureMapperMock.toRest(any(), any()))
+        .thenReturn(featureCreator.defaultFeatures().getFirst());
   }
 
   @Test
