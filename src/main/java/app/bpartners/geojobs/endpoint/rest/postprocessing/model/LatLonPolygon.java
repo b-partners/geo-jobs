@@ -24,9 +24,11 @@ import org.locationtech.jts.geom.Polygon;
 // unprojected: in degree, such as CRS_CODE = "EPSG:4326"
 @Slf4j
 public record LatLonPolygon(Polygon polygon) {
+  private static final String DEFAULT_LABEL = "line";
+
   public TiledPolygon tiledPolygon(TilingConf tilingConf) {
     Map<String, String> userData = (Map) polygon.getUserData();
-    var label = userData == null ? "line" : userData.get("label");
+    var label = userData == null ? DEFAULT_LABEL : userData.get("label");
     var originXY = uniqueOrigin(tilingConf);
     return new TiledPolygon(
         toPixelPolygon(polygon, tilingConf, originXY), routeTypeFrom(label), originXY, tilingConf);

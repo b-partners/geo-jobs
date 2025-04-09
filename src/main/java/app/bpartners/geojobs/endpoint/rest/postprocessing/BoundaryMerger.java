@@ -4,6 +4,7 @@ import app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.model.geometry.IntXY;
+import app.bpartners.geojobs.model.geometry.LineInt;
 import app.bpartners.geojobs.model.geometry.route.PrettyConf;
 import app.bpartners.geojobs.model.geometry.route.UnifiedRoute;
 import app.bpartners.geojobs.model.geometry.route.UnionConf;
@@ -31,14 +32,16 @@ public class BoundaryMerger implements Function<Set<LatLonPolygon>, Set<LatLonPo
     private final UnionConf unionConf;
     private final NeighbourHoodHandler neighbourHoodHandler;
     private final PolygonPrettier polygonPrettier;
+    private final MergeConf mergeConf;
     private final ExecutorService executorService =
             newFixedThreadPool(Math.max(1, getRuntime().availableProcessors() / 2));
 
-    public BoundaryMerger(TilingConf tilingConf, UnionConf unionConf, PrettyConf prettyConf, int neighbourhoodTileDistance) {
+    public BoundaryMerger(TilingConf tilingConf, UnionConf unionConf, PrettyConf prettyConf, MergeConf mergeConf, int neighbourhoodTileDistance) {
         this.tilingConf = tilingConf;
         this.unionConf = unionConf;
         this.neighbourHoodHandler = new NeighbourHoodHandler(neighbourhoodTileDistance);
         this.polygonPrettier = new PolygonPrettier(prettyConf);
+        this.mergeConf = mergeConf;
     }
 
 
@@ -147,14 +150,12 @@ public class BoundaryMerger implements Function<Set<LatLonPolygon>, Set<LatLonPo
     };
 
     public boolean isCollinearEnough(Polygon base, Polygon other) {
-        final double DIRECTION_TOLERANCE = 1;
-
         Coordinate[] baseCoords = base.getExteriorRing().getCoordinates();
         Coordinate[] otherCoords = other.getExteriorRing().getCoordinates();
 
         // Find all vertical edges from both polygons
-        List<Coordinate[]> baseVerticalEdges = findVerticalEdges(baseCoords);
-        List<Coordinate[]> otherVerticalEdges = findVerticalEdges(otherCoords);
+        List<Coordinate[]> baseVerticalEdges = findLinearEdges(baseCoords);
+        List<Coordinate[]> otherVerticalEdges = findLinearEdges(otherCoords);
 
         if (baseVerticalEdges.isEmpty() || otherVerticalEdges.isEmpty()) {
             return false;
@@ -162,10 +163,15 @@ public class BoundaryMerger implements Function<Set<LatLonPolygon>, Set<LatLonPo
 
         // Compare each vertical edge from base with each from other polygon
         for (Coordinate[] baseEdge : baseVerticalEdges) {
+            var basePoint1 = new IntXY((int) baseEdge[0].x, (int) baseEdge[0].y);
+            var basePoint2 = new IntXY((int) baseEdge[1].x, (int) baseEdge[1].y);
+            var baseLine = new LineInt(basePoint1, basePoint2);
             for (Coordinate[] otherEdge : otherVerticalEdges) {
-                if (areEdgesCollinear(baseEdge[0], baseEdge[1],
-                        otherEdge[0], otherEdge[1],
-                        DIRECTION_TOLERANCE)) {
+                var otherPoint1 = new IntXY((int) otherEdge[0].x, (int) otherEdge[0].y);
+                var otherPoint2 = new IntXY((int) otherEdge[1].x, (int) otherEdge[1].y);
+                var otherLine = new LineInt(otherPoint1, otherPoint2);
+
+                if (areVectorsCollinear(baseLine, otherLine)) {
                     return true;
                 }
             }
@@ -174,35 +180,33 @@ public class BoundaryMerger implements Function<Set<LatLonPolygon>, Set<LatLonPo
         return false;
     }
 
-    private List<Coordinate[]> findVerticalEdges(Coordinate[] coords) {
-        List<Coordinate[]> verticalEdges = new ArrayList<>();
-        final double VERTICAL_TOLERANCE = 2;
+    private List<Coordinate[]> findLinearEdges(Coordinate[] coords) {
+        List<Coordinate[]> linearEdges = new ArrayList<>();
+        var minXDistance = mergeConf.minXDistance();
+        var minYDistance = mergeConf.minYDistance();
 
         for (int i = 0; i < coords.length - 1; i++) {
             Coordinate c1 = coords[i];
             Coordinate c2 = coords[i + 1];
 
             // Check if segment is vertical (x coordinates are nearly equal)
-            if (Math.abs(c1.x - c2.x) < VERTICAL_TOLERANCE && Math.abs(c1.y - c2.y) > 5) {
-                verticalEdges.add(new Coordinate[]{c1, c2});
+            if (Math.abs(c1.x - c2.x) < minXDistance && Math.abs(c1.y - c2.y) > minYDistance) {
+                linearEdges.add(new Coordinate[]{c1, c2});
+            }
+            if (Math.abs(c1.y - c2.y) < minXDistance && Math.abs(c1.x - c2.x) > minYDistance) {
+                linearEdges.add(new Coordinate[]{c1, c2});
             }
         }
-        return verticalEdges;
+        return linearEdges;
     }
 
-    private boolean areEdgesCollinear(Coordinate a1, Coordinate a2,
-                                      Coordinate b1, Coordinate b2, double directionTolerance) {
-        // First check if edges are parallel (same direction)
-        return areVectorsParallel(a1, a2, b1, b2, directionTolerance);
-    }
 
-    private boolean areVectorsParallel(Coordinate a1, Coordinate a2,
-                                       Coordinate b1, Coordinate b2,
-                                       double tolerance) {
-        double dx1 = a2.x - a1.x;
-        double dy1 = a2.y - a1.y;
-        double dx2 = b2.x - b1.x;
-        double dy2 = b2.y - b1.y;
+    private boolean areVectorsCollinear(LineInt baseLine, LineInt otherLine) {
+        var tolerance = mergeConf.directionTolerance();
+        double dx1 = otherLine.a().x() - baseLine.a().x();
+        double dy1 = otherLine.a().y() - baseLine.a().y();
+        double dx2 = otherLine.b().x() - baseLine.b().x();
+        double dy2 = otherLine.b().y() - baseLine.b().y();
 
         // Normalize vectors to avoid magnitude differences
         double len1 = Math.hypot(dx1, dy1);
@@ -219,17 +223,5 @@ public class BoundaryMerger implements Function<Set<LatLonPolygon>, Set<LatLonPo
         return Math.abs(dx1 * dy2 - dy1 * dx2) < tolerance;
     }
 
-    private double distancePointToLine(Coordinate p, Coordinate lineP1, Coordinate lineP2) {
-        if (lineP1.equals(lineP2)) {
-            return p.distance(lineP1);
-        }
-
-        double lineLength = lineP1.distance(lineP2);
-        double area = Math.abs(
-                (lineP2.x - lineP1.x) * (p.y - lineP1.y) -
-                        (lineP2.y - lineP1.y) * (p.x - lineP1.x)
-        );
-        return area / lineLength;
-    }
 
 }

@@ -57,7 +57,16 @@ public enum RouteType {
 
   public static RouteType routeTypeFrom(String label) {
     return switch (label.toLowerCase()) {
-      case "pathway", "passage_pieton", "bati", "stationnement" -> pathway;
+      case "pathway",
+              "passage_pieton",
+              "solar_panel",
+              "bati",
+              "stationnement",
+              "tree",
+              "green_space",
+              "parking",
+              "pool" ->
+          pathway;
       case "line" -> road;
       case "sidewalk" -> sidewalk;
       default -> throw new IllegalArgumentException("Unsupported continuation on " + label);
