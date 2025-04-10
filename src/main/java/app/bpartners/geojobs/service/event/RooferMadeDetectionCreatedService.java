@@ -9,6 +9,8 @@ import static java.util.UUID.randomUUID;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import static java.util.stream.Collectors.toSet;
 
+import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionProcessSucceeded;
 import app.bpartners.geojobs.endpoint.event.model.RooferMadeDetectionCreated;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
@@ -56,6 +58,7 @@ public class RooferMadeDetectionCreatedService implements Consumer<RooferMadeDet
   private final DetectionMapper detectionMapper;
   private final FileWriter fileWriter;
   private final DetectionMaskCreator detectionMaskCreator;
+  private final EventProducer eventProducer;
   private final ExecutorService executorService =
       newFixedThreadPool(Math.max(1, getRuntime().availableProcessors() - 1));
 
@@ -125,6 +128,9 @@ public class RooferMadeDetectionCreatedService implements Consumer<RooferMadeDet
     bucketComponent.upload(geoJsonAsFile, fileKey);
     detection.setGeojsonS3FileKey(fileKey);
     detectionRepository.save(detection);
+
+    eventProducer.accept(
+        List.of(GeoJsonConversionProcessSucceeded.builder().detection(detection).build()));
   }
 
   private MachineDetectedTile futureStream(Future<MachineDetectedTile> future) {
