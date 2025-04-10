@@ -2,8 +2,6 @@ package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
-import static app.bpartners.geojobs.model.SubscriptionConsumptionType.ROOF_ANALYSIS;
-import static app.bpartners.geojobs.model.SubscriptionConsumptionUnit.UNIT;
 import static app.bpartners.geojobs.repository.model.GeoJobType.GEO_JSON_CONVERSION;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
@@ -20,7 +18,6 @@ import app.bpartners.geojobs.file.hash.FileHash;
 import app.bpartners.geojobs.file.hash.FileHashAlgorithm;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.TaskStatus;
-import app.bpartners.geojobs.model.SubscriptionConsumptionLog;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.GeoJsonConversionJobRepository;
@@ -49,7 +46,7 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
   EventProducer eventProducerMock = mock();
   ZoneDetectionJobService zoneDetectionJobServiceMock = mock();
   DetectionRepository detectionRepositoryMock = mock();
-  SubscriptionConsumptionLogService subscriptionConsumptionLogServiceMock = mock();
+  SubscriptionConsumptionService subscriptionConsumptionServiceMock = mock();
   GeoJsonConversionAssemblyInitiatedService subject =
       new GeoJsonConversionAssemblyInitiatedService(
           geoJsonConversionTaskRepositoryMock,
@@ -59,7 +56,7 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
           zoneDetectionJobServiceMock,
           detectionRepositoryMock,
           eventProducerMock,
-          subscriptionConsumptionLogServiceMock);
+              subscriptionConsumptionServiceMock);
 
   @SneakyThrows
   @Test
@@ -149,24 +146,6 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
             .geoJsonConversionJob(savedGeoJsonConversionJob)
             .build(),
         geoJsonConversionAssemblySucceededEvent);
-
-    var subscriptionConsumptionCaptor = ArgumentCaptor.forClass(SubscriptionConsumptionLog.class);
-    var consumptionExpected =
-        SubscriptionConsumptionLog.builder()
-            .id(null)
-            .consumptionType(ROOF_ANALYSIS)
-            .consumptionUnit(UNIT)
-            .usageMetric(1L)
-            .creationDatetime(null)
-            .build();
-
-    verify(subscriptionConsumptionLogServiceMock, times(1))
-        .sendSubscriptionConsumptionLog(any(), subscriptionConsumptionCaptor.capture());
-    var actual = subscriptionConsumptionCaptor.getValue();
-    actual.setId(null);
-    actual.setCreationDatetime(null);
-
-    assertEquals(consumptionExpected, actual);
   }
 
   @SneakyThrows
