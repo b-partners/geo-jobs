@@ -98,7 +98,9 @@ public class ParcelService {
 
     ArrayList<Polygon> parcels = new ArrayList<>(parcelizedPolygon.getParcels());
     List<Feature> features =
-        parcels.stream().map(polygonParcel -> featureMapper.toRest(polygonParcel, id)).toList();
+        parcels.stream()
+            .map(polygonParcel -> featureMapper.toRest(polygonParcel, refZoom, id))
+            .toList();
     List<app.bpartners.geojobs.repository.model.ParcelizedPolygon> parcelizedPolygons =
         features.stream()
             .map(

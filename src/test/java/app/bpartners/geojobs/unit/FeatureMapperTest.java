@@ -52,6 +52,7 @@ class FeatureMapperTest {
     MultiPolygon multiPolygon = new MultiPolygon().coordinates(coordinates);
     multiPolygon.setType(MULTI_POLYGON);
     feature.setGeometry(new FeatureGeometry(multiPolygon));
+    feature.setZoom(20);
     feature.setId(id);
     return feature;
   }
@@ -81,7 +82,7 @@ class FeatureMapperTest {
 
   @Test
   void geo_tools_polygon_to_rest_feature_mapper_ok() {
-    Feature feature = subject.toRest(expectedPolygon(), id);
+    Feature feature = subject.toRest(expectedPolygon(), 20, id);
 
     assertEquals(expectedFeature(), feature);
   }

@@ -172,7 +172,7 @@ class ZoneServiceTest {
             Optional.of(CommunityAuthorization.builder().id(randomUUID().toString()).build()));
     when(geoJsonConversionJobRepositoryMock.findByZoneDetectionJobId(any())).thenReturn(List.of());
     when(featureMapperMock.toDomain(any())).thenReturn(geometryFactory.createPolygon());
-    when(featureMapperMock.toRest(any(), any()))
+    when(featureMapperMock.toRest(any(), any(Integer.class), any()))
         .thenReturn(featureCreator.defaultFeatures().getFirst());
   }
 

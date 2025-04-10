@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class DetectionTilingCreation
     implements Function<Detection, app.bpartners.geojobs.endpoint.rest.model.Detection> {
+  private static final int DEFAULT_ZOOM = 21;
   private final ZoneTilingJobMapper zoneTilingJobMapper;
   private final ZoneTilingJobService zoneTilingJobService;
   private final DetectionRepository detectionRepository;
@@ -67,9 +68,10 @@ public class DetectionTilingCreation
   }
 
   public List<Feature> extend(List<Feature> features) {
+    int zoom = features.getFirst().getZoom() == null ? DEFAULT_ZOOM : features.getFirst().getZoom();
     return features.stream()
         .map(feature -> (Polygon) featureMapper.toDomain(feature).buffer(0.0002))
-        .map(polygon -> featureMapper.toRest(polygon, randomUUID().toString()))
+        .map(polygon -> featureMapper.toRest(polygon, zoom, randomUUID().toString()))
         .toList();
   }
 }

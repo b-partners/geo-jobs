@@ -183,7 +183,7 @@ public class FeatureMapper {
             + geometry.getActualInstance().getClass());
   }
 
-  public Feature toRest(org.locationtech.jts.geom.Polygon domain, String id) {
+  public Feature toRest(org.locationtech.jts.geom.Polygon domain, int zoom, String id) {
     List<List<List<List<BigDecimal>>>> multiPolygonCoordinates = new ArrayList<>();
     Coordinate[] polygonCoordinates = domain.getCoordinates();
 
@@ -201,6 +201,7 @@ public class FeatureMapper {
     MultiPolygon multiPolygon = new MultiPolygon().coordinates(multiPolygonCoordinates);
     Feature feature = new Feature();
     feature.setId(id);
+    feature.setZoom(zoom);
     multiPolygon.setType(MULTI_POLYGON);
     feature.setGeometry(new FeatureGeometry(multiPolygon));
 
