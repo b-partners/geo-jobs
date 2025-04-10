@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.controller.mapper;
 
-import static app.bpartners.geojobs.endpoint.rest.model.CreateZoneTilingJob.ZoomLevelEnum.HOUSES_0;
+import static app.bpartners.geojobs.endpoint.rest.model.CreateZoneTilingJob.ZoomLevelEnum.fromValue;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static java.time.Instant.now;
@@ -93,12 +93,13 @@ public class ZoneTilingJobMapper {
 
   public CreateZoneTilingJob from(Detection detection) {
     var overallConfiguration = detection.getGeoServerProperties();
+    var zoom = detection.getProvidedGeoJsonZone().getFirst().getZoom();
     return new CreateZoneTilingJob()
         .emailReceiver(detection.getEmailReceiver())
         .zoneName(detection.getZoneName())
         .geoServerParameter(overallConfiguration.getGeoServerParameter())
         .geoServerUrl(overallConfiguration.getGeoServerUrl())
         .features(detection.getMultiPolygonGeoJsonZone())
-        .zoomLevel(HOUSES_0);
+        .zoomLevel(fromValue(ArcgisImageZoom.fromZoomLevel(zoom).name()));
   }
 }

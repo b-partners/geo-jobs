@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 public class DetectionTilingCreation
     implements Function<Detection, app.bpartners.geojobs.endpoint.rest.model.Detection> {
   private static final int DEFAULT_ZOOM = 21;
+  private static final double BUFFER = 0.001;
   private final ZoneTilingJobMapper zoneTilingJobMapper;
   private final ZoneTilingJobService zoneTilingJobService;
   private final DetectionRepository detectionRepository;
@@ -53,24 +54,30 @@ public class DetectionTilingCreation
   }
 
   private ZoneTilingJob processZoneTilingJob(Detection detection) {
-    var featureExtended =
-        extend(detection.getProvidedGeoJsonZone()).stream()
-            .map(FeatureMapper::toDomainFeature)
-            .toList();
-    detection.setProvidedGeoJsonZone(featureExtended);
+    if (detection.isRooferMade()) {
+      var providedGeoJson =
+          detection.getProvidedGeoJsonZone().stream().map(FeatureMapper::toDomainFeature).toList();
+      var featureExtended =
+          extend(detection.getProvidedGeoJsonZone()).stream()
+              .map(FeatureMapper::toDomainFeature)
+              .toList();
+      detection.setProvidedGeoJsonZone(featureExtended);
+      var createJob = zoneTilingJobMapper.from(detection);
+      var job = zoneTilingJobMapper.toDomain(createJob, detection.isRooferMade());
+      var tilingTasks = getTilingTasks(createJob, job.getId());
+      detection.setProvidedGeoJsonZone(providedGeoJson);
+      return rooferMadeTilingService.apply(job, tilingTasks);
+    }
     var createJob = zoneTilingJobMapper.from(detection);
     var job = zoneTilingJobMapper.toDomain(createJob, detection.isRooferMade());
     var tilingTasks = getTilingTasks(createJob, job.getId());
-    if (job.isRooferMade()) {
-      return rooferMadeTilingService.apply(job, tilingTasks);
-    }
     return zoneTilingJobService.create(job, tilingTasks);
   }
 
   public List<Feature> extend(List<Feature> features) {
     int zoom = features.getFirst().getZoom() == null ? DEFAULT_ZOOM : features.getFirst().getZoom();
     return features.stream()
-        .map(feature -> (Polygon) featureMapper.toDomain(feature).buffer(0.0002))
+        .map(feature -> (Polygon) featureMapper.toDomain(feature).buffer(BUFFER))
         .map(polygon -> featureMapper.toRest(polygon, zoom, randomUUID().toString()))
         .toList();
   }

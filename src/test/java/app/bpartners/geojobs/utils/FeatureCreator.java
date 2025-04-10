@@ -36,6 +36,7 @@ public class FeatureCreator {
                     + "      [ 4.479593950305621, 45.882900828315755 ],\n"
                     + "      [ 4.459648282829194, 45.904988912620688 ] ] ] ] } }",
                 Feature.class)
-            .id("feature_1_id"));
+            .id("feature_1_id")
+            .zoom(20));
   }
 }

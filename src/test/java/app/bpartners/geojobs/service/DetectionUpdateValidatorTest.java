@@ -150,7 +150,7 @@ Detection.geoJsonZone can not be updated once it has values, otherwise actual va
     return """
 Detection.geoJsonZone can not be updated once it has values, otherwise actual value [class Feature {
     id: feature_1_id
-    zoom: null
+    zoom: 20
     geometry: class class app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry {
         instance: class MultiPolygon {
             coordinates: [[[[4.459648282829194, 45.90498891262069], [4.464709510872551, 45.928950368349426], [4.490816965688656, 45.941784543770964], [4.510354299995861, 45.9336971326646], [4.518386257467152, 45.91288834552105], [4.496344031095243, 45.88343820140181], [4.479593950305621, 45.882900828315755], [4.459648282829194, 45.90498891262069]]]]

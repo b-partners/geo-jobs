@@ -62,6 +62,7 @@ import org.springframework.stereotype.Service;
 @AllArgsConstructor
 @Slf4j
 public class ZoneService {
+  private static final int DEFAULT_ZOOM = 20;
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final ZoneTilingJobService zoneTilingJobService;
   private final EventProducer eventProducer;
@@ -86,7 +87,9 @@ public class ZoneService {
   private List<Feature> readFromFile(File featuresFromShape) {
     try {
       var featuresFileContent = Files.readString(featuresFromShape.toPath());
-      return objectMapper.readValue(featuresFileContent, new TypeReference<>() {});
+      List<Feature> features =
+          objectMapper.readValue(featuresFileContent, new TypeReference<>() {});
+      return features.stream().peek(feature -> feature.setZoom(DEFAULT_ZOOM)).toList();
     } catch (Exception e) {
       throw new ApiException(
           CLIENT_EXCEPTION, "Unable to convert uploaded file to Features, exception=" + e);
