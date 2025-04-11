@@ -119,6 +119,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Detection'
+  '/detections/{id}/roofer':
+    post:
+      tags:
+        - Detection
+      operationId: processRooferDetection
+      summary: Process detection for roof
+      description: |
+        This detection is handled synchronously under 30 seconds and used especially for roof under 100 square metre
+      security:
+        - ApiKeyAuth: [ ]
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          description: Detection identifier
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDetection'
+      responses:
+        200:
+          description: Detection result for roof
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detection'
   '/detections/{id}/shape':
     post:
       tags:
