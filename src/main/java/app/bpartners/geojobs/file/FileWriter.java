@@ -3,17 +3,20 @@ package app.bpartners.geojobs.file;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
-import static java.nio.file.attribute.PosixFilePermissions.asFileAttribute;
-import static java.nio.file.attribute.PosixFilePermissions.fromString;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.model.exception.ApiException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.*;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.List;
+import java.util.Set;
 import java.util.function.BiFunction;
 import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
@@ -90,9 +93,17 @@ public class FileWriter implements BiFunction<byte[], File, File> {
 
   @SneakyThrows
   public static File createTempDirectory() {
-    Path tempDir =
-        Files.createTempDirectory(
-            randomUUID().toString(), asFileAttribute(fromString(TEMP_FOLDER_PERMISSION)));
+    Path tempDir;
+
+    if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
+      FileAttribute<Set<PosixFilePermission>> attrs =
+          PosixFilePermissions.asFileAttribute(
+              PosixFilePermissions.fromString(TEMP_FOLDER_PERMISSION));
+      tempDir = Files.createTempDirectory(randomUUID().toString(), attrs);
+    } else {
+      tempDir = Files.createTempDirectory(randomUUID().toString());
+    }
+
     var dirFile = tempDir.toFile();
     dirFile.deleteOnExit();
     return dirFile;
