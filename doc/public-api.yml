@@ -21,7 +21,7 @@ info:
   version: 'latest'
 
 servers:
-  - url: 'https://detection.api.imagery.bpartners.app'
+  - url: 'https://api.birdia.fr'
 
 paths:
   '/usage':
