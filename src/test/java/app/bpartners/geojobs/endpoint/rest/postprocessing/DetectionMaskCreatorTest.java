@@ -44,15 +44,17 @@ public class DetectionMaskCreatorTest {
     var expectedBottomRight =
         ImageIO.read(this.getClass().getResourceAsStream("/geometry/bottomRight.png"));
 
-    var topLeft = ImageIO.read(actual.get(new IntXY(530798, 360453)));
-    var topCenter = ImageIO.read(actual.get(new IntXY(530799, 360453)));
-    var topRight = ImageIO.read(actual.get(new IntXY(530800, 360453)));
-    var centerLeft = ImageIO.read(actual.get(new IntXY(530798, 360454)));
-    var centerCenter = ImageIO.read(actual.get(new IntXY(530799, 360454)));
-    var centerRight = ImageIO.read(actual.get(new IntXY(530800, 360454)));
-    var bottomLeft = ImageIO.read(actual.get(new IntXY(530798, 360455)));
-    var bottomCenter = ImageIO.read(actual.get(new IntXY(530799, 360455)));
-    var bottomRight = ImageIO.read(actual.get(new IntXY(530800, 360455)));
+    var topLeft = ImageIO.read(actual.get(new IntXY(1061594, 720906)));
+    var topCenter = ImageIO.read(actual.get(new IntXY(1061595, 720906)));
+    var topRight = ImageIO.read(actual.get(new IntXY(1061596, 720906)));
+
+    var centerLeft = ImageIO.read(actual.get(new IntXY(1061594, 720907)));
+    var centerCenter = ImageIO.read(actual.get(new IntXY(1061595, 720907)));
+    var centerRight = ImageIO.read(actual.get(new IntXY(1061596, 720907)));
+
+    var bottomLeft = ImageIO.read(actual.get(new IntXY(1061594, 720908)));
+    var bottomCenter = ImageIO.read(actual.get(new IntXY(1061595, 720908)));
+    var bottomRight = ImageIO.read(actual.get(new IntXY(1061596, 720908)));
 
     assertEquals(9, actual.size());
     assertTrue(areImagesEqual.apply(expectedTopLeft, topLeft));
@@ -72,25 +74,20 @@ public class DetectionMaskCreatorTest {
         List.of(
             List.of(
                 List.of(
-                    List.of(
-                        new BigDecimal("2.2351245768056716"), new BigDecimal("48.92126795344402")),
-                    List.of(
-                        new BigDecimal("2.2351695178681674"), new BigDecimal("48.92119716835145")),
-                    List.of(
-                        new BigDecimal("2.2353000609544655"), new BigDecimal("48.921232560897735")),
-                    List.of(
-                        new BigDecimal("2.235278660448515"), new BigDecimal("48.92126653774217")),
-                    List.of(
-                        new BigDecimal("2.235243706288796"), new BigDecimal("48.9212589873323")),
-                    List.of(
-                        new BigDecimal("2.2352165989812587"), new BigDecimal("48.921296267481054")),
-                    List.of(
-                        new BigDecimal("2.2351245768056716"),
-                        new BigDecimal("48.92126795344402")))));
+                    List.of(new BigDecimal("2.234965"), new BigDecimal("48.921228")),
+                    List.of(new BigDecimal("2.235011"), new BigDecimal("48.921158")),
+                    List.of(new BigDecimal("2.235139"), new BigDecimal("48.921194")),
+                    List.of(new BigDecimal("2.235115"), new BigDecimal("48.921229")),
+                    List.of(new BigDecimal("2.235094"), new BigDecimal("48.921222")),
+                    List.of(new BigDecimal("2.23507"), new BigDecimal("48.921257")),
+                    List.of(new BigDecimal("2.235055"), new BigDecimal("48.921254")),
+                    List.of(new BigDecimal("2.234965"), new BigDecimal("48.921228")),
+                    List.of(new BigDecimal("2.234965"), new BigDecimal("48.921228")))));
+
     return toRestFeature(
         app.bpartners.geojobs.repository.model.Feature.builder()
             .id(null)
-            .zoom(20)
+            .zoom(21)
             .geometry(
                 app.bpartners.geojobs.repository.model.Feature.FeatureGeometry.builder()
                     .geometryType(Geometry.TypeEnum.MULTI_POLYGON)
