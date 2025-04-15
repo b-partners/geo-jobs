@@ -6,6 +6,7 @@ import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
 import static java.awt.Color.BLACK;
 import static java.awt.Color.WHITE;
 import static java.util.UUID.randomUUID;
+import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
@@ -109,12 +110,20 @@ public class DetectionMaskCreator implements Function<List<Feature>, Map<IntXY, 
             .flatMap(List::stream)
             .flatMap(List::stream)
             .toList();
-    var refLat =
-        Collections.max(flattedFeatures.stream().map(list -> list.get(1)).toList()).doubleValue();
-    var refLon =
-        Collections.min(flattedFeatures.stream().map(List::getFirst).toList()).doubleValue();
-    var originTile = originTile(new Coordinate(refLat, refLon), zoom);
-    var tilingConf = new TilingConf(zoom, DEFAULT_IMAGE_SIZE);
+
+    var originTiles =
+        flattedFeatures.stream()
+            .map(
+                list -> {
+                  var coord =
+                      new Coordinate(list.get(1).doubleValue(), list.getFirst().doubleValue());
+                  return originTile(coord, zoom);
+                })
+            .collect(toSet());
+
+    var containingTile = Collections.min(originTiles);
+    var originTile = new IntXY(containingTile.x() - 1, containingTile.y() - 1);
+    var tilingConf = new TilingConf(zoom, 1024);
     var pixels = mapToPixel(flattedFeatures, originTile, tilingConf);
     var fullImage = drawImage(pixels);
     return split_image(originTile, fullImage);
