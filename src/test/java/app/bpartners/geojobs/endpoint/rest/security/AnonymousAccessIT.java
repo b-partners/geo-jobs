@@ -39,6 +39,7 @@ public class AnonymousAccessIT extends FacadeIT {
     var anonymousClient = new ApiClient();
     anonymousClient.setScheme("http");
     anonymousClient.setPort(port);
+    anonymousClient.setHost("localhost");
     anonymousClient.setObjectMapper(om);
 
     tilingApi = new TilingApi(anonymousClient);

@@ -24,7 +24,7 @@ import org.springframework.stereotype.Service;
 public class DetectionTilingCreation
     implements Function<Detection, app.bpartners.geojobs.endpoint.rest.model.Detection> {
   private static final int DEFAULT_ZOOM = 21;
-  private static final double BUFFER = 0.001;
+  private static final double BUFFER = 0.0001;
   private final ZoneTilingJobMapper zoneTilingJobMapper;
   private final ZoneTilingJobService zoneTilingJobService;
   private final DetectionRepository detectionRepository;
