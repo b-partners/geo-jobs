@@ -31,10 +31,8 @@ import app.bpartners.geojobs.service.detection.TileObjectDetector;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConverter;
 import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -42,7 +40,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
-import javax.imageio.ImageIO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -85,7 +82,10 @@ public class RooferMadeDetectionCreatedService implements Consumer<RooferMadeDet
                                   () -> {
                                     var coords = task.getTile().getCoordinates();
                                     var tile = new IntXY(coords.getX(), coords.getY());
-                                    var mask = tileMasks.getOrDefault(tile, createTempImage());
+                                    if (!tileMasks.containsKey(tile)) {
+                                      return null;
+                                    }
+                                    var mask = tileMasks.get(tile);
                                     var response = detector.apply(task, mask, detectionConf);
                                     return detectionMapper.toDetectedTile(
                                         response,
@@ -96,6 +96,7 @@ public class RooferMadeDetectionCreatedService implements Consumer<RooferMadeDet
                                   }))
                       .collect(toSet()))
               .stream()
+              .filter(Objects::nonNull)
               .map(this::futureStream)
               .toList();
       var saved = machineDetectedTileRepository.saveAll(machineDetectedTiles);
@@ -158,21 +159,5 @@ public class RooferMadeDetectionCreatedService implements Consumer<RooferMadeDet
             })
         .flatMap(Stream::distinct)
         .collect(toSet());
-  }
-
-  private File createTempImage() {
-    BufferedImage blackImage = new BufferedImage(1024, 1024, BufferedImage.TYPE_INT_RGB);
-    Graphics2D g = blackImage.createGraphics();
-    g.setColor(Color.BLACK);
-    g.fillRect(0, 0, 1024, 1024);
-    g.dispose();
-
-    try {
-      File file = File.createTempFile("black_image_", ".png");
-      ImageIO.write(blackImage, "png", file);
-      return file;
-    } catch (IOException e) {
-      throw new ApiException(SERVER_EXCEPTION, e.getMessage());
-    }
   }
 }
