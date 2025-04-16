@@ -22,7 +22,6 @@ import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
-import app.bpartners.geojobs.endpoint.event.model.RooferMadeDetectionCreated;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerificationSent;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionStepStatisticMapper;
@@ -143,6 +142,7 @@ class ZoneServiceTest {
           zoneDetectionJobServiceMock,
           detectionJobValidatorMock,
           detectionMachineDetectionStatisticsComputerMock);
+  RooferDetectionService rooferDetectionService = mock();
   ZoneService subject =
       new ZoneService(
           zoneDetectionJobServiceMock,
@@ -163,7 +163,8 @@ class ZoneServiceTest {
           detectionTilingStatisticsComputerMock,
           detectionMachineDetectionStatisticsComputerMock,
           detectionMachineDetectionCreationMock,
-          geoJsonConversionJobRepositoryMock);
+          geoJsonConversionJobRepositoryMock,
+          rooferDetectionService);
 
   @BeforeEach
   void setUp() {
@@ -205,6 +206,7 @@ class ZoneServiceTest {
   @Test
   void roofer_process_tiling_when_all_data_ok() {
     var detectionId = randomUUID().toString();
+    var fileId = randomUUID().toString();
     var tilingJobId = randomUUID().toString();
     var isRooferMade = true;
     var createDetection =
