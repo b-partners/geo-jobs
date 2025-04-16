@@ -54,23 +54,12 @@ public class DetectionTilingCreation
   }
 
   private ZoneTilingJob processZoneTilingJob(Detection detection) {
-    if (detection.isRooferMade()) {
-      var providedGeoJson =
-          detection.getProvidedGeoJsonZone().stream().map(FeatureMapper::toDomainFeature).toList();
-      var featureExtended =
-          extend(detection.getProvidedGeoJsonZone()).stream()
-              .map(FeatureMapper::toDomainFeature)
-              .toList();
-      detection.setProvidedGeoJsonZone(featureExtended);
-      var createJob = zoneTilingJobMapper.from(detection);
-      var job = zoneTilingJobMapper.toDomain(createJob, detection.isRooferMade());
-      var tilingTasks = getTilingTasks(createJob, job.getId());
-      detection.setProvidedGeoJsonZone(providedGeoJson);
-      return rooferMadeTilingService.apply(job, tilingTasks);
-    }
     var createJob = zoneTilingJobMapper.from(detection);
     var job = zoneTilingJobMapper.toDomain(createJob, detection.isRooferMade());
     var tilingTasks = getTilingTasks(createJob, job.getId());
+    if (detection.isRooferMade()) {
+      return rooferMadeTilingService.apply(job, tilingTasks);
+    }
     return zoneTilingJobService.create(job, tilingTasks);
   }
 
