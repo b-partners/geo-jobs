@@ -151,6 +151,19 @@ public class ZoneService {
         savedDetection, PENDING, UNKNOWN, CONFIGURING);
   }
 
+  public app.bpartners.geojobs.endpoint.rest.model.Detection configureImageFile(
+      String detectionId, File imageFile) {
+    var detection = getDetectionByE2IdOrId(detectionId);
+    detectionGeoJsonUpdateValidator.accept(detection);
+    var bucketKey = "detections/roofer/image/" + detectionId;
+    bucketComponent.upload(imageFile, bucketKey);
+    var savedDetection =
+        detectionRepository.save(detection.toBuilder().imageFileKey(bucketKey).build());
+    eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
+    return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
+        savedDetection, PENDING, UNKNOWN, CONFIGURING);
+  }
+
   public app.bpartners.geojobs.endpoint.rest.model.Detection configureGeoJsonResult(
       String detectionId, File geoJsonFile) {
     var detection = getDetectionById(detectionId);
@@ -246,12 +259,17 @@ public class ZoneService {
         return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
             savedDetection, PENDING, UNKNOWN, CONFIGURING);
       }
-      if (savedDetection.isRooferMade()) {
-        return rooferDetectionService.apply(savedDetection);
-      }
       return detectionTilingCreation.apply(savedDetection);
     }
+
     if (isRooferMade) {
+      if (optionalDetection.get().getImageFileKey() == null) {
+        return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
+            optionalDetection.get(), PENDING, UNKNOWN, CONFIGURING);
+      }
+      if (optionalDetection.get().getGeojsonS3FileKey() == null) {
+        return rooferDetectionService.apply(optionalDetection.get());
+      }
       return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
           optionalDetection.get(), FINISHED, SUCCEEDED, MACHINE_DETECTION);
     }

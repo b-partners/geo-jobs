@@ -1,7 +1,6 @@
 package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.MACHINE_DETECTION;
-import static app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon.originTile;
 import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
@@ -27,12 +26,10 @@ import app.bpartners.geojobs.service.detection.DetectionMapper;
 import app.bpartners.geojobs.service.detection.DetectionMaskCreator;
 import app.bpartners.geojobs.service.detection.TileObjectDetector;
 import app.bpartners.geojobs.service.geojson.GeoJsonConverter;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import lombok.AllArgsConstructor;
-import org.locationtech.jts.geom.Coordinate;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -65,16 +62,11 @@ public class RooferDetectionService
             .flatMap(List::stream)
             .flatMap(List::stream)
             .toList();
-    var refLat =
-        Collections.max(flattedFeatures.stream().map(list -> list.get(1)).toList()).doubleValue();
-    var refLon =
-        Collections.min(flattedFeatures.stream().map(List::getFirst).toList()).doubleValue();
-    var originTile = originTile(new Coordinate(refLat, refLon), zoom);
-    var mask = detectionMaskCreator.apply(flattedFeatures, originTile, zoom);
+    var mask = detectionMaskCreator.apply(flattedFeatures);
 
     var tile =
         Tile.builder()
-            .coordinates(new TileCoordinates().x(originTile.x()).y(originTile.y()).z(zoom))
+            .coordinates(new TileCoordinates().x(0).y(0).z(zoom))
             .bucketPath(null)
             .build();
     var toDetect =

@@ -52,7 +52,6 @@ import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.detection.*;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
-import app.bpartners.geojobs.service.tiling.RooferMadeTilingService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import app.bpartners.geojobs.utils.FeatureCreator;
 import app.bpartners.geojobs.utils.TaskStatisticCreator;
@@ -115,9 +114,6 @@ class ZoneServiceTest {
   ZoneDetectionJobCreator zoneDetectionJobCreator = new ZoneDetectionJobCreator();
   CommunityAuthorizationRepository communityAuthRepositoryMock = mock();
   TaskStatisticCreator taskStatisticCreator = new TaskStatisticCreator();
-  RooferMadeTilingService rooferMadeTilingService = mock();
-  EventProducer<RooferMadeDetectionCreated> eventProducer = mock();
-  ZoneDetectionJobService detectionJobService = mock();
   DetectionFromStatisticRestMapper detectionFromStatisticRestMapperMock =
       new DetectionFromStatisticRestMapper(bucketComponentMock, stepStatisticMapper);
   FeatureMapper featureMapperMock = mock();
@@ -129,11 +125,7 @@ class ZoneServiceTest {
           tilingJobMapperMock,
           tilingJobServiceMock,
           detectionRepositoryMock,
-          detectionTilingStatisticsComputerMock,
-          rooferMadeTilingService,
-          eventProducer,
-          detectionJobService,
-          featureMapperMock);
+          detectionTilingStatisticsComputerMock);
   DetectionMachineDetectionStatisticsComputer detectionMachineDetectionStatisticsComputerMock =
       new DetectionMachineDetectionStatisticsComputer(
           detectionFromStatisticRestMapperMock, zoneDetectionJobServiceMock);
@@ -201,54 +193,6 @@ class ZoneServiceTest {
     assertEquals(TILING, actual.getStep().getName());
     assertEquals(Status.ProgressionEnum.PENDING, actual.getStep().getStatus().getProgression());
     assertEquals(UNKNOWN, actual.getStep().getStatus().getHealth());
-  }
-
-  @Test
-  void roofer_process_tiling_when_all_data_ok() {
-    var detectionId = randomUUID().toString();
-    var fileId = randomUUID().toString();
-    var tilingJobId = randomUUID().toString();
-    var isRooferMade = true;
-    var createDetection =
-        new CreateDetection()
-            .detectableObjectModel(new DetectableObjectModel(new BPToitureModel()))
-            .geoServerProperties(new GeoServerProperties())
-            .geoJsonZone(featureCreator.defaultFeatures());
-    String communityOwnerId = randomUUID().toString();
-
-    var createdDetectionMock =
-        detectionCreator.create(detectionId, tilingJobId, communityOwnerId).toBuilder()
-            .geoServerProperties(new GeoServerProperties())
-            .multiPolygonGeoJsonZone(List.of(new Feature()))
-            .isRooferMade(isRooferMade)
-            .build();
-    var zoneTilingJob =
-        ZoneTilingJob.builder().id(randomUUID().toString()).isRooferMade(isRooferMade).build();
-
-    when(communityUsedSurfaceServiceMock.persistDetectionWithSurfaceUsage(any(), any()))
-        .thenReturn(createdDetectionMock);
-    when(tilingJobMapperMock.from(any()))
-        .thenReturn(new CreateZoneTilingJob().geoServerUrl("http://locahost:8080"));
-    when(tilingJobMapperMock.toDomain(any(), any())).thenReturn(zoneTilingJob);
-    when(tilingJobServiceMock.create(any(), any())).thenReturn(zoneTilingJob);
-    when(detectionRepositoryMock.save(any()))
-        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
-    when(tilingJobServiceMock.getTaskStatistic(any(String.class)))
-        .thenReturn(someFinishedTaskStatistic(GeoJobType.TILING));
-    when(rooferMadeTilingService.apply(any(), any())).thenReturn(zoneTilingJob);
-    when(detectionJobService.saveZDJFromZTJ(any()))
-        .thenReturn(
-            app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.builder()
-                .id(randomUUID().toString())
-                .build());
-
-    var actual =
-        subject.processDetection(detectionId, createDetection, communityOwnerId, isRooferMade);
-
-    verify(eventProducer, times(1)).accept(any());
-    assertEquals(TILING, actual.getStep().getName());
-    assertEquals(Status.ProgressionEnum.FINISHED, actual.getStep().getStatus().getProgression());
-    assertEquals(SUCCEEDED, actual.getStep().getStatus().getHealth());
   }
 
   @Test

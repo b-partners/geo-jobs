@@ -1,40 +1,25 @@
 package app.bpartners.geojobs.service.detection;
 
-import static app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon.originTile;
-import static app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon.toPixel;
 import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
 import static java.awt.Color.BLACK;
 import static java.awt.Color.WHITE;
 import static java.util.UUID.randomUUID;
-import static java.util.stream.Collectors.toSet;
 
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
-import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
-import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
-import app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLon;
-import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.model.geometry.IntXY;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.math.BigDecimal;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import javax.imageio.ImageIO;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.function.TriFunction;
-import org.locationtech.jts.geom.Coordinate;
 import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
-public class DetectionMaskCreator implements TriFunction<List<List<BigDecimal>>, IntXY, Integer, File> {
+public class DetectionMaskCreator implements Function<List<List<BigDecimal>>, File> {
   private static final int DEFAULT_IMAGE_SIZE = 1024;
 
   @SneakyThrows
@@ -59,23 +44,17 @@ public class DetectionMaskCreator implements TriFunction<List<List<BigDecimal>>,
       }
     }
     g2d.dispose();
-    File output =
-            File.createTempFile(
-                    "mask_" + randomUUID(), ".png", createTempDirectory());
+    File output = File.createTempFile("mask_" + randomUUID(), ".png", createTempDirectory());
     ImageIO.write(image, "png", output);
+    log.info("Mask created at {}", output.getAbsolutePath());
     return output;
   }
 
   @Override
-  public File apply(List<List<BigDecimal>> providedGeoJson, IntXY originTile, Integer zoom) {
-    var tilingConf = new TilingConf(zoom, DEFAULT_IMAGE_SIZE);
-
-    var typedMercatorCoords = providedGeoJson.stream()
-                    .map(list -> new LatLon(list.get(1).doubleValue(), list.getFirst().doubleValue()))
-                    .toList();
-
-    var pixels =  typedMercatorCoords.stream()
-            .map(latLon -> toPixel(latLon, tilingConf, originTile))
+  public File apply(List<List<BigDecimal>> providedGeoJson) {
+    var pixels =
+        providedGeoJson.stream()
+            .map(list -> new IntXY(list.get(1).intValue(), list.getFirst().intValue()))
             .toList();
     return drawImage(pixels);
   }

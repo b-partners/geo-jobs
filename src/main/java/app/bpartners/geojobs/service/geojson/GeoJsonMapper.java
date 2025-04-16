@@ -82,10 +82,18 @@ public class GeoJsonMapper {
                                 ring.stream()
                                     .map(
                                         coor -> {
-                                          var x = coor.getFirst().doubleValue();
-                                          var y = coor.getLast().doubleValue();
+                                          var x = coor.getFirst();
+                                          var y = coor.getLast();
+                                          if (xTile == 0 && yTile == 0) {
+                                            return List.of(x, y);
+                                          }
                                           return toGeographicalCoordinates(
-                                              xTile, yTile, x, y, zoom, imageWidth);
+                                              xTile,
+                                              yTile,
+                                              x.doubleValue(),
+                                              y.doubleValue(),
+                                              zoom,
+                                              imageWidth);
                                         })
                                     .toList())
                         .toList())

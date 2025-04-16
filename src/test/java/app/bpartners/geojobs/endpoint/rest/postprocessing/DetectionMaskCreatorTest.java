@@ -1,17 +1,14 @@
 package app.bpartners.geojobs.endpoint.rest.postprocessing;
 
-import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
-import static app.bpartners.geojobs.model.CustomObjectMapper.objectMapper;
+import static org.junit.jupiter.api.Assertions.*;
 
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
-import app.bpartners.geojobs.endpoint.rest.model.Geometry;
-import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.model.geometry.plot.AreImagesEqual;
 import app.bpartners.geojobs.service.detection.DetectionMaskCreator;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
-import lombok.SneakyThrows;
+import java.util.Objects;
+import javax.imageio.ImageIO;
 import org.junit.jupiter.api.Test;
 
 public class DetectionMaskCreatorTest {
@@ -19,38 +16,20 @@ public class DetectionMaskCreatorTest {
   DetectionMaskCreator subject = new DetectionMaskCreator();
 
   @Test
-  void draw_mask_from_tile() throws IOException {}
-
-  @SneakyThrows
-  private Feature feature() {
+  void draw_mask_from_tile() throws IOException {
+    var expected =
+        ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/geometry/mask.png")));
     var coordinates =
         List.of(
-            List.of(
-                List.of(
-                    List.of(new BigDecimal("2.234965"), new BigDecimal("48.921228")),
-                    List.of(new BigDecimal("2.235011"), new BigDecimal("48.921158")),
-                    List.of(new BigDecimal("2.235139"), new BigDecimal("48.921194")),
-                    List.of(new BigDecimal("2.235115"), new BigDecimal("48.921229")),
-                    List.of(new BigDecimal("2.235094"), new BigDecimal("48.921222")),
-                    List.of(new BigDecimal("2.23507"), new BigDecimal("48.921257")),
-                    List.of(new BigDecimal("2.235055"), new BigDecimal("48.921254")),
-                    List.of(new BigDecimal("2.234965"), new BigDecimal("48.921228")),
-                    List.of(new BigDecimal("2.234965"), new BigDecimal("48.921228")))));
+            List.of(new BigDecimal("465.95744680851067"), new BigDecimal("282.97872340425533")),
+            List.of(new BigDecimal("780.8510638297872"), new BigDecimal("421.2765957446809")),
+            List.of(new BigDecimal("619.1489361702128"), new BigDecimal("800")),
+            List.of(new BigDecimal("474.468085106383"), new BigDecimal("729.7872340425532")),
+            List.of(new BigDecimal("510.63829787234044"), new BigDecimal("636.1702127659574")),
+            List.of(new BigDecimal("351.06382978723406"), new BigDecimal("557.4468085106383")),
+            List.of(new BigDecimal("465.95744680851067"), new BigDecimal("282.97872340425533")));
+    var actual = subject.apply(coordinates);
 
-    return toRestFeature(
-        app.bpartners.geojobs.repository.model.Feature.builder()
-            .id(null)
-            .zoom(21)
-            .geometry(
-                app.bpartners.geojobs.repository.model.Feature.FeatureGeometry.builder()
-                    .geometryType(Geometry.TypeEnum.MULTI_POLYGON)
-                    .actualInstanceStringValue(
-                        objectMapper()
-                            .writeValueAsString(
-                                new MultiPolygon()
-                                    .coordinates(coordinates)
-                                    .type(MultiPolygon.TypeEnum.MULTI_POLYGON)))
-                    .build())
-            .build());
+    assertTrue(areImagesEqual.apply(expected, ImageIO.read(actual)));
   }
 }
