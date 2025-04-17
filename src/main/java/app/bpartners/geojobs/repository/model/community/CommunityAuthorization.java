@@ -10,11 +10,13 @@ import app.bpartners.geojobs.repository.model.SurfaceUnit;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import jakarta.persistence.*;
 import java.io.Serializable;
+import java.time.Instant;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 
 @Data
@@ -38,6 +40,8 @@ public class CommunityAuthorization implements Serializable {
   @Enumerated(STRING)
   @JdbcTypeCode(NAMED_ENUM)
   private SurfaceUnit maxSurfaceUnit;
+
+  private @CreationTimestamp Instant creationDatetime;
 
   @OneToMany(fetch = EAGER, mappedBy = "communityAuthorizationId", cascade = ALL)
   private List<CommunityAuthorizedZone> authorizedZones;

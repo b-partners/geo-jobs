@@ -776,6 +776,8 @@ components:
       properties:
         consumerName:
           type: string
+        consumerEmail:
+          type: string
         consumerType:
           type: string
           enum:
@@ -785,7 +787,7 @@ components:
         maxSurface:
           type: number
           description: allowed surface to detect in square degree
-        authorizedZone:
+        authorizedZones:
           type: array
           items:
             $ref: '#/components/schemas/AuthorizedZone'
@@ -800,6 +802,7 @@ components:
           type: string
         creationDatetime:
           type: string
+          format: date-time
     AuthorizedZone:
       type: object
       properties:
