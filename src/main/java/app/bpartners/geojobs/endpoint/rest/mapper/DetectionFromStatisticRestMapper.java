@@ -34,6 +34,7 @@ public class DetectionFromStatisticRestMapper
     var excelUrl = bucketComponent.presign(detection.getExcelFileKey());
     var shapeUrl = bucketComponent.presign(detection.getShapeFileKey());
     var geojsonUrl = bucketComponent.presign(detection.getGeojsonS3FileKey());
+    var imageUrl = bucketComponent.presign(detection.getImageFileKey());
     return new app.bpartners.geojobs.endpoint.rest.model.Detection()
         .id(detection.getEndToEndId())
         .emailReceiver(detection.getEmailReceiver())
@@ -42,6 +43,7 @@ public class DetectionFromStatisticRestMapper
         .shapeUrl(shapeUrl)
         .geoJsonZone(features)
         .geoJsonUrl(geojsonUrl)
+        .imageUrl(imageUrl)
         .geoServerProperties(detection.getGeoServerProperties())
         .detectableObjectModel(detection.getDetectableObjectModel())
         .step(detectionStepStatisticMapper.toRestDetectionStepStatus(statistic, detectionStepName));
