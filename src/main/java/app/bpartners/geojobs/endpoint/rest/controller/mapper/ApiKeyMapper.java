@@ -29,6 +29,7 @@ public class ApiKeyMapper {
 
   private CommunityAuthorization toCommunityAuthorization(
       CreateApiKey createApiKey, String newCommunityId) {
+    var maxSurface = createApiKey.getMaxSurface();
     return CommunityAuthorization.builder()
         .id(newCommunityId)
         .apiKey(randomUUID().toString())
@@ -40,7 +41,7 @@ public class ApiKeyMapper {
                     detectableObjectType ->
                         toCommunityDetectableObjectType(newCommunityId, detectableObjectType))
                 .toList())
-        .maxSurface(createApiKey.getMaxSurface().doubleValue())
+        .maxSurface(maxSurface == null ? 0 : maxSurface.doubleValue())
         .maxSurfaceUnit(SQUARE_DEGREE)
         .authorizedZones(toCommunityAuthorizedZone(createApiKey, newCommunityId))
         .build();
