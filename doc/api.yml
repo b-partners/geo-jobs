@@ -695,6 +695,28 @@ paths:
         '500':
           description: Internal Server Error
           $ref: '#/components/responses/500'
+  '/api/keys':
+    post:
+      tags:
+        - Security
+      operationId: generateApiKeys
+      summary: Generate new API keys
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/CreateApiKey'
+      responses:
+        200:
+          description: API keys generated
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApiKey'
   '/api/keys/revoke':
     delete:
       tags:
@@ -749,6 +771,45 @@ components:
           schema:
             $ref: '#/components/schemas/InternalServerException'
   schemas:
+    CreateApiKey:
+      type: object
+      properties:
+        consumerName:
+          type: string
+        consumerEmail:
+          type: string
+        consumerType:
+          type: string
+          enum:
+            - INSURANCE
+            - COMMUNITY
+            - ADMIN
+        maxSurface:
+          type: number
+          description: allowed surface to detect in square degree
+        authorizedZones:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuthorizedZone'
+        detectableObjectTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/DetectableObjectType'
+    ApiKey:
+      type: object
+      properties:
+        key:
+          type: string
+        creationDatetime:
+          type: string
+          format: date-time
+    AuthorizedZone:
+      type: object
+      properties:
+        name:
+          type: string
+        zone:
+          $ref: '#/components/schemas/MultiPolygon'
     SingleUserInfo:
       type: object
       properties:
