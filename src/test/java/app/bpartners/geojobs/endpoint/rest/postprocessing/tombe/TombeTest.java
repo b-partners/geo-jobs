@@ -48,18 +48,22 @@ class TombeTest {
     var expectedURI =
         Paths.get(getClass().getResource("/geometry/tombes-postprocessed.geojson").toURI());
     var expected = Files.readString(expectedURI);
+
     assertEquals(expected, new Geojson(postprocessedPolygons).stringValue());
   }
 
   private static Set<LatLonPolygon> invert(Set<LatLonPolygon> noSuperpositionPolygons) {
     return noSuperpositionPolygons.stream()
         .map(
-            p ->
-                new LatLonPolygon(
-                    geometryFactory.createPolygon(
-                        Arrays.stream(p.polygon().getCoordinates())
-                            .map(c -> new Coordinate(c.y, c.x))
-                            .toArray(Coordinate[]::new))))
+            p -> {
+              var polygon =
+                  geometryFactory.createPolygon(
+                      Arrays.stream(p.polygon().getCoordinates())
+                          .map(c -> new Coordinate(c.y, c.x))
+                          .toArray(Coordinate[]::new));
+              polygon.setUserData(p.polygon().getUserData());
+              return new LatLonPolygon(polygon);
+            })
         .collect(toSet());
   }
 
@@ -108,7 +112,11 @@ class TombeTest {
   }
 
   private boolean isSuperposed(Polygon smallP, Polygon bigP, double maxAllowedIoU) {
-    var inter = smallP.intersection(bigP);
-    return inter.getArea() / smallP.getArea() > maxAllowedIoU;
+    try {
+      var inter = smallP.intersection(bigP);
+      return inter.getArea() / smallP.getArea() > maxAllowedIoU;
+    } catch (Exception e) {
+      return false;
+    }
   }
 }

@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.endpoint.rest.postprocessing;
 
-import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import static java.util.stream.Collectors.toSet;
@@ -26,8 +25,6 @@ import org.geotools.geojson.feature.FeatureJSON;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
-import org.locationtech.jts.io.ParseException;
-import org.locationtech.jts.io.WKTReader;
 
 @Accessors(fluent = true)
 @Getter
@@ -39,8 +36,7 @@ public class Geojson {
   public Geojson(Set<LatLonPolygon> polygons) {
     this.polygons = polygons;
     this.stringValue =
-        geojsonString(
-            polygons.stream().map(LatLonPolygon::polygon).map(Polygon::toString).collect(toSet()));
+        geojsonString(polygons.stream().map(LatLonPolygon::polygon).collect(toSet()));
   }
 
   public Geojson(File geojsonPath) {
@@ -56,17 +52,7 @@ public class Geojson {
       try (var featuresIterator = featureCollection.features()) {
         while (featuresIterator.hasNext()) {
           SimpleFeature feature = (SimpleFeature) featuresIterator.next();
-          Polygon polygon;
-          try {
-            polygon = (Polygon) feature.getDefaultGeometry();
-          } catch (ClassCastException e) {
-            var multiPolygon = (MultiPolygon) feature.getDefaultGeometry();
-            if (multiPolygon.getNumGeometries() != 1) {
-              throw new RuntimeException(
-                  "Only mulitpolygons with single polygon supported but got: " + multiPolygon);
-            }
-            polygon = (Polygon) multiPolygon.getGeometryN(0);
-          }
+          Polygon polygon = getPolygon(feature);
           latLonPolygons.add(new LatLonPolygon(polygon));
         }
       }
@@ -76,9 +62,28 @@ public class Geojson {
     return latLonPolygons;
   }
 
+  private static Polygon getPolygon(SimpleFeature feature) {
+    var userData = new HashMap<String, Object>();
+    userData.put("filename", feature.getProperty("filename").getValue());
+    userData.put("label", feature.getProperty("label").getValue());
+    userData.put("confidence", feature.getProperty("confidence").getValue());
+    Polygon polygon;
+    try {
+      polygon = (Polygon) feature.getDefaultGeometry();
+    } catch (ClassCastException e) {
+      var multiPolygon = (MultiPolygon) feature.getDefaultGeometry();
+      if (multiPolygon.getNumGeometries() != 1) {
+        throw new RuntimeException(
+            "Only mulitpolygons with single polygon supported but got: " + multiPolygon);
+      }
+      polygon = (Polygon) multiPolygon.getGeometryN(0);
+    }
+    polygon.setUserData(userData);
+    return polygon;
+  }
+
   // Mostly ChatGPT-generated
-  private static String geojsonString(Set<String> wktPolygons) {
-    WKTReader reader = new WKTReader(geometryFactory);
+  private static String geojsonString(Set<Polygon> wktPolygons) {
     ObjectMapper objectMapper = new ObjectMapper();
 
     // GeoJSON structure
@@ -87,14 +92,8 @@ public class Geojson {
 
     List<Map<String, Object>> features = new ArrayList<>();
 
-    for (String wkt : wktPolygons) {
-      Polygon polygon;
-      try {
-        polygon = (Polygon) reader.read(wkt);
-      } catch (ParseException e) {
-        throw new RuntimeException(e);
-      }
-
+    for (Polygon polygon : wktPolygons) {
+      var properties = (HashMap<String, String>) polygon.getUserData();
       // Convert JTS Polygon to GeoJSON format
       List<List<List<Double>>> coordinates = new ArrayList<>();
       List<List<Double>> outerRing = new ArrayList<>();
@@ -121,7 +120,7 @@ public class Geojson {
       geometry.put("coordinates", coordinates);
 
       feature.put("geometry", geometry);
-      feature.put("properties", new HashMap<>()); // Empty properties
+      feature.put("properties", properties); // Empty properties
 
       features.add(feature);
     }
