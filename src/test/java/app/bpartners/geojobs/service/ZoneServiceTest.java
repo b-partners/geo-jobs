@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service;
 
+import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toDomainFeature;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.*;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.SUCCEEDED;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.UNKNOWN;
@@ -193,6 +194,73 @@ class ZoneServiceTest {
     assertEquals(TILING, actual.getStep().getName());
     assertEquals(Status.ProgressionEnum.PENDING, actual.getStep().getStatus().getProgression());
     assertEquals(UNKNOWN, actual.getStep().getStatus().getHealth());
+  }
+
+  @Test
+  void community_role_create_roofer_detection() {
+    var detectionId = randomUUID().toString();
+    var tilingJobId = randomUUID().toString();
+    var isRooferMade = true;
+    var createDetection =
+        new CreateDetection()
+            .detectableObjectModel(new DetectableObjectModel(new BPToitureModel()))
+            .geoServerProperties(new GeoServerProperties());
+
+    String communityOwnerId = null;
+    var createdDetectionMock = detectionCreator.create(detectionId, tilingJobId, communityOwnerId);
+    createdDetectionMock.setRooferMade(isRooferMade);
+    createdDetectionMock.setGeoServerProperties(new GeoServerProperties());
+    createdDetectionMock.setProvidedGeoJsonZone(List.of(new Feature()));
+
+    setUpAuthorityRoleProcessingMock(detectionId, null, ROLE_COMMUNITY);
+    when(communityUsedSurfaceServiceMock.persistDetectionWithSurfaceUsage(any(), any()))
+        .thenReturn(createdDetectionMock);
+
+    var actual =
+        subject.processDetection(detectionId, createDetection, communityOwnerId, isRooferMade);
+
+    assertEquals(CONFIGURING, actual.getStep().getName());
+    assertEquals(Status.ProgressionEnum.PENDING, actual.getStep().getStatus().getProgression());
+    assertEquals(UNKNOWN, actual.getStep().getStatus().getHealth());
+  }
+
+  @Test
+  void community_role_process_roofer_detection() {
+    var detectionId = randomUUID().toString();
+    var tilingJobId = randomUUID().toString();
+    var isRooferMade = true;
+    var createDetection =
+        new CreateDetection()
+            .detectableObjectModel(new DetectableObjectModel(new BPToitureModel()))
+            .geoServerProperties(new GeoServerProperties())
+            .geoJsonZone(featureCreator.defaultFeatures());
+
+    String communityOwnerId = null;
+    var createdDetectionMock = detectionCreator.create(detectionId, tilingJobId, communityOwnerId);
+    createdDetectionMock.setRooferMade(isRooferMade);
+    createdDetectionMock.setGeoServerProperties(new GeoServerProperties());
+    createdDetectionMock.setImageFileKey(randomUUID().toString());
+    createdDetectionMock.setProvidedGeoJsonZone(
+        List.of(toDomainFeature(featureCreator.defaultFeatures().getFirst())));
+
+    setUpAuthorityRoleProcessingMock(detectionId, createdDetectionMock, ROLE_COMMUNITY);
+    when(rooferDetectionService.apply(any()))
+        .thenReturn(
+            new Detection()
+                .step(
+                    new DetectionStep()
+                        .name(MACHINE_DETECTION)
+                        .status(
+                            new Status()
+                                .health(SUCCEEDED)
+                                .progression(Status.ProgressionEnum.FINISHED))));
+
+    var actual =
+        subject.processDetection(detectionId, createDetection, communityOwnerId, isRooferMade);
+
+    assertEquals(MACHINE_DETECTION, actual.getStep().getName());
+    assertEquals(Status.ProgressionEnum.FINISHED, actual.getStep().getStatus().getProgression());
+    assertEquals(SUCCEEDED, actual.getStep().getStatus().getHealth());
   }
 
   @Test

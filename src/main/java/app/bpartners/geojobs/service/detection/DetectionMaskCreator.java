@@ -2,11 +2,10 @@ package app.bpartners.geojobs.service.detection;
 
 import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
 import static java.awt.Color.BLACK;
-import static java.awt.Color.WHITE;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.model.geometry.IntXY;
-import java.awt.Graphics2D;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.math.BigDecimal;
@@ -36,10 +35,11 @@ public class DetectionMaskCreator implements Function<List<List<BigDecimal>>, Fi
       int[] yPoints = pixels.stream().mapToInt(IntXY::y).toArray();
 
       if (xPoints.length > 2) {
-        g2d.setColor(WHITE);
+        var color = new Color(1, 1, 1);
+        g2d.setColor(color);
         g2d.fillPolygon(xPoints, yPoints, xPoints.length);
 
-        g2d.setColor(WHITE);
+        g2d.setColor(color);
         g2d.drawPolygon(xPoints, yPoints, xPoints.length);
       }
     }
