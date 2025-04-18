@@ -155,7 +155,7 @@ public class ZoneService {
       String detectionId, File imageFile) {
     var detection = getDetectionByE2IdOrId(detectionId);
     detectionGeoJsonUpdateValidator.accept(detection);
-    var bucketKey = "detections/roofer/image/" + detectionId;
+    var bucketKey = "detections/roofer/image/" + detectionId + ".png";
     bucketComponent.upload(imageFile, bucketKey);
     var savedDetection =
         detectionRepository.save(detection.toBuilder().imageFileKey(bucketKey).build());
@@ -259,19 +259,33 @@ public class ZoneService {
         return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
             savedDetection, PENDING, UNKNOWN, CONFIGURING);
       }
-      return detectionTilingCreation.apply(savedDetection);
+      if (!savedDetection.isRooferMade()) {
+        return detectionTilingCreation.apply(savedDetection);
+      }
     }
 
+    var peristedDetection = optionalDetection.get();
     if (isRooferMade) {
-      if (optionalDetection.get().getImageFileKey() == null) {
-        return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
-            optionalDetection.get(), PENDING, UNKNOWN, CONFIGURING);
+      if (peristedDetection.isStillOnConfiguringStep()) {
+        if (peristedDetection.getImageFileKey() == null) {
+          return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
+              peristedDetection, PENDING, UNKNOWN, CONFIGURING);
+        }
+        var toSave =
+            peristedDetection.toBuilder()
+                .providedGeoJsonZone(
+                    createDetection.getGeoJsonZone().stream()
+                        .map(FeatureMapper::toDomainFeature)
+                        .toList())
+                .build();
+        var saved = detectionRepository.save(toSave);
+        return rooferDetectionService.apply(saved);
       }
-      if (optionalDetection.get().getGeojsonS3FileKey() == null) {
-        return rooferDetectionService.apply(optionalDetection.get());
+      if (peristedDetection.getGeojsonS3FileKey() == null) {
+        return rooferDetectionService.apply(peristedDetection);
       }
       return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
-          optionalDetection.get(), FINISHED, SUCCEEDED, MACHINE_DETECTION);
+          peristedDetection, FINISHED, SUCCEEDED, MACHINE_DETECTION);
     }
     return processCommunityDetection(detectionId);
   }

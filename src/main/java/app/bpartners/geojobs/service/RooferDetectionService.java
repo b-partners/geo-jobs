@@ -67,7 +67,7 @@ public class RooferDetectionService
     var tile =
         Tile.builder()
             .coordinates(new TileCoordinates().x(0).y(0).z(zoom))
-            .bucketPath(null)
+            .bucketPath(detection.getImageFileKey())
             .build();
     var toDetect =
         TileDetectionTask.builder()
@@ -78,7 +78,7 @@ public class RooferDetectionService
     var detectionResponse =
         detector.apply(toDetect, mask, detection.getDetectableObjectConfigurations());
     var machineDetectedTile =
-        detectionMapper.toDetectedTile(detectionResponse, tile, null, detection.getId(), null);
+        detectionMapper.toDetectedTile(detectionResponse, tile, null, null, null);
     machineDetectedTileRepository.save(machineDetectedTile);
     var detectedTile =
         DetectedTile.builder()
