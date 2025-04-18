@@ -598,6 +598,36 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Detection'
+
+  '/detections/{id}/image':
+    post:
+      tags:
+        - Detection
+      operationId: configureRooferDetectionImageConfig
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          description: Detection identifier
+          required: true
+      requestBody:
+        description: Image from a specific address
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        200:
+          description: Detection with updated image file uploaded url
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detection'
   '/detections/{id}/shape':
     post:
       tags:
@@ -1605,4 +1635,6 @@ components:
         shapeUrl:
           type: string
         excelUrl:
+          type: string
+        imageUrl:
           type: string

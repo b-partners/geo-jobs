@@ -186,6 +186,13 @@ public class ZoneDetectionController {
     return zoneService.configureShapeFile(detectionId, shapeFile);
   }
 
+  @PostMapping("/detections/{id}/image")
+  public Detection configureRooferDetectionImageFile(
+      @PathVariable(name = "id") String detectionId, @RequestBody byte[] imageAsByte) {
+    File imageFile = fileWriter.apply(imageAsByte, null);
+    return zoneService.configureImageFile(detectionId, imageFile);
+  }
+
   @PostMapping("/detections/{id}/excel")
   public Detection configureDetectionExcelFile(
       @PathVariable(name = "id") String detectionId, @RequestBody byte[] excelFileAsBytes) {

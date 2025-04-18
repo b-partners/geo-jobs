@@ -1,21 +1,14 @@
 package app.bpartners.geojobs.endpoint.rest.postprocessing;
 
-import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
-import static app.bpartners.geojobs.model.CustomObjectMapper.objectMapper;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
-import app.bpartners.geojobs.endpoint.rest.model.Geometry;
-import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
-import app.bpartners.geojobs.model.geometry.IntXY;
 import app.bpartners.geojobs.model.geometry.plot.AreImagesEqual;
 import app.bpartners.geojobs.service.detection.DetectionMaskCreator;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 import javax.imageio.ImageIO;
-import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 
 public class DetectionMaskCreatorTest {
@@ -24,80 +17,19 @@ public class DetectionMaskCreatorTest {
 
   @Test
   void draw_mask_from_tile() throws IOException {
-    var actual = subject.apply(List.of(feature()));
-    var expectedTopLeft =
-        ImageIO.read(this.getClass().getResourceAsStream("/geometry/topLeft.png"));
-    var expectedTopCenter =
-        ImageIO.read(this.getClass().getResourceAsStream("/geometry/topCenter.png"));
-    var expectedTopRight =
-        ImageIO.read(this.getClass().getResourceAsStream("/geometry/topRight.png"));
-    var expectedCenterLeft =
-        ImageIO.read(this.getClass().getResourceAsStream("/geometry/centerLeft.png"));
-    var expectedCenterCenter =
-        ImageIO.read(this.getClass().getResourceAsStream("/geometry/centerCenter.png"));
-    var expectedCenterRight =
-        ImageIO.read(this.getClass().getResourceAsStream("/geometry/centerRight.png"));
-    var expectedBottomLeft =
-        ImageIO.read(this.getClass().getResourceAsStream("/geometry/bottomLeft.png"));
-    var expectedBottomCenter =
-        ImageIO.read(this.getClass().getResourceAsStream("/geometry/bottomCenter.png"));
-    var expectedBottomRight =
-        ImageIO.read(this.getClass().getResourceAsStream("/geometry/bottomRight.png"));
-
-    var topLeft = ImageIO.read(actual.get(new IntXY(1061594, 720906)));
-    var topCenter = ImageIO.read(actual.get(new IntXY(1061595, 720906)));
-    var topRight = ImageIO.read(actual.get(new IntXY(1061596, 720906)));
-
-    var centerLeft = ImageIO.read(actual.get(new IntXY(1061594, 720907)));
-    var centerCenter = ImageIO.read(actual.get(new IntXY(1061595, 720907)));
-    var centerRight = ImageIO.read(actual.get(new IntXY(1061596, 720907)));
-
-    var bottomLeft = ImageIO.read(actual.get(new IntXY(1061594, 720908)));
-    var bottomCenter = ImageIO.read(actual.get(new IntXY(1061595, 720908)));
-    var bottomRight = ImageIO.read(actual.get(new IntXY(1061596, 720908)));
-
-    assertEquals(9, actual.size());
-    assertTrue(areImagesEqual.apply(expectedTopLeft, topLeft));
-    assertTrue(areImagesEqual.apply(expectedTopCenter, topCenter));
-    assertTrue(areImagesEqual.apply(expectedTopRight, topRight));
-    assertTrue(areImagesEqual.apply(expectedCenterLeft, centerLeft));
-    assertTrue(areImagesEqual.apply(expectedCenterCenter, centerCenter));
-    assertTrue(areImagesEqual.apply(expectedCenterRight, centerRight));
-    assertTrue(areImagesEqual.apply(expectedBottomLeft, bottomLeft));
-    assertTrue(areImagesEqual.apply(expectedBottomCenter, bottomCenter));
-    assertTrue(areImagesEqual.apply(expectedBottomRight, bottomRight));
-  }
-
-  @SneakyThrows
-  private Feature feature() {
+    var expected =
+        ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/geometry/mask.png")));
     var coordinates =
         List.of(
-            List.of(
-                List.of(
-                    List.of(new BigDecimal("2.234965"), new BigDecimal("48.921228")),
-                    List.of(new BigDecimal("2.235011"), new BigDecimal("48.921158")),
-                    List.of(new BigDecimal("2.235139"), new BigDecimal("48.921194")),
-                    List.of(new BigDecimal("2.235115"), new BigDecimal("48.921229")),
-                    List.of(new BigDecimal("2.235094"), new BigDecimal("48.921222")),
-                    List.of(new BigDecimal("2.23507"), new BigDecimal("48.921257")),
-                    List.of(new BigDecimal("2.235055"), new BigDecimal("48.921254")),
-                    List.of(new BigDecimal("2.234965"), new BigDecimal("48.921228")),
-                    List.of(new BigDecimal("2.234965"), new BigDecimal("48.921228")))));
+            List.of(new BigDecimal("465.95744680851067"), new BigDecimal("282.97872340425533")),
+            List.of(new BigDecimal("780.8510638297872"), new BigDecimal("421.2765957446809")),
+            List.of(new BigDecimal("619.1489361702128"), new BigDecimal("800")),
+            List.of(new BigDecimal("474.468085106383"), new BigDecimal("729.7872340425532")),
+            List.of(new BigDecimal("510.63829787234044"), new BigDecimal("636.1702127659574")),
+            List.of(new BigDecimal("351.06382978723406"), new BigDecimal("557.4468085106383")),
+            List.of(new BigDecimal("465.95744680851067"), new BigDecimal("282.97872340425533")));
+    var actual = subject.apply(coordinates);
 
-    return toRestFeature(
-        app.bpartners.geojobs.repository.model.Feature.builder()
-            .id(null)
-            .zoom(21)
-            .geometry(
-                app.bpartners.geojobs.repository.model.Feature.FeatureGeometry.builder()
-                    .geometryType(Geometry.TypeEnum.MULTI_POLYGON)
-                    .actualInstanceStringValue(
-                        objectMapper()
-                            .writeValueAsString(
-                                new MultiPolygon()
-                                    .coordinates(coordinates)
-                                    .type(MultiPolygon.TypeEnum.MULTI_POLYGON)))
-                    .build())
-            .build());
+    assertTrue(areImagesEqual.apply(expected, ImageIO.read(actual)));
   }
 }

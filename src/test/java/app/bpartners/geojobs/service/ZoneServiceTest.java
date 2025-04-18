@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service;
 
+import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toDomainFeature;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.*;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.SUCCEEDED;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.UNKNOWN;
@@ -22,7 +23,6 @@ import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
-import app.bpartners.geojobs.endpoint.event.model.RooferMadeDetectionCreated;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerificationSent;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionStepStatisticMapper;
@@ -53,7 +53,6 @@ import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.detection.*;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
-import app.bpartners.geojobs.service.tiling.RooferMadeTilingService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import app.bpartners.geojobs.utils.FeatureCreator;
 import app.bpartners.geojobs.utils.TaskStatisticCreator;
@@ -116,9 +115,6 @@ class ZoneServiceTest {
   ZoneDetectionJobCreator zoneDetectionJobCreator = new ZoneDetectionJobCreator();
   CommunityAuthorizationRepository communityAuthRepositoryMock = mock();
   TaskStatisticCreator taskStatisticCreator = new TaskStatisticCreator();
-  RooferMadeTilingService rooferMadeTilingService = mock();
-  EventProducer<RooferMadeDetectionCreated> eventProducer = mock();
-  ZoneDetectionJobService detectionJobService = mock();
   DetectionFromStatisticRestMapper detectionFromStatisticRestMapperMock =
       new DetectionFromStatisticRestMapper(bucketComponentMock, stepStatisticMapper);
   FeatureMapper featureMapperMock = mock();
@@ -130,11 +126,7 @@ class ZoneServiceTest {
           tilingJobMapperMock,
           tilingJobServiceMock,
           detectionRepositoryMock,
-          detectionTilingStatisticsComputerMock,
-          rooferMadeTilingService,
-          eventProducer,
-          detectionJobService,
-          featureMapperMock);
+          detectionTilingStatisticsComputerMock);
   DetectionMachineDetectionStatisticsComputer detectionMachineDetectionStatisticsComputerMock =
       new DetectionMachineDetectionStatisticsComputer(
           detectionFromStatisticRestMapperMock, zoneDetectionJobServiceMock);
@@ -143,6 +135,7 @@ class ZoneServiceTest {
           zoneDetectionJobServiceMock,
           detectionJobValidatorMock,
           detectionMachineDetectionStatisticsComputerMock);
+  RooferDetectionService rooferDetectionService = mock();
   ZoneService subject =
       new ZoneService(
           zoneDetectionJobServiceMock,
@@ -163,7 +156,8 @@ class ZoneServiceTest {
           detectionTilingStatisticsComputerMock,
           detectionMachineDetectionStatisticsComputerMock,
           detectionMachineDetectionCreationMock,
-          geoJsonConversionJobRepositoryMock);
+          geoJsonConversionJobRepositoryMock,
+          rooferDetectionService);
 
   @BeforeEach
   void setUp() {
@@ -203,7 +197,35 @@ class ZoneServiceTest {
   }
 
   @Test
-  void roofer_process_tiling_when_all_data_ok() {
+  void community_role_create_roofer_detection() {
+    var detectionId = randomUUID().toString();
+    var tilingJobId = randomUUID().toString();
+    var isRooferMade = true;
+    var createDetection =
+        new CreateDetection()
+            .detectableObjectModel(new DetectableObjectModel(new BPToitureModel()))
+            .geoServerProperties(new GeoServerProperties());
+
+    String communityOwnerId = null;
+    var createdDetectionMock = detectionCreator.create(detectionId, tilingJobId, communityOwnerId);
+    createdDetectionMock.setRooferMade(isRooferMade);
+    createdDetectionMock.setGeoServerProperties(new GeoServerProperties());
+    createdDetectionMock.setProvidedGeoJsonZone(List.of(new Feature()));
+
+    setUpAuthorityRoleProcessingMock(detectionId, null, ROLE_COMMUNITY);
+    when(communityUsedSurfaceServiceMock.persistDetectionWithSurfaceUsage(any(), any()))
+        .thenReturn(createdDetectionMock);
+
+    var actual =
+        subject.processDetection(detectionId, createDetection, communityOwnerId, isRooferMade);
+
+    assertEquals(CONFIGURING, actual.getStep().getName());
+    assertEquals(Status.ProgressionEnum.PENDING, actual.getStep().getStatus().getProgression());
+    assertEquals(UNKNOWN, actual.getStep().getStatus().getHealth());
+  }
+
+  @Test
+  void community_role_process_roofer_detection() {
     var detectionId = randomUUID().toString();
     var tilingJobId = randomUUID().toString();
     var isRooferMade = true;
@@ -212,39 +234,31 @@ class ZoneServiceTest {
             .detectableObjectModel(new DetectableObjectModel(new BPToitureModel()))
             .geoServerProperties(new GeoServerProperties())
             .geoJsonZone(featureCreator.defaultFeatures());
-    String communityOwnerId = randomUUID().toString();
 
-    var createdDetectionMock =
-        detectionCreator.create(detectionId, tilingJobId, communityOwnerId).toBuilder()
-            .geoServerProperties(new GeoServerProperties())
-            .multiPolygonGeoJsonZone(List.of(new Feature()))
-            .isRooferMade(isRooferMade)
-            .build();
-    var zoneTilingJob =
-        ZoneTilingJob.builder().id(randomUUID().toString()).isRooferMade(isRooferMade).build();
+    String communityOwnerId = null;
+    var createdDetectionMock = detectionCreator.create(detectionId, tilingJobId, communityOwnerId);
+    createdDetectionMock.setRooferMade(isRooferMade);
+    createdDetectionMock.setGeoServerProperties(new GeoServerProperties());
+    createdDetectionMock.setImageFileKey(randomUUID().toString());
+    createdDetectionMock.setProvidedGeoJsonZone(
+        List.of(toDomainFeature(featureCreator.defaultFeatures().getFirst())));
 
-    when(communityUsedSurfaceServiceMock.persistDetectionWithSurfaceUsage(any(), any()))
-        .thenReturn(createdDetectionMock);
-    when(tilingJobMapperMock.from(any()))
-        .thenReturn(new CreateZoneTilingJob().geoServerUrl("http://locahost:8080"));
-    when(tilingJobMapperMock.toDomain(any(), any())).thenReturn(zoneTilingJob);
-    when(tilingJobServiceMock.create(any(), any())).thenReturn(zoneTilingJob);
-    when(detectionRepositoryMock.save(any()))
-        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
-    when(tilingJobServiceMock.getTaskStatistic(any(String.class)))
-        .thenReturn(someFinishedTaskStatistic(GeoJobType.TILING));
-    when(rooferMadeTilingService.apply(any(), any())).thenReturn(zoneTilingJob);
-    when(detectionJobService.saveZDJFromZTJ(any()))
+    setUpAuthorityRoleProcessingMock(detectionId, createdDetectionMock, ROLE_COMMUNITY);
+    when(rooferDetectionService.apply(any()))
         .thenReturn(
-            app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.builder()
-                .id(randomUUID().toString())
-                .build());
+            new Detection()
+                .step(
+                    new DetectionStep()
+                        .name(MACHINE_DETECTION)
+                        .status(
+                            new Status()
+                                .health(SUCCEEDED)
+                                .progression(Status.ProgressionEnum.FINISHED))));
 
     var actual =
         subject.processDetection(detectionId, createDetection, communityOwnerId, isRooferMade);
 
-    verify(eventProducer, times(1)).accept(any());
-    assertEquals(TILING, actual.getStep().getName());
+    assertEquals(MACHINE_DETECTION, actual.getStep().getName());
     assertEquals(Status.ProgressionEnum.FINISHED, actual.getStep().getStatus().getProgression());
     assertEquals(SUCCEEDED, actual.getStep().getStatus().getHealth());
   }
