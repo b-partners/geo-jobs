@@ -65,6 +65,7 @@ public enum RouteType {
               "tree",
               "green_space",
               "parking",
+              "place_standard",
               "pool" ->
           pathway;
       case "line" -> road;
