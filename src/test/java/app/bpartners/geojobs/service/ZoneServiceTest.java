@@ -22,6 +22,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.DetectionExcelFileSaved;
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerificationSent;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
@@ -916,11 +917,15 @@ class ZoneServiceTest {
     var actual = subject.configureExcelFile(detectionE2eId, excelFile);
 
     var listCaptor = ArgumentCaptor.forClass(List.class);
-    verify(eventProducerMock, only()).accept(listCaptor.capture());
-    var detectionSaved = (DetectionSaved) listCaptor.getValue().getFirst();
+    verify(eventProducerMock, times(2)).accept(listCaptor.capture());
+    var detectionSaved = (DetectionSaved) listCaptor.getAllValues().getLast().getFirst();
+    var detectionExcelFileSaved =
+        (DetectionExcelFileSaved) listCaptor.getAllValues().getFirst().getFirst();
     var expectedSavedDetection = detection.toBuilder().excelFileKey(excelFileBucketKey).build();
     var expectedDetectionSavedEvent =
         DetectionSaved.builder().detection(expectedSavedDetection).build();
+    var expectedDetectionExcelFileSaved =
+        DetectionExcelFileSaved.builder().detection(expectedSavedDetection).build();
     var expectedRestDetection =
         new Detection()
             .id(detectionE2eId)
@@ -941,6 +946,7 @@ class ZoneServiceTest {
                     .updatedAt(actual.getStep().getUpdatedAt()));
     assertEquals(expectedDetectionSavedEvent, detectionSaved);
     assertEquals(expectedRestDetection, actual);
+    assertEquals(expectedDetectionExcelFileSaved, detectionExcelFileSaved);
   }
 
   @Test
