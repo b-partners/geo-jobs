@@ -71,6 +71,9 @@ public class Detection implements Serializable {
   @Getter(AccessLevel.NONE)
   private List<Feature> multiPolygonGeoJsonZone;
 
+  @JdbcTypeCode(JSON)
+  private List<String> convertedAddresses;
+
   public List<app.bpartners.geojobs.endpoint.rest.model.Feature> getProvidedGeoJsonZone() {
     return providedGeoJsonZone == null
         ? null
