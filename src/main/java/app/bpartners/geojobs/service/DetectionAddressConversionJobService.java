@@ -2,6 +2,7 @@ package app.bpartners.geojobs.service;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionAddressConversionJobStatusChanged;
+import app.bpartners.geojobs.endpoint.event.model.DetectionAddressConversionJobStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.DetectionAddressConversionTaskCreated;
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.job.repository.TaskRepository;
@@ -42,6 +43,10 @@ public class DetectionAddressConversionJobService
               eventProducer.accept(
                   List.of(DetectionAddressConversionTaskCreated.builder().task(task).build()));
             });
+
+    eventProducer.accept(
+        List.of(new DetectionAddressConversionJobStatusRecomputingSubmitted(jobId)));
+
     return job;
   }
 
