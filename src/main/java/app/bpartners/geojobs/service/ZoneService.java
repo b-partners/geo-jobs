@@ -13,6 +13,7 @@ import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.DetectionExcelFileSaved;
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerificationSent;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
@@ -133,6 +134,8 @@ public class ZoneService {
     bucketComponent.upload(excelFile, bucketKey);
     var savedDetection =
         detectionRepository.save(detection.toBuilder().excelFileKey(bucketKey).build());
+    eventProducer.accept(
+        List.of(DetectionExcelFileSaved.builder().detection(savedDetection).build()));
     eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
     return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
         savedDetection, PENDING, UNKNOWN, CONFIGURING);
