@@ -26,6 +26,7 @@ public class DetectionAddressConversionTaskConsumer
 
     var feature = areaPictureDetailsMapper.toFeature(areaPictureDetails);
     task.setFeature(feature);
+    task.setLayer(areaPictureDetails.actualLayer().name());
   }
 
   public static DetectionAddressConversionTask withNewStatus(

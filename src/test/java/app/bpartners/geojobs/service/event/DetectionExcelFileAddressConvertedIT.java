@@ -16,8 +16,10 @@ import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.service.dashboard.AreaPictureApi;
 import app.bpartners.geojobs.service.dashboard.component.AreaPictureDetails;
+import app.bpartners.geojobs.service.dashboard.component.AreaPictureMapLayer;
 import app.bpartners.geojobs.service.dashboard.component.CrupdateAreaPictureDetails;
 import app.bpartners.geojobs.service.dashboard.mapper.AreaPictureDetailsMapper;
+import app.bpartners.geojobs.service.geoserver.GeoServerConfiguration;
 import app.bpartners.geojobs.sqs.EventProducerInvocationMock;
 import app.bpartners.geojobs.sqs.LocalEventQueue;
 import app.bpartners.geojobs.utils.detection.DetectionIT;
@@ -31,12 +33,14 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 
 class DetectionExcelFileAddressConvertedIT extends DetectionIT {
   private static final int DEFAULT_EVENT_DELAY_SPEED_FACTOR = 10;
+  private static final String AREA_PICTURE_LAYER = "area_picture_layer";
   @Autowired DetectionExcelFileAddressConvertedService subject;
   @MockBean EventProducer eventProducerMock;
   @MockBean AreaPictureApi areaPictureApiMock;
   @MockBean AreaPictureDetailsMapper areaPictureDetailsMapperMock;
   @Autowired DetectionRepository detectionRepository;
   @Autowired LocalEventQueue localEventQueue;
+  @Autowired GeoServerConfiguration geoServerConfiguration;
   EventProducerInvocationMock eventProducerInvocationMock = new EventProducerInvocationMock();
 
   @BeforeEach
@@ -52,8 +56,11 @@ class DetectionExcelFileAddressConvertedIT extends DetectionIT {
         .when(eventProducerMock)
         .accept(any());
 
-    when(areaPictureApiMock.crupdateAreaPictureDetails(any()))
-        .thenReturn(mock(AreaPictureDetails.class));
+    var areaPictureDetailsMock = mock(AreaPictureDetails.class);
+    var areaPictureMapLayerMock = mock(AreaPictureMapLayer.class);
+    when(areaPictureMapLayerMock.name()).thenReturn(AREA_PICTURE_LAYER);
+    when(areaPictureDetailsMock.actualLayer()).thenReturn(areaPictureMapLayerMock);
+    when(areaPictureApiMock.crupdateAreaPictureDetails(any())).thenReturn(areaPictureDetailsMock);
     when(areaPictureDetailsMapperMock.toCrupdateAreaPictureDetails(any()))
         .thenReturn(mock(CrupdateAreaPictureDetails.class));
   }
@@ -79,11 +86,12 @@ class DetectionExcelFileAddressConvertedIT extends DetectionIT {
             someRestFeature()), // restFeature as getMultiPolygonGeoJsonZone returns rest Feature
         // not domain
         actualDetection.getMultiPolygonGeoJsonZone());
-    // TODO : once geo server properties set from areaPicture response
-    // assertNotNull(actualDetection.getGeoServerProperties());
-    // assertNotNull(actualDetection.getGeoServerProperties().getGeoServerUrl());
-    // assertNotNull(actualDetection.getGeoServerProperties().getGeoServerParameter());
-    // assertNotNull(actualDetection.getGeoServerProperties().getGeoServerParameter().getLayers());
+    assertEquals(
+        "http://dummy-geoserver.com", // Set from EnvConf
+        actualDetection.getGeoServerProperties().getGeoServerUrl());
+    assertEquals(
+        geoServerConfiguration.defaultGeoServerProperties(AREA_PICTURE_LAYER),
+        actualDetection.getGeoServerProperties());
   }
 
   private Detection someDetection() {

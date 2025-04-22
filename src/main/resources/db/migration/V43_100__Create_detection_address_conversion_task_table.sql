@@ -5,5 +5,6 @@ create table if not exists "detection_address_conversion_task"
     as_job_id          varchar,
     submission_instant timestamp with time zone default now()::timestamp with time zone,
     address            varchar,
-    feature            jsonb
+    feature            jsonb,
+    layer              varchar
 );
