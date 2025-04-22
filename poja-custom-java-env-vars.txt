@@ -15,3 +15,4 @@ README_MONITOR_API_KEY: !Sub '{{resolve:ssm:/geo-jobs/${Env}/readme/monitor/apik
 ADMIN_EMAIL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/admin/email}}'
 README_WEBHOOK_SECRET: !Sub '{{resolve:ssm:/geo-jobs/${Env}/readme/webhook/secret}}'
 BPARTNERS_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/bpartners/api/url}}'
+GEOSERVER_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/geoserver/api/url}}'

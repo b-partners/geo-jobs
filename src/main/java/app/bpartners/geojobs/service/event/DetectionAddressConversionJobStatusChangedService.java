@@ -7,7 +7,9 @@ import app.bpartners.geojobs.repository.DetectionAddressConversionTaskRepository
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.DetectionAddressConversionJob;
 import app.bpartners.geojobs.repository.model.DetectionAddressConversionTask;
+import app.bpartners.geojobs.service.GeoServerLayerRetriever;
 import app.bpartners.geojobs.service.StatusChangedHandler;
+import app.bpartners.geojobs.service.geoserver.GeoServerConfiguration;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,8 @@ public class DetectionAddressConversionJobStatusChangedService
   private final DetectionRepository detectionRepository;
   private final DetectionAddressConversionTaskRepository detectionAddressConversionTaskRepository;
   private final EventProducer eventProducer;
+  private final GeoServerConfiguration geoServerConfiguration;
+  private final GeoServerLayerRetriever layerRetriever;
 
   @Override
   public void accept(DetectionAddressConversionJobStatusChanged event) {
@@ -31,7 +35,12 @@ public class DetectionAddressConversionJobStatusChangedService
 
     var onSucceededStatusChangedHandler =
         new OnSucceededStatusChangedHandler(
-            newJob, detectionRepository, detectionAddressConversionTaskRepository, eventProducer);
+            newJob,
+            detectionRepository,
+            detectionAddressConversionTaskRepository,
+            eventProducer,
+            geoServerConfiguration,
+            layerRetriever);
     var onFailedStatusChangedHandler = new OnFailedStatusChangedHandler(newJob);
 
     statusChangedHandler.handle(
@@ -46,7 +55,9 @@ public class DetectionAddressConversionJobStatusChangedService
       DetectionAddressConversionJob newJob,
       DetectionRepository detectionRepository,
       DetectionAddressConversionTaskRepository detectionAddressConversionTaskRepository,
-      EventProducer eventProducer)
+      EventProducer eventProducer,
+      GeoServerConfiguration geoServerConfiguration,
+      GeoServerLayerRetriever layerRetriever)
       implements Runnable {
 
     @Override
@@ -55,12 +66,16 @@ public class DetectionAddressConversionJobStatusChangedService
       var tasks = detectionAddressConversionTaskRepository.findAllByJobId(newJob.getId());
       var convertedFeatures =
           tasks.stream().map(DetectionAddressConversionTask::getFeature).toList();
-
+      var layer = layerRetriever.apply(tasks);
       var detection = detectionRepository.findById(detectionId).orElseThrow();
 
       var savedDetection =
           detectionRepository.save(
-              detection.toBuilder().multiPolygonGeoJsonZone(convertedFeatures).build());
+              detection.toBuilder()
+                  .multiPolygonGeoJsonZone(convertedFeatures)
+                  .geoServerProperties(geoServerConfiguration.defaultGeoServerProperties(layer))
+                  .build());
+
       eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
     }
   }

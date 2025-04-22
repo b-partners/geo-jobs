@@ -21,6 +21,8 @@ import org.hibernate.annotations.JdbcTypeCode;
 @Setter
 @EqualsAndHashCode(callSuper = true)
 public class DetectionAddressConversionTask extends Task implements Serializable {
+  private String layer;
+
   private String address;
 
   @JdbcTypeCode(JSON)
