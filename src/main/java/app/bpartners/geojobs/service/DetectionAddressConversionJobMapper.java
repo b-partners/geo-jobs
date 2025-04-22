@@ -22,6 +22,7 @@ public class DetectionAddressConversionJobMapper {
             .detectionId(savedDetection.getId())
             .emailReceiver(savedDetection.getEmailReceiver())
             .zoneName(savedDetection.getZoneName())
+            .submissionInstant(now())
             .build();
     detectionAddressConversionJob.hasNewStatus(
         JobStatus.builder()
