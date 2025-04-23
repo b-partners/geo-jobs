@@ -20,8 +20,10 @@ import org.junit.jupiter.api.Test;
 class DetectionTrackingApiIT {
   private final String apiKey = System.getenv("API_KEY");
   final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+  final ApiConfiguration apiConfiguration =
+      new ApiConfiguration(System.getenv("BPARTNERS_API_URL"));
   DetectionTrackingApi subject =
-      new DetectionTrackingApi(System.getenv("BPARTNERS_API_URL"), objectMapper);
+      new DetectionTrackingApi(apiConfiguration, new SecurityApi(apiConfiguration, objectMapper));
 
   @BeforeEach
   void setUp() {
