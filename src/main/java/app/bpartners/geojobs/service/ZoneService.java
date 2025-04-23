@@ -248,6 +248,7 @@ public class ZoneService {
         : getDetectionById(detectionId);
   }
 
+  // TODO: refactor as very difficult to read, separate rooferDetection and largeZoneDetection
   public app.bpartners.geojobs.endpoint.rest.model.Detection processDetection(
       String detectionId,
       CreateDetection createDetection,
@@ -255,6 +256,7 @@ public class ZoneService {
       boolean isRooferMade) {
     var optionalDetection =
         detectionRepository.findByEndToEndIdAndCommunityOwnerId(detectionId, communityOwnerId);
+
     if (optionalDetection.isEmpty()) {
       var savedDetection =
           createDetectionJob(detectionId, createDetection, communityOwnerId, isRooferMade);
@@ -290,6 +292,7 @@ public class ZoneService {
       return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
           peristedDetection, FINISHED, SUCCEEDED, MACHINE_DETECTION);
     }
+
     return processCommunityDetection(detectionId);
   }
 
@@ -301,10 +304,10 @@ public class ZoneService {
             .or(() -> detectionRepository.findByEndToEndId(detectionId))
             .orElseThrow(
                 () -> new NotFoundException("Detection(id=" + detectionId + ") not found"));
-    return getProcessingJobStatistics(detection);
+    return processDetectionSteps(detection);
   }
 
-  private app.bpartners.geojobs.endpoint.rest.model.Detection getProcessingJobStatistics(
+  public app.bpartners.geojobs.endpoint.rest.model.Detection processDetectionSteps(
       Detection detection) {
     var tilingJobId = detection.getZtjId();
     var detectionJobId = detection.getZdjId();

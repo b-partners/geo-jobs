@@ -9,6 +9,7 @@ import app.bpartners.geojobs.repository.model.DetectionAddressConversionJob;
 import app.bpartners.geojobs.repository.model.DetectionAddressConversionTask;
 import app.bpartners.geojobs.service.GeoServerLayerRetriever;
 import app.bpartners.geojobs.service.StatusChangedHandler;
+import app.bpartners.geojobs.service.ZoneService;
 import app.bpartners.geojobs.service.geoserver.GeoServerConfiguration;
 import java.util.List;
 import java.util.function.Consumer;
@@ -27,6 +28,7 @@ public class DetectionAddressConversionJobStatusChangedService
   private final EventProducer eventProducer;
   private final GeoServerConfiguration geoServerConfiguration;
   private final GeoServerLayerRetriever layerRetriever;
+  private final ZoneService zoneService;
 
   @Override
   public void accept(DetectionAddressConversionJobStatusChanged event) {
@@ -40,7 +42,8 @@ public class DetectionAddressConversionJobStatusChangedService
             detectionAddressConversionTaskRepository,
             eventProducer,
             geoServerConfiguration,
-            layerRetriever);
+            layerRetriever,
+            zoneService);
     var onFailedStatusChangedHandler = new OnFailedStatusChangedHandler(newJob);
 
     statusChangedHandler.handle(
@@ -57,7 +60,8 @@ public class DetectionAddressConversionJobStatusChangedService
       DetectionAddressConversionTaskRepository detectionAddressConversionTaskRepository,
       EventProducer eventProducer,
       GeoServerConfiguration geoServerConfiguration,
-      GeoServerLayerRetriever layerRetriever)
+      GeoServerLayerRetriever layerRetriever,
+      ZoneService zoneService)
       implements Runnable {
 
     @Override
@@ -77,6 +81,8 @@ public class DetectionAddressConversionJobStatusChangedService
                   .build());
 
       eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
+
+      zoneService.processDetectionSteps(savedDetection);
     }
   }
 
