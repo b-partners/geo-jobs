@@ -27,7 +27,7 @@ public class DetectionAddressConversionTaskCreatedService
     var task = event.getTask();
     taskStatusService.process(task);
 
-    taskConsumer.accept(task);
+    taskConsumer.accept(task, event.getE2ApiKey());
 
     eventProducer.accept(
         List.of(

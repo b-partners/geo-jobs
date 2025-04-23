@@ -1,28 +1,32 @@
 package app.bpartners.geojobs.service;
 
 import static java.time.Instant.now;
+import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.repository.model.DetectionAddressConversionTask;
 import app.bpartners.geojobs.service.dashboard.AreaPictureApi;
 import app.bpartners.geojobs.service.dashboard.mapper.AreaPictureDetailsMapper;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 public class DetectionAddressConversionTaskConsumer
-    implements Consumer<DetectionAddressConversionTask> {
+    implements BiConsumer<DetectionAddressConversionTask, String> {
   private final AreaPictureApi areaPictureApi;
   private final AreaPictureDetailsMapper areaPictureDetailsMapper;
 
   @Override
-  public void accept(DetectionAddressConversionTask task) {
+  public void accept(DetectionAddressConversionTask task, String e2ApiKey) {
     var address = task.getAddress();
     var crupdateAreaPictureDetails = areaPictureDetailsMapper.toCrupdateAreaPictureDetails(address);
 
-    var areaPictureDetails = areaPictureApi.crupdateAreaPictureDetails(crupdateAreaPictureDetails);
+    var areaPictureId = randomUUID().toString();
+    var areaPictureDetails =
+        areaPictureApi.crupdateAreaPictureDetails(
+            areaPictureId, crupdateAreaPictureDetails, e2ApiKey);
 
     var feature = areaPictureDetailsMapper.toFeature(areaPictureDetails);
     task.setFeature(feature);

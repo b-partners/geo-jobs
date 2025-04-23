@@ -7,9 +7,12 @@ import app.bpartners.geojobs.endpoint.event.model.DetectionAddressConversionTask
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.job.repository.TaskRepository;
 import app.bpartners.geojobs.job.service.JobService;
+import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
+import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.TaskStatisticRepository;
 import app.bpartners.geojobs.repository.model.DetectionAddressConversionJob;
 import app.bpartners.geojobs.repository.model.DetectionAddressConversionTask;
+import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -18,13 +21,17 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class DetectionAddressConversionJobService
     extends JobService<DetectionAddressConversionTask, DetectionAddressConversionJob> {
+  private final DetectionRepository detectionRepository;
+  private final CommunityAuthorizationRepository communityAuthorizationRepository;
 
   protected DetectionAddressConversionJobService(
       JpaRepository<DetectionAddressConversionJob, String> repository,
       JobStatusRepository jobStatusRepository,
       TaskStatisticRepository taskStatisticRepository,
       TaskRepository<DetectionAddressConversionTask> taskRepository,
-      EventProducer eventProducer) {
+      EventProducer eventProducer,
+      DetectionRepository detectionRepository,
+      CommunityAuthorizationRepository communityAuthorizationRepository) {
     super(
         repository,
         jobStatusRepository,
@@ -32,17 +39,28 @@ public class DetectionAddressConversionJobService
         taskRepository,
         eventProducer,
         DetectionAddressConversionJob.class);
+    this.detectionRepository = detectionRepository;
+    this.communityAuthorizationRepository = communityAuthorizationRepository;
   }
 
   @Transactional
   public DetectionAddressConversionJob fireTasks(String jobId) {
     var job = findById(jobId);
+    var detection = detectionRepository.findById(job.getDetectionId()).orElseThrow();
+    var e2ApiKey =
+        communityAuthorizationRepository
+            .findById(detection.getCommunityOwnerId())
+            .map(CommunityAuthorization::getApiKey)
+            .orElseThrow();
     getTasks(job)
         .forEach(
-            task -> {
-              eventProducer.accept(
-                  List.of(DetectionAddressConversionTaskCreated.builder().task(task).build()));
-            });
+            task ->
+                eventProducer.accept(
+                    List.of(
+                        DetectionAddressConversionTaskCreated.builder()
+                            .task(task)
+                            .e2ApiKey(e2ApiKey)
+                            .build())));
 
     eventProducer.accept(
         List.of(new DetectionAddressConversionJobStatusRecomputingSubmitted(jobId)));

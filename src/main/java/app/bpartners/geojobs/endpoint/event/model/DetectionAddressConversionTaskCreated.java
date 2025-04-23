@@ -12,6 +12,7 @@ import lombok.*;
 @ToString
 public class DetectionAddressConversionTaskCreated extends PojaEvent {
   private DetectionAddressConversionTask task;
+  private String e2ApiKey;
 
   @Override
   public Duration maxConsumerDuration() {

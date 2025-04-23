@@ -2,6 +2,7 @@ package app.bpartners.geojobs.service.event;
 
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
 import static app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.MULTI_POLYGON;
+import static app.bpartners.geojobs.repository.model.SurfaceUnit.SQUARE_DEGREE;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -11,8 +12,10 @@ import static org.mockito.Mockito.when;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionAddressConversionJobStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.DetectionExcelFileAddressConverted;
+import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.Feature;
+import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.service.dashboard.AreaPictureApi;
 import app.bpartners.geojobs.service.dashboard.component.AreaPictureDetails;
@@ -26,6 +29,7 @@ import app.bpartners.geojobs.utils.detection.DetectionIT;
 import java.time.Duration;
 import java.util.List;
 import lombok.SneakyThrows;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +45,10 @@ class DetectionExcelFileAddressConvertedIT extends DetectionIT {
   @Autowired DetectionRepository detectionRepository;
   @Autowired LocalEventQueue localEventQueue;
   @Autowired GeoServerConfiguration geoServerConfiguration;
+  @Autowired CommunityAuthorizationRepository communityAuthorizationRepository;
   EventProducerInvocationMock eventProducerInvocationMock = new EventProducerInvocationMock();
+  private final String detectionId = randomUUID().toString();
+  private final String communityAuthorizationId = randomUUID().toString();
 
   @BeforeEach
   void setUp() {
@@ -60,9 +67,16 @@ class DetectionExcelFileAddressConvertedIT extends DetectionIT {
     var areaPictureMapLayerMock = mock(AreaPictureMapLayer.class);
     when(areaPictureMapLayerMock.name()).thenReturn(AREA_PICTURE_LAYER);
     when(areaPictureDetailsMock.actualLayer()).thenReturn(areaPictureMapLayerMock);
-    when(areaPictureApiMock.crupdateAreaPictureDetails(any())).thenReturn(areaPictureDetailsMock);
+    when(areaPictureApiMock.crupdateAreaPictureDetails(any(), any(), any()))
+        .thenReturn(areaPictureDetailsMock);
     when(areaPictureDetailsMapperMock.toCrupdateAreaPictureDetails(any()))
         .thenReturn(mock(CrupdateAreaPictureDetails.class));
+  }
+
+  @AfterEach
+  void tearDown() {
+    detectionRepository.deleteById(detectionId);
+    communityAuthorizationRepository.deleteById(communityAuthorizationId);
   }
 
   @SneakyThrows
@@ -71,7 +85,7 @@ class DetectionExcelFileAddressConvertedIT extends DetectionIT {
     when(areaPictureDetailsMapperMock.toFeature(any()))
         .thenReturn(someFeature()) // First invocation for dummy address 1
         .thenReturn(someFeature()); // Second invocation for dummy address 2
-    var detection = someDetection();
+    var detection = someDetection(detectionId);
 
     subject.accept(DetectionExcelFileAddressConverted.builder().detection(detection).build());
 
@@ -94,13 +108,14 @@ class DetectionExcelFileAddressConvertedIT extends DetectionIT {
         actualDetection.getGeoServerProperties());
   }
 
-  private Detection someDetection() {
-    var detectionId = randomUUID().toString();
+  private Detection someDetection(String detectionId) {
     var e2Id = randomUUID().toString();
+    var communityAuthorization = someCommunityAuthorization(communityAuthorizationId);
     return detectionRepository.save(
         Detection.builder()
             .id(detectionId)
             .endToEndId(e2Id)
+            .communityOwnerId(communityAuthorization.getId())
             .zoneName("dummy zone")
             .emailReceiver("dummy receiver")
             .convertedAddresses(List.of("dummy address 1", "dummy address 2"))
@@ -127,5 +142,19 @@ class DetectionExcelFileAddressConvertedIT extends DetectionIT {
 
   private app.bpartners.geojobs.endpoint.rest.model.Feature someRestFeature() {
     return toRestFeature(someFeature());
+  }
+
+  private CommunityAuthorization someCommunityAuthorization(String communityAuthorizationId) {
+    return communityAuthorizationRepository.save(
+        CommunityAuthorization.builder()
+            .id(communityAuthorizationId)
+            .apiKey(randomUUID().toString())
+            .name("dummyCommunity")
+            .email("dummyCommunityEmail")
+            .detectableObjectTypes(List.of())
+            .maxSurface(0)
+            .maxSurfaceUnit(SQUARE_DEGREE)
+            .authorizedZones(List.of())
+            .build());
   }
 }
