@@ -6,6 +6,7 @@ import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_BUCKET_FOLDER;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_EXTENSION;
+import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
@@ -15,8 +16,11 @@ import app.bpartners.geojobs.endpoint.rest.model.Detection;
 import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
+import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.mail.Email;
+import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.model.DetectedTile;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
@@ -26,16 +30,24 @@ import app.bpartners.geojobs.service.detection.DetectionMapper;
 import app.bpartners.geojobs.service.detection.DetectionMaskCreator;
 import app.bpartners.geojobs.service.detection.TileObjectDetector;
 import app.bpartners.geojobs.service.geojson.GeoJsonConverter;
+import app.bpartners.geojobs.template.HTMLTemplateParser;
+import jakarta.mail.internet.InternetAddress;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.context.Context;
 
 @Service
 @AllArgsConstructor
 public class RooferDetectionService
     implements Function<app.bpartners.geojobs.repository.model.detection.Detection, Detection> {
+  private static final String TEMPLATE_NAME = "roofer_detection_made";
+  private static final String env = System.getenv("ENV");
   private final TileObjectDetector detector;
   private final DetectionMaskCreator detectionMaskCreator;
   private final DetectionMapper detectionMapper;
@@ -46,6 +58,9 @@ public class RooferDetectionService
   private final BucketComponent bucketComponent;
   private final EventProducer<GeoJsonConversionProcessSucceeded> eventProducer;
   private final DetectionFromStatisticRestMapper detectionFromStatisticRestMapper;
+  private final Mailer mailer;
+  private final AuthProvider authProvider;
+  private final HTMLTemplateParser htmlTemplateParser;
 
   @Override
   public Detection apply(app.bpartners.geojobs.repository.model.detection.Detection detection) {
@@ -86,14 +101,15 @@ public class RooferDetectionService
             .detectedObjects(machineDetectedTile.getDetectedObjects())
             .build();
 
-    processGeoJsonConversion(detection, List.of(detectedTile));
+    processGeoJsonConversion(detection, List.of(detectedTile), detectionResponse.getRstImageUrl());
     return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
         detection, FINISHED, SUCCEEDED, MACHINE_DETECTION);
   }
 
   private void processGeoJsonConversion(
       app.bpartners.geojobs.repository.model.detection.Detection detection,
-      List<DetectedTile> detectedTiles) {
+      List<DetectedTile> detectedTiles,
+      String detectionResultUrl) {
     var zdjId = detection.getId();
     var geoJson = geoJsonConverter.convert(detectedTiles);
     var zoneName = detection.getZoneName();
@@ -107,5 +123,28 @@ public class RooferDetectionService
 
     eventProducer.accept(
         List.of(GeoJsonConversionProcessSucceeded.builder().detection(detection).build()));
+    sendEmail(detection.getEmailReceiver(), detection.getZoneName(), detectionResultUrl);
+  }
+
+  @SneakyThrows
+  private void sendEmail(String submitterEmail, String address, String detectionResultUrl) {
+    var formattedCreationDatetime =
+        DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")
+            .format(now().atZone(ZoneId.of("Europe/Paris")));
+    Context context = new Context();
+    context.setVariable("submitterEmail", submitterEmail);
+    context.setVariable("address", address);
+    context.setVariable("creationDatetime", formattedCreationDatetime);
+    context.setVariable("detectionResultUrl", detectionResultUrl);
+    var emailBody = htmlTemplateParser.apply(TEMPLATE_NAME, context);
+
+    mailer.accept(
+        new Email(
+            new InternetAddress(authProvider.getAuthenticatedCommunity().getEmail()),
+            List.of(new InternetAddress("tech@bpartners.app")),
+            List.of(),
+            String.format("[BIRDIA- %s] - ANALYSE TOITURE", env),
+            emailBody,
+            List.of()));
   }
 }

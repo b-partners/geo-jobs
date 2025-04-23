@@ -17,11 +17,15 @@ import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapp
 import app.bpartners.geojobs.endpoint.rest.model.BPToitureModel;
 import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
+import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.job.model.JobStatus;
+import app.bpartners.geojobs.mail.Email;
+import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
+import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.service.RooferDetectionService;
@@ -32,6 +36,7 @@ import app.bpartners.geojobs.service.detection.TileObjectDetector;
 import app.bpartners.geojobs.service.geojson.GeoJson;
 import app.bpartners.geojobs.service.geojson.GeoJsonConverter;
 import app.bpartners.geojobs.service.tiling.TileValidator;
+import app.bpartners.geojobs.template.HTMLTemplateParser;
 import java.io.File;
 import java.math.BigDecimal;
 import java.util.List;
@@ -56,6 +61,9 @@ public class RooferDetectionServiceTest {
       new DetectionStepStatisticMapper(statusMapper);
   DetectionFromStatisticRestMapper detectionFromStatisticRestMapper =
       new DetectionFromStatisticRestMapper(bucketComponent, detectionStepStatisticMapper);
+  Mailer mailer = mock();
+  AuthProvider authProvider = mock();
+  HTMLTemplateParser htmlTemplateParser = new HTMLTemplateParser();
   RooferDetectionService subject;
 
   @BeforeEach
@@ -71,7 +79,10 @@ public class RooferDetectionServiceTest {
             detectionRepository,
             bucketComponent,
             eventProducer,
-            detectionFromStatisticRestMapper);
+            detectionFromStatisticRestMapper,
+            mailer,
+            authProvider,
+            htmlTemplateParser);
 
     when(detector.apply(any(), any(), any()))
         .thenReturn(
@@ -85,6 +96,8 @@ public class RooferDetectionServiceTest {
     when(geoJsonConverter.convert(any())).thenReturn(new GeoJson(List.of()));
     when(fileWriter.write(any(), any(), any())).thenReturn(mock(File.class));
     when(bucketComponent.presign(any(String.class))).thenReturn(PRESIGNED_URL);
+    when(authProvider.getAuthenticatedCommunity())
+        .thenReturn(CommunityAuthorization.builder().email("test@gmail.com").build());
   }
 
   @Test
@@ -94,6 +107,7 @@ public class RooferDetectionServiceTest {
     verify(bucketComponent, times(1)).upload(any(), any());
     verify(eventProducer, only()).accept(any());
     verify(detectionRepository, times(1)).save(any());
+    verify(mailer, only()).accept(any(Email.class));
 
     assertEquals(PRESIGNED_URL, actual.getGeoJsonUrl());
     assertEquals(MACHINE_DETECTION, actual.getStep().getName());
