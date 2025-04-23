@@ -1,3 +1,6 @@
 package app.bpartners.geojobs.service.dashboard.component;
 
-public record GeoPosition(Double score, Double latitude, Double longitude) {}
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+public record GeoPosition(Double latitude, Double longitude) {}
