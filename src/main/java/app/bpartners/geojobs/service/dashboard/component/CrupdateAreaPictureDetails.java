@@ -1,3 +1,11 @@
 package app.bpartners.geojobs.service.dashboard.component;
 
-public record CrupdateAreaPictureDetails() {}
+import app.bpartners.geojobs.endpoint.rest.model.ZoneTilingJob;
+
+public record CrupdateAreaPictureDetails(
+    String address,
+    Integer shiftNb,
+    String fileId,
+    String filename,
+    String prospectId,
+    ZoneTilingJob.ZoomLevelEnum zoomLevel) {}
