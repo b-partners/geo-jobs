@@ -17,7 +17,7 @@ public class JobStatusRecomputingSubmittedService<
         J extends Job, T extends Task, E extends JobStatusRecomputingSubmitted>
     implements Consumer<E> {
 
-  private static final int MAX_ATTEMPTS = 10;
+  private static final int MAX_ATTEMPTS = 8;
   private final JobService<T, J> jobService;
   private final TaskStatusService<T> taskStatusService;
   private final TaskRepository<T> taskRepository;

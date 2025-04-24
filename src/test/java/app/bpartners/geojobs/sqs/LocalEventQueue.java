@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 @Component
 @Scope("prototype")
 public class LocalEventQueue {
-  private static final int DEFAULT_MAX_ATTEMPT = 10;
+  private static final int DEFAULT_MAX_ATTEMPT = 8;
   private static final int CUSTOM_MAX_ATTEMPT = 5;
   private static final int MAX_SHUTDOWN_ATTEMPT = 3;
   final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();

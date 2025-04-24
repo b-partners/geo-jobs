@@ -55,13 +55,13 @@ class ZTJStatusRecomputingSubmittedServiceTest {
     when(zoneTilingJobRepository.findById(processingJob)).thenReturn(Optional.of(zoneTilingJob));
 
     var event = new ZTJStatusRecomputingSubmitted(processingJob, 180L);
-    event.setAttemptNb(11);
+    event.setAttemptNb(9);
     subject.accept(event);
 
     verify(taskStatusServiceMock, times(2)).fail(any());
     var jobCaptor = ArgumentCaptor.forClass(ZoneTilingJob.class);
     verify(tilingJobServiceMock, times(1)).recomputeStatus(jobCaptor.capture());
-    assertFalse(jobCaptor.getValue().isFinished());
+    assertFalse(jobCaptor.getValue().isFailed());
   }
 
   private static ParcelTilingTask aTilingTask(
