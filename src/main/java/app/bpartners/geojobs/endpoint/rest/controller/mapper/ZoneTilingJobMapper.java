@@ -93,13 +93,18 @@ public class ZoneTilingJobMapper {
 
   public CreateZoneTilingJob from(Detection detection) {
     var overallConfiguration = detection.getGeoServerProperties();
-    var zoom = detection.getProvidedGeoJsonZone().getFirst().getZoom();
+    var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
+    var finalMultiPolygonGeoJsonZone = detection.getMultiPolygonGeoJsonZone();
+    var zoom =
+        (providedGeoJsonZone == null || providedGeoJsonZone.isEmpty())
+            ? finalMultiPolygonGeoJsonZone.getFirst().getZoom()
+            : providedGeoJsonZone.getFirst().getZoom();
     return new CreateZoneTilingJob()
         .emailReceiver(detection.getEmailReceiver())
         .zoneName(detection.getZoneName())
         .geoServerParameter(overallConfiguration.getGeoServerParameter())
         .geoServerUrl(overallConfiguration.getGeoServerUrl())
-        .features(detection.getMultiPolygonGeoJsonZone())
+        .features(finalMultiPolygonGeoJsonZone)
         .zoomLevel(fromValue(ArcgisImageZoom.fromZoomLevel(zoom).name()));
   }
 }
