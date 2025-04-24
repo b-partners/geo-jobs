@@ -38,7 +38,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 
 class DetectionExcelFileAddressConvertedIT extends DetectionIT {
   private static final int DEFAULT_EVENT_DELAY_SPEED_FACTOR = 10;
-  private static final String AREA_PICTURE_LAYER = "area_picture_layer";
+  private static final String AREA_PICTURE_LAYER = "cite:PCRS"; // Default for now
   @Autowired DetectionExcelFileAddressConvertedService subject;
   @MockBean EventProducer eventProducerMock;
   @MockBean AreaPictureApi areaPictureApiMock;
