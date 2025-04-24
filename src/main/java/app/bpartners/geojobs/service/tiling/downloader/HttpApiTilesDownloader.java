@@ -102,11 +102,12 @@ public class HttpApiTilesDownloader implements TilesDownloader {
 
   @SneakyThrows
   private File getServerInfoFile(ParcelContent parcelContent) {
+    var priorityLayer = parcelContent.getFeature().getPriorityLayer();
     var geoServerParameter = parcelContent.getGeoServerParameter();
     String geoServerUrl = String.valueOf(parcelContent.getGeoServerUrl());
     String service = geoServerParameter.getService();
     String request = geoServerParameter.getRequest();
-    String layers = geoServerParameter.getLayers();
+    String layers = priorityLayer == null ? geoServerParameter.getLayers() : priorityLayer;
     String styles = geoServerParameter.getStyles();
     String format = geoServerParameter.getFormat();
     String transparent = String.valueOf(geoServerParameter.getTransparent());

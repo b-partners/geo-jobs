@@ -46,6 +46,7 @@ public class AreaPictureDetailsMapper {
                     pointToMultiPolygonConverter.generateSquareMultiPolygon(multiPolygon))
                 .build())
         .properties(properties)
+        .priorityLayer(layer.name())
         .build();
   }
 

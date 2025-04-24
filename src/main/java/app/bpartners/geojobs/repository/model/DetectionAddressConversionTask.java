@@ -22,7 +22,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 @Setter
 @EqualsAndHashCode(callSuper = true)
 public class DetectionAddressConversionTask extends Task implements Serializable {
-  private String layer;
+  private String layer; // TODO: unused, may be deleted ?
 
   private String address;
 
