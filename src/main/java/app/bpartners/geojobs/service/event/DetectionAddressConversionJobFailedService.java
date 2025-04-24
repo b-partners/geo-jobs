@@ -21,21 +21,35 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 
 @Service
-@RequiredArgsConstructor
 public class DetectionAddressConversionJobFailedService
     implements Consumer<DetectionAddressConversionJobFailed> {
-  private final String ADMIN_EMAIL = System.getenv("ADMIN_EMAIL");
   private final DetectionAddressConversionTaskRepository detectionAddressConversionTaskRepository;
   private final Mailer mailer;
   private final HTMLTemplateParser htmlTemplateParser;
   private final BucketComponent bucketComponent;
   private final DetectionRepository detectionRepository;
+  private final String adminEmail;
+
+  public DetectionAddressConversionJobFailedService(
+      DetectionAddressConversionTaskRepository detectionAddressConversionTaskRepository,
+      Mailer mailer,
+      HTMLTemplateParser htmlTemplateParser,
+      BucketComponent bucketComponent,
+      DetectionRepository detectionRepository,
+      @Value("${admin.email}") String adminEmail) {
+    this.detectionAddressConversionTaskRepository = detectionAddressConversionTaskRepository;
+    this.mailer = mailer;
+    this.htmlTemplateParser = htmlTemplateParser;
+    this.bucketComponent = bucketComponent;
+    this.detectionRepository = detectionRepository;
+    this.adminEmail = adminEmail;
+  }
 
   @SneakyThrows
   @Override
@@ -55,7 +69,7 @@ public class DetectionAddressConversionJobFailedService
                 + " l'ID %s le %s",
             failedTasks.size(), detection.getEndToEndId(), actualDatetime);
     var to = new InternetAddress(job.getEmailReceiver());
-    var cc = List.of(new InternetAddress(ADMIN_EMAIL));
+    var cc = List.of(new InternetAddress(adminEmail));
     var bcc = new ArrayList<InternetAddress>();
     var htmlBody = computeHtmlBody(detection, failedTasks);
     var attachments = new ArrayList<File>();
