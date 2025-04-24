@@ -1,0 +1,31 @@
+<html>
+<head>
+    <style>
+        body {
+            font-family: Helvetica, serif;
+        }
+    </style>
+</head>
+<body>
+<section>
+    <p>Bonjour</p>
+
+    <p>
+        Une analyse toiture a été faite par
+        <span th:text="${submitterEmail}"></span>
+        à l'adresse
+        <span th:text="${address}"></span>
+        le
+        <span th:text="${creationDatetime}"></span>
+    </p>
+
+    <p>
+        Le résultat est visible sur le lien suivant :
+        <a th:href="${detectionResultUrl}" th:text="${detectionResultUrl}"></a>
+    </p>
+
+    <p>Cordialement</p>
+
+</section>
+</body>
+</html>
