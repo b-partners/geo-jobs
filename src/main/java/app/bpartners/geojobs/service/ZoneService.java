@@ -167,6 +167,19 @@ public class ZoneService {
         savedDetection, PENDING, UNKNOWN, CONFIGURING);
   }
 
+  public app.bpartners.geojobs.endpoint.rest.model.Detection uploadPdfFile(
+      String detectionId, File imageFile) {
+    var detection = getDetectionByE2IdOrId(detectionId);
+    detectionGeoJsonUpdateValidator.accept(detection);
+    var bucketKey = "detections/roofer/pdf/" + detectionId + ".pdf";
+    bucketComponent.upload(imageFile, bucketKey);
+    var savedDetection =
+        detectionRepository.save(detection.toBuilder().pdfFileKey(bucketKey).build());
+    eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
+    return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
+        savedDetection, FINISHED, SUCCEEDED, MACHINE_DETECTION);
+  }
+
   public app.bpartners.geojobs.endpoint.rest.model.Detection configureGeoJsonResult(
       String detectionId, File geoJsonFile) {
     var detection = getDetectionById(detectionId);
@@ -449,5 +462,14 @@ public class ZoneService {
 
   private boolean communityHasAdminRole() {
     return authProvider.getPrincipal().isAdmin();
+  }
+
+  public app.bpartners.geojobs.endpoint.rest.model.Detection sendMailAboutProspect(
+      String detectionId, Prospect prospect) {
+    var detection = detectionRepository.findByEndToEndId(detectionId).orElseThrow();
+    var pdfFile = bucketComponent.download(detection.getPdfFileKey());
+    rooferDetectionService.sendEmail(prospect, pdfFile);
+    return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
+        detection, FINISHED, SUCCEEDED, MACHINE_DETECTION);
   }
 }

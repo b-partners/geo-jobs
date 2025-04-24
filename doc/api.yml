@@ -569,6 +569,65 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Detection'
+
+  '/detections/{id}/roofer':
+    post:
+      tags:
+        - Detection
+      operationId: processRooferDetection
+      summary: Process detection for roof
+      description: |
+        This detection is handled synchronously under 30 seconds and used especially for roof under 100 square metre
+      security:
+        - ApiKeyAuth: [ ]
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          description: Detection identifier
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDetection'
+      responses:
+        200:
+          description: Detection result for roof
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detection'
+
+  '/detections/{id}/roofer/email':
+    post:
+      tags:
+        - Detection
+      operationId: sendMailAboutProspect
+      summary: Send information about prospect to roofer
+      security:
+        - ApiKeyAuth: [ ]
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          description: Detection identifier
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Prospect'
+      responses:
+        200:
+          description: Detection result for roof
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detection'
+
   '/detections/{id}/geojson':
     post:
       tags:
@@ -628,6 +687,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Detection'
+
+  '/detections/{id}/pdf':
+    post:
+      tags:
+        - Detection
+      operationId: uploadRooferDetectionPdfResult
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          description: Detection identifier
+          required: true
+      requestBody:
+        description: Pdf of the detection result
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        200:
+          description: Detection with updated pdf file uploaded url
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detection'
+
   '/detections/{id}/shape':
     post:
       tags:
@@ -1637,4 +1727,19 @@ components:
         excelUrl:
           type: string
         imageUrl:
+          type: string
+        pdfUrl:
+          type: string
+    Prospect:
+      type: object
+      properties:
+        email:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: string
+        address:
           type: string

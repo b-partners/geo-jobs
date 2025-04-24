@@ -1,31 +1,57 @@
-<html>
+<html lang="fr">
 <head>
+    <meta charset="UTF-8">
     <style>
         body {
-            font-family: Helvetica, serif;
+            font-family: 'Helvetica', sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            margin: 0;
+            padding: 1rem;
+        }
+        .email-content {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+        }
+        h1 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: #2c3e50;
+        }
+        .info {
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+        .info span {
+            display: block;
+            margin-top: 0.5rem;
+        }
+        .footer {
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            color: #777;
         }
     </style>
 </head>
 <body>
-<section>
-    <p>Bonjour</p>
+<div class="email-content">
+    <h1>Bonjour,</h1>
 
-    <p>
-        Une analyse toiture a été faite par
-        <span th:text="${submitterEmail}"></span>
-        à l'adresse
-        <span th:text="${address}"></span>
-        le
-        <span th:text="${creationDatetime}"></span>
-    </p>
+    <p>Vous trouverez ci-dessous les détails de l’analyse de toiture effectuée par :</p>
 
-    <p>
-        Le résultat est visible sur le lien suivant :
-        <a th:href="${detectionResultUrl}" th:text="${detectionResultUrl}"></a>
-    </p>
+    <div class="info">
+        <strong>Nom :</strong> <span th:text="${firstName} + ' ' + ${lastName}"></span>
+        <strong>Téléphone :</strong> <span th:text="${phoneNumber}"></span>
+        <strong>Email :</strong> <span th:text="${email}"></span>
+        <strong>Adresse :</strong> <span th:text="${address}"></span>
+        <strong>Le :</strong> <span th:text="${creationDatetime}"></span>
+    </div>
 
-    <p>Cordialement</p>
+    <p>Veuillez trouver en pièce jointe le rapport complet de l’analyse.</p>
 
-</section>
+    <p class="footer">Bien cordialement,<br>L’équipe BIRDIA.</p>
+</div>
 </body>
 </html>
