@@ -9,6 +9,7 @@ import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.service.dashboard.component.AreaPictureDetails;
 import app.bpartners.geojobs.service.dashboard.component.CrupdateAreaPictureDetails;
 import app.bpartners.geojobs.service.geojson.PointToMultiPolygonConverter;
+import java.util.HashMap;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Component;
 public class AreaPictureDetailsMapper {
   private static final int DEFAULT_SHIFT_NB = 0;
   private static final double DEFAULT_POLYGON_SIZE_IN_METERS = 70.0;
+  private static final String FEATURE_ADDRESS_PROPERTY = "address";
   private final PointToMultiPolygonConverter pointToMultiPolygonConverter;
 
   public CrupdateAreaPictureDetails toCrupdateAreaPictureDetails(String address) {
@@ -27,11 +29,13 @@ public class AreaPictureDetailsMapper {
         address, DEFAULT_SHIFT_NB, fileId, filename, null, HOUSES_0);
   }
 
-  public Feature toFeature(AreaPictureDetails areaPictureDetails) {
+  public Feature toFeature(AreaPictureDetails areaPictureDetails, String address) {
     var featureId = randomUUID().toString();
     var layer = areaPictureDetails.actualLayer();
     int zoom = layer.maximumZoom().number();
     var multiPolygon = toMultiPolygon(areaPictureDetails);
+    var properties = new HashMap<String, Object>();
+    properties.put(FEATURE_ADDRESS_PROPERTY, address);
     return Feature.builder()
         .id(featureId)
         .zoom(zoom)
@@ -41,6 +45,7 @@ public class AreaPictureDetailsMapper {
                 .actualInstanceStringValue(
                     pointToMultiPolygonConverter.generateSquareMultiPolygon(multiPolygon))
                 .build())
+        .properties(properties)
         .build();
   }
 

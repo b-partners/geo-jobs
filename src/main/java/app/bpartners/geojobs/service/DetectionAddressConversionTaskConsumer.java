@@ -26,7 +26,7 @@ public class DetectionAddressConversionTaskConsumer
         areaPictureApi.crupdateAreaPictureDetails(
             areaPictureId, crupdateAreaPictureDetails, e2ApiKey);
 
-    var feature = areaPictureDetailsMapper.toFeature(areaPictureDetails);
+    var feature = areaPictureDetailsMapper.toFeature(areaPictureDetails, address);
     task.setFeature(feature);
     task.setLayer(areaPictureDetails.actualLayer().name());
   }

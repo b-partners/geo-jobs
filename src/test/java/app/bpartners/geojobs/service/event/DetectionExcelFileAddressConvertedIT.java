@@ -84,7 +84,7 @@ class DetectionExcelFileAddressConvertedIT extends DetectionIT {
   @SneakyThrows
   @Test
   void fire_tasks_and_convert_all_address_to_detection_multi_polygon() {
-    when(areaPictureDetailsMapperMock.toFeature(any()))
+    when(areaPictureDetailsMapperMock.toFeature(any(), any()))
         .thenReturn(someFeature()) // First invocation for dummy address 1
         .thenReturn(someFeature()); // Second invocation for dummy address 2
     var detection = someDetection(detectionId);
