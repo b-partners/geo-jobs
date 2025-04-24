@@ -4,16 +4,19 @@ import app.bpartners.geojobs.repository.model.DetectionAddressConversionTask;
 import java.time.Duration;
 import lombok.*;
 
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder(toBuilder = true)
-@Data
+@Getter
 @EqualsAndHashCode(callSuper = false)
 @ToString
-public class DetectionAddressConversionTaskCreated extends PojaEvent {
-  private DetectionAddressConversionTask task;
-  private String e2ApiKey;
-  private int attemptNb;
+public class DetectionAddressConversionTaskCreated
+    extends TaskCreated<DetectionAddressConversionTask> {
+
+  public DetectionAddressConversionTaskCreated(
+      DetectionAddressConversionTask task, String e2ApiKey) {
+    super(task);
+    this.e2ApiKey = e2ApiKey;
+  }
+
+  private final String e2ApiKey;
 
   @Override
   public Duration maxConsumerDuration() {

@@ -1,26 +1,24 @@
 package app.bpartners.geojobs.service;
 
-import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
-import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.repository.model.DetectionAddressConversionTask;
 import app.bpartners.geojobs.service.dashboard.AreaPictureApi;
 import app.bpartners.geojobs.service.dashboard.mapper.AreaPictureDetailsMapper;
-import java.util.function.BiConsumer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 public class DetectionAddressConversionTaskConsumer
-    implements BiConsumer<DetectionAddressConversionTask, String> {
+    implements TaskConsumer<DetectionAddressConversionTask> {
   private final AreaPictureApi areaPictureApi;
   private final AreaPictureDetailsMapper areaPictureDetailsMapper;
 
   @Override
-  public void accept(DetectionAddressConversionTask task, String e2ApiKey) {
+  public void accept(DetectionAddressConversionTask task) {
     var address = task.getAddress();
+    var e2ApiKey = task.getE2ApiKey();
     var crupdateAreaPictureDetails = areaPictureDetailsMapper.toCrupdateAreaPictureDetails(address);
 
     var areaPictureId = randomUUID().toString();
@@ -31,20 +29,5 @@ public class DetectionAddressConversionTaskConsumer
     var feature = areaPictureDetailsMapper.toFeature(areaPictureDetails);
     task.setFeature(feature);
     task.setLayer(areaPictureDetails.actualLayer().name());
-  }
-
-  public static DetectionAddressConversionTask withNewStatus(
-      DetectionAddressConversionTask task,
-      Status.ProgressionStatus progression,
-      Status.HealthStatus health,
-      String message) {
-    return (DetectionAddressConversionTask)
-        task.hasNewStatus(
-            Status.builder()
-                .progression(progression)
-                .health(health)
-                .creationDatetime(now())
-                .message(message)
-                .build());
   }
 }
