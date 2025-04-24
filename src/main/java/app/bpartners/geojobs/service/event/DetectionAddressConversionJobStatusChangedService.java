@@ -7,7 +7,6 @@ import app.bpartners.geojobs.repository.DetectionAddressConversionTaskRepository
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.DetectionAddressConversionJob;
 import app.bpartners.geojobs.repository.model.DetectionAddressConversionTask;
-import app.bpartners.geojobs.service.GeoServerLayerRetriever;
 import app.bpartners.geojobs.service.StatusChangedHandler;
 import app.bpartners.geojobs.service.ZoneService;
 import app.bpartners.geojobs.service.geoserver.GeoServerConfiguration;
@@ -22,12 +21,12 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class DetectionAddressConversionJobStatusChangedService
     implements Consumer<DetectionAddressConversionJobStatusChanged> {
+  private static final String LAYER_CITE_PCRS = "cite:PCRS";
   private final StatusChangedHandler statusChangedHandler;
   private final DetectionRepository detectionRepository;
   private final DetectionAddressConversionTaskRepository detectionAddressConversionTaskRepository;
   private final EventProducer eventProducer;
   private final GeoServerConfiguration geoServerConfiguration;
-  private final GeoServerLayerRetriever layerRetriever;
   private final ZoneService zoneService;
 
   @Override
@@ -42,7 +41,6 @@ public class DetectionAddressConversionJobStatusChangedService
             detectionAddressConversionTaskRepository,
             eventProducer,
             geoServerConfiguration,
-            layerRetriever,
             zoneService);
     var onFailedStatusChangedHandler = new OnFailedStatusChangedHandler(newJob);
 
@@ -60,7 +58,6 @@ public class DetectionAddressConversionJobStatusChangedService
       DetectionAddressConversionTaskRepository detectionAddressConversionTaskRepository,
       EventProducer eventProducer,
       GeoServerConfiguration geoServerConfiguration,
-      GeoServerLayerRetriever layerRetriever,
       ZoneService zoneService)
       implements Runnable {
 
@@ -70,14 +67,14 @@ public class DetectionAddressConversionJobStatusChangedService
       var tasks = detectionAddressConversionTaskRepository.findAllByJobId(newJob.getId());
       var convertedFeatures =
           tasks.stream().map(DetectionAddressConversionTask::getFeature).toList();
-      var layer = layerRetriever.apply(tasks);
       var detection = detectionRepository.findById(detectionId).orElseThrow();
 
       var savedDetection =
           detectionRepository.save(
               detection.toBuilder()
                   .multiPolygonGeoJsonZone(convertedFeatures)
-                  .geoServerProperties(geoServerConfiguration.defaultGeoServerProperties(layer))
+                  .geoServerProperties(
+                      geoServerConfiguration.defaultGeoServerProperties(LAYER_CITE_PCRS))
                   .build());
 
       eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
