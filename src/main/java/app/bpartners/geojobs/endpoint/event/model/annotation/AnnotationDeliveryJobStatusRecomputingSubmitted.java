@@ -16,7 +16,8 @@ import lombok.ToString;
 @ToString
 public class AnnotationDeliveryJobStatusRecomputingSubmitted extends JobStatusRecomputingSubmitted {
   private static final long MAX_CONSUMER_DURATION_IN_SECONDS = Duration.ofSeconds(60L).getSeconds();
-  private static final long INITIAL_BACKOFF_DURATION_IN_SECONDS = Duration.ofSeconds(30L).getSeconds();
+  private static final long INITIAL_BACKOFF_DURATION_IN_SECONDS =
+      Duration.ofSeconds(30L).getSeconds();
 
   public AnnotationDeliveryJobStatusRecomputingSubmitted(String jobId) {
     super(jobId, MAX_CONSUMER_DURATION_IN_SECONDS, INITIAL_BACKOFF_DURATION_IN_SECONDS);
