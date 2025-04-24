@@ -12,10 +12,7 @@ import static java.util.UUID.randomUUID;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionProcessSucceeded;
 import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
-import app.bpartners.geojobs.endpoint.rest.model.Detection;
-import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
-import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
-import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
+import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
@@ -32,6 +29,7 @@ import app.bpartners.geojobs.service.detection.TileObjectDetector;
 import app.bpartners.geojobs.service.geojson.GeoJsonConverter;
 import app.bpartners.geojobs.template.HTMLTemplateParser;
 import jakarta.mail.internet.InternetAddress;
+import java.io.File;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -123,19 +121,20 @@ public class RooferDetectionService
 
     eventProducer.accept(
         List.of(GeoJsonConversionProcessSucceeded.builder().detection(detection).build()));
-    sendEmail(detection.getEmailReceiver(), detection.getZoneName(), detectionResultUrl);
   }
 
   @SneakyThrows
-  private void sendEmail(String submitterEmail, String address, String detectionResultUrl) {
+  public void sendEmail(Prospect prospect, File detectionResultPdf) {
     var formattedCreationDatetime =
         DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")
             .format(now().atZone(ZoneId.of("Europe/Paris")));
     Context context = new Context();
-    context.setVariable("submitterEmail", submitterEmail);
-    context.setVariable("address", address);
+    context.setVariable("firstName", prospect.getFirstName());
+    context.setVariable("lastName", prospect.getLastName());
+    context.setVariable("phoneNumber", prospect.getPhone());
+    context.setVariable("email", prospect.getEmail());
+    context.setVariable("address", prospect.getAddress());
     context.setVariable("creationDatetime", formattedCreationDatetime);
-    context.setVariable("detectionResultUrl", detectionResultUrl);
     var emailBody = htmlTemplateParser.apply(TEMPLATE_NAME, context);
 
     mailer.accept(
@@ -145,6 +144,6 @@ public class RooferDetectionService
             List.of(),
             String.format("[BIRDIA- %s] - ANALYSE TOITURE", env),
             emailBody,
-            List.of()));
+            List.of(detectionResultPdf)));
   }
 }

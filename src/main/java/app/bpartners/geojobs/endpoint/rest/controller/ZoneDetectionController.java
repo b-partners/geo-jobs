@@ -13,15 +13,7 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionTaskMapper
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.TaskStatisticMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMapper;
-import app.bpartners.geojobs.endpoint.rest.model.CreateDetection;
-import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectConfiguration;
-import app.bpartners.geojobs.endpoint.rest.model.DetectedParcel;
-import app.bpartners.geojobs.endpoint.rest.model.Detection;
-import app.bpartners.geojobs.endpoint.rest.model.DetectionSurfaceUnit;
-import app.bpartners.geojobs.endpoint.rest.model.DetectionUsage;
-import app.bpartners.geojobs.endpoint.rest.model.GeoJsonsUrl;
-import app.bpartners.geojobs.endpoint.rest.model.Status;
-import app.bpartners.geojobs.endpoint.rest.model.TaskStatistic;
+import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.authorizer.DetectionAuthorizer;
 import app.bpartners.geojobs.endpoint.rest.validator.GetUsageValidator;
@@ -242,6 +234,13 @@ public class ZoneDetectionController {
     var isRooferMade = true;
     return zoneService.processDetection(
         detectionId, createDetection, communityOwnerId, isRooferMade);
+  }
+
+  @PostMapping("/detections/{id}/roofer/email")
+  public Detection sendMailAboutProspect(
+      @PathVariable(name = "id") String detectionId, @RequestBody Prospect prospect) {
+    detectionAuthorizer.accept(detectionId, authProvider.getPrincipal());
+    return zoneService.sendMailAboutProspect(detectionId, prospect);
   }
 
   @GetMapping("/detections/{id}")

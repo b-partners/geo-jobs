@@ -6,6 +6,7 @@ import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.SUCCEE
 import static app.bpartners.geojobs.endpoint.rest.model.Status.ProgressionEnum.FINISHED;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -17,6 +18,7 @@ import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapp
 import app.bpartners.geojobs.endpoint.rest.model.BPToitureModel;
 import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
+import app.bpartners.geojobs.endpoint.rest.model.Prospect;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
@@ -37,12 +39,15 @@ import app.bpartners.geojobs.service.geojson.GeoJson;
 import app.bpartners.geojobs.service.geojson.GeoJsonConverter;
 import app.bpartners.geojobs.service.tiling.TileValidator;
 import app.bpartners.geojobs.template.HTMLTemplateParser;
+import jakarta.mail.internet.AddressException;
+import jakarta.mail.internet.InternetAddress;
 import java.io.File;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 public class RooferDetectionServiceTest {
   private static final String PRESIGNED_URL = "https://presigned.bucket.org";
@@ -107,12 +112,24 @@ public class RooferDetectionServiceTest {
     verify(bucketComponent, times(1)).upload(any(), any());
     verify(eventProducer, only()).accept(any());
     verify(detectionRepository, times(1)).save(any());
-    verify(mailer, only()).accept(any(Email.class));
 
     assertEquals(PRESIGNED_URL, actual.getGeoJsonUrl());
     assertEquals(MACHINE_DETECTION, actual.getStep().getName());
     assertEquals(FINISHED, actual.getStep().getStatus().getProgression());
     assertEquals(SUCCEEDED, actual.getStep().getStatus().getHealth());
+  }
+
+  @Test
+  void send_mail() throws AddressException {
+    var prospect = new Prospect();
+    var file = mock(File.class);
+    var emailCaptor = ArgumentCaptor.forClass(Email.class);
+
+    subject.sendEmail(prospect, file);
+
+    verify(mailer, only()).accept(emailCaptor.capture());
+
+    assertTrue(emailCaptor.getValue().cc().contains(new InternetAddress("tech@bpartners.app")));
   }
 
   Detection detection() {

@@ -174,7 +174,7 @@ public class ZoneService {
     var bucketKey = "detections/roofer/pdf/" + detectionId + ".pdf";
     bucketComponent.upload(imageFile, bucketKey);
     var savedDetection =
-        detectionRepository.save(detection.toBuilder().imageFileKey(bucketKey).build());
+        detectionRepository.save(detection.toBuilder().pdfFileKey(bucketKey).build());
     eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
     return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
         savedDetection, FINISHED, SUCCEEDED, MACHINE_DETECTION);
@@ -462,5 +462,14 @@ public class ZoneService {
 
   private boolean communityHasAdminRole() {
     return authProvider.getPrincipal().isAdmin();
+  }
+
+  public app.bpartners.geojobs.endpoint.rest.model.Detection sendMailAboutProspect(
+      String detectionId, Prospect prospect) {
+    var detection = detectionRepository.findByEndToEndId(detectionId).orElseThrow();
+    var pdfFile = bucketComponent.download(detection.getPdfFileKey());
+    rooferDetectionService.sendEmail(prospect, pdfFile);
+    return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
+        detection, FINISHED, SUCCEEDED, MACHINE_DETECTION);
   }
 }
