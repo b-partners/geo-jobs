@@ -1,0 +1,24 @@
+<html>
+<head>
+    <style>
+        body {
+            font-family: Helvetica, serif;
+        }
+    </style>
+</head>
+<body>
+<section>
+    <p>Bonjour,</p>
+    <p><span th:text="${failedTasks.size()}"></span> adresses issus du fichier Excel
+        soumis lors de la création de détection portant l'ID = <span th:text="${detection.getEndToEndId()}"></span>, et
+        disponible <a
+                th:href="${excelFileUrl}">ici</a>
+        n'ont pas pu être traitées :</p>
+    <ol th:each="task : ${failedTasks}">
+        <li th:text="${task.getAddress()}"></li>
+    </ol>
+    <p>Cordialement.</p>
+    <p>L'équipe BPartners.</p>
+</section>
+</body>
+</html>

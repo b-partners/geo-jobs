@@ -1,6 +1,10 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
+
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.DetectionAddressConversionJobFailed;
 import app.bpartners.geojobs.endpoint.event.model.DetectionAddressConversionJobStatusChanged;
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
 import app.bpartners.geojobs.repository.DetectionAddressConversionTaskRepository;
@@ -42,7 +46,14 @@ public class DetectionAddressConversionJobStatusChangedService
             eventProducer,
             geoServerConfiguration,
             zoneService);
-    var onFailedStatusChangedHandler = new OnFailedStatusChangedHandler(newJob);
+    var onFailedStatusChangedHandler =
+        new OnFailedStatusChangedHandler(
+            newJob,
+            detectionRepository,
+            detectionAddressConversionTaskRepository,
+            eventProducer,
+            geoServerConfiguration,
+            zoneService);
 
     statusChangedHandler.handle(
         event,
@@ -65,31 +76,66 @@ public class DetectionAddressConversionJobStatusChangedService
     public void run() {
       var detectionId = newJob.getDetectionId();
       var tasks = detectionAddressConversionTaskRepository.findAllByJobId(newJob.getId());
-      var convertedFeatures =
-          tasks.stream().map(DetectionAddressConversionTask::getFeature).toList();
-      var detection = detectionRepository.findById(detectionId).orElseThrow();
 
-      var savedDetection =
-          detectionRepository.save(
-              detection.toBuilder()
-                  .multiPolygonGeoJsonZone(convertedFeatures)
-                  .geoServerProperties(
-                      geoServerConfiguration.defaultGeoServerProperties(LAYER_CITE_PCRS))
-                  .build());
-
-      eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
-
-      zoneService.processDetectionSteps(savedDetection);
+      finalizeDetectionGeoJsonFromConvertedAddresses(
+          tasks,
+          detectionId,
+          detectionRepository,
+          geoServerConfiguration,
+          eventProducer,
+          zoneService);
     }
   }
 
-  private record OnFailedStatusChangedHandler(DetectionAddressConversionJob newJob)
+  private record OnFailedStatusChangedHandler(
+      DetectionAddressConversionJob newJob,
+      DetectionRepository detectionRepository,
+      DetectionAddressConversionTaskRepository taskRepository,
+      EventProducer eventProducer,
+      GeoServerConfiguration geoServerConfiguration,
+      ZoneService zoneService)
       implements Runnable {
 
     @Override
     public void run() {
-      // TODO : notify be email for example
-      log.info("Failed to convert detection.id={} addresses into geojson", newJob.getId());
+      var detectionId = newJob.getDetectionId();
+      var succeededTasks =
+          taskRepository.findAllByJobIdAndProgressionStatusAndHealthStatus(
+              newJob.getId(), FINISHED.name(), SUCCEEDED.name());
+
+      finalizeDetectionGeoJsonFromConvertedAddresses(
+          succeededTasks,
+          detectionId,
+          detectionRepository,
+          geoServerConfiguration,
+          eventProducer,
+          zoneService);
+
+      eventProducer.accept(
+          List.of(DetectionAddressConversionJobFailed.builder().job(newJob).build()));
     }
+  }
+
+  private static void finalizeDetectionGeoJsonFromConvertedAddresses(
+      List<DetectionAddressConversionTask> tasks,
+      String detectionId,
+      DetectionRepository detectionRepository,
+      GeoServerConfiguration geoServerConfiguration,
+      EventProducer eventProducer,
+      ZoneService zoneService) {
+    var convertedFeatures = tasks.stream().map(DetectionAddressConversionTask::getFeature).toList();
+    var detection = detectionRepository.findById(detectionId).orElseThrow();
+
+    var savedDetection =
+        detectionRepository.save(
+            detection.toBuilder()
+                .multiPolygonGeoJsonZone(convertedFeatures)
+                .geoServerProperties(
+                    geoServerConfiguration.defaultGeoServerProperties(LAYER_CITE_PCRS))
+                .build());
+
+    eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
+
+    zoneService.processDetectionSteps(savedDetection);
   }
 }
