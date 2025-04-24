@@ -56,12 +56,7 @@ public class DetectionAddressConversionJobService
         .forEach(
             task ->
                 eventProducer.accept(
-                    List.of(
-                        DetectionAddressConversionTaskCreated.builder()
-                            .task(task)
-                            .e2ApiKey(e2ApiKey)
-                            .attemptNb(1)
-                            .build())));
+                    List.of(new DetectionAddressConversionTaskCreated(task, e2ApiKey))));
 
     eventProducer.accept(
         List.of(new DetectionAddressConversionJobStatusRecomputingSubmitted(jobId)));

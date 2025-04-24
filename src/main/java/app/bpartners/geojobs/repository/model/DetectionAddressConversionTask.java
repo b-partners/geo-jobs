@@ -6,6 +6,7 @@ import static org.hibernate.type.SqlTypes.JSON;
 import app.bpartners.geojobs.job.model.JobType;
 import app.bpartners.geojobs.job.model.Task;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Transient;
 import java.io.Serializable;
 import java.util.ArrayList;
 import lombok.*;
@@ -27,6 +28,8 @@ public class DetectionAddressConversionTask extends Task implements Serializable
 
   @JdbcTypeCode(JSON)
   private Feature feature;
+
+  @Transient private String e2ApiKey;
 
   @Override
   public JobType getJobType() {
