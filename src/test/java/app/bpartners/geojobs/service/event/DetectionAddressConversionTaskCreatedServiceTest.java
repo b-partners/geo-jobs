@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service.event;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 
 import app.bpartners.geojobs.endpoint.event.model.DetectionAddressConversionTaskCreated;
 import app.bpartners.geojobs.repository.DetectionAddressConversionTaskRepository;
@@ -10,9 +11,14 @@ import app.bpartners.geojobs.repository.model.DetectionAddressConversionTask;
 import app.bpartners.geojobs.service.DetectionAddressConversionTaskConsumer;
 import app.bpartners.geojobs.service.DetectionAddressConversionTaskStatusService;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.web.client.HttpServerErrorException;
 
 class DetectionAddressConversionTaskCreatedServiceTest {
+  private static final String API_500_INTERNAL_SERVER_ERROR_MESSAGE_FOR_BAD_ADDRESS_PROVIDED =
+      "{\"type\":\"500 INTERNAL_SERVER_ERROR\",\"message\":\"Index 0 out of bounds for length 0\"}";
+  private static final String API_500_INTERNAL_SERVER_ERROR_MESSAGE_FOR_UNKNOWN_API_EXCEPTION =
+      "{\"type\":\"500 INTERNAL_SERVER_ERROR\",\"message\":\"Unknown exception\"}";
   DetectionAddressConversionTaskConsumer taskConsumerMock = mock();
   DetectionAddressConversionTaskStatusService taskStatusServiceMock = mock();
   DetectionAddressConversionTaskRepository taskRepositoryMock = mock();
@@ -61,29 +67,86 @@ class DetectionAddressConversionTaskCreatedServiceTest {
   }
 
   @Test
-  void consumes_task_with_exception_do_not_succeed_or_fail() {
-    var taskMock = mock(DetectionAddressConversionTask.class);
+  void consumes_task_with_out_of_bounds_500_api_exception_fail() {
     var e2ApiKey = randomUUID().toString();
     var attemptNb = 1;
     var detectionAddressConversionTaskCreatedMock =
         mock(DetectionAddressConversionTaskCreated.class);
-    when(taskMock.getE2ApiKey()).thenReturn(e2ApiKey);
+    var task =
+        DetectionAddressConversionTask.builder()
+            .e2ApiKey(e2ApiKey)
+            .address("My bad address")
+            .build();
     when(detectionAddressConversionTaskCreatedMock.getAttemptNb()).thenReturn(attemptNb);
-    when(detectionAddressConversionTaskCreatedMock.getTask()).thenReturn(taskMock);
+    when(detectionAddressConversionTaskCreatedMock.getTask()).thenReturn(task);
     when(detectionAddressConversionTaskCreatedMock.getE2ApiKey()).thenReturn(e2ApiKey);
-    doThrow(HttpServerErrorException.InternalServerError.class)
+    doThrow(
+            HttpServerErrorException.create(
+                INTERNAL_SERVER_ERROR,
+                "Internal Server Error",
+                null,
+                API_500_INTERNAL_SERVER_ERROR_MESSAGE_FOR_BAD_ADDRESS_PROVIDED.getBytes(),
+                null))
         .when(taskConsumerMock)
-        .accept(taskMock);
+        .accept(task);
+    when(taskRepositoryMock.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-    assertThrows(
-        HttpServerErrorException.InternalServerError.class,
-        () -> subject.accept(detectionAddressConversionTaskCreatedMock));
+    assertDoesNotThrow(() -> subject.accept(detectionAddressConversionTaskCreatedMock));
 
-    verify(taskStatusServiceMock).process(taskMock);
-    verify(taskConsumerMock, only()).accept(taskMock);
-    verify(taskStatusServiceMock, never()).succeed(taskMock);
-    verify(taskStatusServiceMock, never()).fail(taskMock);
-    verify(taskRepositoryMock, never()).save(taskMock);
+    verify(taskStatusServiceMock).process(task);
+    verify(taskConsumerMock, only()).accept(task);
+    verify(taskStatusServiceMock, never()).fail(task);
+    verify(taskStatusServiceMock, never()).succeed(task);
+
+    var taskCaptor = ArgumentCaptor.forClass(DetectionAddressConversionTask.class);
+    verify(taskRepositoryMock, only()).save(taskCaptor.capture());
+    var taskSaved = taskCaptor.getValue();
+    var actualTaskStatus = taskSaved.getStatus();
+    assertTrue(taskSaved.isFailed());
+    assertEquals(
+        "Unable to convert address " + task.getAddress() + " to coordinates latitude and longitude",
+        actualTaskStatus.getMessage());
+  }
+
+  @Test
+  void consumes_task_with_unknown_500_api_exception_rethrows_exception() {
+    var e2ApiKey = randomUUID().toString();
+    var attemptNb = 1;
+    var detectionAddressConversionTaskCreatedMock =
+        mock(DetectionAddressConversionTaskCreated.class);
+    var task =
+        DetectionAddressConversionTask.builder()
+            .e2ApiKey(e2ApiKey)
+            .address("My bad address")
+            .build();
+    when(detectionAddressConversionTaskCreatedMock.getAttemptNb()).thenReturn(attemptNb);
+    when(detectionAddressConversionTaskCreatedMock.getTask()).thenReturn(task);
+    when(detectionAddressConversionTaskCreatedMock.getE2ApiKey()).thenReturn(e2ApiKey);
+    doThrow(
+            HttpServerErrorException.create(
+                INTERNAL_SERVER_ERROR,
+                "Internal Server Error",
+                null,
+                API_500_INTERNAL_SERVER_ERROR_MESSAGE_FOR_UNKNOWN_API_EXCEPTION.getBytes(),
+                null))
+        .when(taskConsumerMock)
+        .accept(task);
+    when(taskRepositoryMock.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+    var actual =
+        assertThrows(
+            RuntimeException.class,
+            () -> subject.accept(detectionAddressConversionTaskCreatedMock));
+
+    verify(taskStatusServiceMock).process(task);
+    verify(taskConsumerMock, only()).accept(task);
+    verify(taskStatusServiceMock, never()).fail(task);
+    verify(taskStatusServiceMock, never()).succeed(task);
+    verify(taskRepositoryMock, never()).save(task);
+    assertEquals(
+        "Unexpected internal server error causing retry from dashboard API : "
+            + API_500_INTERNAL_SERVER_ERROR_MESSAGE_FOR_UNKNOWN_API_EXCEPTION,
+        actual.getMessage());
   }
 
   @Test
