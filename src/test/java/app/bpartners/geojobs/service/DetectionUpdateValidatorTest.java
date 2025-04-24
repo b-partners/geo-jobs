@@ -159,6 +159,7 @@ Detection.geoJsonZone can not be updated once it has values, otherwise actual va
         isNullable: false
         schemaType: oneOf
     }
+    properties: {code=69, id=30251921, CLUSTER_SIZE=386884, CLUSTER_ID=99520, nom=Rhône}
 }] is not equals provided value null. Detection.detectableObjectModel can not be updated once it has values, otherwise actual value class class app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel {
     instance: class BPLomModel {
         modelName: null

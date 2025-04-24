@@ -1417,7 +1417,9 @@ components:
             - $ref: '#/components/schemas/Point'
             - $ref: '#/components/schemas/Polygon'
             - $ref: '#/components/schemas/MultiPolygon'
-
+        properties:
+          type: object
+          additionalProperties: true
     Geometry:
       type: object
       required:
