@@ -10,10 +10,8 @@ import lombok.*;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @ToString
-public class DetectionAddressConversionTaskCreated extends PojaEvent {
+public class DetectionAddressConversionTaskFailed extends PojaEvent {
   private DetectionAddressConversionTask task;
-  private String e2ApiKey;
-  private int attemptNb;
 
   @Override
   public Duration maxConsumerDuration() {

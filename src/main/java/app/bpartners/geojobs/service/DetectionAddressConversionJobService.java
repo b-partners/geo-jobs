@@ -60,6 +60,7 @@ public class DetectionAddressConversionJobService
                         DetectionAddressConversionTaskCreated.builder()
                             .task(task)
                             .e2ApiKey(e2ApiKey)
+                            .attemptNb(1)
                             .build())));
 
     eventProducer.accept(
