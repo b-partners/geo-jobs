@@ -170,7 +170,6 @@ public class ZoneService {
   public app.bpartners.geojobs.endpoint.rest.model.Detection uploadPdfFile(
       String detectionId, File imageFile) {
     var detection = getDetectionByE2IdOrId(detectionId);
-    detectionGeoJsonUpdateValidator.accept(detection);
     var bucketKey = "detections/roofer/pdf/" + detectionId + ".pdf";
     bucketComponent.upload(imageFile, bucketKey);
     var savedDetection =
