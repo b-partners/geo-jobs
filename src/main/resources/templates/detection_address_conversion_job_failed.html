@@ -14,8 +14,8 @@
         disponible <a
                 th:href="${excelFileUrl}">ici</a>
         n'ont pas pu être traitées :</p>
-    <ol th:each="task : ${failedTasks}">
-        <li th:text="${task.getAddress()}"></li>
+    <ol>
+        <li th:each="task : ${failedTasks}" th:text="${task.getAddress()}"></li>
     </ol>
     <p>Cordialement.</p>
     <p>L'équipe BPartners.</p>
