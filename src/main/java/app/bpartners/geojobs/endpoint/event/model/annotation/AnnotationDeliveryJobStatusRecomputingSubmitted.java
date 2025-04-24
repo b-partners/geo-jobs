@@ -15,8 +15,8 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = false)
 @ToString
 public class AnnotationDeliveryJobStatusRecomputingSubmitted extends JobStatusRecomputingSubmitted {
-  private static final long MAX_CONSUMER_DURATION_IN_SECONDS = Duration.ofMinutes(5).getSeconds();
-  public static final long INITIAL_BACKOFF_DURATION_IN_SECONDS = Duration.ofMinutes(2).getSeconds();
+  private static final long MAX_CONSUMER_DURATION_IN_SECONDS = Duration.ofSeconds(60L).getSeconds();
+  private static final long INITIAL_BACKOFF_DURATION_IN_SECONDS = Duration.ofSeconds(30L).getSeconds();
 
   public AnnotationDeliveryJobStatusRecomputingSubmitted(String jobId) {
     super(jobId, MAX_CONSUMER_DURATION_IN_SECONDS, INITIAL_BACKOFF_DURATION_IN_SECONDS);
