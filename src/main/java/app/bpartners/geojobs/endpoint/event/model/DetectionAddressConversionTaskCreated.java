@@ -5,7 +5,7 @@ import java.time.Duration;
 import lombok.*;
 
 @Getter
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(callSuper = true)
 @ToString
 public class DetectionAddressConversionTaskCreated
     extends TaskCreated<DetectionAddressConversionTask> {
