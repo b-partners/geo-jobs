@@ -378,6 +378,39 @@ class DetectionControllerIT extends FacadeIT {
 
   @SneakyThrows
   @Test
+  void upload_pdf_file_ok() {
+    var presignedUrl = "http://localhost/presignedPdfFile";
+    File dummyPdfFile = new ClassPathResource("/mockData/dummy.pdf").getFile();
+    var communityOwnerId = randomUUID().toString();
+    var savedCommunity =
+        communityAuthRepository.save(
+            CommunityAuthorization.builder()
+                .id(communityOwnerId)
+                .name("dummy")
+                .apiKey("dummy")
+                .maxSurfaceUnit(SQUARE_DEGREE)
+                .maxSurface(10)
+                .build());
+    var e2Id = randomUUID().toString();
+    var detection =
+        detectionRepository.save(
+            detectionWithoutZdj(null).toBuilder()
+                .endToEndId(e2Id)
+                .communityOwnerId(communityOwnerId)
+                .build());
+    when(bucketComponentMock.presign(any())).thenReturn(presignedUrl);
+
+    var actual = subject.uploadRooferDetectionPdfResult(e2Id, fileWriter.writeAsByte(dummyPdfFile));
+
+    assertNull(detection.getPdfFileKey());
+    assertEquals(presignedUrl, actual.getPdfUrl());
+
+    detectionRepository.delete(detection);
+    communityAuthRepository.delete(savedCommunity);
+  }
+
+  @SneakyThrows
+  @Test
   void configure_file_excel_ko() {
     var dummyShapeFileBytes = new ClassPathResource("/shape/dummy.shape").getContentAsByteArray();
     var zoneTilingJob = zoneTilingJobRepository.save(zoneTilingJob(randomUUID().toString()));

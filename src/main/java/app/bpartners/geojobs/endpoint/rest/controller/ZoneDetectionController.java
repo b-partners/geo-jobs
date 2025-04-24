@@ -193,6 +193,13 @@ public class ZoneDetectionController {
     return zoneService.configureImageFile(detectionId, imageFile);
   }
 
+  @PostMapping("/detections/{id}/pdf")
+  public Detection uploadRooferDetectionPdfResult(
+      @PathVariable(name = "id") String detectionId, @RequestBody byte[] pdfAsByte) {
+    File imageFile = fileWriter.apply(pdfAsByte, null);
+    return zoneService.uploadPdfFile(detectionId, imageFile);
+  }
+
   @PostMapping("/detections/{id}/excel")
   public Detection configureDetectionExcelFile(
       @PathVariable(name = "id") String detectionId, @RequestBody byte[] excelFileAsBytes) {
