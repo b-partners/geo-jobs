@@ -104,7 +104,7 @@ public class DetectionAddressConversionJobStatusChangedService
               newJob.getId(), FINISHED.name(), SUCCEEDED.name());
 
       eventProducer.accept(
-              List.of(DetectionAddressConversionJobFailed.builder().job(newJob).build()));
+          List.of(DetectionAddressConversionJobFailed.builder().job(newJob).build()));
 
       finalizeDetectionGeoJsonFromConvertedAddresses(
           succeededTasks,
