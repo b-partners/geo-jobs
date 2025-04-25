@@ -12,10 +12,10 @@ import app.bpartners.geojobs.repository.DetectionAddressConversionTaskRepository
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.DetectionAddressConversionTask;
 import app.bpartners.geojobs.repository.model.detection.Detection;
+import app.bpartners.geojobs.service.DetectionAddressConversionTaskToCsvConverter;
 import app.bpartners.geojobs.template.HTMLTemplateParser;
 import jakarta.mail.internet.InternetAddress;
 import java.io.File;
-import java.time.Duration;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -35,6 +35,7 @@ public class DetectionAddressConversionJobFailedService
   private final BucketComponent bucketComponent;
   private final DetectionRepository detectionRepository;
   private final String adminEmail;
+  private final DetectionAddressConversionTaskToCsvConverter csvConverter;
 
   public DetectionAddressConversionJobFailedService(
       DetectionAddressConversionTaskRepository detectionAddressConversionTaskRepository,
@@ -42,13 +43,15 @@ public class DetectionAddressConversionJobFailedService
       HTMLTemplateParser htmlTemplateParser,
       BucketComponent bucketComponent,
       DetectionRepository detectionRepository,
-      @Value("${admin.email}") String adminEmail) {
+      @Value("${admin.email}") String adminEmail,
+      DetectionAddressConversionTaskToCsvConverter csvConverter) {
     this.detectionAddressConversionTaskRepository = detectionAddressConversionTaskRepository;
     this.mailer = mailer;
     this.htmlTemplateParser = htmlTemplateParser;
     this.bucketComponent = bucketComponent;
     this.detectionRepository = detectionRepository;
     this.adminEmail = adminEmail;
+    this.csvConverter = csvConverter;
   }
 
   @SneakyThrows
@@ -60,31 +63,47 @@ public class DetectionAddressConversionJobFailedService
             job.getId(), FINISHED.name(), FAILED.name());
     var detection = detectionRepository.findById(job.getDetectionId()).orElseThrow();
     var actualDatetime =
-        DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")
+        DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")
             .format(now().atZone(ZoneId.of("Europe/Paris")));
 
     var emailSubject =
         String.format(
-            "Erreur lors du traitement de %d adresses durant le traitement de la détection portant"
-                + " l'ID %s le %s",
+            "BPartners | Anomalie détectée sur %d adresses - Détection sur toiture"
+                + " portant l'ID %s le %s",
             failedTasks.size(), detection.getEndToEndId(), actualDatetime);
     var to = new InternetAddress(job.getEmailReceiver());
     var cc = List.of(new InternetAddress(adminEmail));
     var bcc = new ArrayList<InternetAddress>();
     var htmlBody = computeHtmlBody(detection, failedTasks);
-    var attachments = new ArrayList<File>();
+    var failedAddressesCsvFile = getFailedAddressesCsvFile(failedTasks, detection);
+    var uploadedExcelFile = getExcelUploadedFile(detection);
+    var attachments = List.of(failedAddressesCsvFile, uploadedExcelFile);
 
     mailer.accept(new Email(to, cc, bcc, emailSubject, htmlBody, attachments));
   }
 
+  private File getFailedAddressesCsvFile(
+      List<DetectionAddressConversionTask> failedTasks, Detection detection) {
+    var fileName = "Adresses non-traitées - Detection " + detection.getEndToEndId();
+    return csvConverter.apply(failedTasks, fileName);
+  }
+
+  private File getExcelUploadedFile(Detection detection) {
+    var excelUploadedFile = bucketComponent.download(detection.getExcelFileKey());
+    var absolutePath = excelUploadedFile.getAbsolutePath();
+    var dirIndex = absolutePath.lastIndexOf('/');
+    var dirName = absolutePath.substring(0, dirIndex) + "/";
+    var filePathWithXlsxExtension =
+        dirName + "Adresses soumises - Detection " + detection.getEndToEndId() + ".xlsx";
+    var xlsxFileForced = new File(filePathWithXlsxExtension);
+    excelUploadedFile.renameTo(xlsxFileForced);
+    return xlsxFileForced;
+  }
+
   private String computeHtmlBody(
       Detection detection, List<DetectionAddressConversionTask> failedTasks) {
-    var excelFilePreSignedUrl =
-        bucketComponent.presign(detection.getExcelFileKey(), Duration.ofDays(1L)).toString();
-
     var context = new Context();
     context.setVariable("failedTasks", failedTasks);
-    context.setVariable("excelFileUrl", excelFilePreSignedUrl);
     context.setVariable("detection", detection);
     return htmlTemplateParser.apply("detection_address_conversion_job_failed", context);
   }

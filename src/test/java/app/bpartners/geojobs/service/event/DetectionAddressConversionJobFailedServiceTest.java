@@ -13,10 +13,10 @@ import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.DetectionAddressConversionJob;
 import app.bpartners.geojobs.repository.model.DetectionAddressConversionTask;
 import app.bpartners.geojobs.repository.model.detection.Detection;
+import app.bpartners.geojobs.service.DetectionAddressConversionTaskToCsvConverter;
 import app.bpartners.geojobs.template.HTMLTemplateParser;
 import jakarta.mail.internet.InternetAddress;
-import java.net.URI;
-import java.time.Duration;
+import java.io.File;
 import java.util.List;
 import java.util.Optional;
 import lombok.SneakyThrows;
@@ -31,6 +31,7 @@ class DetectionAddressConversionJobFailedServiceTest {
   HTMLTemplateParser htmlTemplateParser = new HTMLTemplateParser();
   BucketComponent bucketComponentMock = mock();
   DetectionRepository detectionRepositoryMock = mock();
+  DetectionAddressConversionTaskToCsvConverter taskToCsvConverterMock = mock();
   DetectionAddressConversionJobFailedService subject =
       new DetectionAddressConversionJobFailedService(
           taskRepositoryMock,
@@ -38,7 +39,8 @@ class DetectionAddressConversionJobFailedServiceTest {
           htmlTemplateParser,
           bucketComponentMock,
           detectionRepositoryMock,
-          ADMIN_EMAIL);
+          ADMIN_EMAIL,
+          taskToCsvConverterMock);
 
   @SneakyThrows
   @Test
@@ -48,10 +50,11 @@ class DetectionAddressConversionJobFailedServiceTest {
     var detectionE2Id = randomUUID().toString();
     var emailReceiver = "dummy@email.com";
     var excelFileKey = randomUUID().toString();
-    var excelFilePreSignedUrl = "http://dummy";
     var jobMock = mock(DetectionAddressConversionJob.class);
     var taskMock = mock(DetectionAddressConversionTask.class);
     var detectionMock = mock(Detection.class);
+    var failedAddressesCsvFileMock = mock(File.class);
+    var tmpFileForExcelFile = File.createTempFile(excelFileKey, ".txt");
 
     when(jobMock.getId()).thenReturn(jobId);
     when(jobMock.getDetectionId()).thenReturn(detectionId);
@@ -63,14 +66,18 @@ class DetectionAddressConversionJobFailedServiceTest {
     when(taskRepositoryMock.findAllByJobIdAndProgressionStatusAndHealthStatus(
             jobId, "FINISHED", "FAILED"))
         .thenReturn(List.of(taskMock));
-    when(bucketComponentMock.presign(excelFileKey, Duration.ofDays(1L)))
-        .thenReturn(new URI(excelFilePreSignedUrl).toURL());
+    when(bucketComponentMock.download(excelFileKey)).thenReturn(tmpFileForExcelFile);
+    when(taskToCsvConverterMock.apply(eq(List.of(taskMock)), anyString()))
+        .thenReturn(failedAddressesCsvFileMock);
 
     assertDoesNotThrow(() -> subject.accept(new DetectionAddressConversionJobFailed(jobMock)));
 
     var emailCaptor = ArgumentCaptor.forClass(Email.class);
     verify(mailerMock, only()).accept(emailCaptor.capture());
     var email = emailCaptor.getValue();
+    var attachments = email.attachments();
+    verify(taskToCsvConverterMock)
+        .apply(eq(List.of(taskMock)), eq("Adresses non-traitées - Detection " + detectionE2Id));
     assertEquals(new InternetAddress(emailReceiver), email.to());
     assertEquals(List.of(new InternetAddress(ADMIN_EMAIL)), email.cc());
     assertEquals(List.of(), email.bcc());
@@ -78,41 +85,47 @@ class DetectionAddressConversionJobFailedServiceTest {
         email
             .subject()
             .contains(
-                "Erreur lors du traitement de 1 adresses durant le traitement"
-                    + " de la détection portant l'ID "
+                "BPartners | Anomalie détectée sur 1 adresses - Détection sur toiture"
+                    + " portant l'ID "
                     + detectionE2Id
                     + " le "));
     assertEquals(expectedHtmlBody(detectionE2Id), email.htmlBody());
-    assertEquals(List.of(), email.attachments());
+    assertTrue(attachments.contains(failedAddressesCsvFileMock));
+    assertTrue(
+        attachments.stream()
+            .anyMatch(
+                file -> {
+                  if (!mockingDetails(file).isMock()) {
+                    return file.getAbsolutePath()
+                        .contains("Adresses soumises - Detection " + detectionE2Id);
+                  }
+                  return false;
+                }));
   }
 
   private static @NotNull String expectedHtmlBody(String detectionE2Id) {
     return String.format(
         """
-        <html>
-        <head>
-            <style>
-                body {
-                    font-family: Helvetica, serif;
-                }
-            </style>
-        </head>
-        <body>
-        <section>
-            <p>Bonjour,</p>
-            <p><span>1</span> adresses issus du fichier Excel
-                soumis lors de la création de détection portant l'ID = <span>%s</span>, et
-                disponible <a
-                        href="http://dummy">ici</a>
-                n'ont pas pu être traitées :</p>
-            <ol>
-                <li>Malformed address</li>
-            </ol>
-            <p>Cordialement.</p>
-            <p>L'équipe BPartners.</p>
-        </section>
-        </body>
-        </html>""",
+<html>
+<head>
+    <style>
+        body {
+            font-family: Helvetica, serif;
+        }
+    </style>
+</head>
+<body>
+<section>
+    <p>Bonjour,</p>
+    <p>Lors du traitement de la détection de toiture portant l'identifiant <strong>%s</strong>,
+        <span>1</span> adresses n'ont pas pas pu être traitées correctement.</p>
+    <p>Ces adresses non traitées, ainsi que le fichier excel initialement soumis, sont disponibles en pièces jointes de
+        ce mail.</p>
+    <p>Cordialement.</p>
+    <p>L'équipe BPartners.</p>
+</section>
+</body>
+</html>""",
         detectionE2Id);
   }
 }

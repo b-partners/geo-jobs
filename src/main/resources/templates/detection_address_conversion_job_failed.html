@@ -9,14 +9,11 @@
 <body>
 <section>
     <p>Bonjour,</p>
-    <p><span th:text="${failedTasks.size()}"></span> adresses issus du fichier Excel
-        soumis lors de la création de détection portant l'ID = <span th:text="${detection.getEndToEndId()}"></span>, et
-        disponible <a
-                th:href="${excelFileUrl}">ici</a>
-        n'ont pas pu être traitées :</p>
-    <ol>
-        <li th:each="task : ${failedTasks}" th:text="${task.getAddress()}"></li>
-    </ol>
+    <p>Lors du traitement de la détection de toiture portant l'identifiant <strong
+            th:text="${detection.getEndToEndId()}"></strong>,
+        <span th:text="${failedTasks.size()}"></span> adresses n'ont pas pas pu être traitées correctement.</p>
+    <p>Ces adresses non traitées, ainsi que le fichier excel initialement soumis, sont disponibles en pièces jointes de
+        ce mail.</p>
     <p>Cordialement.</p>
     <p>L'équipe BPartners.</p>
 </section>
