@@ -57,11 +57,14 @@
 </head>
 <body>
 <section>
-    <h1>Informations de Détection</h1>
+    <h1>Informations de la détection ID = <span th:text="${detection.id}"></span> | e2Id = <span
+            th:text="${detection.endToEndId}"></span></h1>
     <p>Bonjour,</p>
-    <p>Voici les éléments fournis par le consommateur d'API <span
-            th:if="${detection.communityOwnerId != null}"
-            th:text="${detection.communityOwnerId}"></span> :</p>
+    <p>Voici les éléments fournis par le consommateur d'API <span th:if="${community != null}">
+            <span th:text="${community.name}"></span> ayant comme email <span th:text="${community.email}"></span>
+            et ID <span th:text="${community.id}"></span>
+        </span> :
+    </p>
     <ul>
         <li>Email associé : <span th:text="${detection.getEmailReceiver()}"></span></li>
         <li>Nom de zone fournie par le consommateur : <span th:text="${detection.getZoneName()}"></span></li>
@@ -75,7 +78,7 @@
             </ul>
         </li>
         </span>
-        <li>Configuration du geoServeur :
+        <li>Configuration du geoServer :
             <ul>
                 <li>geoServerUrl: <span th:text="${geoServerUrl}"></span></li>
                 <li th:each="item : ${geoServerParameterStringMapValues}">
@@ -84,18 +87,36 @@
                 </li>
             </ul>
         </li>
-        <li>Zone en geoJson fournie : <br>
+        <li>Zone en geoJson fournie :
             <span th:if="${detection.getProvidedGeoJsonZone() != null && !detection.getProvidedGeoJsonZone().isEmpty()}"
                   th:text="${detection.getProvidedGeoJsonZone()}"></span>
+            <span th:unless="${detection.getProvidedGeoJsonZone() != null && !detection.getProvidedGeoJsonZone().isEmpty()}">
+                non définie
+            </span>
         </li>
-        <li>Fichier shape à convertir en geoJson : <br>
-            <span th:if="${detection.getShapeFileKey() != null}" th:text="${shapeFileUrl}"></span>
+        <li>Zone à détecter :
+            <span th:if="${detection.getMultiPolygonGeoJsonZone() != null && !detection.getMultiPolygonGeoJsonZone().isEmpty()}"
+                  th:text="${detection.getMultiPolygonGeoJsonZone()}"></span>
+            <span th:unless="${detection.getMultiPolygonGeoJsonZone() != null && !detection.getMultiPolygonGeoJsonZone().isEmpty()}">
+                non définie
+            </span>
+
         </li>
-        <li>Fichier excel à convertir en geoJson : <br>
-            <span th:if="${detection.getExcelFileKey() != null}" th:text="${excelFileUrl}"></span>
+        <li>Fichier shape à convertir en geoJson :
+            <span th:if="${detection.getShapeFileKey() != null}">
+                <a th:ref="${shapeFileUrl}">ici</a>
+            </span>
+            <span th:unless="${detection.getShapeFileKey() != null}"> non définie</span>
+        </li>
+        <li>Fichier excel à convertir en geoJson :
+            <span th:if="${detection.getExcelFileKey() != null}">
+                <a th:ref="${excelFileUrl}">ici</a>
+            </span>
+            <span th:unless="${detection.getExcelFileKey() != null}"> non définie</span>
         </li>
     </ul>
-    <p>Cordialement,</p>
+    <p>Cordialement.</p>
+    <p>L'équipe BirdIA.</p>
 </section>
 </body>
 </html>

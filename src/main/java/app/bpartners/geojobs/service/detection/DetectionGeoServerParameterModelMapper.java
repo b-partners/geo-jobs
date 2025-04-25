@@ -23,7 +23,7 @@ public class DetectionGeoServerParameterModelMapper
       fieldName.setAccessible(true);
       fieldValue.setAccessible(true);
       var name = fieldName.get(geoServerParameter).toString();
-      var value = fieldValue.get(geoServerParameter).toString();
+      var value = String.valueOf(fieldValue.get(geoServerParameter));
       geoServerParameterStringMapValues.add(new GeoServerParameterStringMapValue(name, value));
     }
     return geoServerParameterStringMapValues;
