@@ -103,6 +103,9 @@ public class DetectionAddressConversionJobStatusChangedService
           taskRepository.findAllByJobIdAndProgressionStatusAndHealthStatus(
               newJob.getId(), FINISHED.name(), SUCCEEDED.name());
 
+      eventProducer.accept(
+              List.of(DetectionAddressConversionJobFailed.builder().job(newJob).build()));
+
       finalizeDetectionGeoJsonFromConvertedAddresses(
           succeededTasks,
           detectionId,
@@ -110,9 +113,6 @@ public class DetectionAddressConversionJobStatusChangedService
           geoServerConfiguration,
           eventProducer,
           zoneService);
-
-      eventProducer.accept(
-          List.of(DetectionAddressConversionJobFailed.builder().job(newJob).build()));
     }
   }
 
