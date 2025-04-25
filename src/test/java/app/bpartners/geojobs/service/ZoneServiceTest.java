@@ -901,7 +901,7 @@ class ZoneServiceTest {
         detectionCreator.create(
             randomUUID().toString(), randomUUID().toString(), randomUUID().toString(), List.of());
     var detectionE2eId = detection.getEndToEndId();
-    var excelFileBucketKey = "detections/excel/" + detectionE2eId;
+    var excelFileBucketKey = "detections/excel/" + detectionE2eId + ".xlsx";
     var excelUrl = "https://localhost";
     when(bucketComponentMock.upload(excelFile, excelFileBucketKey))
         .thenReturn(new FileHash(SHA256, "dummy"));

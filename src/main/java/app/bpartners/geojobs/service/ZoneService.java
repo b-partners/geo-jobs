@@ -130,7 +130,7 @@ public class ZoneService {
       String detectionId, File excelFile) {
     var detection = getDetectionByE2IdOrId(detectionId);
     detectionGeoJsonUpdateValidator.accept(detection);
-    var bucketKey = "detections/excel/" + detectionId;
+    var bucketKey = "detections/excel/" + detectionId + ".xlsx";
     bucketComponent.upload(excelFile, bucketKey);
     var savedDetection =
         detectionRepository.save(detection.toBuilder().excelFileKey(bucketKey).build());
