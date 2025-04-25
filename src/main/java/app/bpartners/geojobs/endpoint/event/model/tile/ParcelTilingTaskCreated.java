@@ -8,8 +8,8 @@ import lombok.*;
 @Getter
 @EqualsAndHashCode(callSuper = true)
 @ToString
-public class TilingTaskCreated extends TaskCreated<ParcelTilingTask> {
-  public TilingTaskCreated(ParcelTilingTask task) {
+public class ParcelTilingTaskCreated extends TaskCreated<ParcelTilingTask> {
+  public ParcelTilingTaskCreated(ParcelTilingTask task) {
     super(task);
   }
 

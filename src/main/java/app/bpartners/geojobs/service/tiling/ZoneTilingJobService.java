@@ -9,7 +9,7 @@ import static java.util.stream.Collectors.toList;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.status.ZTJStatusRecomputingSubmitted;
-import app.bpartners.geojobs.endpoint.event.model.tile.TilingTaskCreated;
+import app.bpartners.geojobs.endpoint.event.model.tile.ParcelTilingTaskCreated;
 import app.bpartners.geojobs.endpoint.event.model.zone.ImportedZoneTilingJobSaved;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobCreated;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobStatusChanged;
@@ -175,7 +175,8 @@ public class ZoneTilingJobService extends JobService<ParcelTilingTask, ZoneTilin
     }
     List<ParcelTilingTask> savedFailedTasks =
         taskRepository.saveAll(failedTasks.stream().map(notFinishedTaskRetriever).toList());
-    savedFailedTasks.forEach(task -> eventProducer.accept(List.of(new TilingTaskCreated(task))));
+    savedFailedTasks.forEach(
+        task -> eventProducer.accept(List.of(new ParcelTilingTaskCreated(task))));
     // /!\ Force job status to status PROCESSING again
     job.hasNewStatus(
         JobStatus.builder()
@@ -204,7 +205,7 @@ public class ZoneTilingJobService extends JobService<ParcelTilingTask, ZoneTilin
 
   @Transactional
   public void fireTasks(ZoneTilingJob job) {
-    getTasks(job).forEach(task -> eventProducer.accept(List.of(new TilingTaskCreated(task))));
+    getTasks(job).forEach(task -> eventProducer.accept(List.of(new ParcelTilingTaskCreated(task))));
   }
 
   @Override

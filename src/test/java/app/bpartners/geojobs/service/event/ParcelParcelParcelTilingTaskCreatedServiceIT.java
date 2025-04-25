@@ -13,7 +13,7 @@ import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.tile.TilingTaskCreated;
+import app.bpartners.geojobs.endpoint.event.model.tile.ParcelTilingTaskCreated;
 import app.bpartners.geojobs.endpoint.rest.controller.ZoneTilingController;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.endpoint.rest.model.TiledParcel;
@@ -45,7 +45,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 @Slf4j
-class ParcelTilingTaskCreatedServiceIT extends FacadeIT {
+class ParcelParcelParcelTilingTaskCreatedServiceIT extends FacadeIT {
   public static final String GEOMETRY_MOCK =
       "{\n"
           + "    \"type\": \"MultiPolygon\",\n"
@@ -58,7 +58,7 @@ class ParcelTilingTaskCreatedServiceIT extends FacadeIT {
           + "      [ 4.496344031095243, 45.883438201401809 ],\n"
           + "      [ 4.479593950305621, 45.882900828315755 ],\n"
           + "      [ 4.459648282829194, 45.904988912620688 ] ] ] ] }";
-  @Autowired TilingTaskCreatedService subject;
+  @Autowired ParcelTilingTaskCreatedService subject;
   @Autowired ZoneTilingController zoneTilingController;
   @MockBean BucketComponent bucketComponent;
   @MockBean TilesDownloader tilesDownloader;
@@ -216,7 +216,7 @@ class ParcelTilingTaskCreatedServiceIT extends FacadeIT {
                         .build()))
             .build();
     ParcelTilingTask created = tilingTaskRepository.save(toCreate);
-    TilingTaskCreated createdEventPayload = new TilingTaskCreated(created);
+    ParcelTilingTaskCreated createdEventPayload = new ParcelTilingTaskCreated(created);
     subject.accept(createdEventPayload);
     int numberOfDirectoryToUpload = 1;
     verify(bucketComponent, times(numberOfDirectoryToUpload)).upload(any(), any(String.class));
@@ -231,7 +231,7 @@ class ParcelTilingTaskCreatedServiceIT extends FacadeIT {
     ParcelTilingTask toCreate = aZTT(jobId, taskId, parcelId);
     ParcelTilingTask task = tilingTaskRepository.save(toCreate);
 
-    assertDoesNotThrow(() -> subject.accept(new TilingTaskCreated(task)));
+    assertDoesNotThrow(() -> subject.accept(new ParcelTilingTaskCreated(task)));
 
     tilingTaskRepository
         .findById(task.getId())
@@ -302,7 +302,7 @@ class ParcelTilingTaskCreatedServiceIT extends FacadeIT {
     String parcelId = randomUUID().toString();
     ParcelTilingTask toCreate = aZTT(jobId, taskId, parcelId);
     ParcelTilingTask created = tilingTaskRepository.save(toCreate);
-    TilingTaskCreated ztjCreated = new TilingTaskCreated(created);
+    ParcelTilingTaskCreated ztjCreated = new ParcelTilingTaskCreated(created);
 
     assertDoesNotThrow(() -> subject.accept(ztjCreated));
 
