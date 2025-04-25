@@ -142,7 +142,7 @@ public class RooferDetectionService
             new InternetAddress(authProvider.getAuthenticatedCommunity().getEmail()),
             List.of(new InternetAddress("tech@bpartners.app")),
             List.of(),
-            String.format("[BIRDIA- %s] - ANALYSE TOITURE", env),
+            String.format("[%s] - ANALYSE TOITURE", env),
             emailBody,
             List.of(detectionResultPdf)));
   }
