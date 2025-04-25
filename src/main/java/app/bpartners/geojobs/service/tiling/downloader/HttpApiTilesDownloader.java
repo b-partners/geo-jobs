@@ -78,8 +78,11 @@ public class HttpApiTilesDownloader implements TilesDownloader {
         ResponseEntity<byte[]> file =
             restTemplate.getForEntity(new URI(responseEntity.getBody().fileUrl), byte[].class);
         var zip = fileWriter.apply(file.getBody(), null);
-
-        var unzipped = unzip(zip, parcelContent);
+        var layers =
+            parcelContent.getFeature().getPriorityLayer() == null
+                ? parcelContent.getGeoServerParameter().getLayers()
+                : parcelContent.getFeature().getPriorityLayer();
+        var unzipped = unzip(zip, layers);
         zip.delete();
 
         return unzipped;
@@ -91,9 +94,8 @@ public class HttpApiTilesDownloader implements TilesDownloader {
     throw new ApiException(SERVER_EXCEPTION, "Server error");
   }
 
-  private File unzip(File downloadedTiles, ParcelContent parcelContent) throws IOException {
+  private File unzip(File downloadedTiles, String layer) throws IOException {
     ZipFile asZipFile = new ZipFile(downloadedTiles);
-    String layer = parcelContent.getGeoServerParameter().getLayers();
     Path unzippedPath = fileUnzipper.apply(asZipFile, layer);
     return unzippedPath.toFile();
   }
