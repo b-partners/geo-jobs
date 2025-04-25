@@ -11,6 +11,7 @@ import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.service.detection.DetectionMapper;
+import app.bpartners.geojobs.service.detection.DetectionMaskCreator;
 import app.bpartners.geojobs.service.detection.DetectionResponse;
 import app.bpartners.geojobs.service.detection.TileObjectDetector;
 import java.util.List;
@@ -18,12 +19,13 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 public class TileParcelParcelDetectionTaskCreatedConsumerTest {
+  DetectionMaskCreator maskCreator = new DetectionMaskCreator();
   MachineDetectedTileRepository machineDetectedTileRepositoryMock = mock();
   TileObjectDetector objectDetectorMock = mock();
   DetectionMapper detectionMapperMock = mock();
   TileDetectionTaskCreatedConsumer subject =
       new TileDetectionTaskCreatedConsumer(
-          machineDetectedTileRepositoryMock, objectDetectorMock, detectionMapperMock);
+          machineDetectedTileRepositoryMock, objectDetectorMock, detectionMapperMock, maskCreator);
 
   @Test
   void accept_ok() {

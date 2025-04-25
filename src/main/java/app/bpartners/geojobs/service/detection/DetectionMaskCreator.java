@@ -58,4 +58,21 @@ public class DetectionMaskCreator implements Function<List<List<BigDecimal>>, Fi
             .toList();
     return drawImage(pixels);
   }
+
+  @SneakyThrows
+  public File createTempMask() {
+    BufferedImage whiteImage =
+        new BufferedImage(DEFAULT_IMAGE_SIZE, DEFAULT_IMAGE_SIZE, BufferedImage.TYPE_INT_RGB);
+    var color = new Color(1, 1, 1);
+
+    for (int y = 0; y < DEFAULT_IMAGE_SIZE; y++) {
+      for (int x = 0; x < DEFAULT_IMAGE_SIZE; x++) {
+        whiteImage.setRGB(x, y, color.getRGB());
+      }
+    }
+
+    File output = File.createTempFile(randomUUID().toString(), ".png");
+    ImageIO.write(whiteImage, "png", output);
+    return output;
+  }
 }
