@@ -107,7 +107,7 @@ class DetectionExcelFileAddressConvertedIT extends DetectionIT {
         "http://dummy-geoserver.com", // Set from EnvConf
         actualDetection.getGeoServerProperties().getGeoServerUrl());
     assertEquals(
-        geoServerConfiguration.defaultGeoServerProperties(AREA_PICTURE_LAYER),
+        geoServerConfiguration.defaultGeoServerProperties(null),
         actualDetection.getGeoServerProperties());
   }
 

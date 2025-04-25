@@ -130,8 +130,7 @@ public class DetectionAddressConversionJobStatusChangedService
         detectionRepository.save(
             detection.toBuilder()
                 .multiPolygonGeoJsonZone(convertedFeatures)
-                .geoServerProperties(
-                    geoServerConfiguration.defaultGeoServerProperties(LAYER_CITE_PCRS))
+                .geoServerProperties(geoServerConfiguration.defaultGeoServerProperties(null))
                 .build());
 
     eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
