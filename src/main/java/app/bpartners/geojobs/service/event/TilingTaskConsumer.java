@@ -12,19 +12,19 @@ import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
+import app.bpartners.geojobs.service.TaskConsumer;
 import app.bpartners.geojobs.service.tiling.downloader.TilesDownloader;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @AllArgsConstructor
 @Component
-public class TilingTaskConsumer implements Consumer<ParcelTilingTask> {
+public class TilingTaskConsumer implements TaskConsumer<ParcelTilingTask> {
   private static final int DEFAULT_TILE_SIZE = 1024;
   private final TilesDownloader tilesDownloader;
   private final BucketComponent bucketComponent;

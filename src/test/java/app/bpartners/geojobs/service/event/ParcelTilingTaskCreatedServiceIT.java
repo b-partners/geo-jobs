@@ -7,17 +7,13 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.consumer.EventConsumer;
 import app.bpartners.geojobs.endpoint.event.model.tile.TilingTaskCreated;
-import app.bpartners.geojobs.endpoint.event.model.tile.TilingTaskSucceeded;
 import app.bpartners.geojobs.endpoint.rest.controller.ZoneTilingController;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.endpoint.rest.model.TiledParcel;
@@ -45,7 +41,6 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
@@ -72,9 +67,7 @@ class ParcelTilingTaskCreatedServiceIT extends FacadeIT {
   @Autowired ZoneTilingJobService zoneTilingJobService;
   @MockBean EventProducer eventProducer;
   @Autowired TilingTaskStatusService tilingTaskStatusService;
-  @Autowired TilingTaskSucceededService tilingTaskSucceededService;
   @Autowired LocalEventQueue localEventQueue;
-  @Autowired EventConsumer eventConsumer;
   EventProducerInvocationMock eventProducerInvocationMock = new EventProducerInvocationMock();
   private app.bpartners.geojobs.repository.model.Feature lyonFeature;
 
@@ -223,29 +216,29 @@ class ParcelTilingTaskCreatedServiceIT extends FacadeIT {
                         .build()))
             .build();
     ParcelTilingTask created = tilingTaskRepository.save(toCreate);
-    TilingTaskCreated createdEventPayload = TilingTaskCreated.builder().task(created).build();
+    TilingTaskCreated createdEventPayload = new TilingTaskCreated(created);
     subject.accept(createdEventPayload);
     int numberOfDirectoryToUpload = 1;
     verify(bucketComponent, times(numberOfDirectoryToUpload)).upload(any(), any(String.class));
   }
 
   @Test
-  void send_tilingSucceed_on_success() {
+  void succeed_task_when_consumer_does_not_throws() {
     String jobId = randomUUID().toString();
     zoneTilingJobRepository.save(aZTJ(jobId));
     String taskId = randomUUID().toString();
     String parcelId = randomUUID().toString();
     ParcelTilingTask toCreate = aZTT(jobId, taskId, parcelId);
-    ParcelTilingTask created = tilingTaskRepository.save(toCreate);
-    TilingTaskCreated createdEventPayload = TilingTaskCreated.builder().task(created).build();
-    subject.accept(createdEventPayload);
-    zoneTilingJobService.recomputeStatus(zoneTilingJobRepository.findById(jobId).get());
-    var eventsCaptor = ArgumentCaptor.forClass(List.class);
-    verify(eventProducer, times(2)).accept(eventsCaptor.capture());
-    var sentEvents = eventsCaptor.getAllValues().stream().flatMap(List::stream).toList();
-    assertEquals(2, sentEvents.size());
-    var tilingTaskSucceeded = (TilingTaskSucceeded) sentEvents.getFirst();
-    assertEquals(2, tilingTaskSucceeded.getTask().getParcelContent().getTiles().size());
+    ParcelTilingTask task = tilingTaskRepository.save(toCreate);
+
+    assertDoesNotThrow(() -> subject.accept(new TilingTaskCreated(task)));
+
+    tilingTaskRepository
+        .findById(task.getId())
+        .ifPresent(
+            tilingTask -> {
+              assertTrue(tilingTask.isSucceeded());
+            });
   }
 
   @SneakyThrows
@@ -309,14 +302,11 @@ class ParcelTilingTaskCreatedServiceIT extends FacadeIT {
     String parcelId = randomUUID().toString();
     ParcelTilingTask toCreate = aZTT(jobId, taskId, parcelId);
     ParcelTilingTask created = tilingTaskRepository.save(toCreate);
-    TilingTaskCreated ztjCreated = TilingTaskCreated.builder().task(created).build();
-    subject.accept(ztjCreated);
+    TilingTaskCreated ztjCreated = new TilingTaskCreated(created);
+
+    assertDoesNotThrow(() -> subject.accept(ztjCreated));
+
     zoneTilingJobService.recomputeStatus(zoneTilingJobRepository.findById(jobId).get());
-    var eventsCaptor = ArgumentCaptor.forClass(List.class);
-    verify(eventProducer, times(2)).accept(eventsCaptor.capture());
-    var events = eventsCaptor.getAllValues();
-    var taskSucceeded = (TilingTaskSucceeded) events.getFirst().getFirst();
-    tilingTaskSucceededService.accept(taskSucceeded);
     List<TiledParcel> parcels = zoneTilingController.getZTJParcels(jobId);
     assertEquals(1, parcels.size());
     assertEquals(2, parcels.getFirst().getTiles().size());

@@ -1,31 +1,21 @@
 package app.bpartners.geojobs.endpoint.event.model.tile;
 
-import app.bpartners.geojobs.endpoint.event.model.PojaEvent;
+import app.bpartners.geojobs.endpoint.event.model.TaskCreated;
 import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Duration;
-import javax.annotation.processing.Generated;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
-@Generated("EventBridge")
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder(toBuilder = true)
-@Data
-@EqualsAndHashCode
+@Getter
+@EqualsAndHashCode(callSuper = true)
 @ToString
-public class TilingTaskCreated extends PojaEvent {
-  @JsonProperty("tilingTask")
-  private ParcelTilingTask task;
+public class TilingTaskCreated extends TaskCreated<ParcelTilingTask> {
+  public TilingTaskCreated(ParcelTilingTask task) {
+    super(task);
+  }
 
   @Override
   public Duration maxConsumerDuration() {
-    return Duration.ofMinutes(13);
+    return Duration.ofMinutes(1);
   }
 
   @Override
