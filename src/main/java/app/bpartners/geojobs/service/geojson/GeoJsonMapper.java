@@ -66,7 +66,11 @@ public class GeoJsonMapper {
       int imageWidth,
       DetectedObject object,
       List<List<List<List<BigDecimal>>>> geometryCoordinates) {
-    var properties = new HashMap<String, String>();
+    var objectFeature = object.getFeature();
+    var properties =
+        objectFeature.getProperties() == null
+            ? new HashMap<String, Object>()
+            : objectFeature.getProperties();
     var confidence =
         object.getComputedConfidence() != null ? object.getComputedConfidence().toString() : null;
     properties.put("confidence", confidence);
