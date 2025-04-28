@@ -118,27 +118,25 @@ class ParcelDetectionTaskCreatedServiceIT extends FacadeIT {
     String taskId = randomUUID().toString();
     String jobId = randomUUID().toString();
 
-    return ParcelDetectionTaskCreated.builder()
-        .task(
-            ParcelDetectionTask.builder()
-                .id(taskId)
-                .jobId(jobId)
-                .parcels(parcels)
-                .statusHistory(
-                    new ArrayList<>() {
-                      {
-                        TaskStatus.builder()
-                            .id(randomUUID().toString())
-                            .progression(PENDING)
-                            .health(UNKNOWN)
-                            .jobType(DETECTION)
-                            .taskId(taskId)
-                            .creationDatetime(now())
-                            .build();
-                      }
-                    })
-                .build())
-        .build();
+    return new ParcelDetectionTaskCreated(
+        ParcelDetectionTask.builder()
+            .id(taskId)
+            .jobId(jobId)
+            .parcels(parcels)
+            .statusHistory(
+                new ArrayList<>() {
+                  {
+                    TaskStatus.builder()
+                        .id(randomUUID().toString())
+                        .progression(PENDING)
+                        .health(UNKNOWN)
+                        .jobType(DETECTION)
+                        .taskId(taskId)
+                        .creationDatetime(now())
+                        .build();
+                  }
+                })
+            .build());
   }
 
   @NonNull

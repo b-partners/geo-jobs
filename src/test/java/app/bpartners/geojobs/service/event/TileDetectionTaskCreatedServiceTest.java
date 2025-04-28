@@ -8,28 +8,29 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.tile.TileDetectionTaskCreated;
-import app.bpartners.geojobs.endpoint.event.model.tile.TileDetectionTaskSucceeded;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.model.exception.ApiException;
+import app.bpartners.geojobs.repository.TileDetectionTaskRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
+import app.bpartners.geojobs.service.TileDetectionTaskConsumer;
 import app.bpartners.geojobs.service.detection.TileDetectionTaskStatusService;
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 
 class TileDetectionTaskCreatedServiceTest {
   TileDetectionTaskStatusService tileDetectionTaskStatusServiceMock = mock();
-  TileDetectionTaskCreatedConsumer tileDetectionTaskConsumerMock = mock();
-  EventProducer eventProducerMock = mock();
+  TileDetectionTaskConsumer tileDetectionTaskConsumerMock = mock();
+  TileDetectionTaskRepository tileDetectionTaskRepositoryMock = mock();
   TileDetectionTaskCreatedService subject =
       new TileDetectionTaskCreatedService(
-          tileDetectionTaskStatusServiceMock, tileDetectionTaskConsumerMock, eventProducerMock);
+          tileDetectionTaskConsumerMock,
+          tileDetectionTaskStatusServiceMock,
+          tileDetectionTaskRepositoryMock);
 
   @Test
-  void accept_ok() {
+  void consumes_task_and_succeed() {
     doNothing().when(tileDetectionTaskConsumerMock).accept(any());
     when(tileDetectionTaskStatusServiceMock.process(any()))
         .thenReturn(
@@ -61,13 +62,8 @@ class TileDetectionTaskCreatedServiceTest {
                         DetectableObjectConfiguration.builder()
                             .objectType(PASSAGE_PIETON)
                             .build()))));
-    var eventCaptor = ArgumentCaptor.forClass(List.class);
-    verify(eventProducerMock, times(1)).accept(eventCaptor.capture());
-    TileDetectionTaskSucceeded capturedTileDetectionTaskSucceeded =
-        (TileDetectionTaskSucceeded) eventCaptor.getValue().getFirst();
-    TileDetectionTask tileDetectionTask = capturedTileDetectionTaskSucceeded.getTileDetectionTask();
-    assertEquals(FINISHED, tileDetectionTask.getStatus().getProgression());
-    assertEquals(SUCCEEDED, tileDetectionTask.getStatus().getHealth());
+    verify(tileDetectionTaskStatusServiceMock, only()).succeed(any());
+    verify(tileDetectionTaskRepositoryMock, only()).save(any());
   }
 
   @Test
@@ -92,8 +88,7 @@ class TileDetectionTaskCreatedServiceTest {
             List.of(DetectableObjectConfiguration.builder().objectType(PASSAGE_PIETON).build()));
 
     assertThrows(ApiException.class, () -> subject.accept(expectedTileDetectionTaskCreated));
-
-    var eventCaptor = ArgumentCaptor.forClass(List.class);
-    verify(eventProducerMock, times(0)).accept(eventCaptor.capture());
+    verify(tileDetectionTaskStatusServiceMock, never()).succeed(any());
+    verify(tileDetectionTaskRepositoryMock, never()).save(any());
   }
 }

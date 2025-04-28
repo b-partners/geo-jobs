@@ -1,9 +1,8 @@
-package app.bpartners.geojobs.service.event;
+package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 import static java.time.Instant.now;
 
-import app.bpartners.geojobs.endpoint.event.model.tile.TileDetectionTaskCreated;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
@@ -15,7 +14,6 @@ import app.bpartners.geojobs.service.detection.DetectionResponse;
 import app.bpartners.geojobs.service.detection.TileObjectDetector;
 import java.io.File;
 import java.util.List;
-import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -23,18 +21,16 @@ import org.springframework.stereotype.Component;
 @Component
 @AllArgsConstructor
 @Slf4j
-public class TileDetectionTaskCreatedConsumer implements Consumer<TileDetectionTaskCreated> {
+public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask> {
   private final MachineDetectedTileRepository machineDetectedTileRepository;
   private final TileObjectDetector objectsDetector;
   private final DetectionMapper detectionMapper;
   private final DetectionMaskCreator maskCreator;
 
   @Override
-  public void accept(TileDetectionTaskCreated tileDetectionTaskCreated) {
-    var tileDetectionTask = tileDetectionTaskCreated.getTileDetectionTask();
-    var detectableObjectConfigurations =
-        tileDetectionTaskCreated.getDetectableObjectConfigurations();
-    var zoneDetectionJobId = tileDetectionTaskCreated.getZoneDetectionJobId();
+  public void accept(TileDetectionTask tileDetectionTask) {
+    var detectableObjectConfigurations = tileDetectionTask.getDetectableObjectConfigurations();
+    var zoneDetectionJobId = tileDetectionTask.getZoneDetectionJobId();
     var parcelJobId = tileDetectionTask.getJobId();
     File mask = null;
     if (isRooferModel(detectableObjectConfigurations)) {

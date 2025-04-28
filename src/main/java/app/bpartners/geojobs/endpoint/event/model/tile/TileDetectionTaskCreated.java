@@ -1,29 +1,28 @@
 package app.bpartners.geojobs.endpoint.event.model.tile;
 
-import app.bpartners.geojobs.endpoint.event.model.PojaEvent;
+import app.bpartners.geojobs.endpoint.event.model.TaskCreated;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Duration;
 import java.util.List;
-import javax.annotation.processing.Generated;
 import lombok.*;
 
-@Generated("EventBridge")
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder(toBuilder = true)
-@Data
-@EqualsAndHashCode
+@Getter
+@EqualsAndHashCode(callSuper = true)
 @ToString
-public class TileDetectionTaskCreated extends PojaEvent {
-  private String zoneDetectionJobId;
+public class TileDetectionTaskCreated extends TaskCreated<TileDetectionTask> {
+  public TileDetectionTaskCreated(
+      String zoneDetectionJobId,
+      TileDetectionTask task,
+      List<DetectableObjectConfiguration> detectableObjectConfigurations) {
+    super(task);
+    this.zoneDetectionJobId = zoneDetectionJobId;
+    this.detectableObjectConfigurations = detectableObjectConfigurations;
+  }
 
-  @JsonProperty("tileDetectionTask")
-  private TileDetectionTask tileDetectionTask;
+  private final String zoneDetectionJobId;
 
-  @JsonProperty("detectableObjectConfigurations")
-  private List<DetectableObjectConfiguration> detectableObjectConfigurations;
+  private final List<DetectableObjectConfiguration> detectableObjectConfigurations;
 
   @Override
   public Duration maxConsumerDuration() {
