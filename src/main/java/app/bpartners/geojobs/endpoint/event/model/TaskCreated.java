@@ -6,6 +6,7 @@ import lombok.*;
 
 @Getter
 @EqualsAndHashCode(callSuper = false)
+@NoArgsConstructor
 @ToString
 public class TaskCreated<T extends Task> extends PojaEvent {
 

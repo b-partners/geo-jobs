@@ -9,6 +9,7 @@ import lombok.*;
 
 @Getter
 @EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
 @ToString
 public class TileDetectionTaskCreated extends TaskCreated<TileDetectionTask> {
   public TileDetectionTaskCreated(
@@ -20,9 +21,9 @@ public class TileDetectionTaskCreated extends TaskCreated<TileDetectionTask> {
     this.detectableObjectConfigurations = detectableObjectConfigurations;
   }
 
-  private final String zoneDetectionJobId;
+  private String zoneDetectionJobId;
 
-  private final List<DetectableObjectConfiguration> detectableObjectConfigurations;
+  private List<DetectableObjectConfiguration> detectableObjectConfigurations;
 
   @Override
   public Duration maxConsumerDuration() {

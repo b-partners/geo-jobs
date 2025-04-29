@@ -7,6 +7,7 @@ import lombok.*;
 
 @Getter
 @EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
 @ToString
 public class ParcelTilingTaskCreated extends TaskCreated<ParcelTilingTask> {
   public ParcelTilingTaskCreated(ParcelTilingTask task) {

@@ -6,6 +6,7 @@ import lombok.*;
 
 @Getter
 @EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
 @ToString
 public class DetectionAddressConversionTaskCreated
     extends TaskCreated<DetectionAddressConversionTask> {
@@ -16,7 +17,7 @@ public class DetectionAddressConversionTaskCreated
     this.e2ApiKey = e2ApiKey;
   }
 
-  private final String e2ApiKey;
+  private String e2ApiKey;
 
   @Override
   public Duration maxConsumerDuration() {
