@@ -21,6 +21,14 @@ info:
     
     # Examples
     
+    ### Detection on roof objects providing geojson multiPolygon
+    1. Submit detection request through `POST /detections/{id}` where `{id}` is yours to be created
+    using the example request body accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/toiture%20analysis%20payload%20example.json).
+    Note that `detectableObjectModel` property must be set to `BP_TOITURE` and `geoServerProperties` property to `null`
+    2. Track the progress of your detection through `GET /detections/{id}`. 
+    Detection is finished when `geoJsonUrl` property containing your detection result is not null.
+    Expected example result is accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/toiture%20analysis%20result%20example.json)
+    
     ### Detection on roof objects providing addresses 
     1. Submit detection request through `POST /detections/{id}` where `{id}` is yours to be created
     using the example request body accessible [here](https://example.com/docs). 
