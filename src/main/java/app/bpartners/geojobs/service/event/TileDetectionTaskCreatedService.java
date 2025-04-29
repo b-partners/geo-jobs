@@ -1,34 +1,29 @@
 package app.bpartners.geojobs.service.event;
 
-import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.tile.TileDetectionTaskCreated;
-import app.bpartners.geojobs.endpoint.event.model.tile.TileDetectionTaskSucceeded;
+import app.bpartners.geojobs.job.repository.TaskRepository;
+import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
-import app.bpartners.geojobs.service.detection.TileDetectionTaskStatusService;
-import java.util.List;
-import java.util.function.Consumer;
-import lombok.AllArgsConstructor;
+import app.bpartners.geojobs.service.TaskConsumer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
-@AllArgsConstructor
 @Slf4j
-public class TileDetectionTaskCreatedService implements Consumer<TileDetectionTaskCreated> {
-  private final TileDetectionTaskStatusService tileDetectionTaskStatusService;
-  private final TileDetectionTaskCreatedConsumer tileDetectionTaskConsumer;
-  private final EventProducer eventProducer;
+public class TileDetectionTaskCreatedService
+    extends TaskCreatedService<TileDetectionTask, TileDetectionTaskCreated> {
+
+  public TileDetectionTaskCreatedService(
+      TaskConsumer<TileDetectionTask> taskConsumer,
+      TaskStatusService<TileDetectionTask> taskStatusService,
+      TaskRepository<TileDetectionTask> taskRepository) {
+    super(taskConsumer, taskStatusService, taskRepository);
+  }
 
   @Override
-  public void accept(TileDetectionTaskCreated tileDetectionTaskCreated) {
-    TileDetectionTask tileDetectionTask = tileDetectionTaskCreated.getTileDetectionTask();
-    tileDetectionTaskStatusService.process(tileDetectionTask);
-
-    tileDetectionTaskConsumer.accept(tileDetectionTaskCreated);
-
-    eventProducer.accept(
-        List.of(
-            new TileDetectionTaskSucceeded(
-                tileDetectionTask, tileDetectionTaskCreated.getZoneDetectionJobId())));
+  public void accept(TileDetectionTaskCreated event) {
+    event.getTask().setDetectableObjectConfigurations(event.getDetectableObjectConfigurations());
+    event.getTask().setZoneDetectionJobId(event.getZoneDetectionJobId());
+    super.accept(event);
   }
 }

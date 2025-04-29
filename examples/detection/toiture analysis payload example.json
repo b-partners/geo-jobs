@@ -1,0 +1,67 @@
+{
+  "emailReceiver": "your.email@mail.com",
+  "zoneName": "your.zone.name",
+  "geoServerProperties": null,
+  "detectableObjectModel": {
+    "modelName": "BP_TOITURE",
+    "toitureRevetement": true,
+    "arbre": false,
+    "velux": true,
+    "panneauPhotovoltaique": true,
+    "moisissure": true,
+    "usure": true,
+    "fissureCassure": true,
+    "obstacle": true,
+    "cheminee": false,
+    "humidite": true,
+    "risqueFeu": false
+  },
+  "geoJsonZone": [
+    {
+      "id": "you_feature_id",
+      "zoom": 20,
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                2.214246029089143,
+                48.895521738328156
+              ],
+              [
+                2.213880069590856,
+                48.89529127845136
+              ],
+              [
+                2.213903528533053,
+                48.895248535298144
+              ],
+              [
+                2.214131415400119,
+                48.8952489759494
+              ],
+              [
+                2.214203132737695,
+                48.895266161345141
+              ],
+              [
+                2.214292946973539,
+                48.895309785784711
+              ],
+              [
+                2.21466024698281,
+                48.895521738328156
+              ],
+              [
+                2.214246029089143,
+                48.895521738328156
+              ]
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

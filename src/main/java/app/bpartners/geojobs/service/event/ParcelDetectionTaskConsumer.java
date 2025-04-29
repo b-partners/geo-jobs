@@ -8,10 +8,10 @@ import app.bpartners.geojobs.repository.model.detection.ParcelDetectionJob;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.KeyPredicateFunction;
+import app.bpartners.geojobs.service.TaskConsumer;
 import app.bpartners.geojobs.service.TaskToJobConverter;
 import app.bpartners.geojobs.service.detection.ParcelDetectionJobService;
 import java.util.List;
-import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 @AllArgsConstructor
 @Component
 @Slf4j
-public class ParcelDetectionTaskConsumer implements Consumer<ParcelDetectionTask> {
+public class ParcelDetectionTaskConsumer implements TaskConsumer<ParcelDetectionTask> {
   private final EventProducer eventProducer;
   private final TaskToJobConverter<ParcelDetectionTask, ParcelDetectionJob> taskToJobConverter;
   private final ParcelDetectionJobService parcelDetectionJobService;

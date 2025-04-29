@@ -14,8 +14,8 @@ import lombok.ToString;
 @EqualsAndHashCode
 @ToString
 public class HumanZDJStatusRecomputingSubmitted extends JobStatusRecomputingSubmitted {
-  private static final long MAX_CONSUMER_DURATION_IN_SECONDS = Duration.ofMinutes(5).toSeconds();
-  public static final long INITIAL_BACKOFF_IN_SECONDS = Duration.ofMinutes(2).toSeconds();
+  private static final long MAX_CONSUMER_DURATION_IN_SECONDS = Duration.ofSeconds(60).toSeconds();
+  private static final long INITIAL_BACKOFF_IN_SECONDS = Duration.ofSeconds(30).toSeconds();
 
   public HumanZDJStatusRecomputingSubmitted(String jobId) {
     super(jobId, MAX_CONSUMER_DURATION_IN_SECONDS, INITIAL_BACKOFF_IN_SECONDS);

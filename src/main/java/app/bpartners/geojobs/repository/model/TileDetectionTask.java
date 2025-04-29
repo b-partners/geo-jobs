@@ -5,9 +5,11 @@ import static java.time.Instant.now;
 import static org.hibernate.type.SqlTypes.JSON;
 
 import app.bpartners.geojobs.job.model.*;
+import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Transient;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +31,10 @@ public class TileDetectionTask extends Task implements Serializable {
 
   @JdbcTypeCode(JSON)
   private Tile tile;
+
+  @Transient private List<DetectableObjectConfiguration> detectableObjectConfigurations;
+
+  @Transient private String zoneDetectionJobId;
 
   public TileDetectionTask(
       String id,

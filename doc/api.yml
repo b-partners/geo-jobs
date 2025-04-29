@@ -6,7 +6,7 @@ info:
   version: 'latest'
 
 servers:
-  - url: 'https://localhost:8080'
+  - url: 'https://api.birdia.fr'
 
 
 paths:
@@ -569,6 +569,65 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Detection'
+
+  '/detections/{id}/roofer':
+    post:
+      tags:
+        - Detection
+      operationId: processRooferDetection
+      summary: Process detection for roof
+      description: |
+        This detection is handled synchronously under 30 seconds and used especially for roof under 100 square metre
+      security:
+        - ApiKeyAuth: [ ]
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          description: Detection identifier
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDetection'
+      responses:
+        200:
+          description: Detection result for roof
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detection'
+
+  '/detections/{id}/roofer/email':
+    post:
+      tags:
+        - Detection
+      operationId: sendMailAboutProspect
+      summary: Send information about prospect to roofer
+      security:
+        - ApiKeyAuth: [ ]
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          description: Detection identifier
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Prospect'
+      responses:
+        200:
+          description: Detection result for roof
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detection'
+
   '/detections/{id}/geojson':
     post:
       tags:
@@ -598,6 +657,67 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Detection'
+
+  '/detections/{id}/image':
+    post:
+      tags:
+        - Detection
+      operationId: configureRooferDetectionImageConfig
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          description: Detection identifier
+          required: true
+      requestBody:
+        description: Image from a specific address
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        200:
+          description: Detection with updated image file uploaded url
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detection'
+
+  '/detections/{id}/pdf':
+    post:
+      tags:
+        - Detection
+      operationId: uploadRooferDetectionPdfResult
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          description: Detection identifier
+          required: true
+      requestBody:
+        description: Pdf of the detection result
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        200:
+          description: Detection with updated pdf file uploaded url
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detection'
+
   '/detections/{id}/shape':
     post:
       tags:
@@ -695,6 +815,28 @@ paths:
         '500':
           description: Internal Server Error
           $ref: '#/components/responses/500'
+  '/api/keys':
+    post:
+      tags:
+        - Security
+      operationId: generateApiKeys
+      summary: Generate new API keys
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/CreateApiKey'
+      responses:
+        200:
+          description: API keys generated
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApiKey'
   '/api/keys/revoke':
     delete:
       tags:
@@ -749,6 +891,45 @@ components:
           schema:
             $ref: '#/components/schemas/InternalServerException'
   schemas:
+    CreateApiKey:
+      type: object
+      properties:
+        consumerName:
+          type: string
+        consumerEmail:
+          type: string
+        consumerType:
+          type: string
+          enum:
+            - INSURANCE
+            - COMMUNITY
+            - ADMIN
+        maxSurface:
+          type: number
+          description: allowed surface to detect in square degree
+        authorizedZones:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuthorizedZone'
+        detectableObjectTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/DetectableObjectType'
+    ApiKey:
+      type: object
+      properties:
+        key:
+          type: string
+        creationDatetime:
+          type: string
+          format: date-time
+    AuthorizedZone:
+      type: object
+      properties:
+        name:
+          type: string
+        zone:
+          $ref: '#/components/schemas/MultiPolygon'
     SingleUserInfo:
       type: object
       properties:
@@ -1236,7 +1417,9 @@ components:
             - $ref: '#/components/schemas/Point'
             - $ref: '#/components/schemas/Polygon'
             - $ref: '#/components/schemas/MultiPolygon'
-
+        properties:
+          type: object
+          additionalProperties: true
     Geometry:
       type: object
       required:
@@ -1544,4 +1727,21 @@ components:
         shapeUrl:
           type: string
         excelUrl:
+          type: string
+        imageUrl:
+          type: string
+        pdfUrl:
+          type: string
+    Prospect:
+      type: object
+      properties:
+        email:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: string
+        address:
           type: string

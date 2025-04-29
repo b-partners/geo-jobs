@@ -67,10 +67,6 @@ public class GeoJsonConversionJobService
     var zoneDetectionJob = zoneDetectionJobService.findById(detectionJobId);
     var jobStatus = zoneDetectionJob.getStatus();
     var restJobStatus = jobStatusMapper.toRest(jobStatus);
-    if (!zoneDetectionJob.isSucceeded()) {
-      // TODO: add step here : MACHINE_DETECTION or HUMAN or GEO_JSON_CONVERSION
-      return new GeoJsonsUrl().url(null).status(restJobStatus);
-    }
     var geoJsonConversionJob = getOrComputeGeoJsonConversionJob(zoneDetectionJob);
     return new GeoJsonsUrl().url(generatePreSignedUrl(geoJsonConversionJob)).status(restJobStatus);
   }

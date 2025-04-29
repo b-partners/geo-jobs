@@ -5,7 +5,9 @@ import static org.hibernate.type.SqlTypes.JSON;
 import app.bpartners.geojobs.endpoint.rest.model.Geometry;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import java.io.Serializable;
+import java.util.HashMap;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,6 +25,11 @@ import org.hibernate.annotations.JdbcTypeCode;
 public class Feature implements Serializable {
   private String id;
   private Integer zoom;
+
+  private String priorityLayer;
+
+  @JsonDeserialize(as = HashMap.class)
+  private HashMap<String, Object> properties = new HashMap<>();
 
   @JdbcTypeCode(JSON)
   private FeatureGeometry geometry;

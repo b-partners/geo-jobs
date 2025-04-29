@@ -5,7 +5,7 @@
       "type" : "Polygon"
     },
     "type" : "Feature",
-    "properties" : { }
+    "properties" : null
   } ],
   "type" : "FeatureCollection"
 }

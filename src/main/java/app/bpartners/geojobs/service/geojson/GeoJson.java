@@ -66,11 +66,11 @@ public class GeoJson implements Serializable {
   @EqualsAndHashCode
   public static class GeoFeature implements Serializable {
     private static final String DEFAULT_FEATURE_TYPE = "Feature";
-    private Map<String, String> properties;
+    private Map<String, Object> properties;
     private String type;
     private MultiPolygon geometry;
 
-    public GeoFeature(Map<String, String> properties, MultiPolygon geometry) {
+    public GeoFeature(Map<String, Object> properties, MultiPolygon geometry) {
       this.properties = properties;
       this.type = DEFAULT_FEATURE_TYPE;
       this.geometry = geometry;

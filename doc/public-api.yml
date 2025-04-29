@@ -18,10 +18,30 @@ info:
     1. If your zone is described by a **GeoJson**, then just set accordingly the `geoJsonZone` field in the payload.
     2. If your zone is described by a **Shape file**, then upload it in a second call `POST /detections/{id}/shape`.
     3. If your zone is described by a list of addresses in an **Excel file**, then upload it in a second call `POST /detections/{id}/excel`.
+    
+    # Examples
+    
+    ### Detection on roof objects providing geojson multiPolygon
+    1. Submit detection request through `POST /detections/{id}` where `{id}` is yours to be created
+    using the example request body accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/toiture%20analysis%20payload%20example.json).
+    Note that `detectableObjectModel` property must be set to `BP_TOITURE` and `geoServerProperties` property to `null`
+    2. Track the progress of your detection through `GET /detections/{id}`. 
+    Detection is finished when `geoJsonUrl` property containing your detection result is not null.
+    Expected example result is accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/toiture%20analysis%20result%20example.json)
+    
+    ### Detection on roof objects providing addresses 
+    1. Submit detection request through `POST /detections/{id}` where `{id}` is yours to be created
+    using the example request body accessible [here](https://example.com/docs). 
+    Note that `detectableObjectModel` property must be set to `BP_TOITURE` and `geoServerProperties` property to `null`.
+    2. Submit list of addresses contained inside an **Excel file** in a second call `POST /detections/{id}/excel`.
+    3. Track the progress of your detection through `GET /detections/{id}`. 
+    Detection is finished when `geoJsonUrl` property containing your detection result is not null.
+    4. Processing time is variable due to address conversion, the expected example result is accessible [here](https://example.com/docs). 
+
   version: 'latest'
 
 servers:
-  - url: 'https://detection.api.imagery.bpartners.app'
+  - url: 'https://api.birdia.fr'
 
 paths:
   '/usage':
@@ -141,6 +161,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateDetection'
+            examples:
+              detectionForRoof:
+                $ref: '#/components/examples/DetectionUsingToitureModel'
       responses:
         200:
           description: Detection result for roof
@@ -231,6 +254,50 @@ components:
       type: apiKey
       in: header
       name: x-api-key
+  examples:
+    DetectionUsingToitureModel:
+      summary: Detection using BP_TOITURE model
+      value:
+        emailReceiver: "<your-email-address>"
+        zoneName: "<your-zone-name>"
+        geoServerProperties:
+          geoServerUrl: null
+          geoServerParameter:
+            service: "WMS"
+            request: null
+            layers: null
+            styles: null
+            format: null
+            transparent: true
+            version: null
+            width: 1024
+            height: 1024
+            srs: null
+        detectableObjectModel:
+          modelName: "BP_TOITURE"
+          toitureRevetement: true
+          humidite: true
+          velux: true
+          panneauPhotovoltaique: true
+          moisissure: true
+          usure: true
+          arbre: false
+          fissureCassure: false
+          obstacle: false
+          cheminee: false
+          risqueFeu: false
+        geoJsonZone:
+          - id: "feature_identifier"
+            zoom: 20
+            type: "Feature"
+            geometry:
+              type: "MultiPolygon"
+              coordinates:
+                - - - [ 4.825981555776383, 45.733401843736686 ]
+                    - [ 4.826104636117987, 45.733393355437265 ]
+                    - [ 4.826096147818566, 45.733285129619645 ]
+                    - [ 4.825981555776383, 45.733291495844213 ]
+                    - [ 4.825981555776383, 45.733401843736686 ]
   schemas:
     Page:
       type: integer

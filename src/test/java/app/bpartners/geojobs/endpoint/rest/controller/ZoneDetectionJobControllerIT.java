@@ -191,7 +191,7 @@ class ZoneDetectionJobControllerIT extends FacadeIT {
 
     assertNull(actual1.getUrl());
     assertNotNull(actual1.getStatus());
-    verify(eventProducer, times(1)).accept(eventCapture.capture());
+    verify(eventProducer, times(2)).accept(eventCapture.capture());
     assertEquals(
         new GeoJsonsUrl()
             .url(null)

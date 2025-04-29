@@ -52,28 +52,31 @@ public class GeoJsonConversionAssemblyInitiatedService
     var savedConversionJob =
         geoJsonConversionJobRepository.save(
             geoJsonConversionJob.toBuilder().fileKey(combinedFileKey).build());
-
-    var humanZDJ = zoneDetectionJobService.getHumanZdjFromZdjId(zoneDetectionJob.getId());
-    var machineZDJ = zoneDetectionJobService.getMachineZdjFromZdjId(zoneDetectionJob.getId());
-    var detection =
-        detectionRepository
-            .findByZdjId(humanZDJ.getId())
-            .orElseGet(
-                () -> {
-                  var optionalDetectionFromMachineZDJ =
-                      detectionRepository.findByZdjId(machineZDJ.getId());
-                  if (optionalDetectionFromMachineZDJ.isPresent()) {
-                    return optionalDetectionFromMachineZDJ.orElseThrow();
-                  }
-                  throw new NotFoundException(
-                      "Any detection found associated to ZDJ(id=" + zoneDetectionJob.getId() + ")");
-                });
-    detectionRepository.save(
-        detection.toBuilder().geojsonS3FileKey(savedConversionJob.getFileKey()).build());
-    eventProducer.accept(
-        List.of(
-            GeoJsonConversionAssemblySucceeded.builder()
-                .geoJsonConversionJob(savedConversionJob)
-                .build()));
+    if (zoneDetectionJob.isFinished()) {
+      var humanZDJ = zoneDetectionJobService.getHumanZdjFromZdjId(zoneDetectionJob.getId());
+      var machineZDJ = zoneDetectionJobService.getMachineZdjFromZdjId(zoneDetectionJob.getId());
+      var detection =
+          detectionRepository
+              .findByZdjId(humanZDJ.getId())
+              .orElseGet(
+                  () -> {
+                    var optionalDetectionFromMachineZDJ =
+                        detectionRepository.findByZdjId(machineZDJ.getId());
+                    if (optionalDetectionFromMachineZDJ.isPresent()) {
+                      return optionalDetectionFromMachineZDJ.orElseThrow();
+                    }
+                    throw new NotFoundException(
+                        "Any detection found associated to ZDJ(id="
+                            + zoneDetectionJob.getId()
+                            + ")");
+                  });
+      detectionRepository.save(
+          detection.toBuilder().geojsonS3FileKey(savedConversionJob.getFileKey()).build());
+      eventProducer.accept(
+          List.of(
+              GeoJsonConversionAssemblySucceeded.builder()
+                  .geoJsonConversionJob(savedConversionJob)
+                  .build()));
+    }
   }
 }

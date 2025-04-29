@@ -41,6 +41,7 @@ class ReadmeMonitorFilterIT extends FacadeIT {
     authenticatedClient.setRequestInterceptor(
         builder -> builder.header(API_KEY_HEADER, "communityApiKey"));
     authenticatedClient.setScheme("http");
+    authenticatedClient.setHost("localhost");
     authenticatedClient.setPort(port);
     authenticatedClient.setObjectMapper(objectMapper);
 

@@ -1,27 +1,19 @@
 package app.bpartners.geojobs.endpoint.event.model.parcel;
 
-import app.bpartners.geojobs.endpoint.event.model.PojaEvent;
+import app.bpartners.geojobs.endpoint.event.model.TaskCreated;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Duration;
-import javax.annotation.processing.Generated;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
-@Generated("EventBridge")
+@Getter
+@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-@AllArgsConstructor
-@Builder(toBuilder = true)
-@Data
-@EqualsAndHashCode
 @ToString
-public class ParcelDetectionTaskCreated extends PojaEvent {
-  @JsonProperty("detectionTask")
-  private ParcelDetectionTask task;
+public class ParcelDetectionTaskCreated extends TaskCreated<ParcelDetectionTask> {
+
+  public ParcelDetectionTaskCreated(ParcelDetectionTask task) {
+    super(task);
+  }
 
   @Override
   public Duration maxConsumerDuration() {

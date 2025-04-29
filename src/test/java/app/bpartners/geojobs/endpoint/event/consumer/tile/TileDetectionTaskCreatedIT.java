@@ -91,11 +91,10 @@ class TileDetectionTaskCreatedIT extends DetectionIT {
                   tileDetectionTask ->
                       eventProducerMock.accept(
                           List.of(
-                              TileDetectionTaskCreated.builder()
-                                  .tileDetectionTask(tileDetectionTask)
-                                  .detectableObjectConfigurations(detectableObjectConfiguration())
-                                  .zoneDetectionJobId(testData.detectionJobId())
-                                  .build())));
+                              new TileDetectionTaskCreated(
+                                  testData.detectionJobId(),
+                                  tileDetectionTask,
+                                  detectableObjectConfiguration()))));
             });
 
     eventProducerMock.accept(

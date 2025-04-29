@@ -29,6 +29,8 @@ public class Detection implements Serializable {
 
   private String shapeFileKey;
   private String excelFileKey;
+  private String imageFileKey;
+  private String pdfFileKey;
 
   @Column(name = "zdj_id")
   private String zdjId;
@@ -69,6 +71,9 @@ public class Detection implements Serializable {
   @JdbcTypeCode(JSON)
   @Getter(AccessLevel.NONE)
   private List<Feature> multiPolygonGeoJsonZone;
+
+  @JdbcTypeCode(JSON)
+  private List<String> convertedAddresses;
 
   public List<app.bpartners.geojobs.endpoint.rest.model.Feature> getProvidedGeoJsonZone() {
     return providedGeoJsonZone == null

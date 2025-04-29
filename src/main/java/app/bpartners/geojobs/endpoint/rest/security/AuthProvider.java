@@ -2,6 +2,8 @@ package app.bpartners.geojobs.endpoint.rest.security;
 
 import app.bpartners.geojobs.endpoint.rest.security.authenticator.UsernamePasswordAuthenticator;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
+import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
+import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import lombok.AllArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.dao.AbstractUserDetailsAuthenticationProvider;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Component;
 @AllArgsConstructor
 public class AuthProvider extends AbstractUserDetailsAuthenticationProvider {
   private final UsernamePasswordAuthenticator authenticator;
+  private final CommunityAuthorizationRepository communityAuthorizationRepository;
 
   @Override
   protected void additionalAuthenticationChecks(
@@ -28,5 +31,9 @@ public class AuthProvider extends AbstractUserDetailsAuthenticationProvider {
 
   public Principal getPrincipal() {
     return (Principal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+  }
+
+  public CommunityAuthorization getAuthenticatedCommunity() {
+    return communityAuthorizationRepository.findByApiKey(getPrincipal().getApiKey()).orElseThrow();
   }
 }

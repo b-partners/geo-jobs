@@ -10,7 +10,7 @@ plugins {
 
     id 'jacoco'
 
-    id "org.sonarqube" version "4.4.1.3373" 
+    id "org.sonarqube" version "4.4.1.3373"
 }
 
 jacoco {
@@ -22,13 +22,13 @@ sonarqube {
         property "sonar.java.source", "21"
         property "sonar.java.target", "21"
     }
-} 
+}
 
 repositories {
-mavenLocal()
-maven {
-  url 'https://repo.osgeo.org/repository/geotools-releases'
-}
+    mavenLocal()
+    maven {
+        url 'https://repo.osgeo.org/repository/geotools-releases'
+    }
     mavenCentral()
 }
 
@@ -53,13 +53,13 @@ task generateJavaClient(type: GenerateTask) {
     modelPackage = "app.bpartners.geojobs.endpoint.rest.model"
 
     configOptions = [
-            serializableModel: "true",
+            serializableModel   : "true",
             serializationLibrary: "jackson",
-            dateLibrary: "custom"
+            dateLibrary         : "custom"
     ]
     typeMappings = [
             // What date-time type to use when? https://i.stack.imgur.com/QPhGW.png
-            Date: "java.time.LocalDate",
+            Date    : "java.time.LocalDate",
             DateTime: "java.time.Instant",
     ]
     library = "native"
@@ -86,7 +86,7 @@ task generateTsClient(type: org.openapitools.generator.gradle.plugin.tasks.Gener
     ]
 }
 task publishJavaClientToMavenLocal(type: Exec, dependsOn: generateJavaClient) {
-    if (Os.isFamily(Os.FAMILY_WINDOWS)){
+    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
         commandLine './.shell/publish_gen_to_maven_local.bat'
     } else {
         commandLine './.shell/publish_gen_to_maven_local.sh'
@@ -198,6 +198,8 @@ dependencies {
 
     implementation 'org.apache.tika:tika-core:2.9.1'
 
+    implementation 'org.apache.poi:poi-ooxml:5.4.1'
+
     implementation 'org.reflections:reflections:0.10.2'
 
     compileOnly 'org.projectlombok:lombok'
@@ -216,13 +218,13 @@ dependencies {
     implementation 'io.sentry:sentry-logback:7.6.0'
     implementation 'io.sentry:sentry-spring-boot-starter-jakarta:7.4.0'
     implementation 'org.springframework.boot:spring-boot-starter-security'
-implementation 'app.bpartners:geo-jobs-gen:latest'
-implementation 'org.thymeleaf:thymeleaf:3.1.1.RELEASE'
-implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.1'
-implementation 'org.geotools:gt-api:31.2'
+    implementation 'app.bpartners:geo-jobs-gen:latest'
+    implementation 'org.thymeleaf:thymeleaf:3.1.1.RELEASE'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.1'
+    implementation 'org.geotools:gt-api:31.2'
     implementation 'org.geotools:gt-geojson:31.2'
     implementation 'org.geotools:gt-main:31.2'
-implementation 'org.geotools:gt-referencing:31.2'
-implementation 'org.geotools:gt-epsg-hsql:31.2'
+    implementation 'org.geotools:gt-referencing:31.2'
+    implementation 'org.geotools:gt-epsg-hsql:31.2'
 
 }

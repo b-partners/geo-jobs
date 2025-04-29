@@ -81,6 +81,7 @@ class CommunityAuthenticatedAccessIT extends FacadeIT {
     var authenticatedClient = new ApiClient();
     authenticatedClient.setRequestInterceptor(builder -> builder.header(API_KEY_HEADER, APIKEY));
     authenticatedClient.setScheme("http");
+    authenticatedClient.setHost("localhost");
     authenticatedClient.setPort(port);
     authenticatedClient.setObjectMapper(om);
 

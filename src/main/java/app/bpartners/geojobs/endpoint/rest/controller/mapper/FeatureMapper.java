@@ -11,9 +11,7 @@ import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import java.math.BigDecimal;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import javax.annotation.Nullable;
 import lombok.SneakyThrows;
 import org.locationtech.jts.geom.Coordinate;
@@ -49,6 +47,8 @@ public class FeatureMapper {
         .id(rest.getId())
         .zoom(rest.getZoom())
         .geometry(toDomainFeatureGeometry(rest.getGeometry()))
+        .properties(
+            rest.getProperties() == null ? new HashMap<>() : new HashMap<>(rest.getProperties()))
         .build();
   }
 
@@ -57,7 +57,11 @@ public class FeatureMapper {
       return null;
     }
     var restFeatureGeometry = toRestFeatureGeometry(domain.getGeometry());
-    return new Feature().id(domain.getId()).zoom(domain.getZoom()).geometry(restFeatureGeometry);
+    return new Feature()
+        .id(domain.getId())
+        .zoom(domain.getZoom())
+        .geometry(restFeatureGeometry)
+        .properties(domain.getProperties());
   }
 
   @SneakyThrows

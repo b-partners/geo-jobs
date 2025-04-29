@@ -55,10 +55,10 @@ class ZoneDetectionJobCreatedIT extends DetectionIT {
   @NonNull
   private static List<LocalEventQueue.CustomEventDelayConfig> customEventConfigList() {
     return List.of(
-        new LocalEventQueue.CustomEventDelayConfig(AutoTaskStatisticRecomputingSubmitted.class, 50),
+        new LocalEventQueue.CustomEventDelayConfig(AutoTaskStatisticRecomputingSubmitted.class, 20),
         new LocalEventQueue.CustomEventDelayConfig(
-            ParcelDetectionStatusRecomputingSubmitted.class, 50),
-        new LocalEventQueue.CustomEventDelayConfig(ZDJStatusRecomputingSubmitted.class, 50));
+            ParcelDetectionStatusRecomputingSubmitted.class, 20),
+        new LocalEventQueue.CustomEventDelayConfig(ZDJStatusRecomputingSubmitted.class, 20));
   }
 
   @SneakyThrows
