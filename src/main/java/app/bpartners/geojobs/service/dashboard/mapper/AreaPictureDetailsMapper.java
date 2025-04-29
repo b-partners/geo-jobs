@@ -38,6 +38,7 @@ public class AreaPictureDetailsMapper {
     properties.put(FEATURE_ADDRESS_PROPERTY, address);
     properties.put("id", featureId);
     properties.put("zoom", zoom);
+    properties.put("priorityLayer", layer.name());
     return Feature.builder()
         .id(featureId)
         .zoom(zoom)
@@ -48,7 +49,6 @@ public class AreaPictureDetailsMapper {
                     pointToMultiPolygonConverter.generateSquareMultiPolygon(multiPolygon))
                 .build())
         .properties(properties)
-        .priorityLayer(layer.name())
         .build();
   }
 

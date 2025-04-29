@@ -79,9 +79,9 @@ public class HttpApiTilesDownloader implements TilesDownloader {
             restTemplate.getForEntity(new URI(responseEntity.getBody().fileUrl), byte[].class);
         var zip = fileWriter.apply(file.getBody(), null);
         var layers =
-            parcelContent.getFeature().getPriorityLayer() == null
+            parcelContent.getFeature().getProperties().get("priorityLayer") == null
                 ? parcelContent.getGeoServerParameter().getLayers()
-                : parcelContent.getFeature().getPriorityLayer();
+                : parcelContent.getFeature().getProperties().get("priorityLayer").toString();
         var unzipped = unzip(zip, layers);
         zip.delete();
 
@@ -104,12 +104,14 @@ public class HttpApiTilesDownloader implements TilesDownloader {
 
   @SneakyThrows
   private File getServerInfoFile(ParcelContent parcelContent) {
-    var priorityLayer = parcelContent.getFeature().getPriorityLayer();
     var geoServerParameter = parcelContent.getGeoServerParameter();
     String geoServerUrl = String.valueOf(parcelContent.getGeoServerUrl());
     String service = geoServerParameter.getService();
     String request = geoServerParameter.getRequest();
-    String layers = priorityLayer == null ? geoServerParameter.getLayers() : priorityLayer;
+    String layers =
+        parcelContent.getFeature().getProperties().get("priorityLayer") == null
+            ? geoServerParameter.getLayers()
+            : parcelContent.getFeature().getProperties().get("priorityLayer").toString();
     String styles = geoServerParameter.getStyles();
     String format = geoServerParameter.getFormat();
     String transparent = String.valueOf(geoServerParameter.getTransparent());
