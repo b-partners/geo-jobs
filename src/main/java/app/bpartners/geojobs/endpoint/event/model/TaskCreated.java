@@ -5,6 +5,7 @@ import java.time.Duration;
 import lombok.*;
 
 @Getter
+@Setter
 @EqualsAndHashCode(callSuper = false)
 @NoArgsConstructor
 @ToString
