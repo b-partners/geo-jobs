@@ -132,7 +132,7 @@ public class SecurityConf {
                     .hasAuthority(ROLE_ADMIN.name())
                     .requestMatchers(POST, "/detections/*")
                     .hasAnyAuthority(ROLE_ADMIN.name(), ROLE_COMMUNITY.name())
-                    .requestMatchers(POST, "/detections/*/roofer")
+                    .requestMatchers(POST, "/detections/roofer")
                     .hasAnyAuthority(ROLE_ADMIN.name(), ROLE_COMMUNITY.name())
                     .requestMatchers(POST, "/detections/*/roofer/email")
                     .hasAnyAuthority(ROLE_ADMIN.name(), ROLE_COMMUNITY.name())

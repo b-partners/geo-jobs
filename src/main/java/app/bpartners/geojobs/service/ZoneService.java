@@ -45,6 +45,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -56,6 +58,8 @@ import org.springframework.stereotype.Service;
 @AllArgsConstructor
 @Slf4j
 public class ZoneService {
+  private static final ExecutorService executorService =
+      Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() - 1);
   private static final int DEFAULT_ZOOM = 20;
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final ZoneTilingJobService zoneTilingJobService;

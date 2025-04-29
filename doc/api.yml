@@ -1680,6 +1680,8 @@ components:
     CreateDetection:
       type: object
       properties:
+        id:
+          type: string
         emailReceiver:
           type: string
           description: |
