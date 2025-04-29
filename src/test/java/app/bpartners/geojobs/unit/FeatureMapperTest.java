@@ -52,8 +52,8 @@ class FeatureMapperTest {
     MultiPolygon multiPolygon = new MultiPolygon().coordinates(coordinates);
     multiPolygon.setType(MULTI_POLYGON);
     feature.setGeometry(new FeatureGeometry(multiPolygon));
-    feature.setZoom(20);
-    feature.setId(id);
+    feature.getProperties().put("zoom", 20);
+    feature.getProperties().put("id", id);
     return feature;
   }
 

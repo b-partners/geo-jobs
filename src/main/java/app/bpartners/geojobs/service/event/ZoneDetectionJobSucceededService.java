@@ -11,6 +11,8 @@ import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.service.DetectionFinishedMailer;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
@@ -47,10 +49,16 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
                             succeededJobId, detectableConfiguration.getObjectType().name())
                         > 0);
     if (!machineDetectionFoundAnyDetectedTileFromDetectableConfiguration) {
-      detectionFinishedMailer.accept(
-          succeededZoneDetectionJob.getEmailReceiver(),
-          succeededZoneDetectionJob.getZoneName(),
-          succeededZoneDetectionJob.getStatus().getCreationDatetime());
+      var succeededDatetime = succeededZoneDetectionJob.getStatus().getCreationDatetime();
+      var zoneName = succeededZoneDetectionJob.getZoneName();
+      var formattedCreationDatetime =
+          DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")
+              .format(succeededDatetime.atZone(ZoneId.of("Europe/Paris")));
+
+      var emailSubject =
+          String.format(
+              "Analyse sur la zone %s terminée le %s", zoneName, formattedCreationDatetime);
+      detectionFinishedMailer.accept(succeededZoneDetectionJob.getEmailReceiver(), emailSubject);
       return;
     }
     var minimumConfidenceForDelivery =

@@ -2,6 +2,7 @@ package app.bpartners.geojobs.unit;
 
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toDomainFeature;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.MACHINE_DETECTION;
+import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.SUCCEEDED;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.ProgressionEnum.FINISHED;
 import static java.util.UUID.randomUUID;
@@ -15,7 +16,7 @@ import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionProcessSuccee
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionStepStatisticMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
 import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
-import app.bpartners.geojobs.endpoint.rest.model.BPToitureModel;
+import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel;
 import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.endpoint.rest.model.Prospect;
@@ -43,6 +44,7 @@ import jakarta.mail.internet.AddressException;
 import jakarta.mail.internet.InternetAddress;
 import java.io.File;
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -136,7 +138,7 @@ public class RooferDetectionServiceTest {
     return Detection.builder()
         .id(randomUUID().toString())
         .isRooferMade(true)
-        .bpToitureModel(new BPToitureModel())
+        .detectableObjectModel(new DetectableObjectModel().modelName(TOITURE))
         .zoneName("Dijon")
         .imageFileKey(randomUUID().toString())
         .providedGeoJsonZone(List.of(toDomainFeature(feature())))
@@ -155,10 +157,11 @@ public class RooferDetectionServiceTest {
             List.of(new BigDecimal("465.95744680851067"), new BigDecimal("282.97872340425533")));
     MultiPolygon multiPolygon = new MultiPolygon().coordinates(List.of(List.of(coordinates)));
     multiPolygon.setType(MultiPolygon.TypeEnum.MULTI_POLYGON);
-
+    HashMap<String, Object> properties = new HashMap<>();
+    properties.put("id", randomUUID().toString());
+    properties.put("zoom", 20);
     return new app.bpartners.geojobs.endpoint.rest.model.Feature()
-        .zoom(20)
-        .id(randomUUID().toString())
+        .properties(properties)
         .geometry(new FeatureGeometry(multiPolygon));
   }
 }

@@ -8,6 +8,7 @@ import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
@@ -80,7 +81,10 @@ class ParcelizationControllerIT extends FacadeIT {
   private Feature featureFromCoordinates(List<List<List<List<BigDecimal>>>> coordinates) {
     MultiPolygon multiPolygon = new MultiPolygon().coordinates(coordinates);
     multiPolygon.setType(MULTI_POLYGON);
-    return new Feature().geometry(new FeatureGeometry(multiPolygon)).id(null).zoom(20);
+    HashMap<String, Object> properties = new HashMap<>();
+    properties.put("id", null);
+    properties.put("zoom", 20);
+    return new Feature().geometry(new FeatureGeometry(multiPolygon)).properties(properties);
   }
 
   @Test
@@ -132,7 +136,7 @@ class ParcelizationControllerIT extends FacadeIT {
   }
 
   private Feature ignoreId(Feature feature) {
-    feature.setId(null);
+    feature.getProperties().put("id", null);
     return feature;
   }
 }

@@ -63,7 +63,10 @@ public class RooferDetectionService
   @Override
   public Detection apply(app.bpartners.geojobs.repository.model.detection.Detection detection) {
     var providedGeoJson = detection.getProvidedGeoJsonZone();
-    int zoom = providedGeoJson.getFirst().getZoom();
+    int zoom =
+        providedGeoJson.getFirst().getProperties().get("zoom") == null
+            ? null
+            : (Integer) providedGeoJson.getFirst().getProperties().get("zoom");
     var flattedFeatures =
         providedGeoJson.stream()
             .map(app.bpartners.geojobs.endpoint.rest.model.Feature::getGeometry)

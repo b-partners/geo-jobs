@@ -34,7 +34,7 @@ import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.JobFilteredMailer;
 import app.bpartners.geojobs.service.NotFinishedTaskRetriever;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
-import java.net.URL;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -269,12 +269,17 @@ public class ZoneTilingJobService extends JobService<ParcelTilingTask, ZoneTilin
 
   @SneakyThrows
   public static List<ParcelTilingTask> getTilingTasks(CreateZoneTilingJob job, String jobId) {
-    var serverUrl = new URL(Objects.requireNonNull(job.getGeoServerUrl()));
+    var serverUrl = new URI(Objects.requireNonNull(job.getGeoServerUrl())).toURL();
     return Objects.requireNonNull(job.getFeatures()).stream()
         .map(
             feature -> {
-              feature.setZoom(
-                  zoomMapper.toDomain(Objects.requireNonNull(job.getZoomLevel())).getZoomLevel());
+              feature
+                  .getProperties()
+                  .put(
+                      "zoom",
+                      zoomMapper
+                          .toDomain(Objects.requireNonNull(job.getZoomLevel()))
+                          .getZoomLevel());
               return tilingTaskMapper.from(feature, serverUrl, job.getGeoServerParameter(), jobId);
             })
         .collect(toList());

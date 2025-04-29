@@ -8,6 +8,8 @@ import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionAssemblySucce
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionJob;
 import app.bpartners.geojobs.service.event.GeoJsonConversionAssemblySucceededService;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import org.junit.jupiter.api.Test;
 
 class GeoJsonConversionAssemblySucceededServiceTest {
@@ -22,6 +24,12 @@ class GeoJsonConversionAssemblySucceededServiceTest {
     var creationDatetime = now();
     var emailReceiver = "emailReceiver";
     var zoneName = "zoneName";
+    var emailSubject =
+        String.format(
+            "Analyse sur la zone %s terminée le %s",
+            zoneName,
+            DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")
+                .format(creationDatetime.atZone(ZoneId.of("Europe/Paris"))));
     when(jobStatusMock.getCreationDatetime()).thenReturn(creationDatetime);
     when(succeededGeoJsonConversionJobMock.getStatus()).thenReturn(jobStatusMock);
     when(succeededGeoJsonConversionJobMock.getEmailReceiver()).thenReturn(emailReceiver);
@@ -32,6 +40,6 @@ class GeoJsonConversionAssemblySucceededServiceTest {
             subject.accept(
                 new GeoJsonConversionAssemblySucceeded(succeededGeoJsonConversionJobMock)));
 
-    verify(detectionFinishedMailerMock, only()).accept(emailReceiver, zoneName, creationDatetime);
+    verify(detectionFinishedMailerMock, only()).accept(emailReceiver, emailSubject);
   }
 }

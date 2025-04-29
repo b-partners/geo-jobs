@@ -51,13 +51,7 @@ public class Detection implements Serializable {
   private List<DetectableObjectConfiguration> detectableObjectConfigurations;
 
   @JdbcTypeCode(JSON)
-  private BPToitureModel bpToitureModel;
-
-  @JdbcTypeCode(JSON)
-  private BPLomModel bpLomModel;
-
-  @JdbcTypeCode(JSON)
-  private BPZanModel bpZanModel;
+  private DetectableObjectModel detectableObjectModel;
 
   // TODO: save as entity
   @JdbcTypeCode(JSON)
@@ -85,20 +79,6 @@ public class Detection implements Serializable {
     return multiPolygonGeoJsonZone == null
         ? null
         : multiPolygonGeoJsonZone.stream().map(FeatureMapper::toRestFeature).toList();
-  }
-
-  public DetectableObjectModel getDetectableObjectModel() {
-    DetectableObjectModel detectableObjectModel = new DetectableObjectModel();
-    if (bpToitureModel != null) {
-      detectableObjectModel.setActualInstance(bpToitureModel);
-    } else if (bpLomModel != null) {
-      detectableObjectModel.setActualInstance(bpLomModel);
-    } else if (bpZanModel != null) {
-      detectableObjectModel.setActualInstance(bpZanModel);
-    } else {
-      return null;
-    }
-    return detectableObjectModel;
   }
 
   public boolean isSucceeded() {

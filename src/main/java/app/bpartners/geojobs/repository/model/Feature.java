@@ -26,8 +26,6 @@ public class Feature implements Serializable {
   private String id;
   private Integer zoom;
 
-  private String priorityLayer;
-
   @JsonDeserialize(as = HashMap.class)
   private HashMap<String, Object> properties = new HashMap<>();
 

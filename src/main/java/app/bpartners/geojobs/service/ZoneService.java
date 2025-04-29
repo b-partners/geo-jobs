@@ -84,7 +84,9 @@ public class ZoneService {
       var featuresFileContent = Files.readString(featuresFromShape.toPath());
       List<Feature> features =
           objectMapper.readValue(featuresFileContent, new TypeReference<>() {});
-      return features.stream().peek(feature -> feature.setZoom(DEFAULT_ZOOM)).toList();
+      return features.stream()
+          .peek(feature -> feature.getProperties().put("zoom", DEFAULT_ZOOM))
+          .toList();
     } catch (Exception e) {
       throw new ApiException(
           CLIENT_EXCEPTION, "Unable to convert uploaded file to Features, exception=" + e);
@@ -371,9 +373,10 @@ public class ZoneService {
       boolean isRooferMade) {
     var detectionToSave =
         mapFromRestCreateDetection(detectionId, createDetection, communityOwnerId, isRooferMade);
+    List<Feature> geoJsonZone =
+        createDetection.getGeoJsonZone() == null ? List.of() : createDetection.getGeoJsonZone();
     var savedDetection =
-        communityUsedSurfaceService.persistDetectionWithSurfaceUsage(
-            detectionToSave, createDetection.getGeoJsonZone());
+        communityUsedSurfaceService.persistDetectionWithSurfaceUsage(detectionToSave, geoJsonZone);
     eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
     return savedDetection;
   }
@@ -384,15 +387,17 @@ public class ZoneService {
       @Nullable String communityOwnerId,
       boolean isRooferMade) {
     var detectableObjectModel = createDetection.getDetectableObjectModel();
-    var modelActualInstance = Objects.requireNonNull(detectableObjectModel).getActualInstance();
+    var modelName = detectableObjectModel.getModelName();
     var detectionId = randomUUID().toString();
     var detectableObjectConfigurations =
-        detectableObjectTypeMapper.mapDefaultConfigurationsFromModel(
-            detectionId, modelActualInstance);
-    var providedGeoJsonZone =
-        createDetection.getGeoJsonZone().stream().map(FeatureMapper::toDomainFeature).toList();
+        detectableObjectTypeMapper.mapDefaultConfigurationsFromModel(detectionId, modelName);
+    var geoJsonZone = createDetection.getGeoJsonZone();
+    List<app.bpartners.geojobs.repository.model.Feature> providedGeoJsonZone =
+        geoJsonZone == null
+            ? List.of()
+            : geoJsonZone.stream().map(FeatureMapper::toDomainFeature).toList();
     var featuresHasAllMultiPolygonInstances =
-        featureMultiPolygonChecker.apply(createDetection.getGeoJsonZone());
+        geoJsonZone != null && featureMultiPolygonChecker.apply(geoJsonZone);
     var detectionBuilder =
         Detection.builder()
             .id(detectionId)
@@ -407,13 +412,7 @@ public class ZoneService {
     if (featuresHasAllMultiPolygonInstances) {
       detectionBuilder.multiPolygonGeoJsonZone(providedGeoJsonZone);
     }
-    if (modelActualInstance instanceof BPToitureModel) {
-      detectionBuilder.bpToitureModel((BPToitureModel) modelActualInstance);
-    } else if (modelActualInstance instanceof BPLomModel) {
-      detectionBuilder.bpLomModel((BPLomModel) modelActualInstance);
-    } else if (modelActualInstance instanceof BPZanModel) {
-      detectionBuilder.bpZanModel((BPZanModel) modelActualInstance);
-    }
+    detectionBuilder.detectableObjectModel(detectableObjectModel);
     return detectionBuilder.build();
   }
 

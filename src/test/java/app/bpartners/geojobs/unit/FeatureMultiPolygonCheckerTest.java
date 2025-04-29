@@ -40,7 +40,7 @@ class FeatureMultiPolygonCheckerTest {
     MultiPolygon multiPolygon = new MultiPolygon().coordinates(coordinates);
     multiPolygon.setType(MULTI_POLYGON);
     feature.setGeometry(new FeatureGeometry(multiPolygon));
-    feature.setId("multipolygon");
+    feature.getProperties().put("id", "multipolygon");
     return feature;
   }
 
@@ -61,7 +61,7 @@ class FeatureMultiPolygonCheckerTest {
     var polygon = new Polygon().coordinates(coordinates);
     polygon.setType(POLYGON);
     feature.setGeometry(new FeatureGeometry(polygon));
-    feature.setId("polygon");
+    feature.getProperties().put("id", "polygon");
     return feature;
   }
 
@@ -72,7 +72,7 @@ class FeatureMultiPolygonCheckerTest {
     var point = new Point().coordinates(coordinates);
     point.setType(POINT);
     feature.setGeometry(new FeatureGeometry(point));
-    feature.setId("point");
+    feature.getProperties().put("id", "point");
     return feature;
   }
 

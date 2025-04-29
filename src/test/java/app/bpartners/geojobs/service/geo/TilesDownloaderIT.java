@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +47,10 @@ class TilesDownloaderIT extends FacadeIT {
                         new BigDecimal("4.825981555776383"),
                         new BigDecimal("45.733401843736686")))));
 
+    HashMap<String, Object> properties = new HashMap<>();
+    var featureId = randomUUID().toString();
+    properties.put("zoom", zoom);
+    properties.put("id", featureId);
     return ParcelContent.builder()
         .id(randomUUID().toString())
         .geoServerUrl(new URL("https://data.grandlyon.com/fr/geoserv/grandlyon/ows"))
@@ -67,7 +72,7 @@ class TilesDownloaderIT extends FacadeIT {
                 GeoServerParameter.class))
         .feature(
             Feature.builder()
-                .id(randomUUID().toString())
+                .id(featureId)
                 .geometry(
                     Feature.FeatureGeometry.builder()
                         .geometryType(Geometry.TypeEnum.MULTI_POLYGON)
@@ -78,6 +83,7 @@ class TilesDownloaderIT extends FacadeIT {
                                     .coordinates(coordinates)))
                         .build())
                 .zoom(zoom)
+                .properties(properties)
                 .build())
         .build();
   }

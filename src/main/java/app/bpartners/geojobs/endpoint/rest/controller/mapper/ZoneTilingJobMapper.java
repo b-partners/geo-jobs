@@ -71,6 +71,10 @@ public class ZoneTilingJobMapper {
     var parcel0 = parcels.isEmpty() ? null : parcels.getFirst(); // only need one
     var parcelContent = parcel0 == null ? null : parcel0.getParcelContent();
 
+    var zoom =
+        parcelContent == null
+            ? null
+            : parcelContent.getFeature() == null ? null : parcelContent.getFeature().getZoom();
     return new app.bpartners.geojobs.endpoint.rest.model.ZoneTilingJob()
         .id(domain.getId())
         .zoneName(domain.getZoneName())
@@ -80,8 +84,9 @@ public class ZoneTilingJobMapper {
                 ? null
                 : (parcelContent.restFeatures() == null
                     ? null
-                    : zoomMapper.toRest(
-                        ArcgisImageZoom.fromZoomLevel(parcelContent.restFeatures().getZoom()))))
+                    : zoom == null
+                        ? null
+                        : zoomMapper.toRest(ArcgisImageZoom.fromZoomLevel((Integer) zoom))))
 
         // All parcels of the same job have same geoServer url and parameter
         .geoServerUrl(parcel0 == null ? null : parcelContent.getGeoServerUrl().toString())
@@ -95,10 +100,16 @@ public class ZoneTilingJobMapper {
     var overallConfiguration = detection.getGeoServerProperties();
     var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
     var finalMultiPolygonGeoJsonZone = detection.getMultiPolygonGeoJsonZone();
+    var finalGeoJsonZoom =
+        finalMultiPolygonGeoJsonZone.getFirst().getProperties().get("zoom") == null
+            ? null
+            : (Integer) finalMultiPolygonGeoJsonZone.getFirst().getProperties().get("zoom");
     var zoom =
         (providedGeoJsonZone == null || providedGeoJsonZone.isEmpty())
-            ? finalMultiPolygonGeoJsonZone.getFirst().getZoom()
-            : providedGeoJsonZone.getFirst().getZoom();
+            ? finalGeoJsonZoom
+            : providedGeoJsonZone.getFirst().getProperties().get("zoom") == null
+                ? null
+                : (Integer) providedGeoJsonZone.getFirst().getProperties().get("zoom");
     return new CreateZoneTilingJob()
         .emailReceiver(detection.getEmailReceiver())
         .zoneName(detection.getZoneName())
