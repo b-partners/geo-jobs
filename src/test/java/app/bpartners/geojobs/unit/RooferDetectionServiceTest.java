@@ -2,6 +2,7 @@ package app.bpartners.geojobs.unit;
 
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toDomainFeature;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.MACHINE_DETECTION;
+import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.SUCCEEDED;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.ProgressionEnum.FINISHED;
 import static java.util.UUID.randomUUID;
@@ -15,7 +16,7 @@ import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionProcessSuccee
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionStepStatisticMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
 import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
-import app.bpartners.geojobs.endpoint.rest.model.BPToitureModel;
+import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel;
 import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.endpoint.rest.model.Prospect;
@@ -137,7 +138,7 @@ public class RooferDetectionServiceTest {
     return Detection.builder()
         .id(randomUUID().toString())
         .isRooferMade(true)
-        .bpToitureModel(new BPToitureModel())
+        .detectableObjectModel(new DetectableObjectModel().modelName(TOITURE))
         .zoneName("Dijon")
         .imageFileKey(randomUUID().toString())
         .providedGeoJsonZone(List.of(toDomainFeature(feature())))

@@ -2,6 +2,7 @@ package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toDomainFeature;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.*;
+import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.SUCCEEDED;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.UNKNOWN;
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
@@ -178,7 +179,7 @@ class ZoneServiceTest {
     var isRooferMade = false;
     var createDetection =
         new CreateDetection()
-            .detectableObjectModel(new DetectableObjectModel(new BPToitureModel()))
+            .detectableObjectModel(new DetectableObjectModel().modelName(TOITURE))
             .geoServerProperties(new GeoServerProperties())
             .geoJsonZone(featureCreator.defaultFeatures());
     String communityOwnerId = null;
@@ -204,7 +205,7 @@ class ZoneServiceTest {
     var isRooferMade = true;
     var createDetection =
         new CreateDetection()
-            .detectableObjectModel(new DetectableObjectModel(new BPToitureModel()))
+            .detectableObjectModel(new DetectableObjectModel().modelName(TOITURE))
             .geoServerProperties(new GeoServerProperties());
 
     String communityOwnerId = null;
@@ -232,7 +233,7 @@ class ZoneServiceTest {
     var isRooferMade = true;
     var createDetection =
         new CreateDetection()
-            .detectableObjectModel(new DetectableObjectModel(new BPToitureModel()))
+            .detectableObjectModel(new DetectableObjectModel().modelName(TOITURE))
             .geoServerProperties(new GeoServerProperties())
             .geoJsonZone(featureCreator.defaultFeatures());
 

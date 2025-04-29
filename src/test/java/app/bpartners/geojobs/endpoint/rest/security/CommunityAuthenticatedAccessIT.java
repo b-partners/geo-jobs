@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.security;
 
-import static app.bpartners.geojobs.endpoint.rest.model.BPToitureModel.ModelNameEnum.BP_TOITURE;
+import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static app.bpartners.geojobs.endpoint.rest.security.authenticator.ApiKeyAuthenticator.API_KEY_HEADER;
 import static app.bpartners.geojobs.repository.model.SurfaceUnit.SQUARE_DEGREE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.ARBRE;
@@ -69,7 +69,7 @@ class CommunityAuthenticatedAccessIT extends FacadeIT {
   void community_cannot_do_detection_with_wrong_authorization() {
     var detectionId = randomUUID().toString();
     var detectableObjectModel = new DetectableObjectModel();
-    detectableObjectModel.setActualInstance(new BPToitureModel().modelName(BP_TOITURE));
+    detectableObjectModel.setModelName(TOITURE);
     var createDetection = new CreateDetection().detectableObjectModel(detectableObjectModel);
     var error =
         assertThrows(

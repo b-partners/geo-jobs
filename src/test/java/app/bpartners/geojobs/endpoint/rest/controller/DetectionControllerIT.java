@@ -2,6 +2,7 @@ package app.bpartners.geojobs.endpoint.rest.controller;
 
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper.toHealthStatus;
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper.toProgressionEnum;
+import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_COMMUNITY;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
@@ -131,7 +132,7 @@ class DetectionControllerIT extends FacadeIT {
   }
 
   private CreateDetection createDetection() {
-    var detectableObjectModel = new DetectableObjectModel(new BPToitureModel());
+    var detectableObjectModel = new DetectableObjectModel().modelName(TOITURE);
     return new CreateDetection()
         .emailReceiver("mock@hotmail.com")
         .zoneName("Lyon")

@@ -1,11 +1,9 @@
 package app.bpartners.geojobs.endpoint.rest.controller.mapper;
 
 import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.*;
-import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.model.*;
-import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
@@ -72,116 +70,103 @@ public class DetectableObjectTypeMapper {
     };
   }
 
-  public List<DetectableObjectType> mapFromModel(Object o) {
-    List<DetectableObjectType> objectTypes = new ArrayList<>();
+  public List<DetectableObjectType> mapFromModel(DetectableObjectModel model) {
+    var modelName = model.getModelName();
+    return modelName == null ? List.of() : mapFromModel(modelName);
+  }
 
-    switch (o) {
-      case BPToitureModel model ->
-          objectTypes.addAll(detectableObjectTypeFromBPToitureModel(model));
-      case BPLomModel model -> objectTypes.addAll(detectableObjectTypeFromBPLomModel(model));
-      case BPZanModel model -> objectTypes.addAll(detectableObjectTypeFromBPZanModel(model));
-      case BPClimatResilienceModel model ->
-          objectTypes.addAll(detectableObjectTypeFromBPClimatResilienceModel(model));
-      case BPConformitePluModel model ->
-          objectTypes.addAll(detectableObjectTypeFromBPConformitePluModel(model));
-      case BPTrottoirsModel model ->
-          objectTypes.addAll(detectableObjectTypeFromBPTrottoirsModel(model));
-      case BPOldModel model -> objectTypes.addAll(detectableObjectTypeFromBPOldModel(model));
-      default ->
-          throw new ApiException(SERVER_EXCEPTION, "Unknown instance of object " + o.getClass());
+  public List<DetectableObjectType> mapFromModel(ModelName modelName) {
+    List<DetectableObjectType> objectTypes = new ArrayList<>();
+    switch (modelName) {
+      case TOITURE -> objectTypes.addAll(detectableObjectTypeForToitureModel());
+      case LOM -> objectTypes.addAll(detectableObjectTypeForLomModel());
+      case ZAN -> objectTypes.addAll(detectableObjectTypeForZanModel());
+      case CLIMAT_RESILIENCE -> objectTypes.addAll(detectableObjectTypeForClimatResilienceModel());
+      case CONFIRMITE_PLU -> objectTypes.addAll(detectableObjectTypeForConformitePluModel());
+      case TROTTOIRS -> objectTypes.addAll(detectableObjectTypeForTrottoirsModel());
+      case OLD -> objectTypes.addAll(detectableObjectTypeForOldModel());
     }
-
     return objectTypes;
   }
 
-  private List<DetectableObjectType> detectableObjectTypeFromBPToitureModel(BPToitureModel model) {
+  private List<DetectableObjectType> detectableObjectTypeForToitureModel() {
     List<DetectableObjectType> objectTypes = new ArrayList<>();
-    addIfTrue(model.getArbre(), objectTypes, ARBRE);
-    addIfTrue(model.getToitureRevetement(), objectTypes, TOITURE_REVETEMENT);
-    addIfTrue(model.getPanneauPhotovoltaique(), objectTypes, PANNEAU_PHOTOVOLTAIQUE);
-    addIfTrue(model.getMoisissure(), objectTypes, MOISISSURE);
-    addIfTrue(model.getUsure(), objectTypes, USURE);
-    addIfTrue(model.getFissureCassure(), objectTypes, FISSURE_CASSURE);
-    addIfTrue(model.getObstacle(), objectTypes, OBSTACLE);
-    addIfTrue(model.getCheminee(), objectTypes, CHEMINEE);
-    addIfTrue(model.getHumidite(), objectTypes, HUMIDITE);
-    addIfTrue(model.getRisqueFeu(), objectTypes, RISQUE_FEU);
+    objectTypes.add(ARBRE);
+    objectTypes.add(TOITURE_REVETEMENT);
+    objectTypes.add(PANNEAU_PHOTOVOLTAIQUE);
+    objectTypes.add(MOISISSURE);
+    objectTypes.add(USURE);
+    objectTypes.add(FISSURE_CASSURE);
+    objectTypes.add(OBSTACLE);
+    objectTypes.add(CHEMINEE);
+    objectTypes.add(HUMIDITE);
+    objectTypes.add(RISQUE_FEU);
     return objectTypes;
   }
 
-  private List<DetectableObjectType> detectableObjectTypeFromBPLomModel(BPLomModel model) {
+  private List<DetectableObjectType> detectableObjectTypeForLomModel() {
     List<DetectableObjectType> objectTypes = new ArrayList<>();
-    addIfTrue(model.getPassagePieton(), objectTypes, PASSAGE_PIETON);
-    addIfTrue(model.getTrottoir(), objectTypes, TROTTOIR);
-    addIfTrue(model.getVoieCarrosable(), objectTypes, VOIE_CARROSSABLE);
+    objectTypes.add(PASSAGE_PIETON);
+    objectTypes.add(TROTTOIR);
+    objectTypes.add(VOIE_CARROSSABLE);
     return objectTypes;
   }
 
-  private List<DetectableObjectType> detectableObjectTypeFromBPClimatResilienceModel(
-      BPClimatResilienceModel model) {
+  private List<DetectableObjectType> detectableObjectTypeForClimatResilienceModel() {
     List<DetectableObjectType> objectTypes = new ArrayList<>();
-    addIfTrue(model.getParking(), objectTypes, PARKING);
-    addIfTrue(model.getPanneauPhotovoltaique(), objectTypes, PANNEAU_PHOTOVOLTAIQUE);
-    addIfTrue(model.getArbre(), objectTypes, ARBRE);
-    addIfTrue(model.getEspaceVert(), objectTypes, ESPACE_VERT);
+    objectTypes.add(PARKING);
+    objectTypes.add(PANNEAU_PHOTOVOLTAIQUE);
+    objectTypes.add(ARBRE);
+    objectTypes.add(ESPACE_VERT);
     return objectTypes;
   }
 
-  private List<DetectableObjectType> detectableObjectTypeFromBPZanModel(BPZanModel model) {
+  private List<DetectableObjectType> detectableObjectTypeForZanModel() {
     List<DetectableObjectType> objectTypes = new ArrayList<>();
-    addIfTrue(model.getArbre(), objectTypes, ARBRE);
-    addIfTrue(model.getEspaceVert(), objectTypes, ESPACE_VERT);
-    addIfTrue(model.getToiture(), objectTypes, TOITURE_REVETEMENT);
-    addIfTrue(model.getVoieCarrossable(), objectTypes, VOIE_CARROSSABLE);
-    addIfTrue(model.getTrottoir(), objectTypes, TROTTOIR);
-    addIfTrue(model.getParking(), objectTypes, PARKING);
+    objectTypes.add(ARBRE);
+    objectTypes.add(ESPACE_VERT);
+    objectTypes.add(TOITURE_REVETEMENT);
+    objectTypes.add(VOIE_CARROSSABLE);
+    objectTypes.add(TROTTOIR);
+    objectTypes.add(PARKING);
     return objectTypes;
   }
 
-  private List<DetectableObjectType> detectableObjectTypeFromBPConformitePluModel(
-      BPConformitePluModel model) {
+  private List<DetectableObjectType> detectableObjectTypeForConformitePluModel() {
     List<DetectableObjectType> objectTypes = new ArrayList<>();
-    addIfTrue(model.getToiture(), objectTypes, TOITURE_REVETEMENT);
-    addIfTrue(model.getArbre(), objectTypes, ARBRE);
-    addIfTrue(model.getVelux(), objectTypes, VELUX);
-    addIfTrue(model.getPanneauPhotovoltaique(), objectTypes, PANNEAU_PHOTOVOLTAIQUE);
-    addIfTrue(model.getEspaceVert(), objectTypes, ESPACE_VERT);
-    addIfTrue(model.getPiscine(), objectTypes, PISCINE);
+    objectTypes.add(TOITURE_REVETEMENT);
+    objectTypes.add(ARBRE);
+    objectTypes.add(VELUX);
+    objectTypes.add(PANNEAU_PHOTOVOLTAIQUE);
+    objectTypes.add(ESPACE_VERT);
+    objectTypes.add(PISCINE);
     return objectTypes;
   }
 
-  private List<DetectableObjectType> detectableObjectTypeFromBPTrottoirsModel(
-      BPTrottoirsModel model) {
+  private List<DetectableObjectType> detectableObjectTypeForTrottoirsModel() {
     List<DetectableObjectType> objectTypes = new ArrayList<>();
-    addIfTrue(model.getTrottoir(), objectTypes, TROTTOIR);
-    addIfTrue(model.getVoieCarrossable(), objectTypes, VOIE_CARROSSABLE);
-    addIfTrue(model.getArbre(), objectTypes, ARBRE);
-    addIfTrue(model.getEspaceVertParking(), objectTypes, ESPACE_VERT_PARKING);
+    objectTypes.add(TROTTOIR);
+    objectTypes.add(VOIE_CARROSSABLE);
+    objectTypes.add(ARBRE);
+    objectTypes.add(ESPACE_VERT_PARKING);
     return objectTypes;
   }
 
-  private List<DetectableObjectType> detectableObjectTypeFromBPOldModel(BPOldModel model) {
+  private List<DetectableObjectType> detectableObjectTypeForOldModel() {
     List<DetectableObjectType> objectTypes = new ArrayList<>();
-    addIfTrue(model.getArbre(), objectTypes, ARBRE);
-    addIfTrue(model.getEspaceVert(), objectTypes, ESPACE_VERT);
-    addIfTrue(model.getToiture(), objectTypes, TOITURE_REVETEMENT);
-    addIfTrue(model.getVoieCarrossable(), objectTypes, VOIE_CARROSSABLE);
-    addIfTrue(model.getTrottoir(), objectTypes, TROTTOIR);
-    addIfTrue(model.getParking(), objectTypes, PARKING);
-    addIfTrue(model.getRisqueFeu(), objectTypes, RISQUE_FEU);
+    objectTypes.add(ARBRE);
+    objectTypes.add(ESPACE_VERT);
+    objectTypes.add(TOITURE_REVETEMENT);
+    objectTypes.add(VOIE_CARROSSABLE);
+    objectTypes.add(TROTTOIR);
+    objectTypes.add(PARKING);
+    objectTypes.add(RISQUE_FEU);
     return objectTypes;
-  }
-
-  private void addIfTrue(
-      Boolean condition, List<DetectableObjectType> objectTypes, DetectableObjectType objectType) {
-    if (Boolean.TRUE.equals(condition)) {
-      objectTypes.add(objectType);
-    }
   }
 
   public List<DetectableObjectConfiguration> mapDefaultConfigurationsFromModel(
-      String detectionId, Object o) {
-    var objectTypes = mapFromModel(o);
+      String detectionId, ModelName modelName) {
+    var objectTypes = mapFromModel(modelName);
     return objectTypes.stream()
         .map(
             detectableObjectType -> {

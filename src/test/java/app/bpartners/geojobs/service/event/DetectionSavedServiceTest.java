@@ -1,13 +1,13 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.endpoint.rest.model.BPToitureModel.ModelNameEnum.BP_TOITURE;
+import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static app.bpartners.geojobs.service.event.DetectionSavedService.DETECTION_SAVED_TEMPLATE;
 import static app.bpartners.geojobs.service.event.DetectionSavedService.computeStaticEmailBody;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
-import app.bpartners.geojobs.endpoint.rest.model.BPToitureModel;
+import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerProperties;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
@@ -15,7 +15,6 @@ import app.bpartners.geojobs.mail.Email;
 import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
-import app.bpartners.geojobs.repository.model.detection.DetectableObjectModelStringMapValue;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.GeoServerParameterStringMapValue;
 import app.bpartners.geojobs.service.detection.DetectableObjectModelMapper;
@@ -44,7 +43,6 @@ class DetectionSavedServiceTest {
       new DetectionSavedService(
           mailerMock,
           bucketComponentMock,
-          detectableObjectModelMapper,
           detectionGeoServerParameterModelMapper,
           communityAuthorizationRepositoryMock);
 
@@ -79,7 +77,7 @@ class DetectionSavedServiceTest {
     var detection =
         Detection.builder()
             .shapeFileKey(shapeFileKey)
-            .bpToitureModel(new BPToitureModel().modelName(BP_TOITURE))
+            .detectableObjectModel(new DetectableObjectModel().modelName(TOITURE))
             .geoServerProperties(
                 new GeoServerProperties()
                     .geoServerUrl("geoServerUrl")
@@ -91,7 +89,6 @@ class DetectionSavedServiceTest {
         computeStaticEmailBody(
             detection,
             bucketComponentMock,
-            detectableObjectModelMapper,
             detectionGeoServerParameterModelMapper,
             communityAuthorizationRepositoryMock);
     List<File> attachments = List.of();
@@ -120,9 +117,6 @@ class DetectionSavedServiceTest {
   void parse_detection_saved_email_body() {
     HTMLTemplateParser htmlTemplateParser = new HTMLTemplateParser();
     Context context = new Context();
-    BPToitureModel modelInstance = new BPToitureModel().modelName(BP_TOITURE);
-    List<DetectableObjectModelStringMapValue> detectableObjectModelStringMapValues =
-        detectableObjectModelMapper.apply(modelInstance);
     var geoServerParameter =
         new GeoServerParameter()
             .service("service_value_test")
@@ -137,8 +131,7 @@ class DetectionSavedServiceTest {
             .srs("srs_value_test");
     List<GeoServerParameterStringMapValue> detectionGeoServerParameterStringMapValues =
         detectionGeoServerParameterModelMapper.apply(geoServerParameter);
-    context.setVariable(
-        "detectableObjectModelStringMapValues", detectableObjectModelStringMapValues);
+    context.setVariable("detectableObjectModel", new DetectableObjectModel().modelName(TOITURE));
     context.setVariable(
         "geoServerParameterStringMapValues", detectionGeoServerParameterStringMapValues);
     context.setVariable("geoServerUrl", "geo_server_value_test");
@@ -225,71 +218,7 @@ class DetectionSavedServiceTest {
     <ul>
         <li>Email associé : <span></span></li>
         <li>Nom de zone fournie par le consommateur : <span></span></li>
-        <span>
-            <li>Configurations de la détection :
-            <ul>
-                <li>
-                    <span class="indent">modelName</span> :
-                    <span class="indent">BP_TOITURE</span>
-                </li>
-            </ul><ul>
-                <li>
-                    <span class="indent">toitureRevetement</span> :
-                    <span class="indent">oui</span>
-                </li>
-            </ul><ul>
-                <li>
-                    <span class="indent">arbre</span> :
-                    <span class="indent">oui</span>
-                </li>
-            </ul><ul>
-                <li>
-                    <span class="indent">velux</span> :
-                    <span class="indent">oui</span>
-                </li>
-            </ul><ul>
-                <li>
-                    <span class="indent">panneauPhotovoltaique</span> :
-                    <span class="indent">oui</span>
-                </li>
-            </ul><ul>
-                <li>
-                    <span class="indent">moisissure</span> :
-                    <span class="indent">oui</span>
-                </li>
-            </ul><ul>
-                <li>
-                    <span class="indent">usure</span> :
-                    <span class="indent">oui</span>
-                </li>
-            </ul><ul>
-                <li>
-                    <span class="indent">fissureCassure</span> :
-                    <span class="indent">oui</span>
-                </li>
-            </ul><ul>
-                <li>
-                    <span class="indent">obstacle</span> :
-                    <span class="indent">oui</span>
-                </li>
-            </ul><ul>
-                <li>
-                    <span class="indent">cheminee</span> :
-                    <span class="indent">oui</span>
-                </li>
-            </ul><ul>
-                <li>
-                    <span class="indent">humidite</span> :
-                    <span class="indent">oui</span>
-                </li>
-            </ul><ul>
-                <li>
-                    <span class="indent">risqueFeu</span> :
-                    <span class="indent">oui</span>
-                </li>
-            </ul>
-        </li>
-        </span>
+        <li>Model utilisé pour la détection : <span>BP_TOITURE</span></li>
         <li>Configuration du geoServer :
             <ul>
                 <li>geoServerUrl: <span>geo_server_value_test</span></li>

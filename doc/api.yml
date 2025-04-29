@@ -1494,184 +1494,20 @@ components:
       allOf:
         - $ref: '#/components/schemas/StatusStatistic'
     DetectableObjectModel:
-      discriminator:
-        propertyName: modelName
-      oneOf:
-        - $ref: '#/components/schemas/BPToitureModel'
-        - $ref: '#/components/schemas/BPLomModel'
-        - $ref: '#/components/schemas/BPZanModel'
-        - $ref: '#/components/schemas/BPClimatResilienceModel'
-        - $ref: '#/components/schemas/BPConformitePluModel'
-        - $ref: '#/components/schemas/BPOldModel'
-        - $ref: '#/components/schemas/BPTrottoirsModel'
-    BPToitureModel:
       type: object
       properties:
         modelName:
-          type: string
-          enum: [ 'BP_TOITURE' ]
-          description: |
-            Détection du bâti (incluant typologies de revêtements) et des mutations entre 2 millésimes d'ortho 
-             - 
-             EVALUATION DE L'ETAT DU BATI
-        toitureRevetement:
-          type: boolean
-          default: true
-        arbre:
-          type: boolean
-          default: true
-        velux:
-          type: boolean
-          default: true
-        panneauPhotovoltaique:
-          type: boolean
-          default: true
-        moisissure:
-          type: boolean
-          default: true
-        usure:
-          type: boolean
-          default: true
-        fissureCassure:
-          type: boolean
-          default: true
-        obstacle:
-          type: boolean
-          default: true
-        cheminee:
-          type: boolean
-          default: true
-        humidite:
-          type: boolean
-          default: true
-        risqueFeu:
-          type: boolean
-          default: true
-    BPLomModel:
-      type: object
-      properties:
-        modelName:
-          type: string
-          enum: [ 'BP_LOM' ]
-        passagePieton:
-          type: boolean
-          default: true
-        voieCarrosable:
-          type: boolean
-          default: true
-        trottoir:
-          type: boolean
-          default: true
-        parking:
-          type: boolean
-          default: true
-    BPZanModel:
-      type: object
-      properties:
-        modelName:
-          type: string
-          enum: [ 'BP_ZAN' ]
-        arbre:
-          type: boolean
-          default: true
-        espaceVert:
-          type: boolean
-          default: true
-        toiture:
-          type: boolean
-          default: true
-        voieCarrossable:
-          type: boolean
-          default: true
-        trottoir:
-          type: boolean
-          default: true
-        parking:
-          type: boolean
-          default: true
-    BPClimatResilienceModel:
-      properties:
-        modelName:
-          type: string
-          enum: [ 'BP_CLIMAT_RESILIENCE' ]
-        parking:
-          type: boolean
-          default: true
-        panneauPhotovoltaique:
-          type: boolean
-          default: true
-        arbre:
-          type: boolean
-          default: true
-        espaceVert:
-          type: boolean
-          default: true
-    BPConformitePluModel:
-      properties:
-        modelName:
-          type: string
-          enum: [ 'BP_CONFORMITE_PLU' ]
-        toiture:
-          type: boolean
-          default: true
-        arbre:
-          type: boolean
-          default: true
-        velux:
-          type: boolean
-          default: true
-        panneauPhotovoltaique:
-          type: boolean
-          default: true
-        espaceVert:
-          type: boolean
-          default: true
-        piscine:
-          type: boolean
-          default: true
-    BPTrottoirsModel:
-      properties:
-        modelName:
-          type: string
-          enum: [ 'BP_TROTTOIRS' ]
-        trottoir:
-          type: boolean
-          default: true
-        voieCarrossable:
-          type: boolean
-          default: true
-        arbre:
-          type: boolean
-          default: true
-        espaceVertParking:
-          type: boolean
-          default: true
-    BPOldModel:
-      properties:
-        modelName:
-          type: string
-          enum: [ 'BP_OLD' ]
-        arbre:
-          type: boolean
-          default: true
-        espaceVert:
-          type: boolean
-          default: true
-        toiture:
-          type: boolean
-          default: true
-        voieCarrossable:
-          type: boolean
-          default: true
-        trottoir:
-          type: boolean
-          default: true
-        parking:
-          type: boolean
-          default: true
-        risqueFeu:
-          type: boolean
-          default: true
+          $ref: '#/components/schemas/ModelName'
+    ModelName:
+      type: string
+      enum:
+        - BP_TOITURE
+        - BP_LOM
+        - BP_ZAN
+        - BP_CLIMAT_RESILIENCE
+        - BP_CONFIRMITE_PLU
+        - BP_TROTTOIRS
+        - BP_OLD
     CreateDetection:
       type: object
       properties:
