@@ -1,8 +1,5 @@
 package app.bpartners.geojobs.service;
 
-import app.bpartners.geojobs.endpoint.rest.model.BPLomModel;
-import app.bpartners.geojobs.endpoint.rest.model.BPToitureModel;
-import app.bpartners.geojobs.endpoint.rest.model.BPZanModel;
 import app.bpartners.geojobs.endpoint.rest.model.CreateDetection;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import java.util.function.BiConsumer;
@@ -25,24 +22,11 @@ public class DetectionUpdateValidator implements BiConsumer<Detection, CreateDet
           .append(". ");
     }
     var detectableObjectModel = createDetection.getDetectableObjectModel();
-    boolean bpLomModelIsToBeUpdated =
-        detection.getBpLomModel() != null
-            && (detectableObjectModel == null
-                || !(detectableObjectModel.getActualInstance() instanceof BPLomModel)
-                || !detectableObjectModel.getBPLomModel().equals(detection.getBpLomModel()));
-    boolean bpToitureModelIsToBeUpdated =
-        detection.getBpToitureModel() != null
-            && (detectableObjectModel == null
-                || !(detectableObjectModel.getActualInstance() instanceof BPToitureModel)
-                || !detectableObjectModel
-                    .getBPToitureModel()
-                    .equals(detection.getBpToitureModel()));
-    boolean bpZanModelIsToBeUpdated =
-        detection.getBpZanModel() != null
-            && (detectableObjectModel == null
-                || !(detectableObjectModel.getActualInstance() instanceof BPZanModel)
-                || !detectableObjectModel.getBPZanModel().equals(detection.getBpZanModel()));
-    if (bpLomModelIsToBeUpdated || bpToitureModelIsToBeUpdated || bpZanModelIsToBeUpdated) {
+    boolean detectableObjectToBeUpdated =
+        detectableObjectModel != null
+            && detection.getDetectableObjectModel() != null
+            && !detectableObjectModel.equals(detection.getDetectableObjectModel());
+    if (detectableObjectToBeUpdated) {
       messageBuilder
           .append(
               "Detection.detectableObjectModel can not be updated once it has values, otherwise"
@@ -52,17 +36,7 @@ public class DetectionUpdateValidator implements BiConsumer<Detection, CreateDet
           .append(detectableObjectModel)
           .append(". ");
     }
-    if (detection.getGeoServerProperties() != null
-        && !detection.getGeoServerProperties().equals(createDetection.getGeoServerProperties())) {
-      messageBuilder
-          .append(
-              "Detection.geoServerProperties can not be updated once it has values, otherwise"
-                  + " actual value ")
-          .append(detection.getGeoServerProperties())
-          .append(" is not equals provided value ")
-          .append(createDetection.getGeoServerProperties())
-          .append(". ");
-    }
+
     String messageException = messageBuilder.toString();
     if (!messageException.isEmpty()) {
       throw new IllegalArgumentException(messageException);

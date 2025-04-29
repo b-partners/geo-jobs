@@ -386,11 +386,10 @@ public class ZoneService {
       @Nullable String communityOwnerId,
       boolean isRooferMade) {
     var detectableObjectModel = createDetection.getDetectableObjectModel();
-    var modelActualInstance = Objects.requireNonNull(detectableObjectModel).getActualInstance();
+    var modelName = detectableObjectModel.getModelName();
     var detectionId = randomUUID().toString();
     var detectableObjectConfigurations =
-        detectableObjectTypeMapper.mapDefaultConfigurationsFromModel(
-            detectionId, modelActualInstance);
+        detectableObjectTypeMapper.mapDefaultConfigurationsFromModel(detectionId, modelName);
     var providedGeoJsonZone =
         createDetection.getGeoJsonZone().stream().map(FeatureMapper::toDomainFeature).toList();
     var featuresHasAllMultiPolygonInstances =
@@ -409,13 +408,7 @@ public class ZoneService {
     if (featuresHasAllMultiPolygonInstances) {
       detectionBuilder.multiPolygonGeoJsonZone(providedGeoJsonZone);
     }
-    if (modelActualInstance instanceof BPToitureModel) {
-      detectionBuilder.bpToitureModel((BPToitureModel) modelActualInstance);
-    } else if (modelActualInstance instanceof BPLomModel) {
-      detectionBuilder.bpLomModel((BPLomModel) modelActualInstance);
-    } else if (modelActualInstance instanceof BPZanModel) {
-      detectionBuilder.bpZanModel((BPZanModel) modelActualInstance);
-    }
+    detectionBuilder.detectableObjectModel(detectableObjectModel);
     return detectionBuilder.build();
   }
 

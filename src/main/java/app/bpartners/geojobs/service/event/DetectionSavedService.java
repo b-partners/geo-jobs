@@ -11,7 +11,6 @@ import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.GeoServerParameterStringMapValue;
-import app.bpartners.geojobs.service.detection.DetectableObjectModelMapper;
 import app.bpartners.geojobs.service.detection.DetectionGeoServerParameterModelMapper;
 import app.bpartners.geojobs.template.HTMLTemplateParser;
 import jakarta.mail.internet.InternetAddress;
@@ -33,7 +32,6 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
   public static final String DETECTION_SAVED_TEMPLATE = "detection_saved";
   private final Mailer mailer;
   private final BucketComponent bucketComponent;
-  private final DetectableObjectModelMapper detectableObjectModelMapper;
   private final DetectionGeoServerParameterModelMapper detectionGeoServerParameterModelMapper;
   private final CommunityAuthorizationRepository communityAuthorizationRepository;
 
@@ -56,7 +54,6 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
         computeStaticEmailBody(
             detection,
             bucketComponent,
-            detectableObjectModelMapper,
             detectionGeoServerParameterModelMapper,
             communityAuthorizationRepository);
     List<File> attachments = List.of();
@@ -69,12 +66,11 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
   public static String computeStaticEmailBody(
       Detection detection,
       BucketComponent bucketComponent,
-      DetectableObjectModelMapper detectableObjectModelMapper,
       DetectionGeoServerParameterModelMapper detectionGeoServerParameterModelMapper,
       CommunityAuthorizationRepository communityAuthorizationRepository) {
     var shapeFilePresignURL = getShapeFilePresignURL(detection, bucketComponent);
     var excelFilePresignURL = getExcelFilePresignURL(detection, bucketComponent);
-    var modelActualInstance = detection.getDetectableObjectModel().getActualInstance();
+    var detectableObjectModel = detection.getDetectableObjectModel();
     var geoServerProperties = detection.getGeoServerProperties();
     var geoServerParameter =
         getGeoServerParameter(detectionGeoServerParameterModelMapper, geoServerProperties);
@@ -82,9 +78,7 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
 
     var htmlTemplateParser = new HTMLTemplateParser();
     Context context = new Context();
-    context.setVariable(
-        "detectableObjectModelStringMapValues",
-        detectableObjectModelMapper.apply(modelActualInstance));
+    context.setVariable("detectableObjectModel", detectableObjectModel);
     context.setVariable(
         "geoServerParameterStringMapValues", requireNonNullElse(geoServerParameter, List.of()));
     context.setVariable("geoServerUrl", geoServerUrl);
