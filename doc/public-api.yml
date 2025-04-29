@@ -47,7 +47,7 @@ paths:
   '/usage':
     get:
       tags:
-        - Detection
+        - Usage
       operationId: getDetectionUsage
       summary: Get detection usage
       security:
