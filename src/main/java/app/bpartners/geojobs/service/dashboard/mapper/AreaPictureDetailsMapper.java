@@ -36,6 +36,8 @@ public class AreaPictureDetailsMapper {
     var multiPolygon = toMultiPolygon(areaPictureDetails);
     var properties = new HashMap<String, Object>();
     properties.put(FEATURE_ADDRESS_PROPERTY, address);
+    properties.put("id", featureId);
+    properties.put("zoom", zoom);
     return Feature.builder()
         .id(featureId)
         .zoom(zoom)
