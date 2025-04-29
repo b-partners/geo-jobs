@@ -149,8 +149,7 @@ Detection.geoJsonZone can not be updated once it has values, otherwise actual va
   private String expectedGeoServerAndBPLomModelUpdateAttemptException() {
     return """
 Detection.geoJsonZone can not be updated once it has values, otherwise actual value [class Feature {
-    id: feature_1_id
-    zoom: 20
+    type: Feature
     geometry: class class app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry {
         instance: class MultiPolygon {
             coordinates: [[[[4.459648282829194, 45.90498891262069], [4.464709510872551, 45.928950368349426], [4.490816965688656, 45.941784543770964], [4.510354299995861, 45.9336971326646], [4.518386257467152, 45.91288834552105], [4.496344031095243, 45.88343820140181], [4.479593950305621, 45.882900828315755], [4.459648282829194, 45.90498891262069]]]]
@@ -159,7 +158,7 @@ Detection.geoJsonZone can not be updated once it has values, otherwise actual va
         isNullable: false
         schemaType: oneOf
     }
-    properties: {code=69, id=30251921, CLUSTER_SIZE=386884, CLUSTER_ID=99520, nom=Rhône}
+    properties: {zoom=20, code=69, id=feature1_id, CLUSTER_SIZE=386884, CLUSTER_ID=99520, nom=Rhône}
 }] is not equals provided value null. Detection.detectableObjectModel can not be updated once it has values, otherwise actual value class class app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel {
     instance: class BPLomModel {
         modelName: null

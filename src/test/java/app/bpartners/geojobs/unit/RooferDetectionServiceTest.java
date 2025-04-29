@@ -43,6 +43,7 @@ import jakarta.mail.internet.AddressException;
 import jakarta.mail.internet.InternetAddress;
 import java.io.File;
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -155,10 +156,11 @@ public class RooferDetectionServiceTest {
             List.of(new BigDecimal("465.95744680851067"), new BigDecimal("282.97872340425533")));
     MultiPolygon multiPolygon = new MultiPolygon().coordinates(List.of(List.of(coordinates)));
     multiPolygon.setType(MultiPolygon.TypeEnum.MULTI_POLYGON);
-
+    HashMap<String, Object> properties = new HashMap<>();
+    properties.put("id", randomUUID().toString());
+    properties.put("zoom", 20);
     return new app.bpartners.geojobs.endpoint.rest.model.Feature()
-        .zoom(20)
-        .id(randomUUID().toString())
+        .properties(properties)
         .geometry(new FeatureGeometry(multiPolygon));
   }
 }

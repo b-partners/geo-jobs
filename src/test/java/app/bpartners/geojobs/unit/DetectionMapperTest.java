@@ -22,6 +22,7 @@ import app.bpartners.geojobs.service.detection.DetectionMapper;
 import app.bpartners.geojobs.service.detection.DetectionResponse;
 import app.bpartners.geojobs.service.tiling.TileValidator;
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.SneakyThrows;
@@ -92,7 +93,10 @@ class DetectionMapperTest {
     assertEquals(HUMAN, detectedObject.getType());
     assertEquals(tileId, detectedObject.getDetectedTileId());
     assertEquals(0.9515481, detectedObject.getComputedConfidence());
-    assertEquals(feature().id(detectedObject.getFeature().getId()), detectedObject.getFeature());
+    Map<String, Object> properties = feature().getProperties();
+    properties.put("zoom", zoom);
+    properties.put("id", detectedObject.getFeature().getProperties().get("id"));
+    assertEquals(feature().properties(properties), detectedObject.getFeature());
   }
 
   private Annotation annotation() {
@@ -120,6 +124,7 @@ class DetectionMapperTest {
                                     .coordinates(coordinates)
                                     .type(MultiPolygon.TypeEnum.MULTI_POLYGON)))
                     .build())
+            .properties(new HashMap<>())
             .build());
   }
 }

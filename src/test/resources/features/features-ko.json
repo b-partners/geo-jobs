@@ -3,7 +3,7 @@
   "properties": {
     "code": "69",
     "nom": "Rhône",
-    "id": 30251921,
+    "id": "feature1_id",
     "CLUSTER_ID": 99520,
     "CLUSTER_SIZE": 386884
   },

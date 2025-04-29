@@ -63,7 +63,7 @@ public class HttpApiTilesDownloader implements TilesDownloader {
     UriComponentsBuilder builder =
         UriComponentsBuilder.fromHttpUrl(tilesDownloaderApiURl)
             .path("/geo-tiles")
-            .queryParam("zoom_size", parcelContent.restFeatures().getZoom());
+            .queryParam("zoom_size", parcelContent.getFeature().getZoom());
 
     ResponseEntity<TilerResponse> responseEntity;
     try {

@@ -18,7 +18,11 @@ public class TilesAttrAggregator {
     var zoomList =
         tiles.stream()
             .flatMap(t -> t.getDetectedObjects().stream())
-            .map(o -> o.getFeature().getZoom())
+            .map(
+                o ->
+                    o.getFeature().getProperties().get("zoom") == null
+                        ? null
+                        : (Integer) o.getFeature().getProperties().get("zoom"))
             .toList();
     if (new HashSet<>(zoomList).size() == 1) {
       throw new RuntimeException("Zoom is not unique for tiles=" + tiles);

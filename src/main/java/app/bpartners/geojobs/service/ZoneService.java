@@ -84,7 +84,9 @@ public class ZoneService {
       var featuresFileContent = Files.readString(featuresFromShape.toPath());
       List<Feature> features =
           objectMapper.readValue(featuresFileContent, new TypeReference<>() {});
-      return features.stream().peek(feature -> feature.setZoom(DEFAULT_ZOOM)).toList();
+      return features.stream()
+          .peek(feature -> feature.getProperties().put("zoom", DEFAULT_ZOOM))
+          .toList();
     } catch (Exception e) {
       throw new ApiException(
           CLIENT_EXCEPTION, "Unable to convert uploaded file to Features, exception=" + e);
