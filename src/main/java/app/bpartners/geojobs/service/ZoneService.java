@@ -390,10 +390,13 @@ public class ZoneService {
     var detectionId = randomUUID().toString();
     var detectableObjectConfigurations =
         detectableObjectTypeMapper.mapDefaultConfigurationsFromModel(detectionId, modelName);
-    var providedGeoJsonZone =
-        createDetection.getGeoJsonZone().stream().map(FeatureMapper::toDomainFeature).toList();
+    var geoJsonZone = createDetection.getGeoJsonZone();
+    List<app.bpartners.geojobs.repository.model.Feature> providedGeoJsonZone =
+        geoJsonZone == null
+            ? List.of()
+            : geoJsonZone.stream().map(FeatureMapper::toDomainFeature).toList();
     var featuresHasAllMultiPolygonInstances =
-        featureMultiPolygonChecker.apply(createDetection.getGeoJsonZone());
+        geoJsonZone != null && featureMultiPolygonChecker.apply(geoJsonZone);
     var detectionBuilder =
         Detection.builder()
             .id(detectionId)
