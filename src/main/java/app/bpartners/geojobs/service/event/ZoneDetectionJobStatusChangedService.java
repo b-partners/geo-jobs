@@ -57,7 +57,7 @@ public class ZoneDetectionJobStatusChangedService
       mailer.accept(zdj);
       eventProducer.accept(
           List.of(ZoneDetectionJobFailed.builder().failedJobId(zdj.getId()).build()));
-      log.info("Failed to process ZDJ {}, mail sent, processing annotator triggered anyway", zdj);
+      log.info("Failed to process ZDJ {}, mail sent", zdj);
     }
   }
 }

@@ -20,6 +20,8 @@ import app.bpartners.geojobs.service.DetectionFinishedMailer;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
@@ -78,6 +80,12 @@ class ZoneDetectionJobSucceededServiceTest {
     var emailReceiver = "email@email.com";
     var zoneName = "My address";
     var creationDatetime = Instant.parse("2025-03-01T03:00:00Z");
+    var emailSubject =
+        String.format(
+            "Analyse sur la zone %s terminée le %s",
+            zoneName,
+            DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")
+                .format(creationDatetime.atZone(ZoneId.of("Europe/Paris"))));
     when(succeededZoneDetectionJobMock.getEmailReceiver()).thenReturn(emailReceiver);
     when(succeededZoneDetectionJobMock.getZoneName()).thenReturn(zoneName);
     when(jobStatus.getCreationDatetime()).thenReturn(creationDatetime);
@@ -87,7 +95,7 @@ class ZoneDetectionJobSucceededServiceTest {
 
     assertDoesNotThrow(() -> subject.accept(new ZoneDetectionJobSucceeded(succeededJobId)));
 
-    verify(detectionFinishedMailerMock, only()).accept(emailReceiver, zoneName, creationDatetime);
+    verify(detectionFinishedMailerMock, only()).accept(emailReceiver, emailSubject);
     verify(configurationRepositoryMock, never()).findLatestConfiguration();
     verify(eventProducerMock, never()).accept(any());
   }
