@@ -19,6 +19,7 @@ import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
@@ -75,6 +76,7 @@ class ExtractorIT extends FacadeIT {
                     .geometryType(MULTI_POLYGON)
                     .actualInstanceStringValue(GEOMETRY_MOCK)
                     .build())
+            .properties(new HashMap<>())
             .build();
   }
 

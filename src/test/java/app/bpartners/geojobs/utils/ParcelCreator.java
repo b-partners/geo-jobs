@@ -13,6 +13,7 @@ import app.bpartners.geojobs.repository.model.tiling.Tile;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import lombok.SneakyThrows;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,6 +39,11 @@ public class ParcelCreator {
 
   @SneakyThrows
   public Parcel create(String id, List<Tile> tiles) {
+    HashMap<String, Object> properties = new HashMap<>();
+    var featureId = randomUUID().toString();
+    int zoom = 20;
+    properties.put("id", featureId);
+    properties.put("zoom", zoom);
     return Parcel.builder()
         .id(id)
         .parcelContent(
@@ -45,8 +51,8 @@ public class ParcelCreator {
                 .geoServerUrl(new URI("https://dummy.com").toURL())
                 .feature(
                     Feature.builder()
-                        .id(randomUUID().toString())
-                        .zoom(20)
+                        .id(featureId)
+                        .zoom(zoom)
                         .geometry(
                             Feature.FeatureGeometry.builder()
                                 .actualInstanceStringValue(
@@ -62,6 +68,7 @@ public class ParcelCreator {
                                                                     new BigDecimal("0.0"),
                                                                     new BigDecimal("0.0"))))))))
                                 .build())
+                        .properties(properties)
                         .build())
                 .geoServerParameter(
                     om.readValue(

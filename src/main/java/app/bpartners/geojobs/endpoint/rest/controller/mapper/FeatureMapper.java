@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.controller.mapper;
 
+import static app.bpartners.geojobs.endpoint.rest.model.Feature.TypeEnum.FEATURE;
 import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.MULTI_POLYGON;
 import static app.bpartners.geojobs.model.CustomObjectMapper.objectMapper;
 import static java.time.Instant.now;
@@ -21,13 +22,18 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class FeatureMapper {
+
   public Parcel toDomain(
       String parcelId, Feature rest, URL geoServerUrl, GeoServerParameter GeoServerParameter) {
+    var id =
+        Objects.requireNonNull(rest.getProperties()).get("id") == null
+            ? null
+            : rest.getProperties().get("id").toString();
     return Parcel.builder()
         .id(parcelId)
         .parcelContent(
             ParcelContent.builder()
-                .id(rest.getId())
+                .id(id)
                 .feature(toDomainFeature(rest))
                 .geoServerUrl(geoServerUrl)
                 .geoServerParameter(GeoServerParameter)
@@ -43,12 +49,13 @@ public class FeatureMapper {
   }
 
   public static app.bpartners.geojobs.repository.model.Feature toDomainFeature(Feature rest) {
+    HashMap<String, Object> properties =
+        rest.getProperties() == null ? new HashMap<>() : new HashMap<>(rest.getProperties());
     return app.bpartners.geojobs.repository.model.Feature.builder()
-        .id(rest.getId())
-        .zoom(rest.getZoom())
+        .id(properties.get("id") == null ? null : properties.get("id").toString())
+        .zoom(properties.get("zoom") == null ? null : (Integer) properties.get("zoom"))
         .geometry(toDomainFeatureGeometry(rest.getGeometry()))
-        .properties(
-            rest.getProperties() == null ? new HashMap<>() : new HashMap<>(rest.getProperties()))
+        .properties(properties)
         .build();
   }
 
@@ -58,8 +65,7 @@ public class FeatureMapper {
     }
     var restFeatureGeometry = toRestFeatureGeometry(domain.getGeometry());
     return new Feature()
-        .id(domain.getId())
-        .zoom(domain.getZoom())
+        .type(FEATURE)
         .geometry(restFeatureGeometry)
         .properties(domain.getProperties());
   }
@@ -204,8 +210,8 @@ public class FeatureMapper {
 
     MultiPolygon multiPolygon = new MultiPolygon().coordinates(multiPolygonCoordinates);
     Feature feature = new Feature();
-    feature.setId(id);
-    feature.setZoom(zoom);
+    feature.getProperties().put("id", id);
+    feature.getProperties().put("zoom", zoom);
     multiPolygon.setType(MULTI_POLYGON);
     feature.setGeometry(new FeatureGeometry(multiPolygon));
 

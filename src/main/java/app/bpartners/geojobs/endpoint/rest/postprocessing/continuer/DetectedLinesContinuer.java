@@ -126,8 +126,8 @@ public class DetectedLinesContinuer implements Function<DetectedParcel, Detected
 
   private Feature newFeature(TiledPolygon tiledPolygon) {
     var feature = new Feature();
-    feature.setId(randomUUID().toString());
-    feature.setZoom(tiledPolygon.tilingConf().z());
+    feature.getProperties().put("id", randomUUID().toString());
+    feature.getProperties().put("zoom", tiledPolygon.tilingConf().z());
 
     var featureGeometry = new FeatureGeometry();
     featureGeometry.setActualInstance(tiledPolygon.latLonPolygon().polygon());

@@ -21,7 +21,8 @@ public class FeatureCreator {
                     + "  \"properties\": {\n"
                     + "    \"code\": \"69\",\n"
                     + "    \"nom\": \"Rh\u00f4ne\",\n"
-                    + "    \"id\": 30251921,\n"
+                    + "    \"id\": \"feature1_id\",\n"
+                    + "    \"zoom\": 20,\n"
                     + "    \"CLUSTER_ID\": 99520,\n"
                     + "    \"CLUSTER_SIZE\": 386884 },\n"
                     + "  \"geometry\": {\n"
@@ -35,8 +36,6 @@ public class FeatureCreator {
                     + "      [ 4.496344031095243, 45.883438201401809 ],\n"
                     + "      [ 4.479593950305621, 45.882900828315755 ],\n"
                     + "      [ 4.459648282829194, 45.904988912620688 ] ] ] ] } }",
-                Feature.class)
-            .id("feature_1_id")
-            .zoom(20));
+                Feature.class));
   }
 }

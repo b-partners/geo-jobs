@@ -1408,10 +1408,9 @@ components:
     Feature:
       type: object
       properties:
-        id:
+        type:
           type: string
-        zoom:
-          type: integer
+          enum: [ Feature ]
         geometry:
           oneOf:
             - $ref: '#/components/schemas/Point'

@@ -22,6 +22,7 @@ import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.annotator.AnnotationService;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -74,6 +75,9 @@ public class AnnotationServiceIT extends FacadeIT {
     List<List<BigDecimal>> aPolygon = List.of(aPoint, aPoint);
     List<List<List<BigDecimal>>> aMultiPolygon = List.of(aPolygon);
     MultiPolygon geometry = new MultiPolygon().coordinates(List.of(aMultiPolygon));
+    HashMap<String, Object> properties = new HashMap<>();
+    var featureId = "featureId";
+    properties.put("id", featureId);
     return MachineDetectedTile.builder()
         .id(tileId)
         .zdjJobId(jobId)
@@ -87,12 +91,13 @@ public class AnnotationServiceIT extends FacadeIT {
                     .detectedTileId(tileId)
                     .feature(
                         Feature.builder()
-                            .id("featureId")
+                            .id(featureId)
                             .geometry(
                                 Feature.FeatureGeometry.builder()
                                     .actualInstanceStringValue(
                                         objectMapper().writeValueAsString(geometry))
                                     .build())
+                            .properties(properties)
                             .build())
                     .detectedObjectType(
                         DetectableObjectType.builder()

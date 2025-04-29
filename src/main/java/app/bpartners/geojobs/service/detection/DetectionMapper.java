@@ -29,6 +29,7 @@ import app.bpartners.geojobs.service.tiling.TileValidator;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.IntStream;
 import lombok.AllArgsConstructor;
@@ -156,8 +157,12 @@ public class DetectionMapper {
     var allY = shapeAttributes.getAllPointsY();
     IntStream.range(0, allX.size())
         .forEach(i -> coordinates.add(List.of(allX.get(i), allY.get(i))));
+    var featureId = randomUUID().toString();
+    HashMap<String, Object> properties = new HashMap<>();
+    properties.put("id", featureId);
+    properties.put("zoom", zoom);
     return app.bpartners.geojobs.repository.model.Feature.builder()
-        .id(randomUUID().toString())
+        .id(featureId)
         .zoom(zoom)
         .geometry(
             app.bpartners.geojobs.repository.model.Feature.FeatureGeometry.builder()
@@ -169,6 +174,7 @@ public class DetectionMapper {
                                 .type(MultiPolygon.TypeEnum.MULTI_POLYGON)
                                 .coordinates(List.of(List.of(coordinates)))))
                 .build())
+        .properties(properties)
         .build();
   }
 
@@ -288,8 +294,12 @@ public class DetectionMapper {
                               BigDecimal.valueOf(point.getX()), BigDecimal.valueOf(point.getY()))));
                 })
             .toList();
+    var featureId = randomUUID().toString();
+    HashMap<String, Object> properties = new HashMap<>();
+    properties.put("zoom", zoom);
+    properties.put("id", featureId);
     return Feature.builder()
-        .id(randomUUID().toString())
+        .id(featureId)
         .zoom(zoom)
         .geometry(
             Feature.FeatureGeometry.builder()
@@ -301,6 +311,7 @@ public class DetectionMapper {
                                 .coordinates(coordinates)
                                 .type(MultiPolygon.TypeEnum.MULTI_POLYGON)))
                 .build())
+        .properties(properties)
         .build();
   }
 }
