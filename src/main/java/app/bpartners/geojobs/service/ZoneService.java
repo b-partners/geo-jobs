@@ -373,9 +373,10 @@ public class ZoneService {
       boolean isRooferMade) {
     var detectionToSave =
         mapFromRestCreateDetection(detectionId, createDetection, communityOwnerId, isRooferMade);
+    List<Feature> geoJsonZone =
+        createDetection.getGeoJsonZone() == null ? List.of() : createDetection.getGeoJsonZone();
     var savedDetection =
-        communityUsedSurfaceService.persistDetectionWithSurfaceUsage(
-            detectionToSave, createDetection.getGeoJsonZone());
+        communityUsedSurfaceService.persistDetectionWithSurfaceUsage(detectionToSave, geoJsonZone);
     eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
     return savedDetection;
   }
