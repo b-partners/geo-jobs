@@ -6,6 +6,7 @@ import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.
 import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
+import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import java.util.HashSet;
 import java.util.Objects;
 import lombok.Getter;
@@ -41,7 +42,15 @@ public class ApiKeyAuthenticator implements UsernamePasswordAuthenticator {
 
   private HashSet<Authority> getAuthorities(String candidateApiKey) {
     HashSet<Authority> authorities = new HashSet<>();
-    if (adminApiKey.equals(candidateApiKey)) {
+    // TODO: do not set as admin, only not limited by zone role
+    boolean tuitaCommunity =
+        "Tuita"
+            .equals(
+                caRepository
+                    .findByApiKey(candidateApiKey)
+                    .map(CommunityAuthorization::getName)
+                    .orElse(null));
+    if (adminApiKey.equals(candidateApiKey) || tuitaCommunity) {
       authorities.add(new Authority(ROLE_ADMIN));
     }
     if (existsAsNotRevokedApiKeyInCommunityKeys(candidateApiKey)) {
