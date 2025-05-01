@@ -7,21 +7,30 @@ import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryJ
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobSucceeded;
 import app.bpartners.geojobs.repository.AnnotationDeliveryConfigurationRepository;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
+import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
+import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
+import app.bpartners.geojobs.repository.model.detection.Detection;
+import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.service.DetectionFinishedMailer;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
+import app.bpartners.geojobs.template.HTMLTemplateParser;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.thymeleaf.context.Context;
 
 @Service
 @AllArgsConstructor
 public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJobSucceeded> {
+  private static final String ZONE_DETECTION_JOB_WITHOUT_OBJECT_RESULT_TEMPLATE =
+      "zone_detection_job_without_object_result";
   private final AnnotationDeliveryConfigurationRepository annotationDeliveryConfigurationRepository;
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final GeoJsonConversionJobService geoJsonConversionJobService;
@@ -29,16 +38,15 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
   private final MachineDetectedTileRepository machineDetectedTileRepository;
   private final DetectableObjectConfigurationRepository detectableObjectConfigurationRepository;
   private final DetectionFinishedMailer detectionFinishedMailer;
+  private final HTMLTemplateParser htmlTemplateParser;
+  private final DetectionRepository detectionRepository;
 
   @Override
   @Transactional
   public void accept(ZoneDetectionJobSucceeded event) {
     var succeededJobId = event.getSucceededJobId();
     var succeededZoneDetectionJob = zoneDetectionJobService.findById(succeededJobId);
-    if (zoneDetectionJobService.countInDoubtDetectedTileToDeliveryById(succeededJobId) == 0L) {
-      geoJsonConversionJobService.getOrComputeGeoJsonConversionJob(succeededZoneDetectionJob);
-      return;
-    }
+
     var detectableObjectConfigurations =
         detectableObjectConfigurationRepository.findAllByDetectionJobId(succeededJobId);
     boolean machineDetectionFoundAnyDetectedTileFromDetectableConfiguration =
@@ -49,6 +57,7 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
                             succeededJobId, detectableConfiguration.getObjectType().name())
                         > 0);
     if (!machineDetectionFoundAnyDetectedTileFromDetectableConfiguration) {
+      var detection = detectionRepository.findByZdjId(succeededJobId).orElse(null);
       var succeededDatetime = succeededZoneDetectionJob.getStatus().getCreationDatetime();
       var zoneName = succeededZoneDetectionJob.getZoneName();
       var formattedCreationDatetime =
@@ -57,8 +66,18 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
 
       var emailSubject =
           String.format(
-              "Analyse sur la zone %s terminée le %s", zoneName, formattedCreationDatetime);
-      detectionFinishedMailer.accept(succeededZoneDetectionJob.getEmailReceiver(), emailSubject);
+              "Analyse sur la zone %s terminée le %s sans objets détectés",
+              zoneName, formattedCreationDatetime);
+      var emailBody =
+          detectionWithoutResultBody(
+              detection, succeededZoneDetectionJob, detectableObjectConfigurations);
+      detectionFinishedMailer.accept(
+          succeededZoneDetectionJob.getEmailReceiver(), emailSubject, emailBody);
+      return;
+    }
+
+    if (zoneDetectionJobService.countInDoubtDetectedTileToDeliveryById(succeededJobId) == 0L) {
+      geoJsonConversionJobService.getOrComputeGeoJsonConversionJob(succeededZoneDetectionJob);
       return;
     }
     var minimumConfidenceForDelivery =
@@ -79,5 +98,20 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
                 .annotationJobWithObjectsIdFalsePositive(annotationJobWithObjectsIdFalsePositive)
                 .annotationJobWithoutObjectsId(annotationJobWithoutObjectsId)
                 .build()));
+  }
+
+  private String detectionWithoutResultBody(
+      @Nullable Detection detection,
+      ZoneDetectionJob zoneDetectionJob,
+      List<DetectableObjectConfiguration> detectableObjectConfigurations) {
+    var detectableTypes =
+        detectableObjectConfigurations.stream()
+            .map(DetectableObjectConfiguration::getObjectType)
+            .toList();
+    Context context = new Context();
+    context.setVariable("detection", detection);
+    context.setVariable("zoneDetectionJob", zoneDetectionJob);
+    context.setVariable("detectableTypes", detectableTypes);
+    return htmlTemplateParser.apply(ZONE_DETECTION_JOB_WITHOUT_OBJECT_RESULT_TEMPLATE, context);
   }
 }
