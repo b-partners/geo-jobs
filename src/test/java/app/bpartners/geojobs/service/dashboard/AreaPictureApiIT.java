@@ -50,6 +50,19 @@ class AreaPictureApiIT {
   }
 
   @Test
+  void get_area_picture_map_layers_with_longitude_and_latitude() {
+    double latitude = 48.8589892;
+    double longitude = 2.2847458;
+
+    var actual = subject.getAreaPictureMapLayers(longitude, latitude, apiKey);
+
+    assertEquals(3, actual.size());
+    assertEquals("cite:PHOTO_AERIENNE", actual.get(0).name());
+    assertEquals("ORTHOIMAGERY.ORTHOPHOTOS", actual.get(1).name());
+    assertEquals("cite:PCRS", actual.get(2).name());
+  }
+
+  @Test
   void response_500_with_bad_address_crupdate_area_picture() {
     var areaPictureId = randomUUID().toString();
     var fileId = randomUUID().toString();
