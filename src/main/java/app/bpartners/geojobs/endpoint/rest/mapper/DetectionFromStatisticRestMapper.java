@@ -48,7 +48,11 @@ public class DetectionFromStatisticRestMapper
         .pdfUrl(pdfUrl)
         .geoServerProperties(detection.getGeoServerProperties())
         .detectableObjectModel(detection.getDetectableObjectModel())
-        .step(detectionStepStatisticMapper.toRestDetectionStepStatus(statistic, detectionStepName));
+        .step(detectionStepStatisticMapper.toRestDetectionStepStatus(statistic, detectionStepName))
+        .addresses(
+            detection.getConvertedAddresses() == null
+                ? List.of()
+                : detection.getConvertedAddresses());
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection computeEmptyStatisticFromStep(

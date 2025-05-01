@@ -78,6 +78,7 @@ public class ZoneService {
   private final DetectionMachineDetectionCreation detectionMachineDetectionCreation;
   private final GeoJsonConversionJobRepository geoJsonConversionJobRepository;
   private final RooferDetectionService rooferDetectionService;
+  private final DetectionAddressConsumer detectionAddressConsumer;
 
   private List<Feature> readFromFile(File featuresFromShape) {
     try {
@@ -141,6 +142,18 @@ public class ZoneService {
     eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
     return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
         savedDetection, PENDING, UNKNOWN, CONFIGURING);
+  }
+
+  public app.bpartners.geojobs.endpoint.rest.model.Detection configureDetectionAddresses(
+      String detectionId, List<String> addresses) {
+    var detection = getDetectionByE2IdOrId(detectionId);
+    var savedDetection =
+        detectionRepository.save(detection.toBuilder().convertedAddresses(addresses).build());
+
+    detectionAddressConsumer.accept(savedDetection);
+
+    return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
+        savedDetection, PROCESSING, UNKNOWN, CONFIGURING);
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection configureShapeFile(

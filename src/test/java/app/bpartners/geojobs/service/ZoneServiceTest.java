@@ -138,6 +138,7 @@ class ZoneServiceTest {
           detectionJobValidatorMock,
           detectionMachineDetectionStatisticsComputerMock);
   RooferDetectionService rooferDetectionService = mock();
+  DetectionAddressConsumer detectionAddressConsumerMock = mock();
   ZoneService subject =
       new ZoneService(
           zoneDetectionJobServiceMock,
@@ -159,7 +160,8 @@ class ZoneServiceTest {
           detectionMachineDetectionStatisticsComputerMock,
           detectionMachineDetectionCreationMock,
           geoJsonConversionJobRepositoryMock,
-          rooferDetectionService);
+          rooferDetectionService,
+          detectionAddressConsumerMock);
 
   @BeforeEach
   void setUp() {
@@ -841,6 +843,46 @@ class ZoneServiceTest {
         .taskStatusStatistics(new ArrayList<>())
         .jobType(geoJobType)
         .build();
+  }
+
+  @Test
+  void configure_addresses_ok() {
+    var detectionId = randomUUID().toString();
+    var detection =
+        detectionCreator.create(
+            detectionId, randomUUID().toString(), randomUUID().toString(), null);
+    var addresses = List.of("11-7 Rue Mot, 94120 Fontenay-sous-Bois, France");
+    var expected = detection.toBuilder().convertedAddresses(addresses).build();
+    when(detectionRepositoryMock.findByEndToEndIdAndCommunityOwnerId(any(), any()))
+        .thenReturn(Optional.of(detection));
+    when(detectionRepositoryMock.save(any()))
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+    var principalMock = mock(Principal.class);
+    when(principalMock.getPassword()).thenReturn("dummy");
+    when(authProviderMock.getPrincipal()).thenReturn(principalMock);
+
+    var actual = subject.configureDetectionAddresses(detectionId, addresses);
+    var expectedRestDetection =
+        new Detection()
+            .id(detectionId)
+            .addresses(addresses)
+            .shapeUrl(null)
+            .excelUrl(null)
+            .geoJsonZone(null)
+            .geoServerProperties(detection.getGeoServerProperties())
+            .detectableObjectModel(detection.getDetectableObjectModel())
+            .step(
+                new DetectionStep()
+                    .name(CONFIGURING)
+                    .status(
+                        new Status()
+                            .progression(Status.ProgressionEnum.PROCESSING)
+                            .health(UNKNOWN)
+                            .creationDatetime(actual.getStep().getStatus().getCreationDatetime()))
+                    .statistics(List.of())
+                    .updatedAt(actual.getStep().getUpdatedAt()));
+    verify(detectionAddressConsumerMock, only()).accept(expected);
+    assertEquals(expectedRestDetection, actual);
   }
 
   @SneakyThrows

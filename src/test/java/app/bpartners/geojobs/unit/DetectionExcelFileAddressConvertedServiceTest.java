@@ -15,6 +15,7 @@ import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.repository.model.DetectionAddressConversionJob;
 import app.bpartners.geojobs.repository.model.DetectionAddressConversionTask;
 import app.bpartners.geojobs.repository.model.detection.Detection;
+import app.bpartners.geojobs.service.DetectionAddressConsumer;
 import app.bpartners.geojobs.service.DetectionAddressConversionJobMapper;
 import app.bpartners.geojobs.service.DetectionAddressConversionJobService;
 import app.bpartners.geojobs.service.DetectionAddressConversionTaskMapper;
@@ -33,10 +34,11 @@ class DetectionExcelFileAddressConvertedServiceTest {
 
   DetectionExcelFileAddressConvertedService subject =
       new DetectionExcelFileAddressConvertedService(
-          detectionAddressConversionJobMapper,
-          detectionAddressConversionJobServiceMock,
-          eventProducerMock,
-          detectionAddressConversionTaskMapper);
+          new DetectionAddressConsumer(
+              detectionAddressConversionJobMapper,
+              detectionAddressConversionJobServiceMock,
+              eventProducerMock,
+              detectionAddressConversionTaskMapper));
 
   @Test
   void create_detection_address_conversion_job_and_tasks() {
