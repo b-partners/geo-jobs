@@ -2,8 +2,9 @@ package app.bpartners.geojobs.endpoint.rest.security.authorizer;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.model.CreateDetection;
+import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
-import app.bpartners.geojobs.endpoint.rest.validator.FeatureMultiPolygonChecker;
+import app.bpartners.geojobs.endpoint.rest.validator.FeatureTypeChecker;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
@@ -23,7 +24,7 @@ public class DetectionAuthorizer implements TriConsumer<String, CreateDetection,
   private final DetectionOwnerAuthorizer detectionOwnerAuthorizer;
   private final DetectionRepository detectionRepository;
   private final DetectableObjectTypeMapper detectableObjectTypeMapper;
-  private final FeatureMultiPolygonChecker featureMultiPolygonChecker;
+  private final FeatureTypeChecker featureTypeChecker;
 
   @Override
   public void accept(String detectionId, CreateDetection createDetection, Principal principal) {
@@ -54,7 +55,8 @@ public class DetectionAuthorizer implements TriConsumer<String, CreateDetection,
     var communityAuthorization = authorizeCommunity(detectionId, principal);
     var features = createDetection.getGeoJsonZone();
     if (features != null && !features.isEmpty()) {
-      boolean featuresHasAllMultiPolygonInstances = featureMultiPolygonChecker.apply(features);
+      boolean featuresHasAllMultiPolygonInstances =
+          featureTypeChecker.apply(features, MultiPolygon.class);
       if (featuresHasAllMultiPolygonInstances) {
         communityZoneSurfaceAuthorizer.accept(communityAuthorization, features);
         communityZoneAuthorizer.accept(communityAuthorization, features, principal);

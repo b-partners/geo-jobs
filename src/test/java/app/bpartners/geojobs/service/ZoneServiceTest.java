@@ -36,7 +36,7 @@ import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
-import app.bpartners.geojobs.endpoint.rest.validator.FeatureMultiPolygonChecker;
+import app.bpartners.geojobs.endpoint.rest.validator.FeatureTypeChecker;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.hash.FileHash;
@@ -55,6 +55,7 @@ import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.detection.*;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
+import app.bpartners.geojobs.service.geojson.PointToMultiPolygonConverter;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import app.bpartners.geojobs.utils.FeatureCreator;
 import app.bpartners.geojobs.utils.TaskStatisticCreator;
@@ -113,7 +114,7 @@ class ZoneServiceTest {
       mock(GeoJsonConversionJobRepository.class);
   DetectionGeoJsonUpdateValidator detectionGeoJsonUpdateValidator =
       new DetectionGeoJsonUpdateValidator();
-  FeatureMultiPolygonChecker featureMultiPolygonCheckerMock = mock();
+  FeatureTypeChecker featureTypeChecker = new FeatureTypeChecker();
   ZoneDetectionJobCreator zoneDetectionJobCreator = new ZoneDetectionJobCreator();
   CommunityAuthorizationRepository communityAuthRepositoryMock = mock();
   TaskStatisticCreator taskStatisticCreator = new TaskStatisticCreator();
@@ -139,6 +140,8 @@ class ZoneServiceTest {
           detectionMachineDetectionStatisticsComputerMock);
   RooferDetectionService rooferDetectionService = mock();
   DetectionAddressConsumer detectionAddressConsumerMock = mock();
+  PointToMultiPolygonConverter pointToMultiPolygonConverterMock = mock();
+  FeatureConverter featureConverterMock = mock();
   ZoneService subject =
       new ZoneService(
           zoneDetectionJobServiceMock,
@@ -152,7 +155,7 @@ class ZoneServiceTest {
           new ObjectMapper().configure(FAIL_ON_UNKNOWN_PROPERTIES, false),
           authProviderMock,
           detectionGeoJsonUpdateValidator,
-          featureMultiPolygonCheckerMock,
+          featureTypeChecker,
           communityAuthRepositoryMock,
           detectionTilingCreationMock,
           detectionFromStatisticRestMapperMock,
@@ -161,7 +164,9 @@ class ZoneServiceTest {
           detectionMachineDetectionCreationMock,
           geoJsonConversionJobRepositoryMock,
           rooferDetectionService,
-          detectionAddressConsumerMock);
+          detectionAddressConsumerMock,
+          pointToMultiPolygonConverterMock,
+          featureConverterMock);
 
   @BeforeEach
   void setUp() {
