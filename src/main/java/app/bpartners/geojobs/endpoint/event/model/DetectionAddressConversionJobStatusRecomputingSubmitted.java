@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.endpoint.event.model;
 
-
 import app.bpartners.geojobs.endpoint.event.model.status.JobStatusRecomputingSubmitted;
 import java.time.Duration;
 import lombok.AllArgsConstructor;

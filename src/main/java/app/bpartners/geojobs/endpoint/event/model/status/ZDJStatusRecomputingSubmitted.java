@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.endpoint.event.model.status;
 
-
 import java.time.Duration;
 import lombok.AllArgsConstructor;
 import lombok.Data;

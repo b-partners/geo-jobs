@@ -22,7 +22,7 @@ class AutoTaskStatisticRecomputingSubmittedIT extends FacadeIT {
 
     assertEquals(statisticRecomputingSubmitted, deserialized);
     assertEquals("jobId", deserialized.getJobId());
-    assertEquals(Duration.ofSeconds(300), deserialized.maxConsumerDuration());
-    assertEquals(Duration.ofSeconds(120), deserialized.maxConsumerBackoffBetweenRetries());
+    assertEquals(Duration.ofSeconds(30), deserialized.maxConsumerDuration());
+    assertEquals(Duration.ofSeconds(60), deserialized.maxConsumerBackoffBetweenRetries());
   }
 }

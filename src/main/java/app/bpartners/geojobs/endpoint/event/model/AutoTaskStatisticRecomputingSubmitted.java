@@ -18,9 +18,14 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = false)
 @ToString
 public class AutoTaskStatisticRecomputingSubmitted extends PojaEvent {
-  private static final long MAX_CONSUMER_DURATION_VALUE = 300L;
-  private static final long DEFAULT_BACK_OFF_VALUE = 120L;
+  private static final long MAX_CONSUMER_DURATION_VALUE = 30L;
+  private static final long DEFAULT_BACK_OFF_VALUE = 60L;
   protected String jobId;
+
+  @Override
+  public Duration eventHandlerInitMaxDuration() {
+    return Duration.ofSeconds(0);
+  }
 
   @Override
   public Duration maxConsumerDuration() {
