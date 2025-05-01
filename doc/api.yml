@@ -578,7 +578,7 @@ paths:
       description: |
         Provide addresses to finalize detection configuration
       security:
-        - ApiKeyAuth: []
+        - ApiKeyAuth: [ ]
       parameters:
         - $ref: '#/components/parameters/IdentifierParameter'
       requestBody:
@@ -597,6 +597,7 @@ paths:
                 $ref: '#/components/schemas/Detection'
   '/detections/{id}/roofer':
     post:
+      deprecated: true
       tags:
         - Detection
       operationId: processRooferDetection
@@ -624,7 +625,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Detection'
-
+  '/detections/{id}/sync':
+    post:
+      tags:
+        - Detection
+      operationId: processDetectionSynchronously
+      summary: Process detection synchronously
+      description: |
+        Intended for small areas such as an address, detection tasks are processed simultaneously, delivering results in less than 60 seconds. 
+        Results are requested through the GET /detections/{id} endpoint.
+      security:
+        - ApiKeyAuth: [ ]
+      parameters:
+        - $ref: '#/components/parameters/IdentifierParameter'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDetection'
+      responses:
+        200:
+          description: Detection created or processing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detection'
   '/detections/{id}/roofer/email':
     post:
       tags:
@@ -687,16 +712,14 @@ paths:
     post:
       tags:
         - Detection
-      operationId: configureRooferDetectionImageConfig
+      operationId: configureDetectionImage
+      summary: Configure image for detection
+      description: |
+        Only image queried from GET /areaPictureDetails is supported for now.
       parameters:
-        - in: path
-          name: id
-          schema:
-            type: string
-          description: Detection identifier
-          required: true
+        - $ref: '#/components/parameters/IdentifierParameter'
       requestBody:
-        description: Image from a specific address
+        description: Image from a specific address to be detected
         content:
           multipart/form-data:
             schema:
@@ -1562,7 +1585,7 @@ components:
           items:
             $ref: '#/components/schemas/Feature'
           description: |
-            Optional. If so, must provide zone by shape or excel file through its specific endpoint.
+            Optional. If so, must shape file or excel file or image file through its specific endpoint.
     DetectionStep:
       properties:
         name:
