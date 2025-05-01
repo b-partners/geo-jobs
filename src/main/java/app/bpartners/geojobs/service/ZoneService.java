@@ -39,9 +39,12 @@ import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionJob;
+import app.bpartners.geojobs.service.dashboard.AreaPictureApi;
+import app.bpartners.geojobs.service.dashboard.component.AreaPictureMapLayer;
 import app.bpartners.geojobs.service.detection.*;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import app.bpartners.geojobs.service.geojson.PointToMultiPolygonConverter;
+import app.bpartners.geojobs.service.geoserver.GeoServerConfiguration;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -86,6 +89,8 @@ public class ZoneService {
   private final DetectionAddressConsumer detectionAddressConsumer;
   private final PointToMultiPolygonConverter pointToMultiPolygonConverter;
   private final FeatureConverter featureConverter;
+  private final AreaPictureApi areaPictureApi;
+  private final GeoServerConfiguration geoServerConfiguration;
 
   private List<Feature> readFromFile(File featuresFromShape) {
     try {
@@ -418,6 +423,12 @@ public class ZoneService {
             : geoJsonZone.stream().map(FeatureMapper::toDomainFeature).toList();
     var multiPolygonGeoJsonZone =
         extractDetectionMultiPolygonGeoJson(geoJsonZone, providedGeoJsonZone);
+    var finalGeoServerProperties =
+        extractGeoServerProperties(
+            createDetection.getGeoServerProperties(),
+            communityOwnerId,
+            geoJsonZone,
+            multiPolygonGeoJsonZone);
     return Detection.builder()
         .id(detectionId)
         .endToEndId(endToEndId)
@@ -426,11 +437,31 @@ public class ZoneService {
         .isRooferMade(isRooferMade)
         .communityOwnerId(communityOwnerId)
         .detectableObjectConfigurations(detectableObjectConfigurations)
-        .geoServerProperties(createDetection.getGeoServerProperties())
+        .geoServerProperties(finalGeoServerProperties)
         .providedGeoJsonZone(providedGeoJsonZone)
         .multiPolygonGeoJsonZone(multiPolygonGeoJsonZone)
         .detectableObjectModel(detectableObjectModel)
         .build();
+  }
+
+  private GeoServerProperties extractGeoServerProperties(
+      GeoServerProperties geoServerProperties,
+      String communityOwnerId,
+      List<Feature> geoJsonZone,
+      List<app.bpartners.geojobs.repository.model.Feature> multiPolygonGeoJsonZone) {
+    var finalGeoServerProperties = geoServerProperties;
+    if (geoJsonZone != null
+        && !multiPolygonGeoJsonZone.isEmpty()
+        && (geoServerProperties == null
+            || geoServerProperties.getGeoServerParameter() == null
+            || geoServerProperties.getGeoServerParameter().getLayers() == null)) {
+      var firstPoint = retrieveFirstPoint(geoJsonZone);
+      List<String> layers = retrieveLayers(firstPoint, communityOwnerId);
+      // TODO: save other layers to be used in failure case
+      finalGeoServerProperties =
+          geoServerConfiguration.defaultGeoServerProperties(layers.getFirst());
+    }
+    return finalGeoServerProperties;
   }
 
   private List<app.bpartners.geojobs.repository.model.Feature> extractDetectionMultiPolygonGeoJson(
@@ -479,6 +510,31 @@ public class ZoneService {
 
     throw new NotImplementedException(
         "Feature with multiple geometry instances not supported for now.");
+  }
+
+  private List<BigDecimal> retrieveFirstPoint(List<Feature> geoJsonZone) {
+    var firstFeature = geoJsonZone.getFirst();
+    var firstInstance = firstFeature.getGeometry().getActualInstance();
+    if (firstInstance instanceof MultiPolygon multiPolygon) {
+      return multiPolygon.getCoordinates().getFirst().getFirst().getFirst();
+    } else if (firstInstance instanceof Polygon polygon) {
+      return polygon.getCoordinates().getFirst().getFirst();
+    } else if (firstInstance instanceof Point point) {
+      return point.getCoordinates();
+    }
+    throw new IllegalArgumentException("Unknown feature type: " + firstFeature);
+  }
+
+  private List<String> retrieveLayers(List<BigDecimal> firstPoint, String communityOwnerId) {
+    var longitude = firstPoint.get(0).doubleValue();
+    var latitude = firstPoint.get(1).doubleValue();
+    var e2ApiKey =
+        communityAuthRepository
+            .findById(communityOwnerId)
+            .map(CommunityAuthorization::getApiKey)
+            .orElseThrow();
+    var areaMapLayers = areaPictureApi.getAreaPictureMapLayers(longitude, latitude, e2ApiKey);
+    return areaMapLayers.stream().map(AreaPictureMapLayer::name).toList();
   }
 
   public List<app.bpartners.geojobs.endpoint.rest.model.Detection> getDetectionsByCriteria(
