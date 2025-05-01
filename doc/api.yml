@@ -569,6 +569,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Detection'
+  '/detections/{id}/addresses':
+    post:
+      tags:
+        - Detection
+      summary: Set addresses for existing detection
+      operationId: configureDetectionAddresses
+      description: |
+        Provide addresses to finalize detection configuration
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdentifierParameter'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/Address'
+      responses:
+        200:
+          description: Detection configured with addresses
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detection'
   '/detections/{id}/roofer':
     post:
       tags:
@@ -858,6 +884,14 @@ components:
       type: apiKey
       name: readme-signature
       in: header
+  parameters:
+    IdentifierParameter:
+      in: path
+      name: id
+      schema:
+        type: string
+      description: Detection identifier
+      required: true
   responses:
     400:
       description: Bad request
@@ -1566,6 +1600,10 @@ components:
           type: string
         pdfUrl:
           type: string
+        addresses:
+          type: string
+          items:
+            type: string
     Prospect:
       type: object
       properties:
@@ -1577,5 +1615,10 @@ components:
           type: string
         phone:
           type: string
+        address:
+          type: string
+    Address:
+      type: object
+      properties:
         address:
           type: string
