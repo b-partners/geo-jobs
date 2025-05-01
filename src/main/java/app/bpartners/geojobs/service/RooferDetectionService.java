@@ -4,6 +4,7 @@ import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.MACHIN
 import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
+import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.HOUSES_0;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_BUCKET_FOLDER;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_EXTENSION;
 import static java.time.Instant.now;
@@ -65,7 +66,7 @@ public class RooferDetectionService
     var providedGeoJson = detection.getProvidedGeoJsonZone();
     int zoom =
         providedGeoJson.getFirst().getProperties().get("zoom") == null
-            ? null
+            ? HOUSES_0.getZoomLevel()
             : (Integer) providedGeoJson.getFirst().getProperties().get("zoom");
     var flattedFeatures =
         providedGeoJson.stream()
