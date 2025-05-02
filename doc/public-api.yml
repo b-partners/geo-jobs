@@ -91,6 +91,103 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Detection'
+  '/areaPictureDetails':
+    get:
+      tags:
+        - Detection
+      summary: Retrieve area picture from address and its details
+      operationId: getAreaPicture
+      security:
+        - ApiKeyAuth: [ ]
+      parameters:
+        - in: query
+          name: address
+          schema:
+            type: string
+          required: true
+      responses:
+        200:
+          description: Area picture details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AreaPictureDetails'
+  '/detections/{id}/sync':
+    post:
+      tags:
+        - Detection
+      operationId: processDetectionSynchronously
+      summary: Process detection synchronously
+      description: |
+        Intended for small areas such as an address, detection tasks are processed simultaneously, delivering results in less than 60 seconds. 
+        Results are requested through the GET /detections/{id} endpoint.
+      security:
+        - ApiKeyAuth: [ ]
+      parameters:
+        - $ref: '#/components/parameters/IdentifierParameter'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDetection'
+      responses:
+        200:
+          description: Detection created or processing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detection'
+  '/detections/{id}/image':
+    post:
+      tags:
+        - Detection
+      operationId: configureDetectionImage
+      summary: Configure image for detection
+      description: |
+        Only image queried from GET /areaPictureDetails is supported for now.
+      parameters:
+        - $ref: '#/components/parameters/IdentifierParameter'
+      requestBody:
+        description: Image from a specific address to be detected
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        200:
+          description: Detection with updated image file uploaded url
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detection'
+  '/detections/{id}/roofDelimiter':
+    post:
+      tags:
+        - Detection
+      summary: Set roof delimiter for existing detection
+      operationId: configureDetectionRoofDelimiter
+      description: |
+        Provide roof delimiter to finalize detection configuration in TOITURE model use case.
+      security:
+        - ApiKeyAuth: [ ]
+      parameters:
+        - $ref: '#/components/parameters/IdentifierParameter'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoofDelimiter'
+      responses:
+        200:
+          description: Detection configured with roof delimiter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detection'
   '/detections/{id}':
     get:
       tags:
@@ -230,36 +327,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Detection'
-  '/detections/{id}/image':
-    post:
-      tags:
-        - Detection
-      operationId: configureRooferDetectionImageConfig
-      parameters:
-        - in: path
-          name: id
-          schema:
-            type: string
-          description: Detection identifier
-          required: true
-      requestBody:
-        description: Image from a specific address
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                file:
-                  type: string
-                  format: binary
-      responses:
-        200:
-          description: Detection with updated image file uploaded url
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Detection'
-
   '/api/keys/revoke':
     delete:
       tags:
@@ -549,6 +616,8 @@ components:
           type: array
           items:
             type: string
+        roofDelimiter:
+          $ref: '#/components/schemas/RoofDelimiter'
     DetectionStepName:
       enum:
         - CONFIGURING
@@ -591,3 +660,19 @@ components:
       properties:
         address:
           type: string
+    AreaPictureDetails:
+      type: object
+      properties:
+        address:
+          type: string
+        imageBase64:
+          type: string
+    RoofDelimiter:
+      type: object
+      description: |
+        Optional. Mandatory only when doing sync detection using TOITURE model.
+      properties:
+        polygon:
+          type: array
+          items:
+            $ref: '#/components/schemas/Point2D'
