@@ -96,6 +96,8 @@ public class SecurityConf {
                     .anonymous()
                     .requestMatchers(OPTIONS, "/**")
                     .permitAll()
+                    .requestMatchers(GET, "/areaPictureDetails")
+                    .authenticated()
                     .requestMatchers("/jobs/*/annotationProcessing")
                     .hasAuthority(ROLE_ADMIN.name())
                     .requestMatchers(GET, "/tilingJobs", "/tilingJobs/**")
