@@ -140,6 +140,8 @@ public class SecurityConf {
                     .authenticated() // TODO: change later
                     .requestMatchers(POST, "/detections/*/roofDelimiter")
                     .authenticated() // TODO: change later
+                    .requestMatchers(POST, "/detections/*/addresses")
+                    .authenticated() // TODO: change later
                     .requestMatchers(POST, "/detections/*/roofer/email")
                     .hasAnyAuthority(ROLE_ADMIN.name(), ROLE_COMMUNITY.name())
                     .requestMatchers(GET, "/detections/*")
