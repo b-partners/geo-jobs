@@ -5,6 +5,7 @@ import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionStepStatisticMapper;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionStepName;
+import app.bpartners.geojobs.endpoint.rest.model.RoofDelimiter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
@@ -52,7 +53,9 @@ public class DetectionFromStatisticRestMapper
         .addresses(
             detection.getConvertedAddresses() == null
                 ? List.of()
-                : detection.getConvertedAddresses());
+                : detection.getConvertedAddresses())
+        .roofDelimiter(detection.getPolygonRoofDelimitation() == null || detection.getPolygonRoofDelimitation().isEmpty() ? null
+                : new RoofDelimiter().polygon(detection.getPolygonRoofDelimitation()));
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection computeEmptyStatisticFromStep(
