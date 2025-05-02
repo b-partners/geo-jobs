@@ -503,7 +503,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DetectionUsage'
-
+  /areaPictureDetails:
+    get:
+      tags:
+        - Detection
+      summary: Retrieve area picture from address and its details
+      operationId: getAreaPicture
+      security:
+        - ApiKeyAuth: [ ]
+      parameters:
+        - in: query
+          name: address
+          schema:
+            type: string
+          required: true
+      responses:
+        200:
+          description: Area picture details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AreaPictureDetails'
   '/detections':
     get:
       tags:
@@ -1644,4 +1664,11 @@ components:
       type: object
       properties:
         address:
+          type: string
+    AreaPictureDetails:
+      type: object
+      properties:
+        address:
+          type: string
+        imageBase64:
           type: string
