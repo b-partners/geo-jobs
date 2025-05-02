@@ -503,7 +503,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DetectionUsage'
-
+  /areaPictureDetails:
+    get:
+      tags:
+        - Detection
+      summary: Retrieve area picture from address and its details
+      operationId: getAreaPicture
+      security:
+        - ApiKeyAuth: [ ]
+      parameters:
+        - in: query
+          name: address
+          schema:
+            type: string
+          required: true
+      responses:
+        200:
+          description: Area picture details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AreaPictureDetails'
   '/detections':
     get:
       tags:
@@ -569,8 +589,59 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Detection'
+  '/detections/{id}/addresses':
+    post:
+      tags:
+        - Detection
+      summary: Set addresses for existing detection
+      operationId: configureDetectionAddresses
+      description: |
+        Provide addresses to finalize detection configuration
+      security:
+        - ApiKeyAuth: [ ]
+      parameters:
+        - $ref: '#/components/parameters/IdentifierParameter'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/Address'
+      responses:
+        200:
+          description: Detection configured with addresses
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detection'
+  '/detections/{id}/roofDelimiter':
+    post:
+      tags:
+        - Detection
+      summary: Set roof delimiter for existing detection
+      operationId: configureDetectionRoofDelimiter
+      description: |
+        Provide roof delimiter to finalize detection configuration in TOITURE model use case.
+      security:
+        - ApiKeyAuth: [ ]
+      parameters:
+        - $ref: '#/components/parameters/IdentifierParameter'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoofDelimiter'
+      responses:
+        200:
+          description: Detection configured with roof delimiter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detection'
   '/detections/{id}/roofer':
     post:
+      deprecated: true
       tags:
         - Detection
       operationId: processRooferDetection
@@ -598,7 +669,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Detection'
-
+  '/detections/{id}/sync':
+    post:
+      tags:
+        - Detection
+      operationId: processDetectionSynchronously
+      summary: Process detection synchronously
+      description: |
+        Intended for small areas such as an address, detection tasks are processed simultaneously, delivering results in less than 60 seconds. 
+        Results are requested through the GET /detections/{id} endpoint.
+      security:
+        - ApiKeyAuth: [ ]
+      parameters:
+        - $ref: '#/components/parameters/IdentifierParameter'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDetection'
+      responses:
+        200:
+          description: Detection created or processing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detection'
   '/detections/{id}/roofer/email':
     post:
       tags:
@@ -661,16 +756,14 @@ paths:
     post:
       tags:
         - Detection
-      operationId: configureRooferDetectionImageConfig
+      operationId: configureDetectionImage
+      summary: Configure image for detection
+      description: |
+        Only image queried from GET /areaPictureDetails is supported for now.
       parameters:
-        - in: path
-          name: id
-          schema:
-            type: string
-          description: Detection identifier
-          required: true
+        - $ref: '#/components/parameters/IdentifierParameter'
       requestBody:
-        description: Image from a specific address
+        description: Image from a specific address to be detected
         content:
           multipart/form-data:
             schema:
@@ -858,6 +951,14 @@ components:
       type: apiKey
       name: readme-signature
       in: header
+  parameters:
+    IdentifierParameter:
+      in: path
+      name: id
+      schema:
+        type: string
+      description: Detection identifier
+      required: true
   responses:
     400:
       description: Bad request
@@ -1528,7 +1629,7 @@ components:
           items:
             $ref: '#/components/schemas/Feature'
           description: |
-            Optional. If so, must provide zone by shape or excel file through its specific endpoint.
+            Optional. If so, must shape file or excel file or image file through its specific endpoint.
     DetectionStep:
       properties:
         name:
@@ -1566,6 +1667,12 @@ components:
           type: string
         pdfUrl:
           type: string
+        addresses:
+          type: array
+          items:
+            type: string
+        roofDelimiter:
+          $ref: '#/components/schemas/RoofDelimiter'
     Prospect:
       type: object
       properties:
@@ -1579,3 +1686,24 @@ components:
           type: string
         address:
           type: string
+    Address:
+      type: object
+      properties:
+        address:
+          type: string
+    AreaPictureDetails:
+      type: object
+      properties:
+        address:
+          type: string
+        imageBase64:
+          type: string
+    RoofDelimiter:
+      type: object
+      description: |
+        Optional. Mandatory only when doing sync detection using TOITURE model.
+      properties:
+        polygon:
+          type: array
+          items:
+            $ref: '#/components/schemas/Point2D'

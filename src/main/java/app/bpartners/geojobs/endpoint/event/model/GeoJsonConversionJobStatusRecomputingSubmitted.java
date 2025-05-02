@@ -1,8 +1,5 @@
 package app.bpartners.geojobs.endpoint.event.model;
 
-import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
-
-import app.bpartners.geojobs.endpoint.event.EventStack;
 import app.bpartners.geojobs.endpoint.event.model.status.JobStatusRecomputingSubmitted;
 import java.time.Duration;
 import lombok.AllArgsConstructor;
@@ -15,16 +12,10 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = false)
 @ToString
 public class GeoJsonConversionJobStatusRecomputingSubmitted extends JobStatusRecomputingSubmitted {
-  private static final long MAX_CONSUMER_DURATION_IN_SECONDS = Duration.ofSeconds(60).getSeconds();
   private static final long INITIAL_BACKOFF_DURATION_IN_SECONDS =
       Duration.ofMinutes(30).getSeconds();
 
   public GeoJsonConversionJobStatusRecomputingSubmitted(String jobId) {
-    super(jobId, MAX_CONSUMER_DURATION_IN_SECONDS, INITIAL_BACKOFF_DURATION_IN_SECONDS);
-  }
-
-  @Override
-  public EventStack getEventStack() {
-    return EVENT_STACK_2;
+    super(jobId, INITIAL_BACKOFF_DURATION_IN_SECONDS);
   }
 }

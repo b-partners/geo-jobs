@@ -11,13 +11,13 @@ import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.endpoint.rest.model.Point;
 import app.bpartners.geojobs.endpoint.rest.model.Polygon;
-import app.bpartners.geojobs.endpoint.rest.validator.FeatureMultiPolygonChecker;
+import app.bpartners.geojobs.endpoint.rest.validator.FeatureTypeChecker;
 import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-class FeatureMultiPolygonCheckerTest {
-  private final FeatureMultiPolygonChecker subject = new FeatureMultiPolygonChecker();
+class FeatureTypeCheckerTest {
+  private final FeatureTypeChecker subject = new FeatureTypeChecker();
 
   private Feature multipolygon() {
     Feature feature = new Feature();
@@ -78,8 +78,11 @@ class FeatureMultiPolygonCheckerTest {
 
   @Test
   void check_list_of_features() {
-    assertTrue(subject.apply(List.of(multipolygon())));
-    assertFalse(subject.apply(List.of(polygon())));
-    assertFalse(subject.apply(List.of(point())));
+    assertTrue(subject.apply(List.of(multipolygon()), MultiPolygon.class));
+    assertFalse(subject.apply(List.of(polygon()), MultiPolygon.class));
+    assertFalse(subject.apply(List.of(point()), MultiPolygon.class));
+
+    assertTrue(subject.apply(List.of(point()), Point.class));
+    assertTrue(subject.apply(List.of(polygon()), Polygon.class));
   }
 }

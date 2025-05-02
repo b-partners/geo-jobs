@@ -18,12 +18,17 @@ public class TaskCreated<T extends Task> extends PojaEvent {
   }
 
   @Override
+  public Duration eventHandlerInitMaxDuration() {
+    return Duration.ofSeconds(0);
+  }
+
+  @Override
   public Duration maxConsumerDuration() {
-    return null;
+    return Duration.ofSeconds(30);
   }
 
   @Override
   public Duration maxConsumerBackoffBetweenRetries() {
-    return null;
+    return Duration.ofSeconds(60);
   }
 }

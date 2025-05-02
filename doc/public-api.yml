@@ -142,6 +142,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Detection'
+  '/detections/{id}/addresses':
+    post:
+      tags:
+        - Detection
+      summary: Set addresses for existing detection
+      operationId: configureDetectionAddresses
+      description: |
+        Provide addresses to finalize detection configuration
+      security:
+        - ApiKeyAuth: [ ]
+      parameters:
+        - $ref: '#/components/parameters/IdentifierParameter'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/Address'
+      responses:
+        200:
+          description: Detection configured with addresses
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detection'
   '/detections/{id}/shape':
     post:
       tags:
@@ -270,6 +296,14 @@ components:
               type: "MultiPolygon"
               coordinates:
                 - [ [ [ 2.3767,48.9172 ],[ 2.3777,48.9172 ],[ 2.3777,48.9179 ],[ 2.3767,48.9179 ],[ 2.3767,48.9172 ] ] ]
+  parameters:
+    IdentifierParameter:
+      in: path
+      name: id
+      schema:
+        type: string
+      description: Detection identifier
+      required: true
   schemas:
     Page:
       type: integer
@@ -511,6 +545,10 @@ components:
           type: string
         pdfUrl:
           type: string
+        addresses:
+          type: array
+          items:
+            type: string
     DetectionStepName:
       enum:
         - CONFIGURING
@@ -548,3 +586,8 @@ components:
         updatedAt:
           type: string
           format: date-time
+    Address:
+      type: object
+      properties:
+        address:
+          type: string

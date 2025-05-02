@@ -26,4 +26,16 @@ public class DetectionFinishedMailer implements BiConsumer<String, String> {
             null,
             List.of()));
   }
+
+  @SneakyThrows
+  public void accept(String emailReceiver, String subject, String body) {
+    mailer.accept(
+        new Email(
+            new InternetAddress(emailReceiver),
+            List.of(new InternetAddress("tech@bpartners.app")),
+            List.of(),
+            subject,
+            body,
+            List.of()));
+  }
 }

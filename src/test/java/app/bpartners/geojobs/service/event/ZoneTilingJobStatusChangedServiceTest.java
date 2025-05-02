@@ -3,13 +3,12 @@ package app.bpartners.geojobs.service.event;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.FAILED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobFailed;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobStatusChanged;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status.HealthStatus;
@@ -23,8 +22,10 @@ import app.bpartners.geojobs.service.JobFinishedMailer;
 import app.bpartners.geojobs.service.StatusChangedHandler;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 
 @AutoConfigureMockMvc
@@ -62,20 +63,17 @@ class ZoneTilingJobStatusChangedServiceTest {
   @Test
   void mail_if_old_unknown_and_new_fails() {
     var ztjStatusChanged = new ZoneTilingJobStatusChanged();
-    ztjStatusChanged.setOldJob(aZTJ(PROCESSING, UNKNOWN));
-    ztjStatusChanged.setNewJob(aZTJ(FINISHED, FAILED));
-    when(detectionRepository.findByEndToEndIdAndCommunityOwnerId(any(), any()))
-        .thenReturn(
-            Optional.ofNullable(
-                Detection.builder()
-                    .endToEndId("end_to_end_id")
-                    .ztjId("ztj_id")
-                    .zdjId("zdj_id")
-                    .build()));
-    when(jobService.saveZDJFromZTJ(any())).thenReturn(ZoneDetectionJob.builder().build());
+    var oldJob = aZTJ(PROCESSING, UNKNOWN);
+    var newJob = aZTJ(FINISHED, FAILED);
+    ztjStatusChanged.setOldJob(oldJob);
+    ztjStatusChanged.setNewJob(newJob);
+
     subject.accept(ztjStatusChanged);
 
-    verify(mailer, times(1)).accept(any());
+    var eventListCaptor = ArgumentCaptor.forClass(List.class);
+    verify(eventProducerMock, only()).accept(eventListCaptor.capture());
+    var zoneTilingJobFailed = (ZoneTilingJobFailed) eventListCaptor.getValue().getFirst();
+    assertEquals(ZoneTilingJobFailed.builder().failedJob(newJob).build(), zoneTilingJobFailed);
   }
 
   @Test

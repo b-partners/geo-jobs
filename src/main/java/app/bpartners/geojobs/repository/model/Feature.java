@@ -22,6 +22,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 @Data
 @ToString
 @EqualsAndHashCode
+@JsonIgnoreProperties({"priorityLayer"})
 public class Feature implements Serializable {
   private String id;
   private Integer zoom;

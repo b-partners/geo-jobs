@@ -7,6 +7,7 @@ import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.repository.model.Feature;
 import jakarta.persistence.*;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.List;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -68,6 +69,9 @@ public class Detection implements Serializable {
 
   @JdbcTypeCode(JSON)
   private List<String> convertedAddresses;
+
+  @JdbcTypeCode(JSON)
+  private List<List<BigDecimal>> polygonRoofDelimitation;
 
   public List<app.bpartners.geojobs.endpoint.rest.model.Feature> getProvidedGeoJsonZone() {
     return providedGeoJsonZone == null

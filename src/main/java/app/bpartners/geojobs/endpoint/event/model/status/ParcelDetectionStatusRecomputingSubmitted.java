@@ -1,8 +1,5 @@
 package app.bpartners.geojobs.endpoint.event.model.status;
 
-import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
-
-import app.bpartners.geojobs.endpoint.event.EventStack;
 import java.time.Duration;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -14,15 +11,9 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = false)
 @ToString(callSuper = true)
 public class ParcelDetectionStatusRecomputingSubmitted extends JobStatusRecomputingSubmitted {
-  private static final long MAX_CONSUMER_DURATION_IN_SECONDS = Duration.ofSeconds(60).toSeconds();
   private static final long INITIAL_BACKOFF_IN_SECONDS = Duration.ofSeconds(15).toSeconds();
 
   public ParcelDetectionStatusRecomputingSubmitted(String parcelDetectionJobId) {
-    super(parcelDetectionJobId, MAX_CONSUMER_DURATION_IN_SECONDS, INITIAL_BACKOFF_IN_SECONDS);
-  }
-
-  @Override
-  public EventStack getEventStack() {
-    return EVENT_STACK_2;
+    super(parcelDetectionJobId, INITIAL_BACKOFF_IN_SECONDS);
   }
 }

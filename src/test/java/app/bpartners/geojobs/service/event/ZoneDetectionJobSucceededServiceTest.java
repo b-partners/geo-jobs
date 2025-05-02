@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.MOISISSURE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.USURE;
 import static java.util.UUID.randomUUID;
@@ -9,16 +10,20 @@ import static org.mockito.Mockito.*;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryJobRequested;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobSucceeded;
+import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.repository.AnnotationDeliveryConfigurationRepository;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
+import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.annotation.AnnotationDeliveryConfiguration;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
+import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.service.DetectionFinishedMailer;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
+import app.bpartners.geojobs.template.HTMLTemplateParser;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -38,6 +43,8 @@ class ZoneDetectionJobSucceededServiceTest {
   MachineDetectedTileRepository machineDetectedTileRepositoryMock = mock();
   DetectableObjectConfigurationRepository detectableObjectConfigurationRepositoryMock = mock();
   DetectionFinishedMailer detectionFinishedMailerMock = mock();
+  DetectionRepository detectionRepositoryMock = mock();
+  HTMLTemplateParser htmlTemplateParser = new HTMLTemplateParser();
   ZoneDetectionJobSucceededService subject =
       new ZoneDetectionJobSucceededService(
           configurationRepositoryMock,
@@ -46,7 +53,9 @@ class ZoneDetectionJobSucceededServiceTest {
           eventProducerMock,
           machineDetectedTileRepositoryMock,
           detectableObjectConfigurationRepositoryMock,
-          detectionFinishedMailerMock);
+          detectionFinishedMailerMock,
+          htmlTemplateParser,
+          detectionRepositoryMock);
 
   @BeforeEach
   void setUp() {
@@ -64,7 +73,7 @@ class ZoneDetectionJobSucceededServiceTest {
   }
 
   @Test
-  void trigger_detection_finished_mailer_when_no_detect_tile_found() {
+  void trigger_mail_with_ZDJ_infos_when_no_detect_tile_found() {
     var succeededJobId = randomUUID().toString();
     var succeededZoneDetectionJobMock = mock(ZoneDetectionJob.class);
     var jobStatus = mock(JobStatus.class);
@@ -82,22 +91,80 @@ class ZoneDetectionJobSucceededServiceTest {
     var creationDatetime = Instant.parse("2025-03-01T03:00:00Z");
     var emailSubject =
         String.format(
-            "Analyse sur la zone %s terminée le %s",
+            "Analyse sur la zone %s terminée le %s sans objets détectés",
             zoneName,
             DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")
                 .format(creationDatetime.atZone(ZoneId.of("Europe/Paris"))));
+    when(succeededZoneDetectionJobMock.getId()).thenReturn(succeededJobId);
     when(succeededZoneDetectionJobMock.getEmailReceiver()).thenReturn(emailReceiver);
     when(succeededZoneDetectionJobMock.getZoneName()).thenReturn(zoneName);
     when(jobStatus.getCreationDatetime()).thenReturn(creationDatetime);
     when(succeededZoneDetectionJobMock.getStatus()).thenReturn(jobStatus);
     when(zoneDetectionJobServiceMock.findById(succeededJobId))
         .thenReturn(succeededZoneDetectionJobMock);
+    when(detectionRepositoryMock.findByZdjId(succeededJobId)).thenReturn(Optional.empty());
 
     assertDoesNotThrow(() -> subject.accept(new ZoneDetectionJobSucceeded(succeededJobId)));
 
-    verify(detectionFinishedMailerMock, only()).accept(emailReceiver, emailSubject);
+    var emailBodyCaptor = ArgumentCaptor.forClass(String.class);
+    verify(detectionFinishedMailerMock, only())
+        .accept(eq(emailReceiver), eq(emailSubject), emailBodyCaptor.capture());
     verify(configurationRepositoryMock, never()).findLatestConfiguration();
     verify(eventProducerMock, never()).accept(any());
+    assertEquals(
+        expectedEmailContainingZDJWhenNoResultRetrieved(succeededJobId),
+        emailBodyCaptor.getValue());
+  }
+
+  @Test
+  void trigger_mail_with_detection_infos_when_no_detect_tile_found() {
+    var succeededJobId = randomUUID().toString();
+    var succeededZoneDetectionJobMock = mock(ZoneDetectionJob.class);
+    var jobStatus = mock(JobStatus.class);
+    reset(machineDetectedTileRepositoryMock);
+    when(machineDetectedTileRepositoryMock.countByZdjJobIdAndDetectableType(
+            succeededJobId, USURE.name()))
+        .thenReturn(0L);
+    when(machineDetectedTileRepositoryMock.countByZdjJobIdAndDetectableType(
+            succeededJobId, MOISISSURE.name()))
+        .thenReturn(0L);
+    when(zoneDetectionJobServiceMock.countInDoubtDetectedTileToDeliveryById(succeededJobId))
+        .thenReturn(1L);
+    var emailReceiver = "email@email.com";
+    var zoneName = "My address";
+    var creationDatetime = Instant.parse("2025-03-01T03:00:00Z");
+    var emailSubject =
+        String.format(
+            "Analyse sur la zone %s terminée le %s sans objets détectés",
+            zoneName,
+            DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")
+                .format(creationDatetime.atZone(ZoneId.of("Europe/Paris"))));
+    when(succeededZoneDetectionJobMock.getId()).thenReturn(succeededJobId);
+    when(succeededZoneDetectionJobMock.getEmailReceiver()).thenReturn(emailReceiver);
+    when(succeededZoneDetectionJobMock.getZoneName()).thenReturn(zoneName);
+    when(jobStatus.getCreationDatetime()).thenReturn(creationDatetime);
+    when(succeededZoneDetectionJobMock.getStatus()).thenReturn(jobStatus);
+    when(zoneDetectionJobServiceMock.findById(succeededJobId))
+        .thenReturn(succeededZoneDetectionJobMock);
+    var detectionMock = mock(Detection.class);
+    var detectionE2Id = randomUUID().toString();
+    when(detectionMock.getEndToEndId()).thenReturn(detectionE2Id);
+    when(detectionMock.getZoneName()).thenReturn(zoneName);
+    when(detectionMock.getDetectableObjectModel())
+        .thenReturn(new DetectableObjectModel().modelName(TOITURE));
+    when(detectionRepositoryMock.findByZdjId(succeededJobId))
+        .thenReturn(Optional.of(detectionMock));
+
+    assertDoesNotThrow(() -> subject.accept(new ZoneDetectionJobSucceeded(succeededJobId)));
+
+    var emailBodyCaptor = ArgumentCaptor.forClass(String.class);
+    verify(detectionFinishedMailerMock, only())
+        .accept(eq(emailReceiver), eq(emailSubject), emailBodyCaptor.capture());
+    verify(configurationRepositoryMock, never()).findLatestConfiguration();
+    verify(eventProducerMock, never()).accept(any());
+    assertEquals(
+        expectedEmailContainingDetectionWhenNoResultRetrieved(detectionE2Id),
+        emailBodyCaptor.getValue());
   }
 
   @Test
@@ -157,5 +224,78 @@ class ZoneDetectionJobSucceededServiceTest {
         .getOrComputeGeoJsonConversionJob(zoneDetectionJobMock);
     verify(configurationRepositoryMock, never()).findLatestConfiguration();
     verify(eventProducerMock, never()).accept(any());
+  }
+
+  private String expectedEmailContainingDetectionWhenNoResultRetrieved(String detectionE2Id) {
+    return String.format(
+        """
+<html>
+<head>
+    <style>
+        body {
+            font-family: Helvetica, serif;
+        }
+    </style>
+</head>
+<body>
+<section>
+    <p>Bonjour,</p>
+    <div>
+        <p>La détection portant l'identifiant <span>%s</span> effectuée sur la zone
+            <span>My address</span> n'a permis de trouver aucun objet
+            correspondant à la liste d'objets suivante, contenu dans le modèle de détection <strong>BP_TOITURE</strong> :</p>
+    </div>
+   \s
+    <ul>
+        <li>
+            <span>USURE</span>
+        </li>
+        <li>
+            <span>MOISISSURE</span>
+        </li>
+    </ul>
+    <p>Cordialement.</p>
+    <p>L'équipe BirdIA.</p>
+</section>
+</body>
+</html>""",
+        detectionE2Id);
+  }
+
+  private @NotNull String expectedEmailContainingZDJWhenNoResultRetrieved(
+      String zoneDetectionJobId) {
+    return String.format(
+        """
+<html>
+<head>
+    <style>
+        body {
+            font-family: Helvetica, serif;
+        }
+    </style>
+</head>
+<body>
+<section>
+    <p>Bonjour,</p>
+   \s
+    <div>
+        <p>La détection machine portant l'identifiant <span>%s</span> effectuée sur la
+            zone <span>My address</span> n'a permis de trouver aucun objet
+            correspondant à la liste d'objets suivante :</p>
+    </div>
+    <ul>
+        <li>
+            <span>USURE</span>
+        </li>
+        <li>
+            <span>MOISISSURE</span>
+        </li>
+    </ul>
+    <p>Cordialement.</p>
+    <p>L'équipe BirdIA.</p>
+</section>
+</body>
+</html>""",
+        zoneDetectionJobId);
   }
 }

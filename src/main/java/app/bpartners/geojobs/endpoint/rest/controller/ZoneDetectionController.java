@@ -16,6 +16,7 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMap
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.authorizer.DetectionAuthorizer;
+import app.bpartners.geojobs.endpoint.rest.validator.ConfigureAddressValidator;
 import app.bpartners.geojobs.endpoint.rest.validator.GetUsageValidator;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.file.FileWriter;
@@ -69,6 +70,7 @@ public class ZoneDetectionController {
   private final DetectionAuthorizer detectionAuthorizer;
   private final FileWriter fileWriter;
   private final MediaTypeGuesser mediaTypeGuesser;
+  private final ConfigureAddressValidator configureAddressValidator;
 
   @PostMapping("/detectionJobs/{id}/succeed")
   public app.bpartners.geojobs.endpoint.rest.model.ZoneDetectionJob succeedJob(
@@ -224,6 +226,14 @@ public class ZoneDetectionController {
         detectionId, createDetection, communityOwnerId, isRooferMade);
   }
 
+  @PostMapping("/detections/{id}/addresses")
+  public Detection configureDetectionAddresses(
+      @PathVariable(name = "id") String detectionId, @RequestBody List<Address> addresses) {
+    configureAddressValidator.accept(addresses);
+    return zoneService.configureDetectionAddresses(
+        detectionId, addresses.stream().map(Address::getAddress).toList());
+  }
+
   @PostMapping("/detections/{id}/roofer")
   public Detection processRooferDetection(
       @PathVariable(name = "id") String detectionId, @RequestBody CreateDetection createDetection) {
@@ -234,6 +244,28 @@ public class ZoneDetectionController {
     var isRooferMade = true;
     return zoneService.processDetection(
         detectionId, createDetection, communityOwnerId, isRooferMade);
+  }
+
+  @PostMapping("/detections/{id}/sync")
+  public Detection processDetectionSynchronously(
+      @PathVariable(name = "id") String detectionId, @RequestBody CreateDetection createDetection) {
+    detectionAuthorizer.accept(detectionId, createDetection, authProvider.getPrincipal());
+    var communityAuthorization =
+        communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
+    var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId).orElse(null);
+    var isRooferMade = true;
+    return zoneService.processDetection(
+        detectionId, createDetection, communityOwnerId, isRooferMade);
+  }
+
+  @PostMapping("/detections/{id}/roofDelimiter")
+  public Detection configureDetectionRoofDelimiter(
+      @PathVariable(name = "id") String detectionId, @RequestBody RoofDelimiter roofDelimiter) {
+    var polygonDelimitations = roofDelimiter.getPolygon();
+    var communityAuthorization =
+        communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
+    var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId).orElse(null);
+    return zoneService.configureRoofDelimiter(detectionId, communityOwnerId, polygonDelimitations);
   }
 
   @PostMapping("/detections/{id}/roofer/email")

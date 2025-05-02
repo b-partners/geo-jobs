@@ -1,7 +1,6 @@
 package app.bpartners.geojobs.endpoint.event.model;
 
 import app.bpartners.geojobs.repository.model.DetectionAddressConversionTask;
-import java.time.Duration;
 import lombok.*;
 
 @Getter
@@ -18,14 +17,4 @@ public class DetectionAddressConversionTaskCreated
   }
 
   private String e2ApiKey;
-
-  @Override
-  public Duration maxConsumerDuration() {
-    return Duration.ofMinutes(3L);
-  }
-
-  @Override
-  public Duration maxConsumerBackoffBetweenRetries() {
-    return Duration.ofMinutes(1L);
-  }
 }

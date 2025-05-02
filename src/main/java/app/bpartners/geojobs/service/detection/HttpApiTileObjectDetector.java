@@ -32,7 +32,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 public class HttpApiTileObjectDetector implements TileObjectDetector {
   private final ObjectMapper om;
   private final CustomBucketComponent bucketComponent;
-  private final List<DetectionUrl> tileDetectionApiUrl;
+  private final List<DetectionUrl> tileDetectionApiUrls;
   private final String defaultDetectionApiUrl;
 
   @SneakyThrows
@@ -44,7 +44,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
     this.om = om;
     this.bucketComponent = bucketComponent;
     this.defaultDetectionApiUrl = defaultApiUrl;
-    this.tileDetectionApiUrl = om.readValue(tileDetectionApiUrls, new TypeReference<>() {});
+    this.tileDetectionApiUrls = om.readValue(tileDetectionApiUrls, new TypeReference<>() {});
   }
 
   @SneakyThrows
@@ -92,7 +92,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
 
   private String getApiUrl(List<DetectableObjectConfiguration> objectConfigurations) {
     for (var conf : objectConfigurations) {
-      for (var url : tileDetectionApiUrl) {
+      for (var url : tileDetectionApiUrls) {
         if (conf.getObjectType().equals(url.objectType)) {
           return url.url;
         }

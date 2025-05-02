@@ -32,7 +32,7 @@ class ParcelTilingTaskCreatedIT extends FacadeIT {
     var deserialized = om.readValue(serialized, ParcelTilingTaskCreated.class);
 
     assertEquals(parcelTilingTaskCreated(), deserialized);
-    assertEquals(Duration.ofMinutes(1), deserialized.maxConsumerDuration());
-    assertEquals(Duration.ofMinutes(1), deserialized.maxConsumerBackoffBetweenRetries());
+    assertEquals(Duration.ofSeconds(30), deserialized.maxConsumerDuration());
+    assertEquals(Duration.ofSeconds(60), deserialized.maxConsumerBackoffBetweenRetries());
   }
 }

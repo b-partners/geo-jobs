@@ -102,13 +102,13 @@ public class ZoneTilingJobMapper {
     var finalMultiPolygonGeoJsonZone = detection.getMultiPolygonGeoJsonZone();
     var finalGeoJsonZoom =
         finalMultiPolygonGeoJsonZone.getFirst().getProperties().get("zoom") == null
-            ? null
+            ? ArcgisImageZoom.HOUSES_0.getZoomLevel()
             : (Integer) finalMultiPolygonGeoJsonZone.getFirst().getProperties().get("zoom");
     var zoom =
         (providedGeoJsonZone == null || providedGeoJsonZone.isEmpty())
             ? finalGeoJsonZoom
             : providedGeoJsonZone.getFirst().getProperties().get("zoom") == null
-                ? null
+                ? ArcgisImageZoom.HOUSES_0.getZoomLevel()
                 : (Integer) providedGeoJsonZone.getFirst().getProperties().get("zoom");
     return new CreateZoneTilingJob()
         .emailReceiver(detection.getEmailReceiver())

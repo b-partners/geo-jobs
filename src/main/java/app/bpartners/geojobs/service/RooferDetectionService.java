@@ -4,6 +4,7 @@ import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.MACHIN
 import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
+import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.HOUSES_0;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_BUCKET_FOLDER;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_EXTENSION;
 import static java.time.Instant.now;
@@ -30,6 +31,7 @@ import app.bpartners.geojobs.service.geojson.GeoJsonConverter;
 import app.bpartners.geojobs.template.HTMLTemplateParser;
 import jakarta.mail.internet.InternetAddress;
 import java.io.File;
+import java.math.BigDecimal;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -65,19 +67,26 @@ public class RooferDetectionService
     var providedGeoJson = detection.getProvidedGeoJsonZone();
     int zoom =
         providedGeoJson.getFirst().getProperties().get("zoom") == null
-            ? null
+            ? HOUSES_0.getZoomLevel()
             : (Integer) providedGeoJson.getFirst().getProperties().get("zoom");
-    var flattedFeatures =
-        providedGeoJson.stream()
-            .map(app.bpartners.geojobs.endpoint.rest.model.Feature::getGeometry)
-            .filter(Objects::nonNull)
-            .map(FeatureGeometry::getMultiPolygon)
-            .map(MultiPolygon::getCoordinates)
-            .filter(Objects::nonNull)
-            .flatMap(List::stream)
-            .flatMap(List::stream)
-            .flatMap(List::stream)
-            .toList();
+
+    List<List<BigDecimal>> flattedFeatures;
+    if (detection.getPolygonRoofDelimitation() != null
+        && !detection.getPolygonRoofDelimitation().isEmpty()) {
+      flattedFeatures = detection.getPolygonRoofDelimitation();
+    } else {
+      flattedFeatures =
+          providedGeoJson.stream()
+              .map(app.bpartners.geojobs.endpoint.rest.model.Feature::getGeometry)
+              .filter(Objects::nonNull)
+              .map(FeatureGeometry::getMultiPolygon)
+              .map(MultiPolygon::getCoordinates)
+              .filter(Objects::nonNull)
+              .flatMap(List::stream)
+              .flatMap(List::stream)
+              .flatMap(List::stream)
+              .toList();
+    }
     var mask = detectionMaskCreator.apply(flattedFeatures);
 
     var tile =

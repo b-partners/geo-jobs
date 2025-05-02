@@ -96,6 +96,8 @@ public class SecurityConf {
                     .anonymous()
                     .requestMatchers(OPTIONS, "/**")
                     .permitAll()
+                    .requestMatchers(GET, "/areaPictureDetails")
+                    .authenticated()
                     .requestMatchers("/jobs/*/annotationProcessing")
                     .hasAuthority(ROLE_ADMIN.name())
                     .requestMatchers(GET, "/tilingJobs", "/tilingJobs/**")
@@ -134,6 +136,10 @@ public class SecurityConf {
                     .hasAnyAuthority(ROLE_ADMIN.name(), ROLE_COMMUNITY.name())
                     .requestMatchers(POST, "/detections/*/roofer")
                     .hasAnyAuthority(ROLE_ADMIN.name(), ROLE_COMMUNITY.name())
+                    .requestMatchers(POST, "/detections/*/sync")
+                    .authenticated() // TODO: change later
+                    .requestMatchers(POST, "/detections/*/roofDelimiter")
+                    .authenticated() // TODO: change later
                     .requestMatchers(POST, "/detections/*/roofer/email")
                     .hasAnyAuthority(ROLE_ADMIN.name(), ROLE_COMMUNITY.name())
                     .requestMatchers(GET, "/detections/*")

@@ -82,7 +82,13 @@ class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
   @Test
   void zdj_succeeds_trigger_conversion_job() {
     when(zoneDetectionJobService.countInDoubtDetectedTileToDeliveryById(any())).thenReturn(0L);
+    when(machineDetectedTileRepositoryMock.countByZdjJobIdAndDetectableType(
+            eq(succeededJobId), eq(USURE.name())))
+        .thenReturn(1L);
+    when(detectableObjectConfigurationRepositoryMock.findAllByDetectionJobId(succeededJobId))
+        .thenReturn(List.of(DetectableObjectConfiguration.builder().objectType(USURE).build()));
     when(zoneDetectionJobService.findById(any())).thenReturn(new ZoneDetectionJob());
+
     assertDoesNotThrow(() -> subject.accept(new ZoneDetectionJobSucceeded(succeededJobId)));
 
     var eventCaptor = ArgumentCaptor.forClass(List.class);

@@ -4,6 +4,7 @@ import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobCreated;
+import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobFailed;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobStatusChanged;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
@@ -33,19 +34,22 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
     var oldJob = event.getOldJob();
     var newJob = event.getNewJob();
 
-    var onFinishHandler =
-        new OnFinishedHandler(
+    var onSucceededHandler =
+        new onSucceededJobHandler(
             eventProducer,
             tilingFinishedMailer,
             zoneDetectionJobService,
             newJob,
             detectionRepository,
             objectConfigurationRepository);
+
+    var onFailedHandler = new onFailedJobHandler(eventProducer, newJob);
+
     statusChangedHandler.handle(
-        event, newJob.getStatus(), oldJob.getStatus(), onFinishHandler, onFinishHandler);
+        event, newJob.getStatus(), oldJob.getStatus(), onSucceededHandler, onFailedHandler);
   }
 
-  private record OnFinishedHandler(
+  private record onSucceededJobHandler(
       EventProducer eventProducer,
       JobFinishedMailer<ZoneTilingJob> tilingFinishedMailer,
       ZoneDetectionJobService zoneDetectionJobService,
@@ -74,6 +78,15 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
       }
       tilingFinishedMailer.accept(ztj);
       log.info("Finished, mail sent, ztj=" + ztj);
+    }
+  }
+
+  private record onFailedJobHandler(EventProducer eventProducer, ZoneTilingJob failedJob)
+      implements Runnable {
+    @Override
+    public void run() {
+      eventProducer.accept(List.of(new ZoneTilingJobFailed(failedJob)));
+      log.info("Finished with failed status, ztj=" + failedJob);
     }
   }
 }

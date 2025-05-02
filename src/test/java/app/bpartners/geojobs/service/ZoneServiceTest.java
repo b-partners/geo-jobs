@@ -36,7 +36,7 @@ import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
-import app.bpartners.geojobs.endpoint.rest.validator.FeatureMultiPolygonChecker;
+import app.bpartners.geojobs.endpoint.rest.validator.FeatureTypeChecker;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.hash.FileHash;
@@ -53,8 +53,12 @@ import app.bpartners.geojobs.repository.model.GeoJobType;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
+import app.bpartners.geojobs.service.dashboard.AreaPictureApi;
+import app.bpartners.geojobs.service.dashboard.component.AreaPictureMapLayer;
 import app.bpartners.geojobs.service.detection.*;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
+import app.bpartners.geojobs.service.geojson.PointToMultiPolygonConverter;
+import app.bpartners.geojobs.service.geoserver.GeoServerConfiguration;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import app.bpartners.geojobs.utils.FeatureCreator;
 import app.bpartners.geojobs.utils.TaskStatisticCreator;
@@ -93,6 +97,7 @@ class ZoneServiceTest {
           + "features"
           + File.separator
           + "features-ko.json";
+  private static final String LATEST_DEFAULT_LAYER = "cite:PCRS";
   ZoneTilingJobService tilingJobServiceMock = mock();
   ZoneTilingJobMapper tilingJobMapperMock = mock();
   ZoneDetectionJobValidator detectionJobValidatorMock = mock();
@@ -113,7 +118,7 @@ class ZoneServiceTest {
       mock(GeoJsonConversionJobRepository.class);
   DetectionGeoJsonUpdateValidator detectionGeoJsonUpdateValidator =
       new DetectionGeoJsonUpdateValidator();
-  FeatureMultiPolygonChecker featureMultiPolygonCheckerMock = mock();
+  FeatureTypeChecker featureTypeChecker = new FeatureTypeChecker();
   ZoneDetectionJobCreator zoneDetectionJobCreator = new ZoneDetectionJobCreator();
   CommunityAuthorizationRepository communityAuthRepositoryMock = mock();
   TaskStatisticCreator taskStatisticCreator = new TaskStatisticCreator();
@@ -138,6 +143,13 @@ class ZoneServiceTest {
           detectionJobValidatorMock,
           detectionMachineDetectionStatisticsComputerMock);
   RooferDetectionService rooferDetectionService = mock();
+  DetectionAddressConsumer detectionAddressConsumerMock = mock();
+  PointToMultiPolygonConverter pointToMultiPolygonConverterMock = mock();
+  FeatureConverter featureConverterMock = mock();
+  AreaPictureApi areaPictureApiMock = mock();
+  private final String geoServerDummyUrl = "http://dummy";
+  private final String e2ApiKey = randomUUID().toString();
+  GeoServerConfiguration geoServerConfiguration = new GeoServerConfiguration(geoServerDummyUrl);
   ZoneService subject =
       new ZoneService(
           zoneDetectionJobServiceMock,
@@ -151,7 +163,7 @@ class ZoneServiceTest {
           new ObjectMapper().configure(FAIL_ON_UNKNOWN_PROPERTIES, false),
           authProviderMock,
           detectionGeoJsonUpdateValidator,
-          featureMultiPolygonCheckerMock,
+          featureTypeChecker,
           communityAuthRepositoryMock,
           detectionTilingCreationMock,
           detectionFromStatisticRestMapperMock,
@@ -159,43 +171,54 @@ class ZoneServiceTest {
           detectionMachineDetectionStatisticsComputerMock,
           detectionMachineDetectionCreationMock,
           geoJsonConversionJobRepositoryMock,
-          rooferDetectionService);
+          rooferDetectionService,
+          detectionAddressConsumerMock,
+          pointToMultiPolygonConverterMock,
+          featureConverterMock,
+          areaPictureApiMock,
+          geoServerConfiguration);
 
   @BeforeEach
   void setUp() {
     when(communityAuthRepositoryMock.findByApiKey(any()))
         .thenReturn(
             Optional.of(CommunityAuthorization.builder().id(randomUUID().toString()).build()));
+    when(communityAuthRepositoryMock.findById(any()))
+        .thenReturn(Optional.of(CommunityAuthorization.builder().apiKey(e2ApiKey).build()));
     when(geoJsonConversionJobRepositoryMock.findByZoneDetectionJobId(any())).thenReturn(List.of());
     when(featureMapperMock.toDomain(any())).thenReturn(geometryFactory.createPolygon());
     when(featureMapperMock.toRest(any(), any(Integer.class), any()))
         .thenReturn(featureCreator.defaultFeatures().getFirst());
+
+    var areaPictureMapLayerMock = mock(AreaPictureMapLayer.class);
+    when(areaPictureMapLayerMock.name()).thenReturn(LATEST_DEFAULT_LAYER);
+    when(areaPictureApiMock.getAreaPictureMapLayers(anyDouble(), anyDouble(), eq(e2ApiKey)))
+        .thenReturn(List.of(areaPictureMapLayerMock));
   }
 
   @Test
   void admin_role_process_tiling_when_all_data_ok() {
     var detectionId = randomUUID().toString();
-    var tilingJobId = randomUUID().toString();
     var isRooferMade = false;
     var createDetection =
         new CreateDetection()
             .detectableObjectModel(new DetectableObjectModel().modelName(TOITURE))
-            .geoServerProperties(new GeoServerProperties())
+            .geoServerProperties(null)
             .geoJsonZone(featureCreator.defaultFeatures());
-    String communityOwnerId = null;
-    var createdDetectionMock = detectionCreator.create(detectionId, tilingJobId, communityOwnerId);
-    createdDetectionMock.setGeoServerProperties(new GeoServerProperties());
-    createdDetectionMock.setMultiPolygonGeoJsonZone(List.of(new Feature()));
+    String communityOwnerId = randomUUID().toString();
     setUpAuthorityRoleProcessingMock(detectionId, null, ROLE_ADMIN);
     when(communityUsedSurfaceServiceMock.persistDetectionWithSurfaceUsage(any(), any()))
-        .thenReturn(createdDetectionMock);
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
 
     var actual =
         subject.processDetection(detectionId, createDetection, communityOwnerId, isRooferMade);
 
+    var expectedGeoServerProperties =
+        geoServerConfiguration.defaultGeoServerProperties(LATEST_DEFAULT_LAYER);
     assertEquals(TILING, actual.getStep().getName());
     assertEquals(Status.ProgressionEnum.PENDING, actual.getStep().getStatus().getProgression());
     assertEquals(UNKNOWN, actual.getStep().getStatus().getHealth());
+    assertEquals(expectedGeoServerProperties, actual.getGeoServerProperties());
   }
 
   @Test
@@ -841,6 +864,46 @@ class ZoneServiceTest {
         .taskStatusStatistics(new ArrayList<>())
         .jobType(geoJobType)
         .build();
+  }
+
+  @Test
+  void configure_addresses_ok() {
+    var detectionId = randomUUID().toString();
+    var detection =
+        detectionCreator.create(
+            detectionId, randomUUID().toString(), randomUUID().toString(), null);
+    var addresses = List.of("11-7 Rue Mot, 94120 Fontenay-sous-Bois, France");
+    var expected = detection.toBuilder().convertedAddresses(addresses).build();
+    when(detectionRepositoryMock.findByEndToEndIdAndCommunityOwnerId(any(), any()))
+        .thenReturn(Optional.of(detection));
+    when(detectionRepositoryMock.save(any()))
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+    var principalMock = mock(Principal.class);
+    when(principalMock.getPassword()).thenReturn("dummy");
+    when(authProviderMock.getPrincipal()).thenReturn(principalMock);
+
+    var actual = subject.configureDetectionAddresses(detectionId, addresses);
+    var expectedRestDetection =
+        new Detection()
+            .id(detectionId)
+            .addresses(addresses)
+            .shapeUrl(null)
+            .excelUrl(null)
+            .geoJsonZone(null)
+            .geoServerProperties(detection.getGeoServerProperties())
+            .detectableObjectModel(detection.getDetectableObjectModel())
+            .step(
+                new DetectionStep()
+                    .name(CONFIGURING)
+                    .status(
+                        new Status()
+                            .progression(Status.ProgressionEnum.PROCESSING)
+                            .health(UNKNOWN)
+                            .creationDatetime(actual.getStep().getStatus().getCreationDatetime()))
+                    .statistics(List.of())
+                    .updatedAt(actual.getStep().getUpdatedAt()));
+    verify(detectionAddressConsumerMock, only()).accept(expected);
+    assertEquals(expectedRestDetection, actual);
   }
 
   @SneakyThrows

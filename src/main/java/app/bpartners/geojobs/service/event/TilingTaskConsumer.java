@@ -20,8 +20,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @AllArgsConstructor
 @Component
 public class TilingTaskConsumer implements TaskConsumer<ParcelTilingTask> {
@@ -32,10 +34,12 @@ public class TilingTaskConsumer implements TaskConsumer<ParcelTilingTask> {
   @Override
   public void accept(ParcelTilingTask parcelTilingTask) {
     var parcel = parcelTilingTask.getParcelContent();
+    log.info("DEBUG XYZ parcel feature {}", parcel.getFeature());
 
     File downloadedTiles = tilesDownloader.apply(parcel);
     String bucketKey = downloadedTiles.getName();
 
+    log.info("DEBUG XYZ bucket key: {}", bucketKey);
     bucketComponent.upload(downloadedTiles, bucketKey);
     downloadedTiles.delete();
 
@@ -58,6 +62,7 @@ public class TilingTaskConsumer implements TaskConsumer<ParcelTilingTask> {
       var enrichedAccumulator = new ArrayList<>(accumulator);
 
       String entryParentPath = tilesFile.getPath();
+      log.info("DEBUG XYZ entryParentPath {}", entryParentPath);
       String[] dir = entryParentPath.split("/");
       var x = Integer.valueOf(dir[dir.length - 2]);
       var z = Integer.valueOf(dir[dir.length - 3]);

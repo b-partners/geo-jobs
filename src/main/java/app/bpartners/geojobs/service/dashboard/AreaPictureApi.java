@@ -1,15 +1,20 @@
 package app.bpartners.geojobs.service.dashboard;
 
 import static app.bpartners.geojobs.service.dashboard.ApiConfiguration.API_KEY_HEADER;
+import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpMethod.PUT;
 
 import app.bpartners.geojobs.service.dashboard.component.AreaPictureDetails;
+import app.bpartners.geojobs.service.dashboard.component.AreaPictureMapLayer;
 import app.bpartners.geojobs.service.dashboard.component.CrupdateAreaPictureDetails;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
 @RequiredArgsConstructor
@@ -30,5 +35,27 @@ public class AreaPictureApi {
     var requestEntity = new HttpEntity<>(crupdateAreaPictureDetails, headers);
 
     return restTemplate.exchange(endpoint, PUT, requestEntity, AreaPictureDetails.class).getBody();
+  }
+
+  public List<AreaPictureMapLayer> getAreaPictureMapLayers(
+      Double longitude, Double latitude, String apiKey) {
+    var uri =
+        UriComponentsBuilder.fromHttpUrl(
+                apiConfiguration.getDashboardApiUrl() + "/areaPictureMapLayers")
+            .queryParam("longitude", longitude)
+            .queryParam("latitude", latitude)
+            .build()
+            .encode()
+            .toUri();
+
+    var headers = new HttpHeaders();
+    headers.add(API_KEY_HEADER, apiKey);
+
+    var requestEntity = new HttpEntity<>(headers);
+
+    return restTemplate
+        .exchange(
+            uri, GET, requestEntity, new ParameterizedTypeReference<List<AreaPictureMapLayer>>() {})
+        .getBody();
   }
 }

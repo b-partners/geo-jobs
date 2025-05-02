@@ -31,6 +31,7 @@ import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.authorizer.DetectionAuthorizer;
 import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
+import app.bpartners.geojobs.endpoint.rest.validator.ConfigureAddressValidator;
 import app.bpartners.geojobs.endpoint.rest.validator.GetUsageValidator;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.file.FileWriter;
@@ -82,6 +83,7 @@ class ZoneDetectionControllerTest {
   DetectionAuthorizer detectionAuthorizerMock = mock();
   FileWriter fileWriterMock = mock();
   MediaTypeGuesser mediaTypeGuesserMock = mock();
+  ConfigureAddressValidator configureAddressValidatorMock = mock();
   ZoneDetectionController subject =
       new ZoneDetectionController(
           parcelServiceMock,
@@ -103,7 +105,8 @@ class ZoneDetectionControllerTest {
           surfaceUnitMapper,
           detectionAuthorizerMock,
           fileWriterMock,
-          mediaTypeGuesserMock);
+          mediaTypeGuesserMock,
+          configureAddressValidatorMock);
 
   @BeforeEach
   void setup() {
