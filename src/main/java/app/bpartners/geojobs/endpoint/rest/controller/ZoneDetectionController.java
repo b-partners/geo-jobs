@@ -246,6 +246,18 @@ public class ZoneDetectionController {
         detectionId, createDetection, communityOwnerId, isRooferMade);
   }
 
+  @PostMapping("/detections/{id}/sync")
+  public Detection processDetectionSynchronously(
+      @PathVariable(name = "id") String detectionId, @RequestBody CreateDetection createDetection) {
+    detectionAuthorizer.accept(detectionId, createDetection, authProvider.getPrincipal());
+    var communityAuthorization =
+        communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
+    var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId).orElse(null);
+    var isRooferMade = true;
+    return zoneService.processDetection(
+        detectionId, createDetection, communityOwnerId, isRooferMade);
+  }
+
   @PostMapping("/detections/{id}/roofer/email")
   public Detection sendMailAboutProspect(
       @PathVariable(name = "id") String detectionId, @RequestBody Prospect prospect) {
