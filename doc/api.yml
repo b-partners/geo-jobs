@@ -615,6 +615,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Detection'
+  '/detections/{id}/roofDelimiter':
+    post:
+      tags:
+        - Detection
+      summary: Set roof delimiter for existing detection
+      operationId: configureDetectionRoofDelimiter
+      description: |
+        Provide roof delimiter to finalize detection configuration in TOITURE model use case.
+      security:
+        - ApiKeyAuth: [ ]
+      parameters:
+        - $ref: '#/components/parameters/IdentifierParameter'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/RoofDelimiter'
+      responses:
+        200:
+          description: Detection configured with roof delimiter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detection'
   '/detections/{id}/roofer':
     post:
       deprecated: true
@@ -1647,6 +1673,8 @@ components:
           type: array
           items:
             type: string
+        roofDelimiter:
+          $ref: '#/components/schemas/RoofDelimiter'
     Prospect:
       type: object
       properties:
@@ -1672,3 +1700,9 @@ components:
           type: string
         imageBase64:
           type: string
+    RoofDelimiter:
+      description: |
+        Optional. Mandatory only when doing sync detection using TOITURE model.
+      type: array
+      items:
+        $ref: '#/components/schemas/Point2D'
