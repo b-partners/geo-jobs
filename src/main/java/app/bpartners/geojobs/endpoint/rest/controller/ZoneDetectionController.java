@@ -258,6 +258,16 @@ public class ZoneDetectionController {
         detectionId, createDetection, communityOwnerId, isRooferMade);
   }
 
+  @PostMapping("/detections/{id}/roofDelimiter")
+  public Detection configureDetectionRoofDelimiter(
+      @PathVariable(name = "id") String detectionId, @RequestBody RoofDelimiter roofDelimiter) {
+    var polygonDelimitations = roofDelimiter.getPolygon();
+    var communityAuthorization =
+        communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
+    var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId).orElse(null);
+    return zoneService.configureRoofDelimiter(detectionId, communityOwnerId, polygonDelimitations);
+  }
+
   @PostMapping("/detections/{id}/roofer/email")
   public Detection sendMailAboutProspect(
       @PathVariable(name = "id") String detectionId, @RequestBody Prospect prospect) {

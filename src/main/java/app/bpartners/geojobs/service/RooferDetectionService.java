@@ -31,6 +31,7 @@ import app.bpartners.geojobs.service.geojson.GeoJsonConverter;
 import app.bpartners.geojobs.template.HTMLTemplateParser;
 import jakarta.mail.internet.InternetAddress;
 import java.io.File;
+import java.math.BigDecimal;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -68,17 +69,24 @@ public class RooferDetectionService
         providedGeoJson.getFirst().getProperties().get("zoom") == null
             ? HOUSES_0.getZoomLevel()
             : (Integer) providedGeoJson.getFirst().getProperties().get("zoom");
-    var flattedFeatures =
-        providedGeoJson.stream()
-            .map(app.bpartners.geojobs.endpoint.rest.model.Feature::getGeometry)
-            .filter(Objects::nonNull)
-            .map(FeatureGeometry::getMultiPolygon)
-            .map(MultiPolygon::getCoordinates)
-            .filter(Objects::nonNull)
-            .flatMap(List::stream)
-            .flatMap(List::stream)
-            .flatMap(List::stream)
-            .toList();
+
+    List<List<BigDecimal>> flattedFeatures;
+    if (detection.getPolygonRoofDelimitation() != null
+        && !detection.getPolygonRoofDelimitation().isEmpty()) {
+      flattedFeatures = detection.getPolygonRoofDelimitation();
+    } else {
+      flattedFeatures =
+          providedGeoJson.stream()
+              .map(app.bpartners.geojobs.endpoint.rest.model.Feature::getGeometry)
+              .filter(Objects::nonNull)
+              .map(FeatureGeometry::getMultiPolygon)
+              .map(MultiPolygon::getCoordinates)
+              .filter(Objects::nonNull)
+              .flatMap(List::stream)
+              .flatMap(List::stream)
+              .flatMap(List::stream)
+              .toList();
+    }
     var mask = detectionMaskCreator.apply(flattedFeatures);
 
     var tile =

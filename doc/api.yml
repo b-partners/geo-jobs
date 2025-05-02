@@ -631,9 +631,7 @@ paths:
         content:
           application/json:
             schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/RoofDelimiter'
+              $ref: '#/components/schemas/RoofDelimiter'
       responses:
         200:
           description: Detection configured with roof delimiter
@@ -1701,8 +1699,11 @@ components:
         imageBase64:
           type: string
     RoofDelimiter:
+      type: object
       description: |
         Optional. Mandatory only when doing sync detection using TOITURE model.
-      type: array
-      items:
-        $ref: '#/components/schemas/Point2D'
+      properties:
+        polygon:
+          type: array
+          items:
+            $ref: '#/components/schemas/Point2D'

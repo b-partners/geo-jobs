@@ -287,6 +287,21 @@ public class ZoneService {
         : getDetectionById(detectionId);
   }
 
+  public app.bpartners.geojobs.endpoint.rest.model.Detection configureRoofDelimiter(
+      String detectionId, String communityOwnerId, List<List<BigDecimal>> polygonDelimitation) {
+    var detection =
+        detectionRepository
+            .findByEndToEndIdAndCommunityOwnerId(detectionId, communityOwnerId)
+            .orElseThrow(
+                () ->
+                    new NotFoundException(
+                        "Detection with provided ID = " + detectionId + " not found"));
+    var savedDetection =
+        detectionRepository.save(
+            detection.toBuilder().polygonRoofDelimitation(polygonDelimitation).build());
+    return rooferDetectionService.apply(savedDetection);
+  }
+
   // TODO: refactor as very difficult to read, separate rooferDetection and largeZoneDetection
   public app.bpartners.geojobs.endpoint.rest.model.Detection processDetection(
       String detectionId,
