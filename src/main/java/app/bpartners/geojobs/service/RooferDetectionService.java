@@ -66,7 +66,7 @@ public class RooferDetectionService
   public Detection apply(app.bpartners.geojobs.repository.model.detection.Detection detection) {
     var providedGeoJson = detection.getProvidedGeoJsonZone();
     int zoom =
-        providedGeoJson.getFirst().getProperties().get("zoom") == null
+        providedGeoJson.isEmpty() || providedGeoJson.getFirst().getProperties().get("zoom") == null
             ? HOUSES_0.getZoomLevel()
             : (Integer) providedGeoJson.getFirst().getProperties().get("zoom");
 
