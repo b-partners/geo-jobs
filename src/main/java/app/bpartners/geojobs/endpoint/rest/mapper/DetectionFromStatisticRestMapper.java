@@ -54,7 +54,10 @@ public class DetectionFromStatisticRestMapper
             detection.getConvertedAddresses() == null
                 ? List.of()
                 : detection.getConvertedAddresses())
-        .roofDelimiter(detection.getPolygonRoofDelimitation() == null || detection.getPolygonRoofDelimitation().isEmpty() ? null
+        .roofDelimiter(
+            detection.getPolygonRoofDelimitation() == null
+                    || detection.getPolygonRoofDelimitation().isEmpty()
+                ? null
                 : new RoofDelimiter().polygon(detection.getPolygonRoofDelimitation()));
   }
 

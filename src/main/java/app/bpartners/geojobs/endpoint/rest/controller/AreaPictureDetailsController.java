@@ -46,8 +46,8 @@ public class AreaPictureDetailsController {
       byte[] imageAsBytes = fileApi.downloadOrUploadFile(fileId, AREA_PICTURE, adminApiKey);
       return new AreaPictureDetails()
           .address(address)
-          .imageBase64("data:image/jpeg;base64,"
-                  + Base64.getEncoder().encodeToString(imageAsBytes));
+          .imageBase64(
+              "data:image/jpeg;base64," + Base64.getEncoder().encodeToString(imageAsBytes));
     } catch (RuntimeException e) {
       log.error(e.getMessage(), e);
       throw new ApiException(
