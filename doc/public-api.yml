@@ -1,9 +1,9 @@
 openapi: 3.0.3
 
 info:
-  title: Geo Detection API
+  title: Birdia API
   description: |
-    Detect objects on large geographic zones.
+    Detect and qualify geo-referenced objects.
     
     # Security
     
@@ -18,13 +18,14 @@ info:
     1. If your zone is described by a **GeoJson**, then just set accordingly the `geoJsonZone` field in the payload.
     2. If your zone is described by a **Shape file**, then upload it in a second call `POST /detections/{id}/shape`.
     3. If your zone is described by a list of addresses in an **Excel file**, then upload it in a second call `POST /detections/{id}/excel`.
+    3. If your zone is described by an **Image**, then upload it in a second call `POST /detections/{id}/image`.
     
     # Examples
     
     ### Detection on roof objects providing geojson multiPolygon
     1. Submit detection request through `POST /detections/{id}` where `{id}` is yours to be created
     using the example request body accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/toiture%20analysis%20payload%20example.json).
-    Note that `detectableObjectModel` property must be set to `TOITURE` and `geoServerProperties` property to `null`
+    Note that `detectableObjectModel` property must be set to `BP_TOITURE` and `geoServerProperties` property to `null`
     2. Track the progress of your detection through `GET /detections/{id}`. 
     Detection is finished when `geoJsonUrl` property containing your detection result is not null.
     Expected example result is accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/toiture%20analysis%20result%20example.json)
@@ -32,7 +33,7 @@ info:
     ### Detection on roof objects providing addresses 
     1. Submit detection request through `POST /detections/{id}` where `{id}` is yours to be created
     using the example request body accessible [here](https://example.com/docs). 
-    Note that `detectableObjectModel` property must be set to `TOITURE` and `geoServerProperties` property to `null`.
+    Note that `detectableObjectModel` property must be set to `BP_TOITURE` and `geoServerProperties` property to `null`.
     2. Submit list of addresses contained inside an **Excel file** in a second call `POST /detections/{id}/excel`.
     3. Track the progress of your detection through `GET /detections/{id}`. 
     Detection is finished when `geoJsonUrl` property containing your detection result is not null.
@@ -91,11 +92,11 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Detection'
-  '/areaPictureDetails':
+  '/image':
     get:
       tags:
-        - Detection
-      summary: Retrieve area picture from address and its details
+        - Image
+      summary: Retrieve aerial image from a textual, human-readable, address
       operationId: getAreaPicture
       security:
         - ApiKeyAuth: [ ]
@@ -111,7 +112,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AreaPictureDetails'
+                $ref: '#/components/schemas/ImageOfAddress'
   '/detections/{id}/sync':
     post:
       tags:
@@ -140,11 +141,13 @@ paths:
   '/detections/{id}/image':
     post:
       tags:
-        - Detection
+        - Image
       operationId: configureDetectionImage
-      summary: Configure image for detection
+      summary: Launch detection over an image
       description: |
-        Only image queried from GET /areaPictureDetails is supported for now.
+        For security reasons, only imageq already previously queried from `GET /image` are supported for the moment. This ensures that only small enough images are submitted, and that images quality fit the requirements of our AI models. 
+      security:
+        - ApiKeyAuth: [ ]
       parameters:
         - $ref: '#/components/parameters/IdentifierParameter'
       requestBody:
@@ -167,7 +170,7 @@ paths:
   '/detections/{id}/roofDelimiter':
     post:
       tags:
-        - Detection
+        - Roof
       summary: Set roof delimiter for existing detection
       operationId: configureDetectionRoofDelimiter
       description: |
@@ -243,8 +246,8 @@ paths:
     post:
       tags:
         - Detection
-      summary: Set addresses for existing detection
-      operationId: configureDetectionAddresses
+      summary: Submit detection over a list of textual addresses
+      operationId: configureDetectionAddresses # TODO: "configure" word is bad. A "configure" input should return a "configuration" as output. Yet, do not return a configuration. What you really do here is launch the detection so make that explicit! Eg: detectAddresses. Remark applies for all other endpoints.
       description: |
         Provide addresses to finalize detection configuration
       security:
@@ -270,7 +273,7 @@ paths:
       tags:
         - Detection
       operationId: configureDetectionShapeFile
-      summary: Upload shape file to configure detection zone
+      summary: Submit detection over a Shape file
       security:
         - ApiKeyAuth: [ ]
       parameters:
@@ -301,7 +304,7 @@ paths:
       tags:
         - Detection
       operationId: configureDetectionExcelFile
-      summary: Upload excel file to configure detection zone
+      summary: Submit detection over an Excel
       security:
         - ApiKeyAuth: [ ]
       parameters:
@@ -327,12 +330,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Detection'
-  '/api/keys/revoke':
+  '/keys':
     delete:
       tags:
         - Security
       operationId: revokeApiKey
-      summary: Revoke apiKey access
+      summary: Revoke all apiKey accesses
       security:
         - ApiKeyAuth: [ ]
       responses:
@@ -350,13 +353,13 @@ components:
       name: x-api-key
   examples:
     DetectionUsingToitureModel:
-      summary: Detection using TOITURE model
+      summary: Detection using BP_TOITURE model
       value:
         emailReceiver: "<your-email-address>"
         zoneName: "<your-zone-name>"
         geoServerProperties: null
         detectableObjectModel:
-          modelName: "TOITURE"
+          modelName: "BP_TOITURE"
         geoJsonZone:
           - type: "Feature"
             geometry:
@@ -612,8 +615,6 @@ components:
           type: string
         pdfUrl:
           type: string
-        vggUrl:
-          type: string
         addresses:
           type: array
           items:
@@ -637,13 +638,13 @@ components:
     ModelName:
       type: string
       enum:
-        - TOITURE
-        - LOM
-        - ZAN
-        - CLIMAT_RESILIENCE
-        - CONFIRMITE_PLU
-        - TROTTOIRS
-        - OLD
+        - BP_TOITURE
+        - BP_LOM
+        - BP_ZAN
+        - BP_CLIMAT_RESILIENCE
+        - BP_CONFIRMITE_PLU
+        - BP_TROTTOIRS
+        - BP_OLD
     DetectionStep:
       properties:
         name:
@@ -662,7 +663,7 @@ components:
       properties:
         address:
           type: string
-    AreaPictureDetails:
+    ImageOfAddress:
       type: object
       properties:
         address:
