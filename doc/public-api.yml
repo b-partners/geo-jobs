@@ -18,7 +18,7 @@ info:
     1. If your zone is described by a **GeoJson**, then just set accordingly the `geoJsonZone` field in the payload.
     2. If your zone is described by a **Shape file**, then upload it in a second call `POST /detections/{id}/shape`.
     3. If your zone is described by a list of addresses in an **Excel file**, then upload it in a second call `POST /detections/{id}/excel`.
-    3. If your zone is described by an **Image**, then upload it in a second call `POST /detections/{id}/image`.
+    4. If your zone is described by an **Image**, then upload it in a second call `POST /detections/{id}/image`.
     
     # Examples
     
@@ -30,7 +30,7 @@ info:
     Detection is finished when `geoJsonUrl` property containing your detection result is not null.
     Expected example result is accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/toiture%20analysis%20result%20example.json)
     
-    ### Detection on roof objects providing addresses 
+    ### Detection on roof objects providing excel file containing textual addresses 
     1. Submit detection request through `POST /detections/{id}` where `{id}` is yours to be created
     using the example request body accessible [here](https://example.com/docs). 
     Note that `detectableObjectModel` property must be set to `BP_TOITURE` and `geoServerProperties` property to `null`.
@@ -97,7 +97,7 @@ paths:
       tags:
         - Image
       summary: Retrieve aerial image from a textual, human-readable, address
-      operationId: getAreaPicture
+      operationId: getImage
       security:
         - ApiKeyAuth: [ ]
       parameters:
@@ -108,7 +108,7 @@ paths:
           required: true
       responses:
         200:
-          description: Area picture details
+          description: Image of provided address
           content:
             application/json:
               schema:
@@ -142,16 +142,17 @@ paths:
     post:
       tags:
         - Image
-      operationId: configureDetectionImage
-      summary: Launch detection over an image
+      operationId: detectImage
+      summary: Submit detection over an image
       description: |
-        For security reasons, only imageq already previously queried from `GET /image` are supported for the moment. This ensures that only small enough images are submitted, and that images quality fit the requirements of our AI models. 
+        For security reasons, only image already previously queried from `GET /image` are supported for the moment.
+        This ensures that only small enough images are submitted, and that images quality fit the requirements of our AI models.
       security:
         - ApiKeyAuth: [ ]
       parameters:
         - $ref: '#/components/parameters/IdentifierParameter'
       requestBody:
-        description: Image from a specific address to be detected
+        description: Image from a specific textual address to be detected
         content:
           multipart/form-data:
             schema:
@@ -171,10 +172,10 @@ paths:
     post:
       tags:
         - Roof
-      summary: Set roof delimiter for existing detection
-      operationId: configureDetectionRoofDelimiter
+      summary: Launch detection on delimited roof
+      operationId: detectOnDelimitedRoof
       description: |
-        Provide roof delimiter to finalize detection configuration in TOITURE model use case.
+        Provide roof delimiter used in `BP_TOITURE` model and launches detection.
       security:
         - ApiKeyAuth: [ ]
       parameters:
@@ -186,7 +187,7 @@ paths:
               $ref: '#/components/schemas/RoofDelimiter'
       responses:
         200:
-          description: Detection configured with roof delimiter
+          description: Detection launched on roof delimiter
           content:
             application/json:
               schema:
@@ -217,7 +218,9 @@ paths:
       tags:
         - Detection
       operationId: processDetection
-      summary: Process detection
+      summary: Create or process detection
+      description: |
+        Create detection and launch it if `geoJsonZone` provided.
       security:
         - ApiKeyAuth: [ ]
       parameters:
@@ -237,7 +240,7 @@ paths:
                 $ref: '#/components/examples/DetectionUsingToitureModel'
       responses:
         200:
-          description: Detection result
+          description: Detection created or launched
           content:
             application/json:
               schema:
@@ -247,9 +250,9 @@ paths:
       tags:
         - Detection
       summary: Submit detection over a list of textual addresses
-      operationId: configureDetectionAddresses # TODO: "configure" word is bad. A "configure" input should return a "configuration" as output. Yet, do not return a configuration. What you really do here is launch the detection so make that explicit! Eg: detectAddresses. Remark applies for all other endpoints.
+      operationId: detectAddresses
       description: |
-        Provide addresses to finalize detection configuration
+        Provide list of textual addresses to launch detection
       security:
         - ApiKeyAuth: [ ]
       parameters:
@@ -263,7 +266,7 @@ paths:
                 $ref: '#/components/schemas/Address'
       responses:
         200:
-          description: Detection configured with addresses
+          description: Detection launched with provided textual addresses
           content:
             application/json:
               schema:
@@ -272,8 +275,10 @@ paths:
     post:
       tags:
         - Detection
-      operationId: configureDetectionShapeFile
-      summary: Submit detection over a Shape file
+      operationId: detectShapeFile
+      summary: Submit detection over a shape file
+      description: |
+        Provide shape file to launch detection
       security:
         - ApiKeyAuth: [ ]
       parameters:
@@ -294,7 +299,7 @@ paths:
                   format: binary
       responses:
         200:
-          description: Detection with updated shape file uploaded url
+          description: Detection launched with provided shape file
           content:
             application/json:
               schema:
@@ -303,8 +308,10 @@ paths:
     post:
       tags:
         - Detection
-      operationId: configureDetectionExcelFile
-      summary: Submit detection over an Excel
+      operationId: detectExcelFile
+      summary: Submit detection over an excel file
+      description: |
+        Provide excel file containing textual addresses and launch detection.
       security:
         - ApiKeyAuth: [ ]
       parameters:
@@ -673,7 +680,7 @@ components:
     RoofDelimiter:
       type: object
       description: |
-        Optional. Mandatory only when doing sync detection using TOITURE model.
+        Optional. Mandatory only when doing sync detection using BP_TOITURE model.
       properties:
         polygon:
           type: array
