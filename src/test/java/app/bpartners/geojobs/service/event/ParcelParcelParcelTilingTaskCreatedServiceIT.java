@@ -45,7 +45,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 @Slf4j
-class ParcelParcelParcelTilingTaskCreatedServiceIT extends FacadeIT {
+public class ParcelParcelParcelTilingTaskCreatedServiceIT extends FacadeIT {
   public static final String GEOMETRY_MOCK =
       "{\n"
           + "    \"type\": \"MultiPolygon\",\n"

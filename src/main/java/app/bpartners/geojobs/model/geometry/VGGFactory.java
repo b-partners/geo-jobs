@@ -1,15 +1,23 @@
 package app.bpartners.geojobs.model.geometry;
 
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
+import app.bpartners.geojobs.model.DetectedTile;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import lombok.AllArgsConstructor;
 import org.locationtech.jts.geom.Polygon;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.stereotype.Component;
 
+@Component
+@AllArgsConstructor
 public class VGGFactory implements Converter<Set<Polygon>, VGG> {
+  private final FeatureMapper featureMapper;
+
   @Override
   public VGG convert(Set<Polygon> polygons) {
     var vgg = new VGG();
@@ -32,7 +40,27 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
     return vgg;
   }
 
-  private VGG.Annotation.Region toVGGRegion(String label, double confidence, Polygon geometry) {
+  public VGG from(List<DetectedTile> detectedTiles) {
+    var vgg = new VGG();
+    for (var detectedTile : detectedTiles) {
+      var detectedObjects = detectedTile.getDetectedObjects();
+      var tile = detectedTile.getTile().getCoordinates();
+      var key = String.format("%s_%s_%s.jpg", tile.getZ(), tile.getX(), tile.getY());
+      Map<String, VGG.Annotation.Region> regions = new HashMap<>();
+      for (var object : detectedObjects) {
+        var label = object.getDetectableObjectType().name();
+        var confidence = object.getComputedConfidence();
+        var polygon = featureMapper.toDomain(object.getFeature());
+        regions.put(
+            String.valueOf(Instant.now().getNano()), toVGGRegion(label, confidence, polygon));
+      }
+      var annotation = VGG.Annotation.builder().filename(key).regions(regions).build();
+      vgg.putIfAbsent(key, annotation);
+    }
+    return vgg;
+  }
+
+  private VGG.Annotation.Region toVGGRegion(String label, Double confidence, Polygon geometry) {
     List<Double> allX = Arrays.stream(geometry.getCoordinates()).map(coor -> coor.x).toList();
     List<Double> allY = Arrays.stream(geometry.getCoordinates()).map(coor -> coor.y).toList();
     var name = "Polygon";

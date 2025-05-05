@@ -1,6 +1,8 @@
 package app.bpartners.geojobs.model.geometry;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,8 +64,18 @@ public class VGG extends HashMap<String, VGG.Annotation> {
       @NoArgsConstructor
       public static class RegionAttribute {
         private String label;
-        private double confidence;
+        private Double confidence;
       }
     }
   }
+
+  public byte[] getBytes() {
+    ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
+    try {
+      return mapper.writeValueAsBytes(this);
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException(e);
+    }
+  }
+  ;
 }

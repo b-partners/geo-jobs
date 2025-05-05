@@ -123,26 +123,23 @@ public class FeatureMapper {
   public org.locationtech.jts.geom.Polygon toDomain(Feature feature) {
     List<List<List<List<BigDecimal>>>> multiPolygonCoordinates = validateFeature(feature);
     GeometryFactory geometryFactory = new GeometryFactory();
-    List<Coordinate> polygonCoords = new ArrayList<>();
 
-    multiPolygonCoordinates
-        .getFirst()
-        .forEach(
-            ring -> {
-              Coordinate[] ringCoords =
-                  ring.stream()
-                      .map(
-                          point ->
-                              new Coordinate(
-                                  point.getFirst().doubleValue(), point.getLast().doubleValue()))
-                      .toArray(Coordinate[]::new);
-              polygonCoords.addAll(List.of(ringCoords));
-            });
+    List<List<BigDecimal>> firstRing = multiPolygonCoordinates.getFirst().getFirst();
+    Coordinate[] ringCoords =
+        firstRing.stream()
+            .map(
+                point ->
+                    new Coordinate(point.getFirst().doubleValue(), point.getLast().doubleValue()))
+            .toArray(Coordinate[]::new);
 
-    LinearRing linearRing =
-        geometryFactory.createLinearRing(polygonCoords.toArray(new Coordinate[0]));
+    if (!ringCoords[0].equals2D(ringCoords[ringCoords.length - 1])) {
+      Coordinate[] closedRingCoords = Arrays.copyOf(ringCoords, ringCoords.length + 1);
+      closedRingCoords[closedRingCoords.length - 1] = closedRingCoords[0];
+      ringCoords = closedRingCoords;
+    }
 
-    return geometryFactory.createPolygon(linearRing);
+    LinearRing shell = geometryFactory.createLinearRing(ringCoords);
+    return geometryFactory.createPolygon(shell);
   }
 
   public List<org.locationtech.jts.geom.Polygon> toDomainList(Feature feature) {

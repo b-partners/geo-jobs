@@ -7,7 +7,7 @@ import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.rest.api.DetectionApi;
+import app.bpartners.geojobs.endpoint.rest.api.UsageApi;
 import app.bpartners.geojobs.endpoint.rest.client.ApiClient;
 import app.bpartners.geojobs.endpoint.rest.client.ApiException;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionUsage;
@@ -31,7 +31,7 @@ class ReadmeMonitorFilterIT extends FacadeIT {
   @MockBean CommunityAuthorizationRepository communityAuthRepositoryMock;
   @MockBean ReadmeLogFactory readmeLogFactoryMock;
   @MockBean EventProducer eventProducerMock;
-  DetectionApi detectionApi;
+  UsageApi usageApi;
   DetectionUsage expectedDetectionUsage = new DetectionUsage();
   CommunityAuthorization communityAuthorizationMock = mock();
 
@@ -45,7 +45,7 @@ class ReadmeMonitorFilterIT extends FacadeIT {
     authenticatedClient.setPort(port);
     authenticatedClient.setObjectMapper(objectMapper);
 
-    detectionApi = new DetectionApi(authenticatedClient);
+    usageApi = new UsageApi(authenticatedClient);
     when(communityAuthRepositoryMock.findByApiKey(any()))
         .thenReturn(Optional.of(communityAuthorizationMock));
     when(communityAuthorizationMock.isApiKeyRevoked()).thenReturn(false);
@@ -57,7 +57,7 @@ class ReadmeMonitorFilterIT extends FacadeIT {
   @Test
   void can_save_log_with_request_ok() throws ApiException {
     when(communityUsedSurfaceServiceMock.getUsage(any(), any())).thenReturn(expectedDetectionUsage);
-    var actual = detectionApi.getDetectionUsage(SQUARE_DEGREE);
+    var actual = usageApi.getDetectionUsage(SQUARE_DEGREE);
 
     assertEquals(expectedDetectionUsage, actual);
     verify(eventProducerMock, times(1)).accept(any());
@@ -68,8 +68,7 @@ class ReadmeMonitorFilterIT extends FacadeIT {
     when(communityUsedSurfaceServiceMock.getUsage(any(), any()))
         .thenThrow(BadRequestException.class);
 
-    var error =
-        assertThrows(ApiException.class, () -> detectionApi.getDetectionUsage(SQUARE_DEGREE));
+    var error = assertThrows(ApiException.class, () -> usageApi.getDetectionUsage(SQUARE_DEGREE));
     assertTrue(error.getMessage().contains("400 BAD_REQUEST"));
     verify(eventProducerMock, times(1)).accept(any());
   }
