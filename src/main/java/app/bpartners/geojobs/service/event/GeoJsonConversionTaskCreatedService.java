@@ -1,30 +1,24 @@
 package app.bpartners.geojobs.service.event;
 
-import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionTaskCreated;
-import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionTaskSucceeded;
+import app.bpartners.geojobs.job.repository.TaskRepository;
 import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionTask;
-import java.util.List;
-import java.util.function.Consumer;
-import lombok.RequiredArgsConstructor;
+import app.bpartners.geojobs.service.TaskConsumer;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
-public class GeoJsonConversionTaskCreatedService implements Consumer<GeoJsonConversionTaskCreated> {
-  private final TaskStatusService<GeoJsonConversionTask> taskStatusService;
-  private final GeoJsonConversionTaskConsumer geoJsonConversionTaskConsumer;
-  private final EventProducer eventProducer;
+public class GeoJsonConversionTaskCreatedService
+    extends TaskCreatedService<GeoJsonConversionTask, GeoJsonConversionTaskCreated> {
+  public GeoJsonConversionTaskCreatedService(
+      TaskConsumer<GeoJsonConversionTask> geoJsonConversionTaskTaskConsumer,
+      TaskStatusService<GeoJsonConversionTask> taskStatusService,
+      TaskRepository<GeoJsonConversionTask> taskRepository) {
+    super(geoJsonConversionTaskTaskConsumer, taskStatusService, taskRepository);
+  }
 
   @Override
   public void accept(GeoJsonConversionTaskCreated geoJsonConversionTaskCreated) {
-    var task = geoJsonConversionTaskCreated.getGeoJsonConversionTask();
-    taskStatusService.process(task);
-
-    geoJsonConversionTaskConsumer.accept(task);
-
-    eventProducer.accept(
-        List.of(GeoJsonConversionTaskSucceeded.builder().geoJsonConversionTask(task).build()));
+    super.accept(geoJsonConversionTaskCreated);
   }
 }

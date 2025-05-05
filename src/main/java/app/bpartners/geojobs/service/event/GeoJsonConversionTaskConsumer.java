@@ -14,11 +14,11 @@ import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionTask;
+import app.bpartners.geojobs.service.TaskConsumer;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConverter;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class GeoJsonConversionTaskConsumer implements Consumer<GeoJsonConversionTask> {
+public class GeoJsonConversionTaskConsumer implements TaskConsumer<GeoJsonConversionTask> {
   public static final String GEO_JSON_EXTENSION = ".geojson";
   public static final String GEO_JSON_BUCKET_FOLDER = "geoJson/";
   private final MachineDetectedTileRepository machineDetectedTileRepository;
