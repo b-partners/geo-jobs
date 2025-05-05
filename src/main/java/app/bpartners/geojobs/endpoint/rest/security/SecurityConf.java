@@ -164,7 +164,7 @@ public class SecurityConf {
                     .hasAnyAuthority(ROLE_ADMIN.name(), ROLE_COMMUNITY.name())
                     .requestMatchers(POST, "/api/keys")
                     .hasAnyAuthority(ROLE_ADMIN.name())
-                    .requestMatchers(DELETE, "/api/keys/revoke")
+                    .requestMatchers(DELETE, "/keys")
                     .hasAnyAuthority(ROLE_COMMUNITY.name())
                     .anyRequest()
                     .denyAll())

@@ -34,7 +34,7 @@ public class SecurityController {
         .toList();
   }
 
-  @DeleteMapping("/api/keys/revoke")
+  @DeleteMapping("/keys")
   public RevokeApiKeyResponse revokeApikey() {
     var communityAuthorization =
         communityAuthRepository
