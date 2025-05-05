@@ -68,7 +68,7 @@ public class DetectionAddressConversionJobFailedService
 
     var emailSubject =
         String.format(
-            "BPartners | Anomalie détectée sur %d adresses - Détection sur toiture"
+            "BirdIA | Anomalie détectée sur %d adresses - Détection sur toiture"
                 + " portant l'ID %s le %s",
             failedTasks.size(), detection.getEndToEndId(), actualDatetime);
     var to = new InternetAddress(job.getEmailReceiver());

@@ -85,7 +85,7 @@ class DetectionAddressConversionJobFailedServiceTest {
         email
             .subject()
             .contains(
-                "BPartners | Anomalie détectée sur 1 adresses - Détection sur toiture"
+                "BirdIA | Anomalie détectée sur 1 adresses - Détection sur toiture"
                     + " portant l'ID "
                     + detectionE2Id
                     + " le "));
@@ -122,7 +122,7 @@ class DetectionAddressConversionJobFailedServiceTest {
     <p>Ces adresses non traitées, ainsi que le fichier excel initialement soumis, sont disponibles en pièces jointes de
         ce mail.</p>
     <p>Cordialement.</p>
-    <p>L'équipe BPartners.</p>
+    <p>L'équipe BirdIA.</p>
 </section>
 </body>
 </html>""",
