@@ -32,6 +32,7 @@ public class Detection implements Serializable {
   private String excelFileKey;
   private String imageFileKey;
   private String pdfFileKey;
+  private String vggFileKey;
 
   @Column(name = "zdj_id")
   private String zdjId;

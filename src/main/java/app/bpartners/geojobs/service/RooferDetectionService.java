@@ -5,7 +5,6 @@ import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.HOUSES_0;
-import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_BUCKET_FOLDER;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_EXTENSION;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
@@ -20,6 +19,7 @@ import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.mail.Email;
 import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.model.DetectedTile;
+import app.bpartners.geojobs.model.geometry.VGGFactory;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
@@ -27,7 +27,6 @@ import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.detection.DetectionMapper;
 import app.bpartners.geojobs.service.detection.DetectionMaskCreator;
 import app.bpartners.geojobs.service.detection.TileObjectDetector;
-import app.bpartners.geojobs.service.geojson.GeoJsonConverter;
 import app.bpartners.geojobs.template.HTMLTemplateParser;
 import jakarta.mail.internet.InternetAddress;
 import java.io.File;
@@ -46,13 +45,14 @@ import org.thymeleaf.context.Context;
 @AllArgsConstructor
 public class RooferDetectionService
     implements Function<app.bpartners.geojobs.repository.model.detection.Detection, Detection> {
+  private static final String VGG_BUCKET_FOLDER = "vgg/";
   private static final String TEMPLATE_NAME = "roofer_detection_made";
   private static final String env = System.getenv("ENV");
   private final TileObjectDetector detector;
   private final DetectionMaskCreator detectionMaskCreator;
   private final DetectionMapper detectionMapper;
   private final MachineDetectedTileRepository machineDetectedTileRepository;
-  private final GeoJsonConverter geoJsonConverter;
+  private final VGGFactory vggFactory;
   private final FileWriter fileWriter;
   private final DetectionRepository detectionRepository;
   private final BucketComponent bucketComponent;
@@ -111,24 +111,23 @@ public class RooferDetectionService
             .detectedObjects(machineDetectedTile.getDetectedObjects())
             .build();
 
-    processGeoJsonConversion(detection, List.of(detectedTile), detectionResponse.getRstImageUrl());
+    processVggConversion(detection, List.of(detectedTile));
     return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
         detection, FINISHED, SUCCEEDED, MACHINE_DETECTION);
   }
 
-  private void processGeoJsonConversion(
+  private void processVggConversion(
       app.bpartners.geojobs.repository.model.detection.Detection detection,
-      List<DetectedTile> detectedTiles,
-      String detectionResultUrl) {
+      List<DetectedTile> detectedTiles) {
     var zdjId = detection.getId();
-    var geoJson = geoJsonConverter.convert(detectedTiles);
+    var vgg = vggFactory.from(detectedTiles);
     var zoneName = detection.getZoneName();
-    var fileKey = GEO_JSON_BUCKET_FOLDER + zdjId + "/" + zoneName + GEO_JSON_EXTENSION;
-    var geoJsonAsByte = geoJson.getStringValue().getBytes();
-    var geoJsonAsFile =
-        fileWriter.write(geoJsonAsByte, createTempDirectory(), zoneName + GEO_JSON_EXTENSION);
-    bucketComponent.upload(geoJsonAsFile, fileKey);
-    detection.setGeojsonS3FileKey(fileKey);
+    var fileKey = VGG_BUCKET_FOLDER + zdjId + "/" + zoneName + ".json";
+    var vggAsByte = vgg.getBytes();
+    var vggAsFile =
+        fileWriter.write(vggAsByte, createTempDirectory(), zoneName + GEO_JSON_EXTENSION);
+    bucketComponent.upload(vggAsFile, fileKey);
+    detection.setVggFileKey(fileKey);
     detectionRepository.save(detection);
 
     eventProducer.accept(
