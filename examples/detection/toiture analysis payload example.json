@@ -3,19 +3,7 @@
   "zoneName": "your.zone.name",
   "geoServerProperties": null,
   "detectableObjectModel": {
-    "modelName": "BP_TOITURE",
-    "toitureRevetement": true,
-    "arbre": false,
-    "velux": true,
-    "panneauPhotovoltaique": true,
-    "moisissure": true,
-    "usure": true,
-    "fissureCassure": true,
-    "obstacle": true,
-    "cheminee": false,
-    "humidite": true,
-    "risqueFeu": false
-  },
+    "modelName": "TOITURE"},
   "geoJsonZone": [
     {
       "id": "you_feature_id",

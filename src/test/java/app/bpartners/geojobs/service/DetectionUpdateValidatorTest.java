@@ -116,9 +116,9 @@ class DetectionUpdateValidatorTest {
   private String expectedGeoJsonAndBPToitureModelUpdateAttemptException() {
     return """
 Detection.geoJsonZone can not be updated once it has values, otherwise actual value [null] is not equals provided value null. Detection.detectableObjectModel can not be updated once it has values, otherwise actual value class DetectableObjectModel {
-    modelName: BP_TOITURE
+    modelName: TOITURE
 } is not equals provided value class DetectableObjectModel {
-    modelName: BP_LOM
+    modelName: LOM
 }.\s""";
   }
 
@@ -137,9 +137,9 @@ Detection.geoJsonZone can not be updated once it has values, otherwise actual va
     }
     properties: {zoom=20, code=69, id=feature1_id, CLUSTER_SIZE=386884, CLUSTER_ID=99520, nom=Rhône}
 }] is not equals provided value null. Detection.detectableObjectModel can not be updated once it has values, otherwise actual value class DetectableObjectModel {
-    modelName: BP_LOM
+    modelName: LOM
 } is not equals provided value class DetectableObjectModel {
-    modelName: BP_TOITURE
+    modelName: TOITURE
 }.\s""";
   }
 }

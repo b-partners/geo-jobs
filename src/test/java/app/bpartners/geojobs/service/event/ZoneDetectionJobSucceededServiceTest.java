@@ -243,7 +243,7 @@ class ZoneDetectionJobSucceededServiceTest {
     <div>
         <p>La détection portant l'identifiant <span>%s</span> effectuée sur la zone
             <span>My address</span> n'a permis de trouver aucun objet
-            correspondant à la liste d'objets suivante, contenu dans le modèle de détection <strong>BP_TOITURE</strong> :</p>
+            correspondant à la liste d'objets suivante, contenu dans le modèle de détection <strong>TOITURE</strong> :</p>
     </div>
    \s
     <ul>

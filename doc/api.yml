@@ -1601,13 +1601,13 @@ components:
     ModelName:
       type: string
       enum:
-        - BP_TOITURE
-        - BP_LOM
-        - BP_ZAN
-        - BP_CLIMAT_RESILIENCE
-        - BP_CONFIRMITE_PLU
-        - BP_TROTTOIRS
-        - BP_OLD
+        - TOITURE
+        - LOM
+        - ZAN
+        - CLIMAT_RESILIENCE
+        - CONFIRMITE_PLU
+        - TROTTOIRS
+        - OLD
     CreateDetection:
       type: object
       properties:

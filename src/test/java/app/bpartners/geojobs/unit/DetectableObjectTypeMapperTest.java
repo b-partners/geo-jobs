@@ -49,7 +49,7 @@ class DetectableObjectTypeMapperTest {
   }
 
   @Test
-  void map_from_model_BP_Toiture_Model() {
+  void map_from_model_Toiture_Model() {
     var object = new DetectableObjectModel().modelName(TOITURE);
 
     var actual = subject.mapFromModel(object);
@@ -70,7 +70,7 @@ class DetectableObjectTypeMapperTest {
   }
 
   @Test
-  void map_from_model_BP_Lom_Model() {
+  void map_from_model_Lom_Model() {
     var object = new DetectableObjectModel().modelName(LOM);
 
     var actual = subject.mapFromModel(object);
@@ -80,7 +80,7 @@ class DetectableObjectTypeMapperTest {
   }
 
   @Test
-  void map_from_model_BP_Zan_Model() {
+  void map_from_model_Zan_Model() {
     var object = new DetectableObjectModel().modelName(ZAN);
 
     var actual = subject.mapFromModel(object);
@@ -91,7 +91,7 @@ class DetectableObjectTypeMapperTest {
   }
 
   @Test
-  void map_from_model_BP_Conformite_Plu_Model() {
+  void map_from_model_Conformite_Plu_Model() {
     var object = new DetectableObjectModel().modelName(CONFIRMITE_PLU);
 
     var actual = subject.mapFromModel(object);
@@ -102,7 +102,7 @@ class DetectableObjectTypeMapperTest {
   }
 
   @Test
-  void map_from_model_BP_Climat_Resilience_Model() {
+  void map_from_model_Climat_Resilience_Model() {
     var object = new DetectableObjectModel().modelName(CLIMAT_RESILIENCE);
 
     var actual = subject.mapFromModel(object);
@@ -112,7 +112,7 @@ class DetectableObjectTypeMapperTest {
   }
 
   @Test
-  void map_from_modl_BP_Trottoirs_Model() {
+  void map_from_modl_Trottoirs_Model() {
     var object = new DetectableObjectModel().modelName(TROTTOIRS);
 
     var actual = subject.mapFromModel(object);
@@ -122,7 +122,7 @@ class DetectableObjectTypeMapperTest {
   }
 
   @Test
-  void map_from_modl_BP_Old_Model() {
+  void map_from_modl_Old_Model() {
     var object = new DetectableObjectModel().modelName(OLD);
 
     var actual = subject.mapFromModel(object);
@@ -140,7 +140,7 @@ class DetectableObjectTypeMapperTest {
   }
 
   @Test
-  void map_bp_zan_model_object_type_with_its_variable_reference_confidence() {
+  void map_zan_model_object_type_with_its_variable_reference_confidence() {
     var detectionId = randomUUID().toString();
 
     var actual = subject.mapDefaultConfigurationsFromModel(detectionId, ZAN);
@@ -175,7 +175,7 @@ class DetectableObjectTypeMapperTest {
   }
 
   @Test
-  void map_bp_confirmite_plu_model_object_type_with_its_variable_reference_confidence() {
+  void map_confirmite_plu_model_object_type_with_its_variable_reference_confidence() {
     var detectionId = randomUUID().toString();
 
     var actual = subject.mapDefaultConfigurationsFromModel(detectionId, CONFIRMITE_PLU);
@@ -211,7 +211,7 @@ class DetectableObjectTypeMapperTest {
   }
 
   @Test
-  void map_bp_trottoirs_model_object_type_with_its_variable_reference_confidence() {
+  void map_trottoirs_model_object_type_with_its_variable_reference_confidence() {
     var detectionId = randomUUID().toString();
 
     var actual = subject.mapDefaultConfigurationsFromModel(detectionId, TROTTOIRS);
@@ -240,7 +240,7 @@ class DetectableObjectTypeMapperTest {
   }
 
   @Test
-  void map_bp_climat_resilience_model_object_type_with_its_variable_reference_confidence() {
+  void map_climat_resilience_model_object_type_with_its_variable_reference_confidence() {
     var detectionId = randomUUID().toString();
 
     var actual = subject.mapDefaultConfigurationsFromModel(detectionId, CLIMAT_RESILIENCE);
@@ -270,7 +270,7 @@ class DetectableObjectTypeMapperTest {
   }
 
   @Test
-  void map_bp_toiture_model_object_type_with_its_variable_reference_confidence() {
+  void map_toiture_model_object_type_with_its_variable_reference_confidence() {
     var detectionId = randomUUID().toString();
 
     var actual = subject.mapDefaultConfigurationsFromModel(detectionId, TOITURE);
@@ -318,7 +318,7 @@ class DetectableObjectTypeMapperTest {
   }
 
   @Test
-  void map_bp_lom_model_object_type_with_its_variable_reference_confidence() {
+  void map_lom_model_object_type_with_its_variable_reference_confidence() {
     var detectionId = randomUUID().toString();
 
     var actual = subject.mapDefaultConfigurationsFromModel(detectionId, LOM);
@@ -344,7 +344,7 @@ class DetectableObjectTypeMapperTest {
   }
 
   @Test
-  void map_bp_old_model_object_type_with_its_variable_reference_confidence() {
+  void map_old_model_object_type_with_its_variable_reference_confidence() {
     var detectionId = randomUUID().toString();
 
     var actual = subject.mapDefaultConfigurationsFromModel(detectionId, OLD);

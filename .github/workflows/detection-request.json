@@ -17,13 +17,7 @@
     }
   },
   "detectableObjectModel": {
-    "modelName": "BP_ZAN",
-    "arbre": false,
-    "espaceVert": true,
-    "toiture": false,
-    "voieCarrosable": false,
-    "trottoir": true,
-    "parking": false
+    "modelName": "ZAN"
   },
   "geoJsonZone": [
     {
