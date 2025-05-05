@@ -1,8 +1,43 @@
 openapi: 3.0.3
 
 info:
-  title: geo-jobs
-  description: Launch Zone Tiling Jobs (ZTJ) and Zone Detection Jobs (ZDJ).
+  title: Birdia API
+  description: |
+    Detect and qualify geo-referenced objects.
+    
+    # Security
+    
+    Get your **API key** by emailing **contact@bpartners.app**.
+    All of your requests must embed your API key in the header named: **x-api-key**.
+    
+    # Usage
+    
+    Submit your detection request through `POST /detections/{id}`
+    where `{id}` is yours to be created.
+    
+    1. If your zone is described by a **GeoJson**, then just set accordingly the `geoJsonZone` field in the payload.
+    2. If your zone is described by a **Shape file**, then upload it in a second call `POST /detections/{id}/shape`.
+    3. If your zone is described by a list of addresses in an **Excel file**, then upload it in a second call `POST /detections/{id}/excel`.
+    4. If your zone is described by an **Image**, then upload it in a second call `POST /detections/{id}/image`.
+    
+    # Examples
+    
+    ### Detection on roof objects providing geojson multiPolygon
+    1. Submit detection request through `POST /detections/{id}` where `{id}` is yours to be created
+    using the example request body accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/toiture%20analysis%20payload%20example.json).
+    Note that `detectableObjectModel` property must be set to `BP_TOITURE` and `geoServerProperties` property to `null`
+    2. Track the progress of your detection through `GET /detections/{id}`. 
+    Detection is finished when `geoJsonUrl` property containing your detection result is not null.
+    Expected example result is accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/toiture%20analysis%20result%20example.json)
+    
+    ### Detection on roof objects providing excel file containing textual addresses 
+    1. Submit detection request through `POST /detections/{id}` where `{id}` is yours to be created
+    using the example request body accessible [here](https://example.com/docs). 
+    Note that `detectableObjectModel` property must be set to `BP_TOITURE` and `geoServerProperties` property to `null`.
+    2. Submit list of addresses contained inside an **Excel file** in a second call `POST /detections/{id}/excel`.
+    3. Track the progress of your detection through `GET /detections/{id}`. 
+    Detection is finished when `geoJsonUrl` property containing your detection result is not null.
+    4. Processing time is variable due to address conversion, the expected example result is accessible [here](https://example.com/docs).
   version: 'latest'
 
 servers:
@@ -444,11 +479,10 @@ paths:
             type: string
       operationId: getZDJGeojsonsUrl
       description: |
-        Get a secured URL to a ZIP containing the detection results as GeoJSON,
-        one GeoJSON per objectType for the whole job.
+        Get a secured URL containing the detection results as geojson.
       responses:
         200:
-          description: Information
+          description: URL containing detection result as geojson.
           content:
             application/json:
               schema:
@@ -487,9 +521,9 @@ paths:
   '/usage':
     get:
       tags:
-        - Detection
+        - Usage
       operationId: getDetectionUsage
-      summary: get detection usage for community users
+      summary: Get detection usage
       parameters:
         - in: query
           name: surfaceUnit
@@ -498,17 +532,17 @@ paths:
             $ref: '#/components/schemas/DetectionSurfaceUnit'
       responses:
         200:
-          description: The statistics of detections usages
+          description: Statistics of detection usage
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/DetectionUsage'
-  /areaPictureDetails:
+  '/image':
     get:
       tags:
-        - Detection
-      summary: Retrieve area picture from address and its details
-      operationId: getAreaPicture
+        - Image
+      summary: Retrieve aerial image from a textual, human-readable, address
+      operationId: getImage
       security:
         - ApiKeyAuth: [ ]
       parameters:
@@ -519,11 +553,11 @@ paths:
           required: true
       responses:
         200:
-          description: Area picture details
+          description: Image of provided address
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AreaPictureDetails'
+                $ref: '#/components/schemas/ImageOfAddress'
   '/detections':
     get:
       tags:
@@ -570,6 +604,11 @@ paths:
       tags:
         - Detection
       operationId: processDetection
+      summary: Create or process detection
+      description: |
+        Create detection and launch it if `geoJsonZone` provided.
+      security:
+        - ApiKeyAuth: [ ]
       parameters:
         - in: path
           name: id
@@ -582,9 +621,12 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateDetection'
+            examples:
+              detectionForRoof:
+                $ref: '#/components/examples/DetectionUsingToitureModel'
       responses:
         200:
-          description: Detection result
+          description: Detection created or launched
           content:
             application/json:
               schema:
@@ -593,10 +635,10 @@ paths:
     post:
       tags:
         - Detection
-      summary: Set addresses for existing detection
-      operationId: configureDetectionAddresses
+      summary: Submit detection over a list of textual addresses
+      operationId: detectAddresses
       description: |
-        Provide addresses to finalize detection configuration
+        Provide list of textual addresses to launch detection
       security:
         - ApiKeyAuth: [ ]
       parameters:
@@ -610,7 +652,7 @@ paths:
                 $ref: '#/components/schemas/Address'
       responses:
         200:
-          description: Detection configured with addresses
+          description: Detection launched with provided textual addresses
           content:
             application/json:
               schema:
@@ -618,11 +660,11 @@ paths:
   '/detections/{id}/roofDelimiter':
     post:
       tags:
-        - Detection
-      summary: Set roof delimiter for existing detection
-      operationId: configureDetectionRoofDelimiter
+        - Roof
+      summary: Launch detection on delimited roof
+      operationId: detectOnDelimitedRoof
       description: |
-        Provide roof delimiter to finalize detection configuration in TOITURE model use case.
+        Provide roof delimiter used in `BP_TOITURE` model and launches detection.
       security:
         - ApiKeyAuth: [ ]
       parameters:
@@ -634,7 +676,7 @@ paths:
               $ref: '#/components/schemas/RoofDelimiter'
       responses:
         200:
-          description: Detection configured with roof delimiter
+          description: Detection launched on roof delimiter
           content:
             application/json:
               schema:
@@ -726,7 +768,10 @@ paths:
     post:
       tags:
         - Detection
-      operationId: finalizeShapeConfig
+      operationId: detectGeoJson
+      summary: Submit detection over retrieved geojson
+      description: |
+        Provide geojson retrieved from shape file or excel containing textual addresses and launch detection
       parameters:
         - in: path
           name: id
@@ -735,7 +780,7 @@ paths:
           description: Detection identifier
           required: true
       requestBody:
-        description: feature from shape
+        description: File containing list of features retrieved
         content:
           multipart/form-data:
             schema:
@@ -746,7 +791,7 @@ paths:
                   format: binary
       responses:
         200:
-          description: Detection with updated geojson file uploaded url
+          description: Detection launched with updated geojson
           content:
             application/json:
               schema:
@@ -755,15 +800,18 @@ paths:
   '/detections/{id}/image':
     post:
       tags:
-        - Detection
-      operationId: configureDetectionImage
-      summary: Configure image for detection
+        - Image
+      operationId: detectImage
+      summary: Submit detection over an image
       description: |
-        Only image queried from GET /areaPictureDetails is supported for now.
+        For security reasons, only image already previously queried from `GET /image` are supported for the moment.
+        This ensures that only small enough images are submitted, and that images quality fit the requirements of our AI models.
+      security:
+        - ApiKeyAuth: [ ]
       parameters:
         - $ref: '#/components/parameters/IdentifierParameter'
       requestBody:
-        description: Image from a specific address to be detected
+        description: Image from a specific textual address to be detected
         content:
           multipart/form-data:
             schema:
@@ -784,7 +832,10 @@ paths:
     post:
       tags:
         - Detection
+      summary: Submit PDF containing detection result
       operationId: uploadRooferDetectionPdfResult
+      description: |
+        Provide PDF containing detection result
       parameters:
         - in: path
           name: id
@@ -804,17 +855,21 @@ paths:
                   format: binary
       responses:
         200:
-          description: Detection with updated pdf file uploaded url
+          description: Detection with pdf file containing result uploaded url
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Detection'
-
   '/detections/{id}/shape':
     post:
       tags:
         - Detection
-      operationId: configureDetectionShapeFile
+      operationId: detectShapeFile
+      summary: Submit detection over a shape file
+      description: |
+        Provide shape file to launch detection
+      security:
+        - ApiKeyAuth: [ ]
       parameters:
         - in: path
           name: id
@@ -833,7 +888,7 @@ paths:
                   format: binary
       responses:
         200:
-          description: Detection with updated shape file uploaded url
+          description: Detection launched with provided shape file
           content:
             application/json:
               schema:
@@ -842,7 +897,12 @@ paths:
     post:
       tags:
         - Detection
-      operationId: configureDetectionExcelFile
+      operationId: detectExcelFile
+      summary: Submit detection over an excel file
+      description: |
+        Provide excel file containing textual addresses and launch detection.
+      security:
+        - ApiKeyAuth: [ ]
       parameters:
         - in: path
           name: id
@@ -929,12 +989,12 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ApiKey'
-  '/api/keys/revoke':
+  '/keys':
     delete:
       tags:
         - Security
       operationId: revokeApiKey
-      summary: Revoke apiKey access
+      summary: Revoke all apiKey accesses
       security:
         - ApiKeyAuth: [ ]
       responses:
@@ -944,7 +1004,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RevokeApiKeyResponse'
-
 components:
   securitySchemes:
     ReadmeAuth:
@@ -959,6 +1018,22 @@ components:
         type: string
       description: Detection identifier
       required: true
+  examples:
+    DetectionUsingToitureModel:
+      summary: Detection using BP_TOITURE model
+      value:
+        emailReceiver: "<your-email-address>"
+        zoneName: "<your-zone-name>"
+        geoServerProperties: null
+        detectableObjectModel:
+          modelName: "BP_TOITURE"
+        geoJsonZone:
+          - type: "Feature"
+            geometry:
+              type: "MultiPolygon"
+              coordinates:
+                - [ [ [ 2.3767,48.9172 ],[ 2.3777,48.9172 ],[ 2.3777,48.9179 ],[ 2.3767,48.9179 ],[ 2.3767,48.9172 ] ] ]
+
   responses:
     400:
       description: Bad request
@@ -1693,7 +1768,7 @@ components:
       properties:
         address:
           type: string
-    AreaPictureDetails:
+    ImageOfAddress:
       type: object
       properties:
         address:
