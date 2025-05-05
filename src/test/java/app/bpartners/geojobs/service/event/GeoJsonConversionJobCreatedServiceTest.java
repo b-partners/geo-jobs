@@ -156,10 +156,8 @@ class GeoJsonConversionJobCreatedServiceTest {
 
   private GeoJsonConversionTaskCreated geoJsonConversionTaskCreatedBuilder(
       String geoJsonConversionJobId, DetectableType humidite, int pageNumber) {
-    return GeoJsonConversionTaskCreated.builder()
-        .geoJsonConversionTask(
-            someGeoJsonConversionTask(geoJsonConversionJobId, humidite, pageNumber))
-        .build();
+    return new GeoJsonConversionTaskCreated(
+        someGeoJsonConversionTask(geoJsonConversionJobId, humidite, pageNumber));
   }
 
   private static <T> @NotNull Function<Object, T> retrieveObjectType(Class<T> clazz) {
@@ -174,10 +172,10 @@ class GeoJsonConversionJobCreatedServiceTest {
   private static @NotNull Consumer<GeoJsonConversionTaskCreated>
       computeGeoJsonConversionTaskCreatedNullValuesForRandomAttribution() {
     return geoJsonConversionJobCreatedEvent -> {
-      geoJsonConversionJobCreatedEvent.getGeoJsonConversionTask().setId(null);
-      geoJsonConversionJobCreatedEvent.getGeoJsonConversionTask().setSubmissionInstant(null);
+      geoJsonConversionJobCreatedEvent.getTask().setId(null);
+      geoJsonConversionJobCreatedEvent.getTask().setSubmissionInstant(null);
       geoJsonConversionJobCreatedEvent
-          .getGeoJsonConversionTask()
+          .getTask()
           .getStatusHistory()
           .forEach(status -> status.setCreationDatetime(null));
     };

@@ -64,11 +64,7 @@ public class GeoJsonConversionJobCreatedService implements Consumer<GeoJsonConve
           tasksCount.getAndAccumulate(savedConversionTasks.size(), Long::sum);
           savedConversionTasks.forEach(
               conversionTask ->
-                  eventProducer.accept(
-                      List.of(
-                          GeoJsonConversionTaskCreated.builder()
-                              .geoJsonConversionTask(conversionTask)
-                              .build())));
+                  eventProducer.accept(List.of(new GeoJsonConversionTaskCreated(conversionTask))));
         });
 
     if (tasksCount.get() == 0) {

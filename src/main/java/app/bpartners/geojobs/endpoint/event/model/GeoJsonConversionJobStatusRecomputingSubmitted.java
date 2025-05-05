@@ -13,7 +13,7 @@ import lombok.ToString;
 @ToString
 public class GeoJsonConversionJobStatusRecomputingSubmitted extends JobStatusRecomputingSubmitted {
   private static final long INITIAL_BACKOFF_DURATION_IN_SECONDS =
-      Duration.ofMinutes(30).getSeconds();
+      Duration.ofSeconds(30).toSeconds();
 
   public GeoJsonConversionJobStatusRecomputingSubmitted(String jobId) {
     super(jobId, INITIAL_BACKOFF_DURATION_IN_SECONDS);
