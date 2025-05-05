@@ -62,7 +62,6 @@ Parameters:
 
 Resources:
   FrontalServerlessHttpApi:
-    StageName: $default
     Type: AWS::Serverless::HttpApi
     Properties:
       CorsConfiguration:
@@ -86,6 +85,16 @@ Resources:
       PayloadFormatVersion: "1.0"
       IntegrationMethod: ANY
       TimeoutInMillis: 30000
+
+  FrontalServerlessHttpApiDefaultStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref FrontalServerlessHttpApi
+      StageName: $default
+      AutoDeploy: true
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 10
+        ThrottlingRateLimit: 50.0
 
   DefaultRoute:
     Type: AWS::ApiGatewayV2::Route
