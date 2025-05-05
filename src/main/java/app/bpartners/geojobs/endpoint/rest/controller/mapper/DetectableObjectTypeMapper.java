@@ -10,10 +10,8 @@ import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-@Slf4j
 @Component
 public class DetectableObjectTypeMapper {
 
@@ -79,24 +77,14 @@ public class DetectableObjectTypeMapper {
 
   public List<DetectableObjectType> mapFromModel(ModelName modelName) {
     List<DetectableObjectType> objectTypes = new ArrayList<>();
-    var modelNameStringValue = modelName.getValue();
-    if (modelNameStringValue.contains("BP_")) {
-      log.warn(
-          "DEPRECATED detectableObjectModelName {} is still used. Should only use {} for now",
-          modelNameStringValue,
-          modelNameStringValue.replace("BP_", ""));
-    }
-    switch (modelNameStringValue) {
-      case "TOITURE", "BP_TOITURE" -> objectTypes.addAll(detectableObjectTypeForToitureModel());
-      case "LOM", "BP_LOM" -> objectTypes.addAll(detectableObjectTypeForLomModel());
-      case "ZAN", "BP_ZAN" -> objectTypes.addAll(detectableObjectTypeForZanModel());
-      case "CLIMAT_RESILIENCE", "BP_CLIMAT_RESILIENCE" ->
-          objectTypes.addAll(detectableObjectTypeForClimatResilienceModel());
-      case "CONFIRMITE_PLU", "BP_CONFIRMITE_PLU" ->
-          objectTypes.addAll(detectableObjectTypeForConformitePluModel());
-      case "TROTTOIRS", "BP_TROTTOIRS" ->
-          objectTypes.addAll(detectableObjectTypeForTrottoirsModel());
-      case "OLD", "BP_OLD" -> objectTypes.addAll(detectableObjectTypeForOldModel());
+    switch (modelName) {
+      case TOITURE -> objectTypes.addAll(detectableObjectTypeForToitureModel());
+      case LOM -> objectTypes.addAll(detectableObjectTypeForLomModel());
+      case ZAN -> objectTypes.addAll(detectableObjectTypeForZanModel());
+      case CLIMAT_RESILIENCE -> objectTypes.addAll(detectableObjectTypeForClimatResilienceModel());
+      case CONFIRMITE_PLU -> objectTypes.addAll(detectableObjectTypeForConformitePluModel());
+      case TROTTOIRS -> objectTypes.addAll(detectableObjectTypeForTrottoirsModel());
+      case OLD -> objectTypes.addAll(detectableObjectTypeForOldModel());
     }
     return objectTypes;
   }

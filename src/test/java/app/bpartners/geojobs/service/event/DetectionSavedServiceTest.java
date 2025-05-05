@@ -17,6 +17,7 @@ import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.GeoServerParameterStringMapValue;
+import app.bpartners.geojobs.service.detection.DetectableObjectModelMapper;
 import app.bpartners.geojobs.service.detection.DetectionGeoServerParameterModelMapper;
 import app.bpartners.geojobs.template.HTMLTemplateParser;
 import jakarta.mail.internet.InternetAddress;
@@ -34,6 +35,7 @@ import org.thymeleaf.context.Context;
 class DetectionSavedServiceTest {
   BucketComponent bucketComponentMock = mock();
   Mailer mailerMock = mock();
+  DetectableObjectModelMapper detectableObjectModelMapper = new DetectableObjectModelMapper();
   DetectionGeoServerParameterModelMapper detectionGeoServerParameterModelMapper =
       new DetectionGeoServerParameterModelMapper();
   CommunityAuthorizationRepository communityAuthorizationRepositoryMock = mock();
@@ -216,7 +218,7 @@ class DetectionSavedServiceTest {
     <ul>
         <li>Email associé : <span></span></li>
         <li>Nom de zone fournie par le consommateur : <span></span></li>
-        <li>Model utilisé pour la détection : <span>TOITURE</span></li>
+        <li>Model utilisé pour la détection : <span>BP_TOITURE</span></li>
         <li>Configuration du geoServer :
             <ul>
                 <li>geoServerUrl: <span>geo_server_value_test</span></li>
