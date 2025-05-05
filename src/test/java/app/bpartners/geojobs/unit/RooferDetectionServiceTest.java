@@ -26,6 +26,8 @@ import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.mail.Email;
 import app.bpartners.geojobs.mail.Mailer;
+import app.bpartners.geojobs.model.geometry.VGG;
+import app.bpartners.geojobs.model.geometry.VGGFactory;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
@@ -36,8 +38,6 @@ import app.bpartners.geojobs.service.detection.DetectionMapper;
 import app.bpartners.geojobs.service.detection.DetectionMaskCreator;
 import app.bpartners.geojobs.service.detection.DetectionResponse;
 import app.bpartners.geojobs.service.detection.TileObjectDetector;
-import app.bpartners.geojobs.service.geojson.GeoJson;
-import app.bpartners.geojobs.service.geojson.GeoJsonConverter;
 import app.bpartners.geojobs.service.tiling.TileValidator;
 import app.bpartners.geojobs.template.HTMLTemplateParser;
 import jakarta.mail.internet.AddressException;
@@ -58,7 +58,7 @@ public class RooferDetectionServiceTest {
   TileValidator tileValidator = new TileValidator();
   DetectionMapper detectionMapper = new DetectionMapper(tileValidator);
   MachineDetectedTileRepository machineDetectedTileRepository = mock();
-  GeoJsonConverter geoJsonConverter = mock();
+  VGGFactory vggFactoryMock = mock();
   FileWriter fileWriter = mock();
   DetectionRepository detectionRepository = mock();
   BucketComponent bucketComponent = mock();
@@ -81,7 +81,7 @@ public class RooferDetectionServiceTest {
             detectionMaskCreator,
             detectionMapper,
             machineDetectedTileRepository,
-            geoJsonConverter,
+            vggFactoryMock,
             fileWriter,
             detectionRepository,
             bucketComponent,
@@ -100,7 +100,7 @@ public class RooferDetectionServiceTest {
                         DetectionResponse.ImageData.builder().regions(Map.of()).build()))
                 .build());
     when(machineDetectedTileRepository.save(any())).thenReturn(new MachineDetectedTile());
-    when(geoJsonConverter.convert(any())).thenReturn(new GeoJson(List.of()));
+    when(vggFactoryMock.from(any())).thenReturn(new VGG());
     when(fileWriter.write(any(), any(), any())).thenReturn(mock(File.class));
     when(bucketComponent.presign(any(String.class))).thenReturn(PRESIGNED_URL);
     when(authProvider.getAuthenticatedCommunity())
@@ -115,7 +115,7 @@ public class RooferDetectionServiceTest {
     verify(eventProducer, only()).accept(any());
     verify(detectionRepository, times(1)).save(any());
 
-    assertEquals(PRESIGNED_URL, actual.getGeoJsonUrl());
+    assertEquals(PRESIGNED_URL, actual.getVggUrl());
     assertEquals(MACHINE_DETECTION, actual.getStep().getName());
     assertEquals(FINISHED, actual.getStep().getStatus().getProgression());
     assertEquals(SUCCEEDED, actual.getStep().getStatus().getHealth());
