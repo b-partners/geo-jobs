@@ -1667,6 +1667,8 @@ components:
           type: string
         pdfUrl:
           type: string
+        vggUrl:
+          type: string
         addresses:
           type: array
           items:
