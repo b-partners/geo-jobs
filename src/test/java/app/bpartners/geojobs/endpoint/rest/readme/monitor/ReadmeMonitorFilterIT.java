@@ -68,8 +68,7 @@ class ReadmeMonitorFilterIT extends FacadeIT {
     when(communityUsedSurfaceServiceMock.getUsage(any(), any()))
         .thenThrow(BadRequestException.class);
 
-    var error =
-        assertThrows(ApiException.class, () -> usageApi.getDetectionUsage(SQUARE_DEGREE));
+    var error = assertThrows(ApiException.class, () -> usageApi.getDetectionUsage(SQUARE_DEGREE));
     assertTrue(error.getMessage().contains("400 BAD_REQUEST"));
     verify(eventProducerMock, times(1)).accept(any());
   }
