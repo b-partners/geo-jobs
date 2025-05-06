@@ -14,6 +14,7 @@ import static org.mockito.Mockito.*;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionAssemblyInitiated;
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionAssemblySucceeded;
+import app.bpartners.geojobs.file.ExtensionGuesser;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.hash.FileHash;
@@ -31,13 +32,18 @@ import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionJob;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionTask;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.event.GeoJsonConversionAssemblyInitiatedService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import lombok.SneakyThrows;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.core.io.ClassPathResource;
 
 class GeoJsonConversionAssemblyInitiatedServiceTest {
   private static final String GEO_JSON_CONVERSION_JOB_ID = "geoJsonConversionJobId";
@@ -45,19 +51,27 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
   GeoJsonConversionTaskRepository geoJsonConversionTaskRepositoryMock = mock();
   GeoJsonConversionJobRepository geoJsonConversionJobRepositoryMock = mock();
   BucketComponent bucketComponentMock = mock();
-  FileWriter fileWriterMock = mock();
   EventProducer eventProducerMock = mock();
   ZoneDetectionJobService zoneDetectionJobServiceMock = mock();
   DetectionRepository detectionRepositoryMock = mock();
+  ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+  FileWriter fileWriter = new FileWriter(objectMapper, new ExtensionGuesser());
   GeoJsonConversionAssemblyInitiatedService subject =
       new GeoJsonConversionAssemblyInitiatedService(
           geoJsonConversionTaskRepositoryMock,
           geoJsonConversionJobRepositoryMock,
           bucketComponentMock,
-          fileWriterMock,
+          fileWriter,
           zoneDetectionJobServiceMock,
           detectionRepositoryMock,
-          eventProducerMock);
+          eventProducerMock,
+          objectMapper);
+  private final File featureFile;
+
+  @SneakyThrows
+  public GeoJsonConversionAssemblyInitiatedServiceTest() {
+    this.featureFile = new ClassPathResource("features/features-ok.json").getFile();
+  }
 
   @SneakyThrows
   @Test
@@ -91,10 +105,8 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
         .thenReturn(List.of(conversionTask1, conversionTask2));
     when(zoneDetectionJobServiceMock.findById(ZONE_DETECTION_JOB_ID))
         .thenReturn(dummyFinishedZDJ(ZONE_DETECTION_JOB_ID));
-    when(bucketComponentMock.download(conversionTask1.getFileKey())).thenReturn(mock(File.class));
-    when(bucketComponentMock.download(conversionTask2.getFileKey())).thenReturn(mock(File.class));
-    var combinedConvertedGeoJsonFileMock = mock(File.class);
-    when(fileWriterMock.combineContent(any(), any())).thenReturn(combinedConvertedGeoJsonFileMock);
+    when(bucketComponentMock.download(conversionTask1.getFileKey())).thenReturn(featureFile);
+    when(bucketComponentMock.download(conversionTask2.getFileKey())).thenReturn(featureFile);
     when(bucketComponentMock.upload(any(), any()))
         .thenReturn(new FileHash(FileHashAlgorithm.SHA256, "dummy"));
     var detectionMock = new Detection();
@@ -113,18 +125,15 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
                     .geoJsonConversionJobId(GEO_JSON_CONVERSION_JOB_ID)
                     .build()));
 
-    var outputFileNameCaptor = ArgumentCaptor.forClass(String.class);
-    verify(fileWriterMock, times(1)).combineContent(any(), outputFileNameCaptor.capture());
-    var outputFileName = outputFileNameCaptor.getValue();
-    assertEquals("dummyZoneName-final.geojson", outputFileName);
-
     var fileKeyCaptor = ArgumentCaptor.forClass(String.class);
     var fileCaptor = ArgumentCaptor.forClass(File.class);
     verify(bucketComponentMock, times(1)).upload(fileCaptor.capture(), fileKeyCaptor.capture());
     var fileKey = fileKeyCaptor.getValue();
     var file = fileCaptor.getValue();
-    assertEquals(combinedConvertedGeoJsonFileMock, file);
+    var finalGeoJsonContent = Files.readString(Path.of(file.getPath()));
+    assertEquals("dummyZoneName-final.geojson.txt", file.getName());
     assertEquals("geoJson/zoneDetectionJobId/dummyZoneName-final.geojson", fileKey);
+    assertEquals(expectedFinalGeojsonContent(), finalGeoJsonContent);
 
     var geoJsonConversionJobCaptor = ArgumentCaptor.forClass(GeoJsonConversionJob.class);
     verify(geoJsonConversionJobRepositoryMock, times(1)).save(geoJsonConversionJobCaptor.capture());
@@ -181,10 +190,8 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
         .thenReturn(List.of(conversionTask1, conversionTask2));
     when(zoneDetectionJobServiceMock.findById(ZONE_DETECTION_JOB_ID))
         .thenReturn(dummyProcessingZDJ(ZONE_DETECTION_JOB_ID));
-    when(bucketComponentMock.download(conversionTask1.getFileKey())).thenReturn(mock(File.class));
-    when(bucketComponentMock.download(conversionTask2.getFileKey())).thenReturn(mock(File.class));
-    var combinedConvertedGeoJsonFileMock = mock(File.class);
-    when(fileWriterMock.combineContent(any(), any())).thenReturn(combinedConvertedGeoJsonFileMock);
+    when(bucketComponentMock.download(conversionTask1.getFileKey())).thenReturn(featureFile);
+    when(bucketComponentMock.download(conversionTask2.getFileKey())).thenReturn(featureFile);
     when(bucketComponentMock.upload(any(), any()))
         .thenReturn(new FileHash(FileHashAlgorithm.SHA256, "dummy"));
     var detectionMock = new Detection();
@@ -203,18 +210,10 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
                     .geoJsonConversionJobId(GEO_JSON_CONVERSION_JOB_ID)
                     .build()));
 
-    var outputFileNameCaptor = ArgumentCaptor.forClass(String.class);
-    verify(fileWriterMock, times(1)).combineContent(any(), outputFileNameCaptor.capture());
-    var outputFileName = outputFileNameCaptor.getValue();
-    assertEquals("dummyZoneName-final.geojson", outputFileName);
-
     var fileKeyCaptor = ArgumentCaptor.forClass(String.class);
     var fileCaptor = ArgumentCaptor.forClass(File.class);
     verify(bucketComponentMock, times(1)).upload(fileCaptor.capture(), fileKeyCaptor.capture());
     var fileKey = fileKeyCaptor.getValue();
-    var file = fileCaptor.getValue();
-    assertEquals(combinedConvertedGeoJsonFileMock, file);
-    assertEquals("geoJson/zoneDetectionJobId/dummyZoneName-final.geojson", fileKey);
 
     var geoJsonConversionJobCaptor = ArgumentCaptor.forClass(GeoJsonConversionJob.class);
     verify(geoJsonConversionJobRepositoryMock, times(1)).save(geoJsonConversionJobCaptor.capture());
@@ -261,10 +260,8 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
         .thenReturn(List.of(conversionTask1, conversionTask2));
     when(zoneDetectionJobServiceMock.findById(zoneDetectionJobId))
         .thenReturn(dummyFinishedZDJ(zoneDetectionJobId));
-    when(bucketComponentMock.download(conversionTask1.getFileKey())).thenReturn(mock(File.class));
-    when(bucketComponentMock.download(conversionTask2.getFileKey())).thenReturn(mock(File.class));
-    var combinedConvertedGeoJsonFileMock = mock(File.class);
-    when(fileWriterMock.combineContent(any(), any())).thenReturn(combinedConvertedGeoJsonFileMock);
+    when(bucketComponentMock.download(conversionTask1.getFileKey())).thenReturn(featureFile);
+    when(bucketComponentMock.download(conversionTask2.getFileKey())).thenReturn(featureFile);
     when(bucketComponentMock.upload(any(), any()))
         .thenReturn(new FileHash(FileHashAlgorithm.SHA256, "dummy"));
     when(detectionRepositoryMock.findByZdjId(any())).thenReturn(Optional.empty());
@@ -333,5 +330,39 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
             .health(healthStatus)
             .build());
     return geoJsonConversionTask;
+  }
+
+  private static @NotNull String expectedFinalGeojsonContent() {
+    return """
+{
+  "features" : [ {
+    "geometry" : {
+      "coordinates" : [ [ [ [ 4.459648282829194, 45.904988912620688 ], [ 4.464709510872551, 45.928950368349426 ], [ 4.490816965688656, 45.941784543770964 ], [ 4.510354299995861, 45.933697132664598 ], [ 4.518386257467152, 45.912888345521047 ], [ 4.496344031095243, 45.883438201401809 ], [ 4.479593950305621, 45.882900828315755 ], [ 4.459648282829194, 45.904988912620688 ] ] ] ],
+      "type" : "MultiPolygon"
+    },
+    "type" : "Feature",
+    "properties" : {
+      "code" : "69",
+      "nom" : "Rhône",
+      "id" : "feature1_id",
+      "CLUSTER_ID" : 99520,
+      "CLUSTER_SIZE" : 386884
+    }
+  }, {
+    "geometry" : {
+      "coordinates" : [ [ [ [ 4.459648282829194, 45.904988912620688 ], [ 4.464709510872551, 45.928950368349426 ], [ 4.490816965688656, 45.941784543770964 ], [ 4.510354299995861, 45.933697132664598 ], [ 4.518386257467152, 45.912888345521047 ], [ 4.496344031095243, 45.883438201401809 ], [ 4.479593950305621, 45.882900828315755 ], [ 4.459648282829194, 45.904988912620688 ] ] ] ],
+      "type" : "MultiPolygon"
+    },
+    "type" : "Feature",
+    "properties" : {
+      "code" : "69",
+      "nom" : "Rhône",
+      "id" : "feature1_id",
+      "CLUSTER_ID" : 99520,
+      "CLUSTER_SIZE" : 386884
+    }
+  } ],
+  "type" : "FeatureCollection"
+}""";
   }
 }

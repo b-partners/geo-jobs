@@ -74,14 +74,25 @@ class GeoJsonConversionJobCreatedIT extends DetectionIT {
 
     when(bucketComponentMock.upload(any(), any()))
         .thenReturn(new FileHash(SHA256, randomUUID().toString()));
-    when(bucketComponentMock.download(any())).thenReturn(dummyGeoJson());
+    when(bucketComponentMock.download(any())).thenReturn(dummyGeoFeaturesFile());
   }
 
   @SneakyThrows
-  private File dummyGeoJson() {
+  private File dummyGeoFeaturesFile() {
     File tempFile = File.createTempFile(randomUUID().toString(), ".geojson");
     try (FileWriter writer = new FileWriter(tempFile)) {
-      writer.write("FeatureCollection");
+      writer.write(
+          """
+          [
+            {
+              "properties": {},
+              "geometry": {
+              "type": "MultiPolygon",
+              "coordinates": [[[[0,0]]]]
+              },
+              "type": "Feature"
+            }
+          ]""");
     }
     return tempFile;
   }

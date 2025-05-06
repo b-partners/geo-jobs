@@ -27,7 +27,8 @@ class GeoJsonConverterTest {
   private final GeoJsonConverter subject = new GeoJsonConverter(mapper);
 
   @Test
-  void convert_detected_tile_to_geojson() throws IOException, URISyntaxException {
+  void convert_detected_tile_to_geojson_without_feature_collections()
+      throws IOException, URISyntaxException {
     var detectedTiles = List.of(detectedTile());
 
     var actual = subject.convert(detectedTiles);
