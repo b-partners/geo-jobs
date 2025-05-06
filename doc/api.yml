@@ -24,20 +24,23 @@ info:
     
     ### Detection on roof objects providing geojson multiPolygon
     1. Submit detection request through `POST /detections/{id}` where `{id}` is yours to be created
-    using the example request body accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/toiture%20analysis%20payload%20example.json).
+    using the example request body accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/geojson/toiture_analysis_payload_example.json).
     Note that `detectableObjectModel` property must be set to `BP_TOITURE` and `geoServerProperties` property to `null`
     2. Track the progress of your detection through `GET /detections/{id}`. 
     Detection is finished when `geoJsonUrl` property containing your detection result is not null.
-    Expected example result is accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/toiture%20analysis%20result%20example.json)
+    Expected geojson example result is accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/toiture_analysis_result_example.geojson)
     
     ### Detection on roof objects providing excel file containing textual addresses 
     1. Submit detection request through `POST /detections/{id}` where `{id}` is yours to be created
-    using the example request body accessible [here](https://example.com/docs). 
+    using the example request body accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/detection_creation_using_toiture_model_example.json). 
     Note that `detectableObjectModel` property must be set to `BP_TOITURE` and `geoServerProperties` property to `null`.
-    2. Submit list of addresses contained inside an **Excel file** in a second call `POST /detections/{id}/excel`.
+    2. Submit list of addresses contained inside an **Excel file** in a second call `POST /detections/{id}/excel`. 
+    Example can be found [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/excel/excel_addresses_example.xlsx)
     3. Track the progress of your detection through `GET /detections/{id}`. 
     Detection is finished when `geoJsonUrl` property containing your detection result is not null.
-    4. Processing time is variable due to address conversion, the expected example result is accessible [here](https://example.com/docs).
+    4. Processing time is variable due to address conversion, 
+    expected geojson example result is accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/toiture_analysis_result_example.geojson). 
+
   version: 'latest'
 
 servers:
