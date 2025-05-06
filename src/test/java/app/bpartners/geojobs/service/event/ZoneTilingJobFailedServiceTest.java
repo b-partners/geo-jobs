@@ -2,6 +2,7 @@ package app.bpartners.geojobs.service.event;
 
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobFailed;
@@ -9,14 +10,18 @@ import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.DetectionFinishedMailer;
+import app.bpartners.geojobs.template.HTMLTemplateParser;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 class ZoneTilingJobFailedServiceTest {
   DetectionFinishedMailer detectionFinishedMailerMock = mock();
   DetectionRepository detectionRepositoryMock = mock();
+  HTMLTemplateParser htmlTemplateParser = new HTMLTemplateParser();
   ZoneTilingJobFailedService subject =
-      new ZoneTilingJobFailedService(detectionFinishedMailerMock, detectionRepositoryMock);
+      new ZoneTilingJobFailedService(
+          detectionFinishedMailerMock, detectionRepositoryMock, htmlTemplateParser);
 
   @Test
   void trigger_email_containing_detection_id() {
@@ -32,10 +37,13 @@ class ZoneTilingJobFailedServiceTest {
 
     assertDoesNotThrow(() -> subject.accept(new ZoneTilingJobFailed(zoneTilingJob)));
 
+    var stringCaptor = ArgumentCaptor.forClass(String.class);
     verify(detectionFinishedMailerMock, only())
         .accept(
             eq(emailReceiver),
-            eq("Erreur survenue lors du traitement de la détection portant l'ID " + detectionE2Id));
+            eq("Erreur survenue lors du traitement de la détection portant l'ID " + detectionE2Id),
+            stringCaptor.capture());
+    assertEquals(getEmailBody(detectionMock), stringCaptor.getValue());
   }
 
   @Test
@@ -49,9 +57,72 @@ class ZoneTilingJobFailedServiceTest {
 
     assertDoesNotThrow(() -> subject.accept(new ZoneTilingJobFailed(zoneTilingJob)));
 
+    var stringCaptor = ArgumentCaptor.forClass(String.class);
     verify(detectionFinishedMailerMock, only())
         .accept(
             eq(emailReceiver),
-            eq("Erreur survenue lors du traitement du pavage (ZDJ=" + jobId + ")"));
+            eq("Erreur survenue lors du traitement du pavage (ZTJ.id=" + jobId + ")"),
+            stringCaptor.capture());
+    assertEquals(getEmailBody(zoneTilingJob), stringCaptor.getValue());
+  }
+
+  private String getEmailBody(Detection detection) {
+    return String.format(
+        """
+<html>
+<head>
+    <style>
+        body {
+            font-family: Helvetica, serif;
+        }
+    </style>
+</head>
+<body>
+<section>
+    <p>Bonjour,</p>
+    <div>
+        <p>Une erreur est survenue lors du traitement de la détection portant l'ID <span>%s</span> à l'étape 2 sur 4 : PAVAGE.</p>
+    </div>
+   \s
+    <p>Veuillez réessayer plus tard ou nous contacter par email à l'adresse
+        <a href="mailto:contact@bpartners.app">contact@bpartners.app</a> ou au numéro 01 84 80 31 69 pour toutes
+        informations supplémentaires.
+    </p>
+    <p>Cordialement,</p>
+    <p>L'équipe BirdIA.</p>
+</section>
+</body>
+</html>""",
+        detection.getEndToEndId());
+  }
+
+  private String getEmailBody(ZoneTilingJob zoneTilingJob) {
+    return String.format(
+        """
+<html>
+<head>
+    <style>
+        body {
+            font-family: Helvetica, serif;
+        }
+    </style>
+</head>
+<body>
+<section>
+    <p>Bonjour,</p>
+   \s
+    <div>
+        <p>Une erreur est survenue lors du traitement du ZoneTilingJob portant l'ID <span>%s</span>.</p>
+    </div>
+    <p>Veuillez réessayer plus tard ou nous contacter par email à l'adresse
+        <a href="mailto:contact@bpartners.app">contact@bpartners.app</a> ou au numéro 01 84 80 31 69 pour toutes
+        informations supplémentaires.
+    </p>
+    <p>Cordialement,</p>
+    <p>L'équipe BirdIA.</p>
+</section>
+</body>
+</html>""",
+        zoneTilingJob.getId());
   }
 }

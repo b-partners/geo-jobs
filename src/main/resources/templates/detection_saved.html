@@ -95,13 +95,13 @@
         </li>
         <li>Fichier shape à convertir en geoJson :
             <span th:if="${detection.getShapeFileKey() != null}">
-                <a th:ref="${shapeFileUrl}">ici</a>
+                <a th:href="${shapeFileUrl}">ici</a>
             </span>
             <span th:unless="${detection.getShapeFileKey() != null}"> non définie</span>
         </li>
         <li>Fichier excel à convertir en geoJson :
             <span th:if="${detection.getExcelFileKey() != null}">
-                <a th:ref="${excelFileUrl}">ici</a>
+                <a th:href="${excelFileUrl}">ici</a>
             </span>
             <span th:unless="${detection.getExcelFileKey() != null}"> non définie</span>
         </li>
