@@ -147,6 +147,7 @@ class ZoneServiceTest {
   PointToMultiPolygonConverter pointToMultiPolygonConverterMock = mock();
   FeatureConverter featureConverterMock = mock();
   AreaPictureApi areaPictureApiMock = mock();
+  DetectionRoofDelimiterValidator detectionRoofDelimiterValidatorMock = mock();
   private final String geoServerDummyUrl = "http://dummy";
   private final String e2ApiKey = randomUUID().toString();
   GeoServerConfiguration geoServerConfiguration = new GeoServerConfiguration(geoServerDummyUrl);
@@ -176,10 +177,12 @@ class ZoneServiceTest {
           pointToMultiPolygonConverterMock,
           featureConverterMock,
           areaPictureApiMock,
-          geoServerConfiguration);
+          geoServerConfiguration,
+          detectionRoofDelimiterValidatorMock);
 
   @BeforeEach
   void setUp() {
+    doNothing().when(detectionRoofDelimiterValidatorMock).accept(any());
     when(communityAuthRepositoryMock.findByApiKey(any()))
         .thenReturn(
             Optional.of(CommunityAuthorization.builder().id(randomUUID().toString()).build()));

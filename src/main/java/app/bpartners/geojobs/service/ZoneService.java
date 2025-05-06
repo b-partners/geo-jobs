@@ -91,6 +91,7 @@ public class ZoneService {
   private final FeatureConverter featureConverter;
   private final AreaPictureApi areaPictureApi;
   private final GeoServerConfiguration geoServerConfiguration;
+  private final DetectionRoofDelimiterValidator detectionRoofDelimiterValidator;
 
   private List<Feature> readFromFile(File featuresFromShape) {
     try {
@@ -296,6 +297,7 @@ public class ZoneService {
                 () ->
                     new NotFoundException(
                         "Detection with provided ID = " + detectionId + " not found"));
+    detectionRoofDelimiterValidator.accept(detection);
     var savedDetection =
         detectionRepository.save(
             detection.toBuilder().polygonRoofDelimitation(polygonDelimitation).build());
