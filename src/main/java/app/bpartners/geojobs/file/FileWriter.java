@@ -15,7 +15,6 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
-import java.util.List;
 import java.util.Set;
 import java.util.function.BiFunction;
 import javax.annotation.Nullable;
@@ -65,30 +64,6 @@ public class FileWriter implements BiFunction<byte[], File, File> {
     } catch (IOException | NullPointerException e) {
       throw new ApiException(SERVER_EXCEPTION, e);
     }
-  }
-
-  public File combineContent(List<File> files, String outputFileName) {
-    var outputFile = new File(createTempDirectory(), outputFileName);
-    try (BufferedWriter writer = new BufferedWriter(new java.io.FileWriter(outputFile))) {
-      for (File file : files) {
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-          String line;
-          while ((line = reader.readLine()) != null) {
-            writer.write(line);
-            writer.newLine();
-          }
-        } catch (IOException e) {
-          throw new ApiException(
-              SERVER_EXCEPTION,
-              "Exception while reading file content for File.name=" + file.getName());
-        }
-      }
-    } catch (IOException e) {
-      throw new ApiException(
-          SERVER_EXCEPTION,
-          "Exception while write file content for File.name=" + outputFile.getName());
-    }
-    return outputFile;
   }
 
   @SneakyThrows

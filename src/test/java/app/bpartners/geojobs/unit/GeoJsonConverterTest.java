@@ -27,7 +27,8 @@ class GeoJsonConverterTest {
   private final GeoJsonConverter subject = new GeoJsonConverter(mapper);
 
   @Test
-  void convert_detected_tile_to_geojson() throws IOException, URISyntaxException {
+  void convert_detected_tile_to_geojson_without_feature_collections()
+      throws IOException, URISyntaxException {
     var detectedTiles = List.of(detectedTile());
 
     var actual = subject.convert(detectedTiles);
@@ -62,8 +63,9 @@ class GeoJsonConverterTest {
 {
         "type": "MultiPolygon",
         "coordinates": [ [\s
-        [[30, 10], [10, 20], [20, 40], [40, 40], [30, 10]],\
-        [[20, 20], [25, 30], [15, 30], [20, 20]]\
+        [[30, 10], [10, 20], [20, 40], [40, 40], [20, 10]],\
+        [[20, 20], [25, 30], [15, 30], [20, 20]],\
+        [[]]
  ] ] }""")
                                     .build())
                             .build())

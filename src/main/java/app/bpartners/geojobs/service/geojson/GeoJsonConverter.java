@@ -1,13 +1,13 @@
 package app.bpartners.geojobs.service.geojson;
 
+import static app.bpartners.geojobs.service.geojson.GeoJson.fromFeatures;
+
 import app.bpartners.geojobs.model.DetectedTile;
 import java.util.List;
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Service;
 
-@Slf4j
 @Service
 @AllArgsConstructor
 public class GeoJsonConverter implements Converter<List<DetectedTile>, GeoJson> {
@@ -16,9 +16,6 @@ public class GeoJsonConverter implements Converter<List<DetectedTile>, GeoJson> 
 
   @Override
   public GeoJson convert(List<DetectedTile> detectedTiles) {
-    log.info(
-        "debug detected tiles objects: {}",
-        detectedTiles.stream().map(DetectedTile::getDetectedObjects).toList());
     List<GeoJson.GeoFeature> geoFeatures =
         detectedTiles.stream()
             .map(
@@ -32,6 +29,6 @@ public class GeoJsonConverter implements Converter<List<DetectedTile>, GeoJson> 
                 })
             .flatMap(List::stream)
             .toList();
-    return new GeoJson(geoFeatures);
+    return fromFeatures(geoFeatures);
   }
 }

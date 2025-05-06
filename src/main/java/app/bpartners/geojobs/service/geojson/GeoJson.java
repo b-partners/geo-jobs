@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service.geojson;
 
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.Serializable;
@@ -26,12 +27,21 @@ public class GeoJson implements Serializable {
     stringValue = geojsonString(features);
   }
 
-  private static String geojsonString(List<GeoFeature> geoFeatures) {
-    ObjectMapper objectMapper = new ObjectMapper();
+  public static GeoJson fromFeatures(List<GeoFeature> features) {
+    return new GeoJson(geoFeaturesAsString(features));
+  }
 
-    Map<String, Object> geoJson = new HashMap<>();
-    geoJson.put("type", "FeatureCollection");
+  private static String geoFeaturesAsString(List<GeoFeature> geoFeatures) {
+    ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+    List<Map<String, Object>> features = getGeoFeatures(geoFeatures);
+    try {
+      return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(features);
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException(e);
+    }
+  }
 
+  private static List<Map<String, Object>> getGeoFeatures(List<GeoFeature> geoFeatures) {
     List<Map<String, Object>> features = new ArrayList<>();
 
     for (var geoF : geoFeatures) {
@@ -49,8 +59,16 @@ public class GeoJson implements Serializable {
 
       features.add(featureAsMap);
     }
+    return features;
+  }
 
-    geoJson.put("features", geoFeatures);
+  private static String geojsonString(List<GeoFeature> geoFeatures) {
+    ObjectMapper objectMapper = new ObjectMapper();
+
+    Map<String, Object> geoJson = new HashMap<>();
+    geoJson.put("type", "FeatureCollection");
+
+    geoJson.put("features", getGeoFeatures(geoFeatures));
 
     try {
       return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(geoJson);
@@ -64,11 +82,14 @@ public class GeoJson implements Serializable {
   @Setter
   @ToString
   @EqualsAndHashCode
+  @JsonIgnoreProperties(ignoreUnknown = true)
   public static class GeoFeature implements Serializable {
     private static final String DEFAULT_FEATURE_TYPE = "Feature";
     private Map<String, Object> properties;
     private String type;
     private MultiPolygon geometry;
+
+    public GeoFeature() {}
 
     public GeoFeature(Map<String, Object> properties, MultiPolygon geometry) {
       this.properties = properties;

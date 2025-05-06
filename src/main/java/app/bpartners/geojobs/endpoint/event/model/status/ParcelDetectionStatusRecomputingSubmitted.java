@@ -11,7 +11,7 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = false)
 @ToString(callSuper = true)
 public class ParcelDetectionStatusRecomputingSubmitted extends JobStatusRecomputingSubmitted {
-  private static final long INITIAL_BACKOFF_IN_SECONDS = Duration.ofSeconds(15).toSeconds();
+  private static final long INITIAL_BACKOFF_IN_SECONDS = Duration.ofSeconds(30).toSeconds();
 
   public ParcelDetectionStatusRecomputingSubmitted(String parcelDetectionJobId) {
     super(parcelDetectionJobId, INITIAL_BACKOFF_IN_SECONDS);

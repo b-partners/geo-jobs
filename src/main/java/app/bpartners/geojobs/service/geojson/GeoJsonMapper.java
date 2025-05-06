@@ -79,27 +79,44 @@ public class GeoJsonMapper {
     List<List<List<List<BigDecimal>>>> multipolygonCoordinates =
         geometryCoordinates.stream()
             .map(
-                polygon ->
-                    polygon.stream()
+                xyzMultiPolygon ->
+                    xyzMultiPolygon.stream()
                         .map(
-                            ring ->
-                                ring.stream()
-                                    .map(
-                                        coor -> {
-                                          var x = coor.getFirst();
-                                          var y = coor.getLast();
-                                          if (xTile == 0 && yTile == 0) {
-                                            return List.of(x, y);
-                                          }
-                                          return toGeographicalCoordinates(
-                                              xTile,
-                                              yTile,
-                                              x.doubleValue(),
-                                              y.doubleValue(),
-                                              zoom,
-                                              imageWidth);
-                                        })
-                                    .toList())
+                            xyzPolygon -> {
+                              List<List<BigDecimal>> geoPolygon =
+                                  xyzPolygon.stream()
+                                      .map(
+                                          points -> {
+                                            if (points.isEmpty()) {
+                                              return new ArrayList<BigDecimal>();
+                                            }
+                                            var x = points.getFirst();
+                                            var y = points.getLast();
+                                            if (xTile == 0 && yTile == 0) {
+                                              return List.of(x, y);
+                                            }
+                                            return toGeographicalCoordinates(
+                                                xTile,
+                                                yTile,
+                                                x.doubleValue(),
+                                                y.doubleValue(),
+                                                zoom,
+                                                imageWidth);
+                                          })
+                                      .toList();
+                              if (geoPolygon.isEmpty()) {
+                                return geoPolygon;
+                              }
+                              List<BigDecimal> first = geoPolygon.getFirst();
+                              List<BigDecimal> last = geoPolygon.getLast();
+                              if (!first.equals(last)) {
+                                List<List<BigDecimal>> closedGeoPolygon =
+                                    new ArrayList<>(geoPolygon);
+                                closedGeoPolygon.add(new ArrayList<>(first));
+                                return closedGeoPolygon;
+                              }
+                              return geoPolygon;
+                            })
                         .toList())
             .toList();
     multipolygon.setType(MULTI_POLYGON);
