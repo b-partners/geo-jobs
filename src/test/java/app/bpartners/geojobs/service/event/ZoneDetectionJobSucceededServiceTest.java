@@ -1,8 +1,7 @@
 package app.bpartners.geojobs.service.event;
 
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.MOISISSURE;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.USURE;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -68,8 +67,8 @@ class ZoneDetectionJobSucceededServiceTest {
 
   private @NotNull List<DetectableObjectConfiguration> someObjectConfigurations() {
     return List.of(
-        DetectableObjectConfiguration.builder().objectType(USURE).build(),
-        DetectableObjectConfiguration.builder().objectType(MOISISSURE).build());
+        DetectableObjectConfiguration.builder().objectType(USURE_IMPORTANTE).build(),
+        DetectableObjectConfiguration.builder().objectType(MOISISSURE_NOIRCIE).build());
   }
 
   @Test
@@ -79,10 +78,10 @@ class ZoneDetectionJobSucceededServiceTest {
     var jobStatus = mock(JobStatus.class);
     reset(machineDetectedTileRepositoryMock);
     when(machineDetectedTileRepositoryMock.countByZdjJobIdAndDetectableType(
-            succeededJobId, USURE.name()))
+            succeededJobId, USURE_IMPORTANTE.name()))
         .thenReturn(0L);
     when(machineDetectedTileRepositoryMock.countByZdjJobIdAndDetectableType(
-            succeededJobId, MOISISSURE.name()))
+            succeededJobId, MOISISSURE_NOIRCIE.name()))
         .thenReturn(0L);
     when(zoneDetectionJobServiceMock.countInDoubtDetectedTileToDeliveryById(succeededJobId))
         .thenReturn(1L);
@@ -123,10 +122,10 @@ class ZoneDetectionJobSucceededServiceTest {
     var jobStatus = mock(JobStatus.class);
     reset(machineDetectedTileRepositoryMock);
     when(machineDetectedTileRepositoryMock.countByZdjJobIdAndDetectableType(
-            succeededJobId, USURE.name()))
+            succeededJobId, USURE_IMPORTANTE.name()))
         .thenReturn(0L);
     when(machineDetectedTileRepositoryMock.countByZdjJobIdAndDetectableType(
-            succeededJobId, MOISISSURE.name()))
+            succeededJobId, MOISISSURE_NOIRCIE.name()))
         .thenReturn(0L);
     when(zoneDetectionJobServiceMock.countInDoubtDetectedTileToDeliveryById(succeededJobId))
         .thenReturn(1L);
@@ -248,10 +247,10 @@ class ZoneDetectionJobSucceededServiceTest {
    \s
     <ul>
         <li>
-            <span>USURE</span>
+            <span>USURE_IMPORTANTE</span>
         </li>
         <li>
-            <span>MOISISSURE</span>
+            <span>MOISISSURE_NOIRCIE</span>
         </li>
     </ul>
     <p>Cordialement.</p>
@@ -266,36 +265,36 @@ class ZoneDetectionJobSucceededServiceTest {
       String zoneDetectionJobId) {
     return String.format(
         """
-<html>
-<head>
-    <style>
-        body {
-            font-family: Helvetica, serif;
-        }
-    </style>
-</head>
-<body>
-<section>
-    <p>Bonjour,</p>
-   \s
-    <div>
-        <p>La détection machine portant l'identifiant <span>%s</span> effectuée sur la
-            zone <span>My address</span> n'a permis de trouver aucun objet
-            correspondant à la liste d'objets suivante :</p>
-    </div>
-    <ul>
-        <li>
-            <span>USURE</span>
-        </li>
-        <li>
-            <span>MOISISSURE</span>
-        </li>
-    </ul>
-    <p>Cordialement.</p>
-    <p>L'équipe BirdIA.</p>
-</section>
-</body>
-</html>""",
+        <html>
+        <head>
+            <style>
+                body {
+                    font-family: Helvetica, serif;
+                }
+            </style>
+        </head>
+        <body>
+        <section>
+            <p>Bonjour,</p>
+           \s
+            <div>
+                <p>La détection machine portant l'identifiant <span>%s</span> effectuée sur la
+                    zone <span>My address</span> n'a permis de trouver aucun objet
+                    correspondant à la liste d'objets suivante :</p>
+            </div>
+            <ul>
+                <li>
+                    <span>USURE_IMPORTANTE</span>
+                </li>
+                <li>
+                    <span>MOISISSURE_NOIRCIE</span>
+                </li>
+            </ul>
+            <p>Cordialement.</p>
+            <p>L'équipe BirdIA.</p>
+        </section>
+        </body>
+        </html>""",
         zoneDetectionJobId);
   }
 }

@@ -35,9 +35,9 @@ class SecurityControllerIT extends FacadeIT {
             .containsAll(
                 List.of(
                     DetectableType.TOITURE_REVETEMENT,
-                    DetectableType.HUMIDITE,
-                    DetectableType.USURE,
-                    DetectableType.MOISISSURE)));
+                    DetectableType.HUMIDITE_INTENSE,
+                    DetectableType.USURE_IMPORTANTE,
+                    DetectableType.MOISISSURE_NOIRCIE)));
     assertTrue(actualCommunity.getAuthorizedZones().isEmpty());
   }
 
@@ -59,7 +59,8 @@ class SecurityControllerIT extends FacadeIT {
         .consumerName("dummyConsumerName")
         .consumerEmail(consumerEmail)
         .consumerType(INSURANCE)
-        .detectableObjectTypes(List.of(TOITURE_REVETEMENT, HUMIDITE, USURE, MOISISSURE))
+        .detectableObjectTypes(
+            List.of(TOITURE_REVETEMENT, HUMIDITE_INTENSE, USURE_IMPORTANTE, MOISISSURE_NOIRCIE))
         .maxSurface(null)
         .authorizedZones(List.of());
   }

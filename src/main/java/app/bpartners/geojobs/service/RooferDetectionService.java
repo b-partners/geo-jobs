@@ -4,6 +4,7 @@ import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.MACHIN
 import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
+import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.HOUSES_0;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_EXTENSION;
 import static java.time.Instant.now;
@@ -33,11 +34,14 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.LinearRing;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 
@@ -111,16 +115,18 @@ public class RooferDetectionService
             .detectedObjects(machineDetectedTile.getDetectedObjects())
             .build();
 
-    processVggConversion(detection, List.of(detectedTile));
+    var roofGeometry = polygon(flattedFeatures);
+    processVggConversion(detection, roofGeometry, List.of(detectedTile));
     return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
         detection, FINISHED, SUCCEEDED, MACHINE_DETECTION);
   }
 
   private void processVggConversion(
       app.bpartners.geojobs.repository.model.detection.Detection detection,
+      org.locationtech.jts.geom.Polygon roofGeometry,
       List<DetectedTile> detectedTiles) {
     var zdjId = detection.getId();
-    var vgg = vggFactory.from(detectedTiles);
+    var vgg = vggFactory.from(roofGeometry, detectedTiles);
     var zoneName = detection.getZoneName();
     var fileKey = VGG_BUCKET_FOLDER + zdjId + "/" + zoneName + ".json";
     var vggAsByte = vgg.getBytes();
@@ -132,6 +138,24 @@ public class RooferDetectionService
 
     eventProducer.accept(
         List.of(GeoJsonConversionProcessSucceeded.builder().detection(detection).build()));
+  }
+
+  private org.locationtech.jts.geom.Polygon polygon(List<List<BigDecimal>> features) {
+    Coordinate[] coordinates =
+        features.stream()
+            .map(
+                point ->
+                    new Coordinate(point.getFirst().doubleValue(), point.getLast().doubleValue()))
+            .toArray(Coordinate[]::new);
+
+    if (!coordinates[0].equals2D(coordinates[coordinates.length - 1])) {
+      Coordinate[] closedRingCoords = Arrays.copyOf(coordinates, coordinates.length + 1);
+      closedRingCoords[closedRingCoords.length - 1] = closedRingCoords[0];
+      coordinates = closedRingCoords;
+    }
+
+    LinearRing shell = geometryFactory.createLinearRing(coordinates);
+    return geometryFactory.createPolygon(shell);
   }
 
   @SneakyThrows

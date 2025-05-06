@@ -107,16 +107,16 @@ class GeoJsonConversionJobCreatedServiceTest {
         .thenReturn(
             List.of(
                 DetectableObjectConfiguration.builder().objectType(TOITURE_REVETEMENT).build(),
-                DetectableObjectConfiguration.builder().objectType(HUMIDITE).build(),
-                DetectableObjectConfiguration.builder().objectType(USURE).build()));
+                DetectableObjectConfiguration.builder().objectType(HUMIDITE_INTENSE).build(),
+                DetectableObjectConfiguration.builder().objectType(USURE_IMPORTANTE).build()));
     when(machineDetectedTileRepositoryMock.countByZdjJobIdAndDetectableType(
             zoneDetectionJobId, TOITURE_REVETEMENT.name()))
         .thenReturn(0L);
     when(machineDetectedTileRepositoryMock.countByZdjJobIdAndDetectableType(
-            zoneDetectionJobId, HUMIDITE.name()))
+            zoneDetectionJobId, HUMIDITE_INTENSE.name()))
         .thenReturn(100L);
     when(machineDetectedTileRepositoryMock.countByZdjJobIdAndDetectableType(
-            zoneDetectionJobId, USURE.name()))
+            zoneDetectionJobId, USURE_IMPORTANTE.name()))
         .thenReturn(600L);
     when(geoJsonConversionTaskRepositoryMock.saveAll(any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
@@ -142,13 +142,13 @@ class GeoJsonConversionJobCreatedServiceTest {
             .orElseThrow();
     assertTrue(
         geoJsonConversionJobCreatedEvents.contains(
-            geoJsonConversionTaskCreatedBuilder(geoJsonConversionJobId, HUMIDITE, 1)));
+            geoJsonConversionTaskCreatedBuilder(geoJsonConversionJobId, HUMIDITE_INTENSE, 1)));
     assertTrue(
         geoJsonConversionJobCreatedEvents.contains(
-            geoJsonConversionTaskCreatedBuilder(geoJsonConversionJobId, USURE, 1)));
+            geoJsonConversionTaskCreatedBuilder(geoJsonConversionJobId, USURE_IMPORTANTE, 1)));
     assertTrue(
         geoJsonConversionJobCreatedEvents.contains(
-            geoJsonConversionTaskCreatedBuilder(geoJsonConversionJobId, USURE, 2)));
+            geoJsonConversionTaskCreatedBuilder(geoJsonConversionJobId, USURE_IMPORTANTE, 2)));
     assertEquals(
         new GeoJsonConversionJobStatusRecomputingSubmitted(geoJsonConversionJobId),
         geoJsonConversionJobStatusRecomputingSubmittedEvent);

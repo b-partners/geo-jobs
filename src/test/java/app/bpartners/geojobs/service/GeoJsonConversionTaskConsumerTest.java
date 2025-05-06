@@ -1,8 +1,8 @@
 package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.POLYGON;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.HUMIDITE;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.USURE;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.HUMIDITE_INTENSE;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.USURE_IMPORTANTE;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static java.util.UUID.randomUUID;
@@ -100,7 +100,8 @@ class GeoJsonConversionTaskConsumerTest {
         .thenReturn(
             ZoneDetectionJob.builder().id(ZONE_DETECTION_JOB_ID).zoneName("dummyZoneName").build());
     when(machineDetectedTileRepositoryMock.findAllByZdjJobIdAndDetectableType(any(), any(), any()))
-        .thenReturn(List.of(machineDetectedTile(HUMIDITE), machineDetectedTile(USURE)));
+        .thenReturn(
+            List.of(machineDetectedTile(HUMIDITE_INTENSE), machineDetectedTile(USURE_IMPORTANTE)));
     when(geoJsonConverterMock.convert(any())).thenReturn(new GeoJson(List.of()));
     when(fileWriterMock.writeAsByte(any())).thenReturn(null);
     when(fileWriterMock.write(any(), any(), any())).thenReturn(mock(File.class));
@@ -112,7 +113,7 @@ class GeoJsonConversionTaskConsumerTest {
                 GeoJsonConversionTask.builder()
                     .page(1)
                     .jobId(CONVERSION_JOB_ID)
-                    .detectableType(HUMIDITE)
+                    .detectableType(HUMIDITE_INTENSE)
                     .build()));
     var listCaptor = ArgumentCaptor.forClass(List.class);
     verify(humanDetectedTileRepositoryMock, never()).findAllByJobId(any(), any());
@@ -143,7 +144,7 @@ class GeoJsonConversionTaskConsumerTest {
                     .id(detectedObjectId)
                     .computedConfidence(0.9)
                     .detectedObjectType(
-                        DetectableObjectType.builder().detectableType(HUMIDITE).build())
+                        DetectableObjectType.builder().detectableType(HUMIDITE_INTENSE).build())
                     .feature(
                         Feature.builder()
                             .id("feature_id")
@@ -165,7 +166,7 @@ class GeoJsonConversionTaskConsumerTest {
             List.of(
                 DetectedObject.builder()
                     .detectedObjectType(
-                        DetectableObjectType.builder().detectableType(HUMIDITE).build())
+                        DetectableObjectType.builder().detectableType(HUMIDITE_INTENSE).build())
                     .computedConfidence(0.9)
                     .feature(
                         Feature.builder()

@@ -52,6 +52,35 @@ public class DetectionMapper {
   public static final String TROTTOIR_STRING_VALUE = "TROTTOIR";
   public static final String PARKING_STRING_VALUE = "PARKING";
   public static final String ESPACE_VERT_STRING_VALUE = "ESPACE_VERT";
+  public static final String OBSTACLE_STRING_VALUE = "OBSTACLE";
+  public static final String CHEMINEE_STRING_VALUE = "CHEMINEE";
+  public static final String VELUX_STRING_VALUE = "VELUX";
+
+  public static final String USURE_IMPORTANTE_ARDOISE_STRING_VALUE = "USURE_IMPORTANTE_ARDOISE";
+  public static final String USURE_IMPORTANTE_TUILES_STRING_VALUE = "USURE_IMPORTANTE_TUILES";
+  public static final String USURE_LEGERE_ARDOISE_STRING_VALUE = "USURE_LEGERE_ARDOISE";
+  public static final String USURE_LEGERE_AUTRES_STRING_VALUE = "USURE_LEGERE_AUTRES";
+
+  public static final String MOISISSURE_COULEUR_ARDOISE_STRING_VALUE = "MOISISSURE_COULEUR_ARDOISE";
+  public static final String MOISISSURE_COULEUR_TUILES_STRING_VALUE = "MOISISSURE_COULEUR_TUILES";
+  public static final String MOISISSURE_NOIRCIE_TUILES_STRING_VALUE = "MOISISSURE_NOIRCIE_TUILES";
+  public static final String MOISISSURE_CLAIR_TUILES_STRING_VALUE = "MOISISSURE_CLAIR_TUILES";
+
+  public static final String HUMIDITE_CLAIR_AUTRES_STRING_VALUE = "HUMIDITE_CLAIR_AUTRES";
+  public static final String HUMIDITE_INTENSE_AUTRES_STRING_VALUE = "HUMIDITE_INTENSE_AUTRES";
+
+  public static final String ROOF_STRING_VALUE = "ROOF";
+  public static final String ROOF_ARDOISE_STRING_VALUE = "ROOF_ARDOISE";
+  public static final String ROOF_AUTRES_STRING_VALUE = "ROOF_AUTRES";
+  public static final String ROOF_TUILES_STRING_VALUE = "ROOF_TUILES";
+
+  public static final String SOLAR_PANEL_STRING_VALUE = "SOLAR_PANEL";
+  public static final String PV_STRING_VALUE = "PV";
+
+  public static final String TREE_STRING_VALUE = "TREE";
+  public static final String PATHWAY_STRING_VALUE = "PATHWAY";
+  public static final String POOL_STRING_VALUE = "POOL";
+
   private final TileValidator tileValidator;
 
   public MachineDetectedTile toDetectedTile(
@@ -116,13 +145,17 @@ public class DetectionMapper {
 
   private DetectableType toDetectableType(String label) {
     return switch (label.toUpperCase()) {
-      case "ROOF", "ROOF_ARDOISE", "ROOF_AUTRES", "ROOF_TUILES", TOITURE_REVETEMENT_STRING_VALUE ->
+      case ROOF_STRING_VALUE,
+              ROOF_ARDOISE_STRING_VALUE,
+              ROOF_AUTRES_STRING_VALUE,
+              ROOF_TUILES_STRING_VALUE,
+              TOITURE_REVETEMENT_STRING_VALUE ->
           DetectableType.TOITURE_REVETEMENT;
-      case "SOLAR_PANEL", "PV", PANNEAU_PHOTOVOLTAIQUE_STRING_VALUE ->
+      case SOLAR_PANEL_STRING_VALUE, PV_STRING_VALUE, PANNEAU_PHOTOVOLTAIQUE_STRING_VALUE ->
           DetectableType.PANNEAU_PHOTOVOLTAIQUE;
-      case "TREE", ARBRE_STRING_VALUE -> DetectableType.ARBRE;
-      case "PATHWAY", PASSAGE_PIETON_STRING_VALUE -> DetectableType.PASSAGE_PIETON;
-      case "POOL", PISCINE_STRING_VALUE -> DetectableType.PISCINE;
+      case TREE_STRING_VALUE, ARBRE_STRING_VALUE -> DetectableType.ARBRE;
+      case PATHWAY_STRING_VALUE, PASSAGE_PIETON_STRING_VALUE -> DetectableType.PASSAGE_PIETON;
+      case POOL_STRING_VALUE, PISCINE_STRING_VALUE -> DetectableType.PISCINE;
       case BATI_TUILES_STRING_VALUE -> DetectableType.BATI_TUILES;
       case BATI_BETON_STRING_VALUE -> DetectableType.BATI_BETON;
       case BATI_ARDOISE_STRING_VALUE -> DetectableType.BATI_ARDOISE;
@@ -131,20 +164,19 @@ public class DetectionMapper {
       case TROTTOIR_STRING_VALUE -> DetectableType.TROTTOIR;
       case PARKING_STRING_VALUE -> DetectableType.PARKING;
       case ESPACE_VERT_STRING_VALUE -> DetectableType.ESPACE_VERT;
-      case "OBSTACLE" -> OBSTACLE;
-      case "CHEMINEE" -> CHEMINEE;
-      case "VELUX" -> VELUX;
-      case "USURE_IMPORTANTE_ARDOISE",
-              "USURE_IMPORTANTE_TUILES",
-              "USURE_LEGERE_ARDOISE",
-              "USURE_LEGERE_AUTRES" ->
-          USURE;
-      case "MOISISSURE_COULEUR_ARDOISE",
-              "MOISISSURE_COULEUR_TUILES",
-              "MOISISSURE_NOIRCIE_TUILES",
-              "MOISISSURE_CLAIR_TUILES" ->
-          MOISISSURE;
-      case "HUMIDITE_CLAIR_AUTRES", "HUMIDITE_INTENSE_AUTRES" -> HUMIDITE;
+      case OBSTACLE_STRING_VALUE -> DetectableType.OBSTACLE;
+      case CHEMINEE_STRING_VALUE -> DetectableType.CHEMINEE;
+      case VELUX_STRING_VALUE -> DetectableType.VELUX;
+      case USURE_IMPORTANTE_ARDOISE_STRING_VALUE, USURE_IMPORTANTE_TUILES_STRING_VALUE ->
+          DetectableType.USURE_IMPORTANTE;
+      case USURE_LEGERE_ARDOISE_STRING_VALUE, USURE_LEGERE_AUTRES_STRING_VALUE ->
+          DetectableType.USURE_LEGER;
+      case MOISISSURE_COULEUR_ARDOISE_STRING_VALUE, MOISISSURE_COULEUR_TUILES_STRING_VALUE ->
+          DetectableType.MOISISSURE_COULEUR;
+      case MOISISSURE_NOIRCIE_TUILES_STRING_VALUE -> DetectableType.MOISISSURE_NOIRCIE;
+      case MOISISSURE_CLAIR_TUILES_STRING_VALUE -> DetectableType.MOISISSURE_CLAIR;
+      case HUMIDITE_CLAIR_AUTRES_STRING_VALUE -> DetectableType.HUMIDITE_CLAIR;
+      case HUMIDITE_INTENSE_AUTRES_STRING_VALUE -> DetectableType.HUMIDITE_INTENSE;
       default -> throw new IllegalStateException("Unexpected value: " + label.toLowerCase());
     };
   }
