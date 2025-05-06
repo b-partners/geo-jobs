@@ -21,10 +21,10 @@ class DetectionFinishedMailerTest {
   void send_email() {
     String emailReceiver = "emailReceiver";
     String emailSubject = "Analyse sur la zone zoneName terminée le 01/01/2025 08:00:00";
+    var emailBody = "Email body";
 
-    assertDoesNotThrow(() -> subject.accept(emailReceiver, emailSubject));
+    assertDoesNotThrow(() -> subject.accept(emailReceiver, emailSubject, emailBody));
 
-    // TODO : Paris is GMT+1 now but must be set to +2 from 31st march 2025
     var emailCaptor = ArgumentCaptor.forClass(Email.class);
     verify(mailerMock, only()).accept(emailCaptor.capture());
     var actualEmail = emailCaptor.getValue();
@@ -34,7 +34,7 @@ class DetectionFinishedMailerTest {
             List.of(new InternetAddress("tech@bpartners.app")),
             List.of(),
             emailSubject,
-            null,
+            emailBody,
             List.of()),
         actualEmail);
   }
