@@ -1,8 +1,8 @@
 package app.bpartners.geojobs.model.geometry;
 
 import static app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.MULTI_POLYGON;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.HUMIDITE;
-import static app.bpartners.geojobs.service.event.ParcelParcelParcelTilingTaskCreatedServiceIT.defaultFeature;
+import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
@@ -15,12 +15,104 @@ import app.bpartners.geojobs.repository.model.tiling.Tile;
 import java.io.IOException;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.LinearRing;
+import org.locationtech.jts.geom.Polygon;
 
 public class VGGFactoryTest {
   private final PolygonProvider polygonProvider =
       new PolygonProvider("/geometry/vgg/pathway.json", null, new IntXY(1024, 1024));
   private final FeatureMapper featureMapper = new FeatureMapper();
   private final VGGFactory subject = new VGGFactory(featureMapper);
+
+  public static DetectedTile detectedTile() {
+    String humiditeGeometry =
+        """
+        {
+          "type": "MultiPolygon",
+          "coordinates": [ [ [
+            [ 100.0, 200.0 ],
+            [ 150.0, 210.0 ],
+            [ 160.0, 180.0 ],
+            [ 120.0, 170.0 ],
+            [ 100.0, 200.0 ]
+          ] ] ]
+        }
+        """;
+    String usureGeometry =
+        """
+        {
+          "type": "MultiPolygon",
+          "coordinates": [ [ [
+            [ 50.0, 50.0 ],
+            [ 70.0, 60.0 ],
+            [ 60.0, 80.0 ],
+            [ 40.0, 70.0 ],
+            [ 50.0, 50.0 ]
+          ] ] ]
+        }
+
+        """;
+
+    String moisissure =
+        """
+        {
+          "type": "MultiPolygon",
+          "coordinates": [ [ [
+            [ 200.0, 100.0 ],
+            [ 220.0, 110.0 ],
+            [ 210.0, 130.0 ],
+            [ 190.0, 120.0 ],
+            [ 200.0, 100.0 ]
+          ] ] ]
+        }
+
+        """;
+
+    Feature feature = Feature.builder().id("feature").zoom(20).build();
+
+    return DetectedTile.builder()
+        .tile(Tile.builder().coordinates(new TileCoordinates().x(538860).y(367571).z(20)).build())
+        .detectedObjects(
+            List.of(
+                DetectedObject.builder()
+                    .feature(
+                        feature.toBuilder()
+                            .geometry(
+                                Feature.FeatureGeometry.builder()
+                                    .geometryType(MULTI_POLYGON)
+                                    .actualInstanceStringValue(humiditeGeometry)
+                                    .build())
+                            .build())
+                    .detectedObjectType(
+                        DetectableObjectType.builder().detectableType(HUMIDITE_CLAIR).build())
+                    .build(),
+                DetectedObject.builder()
+                    .feature(
+                        feature.toBuilder()
+                            .geometry(
+                                Feature.FeatureGeometry.builder()
+                                    .geometryType(MULTI_POLYGON)
+                                    .actualInstanceStringValue(usureGeometry)
+                                    .build())
+                            .build())
+                    .detectedObjectType(
+                        DetectableObjectType.builder().detectableType(USURE_LEGER).build())
+                    .build(),
+                DetectedObject.builder()
+                    .feature(
+                        feature.toBuilder()
+                            .geometry(
+                                Feature.FeatureGeometry.builder()
+                                    .geometryType(MULTI_POLYGON)
+                                    .actualInstanceStringValue(moisissure)
+                                    .build())
+                            .build())
+                    .detectedObjectType(
+                        DetectableObjectType.builder().detectableType(MOISISSURE_COULEUR).build())
+                    .build()))
+        .build();
+  }
 
   @Test
   void features_to_vgg_ok() {
@@ -37,32 +129,21 @@ public class VGGFactoryTest {
   void detected_tiles_to_vgg_ok() throws IOException {
     var expectedFilename = "20_538860_367571.jpg";
 
-    var actual = subject.from(List.of(detectedTile()));
+    Coordinate[] boundingCoords =
+        new Coordinate[] {
+          new Coordinate(40.0, 50.0),
+          new Coordinate(220.0, 50.0),
+          new Coordinate(220.0, 160.0),
+          new Coordinate(40.0, 160.0),
+          new Coordinate(40.0, 50.0)
+        };
+
+    LinearRing shell = geometryFactory.createLinearRing(boundingCoords);
+    Polygon roofGeometry = geometryFactory.createPolygon(shell, null);
+
+    var actual = subject.from(roofGeometry, List.of(detectedTile()));
 
     assertEquals(1, actual.size());
-    assertEquals(1, actual.get(expectedFilename).getRegions().size());
-  }
-
-  DetectedTile detectedTile() {
-    return DetectedTile.builder()
-        .tile(Tile.builder().coordinates(new TileCoordinates().x(538860).y(367571).z(20)).build())
-        .detectedObjects(
-            List.of(
-                DetectedObject.builder()
-                    .feature(
-                        Feature.builder()
-                            .geometry(
-                                Feature.FeatureGeometry.builder()
-                                    .geometryType(MULTI_POLYGON)
-                                    .actualInstanceStringValue(
-                                        defaultFeature()
-                                            .getGeometry()
-                                            .getActualInstanceStringValue())
-                                    .build())
-                            .build())
-                    .detectedObjectType(
-                        DetectableObjectType.builder().detectableType(HUMIDITE).build())
-                    .build()))
-        .build();
+    assertEquals(3, actual.get(expectedFilename).getRegions().size());
   }
 }

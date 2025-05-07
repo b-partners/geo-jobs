@@ -28,12 +28,16 @@ public class DetectableObjectTypeMapper {
       case LINE -> DetectableType.LINE;
       case ESPACE_VERT -> DetectableType.ESPACE_VERT;
       case VOIE_CARROSSABLE -> DetectableType.VOIE_CARROSSABLE;
-      case MOISISSURE -> DetectableType.MOISISSURE;
-      case USURE -> DetectableType.USURE;
+      case MOISISSURE_CLAIR -> DetectableType.MOISISSURE_CLAIR;
+      case MOISISSURE_COULEUR -> DetectableType.MOISISSURE_COULEUR;
+      case MOISISSURE_NOIRCIE -> DetectableType.MOISISSURE_NOIRCIE;
+      case USURE_IMPORTANTE -> DetectableType.USURE_IMPORTANTE;
+      case USURE_LEGER -> DetectableType.USURE_LEGER;
       case FISSURE_CASSURE -> DetectableType.FISSURE_CASSURE;
       case OBSTACLE -> DetectableType.OBSTACLE;
       case CHEMINEE -> DetectableType.CHEMINEE;
-      case HUMIDITE -> DetectableType.HUMIDITE;
+      case HUMIDITE_INTENSE -> DetectableType.HUMIDITE_INTENSE;
+      case HUMIDITE_CLAIR -> DetectableType.HUMIDITE_CLAIR;
       case RISQUE_FEU -> DetectableType.RISQUE_FEU;
       case VELUX -> DetectableType.VELUX;
       case PARKING -> DetectableType.PARKING;
@@ -53,12 +57,16 @@ public class DetectableObjectTypeMapper {
       case LINE -> LINE;
       case ESPACE_VERT -> ESPACE_VERT;
       case VOIE_CARROSSABLE -> VOIE_CARROSSABLE;
-      case MOISISSURE -> MOISISSURE;
-      case USURE -> USURE;
+      case MOISISSURE_CLAIR -> MOISISSURE_CLAIR;
+      case MOISISSURE_COULEUR -> MOISISSURE_COULEUR;
+      case MOISISSURE_NOIRCIE -> MOISISSURE_NOIRCIE;
+      case USURE_IMPORTANTE -> USURE_IMPORTANTE;
+      case USURE_LEGER -> USURE_LEGER;
       case FISSURE_CASSURE -> FISSURE_CASSURE;
       case OBSTACLE -> OBSTACLE;
       case CHEMINEE -> CHEMINEE;
-      case HUMIDITE -> HUMIDITE;
+      case HUMIDITE_CLAIR -> HUMIDITE_CLAIR;
+      case HUMIDITE_INTENSE -> HUMIDITE_INTENSE;
       case RISQUE_FEU -> RISQUE_FEU;
       case VELUX -> VELUX;
       case BATI_TUILES -> BATI_TUILES;
@@ -94,12 +102,16 @@ public class DetectableObjectTypeMapper {
     objectTypes.add(ARBRE);
     objectTypes.add(TOITURE_REVETEMENT);
     objectTypes.add(PANNEAU_PHOTOVOLTAIQUE);
-    objectTypes.add(MOISISSURE);
-    objectTypes.add(USURE);
+    objectTypes.add(MOISISSURE_NOIRCIE);
+    objectTypes.add(MOISISSURE_CLAIR);
+    objectTypes.add(MOISISSURE_COULEUR);
+    objectTypes.add(USURE_IMPORTANTE);
+    objectTypes.add(USURE_LEGER);
     objectTypes.add(FISSURE_CASSURE);
     objectTypes.add(OBSTACLE);
     objectTypes.add(CHEMINEE);
-    objectTypes.add(HUMIDITE);
+    objectTypes.add(HUMIDITE_INTENSE);
+    objectTypes.add(HUMIDITE_CLAIR);
     objectTypes.add(RISQUE_FEU);
     return objectTypes;
   }
@@ -209,10 +221,10 @@ public class DetectableObjectTypeMapper {
       case VOIE_CARROSSABLE -> {
         return 0.0;
       }
-      case MOISISSURE -> {
+      case MOISISSURE_CLAIR, MOISISSURE_COULEUR, MOISISSURE_NOIRCIE -> {
         return 0.0;
       }
-      case USURE -> {
+      case USURE_IMPORTANTE, USURE_LEGER -> {
         return 0.0;
       }
       case FISSURE_CASSURE -> {
@@ -224,7 +236,7 @@ public class DetectableObjectTypeMapper {
       case CHEMINEE -> {
         return 0.0;
       }
-      case HUMIDITE -> {
+      case HUMIDITE_CLAIR, HUMIDITE_INTENSE -> {
         return 0.0;
       }
       case RISQUE_FEU -> {

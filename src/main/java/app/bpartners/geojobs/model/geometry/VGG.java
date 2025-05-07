@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.model.geometry;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,12 +31,16 @@ public class VGG extends HashMap<String, VGG.Annotation> {
     @JsonProperty("base64_img_data")
     private String base64ImgData;
 
+    @JsonProperty("properties")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Map<String, Object> properties;
+
     @JsonProperty("regions")
     private Map<String, Region> regions;
 
     @AllArgsConstructor
     @Data
-    @Builder
+    @Builder(toBuilder = true)
     @NoArgsConstructor
     public static class Region {
       @JsonProperty("shape_attributes")
@@ -65,6 +70,7 @@ public class VGG extends HashMap<String, VGG.Annotation> {
       public static class RegionAttribute {
         private String label;
         private Double confidence;
+        private Double rate_in_percent;
       }
     }
   }

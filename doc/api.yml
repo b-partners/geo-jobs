@@ -1362,20 +1362,24 @@ components:
         - LINE
         - ESPACE_VERT
         - VOIE_CARROSSABLE
-        - MOISISSURE
-        - USURE
+        - PARKING
+        - MOISISSURE_COULEUR
+        - MOISISSURE_CLAIR
+        - MOISISSURE_NOIRCIE
+        - USURE_LEGER
+        - USURE_IMPORTANTE
         - FISSURE_CASSURE
         - OBSTACLE
         - CHEMINEE
-        - HUMIDITE
+        - HUMIDITE_CLAIR
+        - HUMIDITE_INTENSE
         - RISQUE_FEU
-        - PARKING
         - VELUX
-        - ESPACE_VERT_PARKING
         - BATI_TUILES
         - BATI_BETON
         - BATI_ARDOISE
         - BATI_AUTRES
+        - ESPACE_VERT_PARKING
     ProcessJobAnnotation:
       type: object
       properties:

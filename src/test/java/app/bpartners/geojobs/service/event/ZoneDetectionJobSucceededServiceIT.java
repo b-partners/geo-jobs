@@ -1,8 +1,9 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.USURE;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.USURE_IMPORTANTE;
 import static java.util.UUID.randomUUID;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.conf.FacadeIT;
@@ -10,8 +11,11 @@ import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionJobCreated;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryJobRequested;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobSucceeded;
-import app.bpartners.geojobs.repository.*;
-import app.bpartners.geojobs.repository.model.detection.*;
+import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
+import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
+import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
+import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
+import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import java.util.List;
@@ -30,9 +34,9 @@ class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
   @MockBean ZoneDetectionJobService zoneDetectionJobService;
   @MockBean EventProducer eventProducer;
   @Autowired ZoneDetectionJobSucceededService subject;
-  @Autowired private ZoneDetectionJobRepository jobRepository;
   @MockBean DetectableObjectConfigurationRepository detectableObjectConfigurationRepositoryMock;
   @MockBean MachineDetectedTileRepository machineDetectedTileRepositoryMock;
+  @Autowired private ZoneDetectionJobRepository jobRepository;
 
   ZoneDetectionJobSucceededServiceIT() {
     this.succeededJobId = randomUUID().toString();
@@ -66,10 +70,11 @@ class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
   void zdj_succeeds_trigger_delivery_job() {
     when(zoneDetectionJobService.countInDoubtDetectedTileToDeliveryById(any())).thenReturn(1L);
     when(machineDetectedTileRepositoryMock.countByZdjJobIdAndDetectableType(
-            eq(succeededJobId), eq(USURE.name())))
+            eq(succeededJobId), eq(USURE_IMPORTANTE.name())))
         .thenReturn(1L);
     when(detectableObjectConfigurationRepositoryMock.findAllByDetectionJobId(succeededJobId))
-        .thenReturn(List.of(DetectableObjectConfiguration.builder().objectType(USURE).build()));
+        .thenReturn(
+            List.of(DetectableObjectConfiguration.builder().objectType(USURE_IMPORTANTE).build()));
 
     assertDoesNotThrow(() -> subject.accept(new ZoneDetectionJobSucceeded(succeededJobId)));
 
@@ -83,10 +88,11 @@ class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
   void zdj_succeeds_trigger_conversion_job() {
     when(zoneDetectionJobService.countInDoubtDetectedTileToDeliveryById(any())).thenReturn(0L);
     when(machineDetectedTileRepositoryMock.countByZdjJobIdAndDetectableType(
-            eq(succeededJobId), eq(USURE.name())))
+            eq(succeededJobId), eq(USURE_IMPORTANTE.name())))
         .thenReturn(1L);
     when(detectableObjectConfigurationRepositoryMock.findAllByDetectionJobId(succeededJobId))
-        .thenReturn(List.of(DetectableObjectConfiguration.builder().objectType(USURE).build()));
+        .thenReturn(
+            List.of(DetectableObjectConfiguration.builder().objectType(USURE_IMPORTANTE).build()));
     when(zoneDetectionJobService.findById(any())).thenReturn(new ZoneDetectionJob());
 
     assertDoesNotThrow(() -> subject.accept(new ZoneDetectionJobSucceeded(succeededJobId)));

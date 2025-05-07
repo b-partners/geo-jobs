@@ -22,12 +22,12 @@ class LabelConverterTest {
     var espaceVert = subject.apply(DetectableType.ESPACE_VERT);
     var voieCarrosable = subject.apply(DetectableType.VOIE_CARROSSABLE);
     var parking = subject.apply(DetectableType.PARKING);
-    var moisissure = subject.apply(DetectableType.MOISISSURE);
-    var usure = subject.apply(DetectableType.USURE);
+    var moisissure = subject.apply(DetectableType.MOISISSURE_CLAIR);
+    var usure = subject.apply(DetectableType.USURE_IMPORTANTE);
     var fissureCassure = subject.apply(DetectableType.FISSURE_CASSURE);
     var obstacle = subject.apply(DetectableType.OBSTACLE);
     var cheminee = subject.apply(DetectableType.CHEMINEE);
-    var humidite = subject.apply(DetectableType.HUMIDITE);
+    var humidite = subject.apply(DetectableType.HUMIDITE_INTENSE);
     var risqueFeu = subject.apply(DetectableType.RISQUE_FEU);
     var velux = subject.apply(DetectableType.VELUX);
     var batiTuiles = subject.apply(DetectableType.BATI_TUILES);

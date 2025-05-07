@@ -72,11 +72,12 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
         .anyMatch(
             type ->
                 type.equals(TOITURE_REVETEMENT)
-                    || type.equals(HUMIDITE)
+                    || type.name().startsWith("HUMIDITE")
                     || type.equals(OBSTACLE)
                     || type.equals(CHEMINEE)
                     || type.equals(VELUX)
-                    || type.equals(USURE)
+                    || type.name().startsWith("USURE")
+                    || type.name().startsWith("MOISISSURE")
                     || type.equals(FISSURE_CASSURE)
                     || type.name().startsWith("BATI_"));
   }
