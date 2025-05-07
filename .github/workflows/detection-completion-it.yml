@@ -38,13 +38,21 @@ jobs:
                -H "x-api-key: $API_KEY")
 
           echo "HTTP Response Code: $response"
-          cat detection-response.json
 
           if [ "$response" -ne 200 ]; then
             echo "Detection request test failed: HTTP error '$response'"
             exit 1
           fi
 
+          name=$(jq -r '.step.name' detection-response.json)
+          progression=$(jq -r '.step.status.progression' detection-response.json)
+          health=$(jq -r '.step.status.health' detection-response.json)
+          
+          if [[ "$name" == "TILING" && "$progression" == "FINISHED" && "$health" == "FAILED" ]]; then
+            echo "Detection failed, producing incident on InStatus"
+            exit 1
+          fi
+          
           geoJsonUrl=$(jq -r '.geoJsonUrl' detection-response.json)
 
           if [ -z "$geoJsonUrl" ] || [ "$geoJsonUrl" == "null" ]; then
