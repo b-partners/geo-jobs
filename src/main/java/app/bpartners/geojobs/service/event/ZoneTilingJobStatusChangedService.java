@@ -8,6 +8,7 @@ import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobFailed;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobStatusChanged;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
+import app.bpartners.geojobs.repository.TilingTaskRepository;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.JobFinishedMailer;
 import app.bpartners.geojobs.service.StatusChangedHandler;
@@ -28,6 +29,7 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
   private final DetectionRepository detectionRepository;
   private final EventProducer eventProducer;
   private final DetectableObjectConfigurationRepository objectConfigurationRepository;
+  private final TilingTaskRepository tilingTaskRepository;
 
   @Override
   public void accept(ZoneTilingJobStatusChanged event) {
@@ -41,7 +43,8 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
             zoneDetectionJobService,
             newJob,
             detectionRepository,
-            objectConfigurationRepository);
+            objectConfigurationRepository,
+            tilingTaskRepository);
 
     var onFailedHandler = new onFailedJobHandler(eventProducer, newJob);
 
@@ -55,11 +58,39 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
       ZoneDetectionJobService zoneDetectionJobService,
       ZoneTilingJob ztj,
       DetectionRepository detectionRepository,
-      DetectableObjectConfigurationRepository objectConfigurationRepository)
+      DetectableObjectConfigurationRepository objectConfigurationRepository,
+      TilingTaskRepository tilingTaskRepository)
       implements Runnable {
+
+    private static final String IGN_IMAGE_SOURCE = "IGN";
 
     @Override
     public void run() {
+      var parcelTilingTasks = tilingTaskRepository.findAllByJobId(ztj.getId());
+      var succeededJobHasIGNImages =
+          parcelTilingTasks.stream()
+              .anyMatch(
+                  task ->
+                      task.getParcelContent() != null
+                          && task.getParcelContent()
+                                  .getFeature()
+                                  .getProperties()
+                                  .get("priorityLayer")
+                              != null
+                          && task.getParcelContent()
+                              .getFeature()
+                              .getProperties()
+                              .get("priorityLayer")
+                              .toString()
+                              .contains(IGN_IMAGE_SOURCE));
+      if (succeededJobHasIGNImages) {
+        eventProducer.accept(List.of(new ZoneTilingJobFailed(ztj)));
+        log.info(
+            "ZTJ.id={} Finished with succeeded status but with IGN images, produces"
+                + " ZoneTilingJobFailed event",
+            ztj.getId());
+        return;
+      }
       var zdj = zoneDetectionJobService.saveZDJFromZTJ(ztj);
       var optionalDetection = detectionRepository.findByZtjId(ztj.getId());
       // For now, only detection process triggers ZDJ processing
