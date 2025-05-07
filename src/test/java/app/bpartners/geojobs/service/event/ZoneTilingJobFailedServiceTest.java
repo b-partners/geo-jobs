@@ -81,7 +81,7 @@ class ZoneTilingJobFailedServiceTest {
 <section>
     <p>Bonjour,</p>
     <div>
-        <p>Une erreur est survenue lors du traitement de la détection portant l'ID <span>%s</span> à l'étape 2 sur 4 : PAVAGE.</p>
+        <p>Une erreur est survenue lors du traitement de la détection portant l'ID <span>%s</span> à l'étape 2 sur 4 : RÉCUPÉRATION DES IMAGES.</p>
     </div>
    \s
     <p>Veuillez réessayer plus tard ou nous contacter par email à l'adresse

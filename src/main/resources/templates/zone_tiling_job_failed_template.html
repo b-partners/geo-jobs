@@ -11,7 +11,7 @@
     <p>Bonjour,</p>
     <div th:if="${detection != null}">
         <p>Une erreur est survenue lors du traitement de la détection portant l'ID <span
-                th:text="${detection.endToEndId}"></span> à l'étape 2 sur 4 : PAVAGE.</p>
+                th:text="${detection.endToEndId}"></span> à l'étape 2 sur 4 : RÉCUPÉRATION DES IMAGES.</p>
     </div>
     <div th:unless="${detection != null}">
         <p>Une erreur est survenue lors du traitement du ZoneTilingJob portant l'ID <span
