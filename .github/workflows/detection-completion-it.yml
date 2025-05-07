@@ -33,10 +33,9 @@ jobs:
 
       - name: Send POST /detections/* request for retrieving result
         run: |
-          response=$(curl -s -o detection-response.json -w "%{http_code}" -X POST "$API_URL/detections/$detection_e2_id" \
+          response=$(curl -s -o detection-response.json -w "%{http_code}" -X GET "$API_URL/detections/$detection_e2_id" \
                -H "Content-Type: application/json" \
-               -H "x-api-key: $API_KEY" \
-               --data "@.github/workflows/detection-request.json")
+               -H "x-api-key: $API_KEY")
 
           echo "HTTP Response Code: $response"
           cat detection-response.json
