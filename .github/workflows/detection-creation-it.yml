@@ -32,14 +32,16 @@ jobs:
 
       - name: Send POST /detections/* request
         run: |
-          response=$(curl -s -o detection-response.json -w "%{http_code}" -X POST "$API_URL/detections/$detection_e2_id" \
-               -H "Content-Type: application/json" \
-               -H "x-api-key: $API_KEY" \
-               --data "@.github/workflows/detection-request.json")
-
-          echo "HTTP Response Code: $response"
-
-          if [ "$response" -ne 200 ]; then
-            echo "Detection request test failed: HTTP error '$response'"
+          http_code=$(curl -s -w "%{http_code}" -X POST "$API_URL/detections/$detection_e2_id" \
+          -H "Content-Type: application/json" \
+          -H "x-api-key: $API_KEY" \
+          --data "@.github/workflows/detection-request.json" \
+          -o >(tee detection-response.json))
+          
+          echo "HTTP Response Code: $http_code"
+          
+          if [ "${http_code:-0}" -ne 200 ]; then
+            echo "Response Body:"
+              cat detection-response.json
             exit 1
           fi
