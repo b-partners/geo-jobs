@@ -62,8 +62,8 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
       for (var object : detectedObjects) {
         var label = object.getDetectableObjectType();
         var confidence = object.getComputedConfidence();
-        var rate = rateComputer.compute(label);
         var polygon = featureMapper.toDomain(object.getFeature());
+        var rate = rateComputer.format((polygon.getArea() / roofGeometry.getArea()) * 100);
         regions.put(
             String.valueOf(System.nanoTime()),
             toVGGRegion(label.name(), confidence, rate, polygon));
