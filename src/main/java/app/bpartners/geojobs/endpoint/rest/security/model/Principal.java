@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.endpoint.rest.security.model;
 
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
+import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_INSURANCE;
 
 import app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role;
 import java.util.Collection;
@@ -61,5 +62,9 @@ public class Principal implements UserDetails {
 
   public boolean isAdmin() {
     return getRoles().contains(ROLE_ADMIN);
+  }
+
+  public boolean isInsurance() {
+    return getRoles().contains(ROLE_INSURANCE);
   }
 }

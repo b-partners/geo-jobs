@@ -57,7 +57,8 @@ public class DetectionAuthorizer implements TriConsumer<String, CreateDetection,
     if (features != null && !features.isEmpty()) {
       boolean featuresHasAllMultiPolygonInstances =
           featureTypeChecker.apply(features, MultiPolygon.class);
-      if (featuresHasAllMultiPolygonInstances) {
+      if (featuresHasAllMultiPolygonInstances
+          && !(principal.isInsurance() || principal.isAdmin())) {
         communityZoneSurfaceAuthorizer.accept(communityAuthorization, features);
         communityZoneAuthorizer.accept(communityAuthorization, features, principal);
       }

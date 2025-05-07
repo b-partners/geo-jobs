@@ -6,7 +6,8 @@ public record Authority(Role value) implements GrantedAuthority {
 
   public enum Role {
     ROLE_ADMIN,
-    ROLE_COMMUNITY
+    ROLE_COMMUNITY,
+    ROLE_INSURANCE
   }
 
   @Override

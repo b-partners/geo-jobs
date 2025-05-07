@@ -1,7 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.security;
 
-import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
-import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_COMMUNITY;
+import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.*;
 import static org.springframework.http.HttpMethod.*;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
@@ -133,9 +132,11 @@ public class SecurityConf {
                     .requestMatchers(PUT, "/parcelization")
                     .hasAuthority(ROLE_ADMIN.name())
                     .requestMatchers(POST, "/detections/*")
-                    .hasAnyAuthority(ROLE_ADMIN.name(), ROLE_COMMUNITY.name())
+                    .hasAnyAuthority(
+                        ROLE_ADMIN.name(), ROLE_COMMUNITY.name(), ROLE_INSURANCE.name())
                     .requestMatchers(POST, "/detections/*/roofer")
-                    .hasAnyAuthority(ROLE_ADMIN.name(), ROLE_COMMUNITY.name())
+                    .hasAnyAuthority(
+                        ROLE_ADMIN.name(), ROLE_COMMUNITY.name(), ROLE_INSURANCE.name())
                     .requestMatchers(POST, "/detections/*/sync")
                     .authenticated() // TODO: change later
                     .requestMatchers(POST, "/detections/*/roofDelimiter")
@@ -143,29 +144,37 @@ public class SecurityConf {
                     .requestMatchers(POST, "/detections/*/addresses")
                     .authenticated() // TODO: change later
                     .requestMatchers(POST, "/detections/*/roofer/email")
-                    .hasAnyAuthority(ROLE_ADMIN.name(), ROLE_COMMUNITY.name())
+                    .hasAnyAuthority(
+                        ROLE_ADMIN.name(), ROLE_COMMUNITY.name(), ROLE_INSURANCE.name())
                     .requestMatchers(GET, "/detections/*")
-                    .hasAnyAuthority(ROLE_ADMIN.name(), ROLE_COMMUNITY.name())
+                    .hasAnyAuthority(
+                        ROLE_ADMIN.name(), ROLE_COMMUNITY.name(), ROLE_INSURANCE.name())
                     .requestMatchers(POST, "/detections/*/geojson")
                     .hasAnyAuthority(ROLE_ADMIN.name())
                     .requestMatchers(POST, "/detections/*/shape")
-                    .hasAnyAuthority(ROLE_ADMIN.name(), ROLE_COMMUNITY.name())
+                    .hasAnyAuthority(
+                        ROLE_ADMIN.name(), ROLE_COMMUNITY.name(), ROLE_INSURANCE.name())
                     .requestMatchers(POST, "/detections/*/excel")
-                    .hasAnyAuthority(ROLE_ADMIN.name(), ROLE_COMMUNITY.name())
+                    .hasAnyAuthority(
+                        ROLE_ADMIN.name(), ROLE_COMMUNITY.name(), ROLE_INSURANCE.name())
                     .requestMatchers(POST, "/detections/*/image")
-                    .hasAnyAuthority(ROLE_ADMIN.name(), ROLE_COMMUNITY.name())
+                    .hasAnyAuthority(
+                        ROLE_ADMIN.name(), ROLE_COMMUNITY.name(), ROLE_INSURANCE.name())
                     .requestMatchers(POST, "/detections/*/pdf")
-                    .hasAnyAuthority(ROLE_ADMIN.name(), ROLE_COMMUNITY.name())
+                    .hasAnyAuthority(
+                        ROLE_ADMIN.name(), ROLE_COMMUNITY.name(), ROLE_INSURANCE.name())
                     .requestMatchers(POST, "/detections/*/geoJsonResult")
                     .hasAnyAuthority(ROLE_ADMIN.name())
                     .requestMatchers(GET, "/detections")
-                    .hasAnyAuthority(ROLE_ADMIN.name(), ROLE_COMMUNITY.name())
+                    .hasAnyAuthority(
+                        ROLE_ADMIN.name(), ROLE_COMMUNITY.name(), ROLE_INSURANCE.name())
                     .requestMatchers(GET, "/usage")
-                    .hasAnyAuthority(ROLE_ADMIN.name(), ROLE_COMMUNITY.name())
+                    .hasAnyAuthority(
+                        ROLE_ADMIN.name(), ROLE_COMMUNITY.name(), ROLE_INSURANCE.name())
                     .requestMatchers(POST, "/api/keys")
                     .hasAnyAuthority(ROLE_ADMIN.name())
                     .requestMatchers(DELETE, "/keys")
-                    .hasAnyAuthority(ROLE_COMMUNITY.name())
+                    .hasAnyAuthority(ROLE_COMMUNITY.name(), ROLE_INSURANCE.name())
                     .anyRequest()
                     .denyAll())
         .csrf(AbstractHttpConfigurer::disable)
