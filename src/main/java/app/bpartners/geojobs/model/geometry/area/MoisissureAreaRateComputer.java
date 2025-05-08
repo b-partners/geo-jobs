@@ -1,0 +1,49 @@
+package app.bpartners.geojobs.model.geometry.area;
+
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
+
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
+import app.bpartners.geojobs.model.DetectedTile;
+import app.bpartners.geojobs.model.exception.BadRequestException;
+import app.bpartners.geojobs.repository.model.detection.DetectableType;
+import app.bpartners.geojobs.repository.model.detection.DetectedObject;
+import org.locationtech.jts.geom.Polygon;
+
+public class MoisissureAreaRateComputer extends AreaRateComputer {
+  private static final double weight = 0.3;
+  private final FeatureMapper featureMapper = new FeatureMapper();
+  private final double roofArea;
+  private final DetectedTile tile;
+
+  public MoisissureAreaRateComputer(double roofArea, DetectedTile tile) {
+    this.roofArea = roofArea;
+    this.tile = tile;
+  }
+
+  @Override
+  public double compute(DetectableType detectableType) {
+    if (roofArea <= 0) {
+      throw new BadRequestException(
+          "Roof area cannot be zero or negative, current value" + roofArea);
+    }
+    double computedArea =
+        tile.getDetectedObjects().stream()
+            .filter(o -> o.getDetectableObjectType().equals(detectableType))
+            .map(DetectedObject::getFeature)
+            .map(featureMapper::toDomain)
+            .mapToDouble(Polygon::getArea)
+            .sum();
+
+    return computedArea / roofArea;
+  }
+
+  public double getMoisissureAreaRate() {
+    return (compute(MOISISSURE_NOIRCIE) + compute(MOISISSURE_CLAIR) + compute(MOISISSURE_COULEUR))
+        * 100;
+  }
+
+  @Override
+  public double getGlobalRate() {
+    return weight * getMoisissureAreaRate();
+  }
+}

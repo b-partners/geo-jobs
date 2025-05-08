@@ -100,7 +100,7 @@ public class RooferDetectionServiceTest {
                         DetectionResponse.ImageData.builder().regions(Map.of()).build()))
                 .build());
     when(machineDetectedTileRepository.save(any())).thenReturn(new MachineDetectedTile());
-    when(vggFactoryMock.from(any())).thenReturn(new VGG());
+    when(vggFactoryMock.from(any(), any())).thenReturn(new VGG());
     when(fileWriter.write(any(), any(), any())).thenReturn(mock(File.class));
     when(bucketComponent.presign(any(String.class))).thenReturn(PRESIGNED_URL);
     when(authProvider.getAuthenticatedCommunity())

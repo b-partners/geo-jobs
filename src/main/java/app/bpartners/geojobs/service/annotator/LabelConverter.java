@@ -30,12 +30,12 @@ public class LabelConverter implements Function<DetectableType, Label> {
       case ESPACE_VERT -> "#e39724";
       case VOIE_CARROSSABLE -> "TODO";
       case PARKING -> "#8c463e";
-      case MOISISSURE -> "#5d8c3e";
-      case USURE -> "#3e718c";
+      case MOISISSURE_CLAIR, MOISISSURE_COULEUR, MOISISSURE_NOIRCIE -> "#5d8c3e";
+      case USURE_IMPORTANTE, USURE_LEGER -> "#3e718c";
       case FISSURE_CASSURE -> "#733e8c";
       case OBSTACLE -> "#3e8c88";
       case CHEMINEE -> "#a32a55";
-      case HUMIDITE -> "#f2f538";
+      case HUMIDITE_CLAIR, HUMIDITE_INTENSE -> "#f2f538";
       case RISQUE_FEU -> "#361c1b";
       case VELUX -> "#c71497";
       case BATI_TUILES -> "#47e66c";
