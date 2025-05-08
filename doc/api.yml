@@ -1366,13 +1366,16 @@ components:
         - MOISISSURE_COULEUR
         - MOISISSURE_CLAIR
         - MOISISSURE_NOIRCIE
+        - MOISISSURE
         - USURE_LEGER
         - USURE_IMPORTANTE
+        - USURE
         - FISSURE_CASSURE
         - OBSTACLE
         - CHEMINEE
         - HUMIDITE_CLAIR
         - HUMIDITE_INTENSE
+        - HUMIDITE
         - RISQUE_FEU
         - VELUX
         - BATI_TUILES

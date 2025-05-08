@@ -25,6 +25,9 @@ public enum RouteType {
       case LINE -> road;
       case TROTTOIR -> sidewalk;
       case RISQUE_FEU,
+              MOISISSURE,
+              USURE,
+              HUMIDITE,
               TOITURE_REVETEMENT,
               ESPACE_VERT_PARKING,
               PANNEAU_PHOTOVOLTAIQUE,

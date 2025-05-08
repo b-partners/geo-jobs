@@ -1,6 +1,9 @@
 package app.bpartners.geojobs.endpoint.rest.controller.mapper;
 
 import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.*;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.HUMIDITE;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.MOISISSURE;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.USURE;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.model.*;
@@ -31,13 +34,16 @@ public class DetectableObjectTypeMapper {
       case MOISISSURE_CLAIR -> DetectableType.MOISISSURE_CLAIR;
       case MOISISSURE_COULEUR -> DetectableType.MOISISSURE_COULEUR;
       case MOISISSURE_NOIRCIE -> DetectableType.MOISISSURE_NOIRCIE;
+      case MOISISSURE -> DetectableType.MOISISSURE;
       case USURE_IMPORTANTE -> DetectableType.USURE_IMPORTANTE;
       case USURE_LEGER -> DetectableType.USURE_LEGER;
+      case USURE -> DetectableType.USURE;
       case FISSURE_CASSURE -> DetectableType.FISSURE_CASSURE;
       case OBSTACLE -> DetectableType.OBSTACLE;
       case CHEMINEE -> DetectableType.CHEMINEE;
       case HUMIDITE_INTENSE -> DetectableType.HUMIDITE_INTENSE;
       case HUMIDITE_CLAIR -> DetectableType.HUMIDITE_CLAIR;
+      case HUMIDITE -> DetectableType.HUMIDITE;
       case RISQUE_FEU -> DetectableType.RISQUE_FEU;
       case VELUX -> DetectableType.VELUX;
       case PARKING -> DetectableType.PARKING;
@@ -61,12 +67,15 @@ public class DetectableObjectTypeMapper {
       case MOISISSURE_COULEUR -> MOISISSURE_COULEUR;
       case MOISISSURE_NOIRCIE -> MOISISSURE_NOIRCIE;
       case USURE_IMPORTANTE -> USURE_IMPORTANTE;
+      case MOISISSURE -> MOISISSURE;
       case USURE_LEGER -> USURE_LEGER;
+      case USURE -> USURE;
       case FISSURE_CASSURE -> FISSURE_CASSURE;
       case OBSTACLE -> OBSTACLE;
       case CHEMINEE -> CHEMINEE;
       case HUMIDITE_CLAIR -> HUMIDITE_CLAIR;
       case HUMIDITE_INTENSE -> HUMIDITE_INTENSE;
+      case HUMIDITE -> HUMIDITE;
       case RISQUE_FEU -> RISQUE_FEU;
       case VELUX -> VELUX;
       case BATI_TUILES -> BATI_TUILES;
@@ -105,13 +114,16 @@ public class DetectableObjectTypeMapper {
     objectTypes.add(MOISISSURE_NOIRCIE);
     objectTypes.add(MOISISSURE_CLAIR);
     objectTypes.add(MOISISSURE_COULEUR);
+    objectTypes.add(MOISISSURE);
     objectTypes.add(USURE_IMPORTANTE);
     objectTypes.add(USURE_LEGER);
+    objectTypes.add(USURE);
     objectTypes.add(FISSURE_CASSURE);
     objectTypes.add(OBSTACLE);
     objectTypes.add(CHEMINEE);
     objectTypes.add(HUMIDITE_INTENSE);
     objectTypes.add(HUMIDITE_CLAIR);
+    objectTypes.add(HUMIDITE);
     objectTypes.add(RISQUE_FEU);
     return objectTypes;
   }
