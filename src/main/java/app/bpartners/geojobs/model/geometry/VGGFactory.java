@@ -16,11 +16,8 @@ import java.util.Map;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
-import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
-import org.geotools.api.referencing.operation.MathTransform;
-import org.geotools.geometry.jts.JTS;
-import org.geotools.referencing.CRS;
-import org.locationtech.jts.geom.Geometry;
+import net.sf.geographiclib.Geodesic;
+import net.sf.geographiclib.PolygonArea;
 import org.locationtech.jts.geom.Polygon;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
@@ -64,6 +61,7 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
         new TiledPolygon(roofGeometry, null, originTileCoords, tilingConf)
             .latLonPolygon()
             .polygon();
+    System.out.println(roofGeometryAsTile);
     var roofAreaInM2 = computeRoofArea(roofGeometryAsTile);
     for (var detectedTile : detectedTiles) {
       var rateComputer = new AreaRateComputerFacade(roofGeometry, detectedTile);
@@ -128,14 +126,12 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
   // Mostly ChatGPT generated
   @SneakyThrows
   private double computeRoofArea(Polygon polygon) {
-    CoordinateReferenceSystem sourceCRS = CRS.decode("EPSG:4326"); // WGS84
-    CoordinateReferenceSystem targetCRS = CRS.decode("EPSG:3857"); // Web Mercator (en mètres)
-
-    // Transformer les coordonnées
-    MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS, true);
-    Geometry projected = JTS.transform(polygon, transform);
-
+    var coords = polygon.getCoordinates();
+    PolygonArea poly = new PolygonArea(Geodesic.WGS84, false);
+    for (var point : coords) {
+      poly.AddPoint(point.x, point.y);
+    }
     // Calculer la surface en m²
-    return format(projected.getArea());
+    return format(poly.Compute(false, false).area);
   }
 }
