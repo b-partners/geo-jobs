@@ -92,6 +92,6 @@ class AnnotationDeliveryJobStatusChangedServiceTest {
     String htmlBody = "";
     List<File> attachments = List.of();
     return new Email(
-        new InternetAddress("tech@bpartners.app"), cc, bcc, subject, htmlBody, attachments);
+        new InternetAddress("tech@birdia.fr"), cc, bcc, subject, htmlBody, attachments);
   }
 }

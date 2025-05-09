@@ -87,7 +87,7 @@ public class AnnotationDeliveryJobStatusChangedService
       List<File> attachments = List.of();
       mailer.accept(
           new Email(
-              new InternetAddress("tech@bpartners.app"), cc, bcc, subject, htmlBody, attachments));
+              new InternetAddress("tech@birdia.fr"), cc, bcc, subject, htmlBody, attachments));
     }
 
     private void updateZDJStatus(String detectionJobId) {
