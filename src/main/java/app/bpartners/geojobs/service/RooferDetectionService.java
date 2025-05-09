@@ -96,6 +96,7 @@ public class RooferDetectionService
     var tile =
         Tile.builder()
             .coordinates(new TileCoordinates().x(0).y(0).z(zoom))
+            .size(new TileInfoSize().width(1024).height(1024))
             .bucketPath(detection.getImageFileKey())
             .build();
     var toDetect =

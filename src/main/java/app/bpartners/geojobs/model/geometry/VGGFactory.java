@@ -1,8 +1,11 @@
 package app.bpartners.geojobs.model.geometry;
 
 import static app.bpartners.geojobs.model.geometry.area.AreaRateComputerFacade.*;
+import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
+import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon;
+import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.model.DetectedTile;
 import app.bpartners.geojobs.model.geometry.area.AreaRateComputerFacade;
 import java.time.Instant;
@@ -12,6 +15,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.geometry.jts.JTS;
+import org.geotools.referencing.CRS;
+import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Polygon;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
@@ -46,11 +55,22 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
 
   public VGG from(Polygon roofGeometry, List<DetectedTile> detectedTiles) {
     var vgg = new VGG();
+    var originTile = detectedTiles.getFirst().getTile();
+    var originTileCoords =
+        new IntXY(originTile.getCoordinates().getX(), originTile.getCoordinates().getY());
+    var tilingConf =
+        new TilingConf(originTile.getCoordinates().getZ(), originTile.getSize().getHeight());
+    var roofGeometryAsTile =
+        new TiledPolygon(roofGeometry, null, originTileCoords, tilingConf)
+            .latLonPolygon()
+            .polygon();
+    var roofAreaInM2 = computeRoofArea(roofGeometryAsTile);
     for (var detectedTile : detectedTiles) {
       var rateComputer = new AreaRateComputerFacade(roofGeometry, detectedTile);
       var detectedObjects = detectedTile.getDetectedObjects();
       var tile = detectedTile.getTile().getCoordinates();
-      var key = String.format("%s_%s_%s.jpg", tile.getZ(), tile.getX(), tile.getY());
+      var key =
+          String.format("%s_%s_%s_%s.jpg", randomUUID(), tile.getZ(), tile.getX(), tile.getY());
 
       var usureRate = rateComputer.getUsureAreaRate();
       var humiditeRate = rateComputer.getHumidityAreaRate();
@@ -63,13 +83,14 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
         var label = object.getDetectableObjectType();
         var confidence = object.getComputedConfidence();
         var polygon = featureMapper.toDomain(object.getFeature());
-        var rate = rateComputer.format((polygon.getArea() / roofGeometry.getArea()) * 100);
+        var rate = format((polygon.getArea() / roofGeometry.getArea()) * 100);
         regions.put(
             String.valueOf(System.nanoTime()),
             toVGGRegion(label.name(), confidence, rate, polygon));
       }
 
       var properties = new HashMap<String, Object>();
+      properties.put("roof_area_in_m2", roofAreaInM2);
       properties.put("usure_rate", usureRate);
       properties.put("humidite_rate", humiditeRate);
       properties.put("moisissure_rate", moisissureRate);
@@ -102,5 +123,19 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
                 .allPointsY(allY)
                 .build())
         .build();
+  }
+
+  // Mostly ChatGPT generated
+  @SneakyThrows
+  private double computeRoofArea(Polygon polygon) {
+    CoordinateReferenceSystem sourceCRS = CRS.decode("EPSG:4326"); // WGS84
+    CoordinateReferenceSystem targetCRS = CRS.decode("EPSG:3857"); // Web Mercator (en mètres)
+
+    // Transformer les coordonnées
+    MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS, true);
+    Geometry projected = JTS.transform(polygon, transform);
+
+    // Calculer la surface en m²
+    return format(projected.getArea());
   }
 }
