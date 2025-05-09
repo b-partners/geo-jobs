@@ -7,12 +7,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
+import app.bpartners.geojobs.endpoint.rest.model.TileInfoSize;
 import app.bpartners.geojobs.model.DetectedTile;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectType;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
-import java.io.IOException;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
@@ -72,7 +72,11 @@ public class VGGFactoryTest {
     Feature feature = Feature.builder().id("feature").zoom(20).build();
 
     return DetectedTile.builder()
-        .tile(Tile.builder().coordinates(new TileCoordinates().x(538860).y(367571).z(20)).build())
+        .tile(
+            Tile.builder()
+                .coordinates(new TileCoordinates().x(0).y(0).z(20))
+                .size(new TileInfoSize().height(1024).width(1024))
+                .build())
         .detectedObjects(
             List.of(
                 DetectedObject.builder()
@@ -126,16 +130,16 @@ public class VGGFactoryTest {
   }
 
   @Test
-  void detected_tiles_to_vgg_ok() throws IOException {
-    var expectedFilename = "20_538860_367571.jpg";
-
+  void detected_tiles_to_vgg_ok() {
     Coordinate[] boundingCoords =
         new Coordinate[] {
-          new Coordinate(40.0, 50.0),
-          new Coordinate(220.0, 50.0),
-          new Coordinate(220.0, 160.0),
-          new Coordinate(40.0, 160.0),
-          new Coordinate(40.0, 50.0)
+          new Coordinate(465.95744680851067, 282.97872340425533),
+          new Coordinate(780.8510638297872, 421.2765957446809),
+          new Coordinate(619.1489361702128, 800.0),
+          new Coordinate(474.468085106383, 729.7872340425532),
+          new Coordinate(510.63829787234044, 636.1702127659574),
+          new Coordinate(351.06382978723406, 557.4468085106383),
+          new Coordinate(465.95744680851067, 282.97872340425533)
         };
 
     LinearRing shell = geometryFactory.createLinearRing(boundingCoords);
@@ -143,7 +147,8 @@ public class VGGFactoryTest {
 
     var actual = subject.from(roofGeometry, List.of(detectedTile()));
 
+    var filename = actual.keySet().stream().toList().getFirst();
     assertEquals(1, actual.size());
-    assertEquals(3, actual.get(expectedFilename).getRegions().size());
+    assertEquals(3, actual.get(filename).getRegions().size());
   }
 }

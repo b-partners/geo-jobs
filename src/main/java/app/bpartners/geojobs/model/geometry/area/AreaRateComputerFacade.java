@@ -50,7 +50,7 @@ public class AreaRateComputerFacade {
     return Rate.E;
   }
 
-  public double format(double value) {
+  public static double format(double value) {
     return Math.round((value * 100)) / 100.0;
   }
 }
