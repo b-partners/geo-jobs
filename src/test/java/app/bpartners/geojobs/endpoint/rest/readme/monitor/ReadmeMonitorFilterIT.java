@@ -2,6 +2,7 @@ package app.bpartners.geojobs.endpoint.rest.readme.monitor;
 
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionSurfaceUnit.SQUARE_DEGREE;
 import static app.bpartners.geojobs.endpoint.rest.security.authenticator.ApiKeyAuthenticator.API_KEY_HEADER;
+import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_COMMUNITY;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -49,6 +50,7 @@ class ReadmeMonitorFilterIT extends FacadeIT {
     when(communityAuthRepositoryMock.findByApiKey(any()))
         .thenReturn(Optional.of(communityAuthorizationMock));
     when(communityAuthorizationMock.isApiKeyRevoked()).thenReturn(false);
+    when(communityAuthorizationMock.getRole()).thenReturn(ROLE_COMMUNITY);
     when(readmeLogFactoryMock.createReadmeLog(any(), any(), any(), any(), any(), any()))
         .thenReturn(mock());
     doNothing().when(eventProducerMock).accept(any());
