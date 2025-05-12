@@ -262,7 +262,7 @@ public class AnnotationService {
               .bucketName(bucketName.get())
               .folderPath(null)
               .labels(labels)
-              .ownerEmail("tech@bpartners.app")
+              .ownerEmail("tech@birdia.fr")
               .status(annotationJobStatus)
               .type(REVIEWING)
               .imagesHeight(DEFAULT_IMAGES_HEIGHT)

@@ -131,7 +131,7 @@ public class RooferDetectionServiceTest {
 
     verify(mailer, only()).accept(emailCaptor.capture());
 
-    assertTrue(emailCaptor.getValue().cc().contains(new InternetAddress("tech@bpartners.app")));
+    assertTrue(emailCaptor.getValue().cc().contains(new InternetAddress("tech@birdia.fr")));
   }
 
   Detection detection() {

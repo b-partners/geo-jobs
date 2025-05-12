@@ -62,13 +62,16 @@ class DetectableObjectTypeMapperTest {
             MOISISSURE_NOIRCIE,
             MOISISSURE_CLAIR,
             MOISISSURE_COULEUR,
+            MOISISSURE,
             USURE_IMPORTANTE,
             USURE_LEGER,
+            USURE,
             FISSURE_CASSURE,
             OBSTACLE,
             CHEMINEE,
             HUMIDITE_INTENSE,
             HUMIDITE_CLAIR,
+            HUMIDITE,
             RISQUE_FEU);
     assertEquals(expected, actual);
   }
@@ -287,7 +290,7 @@ class DetectableObjectTypeMapperTest {
                         objectConfiguration.getObjectType(),
                         objectConfiguration.getMinConfidenceForDetection()))
             .toList();
-    assertEquals(14, detectableObjectWithReferenceConfidences.size());
+    assertEquals(17, detectableObjectWithReferenceConfidences.size());
     assertTrue(
         detectableObjectWithReferenceConfidences.contains(
             new DetectableObjectWithReferenceConfidence(DetectableType.ARBRE, 0.2504)));

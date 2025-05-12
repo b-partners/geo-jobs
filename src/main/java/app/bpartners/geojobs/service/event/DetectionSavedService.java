@@ -58,8 +58,7 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
             communityAuthorizationRepository);
     List<File> attachments = List.of();
     mailer.accept(
-        new Email(
-            new InternetAddress("tech@bpartners.app"), cc, bcc, subject, htmlBody, attachments));
+        new Email(new InternetAddress("tech@birdia.fr"), cc, bcc, subject, htmlBody, attachments));
   }
 
   @NonNull

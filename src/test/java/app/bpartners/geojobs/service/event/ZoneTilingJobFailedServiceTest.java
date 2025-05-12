@@ -85,7 +85,7 @@ class ZoneTilingJobFailedServiceTest {
     </div>
    \s
     <p>Veuillez réessayer plus tard ou nous contacter par email à l'adresse
-        <a href="mailto:contact@bpartners.app">contact@bpartners.app</a> ou au numéro 01 84 80 31 69 pour toutes
+        <a href="mailto:contact@birdia.fr">contact@birdia.fr</a> ou au numéro 01 84 80 31 69 pour toutes
         informations supplémentaires.
     </p>
     <p>Cordialement,</p>
@@ -115,7 +115,7 @@ class ZoneTilingJobFailedServiceTest {
         <p>Une erreur est survenue lors du traitement du ZoneTilingJob portant l'ID <span>%s</span>.</p>
     </div>
     <p>Veuillez réessayer plus tard ou nous contacter par email à l'adresse
-        <a href="mailto:contact@bpartners.app">contact@bpartners.app</a> ou au numéro 01 84 80 31 69 pour toutes
+        <a href="mailto:contact@birdia.fr">contact@birdia.fr</a> ou au numéro 01 84 80 31 69 pour toutes
         informations supplémentaires.
     </p>
     <p>Cordialement,</p>

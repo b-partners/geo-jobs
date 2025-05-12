@@ -96,6 +96,7 @@ public class RooferDetectionService
     var tile =
         Tile.builder()
             .coordinates(new TileCoordinates().x(0).y(0).z(zoom))
+            .size(new TileInfoSize().width(1024).height(1024))
             .bucketPath(detection.getImageFileKey())
             .build();
     var toDetect =
@@ -175,7 +176,7 @@ public class RooferDetectionService
     mailer.accept(
         new Email(
             new InternetAddress(authProvider.getAuthenticatedCommunity().getEmail()),
-            List.of(new InternetAddress("tech@bpartners.app")),
+            List.of(new InternetAddress("tech@birdia.fr")),
             List.of(),
             String.format("[%s] - ANALYSE TOITURE", env),
             emailBody,

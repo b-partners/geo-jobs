@@ -103,7 +103,7 @@ class DetectionSavedServiceTest {
     var actualEmail = emailCaptor.getValue();
     var expectedMail =
         new Email(
-            new InternetAddress("tech@bpartners.app"),
+            new InternetAddress("tech@birdia.fr"),
             cc,
             bcc,
             actualEmail.subject(),

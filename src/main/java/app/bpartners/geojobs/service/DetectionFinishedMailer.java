@@ -20,7 +20,7 @@ public class DetectionFinishedMailer implements TriConsumer<String, String, Stri
     mailer.accept(
         new Email(
             new InternetAddress(emailReceiver),
-            List.of(new InternetAddress("tech@bpartners.app")),
+            List.of(new InternetAddress("tech@birdia.fr")),
             List.of(),
             subject,
             body,

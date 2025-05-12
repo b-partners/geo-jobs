@@ -28,7 +28,7 @@ class JobFinishedMailerTest {
     ZoneDetectionJob job =
         ZoneDetectionJob.builder()
             .id(jobId)
-            .emailReceiver("tech@bpartners.app")
+            .emailReceiver("tech@birdia.fr")
             .statusHistory(List.of(JobStatus.builder().jobType(DETECTION).build()))
             .build();
 
