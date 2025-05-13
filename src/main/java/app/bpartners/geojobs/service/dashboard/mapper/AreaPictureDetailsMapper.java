@@ -26,7 +26,7 @@ public class AreaPictureDetailsMapper {
     var fileId = randomUUID().toString();
     var filename = address + "-" + hashCode();
     return new CrupdateAreaPictureDetails(
-        address, DEFAULT_SHIFT_NB, fileId, filename, null, HOUSES_0);
+        address, DEFAULT_SHIFT_NB, null, fileId, filename, null, HOUSES_0);
   }
 
   public Feature toFeature(AreaPictureDetails areaPictureDetails, String address) {
