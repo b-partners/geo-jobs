@@ -9,6 +9,7 @@ import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.service.dashboard.component.AreaPictureDetails;
 import app.bpartners.geojobs.service.dashboard.component.CrupdateAreaPictureDetails;
 import app.bpartners.geojobs.service.geojson.PointToMultiPolygonConverter;
+import app.bpartners.geojobs.service.gouv.fr.rnb.BuildingApi;
 import java.util.HashMap;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.MultiPolygon;
@@ -18,13 +19,14 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class AreaPictureDetailsMapper {
   private static final int DEFAULT_SHIFT_NB = 0;
-  private static final double DEFAULT_POLYGON_SIZE_IN_METERS = 70.0;
+  private static final int DEFAULT_POLYGON_SIZE_IN_METERS = 30;
   private static final String FEATURE_ADDRESS_PROPERTY = "address";
   private final PointToMultiPolygonConverter pointToMultiPolygonConverter;
+  private final BuildingApi buildingApi;
 
   public CrupdateAreaPictureDetails toCrupdateAreaPictureDetails(String address) {
     var fileId = randomUUID().toString();
-    var filename = address + "-" + hashCode();
+    var filename = address + "-" + randomUUID();
     return new CrupdateAreaPictureDetails(
         address, DEFAULT_SHIFT_NB, null, fileId, filename, null, HOUSES_0);
   }
@@ -57,6 +59,10 @@ public class AreaPictureDetailsMapper {
         new Point()
             .x(areaPictureDetails.currentGeoPosition().latitude())
             .y(areaPictureDetails.currentGeoPosition().longitude());
-    return pointToMultiPolygonConverter.apply(point, DEFAULT_POLYGON_SIZE_IN_METERS);
+    var nearestBuilding =
+        buildingApi.getNearestBuildingAt(
+            point.getX(), point.getY(), DEFAULT_POLYGON_SIZE_IN_METERS);
+    var multiPolygonCoordinates = nearestBuilding.shape().getMultiPolygonCoordinates();
+    return pointToMultiPolygonConverter.apply(multiPolygonCoordinates);
   }
 }
