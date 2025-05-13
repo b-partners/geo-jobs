@@ -17,7 +17,6 @@ import app.bpartners.geojobs.model.geometry.VGG;
 import app.bpartners.geojobs.model.geometry.route.RouteType;
 import java.math.BigDecimal;
 import java.util.*;
-
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LinearRing;
@@ -38,7 +37,9 @@ public record TiledPolygon(
       holes[i] = geometryFactory.createLinearRing(latLonHolesCoordinates[i]);
     }
     var p = geometryFactory.createPolygon(exteriorRing, holes);
-    p.setUserData(polygon.getUserData());
+    var userData = new HashMap<String, RouteType>();
+    userData.put("label", type);
+    p.setUserData(userData);
     return new LatLonPolygon(p);
   }
 
@@ -74,17 +75,18 @@ public record TiledPolygon(
     return res;
   }
 
-  public static Set<TiledPolygon> toTiledPolygons(TilingConf tilingConf, VGG vgg, boolean isZXYDotFiletype) {
+  public static Set<TiledPolygon> toTiledPolygons(
+      TilingConf tilingConf, VGG vgg, boolean isZXYDotFiletype) {
     var annotations = vgg.values();
     return annotations.stream()
-            .map(
-                    annotation -> {
-                      var filename = annotation.getFilename();
-                      var regions = annotation.getRegions();
-                      return newTiledPolygons(filename, regions, tilingConf, isZXYDotFiletype);
-                    })
-            .flatMap(Collection::stream)
-            .collect(toSet());
+        .map(
+            annotation -> {
+              var filename = annotation.getFilename();
+              var regions = annotation.getRegions();
+              return newTiledPolygons(filename, regions, tilingConf, isZXYDotFiletype);
+            })
+        .flatMap(Collection::stream)
+        .collect(toSet());
   }
 
   public static Set<TiledPolygon> newTiledPolygons(

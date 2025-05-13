@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.endpoint.rest.postprocessing.continuer;
 
-import static app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon.newTiledPolygons;
 import static app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon.toTiledPolygons;
 import static java.util.stream.Collectors.toSet;
 
@@ -9,8 +8,6 @@ import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.model.geometry.VGG;
 import app.bpartners.geojobs.model.geometry.route.RoutesContinuationConf;
-import java.util.Collection;
-import java.util.Set;
 import java.util.function.Function;
 import lombok.extern.slf4j.Slf4j;
 

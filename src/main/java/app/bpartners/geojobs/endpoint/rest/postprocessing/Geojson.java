@@ -99,7 +99,7 @@ public class Geojson {
       List<List<Double>> outerRing = new ArrayList<>();
 
       for (Coordinate coord : polygon.getExteriorRing().getCoordinates()) {
-        outerRing.add(Arrays.asList(coord.x, coord.y));
+        outerRing.add(Arrays.asList(coord.y, coord.x));
       }
       coordinates.add(outerRing);
 
@@ -107,7 +107,7 @@ public class Geojson {
       for (int i = 0; i < polygon.getNumInteriorRing(); i++) {
         List<List<Double>> hole = new ArrayList<>();
         for (Coordinate coord : polygon.getInteriorRingN(i).getCoordinates()) {
-          hole.add(Arrays.asList(coord.x, coord.y));
+          hole.add(Arrays.asList(coord.y, coord.x));
         }
         coordinates.add(hole);
       }

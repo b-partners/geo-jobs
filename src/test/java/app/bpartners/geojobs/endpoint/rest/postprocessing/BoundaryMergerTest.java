@@ -16,7 +16,7 @@ class BoundaryMergerTest {
   private final GeoJsonLoader geoJsonLoader = new GeoJsonLoader();
 
   @Test
-  void boundary_merge_on_tree() throws IOException, URISyntaxException {
+  void boundary_merge_on_bati() throws IOException, URISyntaxException {
     var geojsonFile = new File(getClass().getResource("/ivandry/bati.geojson").getFile());
 
     var tilingConf = new TilingConf(20, 1_024);
@@ -31,6 +31,7 @@ class BoundaryMergerTest {
     var expectedURI = Paths.get(getClass().getResource("/ivandry/bati_merged.geojson").toURI());
     var expected = Files.readString(expectedURI);
 
+    // new Geojson(unified).saveAsFile("bati_merged.geojson");
     assertEquals(expected, new Geojson(unified).stringValue());
   }
 }
