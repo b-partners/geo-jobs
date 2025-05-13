@@ -4,12 +4,11 @@ import static java.lang.Runtime.getRuntime;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import static java.util.stream.Collectors.toSet;
 
+import app.bpartners.geojobs.endpoint.rest.postprocessing.NeighbourHoodHandler;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.model.geometry.IntXY;
 import app.bpartners.geojobs.model.geometry.route.RoutesContinuationConf;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -23,8 +22,7 @@ import lombok.Getter;
 public final class ParallelTiledLinesContinuer extends LinesContinuer<TiledPolygon> {
   @Getter private final TiledLinesContinuer tiledLinesContinuer;
 
-  private final int neighbourhoodTileDistance;
-  // e.g.: if equals 10, then will have 10*10=100 tiles in neighbourhood
+  private final NeighbourHoodHandler neighbourHoodHandler;
 
   private final ExecutorService executorService =
       newFixedThreadPool(Math.max(1, getRuntime().availableProcessors() / 2));
@@ -34,12 +32,12 @@ public final class ParallelTiledLinesContinuer extends LinesContinuer<TiledPolyg
       TilingConf tilingConf,
       int neighbourhoodTileDistance) {
     this.tiledLinesContinuer = new TiledLinesContinuer(continuationConf, tilingConf);
-    this.neighbourhoodTileDistance = neighbourhoodTileDistance;
+    this.neighbourHoodHandler = new NeighbourHoodHandler(neighbourhoodTileDistance);
   }
 
   @Override
   public Set<TiledPolygon> apply(Set<TiledPolygon> polygons) {
-    Map<IntXY, Set<TiledPolygon>> polygonsByNeighbourhood = polygonsByNeighbourhood(polygons);
+    Map<IntXY, Set<TiledPolygon>> polygonsByNeighbourhood = neighbourHoodHandler.apply(polygons);
 
     List<Future<Set<TiledPolygon>>> futures;
     try {
@@ -64,21 +62,5 @@ public final class ParallelTiledLinesContinuer extends LinesContinuer<TiledPolyg
     } catch (InterruptedException | ExecutionException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  private Map<IntXY, Set<TiledPolygon>> polygonsByNeighbourhood(Set<TiledPolygon> polygons) {
-    Map<IntXY, Set<TiledPolygon>> res = new HashMap<>();
-
-    for (var p : polygons) {
-      var originTile = p.originTile();
-      var neighbourhood =
-          new IntXY(
-              originTile.x() / neighbourhoodTileDistance,
-              originTile.y() / neighbourhoodTileDistance);
-      res.putIfAbsent(neighbourhood, new HashSet<>());
-      res.get(neighbourhood).add(p);
-    }
-
-    return res;
   }
 }

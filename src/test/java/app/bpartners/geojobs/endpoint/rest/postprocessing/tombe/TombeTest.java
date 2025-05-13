@@ -26,7 +26,7 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Polygon;
 
 @Slf4j
-class TombeTest {
+public class TombeTest {
 
   @Test
   void postprocess_tombes() throws IOException, URISyntaxException {
@@ -52,7 +52,7 @@ class TombeTest {
     assertEquals(expected, new Geojson(postprocessedPolygons).stringValue());
   }
 
-  private static Set<LatLonPolygon> invert(Set<LatLonPolygon> noSuperpositionPolygons) {
+  public static Set<LatLonPolygon> invert(Set<LatLonPolygon> noSuperpositionPolygons) {
     return noSuperpositionPolygons.stream()
         .map(
             p -> {

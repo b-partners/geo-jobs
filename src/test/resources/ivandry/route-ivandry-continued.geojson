@@ -5,7 +5,9 @@
       "type" : "Polygon"
     },
     "type" : "Feature",
-    "properties" : null
+    "properties" : {
+      "label" : "road"
+    }
   } ],
   "type" : "FeatureCollection"
 }
