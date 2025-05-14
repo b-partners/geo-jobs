@@ -4,6 +4,7 @@ import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_BUCKET_FOLDER;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_EXTENSION;
+import static java.math.RoundingMode.HALF_UP;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionAssemblyInitiated;
@@ -28,6 +29,7 @@ import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Consumer;
@@ -131,28 +133,59 @@ public class GeoJsonConversionAssemblyInitiatedService
                 })
             .collect(
                 Collectors.groupingBy(
-                    geoFeature -> geoFeature.getProperties().get("address").toString()));
+                    geoFeature ->
+                        new AddressLabelKey(
+                            geoFeature.getProperties().get("address").toString(),
+                            geoFeature.getProperties().get("label").toString())));
 
-    return geoFeaturesGroupByAddress.entrySet().stream()
-        .map(this::unifyFeatureGeometryByAddress)
-        .toList();
+    return unifyFeatureGeometryByAddressAndLabel(
+        polygonAddressDelimitation, geoFeaturesGroupByAddress);
   }
 
-  private GeoJson.GeoFeature unifyFeatureGeometryByAddress(
-      Map.Entry<String, List<GeoJson.GeoFeature>> entry) {
-    var multiPolygonsLinkedByAddress =
-        entry.getValue().stream()
-            .map(
-                geoFeature ->
-                    geometryConverter.apply(
-                        Objects.requireNonNull(geoFeature.getGeometry().getCoordinates())))
-            .toList();
-    var unifiedMultiPolygon = geometryConverter.unifyMultiPolygon(multiPolygonsLinkedByAddress);
-    var address = entry.getKey();
-    var properties = new HashMap<String, Object>();
-    properties.put("address", address);
-    return geoJsonMapper.getGeoFeature(
-        geometryConverter.multiPolygonToNestedList(unifiedMultiPolygon), properties);
+  private List<GeoJson.GeoFeature> unifyFeatureGeometryByAddressAndLabel(
+      List<PolygonAddress> polygonAddressDelimitation,
+      Map<AddressLabelKey, List<GeoJson.GeoFeature>> geoFeaturesGroupByAddress) {
+    return geoFeaturesGroupByAddress.entrySet().stream()
+        .map(
+            entry -> {
+              var geoFeatures = entry.getValue();
+              var multiPolygonsLinkedByAddress =
+                  geoFeatures.stream()
+                      .map(
+                          geoFeature ->
+                              geometryConverter.apply(
+                                  Objects.requireNonNull(
+                                      geoFeature.getGeometry().getCoordinates())))
+                      .toList();
+              var unifiedMultiPolygon =
+                  geometryConverter.unifyMultiPolygon(multiPolygonsLinkedByAddress);
+              var addressLabel = entry.getKey();
+              var properties = new HashMap<String, Object>();
+              var address = addressLabel.address();
+              var label = addressLabel.label();
+              properties.put("address", address);
+              properties.put("label", label);
+              polygonAddressDelimitation.stream()
+                  .filter(polygonAddress -> polygonAddress.address().equals(address))
+                  .findAny()
+                  .ifPresent(
+                      polygonAddress -> {
+                        var roofLimitationArea = polygonAddress.polygon().getArea();
+                        var objectTotalArea =
+                            multiPolygonsLinkedByAddress.stream()
+                                .mapToDouble(MultiPolygon::getArea)
+                                .sum();
+                        properties.put(
+                            "rate",
+                            new BigDecimal(objectTotalArea / roofLimitationArea)
+                                .setScale(2, HALF_UP)
+                                .doubleValue());
+                      });
+
+              return geoJsonMapper.getGeoFeature(
+                  geometryConverter.multiPolygonToNestedList(unifiedMultiPolygon), properties);
+            })
+        .toList();
   }
 
   private List<PolygonAddress> getPolygonAddressDelimitation(Detection detection) {
@@ -229,4 +262,6 @@ public class GeoJsonConversionAssemblyInitiatedService
         .flatMap(List::stream)
         .toList();
   }
+
+  private record AddressLabelKey(String address, String label) {}
 }

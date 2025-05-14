@@ -81,6 +81,7 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
           geoJsonMapper);
   private final File featureFileWithoutAddressProperty;
   private final File featureContainingAddressFile;
+  private final File featureFileWithAddressAndLabelProperty;
 
   @SneakyThrows
   public GeoJsonConversionAssemblyInitiatedServiceTest() {
@@ -88,6 +89,8 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
         new ClassPathResource("features/features-containing-address.json").getFile();
     this.featureFileWithoutAddressProperty =
         new ClassPathResource("features/features-ok.json").getFile();
+    this.featureFileWithAddressAndLabelProperty =
+        new ClassPathResource("features/features-containing-address-and-label.json").getFile();
   }
 
   @SneakyThrows
@@ -303,8 +306,8 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
     var geoJsonConversionJob = someConversionJob(geoJsonConversionJobId, zoneDetectionJobId);
     var conversionTask1 = someConversionTask(geoJsonConversionJobId, 1);
     var conversionTask2 = someConversionTask(geoJsonConversionJobId, 2);
-    List<Feature> featureContainingAddress = mapFeaturesFromFile(featureContainingAddressFile);
-    when(detectionMock.getMultiPolygonGeoJsonZone()).thenReturn(featureContainingAddress);
+    when(detectionMock.getMultiPolygonGeoJsonZone())
+        .thenReturn(mapFeaturesFromFile(featureContainingAddressFile));
     when(zoneDetectionJobMock.getId()).thenReturn(zoneDetectionJobId);
     when(zoneDetectionJobServiceMock.getHumanZdjFromZdjId(zoneDetectionJobId))
         .thenReturn(zoneDetectionJobMock);
@@ -322,7 +325,7 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
     when(bucketComponentMock.download(conversionTask1.getFileKey()))
         .thenReturn(featureFileWithoutAddressProperty);
     when(bucketComponentMock.download(conversionTask2.getFileKey()))
-        .thenReturn(featureContainingAddressFile);
+        .thenReturn(featureFileWithAddressAndLabelProperty);
     when(bucketComponentMock.upload(any(), any()))
         .thenReturn(new FileHash(FileHashAlgorithm.SHA256, "dummy"));
     when(detectionRepositoryMock.save(any(Detection.class)))
@@ -339,7 +342,8 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
     verify(bucketComponentMock).upload(fileCaptor.capture(), any(String.class));
     var geoJsonFinalFile = fileCaptor.getValue();
     var actualGeoJson = Files.readString(geoJsonFinalFile.toPath()).replaceAll("\\s+", "");
-    var expectedFeatureContainingAddressAsString = getFeatureAsString(featureContainingAddress);
+    var expectedFeatureContainingAddressAsString =
+        getFeatureAsString(mapFeaturesFromFile(featureFileWithAddressAndLabelProperty));
     var featureWithoutAddressAsString =
         getFeatureAsString(mapFeaturesFromFile(featureFileWithoutAddressProperty));
     assertTrue(actualGeoJson.contains(expectedFeatureContainingAddressAsString));
