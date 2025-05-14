@@ -57,7 +57,7 @@ import app.bpartners.geojobs.service.dashboard.AreaPictureApi;
 import app.bpartners.geojobs.service.dashboard.component.AreaPictureMapLayer;
 import app.bpartners.geojobs.service.detection.*;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
-import app.bpartners.geojobs.service.geojson.PointToMultiPolygonConverter;
+import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.geoserver.GeoServerConfiguration;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import app.bpartners.geojobs.utils.FeatureCreator;
@@ -144,7 +144,7 @@ class ZoneServiceTest {
           detectionMachineDetectionStatisticsComputerMock);
   RooferDetectionService rooferDetectionService = mock();
   DetectionAddressConsumer detectionAddressConsumerMock = mock();
-  PointToMultiPolygonConverter pointToMultiPolygonConverterMock = mock();
+  GeometryConverter geometryConverterMock = mock();
   FeatureConverter featureConverterMock = mock();
   AreaPictureApi areaPictureApiMock = mock();
   DetectionRoofDelimiterValidator detectionRoofDelimiterValidatorMock = mock();
@@ -174,7 +174,7 @@ class ZoneServiceTest {
           geoJsonConversionJobRepositoryMock,
           rooferDetectionService,
           detectionAddressConsumerMock,
-          pointToMultiPolygonConverterMock,
+          geometryConverterMock,
           featureConverterMock,
           areaPictureApiMock,
           geoServerConfiguration,

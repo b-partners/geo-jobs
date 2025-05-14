@@ -43,7 +43,7 @@ import app.bpartners.geojobs.service.dashboard.AreaPictureApi;
 import app.bpartners.geojobs.service.dashboard.component.AreaPictureMapLayer;
 import app.bpartners.geojobs.service.detection.*;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
-import app.bpartners.geojobs.service.geojson.PointToMultiPolygonConverter;
+import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.geoserver.GeoServerConfiguration;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -87,7 +87,7 @@ public class ZoneService {
   private final GeoJsonConversionJobRepository geoJsonConversionJobRepository;
   private final RooferDetectionService rooferDetectionService;
   private final DetectionAddressConsumer detectionAddressConsumer;
-  private final PointToMultiPolygonConverter pointToMultiPolygonConverter;
+  private final GeometryConverter geometryConverter;
   private final FeatureConverter featureConverter;
   private final AreaPictureApi areaPictureApi;
   private final GeoServerConfiguration geoServerConfiguration;
@@ -518,7 +518,7 @@ public class ZoneService {
             var y = point.getCoordinates().getLast().doubleValue();
             var restPoint = new app.bpartners.gen.annotator.endpoint.rest.model.Point().x(x).y(y);
             var jtsMultiPolygon =
-                pointToMultiPolygonConverter.apply(restPoint, DEFAULT_POLYGON_SIZE_IN_METERS);
+                geometryConverter.apply(restPoint, DEFAULT_POLYGON_SIZE_IN_METERS);
             var multiPolygonConverted = featureConverter.fromJtsMultiPolygon(jtsMultiPolygon);
             feature.getGeometry().setActualInstance(multiPolygonConverted);
           });

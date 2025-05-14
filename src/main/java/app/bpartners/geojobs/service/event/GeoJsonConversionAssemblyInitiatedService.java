@@ -23,6 +23,8 @@ import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionTask;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJson;
+import app.bpartners.geojobs.service.geojson.GeoJsonMapper;
+import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
@@ -32,7 +34,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.*;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -50,6 +52,8 @@ public class GeoJsonConversionAssemblyInitiatedService
   private final EventProducer eventProducer;
   private final ObjectMapper objectMapper;
   private final FeatureMapper featureMapper;
+  private final GeometryConverter geometryConverter;
+  private final GeoJsonMapper geoJsonMapper;
 
   @Override
   public void accept(GeoJsonConversionAssemblyInitiated event) {
@@ -100,31 +104,55 @@ public class GeoJsonConversionAssemblyInitiatedService
 
   private List<GeoJson.GeoFeature> filterGeoFeaturesByAddresses(
       List<GeoJson.GeoFeature> geoFeaturesList, List<PolygonAddress> polygonAddressDelimitation) {
-    return geoFeaturesList.stream()
-        .filter(
-            geoFeature -> {
-              var optionalPolygonAddress =
-                  polygonAddressDelimitation.stream()
-                      .filter(
-                          polygonAddress ->
-                              polygonAddress
-                                  .address()
-                                  .equals(geoFeature.getProperties().get("address")))
-                      .findAny();
-              if (optionalPolygonAddress.isEmpty()) {
-                return false;
-              }
-              var roofPolygon = optionalPolygonAddress.get().polygon();
-              var objectPolygon =
-                  featureMapper.toDomainPolygon(
-                      Objects.requireNonNull(geoFeature.getGeometry().getCoordinates()));
-              var intersection = roofPolygon.intersection(objectPolygon);
-              double intersectionArea = intersection.getArea();
-              double objectPolygonArea = objectPolygon.getArea();
-              double ratio = intersectionArea / objectPolygonArea;
-              return ratio > HALF_OF_AREA;
-            })
+    var geoFeaturesGroupByAddress =
+        geoFeaturesList.stream()
+            .filter(
+                geoFeature -> {
+                  var optionalPolygonAddress =
+                      polygonAddressDelimitation.stream()
+                          .filter(
+                              polygonAddress ->
+                                  polygonAddress
+                                      .address()
+                                      .equals(geoFeature.getProperties().get("address")))
+                          .findAny();
+                  if (optionalPolygonAddress.isEmpty()) {
+                    return false;
+                  }
+                  var roofPolygon = optionalPolygonAddress.get().polygon();
+                  var objectPolygon =
+                      featureMapper.toDomainPolygon(
+                          Objects.requireNonNull(geoFeature.getGeometry().getCoordinates()));
+                  var intersection = roofPolygon.intersection(objectPolygon);
+                  double intersectionArea = intersection.getArea();
+                  double objectPolygonArea = objectPolygon.getArea();
+                  double ratio = intersectionArea / objectPolygonArea;
+                  return ratio > HALF_OF_AREA;
+                })
+            .collect(
+                Collectors.groupingBy(
+                    geoFeature -> geoFeature.getProperties().get("address").toString()));
+
+    return geoFeaturesGroupByAddress.entrySet().stream()
+        .map(this::unifyFeatureGeometryByAddress)
         .toList();
+  }
+
+  private GeoJson.GeoFeature unifyFeatureGeometryByAddress(
+      Map.Entry<String, List<GeoJson.GeoFeature>> entry) {
+    var multiPolygonsLinkedByAddress =
+        entry.getValue().stream()
+            .map(
+                geoFeature ->
+                    geometryConverter.apply(
+                        Objects.requireNonNull(geoFeature.getGeometry().getCoordinates())))
+            .toList();
+    var unifiedMultiPolygon = geometryConverter.unifyMultiPolygon(multiPolygonsLinkedByAddress);
+    var address = entry.getKey();
+    var properties = new HashMap<String, Object>();
+    properties.put("address", address);
+    return geoJsonMapper.getGeoFeature(
+        geometryConverter.multiPolygonToNestedList(unifiedMultiPolygon), properties);
   }
 
   private List<PolygonAddress> getPolygonAddressDelimitation(Detection detection) {

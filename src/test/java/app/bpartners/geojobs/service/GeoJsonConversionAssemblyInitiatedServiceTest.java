@@ -36,6 +36,7 @@ import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.event.GeoJsonConversionAssemblyInitiatedService;
 import app.bpartners.geojobs.service.geojson.GeoJsonMapper;
 import app.bpartners.geojobs.service.geojson.GeoJsonMultiPolygonCorrector;
+import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
@@ -64,6 +65,7 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
   FileWriter fileWriter = new FileWriter(objectMapper, new ExtensionGuesser());
   FeatureMapper featureMapper = new FeatureMapper();
   GeoJsonMapper geoJsonMapper = new GeoJsonMapper(new GeoJsonMultiPolygonCorrector());
+  GeometryConverter geometryConverter = new GeometryConverter();
   GeoJsonConversionAssemblyInitiatedService subject =
       new GeoJsonConversionAssemblyInitiatedService(
           geoJsonConversionTaskRepositoryMock,
@@ -74,7 +76,9 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
           detectionRepositoryMock,
           eventProducerMock,
           objectMapper,
-          featureMapper);
+          featureMapper,
+          geometryConverter,
+          geoJsonMapper);
   private final File featureFileWithoutAddressProperty;
   private final File featureContainingAddressFile;
 

@@ -1,10 +1,11 @@
 package app.bpartners.geojobs.service.geojson;
 
 import app.bpartners.gen.annotator.endpoint.rest.model.Point;
+import app.bpartners.geojobs.model.exception.NotImplementedException;
 import java.io.StringWriter;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiFunction;
 import lombok.SneakyThrows;
 import org.geotools.geojson.geom.GeometryJSON;
 import org.locationtech.jts.geom.*;
@@ -12,11 +13,10 @@ import org.springframework.stereotype.Component;
 
 // Most ChatGPT-generated code
 @Component
-public class PointToMultiPolygonConverter implements BiFunction<Point, Double, MultiPolygon> {
+public class GeometryConverter {
   private static final double APPROXIMATE_METERS_PER_DEGREE_OF_LATITUDE = 111320.0;
   private final GeometryFactory geometryFactory = new GeometryFactory();
 
-  @Override
   public MultiPolygon apply(Point point, Double sizeInMeters) {
     var latitude = point.getX();
     var longitude = point.getY();
@@ -66,6 +66,55 @@ public class PointToMultiPolygonConverter implements BiFunction<Point, Double, M
     }
 
     return geometryFactory.createMultiPolygon(polygons);
+  }
+
+  public MultiPolygon unifyMultiPolygon(List<MultiPolygon> multiPolygons) {
+    GeometryCollection collection =
+        new GeometryCollection(multiPolygons.toArray(new Geometry[0]), geometryFactory);
+    Geometry union = collection.union();
+    // Cas 1 : déjà un MultiPolygon
+    if (union instanceof MultiPolygon) {
+      return (MultiPolygon) union;
+    }
+
+    // Cas 2 : un seul Polygon, on l'encapsule dans un MultiPolygon
+    if (union instanceof Polygon) {
+      return geometryFactory.createMultiPolygon(new Polygon[] {(Polygon) union});
+    }
+    throw new NotImplementedException("GeometryCollection not supported for now");
+  }
+
+  public List<List<List<List<BigDecimal>>>> multiPolygonToNestedList(MultiPolygon multiPolygon) {
+    List<List<List<List<BigDecimal>>>> coordinates = new ArrayList<>();
+
+    for (int i = 0; i < multiPolygon.getNumGeometries(); i++) {
+      Polygon polygon = (Polygon) multiPolygon.getGeometryN(i);
+      List<List<List<BigDecimal>>> polygonList = new ArrayList<>();
+
+      // Partie extérieure (shell)
+      polygonList.add(linearRingToList(polygon.getExteriorRing()));
+
+      // Trous éventuels (holes)
+      for (int j = 0; j < polygon.getNumInteriorRing(); j++) {
+        polygonList.add(linearRingToList(polygon.getInteriorRingN(j)));
+      }
+
+      coordinates.add(polygonList);
+    }
+
+    return coordinates;
+  }
+
+  private List<List<BigDecimal>> linearRingToList(LineString ring) {
+    List<List<BigDecimal>> coordsList = new ArrayList<>();
+
+    for (Coordinate coord : ring.getCoordinates()) {
+      List<BigDecimal> point =
+          List.of(BigDecimal.valueOf(coord.getX()), BigDecimal.valueOf(coord.getY()));
+      coordsList.add(point);
+    }
+
+    return coordsList;
   }
 
   private LinearRing toLinearRing(List<List<BigDecimal>> ringData) {

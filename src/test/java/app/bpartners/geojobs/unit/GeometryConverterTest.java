@@ -3,13 +3,13 @@ package app.bpartners.geojobs.unit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import app.bpartners.gen.annotator.endpoint.rest.model.Point;
-import app.bpartners.geojobs.service.geojson.PointToMultiPolygonConverter;
+import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 
 @Slf4j
-class PointToMultiPolygonConverterTest {
-  PointToMultiPolygonConverter subject = new PointToMultiPolygonConverter();
+class GeometryConverterTest {
+  GeometryConverter subject = new GeometryConverter();
 
   @Test
   void convert_using_70_meters_x_70_meters_in_size() {

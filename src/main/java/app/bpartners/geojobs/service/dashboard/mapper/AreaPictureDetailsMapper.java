@@ -8,7 +8,7 @@ import app.bpartners.gen.annotator.endpoint.rest.model.Point;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.service.dashboard.component.AreaPictureDetails;
 import app.bpartners.geojobs.service.dashboard.component.CrupdateAreaPictureDetails;
-import app.bpartners.geojobs.service.geojson.PointToMultiPolygonConverter;
+import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.gouv.fr.rnb.BuildingApi;
 import java.util.HashMap;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ public class AreaPictureDetailsMapper {
   private static final int DEFAULT_SHIFT_NB = 0;
   private static final int DEFAULT_POLYGON_SIZE_IN_METERS = 100;
   private static final String FEATURE_ADDRESS_PROPERTY = "address";
-  private final PointToMultiPolygonConverter pointToMultiPolygonConverter;
+  private final GeometryConverter geometryConverter;
   private final BuildingApi buildingApi;
 
   public CrupdateAreaPictureDetails toCrupdateAreaPictureDetails(String address) {
@@ -48,7 +48,7 @@ public class AreaPictureDetailsMapper {
             Feature.FeatureGeometry.builder()
                 .geometryType(MULTI_POLYGON)
                 .actualInstanceStringValue(
-                    pointToMultiPolygonConverter.writeMultiPolygonAsString(multiPolygon))
+                    geometryConverter.writeMultiPolygonAsString(multiPolygon))
                 .build())
         .properties(properties)
         .build();
@@ -63,6 +63,6 @@ public class AreaPictureDetailsMapper {
         buildingApi.getNearestBuildingAt(
             point.getX(), point.getY(), DEFAULT_POLYGON_SIZE_IN_METERS);
     var multiPolygonCoordinates = nearestBuilding.shape().getMultiPolygonCoordinates();
-    return pointToMultiPolygonConverter.apply(multiPolygonCoordinates);
+    return geometryConverter.apply(multiPolygonCoordinates);
   }
 }

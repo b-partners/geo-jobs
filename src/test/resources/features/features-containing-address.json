@@ -2,7 +2,6 @@
   {
     "type": "Feature",
     "properties": {
-      "id": "feature_address",
       "address": "1 Rue De La Vau Saint-Jacques, 79200 Parthenay, France"
     },
     "geometry": {
