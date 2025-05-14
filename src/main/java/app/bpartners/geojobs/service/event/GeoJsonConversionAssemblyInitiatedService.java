@@ -40,6 +40,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class GeoJsonConversionAssemblyInitiatedService
     implements Consumer<GeoJsonConversionAssemblyInitiated> {
+  private static final double HALF_OF_AREA = 0.5;
   private final GeoJsonConversionTaskRepository geoJsonConversionTaskRepository;
   private final GeoJsonConversionJobRepository geoJsonConversionJobRepository;
   private final BucketComponent bucketComponent;
@@ -113,10 +114,15 @@ public class GeoJsonConversionAssemblyInitiatedService
               if (optionalPolygonAddress.isEmpty()) {
                 return false;
               }
-              var polygon =
+              var roofPolygon = optionalPolygonAddress.get().polygon();
+              var objectPolygon =
                   featureMapper.toDomainPolygon(
                       Objects.requireNonNull(geoFeature.getGeometry().getCoordinates()));
-              return optionalPolygonAddress.get().polygon().contains(polygon);
+              var intersection = roofPolygon.intersection(objectPolygon);
+              double intersectionArea = intersection.getArea();
+              double objectPolygonArea = objectPolygon.getArea();
+              double ratio = intersectionArea / objectPolygonArea;
+              return ratio > HALF_OF_AREA;
             })
         .toList();
   }
