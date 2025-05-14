@@ -13,8 +13,8 @@ class GeometryConverterTest {
 
   @Test
   void convert_using_70_meters_x_70_meters_in_size() {
-    var latitude = 48.8589892;
-    var longitude = 2.2847458;
+    double latitude = 46.651930;
+    double longitude = -0.249317;
     var sizeInMeters = 70.0;
 
     var actual = subject.apply(new Point().x(latitude).y(longitude), sizeInMeters);
@@ -25,6 +25,6 @@ class GeometryConverterTest {
 
   public String expectedMultiPolygonStringValue() {
     return """
-{"type":"MultiPolygon","coordinates":[[[[2.284267912780165,48.85867479108876],[2.285223687219836,48.85867479108876],[2.285223687219836,48.85930360891125],[2.284267912780165,48.85930360891125],[2.284267912780165,48.85867479108876]]]]}""";
+{"type":"MultiPolygon","coordinates":[[[[-0.249775035790335,46.65161559108876],[-0.248858964209665,46.65161559108876],[-0.248858964209665,46.65224440891125],[-0.249775035790335,46.65224440891125],[-0.249775035790335,46.65161559108876]]]]}""";
   }
 }
