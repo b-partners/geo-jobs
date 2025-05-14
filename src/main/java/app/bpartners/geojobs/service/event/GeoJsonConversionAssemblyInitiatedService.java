@@ -178,7 +178,7 @@ public class GeoJsonConversionAssemblyInitiatedService
                         properties.put(
                             "rate",
                             new BigDecimal(objectTotalArea / roofLimitationArea)
-                                .setScale(2, HALF_UP)
+                                .setScale(4, HALF_UP)
                                 .doubleValue());
                       });
 
