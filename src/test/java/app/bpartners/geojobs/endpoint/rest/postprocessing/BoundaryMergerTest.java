@@ -31,7 +31,8 @@ class BoundaryMergerTest {
     var expectedURI = Paths.get(getClass().getResource("/ivandry/bati_merged.geojson").toURI());
     var expected = Files.readString(expectedURI);
 
-    // new Geojson(unified).saveAsFile("bati_merged.geojson");
+    // new
+    // Geojson(invert(unified)).saveAsFile("map95_v2_0.05_fusion_cimetiere_vgg_annotations_merged.geojson");
     assertEquals(expected, new Geojson(unified).stringValue());
   }
 }

@@ -25,49 +25,49 @@ public enum RouteType {
       case LINE -> road;
       case TROTTOIR -> sidewalk;
       case RISQUE_FEU,
-              MOISISSURE,
-              USURE,
-              HUMIDITE,
-              TOITURE_REVETEMENT,
-              ESPACE_VERT_PARKING,
-              PANNEAU_PHOTOVOLTAIQUE,
-              PISCINE,
-              ARBRE,
-              ESPACE_VERT,
-              VOIE_CARROSSABLE,
-              PARKING,
-              MOISISSURE_CLAIR,
-              MOISISSURE_COULEUR,
-              MOISISSURE_NOIRCIE,
-              USURE_IMPORTANTE,
-              USURE_LEGER,
-              FISSURE_CASSURE,
-              OBSTACLE,
-              CHEMINEE,
-              HUMIDITE_CLAIR,
-              HUMIDITE_INTENSE,
-              VELUX,
-              BATI_TUILES,
-              BATI_BETON,
-              BATI_ARDOISE,
-              BATI_AUTRES ->
-          throw new IllegalArgumentException("Unsupported continuation on " + detectableType);
+          MOISISSURE,
+          USURE,
+          HUMIDITE,
+          TOITURE_REVETEMENT,
+          ESPACE_VERT_PARKING,
+          PANNEAU_PHOTOVOLTAIQUE,
+          PISCINE,
+          ARBRE,
+          ESPACE_VERT,
+          VOIE_CARROSSABLE,
+          PARKING,
+          MOISISSURE_CLAIR,
+          MOISISSURE_COULEUR,
+          MOISISSURE_NOIRCIE,
+          USURE_IMPORTANTE,
+          USURE_LEGER,
+          FISSURE_CASSURE,
+          OBSTACLE,
+          CHEMINEE,
+          HUMIDITE_CLAIR,
+          HUMIDITE_INTENSE,
+          VELUX,
+          BATI_TUILES,
+          BATI_BETON,
+          BATI_ARDOISE,
+          BATI_AUTRES -> throw new IllegalArgumentException(
+          "Unsupported continuation on " + detectableType);
     };
   }
 
   public static RouteType routeTypeFrom(String label) {
     return switch (label.toLowerCase()) {
       case "pathway",
-              "passage_pieton",
-              "solar_panel",
-              "bati",
-              "stationnement",
-              "tree",
-              "green_space",
-              "parking",
-              "place_standard",
-              "pool" ->
-          pathway;
+          "passage_pieton",
+          "solar_panel",
+          "bati",
+          "stationnement",
+          "tree",
+          "green_space",
+          "parking",
+          "place_standard",
+          "tombe",
+          "pool" -> pathway;
       case "line" -> road;
       case "sidewalk" -> sidewalk;
       default -> throw new IllegalArgumentException("Unsupported continuation on " + label);

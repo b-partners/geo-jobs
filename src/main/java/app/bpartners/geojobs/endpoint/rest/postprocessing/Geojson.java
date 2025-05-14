@@ -64,9 +64,12 @@ public class Geojson {
 
   private static Polygon getPolygon(SimpleFeature feature) {
     var userData = new HashMap<String, Object>();
-    userData.put("filename", feature.getProperty("filename").getValue());
+    var confidence =
+        feature.getProperty("confidence") == null
+            ? null
+            : feature.getProperty("confidence").getValue();
     userData.put("label", feature.getProperty("label").getValue());
-    userData.put("confidence", feature.getProperty("confidence").getValue());
+    userData.put("confidence", confidence);
     Polygon polygon;
     try {
       polygon = (Polygon) feature.getDefaultGeometry();
@@ -93,7 +96,7 @@ public class Geojson {
     List<Map<String, Object>> features = new ArrayList<>();
 
     for (Polygon polygon : wktPolygons) {
-      var properties = (HashMap<String, String>) polygon.getUserData();
+      var userData = (HashMap<String, String>) polygon.getUserData();
       // Convert JTS Polygon to GeoJSON format
       List<List<List<Double>>> coordinates = new ArrayList<>();
       List<List<Double>> outerRing = new ArrayList<>();
@@ -120,7 +123,7 @@ public class Geojson {
       geometry.put("coordinates", coordinates);
 
       feature.put("geometry", geometry);
-      feature.put("properties", properties); // Empty properties
+      feature.put("properties", userData); // Empty userData
 
       features.add(feature);
     }
