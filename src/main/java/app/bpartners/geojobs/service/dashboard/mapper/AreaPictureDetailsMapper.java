@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class AreaPictureDetailsMapper {
   private static final int DEFAULT_SHIFT_NB = 0;
-  private static final int DEFAULT_POLYGON_SIZE_IN_METERS = 30;
+  private static final int DEFAULT_POLYGON_SIZE_IN_METERS = 100;
   private static final String FEATURE_ADDRESS_PROPERTY = "address";
   private final PointToMultiPolygonConverter pointToMultiPolygonConverter;
   private final BuildingApi buildingApi;
