@@ -81,8 +81,8 @@ public class PointToMultiPolygonConverter implements BiFunction<Point, Double, M
   }
 
   @SneakyThrows
-  public String generateSquareMultiPolygon(MultiPolygon multiPolygon) {
-    GeometryJSON geometryJSON = new GeometryJSON();
+  public String writeMultiPolygonAsString(MultiPolygon multiPolygon) {
+    GeometryJSON geometryJSON = new GeometryJSON(15);
     StringWriter writer = new StringWriter();
     geometryJSON.write(multiPolygon, writer);
     return writer.toString();

@@ -48,7 +48,7 @@ public class AreaPictureDetailsMapper {
             Feature.FeatureGeometry.builder()
                 .geometryType(MULTI_POLYGON)
                 .actualInstanceStringValue(
-                    pointToMultiPolygonConverter.generateSquareMultiPolygon(multiPolygon))
+                    pointToMultiPolygonConverter.writeMultiPolygonAsString(multiPolygon))
                 .build())
         .properties(properties)
         .build();
