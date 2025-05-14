@@ -11,16 +11,18 @@ import lombok.*;
 @NoArgsConstructor
 @ToString
 public class TileDetectionTaskCreated extends TaskCreated<TileDetectionTask> {
+  private String zoneDetectionJobId;
+  private String address;
+  private List<DetectableObjectConfiguration> detectableObjectConfigurations;
+
   public TileDetectionTaskCreated(
       String zoneDetectionJobId,
       TileDetectionTask task,
-      List<DetectableObjectConfiguration> detectableObjectConfigurations) {
+      List<DetectableObjectConfiguration> detectableObjectConfigurations,
+      String address) {
     super(task);
     this.zoneDetectionJobId = zoneDetectionJobId;
     this.detectableObjectConfigurations = detectableObjectConfigurations;
+    this.address = address;
   }
-
-  private String zoneDetectionJobId;
-
-  private List<DetectableObjectConfiguration> detectableObjectConfigurations;
 }

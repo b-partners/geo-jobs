@@ -57,6 +57,16 @@ public class ParcelDetectionTask extends Task implements Serializable {
     return chosenParcel;
   }
 
+  public String getAddress() {
+    if (getParcel() == null
+        || getParcel().getParcelContent() == null
+        || getParcel().getParcelContent().getFeature() == null
+        || getParcel().getParcelContent().getFeature().getProperties() == null
+        || getParcel().getParcelContent().getFeature().getProperties().get("address") == null)
+      return null;
+    return (String) getParcel().getParcelContent().getFeature().getProperties().get("address");
+  }
+
   @Override
   public GeoJobType getJobType() {
     return DETECTION;

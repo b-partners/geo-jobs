@@ -24,6 +24,7 @@ public class TileDetectionTaskCreatedService
   public void accept(TileDetectionTaskCreated event) {
     event.getTask().setDetectableObjectConfigurations(event.getDetectableObjectConfigurations());
     event.getTask().setZoneDetectionJobId(event.getZoneDetectionJobId());
+    event.getTask().setAddress(event.getAddress());
     super.accept(event);
   }
 }

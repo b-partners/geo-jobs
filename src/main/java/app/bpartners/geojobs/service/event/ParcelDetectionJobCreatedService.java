@@ -38,6 +38,7 @@ public class ParcelDetectionJobCreatedService implements Consumer<ParcelDetectio
                 .map(Detection::getDetectableObjectConfigurations)
                 .orElseGet(List::of))
             : persistedObjectConfigurations;
+    var address = parcelDetectionJob.getAddress();
 
     eventProducer.accept(
         List.of(new ParcelDetectionStatusRecomputingSubmitted(parcelDetectionJob.getId())));
@@ -46,6 +47,6 @@ public class ParcelDetectionJobCreatedService implements Consumer<ParcelDetectio
             eventProducer.accept(
                 List.of(
                     new TileDetectionTaskCreated(
-                        zdjId, tileDetectionTask, detectableObjectConfigurations))));
+                        zdjId, tileDetectionTask, detectableObjectConfigurations, address))));
   }
 }

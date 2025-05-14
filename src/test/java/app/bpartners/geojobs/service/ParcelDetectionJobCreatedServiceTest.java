@@ -66,11 +66,11 @@ public class ParcelDetectionJobCreatedServiceTest {
     assertTrue(
         event1.contains(
             new TileDetectionTaskCreated(
-                zoneDetectionJobId, aTileDetectionTask("task1"), objectConfigurations)));
+                zoneDetectionJobId, aTileDetectionTask("task1"), objectConfigurations, null)));
     assertTrue(
         event2.contains(
             new TileDetectionTaskCreated(
-                zoneDetectionJobId, aTileDetectionTask("task2"), objectConfigurations)));
+                zoneDetectionJobId, aTileDetectionTask("task2"), objectConfigurations, null)));
   }
 
   @Test
@@ -106,11 +106,11 @@ public class ParcelDetectionJobCreatedServiceTest {
     assertTrue(
         event1.contains(
             new TileDetectionTaskCreated(
-                zoneDetectionJobId, aTileDetectionTask("task1"), objectConfigurations)));
+                zoneDetectionJobId, aTileDetectionTask("task1"), objectConfigurations, null)));
     assertTrue(
         event2.contains(
             new TileDetectionTaskCreated(
-                zoneDetectionJobId, aTileDetectionTask("task2"), objectConfigurations)));
+                zoneDetectionJobId, aTileDetectionTask("task2"), objectConfigurations, null)));
   }
 
   private TileDetectionTask aTileDetectionTask(String id) {
