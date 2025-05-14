@@ -66,6 +66,8 @@ public class GeoJsonMapper {
       int imageWidth,
       DetectedObject object,
       List<List<List<List<BigDecimal>>>> geometryCoordinates) {
+    List<List<List<List<BigDecimal>>>> multipolygonCoordinates =
+        getMultipolygonCoordinates(xTile, yTile, zoom, imageWidth, geometryCoordinates);
     var objectFeature = object.getFeature();
     var properties =
         objectFeature.getProperties() == null
@@ -75,52 +77,63 @@ public class GeoJsonMapper {
         object.getComputedConfidence() != null ? object.getComputedConfidence().toString() : null;
     properties.put("confidence", confidence);
     properties.put("label", object.getDetectedObjectType().getDetectableType().name());
+    return getGeoFeature(multipolygonCoordinates, properties);
+  }
+
+  public GeoJson.GeoFeature getGeoFeature(
+      List<List<List<List<BigDecimal>>>> multipolygonCoordinates, Map<String, Object> properties) {
     var multipolygon = new MultiPolygon();
-    List<List<List<List<BigDecimal>>>> multipolygonCoordinates =
-        geometryCoordinates.stream()
-            .map(
-                xyzMultiPolygon ->
-                    xyzMultiPolygon.stream()
-                        .map(
-                            xyzPolygon -> {
-                              List<List<BigDecimal>> geoPolygon =
-                                  xyzPolygon.stream()
-                                      .map(
-                                          points -> {
-                                            if (points.isEmpty()) {
-                                              return new ArrayList<BigDecimal>();
-                                            }
-                                            var x = points.getFirst();
-                                            var y = points.getLast();
-                                            if (xTile == 0 && yTile == 0) {
-                                              return List.of(x, y);
-                                            }
-                                            return toGeographicalCoordinates(
-                                                xTile,
-                                                yTile,
-                                                x.doubleValue(),
-                                                y.doubleValue(),
-                                                zoom,
-                                                imageWidth);
-                                          })
-                                      .toList();
-                              if (geoPolygon.isEmpty()) {
-                                return geoPolygon;
-                              }
-                              List<BigDecimal> first = geoPolygon.getFirst();
-                              List<BigDecimal> last = geoPolygon.getLast();
-                              if (!first.equals(last)) {
-                                List<List<BigDecimal>> closedGeoPolygon =
-                                    new ArrayList<>(geoPolygon);
-                                closedGeoPolygon.add(new ArrayList<>(first));
-                                return closedGeoPolygon;
-                              }
-                              return geoPolygon;
-                            })
-                        .toList())
-            .toList();
     multipolygon.setType(MULTI_POLYGON);
     multipolygon.setCoordinates(multipolygonCoordinates);
     return new GeoJson.GeoFeature(properties, multipolygon);
+  }
+
+  private List<List<List<List<BigDecimal>>>> getMultipolygonCoordinates(
+      int xTile,
+      int yTile,
+      int zoom,
+      int imageWidth,
+      List<List<List<List<BigDecimal>>>> geometryCoordinates) {
+    return geometryCoordinates.stream()
+        .map(
+            xyzMultiPolygon ->
+                xyzMultiPolygon.stream()
+                    .map(
+                        xyzPolygon -> {
+                          List<List<BigDecimal>> geoPolygon =
+                              xyzPolygon.stream()
+                                  .map(
+                                      points -> {
+                                        if (points.isEmpty()) {
+                                          return new ArrayList<BigDecimal>();
+                                        }
+                                        var x = points.getFirst();
+                                        var y = points.getLast();
+                                        if (xTile == 0 && yTile == 0) {
+                                          return List.of(x, y);
+                                        }
+                                        return toGeographicalCoordinates(
+                                            xTile,
+                                            yTile,
+                                            x.doubleValue(),
+                                            y.doubleValue(),
+                                            zoom,
+                                            imageWidth);
+                                      })
+                                  .toList();
+                          if (geoPolygon.isEmpty()) {
+                            return geoPolygon;
+                          }
+                          List<BigDecimal> first = geoPolygon.getFirst();
+                          List<BigDecimal> last = geoPolygon.getLast();
+                          if (!first.equals(last)) {
+                            List<List<BigDecimal>> closedGeoPolygon = new ArrayList<>(geoPolygon);
+                            closedGeoPolygon.add(new ArrayList<>(first));
+                            return closedGeoPolygon;
+                          }
+                          return geoPolygon;
+                        })
+                    .toList())
+        .toList();
   }
 }
