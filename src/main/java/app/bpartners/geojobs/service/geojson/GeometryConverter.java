@@ -18,8 +18,8 @@ public class GeometryConverter {
   private final GeometryFactory geometryFactory = new GeometryFactory();
 
   public MultiPolygon apply(Point point, Double sizeInMeters) {
-    var latitude = point.getX();
-    var longitude = point.getY();
+    var longitude = point.getX();
+    var latitude = point.getY();
 
     // 1. Convert meters to degrees
     double halfSize = sizeInMeters / 2.0;

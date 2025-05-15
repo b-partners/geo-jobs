@@ -17,7 +17,7 @@ class GeometryConverterTest {
     double longitude = -0.249317;
     var sizeInMeters = 70.0;
 
-    var actual = subject.apply(new Point().x(latitude).y(longitude), sizeInMeters);
+    var actual = subject.apply(new Point().x(longitude).y(latitude), sizeInMeters);
     var actualString = subject.writeMultiPolygonAsString(actual);
 
     assertEquals(expectedMultiPolygonStringValue(), actualString);
