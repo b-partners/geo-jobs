@@ -32,6 +32,7 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
     var detectableObjectConfigurations = tileDetectionTask.getDetectableObjectConfigurations();
     var zoneDetectionJobId = tileDetectionTask.getZoneDetectionJobId();
     var parcelJobId = tileDetectionTask.getJobId();
+    var address = tileDetectionTask.getAddress();
     File mask = null;
     if (isRooferModel(detectableObjectConfigurations)) {
       mask = maskCreator.createTempMask();
@@ -46,6 +47,17 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
             tileDetectionTask.getParcelId(),
             zoneDetectionJobId,
             parcelJobId);
+
+    if (machineDetectedTile.getDetectedObjects() != null) {
+      machineDetectedTile
+          .getDetectedObjects()
+          .forEach(
+              detectedObject -> {
+                if (address != null) {
+                  detectedObject.getFeature().getProperties().put("address", address);
+                }
+              });
+    }
     log.info(
         "[DEBUG] TileDetectionTaskCreatedConsumer to save tile {}", machineDetectedTile.describe());
     machineDetectedTileRepository.save(machineDetectedTile);

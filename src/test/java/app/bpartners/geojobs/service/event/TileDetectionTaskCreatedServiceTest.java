@@ -59,9 +59,8 @@ class TileDetectionTaskCreatedServiceTest {
                                     .build()))
                         .build(),
                     List.of(
-                        DetectableObjectConfiguration.builder()
-                            .objectType(PASSAGE_PIETON)
-                            .build()))));
+                        DetectableObjectConfiguration.builder().objectType(PASSAGE_PIETON).build()),
+                    null)));
     verify(tileDetectionTaskStatusServiceMock, only()).succeed(any());
     verify(tileDetectionTaskRepositoryMock, only()).save(any());
   }
@@ -85,7 +84,8 @@ class TileDetectionTaskCreatedServiceTest {
         new TileDetectionTaskCreated(
             "zdjId",
             TileDetectionTask.builder().build(),
-            List.of(DetectableObjectConfiguration.builder().objectType(PASSAGE_PIETON).build()));
+            List.of(DetectableObjectConfiguration.builder().objectType(PASSAGE_PIETON).build()),
+            null);
 
     assertThrows(ApiException.class, () -> subject.accept(expectedTileDetectionTaskCreated));
     verify(tileDetectionTaskStatusServiceMock, never()).succeed(any());

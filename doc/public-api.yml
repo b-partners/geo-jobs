@@ -108,6 +108,18 @@ paths:
           schema:
             type: string
           required: true
+        - in: query
+          name: isExtended
+          schema:
+            type: boolean
+            default: false
+          required: false
+        - in: query
+          name: shiftNb
+          schema:
+            type: integer
+            default: 0
+          required: false
       responses:
         200:
           description: Image of provided address

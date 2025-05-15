@@ -3,13 +3,13 @@ package app.bpartners.geojobs.unit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import app.bpartners.gen.annotator.endpoint.rest.model.Point;
-import app.bpartners.geojobs.service.geojson.PointToMultiPolygonConverter;
+import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 
 @Slf4j
-class PointToMultiPolygonConverterTest {
-  PointToMultiPolygonConverter subject = new PointToMultiPolygonConverter();
+class GeometryConverterTest {
+  GeometryConverter subject = new GeometryConverter();
 
   @Test
   void convert_using_70_meters_x_70_meters_in_size() {
@@ -18,13 +18,13 @@ class PointToMultiPolygonConverterTest {
     var sizeInMeters = 70.0;
 
     var actual = subject.apply(new Point().x(latitude).y(longitude), sizeInMeters);
-    var actualString = subject.generateSquareMultiPolygon(actual);
+    var actualString = subject.writeMultiPolygonAsString(actual);
 
     assertEquals(expectedMultiPolygonStringValue(), actualString);
   }
 
   public String expectedMultiPolygonStringValue() {
     return """
-{"type":"MultiPolygon","coordinates":[[[[2.2843,48.8587],[2.2852,48.8587],[2.2852,48.8593],[2.2843,48.8593],[2.2843,48.8587]]]]}""";
+{"type":"MultiPolygon","coordinates":[[[[2.284267912780165,48.85867479108876],[2.285223687219836,48.85867479108876],[2.285223687219836,48.85930360891125],[2.284267912780165,48.85930360891125],[2.284267912780165,48.85867479108876]]]]}""";
   }
 }

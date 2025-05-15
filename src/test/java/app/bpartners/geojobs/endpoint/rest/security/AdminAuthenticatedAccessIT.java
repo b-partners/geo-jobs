@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.endpoint.rest.security;
 
 import static app.bpartners.geojobs.endpoint.rest.security.authenticator.ApiKeyAuthenticator.API_KEY_HEADER;
+import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -17,8 +18,11 @@ import app.bpartners.geojobs.endpoint.rest.controller.ZoneTilingController;
 import app.bpartners.geojobs.endpoint.rest.model.CreateZoneTilingJob;
 import app.bpartners.geojobs.endpoint.rest.model.ZoneDetectionJob;
 import app.bpartners.geojobs.endpoint.rest.model.ZoneTilingJob;
+import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
+import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +31,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 
 public class AdminAuthenticatedAccessIT extends FacadeIT {
 
+  private static final String ADMIN_API_KEY = "the-admin-api-key";
   @LocalServerPort private int port;
 
   @Autowired ObjectMapper om;
@@ -35,6 +40,7 @@ public class AdminAuthenticatedAccessIT extends FacadeIT {
   DetectionApi detectionApi;
   MachineDetectionApi machineDetectionApi;
 
+  @MockBean CommunityAuthorizationRepository caRepositoryMock;
   @MockBean ZoneTilingController tilingController;
   @MockBean ZoneDetectionController detectionController;
 
@@ -42,7 +48,7 @@ public class AdminAuthenticatedAccessIT extends FacadeIT {
   void setUp() {
     var authenticatedClient = new ApiClient();
     authenticatedClient.setRequestInterceptor(
-        builder -> builder.header(API_KEY_HEADER, "the-admin-api-key"));
+        builder -> builder.header(API_KEY_HEADER, ADMIN_API_KEY));
     authenticatedClient.setScheme("http");
     authenticatedClient.setHost("localhost");
     authenticatedClient.setPort(port);
@@ -51,6 +57,10 @@ public class AdminAuthenticatedAccessIT extends FacadeIT {
     tilingApi = new TilingApi(authenticatedClient);
     detectionApi = new DetectionApi(authenticatedClient);
     machineDetectionApi = new MachineDetectionApi(authenticatedClient);
+    when(caRepositoryMock.findByApiKey(ADMIN_API_KEY))
+        .thenReturn(
+            Optional.of(
+                CommunityAuthorization.builder().isApiKeyRevoked(false).role(ROLE_ADMIN).build()));
   }
 
   @Test

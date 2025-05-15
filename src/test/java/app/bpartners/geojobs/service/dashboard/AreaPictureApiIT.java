@@ -35,12 +35,7 @@ class AreaPictureApiIT {
     var address = "1 Rue Benjamin Franklin, 75016 Paris, France";
     var crupdateAreaPictureDetails =
         new CrupdateAreaPictureDetails(
-            address,
-            0,
-            fileId,
-            address + "-" + hashCode(),
-            "944aa3af-4360-4686-a606-2d580c56449a",
-            HOUSES_0);
+            address, -1, true, fileId, address + "-" + randomUUID(), null, HOUSES_0);
 
     var actual =
         subject.crupdateAreaPictureDetails(areaPictureId, crupdateAreaPictureDetails, apiKey);
@@ -69,7 +64,7 @@ class AreaPictureApiIT {
     var address = "25 Rue, mon adresse inexistante";
     var crupdateAreaPictureDetails =
         new CrupdateAreaPictureDetails(
-            address, 0, fileId, address + "-" + hashCode(), null, HOUSES_0);
+            address, 0, null, fileId, address + "-" + hashCode(), null, HOUSES_0);
 
     var actual =
         assertThrows(

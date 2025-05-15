@@ -2,6 +2,7 @@ package app.bpartners.geojobs.endpoint.rest.security;
 
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static app.bpartners.geojobs.endpoint.rest.security.authenticator.ApiKeyAuthenticator.API_KEY_HEADER;
+import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_COMMUNITY;
 import static app.bpartners.geojobs.repository.model.SurfaceUnit.SQUARE_DEGREE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.ARBRE;
 import static java.util.UUID.randomUUID;
@@ -107,6 +108,7 @@ class CommunityAuthenticatedAccessIT extends FacadeIT {
         .authorizedZones(List.of())
         .usedSurfaces(List.of())
         .detectableObjectTypes(List.of(communityDetectableType))
+        .role(ROLE_COMMUNITY)
         .build();
   }
 }

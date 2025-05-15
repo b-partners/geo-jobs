@@ -35,6 +35,7 @@ public class TileDetectionTask extends Task implements Serializable {
   @Transient private List<DetectableObjectConfiguration> detectableObjectConfigurations;
 
   @Transient private String zoneDetectionJobId;
+  @Transient private String address;
 
   public TileDetectionTask(
       String id,

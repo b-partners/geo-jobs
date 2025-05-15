@@ -34,14 +34,24 @@ public class ImageController {
   }
 
   @GetMapping("/image")
-  public ImageOfAddress getImage(@RequestParam String address) {
+  public ImageOfAddress getImage(
+      @RequestParam String address,
+      @RequestParam(required = false) Boolean isExtended,
+      @RequestParam(required = false, name = "shiftNb") Integer providedShiftNb) {
     var areaPictureId = randomUUID().toString();
     var fileId = randomUUID().toString();
     try {
+      var shiftNb = providedShiftNb == null ? 0 : providedShiftNb;
       areaPictureApi.crupdateAreaPictureDetails(
           areaPictureId,
           new CrupdateAreaPictureDetails(
-              address, 0, fileId, address + hashCode(), null, ZoneTilingJob.ZoomLevelEnum.HOUSES_0),
+              address,
+              shiftNb,
+              isExtended,
+              fileId,
+              address + randomUUID(),
+              null,
+              ZoneTilingJob.ZoomLevelEnum.HOUSES_0),
           adminApiKey);
       byte[] imageAsBytes = fileApi.downloadOrUploadFile(fileId, AREA_PICTURE, adminApiKey);
       return new ImageOfAddress()

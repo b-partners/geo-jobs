@@ -4,33 +4,47 @@ import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_BUCKET_FOLDER;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_EXTENSION;
+import static java.math.RoundingMode.HALF_UP;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionAssemblyInitiated;
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionAssemblySucceeded;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
+import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.model.exception.NotFoundException;
+import app.bpartners.geojobs.model.geometry.polygon.PolygonAddress;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.GeoJsonConversionJobRepository;
 import app.bpartners.geojobs.repository.GeoJsonConversionTaskRepository;
+import app.bpartners.geojobs.repository.model.detection.Detection;
+import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
+import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionTask;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJson;
+import app.bpartners.geojobs.service.geojson.GeoJsonMapper;
+import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.locationtech.jts.geom.*;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GeoJsonConversionAssemblyInitiatedService
     implements Consumer<GeoJsonConversionAssemblyInitiated> {
+  private static final double HALF_OF_AREA = 0.5;
   private final GeoJsonConversionTaskRepository geoJsonConversionTaskRepository;
   private final GeoJsonConversionJobRepository geoJsonConversionJobRepository;
   private final BucketComponent bucketComponent;
@@ -39,6 +53,9 @@ public class GeoJsonConversionAssemblyInitiatedService
   private final DetectionRepository detectionRepository;
   private final EventProducer eventProducer;
   private final ObjectMapper objectMapper;
+  private final FeatureMapper featureMapper;
+  private final GeometryConverter geometryConverter;
+  private final GeoJsonMapper geoJsonMapper;
 
   @Override
   public void accept(GeoJsonConversionAssemblyInitiated event) {
@@ -48,15 +65,19 @@ public class GeoJsonConversionAssemblyInitiatedService
         geoJsonConversionJobRepository.findById(conversionJobId).orElseThrow();
     var zoneDetectionJob =
         zoneDetectionJobService.findById(geoJsonConversionJob.getZoneDetectionJobId());
+    var detection = getDetection(zoneDetectionJob);
+
+    var polygonAddressDelimitation = getPolygonAddressDelimitation(detection);
+    var geoFeaturesList = getGeoFeaturesList(conversionTasks);
+    var geoFeaturesFilteredByAddresses =
+        filterGeoFeaturesByAddresses(geoFeaturesList, polygonAddressDelimitation);
+
+    var geoJson =
+        new GeoJson(
+            geoFeaturesFilteredByAddresses.isEmpty()
+                ? geoFeaturesList
+                : geoFeaturesFilteredByAddresses);
     var outputFileName = zoneDetectionJob.getZoneName() + "-final" + GEO_JSON_EXTENSION;
-
-    var partialConvertedGeoJsonFiles =
-        conversionTasks.stream()
-            .map(conversionTask -> bucketComponent.download(conversionTask.getFileKey()))
-            .toList();
-
-    var geoFeaturesList = getGeoFeaturesList(partialConvertedGeoJsonFiles);
-    var geoJson = new GeoJson(geoFeaturesList);
     var geoJsonFinalFile =
         fileWriter.write(
             geoJson.getStringValue().getBytes(StandardCharsets.UTF_8),
@@ -71,26 +92,10 @@ public class GeoJsonConversionAssemblyInitiatedService
         geoJsonConversionJobRepository.save(
             geoJsonConversionJob.toBuilder().fileKey(combinedFileKey).build());
     if (zoneDetectionJob.isFinished()) {
-      var humanZDJ = zoneDetectionJobService.getHumanZdjFromZdjId(zoneDetectionJob.getId());
-      var machineZDJ = zoneDetectionJobService.getMachineZdjFromZdjId(zoneDetectionJob.getId());
-      var detection =
-          detectionRepository
-              .findByZdjId(humanZDJ.getId())
-              .orElseGet(
-                  () -> {
-                    var optionalDetectionFromMachineZDJ =
-                        detectionRepository.findByZdjId(machineZDJ.getId());
-                    if (optionalDetectionFromMachineZDJ.isPresent()) {
-                      return optionalDetectionFromMachineZDJ.orElseThrow();
-                    }
-                    throw new NotFoundException(
-                        "Any detection found associated to ZDJ(id="
-                            + zoneDetectionJob.getId()
-                            + ")");
-                  });
-      detectionRepository.save(
-          detection.toBuilder().geojsonS3FileKey(savedConversionJob.getFileKey()).build());
-
+      if (detection != null) {
+        detectionRepository.save(
+            detection.toBuilder().geojsonS3FileKey(savedConversionJob.getFileKey()).build());
+      }
       eventProducer.accept(
           List.of(
               GeoJsonConversionAssemblySucceeded.builder()
@@ -99,7 +104,150 @@ public class GeoJsonConversionAssemblyInitiatedService
     }
   }
 
-  private List<GeoJson.GeoFeature> getGeoFeaturesList(List<File> partialConvertedGeoJsonFiles) {
+  private List<GeoJson.GeoFeature> filterGeoFeaturesByAddresses(
+      List<GeoJson.GeoFeature> geoFeaturesList, List<PolygonAddress> polygonAddressDelimitation) {
+    var geoFeaturesGroupByAddress =
+        geoFeaturesList.stream()
+            .filter(
+                geoFeature -> {
+                  var optionalPolygonAddress =
+                      polygonAddressDelimitation.stream()
+                          .filter(
+                              polygonAddress ->
+                                  polygonAddress
+                                      .address()
+                                      .equals(geoFeature.getProperties().get("address")))
+                          .findAny();
+                  if (optionalPolygonAddress.isEmpty()) {
+                    return false;
+                  }
+                  var roofPolygon = optionalPolygonAddress.get().polygon();
+                  var objectPolygon =
+                      featureMapper.toDomainPolygon(
+                          Objects.requireNonNull(geoFeature.getGeometry().getCoordinates()));
+                  var intersection = roofPolygon.intersection(objectPolygon);
+                  double intersectionArea = intersection.getArea();
+                  double objectPolygonArea = objectPolygon.getArea();
+                  double ratio = intersectionArea / objectPolygonArea;
+                  return ratio > HALF_OF_AREA;
+                })
+            .collect(
+                Collectors.groupingBy(
+                    geoFeature ->
+                        new AddressLabelKey(
+                            geoFeature.getProperties().get("address").toString(),
+                            geoFeature.getProperties().get("label").toString())));
+
+    return unifyFeatureGeometryByAddressAndLabel(
+        polygonAddressDelimitation, geoFeaturesGroupByAddress);
+  }
+
+  private List<GeoJson.GeoFeature> unifyFeatureGeometryByAddressAndLabel(
+      List<PolygonAddress> polygonAddressDelimitation,
+      Map<AddressLabelKey, List<GeoJson.GeoFeature>> geoFeaturesGroupByAddress) {
+    return geoFeaturesGroupByAddress.entrySet().stream()
+        .map(
+            entry -> {
+              var geoFeatures = entry.getValue();
+              var multiPolygonsLinkedByAddress =
+                  geoFeatures.stream()
+                      .map(
+                          geoFeature ->
+                              geometryConverter.apply(
+                                  Objects.requireNonNull(
+                                      geoFeature.getGeometry().getCoordinates())))
+                      .toList();
+              var unifiedMultiPolygon =
+                  geometryConverter.unifyMultiPolygon(multiPolygonsLinkedByAddress);
+              var addressLabel = entry.getKey();
+              var properties = new HashMap<String, Object>();
+              var address = addressLabel.address();
+              var label = addressLabel.label();
+              properties.put("address", address);
+              properties.put("label", label);
+              polygonAddressDelimitation.stream()
+                  .filter(polygonAddress -> polygonAddress.address().equals(address))
+                  .findAny()
+                  .ifPresent(
+                      polygonAddress -> {
+                        var roofLimitationArea = polygonAddress.polygon().getArea();
+                        var objectTotalArea =
+                            multiPolygonsLinkedByAddress.stream()
+                                .mapToDouble(MultiPolygon::getArea)
+                                .sum();
+                        properties.put(
+                            "rate",
+                            new BigDecimal(objectTotalArea / roofLimitationArea)
+                                .setScale(4, HALF_UP)
+                                .doubleValue());
+                      });
+
+              return geoJsonMapper.getGeoFeature(
+                  geometryConverter.multiPolygonToNestedList(unifiedMultiPolygon), properties);
+            })
+        .toList();
+  }
+
+  private List<PolygonAddress> getPolygonAddressDelimitation(Detection detection) {
+    if (detection == null
+        || detection.getMultiPolygonGeoJsonZone() == null
+        || detection.getMultiPolygonGeoJsonZone().isEmpty()) {
+      return Collections.emptyList();
+    }
+    Map<String, List<Feature>> featureWithAddresses =
+        detection.getMultiPolygonGeoJsonZone().stream()
+            .filter(
+                feature ->
+                    feature.getProperties() != null
+                        && feature.getProperties().get("address") != null)
+            .collect(
+                Collectors.groupingBy(
+                    feature -> feature.getProperties().get("address").toString()));
+
+    return featureWithAddresses.entrySet().stream()
+        .map(
+            stringListEntry -> {
+              var address = stringListEntry.getKey();
+              var polygon =
+                  stringListEntry.getValue().stream()
+                      .map(featureMapper::toDomain)
+                      .reduce(((acc, p) -> (Polygon) p.union(acc)))
+                      .orElseThrow(
+                          () ->
+                              new NotFoundException(
+                                  "No polygon delimitation found for address :" + address));
+              return new PolygonAddress(address, polygon);
+            })
+        .toList();
+  }
+
+  private Detection getDetection(ZoneDetectionJob zoneDetectionJob) {
+    ZoneDetectionJob machineZDJ =
+        zoneDetectionJobService.getMachineZdjFromZdjId(zoneDetectionJob.getId());
+    ZoneDetectionJob humanZDJ;
+    try {
+      humanZDJ = zoneDetectionJobService.getHumanZdjFromZdjId(zoneDetectionJob.getId());
+    } catch (IllegalArgumentException ignored) {
+      humanZDJ = null;
+    }
+    return detectionRepository
+        .findByZdjId(humanZDJ == null ? null : humanZDJ.getId())
+        .orElseGet(
+            () -> {
+              var optionalDetectionFromMachineZDJ =
+                  detectionRepository.findByZdjId(machineZDJ.getId());
+              if (optionalDetectionFromMachineZDJ.isPresent()) {
+                return optionalDetectionFromMachineZDJ.orElseThrow();
+              }
+              return null;
+            });
+  }
+
+  private List<GeoJson.GeoFeature> getGeoFeaturesList(List<GeoJsonConversionTask> conversionTasks) {
+    var partialConvertedGeoJsonFiles =
+        conversionTasks.stream()
+            .map(conversionTask -> bucketComponent.download(conversionTask.getFileKey()))
+            .toList();
     return partialConvertedGeoJsonFiles.stream()
         .map(
             file -> {
@@ -114,4 +262,6 @@ public class GeoJsonConversionAssemblyInitiatedService
         .flatMap(List::stream)
         .toList();
   }
+
+  private record AddressLabelKey(String address, String label) {}
 }

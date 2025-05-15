@@ -7,6 +7,7 @@ import static java.lang.Math.atan;
 import static java.lang.Math.pow;
 import static java.lang.Math.sinh;
 import static java.lang.Math.toDegrees;
+import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.geojobs.endpoint.rest.model.DetectedObject;
 import app.bpartners.geojobs.endpoint.rest.model.DetectedTile;
@@ -15,11 +16,7 @@ import app.bpartners.geojobs.model.geometry.TileCoordinatesFromFileName;
 import app.bpartners.geojobs.model.geometry.VGG;
 import app.bpartners.geojobs.model.geometry.route.RouteType;
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LinearRing;
@@ -39,8 +36,11 @@ public record TiledPolygon(
     for (int i = 0; i < latLonHolesCoordinates.length; i++) {
       holes[i] = geometryFactory.createLinearRing(latLonHolesCoordinates[i]);
     }
-
-    return new LatLonPolygon(geometryFactory.createPolygon(exteriorRing, holes));
+    var p = geometryFactory.createPolygon(exteriorRing, holes);
+    var userData = new HashMap<String, RouteType>();
+    userData.put("label", type);
+    p.setUserData(userData);
+    return new LatLonPolygon(p);
   }
 
   private Coordinate[] getExteriorLatLonCoordinates(Polygon polygon) {
@@ -73,6 +73,20 @@ public record TiledPolygon(
       }
     }
     return res;
+  }
+
+  public static Set<TiledPolygon> toTiledPolygons(
+      TilingConf tilingConf, VGG vgg, boolean isZXYDotFiletype) {
+    var annotations = vgg.values();
+    return annotations.stream()
+        .map(
+            annotation -> {
+              var filename = annotation.getFilename();
+              var regions = annotation.getRegions();
+              return newTiledPolygons(filename, regions, tilingConf, isZXYDotFiletype);
+            })
+        .flatMap(Collection::stream)
+        .collect(toSet());
   }
 
   public static Set<TiledPolygon> newTiledPolygons(
@@ -110,6 +124,8 @@ public record TiledPolygon(
     var label = vggRegion.getRegionAttribute().getLabel();
     var coordsExtractor = new TileCoordinatesFromFileName(isZXYDotFiletype);
     var originTile = new IntXY(coordsExtractor.x(filename), coordsExtractor.y(filename));
+    var polygon = polygon(shapeAttribute);
+    polygon.setUserData(Map.of("label", label));
     return new TiledPolygon(polygon(shapeAttribute), routeTypeFrom(label), originTile, tilingConf);
   }
 

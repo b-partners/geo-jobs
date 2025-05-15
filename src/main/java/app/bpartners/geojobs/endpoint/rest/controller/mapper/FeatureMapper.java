@@ -122,6 +122,11 @@ public class FeatureMapper {
 
   public org.locationtech.jts.geom.Polygon toDomain(Feature feature) {
     List<List<List<List<BigDecimal>>>> multiPolygonCoordinates = validateFeature(feature);
+    return toDomainPolygon(multiPolygonCoordinates);
+  }
+
+  public org.locationtech.jts.geom.Polygon toDomainPolygon(
+      List<List<List<List<BigDecimal>>>> multiPolygonCoordinates) {
     GeometryFactory geometryFactory = new GeometryFactory();
 
     List<List<BigDecimal>> firstRing = multiPolygonCoordinates.getFirst().getFirst();

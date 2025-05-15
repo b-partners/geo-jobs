@@ -8,6 +8,7 @@ import jakarta.persistence.*;
 import java.util.ArrayList;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
@@ -15,8 +16,11 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @SuperBuilder(toBuilder = true)
 @AllArgsConstructor
+@NoArgsConstructor
 @ToString
 public class ParcelDetectionJob extends Job {
+  private String address;
+
   @Override
   protected JobType getType() {
     return PARCEL_DETECTION;

@@ -5,6 +5,7 @@ import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.model.CreateApiKey;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType;
+import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorizedZone;
 import app.bpartners.geojobs.repository.model.community.CommunityDetectableObjectType;
@@ -43,6 +44,7 @@ public class ApiKeyMapper {
                 .toList())
         .maxSurface(maxSurface == null ? 0 : maxSurface.doubleValue())
         .maxSurfaceUnit(SQUARE_DEGREE)
+        .role(toDomain(createApiKey.getConsumerType()))
         .authorizedZones(toCommunityAuthorizedZone(createApiKey, newCommunityId))
         .build();
   }
@@ -68,5 +70,13 @@ public class ApiKeyMapper {
         .communityAuthorizationId(newCommunityId)
         .type(detectableObjectTypeMapper.toDomain(detectableObjectType))
         .build();
+  }
+
+  private Authority.Role toDomain(CreateApiKey.ConsumerTypeEnum rest) {
+    return switch (rest) {
+      case INSURANCE -> Authority.Role.ROLE_INSURANCE;
+      case COMMUNITY -> Authority.Role.ROLE_COMMUNITY;
+      case ADMIN -> Authority.Role.ROLE_ADMIN;
+    };
   }
 }
