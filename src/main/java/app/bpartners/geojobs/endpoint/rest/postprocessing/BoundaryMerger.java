@@ -212,10 +212,10 @@ public class BoundaryMerger implements Function<Set<LatLonPolygon>, Set<LatLonPo
 
   private boolean areVectorsCollinear(LineInt baseLine, LineInt otherLine) {
     var tolerance = mergeConf.directionTolerance();
-    double dx1 = otherLine.a().x() - baseLine.a().x();
-    double dy1 = otherLine.a().y() - baseLine.a().y();
-    double dx2 = otherLine.b().x() - baseLine.b().x();
-    double dy2 = otherLine.b().y() - baseLine.b().y();
+    double dx1 = baseLine.b().x() - baseLine.a().x();
+    double dy1 = baseLine.b().y() - baseLine.a().y();
+    double dx2 = otherLine.b().x() - otherLine.a().x();
+    double dy2 = otherLine.b().y() - otherLine.a().y();
 
     // Normalize vectors to avoid magnitude differences
     double len1 = Math.hypot(dx1, dy1);
