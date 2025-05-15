@@ -6,6 +6,7 @@ import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.Point;
 import app.bpartners.geojobs.endpoint.rest.validator.FeatureTypeChecker;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Component;
 public class DetectionFeaturesResultImageRetriever implements Function<Detection, List<Feature>> {
   private final BucketComponent bucketComponent;
   private final FeatureTypeChecker featureTypeChecker;
+  private final CustomBucketComponent customBucketComponent;
 
   @Override
   public List<Feature> apply(Detection detection) {
@@ -53,19 +55,24 @@ public class DetectionFeaturesResultImageRetriever implements Function<Detection
           var point = feature.getGeometry().getPoint();
           var longitude = point.getCoordinates().getFirst();
           var latitude = point.getCoordinates().getLast();
-
           var fileKey = layer + "/extended_original_" + longitude + "_" + latitude + ".jpg";
-          try {
-            var originalImageUrl = bucketComponent.presign(fileKey, Duration.ofHours(1L));
-            var properties =
-                feature.getProperties() == null
-                    ? new HashMap<String, Object>()
-                    : feature.getProperties();
-            properties.put("original_image_url", originalImageUrl);
-            feature.setProperties(properties);
-          } catch (RuntimeException ignored) {
-            log.warn(
-                "Unable to presign file {}, exception caught {}", fileKey, ignored.getMessage());
+          var fileExist =
+              customBucketComponent.listObjects(bucketComponent.getBucketName(), fileKey).stream()
+                  .findAny()
+                  .isPresent();
+          if (fileExist) {
+            try {
+              var originalImageUrl = bucketComponent.presign(fileKey, Duration.ofHours(1L));
+              var properties =
+                  feature.getProperties() == null
+                      ? new HashMap<String, Object>()
+                      : feature.getProperties();
+              properties.put("original_image_url", originalImageUrl);
+              feature.setProperties(properties);
+            } catch (RuntimeException ignored) {
+              log.warn(
+                  "Unable to presign file {}, exception caught {}", fileKey, ignored.getMessage());
+            }
           }
         });
     return updatedGeoJson;
