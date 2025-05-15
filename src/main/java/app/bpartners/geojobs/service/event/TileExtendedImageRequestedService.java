@@ -31,7 +31,7 @@ public class TileExtendedImageRequestedService implements Consumer<TileExtendedI
 
     var extendedImageBase64 = extenderApi.apply(tileImagesFiles);
 
-    var filename = "extended_" + longitude + "_" + latitude;
+    var filename = "extended_original_" + longitude + "_" + latitude;
     var extendedImageFile = fileWriter.base64ToFile(extendedImageBase64, filename);
     var extendedImageKey = layer + "/" + filename + ".jpg";
     bucketComponent.upload(extendedImageFile, extendedImageKey);

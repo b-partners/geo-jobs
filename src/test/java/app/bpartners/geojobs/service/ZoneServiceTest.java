@@ -122,8 +122,11 @@ class ZoneServiceTest {
   ZoneDetectionJobCreator zoneDetectionJobCreator = new ZoneDetectionJobCreator();
   CommunityAuthorizationRepository communityAuthRepositoryMock = mock();
   TaskStatisticCreator taskStatisticCreator = new TaskStatisticCreator();
+  DetectionFeaturesResultImageRetriever featureImageRetrieverMock =
+      mock(DetectionFeaturesResultImageRetriever.class);
   DetectionFromStatisticRestMapper detectionFromStatisticRestMapperMock =
-      new DetectionFromStatisticRestMapper(bucketComponentMock, stepStatisticMapper);
+      new DetectionFromStatisticRestMapper(
+          bucketComponentMock, stepStatisticMapper, featureImageRetrieverMock);
   FeatureMapper featureMapperMock = mock();
   DetectionTilingStatisticsComputer detectionTilingStatisticsComputerMock =
       new DetectionTilingStatisticsComputer(
@@ -182,6 +185,12 @@ class ZoneServiceTest {
 
   @BeforeEach
   void setUp() {
+    when(featureImageRetrieverMock.apply(any()))
+        .thenAnswer(
+            invocation ->
+                ((app.bpartners.geojobs.repository.model.detection.Detection)
+                        invocation.getArgument(0))
+                    .getProvidedGeoJsonZone());
     doNothing().when(detectionRoofDelimiterValidatorMock).accept(any());
     when(communityAuthRepositoryMock.findByApiKey(any()))
         .thenReturn(

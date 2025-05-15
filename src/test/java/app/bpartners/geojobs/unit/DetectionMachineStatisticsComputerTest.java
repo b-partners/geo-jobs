@@ -3,6 +3,7 @@ package app.bpartners.geojobs.unit;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.SUCCEEDED;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.ProgressionEnum.FINISHED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -14,6 +15,7 @@ import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.repository.model.detection.Detection;
+import app.bpartners.geojobs.service.DetectionFeaturesResultImageRetriever;
 import app.bpartners.geojobs.service.detection.DetectionMachineDetectionStatisticsComputer;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import java.util.List;
@@ -21,7 +23,7 @@ import java.util.Objects;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class DetectionMachineStatisticsComputerTest {
+class DetectionMachineStatisticsComputerTest {
   private static final String ZDJ_ID = "zdjId";
   StatusMapper<JobStatus> statusMapper = new StatusMapper<>();
   DetectionStepStatisticMapper detectionStepStatisticMapper =
@@ -29,12 +31,17 @@ public class DetectionMachineStatisticsComputerTest {
   BucketComponent bucketComponentMock = mock(BucketComponent.class);
   DetectionFromStatisticRestMapper detectionFromStatisticRestMapper;
   ZoneDetectionJobService zoneDetectionJobServiceMock = mock();
+  DetectionFeaturesResultImageRetriever featureImageRetrieverMock =
+      mock(DetectionFeaturesResultImageRetriever.class);
   DetectionMachineDetectionStatisticsComputer subject;
 
   @BeforeEach
   void setUp() {
+    when(featureImageRetrieverMock.apply(any()))
+        .thenAnswer(invocation -> ((Detection) invocation.getArgument(0)).getProvidedGeoJsonZone());
     detectionFromStatisticRestMapper =
-        new DetectionFromStatisticRestMapper(bucketComponentMock, detectionStepStatisticMapper);
+        new DetectionFromStatisticRestMapper(
+            bucketComponentMock, detectionStepStatisticMapper, featureImageRetrieverMock);
     subject =
         new DetectionMachineDetectionStatisticsComputer(
             detectionFromStatisticRestMapper, zoneDetectionJobServiceMock);

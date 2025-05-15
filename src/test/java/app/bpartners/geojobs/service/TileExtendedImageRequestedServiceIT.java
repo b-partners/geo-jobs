@@ -66,7 +66,12 @@ class TileExtendedImageRequestedServiceIT {
     var extendedFile = fileCaptor.getValue();
     var extendedFileKey = stringCaptor.getValue();
     var expectedKey =
-        layer + "/extended_" + longitude.doubleValue() + "_" + latitude.doubleValue() + ".jpg";
+        layer
+            + "/extended_original_"
+            + longitude.doubleValue()
+            + "_"
+            + latitude.doubleValue()
+            + ".jpg";
     assertEquals(expectedKey, extendedFileKey);
     assertNotNull(extendedFile);
   }
