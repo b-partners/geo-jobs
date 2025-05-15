@@ -3,8 +3,11 @@ package app.bpartners.geojobs.service.tiling;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import org.springframework.stereotype.Component;
 
+@Component
 public class TileFinder {
 
   private int lonToTileX(double lon, int zoom) {
@@ -31,6 +34,10 @@ public class TileFinder {
         tileCoordinates.add(new TileCoordinates().x(x + dx).y(y + dy).z(zoom));
       }
     }
+    tileCoordinates.sort(
+        Comparator.comparing(TileCoordinates::getZ)
+            .thenComparing(TileCoordinates::getY)
+            .thenComparing(TileCoordinates::getX));
     return tileCoordinates;
   }
 }

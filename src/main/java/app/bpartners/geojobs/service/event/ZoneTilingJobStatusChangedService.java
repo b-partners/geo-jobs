@@ -1,11 +1,16 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
+import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.HOUSES_0;
 import static java.util.UUID.randomUUID;
 
+import app.bpartners.gen.annotator.endpoint.rest.model.Point;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.TileExtendedImageRequested;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobCreated;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobFailed;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobStatusChanged;
+import app.bpartners.geojobs.endpoint.rest.validator.FeatureTypeChecker;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
@@ -30,6 +35,7 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
   private final EventProducer eventProducer;
   private final DetectableObjectConfigurationRepository objectConfigurationRepository;
   private final TilingTaskRepository tilingTaskRepository;
+  private final FeatureTypeChecker featureTypeChecker;
 
   @Override
   public void accept(ZoneTilingJobStatusChanged event) {
@@ -44,7 +50,8 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
             newJob,
             detectionRepository,
             objectConfigurationRepository,
-            tilingTaskRepository);
+            tilingTaskRepository,
+            featureTypeChecker);
 
     var onFailedHandler = new onFailedJobHandler(eventProducer, newJob);
 
@@ -59,7 +66,8 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
       ZoneTilingJob ztj,
       DetectionRepository detectionRepository,
       DetectableObjectConfigurationRepository objectConfigurationRepository,
-      TilingTaskRepository tilingTaskRepository)
+      TilingTaskRepository tilingTaskRepository,
+      FeatureTypeChecker featureTypeChecker)
       implements Runnable {
 
     private static final String IGN_IMAGE_SOURCE = "IGN";
@@ -95,9 +103,9 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
       var optionalDetection = detectionRepository.findByZtjId(ztj.getId());
       // For now, only detection process triggers ZDJ processing
       if (optionalDetection.isPresent()) {
+        var detection = optionalDetection.get();
         var savedDetection =
-            detectionRepository.save(
-                optionalDetection.get().toBuilder().zdjId(zdj.getId()).build());
+            detectionRepository.save(detection.toBuilder().zdjId(zdj.getId()).build());
         objectConfigurationRepository.saveAll(
             savedDetection.getDetectableObjectConfigurations().stream()
                 .map(
@@ -106,6 +114,26 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
                 .toList());
         eventProducer.accept(
             List.of(ZoneDetectionJobCreated.builder().zoneDetectionJob(zdj).build()));
+
+        if (featureTypeChecker.apply(detection.getProvidedGeoJsonZone(), Point.class)
+            && TOITURE.equals(detection.getDetectableObjectModel().getModelName())) {
+          detection
+              .getProvidedGeoJsonZone()
+              .forEach(
+                  feature -> {
+                    var pointCoordinates = feature.getGeometry().getPoint().getCoordinates();
+                    var longitude = pointCoordinates.getFirst();
+                    var latitude = pointCoordinates.getLast();
+                    var layer =
+                        detection.getGeoServerProperties().getGeoServerParameter().getLayers();
+                    var defaultZoomLevel = HOUSES_0.getZoomLevel();
+                    eventProducer.accept(
+                        List.of(
+                            new TileExtendedImageRequested(
+                                longitude, latitude, defaultZoomLevel, layer)));
+                  });
+        }
+        ;
       }
       tilingFinishedMailer.accept(ztj);
       log.info("Finished, mail sent, ztj=" + ztj);

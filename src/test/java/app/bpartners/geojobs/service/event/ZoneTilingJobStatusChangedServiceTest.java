@@ -10,6 +10,7 @@ import static org.mockito.Mockito.*;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobFailed;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobStatusChanged;
+import app.bpartners.geojobs.endpoint.rest.validator.FeatureTypeChecker;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status.HealthStatus;
 import app.bpartners.geojobs.job.model.Status.ProgressionStatus;
@@ -45,6 +46,7 @@ class ZoneTilingJobStatusChangedServiceTest {
   DetectableObjectConfigurationRepository objectConfigurationRepositoryMock = mock();
   TilingTaskRepository tilingTaskRepositoryMock = mock();
   TilingTaskCreator tilingTaskCreator = new TilingTaskCreator();
+  FeatureTypeChecker featureTypeCheckerMock = mock();
   ZoneTilingJobStatusChangedService subject =
       new ZoneTilingJobStatusChangedService(
           mailerMock,
@@ -53,7 +55,8 @@ class ZoneTilingJobStatusChangedServiceTest {
           detectionRepositoryMock,
           eventProducerMock,
           objectConfigurationRepositoryMock,
-          tilingTaskRepositoryMock);
+          tilingTaskRepositoryMock,
+          featureTypeCheckerMock);
 
   @BeforeEach
   void setUp() {

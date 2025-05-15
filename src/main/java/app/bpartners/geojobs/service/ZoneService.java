@@ -516,7 +516,10 @@ public class ZoneService {
             var point = feature.getGeometry().getPoint();
             var longitude = point.getCoordinates().getFirst().doubleValue();
             var latitude = point.getCoordinates().getLast().doubleValue();
-            var restPoint = new app.bpartners.gen.annotator.endpoint.rest.model.Point().x(longitude).y(latitude);
+            var restPoint =
+                new app.bpartners.gen.annotator.endpoint.rest.model.Point()
+                    .x(longitude)
+                    .y(latitude);
             var jtsMultiPolygon =
                 geometryConverter.apply(restPoint, DEFAULT_POLYGON_SIZE_IN_METERS);
             var multiPolygonConverted = featureConverter.fromJtsMultiPolygon(jtsMultiPolygon);
