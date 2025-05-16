@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.HOUSES_0;
 import static java.util.UUID.randomUUID;
 
@@ -10,7 +9,6 @@ import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobCreated;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobFailed;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobStatusChanged;
 import app.bpartners.geojobs.endpoint.rest.model.Point;
-import app.bpartners.geojobs.endpoint.rest.validator.FeatureTypeChecker;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
@@ -18,8 +16,12 @@ import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.JobFinishedMailer;
 import app.bpartners.geojobs.service.StatusChangedHandler;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
+import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,7 +37,7 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
   private final EventProducer eventProducer;
   private final DetectableObjectConfigurationRepository objectConfigurationRepository;
   private final TilingTaskRepository tilingTaskRepository;
-  private final FeatureTypeChecker featureTypeChecker;
+  private final GeometryConverter geometryConverter;
 
   @Override
   public void accept(ZoneTilingJobStatusChanged event) {
@@ -51,7 +53,7 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
             detectionRepository,
             objectConfigurationRepository,
             tilingTaskRepository,
-            featureTypeChecker);
+            geometryConverter);
 
     var onFailedHandler = new onFailedJobHandler(eventProducer, newJob);
 
@@ -67,7 +69,7 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
       DetectionRepository detectionRepository,
       DetectableObjectConfigurationRepository objectConfigurationRepository,
       TilingTaskRepository tilingTaskRepository,
-      FeatureTypeChecker featureTypeChecker)
+      GeometryConverter geometryConverter)
       implements Runnable {
 
     private static final String IGN_IMAGE_SOURCE = "IGN";
@@ -115,28 +117,57 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
         eventProducer.accept(
             List.of(ZoneDetectionJobCreated.builder().zoneDetectionJob(zdj).build()));
 
-        if (featureTypeChecker.apply(detection.getProvidedGeoJsonZone(), Point.class)
-            && TOITURE.equals(detection.getDetectableObjectModel().getModelName())) {
-          detection
-              .getProvidedGeoJsonZone()
-              .forEach(
-                  feature -> {
-                    var pointCoordinates = feature.getGeometry().getPoint().getCoordinates();
-                    var longitude = pointCoordinates.getFirst();
-                    var latitude = pointCoordinates.getLast();
-                    var layer =
-                        detection.getGeoServerProperties().getGeoServerParameter().getLayers();
-                    var defaultZoomLevel = HOUSES_0.getZoomLevel();
-                    eventProducer.accept(
-                        List.of(
-                            new TileExtendedImageRequested(
-                                longitude, latitude, defaultZoomLevel, layer)));
-                  });
+        if (detection.hasToitureModelName() && detection.hasOnlyPointsGeoJson()) {
+          var collectedPointWithItsMultiPolygon =
+              detection.getProvidedGeoJsonZone().stream()
+                  .map(
+                      feature -> {
+                        var layer =
+                            detection.getGeoServerProperties().getGeoServerParameter().getLayers();
+                        var restPoint = requestTileExtendedImageForPoint(feature, layer);
+                        var properties =
+                            feature.getProperties() == null
+                                ? new HashMap<String, Object>()
+                                : new HashMap<>(feature.getProperties());
+                        var zoom =
+                            properties.get("zoom") != null
+                                ? (Integer) properties.get("zoom")
+                                : HOUSES_0.getZoomLevel();
+                        var pointDomain = geometryConverter.toFeature(zoom, properties, restPoint);
+                        var multiPolygonFromPointDomain =
+                            geometryConverter.toFeature(
+                                null,
+                                zoom,
+                                properties,
+                                geometryConverter.retrieveNearestRoofMultiPolygon(restPoint));
+                        return new HashMap<>(Map.of(pointDomain, multiPolygonFromPointDomain));
+                      })
+                  .flatMap(map -> map.entrySet().stream())
+                  .collect(
+                      Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1, v2) -> v1));
+          var detectionWithMultiPolygonFromPoint =
+              detection.toBuilder()
+                  .pointDelimitation(new HashMap<>(collectedPointWithItsMultiPolygon))
+                  .build();
+          detectionRepository.save(detectionWithMultiPolygonFromPoint);
         }
-        ;
       }
       tilingFinishedMailer.accept(ztj);
       log.info("Finished, mail sent, ztj=" + ztj);
+    }
+
+    private Point requestTileExtendedImageForPoint(
+        app.bpartners.geojobs.endpoint.rest.model.Feature feature, String layer) {
+      var point = feature.getGeometry().getPoint();
+      var pointCoordinates = point.getCoordinates();
+      var longitude = pointCoordinates.getFirst();
+      var latitude = pointCoordinates.getLast();
+      var defaultZoomLevel = HOUSES_0.getZoomLevel();
+
+      eventProducer.accept(
+          List.of(new TileExtendedImageRequested(longitude, latitude, defaultZoomLevel, layer)));
+
+      return point;
     }
   }
 

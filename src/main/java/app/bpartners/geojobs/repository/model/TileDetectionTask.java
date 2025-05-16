@@ -4,6 +4,7 @@ import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
 import static java.time.Instant.now;
 import static org.hibernate.type.SqlTypes.JSON;
 
+import app.bpartners.geojobs.endpoint.rest.model.Point;
 import app.bpartners.geojobs.job.model.*;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
@@ -36,6 +37,7 @@ public class TileDetectionTask extends Task implements Serializable {
 
   @Transient private String zoneDetectionJobId;
   @Transient private String address;
+  @Transient private Point point;
 
   public TileDetectionTask(
       String id,

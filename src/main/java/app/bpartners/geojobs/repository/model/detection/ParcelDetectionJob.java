@@ -1,7 +1,9 @@
 package app.bpartners.geojobs.repository.model.detection;
 
 import static app.bpartners.geojobs.repository.model.GeoJobType.PARCEL_DETECTION;
+import static org.hibernate.type.SqlTypes.JSON;
 
+import app.bpartners.geojobs.endpoint.rest.model.Point;
 import app.bpartners.geojobs.job.model.Job;
 import app.bpartners.geojobs.job.model.JobType;
 import jakarta.persistence.*;
@@ -11,6 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.JdbcTypeCode;
 
 @Entity
 @Getter
@@ -20,6 +23,9 @@ import lombok.experimental.SuperBuilder;
 @ToString
 public class ParcelDetectionJob extends Job {
   private String address;
+
+  @JdbcTypeCode(JSON)
+  private Point point;
 
   @Override
   protected JobType getType() {

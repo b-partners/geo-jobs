@@ -33,7 +33,7 @@ public class BuildingApi {
         .getBody();
   }
 
-  public Building getNearestBuildingAt(Double latitude, Double longitude, Integer radius) {
+  public Building getNearestBuildingAt(Double longitude, Double latitude, Integer radius) {
     var nearestBuilding =
         getBuildingClosest(latitude, longitude, radius).results().stream()
             .min(Comparator.comparing(Building::distance))

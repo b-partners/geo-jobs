@@ -95,6 +95,7 @@ class TileDetectionTaskCreatedIT extends DetectionIT {
                                   testData.detectionJobId(),
                                   tileDetectionTask,
                                   detectableObjectConfiguration(),
+                                  null,
                                   null))));
             });
 

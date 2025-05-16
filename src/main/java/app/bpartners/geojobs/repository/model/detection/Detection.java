@@ -1,14 +1,19 @@
 package app.bpartners.geojobs.repository.model.detection;
 
+import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
+import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static org.hibernate.type.SqlTypes.JSON;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
+import app.bpartners.geojobs.endpoint.rest.validator.FeatureTypeChecker;
 import app.bpartners.geojobs.repository.model.Feature;
 import jakarta.persistence.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 
@@ -69,6 +74,10 @@ public class Detection implements Serializable {
   private List<Feature> multiPolygonGeoJsonZone;
 
   @JdbcTypeCode(JSON)
+  @Getter(AccessLevel.NONE)
+  private HashMap<Feature, Feature> pointDelimitation;
+
+  @JdbcTypeCode(JSON)
   private List<String> convertedAddresses;
 
   @JdbcTypeCode(JSON)
@@ -84,6 +93,32 @@ public class Detection implements Serializable {
     return multiPolygonGeoJsonZone == null
         ? null
         : multiPolygonGeoJsonZone.stream().map(FeatureMapper::toRestFeature).toList();
+  }
+
+  public HashMap<
+          app.bpartners.geojobs.endpoint.rest.model.Feature,
+          app.bpartners.geojobs.endpoint.rest.model.Feature>
+      getPointDelimitation() {
+    return pointDelimitation == null
+        ? new HashMap<>()
+        : pointDelimitation.entrySet().stream()
+            .collect(
+                Collectors.toMap(
+                    entry -> toRestFeature(entry.getKey()),
+                    entry -> toRestFeature(entry.getValue()),
+                    (v1, v2) -> v1,
+                    HashMap::new));
+  }
+
+  public boolean hasOnlyPointsGeoJson() {
+    return getMultiPolygonGeoJsonZone() != null
+        && new FeatureTypeChecker().apply(getMultiPolygonGeoJsonZone(), Point.class);
+  }
+
+  public boolean hasToitureModelName() {
+    return detectableObjectModel != null
+        && detectableObjectModel.getModelName() != null
+        && TOITURE.equals(detectableObjectModel.getModelName());
   }
 
   public boolean isSucceeded() {

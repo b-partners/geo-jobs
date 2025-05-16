@@ -32,6 +32,7 @@ public class TaskToJobConverter<T extends Task, J extends Job> implements Functi
           ParcelDetectionJob.builder()
               .id(jobId)
               .address(((ParcelDetectionTask) task).getAddress())
+              .point(((ParcelDetectionTask) task).getPoint())
               .statusHistory(
                   List.of(
                       JobStatus.builder()

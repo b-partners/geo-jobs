@@ -71,12 +71,10 @@ public class GeoJsonConversionAssemblyInitiatedService
     var geoFeaturesList = getGeoFeaturesList(conversionTasks);
     var geoFeaturesFilteredByAddresses =
         filterGeoFeaturesByAddresses(geoFeaturesList, polygonAddressDelimitation);
-
+    var geoFeaturesFilterByPoint = filterGeoFeaturesByPoint(geoFeaturesList, detection);
     var geoJson =
-        new GeoJson(
-            geoFeaturesFilteredByAddresses.isEmpty()
-                ? geoFeaturesList
-                : geoFeaturesFilteredByAddresses);
+        computeFinalGeoJson(
+            geoFeaturesList, geoFeaturesFilteredByAddresses, geoFeaturesFilterByPoint);
     var outputFileName = zoneDetectionJob.getZoneName() + "-final" + GEO_JSON_EXTENSION;
     var geoJsonFinalFile =
         fileWriter.write(
@@ -102,6 +100,67 @@ public class GeoJsonConversionAssemblyInitiatedService
                   .geoJsonConversionJob(savedConversionJob)
                   .build()));
     }
+  }
+
+  private GeoJson computeFinalGeoJson(
+      List<GeoJson.GeoFeature> geoFeaturesList,
+      List<GeoJson.GeoFeature> geoFeaturesFilteredByAddresses,
+      List<GeoJson.GeoFeature> geoFeaturesFilteredByPoint) {
+    if (!geoFeaturesFilteredByAddresses.isEmpty()) {
+      return new GeoJson(geoFeaturesFilteredByAddresses);
+    }
+    if (!geoFeaturesFilteredByPoint.isEmpty()) {
+      return new GeoJson(geoFeaturesFilteredByPoint);
+    }
+    return new GeoJson(geoFeaturesList);
+  }
+
+  private List<GeoJson.GeoFeature> filterGeoFeaturesByPoint(
+      List<GeoJson.GeoFeature> geoFeaturesList, Detection detection) {
+    if (detection == null
+        || detection.getMultiPolygonGeoJsonZone() == null
+        || detection.getMultiPolygonGeoJsonZone().isEmpty()) {
+      return Collections.emptyList();
+    }
+    var pointDelimitation = detection.getPointDelimitation();
+    var geoFeaturesGroupByPoint =
+        geoFeaturesList.stream()
+            .filter(
+                geoFeature -> {
+                  var optionalPointMap =
+                      pointDelimitation.entrySet().stream()
+                          .filter(
+                              map -> map.getKey().equals(geoFeature.getProperties().get("point")))
+                          .findAny();
+                  if (optionalPointMap.isEmpty()) {
+                    return false;
+                  }
+                  var roofPolygon =
+                      geometryConverter.apply(
+                          optionalPointMap
+                              .get()
+                              .getValue()
+                              .getGeometry()
+                              .getMultiPolygon()
+                              .getCoordinates());
+                  var objectPolygon =
+                      featureMapper.toDomainPolygon(
+                          Objects.requireNonNull(geoFeature.getGeometry().getCoordinates()));
+                  var intersection = roofPolygon.intersection(objectPolygon);
+                  double intersectionArea = intersection.getArea();
+                  double objectPolygonArea = objectPolygon.getArea();
+                  double ratio = intersectionArea / objectPolygonArea;
+                  return ratio > HALF_OF_AREA;
+                })
+            .collect(
+                Collectors.groupingBy(
+                    geoFeature ->
+                        new PointLabelKey(
+                            (app.bpartners.geojobs.endpoint.rest.model.Point)
+                                geoFeature.getProperties().get("point"),
+                            geoFeature.getProperties().get("label").toString())));
+
+    return unifyFeatureGeometryByPointAndLabel(geoFeaturesGroupByPoint);
   }
 
   private List<GeoJson.GeoFeature> filterGeoFeaturesByAddresses(
@@ -176,11 +235,40 @@ public class GeoJsonConversionAssemblyInitiatedService
                                 .mapToDouble(MultiPolygon::getArea)
                                 .sum();
                         properties.put(
-                            "rate",
+                            "ratio",
                             new BigDecimal(objectTotalArea / roofLimitationArea)
                                 .setScale(4, HALF_UP)
                                 .doubleValue());
                       });
+
+              return geoJsonMapper.getGeoFeature(
+                  geometryConverter.multiPolygonToNestedList(unifiedMultiPolygon), properties);
+            })
+        .toList();
+  }
+
+  private List<GeoJson.GeoFeature> unifyFeatureGeometryByPointAndLabel(
+      Map<PointLabelKey, List<GeoJson.GeoFeature>> geoFeaturesGroupByPointAndLabel) {
+    return geoFeaturesGroupByPointAndLabel.entrySet().stream()
+        .map(
+            entry -> {
+              var geoFeatures = entry.getValue();
+              var multiPolygonsLinkedByPoint =
+                  geoFeatures.stream()
+                      .map(
+                          geoFeature ->
+                              geometryConverter.apply(
+                                  Objects.requireNonNull(
+                                      geoFeature.getGeometry().getCoordinates())))
+                      .toList();
+              var unifiedMultiPolygon =
+                  geometryConverter.unifyMultiPolygon(multiPolygonsLinkedByPoint);
+              var pointLabelKey = entry.getKey();
+              var properties = new HashMap<String, Object>();
+              var point = pointLabelKey.point();
+              var label = pointLabelKey.label();
+              properties.put("point", point);
+              properties.put("label", label);
 
               return geoJsonMapper.getGeoFeature(
                   geometryConverter.multiPolygonToNestedList(unifiedMultiPolygon), properties);
@@ -264,4 +352,7 @@ public class GeoJsonConversionAssemblyInitiatedService
   }
 
   private record AddressLabelKey(String address, String label) {}
+
+  private record PointLabelKey(
+      app.bpartners.geojobs.endpoint.rest.model.Point point, String label) {}
 }

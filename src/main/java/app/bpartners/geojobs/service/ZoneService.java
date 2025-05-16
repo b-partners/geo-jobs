@@ -433,19 +433,16 @@ public class ZoneService {
     var detectionId = randomUUID().toString();
     var detectableObjectConfigurations =
         detectableObjectTypeMapper.mapDefaultConfigurationsFromModel(detectionId, modelName);
-    var geoJsonZone = createDetection.getGeoJsonZone();
-    List<app.bpartners.geojobs.repository.model.Feature> providedGeoJsonZone =
-        geoJsonZone == null
-            ? List.of()
-            : geoJsonZone.stream().map(FeatureMapper::toDomainFeature).toList();
-    var multiPolygonGeoJsonZone =
-        extractDetectionMultiPolygonGeoJson(geoJsonZone, providedGeoJsonZone);
+    var restProvidedGeoJsonZone = createDetection.getGeoJsonZone();
+    var domainProvidedGeoJsonZone = getActualProvidedGeoJson(restProvidedGeoJsonZone);
+    var multiPolygonGeoJsonZoneToBeProcessed =
+        extractDetectionMultiPolygonGeoJson(restProvidedGeoJsonZone, domainProvidedGeoJsonZone);
     var finalGeoServerProperties =
         extractGeoServerProperties(
             createDetection.getGeoServerProperties(),
             communityOwnerId,
-            geoJsonZone,
-            multiPolygonGeoJsonZone);
+            restProvidedGeoJsonZone,
+            multiPolygonGeoJsonZoneToBeProcessed);
     return Detection.builder()
         .id(detectionId)
         .endToEndId(endToEndId)
@@ -455,10 +452,18 @@ public class ZoneService {
         .communityOwnerId(communityOwnerId)
         .detectableObjectConfigurations(detectableObjectConfigurations)
         .geoServerProperties(finalGeoServerProperties)
-        .providedGeoJsonZone(providedGeoJsonZone)
-        .multiPolygonGeoJsonZone(multiPolygonGeoJsonZone)
+        .providedGeoJsonZone(domainProvidedGeoJsonZone)
+        .multiPolygonGeoJsonZone(multiPolygonGeoJsonZoneToBeProcessed)
         .detectableObjectModel(detectableObjectModel)
         .build();
+  }
+
+  private List<app.bpartners.geojobs.repository.model.Feature> getActualProvidedGeoJson(
+      List<Feature> restProvidedGeoJson) {
+    if (restProvidedGeoJson == null) {
+      return List.of();
+    }
+    return restProvidedGeoJson.stream().map(FeatureMapper::toDomainFeature).toList();
   }
 
   private GeoServerProperties extractGeoServerProperties(
@@ -514,14 +519,7 @@ public class ZoneService {
       geoJsonZone.forEach(
           feature -> {
             var point = feature.getGeometry().getPoint();
-            var longitude = point.getCoordinates().getFirst().doubleValue();
-            var latitude = point.getCoordinates().getLast().doubleValue();
-            var restPoint =
-                new app.bpartners.gen.annotator.endpoint.rest.model.Point()
-                    .x(longitude)
-                    .y(latitude);
-            var jtsMultiPolygon =
-                geometryConverter.apply(restPoint, DEFAULT_POLYGON_SIZE_IN_METERS);
+            var jtsMultiPolygon = geometryConverter.apply(point, DEFAULT_POLYGON_SIZE_IN_METERS);
             var multiPolygonConverted = featureConverter.fromJtsMultiPolygon(jtsMultiPolygon);
             feature.getGeometry().setActualInstance(multiPolygonConverted);
           });

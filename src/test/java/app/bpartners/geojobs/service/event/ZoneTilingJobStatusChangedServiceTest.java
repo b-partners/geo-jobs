@@ -10,7 +10,6 @@ import static org.mockito.Mockito.*;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobFailed;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobStatusChanged;
-import app.bpartners.geojobs.endpoint.rest.validator.FeatureTypeChecker;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status.HealthStatus;
 import app.bpartners.geojobs.job.model.Status.ProgressionStatus;
@@ -26,6 +25,7 @@ import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.JobFinishedMailer;
 import app.bpartners.geojobs.service.StatusChangedHandler;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
+import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.utils.tiling.TilingTaskCreator;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,7 +46,7 @@ class ZoneTilingJobStatusChangedServiceTest {
   DetectableObjectConfigurationRepository objectConfigurationRepositoryMock = mock();
   TilingTaskRepository tilingTaskRepositoryMock = mock();
   TilingTaskCreator tilingTaskCreator = new TilingTaskCreator();
-  FeatureTypeChecker featureTypeCheckerMock = mock();
+  GeometryConverter geometryConverterMock = mock();
   ZoneTilingJobStatusChangedService subject =
       new ZoneTilingJobStatusChangedService(
           mailerMock,
@@ -56,7 +56,7 @@ class ZoneTilingJobStatusChangedServiceTest {
           eventProducerMock,
           objectConfigurationRepositoryMock,
           tilingTaskRepositoryMock,
-          featureTypeCheckerMock);
+          geometryConverterMock);
 
   @BeforeEach
   void setUp() {

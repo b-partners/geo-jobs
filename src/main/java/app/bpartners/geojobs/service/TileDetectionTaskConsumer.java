@@ -33,6 +33,7 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
     var zoneDetectionJobId = tileDetectionTask.getZoneDetectionJobId();
     var parcelJobId = tileDetectionTask.getJobId();
     var address = tileDetectionTask.getAddress();
+    var point = tileDetectionTask.getPoint();
     File mask = null;
     if (isRooferModel(detectableObjectConfigurations)) {
       mask = maskCreator.createTempMask();
@@ -55,6 +56,9 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
               detectedObject -> {
                 if (address != null) {
                   detectedObject.getFeature().getProperties().put("address", address);
+                }
+                if (point != null) {
+                  detectedObject.getFeature().getProperties().put("point", point);
                 }
               });
     }

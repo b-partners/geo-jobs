@@ -3,8 +3,8 @@
     "type": "Feature",
     "properties": {
       "address": "1 Rue De La Vau Saint-Jacques, 79200 Parthenay, France",
-      "rate":1.0,
-      "label": "TOITURE_REVETEMENT"
+      "label": "TOITURE_REVETEMENT",
+      "ratio":1.0
     },
     "geometry": {
       "type": "MultiPolygon",

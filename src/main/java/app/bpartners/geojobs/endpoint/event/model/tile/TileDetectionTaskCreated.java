@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.endpoint.event.model.tile;
 
 import app.bpartners.geojobs.endpoint.event.model.TaskCreated;
+import app.bpartners.geojobs.endpoint.rest.model.Point;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import java.util.List;
@@ -13,16 +14,19 @@ import lombok.*;
 public class TileDetectionTaskCreated extends TaskCreated<TileDetectionTask> {
   private String zoneDetectionJobId;
   private String address;
+  private Point point;
   private List<DetectableObjectConfiguration> detectableObjectConfigurations;
 
   public TileDetectionTaskCreated(
       String zoneDetectionJobId,
       TileDetectionTask task,
       List<DetectableObjectConfiguration> detectableObjectConfigurations,
-      String address) {
+      String address,
+      Point point) {
     super(task);
     this.zoneDetectionJobId = zoneDetectionJobId;
     this.detectableObjectConfigurations = detectableObjectConfigurations;
     this.address = address;
+    this.point = point;
   }
 }
