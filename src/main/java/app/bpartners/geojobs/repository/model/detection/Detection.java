@@ -112,7 +112,7 @@ public class Detection implements Serializable {
 
   public boolean hasOnlyPointsGeoJson() {
     return getMultiPolygonGeoJsonZone() != null
-        && new FeatureTypeChecker().apply(getMultiPolygonGeoJsonZone(), Point.class);
+        && new FeatureTypeChecker().apply(getProvidedGeoJsonZone(), Point.class);
   }
 
   public boolean hasToitureModelName() {
