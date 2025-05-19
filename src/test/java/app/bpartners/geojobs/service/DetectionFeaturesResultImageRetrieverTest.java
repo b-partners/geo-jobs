@@ -35,7 +35,8 @@ class DetectionFeaturesResultImageRetrieverTest {
   @BeforeEach
   void setUp() {
     when(customBucketComponentMock.listObjects(any(), any()))
-        .thenReturn(List.of(mock(S3Object.class)));
+        .thenReturn(List.of(mock(S3Object.class))) // Get only original image
+        .thenReturn(List.of()); // Do not retrieve drawn image
   }
 
   @SneakyThrows

@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service.event;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.ExtendedImageWithDetectedObjectRequested;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryJobRequested;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobSucceeded;
 import app.bpartners.geojobs.repository.AnnotationDeliveryConfigurationRepository;
@@ -46,7 +47,7 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
   public void accept(ZoneDetectionJobSucceeded event) {
     var succeededJobId = event.getSucceededJobId();
     var succeededZoneDetectionJob = zoneDetectionJobService.findById(succeededJobId);
-
+    var detection = detectionRepository.findByZdjId(succeededJobId).orElse(null);
     var detectableObjectConfigurations =
         detectableObjectConfigurationRepository.findAllByDetectionJobId(succeededJobId);
     boolean machineDetectionFoundAnyDetectedTileFromDetectableConfiguration =
@@ -57,7 +58,6 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
                             succeededJobId, detectableConfiguration.getObjectType().name())
                         > 0);
     if (!machineDetectionFoundAnyDetectedTileFromDetectableConfiguration) {
-      var detection = detectionRepository.findByZdjId(succeededJobId).orElse(null);
       var succeededDatetime = succeededZoneDetectionJob.getStatus().getCreationDatetime();
       var zoneName = succeededZoneDetectionJob.getZoneName();
       var formattedCreationDatetime =
@@ -77,6 +77,8 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
     }
 
     if (zoneDetectionJobService.countInDoubtDetectedTileToDeliveryById(succeededJobId) == 0L) {
+      if (detection != null)
+        eventProducer.accept(List.of(new ExtendedImageWithDetectedObjectRequested(detection)));
       geoJsonConversionJobService.getOrComputeGeoJsonConversionJob(succeededZoneDetectionJob);
       return;
     }
