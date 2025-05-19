@@ -71,8 +71,12 @@ public class ParcelDetectionTask extends Task implements Serializable {
         || getParcel().getParcelContent() == null
         || getParcel().getParcelContent().getFeature() == null
         || getParcel().getParcelContent().getFeature().getProperties() == null
-        || getParcel().getParcelContent().getFeature().getProperties().get("point") == null)
+        || getParcel().getParcelContent().getFeature().getProperties().get("point") == null) {
       return null;
+    }
+    log.info(
+        "Feature point retrieved {}",
+        getParcel().getParcelContent().getFeature().getProperties().get("point"));
     return new ObjectMapper()
         .findAndRegisterModules()
         .readValue(

@@ -42,7 +42,9 @@ public class ParcelDetectionTaskConsumer implements TaskConsumer<ParcelDetection
               + zdjId
               + ") has parcel without tiles");
     }
+    log.info("Processing parcel detection task {}", task);
     ParcelDetectionJob parcelDetectionJob = taskToJobConverter.apply(task);
+    log.info("Processing parcel detection job {}", parcelDetectionJob);
     task.setAsJobId(parcelDetectionJob.getId());
     ParcelDetectionTask savedParcelTask = parcelDetectionTaskRepository.save(task);
     List<TileDetectionTask> tileDetectionTasks =
