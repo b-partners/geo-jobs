@@ -7,19 +7,14 @@ import app.bpartners.geojobs.repository.model.detection.Detection;
 import java.time.Duration;
 import lombok.*;
 
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder(toBuilder = true)
+@Getter
 @EqualsAndHashCode(callSuper = false)
 @ToString
-@Getter
 public class ExtendedImageWithDetectedObjectRequested extends PojaEvent {
-  private final Detection detection;
-
-  public ExtendedImageWithDetectedObjectRequested() {
-    this.detection = null;
-  }
-
-  public ExtendedImageWithDetectedObjectRequested(Detection detection) {
-    this.detection = detection;
-  }
+  private Detection detection;
 
   @Override
   public Duration maxConsumerDuration() {
