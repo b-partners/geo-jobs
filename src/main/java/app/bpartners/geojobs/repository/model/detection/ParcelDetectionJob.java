@@ -3,7 +3,7 @@ package app.bpartners.geojobs.repository.model.detection;
 import static app.bpartners.geojobs.repository.model.GeoJobType.PARCEL_DETECTION;
 import static org.hibernate.type.SqlTypes.JSON;
 
-import app.bpartners.geojobs.endpoint.rest.model.Point;
+import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.job.model.Job;
 import app.bpartners.geojobs.job.model.JobType;
 import jakarta.persistence.*;
@@ -25,7 +25,7 @@ public class ParcelDetectionJob extends Job {
   private String address;
 
   @JdbcTypeCode(JSON)
-  private Point point;
+  private Feature point;
 
   @Override
   protected JobType getType() {

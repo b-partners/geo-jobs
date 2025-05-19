@@ -4,7 +4,6 @@ import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
 import static jakarta.persistence.FetchType.EAGER;
 
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
-import app.bpartners.geojobs.endpoint.rest.model.Point;
 import app.bpartners.geojobs.job.model.Task;
 import app.bpartners.geojobs.repository.model.GeoJobType;
 import app.bpartners.geojobs.repository.model.Parcel;
@@ -67,20 +66,18 @@ public class ParcelDetectionTask extends Task implements Serializable {
   }
 
   @SneakyThrows
-  public Point getPoint() {
+  public Feature getPoint() {
     if (getParcel() == null
         || getParcel().getParcelContent() == null
         || getParcel().getParcelContent().getFeature() == null
         || getParcel().getParcelContent().getFeature().getProperties() == null
         || getParcel().getParcelContent().getFeature().getProperties().get("point") == null)
       return null;
-    var featurePoint =
-        new ObjectMapper()
-            .findAndRegisterModules()
-            .readValue(
-                getParcel().getParcelContent().getFeature().getProperties().get("point").toString(),
-                Feature.class);
-    return featurePoint.getGeometry().getPoint();
+    return new ObjectMapper()
+        .findAndRegisterModules()
+        .readValue(
+            getParcel().getParcelContent().getFeature().getProperties().get("point").toString(),
+            Feature.class);
   }
 
   @Override
