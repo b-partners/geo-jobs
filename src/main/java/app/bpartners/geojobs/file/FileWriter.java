@@ -71,7 +71,7 @@ public class FileWriter implements BiFunction<byte[], File, File> {
   public File base64ToFile(String base64, String filename) {
     byte[] decodedBytes = Base64.getDecoder().decode(base64);
     String suffix = extensionGuesser.apply(decodedBytes);
-    File tmpFile = new File(createTempDirectory(), filename + suffix);
+    File tmpFile = File.createTempFile(filename, suffix);
     return Files.write(tmpFile.toPath(), decodedBytes).toFile();
   }
 
