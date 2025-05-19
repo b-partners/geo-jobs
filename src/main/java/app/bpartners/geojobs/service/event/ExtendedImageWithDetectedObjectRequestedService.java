@@ -19,6 +19,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,7 +46,14 @@ public class ExtendedImageWithDetectedObjectRequestedService
       log.info(
           "Only detection with points geojson are supported for now, otherwise detection has"
               + " geoTypes {}",
-          detection.getProvidedGeoJsonZone().stream().map(Feature::getType).toList());
+          detection.getProvidedGeoJsonZone().stream()
+              .map(
+                  feature ->
+                      Objects.requireNonNull(feature.getGeometry())
+                          .getActualInstance()
+                          .getClass()
+                          .getSimpleName())
+              .toList());
       return;
     }
     var providedFeatures = detection.getProvidedGeoJsonZone();
