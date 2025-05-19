@@ -36,7 +36,7 @@ public class TileDetectionTask extends Task implements Serializable {
 
   @Transient private String zoneDetectionJobId;
   @Transient private String address;
-  @Transient private app.bpartners.geojobs.endpoint.rest.model.Feature point;
+  @Transient private Feature point;
 
   public TileDetectionTask(
       String id,

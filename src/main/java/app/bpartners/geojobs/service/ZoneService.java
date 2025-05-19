@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service;
 
+import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toDomainFeature;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.*;
 import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.MULTI_POLYGON;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
@@ -521,11 +522,12 @@ public class ZoneService {
       geoJsonZone.forEach(
           feature -> {
             var point = feature.getGeometry().getPoint();
+            var domainFeature = toDomainFeature(feature);
             var jtsMultiPolygon = geometryConverter.apply(point, DEFAULT_POLYGON_SIZE_IN_METERS);
             var multiPolygonConverted = featureConverter.fromJtsMultiPolygon(jtsMultiPolygon);
             try {
               var featurePointAsString =
-                  new ObjectMapper().findAndRegisterModules().writeValueAsString(feature);
+                  new ObjectMapper().findAndRegisterModules().writeValueAsString(domainFeature);
               feature.getProperties().put("point", featurePointAsString);
             } catch (JsonProcessingException e) {
               throw new ApiException(SERVER_EXCEPTION, e);

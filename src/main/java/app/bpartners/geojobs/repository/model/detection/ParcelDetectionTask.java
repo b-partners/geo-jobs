@@ -3,8 +3,8 @@ package app.bpartners.geojobs.repository.model.detection;
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
 import static jakarta.persistence.FetchType.EAGER;
 
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.job.model.Task;
+import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.GeoJobType;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.tiling.Tile;

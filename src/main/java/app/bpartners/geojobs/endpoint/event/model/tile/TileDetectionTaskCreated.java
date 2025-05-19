@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.endpoint.event.model.tile;
 
 import app.bpartners.geojobs.endpoint.event.model.TaskCreated;
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import java.util.List;

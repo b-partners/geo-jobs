@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
 import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_BUCKET_FOLDER;
@@ -138,11 +139,16 @@ public class GeoJsonConversionAssemblyInitiatedService
                                 Feature point;
                                 try {
                                   point =
-                                      new ObjectMapper()
-                                          .findAndRegisterModules()
-                                          .readValue(
-                                              geoFeature.getProperties().get("point").toString(),
-                                              Feature.class);
+                                      toRestFeature(
+                                          new ObjectMapper()
+                                              .findAndRegisterModules()
+                                              .readValue(
+                                                  geoFeature
+                                                      .getProperties()
+                                                      .get("point")
+                                                      .toString(),
+                                                  app.bpartners.geojobs.repository.model.Feature
+                                                      .class));
                                 } catch (JsonProcessingException e) {
                                   throw new ApiException(SERVER_EXCEPTION, e);
                                 }
@@ -171,11 +177,23 @@ public class GeoJsonConversionAssemblyInitiatedService
                 })
             .collect(
                 Collectors.groupingBy(
-                    geoFeature ->
-                        new PointLabelKey(
-                            (app.bpartners.geojobs.endpoint.rest.model.Point)
-                                geoFeature.getProperties().get("point"),
-                            geoFeature.getProperties().get("label").toString())));
+                    geoFeature -> {
+                      var pointFeatureAsString = geoFeature.getProperties().get("point").toString();
+                      app.bpartners.geojobs.repository.model.Feature pointFeatureDomain;
+                      try {
+                        pointFeatureDomain =
+                            new ObjectMapper()
+                                .findAndRegisterModules()
+                                .readValue(
+                                    pointFeatureAsString,
+                                    app.bpartners.geojobs.repository.model.Feature.class);
+                      } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e);
+                      }
+                      return new PointLabelKey(
+                          toRestFeature(pointFeatureDomain).getGeometry().getPoint(),
+                          geoFeature.getProperties().get("label").toString());
+                    }));
 
     return unifyFeatureGeometryByPointAndLabel(geoFeaturesGroupByPoint);
   }

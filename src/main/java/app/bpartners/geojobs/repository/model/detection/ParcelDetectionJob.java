@@ -3,9 +3,9 @@ package app.bpartners.geojobs.repository.model.detection;
 import static app.bpartners.geojobs.repository.model.GeoJobType.PARCEL_DETECTION;
 import static org.hibernate.type.SqlTypes.JSON;
 
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.job.model.Job;
 import app.bpartners.geojobs.job.model.JobType;
+import app.bpartners.geojobs.repository.model.Feature;
 import jakarta.persistence.*;
 import java.util.ArrayList;
 import lombok.AllArgsConstructor;
