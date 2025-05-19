@@ -41,12 +41,15 @@ public class ExtendedImageWithDetectedObjectRequestedService
   public void accept(ExtendedImageWithDetectedObjectRequested event) {
     var detection = event.getDetection();
     var layer = detection.getGeoServerProperties().getGeoServerParameter().getLayers();
+    var providedFeatures = detection.getProvidedGeoJsonZone();
+
+    log.info("Detection to be compute image with detected obj : {}", event.getDetection());
 
     if (!detection.hasOnlyPointsGeoJson()) {
       log.info(
           "Only detection with points geojson are supported for now, otherwise detection has"
               + " geoTypes {}",
-          detection.getProvidedGeoJsonZone().stream()
+          providedFeatures.stream()
               .map(
                   feature ->
                       Objects.requireNonNull(feature.getGeometry())
@@ -56,7 +59,6 @@ public class ExtendedImageWithDetectedObjectRequestedService
               .toList());
       return;
     }
-    var providedFeatures = detection.getProvidedGeoJsonZone();
     var pointWithSurroundingTiles = getPointWithSurroundingTiles(providedFeatures);
     var machineDetectedTiles = detectedTileRepository.findAllByZdjJobId(detection.getZdjId());
     var pointWithDetectedObjects =
