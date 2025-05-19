@@ -39,7 +39,7 @@ public class GeometryConverter {
         .geometry(
             new Feature.FeatureGeometry(
                 app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.POINT,
-                new ObjectMapper().writeValueAsString(restPoint.getCoordinates())))
+                new ObjectMapper().writeValueAsString(restPoint)))
         .build();
   }
 
