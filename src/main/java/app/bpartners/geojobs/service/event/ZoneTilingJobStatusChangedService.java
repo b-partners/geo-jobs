@@ -159,7 +159,7 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
                           Map.Entry::getValue,
                           (v1, v2) -> v1));
           var detectionWithMultiPolygonFromPoint =
-              detection.toBuilder()
+              savedDetection.toBuilder()
                   .pointDelimitation(new HashMap<>(collectedPointWithItsMultiPolygon))
                   .build();
           detectionRepository.save(detectionWithMultiPolygonFromPoint);
