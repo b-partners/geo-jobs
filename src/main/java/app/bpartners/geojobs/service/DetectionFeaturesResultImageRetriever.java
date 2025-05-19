@@ -55,26 +55,34 @@ public class DetectionFeaturesResultImageRetriever implements Function<Detection
           var point = feature.getGeometry().getPoint();
           var longitude = point.getCoordinates().getFirst();
           var latitude = point.getCoordinates().getLast();
-          var fileKey = layer + "/extended_original_" + longitude + "_" + latitude + ".jpg";
-          var fileExist =
-              customBucketComponent.listObjects(bucketComponent.getBucketName(), fileKey).stream()
-                  .findAny()
-                  .isPresent();
-          if (fileExist) {
-            try {
-              var originalImageUrl = bucketComponent.presign(fileKey, Duration.ofHours(1L));
-              var properties =
-                  feature.getProperties() == null
-                      ? new HashMap<String, Object>()
-                      : feature.getProperties();
-              properties.put("original_image_url", originalImageUrl);
-              feature.setProperties(properties);
-            } catch (RuntimeException ignored) {
-              log.warn(
-                  "Unable to presign file {}, exception caught {}", fileKey, ignored.getMessage());
-            }
-          }
+
+          var originalFileKey = layer + "/extended_original_" + longitude + "_" + latitude + ".jpg";
+          var drawnFileKey = layer + "/extended_drawn_" + longitude + "_" + latitude + ".jpg";
+
+          addImageIfExist(originalFileKey, feature, "original_image_url");
+
+          addImageIfExist(drawnFileKey, feature, "drawn_image_url");
         });
     return updatedGeoJson;
+  }
+
+  private void addImageIfExist(String fileKey, Feature feature, String fileProperty) {
+    var fileExist =
+        customBucketComponent.listObjects(bucketComponent.getBucketName(), fileKey).stream()
+            .findAny()
+            .isPresent();
+    if (fileExist) {
+      try {
+        var imageUrl = bucketComponent.presign(fileKey, Duration.ofHours(1L));
+        var properties =
+            feature.getProperties() == null
+                ? new HashMap<String, Object>()
+                : feature.getProperties();
+        properties.put(fileProperty, imageUrl);
+        feature.setProperties(properties);
+      } catch (RuntimeException ignored) {
+        log.warn("Unable to presign file {}, exception caught {}", fileKey, ignored.getMessage());
+      }
+    }
   }
 }
