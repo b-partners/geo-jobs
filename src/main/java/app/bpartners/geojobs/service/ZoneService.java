@@ -8,6 +8,7 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.CLIENT_EXCEPTION;
+import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_BUCKET_FOLDER;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_EXTENSION;
@@ -46,6 +47,7 @@ import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.geoserver.GeoServerConfiguration;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
@@ -521,6 +523,15 @@ public class ZoneService {
             var point = feature.getGeometry().getPoint();
             var jtsMultiPolygon = geometryConverter.apply(point, DEFAULT_POLYGON_SIZE_IN_METERS);
             var multiPolygonConverted = featureConverter.fromJtsMultiPolygon(jtsMultiPolygon);
+            try {
+              feature
+                  .getProperties()
+                  .put(
+                      "point",
+                      new ObjectMapper().findAndRegisterModules().writeValueAsString(point));
+            } catch (JsonProcessingException e) {
+              throw new ApiException(SERVER_EXCEPTION, e);
+            }
             feature.getGeometry().setActualInstance(multiPolygonConverted);
           });
       return geoJsonZone.stream().map(FeatureMapper::toDomainFeature).toList();

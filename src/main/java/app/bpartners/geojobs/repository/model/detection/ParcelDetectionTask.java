@@ -9,6 +9,7 @@ import app.bpartners.geojobs.repository.model.GeoJobType;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
@@ -16,11 +17,7 @@ import jakarta.persistence.ManyToMany;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 
@@ -68,6 +65,7 @@ public class ParcelDetectionTask extends Task implements Serializable {
     return (String) getParcel().getParcelContent().getFeature().getProperties().get("address");
   }
 
+  @SneakyThrows
   public Point getPoint() {
     if (getParcel() == null
         || getParcel().getParcelContent() == null
@@ -75,7 +73,11 @@ public class ParcelDetectionTask extends Task implements Serializable {
         || getParcel().getParcelContent().getFeature().getProperties() == null
         || getParcel().getParcelContent().getFeature().getProperties().get("point") == null)
       return null;
-    return (Point) getParcel().getParcelContent().getFeature().getProperties().get("point");
+    return new ObjectMapper()
+        .findAndRegisterModules()
+        .readValue(
+            getParcel().getParcelContent().getFeature().getProperties().get("point").toString(),
+            Point.class);
   }
 
   @Override

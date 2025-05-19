@@ -26,6 +26,7 @@ import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJson;
 import app.bpartners.geojobs.service.geojson.GeoJsonMapper;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
@@ -130,7 +131,23 @@ public class GeoJsonConversionAssemblyInitiatedService
                   var optionalPointMap =
                       pointDelimitation.entrySet().stream()
                           .filter(
-                              map -> map.getKey().equals(geoFeature.getProperties().get("point")))
+                              map -> {
+                                if (geoFeature.getProperties().get("point") == null) {
+                                  return false;
+                                }
+                                Feature point;
+                                try {
+                                  point =
+                                      new ObjectMapper()
+                                          .findAndRegisterModules()
+                                          .readValue(
+                                              geoFeature.getProperties().get("point").toString(),
+                                              Feature.class);
+                                } catch (JsonProcessingException e) {
+                                  throw new ApiException(SERVER_EXCEPTION, e);
+                                }
+                                return map.getKey().equals(point);
+                              })
                           .findAny();
                   if (optionalPointMap.isEmpty()) {
                     return false;

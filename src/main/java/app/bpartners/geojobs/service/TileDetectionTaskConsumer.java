@@ -12,6 +12,8 @@ import app.bpartners.geojobs.service.detection.DetectionMapper;
 import app.bpartners.geojobs.service.detection.DetectionMaskCreator;
 import app.bpartners.geojobs.service.detection.DetectionResponse;
 import app.bpartners.geojobs.service.detection.TileObjectDetector;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -58,7 +60,13 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
                   detectedObject.getFeature().getProperties().put("address", address);
                 }
                 if (point != null) {
-                  detectedObject.getFeature().getProperties().put("point", point);
+                  try {
+                    var pointAsJson =
+                        new ObjectMapper().findAndRegisterModules().writeValueAsString(point);
+                    detectedObject.getFeature().getProperties().put("point", pointAsJson);
+                  } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                  }
                 }
               });
     }
