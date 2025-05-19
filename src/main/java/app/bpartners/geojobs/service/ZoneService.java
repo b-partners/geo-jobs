@@ -524,11 +524,9 @@ public class ZoneService {
             var jtsMultiPolygon = geometryConverter.apply(point, DEFAULT_POLYGON_SIZE_IN_METERS);
             var multiPolygonConverted = featureConverter.fromJtsMultiPolygon(jtsMultiPolygon);
             try {
-              feature
-                  .getProperties()
-                  .put(
-                      "point",
-                      new ObjectMapper().findAndRegisterModules().writeValueAsString(point));
+              var featurePointAsString =
+                  new ObjectMapper().findAndRegisterModules().writeValueAsString(feature);
+              feature.getProperties().put("point", featurePointAsString);
             } catch (JsonProcessingException e) {
               throw new ApiException(SERVER_EXCEPTION, e);
             }
