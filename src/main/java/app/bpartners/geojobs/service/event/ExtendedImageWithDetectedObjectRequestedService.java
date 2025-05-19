@@ -9,6 +9,7 @@ import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.DetectedObjectTypeWithPolygon;
+import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
@@ -36,14 +37,16 @@ public class ExtendedImageWithDetectedObjectRequestedService
   private final DetectedImageDraw detectedImageDraw;
   private final ExtenderApi extenderApi;
   private final FileWriter fileWriter;
+  private final DetectionRepository detectionRepository;
 
   @Override
   public void accept(ExtendedImageWithDetectedObjectRequested event) {
-    var detection = event.getDetection();
+    var detectionId = event.getDetectionId();
+    var detection = detectionRepository.findById(detectionId).orElseThrow();
     var layer = detection.getGeoServerProperties().getGeoServerParameter().getLayers();
     var providedFeatures = detection.getProvidedGeoJsonZone();
 
-    log.info("Detection to be compute image with detected obj : {}", event.getDetection());
+    log.info("Detection to be compute image with detected obj : {}", detection);
 
     if (!detection.hasOnlyPointsGeoJson()) {
       log.info(
