@@ -17,6 +17,8 @@ import app.bpartners.geojobs.service.JobFinishedMailer;
 import app.bpartners.geojobs.service.StatusChangedHandler;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -144,7 +146,18 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
                       })
                   .flatMap(map -> map.entrySet().stream())
                   .collect(
-                      Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1, v2) -> v1));
+                      Collectors.toMap(
+                          entry -> {
+                            try {
+                              return new ObjectMapper()
+                                  .findAndRegisterModules()
+                                  .writeValueAsString(entry.getKey());
+                            } catch (JsonProcessingException e) {
+                              throw new RuntimeException(e);
+                            }
+                          },
+                          Map.Entry::getValue,
+                          (v1, v2) -> v1));
           var detectionWithMultiPolygonFromPoint =
               detection.toBuilder()
                   .pointDelimitation(new HashMap<>(collectedPointWithItsMultiPolygon))

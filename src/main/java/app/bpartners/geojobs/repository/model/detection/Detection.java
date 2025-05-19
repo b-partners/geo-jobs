@@ -2,12 +2,16 @@ package app.bpartners.geojobs.repository.model.detection;
 
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
+import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static org.hibernate.type.SqlTypes.JSON;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.validator.FeatureTypeChecker;
+import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.model.Feature;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -75,7 +79,7 @@ public class Detection implements Serializable {
 
   @JdbcTypeCode(JSON)
   @Getter(AccessLevel.NONE)
-  private HashMap<Feature, Feature> pointDelimitation;
+  private HashMap<String, Feature> pointDelimitation;
 
   @JdbcTypeCode(JSON)
   private List<String> convertedAddresses;
@@ -104,7 +108,16 @@ public class Detection implements Serializable {
         : pointDelimitation.entrySet().stream()
             .collect(
                 Collectors.toMap(
-                    entry -> toRestFeature(entry.getKey()),
+                    entry -> {
+                      try {
+                        return toRestFeature(
+                            new ObjectMapper()
+                                .findAndRegisterModules()
+                                .readValue(entry.getKey(), Feature.class));
+                      } catch (JsonProcessingException e) {
+                        throw new ApiException(SERVER_EXCEPTION, e);
+                      }
+                    },
                     entry -> toRestFeature(entry.getValue()),
                     (v1, v2) -> v1,
                     HashMap::new));
