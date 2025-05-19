@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
 import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_BUCKET_FOLDER;
@@ -135,18 +136,18 @@ public class GeoJsonConversionAssemblyInitiatedService
                                 if (geoFeature.getProperties().get("point") == null) {
                                   return false;
                                 }
-                                Feature point;
+                                app.bpartners.geojobs.repository.model.Feature point;
                                 try {
                                   point =
                                       new ObjectMapper()
                                           .findAndRegisterModules()
                                           .readValue(
                                               geoFeature.getProperties().get("point").toString(),
-                                              Feature.class);
+                                              app.bpartners.geojobs.repository.model.Feature.class);
                                 } catch (JsonProcessingException e) {
                                   throw new ApiException(SERVER_EXCEPTION, e);
                                 }
-                                return map.getKey().equals(point);
+                                return toRestFeature(point).equals(map.getKey());
                               })
                           .findAny();
                   if (optionalPointMap.isEmpty()) {
