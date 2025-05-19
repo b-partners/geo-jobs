@@ -73,11 +73,12 @@ public class ExtendedImageWithDetectedObjectRequestedService
           var pointFeature = point.point().getGeometry().getPoint();
           var longitude = pointFeature.getCoordinates().getFirst();
           var latitude = pointFeature.getCoordinates().getLast();
-          var extendedDrawnImage = extenderApi.apply(point.drawnImages());
-          var filename = layer + "/extended_drawn_" + longitude + "_" + latitude + ".jpg";
+          var extendedDrawnImageBase64 = extenderApi.apply(point.drawnImages());
+          var filename = layer + "/extended_drawn_" + longitude + "_" + latitude;
 
-          var extendedDrawnFile = fileWriter.base64ToFile(extendedDrawnImage, filename);
-          bucketComponent.upload(extendedDrawnFile, filename);
+          var extendedDrawnFile = fileWriter.base64ToFile(extendedDrawnImageBase64, filename);
+          var bucketKey = filename + ".jpg";
+          bucketComponent.upload(extendedDrawnFile, bucketKey);
         });
   }
 
