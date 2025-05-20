@@ -47,6 +47,7 @@ class DetectionFeaturesResultImageRetrieverTest {
     var longitude = BigDecimal.valueOf(-0.249317);
     var layer = "cite:PCRS";
     var features = List.of(somePoint(longitude, latitude, null));
+    when(detectionMock.isSucceeded()).thenReturn(true);
     when(detectionMock.getProvidedGeoJsonZone()).thenReturn(features);
     when(detectionMock.getDetectableObjectModel())
         .thenReturn(new DetectableObjectModel().modelName(TOITURE));
@@ -71,6 +72,7 @@ class DetectionFeaturesResultImageRetrieverTest {
     var latitude = BigDecimal.valueOf(46.651930);
     var longitude = BigDecimal.valueOf(-0.249317);
     var features = List.of(somePoint(longitude, latitude, null));
+    when(detectionMock.isSucceeded()).thenReturn(true);
     when(detectionMock.getProvidedGeoJsonZone()).thenReturn(features);
     when(detectionMock.getDetectableObjectModel())
         .thenReturn(new DetectableObjectModel().modelName(TOITURE));
@@ -91,6 +93,7 @@ class DetectionFeaturesResultImageRetrieverTest {
     var longitude = BigDecimal.valueOf(-0.249317);
     var layer = "cite:PCRS";
     var features = List.of(somePoint(longitude, latitude, null));
+    when(detectionMock.isSucceeded()).thenReturn(true);
     when(detectionMock.getProvidedGeoJsonZone()).thenReturn(features);
     when(detectionMock.getDetectableObjectModel())
         .thenReturn(new DetectableObjectModel().modelName(TOITURE));

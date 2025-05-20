@@ -31,6 +31,9 @@ public class DetectionFeaturesResultImageRetriever implements Function<Detection
     if (providedGeoJsonZone == null) {
       return null;
     }
+    if (!detection.isSucceeded()) {
+      return providedGeoJsonZone;
+    }
     var detectableObjectModel = detection.getDetectableObjectModel();
     if (detectableObjectModel == null) {
       return providedGeoJsonZone;
