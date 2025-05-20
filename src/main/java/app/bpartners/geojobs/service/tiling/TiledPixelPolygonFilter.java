@@ -16,7 +16,7 @@ public class TiledPixelPolygonFilter {
       List<TiledPixelPolygon> pixelPolygons, Geometry maskGeoJson) {
     var preparedMask = new PreparedGeometryFactory().create(maskGeoJson);
     return pixelPolygons.stream()
-        .filter(
+        .map(
             tiledPixelPolygon -> {
               var geoPolygons =
                   tiledPixelPolygon.polygons().stream()
@@ -28,7 +28,15 @@ public class TiledPixelPolygonFilter {
                                   tiledPixelPolygon.tileY(),
                                   tiledPixelPolygon.zoom()))
                       .toList();
-              return geoPolygons.stream().anyMatch(preparedMask::intersects);
+              if (geoPolygons.stream().anyMatch(preparedMask::intersects)) {
+                return tiledPixelPolygon;
+              }
+              return new TiledPixelPolygon(
+                  tiledPixelPolygon.point(),
+                  List.of(),
+                  tiledPixelPolygon.tileX(),
+                  tiledPixelPolygon.tileY(),
+                  tiledPixelPolygon.zoom());
             })
         .toList();
   }

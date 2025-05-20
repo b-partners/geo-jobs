@@ -26,6 +26,9 @@ public class DetectedImageDraw
   @Override
   public File apply(
       File originalImage, List<DetectedObjectTypeWithPolygon> detectedObjectTypeWithPolygon) {
+    if (detectedObjectTypeWithPolygon.isEmpty()) {
+      return originalImage;
+    }
     BufferedImage image = ImageIO.read(originalImage);
     if (image == null)
       throw new IOException("Not valid image file found for " + originalImage.getName());

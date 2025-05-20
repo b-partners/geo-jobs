@@ -77,7 +77,7 @@ public class ExtendedImageWithDetectedObjectRequestedService
     var machineDetectedTiles = detectedTileRepository.findAllByZdjJobId(detection.getZdjId());
     var pointWithDetectedObjects =
         getPointWithDetectedObjects(pointWithSurroundingTiles, machineDetectedTiles);
-    var tiledPixelPolygons = getTiledPixelPolygonsGroupByPoint(pointWithDetectedObjects);
+    var tiledPixelPolygons = getTiledPixelPolygons(pointWithDetectedObjects);
     var masks =
         pointDelimitation.entrySet().stream()
             .map(
@@ -109,7 +109,7 @@ public class ExtendedImageWithDetectedObjectRequestedService
             });
   }
 
-  private List<TiledPixelPolygon> getTiledPixelPolygonsGroupByPoint(
+  private List<TiledPixelPolygon> getTiledPixelPolygons(
       List<PointWithDetectedObjects> pointWithDetectedObjects) {
     return pointWithDetectedObjects.stream()
         .map(
