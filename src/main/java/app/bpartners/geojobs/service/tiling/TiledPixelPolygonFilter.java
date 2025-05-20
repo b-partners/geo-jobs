@@ -18,22 +18,22 @@ public class TiledPixelPolygonFilter {
     return pixelPolygons.stream()
         .map(
             tiledPixelPolygon -> {
-              var geoPolygons =
+              var filteredGeoPolygons =
                   tiledPixelPolygon.polygons().stream()
-                      .map(
-                          pixelPolygon ->
-                              tileProjection.pixelPolygonToGeo(
-                                  pixelPolygon.polygon(),
-                                  tiledPixelPolygon.tileX(),
-                                  tiledPixelPolygon.tileY(),
-                                  tiledPixelPolygon.zoom()))
+                      .filter(
+                          pixelPolygon -> {
+                            var geoPolygon =
+                                tileProjection.pixelPolygonToGeo(
+                                    pixelPolygon.polygon(),
+                                    tiledPixelPolygon.tileX(),
+                                    tiledPixelPolygon.tileY(),
+                                    tiledPixelPolygon.zoom());
+                            return preparedMask.intersects(geoPolygon);
+                          })
                       .toList();
-              if (geoPolygons.stream().anyMatch(preparedMask::intersects)) {
-                return tiledPixelPolygon;
-              }
               return new TiledPixelPolygon(
                   tiledPixelPolygon.point(),
-                  List.of(),
+                  filteredGeoPolygons,
                   tiledPixelPolygon.tileX(),
                   tiledPixelPolygon.tileY(),
                   tiledPixelPolygon.zoom());
