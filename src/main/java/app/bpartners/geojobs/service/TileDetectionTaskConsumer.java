@@ -12,6 +12,8 @@ import app.bpartners.geojobs.service.detection.DetectionMapper;
 import app.bpartners.geojobs.service.detection.DetectionMaskCreator;
 import app.bpartners.geojobs.service.detection.DetectionResponse;
 import app.bpartners.geojobs.service.detection.TileObjectDetector;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -33,6 +35,7 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
     var zoneDetectionJobId = tileDetectionTask.getZoneDetectionJobId();
     var parcelJobId = tileDetectionTask.getJobId();
     var address = tileDetectionTask.getAddress();
+    var point = tileDetectionTask.getPoint();
     File mask = null;
     if (isRooferModel(detectableObjectConfigurations)) {
       mask = maskCreator.createTempMask();
@@ -55,6 +58,15 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
               detectedObject -> {
                 if (address != null) {
                   detectedObject.getFeature().getProperties().put("address", address);
+                }
+                if (point != null) {
+                  try {
+                    var pointAsJson =
+                        new ObjectMapper().findAndRegisterModules().writeValueAsString(point);
+                    detectedObject.getFeature().getProperties().put("point", pointAsJson);
+                  } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                  }
                 }
               });
     }

@@ -37,6 +37,7 @@ import app.bpartners.geojobs.service.event.GeoJsonConversionAssemblyInitiatedSer
 import app.bpartners.geojobs.service.geojson.GeoJsonMapper;
 import app.bpartners.geojobs.service.geojson.GeoJsonMultiPolygonCorrector;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import app.bpartners.geojobs.service.gouv.fr.rnb.BuildingApi;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
@@ -65,7 +66,8 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
   FileWriter fileWriter = new FileWriter(objectMapper, new ExtensionGuesser());
   FeatureMapper featureMapper = new FeatureMapper();
   GeoJsonMapper geoJsonMapper = new GeoJsonMapper(new GeoJsonMultiPolygonCorrector());
-  GeometryConverter geometryConverter = new GeometryConverter();
+  BuildingApi buildingApiMock = mock();
+  GeometryConverter geometryConverter = new GeometryConverter(buildingApiMock);
   GeoJsonConversionAssemblyInitiatedService subject =
       new GeoJsonConversionAssemblyInitiatedService(
           geoJsonConversionTaskRepositoryMock,

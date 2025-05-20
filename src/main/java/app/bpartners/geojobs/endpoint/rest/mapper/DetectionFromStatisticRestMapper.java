@@ -12,11 +12,14 @@ import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.repository.model.GeoJobType;
 import app.bpartners.geojobs.repository.model.detection.Detection;
+import app.bpartners.geojobs.service.DetectionFeaturesResultImageRetriever;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.function.TriFunction;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class DetectionFromStatisticRestMapper
@@ -27,11 +30,11 @@ public class DetectionFromStatisticRestMapper
         app.bpartners.geojobs.endpoint.rest.model.Detection> {
   private final BucketComponent bucketComponent;
   private final DetectionStepStatisticMapper detectionStepStatisticMapper;
+  private final DetectionFeaturesResultImageRetriever featuresImageRetriever;
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection apply(
       Detection detection, TaskStatistic statistic, DetectionStepName detectionStepName) {
-    var features =
-        detection.getProvidedGeoJsonZone() == null ? null : detection.getProvidedGeoJsonZone();
+    var features = featuresImageRetriever.apply(detection);
     var excelUrl = bucketComponent.presign(detection.getExcelFileKey());
     var shapeUrl = bucketComponent.presign(detection.getShapeFileKey());
     var geojsonUrl = bucketComponent.presign(detection.getGeojsonS3FileKey());

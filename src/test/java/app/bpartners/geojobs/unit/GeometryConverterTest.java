@@ -1,23 +1,28 @@
 package app.bpartners.geojobs.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
 
-import app.bpartners.gen.annotator.endpoint.rest.model.Point;
+import app.bpartners.geojobs.endpoint.rest.model.Point;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import app.bpartners.geojobs.service.gouv.fr.rnb.BuildingApi;
+import java.math.BigDecimal;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 
 @Slf4j
 class GeometryConverterTest {
-  GeometryConverter subject = new GeometryConverter();
+  BuildingApi buildingApiMock = mock();
+  GeometryConverter subject = new GeometryConverter(buildingApiMock);
 
   @Test
   void convert_using_70_meters_x_70_meters_in_size() {
-    var latitude = 48.8589892;
-    var longitude = 2.2847458;
+    var latitude = BigDecimal.valueOf(46.651930);
+    var longitude = BigDecimal.valueOf(-0.249317);
     var sizeInMeters = 70.0;
 
-    var actual = subject.apply(new Point().x(latitude).y(longitude), sizeInMeters);
+    var actual = subject.apply(new Point().coordinates(List.of(longitude, latitude)), sizeInMeters);
     var actualString = subject.writeMultiPolygonAsString(actual);
 
     assertEquals(expectedMultiPolygonStringValue(), actualString);
@@ -25,6 +30,6 @@ class GeometryConverterTest {
 
   public String expectedMultiPolygonStringValue() {
     return """
-{"type":"MultiPolygon","coordinates":[[[[2.284267912780165,48.85867479108876],[2.285223687219836,48.85867479108876],[2.285223687219836,48.85930360891125],[2.284267912780165,48.85930360891125],[2.284267912780165,48.85867479108876]]]]}""";
+{"type":"MultiPolygon","coordinates":[[[[-0.249775035790335,46.65161559108876],[-0.248858964209665,46.65161559108876],[-0.248858964209665,46.65224440891125],[-0.249775035790335,46.65224440891125],[-0.249775035790335,46.65161559108876]]]]}""";
   }
 }

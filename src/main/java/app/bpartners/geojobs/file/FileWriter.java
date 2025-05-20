@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
+import java.util.Base64;
 import java.util.Set;
 import java.util.function.BiFunction;
 import javax.annotation.Nullable;
@@ -64,6 +65,14 @@ public class FileWriter implements BiFunction<byte[], File, File> {
     } catch (IOException | NullPointerException e) {
       throw new ApiException(SERVER_EXCEPTION, e);
     }
+  }
+
+  @SneakyThrows
+  public File base64ToFile(String base64, String filename) {
+    byte[] decodedBytes = Base64.getDecoder().decode(base64);
+    String suffix = extensionGuesser.apply(decodedBytes);
+    File tmpFile = File.createTempFile(filename, suffix);
+    return Files.write(tmpFile.toPath(), decodedBytes).toFile();
   }
 
   @SneakyThrows

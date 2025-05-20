@@ -1,14 +1,23 @@
 package app.bpartners.geojobs.repository.model.detection;
 
+import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
+import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
+import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static org.hibernate.type.SqlTypes.JSON;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
+import app.bpartners.geojobs.endpoint.rest.validator.FeatureTypeChecker;
+import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.model.Feature;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 
@@ -69,6 +78,10 @@ public class Detection implements Serializable {
   private List<Feature> multiPolygonGeoJsonZone;
 
   @JdbcTypeCode(JSON)
+  @Getter(AccessLevel.NONE)
+  private HashMap<String, Feature> pointDelimitation;
+
+  @JdbcTypeCode(JSON)
   private List<String> convertedAddresses;
 
   @JdbcTypeCode(JSON)
@@ -84,6 +97,41 @@ public class Detection implements Serializable {
     return multiPolygonGeoJsonZone == null
         ? null
         : multiPolygonGeoJsonZone.stream().map(FeatureMapper::toRestFeature).toList();
+  }
+
+  public HashMap<
+          app.bpartners.geojobs.endpoint.rest.model.Feature,
+          app.bpartners.geojobs.endpoint.rest.model.Feature>
+      getPointDelimitation() {
+    return pointDelimitation == null
+        ? new HashMap<>()
+        : pointDelimitation.entrySet().stream()
+            .collect(
+                Collectors.toMap(
+                    entry -> {
+                      try {
+                        return toRestFeature(
+                            new ObjectMapper()
+                                .findAndRegisterModules()
+                                .readValue(entry.getKey(), Feature.class));
+                      } catch (JsonProcessingException e) {
+                        throw new ApiException(SERVER_EXCEPTION, e);
+                      }
+                    },
+                    entry -> toRestFeature(entry.getValue()),
+                    (v1, v2) -> v1,
+                    HashMap::new));
+  }
+
+  public boolean hasOnlyPointsGeoJson() {
+    return getMultiPolygonGeoJsonZone() != null
+        && new FeatureTypeChecker().apply(getProvidedGeoJsonZone(), Point.class);
+  }
+
+  public boolean hasToitureModelName() {
+    return detectableObjectModel != null
+        && detectableObjectModel.getModelName() != null
+        && TOITURE.equals(detectableObjectModel.getModelName());
   }
 
   public boolean isSucceeded() {

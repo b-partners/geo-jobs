@@ -33,6 +33,7 @@ import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
+import app.bpartners.geojobs.service.DetectionFeaturesResultImageRetriever;
 import app.bpartners.geojobs.service.RooferDetectionService;
 import app.bpartners.geojobs.service.detection.DetectionMapper;
 import app.bpartners.geojobs.service.detection.DetectionMaskCreator;
@@ -51,7 +52,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
-public class RooferDetectionServiceTest {
+class RooferDetectionServiceTest {
   private static final String PRESIGNED_URL = "https://presigned.bucket.org";
   TileObjectDetector detector = mock();
   DetectionMaskCreator detectionMaskCreator = new DetectionMaskCreator();
@@ -64,10 +65,13 @@ public class RooferDetectionServiceTest {
   BucketComponent bucketComponent = mock();
   EventProducer<GeoJsonConversionProcessSucceeded> eventProducer = mock();
   StatusMapper<JobStatus> statusMapper = new StatusMapper<>();
+  DetectionFeaturesResultImageRetriever featureImageRetrieverMock =
+      mock(DetectionFeaturesResultImageRetriever.class);
   DetectionStepStatisticMapper detectionStepStatisticMapper =
       new DetectionStepStatisticMapper(statusMapper);
   DetectionFromStatisticRestMapper detectionFromStatisticRestMapper =
-      new DetectionFromStatisticRestMapper(bucketComponent, detectionStepStatisticMapper);
+      new DetectionFromStatisticRestMapper(
+          bucketComponent, detectionStepStatisticMapper, featureImageRetrieverMock);
   Mailer mailer = mock();
   AuthProvider authProvider = mock();
   HTMLTemplateParser htmlTemplateParser = new HTMLTemplateParser();
@@ -91,6 +95,12 @@ public class RooferDetectionServiceTest {
             authProvider,
             htmlTemplateParser);
 
+    when(featureImageRetrieverMock.apply(any()))
+        .thenAnswer(
+            invocation ->
+                ((app.bpartners.geojobs.repository.model.detection.Detection)
+                        invocation.getArgument(0))
+                    .getProvidedGeoJsonZone());
     when(detector.apply(any(), any(), any()))
         .thenReturn(
             DetectionResponse.builder()

@@ -33,7 +33,7 @@ class BuildingApiIT {
     double longitude = -0.249327;
     int radius = 100;
 
-    var actual = subject.getNearestBuildingAt(latitude, longitude, radius);
+    var actual = subject.getNearestBuildingAt(longitude, latitude, radius);
 
     assertEquals(0.0, actual.distance());
     assertEquals(

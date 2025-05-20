@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
 import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_BUCKET_FOLDER;
@@ -26,6 +27,7 @@ import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJson;
 import app.bpartners.geojobs.service.geojson.GeoJsonMapper;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
@@ -71,12 +73,10 @@ public class GeoJsonConversionAssemblyInitiatedService
     var geoFeaturesList = getGeoFeaturesList(conversionTasks);
     var geoFeaturesFilteredByAddresses =
         filterGeoFeaturesByAddresses(geoFeaturesList, polygonAddressDelimitation);
-
+    var geoFeaturesFilterByPoint = filterGeoFeaturesByPoint(geoFeaturesList, detection);
     var geoJson =
-        new GeoJson(
-            geoFeaturesFilteredByAddresses.isEmpty()
-                ? geoFeaturesList
-                : geoFeaturesFilteredByAddresses);
+        computeFinalGeoJson(
+            geoFeaturesList, geoFeaturesFilteredByAddresses, geoFeaturesFilterByPoint);
     var outputFileName = zoneDetectionJob.getZoneName() + "-final" + GEO_JSON_EXTENSION;
     var geoJsonFinalFile =
         fileWriter.write(
@@ -102,6 +102,100 @@ public class GeoJsonConversionAssemblyInitiatedService
                   .geoJsonConversionJob(savedConversionJob)
                   .build()));
     }
+  }
+
+  private GeoJson computeFinalGeoJson(
+      List<GeoJson.GeoFeature> geoFeaturesList,
+      List<GeoJson.GeoFeature> geoFeaturesFilteredByAddresses,
+      List<GeoJson.GeoFeature> geoFeaturesFilteredByPoint) {
+    if (!geoFeaturesFilteredByAddresses.isEmpty()) {
+      return new GeoJson(geoFeaturesFilteredByAddresses);
+    }
+    if (!geoFeaturesFilteredByPoint.isEmpty()) {
+      return new GeoJson(geoFeaturesFilteredByPoint);
+    }
+    return new GeoJson(geoFeaturesList);
+  }
+
+  private List<GeoJson.GeoFeature> filterGeoFeaturesByPoint(
+      List<GeoJson.GeoFeature> geoFeaturesList, Detection detection) {
+    if (detection == null
+        || detection.getMultiPolygonGeoJsonZone() == null
+        || detection.getMultiPolygonGeoJsonZone().isEmpty()) {
+      return Collections.emptyList();
+    }
+    var pointDelimitation = detection.getPointDelimitation();
+    var geoFeaturesGroupByPoint =
+        geoFeaturesList.stream()
+            .filter(
+                geoFeature -> {
+                  var optionalPointMap =
+                      pointDelimitation.entrySet().stream()
+                          .filter(
+                              map -> {
+                                if (geoFeature.getProperties().get("point") == null) {
+                                  return false;
+                                }
+                                Feature point;
+                                try {
+                                  point =
+                                      toRestFeature(
+                                          new ObjectMapper()
+                                              .findAndRegisterModules()
+                                              .readValue(
+                                                  geoFeature
+                                                      .getProperties()
+                                                      .get("point")
+                                                      .toString(),
+                                                  app.bpartners.geojobs.repository.model.Feature
+                                                      .class));
+                                } catch (JsonProcessingException e) {
+                                  throw new ApiException(SERVER_EXCEPTION, e);
+                                }
+                                return point.equals(map.getKey());
+                              })
+                          .findAny();
+                  if (optionalPointMap.isEmpty()) {
+                    return false;
+                  }
+                  var roofPolygon =
+                      geometryConverter.apply(
+                          optionalPointMap
+                              .get()
+                              .getValue()
+                              .getGeometry()
+                              .getMultiPolygon()
+                              .getCoordinates());
+                  var objectPolygon =
+                      featureMapper.toDomainPolygon(
+                          Objects.requireNonNull(geoFeature.getGeometry().getCoordinates()));
+                  var intersection = roofPolygon.intersection(objectPolygon);
+                  double intersectionArea = intersection.getArea();
+                  double objectPolygonArea = objectPolygon.getArea();
+                  double ratio = intersectionArea / objectPolygonArea;
+                  return ratio > HALF_OF_AREA;
+                })
+            .collect(
+                Collectors.groupingBy(
+                    geoFeature -> {
+                      var pointFeatureAsString = geoFeature.getProperties().get("point").toString();
+                      app.bpartners.geojobs.repository.model.Feature pointFeatureDomain;
+                      try {
+                        pointFeatureDomain =
+                            new ObjectMapper()
+                                .findAndRegisterModules()
+                                .readValue(
+                                    pointFeatureAsString,
+                                    app.bpartners.geojobs.repository.model.Feature.class);
+                      } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e);
+                      }
+                      return new PointLabelKey(
+                          toRestFeature(pointFeatureDomain).getGeometry().getPoint(),
+                          geoFeature.getProperties().get("label").toString());
+                    }));
+
+    return unifyFeatureGeometryByPointAndLabel(geoFeaturesGroupByPoint);
   }
 
   private List<GeoJson.GeoFeature> filterGeoFeaturesByAddresses(
@@ -176,11 +270,40 @@ public class GeoJsonConversionAssemblyInitiatedService
                                 .mapToDouble(MultiPolygon::getArea)
                                 .sum();
                         properties.put(
-                            "rate",
+                            "ratio",
                             new BigDecimal(objectTotalArea / roofLimitationArea)
                                 .setScale(4, HALF_UP)
                                 .doubleValue());
                       });
+
+              return geoJsonMapper.getGeoFeature(
+                  geometryConverter.multiPolygonToNestedList(unifiedMultiPolygon), properties);
+            })
+        .toList();
+  }
+
+  private List<GeoJson.GeoFeature> unifyFeatureGeometryByPointAndLabel(
+      Map<PointLabelKey, List<GeoJson.GeoFeature>> geoFeaturesGroupByPointAndLabel) {
+    return geoFeaturesGroupByPointAndLabel.entrySet().stream()
+        .map(
+            entry -> {
+              var geoFeatures = entry.getValue();
+              var multiPolygonsLinkedByPoint =
+                  geoFeatures.stream()
+                      .map(
+                          geoFeature ->
+                              geometryConverter.apply(
+                                  Objects.requireNonNull(
+                                      geoFeature.getGeometry().getCoordinates())))
+                      .toList();
+              var unifiedMultiPolygon =
+                  geometryConverter.unifyMultiPolygon(multiPolygonsLinkedByPoint);
+              var pointLabelKey = entry.getKey();
+              var properties = new HashMap<String, Object>();
+              var point = pointLabelKey.point();
+              var label = pointLabelKey.label();
+              properties.put("point", point);
+              properties.put("label", label);
 
               return geoJsonMapper.getGeoFeature(
                   geometryConverter.multiPolygonToNestedList(unifiedMultiPolygon), properties);
@@ -264,4 +387,7 @@ public class GeoJsonConversionAssemblyInitiatedService
   }
 
   private record AddressLabelKey(String address, String label) {}
+
+  private record PointLabelKey(
+      app.bpartners.geojobs.endpoint.rest.model.Point point, String label) {}
 }

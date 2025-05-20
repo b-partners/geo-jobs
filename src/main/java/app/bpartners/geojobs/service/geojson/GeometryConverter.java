@@ -1,10 +1,15 @@
 package app.bpartners.geojobs.service.geojson;
 
-import app.bpartners.gen.annotator.endpoint.rest.model.Point;
+import static app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.MULTI_POLYGON;
+
 import app.bpartners.geojobs.model.exception.NotImplementedException;
+import app.bpartners.geojobs.repository.model.Feature;
+import app.bpartners.geojobs.service.gouv.fr.rnb.BuildingApi;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import lombok.SneakyThrows;
 import org.geotools.geojson.geom.GeometryJSON;
@@ -14,12 +19,62 @@ import org.springframework.stereotype.Component;
 // Most ChatGPT-generated code
 @Component
 public class GeometryConverter {
+  private static final int DEFAULT_POLYGON_SIZE_IN_METERS = 100;
   private static final double APPROXIMATE_METERS_PER_DEGREE_OF_LATITUDE = 111320.0;
   private final GeometryFactory geometryFactory = new GeometryFactory();
+  private final BuildingApi buildingApi;
 
-  public MultiPolygon apply(Point point, Double sizeInMeters) {
-    var latitude = point.getX();
-    var longitude = point.getY();
+  public GeometryConverter(BuildingApi buildingApi) {
+    this.buildingApi = buildingApi;
+  }
+
+  @SneakyThrows
+  public Feature toFeature(
+      Integer zoom,
+      HashMap<String, Object> properties,
+      app.bpartners.geojobs.endpoint.rest.model.Point restPoint) {
+    return Feature.builder()
+        .zoom(zoom)
+        .properties(properties)
+        .geometry(
+            new Feature.FeatureGeometry(
+                app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.POINT,
+                new ObjectMapper().writeValueAsString(restPoint)))
+        .build();
+  }
+
+  public Feature toFeature(
+      String featureId,
+      Integer zoom,
+      HashMap<String, Object> properties,
+      MultiPolygon multiPolygon) {
+    return Feature.builder()
+        .id(featureId)
+        .zoom(zoom)
+        .geometry(
+            Feature.FeatureGeometry.builder()
+                .geometryType(MULTI_POLYGON)
+                .actualInstanceStringValue(writeMultiPolygonAsString(multiPolygon))
+                .build())
+        .properties(properties)
+        .build();
+  }
+
+  public MultiPolygon retrieveNearestRoofMultiPolygon(
+      app.bpartners.geojobs.endpoint.rest.model.Point point) {
+    var longitude = point.getCoordinates().getFirst();
+    var latitude = point.getCoordinates().getLast();
+    var nearestBuilding =
+        buildingApi.getNearestBuildingAt(
+            longitude.doubleValue(), latitude.doubleValue(), DEFAULT_POLYGON_SIZE_IN_METERS);
+    var multiPolygonCoordinates = nearestBuilding.shape().getMultiPolygonCoordinates();
+    return apply(multiPolygonCoordinates);
+  }
+
+  public MultiPolygon apply(
+      app.bpartners.geojobs.endpoint.rest.model.Point point, Double sizeInMeters) {
+    var longitude = point.getCoordinates().getFirst().doubleValue();
+    var latitude = point.getCoordinates().getLast().doubleValue();
 
     // 1. Convert meters to degrees
     double halfSize = sizeInMeters / 2.0;
@@ -134,6 +189,14 @@ public class GeometryConverter {
     GeometryJSON geometryJSON = new GeometryJSON(15);
     StringWriter writer = new StringWriter();
     geometryJSON.write(multiPolygon, writer);
+    return writer.toString();
+  }
+
+  @SneakyThrows
+  public String writePointAsString(Point point) {
+    GeometryJSON geometryJSON = new GeometryJSON(15);
+    StringWriter writer = new StringWriter();
+    geometryJSON.write(point, writer);
     return writer.toString();
   }
 }

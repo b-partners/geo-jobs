@@ -25,6 +25,7 @@ import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.JobFinishedMailer;
 import app.bpartners.geojobs.service.StatusChangedHandler;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
+import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.utils.tiling.TilingTaskCreator;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,6 +46,7 @@ class ZoneTilingJobStatusChangedServiceTest {
   DetectableObjectConfigurationRepository objectConfigurationRepositoryMock = mock();
   TilingTaskRepository tilingTaskRepositoryMock = mock();
   TilingTaskCreator tilingTaskCreator = new TilingTaskCreator();
+  GeometryConverter geometryConverterMock = mock();
   ZoneTilingJobStatusChangedService subject =
       new ZoneTilingJobStatusChangedService(
           mailerMock,
@@ -53,7 +55,8 @@ class ZoneTilingJobStatusChangedServiceTest {
           detectionRepositoryMock,
           eventProducerMock,
           objectConfigurationRepositoryMock,
-          tilingTaskRepositoryMock);
+          tilingTaskRepositoryMock,
+          geometryConverterMock);
 
   @BeforeEach
   void setUp() {
