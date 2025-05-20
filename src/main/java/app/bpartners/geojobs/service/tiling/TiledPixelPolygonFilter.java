@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 public class TiledPixelPolygonFilter {
   private final TileProjection tileProjection;
 
+  // TODO: check if TiledPixelPolygon does not contain not used shell
   public List<TiledPixelPolygon> filterPolygonsInMask(
       List<TiledPixelPolygon> pixelPolygons, Geometry maskGeoJson) {
     var preparedMask = new PreparedGeometryFactory().create(maskGeoJson);

@@ -1,7 +1,8 @@
 package app.bpartners.geojobs.service;
 
+import static java.awt.AlphaComposite.Src;
 import static java.awt.Color.*;
-import static java.awt.Font.BOLD;
+import static java.awt.Font.PLAIN;
 import static java.awt.RenderingHints.KEY_ANTIALIASING;
 import static java.awt.RenderingHints.VALUE_ANTIALIAS_ON;
 
@@ -34,8 +35,9 @@ public class DetectedImageDraw
       throw new IOException("Not valid image file found for " + originalImage.getName());
     Graphics2D g2d = image.createGraphics();
     g2d.setStroke(new BasicStroke(4));
-    g2d.setFont(new Font("Arial", BOLD, 14));
+    g2d.setFont(new Font("Arial", PLAIN, 16));
     g2d.setRenderingHint(KEY_ANTIALIASING, VALUE_ANTIALIAS_ON); // For best rendering
+    g2d.setComposite(Src); // For transparent color
 
     for (DetectedObjectTypeWithPolygon polygon : detectedObjectTypeWithPolygon) {
       g2d.setColor(getColor(polygon.objectType()));
@@ -67,10 +69,13 @@ public class DetectedImageDraw
   private Color getColor(DetectableType detectableType) {
     return switch (detectableType) {
       case HUMIDITE, HUMIDITE_CLAIR, HUMIDITE_INTENSE -> BLUE;
-      case MOISISSURE, MOISISSURE_CLAIR, MOISISSURE_COULEUR, MOISISSURE_NOIRCIE -> YELLOW;
-      case OBSTACLE, CHEMINEE, PANNEAU_PHOTOVOLTAIQUE, VELUX -> ORANGE;
-      case USURE, USURE_IMPORTANTE, USURE_LEGER -> RED;
-      default -> GRAY;
+      case MOISISSURE, MOISISSURE_CLAIR, MOISISSURE_COULEUR, MOISISSURE_NOIRCIE -> BLACK;
+      case OBSTACLE, CHEMINEE, VELUX -> ORANGE;
+      case USURE, USURE_IMPORTANTE, USURE_LEGER -> new Color(208, 25, 88);
+      case ARBRE, ESPACE_VERT -> GREEN;
+      case PANNEAU_PHOTOVOLTAIQUE -> CYAN;
+      case RISQUE_FEU -> new Color(255, 0, 0);
+      default -> new Color(0, 0, 0, 0);
     };
   }
 }
