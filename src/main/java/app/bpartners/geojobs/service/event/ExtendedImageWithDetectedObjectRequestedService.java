@@ -194,6 +194,10 @@ public class ExtendedImageWithDetectedObjectRequestedService
     pointWithDetectedObjects.forEach(
         (featurePoint, tiledPixelPolygons) -> {
           List<File> imageDrawn = new ArrayList<>();
+          tiledPixelPolygons.sort(
+              Comparator.comparing(TiledPixelPolygon::zoom)
+                  .thenComparing(TiledPixelPolygon::tileY)
+                  .thenComparing(TiledPixelPolygon::tileX));
           tiledPixelPolygons.forEach(
               tiledPixelPolygon -> {
                 var originalImageKey =
