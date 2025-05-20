@@ -5,6 +5,7 @@ import static java.awt.Color.*;
 import static java.awt.Font.PLAIN;
 import static java.awt.RenderingHints.KEY_ANTIALIASING;
 import static java.awt.RenderingHints.VALUE_ANTIALIAS_ON;
+import static java.awt.image.BufferedImage.TYPE_INT_ARGB;
 
 import app.bpartners.geojobs.model.DetectedObjectTypeWithPolygon;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
@@ -30,15 +31,19 @@ public class DetectedImageDraw
     if (detectedObjectTypeWithPolygon.isEmpty()) {
       return originalImage;
     }
-    BufferedImage image = ImageIO.read(originalImage);
-    if (image == null)
+    BufferedImage original = ImageIO.read(originalImage);
+    if (original == null)
       throw new IOException("Not valid image file found for " + originalImage.getName());
-    Graphics2D g2d = image.createGraphics();
+    BufferedImage newImage =
+        new BufferedImage(original.getWidth(), original.getHeight(), TYPE_INT_ARGB);
+    Graphics2D g2d = newImage.createGraphics();
+    g2d.drawImage(original, 0, 0, null);
     g2d.setStroke(new BasicStroke(4));
     g2d.setFont(new Font("Arial", PLAIN, 16));
     g2d.setRenderingHint(KEY_ANTIALIASING, VALUE_ANTIALIAS_ON); // For best rendering
     g2d.setComposite(Src); // For transparent color
 
+    // Write polygons
     for (DetectedObjectTypeWithPolygon polygon : detectedObjectTypeWithPolygon) {
       g2d.setColor(getColor(polygon.objectType()));
       List<app.bpartners.geojobs.endpoint.rest.model.Point> points = polygon.pointList();
@@ -53,15 +58,29 @@ public class DetectedImageDraw
       } else if (points.size() == 1) {
         g2d.fillOval(xPoints[0] - 2, yPoints[0] - 2, 4, 4);
       }
+    }
 
-      // Write object type label
-      g2d.drawString(polygon.objectType().toString(), xPoints[0], yPoints[0] - 5);
+    // Write legends
+    var detectableTypes =
+        detectedObjectTypeWithPolygon.stream()
+            .map(DetectedObjectTypeWithPolygon::objectType)
+            .toList();
+    int legendX = newImage.getWidth() - 200;
+    int legendY = newImage.getHeight() - 20 * detectableTypes.size();
+    int lineHeight = 20;
+    for (int i = 0; i < detectableTypes.size(); i++) {
+      Color color = getColor(detectableTypes.get(i));
+      String label = detectableTypes.toString();
+      int y = legendY + i * lineHeight;
+      g2d.setColor(color);
+      g2d.fillRect(legendX, y, 15, 15);
+      g2d.drawString(label, legendX + 20, y + 12);
     }
 
     g2d.dispose();
 
     var outputFile = Files.createTempFile(originalImage.getName(), ".jpg").toFile();
-    ImageIO.write(image, "jpg", outputFile);
+    ImageIO.write(newImage, "jpg", outputFile);
     return outputFile;
   }
 
