@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import lombok.SneakyThrows;
@@ -62,6 +63,9 @@ public class GeometryConverter {
 
   public MultiPolygon retrieveNearestRoofMultiPolygon(
       app.bpartners.geojobs.endpoint.rest.model.Point point) {
+    if (buildingApi == null) {
+      return null;
+    }
     var longitude = point.getCoordinates().getFirst();
     var latitude = point.getCoordinates().getLast();
     var nearestBuilding =
@@ -96,6 +100,43 @@ public class GeometryConverter {
     LinearRing shell = geometryFactory.createLinearRing(coordinates);
     Polygon polygon = geometryFactory.createPolygon(shell, null);
     return geometryFactory.createMultiPolygon(new Polygon[] {polygon});
+  }
+
+  public org.locationtech.jts.geom.Polygon toPolygon(
+      List<List<List<List<BigDecimal>>>> multiPolygonCoordinates) {
+    GeometryFactory geometryFactory = new GeometryFactory();
+
+    List<List<BigDecimal>> firstRing = multiPolygonCoordinates.getFirst().getFirst();
+    Coordinate[] ringCoords =
+        firstRing.stream()
+            .map(
+                point ->
+                    new Coordinate(point.getFirst().doubleValue(), point.getLast().doubleValue()))
+            .toArray(Coordinate[]::new);
+
+    if (!ringCoords[0].equals2D(ringCoords[ringCoords.length - 1])) {
+      Coordinate[] closedRingCoords = Arrays.copyOf(ringCoords, ringCoords.length + 1);
+      closedRingCoords[closedRingCoords.length - 1] = closedRingCoords[0];
+      ringCoords = closedRingCoords;
+    }
+
+    LinearRing shell = geometryFactory.createLinearRing(ringCoords);
+    return geometryFactory.createPolygon(shell);
+  }
+
+  public List<List<BigDecimal>> polygonToPoints(Polygon polygon) {
+    List<List<BigDecimal>> result = new ArrayList<>();
+
+    Coordinate[] coordinates = polygon.getExteriorRing().getCoordinates();
+
+    for (Coordinate coord : coordinates) {
+      List<BigDecimal> point = new ArrayList<>(2);
+      point.add(BigDecimal.valueOf(coord.getX()));
+      point.add(BigDecimal.valueOf(coord.getY()));
+      result.add(point);
+    }
+
+    return result;
   }
 
   public MultiPolygon apply(List<List<List<List<BigDecimal>>>> multiPolygonData) {

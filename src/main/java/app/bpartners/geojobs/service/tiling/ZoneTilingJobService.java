@@ -34,6 +34,7 @@ import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.JobFilteredMailer;
 import app.bpartners.geojobs.service.NotFinishedTaskRetriever;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
+import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,7 +54,7 @@ public class ZoneTilingJobService extends JobService<ParcelTilingTask, ZoneTilin
   private final DetectionRepository detectionRepository;
 
   static {
-    FeatureMapper featureMapper = new FeatureMapper();
+    FeatureMapper featureMapper = new FeatureMapper(new GeometryConverter(null));
     zoomMapper = new ZoomMapper();
     tilingTaskMapper = new TilingTaskMapper(featureMapper);
   }

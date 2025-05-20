@@ -167,7 +167,7 @@ public class GeoJsonConversionAssemblyInitiatedService
                               .getMultiPolygon()
                               .getCoordinates());
                   var objectPolygon =
-                      featureMapper.toDomainPolygon(
+                      geometryConverter.toPolygon(
                           Objects.requireNonNull(geoFeature.getGeometry().getCoordinates()));
                   var intersection = roofPolygon.intersection(objectPolygon);
                   double intersectionArea = intersection.getArea();
@@ -217,7 +217,7 @@ public class GeoJsonConversionAssemblyInitiatedService
                   }
                   var roofPolygon = optionalPolygonAddress.get().polygon();
                   var objectPolygon =
-                      featureMapper.toDomainPolygon(
+                      geometryConverter.toPolygon(
                           Objects.requireNonNull(geoFeature.getGeometry().getCoordinates()));
                   var intersection = roofPolygon.intersection(objectPolygon);
                   double intersectionArea = intersection.getArea();

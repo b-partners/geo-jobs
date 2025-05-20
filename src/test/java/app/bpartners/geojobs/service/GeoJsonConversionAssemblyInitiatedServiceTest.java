@@ -64,9 +64,9 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
   DetectionRepository detectionRepositoryMock = mock();
   ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
   FileWriter fileWriter = new FileWriter(objectMapper, new ExtensionGuesser());
-  FeatureMapper featureMapper = new FeatureMapper();
   GeoJsonMapper geoJsonMapper = new GeoJsonMapper(new GeoJsonMultiPolygonCorrector());
   BuildingApi buildingApiMock = mock();
+  FeatureMapper featureMapper = new FeatureMapper(new GeometryConverter(buildingApiMock));
   GeometryConverter geometryConverter = new GeometryConverter(buildingApiMock);
   GeoJsonConversionAssemblyInitiatedService subject =
       new GeoJsonConversionAssemblyInitiatedService(

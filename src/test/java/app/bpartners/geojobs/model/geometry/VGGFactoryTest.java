@@ -13,6 +13,7 @@ import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectType;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
+import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
@@ -22,7 +23,7 @@ import org.locationtech.jts.geom.Polygon;
 public class VGGFactoryTest {
   private final PolygonProvider polygonProvider =
       new PolygonProvider("/geometry/vgg/pathway.json", null, new IntXY(1024, 1024));
-  private final FeatureMapper featureMapper = new FeatureMapper();
+  private final FeatureMapper featureMapper = new FeatureMapper(new GeometryConverter(null));
   private final VGGFactory subject = new VGGFactory(featureMapper);
 
   public static DetectedTile detectedTile() {
