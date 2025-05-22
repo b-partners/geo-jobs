@@ -2,6 +2,8 @@ package app.bpartners.geojobs.service.event;
 
 import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.HOUSES_0;
 
+import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.DetectionVGGRequested;
 import app.bpartners.geojobs.endpoint.event.model.ExtendedImageWithDetectedObjectRequested;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.Point;
@@ -43,6 +45,7 @@ public class ExtendedImageWithDetectedObjectRequestedService
   private final DetectionRepository detectionRepository;
   private final TiledPixelPolygonFilter tiledPixelPolygonFilter;
   private final GeometryConverter geometryConverter;
+  private final EventProducer eventProducer;
 
   @Override
   public void accept(ExtendedImageWithDetectedObjectRequested event) {
@@ -90,8 +93,14 @@ public class ExtendedImageWithDetectedObjectRequestedService
             .map(mask -> tiledPixelPolygonFilter.filterPolygonsInMask(tiledPixelPolygons, mask))
             .flatMap(List::stream)
             .collect(Collectors.groupingBy(TiledPixelPolygon::point));
-    var pointWithObjectDrawnImages = computeDrawnImages(filteredTiledPixelPolygonByMask, layer);
+    var filteredTiledPixelPolygons =
+        filteredTiledPixelPolygonByMask.values().stream()
+            .flatMap(List::stream)
+            .collect(Collectors.toList());
+    eventProducer.accept(
+        List.of(new DetectionVGGRequested(detectionId, filteredTiledPixelPolygons)));
 
+    var pointWithObjectDrawnImages = computeDrawnImages(filteredTiledPixelPolygonByMask, layer);
     pointWithObjectDrawnImages
         .entrySet()
         .forEach(

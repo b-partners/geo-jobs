@@ -18,6 +18,7 @@ import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import net.sf.geographiclib.Geodesic;
 import net.sf.geographiclib.PolygonArea;
+import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Polygon;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Component;
 @Component
 @AllArgsConstructor
 public class VGGFactory implements Converter<Set<Polygon>, VGG> {
+  private static final int DEFAULT_IMG_SIZE = 1024;
   private final FeatureMapper featureMapper;
 
   @Override
@@ -48,6 +50,83 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
       vgg.putIfAbsent(key, annotation);
     }
     return vgg;
+  }
+
+  public VGG from(List<TiledPixelPolygon> tiledPixelPolygons) {
+    var vgg = new VGG();
+    int minTileX =
+        tiledPixelPolygons.stream().mapToInt(TiledPixelPolygon::tileX).min().orElseThrow();
+
+    int minTileY =
+        tiledPixelPolygons.stream().mapToInt(TiledPixelPolygon::tileY).min().orElseThrow();
+    tiledPixelPolygons.forEach(
+        tiledPixelPolygon -> {
+          var key =
+              String.format(
+                  "%s_%s_%s_%s.jpg",
+                  randomUUID(),
+                  tiledPixelPolygon.zoom(),
+                  tiledPixelPolygon.tileX(),
+                  tiledPixelPolygon.tileY());
+          List<PolygonObjectType> originalPolygonObjectTypes = tiledPixelPolygon.polygons();
+          var projectedPolygonObjectTypes =
+              originalPolygonObjectTypes.stream()
+                  .map(
+                      polygonObjectType -> {
+                        var projectedPolygonsToCompositeImage =
+                            projectPolygonsToCompositeImage(
+                                tiledPixelPolygon.tileX(),
+                                tiledPixelPolygon.tileY(),
+                                minTileX,
+                                minTileY,
+                                DEFAULT_IMG_SIZE,
+                                polygonObjectType.polygon());
+                        return new PolygonObjectType(
+                            projectedPolygonsToCompositeImage, polygonObjectType.objectType());
+                      })
+                  .toList();
+
+          projectedPolygonObjectTypes.forEach(
+              polygonObjectType -> {
+                var detectedObjectPolygon = polygonObjectType.polygon();
+                // TODO : compute area using roofGeometryAsTile
+                Map<String, VGG.Annotation.Region> regions = new HashMap<>();
+                var label = polygonObjectType.objectType();
+                regions.put(
+                    String.valueOf(System.nanoTime()),
+                    toVGGRegion(label.name(), null, null, detectedObjectPolygon));
+                var annotation =
+                    VGG.Annotation.builder()
+                        .filename(key)
+                        .properties(new HashMap<>())
+                        .regions(regions)
+                        .build();
+                vgg.putIfAbsent(key, annotation);
+              });
+        });
+    return vgg;
+  }
+
+  private Polygon projectPolygonsToCompositeImage(
+      Integer tileX,
+      Integer tileY,
+      int minTileX,
+      int minTileY,
+      int tileSize,
+      Polygon originalPolygon) {
+    int offsetX = (tileX - minTileX) * tileSize;
+    int offsetY = (tileY - minTileY) * tileSize;
+    return translatePolygon(originalPolygon, offsetX, offsetY);
+  }
+
+  private Polygon translatePolygon(Polygon polygon, int offsetX, int offsetY) {
+    Coordinate[] coords = polygon.getCoordinates();
+    Coordinate[] newCoords =
+        Arrays.stream(coords)
+            .map(coord -> new Coordinate(coord.x + offsetX, coord.y + offsetY))
+            .toArray(Coordinate[]::new);
+
+    return polygon.getFactory().createPolygon(newCoords);
   }
 
   public VGG from(Polygon roofGeometry, List<DetectedTile> detectedTiles) {

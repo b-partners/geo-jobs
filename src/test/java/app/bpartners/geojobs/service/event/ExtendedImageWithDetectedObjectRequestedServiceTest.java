@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
+import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.ExtendedImageWithDetectedObjectRequested;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerProperties;
@@ -32,6 +33,7 @@ class ExtendedImageWithDetectedObjectRequestedServiceTest {
   DetectionRepository detectionRepositoryMock = mock();
   TiledPixelPolygonFilter tiledPixelPolygonFilterMock = mock();
   GeometryConverter geometryConverterMock = mock();
+  EventProducer eventProducerMock = mock();
   ExtendedImageWithDetectedObjectRequestedService subject =
       new ExtendedImageWithDetectedObjectRequestedService(
           tileFinderMock,
@@ -42,7 +44,8 @@ class ExtendedImageWithDetectedObjectRequestedServiceTest {
           fileWriterMock,
           detectionRepositoryMock,
           tiledPixelPolygonFilterMock,
-          geometryConverterMock);
+          geometryConverterMock,
+          eventProducerMock);
 
   @Test
   void detection_not_found() {
