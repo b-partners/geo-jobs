@@ -10,9 +10,11 @@ import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.util.Objects;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Polygon;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DetectionVGGRequestedService implements Consumer<DetectionVGGRequested> {
@@ -30,8 +32,9 @@ public class DetectionVGGRequestedService implements Consumer<DetectionVGGReques
         filteredTiledPixelPolygons.stream()
             .map(
                 tiledPixelPolygonSerializable -> {
+                  var serializedPolygons = tiledPixelPolygonSerializable.polygons();
                   var polygonObjectTypesDeserialized =
-                      tiledPixelPolygonSerializable.polygons().stream()
+                      serializedPolygons.stream()
                           .map(
                               polygonObjectTypeSerializable -> {
                                 var geometry =
@@ -45,6 +48,8 @@ public class DetectionVGGRequestedService implements Consumer<DetectionVGGReques
                               })
                           .filter(Objects::nonNull)
                           .toList();
+                  log.info("debug serialized polygons: {}", serializedPolygons);
+                  log.info("debug deserialized polygons: {}", polygonObjectTypesDeserialized);
                   return new TiledPixelPolygon(
                       tiledPixelPolygonSerializable.point(),
                       polygonObjectTypesDeserialized,
