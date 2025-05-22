@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.endpoint.event.model;
 
-import app.bpartners.geojobs.model.geometry.TiledPixelPolygon;
+import app.bpartners.geojobs.model.geometry.TiledPixelPolygonSerializable;
 import java.time.Duration;
 import java.util.List;
 import lombok.*;
@@ -13,7 +13,7 @@ import lombok.*;
 @ToString
 public class DetectionVGGRequested extends PojaEvent {
   private String detectionId;
-  private List<TiledPixelPolygon> filteredTiledPixelPolygons;
+  private List<TiledPixelPolygonSerializable> filteredTiledPixelPolygons;
 
   @Override
   public Duration maxConsumerDuration() {

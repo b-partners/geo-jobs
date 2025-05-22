@@ -12,7 +12,9 @@ import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.DetectedObjectTypeWithPolygon;
 import app.bpartners.geojobs.model.geometry.PolygonObjectType;
+import app.bpartners.geojobs.model.geometry.PolygonObjectTypeSerializable;
 import app.bpartners.geojobs.model.geometry.TiledPixelPolygon;
+import app.bpartners.geojobs.model.geometry.TiledPixelPolygonSerializable;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
@@ -93,8 +95,32 @@ public class ExtendedImageWithDetectedObjectRequestedService
             .map(mask -> tiledPixelPolygonFilter.filterPolygonsInMask(tiledPixelPolygons, mask))
             .flatMap(List::stream)
             .collect(Collectors.groupingBy(TiledPixelPolygon::point));
-    var filteredTiledPixelPolygons =
-        filteredTiledPixelPolygonByMask.values().stream()
+    List<TiledPixelPolygonSerializable> filteredTiledPixelPolygons =
+        filteredTiledPixelPolygonByMask.entrySet().stream()
+            .map(
+                entry -> {
+                  var featurePoint = entry.getKey();
+                  return entry.getValue().stream()
+                      .map(
+                          tiledPixelPolygon -> {
+                            var polygonObjectTypeSerializable =
+                                tiledPixelPolygon.polygons().stream()
+                                    .map(
+                                        polygonObjectType ->
+                                            new PolygonObjectTypeSerializable(
+                                                geometryConverter.writeGeometryAsString(
+                                                    polygonObjectType.polygon()),
+                                                polygonObjectType.objectType()))
+                                    .toList();
+                            return new TiledPixelPolygonSerializable(
+                                featurePoint,
+                                polygonObjectTypeSerializable,
+                                tiledPixelPolygon.tileX(),
+                                tiledPixelPolygon.tileY(),
+                                tiledPixelPolygon.zoom());
+                          })
+                      .toList();
+                })
             .flatMap(List::stream)
             .collect(Collectors.toList());
     eventProducer.accept(

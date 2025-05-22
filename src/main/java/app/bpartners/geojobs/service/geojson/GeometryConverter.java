@@ -6,6 +6,7 @@ import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.service.gouv.fr.rnb.BuildingApi;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -234,10 +235,16 @@ public class GeometryConverter {
   }
 
   @SneakyThrows
-  public String writePointAsString(Point point) {
+  public String writeGeometryAsString(Geometry geometry) {
     GeometryJSON geometryJSON = new GeometryJSON(15);
     StringWriter writer = new StringWriter();
-    geometryJSON.write(point, writer);
+    geometryJSON.write(geometry, writer);
     return writer.toString();
+  }
+
+  @SneakyThrows
+  public Geometry readGeometryFromString(String geoJsonString) {
+    GeometryJSON geometryJSON = new GeometryJSON(15);
+    return geometryJSON.read(new StringReader(geoJsonString));
   }
 }
