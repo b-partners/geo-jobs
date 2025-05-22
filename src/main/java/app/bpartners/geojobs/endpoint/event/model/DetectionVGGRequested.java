@@ -1,5 +1,8 @@
 package app.bpartners.geojobs.endpoint.event.model;
 
+import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
+
+import app.bpartners.geojobs.endpoint.event.EventStack;
 import app.bpartners.geojobs.model.geometry.TiledPixelPolygonSerializable;
 import java.time.Duration;
 import java.util.List;
@@ -23,5 +26,10 @@ public class DetectionVGGRequested extends PojaEvent {
   @Override
   public Duration maxConsumerBackoffBetweenRetries() {
     return Duration.ofSeconds(60);
+  }
+
+  @Override
+  public EventStack getEventStack() {
+    return EVENT_STACK_2;
   }
 }
