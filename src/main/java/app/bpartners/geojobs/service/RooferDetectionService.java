@@ -1,12 +1,10 @@
 package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.MACHINE_DETECTION;
-import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.HOUSES_0;
-import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_EXTENSION;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
@@ -15,8 +13,6 @@ import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionProcessSuccee
 import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
-import app.bpartners.geojobs.file.FileWriter;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.mail.Email;
 import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.model.DetectedTile;
@@ -49,7 +45,6 @@ import org.thymeleaf.context.Context;
 @AllArgsConstructor
 public class RooferDetectionService
     implements Function<app.bpartners.geojobs.repository.model.detection.Detection, Detection> {
-  private static final String VGG_BUCKET_FOLDER = "vgg/";
   private static final String TEMPLATE_NAME = "roofer_detection_made";
   private static final String env = System.getenv("ENV");
   private final TileObjectDetector detector;
@@ -57,14 +52,13 @@ public class RooferDetectionService
   private final DetectionMapper detectionMapper;
   private final MachineDetectedTileRepository machineDetectedTileRepository;
   private final VGGFactory vggFactory;
-  private final FileWriter fileWriter;
   private final DetectionRepository detectionRepository;
-  private final BucketComponent bucketComponent;
   private final EventProducer<GeoJsonConversionProcessSucceeded> eventProducer;
   private final DetectionFromStatisticRestMapper detectionFromStatisticRestMapper;
   private final Mailer mailer;
   private final AuthProvider authProvider;
   private final HTMLTemplateParser htmlTemplateParser;
+  private final DetectionVGGUpdate detectionVGGUpdate;
 
   @Override
   public Detection apply(app.bpartners.geojobs.repository.model.detection.Detection detection) {
@@ -117,28 +111,24 @@ public class RooferDetectionService
             .build();
 
     var roofGeometry = polygon(flattedFeatures);
-    processVggConversion(detection, roofGeometry, List.of(detectedTile));
+    var updatedDetectionWithVggKey =
+        processVggConversion(detection, roofGeometry, List.of(detectedTile));
     return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
-        detection, FINISHED, SUCCEEDED, MACHINE_DETECTION);
+        updatedDetectionWithVggKey, FINISHED, SUCCEEDED, MACHINE_DETECTION);
   }
 
-  private void processVggConversion(
+  private app.bpartners.geojobs.repository.model.detection.Detection processVggConversion(
       app.bpartners.geojobs.repository.model.detection.Detection detection,
       org.locationtech.jts.geom.Polygon roofGeometry,
       List<DetectedTile> detectedTiles) {
-    var zdjId = detection.getId();
     var vgg = vggFactory.from(roofGeometry, detectedTiles);
-    var zoneName = detection.getZoneName();
-    var fileKey = VGG_BUCKET_FOLDER + zdjId + "/" + zoneName + ".json";
-    var vggAsByte = vgg.getBytes();
-    var vggAsFile =
-        fileWriter.write(vggAsByte, createTempDirectory(), zoneName + GEO_JSON_EXTENSION);
-    bucketComponent.upload(vggAsFile, fileKey);
-    detection.setVggFileKey(fileKey);
-    detectionRepository.save(detection);
+    var detectionWithVggFileKey = detectionVGGUpdate.apply(vgg, detection);
+    var savedDetection = detectionRepository.save(detectionWithVggFileKey);
 
     eventProducer.accept(
-        List.of(GeoJsonConversionProcessSucceeded.builder().detection(detection).build()));
+        List.of(GeoJsonConversionProcessSucceeded.builder().detection(savedDetection).build()));
+
+    return savedDetection;
   }
 
   private org.locationtech.jts.geom.Polygon polygon(List<List<BigDecimal>> features) {

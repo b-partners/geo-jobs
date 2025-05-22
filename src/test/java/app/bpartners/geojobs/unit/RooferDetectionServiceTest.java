@@ -34,6 +34,7 @@ import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.service.DetectionFeaturesResultImageRetriever;
+import app.bpartners.geojobs.service.DetectionVGGUpdate;
 import app.bpartners.geojobs.service.RooferDetectionService;
 import app.bpartners.geojobs.service.detection.DetectionMapper;
 import app.bpartners.geojobs.service.detection.DetectionMaskCreator;
@@ -75,6 +76,7 @@ class RooferDetectionServiceTest {
   Mailer mailer = mock();
   AuthProvider authProvider = mock();
   HTMLTemplateParser htmlTemplateParser = new HTMLTemplateParser();
+  DetectionVGGUpdate detectionVGGUpdate = new DetectionVGGUpdate(fileWriter, bucketComponent);
   RooferDetectionService subject;
 
   @BeforeEach
@@ -86,14 +88,13 @@ class RooferDetectionServiceTest {
             detectionMapper,
             machineDetectedTileRepository,
             vggFactoryMock,
-            fileWriter,
             detectionRepository,
-            bucketComponent,
             eventProducer,
             detectionFromStatisticRestMapper,
             mailer,
             authProvider,
-            htmlTemplateParser);
+            htmlTemplateParser,
+            detectionVGGUpdate);
 
     when(featureImageRetrieverMock.apply(any()))
         .thenAnswer(
@@ -115,6 +116,7 @@ class RooferDetectionServiceTest {
     when(bucketComponent.presign(any(String.class))).thenReturn(PRESIGNED_URL);
     when(authProvider.getAuthenticatedCommunity())
         .thenReturn(CommunityAuthorization.builder().email("test@gmail.com").build());
+    when(detectionRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
   }
 
   @Test

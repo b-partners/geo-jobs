@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
+import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.ExtendedImageWithDetectedObjectRequested;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerProperties;
@@ -14,8 +15,10 @@ import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.service.DetectedImageDraw;
+import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.tile19.ExtenderApi;
 import app.bpartners.geojobs.service.tiling.TileFinder;
+import app.bpartners.geojobs.service.tiling.TiledPixelPolygonFilter;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -28,6 +31,9 @@ class ExtendedImageWithDetectedObjectRequestedServiceTest {
   ExtenderApi extenderApiMock = mock();
   FileWriter fileWriterMock = mock();
   DetectionRepository detectionRepositoryMock = mock();
+  TiledPixelPolygonFilter tiledPixelPolygonFilterMock = mock();
+  GeometryConverter geometryConverterMock = mock();
+  EventProducer eventProducerMock = mock();
   ExtendedImageWithDetectedObjectRequestedService subject =
       new ExtendedImageWithDetectedObjectRequestedService(
           tileFinderMock,
@@ -36,7 +42,10 @@ class ExtendedImageWithDetectedObjectRequestedServiceTest {
           detectedImageDrawMock,
           extenderApiMock,
           fileWriterMock,
-          detectionRepositoryMock);
+          detectionRepositoryMock,
+          tiledPixelPolygonFilterMock,
+          geometryConverterMock,
+          eventProducerMock);
 
   @Test
   void detection_not_found() {

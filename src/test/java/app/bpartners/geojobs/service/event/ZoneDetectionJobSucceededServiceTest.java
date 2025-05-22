@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.ExtendedImageWithDetectedObjectRequested;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryJobRequested;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobSucceeded;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel;
@@ -223,6 +224,34 @@ class ZoneDetectionJobSucceededServiceTest {
         .getOrComputeGeoJsonConversionJob(zoneDetectionJobMock);
     verify(configurationRepositoryMock, never()).findLatestConfiguration();
     verify(eventProducerMock, never()).accept(any());
+  }
+
+  @Test
+  void process_geo_json_conversion_job_and_produces_event_when_any_in_doubt_detected_tile() {
+    var succeededJobId = randomUUID().toString();
+    var detectionId = randomUUID().toString();
+    var zoneDetectionJobMock = mock(ZoneDetectionJob.class);
+    var detectionMock = mock(Detection.class);
+    when(detectionMock.getId()).thenReturn(detectionId);
+    when(zoneDetectionJobServiceMock.countInDoubtDetectedTileToDeliveryById(succeededJobId))
+        .thenReturn(0L);
+    when(zoneDetectionJobServiceMock.findById(succeededJobId)).thenReturn(zoneDetectionJobMock);
+    when(detectionRepositoryMock.findByZdjId(succeededJobId))
+        .thenReturn(Optional.of(detectionMock));
+
+    assertDoesNotThrow(
+        () ->
+            subject.accept(
+                ZoneDetectionJobSucceeded.builder().succeededJobId(succeededJobId).build()));
+
+    verify(geoJsonConversionJobServiceMock, times(1))
+        .getOrComputeGeoJsonConversionJob(zoneDetectionJobMock);
+    verify(configurationRepositoryMock, never()).findLatestConfiguration();
+    var listCaptor = ArgumentCaptor.forClass(List.class);
+    verify(eventProducerMock, only()).accept(listCaptor.capture());
+    var actualEventProduced =
+        (ExtendedImageWithDetectedObjectRequested) listCaptor.getValue().getFirst();
+    assertEquals(new ExtendedImageWithDetectedObjectRequested(detectionId), actualEventProduced);
   }
 
   private String expectedEmailContainingDetectionWhenNoResultRetrieved(String detectionE2Id) {

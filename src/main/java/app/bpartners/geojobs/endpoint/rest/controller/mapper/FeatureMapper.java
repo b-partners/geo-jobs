@@ -10,10 +10,12 @@ import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
+import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.util.*;
 import javax.annotation.Nullable;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -21,7 +23,9 @@ import org.locationtech.jts.geom.LinearRing;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class FeatureMapper {
+  private final GeometryConverter geometryConverter;
 
   public Parcel toDomain(
       String parcelId, Feature rest, URL geoServerUrl, GeoServerParameter GeoServerParameter) {
@@ -122,29 +126,7 @@ public class FeatureMapper {
 
   public org.locationtech.jts.geom.Polygon toDomain(Feature feature) {
     List<List<List<List<BigDecimal>>>> multiPolygonCoordinates = validateFeature(feature);
-    return toDomainPolygon(multiPolygonCoordinates);
-  }
-
-  public org.locationtech.jts.geom.Polygon toDomainPolygon(
-      List<List<List<List<BigDecimal>>>> multiPolygonCoordinates) {
-    GeometryFactory geometryFactory = new GeometryFactory();
-
-    List<List<BigDecimal>> firstRing = multiPolygonCoordinates.getFirst().getFirst();
-    Coordinate[] ringCoords =
-        firstRing.stream()
-            .map(
-                point ->
-                    new Coordinate(point.getFirst().doubleValue(), point.getLast().doubleValue()))
-            .toArray(Coordinate[]::new);
-
-    if (!ringCoords[0].equals2D(ringCoords[ringCoords.length - 1])) {
-      Coordinate[] closedRingCoords = Arrays.copyOf(ringCoords, ringCoords.length + 1);
-      closedRingCoords[closedRingCoords.length - 1] = closedRingCoords[0];
-      ringCoords = closedRingCoords;
-    }
-
-    LinearRing shell = geometryFactory.createLinearRing(ringCoords);
-    return geometryFactory.createPolygon(shell);
+    return geometryConverter.toPolygon(multiPolygonCoordinates);
   }
 
   public List<org.locationtech.jts.geom.Polygon> toDomainList(Feature feature) {

@@ -11,13 +11,14 @@ import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorizedZone;
+import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class CommunityZoneAuthorizerTest {
-  FeatureMapper featureMapper = new FeatureMapper();
+  FeatureMapper featureMapper = new FeatureMapper(new GeometryConverter(null));
   CommunityZoneAuthorizer subject = new CommunityZoneAuthorizer(featureMapper);
   Principal principalMock = mock(Principal.class);
 

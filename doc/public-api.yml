@@ -127,31 +127,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ImageOfAddress'
-  '/detections/{id}/sync':
-    post:
-      tags:
-        - Detection
-      operationId: processDetectionSynchronously
-      summary: Process detection synchronously
-      description: |
-        Intended for small areas such as an address, detection tasks are processed simultaneously, delivering results in less than 60 seconds. 
-        Results are requested through the GET /detections/{id} endpoint.
-      security:
-        - ApiKeyAuth: [ ]
-      parameters:
-        - $ref: '#/components/parameters/IdentifierParameter'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateDetection'
-      responses:
-        200:
-          description: Detection created or processing
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Detection'
   '/detections/{id}/image':
     post:
       tags:

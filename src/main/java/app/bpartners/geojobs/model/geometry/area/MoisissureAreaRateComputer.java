@@ -7,11 +7,12 @@ import app.bpartners.geojobs.model.DetectedTile;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
+import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import org.locationtech.jts.geom.Polygon;
 
 public class MoisissureAreaRateComputer extends AreaRateComputer {
   private static final double weight = 0.3;
-  private final FeatureMapper featureMapper = new FeatureMapper();
+  private final FeatureMapper featureMapper = new FeatureMapper(new GeometryConverter(null));
   private final double roofArea;
   private final DetectedTile tile;
 
