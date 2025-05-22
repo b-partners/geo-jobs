@@ -86,23 +86,23 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
                       })
                   .toList();
 
+          Map<String, VGG.Annotation.Region> regions = new HashMap<>();
           projectedPolygonObjectTypes.forEach(
               polygonObjectType -> {
                 var detectedObjectPolygon = polygonObjectType.polygon();
                 // TODO : compute area using roofGeometryAsTile
-                Map<String, VGG.Annotation.Region> regions = new HashMap<>();
                 var label = polygonObjectType.objectType();
                 regions.put(
                     String.valueOf(System.nanoTime()),
                     toVGGRegion(label.name(), null, null, detectedObjectPolygon));
-                var annotation =
-                    VGG.Annotation.builder()
-                        .filename(key)
-                        .properties(new HashMap<>())
-                        .regions(regions)
-                        .build();
-                vgg.putIfAbsent(key, annotation);
               });
+          var annotation =
+              VGG.Annotation.builder()
+                  .filename(key)
+                  .properties(new HashMap<>())
+                  .regions(regions)
+                  .build();
+          vgg.putIfAbsent(key, annotation);
         });
     return vgg;
   }
