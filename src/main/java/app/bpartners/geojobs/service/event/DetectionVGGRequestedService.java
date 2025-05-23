@@ -48,8 +48,6 @@ public class DetectionVGGRequestedService implements Consumer<DetectionVGGReques
                               })
                           .filter(Objects::nonNull)
                           .toList();
-                  log.info("debug serialized polygons: {}", serializedPolygons);
-                  log.info("debug deserialized polygons: {}", polygonObjectTypesDeserialized);
                   return new TiledPixelPolygon(
                       tiledPixelPolygonSerializable.point(),
                       polygonObjectTypesDeserialized,
@@ -58,10 +56,9 @@ public class DetectionVGGRequestedService implements Consumer<DetectionVGGReques
                       tiledPixelPolygonSerializable.zoom());
                 })
             .toList();
+    var featureVgg = vggFactory.from(filteredTiledPixelPolygonsDeserialized);
 
-    var vgg = vggFactory.from(filteredTiledPixelPolygonsDeserialized);
-
-    var newDetection = detectionVGGUpdate.apply(vgg, detection);
+    var newDetection = detectionVGGUpdate.apply(featureVgg, detection);
 
     detectionRepository.save(newDetection);
   }

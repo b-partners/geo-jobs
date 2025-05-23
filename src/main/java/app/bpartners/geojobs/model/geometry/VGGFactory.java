@@ -4,16 +4,14 @@ import static app.bpartners.geojobs.model.geometry.area.AreaRateComputerFacade.*
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
+import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.model.DetectedTile;
 import app.bpartners.geojobs.model.geometry.area.AreaRateComputerFacade;
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import net.sf.geographiclib.Geodesic;
@@ -52,59 +50,68 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
     return vgg;
   }
 
-  public VGG from(List<TiledPixelPolygon> tiledPixelPolygons) {
-    var vgg = new VGG();
-    int minTileX =
-        tiledPixelPolygons.stream().mapToInt(TiledPixelPolygon::tileX).min().orElseThrow();
+  public Map<Feature, VGG> from(List<TiledPixelPolygon> tiledPixelPolygons) {
+    Map<Feature, List<TiledPixelPolygon>> tiledPixelPolygonFilteredByPoint =
+        tiledPixelPolygons.stream().collect(Collectors.groupingBy(TiledPixelPolygon::point));
+    var vggMap = new HashMap<Feature, VGG>();
 
-    int minTileY =
-        tiledPixelPolygons.stream().mapToInt(TiledPixelPolygon::tileY).min().orElseThrow();
-    tiledPixelPolygons.forEach(
-        tiledPixelPolygon -> {
-          var key =
-              String.format(
-                  "%s_%s_%s_%s.jpg",
-                  randomUUID(),
-                  tiledPixelPolygon.zoom(),
-                  tiledPixelPolygon.tileX(),
-                  tiledPixelPolygon.tileY());
-          List<PolygonObjectType> originalPolygonObjectTypes = tiledPixelPolygon.polygons();
-          var projectedPolygonObjectTypes =
-              originalPolygonObjectTypes.stream()
-                  .map(
-                      polygonObjectType -> {
-                        var projectedPolygonsToCompositeImage =
-                            projectPolygonsToCompositeImage(
-                                tiledPixelPolygon.tileX(),
-                                tiledPixelPolygon.tileY(),
-                                minTileX,
-                                minTileY,
-                                DEFAULT_IMG_SIZE,
-                                polygonObjectType.polygon());
-                        return new PolygonObjectType(
-                            projectedPolygonsToCompositeImage, polygonObjectType.objectType());
-                      })
-                  .toList();
+    tiledPixelPolygonFilteredByPoint.forEach(
+        (featurePoint, tiledPolygons) -> {
+          var vgg = new VGG();
+          int minTileX =
+              tiledPolygons.stream().mapToInt(TiledPixelPolygon::tileX).min().orElseThrow();
+          int minTileY =
+              tiledPolygons.stream().mapToInt(TiledPixelPolygon::tileY).min().orElseThrow();
+          tiledPolygons.forEach(
+              tiledPolygon -> {
+                var key =
+                    String.format(
+                        "%s_%s_%s_%s.jpg",
+                        randomUUID(),
+                        tiledPolygon.zoom(),
+                        tiledPolygon.tileX(),
+                        tiledPolygon.tileY());
+                List<PolygonObjectType> originalPolygonObjectTypes = tiledPolygon.polygons();
+                var projectedPolygonObjectTypes =
+                    originalPolygonObjectTypes.stream()
+                        .map(
+                            polygonObjectType -> {
+                              var projectedPolygonsToCompositeImage =
+                                  projectPolygonsToCompositeImage(
+                                      tiledPolygon.tileX(),
+                                      tiledPolygon.tileY(),
+                                      minTileX,
+                                      minTileY,
+                                      DEFAULT_IMG_SIZE,
+                                      polygonObjectType.polygon());
+                              return new PolygonObjectType(
+                                  projectedPolygonsToCompositeImage,
+                                  polygonObjectType.objectType());
+                            })
+                        .toList();
 
-          Map<String, VGG.Annotation.Region> regions = new HashMap<>();
-          projectedPolygonObjectTypes.forEach(
-              polygonObjectType -> {
-                var detectedObjectPolygon = polygonObjectType.polygon();
-                // TODO : compute area using roofGeometryAsTile
-                var label = polygonObjectType.objectType();
-                regions.put(
-                    String.valueOf(System.nanoTime()),
-                    toVGGRegion(label.name(), null, null, detectedObjectPolygon));
+                Map<String, VGG.Annotation.Region> regions = new HashMap<>();
+                projectedPolygonObjectTypes.forEach(
+                    polygonObjectType -> {
+                      var detectedObjectPolygon = polygonObjectType.polygon();
+                      // TODO : compute area using roofGeometryAsTile
+                      var label = polygonObjectType.objectType();
+                      regions.put(
+                          String.valueOf(System.nanoTime()),
+                          toVGGRegion(label.name(), null, null, detectedObjectPolygon));
+                    });
+                var annotation =
+                    VGG.Annotation.builder()
+                        .filename(key)
+                        .properties(new HashMap<>())
+                        .regions(regions)
+                        .build();
+                vgg.putIfAbsent(key, annotation);
               });
-          var annotation =
-              VGG.Annotation.builder()
-                  .filename(key)
-                  .properties(new HashMap<>())
-                  .regions(regions)
-                  .build();
-          vgg.putIfAbsent(key, annotation);
+
+          vggMap.put(featurePoint, vgg);
         });
-    return vgg;
+    return vggMap;
   }
 
   private Polygon projectPolygonsToCompositeImage(

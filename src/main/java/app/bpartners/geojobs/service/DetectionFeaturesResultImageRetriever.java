@@ -61,27 +61,30 @@ public class DetectionFeaturesResultImageRetriever implements Function<Detection
 
           var originalFileKey = layer + "/extended_original_" + longitude + "_" + latitude + ".jpg";
           var drawnFileKey = layer + "/extended_drawn_" + longitude + "_" + latitude + ".jpg";
+          var vggFileKey = layer + "/vgg_" + longitude + "_" + latitude + ".json";
 
-          addImageIfExist(originalFileKey, feature, "original_image_url");
+          addPropertyIfFileKeyExist(originalFileKey, feature, "original_image_url");
 
-          addImageIfExist(drawnFileKey, feature, "drawn_image_url");
+          addPropertyIfFileKeyExist(drawnFileKey, feature, "drawn_image_url");
+
+          addPropertyIfFileKeyExist(vggFileKey, feature, "vgg_file_url");
         });
     return updatedGeoJson;
   }
 
-  private void addImageIfExist(String fileKey, Feature feature, String fileProperty) {
+  private void addPropertyIfFileKeyExist(String fileKey, Feature feature, String fileProperty) {
     var fileExist =
         customBucketComponent.listObjects(bucketComponent.getBucketName(), fileKey).stream()
             .findAny()
             .isPresent();
     if (fileExist) {
       try {
-        var imageUrl = bucketComponent.presign(fileKey, Duration.ofHours(1L));
+        var propertyUrl = bucketComponent.presign(fileKey, Duration.ofHours(1L));
         var properties =
             feature.getProperties() == null
                 ? new HashMap<String, Object>()
                 : feature.getProperties();
-        properties.put(fileProperty, imageUrl);
+        properties.put(fileProperty, propertyUrl);
         feature.setProperties(properties);
       } catch (RuntimeException ignored) {
         log.warn("Unable to presign file {}, exception caught {}", fileKey, ignored.getMessage());
