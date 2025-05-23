@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service;
 
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
 import static java.awt.AlphaComposite.Src;
 import static java.awt.Color.*;
 import static java.awt.Font.PLAIN;
@@ -45,6 +46,9 @@ public class DetectedImageDraw
 
     // Write polygons
     for (DetectedObjectTypeWithPolygon polygon : detectedObjectTypeWithPolygon) {
+      if (TOITURE_REVETEMENT.equals(polygon.objectType())) {
+        continue;
+      }
       g2d.setColor(getColor(polygon.objectType()));
       List<app.bpartners.geojobs.endpoint.rest.model.Point> points = polygon.pointList();
       int[] xPoints =
