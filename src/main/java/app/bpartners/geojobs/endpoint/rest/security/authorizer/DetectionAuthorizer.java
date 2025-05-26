@@ -9,6 +9,7 @@ import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
+import java.util.HashMap;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.util.TriConsumer;
@@ -28,6 +29,15 @@ public class DetectionAuthorizer implements TriConsumer<String, CreateDetection,
 
   @Override
   public void accept(String detectionId, CreateDetection createDetection, Principal principal) {
+    var providedGeoJson = createDetection.getGeoJsonZone();
+    if (providedGeoJson != null) {
+      providedGeoJson.forEach(
+          feature -> {
+            if (feature.getProperties() == null) {
+              feature.setProperties(new HashMap<>());
+            }
+          });
+    }
     if (!principal.isAdmin()) {
       authorizeCommunity(detectionId, createDetection, principal);
     }
