@@ -74,35 +74,8 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
       GeometryConverter geometryConverter)
       implements Runnable {
 
-    private static final String IGN_IMAGE_SOURCE = "IGN";
-
     @Override
     public void run() {
-      var parcelTilingTasks = tilingTaskRepository.findAllByJobId(ztj.getId());
-      var succeededJobHasIGNImages =
-          parcelTilingTasks.stream()
-              .anyMatch(
-                  task ->
-                      task.getParcelContent() != null
-                          && task.getParcelContent()
-                                  .getFeature()
-                                  .getProperties()
-                                  .get("priorityLayer")
-                              != null
-                          && task.getParcelContent()
-                              .getFeature()
-                              .getProperties()
-                              .get("priorityLayer")
-                              .toString()
-                              .contains(IGN_IMAGE_SOURCE));
-      if (succeededJobHasIGNImages) {
-        eventProducer.accept(List.of(new ZoneTilingJobFailed(ztj)));
-        log.info(
-            "ZTJ.id={} Finished with succeeded status but with IGN images, produces"
-                + " ZoneTilingJobFailed event",
-            ztj.getId());
-        return;
-      }
       var zdj = zoneDetectionJobService.saveZDJFromZTJ(ztj);
       var optionalDetection = detectionRepository.findByZtjId(ztj.getId());
       // For now, only detection process triggers ZDJ processing
