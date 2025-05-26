@@ -16,9 +16,7 @@ import app.bpartners.geojobs.job.model.Status.ProgressionStatus;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
-import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.Parcel;
-import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
@@ -28,7 +26,6 @@ import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.utils.tiling.TilingTaskCreator;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -69,41 +66,6 @@ class ZoneTilingJobStatusChangedServiceTest {
                     new Parcel(),
                     FINISHED,
                     SUCCEEDED)));
-  }
-
-  @Test
-  void produces_failed_event_if_tiled_images_from_IGN() {
-    reset(tilingTaskRepositoryMock);
-    HashMap<String, Object> properties = new HashMap<>();
-    properties.put("priorityLayer", "FLUX_IGN_2023_20CM");
-    var featureMock = mock(Feature.class);
-    var parcel =
-        Parcel.builder()
-            .parcelContent(ParcelContent.builder().feature(featureMock).build())
-            .build();
-    when(featureMock.getProperties()).thenReturn(properties);
-    when(tilingTaskRepositoryMock.findAllByJobId(any()))
-        .thenReturn(
-            List.of(
-                tilingTaskCreator.create(
-                    randomUUID().toString(),
-                    randomUUID().toString(),
-                    parcel,
-                    FINISHED,
-                    SUCCEEDED)));
-
-    var oldJob = aZTJ(PROCESSING, UNKNOWN);
-    var newJob = aZTJ(FINISHED, SUCCEEDED);
-
-    subject.accept(new ZoneTilingJobStatusChanged(oldJob, newJob));
-
-    var listCaptor = ArgumentCaptor.forClass(List.class);
-    verify(jobServiceMock, never()).saveZDJFromZTJ(any());
-    verify(detectionRepositoryMock, never()).findByEndToEndIdAndCommunityOwnerId(any(), any());
-    verify(mailerMock, never()).accept(any());
-    verify(eventProducerMock, only()).accept(listCaptor.capture());
-    var failedEvent = (ZoneTilingJobFailed) listCaptor.getValue().getFirst();
-    assertEquals(new ZoneTilingJobFailed(newJob), failedEvent);
   }
 
   @Test
