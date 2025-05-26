@@ -2,6 +2,9 @@ package app.bpartners.geojobs.endpoint.rest;
 
 import app.bpartners.geojobs.endpoint.rest.model.RestException;
 import app.bpartners.geojobs.model.exception.*;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,6 +39,33 @@ public class InternalToRestExceptionHandler {
 
   @ExceptionHandler(value = {HttpMessageNotReadableException.class})
   ResponseEntity<RestException> handleBadRequest(HttpMessageNotReadableException e) {
+    Throwable cause = e.getCause();
+
+    if (cause instanceof InvalidFormatException ife) {
+      List<String> errors =
+          ife.getPath().stream()
+              .map(
+                  ref ->
+                      "Field '"
+                          + ref.getFieldName()
+                          + "' expects a value of type "
+                          + ife.getTargetType().getSimpleName()
+                          + " but got '"
+                          + ife.getValue()
+                          + "'")
+              .toList();
+
+      return handleBadRequest(new BadRequestException(errors.toString()));
+    }
+
+    if (cause instanceof JsonMappingException jme) {
+      List<String> errors =
+          jme.getPath().stream()
+              .map(ref -> "Problem with field: '" + ref.getFieldName() + "'")
+              .toList();
+
+      return handleBadRequest(new BadRequestException(errors.toString()));
+    }
     log.info("Missing required body", e);
     return handleBadRequest(new BadRequestException(e.getMessage()));
   }
