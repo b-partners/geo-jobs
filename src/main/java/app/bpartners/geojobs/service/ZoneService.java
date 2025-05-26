@@ -239,10 +239,6 @@ public class ZoneService {
       return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
           detection, PENDING, UNKNOWN, CONFIGURING);
     }
-    if (!communityHasAdminRole()) {
-      return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
-          detection, FINISHED, SUCCEEDED, CONFIGURING);
-    }
     if (detection.isStillOnTilingStep()) {
       if (detection.isTilingPending()) {
         return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(

@@ -61,6 +61,7 @@ public class InternalToRestExceptionHandler {
     if (cause instanceof JsonMappingException jme) {
       List<String> errors =
           jme.getPath().stream()
+              .filter(reference -> !"null".equals(reference.getFieldName()))
               .map(ref -> "Problem with field: '" + ref.getFieldName() + "'")
               .toList();
 
