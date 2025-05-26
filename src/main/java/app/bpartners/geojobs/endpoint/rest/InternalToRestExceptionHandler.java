@@ -72,8 +72,12 @@ public class InternalToRestExceptionHandler {
 
   @ExceptionHandler(value = {MethodArgumentTypeMismatchException.class})
   ResponseEntity<RestException> handleConversionFailed(MethodArgumentTypeMismatchException e) {
+    var name = e.getName();
+    var type = e.getRequiredType() != null ? e.getRequiredType().getSimpleName() : "unknown";
+    var value = String.valueOf(e.getValue());
+    var message =
+        String.format("Parameter '%s' should be of type '%s' but got '%s'", name, type, value);
     log.info("Conversion failed", e);
-    String message = e.getCause().getCause().getMessage();
     return handleBadRequest(new BadRequestException(message));
   }
 
