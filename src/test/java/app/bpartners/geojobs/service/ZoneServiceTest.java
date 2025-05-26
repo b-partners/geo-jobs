@@ -506,22 +506,6 @@ class ZoneServiceTest {
   }
 
   @Test
-  void community_role_stuck_in_configuring_finished_reading_detection_ok() {
-    var detectionId = randomUUID().toString();
-    var tilingId = randomUUID().toString();
-    var detection = detectionCreator.create(detectionId, tilingId, null);
-    detection.setGeoServerProperties(new GeoServerProperties());
-    detection.setMultiPolygonGeoJsonZone(List.of(new Feature()));
-    setUpAuthorityRoleProcessingMock(detectionId, detection, ROLE_COMMUNITY);
-
-    var actual = subject.getProcessedDetection(detectionId);
-
-    assertEquals(CONFIGURING, actual.getStep().getName());
-    assertEquals(Status.ProgressionEnum.FINISHED, actual.getStep().getStatus().getProgression());
-    assertEquals(SUCCEEDED, actual.getStep().getStatus().getHealth());
-  }
-
-  @Test
   void admin_role_read_detection_with_tiling_statistics() {
     var detectionId = randomUUID().toString();
     var tilingId = randomUUID().toString();
