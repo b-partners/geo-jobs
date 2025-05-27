@@ -1,25 +1,22 @@
 package app.bpartners.geojobs.endpoint.rest.postprocessing.tombe;
 
-import static app.bpartners.geojobs.endpoint.rest.postprocessing.BoundaryMerger.withOffset;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOMBE;
 import static java.util.stream.Collectors.toSet;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import app.bpartners.geojobs.endpoint.rest.postprocessing.BoundaryMerger;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.Geojson;
+import app.bpartners.geojobs.endpoint.rest.postprocessing.MergeConf;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon;
-import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.model.geometry.PolygonProvider;
 import app.bpartners.geojobs.model.geometry.area.Area;
 import app.bpartners.geojobs.model.geometry.area.SquareDegree;
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+
 import java.util.*;
 
-import app.bpartners.geojobs.model.geometry.route.UnifiedRoute;
+import app.bpartners.geojobs.model.geometry.route.PrettyConf;
 import app.bpartners.geojobs.model.geometry.route.UnionConf;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
@@ -28,42 +25,27 @@ import org.locationtech.jts.geom.Polygon;
 
 @Slf4j
 public class TombeTest {
-  PolygonProvider polygonProvider = new PolygonProvider("/ivandry/vgg_annotations_modified.json");
+  PolygonProvider polygonProvider = new PolygonProvider("/geometry/vgg/dijon.json");
   private final TilingConf tilingConf = new TilingConf(20, 1024);
   private final UnionConf unionConf = new UnionConf(5);
+  private final MergeConf mergeConf = new MergeConf(1, 1, 5);
+  private final BoundaryMerger boundaryMerger = new BoundaryMerger(tilingConf, unionConf, mergeConf, 20);
+
 
   @Test
-  void postprocess_tombes() throws IOException, URISyntaxException {
-    var geojson =
-        new Geojson(new File(getClass().getResource("/ivandry/annotation.geojson").getFile()));
-    var polygons = invert(geojson.polygons());
+  void run() {
+    var tiledPolygons = polygonProvider.getTiledPolygons(false);
+
+    var merged = boundaryMerger.apply(tiledPolygons, TOMBE);
 
     var m2toDeg2 = 1E-11; // France
-    var tombeMinArea = new SquareDegree(112 * m2toDeg2);
-    var filteredByMinAreaPolygons = filterByMinArea(polygons, tombeMinArea);
-    // assertEquals(2528, polygons.size());
-    // assertEquals(2449, filteredByMinAreaPolygons.size());
+    var minArea = new SquareDegree(112 * m2toDeg2);
+    var filteredByMinAreaPolygons = filterByMinArea(merged, minArea);
 
     var maxAllowedIoU = 0.6;
     var noSuperpositionPolygons = noSuperposition(filteredByMinAreaPolygons, maxAllowedIoU);
-    // assertEquals(2195, noSuperpositionPolygons.size());
 
-    var postprocessedPolygons = noSuperpositionPolygons;
-    var expectedURI =
-        Paths.get(getClass().getResource("/geometry/tombes-postprocessed.geojson").toURI());
-    var expected = Files.readString(expectedURI);
-
-    new Geojson(postprocessedPolygons).saveAsFile("annotation_postprocessed.geojson");
-    //assertEquals(expected, new Geojson(postprocessedPolygons).stringValue());
-  }
-
-  @Test
-  void boundary_merge(){
-    var tiledPolygons = polygonProvider.getTiledPolygons(true);
-
-    var postProcessedPolygons = merge(tiledPolygons, 4000);
-
-    new Geojson(postProcessedPolygons).saveAsFile("annotation.geojson");
+    //new Geojson(noSuperpositionPolygons).saveAsFile("tombes_postprocessed.geojson");
   }
 
   public static Set<LatLonPolygon> invert(Set<LatLonPolygon> noSuperpositionPolygons) {
@@ -84,54 +66,6 @@ public class TombeTest {
               return new LatLonPolygon(polygon);
             })
         .collect(toSet());
-  }
-
-  private Set<LatLonPolygon> merge(Set<TiledPolygon> polygons, int minArea) {
-    var origin = new ArrayList<>(polygons).getFirst().originTile();
-    var tiledPolygonsWithOffset = polygons.stream().map(tile -> withOffset(tile, origin, tilingConf)).toList();
-    var result = new HashSet<TiledPolygon>();
-    var alreadyUnified = new HashSet<Polygon>();
-    for (var tp : tiledPolygonsWithOffset) {
-      if (alreadyUnified.contains(tp.polygon())) {
-        continue;
-      }
-      var aroundPolygons = tiledPolygonsWithOffset.stream().filter(p -> smallestAround(tp, p, minArea)).collect(toSet());
-      if (!aroundPolygons.isEmpty()) {
-        var smallest = new ArrayList<>(aroundPolygons.stream()
-                .map(TiledPolygon::polygon)
-                .toList());
-        smallest.sort(Comparator.comparing(Polygon::getArea));
-        var toUnify = smallest.getFirst();
-        alreadyUnified.addAll(Set.of(toUnify, tp.polygon()));
-        var unified = new UnifiedRoute(Set.of(toUnify, tp.polygon()), unionConf).unified();
-        for (var p : unified) {
-          result.add(
-                  new TiledPolygon((Polygon) p.getEnvelope(), tp.type(), tp.originTile(), tp.tilingConf()));
-        }
-      }else {
-        result.add(tp);
-      }
-    }
-    log.info("Already unified polygons: {}", alreadyUnified.size());
-    return result.stream().map(tp -> tp.latLonPolygon(origin)).collect(toSet());
-  }
-
-  private boolean smallestAround(TiledPolygon ref, TiledPolygon other, int minArea) {
-    var origin  = ref.originTile();
-    var tile = other.originTile();
-    if (other.polygon().getArea() > minArea) {
-      return false;
-    }
-
-    if (ref.originTile().equals(other.originTile())) {
-      return false;
-    }
-    int dx = Math.abs(tile.x() - origin.x());
-    int dy = Math.abs(tile.y() - origin.y());
-    var refBoundary = ref.polygon().getBoundary().buffer(10);
-    var otherBoundary = other.polygon().getBoundary().buffer(10);
-    var intersection = refBoundary.intersection(otherBoundary);
-    return (-1 <= dx && dy <= 1) && intersection.getLength() > 100;
   }
 
 

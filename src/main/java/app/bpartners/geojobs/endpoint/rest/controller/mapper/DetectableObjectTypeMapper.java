@@ -83,6 +83,7 @@ public class DetectableObjectTypeMapper {
       case BATI_BETON -> BATI_BETON;
       case BATI_AUTRES -> BATI_AUTRES;
       case BATI_ARDOISE -> BATI_ARDOISE;
+      case TOMBE -> null;
       case ESPACE_VERT_PARKING -> ESPACE_VERT_PARKING;
     };
   }

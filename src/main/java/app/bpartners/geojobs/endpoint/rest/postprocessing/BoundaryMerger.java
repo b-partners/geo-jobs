@@ -15,220 +15,244 @@ import app.bpartners.geojobs.model.geometry.TwoLineInt;
 import app.bpartners.geojobs.model.geometry.route.PrettyConf;
 import app.bpartners.geojobs.model.geometry.route.UnifiedRoute;
 import app.bpartners.geojobs.model.geometry.route.UnionConf;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+
+import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 import java.util.stream.Stream;
+
+import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Polygon;
 
 @Slf4j
-public class BoundaryMerger implements Function<Set<LatLonPolygon>, Set<LatLonPolygon>> {
-  private final TilingConf tilingConf;
-  private final UnionConf unionConf;
-  private final NeighbourHoodHandler neighbourHoodHandler;
-  private final PolygonPrettier polygonPrettier;
-  private final MergeConf mergeConf;
-  private final ExecutorService executorService =
-      newFixedThreadPool(Math.max(1, getRuntime().availableProcessors() / 2));
+public class BoundaryMerger implements BiFunction<Set<TiledPolygon>, DetectableType, Set<LatLonPolygon>> {
+    private final TilingConf tilingConf;
+    private final UnionConf unionConf;
+    private final NeighbourHoodHandler neighbourHoodHandler;
+    private final MergeConf mergeConf;
+    private final ExecutorService executorService =
+            newFixedThreadPool(Math.max(1, getRuntime().availableProcessors() / 2));
 
-  public BoundaryMerger(
-      TilingConf tilingConf,
-      UnionConf unionConf,
-      PrettyConf prettyConf,
-      MergeConf mergeConf,
-      int neighbourhoodTileDistance) {
-    this.tilingConf = tilingConf;
-    this.unionConf = unionConf;
-    this.neighbourHoodHandler = new NeighbourHoodHandler(neighbourhoodTileDistance);
-    this.polygonPrettier = new PolygonPrettier(prettyConf);
-    this.mergeConf = mergeConf;
-  }
-
-
-  @Override
-  public Set<LatLonPolygon> apply(Set<LatLonPolygon> latLonPolygons) {
-    var tiledPolygons =
-        latLonPolygons.stream().map(p -> p.tiledPolygon(tilingConf)).collect(toSet());
-
-    /*
-     * * * * * * * * * * * * * * * * * * * * * *
-     * Uncomment when zone area is up to 2km2  *
-     * * * * * * * * * * * * * * * * * * * * * *
-     **/
-
-    // var polygonsByNeighbourhood = neighbourHoodHandler.aroundN(tiledPolygons);
-    /**
-     * List<Future<Set<TiledPolygon>>> futures; try { futures = executorService.invokeAll(
-     * polygonsByNeighbourhood.stream() .map( neighbourhoodPolygons ->
-     * ((Callable<Set<TiledPolygon>>) () -> applyBoundaryMerge(neighbourhoodPolygons)))
-     * .collect(toSet())); } catch (InterruptedException e) { throw new RuntimeException(e); }
-     *
-     * <p>return futures.stream().flatMap(this::futureStream).collect(toSet()).stream()
-     * .map(TiledPolygon::latLonPolygon) .collect(toSet());
-     */
-    return applyBoundaryMerge(tiledPolygons).stream()
-        .map(TiledPolygon::latLonPolygon)
-        .collect(toSet());
-  }
-
-  public Set<LatLonPolygon> from(Set<TiledPolygon> tiledPolygons) {
-    var latLonPolygons = tiledPolygons.stream().map(TiledPolygon::latLonPolygon).collect(toSet());
-    return apply(latLonPolygons);
-  }
-
-  private Stream<TiledPolygon> futureStream(Future<Set<TiledPolygon>> future) {
-    try {
-      return future.get().stream();
-    } catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
+    public BoundaryMerger(
+            TilingConf tilingConf,
+            UnionConf unionConf,
+            MergeConf mergeConf,
+            int neighbourhoodTileDistance) {
+        this.tilingConf = tilingConf;
+        this.unionConf = unionConf;
+        this.neighbourHoodHandler = new NeighbourHoodHandler(neighbourhoodTileDistance);
+        this.mergeConf = mergeConf;
     }
-  }
 
-  private Set<TiledPolygon> applyBoundaryMerge(Set<TiledPolygon> tiledPolygons) {
-    var groupedByType = tiledPolygons.stream().collect(groupingBy(TiledPolygon::type));
-    var newTiledPolygons = new HashSet<Set<TiledPolygon>>();
-    for (var group : groupedByType.values()) {
-      var newGroupedTiledPolygons = new HashSet<TiledPolygon>();
-      var size = group.size();
-      var toSkip = new HashSet<>();
-      for (int i = 0; i < size; i++) {
-        var base = group.get(i);
-        var toUnify = new HashSet<Polygon>();
+    public static TiledPolygon withOffset(TiledPolygon p, IntXY originTile, TilingConf tilingConf) {
+        var currentTile = p.originTile();
+        var xFactor = currentTile.x() - originTile.x();
+        var yFactor = currentTile.y() - originTile.y();
+        var imgSize = tilingConf.imgSize();
+        var coordinates = p.polygon().getCoordinates();
+        if (!coordinates[0].equals(coordinates[coordinates.length - 1])) {
+            var clone = new Coordinate[coordinates.length + 1];
+            System.arraycopy(coordinates, 0, clone, 0, coordinates.length);
+            clone[coordinates.length] = coordinates[0];
+            coordinates = clone;
+        }
+        var polygon =
+                geometryFactory.createPolygon(
+                        Arrays.stream(coordinates)
+                                .map(c -> new Coordinate(c.x + xFactor * imgSize, c.y + yFactor * imgSize))
+                                .toArray(Coordinate[]::new));
+        return new TiledPolygon(polygon, p.type(), p.originTile(), p.tilingConf());
+    }
 
-        if (toSkip.contains(i)) {
-          continue;
+    private Set<LatLonPolygon> merge(Set<TiledPolygon> polygons, int minArea) {
+        var origin = new ArrayList<>(polygons).getFirst().originTile();
+        var tiledPolygonsWithOffset = polygons.stream().map(tile -> withOffset(tile, origin, tilingConf)).toList();
+        var result = new HashSet<TiledPolygon>();
+        var alreadyUnified = new HashSet<Polygon>();
+        for (var tp : tiledPolygonsWithOffset) {
+            if (alreadyUnified.contains(tp.polygon())) {
+                continue;
+            }
+            var aroundPolygons = tiledPolygonsWithOffset.stream().filter(p -> smallestAround(tp, p, minArea)).collect(toSet());
+            if (!aroundPolygons.isEmpty()) {
+                var smallest = new ArrayList<>(aroundPolygons.stream()
+                        .map(TiledPolygon::polygon)
+                        .toList());
+                smallest.sort(Comparator.comparing(Polygon::getArea));
+                var toUnify = smallest.getFirst();
+                alreadyUnified.addAll(Set.of(toUnify, tp.polygon()));
+                var unified = new UnifiedRoute(Set.of(toUnify, tp.polygon()), unionConf).unified();
+                for (var p : unified) {
+                    result.add(
+                            new TiledPolygon((Polygon) p.getEnvelope(), tp.type(), tp.originTile(), tp.tilingConf()));
+                }
+            } else {
+                result.add(tp);
+            }
+        }
+        log.info("Already unified polygons: {}", alreadyUnified.size());
+        return result.stream().map(tp -> tp.latLonPolygon(origin)).collect(toSet());
+    }
+
+    private boolean smallestAround(TiledPolygon ref, TiledPolygon other, int minArea) {
+        var origin = ref.originTile();
+        var tile = other.originTile();
+        if (other.polygon().getArea() > minArea) {
+            return false;
         }
 
-        for (int j = i + 1; j < size; j++) {
-          if (toSkip.contains(j)) {
-            continue;
-          }
-          var next = group.get(j);
-          var nextWithOffset = withOffset(next, base.originTile(), tilingConf);
-          if (shouldBeMerged(base, nextWithOffset)) {
-            toUnify.add(nextWithOffset.polygon());
-            toSkip.add(j);
-          }
+        if (ref.originTile().equals(other.originTile())) {
+            return false;
+        }
+        int dx = Math.abs(tile.x() - origin.x());
+        int dy = Math.abs(tile.y() - origin.y());
+        var refBoundary = ref.polygon().getBoundary().buffer(10);
+        var otherBoundary = other.polygon().getBoundary().buffer(10);
+        var intersection = refBoundary.intersection(otherBoundary);
+        return (-1 <= dx && dy <= 1) && intersection.getLength() > 100;
+    }
+
+    private Set<LatLonPolygon> parallelMerge(Set<TiledPolygon> tiledPolygons) {
+        var origin = new ArrayList<>(tiledPolygons).getFirst().originTile();
+        var polygonsByNeighbourhood = neighbourHoodHandler.aroundN(tiledPolygons);
+        List<Future<Set<LatLonPolygon>>> futures;
+        try {
+            futures = executorService.invokeAll(
+                    polygonsByNeighbourhood.stream().map(neighbourhoodPolygons ->
+                                    ((Callable<Set<LatLonPolygon>>) () -> merge(neighbourhoodPolygons, origin)))
+                            .collect(toSet()));
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        return futures.stream().flatMap(this::futureStream).collect(toSet());
+    }
+
+    private Stream<LatLonPolygon> futureStream(Future<Set<LatLonPolygon>> future) {
+        try {
+            return future.get().stream();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Set<LatLonPolygon> merge(Set<TiledPolygon> polygons, IntXY origin) {
+        var tiledPolygonsWithOffset = polygons.stream().map(tile -> withOffset(tile, origin, tilingConf)).toList();
+        var result = new HashSet<TiledPolygon>();
+        var alreadyUnified = new HashSet<Polygon>();
+        for (var tp : tiledPolygonsWithOffset) {
+            if (alreadyUnified.contains(tp.polygon())) {
+                continue;
+            }
+            var aroundPolygons = tiledPolygonsWithOffset.stream().filter(p -> shouldBeMerged(tp, p)).collect(toSet());
+            if (!aroundPolygons.isEmpty()) {
+                var toUnify = aroundPolygons.stream()
+                        .map(TiledPolygon::polygon)
+                        .collect(toSet());
+                toUnify.add(tp.polygon());
+                alreadyUnified.addAll(toUnify);
+                var unified = new UnifiedRoute(toUnify, unionConf).unified();
+                for (var p : unified) {
+                    result.add(
+                            new TiledPolygon((Polygon) p.getEnvelope(), tp.type(), tp.originTile(), tp.tilingConf()));
+                }
+            } else {
+                result.add(tp);
+            }
+        }
+        return result.stream().map(tp -> tp.latLonPolygon(origin)).collect(toSet());
+    }
+
+    private boolean shouldBeMerged(TiledPolygon base, TiledPolygon other) {
+        try {
+            var basePolygon = base.polygon();
+            var otherPolygon = other.polygon();
+            return base.originTile().compareTo(other.originTile()) != 0
+                    && (basePolygon.distance(otherPolygon) < 10
+                    || isCollinearEnough(basePolygon, otherPolygon));
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    private TwoLineInt findTwoCloseLineInt(Set<LineInt> base, Set<LineInt> other) {
+        TwoLineInt closest = new TwoLineInt(null, null);
+        var distance = Double.MAX_VALUE;
+        for (var baseLine : base) {
+            for (var otherLine : other) {
+                double dx1 = baseLine.b().x() - baseLine.a().x();
+                double dy1 = baseLine.b().y() - baseLine.a().y();
+                double dx2 = otherLine.b().x() - otherLine.a().x();
+                double dy2 = otherLine.b().y() - otherLine.a().y();
+                var currentDistance =
+                        Math.sqrt(Math.pow(Math.abs(dx1 - dx2), 2) + Math.pow(Math.abs(dy1 - dy2), 2));
+                if (currentDistance < distance) {
+                    closest = new TwoLineInt(baseLine, otherLine);
+                    distance = currentDistance;
+                }
+            }
+        }
+        return closest;
+    }
+
+    public boolean isCollinearEnough(Polygon base, Polygon other) {
+        Coordinate[] baseCoords = base.getExteriorRing().getCoordinates();
+        Coordinate[] otherCoords = other.getExteriorRing().getCoordinates();
+
+        // Find all vertical edges from both polygons
+        Set<LineInt> baseVerticalEdges = findLinearEdges(baseCoords);
+        Set<LineInt> otherVerticalEdges = findLinearEdges(otherCoords);
+
+        if (baseVerticalEdges.isEmpty() || otherVerticalEdges.isEmpty()) {
+            return false;
         }
 
-        toUnify.add(base.polygon());
-        var prettierToUnify = polygonPrettier.apply(toUnify);
-        var unified = new UnifiedRoute(prettierToUnify, unionConf).unified();
-        for (var p : unified) {
-          newGroupedTiledPolygons.add(
-              new TiledPolygon(p, base.type(), base.originTile(), base.tilingConf()));
+        var closestLines = findTwoCloseLineInt(baseVerticalEdges, otherVerticalEdges);
+        var baseLine = closestLines.first();
+        var otherLine = closestLines.second();
+        return areVectorsCollinear(baseLine, otherLine);
+    }
+
+    public Set<LineInt> findLinearEdges(Coordinate[] coords) {
+        Set<LineInt> linearEdges = new HashSet<>();
+        var minXDistance = mergeConf.minXDistance();
+        var minYDistance = mergeConf.minYDistance();
+
+        for (int i = 0; i < coords.length - 1; i++) {
+            Coordinate c1 = coords[i];
+            Coordinate c2 = coords[i + 1];
+
+            // Check if segment is vertical (x coordinates are nearly equal)
+            if (Math.abs(c1.x - c2.x) < minXDistance && Math.abs(c1.y - c2.y) > minYDistance) {
+                linearEdges.add(new LineInt(new IntXY(c1), new IntXY(c2)));
+            }
+            if (Math.abs(c1.y - c2.y) < minXDistance && Math.abs(c1.x - c2.x) > minYDistance) {
+                linearEdges.add(new LineInt(new IntXY(c1), new IntXY(c2)));
+            }
         }
-      }
-
-      newTiledPolygons.add(newGroupedTiledPolygons);
+        return linearEdges;
     }
-    return newTiledPolygons.stream().flatMap(Set::stream).collect(toSet());
-  }
 
-  public static TiledPolygon withOffset(TiledPolygon p, IntXY originTile, TilingConf tilingConf) {
-    var currentTile = p.originTile();
-    var xFactor = currentTile.x() - originTile.x();
-    var yFactor = currentTile.y() - originTile.y();
-    var imgSize = tilingConf.imgSize();
-    var coordinates = p.polygon().getCoordinates();
-    if (!coordinates[0].equals(coordinates[coordinates.length - 1])) {
-      var clone = new Coordinate[coordinates.length + 1];
-      System.arraycopy(coordinates, 0, clone, 0, coordinates.length);
-      clone[coordinates.length] = coordinates[0];
-      coordinates = clone;
-    }
-    var polygon =
-        geometryFactory.createPolygon(
-            Arrays.stream(coordinates)
-                .map(c -> new Coordinate(c.x + xFactor * imgSize, c.y + yFactor * imgSize))
-                .toArray(Coordinate[]::new));
-    return new TiledPolygon(polygon, p.type(), p.originTile(), p.tilingConf());
-  }
-
-  private boolean shouldBeMerged(TiledPolygon base, TiledPolygon other) {
-    try {
-      var basePolygon = base.polygon();
-      var otherPolygon = other.polygon();
-      return base.originTile().compareTo(other.originTile()) != 0
-          && (basePolygon.distance(otherPolygon) < 10
-              || isCollinearEnough(basePolygon, otherPolygon));
-    } catch (Exception ignored) {
-      return false;
-    }
-  }
-
-  private TwoLineInt findTwoCloseLineInt(Set<LineInt> base, Set<LineInt> other) {
-    TwoLineInt closest = new TwoLineInt(null, null);
-    var distance = Double.MAX_VALUE;
-    for (var baseLine : base) {
-      for (var otherLine : other) {
+    public boolean areVectorsCollinear(LineInt baseLine, LineInt otherLine) {
+        var tolerance = mergeConf.directionTolerance();
         double dx1 = baseLine.b().x() - baseLine.a().x();
         double dy1 = baseLine.b().y() - baseLine.a().y();
         double dx2 = otherLine.b().x() - otherLine.a().x();
         double dy2 = otherLine.b().y() - otherLine.a().y();
-        var currentDistance =
-            Math.sqrt(Math.pow(Math.abs(dx1 - dx2), 2) + Math.pow(Math.abs(dy1 - dy2), 2));
-        if (currentDistance < distance) {
-          closest = new TwoLineInt(baseLine, otherLine);
-          distance = currentDistance;
-        }
-      }
-    }
-    return closest;
-  }
 
-  public boolean isCollinearEnough(Polygon base, Polygon other) {
-    Coordinate[] baseCoords = base.getExteriorRing().getCoordinates();
-    Coordinate[] otherCoords = other.getExteriorRing().getCoordinates();
-
-    // Find all vertical edges from both polygons
-    Set<LineInt> baseVerticalEdges = findLinearEdges(baseCoords);
-    Set<LineInt> otherVerticalEdges = findLinearEdges(otherCoords);
-
-    if (baseVerticalEdges.isEmpty() || otherVerticalEdges.isEmpty()) {
-      return false;
+        // Check if vectors are parallel (cross product near zero)
+        return Math.abs(dx1 * dy2 - dy1 * dx2) <= tolerance;
     }
 
-    var closestLines = findTwoCloseLineInt(baseVerticalEdges, otherVerticalEdges);
-    var baseLine = closestLines.first();
-    var otherLine = closestLines.second();
-    return areVectorsCollinear(baseLine, otherLine);
-  }
-
-  public Set<LineInt> findLinearEdges(Coordinate[] coords) {
-    Set<LineInt> linearEdges = new HashSet<>();
-    var minXDistance = mergeConf.minXDistance();
-    var minYDistance = mergeConf.minYDistance();
-
-    for (int i = 0; i < coords.length - 1; i++) {
-      Coordinate c1 = coords[i];
-      Coordinate c2 = coords[i + 1];
-
-      // Check if segment is vertical (x coordinates are nearly equal)
-      if (Math.abs(c1.x - c2.x) < minXDistance && Math.abs(c1.y - c2.y) > minYDistance) {
-        linearEdges.add(new LineInt(new IntXY(c1), new IntXY(c2)));
-      }
-      if (Math.abs(c1.y - c2.y) < minXDistance && Math.abs(c1.x - c2.x) > minYDistance) {
-        linearEdges.add(new LineInt(new IntXY(c1), new IntXY(c2)));
-      }
+    @Override
+    public Set<LatLonPolygon> apply(Set<TiledPolygon> tiledPolygons, DetectableType detectableType) {
+        return switch (detectableType) {
+            case TOMBE, PASSAGE_PIETON, PISCINE -> merge(tiledPolygons, 4000);
+            default -> parallelMerge(tiledPolygons);
+        };
     }
-    return linearEdges;
-  }
-
-  public boolean areVectorsCollinear(LineInt baseLine, LineInt otherLine) {
-    var tolerance = mergeConf.directionTolerance();
-    double dx1 = baseLine.b().x() - baseLine.a().x();
-    double dy1 = baseLine.b().y() - baseLine.a().y();
-    double dx2 = otherLine.b().x() - otherLine.a().x();
-    double dy2 = otherLine.b().y() - otherLine.a().y();
-
-    // Check if vectors are parallel (cross product near zero)
-    return Math.abs(dx1 * dy2 - dy1 * dx2) <= tolerance;
-  }
 }

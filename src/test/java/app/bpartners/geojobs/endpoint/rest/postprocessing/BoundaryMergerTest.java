@@ -2,6 +2,7 @@ package app.bpartners.geojobs.endpoint.rest.postprocessing;
 
 import static app.bpartners.geojobs.endpoint.rest.postprocessing.tombe.TombeTest.invert;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.BATI_BETON;
 import static org.junit.jupiter.api.Assertions.*;
 
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
@@ -14,6 +15,9 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.stream.Collectors;
+
+import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
@@ -26,7 +30,7 @@ class BoundaryMergerTest {
   PrettyConf prettyConf = new PrettyConf(1);
   MergeConf mergeConf = new MergeConf(1, 1, 2);
   BoundaryMerger boundaryMerger =
-      new BoundaryMerger(tilingConf, unionConf, prettyConf, mergeConf, 10);
+      new BoundaryMerger(tilingConf, unionConf, mergeConf, 10);
 
   @Test
   @Disabled("for local run only")
@@ -37,8 +41,9 @@ class BoundaryMergerTest {
                 .getResource("/ivandry/map95_v2_0.05_fusion_cimetiere_vgg_annotations.json.geojson")
                 .getFile());
 
-    var latLonPolygons = geoJsonLoader.apply(geojsonFile);
-    var unified = boundaryMerger.apply(latLonPolygons);
+    var latLonPolygons = geoJsonLoader.apply(geojsonFile).stream()
+            .map(latLon -> latLon.tiledPolygon(tilingConf)).collect(Collectors.toSet());
+    var unified = boundaryMerger.apply(latLonPolygons, BATI_BETON);
 
     var expectedURI = Paths.get(getClass().getResource("/ivandry/bati_merged.geojson").toURI());
     var expected = Files.readString(expectedURI);
