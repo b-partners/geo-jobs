@@ -17,6 +17,7 @@ import app.bpartners.geojobs.model.geometry.VGG;
 import app.bpartners.geojobs.model.geometry.route.RouteType;
 import java.math.BigDecimal;
 import java.util.*;
+import javax.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LinearRing;
@@ -28,8 +29,17 @@ public record TiledPolygon(
     Polygon polygon, RouteType type, IntXY originTile, TilingConf tilingConf) {
 
   public LatLonPolygon latLonPolygon() {
-    var exteriorLatLonCoordinates = getExteriorLatLonCoordinates(polygon);
-    LinearRing exteriorRing = geometryFactory.createLinearRing(exteriorLatLonCoordinates);
+    var exteriorLatLonCoordinates = getExteriorLatLonCoordinates(polygon, null);
+    return latLonPolygon(exteriorLatLonCoordinates);
+  }
+
+  public LatLonPolygon latLonPolygon(IntXY originTile) {
+    var exteriorLatLonCoordinates = getExteriorLatLonCoordinates(polygon, originTile);
+    return latLonPolygon(exteriorLatLonCoordinates);
+  }
+
+  private LatLonPolygon latLonPolygon(Coordinate[] coords) {
+    LinearRing exteriorRing = geometryFactory.createLinearRing(coords);
 
     var latLonHolesCoordinates = getHolesLatLonCoordinates(polygon);
     LinearRing[] holes = new LinearRing[latLonHolesCoordinates.length];
@@ -43,9 +53,10 @@ public record TiledPolygon(
     return new LatLonPolygon(p);
   }
 
-  private Coordinate[] getExteriorLatLonCoordinates(Polygon polygon) {
+  private Coordinate[] getExteriorLatLonCoordinates(Polygon polygon, @Nullable IntXY originTile) {
+    var origin = originTile == null ? this.originTile : originTile;
     return Arrays.stream(polygon.getExteriorRing().getCoordinates())
-        .map(c -> toLatLon(originTile, tilingConf, new IntXY((int) c.x, (int) c.y)))
+        .map(c -> toLatLon(origin, tilingConf, new IntXY((int) c.x, (int) c.y)))
         .toArray(Coordinate[]::new);
   }
 
