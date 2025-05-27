@@ -11,12 +11,7 @@ import app.bpartners.geojobs.model.geometry.LineInt;
 import app.bpartners.geojobs.model.geometry.route.PrettyConf;
 import app.bpartners.geojobs.model.geometry.route.UnionConf;
 import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.stream.Collectors;
-
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Polygon;
@@ -32,20 +27,18 @@ class BoundaryMergerTest {
 
   @Test
   void run() {
-    var geojsonFile =
-        new File(
-            getClass()
-                .getResource("/ivandry/bati.geojson")
-                .getFile());
+    var geojsonFile = new File(getClass().getResource("/ivandry/bati.geojson").getFile());
 
     var polygons = geoJsonLoader.apply(geojsonFile);
     var inverted = invert(polygons);
 
-    var tiledPolygons = inverted.stream()
-            .map(latLon -> latLon.tiledPolygon(tilingConf)).collect(Collectors.toSet());
+    var tiledPolygons =
+        inverted.stream()
+            .map(latLon -> latLon.tiledPolygon(tilingConf))
+            .collect(Collectors.toSet());
     var unified = boundaryMerger.apply(tiledPolygons, BATI_BETON);
 
-    //new Geojson(unified).saveAsFile("bati_dijon.geojson");
+    // new Geojson(unified).saveAsFile("bati_dijon.geojson");
   }
 
   @Test

@@ -3,21 +3,17 @@ package app.bpartners.geojobs.endpoint.rest.postprocessing.tombe;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOMBE;
 import static java.util.stream.Collectors.toSet;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import app.bpartners.geojobs.endpoint.rest.postprocessing.BoundaryMerger;
-import app.bpartners.geojobs.endpoint.rest.postprocessing.Geojson;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.MergeConf;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.model.geometry.PolygonProvider;
 import app.bpartners.geojobs.model.geometry.area.Area;
 import app.bpartners.geojobs.model.geometry.area.SquareDegree;
-
-import java.util.*;
-
 import app.bpartners.geojobs.model.geometry.route.PrettyConf;
 import app.bpartners.geojobs.model.geometry.route.UnionConf;
+import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
@@ -30,8 +26,8 @@ public class TombeTest {
   private final UnionConf unionConf = new UnionConf(5);
   private final MergeConf mergeConf = new MergeConf(1, 1, 5);
   private final PrettyConf prettyConf = new PrettyConf(1);
-  private final BoundaryMerger boundaryMerger = new BoundaryMerger(tilingConf, unionConf, mergeConf, prettyConf, 20);
-
+  private final BoundaryMerger boundaryMerger =
+      new BoundaryMerger(tilingConf, unionConf, mergeConf, prettyConf, 20);
 
   @Test
   void run() {
@@ -46,7 +42,7 @@ public class TombeTest {
     var maxAllowedIoU = 0.6;
     var noSuperpositionPolygons = noSuperposition(filteredByMinAreaPolygons, maxAllowedIoU);
 
-    //new Geojson(noSuperpositionPolygons).saveAsFile("tombes_postprocessed.geojson");
+    // new Geojson(noSuperpositionPolygons).saveAsFile("tombes_postprocessed.geojson");
   }
 
   public static Set<LatLonPolygon> invert(Set<LatLonPolygon> noSuperpositionPolygons) {
@@ -68,7 +64,6 @@ public class TombeTest {
             })
         .collect(toSet());
   }
-
 
   private Set<LatLonPolygon> filterByMinArea(Set<LatLonPolygon> tiledPolygons, Area tombeMinArea) {
     return tiledPolygons.stream()
