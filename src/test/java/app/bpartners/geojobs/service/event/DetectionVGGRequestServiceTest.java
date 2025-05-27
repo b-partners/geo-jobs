@@ -2,6 +2,7 @@ package app.bpartners.geojobs.service.event;
 
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.MOISISSURE_CLAIR;
 import static java.util.UUID.randomUUID;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -16,10 +17,7 @@ import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.service.DetectionVGGUpdate;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import org.junit.jupiter.api.Test;
 
 class DetectionVGGRequestServiceTest {
@@ -31,6 +29,18 @@ class DetectionVGGRequestServiceTest {
   DetectionVGGRequestedService subject =
       new DetectionVGGRequestedService(
           detectionRepositoryMock, vggFactory, detectionVGGUpdate, geometryConverter);
+
+  @Test
+  void throws_when_detection_not_found() {
+    var eventMock = mock(DetectionVGGRequested.class);
+    when(detectionRepositoryMock.findById(any())).thenReturn(Optional.empty());
+
+    assertThrows(
+        NoSuchElementException.class,
+        () -> {
+          subject.accept(eventMock);
+        });
+  }
 
   @Test
   void accept_detection_vgg_request_service() {
@@ -69,8 +79,7 @@ class DetectionVGGRequestServiceTest {
     when(vggFactory.from(any(List.class))).thenReturn(mapVggFactory);
     when(detectionVGGUpdate.apply(eq(mapVggFactory), eq(detectionMock)))
         .thenReturn(newDetectionAfterVggUpdateMock);
-    when(detectionRepositoryMock.save(any()))
-        .thenAnswer(invocation -> invocation.getArgument(0));
+    when(detectionRepositoryMock.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
     subject.accept(eventMock);
 
