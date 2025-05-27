@@ -29,7 +29,8 @@ public class TombeTest {
   private final TilingConf tilingConf = new TilingConf(20, 1024);
   private final UnionConf unionConf = new UnionConf(5);
   private final MergeConf mergeConf = new MergeConf(1, 1, 5);
-  private final BoundaryMerger boundaryMerger = new BoundaryMerger(tilingConf, unionConf, mergeConf, 20);
+  private final PrettyConf prettyConf = new PrettyConf(1);
+  private final BoundaryMerger boundaryMerger = new BoundaryMerger(tilingConf, unionConf, mergeConf, prettyConf, 20);
 
 
   @Test

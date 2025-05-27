@@ -17,8 +17,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.stream.Collectors;
 
-import app.bpartners.geojobs.repository.model.detection.DetectableType;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Polygon;
@@ -26,31 +24,28 @@ import org.locationtech.jts.geom.Polygon;
 class BoundaryMergerTest {
   private final GeoJsonLoader geoJsonLoader = new GeoJsonLoader();
   TilingConf tilingConf = new TilingConf(20, 1_024);
-  UnionConf unionConf = new UnionConf(1);
-  PrettyConf prettyConf = new PrettyConf(1);
+  UnionConf unionConf = new UnionConf(10);
+  PrettyConf prettyConf = new PrettyConf(5);
   MergeConf mergeConf = new MergeConf(1, 1, 2);
   BoundaryMerger boundaryMerger =
-      new BoundaryMerger(tilingConf, unionConf, mergeConf, 10);
+      new BoundaryMerger(tilingConf, unionConf, mergeConf, prettyConf, 10);
 
   @Test
-  @Disabled("for local run only")
-  void boundary_merge_on_bati() throws IOException, URISyntaxException {
+  void run() {
     var geojsonFile =
         new File(
             getClass()
-                .getResource("/ivandry/map95_v2_0.05_fusion_cimetiere_vgg_annotations.json.geojson")
+                .getResource("/ivandry/bati.geojson")
                 .getFile());
 
-    var latLonPolygons = geoJsonLoader.apply(geojsonFile).stream()
+    var polygons = geoJsonLoader.apply(geojsonFile);
+    var inverted = invert(polygons);
+
+    var tiledPolygons = inverted.stream()
             .map(latLon -> latLon.tiledPolygon(tilingConf)).collect(Collectors.toSet());
-    var unified = boundaryMerger.apply(latLonPolygons, BATI_BETON);
+    var unified = boundaryMerger.apply(tiledPolygons, BATI_BETON);
 
-    var expectedURI = Paths.get(getClass().getResource("/ivandry/bati_merged.geojson").toURI());
-    var expected = Files.readString(expectedURI);
-
-    new Geojson(invert(unified))
-        .saveAsFile("map95_v2_0.05_fusion_cimetiere_vgg_annotations_merged.geojson");
-    // assertEquals(expected, new Geojson(unified).stringValue());
+    //new Geojson(unified).saveAsFile("bati_dijon.geojson");
   }
 
   @Test

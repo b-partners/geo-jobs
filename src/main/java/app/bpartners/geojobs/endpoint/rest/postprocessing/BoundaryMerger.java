@@ -35,6 +35,7 @@ public class BoundaryMerger implements BiFunction<Set<TiledPolygon>, DetectableT
     private final UnionConf unionConf;
     private final NeighbourHoodHandler neighbourHoodHandler;
     private final MergeConf mergeConf;
+    private final PolygonPrettier prettier;
     private final ExecutorService executorService =
             newFixedThreadPool(Math.max(1, getRuntime().availableProcessors() / 2));
 
@@ -42,11 +43,13 @@ public class BoundaryMerger implements BiFunction<Set<TiledPolygon>, DetectableT
             TilingConf tilingConf,
             UnionConf unionConf,
             MergeConf mergeConf,
+            PrettyConf prettyConf,
             int neighbourhoodTileDistance) {
         this.tilingConf = tilingConf;
         this.unionConf = unionConf;
         this.neighbourHoodHandler = new NeighbourHoodHandler(neighbourhoodTileDistance);
         this.mergeConf = mergeConf;
+        this.prettier = new PolygonPrettier(prettyConf);
     }
 
     public static TiledPolygon withOffset(TiledPolygon p, IntXY originTile, TilingConf tilingConf) {
@@ -69,7 +72,7 @@ public class BoundaryMerger implements BiFunction<Set<TiledPolygon>, DetectableT
         return new TiledPolygon(polygon, p.type(), p.originTile(), p.tilingConf());
     }
 
-    private Set<LatLonPolygon> merge(Set<TiledPolygon> polygons, int minArea) {
+    private Set<LatLonPolygon> merge(Set<TiledPolygon> polygons) {
         var origin = new ArrayList<>(polygons).getFirst().originTile();
         var tiledPolygonsWithOffset = polygons.stream().map(tile -> withOffset(tile, origin, tilingConf)).toList();
         var result = new HashSet<TiledPolygon>();
@@ -78,7 +81,7 @@ public class BoundaryMerger implements BiFunction<Set<TiledPolygon>, DetectableT
             if (alreadyUnified.contains(tp.polygon())) {
                 continue;
             }
-            var aroundPolygons = tiledPolygonsWithOffset.stream().filter(p -> smallestAround(tp, p, minArea)).collect(toSet());
+            var aroundPolygons = tiledPolygonsWithOffset.stream().filter(p -> smallestAround(tp, p)).collect(toSet());
             if (!aroundPolygons.isEmpty()) {
                 var smallest = new ArrayList<>(aroundPolygons.stream()
                         .map(TiledPolygon::polygon)
@@ -99,10 +102,10 @@ public class BoundaryMerger implements BiFunction<Set<TiledPolygon>, DetectableT
         return result.stream().map(tp -> tp.latLonPolygon(origin)).collect(toSet());
     }
 
-    private boolean smallestAround(TiledPolygon ref, TiledPolygon other, int minArea) {
+    private boolean smallestAround(TiledPolygon ref, TiledPolygon other) {
         var origin = ref.originTile();
         var tile = other.originTile();
-        if (other.polygon().getArea() > minArea) {
+        if (other.polygon().getArea() > 4000) {
             return false;
         }
 
@@ -119,7 +122,8 @@ public class BoundaryMerger implements BiFunction<Set<TiledPolygon>, DetectableT
 
     private Set<LatLonPolygon> parallelMerge(Set<TiledPolygon> tiledPolygons) {
         var origin = new ArrayList<>(tiledPolygons).getFirst().originTile();
-        var polygonsByNeighbourhood = neighbourHoodHandler.aroundN(tiledPolygons);
+        //TODO: handle side effect on concurrent execution
+        /**var polygonsByNeighbourhood = neighbourHoodHandler.aroundN(tiledPolygons);
         List<Future<Set<LatLonPolygon>>> futures;
         try {
             futures = executorService.invokeAll(
@@ -129,7 +133,8 @@ public class BoundaryMerger implements BiFunction<Set<TiledPolygon>, DetectableT
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        return futures.stream().flatMap(this::futureStream).collect(toSet());
+        return futures.stream().flatMap(this::futureStream).collect(toSet());**/
+        return merge(tiledPolygons, origin);
     }
 
     private Stream<LatLonPolygon> futureStream(Future<Set<LatLonPolygon>> future) {
@@ -155,10 +160,11 @@ public class BoundaryMerger implements BiFunction<Set<TiledPolygon>, DetectableT
                         .collect(toSet());
                 toUnify.add(tp.polygon());
                 alreadyUnified.addAll(toUnify);
-                var unified = new UnifiedRoute(toUnify, unionConf).unified();
+                var prettyPolygons = prettier.apply(toUnify);
+                var unified = new UnifiedRoute(prettyPolygons, unionConf).unified();
                 for (var p : unified) {
                     result.add(
-                            new TiledPolygon((Polygon) p.getEnvelope(), tp.type(), tp.originTile(), tp.tilingConf()));
+                            new TiledPolygon(p, tp.type(), tp.originTile(), tp.tilingConf()));
                 }
             } else {
                 result.add(tp);
@@ -251,7 +257,7 @@ public class BoundaryMerger implements BiFunction<Set<TiledPolygon>, DetectableT
     @Override
     public Set<LatLonPolygon> apply(Set<TiledPolygon> tiledPolygons, DetectableType detectableType) {
         return switch (detectableType) {
-            case TOMBE, PASSAGE_PIETON, PISCINE -> merge(tiledPolygons, 4000);
+            case TOMBE, PASSAGE_PIETON, PISCINE -> merge(tiledPolygons);
             default -> parallelMerge(tiledPolygons);
         };
     }
