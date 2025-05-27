@@ -162,6 +162,12 @@ public record TiledPolygon(
       var pixel = new IntXY(allX.get(i).intValue(), allY.get(i).intValue());
       coordinates[i] = new Coordinate(pixel.x(), pixel.y());
     }
+    if (!coordinates[0].equals(coordinates[coordinates.length - 1])) {
+      var clone = new Coordinate[coordinates.length + 1];
+      System.arraycopy(coordinates, 0, clone, 0, coordinates.length);
+      clone[coordinates.length] = coordinates[0];
+      coordinates = clone;
+    }
     return geometryFactory.createPolygon(coordinates);
   }
 

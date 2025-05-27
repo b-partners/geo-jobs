@@ -1,7 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.postprocessing.tombe;
 
 import static app.bpartners.geojobs.endpoint.rest.postprocessing.BoundaryMerger.withOffset;
-import static app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon.originTile;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static java.util.stream.Collectors.toSet;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -10,6 +9,7 @@ import app.bpartners.geojobs.endpoint.rest.postprocessing.Geojson;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
+import app.bpartners.geojobs.model.geometry.PolygonProvider;
 import app.bpartners.geojobs.model.geometry.area.Area;
 import app.bpartners.geojobs.model.geometry.area.SquareDegree;
 import java.io.File;
@@ -28,32 +28,42 @@ import org.locationtech.jts.geom.Polygon;
 
 @Slf4j
 public class TombeTest {
+  PolygonProvider polygonProvider = new PolygonProvider("/ivandry/vgg_annotations_modified.json");
   private final TilingConf tilingConf = new TilingConf(20, 1024);
-  private final UnionConf unionConf = new UnionConf(0);
+  private final UnionConf unionConf = new UnionConf(5);
 
   @Test
   void postprocess_tombes() throws IOException, URISyntaxException {
     var geojson =
-        new Geojson(new File(getClass().getResource("/ivandry/annotations_rectangles.json.geojson").getFile()));
+        new Geojson(new File(getClass().getResource("/ivandry/annotation.geojson").getFile()));
     var polygons = invert(geojson.polygons());
 
     var m2toDeg2 = 1E-11; // France
     var tombeMinArea = new SquareDegree(112 * m2toDeg2);
-    //var filteredByMinAreaPolygons = filterByMinArea(polygons, tombeMinArea);
+    var filteredByMinAreaPolygons = filterByMinArea(polygons, tombeMinArea);
     // assertEquals(2528, polygons.size());
     // assertEquals(2449, filteredByMinAreaPolygons.size());
 
-    var maxAllowedIoU = 0.2;
-    var noSuperpositionPolygons = noSuperposition(polygons, maxAllowedIoU);
+    var maxAllowedIoU = 0.6;
+    var noSuperpositionPolygons = noSuperposition(filteredByMinAreaPolygons, maxAllowedIoU);
     // assertEquals(2195, noSuperpositionPolygons.size());
 
-    var postprocessedPolygons = merge(noSuperpositionPolygons, 2000);
+    var postprocessedPolygons = noSuperpositionPolygons;
     var expectedURI =
         Paths.get(getClass().getResource("/geometry/tombes-postprocessed.geojson").toURI());
     var expected = Files.readString(expectedURI);
 
-    new Geojson(postprocessedPolygons).saveAsFile("annotation.geojson");
+    new Geojson(postprocessedPolygons).saveAsFile("annotation_postprocessed.geojson");
     //assertEquals(expected, new Geojson(postprocessedPolygons).stringValue());
+  }
+
+  @Test
+  void boundary_merge(){
+    var tiledPolygons = polygonProvider.getTiledPolygons(true);
+
+    var postProcessedPolygons = merge(tiledPolygons, 4000);
+
+    new Geojson(postProcessedPolygons).saveAsFile("annotation.geojson");
   }
 
   public static Set<LatLonPolygon> invert(Set<LatLonPolygon> noSuperpositionPolygons) {
@@ -76,28 +86,39 @@ public class TombeTest {
         .collect(toSet());
   }
 
-  private Set<LatLonPolygon> merge(Set<LatLonPolygon> polygons, int minArea) {
-    var origin = originTile(new ArrayList<>(polygons).getFirst().polygon().getCoordinate(), tilingConf.z());
-    var tiledPolygonsWithOffset = polygons.stream().map(latLon -> latLon.tiledPolygon(tilingConf)).toList();
+  private Set<LatLonPolygon> merge(Set<TiledPolygon> polygons, int minArea) {
+    var origin = new ArrayList<>(polygons).getFirst().originTile();
+    var tiledPolygonsWithOffset = polygons.stream().map(tile -> withOffset(tile, origin, tilingConf)).toList();
     var result = new HashSet<TiledPolygon>();
+    var alreadyUnified = new HashSet<Polygon>();
     for (var tp : tiledPolygonsWithOffset) {
-      var aroundPolygons = tiledPolygonsWithOffset.stream().filter(p -> smallAround(tp, p, minArea)).collect(toSet());
+      if (alreadyUnified.contains(tp.polygon())) {
+        continue;
+      }
+      var aroundPolygons = tiledPolygonsWithOffset.stream().filter(p -> smallestAround(tp, p, minArea)).collect(toSet());
       if (!aroundPolygons.isEmpty()) {
-        var smallest = aroundPolygons.stream()
+        var smallest = new ArrayList<>(aroundPolygons.stream()
                 .map(TiledPolygon::polygon)
-                .sorted(Comparator.comparing(Polygon::getArea))
-                .toList().getFirst();
-        var unified = new UnifiedRoute(Set.of(smallest, tp.polygon()), unionConf).unified();
+                .toList());
+        smallest.sort(Comparator.comparing(Polygon::getArea));
+        var toUnify = smallest.getFirst();
+        alreadyUnified.addAll(Set.of(toUnify, tp.polygon()));
+        var unified = new UnifiedRoute(Set.of(toUnify, tp.polygon()), unionConf).unified();
         for (var p : unified) {
           result.add(
-                  new TiledPolygon(p, tp.type(), tp.originTile(), tp.tilingConf()));
+                  new TiledPolygon((Polygon) p.getEnvelope(), tp.type(), tp.originTile(), tp.tilingConf()));
         }
+      }else {
+        result.add(tp);
       }
     }
-     return result.stream().map(tp -> tp.latLonPolygon(origin)).collect(toSet());
+    log.info("Already unified polygons: {}", alreadyUnified.size());
+    return result.stream().map(tp -> tp.latLonPolygon(origin)).collect(toSet());
   }
 
-  private boolean smallAround(TiledPolygon ref, TiledPolygon other, int minArea) {
+  private boolean smallestAround(TiledPolygon ref, TiledPolygon other, int minArea) {
+    var origin  = ref.originTile();
+    var tile = other.originTile();
     if (other.polygon().getArea() > minArea) {
       return false;
     }
@@ -105,16 +126,12 @@ public class TombeTest {
     if (ref.originTile().equals(other.originTile())) {
       return false;
     }
-
-    if (ref.polygon().distance(other.polygon()) > 10) {
-      return false;
-    }
-
-    var bufferedRef = ref.polygon().getBoundary().buffer(0.5);
-    var boundaryOther = other.polygon().getBoundary();
-    var intersection = bufferedRef.intersection(boundaryOther);
-
-    return intersection.getLength() >= 10;
+    int dx = Math.abs(tile.x() - origin.x());
+    int dy = Math.abs(tile.y() - origin.y());
+    var refBoundary = ref.polygon().getBoundary().buffer(10);
+    var otherBoundary = other.polygon().getBoundary().buffer(10);
+    var intersection = refBoundary.intersection(otherBoundary);
+    return (-1 <= dx && dy <= 1) && intersection.getLength() > 100;
   }
 
 

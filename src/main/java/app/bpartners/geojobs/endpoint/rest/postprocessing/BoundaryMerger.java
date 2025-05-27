@@ -50,6 +50,7 @@ public class BoundaryMerger implements Function<Set<LatLonPolygon>, Set<LatLonPo
     this.mergeConf = mergeConf;
   }
 
+
   @Override
   public Set<LatLonPolygon> apply(Set<LatLonPolygon> latLonPolygons) {
     var tiledPolygons =
@@ -109,7 +110,7 @@ public class BoundaryMerger implements Function<Set<LatLonPolygon>, Set<LatLonPo
             continue;
           }
           var next = group.get(j);
-          var nextWithOffset = withOffset(next, base.originTile(), next.originTile());
+          var nextWithOffset = withOffset(next, base.originTile(), tilingConf);
           if (shouldBeMerged(base, nextWithOffset)) {
             toUnify.add(nextWithOffset.polygon());
             toSkip.add(j);
@@ -130,7 +131,8 @@ public class BoundaryMerger implements Function<Set<LatLonPolygon>, Set<LatLonPo
     return newTiledPolygons.stream().flatMap(Set::stream).collect(toSet());
   }
 
-  private TiledPolygon withOffset(TiledPolygon p, IntXY originTile, IntXY currentTile) {
+  public static TiledPolygon withOffset(TiledPolygon p, IntXY originTile, TilingConf tilingConf) {
+    var currentTile = p.originTile();
     var xFactor = currentTile.x() - originTile.x();
     var yFactor = currentTile.y() - originTile.y();
     var imgSize = tilingConf.imgSize();
