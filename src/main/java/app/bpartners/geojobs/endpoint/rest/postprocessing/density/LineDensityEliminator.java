@@ -1,9 +1,9 @@
 package app.bpartners.geojobs.endpoint.rest.postprocessing.density;
 
 import static app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon.polygon;
-import static app.bpartners.geojobs.model.geometry.route.RouteType.pathway;
-import static app.bpartners.geojobs.model.geometry.route.RouteType.road;
-import static app.bpartners.geojobs.model.geometry.route.RouteType.routeTypeFrom;
+import static app.bpartners.geojobs.model.geometry.route.ObjectType.pathway;
+import static app.bpartners.geojobs.model.geometry.route.ObjectType.road;
+import static app.bpartners.geojobs.model.geometry.route.ObjectType.routeTypeFrom;
 
 import app.bpartners.geojobs.model.geometry.VGG;
 import java.util.function.Function;

@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.endpoint.rest.postprocessing.model;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
-import static app.bpartners.geojobs.model.geometry.route.RouteType.routeTypeFrom;
+import static app.bpartners.geojobs.model.geometry.route.ObjectType.routeTypeFrom;
 import static java.lang.Math.PI;
 import static java.lang.Math.cos;
 import static java.lang.Math.floor;

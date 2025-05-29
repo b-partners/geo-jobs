@@ -7,8 +7,8 @@ import app.bpartners.geojobs.endpoint.rest.postprocessing.PolygonPrettier;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.model.geometry.IntXY;
+import app.bpartners.geojobs.model.geometry.route.ObjectType;
 import app.bpartners.geojobs.model.geometry.route.Route;
-import app.bpartners.geojobs.model.geometry.route.RouteType;
 import app.bpartners.geojobs.model.geometry.route.RoutesContinuation;
 import app.bpartners.geojobs.model.geometry.route.RoutesContinuationConf;
 import java.util.ArrayList;
@@ -48,7 +48,7 @@ public final class TiledLinesContinuer extends LinesContinuer<TiledPolygon> {
         .map(
             pWithOffset ->
                 new TiledPolygon(
-                    pWithOffset, (RouteType) pWithOffset.getUserData(), originTile, tilingConf))
+                    pWithOffset, (ObjectType) pWithOffset.getUserData(), originTile, tilingConf))
         .collect(toSet());
   }
 

@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.model.geometry.route;
 
-import static app.bpartners.geojobs.model.geometry.route.RouteType.road;
+import static app.bpartners.geojobs.model.geometry.route.ObjectType.road;
 import static java.awt.Color.BLACK;
 import static java.lang.Math.PI;
 import static java.util.stream.Collectors.toSet;

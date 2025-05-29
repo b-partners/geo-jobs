@@ -125,8 +125,8 @@ public class BoundaryMerger
      * var polygonsByNeighbourhood = neighbourHoodHandler.aroundN(tiledPolygons);
      * List<Future<Set<LatLonPolygon>>> futures; try { futures = executorService.invokeAll(
      * polygonsByNeighbourhood.stream().map(neighbourhoodPolygons -> ((Callable<Set<LatLonPolygon>>)
-     * () -> merge(neighbourhoodPolygons, origin))).collect(toSet())); } catch
-     * (InterruptedException e) { throw new RuntimeException(e); } return
+     * () -> merge(neighbourhoodPolygons, origin))).collect(toSet())); } catch (InterruptedException
+     * e) { throw new RuntimeException(e); } return
      * futures.stream().flatMap(this::futureStream).collect(toSet());*
      */
     return merge(tiledPolygons, origin);

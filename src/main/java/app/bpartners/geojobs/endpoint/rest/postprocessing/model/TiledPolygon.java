@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.endpoint.rest.postprocessing.model;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
-import static app.bpartners.geojobs.model.geometry.route.RouteType.routeTypeFrom;
+import static app.bpartners.geojobs.model.geometry.route.ObjectType.routeTypeFrom;
 import static java.lang.Math.PI;
 import static java.lang.Math.atan;
 import static java.lang.Math.pow;
@@ -14,7 +14,7 @@ import app.bpartners.geojobs.endpoint.rest.model.DetectedTile;
 import app.bpartners.geojobs.model.geometry.IntXY;
 import app.bpartners.geojobs.model.geometry.TileCoordinatesFromFileName;
 import app.bpartners.geojobs.model.geometry.VGG;
-import app.bpartners.geojobs.model.geometry.route.RouteType;
+import app.bpartners.geojobs.model.geometry.route.ObjectType;
 import java.math.BigDecimal;
 import java.util.*;
 import javax.annotation.Nullable;
@@ -26,7 +26,7 @@ import org.locationtech.jts.geom.Polygon;
 @Slf4j
 // projected: in meter, such as CRS_CODE = "EPSG:3857"
 public record TiledPolygon(
-    Polygon polygon, RouteType type, IntXY originTile, TilingConf tilingConf) {
+    Polygon polygon, ObjectType type, IntXY originTile, TilingConf tilingConf) {
 
   public LatLonPolygon latLonPolygon() {
     var exteriorLatLonCoordinates = getExteriorLatLonCoordinates(polygon, null);
@@ -47,7 +47,7 @@ public record TiledPolygon(
       holes[i] = geometryFactory.createLinearRing(latLonHolesCoordinates[i]);
     }
     var p = geometryFactory.createPolygon(exteriorRing, holes);
-    var userData = new HashMap<String, RouteType>();
+    var userData = new HashMap<String, ObjectType>();
     userData.put("label", type);
     p.setUserData(userData);
     return new LatLonPolygon(p);
