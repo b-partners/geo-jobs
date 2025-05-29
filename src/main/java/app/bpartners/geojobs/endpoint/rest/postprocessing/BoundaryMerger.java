@@ -9,8 +9,6 @@ import app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.model.geometry.IntXY;
-import app.bpartners.geojobs.model.geometry.LineInt;
-import app.bpartners.geojobs.model.geometry.TwoLineInt;
 import app.bpartners.geojobs.model.geometry.route.PrettyConf;
 import app.bpartners.geojobs.model.geometry.route.UnifiedRoute;
 import app.bpartners.geojobs.model.geometry.route.UnionConf;
@@ -115,7 +113,7 @@ public class BoundaryMerger
     var refBoundary = ref.polygon().getBoundary().buffer(10);
     var otherBoundary = other.polygon().getBoundary().buffer(10);
     var intersection = refBoundary.intersection(otherBoundary);
-    return (-1 <= dx && dy <= 1) && intersection.getLength() > 100;
+    return (1 <= dx && dy <= 1) && intersection.getLength() > 100;
   }
 
   private Set<LatLonPolygon> parallelMerge(Set<TiledPolygon> tiledPolygons) {
@@ -145,6 +143,7 @@ public class BoundaryMerger
         polygons.stream().map(tile -> withOffset(tile, origin, tilingConf)).toList();
     var result = new HashSet<TiledPolygon>();
     var alreadyUnified = new HashSet<Polygon>();
+    var progress = 0;
     for (var tp : tiledPolygonsWithOffset) {
       if (alreadyUnified.contains(tp.polygon())) {
         continue;
@@ -163,89 +162,38 @@ public class BoundaryMerger
       } else {
         result.add(tp);
       }
+      progress++;
+      log.info("progression: {}/{}", progress, tiledPolygonsWithOffset.size());
     }
     return result.stream().map(tp -> tp.latLonPolygon(origin)).collect(toSet());
   }
 
   private boolean shouldBeMerged(TiledPolygon base, TiledPolygon other) {
     try {
+      var baseTile = base.originTile();
+      var otherTile = other.originTile();
+      if (baseTile.equals(otherTile)) {
+        return false;
+      }
+      int dx = Math.abs(otherTile.x() - baseTile.x());
+      int dy = Math.abs(otherTile.y() - baseTile.y());
+      if (1 >= dx && dy >= 1) {
+        return false;
+      }
+
       var basePolygon = base.polygon();
       var otherPolygon = other.polygon();
-      return base.originTile().compareTo(other.originTile()) != 0
-          && (basePolygon.distance(otherPolygon) < 10
-              || isCollinearEnough(basePolygon, otherPolygon));
+      if (basePolygon.distance(otherPolygon) < 10) {
+        return false;
+      }
+
+      var refBoundary = basePolygon.getBoundary().buffer(10);
+      var otherBoundary = otherPolygon.getBoundary().buffer(10);
+      var intersection = refBoundary.intersection(otherBoundary);
+      return intersection.getLength() > 200;
     } catch (Exception ignored) {
       return false;
     }
-  }
-
-  private TwoLineInt findTwoCloseLineInt(Set<LineInt> base, Set<LineInt> other) {
-    TwoLineInt closest = new TwoLineInt(null, null);
-    var distance = Double.MAX_VALUE;
-    for (var baseLine : base) {
-      for (var otherLine : other) {
-        double dx1 = baseLine.b().x() - baseLine.a().x();
-        double dy1 = baseLine.b().y() - baseLine.a().y();
-        double dx2 = otherLine.b().x() - otherLine.a().x();
-        double dy2 = otherLine.b().y() - otherLine.a().y();
-        var currentDistance =
-            Math.sqrt(Math.pow(Math.abs(dx1 - dx2), 2) + Math.pow(Math.abs(dy1 - dy2), 2));
-        if (currentDistance < distance) {
-          closest = new TwoLineInt(baseLine, otherLine);
-          distance = currentDistance;
-        }
-      }
-    }
-    return closest;
-  }
-
-  public boolean isCollinearEnough(Polygon base, Polygon other) {
-    Coordinate[] baseCoords = base.getExteriorRing().getCoordinates();
-    Coordinate[] otherCoords = other.getExteriorRing().getCoordinates();
-
-    // Find all vertical edges from both polygons
-    Set<LineInt> baseVerticalEdges = findLinearEdges(baseCoords);
-    Set<LineInt> otherVerticalEdges = findLinearEdges(otherCoords);
-
-    if (baseVerticalEdges.isEmpty() || otherVerticalEdges.isEmpty()) {
-      return false;
-    }
-
-    var closestLines = findTwoCloseLineInt(baseVerticalEdges, otherVerticalEdges);
-    var baseLine = closestLines.first();
-    var otherLine = closestLines.second();
-    return areVectorsCollinear(baseLine, otherLine);
-  }
-
-  public Set<LineInt> findLinearEdges(Coordinate[] coords) {
-    Set<LineInt> linearEdges = new HashSet<>();
-    var minXDistance = mergeConf.minXDistance();
-    var minYDistance = mergeConf.minYDistance();
-
-    for (int i = 0; i < coords.length - 1; i++) {
-      Coordinate c1 = coords[i];
-      Coordinate c2 = coords[i + 1];
-
-      // Check if segment is vertical (x coordinates are nearly equal)
-      if (Math.abs(c1.x - c2.x) < minXDistance && Math.abs(c1.y - c2.y) > minYDistance) {
-        linearEdges.add(new LineInt(new IntXY(c1), new IntXY(c2)));
-      }
-      if (Math.abs(c1.y - c2.y) < minXDistance && Math.abs(c1.x - c2.x) > minYDistance) {
-        linearEdges.add(new LineInt(new IntXY(c1), new IntXY(c2)));
-      }
-    }
-    return linearEdges;
-  }
-
-  public boolean areVectorsCollinear(LineInt baseLine, LineInt otherLine) {
-    var tolerance = mergeConf.directionTolerance();
-    double dx1 = baseLine.b().x() - baseLine.a().x();
-    double dy1 = baseLine.b().y() - baseLine.a().y();
-    double dx2 = otherLine.b().x() - otherLine.a().x();
-    double dy2 = otherLine.b().y() - otherLine.a().y();
-
-    // Check if vectors are parallel (cross product near zero)
-    return Math.abs(dx1 * dy2 - dy1 * dx2) <= tolerance;
   }
 
   @Override
