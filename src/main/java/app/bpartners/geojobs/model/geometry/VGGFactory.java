@@ -37,10 +37,12 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
       var metadata = (HashMap) p.getUserData();
       var key = metadata.get("filename").toString();
       var label = metadata.get("label").toString();
-      var confidence = Double.parseDouble(metadata.get("confidence").toString());
+      var confidence = metadata.get("confidence");
+      var confidenceAsDouble =
+          confidence == null ? null : Double.parseDouble(confidence.toString());
       Map<String, VGG.Annotation.Region> newRegions = new HashMap<>();
       newRegions.put(
-          String.valueOf(Instant.now().getNano()), toVGGRegion(label, confidence, null, p));
+          String.valueOf(Instant.now().getNano()), toVGGRegion(label, confidenceAsDouble, null, p));
       if (vgg.containsKey(key)) {
         var annotation = vgg.get(key);
         newRegions.putAll(annotation.getRegions());
@@ -51,6 +53,26 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
       vgg.putIfAbsent(key, annotation);
     }
     return vgg;
+  }
+
+  public VGG from(Set<TiledPolygon> polygons) {
+    var polygonsWithMetadata =
+        polygons.stream()
+            .map(
+                p -> {
+                  var metadata = new HashMap<>();
+                  metadata.put("filename", filename(p.originTile()));
+                  metadata.put("label", p.type().name());
+                  var polygon = p.polygon();
+                  polygon.setUserData(metadata);
+                  return polygon;
+                })
+            .collect(Collectors.toSet());
+    return convert(polygonsWithMetadata);
+  }
+
+  private static String filename(IntXY originTile) {
+    return String.format("%s_%s_%s.jpg", 20, originTile.x(), originTile.y());
   }
 
   public Map<Feature, VGG> from(

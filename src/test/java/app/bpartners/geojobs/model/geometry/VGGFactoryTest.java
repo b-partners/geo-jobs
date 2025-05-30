@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.model.geometry;
 
 import static app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.MULTI_POLYGON;
+import static app.bpartners.geojobs.endpoint.rest.postprocessing.tombe.TombeTest.invert;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -12,6 +13,8 @@ import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.Point;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.endpoint.rest.model.TileInfoSize;
+import app.bpartners.geojobs.endpoint.rest.postprocessing.GeoJsonLoader;
+import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.model.DetectedTile;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectType;
@@ -19,10 +22,13 @@ import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import java.io.File;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
@@ -31,6 +37,7 @@ import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
 
 class VGGFactoryTest {
+  private final GeoJsonLoader geoJsonLoader = new GeoJsonLoader();
   private final PolygonProvider polygonProvider =
       new PolygonProvider("/geometry/vgg/pathway.json", null, new IntXY(1024, 1024));
   private final FeatureMapper featureMapper = new FeatureMapper(new GeometryConverter(null));
@@ -138,6 +145,20 @@ class VGGFactoryTest {
 
     assertEquals(5, actual.size());
     assertEquals(2, actual.get(expectedFilename).getRegions().size());
+  }
+
+  @Test
+  void geojson_to_vgg() throws IOException {
+    var geojsonFile = new File(getClass().getResource("/ivandry/bati.geojson").getFile());
+
+    var polygons = geoJsonLoader.apply(geojsonFile);
+    var inverted =
+        invert(polygons).stream()
+            .map(latLonPolygon -> latLonPolygon.tiledPolygon(new TilingConf(20, 1024)))
+            .collect(Collectors.toSet());
+    var actual = subject.from(inverted);
+
+    // Files.write(new File("bati.json").toPath(), actual.getBytes());
   }
 
   @Test
