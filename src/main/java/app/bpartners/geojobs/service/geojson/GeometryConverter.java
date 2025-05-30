@@ -85,10 +85,7 @@ public class GeometryConverter {
       app.bpartners.geojobs.endpoint.rest.model.MultiPolygon featureMultiPolygon) {
     ObjectMapper objectMapper = new ObjectMapper();
     var geoJsonFeature = objectMapper.writeValueAsString(featureMultiPolygon);
-    ObjectMapper mapper = new ObjectMapper();
-    var node = mapper.readTree(geoJsonFeature);
-    String geometryJson = node.get("geometry").toString();
-    Geometry geometry = readGeometryFromString(geometryJson);
+    Geometry geometry = readGeometryFromString(geoJsonFeature);
 
     Coordinate centroid = geometry.getCentroid().getCoordinate();
     return List.of(BigDecimal.valueOf(centroid.x), BigDecimal.valueOf(centroid.y));
