@@ -114,7 +114,7 @@ public class BoundaryMerger
     var refBoundary = ref.polygon().getBoundary().buffer(10);
     var otherBoundary = other.polygon().getBoundary().buffer(10);
     var intersection = refBoundary.intersection(otherBoundary);
-    return (1 >= dx && dy <= 1) && intersection.getLength() > 100;
+    return (2 > dx && dy < 2) && intersection.getLength() > 100;
   }
 
   private Set<LatLonPolygon> parallelMerge(Set<TiledPolygon> tiledPolygons) {
