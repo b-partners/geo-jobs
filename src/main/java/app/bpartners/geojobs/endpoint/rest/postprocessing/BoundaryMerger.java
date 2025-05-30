@@ -18,6 +18,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
@@ -113,7 +114,7 @@ public class BoundaryMerger
     var refBoundary = ref.polygon().getBoundary().buffer(10);
     var otherBoundary = other.polygon().getBoundary().buffer(10);
     var intersection = refBoundary.intersection(otherBoundary);
-    return (1 <= dx && dy <= 1) && intersection.getLength() > 100;
+    return (1 >= dx && dy <= 1) && intersection.getLength() > 100;
   }
 
   private Set<LatLonPolygon> parallelMerge(Set<TiledPolygon> tiledPolygons) {
@@ -141,57 +142,65 @@ public class BoundaryMerger
   private Set<LatLonPolygon> merge(Set<TiledPolygon> polygons, IntXY origin) {
     var tiledPolygonsWithOffset =
         polygons.stream().map(tile -> withOffset(tile, origin, tilingConf)).toList();
+
     var result = new HashSet<TiledPolygon>();
     var alreadyUnified = new HashSet<Polygon>();
     var progress = 0;
+
     for (var tp : tiledPolygonsWithOffset) {
-      if (alreadyUnified.contains(tp.polygon())) {
+      if (isAlreadyProcessed(tp.polygon(), alreadyUnified)) {
         continue;
       }
+
       var aroundPolygons =
-          tiledPolygonsWithOffset.stream().filter(p -> shouldBeMerged(tp, p)).collect(toSet());
-      if (!aroundPolygons.isEmpty()) {
-        var toUnify = aroundPolygons.stream().map(TiledPolygon::polygon).collect(toSet());
-        toUnify.add(tp.polygon());
-        alreadyUnified.addAll(toUnify);
-        var prettyPolygons = prettier.apply(toUnify);
-        var unified = new UnifiedRoute(prettyPolygons, unionConf).unified();
-        for (var p : unified) {
-          result.add(new TiledPolygon(p, tp.type(), tp.originTile(), tp.tilingConf()));
-        }
-      } else {
-        result.add(tp);
+          tiledPolygonsWithOffset.stream()
+              .filter(p -> !p.equals(tp) && shouldBeMerged(tp, p))
+              .collect(Collectors.toSet());
+
+      var toUnify = aroundPolygons.stream().map(TiledPolygon::polygon).collect(Collectors.toSet());
+      toUnify.add(tp.polygon());
+
+      alreadyUnified.addAll(toUnify);
+
+      var prettyPolygons = prettier.apply(toUnify);
+
+      var unified = new UnifiedRoute(prettyPolygons, unionConf).unified();
+
+      for (var p : unified) {
+        result.add(new TiledPolygon(p, tp.type(), tp.originTile(), tp.tilingConf()));
       }
-      progress++;
-      log.info("progression: {}/{}", progress, tiledPolygonsWithOffset.size());
+
+      log.info("progression: {}/{}", ++progress, tiledPolygonsWithOffset.size());
     }
-    return result.stream().map(tp -> tp.latLonPolygon(origin)).collect(toSet());
+
+    return result.stream().map(tp -> tp.latLonPolygon(origin)).collect(Collectors.toSet());
+  }
+
+  private boolean isAlreadyProcessed(Polygon candidate, Set<Polygon> alreadyProcessed) {
+    return alreadyProcessed.stream().anyMatch(p -> p.equalsTopo(candidate));
   }
 
   private boolean shouldBeMerged(TiledPolygon base, TiledPolygon other) {
     try {
       var baseTile = base.originTile();
       var otherTile = other.originTile();
-      if (baseTile.equals(otherTile)) {
-        return false;
-      }
+
+      if (baseTile.equals(otherTile)) return false;
+
       int dx = Math.abs(otherTile.x() - baseTile.x());
       int dy = Math.abs(otherTile.y() - baseTile.y());
-      if (1 >= dx && dy >= 1) {
-        return false;
-      }
+      if (dx > 1 || dy > 1) return false;
 
       var basePolygon = base.polygon();
       var otherPolygon = other.polygon();
-      if (basePolygon.distance(otherPolygon) < 10) {
-        return false;
-      }
 
-      var refBoundary = basePolygon.getBoundary().buffer(10);
-      var otherBoundary = otherPolygon.getBoundary().buffer(10);
+      if (basePolygon.distance(otherPolygon) > 50) return false;
+
+      var refBoundary = basePolygon.getBoundary().buffer(50);
+      var otherBoundary = otherPolygon.getBoundary().buffer(50);
       var intersection = refBoundary.intersection(otherBoundary);
       return intersection.getLength() > 200;
-    } catch (Exception ignored) {
+    } catch (Exception e) {
       return false;
     }
   }

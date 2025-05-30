@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.model.geometry;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -67,6 +68,7 @@ public class VGG extends HashMap<String, VGG.Annotation> {
       @Data
       @Builder
       @NoArgsConstructor
+      @JsonIgnoreProperties(ignoreUnknown = true)
       public static class RegionAttribute {
         private String label;
         private Double confidence;
