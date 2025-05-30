@@ -64,16 +64,34 @@ public class GeometryConverter {
 
   public MultiPolygon retrieveNearestRoofMultiPolygon(
       app.bpartners.geojobs.endpoint.rest.model.Point point) {
-    if (buildingApi == null) {
+    if (buildingApi == null || point == null) {
       return null;
     }
-    var longitude = point.getCoordinates().getFirst();
-    var latitude = point.getCoordinates().getLast();
+    return retrieveNearestRoofMultiPolygon(point.getCoordinates());
+  }
+
+  public MultiPolygon retrieveNearestRoofMultiPolygon(List<BigDecimal> coordinates) {
+    var longitude = coordinates.getFirst();
+    var latitude = coordinates.getLast();
     var nearestBuilding =
         buildingApi.getNearestBuildingAt(
             longitude.doubleValue(), latitude.doubleValue(), DEFAULT_POLYGON_SIZE_IN_METERS);
     var multiPolygonCoordinates = nearestBuilding.shape().getMultiPolygonCoordinates();
     return apply(multiPolygonCoordinates);
+  }
+
+  @SneakyThrows
+  public List<BigDecimal> centroidFromMultiPolygon(
+      app.bpartners.geojobs.endpoint.rest.model.MultiPolygon featureMultiPolygon) {
+    ObjectMapper objectMapper = new ObjectMapper();
+    var geoJsonFeature = objectMapper.writeValueAsString(featureMultiPolygon);
+    ObjectMapper mapper = new ObjectMapper();
+    var node = mapper.readTree(geoJsonFeature);
+    String geometryJson = node.get("geometry").toString();
+    Geometry geometry = readGeometryFromString(geometryJson);
+
+    Coordinate centroid = geometry.getCentroid().getCoordinate();
+    return List.of(BigDecimal.valueOf(centroid.x), BigDecimal.valueOf(centroid.y));
   }
 
   public MultiPolygon apply(
@@ -246,5 +264,39 @@ public class GeometryConverter {
   public Geometry readGeometryFromString(String geoJsonString) {
     GeometryJSON geometryJSON = new GeometryJSON(15);
     return geometryJSON.read(new StringReader(geoJsonString));
+  }
+
+  private double[] tileXYToLonLatBounds(int x, int y, int z) {
+    double n = Math.pow(2, z);
+
+    double lonLeft = x / n * 360.0 - 180.0;
+    double lonRight = (x + 1) / n * 360.0 - 180.0;
+
+    double latTop = Math.toDegrees(Math.atan(Math.sinh(Math.PI * (1 - 2 * y / n))));
+    double latBottom = Math.toDegrees(Math.atan(Math.sinh(Math.PI * (1 - 2 * (y + 1) / n))));
+
+    return new double[] {lonLeft, latBottom, lonRight, latTop}; // [west, south, east, north]
+  }
+
+  public MultiPolygon getMultiPolygonFromTile(int x, int y, int zoom) {
+    double[] bbox = tileXYToLonLatBounds(x, y, zoom);
+    double west = bbox[0];
+    double south = bbox[1];
+    double east = bbox[2];
+    double north = bbox[3];
+
+    GeometryFactory gf = new GeometryFactory();
+    Coordinate[] coords =
+        new Coordinate[] {
+          new Coordinate(west, south),
+          new Coordinate(west, north),
+          new Coordinate(east, north),
+          new Coordinate(east, south),
+          new Coordinate(west, south) // fermeture du polygone
+        };
+
+    LinearRing shell = gf.createLinearRing(coords);
+    Polygon polygon = gf.createPolygon(shell, null);
+    return gf.createMultiPolygon(new Polygon[] {polygon});
   }
 }
