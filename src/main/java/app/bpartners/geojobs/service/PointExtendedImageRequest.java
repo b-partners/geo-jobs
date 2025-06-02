@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service;
 
+import static app.bpartners.geojobs.endpoint.rest.model.Feature.TypeEnum.FEATURE;
 import static app.bpartners.geojobs.endpoint.rest.model.Point.TypeEnum.POINT;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.HOUSES_0;
@@ -10,6 +11,7 @@ import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.tiling.TileFinder;
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiFunction;
@@ -57,7 +59,10 @@ public class PointExtendedImageRequest implements BiFunction<Feature, String, Fe
       eventProducer.accept(
           List.of(new TileExtendedImageRequested(longitude, latitude, defaultZoomLevel, layer)));
     }
-    return feature;
+    return new Feature()
+        .type(FEATURE)
+        .properties(new HashMap<>())
+        .geometry(new FeatureGeometry(point));
   }
 
   private Point retrieveFromProvidedGeoJsonCentroidPoint(
