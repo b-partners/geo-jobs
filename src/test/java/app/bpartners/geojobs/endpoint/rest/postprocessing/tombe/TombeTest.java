@@ -21,7 +21,7 @@ import org.locationtech.jts.geom.Polygon;
 
 @Slf4j
 public class TombeTest {
-  PolygonProvider polygonProvider = new PolygonProvider("/geometry/vgg/dijon.json");
+  PolygonProvider polygonProvider = new PolygonProvider("/geometry/vgg/line-pathway.json");
   private final TilingConf tilingConf = new TilingConf(20, 1024);
   private final UnionConf unionConf = new UnionConf(5);
   private final MergeConf mergeConf = new MergeConf(1, 1, 5);
@@ -31,9 +31,14 @@ public class TombeTest {
 
   @Test
   void run() {
-    var tiledPolygons = polygonProvider.getTiledPolygons(false);
+    var tiledPolygons = polygonProvider.getTiledPolygons(true);
 
-    var merged = boundaryMerger.apply(tiledPolygons, TOMBE);
+    /*
+     * Tombe : 4_000
+     * Pathway : 20_000
+     * Pool: 4_000
+     */
+    var merged = boundaryMerger.apply(tiledPolygons, TOMBE, 4000.0);
 
     var m2toDeg2 = 1E-11; // France
     var minArea = new SquareDegree(112 * m2toDeg2);

@@ -17,16 +17,17 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.function.TriFunction;
+import org.locationtech.jts.algorithm.MinimumDiameter;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Polygon;
 
 @Slf4j
 public class BoundaryMerger
-    implements BiFunction<Set<TiledPolygon>, DetectableType, Set<LatLonPolygon>> {
+    implements TriFunction<Set<TiledPolygon>, DetectableType, Double, Set<LatLonPolygon>> {
   private final TilingConf tilingConf;
   private final UnionConf unionConf;
   private final NeighbourHoodHandler neighbourHoodHandler;
@@ -68,7 +69,7 @@ public class BoundaryMerger
     return new TiledPolygon(polygon, p.type(), p.originTile(), p.tilingConf());
   }
 
-  private Set<LatLonPolygon> merge(Set<TiledPolygon> polygons) {
+  private Set<LatLonPolygon> merge(Set<TiledPolygon> polygons, double areaThreshold) {
     var origin = new ArrayList<>(polygons).getFirst().originTile();
     var tiledPolygonsWithOffset =
         polygons.stream().map(tile -> withOffset(tile, origin, tilingConf)).toList();
@@ -79,7 +80,9 @@ public class BoundaryMerger
         continue;
       }
       var aroundPolygons =
-          tiledPolygonsWithOffset.stream().filter(p -> smallestAround(tp, p)).collect(toSet());
+          tiledPolygonsWithOffset.stream()
+              .filter(p -> smallestAround(tp, p, areaThreshold))
+              .collect(toSet());
       if (!aroundPolygons.isEmpty()) {
         var smallest = new ArrayList<>(aroundPolygons.stream().map(TiledPolygon::polygon).toList());
         smallest.sort(Comparator.comparing(Polygon::getArea));
@@ -87,9 +90,11 @@ public class BoundaryMerger
         alreadyUnified.addAll(Set.of(toUnify, tp.polygon()));
         var unified = new UnifiedRoute(Set.of(toUnify, tp.polygon()), unionConf).unified();
         for (var p : unified) {
+          var convexHull = p.convexHull();
+          var md = new MinimumDiameter(convexHull);
           result.add(
               new TiledPolygon(
-                  (Polygon) p.getEnvelope(), tp.type(), tp.originTile(), tp.tilingConf()));
+                  (Polygon) md.getMinimumRectangle(), tp.type(), tp.originTile(), tp.tilingConf()));
         }
       } else {
         result.add(tp);
@@ -99,10 +104,11 @@ public class BoundaryMerger
     return result.stream().map(tp -> tp.latLonPolygon(origin)).collect(toSet());
   }
 
-  private boolean smallestAround(TiledPolygon ref, TiledPolygon other) {
+  private boolean smallestAround(TiledPolygon ref, TiledPolygon other, double areaThreshold) {
     var origin = ref.originTile();
     var tile = other.originTile();
-    if (other.polygon().getArea() > 4000) {
+
+    if (other.polygon().getArea() > areaThreshold) {
       return false;
     }
 
@@ -206,9 +212,10 @@ public class BoundaryMerger
   }
 
   @Override
-  public Set<LatLonPolygon> apply(Set<TiledPolygon> tiledPolygons, DetectableType detectableType) {
+  public Set<LatLonPolygon> apply(
+      Set<TiledPolygon> tiledPolygons, DetectableType detectableType, Double areaThreshold) {
     return switch (detectableType) {
-      case TOMBE, PASSAGE_PIETON, PISCINE -> merge(tiledPolygons);
+      case TOMBE, PASSAGE_PIETON, PISCINE -> merge(tiledPolygons, areaThreshold);
       default -> parallelMerge(tiledPolygons);
     };
   }

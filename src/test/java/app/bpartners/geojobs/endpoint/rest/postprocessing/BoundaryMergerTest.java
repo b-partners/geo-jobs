@@ -32,7 +32,7 @@ class BoundaryMergerTest {
         inverted.stream()
             .map(latLon -> latLon.tiledPolygon(tilingConf))
             .collect(Collectors.toSet());
-    var unified = boundaryMerger.apply(tiledPolygons, BATI_BETON);
+    var unified = boundaryMerger.apply(tiledPolygons, BATI_BETON, 0.0);
 
     // new Geojson(unified).saveAsFile("bati_dijon.geojson");
   }
@@ -41,7 +41,7 @@ class BoundaryMergerTest {
   void run_from_vgg() {
     var tiledPolygons = polygonProvider.getTiledPolygons(true);
 
-    var unified = boundaryMerger.apply(tiledPolygons, BATI_BETON);
+    var unified = boundaryMerger.apply(tiledPolygons, BATI_BETON, 0.0);
 
     new Geojson(unified).saveAsFile("bati_map_92.geojson");
   }
