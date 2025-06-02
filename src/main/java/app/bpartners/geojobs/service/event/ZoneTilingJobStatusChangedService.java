@@ -1,7 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toDomainFeature;
-import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.HOUSES_0;
 import static java.util.UUID.randomUUID;
 
@@ -9,8 +8,8 @@ import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobCreated;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobFailed;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobStatusChanged;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
-import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
@@ -128,28 +127,19 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
                             return new HashMap<>(Map.of(pointDomain, multiPolygonFromPointDomain));
                           }
 
-                          case Polygon polygon -> {
+                          case Polygon ignored -> {
                             properties.put("centroid", pointDomain);
-                            try {
-                              return new HashMap<>(
-                                  Map.of(
-                                      new ObjectMapper().writeValueAsString(pointDomain),
-                                      toDomainFeature(feature)));
-                            } catch (JsonProcessingException e) {
-                              throw new ApiException(SERVER_EXCEPTION, e);
-                            }
+                            var delimitationPolygonFeature = toDomainFeature(feature);
+                            delimitationPolygonFeature.setProperties(properties);
+                            return new HashMap<>(Map.of(pointDomain, delimitationPolygonFeature));
                           }
 
-                          case MultiPolygon multiPolygon -> {
+                          case MultiPolygon ignored -> {
                             properties.put("centroid", pointDomain);
-                            try {
-                              return new HashMap<>(
-                                  Map.of(
-                                      new ObjectMapper().writeValueAsString(pointDomain),
-                                      toDomainFeature(feature)));
-                            } catch (JsonProcessingException e) {
-                              throw new ApiException(SERVER_EXCEPTION, e);
-                            }
+                            var delimitationMultiPolygonFeature = toDomainFeature(feature);
+                            delimitationMultiPolygonFeature.setProperties(properties);
+                            return new HashMap<>(
+                                Map.of(pointDomain, delimitationMultiPolygonFeature));
                           }
                           default ->
                               throw new IllegalStateException(
@@ -172,6 +162,10 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
                           (v1, v2) -> v1));
           var detectionWithMultiPolygonFromPoint =
               savedDetection.toBuilder()
+                  .providedGeoJsonZone(
+                      detection.getProvidedGeoJsonZone().stream()
+                          .map(FeatureMapper::toDomainFeature)
+                          .toList())
                   .pointDelimitation(new HashMap<>(collectedPointWithItsMultiPolygon))
                   .build();
           detectionRepository.save(detectionWithMultiPolygonFromPoint);
