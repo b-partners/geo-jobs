@@ -81,12 +81,20 @@ public class GeometryConverter {
   }
 
   @SneakyThrows
-  public List<BigDecimal> centroidFromMultiPolygon(
-      app.bpartners.geojobs.endpoint.rest.model.MultiPolygon featureMultiPolygon) {
+  public List<BigDecimal> centroidFromMultiPolygon(Object featureInstance) {
     ObjectMapper objectMapper = new ObjectMapper();
-    var geoJsonFeature = objectMapper.writeValueAsString(featureMultiPolygon);
-    Geometry geometry = readGeometryFromString(geoJsonFeature);
-
+    Geometry geometry;
+    switch (featureInstance) {
+      case app.bpartners.geojobs.endpoint.rest.model.MultiPolygon multiPolygon ->
+          geometry = readGeometryFromString(objectMapper.writeValueAsString(multiPolygon));
+      case app.bpartners.geojobs.endpoint.rest.model.Polygon polygon ->
+          geometry = readGeometryFromString(objectMapper.writeValueAsString(polygon));
+      case app.bpartners.geojobs.endpoint.rest.model.Point point ->
+          geometry = readGeometryFromString(objectMapper.writeValueAsString(point));
+      default ->
+          throw new UnsupportedOperationException(
+              "Unsupported feature instance: " + featureInstance);
+    }
     Coordinate centroid = geometry.getCentroid().getCoordinate();
     return List.of(BigDecimal.valueOf(centroid.x), BigDecimal.valueOf(centroid.y));
   }

@@ -8,29 +8,30 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.rest.model.*;
-import app.bpartners.geojobs.endpoint.rest.validator.FeatureTypeChecker;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.model.detection.Detection;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.services.s3.model.S3Object;
 
+@Slf4j
 class DetectionFeaturesResultImageRetrieverTest {
   private static final String PRE_SIGNED_S3_URL = "http://presigned-s3-url.com";
-  FeatureTypeChecker featureTypeChecker = new FeatureTypeChecker();
   BucketComponent bucketComponentMock = mock();
   CustomBucketComponent customBucketComponentMock = mock();
   DetectionFeaturesResultImageRetriever subject =
       new DetectionFeaturesResultImageRetriever(
-          bucketComponentMock, featureTypeChecker, customBucketComponentMock);
+          bucketComponentMock, customBucketComponentMock, new ObjectMapper());
 
   @BeforeEach
   void setUp() {
@@ -41,12 +42,13 @@ class DetectionFeaturesResultImageRetrieverTest {
 
   @SneakyThrows
   @Test
-  void retrieve_feature_extended_original_image_from_bucket() {
+  void retrieve_feature_point_extended_original_image_from_bucket() {
     var detectionMock = mock(Detection.class);
     var latitude = BigDecimal.valueOf(46.651930);
     var longitude = BigDecimal.valueOf(-0.249317);
     var layer = "cite:PCRS";
     var features = List.of(somePoint(longitude, latitude, null));
+    when(detectionMock.hasToitureModelName()).thenReturn(true);
     when(detectionMock.isSucceeded()).thenReturn(true);
     when(detectionMock.getProvidedGeoJsonZone()).thenReturn(features);
     when(detectionMock.getDetectableObjectModel())
@@ -63,6 +65,43 @@ class DetectionFeaturesResultImageRetrieverTest {
 
     var expectedFeatures = expectedFeaturesContainingImageUrl(longitude, latitude);
     assertEquals(expectedFeatures.toString(), actual.toString());
+  }
+
+  @SneakyThrows
+  @Test
+  void retrieve_feature_multiPolygon_extended_original_image_from_bucket() {
+    var detectionMock = mock(Detection.class);
+    var latitude = BigDecimal.valueOf(46.651930);
+    var longitude = BigDecimal.valueOf(-0.249317);
+    var layer = "cite:PCRS";
+    var properties = propertiesWithCentroid(longitude, latitude);
+    var features =
+        List.of(
+            new Feature().properties(properties).geometry(new FeatureGeometry(new MultiPolygon())));
+    when(detectionMock.hasToitureModelName()).thenReturn(true);
+    when(detectionMock.isSucceeded()).thenReturn(true);
+    when(detectionMock.getProvidedGeoJsonZone()).thenReturn(features);
+    when(detectionMock.getGeoServerProperties())
+        .thenReturn(
+            new GeoServerProperties().geoServerParameter(new GeoServerParameter().layers(layer)));
+    when(bucketComponentMock.presign(
+            layer + "/extended_original_" + longitude + "_" + latitude + ".jpg",
+            Duration.ofHours(1L)))
+        .thenReturn(new URI(PRE_SIGNED_S3_URL).toURL());
+
+    var actual = subject.apply(detectionMock);
+
+    var expectedFeatures = expectedFeaturesContainingImageUrl(features.getFirst());
+    log.info(expectedFeatures.toString());
+    assertEquals(expectedFeatures.toString(), actual.toString());
+  }
+
+  private HashMap<String, Object> propertiesWithCentroid(
+      BigDecimal longitude, BigDecimal latitude) {
+    var centroidPoint = somePoint(longitude, latitude, null);
+    var properties = new HashMap<String, Object>();
+    properties.put("centroid", centroidPoint);
+    return properties;
   }
 
   @SneakyThrows
@@ -148,6 +187,12 @@ class DetectionFeaturesResultImageRetrieverTest {
     var properties = new HashMap<String, Object>();
     properties.put("original_image_url", PRE_SIGNED_S3_URL);
     return List.of(somePoint(longitude, latitude, properties));
+  }
+
+  private List<Feature> expectedFeaturesContainingImageUrl(Feature featureMultiPolygon) {
+    var properties = featureMultiPolygon.getProperties();
+    properties.put("original_image_url", PRE_SIGNED_S3_URL);
+    return List.of(featureMultiPolygon);
   }
 
   private static Feature somePoint(

@@ -21,6 +21,7 @@ import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.JobFinishedMailer;
+import app.bpartners.geojobs.service.PointExtendedImageRequest;
 import app.bpartners.geojobs.service.StatusChangedHandler;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
@@ -53,7 +54,8 @@ class ZoneTilingJobStatusChangedServiceTest {
           eventProducerMock,
           objectConfigurationRepositoryMock,
           tilingTaskRepositoryMock,
-          geometryConverterMock);
+          geometryConverterMock,
+          new PointExtendedImageRequest(eventProducerMock, geometryConverterMock));
 
   @BeforeEach
   void setUp() {
