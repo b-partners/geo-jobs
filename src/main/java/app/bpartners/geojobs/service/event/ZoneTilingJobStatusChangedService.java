@@ -129,18 +129,11 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
                           }
 
                           case Polygon ignored -> {
-                            var delimitationPolygonFeature =
-                                toDomainFeature(feature, new HashMap<>());
-                            properties.put("centroid", pointDomain);
-                            return new HashMap<>(Map.of(pointDomain, delimitationPolygonFeature));
+                            return getPolygonFeatureDelimitationMap(feature, properties, pointDomain);
                           }
 
                           case MultiPolygon ignored -> {
-                            var delimitationMultiPolygonFeature =
-                                toDomainFeature(feature, new HashMap<>());
-                            properties.put("centroid", pointDomain);
-                            return new HashMap<>(
-                                Map.of(pointDomain, delimitationMultiPolygonFeature));
+                            return getPolygonFeatureDelimitationMap(feature, properties, pointDomain);
                           }
                           default ->
                               throw new IllegalStateException(
@@ -174,6 +167,22 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
       }
       tilingFinishedMailer.accept(ztj);
       log.info("Finished, mail sent, ztj=" + ztj);
+    }
+
+    private HashMap<app.bpartners.geojobs.repository.model.Feature,
+            app.bpartners.geojobs.repository.model.Feature> getPolygonFeatureDelimitationMap(
+                    Feature feature,
+                    Map<String, Object> properties,
+                    app.bpartners.geojobs.repository.model.Feature pointDomain) {
+      var delimitationFeature = toDomainFeature(feature, new HashMap<>());
+      try {
+          properties.put("centroid", new ObjectMapper()
+                  .findAndRegisterModules()
+                  .writeValueAsString(pointDomain));
+      } catch (JsonProcessingException e) {
+          throw new RuntimeException(e);
+      }
+      return new HashMap<>(Map.of(pointDomain, delimitationFeature));
     }
   }
 
