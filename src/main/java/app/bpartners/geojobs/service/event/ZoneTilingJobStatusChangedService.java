@@ -114,7 +114,7 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
                             properties.get("zoom") != null
                                 ? (Integer) properties.get("zoom")
                                 : HOUSES_0.getZoomLevel();
-                        var pointDomain = geometryConverter.toFeature(zoom, properties, restPoint);
+                        var pointDomain = geometryConverter.toFeature(zoom, new HashMap<>(), restPoint);
                         var geometryType = feature.getGeometry().getActualInstance();
                         switch (geometryType) {
                           case Point point -> {
