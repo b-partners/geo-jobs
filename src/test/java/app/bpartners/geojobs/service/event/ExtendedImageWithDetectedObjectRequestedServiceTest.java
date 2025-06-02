@@ -58,7 +58,7 @@ class ExtendedImageWithDetectedObjectRequestedServiceTest {
   }
 
   @Test
-  void detection_does_not_have_only_geo_json_points() {
+  void detection_does_not_have_point_delimitation() {
     var layers = "cite:PCRS";
     var detectionId = randomUUID().toString();
     var detectionMock = mock(Detection.class);
@@ -66,7 +66,7 @@ class ExtendedImageWithDetectedObjectRequestedServiceTest {
     when(detectionMock.getGeoServerProperties())
         .thenReturn(
             new GeoServerProperties().geoServerParameter(new GeoServerParameter().layers(layers)));
-    when(detectionMock.hasOnlyPointsGeoJson()).thenReturn(false);
+    when(detectionMock.getPointDelimitation()).thenReturn(null);
     when(detectionRepositoryMock.findById(detectionId)).thenReturn(Optional.of(detectionMock));
 
     assertDoesNotThrow(

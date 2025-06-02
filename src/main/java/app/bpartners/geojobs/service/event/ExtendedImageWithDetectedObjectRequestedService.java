@@ -1,13 +1,12 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
 import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.HOUSES_0;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionVGGRequested;
 import app.bpartners.geojobs.endpoint.event.model.ExtendedImageWithDetectedObjectRequested;
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
-import app.bpartners.geojobs.endpoint.rest.model.Point;
-import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
+import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.DetectedObjectTypeWithPolygon;
@@ -24,6 +23,8 @@ import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.tile19.ExtenderApi;
 import app.bpartners.geojobs.service.tiling.TileFinder;
 import app.bpartners.geojobs.service.tiling.TiledPixelPolygonFilter;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.math.BigDecimal;
 import java.util.*;
@@ -56,22 +57,6 @@ public class ExtendedImageWithDetectedObjectRequestedService
     var layer = detection.getGeoServerProperties().getGeoServerParameter().getLayers();
     var providedFeatures = detection.getProvidedGeoJsonZone();
 
-    log.info("Detection to be compute image with detected obj : {}", detection);
-
-    if (!detection.hasOnlyPointsGeoJson()) {
-      log.info(
-          "Only detection with points geojson are supported for now, otherwise detection has"
-              + " geoTypes {}",
-          providedFeatures.stream()
-              .map(
-                  feature ->
-                      Objects.requireNonNull(feature.getGeometry())
-                          .getActualInstance()
-                          .getClass()
-                          .getSimpleName())
-              .toList());
-      return;
-    }
     var pointDelimitation = detection.getPointDelimitation();
     if (pointDelimitation == null || pointDelimitation.isEmpty()) {
       log.info("Only detection with point delimitations are supported for now");
@@ -212,7 +197,14 @@ public class ExtendedImageWithDetectedObjectRequestedService
     return providedFeatures.stream()
         .map(
             feature -> {
-              var point = feature.getGeometry().getPoint();
+              var geometry = feature.getGeometry().getActualInstance();
+              Point point;
+              switch (geometry) {
+                case Point p -> point = p;
+                case Polygon ignored -> point = getCentroidRestPoint(feature);
+                case MultiPolygon ignored -> point = getCentroidRestPoint(feature);
+                default -> throw new IllegalStateException("Unexpected value: " + geometry);
+              }
               var longitude = point.getCoordinates().getFirst();
               var latitude = point.getCoordinates().getLast();
               return new PointWithSurroundingTiles(
@@ -220,6 +212,22 @@ public class ExtendedImageWithDetectedObjectRequestedService
                   tileFinder.getSurroundingTiles(longitude, latitude, HOUSES_0.getZoomLevel()));
             })
         .toList();
+  }
+
+  private Point getCentroidRestPoint(Feature feature) {
+    Point point;
+    try {
+      var domainCentroidPoint =
+          new ObjectMapper()
+              .readValue(
+                  feature.getProperties().get("centroid").toString(),
+                  app.bpartners.geojobs.repository.model.Feature.class);
+      var restFeaturePoint = toRestFeature(domainCentroidPoint);
+      point = restFeaturePoint.getGeometry().getPoint();
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException(e);
+    }
+    return point;
   }
 
   private Map<Feature, List<File>> computeDrawnImages(
