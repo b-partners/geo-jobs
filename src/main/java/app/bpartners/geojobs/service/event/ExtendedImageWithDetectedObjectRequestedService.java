@@ -112,40 +112,45 @@ public class ExtendedImageWithDetectedObjectRequestedService
         List.of(new DetectionVGGRequested(detectionId, filteredTiledPixelPolygons)));
 
     var pointWithObjectDrawnImages = computeDrawnImages(filteredTiledPixelPolygonByMask, layer);
-    pointWithObjectDrawnImages
-            .forEach((feature, value) -> {
-                var geometryType = feature.getGeometry().getActualInstance();
-                Point pointFeature;
-                switch (geometryType) {
-                    case Point point -> pointFeature = point;
-                    case Polygon ignored -> pointFeature = getPointFromPolygonFeature(feature);
-                    case MultiPolygon ignored -> pointFeature = getPointFromPolygonFeature(feature);
-                    default -> throw new IllegalStateException("Unexpected geometry type: " + geometryType);
-                }
-                var longitude = pointFeature.getCoordinates().getFirst();
-                var latitude = pointFeature.getCoordinates().getLast();
-                var extendedDrawnImageBase64 = extenderApi.apply(value);
-                var filename = layer + "/extended_drawn_" + longitude + "_" + latitude;
+    pointWithObjectDrawnImages.forEach(
+        (feature, value) -> {
+          var geometryType = feature.getGeometry().getActualInstance();
+          Point pointFeature;
+          switch (geometryType) {
+            case Point point -> pointFeature = point;
+            case Polygon ignored -> pointFeature = getPointFromPolygonFeature(feature);
+            case MultiPolygon ignored -> pointFeature = getPointFromPolygonFeature(feature);
+            default -> throw new IllegalStateException("Unexpected geometry type: " + geometryType);
+          }
+          var longitude = pointFeature.getCoordinates().getFirst();
+          var latitude = pointFeature.getCoordinates().getLast();
+          var extendedDrawnImageBase64 = extenderApi.apply(value);
+          var filename = layer + "/extended_drawn_" + longitude + "_" + latitude;
 
-                var extendedDrawnFile = fileWriter.base64ToFile(extendedDrawnImageBase64, filename);
-                var bucketKey = filename + ".jpg";
-                bucketComponent.upload(extendedDrawnFile, bucketKey);
-            });
+          var extendedDrawnFile = fileWriter.base64ToFile(extendedDrawnImageBase64, filename);
+          var bucketKey = filename + ".jpg";
+          bucketComponent.upload(extendedDrawnFile, bucketKey);
+        });
   }
 
-    private Point getPointFromPolygonFeature(Feature feature) {
-        Point pointFeature;
-        try {
-            pointFeature = toRestFeature(
-                    new ObjectMapper().readValue(feature.getProperties().get("centroid").toString(),
-                            app.bpartners.geojobs.repository.model.Feature.class)).getGeometry().getPoint();
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-        return pointFeature;
+  private Point getPointFromPolygonFeature(Feature feature) {
+    Point pointFeature;
+    try {
+      pointFeature =
+          toRestFeature(
+                  new ObjectMapper()
+                      .readValue(
+                          feature.getProperties().get("centroid").toString(),
+                          app.bpartners.geojobs.repository.model.Feature.class))
+              .getGeometry()
+              .getPoint();
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException(e);
     }
+    return pointFeature;
+  }
 
-    private List<TiledPixelPolygon> getTiledPixelPolygons(
+  private List<TiledPixelPolygon> getTiledPixelPolygons(
       List<PointWithDetectedObjects> pointWithDetectedObjects) {
     return pointWithDetectedObjects.stream()
         .map(
