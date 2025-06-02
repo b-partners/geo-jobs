@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.endpoint.rest.model.Point.TypeEnum.POINT;
+import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.HOUSES_0;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
@@ -75,8 +76,18 @@ public class PointExtendedImageRequest implements BiFunction<Feature, String, Fe
                     geometryConverter.getMultiPolygonFromTile(
                         tileCoordinate.getX(), tileCoordinate.getY(), tileCoordinate.getZ()))
             .reduce(
-                (multiPolygon1, multiPolygon2) ->
-                    (org.locationtech.jts.geom.MultiPolygon) multiPolygon1.union(multiPolygon2));
+                (multiPolygon1, multiPolygon2) -> {
+                  var unifiedGeometry = multiPolygon1.union(multiPolygon2);
+                  if (unifiedGeometry
+                      instanceof org.locationtech.jts.geom.MultiPolygon multiPolygon) {
+                    return multiPolygon;
+                  } else if (unifiedGeometry instanceof org.locationtech.jts.geom.Polygon polygon) {
+                    return geometryFactory.createMultiPolygon(
+                        new org.locationtech.jts.geom.Polygon[] {polygon});
+                  }
+                  throw new UnsupportedOperationException(
+                      "Unsupported unified geometry : " + unifiedGeometry);
+                });
     if (optionalMultiPolygonTiles.isPresent()
         && optionalMultiPolygonTiles.get().contains(geometryMultiPolygonProvided)) {
       return centroidPoint;
