@@ -2,6 +2,7 @@ package app.bpartners.geojobs.service;
 
 import static java.time.Instant.now;
 
+import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.endpoint.rest.model.Point;
 import app.bpartners.geojobs.endpoint.rest.model.Polygon;
 import app.bpartners.geojobs.job.model.Status;
@@ -66,7 +67,7 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
             coordinates.add(longitude);
             coordinates.add(latitude);
           }
-          case MultiPoint multiPolygon -> {
+          case MultiPolygon multiPolygon -> {
             var centroidCoordinates = geometryConverter.centroidFromGeometry(multiPolygon);
             var longitude = centroidCoordinates.getFirst();
             var latitude = centroidCoordinates.getLast();
