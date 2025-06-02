@@ -9,10 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import lombok.SneakyThrows;
 import org.geotools.geojson.geom.GeometryJSON;
 import org.locationtech.jts.geom.*;
@@ -46,10 +43,7 @@ public class GeometryConverter {
   }
 
   public Feature toFeature(
-      String featureId,
-      Integer zoom,
-      HashMap<String, Object> properties,
-      MultiPolygon multiPolygon) {
+      String featureId, Integer zoom, Map<String, Object> properties, MultiPolygon multiPolygon) {
     return Feature.builder()
         .id(featureId)
         .zoom(zoom)
@@ -58,7 +52,7 @@ public class GeometryConverter {
                 .geometryType(MULTI_POLYGON)
                 .actualInstanceStringValue(writeMultiPolygonAsString(multiPolygon))
                 .build())
-        .properties(properties)
+        .properties(new HashMap<>(properties))
         .build();
   }
 

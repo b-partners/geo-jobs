@@ -55,11 +55,16 @@ public class FeatureMapper {
   public static app.bpartners.geojobs.repository.model.Feature toDomainFeature(Feature rest) {
     HashMap<String, Object> properties =
         rest.getProperties() == null ? new HashMap<>() : new HashMap<>(rest.getProperties());
+    return toDomainFeature(rest, properties);
+  }
+
+  public static app.bpartners.geojobs.repository.model.Feature toDomainFeature(
+      Feature rest, Map<String, Object> properties) {
     return app.bpartners.geojobs.repository.model.Feature.builder()
         .id(properties.get("id") == null ? null : properties.get("id").toString())
         .zoom(properties.get("zoom") == null ? null : (Integer) properties.get("zoom"))
         .geometry(toDomainFeatureGeometry(rest.getGeometry()))
-        .properties(properties)
+        .properties(new HashMap<>(properties))
         .build();
   }
 

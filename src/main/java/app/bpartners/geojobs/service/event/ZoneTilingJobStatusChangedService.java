@@ -109,7 +109,7 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
                         var properties =
                             feature.getProperties() == null
                                 ? new HashMap<String, Object>()
-                                : new HashMap<>(feature.getProperties());
+                                : feature.getProperties();
                         var zoom =
                             properties.get("zoom") != null
                                 ? (Integer) properties.get("zoom")
@@ -129,16 +129,16 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
                           }
 
                           case Polygon ignored -> {
+                            var delimitationPolygonFeature =
+                                toDomainFeature(feature, new HashMap<>());
                             properties.put("centroid", pointDomain);
-                            var delimitationPolygonFeature = toDomainFeature(feature);
-                            feature.setProperties(properties);
                             return new HashMap<>(Map.of(pointDomain, delimitationPolygonFeature));
                           }
 
                           case MultiPolygon ignored -> {
+                            var delimitationMultiPolygonFeature =
+                                toDomainFeature(feature, new HashMap<>());
                             properties.put("centroid", pointDomain);
-                            var delimitationMultiPolygonFeature = toDomainFeature(feature);
-                            feature.setProperties(properties);
                             return new HashMap<>(
                                 Map.of(pointDomain, delimitationMultiPolygonFeature));
                           }
