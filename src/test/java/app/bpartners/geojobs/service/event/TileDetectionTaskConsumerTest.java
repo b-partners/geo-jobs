@@ -97,6 +97,7 @@ class TileDetectionTaskConsumerTest {
             .build();
 
     when(featureGeometryMock.getMultiPolygon()).thenReturn(featureMultiPolygonMock);
+    when(featureGeometryMock.getActualInstance()).thenReturn(featureMultiPolygonMock);
     when(featureMock.getGeometry()).thenReturn(featureGeometryMock);
     when(detectionMock.hasToitureModelName()).thenReturn(true);
     when(detectionMock.getProvidedGeoJsonZone()).thenReturn(List.of(featureMock));
