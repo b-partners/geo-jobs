@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 public class PointExtendedImageRequest implements BiFunction<Feature, String, Feature> {
   private final EventProducer eventProducer;
   private final GeometryConverter geometryConverter;
-  private TileFinder tileFinder;
+  private final TileFinder tileFinder;
 
   @Override
   public Feature apply(Feature feature, String layer) {
