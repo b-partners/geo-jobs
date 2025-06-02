@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service;
 
+import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
 import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_EXTENSION;
 
@@ -11,6 +12,9 @@ import app.bpartners.geojobs.model.geometry.VGG;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import java.util.*;
 import java.util.function.BiFunction;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -42,8 +46,20 @@ public class DetectionVGGUpdate implements BiFunction<VGG, Detection, Detection>
                 feature -> {
                   var optionalVgg =
                       vgg.entrySet().stream()
-                          .filter(entry -> entry.getKey().equals(feature))
-                          .findAny();
+                          .filter(entry -> {
+                              try {
+                                // case for point
+                                if (feature.equals(entry.getKey())) return true;
+                                //case for polygon or multiPolygon
+                                if(entry.getKey().getProperties() == null) return false;
+                                if (entry.getKey().getProperties().get("centroid") == null) return false;
+                                var pointFromCentroidFeature = toRestFeature(new ObjectMapper()
+                                        .readValue(entry.getKey().getProperties().get("centroid").toString(), app.bpartners.geojobs.repository.model.Feature.class));
+                                return feature.equals(pointFromCentroidFeature);
+                              } catch (JsonProcessingException e) {
+                                  throw new RuntimeException(e);
+                              }
+                          }).findAny();
 
                   if (optionalVgg.isPresent()) {
                     var longitude = feature.getGeometry().getPoint().getCoordinates().getFirst();
