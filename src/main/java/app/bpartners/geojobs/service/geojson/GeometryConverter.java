@@ -81,7 +81,7 @@ public class GeometryConverter {
   }
 
   @SneakyThrows
-  public List<BigDecimal> centroidFromMultiPolygon(Object featureInstance) {
+  public List<BigDecimal> centroidFromGeometry(Object featureInstance) {
     ObjectMapper objectMapper = new ObjectMapper();
     Geometry geometry;
     switch (featureInstance) {

@@ -36,7 +36,7 @@ public class PointExtendedImageRequest implements BiFunction<Feature, String, Fe
             geometryConverter.apply(List.of(providedPolygon.getCoordinates()));
         point =
             retrieveFromProvidedGeoJsonCentroidPoint(
-                geometryConverter.centroidFromMultiPolygon(providedPolygon),
+                geometryConverter.centroidFromGeometry(providedPolygon),
                 geometryMultiPolygonProvided);
       }
 
@@ -45,7 +45,7 @@ public class PointExtendedImageRequest implements BiFunction<Feature, String, Fe
             geometryConverter.apply(providedMultiPolygon.getCoordinates());
         point =
             retrieveFromProvidedGeoJsonCentroidPoint(
-                geometryConverter.centroidFromMultiPolygon(providedMultiPolygon),
+                geometryConverter.centroidFromGeometry(providedMultiPolygon),
                 geometryMultiPolygonProvided);
       }
       default -> throw new IllegalStateException("Unexpected value: " + geometry);

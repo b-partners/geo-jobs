@@ -102,7 +102,7 @@ class TileDetectionTaskConsumerTest {
     when(detectionMock.getProvidedGeoJsonZone()).thenReturn(List.of(featureMock));
     when(detectionRepositoryMock.findByZdjId(zoneDetectionJobId))
         .thenReturn(Optional.of(detectionMock));
-    when(geometryConverterMock.centroidFromMultiPolygon(featureMultiPolygonMock))
+    when(geometryConverterMock.centroidFromGeometry(featureMultiPolygonMock))
         .thenReturn(centroidCoordinates);
     when(geometryConverterMock.retrieveNearestRoofMultiPolygon(centroidCoordinates))
         .thenReturn(roofMultiPolygonMock);
