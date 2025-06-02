@@ -52,7 +52,6 @@ Globals:
         README_WEBHOOK_SECRET: !Sub '{{resolve:ssm:/geo-jobs/${Env}/readme/webhook/secret}}'
         BPARTNERS_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/bpartners/api/url}}'
         GEOSERVER_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/geoserver/api/url}}'
-
     
         
 
@@ -61,38 +60,12 @@ Parameters:
     Type: String
 
 Resources:
-  FrontalServerlessHttpApi:
-    StageName: $default
-    Type: AWS::Serverless::HttpApi
+  FrontalServerlessRestApi:
+    Type: AWS::Serverless::Api
     Properties:
-      CorsConfiguration:
-        AllowMethods:
-          - GET
-          - POST
-          - PUT
-          - DELETE
-          - OPTIONS
-        AllowHeaders:
-          - "*"
-        AllowOrigins:
-          - "*"
-
-  HttpApiIntegration:
-    Type: AWS::ApiGatewayV2::Integration
-    Properties:
-      ApiId: !Ref FrontalServerlessHttpApi
-      IntegrationType: AWS_PROXY
-      IntegrationUri: !Sub "${FrontalFunction.Arn}:live"
-      PayloadFormatVersion: "1.0"
-      IntegrationMethod: ANY
-      TimeoutInMillis: 30000
-
-  DefaultRoute:
-    Type: AWS::ApiGatewayV2::Route
-    Properties:
-      ApiId: !Ref FrontalServerlessHttpApi
-      RouteKey: $default
-      Target: !Sub "integrations/${HttpApiIntegration}"
+      StageName: Prod
+      BinaryMediaTypes:
+        - "*~1*"
 
   FrontalFunction:
     Type: AWS::Serverless::Function
@@ -104,12 +77,12 @@ Resources:
       
       Events:
         ApiCall:
-          Type: HttpApi
+          Type: Api
           Properties:
             Path: /{proxy+}
             Method: ANY
-            ApiId:
-              Ref: FrontalServerlessHttpApi
+            RestApiId:
+              Ref: FrontalServerlessRestApi
 
   WorkerFunction1:
     Type: AWS::Serverless::Function
@@ -125,7 +98,7 @@ Resources:
           Properties:
             Queue: !Sub '{{resolve:ssm:/geo-jobs/${Env}/1/sqs/mailbox-queue-arn}}'
             BatchSize: 1
-      ReservedConcurrentExecutions: 50
+      ReservedConcurrentExecutions: 2
 
   WorkerFunction2:
     Type: AWS::Serverless::Function
@@ -141,7 +114,7 @@ Resources:
           Properties:
             Queue: !Sub '{{resolve:ssm:/geo-jobs/${Env}/2/sqs/mailbox-queue-arn}}'
             BatchSize: 1
-      ReservedConcurrentExecutions: 50
+      ReservedConcurrentExecutions: 2
 
   ApplicationResourceGroup:
     Type: AWS::ResourceGroups::Group
@@ -161,7 +134,7 @@ Resources:
     Properties:
       Name: !Join [ '', [ /geo-jobs/, !Ref Env, /api/url ] ]
       Type: String
-      Value: !GetAtt FrontalServerlessHttpApi.ApiEndpoint
+      Value: !Sub "https://${FrontalServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
 
 Outputs:
   ApiUrl:
