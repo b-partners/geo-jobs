@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.getCentroidRestPointFromPolygon;
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
 import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.HOUSES_0;
 
@@ -222,8 +223,8 @@ public class ExtendedImageWithDetectedObjectRequestedService
               Point point;
               switch (geometry) {
                 case Point p -> point = p;
-                case Polygon ignored -> point = getCentroidRestPoint(feature);
-                case MultiPolygon ignored -> point = getCentroidRestPoint(feature);
+                case Polygon ignored -> point = getCentroidRestPointFromPolygon(feature);
+                case MultiPolygon ignored -> point = getCentroidRestPointFromPolygon(feature);
                 default -> throw new IllegalStateException("Unexpected value: " + geometry);
               }
               var longitude = point.getCoordinates().getFirst();
@@ -233,22 +234,6 @@ public class ExtendedImageWithDetectedObjectRequestedService
                   tileFinder.getSurroundingTiles(longitude, latitude, HOUSES_0.getZoomLevel()));
             })
         .toList();
-  }
-
-  private Point getCentroidRestPoint(Feature feature) {
-    Point point;
-    try {
-      var domainCentroidPoint =
-          new ObjectMapper()
-              .readValue(
-                  feature.getProperties().get("centroid").toString(),
-                  app.bpartners.geojobs.repository.model.Feature.class);
-      var restFeaturePoint = toRestFeature(domainCentroidPoint);
-      point = restFeaturePoint.getGeometry().getPoint();
-    } catch (JsonProcessingException e) {
-      throw new RuntimeException(e);
-    }
-    return point;
   }
 
   private Map<Feature, List<File>> computeDrawnImages(

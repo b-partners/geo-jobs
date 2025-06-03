@@ -11,6 +11,8 @@ import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.util.*;
@@ -77,6 +79,22 @@ public class FeatureMapper {
         .type(FEATURE)
         .geometry(restFeatureGeometry)
         .properties(domain.getProperties());
+  }
+
+  public static Point getCentroidRestPointFromPolygon(Feature feature) {
+    Point point;
+    try {
+      var domainCentroidPoint =
+          new ObjectMapper()
+              .readValue(
+                  feature.getProperties().get("centroid").toString(),
+                  app.bpartners.geojobs.repository.model.Feature.class);
+      var restFeaturePoint = toRestFeature(domainCentroidPoint);
+      point = restFeaturePoint.getGeometry().getPoint();
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException(e);
+    }
+    return point;
   }
 
   @SneakyThrows
