@@ -573,6 +573,7 @@ public class ZoneService {
                 restFeature.getProperties(),
                 jtsMultipolygonFrame));
       }
+      return providedGeoJsonZone;
     }
     throw new NotImplementedException(
         "Only one geojson multipolygon supported for now, otherwise actual provided size is "
