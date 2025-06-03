@@ -23,7 +23,6 @@ import app.bpartners.geojobs.service.DetectedImageDraw;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.tile19.ExtenderApi;
 import app.bpartners.geojobs.service.tiling.TileFinder;
-import app.bpartners.geojobs.service.tiling.TiledPixelPolygonFilter;
 import java.io.File;
 import java.math.BigDecimal;
 import java.util.*;
@@ -45,7 +44,6 @@ public class ExtendedImageWithDetectedObjectRequestedService
   private final ExtenderApi extenderApi;
   private final FileWriter fileWriter;
   private final DetectionRepository detectionRepository;
-  private final TiledPixelPolygonFilter tiledPixelPolygonFilter;
   private final GeometryConverter geometryConverter;
   private final EventProducer eventProducer;
   private final CentroidGeometryRetriever centroidGeometryRetriever;
@@ -57,62 +55,21 @@ public class ExtendedImageWithDetectedObjectRequestedService
     var layer = detection.getGeoServerProperties().getGeoServerParameter().getLayers();
     var providedFeatures = detection.getProvidedGeoJsonZone();
 
-    var pointDelimitation = detection.getPointDelimitation();
-    if (pointDelimitation == null || pointDelimitation.isEmpty()) {
-      log.info("Only detection with point delimitations are supported for now");
-      return;
-    }
-
-    var pointWithSurroundingTiles = getPointWithSurroundingTiles(providedFeatures);
+    var featureWithSurroundingTiles = getFeatureWithSurroundingTiles(providedFeatures);
     var machineDetectedTiles = detectedTileRepository.findAllByZdjJobId(detection.getZdjId());
-    var pointWithDetectedObjects =
-        getPointWithDetectedObjects(pointWithSurroundingTiles, machineDetectedTiles);
-    var tiledPixelPolygons = getTiledPixelPolygons(pointWithDetectedObjects);
-    var masks =
-        pointDelimitation.entrySet().stream()
-            .map(
-                entry ->
-                    geometryConverter.apply(
-                        entry.getValue().getGeometry().getMultiPolygon().getCoordinates()))
-            .toList();
-    var filteredTiledPixelPolygonByMask =
-        masks.stream()
-            .map(mask -> tiledPixelPolygonFilter.filterPolygonsInMask(tiledPixelPolygons, mask))
-            .flatMap(List::stream)
-            .collect(Collectors.groupingBy(TiledPixelPolygon::point));
-    List<TiledPixelPolygonSerializable> filteredTiledPixelPolygons =
-        filteredTiledPixelPolygonByMask.entrySet().stream()
-            .map(
-                entry -> {
-                  var featurePoint = entry.getKey();
-                  return entry.getValue().stream()
-                      .map(
-                          tiledPixelPolygon -> {
-                            var polygonObjectTypeSerializable =
-                                tiledPixelPolygon.polygons().stream()
-                                    .map(
-                                        polygonObjectType ->
-                                            new PolygonObjectTypeSerializable(
-                                                geometryConverter.writeGeometryAsString(
-                                                    polygonObjectType.polygon()),
-                                                polygonObjectType.objectType()))
-                                    .toList();
-                            return new TiledPixelPolygonSerializable(
-                                featurePoint,
-                                polygonObjectTypeSerializable,
-                                tiledPixelPolygon.tileX(),
-                                tiledPixelPolygon.tileY(),
-                                tiledPixelPolygon.zoom());
-                          })
-                      .toList();
-                })
-            .flatMap(List::stream)
-            .collect(Collectors.toList());
-    eventProducer.accept(
-        List.of(new DetectionVGGRequested(detectionId, filteredTiledPixelPolygons)));
+    var featureWithDetectedObjects =
+        getFeatureWithDetectedObjects(featureWithSurroundingTiles, machineDetectedTiles);
+    var tiledPixelPolygons = getTiledPixelPolygons(featureWithDetectedObjects);
+    var tiledPixelPolygonGroupedByFeature =
+        tiledPixelPolygons.stream().collect(Collectors.groupingBy(TiledPixelPolygon::point));
 
-    var pointWithObjectDrawnImages = computeDrawnImages(filteredTiledPixelPolygonByMask, layer);
-    pointWithObjectDrawnImages.forEach(
+    eventProducer.accept(
+        List.of(
+            new DetectionVGGRequested(
+                detectionId, serializeTiledPixelPolygon(tiledPixelPolygonGroupedByFeature))));
+
+    var featureWithObjectDrawnImages = computeDrawnImages(tiledPixelPolygonGroupedByFeature, layer);
+    featureWithObjectDrawnImages.forEach(
         (feature, value) -> {
           var pointFeature = getPointOrCentroidAttribute(feature);
           var longitude = pointFeature.getCoordinates().getFirst();
@@ -126,13 +83,44 @@ public class ExtendedImageWithDetectedObjectRequestedService
         });
   }
 
-  private List<TiledPixelPolygon> getTiledPixelPolygons(
-      List<PointWithDetectedObjects> pointWithDetectedObjects) {
-    return pointWithDetectedObjects.stream()
+  private List<TiledPixelPolygonSerializable> serializeTiledPixelPolygon(
+      Map<Feature, List<TiledPixelPolygon>> collectedTiledPixelPolygonByFeature) {
+    return collectedTiledPixelPolygonByFeature.entrySet().stream()
         .map(
-            pointWithDetectedObject -> {
-              var point = pointWithDetectedObject.pointWithSurroundingTiles().point();
-              var detectedObjects = pointWithDetectedObject.detectedObjects();
+            entry -> {
+              var feature = entry.getKey();
+              return entry.getValue().stream()
+                  .map(
+                      tiledPixelPolygon -> {
+                        var polygonObjectTypeSerializable =
+                            tiledPixelPolygon.polygons().stream()
+                                .map(
+                                    polygonObjectType ->
+                                        new PolygonObjectTypeSerializable(
+                                            geometryConverter.writeGeometryAsString(
+                                                polygonObjectType.polygon()),
+                                            polygonObjectType.objectType()))
+                                .toList();
+                        return new TiledPixelPolygonSerializable(
+                            feature,
+                            polygonObjectTypeSerializable,
+                            tiledPixelPolygon.tileX(),
+                            tiledPixelPolygon.tileY(),
+                            tiledPixelPolygon.zoom());
+                      })
+                  .toList();
+            })
+        .flatMap(List::stream)
+        .collect(Collectors.toList());
+  }
+
+  private List<TiledPixelPolygon> getTiledPixelPolygons(
+      List<FeatureWithDetectedObjects> featureWithDetectedObjects) {
+    return featureWithDetectedObjects.stream()
+        .map(
+            featureWithDetectedObject -> {
+              var feature = featureWithDetectedObject.featureWithSurroundingTiles().feature();
+              var detectedObjects = featureWithDetectedObject.detectedObjects();
               return detectedObjects.entrySet().stream()
                   .map(
                       entry -> {
@@ -156,7 +144,7 @@ public class ExtendedImageWithDetectedObjectRequestedService
                                       return new PolygonObjectType(polygon, detectableObjectType);
                                     })
                                 .toList();
-                        return new TiledPixelPolygon(point, pixelPolygonObjectType, x, y, z);
+                        return new TiledPixelPolygon(feature, pixelPolygonObjectType, x, y, z);
                       })
                   .toList();
             })
@@ -164,14 +152,14 @@ public class ExtendedImageWithDetectedObjectRequestedService
         .toList();
   }
 
-  private List<PointWithDetectedObjects> getPointWithDetectedObjects(
-      List<PointWithSurroundingTiles> pointWithSurroundingTiles,
+  private List<FeatureWithDetectedObjects> getFeatureWithDetectedObjects(
+      List<FeatureWithSurroundingTiles> featureWithSurroundingTiles,
       List<MachineDetectedTile> detectedTileList) {
-    return pointWithSurroundingTiles.stream()
+    return featureWithSurroundingTiles.stream()
         .map(
-            pointWithTiles -> {
+            featureWithTile -> {
               var listObject = new HashMap<TileCoordinates, List<DetectedObject>>();
-              pointWithTiles
+              featureWithTile
                   .tileCoordinates()
                   .forEach(
                       tileCoordinate -> {
@@ -184,12 +172,12 @@ public class ExtendedImageWithDetectedObjectRequestedService
                               }
                             });
                       });
-              return new PointWithDetectedObjects(pointWithTiles, listObject);
+              return new FeatureWithDetectedObjects(featureWithTile, listObject);
             })
         .toList();
   }
 
-  private List<PointWithSurroundingTiles> getPointWithSurroundingTiles(
+  private List<FeatureWithSurroundingTiles> getFeatureWithSurroundingTiles(
       List<Feature> providedFeatures) {
     return providedFeatures.stream()
         .map(
@@ -198,7 +186,7 @@ public class ExtendedImageWithDetectedObjectRequestedService
               var point = centroidGeometryRetriever.apply(geometry);
               var longitude = point.getCoordinates().getFirst();
               var latitude = point.getCoordinates().getLast();
-              return new PointWithSurroundingTiles(
+              return new FeatureWithSurroundingTiles(
                   feature,
                   tileFinder.getSurroundingTiles(longitude, latitude, HOUSES_0.getZoomLevel()));
             })
@@ -206,11 +194,11 @@ public class ExtendedImageWithDetectedObjectRequestedService
   }
 
   private Map<Feature, List<File>> computeDrawnImages(
-      Map<Feature, List<TiledPixelPolygon>> pointWithDetectedObjects, String layer) {
+      Map<Feature, List<TiledPixelPolygon>> featureWithDetectedObjects, String layer) {
     Map<Feature, List<File>> drawnImageFiles = new HashMap<>();
 
-    pointWithDetectedObjects.forEach(
-        (featurePoint, tiledPixelPolygons) -> {
+    featureWithDetectedObjects.forEach(
+        (feature, tiledPixelPolygons) -> {
           List<File> imageDrawn = new ArrayList<>();
           tiledPixelPolygons.sort(
               Comparator.comparing(TiledPixelPolygon::zoom)
@@ -246,15 +234,16 @@ public class ExtendedImageWithDetectedObjectRequestedService
 
                 imageDrawn.add(detectedImageDraw.apply(originalImage, objectTypeWithPolygons));
               });
-          drawnImageFiles.put(featurePoint, imageDrawn);
+          drawnImageFiles.put(feature, imageDrawn);
         });
 
     return drawnImageFiles;
   }
 
-  private record PointWithSurroundingTiles(Feature point, List<TileCoordinates> tileCoordinates) {}
+  private record FeatureWithSurroundingTiles(
+      Feature feature, List<TileCoordinates> tileCoordinates) {}
 
-  private record PointWithDetectedObjects(
-      PointWithSurroundingTiles pointWithSurroundingTiles,
+  private record FeatureWithDetectedObjects(
+      FeatureWithSurroundingTiles featureWithSurroundingTiles,
       HashMap<TileCoordinates, List<DetectedObject>> detectedObjects) {}
 }
