@@ -74,6 +74,7 @@ import java.util.Set;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.MultiPolygon;
 import org.mockito.ArgumentCaptor;
 
 class ZoneServiceTest {
@@ -221,6 +222,9 @@ class ZoneServiceTest {
     setUpAuthorityRoleProcessingMock(detectionId, null, ROLE_ADMIN);
     when(communityUsedSurfaceServiceMock.persistDetectionWithSurfaceUsage(any(), any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+    var jtsMultiPolygonFrameMock = mock(MultiPolygon.class);
+    when(jtsMultiPolygonFrameMock.contains(any())).thenReturn(true);
+    when(geometryConverterMock.apply(any(), any())).thenReturn(jtsMultiPolygonFrameMock);
 
     var actual =
         subject.processDetection(detectionId, createDetection, communityOwnerId, isRooferMade);
