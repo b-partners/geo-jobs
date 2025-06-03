@@ -18,7 +18,6 @@ import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
-import app.bpartners.geojobs.service.CentroidGeometryRetriever;
 import app.bpartners.geojobs.service.DetectedImageDraw;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.tile19.ExtenderApi;
@@ -46,7 +45,6 @@ public class ExtendedImageWithDetectedObjectRequestedService
   private final DetectionRepository detectionRepository;
   private final GeometryConverter geometryConverter;
   private final EventProducer eventProducer;
-  private final CentroidGeometryRetriever centroidGeometryRetriever;
 
   @Override
   public void accept(ExtendedImageWithDetectedObjectRequested event) {
@@ -182,8 +180,7 @@ public class ExtendedImageWithDetectedObjectRequestedService
     return providedFeatures.stream()
         .map(
             feature -> {
-              var geometry = feature.getGeometry().getActualInstance();
-              var point = centroidGeometryRetriever.apply(geometry);
+              var point = getPointOrCentroidAttribute(feature);
               var longitude = point.getCoordinates().getFirst();
               var latitude = point.getCoordinates().getLast();
               return new FeatureWithSurroundingTiles(

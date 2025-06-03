@@ -29,7 +29,6 @@ class ExtendedImageWithDetectedObjectRequestedServiceTest {
   DetectionRepository detectionRepositoryMock = mock();
   GeometryConverter geometryConverterMock = mock();
   EventProducer eventProducerMock = mock();
-  CentroidGeometryRetriever centroidGeometryRetrieverMock = mock();
   ExtendedImageWithDetectedObjectRequestedService subject =
       new ExtendedImageWithDetectedObjectRequestedService(
           tileFinderMock,
@@ -40,8 +39,7 @@ class ExtendedImageWithDetectedObjectRequestedServiceTest {
           fileWriterMock,
           detectionRepositoryMock,
           geometryConverterMock,
-          eventProducerMock,
-          centroidGeometryRetrieverMock);
+          eventProducerMock);
 
   @Test
   void detection_not_found() {

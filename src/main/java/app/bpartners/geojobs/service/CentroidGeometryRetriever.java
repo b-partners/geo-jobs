@@ -31,7 +31,6 @@ public class CentroidGeometryRetriever implements Function<Object, Point> {
                 geometryConverter.centroidFromGeometry(providedPolygon),
                 geometryMultiPolygonProvided);
       }
-
       case MultiPolygon providedMultiPolygon -> {
         var geometryMultiPolygonProvided =
             geometryConverter.apply(providedMultiPolygon.getCoordinates());
