@@ -20,9 +20,7 @@ import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
-import app.bpartners.geojobs.service.JobFinishedMailer;
-import app.bpartners.geojobs.service.PointExtendedImageRequest;
-import app.bpartners.geojobs.service.StatusChangedHandler;
+import app.bpartners.geojobs.service.*;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.tiling.TileFinder;
@@ -57,7 +55,11 @@ class ZoneTilingJobStatusChangedServiceTest {
           objectConfigurationRepositoryMock,
           tilingTaskRepositoryMock,
           geometryConverterMock,
-          new PointExtendedImageRequest(eventProducerMock, geometryConverterMock, tileFinderMock));
+          new PointExtendedImageRequest(
+              eventProducerMock,
+              new CentroidGeometryRetriever(
+                  geometryConverterMock,
+                  new TileMultiPolygonFrame(tileFinderMock, geometryConverterMock))));
 
   @BeforeEach
   void setUp() {

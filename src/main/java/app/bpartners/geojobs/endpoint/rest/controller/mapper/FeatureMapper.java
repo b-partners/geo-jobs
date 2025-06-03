@@ -97,6 +97,18 @@ public class FeatureMapper {
     return point;
   }
 
+  public static Point getPointOrCentroidAttribute(Feature feature) {
+    var geometryType = feature.getGeometry().getActualInstance();
+    Point pointFeature;
+    switch (geometryType) {
+      case Point point -> pointFeature = point;
+      case Polygon ignored -> pointFeature = getCentroidRestPointFromPolygon(feature);
+      case MultiPolygon ignored -> pointFeature = getCentroidRestPointFromPolygon(feature);
+      default -> throw new IllegalStateException("Unexpected geometry type: " + geometryType);
+    }
+    return pointFeature;
+  }
+
   @SneakyThrows
   private static app.bpartners.geojobs.repository.model.Feature.FeatureGeometry
       toDomainFeatureGeometry(FeatureGeometry featureGeometry) {

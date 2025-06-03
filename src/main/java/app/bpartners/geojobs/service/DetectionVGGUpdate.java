@@ -1,15 +1,11 @@
 package app.bpartners.geojobs.service;
 
-import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.getCentroidRestPointFromPolygon;
-import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
+import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.*;
 import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_EXTENSION;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
-import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
-import app.bpartners.geojobs.endpoint.rest.model.Point;
-import app.bpartners.geojobs.endpoint.rest.model.Polygon;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.geometry.VGG;
@@ -77,16 +73,7 @@ public class DetectionVGGUpdate implements BiFunction<VGG, Detection, Detection>
                           .findAny();
 
                   if (optionalVgg.isPresent()) {
-                    var geometryType = feature.getGeometry().getActualInstance();
-                    Point point;
-                    switch (geometryType) {
-                      case Point p -> point = p;
-                      case Polygon ignored -> point = getCentroidRestPointFromPolygon(feature);
-                      case MultiPolygon ignored -> point = getCentroidRestPointFromPolygon(feature);
-                      default ->
-                          throw new IllegalStateException(
-                              "Unexpected geometry type: " + geometryType);
-                    }
+                    var point = getPointOrCentroidAttribute(feature);
                     var longitude = point.getCoordinates().getFirst();
                     var latitude = point.getCoordinates().getLast();
 

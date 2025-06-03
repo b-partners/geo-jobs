@@ -1,7 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.getCentroidRestPointFromPolygon;
-import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
+import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.*;
 import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.HOUSES_0;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
@@ -19,13 +18,12 @@ import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
+import app.bpartners.geojobs.service.CentroidGeometryRetriever;
 import app.bpartners.geojobs.service.DetectedImageDraw;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.tile19.ExtenderApi;
 import app.bpartners.geojobs.service.tiling.TileFinder;
 import app.bpartners.geojobs.service.tiling.TiledPixelPolygonFilter;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.math.BigDecimal;
 import java.util.*;
@@ -50,6 +48,7 @@ public class ExtendedImageWithDetectedObjectRequestedService
   private final TiledPixelPolygonFilter tiledPixelPolygonFilter;
   private final GeometryConverter geometryConverter;
   private final EventProducer eventProducer;
+  private final CentroidGeometryRetriever centroidGeometryRetriever;
 
   @Override
   public void accept(ExtendedImageWithDetectedObjectRequested event) {
@@ -115,14 +114,7 @@ public class ExtendedImageWithDetectedObjectRequestedService
     var pointWithObjectDrawnImages = computeDrawnImages(filteredTiledPixelPolygonByMask, layer);
     pointWithObjectDrawnImages.forEach(
         (feature, value) -> {
-          var geometryType = feature.getGeometry().getActualInstance();
-          Point pointFeature;
-          switch (geometryType) {
-            case Point point -> pointFeature = point;
-            case Polygon ignored -> pointFeature = getPointFromPolygonFeature(feature);
-            case MultiPolygon ignored -> pointFeature = getPointFromPolygonFeature(feature);
-            default -> throw new IllegalStateException("Unexpected geometry type: " + geometryType);
-          }
+          var pointFeature = getPointOrCentroidAttribute(feature);
           var longitude = pointFeature.getCoordinates().getFirst();
           var latitude = pointFeature.getCoordinates().getLast();
           var extendedDrawnImageBase64 = extenderApi.apply(value);
@@ -132,23 +124,6 @@ public class ExtendedImageWithDetectedObjectRequestedService
           var bucketKey = filename + ".jpg";
           bucketComponent.upload(extendedDrawnFile, bucketKey);
         });
-  }
-
-  private Point getPointFromPolygonFeature(Feature feature) {
-    Point pointFeature;
-    try {
-      pointFeature =
-          toRestFeature(
-                  new ObjectMapper()
-                      .readValue(
-                          feature.getProperties().get("centroid").toString(),
-                          app.bpartners.geojobs.repository.model.Feature.class))
-              .getGeometry()
-              .getPoint();
-    } catch (JsonProcessingException e) {
-      throw new RuntimeException(e);
-    }
-    return pointFeature;
   }
 
   private List<TiledPixelPolygon> getTiledPixelPolygons(
@@ -220,13 +195,7 @@ public class ExtendedImageWithDetectedObjectRequestedService
         .map(
             feature -> {
               var geometry = feature.getGeometry().getActualInstance();
-              Point point;
-              switch (geometry) {
-                case Point p -> point = p;
-                case Polygon ignored -> point = getCentroidRestPointFromPolygon(feature);
-                case MultiPolygon ignored -> point = getCentroidRestPointFromPolygon(feature);
-                default -> throw new IllegalStateException("Unexpected value: " + geometry);
-              }
+              var point = centroidGeometryRetriever.apply(geometry);
               var longitude = point.getCoordinates().getFirst();
               var latitude = point.getCoordinates().getLast();
               return new PointWithSurroundingTiles(

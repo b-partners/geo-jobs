@@ -14,6 +14,7 @@ import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.detection.Detection;
+import app.bpartners.geojobs.service.CentroidGeometryRetriever;
 import app.bpartners.geojobs.service.DetectedImageDraw;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.tile19.ExtenderApi;
@@ -34,6 +35,7 @@ class ExtendedImageWithDetectedObjectRequestedServiceTest {
   TiledPixelPolygonFilter tiledPixelPolygonFilterMock = mock();
   GeometryConverter geometryConverterMock = mock();
   EventProducer eventProducerMock = mock();
+  CentroidGeometryRetriever centroidGeometryRetrieverMock = mock();
   ExtendedImageWithDetectedObjectRequestedService subject =
       new ExtendedImageWithDetectedObjectRequestedService(
           tileFinderMock,
@@ -45,7 +47,8 @@ class ExtendedImageWithDetectedObjectRequestedServiceTest {
           detectionRepositoryMock,
           tiledPixelPolygonFilterMock,
           geometryConverterMock,
-          eventProducerMock);
+          eventProducerMock,
+          centroidGeometryRetrieverMock);
 
   @Test
   void detection_not_found() {
