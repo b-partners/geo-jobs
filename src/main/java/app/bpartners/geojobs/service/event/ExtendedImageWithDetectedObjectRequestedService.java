@@ -72,6 +72,8 @@ public class ExtendedImageWithDetectedObjectRequestedService
           var pointFeature = getPointOrCentroidAttribute(feature);
           var longitude = pointFeature.getCoordinates().getFirst();
           var latitude = pointFeature.getCoordinates().getLast();
+          log.info("file size {}", value.size());
+          log.info("files to be extended {}", value);
           var extendedDrawnImageBase64 = extenderApi.apply(value);
           var filename = layer + "/extended_drawn_" + longitude + "_" + latitude;
 
@@ -185,9 +187,6 @@ public class ExtendedImageWithDetectedObjectRequestedService
               var latitude = point.getCoordinates().getLast();
               var tileCoordinates =
                   tileFinder.getSurroundingTiles(longitude, latitude, HOUSES_0.getZoomLevel());
-              log.info("feature retrieved : {}", feature);
-              log.info("point retrieved : {}", point);
-              log.info("tile coordinates retrieved : {}", tileCoordinates);
               return new FeatureWithSurroundingTiles(feature, tileCoordinates);
             })
         .toList();
@@ -199,7 +198,6 @@ public class ExtendedImageWithDetectedObjectRequestedService
 
     featureWithDetectedObjects.forEach(
         (feature, tiledPixelPolygons) -> {
-          log.info("tiledPixelPolygons retrieved : {}", tiledPixelPolygons);
           List<File> imageDrawn = new ArrayList<>();
           tiledPixelPolygons.sort(
               Comparator.comparing(TiledPixelPolygon::zoom)
@@ -216,7 +214,9 @@ public class ExtendedImageWithDetectedObjectRequestedService
                         + "/"
                         + tiledPixelPolygon.tileY()
                         + ".jpg";
+                log.info("originalImageKey: {}", originalImageKey);
                 var originalImage = bucketComponent.download(originalImageKey);
+                log.info("originalImage: {}", originalImage);
 
                 var objectTypeWithPolygons =
                     tiledPixelPolygon.polygons().stream()
