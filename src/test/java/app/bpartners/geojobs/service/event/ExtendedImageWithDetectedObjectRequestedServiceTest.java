@@ -10,7 +10,6 @@ import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
-import app.bpartners.geojobs.service.CentroidGeometryRetriever;
 import app.bpartners.geojobs.service.DetectedImageDraw;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.tile19.ExtenderApi;

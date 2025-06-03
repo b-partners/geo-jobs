@@ -183,9 +183,12 @@ public class ExtendedImageWithDetectedObjectRequestedService
               var point = getPointOrCentroidAttribute(feature);
               var longitude = point.getCoordinates().getFirst();
               var latitude = point.getCoordinates().getLast();
-              return new FeatureWithSurroundingTiles(
-                  feature,
-                  tileFinder.getSurroundingTiles(longitude, latitude, HOUSES_0.getZoomLevel()));
+              var tileCoordinates =
+                  tileFinder.getSurroundingTiles(longitude, latitude, HOUSES_0.getZoomLevel());
+              log.info("feature retrieved : {}", feature);
+              log.info("point retrieved : {}", point);
+              log.info("tile coordinates retrieved : {}", tileCoordinates);
+              return new FeatureWithSurroundingTiles(feature, tileCoordinates);
             })
         .toList();
   }
@@ -196,6 +199,7 @@ public class ExtendedImageWithDetectedObjectRequestedService
 
     featureWithDetectedObjects.forEach(
         (feature, tiledPixelPolygons) -> {
+          log.info("tiledPixelPolygons retrieved : {}", tiledPixelPolygons);
           List<File> imageDrawn = new ArrayList<>();
           tiledPixelPolygons.sort(
               Comparator.comparing(TiledPixelPolygon::zoom)
