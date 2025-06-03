@@ -70,6 +70,9 @@ public class ExtendedImageWithDetectedObjectRequestedService
     featureWithObjectDrawnImages.forEach(
         (feature, value) -> {
           var pointFeature = getPointOrCentroidAttribute(feature);
+          if (pointFeature == null) {
+            return;
+          }
           var longitude = pointFeature.getCoordinates().getFirst();
           var latitude = pointFeature.getCoordinates().getLast();
           log.info("file size {}", value.size());
@@ -183,12 +186,16 @@ public class ExtendedImageWithDetectedObjectRequestedService
         .map(
             feature -> {
               var point = getPointOrCentroidAttribute(feature);
+              if (point == null) {
+                return null;
+              }
               var longitude = point.getCoordinates().getFirst();
               var latitude = point.getCoordinates().getLast();
               var tileCoordinates =
                   tileFinder.getSurroundingTiles(longitude, latitude, HOUSES_0.getZoomLevel());
               return new FeatureWithSurroundingTiles(feature, tileCoordinates);
             })
+        .filter(Objects::nonNull)
         .toList();
   }
 

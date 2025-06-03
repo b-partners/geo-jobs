@@ -82,12 +82,16 @@ public class FeatureMapper {
   }
 
   public static Point getCentroidRestPointFromPolygon(Feature feature) {
+    Map<String, Object> properties = feature.getProperties();
+    if (properties == null) {
+      return null;
+    }
     Point point;
     try {
       var domainCentroidPoint =
           new ObjectMapper()
               .readValue(
-                  feature.getProperties().get("centroid").toString(),
+                  properties.get("centroid").toString(),
                   app.bpartners.geojobs.repository.model.Feature.class);
       var restFeaturePoint = toRestFeature(domainCentroidPoint);
       point = restFeaturePoint.getGeometry().getPoint();
