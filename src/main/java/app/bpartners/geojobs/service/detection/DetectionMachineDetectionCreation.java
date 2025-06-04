@@ -119,6 +119,7 @@ public class DetectionMachineDetectionCreation
     statusHistory.add(
         JobStatus.builder()
             .id(randomUUID().toString())
+            .jobId(zoneDetectionJob.getId())
             .progression(FINISHED)
             .health(SUCCEEDED)
             .jobType(DETECTION)
