@@ -30,7 +30,6 @@ Globals:
         AWS_EVENT_STACK_2_SQS_QUEUE_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/2/sqs/mailbox-queue-url}}'
         
         
-        
         SENTRY_DSN: !Sub '{{resolve:ssm:/geo-jobs/sentry/dsn}}'
         SENTRY_ENVIRONMENT: !Ref Env
         TILES_DOWNLOADER_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/tiles/downloader/url}}'
@@ -59,39 +58,64 @@ Parameters:
   Env:
     Type: String
 
+
 Resources:
-  FrontalServerlessRestApi:
-    Type: AWS::Serverless::Api
+  FrontalServerlessHttpApi:
+    StageName: $default
+    Type: AWS::Serverless::HttpApi
     Properties:
-      StageName: Prod
-      BinaryMediaTypes:
-        - "*~1*"
+      CorsConfiguration:
+        AllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        AllowHeaders:
+          - "*"
+        AllowOrigins:
+          - "*"
+  
+  HttpApiIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref FrontalServerlessHttpApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub "${FrontalFunction.Arn}:live"
+      PayloadFormatVersion: "1.0"
+      IntegrationMethod: ANY
+      TimeoutInMillis: 30000
+
+  DefaultRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref FrontalServerlessHttpApi
+      RouteKey: $default
+      Target: !Sub "integrations/${HttpApiIntegration}"
 
   FrontalFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: app.bpartners.geojobs.ApiEventHandler::handleRequest
+      Handler: app.bpartners.geojobs.handler.ApiEventHandler::handleRequest
       MemorySize: 512
       Timeout: 300
       Role: !Sub '{{resolve:ssm:/geo-jobs/${Env}/execution/role-arn}}'
-      
       Events:
         ApiCall:
-          Type: Api
+          Type: HttpApi
           Properties:
             Path: /{proxy+}
             Method: ANY
-            RestApiId:
-              Ref: FrontalServerlessRestApi
+            ApiId:
+              Ref: FrontalServerlessHttpApi
 
   WorkerFunction1:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: app.bpartners.geojobs.MailboxEventHandler::handleRequest
+      Handler: app.bpartners.geojobs.handler.MailboxEventHandler::handleRequest
       MemorySize: 1024
       Timeout: 900 #note(sqs-visibility)
       Role: !Sub '{{resolve:ssm:/geo-jobs/${Env}/execution/role-arn}}'
-      
       Events:
         AllEvents:
           Type: SQS
@@ -103,11 +127,10 @@ Resources:
   WorkerFunction2:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: app.bpartners.geojobs.MailboxEventHandler::handleRequest
+      Handler: app.bpartners.geojobs.handler.MailboxEventHandler::handleRequest
       MemorySize: 1024
       Timeout: 900 #note(sqs-visibility)
       Role: !Sub '{{resolve:ssm:/geo-jobs/${Env}/execution/role-arn}}'
-      
       Events:
         AllEvents:
           Type: SQS
@@ -116,27 +139,16 @@ Resources:
             BatchSize: 1
       ReservedConcurrentExecutions: 2
 
-  ApplicationResourceGroup:
-    Type: AWS::ResourceGroups::Group
-    Properties:
-      Name:
-        Fn::Sub: ApplicationInsights-SAM-${AWS::StackName}
-      ResourceQuery:
-        Type: CLOUDFORMATION_STACK_1_0
-  ApplicationInsightsMonitoring:
-    Type: AWS::ApplicationInsights::Application
-    Properties:
-      ResourceGroupName: !Ref ApplicationResourceGroup
-      AutoConfigurationEnabled: 'true'
-
   ApiUrlSSM:
     Type: AWS::SSM::Parameter
     Properties:
       Name: !Join [ '', [ /geo-jobs/, !Ref Env, /api/url ] ]
       Type: String
-      Value: !Sub "https://${FrontalServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
-
+      Value: !GetAtt FrontalServerlessHttpApi.ApiEndpoint
+  
+  
 Outputs:
   ApiUrl:
-    Description: API Gateway endpoint URL
-    Value: !GetAtt ApiUrlSSM.Value
+    Description: Url to access the frontal function
+    Value: !GetAtt FrontalServerlessHttpApi.ApiEndpoint
+                        
