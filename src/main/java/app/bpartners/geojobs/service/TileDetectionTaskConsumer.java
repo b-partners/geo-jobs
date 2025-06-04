@@ -78,10 +78,11 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
 
         var roofMultiPolygon = geometryConverter.retrieveNearestRoofMultiPolygon(coordinates);
         mask = maskRetriever.apply(tile, roofMultiPolygon);
+      } else {
+        log.info(
+            "Only unique provided geojson supported for now, otherwise" + " providedGeojson={}",
+            providedGeoJsonZone);
       }
-      log.info(
-          "Only unique provided geojson supported for now, otherwise" + " providedGeojson={}",
-          providedGeoJsonZone);
     }
 
     DetectionResponse response =
