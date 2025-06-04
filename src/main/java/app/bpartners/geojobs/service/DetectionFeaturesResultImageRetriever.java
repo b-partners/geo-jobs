@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.service;
 
-import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
+import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.getCentroidRestPointFromPolygon;
 
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
@@ -9,8 +9,6 @@ import app.bpartners.geojobs.endpoint.rest.model.Polygon;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.model.detection.Detection;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,7 +24,6 @@ import org.springframework.stereotype.Component;
 public class DetectionFeaturesResultImageRetriever implements Function<Detection, List<Feature>> {
   private final BucketComponent bucketComponent;
   private final CustomBucketComponent customBucketComponent;
-  private final ObjectMapper objectMapper;
 
   @Override
   public List<Feature> apply(Detection detection) {
@@ -34,7 +31,7 @@ public class DetectionFeaturesResultImageRetriever implements Function<Detection
     if (providedGeoJsonZone == null) {
       return null;
     }
-    if (!detection.isSucceeded()) {
+    if (!detection.isSucceeded() && !detection.isSynchronous()) {
       return providedGeoJsonZone;
     }
     var detectableObjectModel = detection.getDetectableObjectModel();
@@ -61,8 +58,8 @@ public class DetectionFeaturesResultImageRetriever implements Function<Detection
           Point point;
           switch (geometryType) {
             case Point ignored -> point = feature.getGeometry().getPoint();
-            case Polygon ignored -> point = getPointFromPolygon(feature);
-            case MultiPolygon ignored -> point = getPointFromPolygon(feature);
+            case Polygon ignored -> point = getCentroidRestPointFromPolygon(feature);
+            case MultiPolygon ignored -> point = getCentroidRestPointFromPolygon(feature);
             default ->
                 throw new IllegalArgumentException("Unsupported geometry type: " + geometryType);
           }
@@ -82,24 +79,6 @@ public class DetectionFeaturesResultImageRetriever implements Function<Detection
           }
         });
     return updatedGeoJson;
-  }
-
-  private Point getPointFromPolygon(Feature feature) {
-
-    var properties = feature.getProperties();
-    if (properties == null || properties.isEmpty() || properties.get("centroid") == null) {
-      return null;
-    }
-    app.bpartners.geojobs.repository.model.Feature centroidFeature;
-    try {
-      centroidFeature =
-          objectMapper.readValue(
-              properties.get("centroid").toString(),
-              app.bpartners.geojobs.repository.model.Feature.class);
-    } catch (JsonProcessingException e) {
-      throw new RuntimeException(e);
-    }
-    return toRestFeature(centroidFeature).getGeometry().getPoint();
   }
 
   private void addPropertyIfFileKeyExist(String fileKey, Feature feature, String fileProperty) {

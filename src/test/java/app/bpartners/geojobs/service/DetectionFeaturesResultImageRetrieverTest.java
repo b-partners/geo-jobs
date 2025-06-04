@@ -11,7 +11,6 @@ import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.model.detection.Detection;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.time.Duration;
@@ -31,7 +30,7 @@ class DetectionFeaturesResultImageRetrieverTest {
   CustomBucketComponent customBucketComponentMock = mock();
   DetectionFeaturesResultImageRetriever subject =
       new DetectionFeaturesResultImageRetriever(
-          bucketComponentMock, customBucketComponentMock, new ObjectMapper());
+          bucketComponentMock, customBucketComponentMock);
 
   @BeforeEach
   void setUp() {
