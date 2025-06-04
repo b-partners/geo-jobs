@@ -253,9 +253,8 @@ public class ZoneDetectionController {
     var communityAuthorization =
         communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
     var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId).orElse(null);
-    var isRooferMade = true;
-    return zoneService.processDetection(
-        detectionId, createDetection, communityOwnerId, isRooferMade);
+    return zoneService.processDetectionSynchronously(
+        detectionId, createDetection, communityOwnerId);
   }
 
   @PostMapping("/detections/{id}/roofDelimiter")

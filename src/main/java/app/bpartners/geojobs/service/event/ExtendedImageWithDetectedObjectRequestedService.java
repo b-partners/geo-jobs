@@ -45,10 +45,12 @@ public class ExtendedImageWithDetectedObjectRequestedService
   private final DetectionRepository detectionRepository;
   private final GeometryConverter geometryConverter;
   private final EventProducer eventProducer;
+  private final DetectionVGGRequestedService detectionVGGRequestedService;
 
   @Override
   public void accept(ExtendedImageWithDetectedObjectRequested event) {
     var detectionId = event.getDetectionId();
+    var isSynchronous = event.getIsSynchronous();
     var detection = detectionRepository.findById(detectionId).orElseThrow();
     var layer = detection.getGeoServerProperties().getGeoServerParameter().getLayers();
     var providedFeatures = detection.getProvidedGeoJsonZone();
@@ -61,10 +63,14 @@ public class ExtendedImageWithDetectedObjectRequestedService
     var tiledPixelPolygonGroupedByFeature =
         tiledPixelPolygons.stream().collect(Collectors.groupingBy(TiledPixelPolygon::point));
 
-    eventProducer.accept(
-        List.of(
-            new DetectionVGGRequested(
-                detectionId, serializeTiledPixelPolygon(tiledPixelPolygonGroupedByFeature))));
+    var detectionVGGRequested =
+        new DetectionVGGRequested(
+            detectionId, serializeTiledPixelPolygon(tiledPixelPolygonGroupedByFeature));
+    if (isSynchronous) {
+      detectionVGGRequestedService.accept(detectionVGGRequested);
+    } else {
+      eventProducer.accept(List.of(detectionVGGRequested));
+    }
 
     var featureWithObjectDrawnImages = computeDrawnImages(tiledPixelPolygonGroupedByFeature, layer);
     featureWithObjectDrawnImages.forEach(

@@ -14,6 +14,7 @@ import lombok.*;
 @ToString
 public class ExtendedImageWithDetectedObjectRequested extends PojaEvent {
   private String detectionId;
+  private Boolean isSynchronous;
 
   @Override
   public Duration maxConsumerDuration() {

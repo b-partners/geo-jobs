@@ -53,6 +53,7 @@ public class Detection implements Serializable {
 
   private String emailReceiver;
   private boolean isRooferMade;
+  private boolean isSynchronous;
 
   @JoinColumn(referencedColumnName = "id", name = "community_owner_id")
   private String communityOwnerId;

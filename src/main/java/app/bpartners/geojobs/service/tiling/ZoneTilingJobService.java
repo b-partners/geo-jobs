@@ -7,6 +7,7 @@ import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
 
+import app.bpartners.geojobs.concurrency.Workers;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.status.ZTJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.tile.ParcelTilingTaskCreated;
@@ -26,7 +27,6 @@ import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.job.repository.TaskRepository;
 import app.bpartners.geojobs.job.service.JobService;
 import app.bpartners.geojobs.model.exception.BadRequestException;
-import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.TaskStatisticRepository;
 import app.bpartners.geojobs.repository.model.FilteredTilingJob;
 import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
@@ -34,11 +34,13 @@ import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.JobFilteredMailer;
 import app.bpartners.geojobs.service.NotFinishedTaskRetriever;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
+import app.bpartners.geojobs.service.event.TilingTaskConsumer;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Callable;
 import lombok.SneakyThrows;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -51,7 +53,8 @@ public class ZoneTilingJobService extends JobService<ParcelTilingTask, ZoneTilin
   private final NotFinishedTaskRetriever<ParcelTilingTask> notFinishedTaskRetriever;
   private static ZoomMapper zoomMapper;
   private static TilingTaskMapper tilingTaskMapper;
-  private final DetectionRepository detectionRepository;
+  private final TilingTaskConsumer tilingTaskConsumer;
+  private final Workers workers;
 
   static {
     FeatureMapper featureMapper = new FeatureMapper(new GeometryConverter(null));
@@ -70,7 +73,8 @@ public class ZoneTilingJobService extends JobService<ParcelTilingTask, ZoneTilin
       ZoomMapper zoomMapper,
       TilingTaskMapper tilingTaskMapper,
       TaskStatisticRepository taskStatisticRepository,
-      DetectionRepository detectionRepository) {
+      TilingTaskConsumer tilingTaskConsumer,
+      Workers workers) {
     super(
         repository,
         jobStatusRepository,
@@ -83,7 +87,8 @@ public class ZoneTilingJobService extends JobService<ParcelTilingTask, ZoneTilin
     this.notFinishedTaskRetriever = notFinishedTaskRetriever;
     this.zoomMapper = zoomMapper;
     this.tilingTaskMapper = tilingTaskMapper;
-    this.detectionRepository = detectionRepository;
+    this.tilingTaskConsumer = tilingTaskConsumer;
+    this.workers = workers;
   }
 
   public ZoneTilingJob importFromBucket(
@@ -207,6 +212,26 @@ public class ZoneTilingJobService extends JobService<ParcelTilingTask, ZoneTilin
   @Transactional
   public void fireTasks(ZoneTilingJob job) {
     getTasks(job).forEach(task -> eventProducer.accept(List.of(new ParcelTilingTaskCreated(task))));
+  }
+
+  public List<ParcelTilingTask> consumeTasks(String jobId) {
+    var job = findById(jobId);
+    var tasks = getTasks(job);
+
+    List<Callable<Void>> callables =
+        tasks.stream()
+            .map(
+                task ->
+                    (Callable<Void>)
+                        () -> {
+                          tilingTaskConsumer.accept(task);
+                          return null;
+                        })
+            .toList();
+
+    workers.invokeAll(callables);
+
+    return tasks;
   }
 
   @Override

@@ -79,7 +79,7 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
     if (zoneDetectionJobService.countInDoubtDetectedTileToDeliveryById(succeededJobId) == 0L) {
       if (detection != null) {
         eventProducer.accept(
-            List.of(new ExtendedImageWithDetectedObjectRequested(detection.getId())));
+            List.of(new ExtendedImageWithDetectedObjectRequested(detection.getId(), false)));
       }
       geoJsonConversionJobService.getOrComputeGeoJsonConversionJob(succeededZoneDetectionJob);
       return;

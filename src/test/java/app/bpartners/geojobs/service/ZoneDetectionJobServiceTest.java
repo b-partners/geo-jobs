@@ -9,6 +9,7 @@ import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import app.bpartners.geojobs.concurrency.Workers;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.AutoTaskStatisticRecomputingSubmitted;
 import app.bpartners.geojobs.job.model.JobStatus;
@@ -48,6 +49,8 @@ class ZoneDetectionJobServiceTest {
   TaskStatisticRepository taskStatisticRepositoryMock = mock();
   AnnotationDeliveryConfigurationRepository deliveryConfigurationRepositoryMock = mock();
   MachineDetectedTileRepository machineDetectedTileRepositoryMock = mock();
+  TileDetectionTaskConsumer tileDetectionTaskConsumerMock = mock();
+  Workers workersMock = mock();
   ZoneDetectionJobService subject =
       new ZoneDetectionJobService(
           jobRepositoryMock,
@@ -61,7 +64,9 @@ class ZoneDetectionJobServiceTest {
           zoneDetectionJobRepositoryMock,
           taskStatisticRepositoryMock,
           machineDetectedTileRepositoryMock,
-          deliveryConfigurationRepositoryMock);
+          deliveryConfigurationRepositoryMock,
+          tileDetectionTaskConsumerMock,
+          workersMock);
 
   @BeforeEach
   void setUp() {

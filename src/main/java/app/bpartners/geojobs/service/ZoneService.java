@@ -98,6 +98,8 @@ public class ZoneService {
   private final AreaPictureApi areaPictureApi;
   private final GeoServerConfiguration geoServerConfiguration;
   private final DetectionRoofDelimiterValidator detectionRoofDelimiterValidator;
+  private final SynchronousDetectionService synchronousDetectionService;
+  private final SynchronousDetectionValidator synchronousDetectionValidator;
 
   private List<Feature> readFromFile(File featuresFromShape) {
     try {
@@ -306,6 +308,28 @@ public class ZoneService {
     return rooferDetectionService.apply(savedDetection);
   }
 
+  public app.bpartners.geojobs.endpoint.rest.model.Detection processDetectionSynchronously(
+      String detectionId, CreateDetection createDetection, String communityOwnerId) {
+    synchronousDetectionValidator.accept(createDetection);
+
+    var optionalDetection =
+        detectionRepository.findByEndToEndIdAndCommunityOwnerId(detectionId, communityOwnerId);
+    Detection detectionToBeProcessed;
+    detectionToBeProcessed =
+        optionalDetection.orElseGet(
+            () -> createDetectionJob(detectionId, createDetection, communityOwnerId));
+    var savedDetectionToBeProcessed =
+        detectionRepository.save(
+            detectionToBeProcessed.toBuilder()
+                .providedGeoJsonZone(
+                    createDetection.getGeoJsonZone().stream()
+                        .map(FeatureMapper::toDomainFeature)
+                        .toList())
+                .build());
+
+    return synchronousDetectionService.apply(savedDetectionToBeProcessed);
+  }
+
   // TODO: refactor as very difficult to read, separate rooferDetection and largeZoneDetection
   public app.bpartners.geojobs.endpoint.rest.model.Detection processDetection(
       String detectionId,
@@ -425,6 +449,16 @@ public class ZoneService {
     return savedDetection;
   }
 
+  private Detection createDetectionJob(
+      String detectionId, CreateDetection createDetection, @Nullable String communityOwnerId) {
+    var detectionToSave =
+        mapFromRestCreateDetection(detectionId, createDetection, communityOwnerId);
+    List<Feature> geoJsonZone =
+        createDetection.getGeoJsonZone() == null ? List.of() : createDetection.getGeoJsonZone();
+    return communityUsedSurfaceService.persistDetectionWithSurfaceUsage(
+        detectionToSave, geoJsonZone);
+  }
+
   private Detection mapFromRestCreateDetection(
       String endToEndId,
       CreateDetection createDetection,
@@ -452,6 +486,39 @@ public class ZoneService {
         .emailReceiver(createDetection.getEmailReceiver())
         .zoneName(createDetection.getZoneName())
         .isRooferMade(isRooferMade)
+        .communityOwnerId(communityOwnerId)
+        .detectableObjectConfigurations(detectableObjectConfigurations)
+        .geoServerProperties(finalGeoServerProperties)
+        .providedGeoJsonZone(domainProvidedGeoJsonZone)
+        .multiPolygonGeoJsonZone(multiPolygonGeoJsonZoneToBeProcessed)
+        .detectableObjectModel(detectableObjectModel)
+        .build();
+  }
+
+  private Detection mapFromRestCreateDetection(
+      String endToEndId, CreateDetection createDetection, @Nullable String communityOwnerId) {
+    var detectableObjectModel = createDetection.getDetectableObjectModel();
+    var modelName = detectableObjectModel.getModelName();
+    var detectionId = randomUUID().toString();
+    var detectableObjectConfigurations =
+        detectableObjectTypeMapper.mapDefaultConfigurationsFromModel(detectionId, modelName);
+    var restProvidedGeoJsonZone = createDetection.getGeoJsonZone();
+    var domainProvidedGeoJsonZone = getActualProvidedGeoJson(restProvidedGeoJsonZone);
+    var multiPolygonGeoJsonZoneToBeProcessed =
+        extractDetectionMultiPolygonGeoJson(
+            detectableObjectModel, restProvidedGeoJsonZone, domainProvidedGeoJsonZone);
+    var finalGeoServerProperties =
+        extractGeoServerProperties(
+            createDetection.getGeoServerProperties(),
+            communityOwnerId,
+            restProvidedGeoJsonZone,
+            multiPolygonGeoJsonZoneToBeProcessed);
+    return Detection.builder()
+        .id(detectionId)
+        .endToEndId(endToEndId)
+        .emailReceiver(createDetection.getEmailReceiver())
+        .zoneName(createDetection.getZoneName())
+        .isSynchronous(true)
         .communityOwnerId(communityOwnerId)
         .detectableObjectConfigurations(detectableObjectConfigurations)
         .geoServerProperties(finalGeoServerProperties)
@@ -645,10 +712,6 @@ public class ZoneService {
                 geoJsonConversionJobs.stream()
                     .max(Comparator.comparing(Job::getSubmissionInstant))
                     .orElse(null));
-  }
-
-  private boolean communityHasAdminRole() {
-    return authProvider.getPrincipal().isAdmin();
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection sendMailAboutProspect(

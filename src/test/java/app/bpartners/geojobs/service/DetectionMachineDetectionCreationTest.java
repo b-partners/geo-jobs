@@ -9,6 +9,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
+import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
@@ -21,9 +22,13 @@ class DetectionMachineDetectionCreationTest {
   ZoneDetectionJobService zoneDetectionJobServiceMock = mock();
   ZoneDetectionJobValidator detectionJobValidatorMock = mock();
   DetectionMachineDetectionStatisticsComputer detectionStatisticsComputerMock = mock();
+  DetectionRepository detectionRepositoryMock = mock();
   DetectionMachineDetectionCreation subject =
       new DetectionMachineDetectionCreation(
-          zoneDetectionJobServiceMock, detectionJobValidatorMock, detectionStatisticsComputerMock);
+          zoneDetectionJobServiceMock,
+          detectionJobValidatorMock,
+          detectionStatisticsComputerMock,
+          detectionRepositoryMock);
 
   @Test
   void job_validate_and_processed() {

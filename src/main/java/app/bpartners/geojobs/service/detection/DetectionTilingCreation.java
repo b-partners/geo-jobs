@@ -5,7 +5,6 @@ import static app.bpartners.geojobs.service.tiling.ZoneTilingJobService.getTilin
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneTilingJobMapper;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.detection.Detection;
-import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
@@ -22,16 +21,18 @@ public class DetectionTilingCreation
 
   @Override
   public app.bpartners.geojobs.endpoint.rest.model.Detection apply(Detection detection) {
-    var ztj = processZoneTilingJob(detection);
-    var detectionWithZTJ =
-        detectionRepository.save(detection.toBuilder().ztjId(ztj.getId()).build());
-    return detectionTilingStatisticsComputer.apply(detectionWithZTJ, ztj.getId());
+    var detectionWithZTJ = processTiling(detection);
+    return detectionTilingStatisticsComputer.apply(detectionWithZTJ, detectionWithZTJ.getZtjId());
   }
 
-  private ZoneTilingJob processZoneTilingJob(Detection detection) {
+  public Detection processTiling(Detection detection) {
     var createJob = zoneTilingJobMapper.from(detection);
-    var job = zoneTilingJobMapper.toDomain(createJob, detection.isRooferMade());
+    var job =
+        zoneTilingJobMapper.toDomain(
+            createJob, detection.isRooferMade() || detection.isSynchronous());
     var tilingTasks = getTilingTasks(createJob, job.getId());
-    return zoneTilingJobService.create(job, tilingTasks);
+    var ztj = zoneTilingJobService.create(job, tilingTasks);
+
+    return detectionRepository.save(detection.toBuilder().ztjId(ztj.getId()).build());
   }
 }

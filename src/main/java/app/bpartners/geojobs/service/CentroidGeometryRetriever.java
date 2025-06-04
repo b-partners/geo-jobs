@@ -6,7 +6,6 @@ import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.endpoint.rest.model.Point;
 import app.bpartners.geojobs.endpoint.rest.model.Polygon;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +15,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CentroidGeometryRetriever implements Function<Object, Point> {
   private final GeometryConverter geometryConverter;
-  private final TileMultiPolygonFrame tileMultiPolygonFrame;
+  private final GeometryTiledValidator geometryTiledValidator;
 
   @Override
   public Point apply(Object geometry) {
@@ -26,35 +25,24 @@ public class CentroidGeometryRetriever implements Function<Object, Point> {
       case Polygon providedPolygon -> {
         var geometryMultiPolygonProvided =
             geometryConverter.apply(List.of(providedPolygon.getCoordinates()));
-        point =
-            retrieveFromProvidedGeoJsonCentroidPoint(
-                geometryConverter.centroidFromGeometry(providedPolygon),
-                geometryMultiPolygonProvided);
+        return retrieveFromProvidedValidMultiPolygon(geometryMultiPolygonProvided);
       }
       case MultiPolygon providedMultiPolygon -> {
         var geometryMultiPolygonProvided =
             geometryConverter.apply(providedMultiPolygon.getCoordinates());
-        point =
-            retrieveFromProvidedGeoJsonCentroidPoint(
-                geometryConverter.centroidFromGeometry(providedMultiPolygon),
-                geometryMultiPolygonProvided);
+        return retrieveFromProvidedValidMultiPolygon(geometryMultiPolygonProvided);
       }
       default -> throw new IllegalStateException("Unexpected value: " + geometry);
     }
     return point;
   }
 
-  private Point retrieveFromProvidedGeoJsonCentroidPoint(
-      List<BigDecimal> centroidCoordinates,
+  private Point retrieveFromProvidedValidMultiPolygon(
       org.locationtech.jts.geom.MultiPolygon geometryMultiPolygonProvided) {
-    var centroidPoint = new Point().coordinates(centroidCoordinates).type(POINT);
-
-    var longitude = centroidPoint.getCoordinates().getFirst();
-    var latitude = centroidPoint.getCoordinates().getLast();
-    var optionalMultiPolygonTiles = tileMultiPolygonFrame.apply(longitude, latitude);
-    if (optionalMultiPolygonTiles.isPresent()
-        && optionalMultiPolygonTiles.get().contains(geometryMultiPolygonProvided)) {
-      return centroidPoint;
+    var centroidCoordinates = geometryConverter.centroidFromGeometry(geometryMultiPolygonProvided);
+    var isMultiPolygonContainedInFrame = geometryTiledValidator.apply(geometryMultiPolygonProvided);
+    if (isMultiPolygonContainedInFrame) {
+      return new Point().coordinates(centroidCoordinates).type(POINT);
     }
     return null;
   }

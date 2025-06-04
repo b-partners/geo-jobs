@@ -145,13 +145,16 @@ class ZoneServiceTest {
       new DetectionMachineDetectionCreation(
           zoneDetectionJobServiceMock,
           detectionJobValidatorMock,
-          detectionMachineDetectionStatisticsComputerMock);
+          detectionMachineDetectionStatisticsComputerMock,
+          detectionRepositoryMock);
   RooferDetectionService rooferDetectionService = mock();
   DetectionAddressConsumer detectionAddressConsumerMock = mock();
   GeometryConverter geometryConverterMock = mock();
   FeatureConverter featureConverterMock = mock();
   AreaPictureApi areaPictureApiMock = mock();
   DetectionRoofDelimiterValidator detectionRoofDelimiterValidatorMock = mock();
+  SynchronousDetectionService synchronousDetectionServiceMock = mock();
+  SynchronousDetectionValidator synchronousDetectionValidatorMock = mock();
   private final String geoServerDummyUrl = "http://dummy";
   private final String e2ApiKey = randomUUID().toString();
   GeoServerConfiguration geoServerConfiguration = new GeoServerConfiguration(geoServerDummyUrl);
@@ -182,7 +185,9 @@ class ZoneServiceTest {
           featureConverterMock,
           areaPictureApiMock,
           geoServerConfiguration,
-          detectionRoofDelimiterValidatorMock);
+          detectionRoofDelimiterValidatorMock,
+          synchronousDetectionServiceMock,
+          synchronousDetectionValidatorMock);
 
   @BeforeEach
   void setUp() {

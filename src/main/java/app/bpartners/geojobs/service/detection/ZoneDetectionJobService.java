@@ -7,6 +7,7 @@ import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
+import app.bpartners.geojobs.concurrency.Workers;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.*;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerificationSent;
@@ -19,12 +20,15 @@ import app.bpartners.geojobs.job.service.JobService;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.*;
+import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.*;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
+import app.bpartners.geojobs.service.TileDetectionTaskConsumer;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +46,8 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
   private final ZoneDetectionJobRepository zoneDetectionJobRepository;
   private final MachineDetectedTileRepository machineDetectedTileRepository;
   private final AnnotationDeliveryConfigurationRepository annotationDeliveryConfigurationRepository;
+  private final TileDetectionTaskConsumer tileDetectionTaskConsumer;
+  private final Workers workers;
 
   public ZoneDetectionJobService(
       JpaRepository<ZoneDetectionJob, String> repository,
@@ -55,7 +61,9 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
       ZoneDetectionJobRepository zoneDetectionJobRepository,
       TaskStatisticRepository taskStatisticRepository,
       MachineDetectedTileRepository machineDetectedTileRepository,
-      AnnotationDeliveryConfigurationRepository annotationDeliveryConfigurationRepository) {
+      AnnotationDeliveryConfigurationRepository annotationDeliveryConfigurationRepository,
+      TileDetectionTaskConsumer tileDetectionTaskConsumer,
+      Workers workers) {
     super(
         repository,
         jobStatusRepository,
@@ -70,6 +78,8 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
     this.zoneDetectionJobRepository = zoneDetectionJobRepository;
     this.machineDetectedTileRepository = machineDetectedTileRepository;
     this.annotationDeliveryConfigurationRepository = annotationDeliveryConfigurationRepository;
+    this.tileDetectionTaskConsumer = tileDetectionTaskConsumer;
+    this.workers = workers;
   }
 
   @Transactional
@@ -192,6 +202,21 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
     var savedZDJ = saveWithTasks(tilingTasks, zoneDetectionJob);
     repository.save(savedZDJ.toBuilder().id(randomUUID().toString()).detectionType(HUMAN).build());
     return savedZDJ;
+  }
+
+  public void consumeTasks(List<TileDetectionTask> tasksToConsume) {
+    List<Callable<Void>> callables =
+        tasksToConsume.stream()
+            .map(
+                task ->
+                    (Callable<Void>)
+                        () -> {
+                          tileDetectionTaskConsumer.accept(task);
+                          return null;
+                        })
+            .toList();
+
+    workers.invokeAll(callables);
   }
 
   public ZoneDetectionJob saveWithTasks(

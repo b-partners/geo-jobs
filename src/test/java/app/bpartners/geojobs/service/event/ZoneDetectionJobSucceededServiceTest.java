@@ -251,7 +251,8 @@ class ZoneDetectionJobSucceededServiceTest {
     verify(eventProducerMock, only()).accept(listCaptor.capture());
     var actualEventProduced =
         (ExtendedImageWithDetectedObjectRequested) listCaptor.getValue().getFirst();
-    assertEquals(new ExtendedImageWithDetectedObjectRequested(detectionId), actualEventProduced);
+    assertEquals(
+        new ExtendedImageWithDetectedObjectRequested(detectionId, false), actualEventProduced);
   }
 
   private String expectedEmailContainingDetectionWhenNoResultRetrieved(String detectionE2Id) {

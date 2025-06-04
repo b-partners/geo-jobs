@@ -28,6 +28,7 @@ class ExtendedImageWithDetectedObjectRequestedServiceTest {
   DetectionRepository detectionRepositoryMock = mock();
   GeometryConverter geometryConverterMock = mock();
   EventProducer eventProducerMock = mock();
+  DetectionVGGRequestedService detectionVGGRequestedServiceMock = mock();
   ExtendedImageWithDetectedObjectRequestedService subject =
       new ExtendedImageWithDetectedObjectRequestedService(
           tileFinderMock,
@@ -38,15 +39,19 @@ class ExtendedImageWithDetectedObjectRequestedServiceTest {
           fileWriterMock,
           detectionRepositoryMock,
           geometryConverterMock,
-          eventProducerMock);
+          eventProducerMock,
+          detectionVGGRequestedServiceMock);
 
   @Test
   void detection_not_found() {
     when(detectionRepositoryMock.findById(any())).thenReturn(Optional.empty());
+    boolean isSynchronous = false;
 
     assertThrows(
         NoSuchElementException.class,
         () ->
-            subject.accept(new ExtendedImageWithDetectedObjectRequested(randomUUID().toString())));
+            subject.accept(
+                new ExtendedImageWithDetectedObjectRequested(
+                    randomUUID().toString(), isSynchronous)));
   }
 }

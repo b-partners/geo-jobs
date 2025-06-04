@@ -11,6 +11,7 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import app.bpartners.geojobs.concurrency.Workers;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.zone.ImportedZoneTilingJobSaved;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobWithoutTasksCreated;
@@ -27,13 +28,13 @@ import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.job.repository.TaskRepository;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.exception.NotFoundException;
-import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.TaskStatisticRepository;
 import app.bpartners.geojobs.repository.model.FilteredTilingJob;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
+import app.bpartners.geojobs.service.event.TilingTaskConsumer;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import java.util.List;
 import java.util.Optional;
@@ -64,7 +65,8 @@ public class ZoneTilingJobServiceTest {
   TaskStatisticRepository taskStatisticRepositoryMock = mock();
   ZoomMapper zoomMapper = mock();
   TilingTaskMapper tilingTaskMapper = mock();
-  DetectionRepository detectionRepositoryMock = mock();
+  TilingTaskConsumer tilingTaskConsumerMock = mock();
+  Workers workersMock = mock();
   ZoneTilingJobService subject =
       new ZoneTilingJobService(
           jobRepositoryMock,
@@ -77,7 +79,8 @@ public class ZoneTilingJobServiceTest {
           zoomMapper,
           tilingTaskMapper,
           taskStatisticRepositoryMock,
-          detectionRepositoryMock);
+          tilingTaskConsumerMock,
+          workersMock);
 
   @Test
   void duplicate_ok() {
