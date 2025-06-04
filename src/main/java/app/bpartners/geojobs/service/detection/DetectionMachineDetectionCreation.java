@@ -10,7 +10,6 @@ import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.job.model.JobStatus;
-import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
@@ -34,7 +33,6 @@ public class DetectionMachineDetectionCreation
   private final ZoneDetectionJobValidator detectionJobValidator;
   private final DetectionMachineDetectionStatisticsComputer
       detectionMachineDetectionStatisticsComputer;
-  private final DetectionRepository detectionRepository;
   private final GeometryConverter geometryConverter;
 
   @Override

@@ -9,26 +9,26 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
-import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.detection.DetectionMachineDetectionCreation;
 import app.bpartners.geojobs.service.detection.DetectionMachineDetectionStatisticsComputer;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
+import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import org.junit.jupiter.api.Test;
 
 class DetectionMachineDetectionCreationTest {
   ZoneDetectionJobService zoneDetectionJobServiceMock = mock();
   ZoneDetectionJobValidator detectionJobValidatorMock = mock();
   DetectionMachineDetectionStatisticsComputer detectionStatisticsComputerMock = mock();
-  DetectionRepository detectionRepositoryMock = mock();
+  GeometryConverter geometryConverterMock = mock();
   DetectionMachineDetectionCreation subject =
       new DetectionMachineDetectionCreation(
           zoneDetectionJobServiceMock,
           detectionJobValidatorMock,
           detectionStatisticsComputerMock,
-          detectionRepositoryMock);
+          geometryConverterMock);
 
   @Test
   void job_validate_and_processed() {
