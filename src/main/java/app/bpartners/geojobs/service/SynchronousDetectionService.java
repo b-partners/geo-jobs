@@ -3,11 +3,13 @@ package app.bpartners.geojobs.service;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.MACHINE_DETECTION;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
+import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.concurrency.Workers;
 import app.bpartners.geojobs.endpoint.event.model.ExtendedImageWithDetectedObjectRequested;
 import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
+import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.service.detection.*;
 import app.bpartners.geojobs.service.event.ExtendedImageWithDetectedObjectRequestedService;
@@ -34,6 +36,7 @@ public class SynchronousDetectionService
   private final GeoJsonConversionJobService geoJsonConversionJobService;
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final Workers workers;
+  private final DetectableObjectConfigurationRepository detectableObjectConfigurationRepository;
 
   @Override
   public Detection apply(app.bpartners.geojobs.repository.model.detection.Detection detection) {
@@ -45,6 +48,15 @@ public class SynchronousDetectionService
 
     // Machine detection job creation
     var createdZoneDetectionJob = zoneDetectionJobService.saveZDJFromZTJ(finishedZoneTilingJob);
+    var zoneDetectionJobDetectableConf =
+        detection.getDetectableObjectConfigurations().stream()
+            .map(
+                detectableObjectConfiguration ->
+                    detectableObjectConfiguration.duplicate(
+                        randomUUID().toString(), createdZoneDetectionJob.getId()))
+            .toList();
+    detectableObjectConfigurationRepository.saveAll(zoneDetectionJobDetectableConf);
+
     var detectionWithCreatedZDJ =
         detectionRepository.save(
             detectionWithCreatedZTJ.toBuilder().zdjId(createdZoneDetectionJob.getId()).build());
