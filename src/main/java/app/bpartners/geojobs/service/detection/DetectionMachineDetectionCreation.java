@@ -6,6 +6,7 @@ import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.Detection;
+import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import java.util.ArrayList;
@@ -41,8 +42,7 @@ public class DetectionMachineDetectionCreation
   }
 
   public void processMachineDetection(
-      Detection detection, ZoneTilingJob zoneTilingJob, List<ParcelTilingTask> tilingTasks) {
-    var zoneDetectionJob = zoneDetectionJobService.saveZDJFromZTJ(zoneTilingJob);
+      Detection detection, ZoneDetectionJob zoneDetectionJob, List<ParcelTilingTask> tilingTasks) {
     detectionRepository.save(detection.toBuilder().zdjId(zoneDetectionJob.getId()).build());
 
     var tileDetectionTasks =

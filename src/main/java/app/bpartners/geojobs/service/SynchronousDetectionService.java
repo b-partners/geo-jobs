@@ -42,6 +42,7 @@ public class SynchronousDetectionService
     var zoneTilingJobId = detectionWithCreatedZTJ.getZtjId();
     var tilingTasks = zoneTilingJobService.consumeTasks(zoneTilingJobId);
     var finishedZoneTilingJob = zoneTilingJobService.findById(zoneTilingJobId);
+    var createdZoneDetectionJob = zoneDetectionJobService.saveZDJFromZTJ(finishedZoneTilingJob);
 
     List<Callable<Void>> voidCallable1 =
         List.of(
@@ -53,33 +54,28 @@ public class SynchronousDetectionService
             () -> {
               // Machine detection step
               detectionMachineDetectionCreation.processMachineDetection(
-                  detectionWithCreatedZTJ, finishedZoneTilingJob, tilingTasks);
+                  detectionWithCreatedZTJ, createdZoneDetectionJob, tilingTasks);
               return null;
             });
     workers.invokeAll(voidCallable1);
 
-    var detectionWithZDJFinished = detectionRepository.findById(detection.getId()).orElseThrow();
     List<Callable<Void>> voidCallable2 =
         List.of(
             () -> {
               // VGG result computing with drawn image step
               extendedImageWithDetectedObjectRequestedService.accept(
-                  new ExtendedImageWithDetectedObjectRequested(
-                      detectionWithZDJFinished.getId(), true));
+                  new ExtendedImageWithDetectedObjectRequested(detection.getId(), true));
               return null;
             },
             () -> {
               // GeoJson Result Requested __EVENT__ step
-              var finishedZoneDetectionJob =
-                  zoneDetectionJobService.findById(detectionWithZDJFinished.getZdjId());
-              geoJsonConversionJobService.getOrComputeGeoJsonConversionJob(
-                  finishedZoneDetectionJob);
+              geoJsonConversionJobService.getOrComputeGeoJsonConversionJob(createdZoneDetectionJob);
               return null;
             });
     workers.invokeAll(voidCallable2);
 
     return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
-        detectionRepository.findById(detectionWithZDJFinished.getId()).orElseThrow(),
+        detectionRepository.findById(detection.getId()).orElseThrow(),
         FINISHED,
         SUCCEEDED,
         MACHINE_DETECTION);
