@@ -29,8 +29,7 @@ class DetectionFeaturesResultImageRetrieverTest {
   BucketComponent bucketComponentMock = mock();
   CustomBucketComponent customBucketComponentMock = mock();
   DetectionFeaturesResultImageRetriever subject =
-      new DetectionFeaturesResultImageRetriever(
-          bucketComponentMock, customBucketComponentMock);
+      new DetectionFeaturesResultImageRetriever(bucketComponentMock, customBucketComponentMock);
 
   @BeforeEach
   void setUp() {

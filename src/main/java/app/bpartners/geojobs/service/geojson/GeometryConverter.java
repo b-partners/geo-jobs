@@ -96,33 +96,6 @@ public class GeometryConverter {
     return List.of(BigDecimal.valueOf(centroid.x), BigDecimal.valueOf(centroid.y));
   }
 
-  public MultiPolygon apply(
-      app.bpartners.geojobs.endpoint.rest.model.Point point, Double sizeInMeters) {
-    var longitude = point.getCoordinates().getFirst().doubleValue();
-    var latitude = point.getCoordinates().getLast().doubleValue();
-
-    // 1. Convert meters to degrees
-    double halfSize = sizeInMeters / 2.0;
-    double deltaLat = halfSize / APPROXIMATE_METERS_PER_DEGREE_OF_LATITUDE;
-    double deltaLon =
-        halfSize / (APPROXIMATE_METERS_PER_DEGREE_OF_LATITUDE * Math.cos(Math.toRadians(latitude)));
-
-    // 2. Define square corners
-    Coordinate[] coordinates =
-        new Coordinate[] {
-          new Coordinate(longitude - deltaLon, latitude - deltaLat),
-          new Coordinate(longitude + deltaLon, latitude - deltaLat),
-          new Coordinate(longitude + deltaLon, latitude + deltaLat),
-          new Coordinate(longitude - deltaLon, latitude + deltaLat),
-          new Coordinate(longitude - deltaLon, latitude - deltaLat) // Close ring
-        };
-
-    // 3. Build polygon and wrap in MultiPolygon
-    LinearRing shell = geometryFactory.createLinearRing(coordinates);
-    Polygon polygon = geometryFactory.createPolygon(shell, null);
-    return geometryFactory.createMultiPolygon(new Polygon[] {polygon});
-  }
-
   public org.locationtech.jts.geom.Polygon toPolygon(
       List<List<List<List<BigDecimal>>>> multiPolygonCoordinates) {
     GeometryFactory geometryFactory = new GeometryFactory();

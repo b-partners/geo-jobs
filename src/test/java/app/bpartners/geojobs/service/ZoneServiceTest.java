@@ -66,6 +66,7 @@ import app.bpartners.geojobs.utils.detection.DetectionCreator;
 import app.bpartners.geojobs.utils.detection.ZoneDetectionJobCreator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -158,6 +159,7 @@ class ZoneServiceTest {
   private final String geoServerDummyUrl = "http://dummy";
   private final String e2ApiKey = randomUUID().toString();
   GeoServerConfiguration geoServerConfiguration = new GeoServerConfiguration(geoServerDummyUrl);
+  TileMultiPolygonFrame tileMultiPolygonFrameMock = mock();
   ZoneService subject =
       new ZoneService(
           zoneDetectionJobServiceMock,
@@ -187,7 +189,8 @@ class ZoneServiceTest {
           geoServerConfiguration,
           detectionRoofDelimiterValidatorMock,
           synchronousDetectionServiceMock,
-          synchronousDetectionValidatorMock);
+          synchronousDetectionValidatorMock,
+          tileMultiPolygonFrameMock);
 
   @BeforeEach
   void setUp() {
@@ -229,7 +232,12 @@ class ZoneServiceTest {
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
     var jtsMultiPolygonFrameMock = mock(MultiPolygon.class);
     when(jtsMultiPolygonFrameMock.contains(any())).thenReturn(true);
-    when(geometryConverterMock.apply(any(), any())).thenReturn(jtsMultiPolygonFrameMock);
+    var longitude = BigDecimal.valueOf(0);
+    var latitude = BigDecimal.valueOf(1);
+    when(geometryConverterMock.centroidFromGeometry(any()))
+        .thenReturn(List.of(longitude, latitude));
+    when(tileMultiPolygonFrameMock.apply(longitude, latitude))
+        .thenReturn(Optional.of(jtsMultiPolygonFrameMock));
 
     var actual =
         subject.processDetection(detectionId, createDetection, communityOwnerId, isRooferMade);

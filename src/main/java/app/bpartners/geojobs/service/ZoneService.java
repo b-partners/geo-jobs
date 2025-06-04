@@ -4,7 +4,6 @@ import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMappe
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.*;
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.MULTI_POLYGON;
-import static app.bpartners.geojobs.endpoint.rest.model.Point.TypeEnum.POINT;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
@@ -70,7 +69,6 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class ZoneService {
   private static final int DEFAULT_ZOOM = 20;
-  private static final double DEFAULT_POLYGON_SIZE_IN_METERS = 70.0;
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final ZoneTilingJobService zoneTilingJobService;
   private final EventProducer eventProducer;
@@ -100,6 +98,7 @@ public class ZoneService {
   private final DetectionRoofDelimiterValidator detectionRoofDelimiterValidator;
   private final SynchronousDetectionService synchronousDetectionService;
   private final SynchronousDetectionValidator synchronousDetectionValidator;
+  private final TileMultiPolygonFrame tileMultiPolygonFrame;
 
   private List<Feature> readFromFile(File featuresFromShape) {
     try {
@@ -602,8 +601,11 @@ public class ZoneService {
           feature -> {
             var point = feature.getGeometry().getPoint();
             var domainFeature = toDomainFeature(feature);
-            var jtsMultiPolygon = geometryConverter.apply(point, DEFAULT_POLYGON_SIZE_IN_METERS);
-            var multiPolygonConverted = featureConverter.fromJtsMultiPolygon(jtsMultiPolygon);
+            var longitude = point.getCoordinates().getFirst();
+            var latitude = point.getCoordinates().getLast();
+            var jtsMultiPolygonFrame =
+                tileMultiPolygonFrame.apply(longitude, latitude).orElseThrow();
+            var multiPolygonConverted = featureConverter.fromJtsMultiPolygon(jtsMultiPolygonFrame);
             try {
               var featurePointAsString =
                   new ObjectMapper().findAndRegisterModules().writeValueAsString(domainFeature);
@@ -629,9 +631,9 @@ public class ZoneService {
       var restMultiPolygon = restFeature.getGeometry().getMultiPolygon();
       var jtsMultiPolygonProvided = geometryConverter.apply(restMultiPolygon.getCoordinates());
       var centroidCoordinates = geometryConverter.centroidFromGeometry(restMultiPolygon);
-      var centroidPoint = new Point().coordinates(centroidCoordinates).type(POINT);
-      var jtsMultipolygonFrame =
-          geometryConverter.apply(centroidPoint, DEFAULT_POLYGON_SIZE_IN_METERS);
+      var longitude = centroidCoordinates.getFirst();
+      var latitude = centroidCoordinates.getLast();
+      var jtsMultipolygonFrame = tileMultiPolygonFrame.apply(longitude, latitude).orElseThrow();
       if (jtsMultipolygonFrame.contains(jtsMultiPolygonProvided)) {
         return Collections.singletonList(
             geometryConverter.toFeature(
