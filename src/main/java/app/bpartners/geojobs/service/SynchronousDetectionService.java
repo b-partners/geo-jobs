@@ -42,19 +42,24 @@ public class SynchronousDetectionService
     var zoneTilingJobId = detectionWithCreatedZTJ.getZtjId();
     var tilingTasks = zoneTilingJobService.consumeTasks(zoneTilingJobId);
     var finishedZoneTilingJob = zoneTilingJobService.findById(zoneTilingJobId);
+
+    // Machine detection job creation
     var createdZoneDetectionJob = zoneDetectionJobService.saveZDJFromZTJ(finishedZoneTilingJob);
+    var detectionWithCreatedZDJ =
+        detectionRepository.save(
+            detectionWithCreatedZTJ.toBuilder().zdjId(createdZoneDetectionJob.getId()).build());
 
     List<Callable<Void>> voidCallable1 =
         List.of(
             () -> {
               // Original image retriever step
-              detectionDelimitationRetriever.accept(detectionWithCreatedZTJ, true);
+              detectionDelimitationRetriever.accept(detectionWithCreatedZDJ, true);
               return null;
             },
             () -> {
               // Machine detection step
               detectionMachineDetectionCreation.processMachineDetection(
-                  detectionWithCreatedZTJ, createdZoneDetectionJob, tilingTasks);
+                  detectionWithCreatedZDJ, createdZoneDetectionJob, tilingTasks);
               return null;
             });
     workers.invokeAll(voidCallable1);

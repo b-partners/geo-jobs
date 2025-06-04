@@ -54,9 +54,7 @@ public class DetectionMachineDetectionCreation
 
   public void processMachineDetection(
       Detection detection, ZoneDetectionJob zoneDetectionJob, List<ParcelTilingTask> tilingTasks) {
-    var saveDetection =
-        detectionRepository.save(detection.toBuilder().zdjId(zoneDetectionJob.getId()).build());
-    var providedGeoJsonZone = saveDetection.getProvidedGeoJsonZone();
+    var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
     var providedLonLatJtsMultiPolygon =
         providedGeoJsonZone.stream()
             .map(
