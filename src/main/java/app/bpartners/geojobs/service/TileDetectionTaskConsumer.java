@@ -110,8 +110,6 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
                 }
               });
     }
-    log.info(
-        "[DEBUG] TileDetectionTaskCreatedConsumer to save tile {}", machineDetectedTile.describe());
     machineDetectedTileRepository.save(machineDetectedTile);
   }
 
