@@ -85,6 +85,9 @@ public class GeometryConverter {
           geometry = readGeometryFromString(objectMapper.writeValueAsString(polygon));
       case app.bpartners.geojobs.endpoint.rest.model.Point point ->
           geometry = readGeometryFromString(objectMapper.writeValueAsString(point));
+      case MultiPolygon multiPolygon -> geometry = multiPolygon;
+      case Polygon polygon -> geometry = polygon;
+      case Point point -> geometry = point;
       default ->
           throw new UnsupportedOperationException(
               "Unsupported feature instance: " + featureInstance);
