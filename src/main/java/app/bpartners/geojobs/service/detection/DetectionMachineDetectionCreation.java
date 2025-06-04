@@ -1,8 +1,14 @@
 package app.bpartners.geojobs.service.detection;
 
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
+import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
+import static java.time.Instant.now;
+import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
+import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.Detection;
@@ -65,5 +71,16 @@ public class DetectionMachineDetectionCreation
             .toList();
 
     zoneDetectionJobService.consumeTasks(tileDetectionTasks);
+
+    ArrayList<JobStatus> statusHistory = new ArrayList<>();
+    statusHistory.add(
+        JobStatus.builder()
+            .id(randomUUID().toString())
+            .progression(FINISHED)
+            .health(SUCCEEDED)
+            .jobType(DETECTION)
+            .creationDatetime(now())
+            .build());
+    zoneDetectionJobService.save(zoneDetectionJob.toBuilder().statusHistory(statusHistory).build());
   }
 }
