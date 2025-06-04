@@ -25,6 +25,9 @@ public class GeometryTiledValidator implements Function<Object, Boolean> {
         var providedMultiPolygon = geometryConverter.apply(multiPolygon.getCoordinates());
         return checkMultiPolygonContainedInFrame(providedMultiPolygon);
       }
+      case org.locationtech.jts.geom.MultiPolygon jtsMultiPolygon -> {
+        return checkMultiPolygonContainedInFrame(jtsMultiPolygon);
+      }
       default -> throw new IllegalArgumentException("Unsupported geometry type: " + geometry);
     }
   }
