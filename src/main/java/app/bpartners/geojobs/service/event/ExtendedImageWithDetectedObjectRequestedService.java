@@ -72,6 +72,8 @@ public class ExtendedImageWithDetectedObjectRequestedService
       eventProducer.accept(List.of(detectionVGGRequested));
     }
 
+    /*
+    TODO: uncomment and debug drawn images
     var featureWithObjectDrawnImages = computeDrawnImages(tiledPixelPolygonGroupedByFeature, layer);
     featureWithObjectDrawnImages.forEach(
         (feature, value) -> {
@@ -89,7 +91,7 @@ public class ExtendedImageWithDetectedObjectRequestedService
           var extendedDrawnFile = fileWriter.base64ToFile(extendedDrawnImageBase64, filename);
           var bucketKey = filename + ".jpg";
           bucketComponent.upload(extendedDrawnFile, bucketKey);
-        });
+        });*/
   }
 
   private List<TiledPixelPolygonSerializable> serializeTiledPixelPolygon(
