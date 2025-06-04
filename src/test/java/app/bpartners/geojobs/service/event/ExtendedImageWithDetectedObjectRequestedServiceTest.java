@@ -2,9 +2,10 @@ package app.bpartners.geojobs.service.event;
 
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.MOISISSURE_CLAIR;
 import static java.util.UUID.randomUUID;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
+
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionVGGRequested;
 import app.bpartners.geojobs.endpoint.event.model.ExtendedImageWithDetectedObjectRequested;
@@ -23,17 +24,18 @@ import app.bpartners.geojobs.service.DetectedImageDraw;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.tile19.ExtenderApi;
 import app.bpartners.geojobs.service.tiling.TileFinder;
-import java.util.NoSuchElementException;
-import java.util.Optional;
 import app.bpartners.geojobs.service.tiling.TiledPixelPolygonFilter;
 import java.io.File;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 class ExtendedImageWithDetectedObjectRequestedServiceTest {
+  TiledPixelPolygonFilter tiledPixelPolygonFilterMock = mock();
   TileFinder tileFinderMock = mock();
   MachineDetectedTileRepository detectedTileRepositoryMock = mock();
   BucketComponent bucketComponentMock = mock();
@@ -85,7 +87,7 @@ class ExtendedImageWithDetectedObjectRequestedServiceTest {
     assertDoesNotThrow(
         () -> subject.accept(new ExtendedImageWithDetectedObjectRequested(detectionId)));
 
-    verify(detectedTileRepositoryMock, never()).findAllByZdjJobId(any());
+    verify(detectedTileRepositoryMock, times(1)).findAllByZdjJobId(any());
     verify(tileFinderMock, never()).getSurroundingTiles(any(), any(), anyInt());
     verify(bucketComponentMock, never()).download(any());
     verify(detectedImageDrawMock, never()).apply(any(), any());
@@ -150,7 +152,8 @@ class ExtendedImageWithDetectedObjectRequestedServiceTest {
     when(featureGeometryMock.getPoint()).thenReturn(pointMock);
     when(providedFeaturePointMock.getGeometry()).thenReturn(featureGeometryMock);
     when(featureGeometryMock.getActualInstance()).thenReturn(pointMock);
-    when(featureGeometryToitureMultiPolygonMock.getActualInstance()).thenReturn(toitureMultiPolygonMock);
+    when(featureGeometryToitureMultiPolygonMock.getActualInstance())
+        .thenReturn(toitureMultiPolygonMock);
     when(featureGeometryToitureMultiPolygonMock.getMultiPolygon())
         .thenReturn(toitureMultiPolygonMock);
     when(featureToitureMultiPolygon.getGeometry())
@@ -173,9 +176,7 @@ class ExtendedImageWithDetectedObjectRequestedServiceTest {
     assertDoesNotThrow(
         () -> subject.accept(new ExtendedImageWithDetectedObjectRequested(detectionId)));
     verify(detectedTileRepositoryMock, times(1)).findAllByZdjJobId(zdjId);
-    verify(geometryConverterMock, times(1)).apply(any());
     verify(tileFinderMock, times(1)).getSurroundingTiles(any(), any(), anyInt());
-    verify(tiledPixelPolygonFilterMock, times(1)).filterPolygonsInMask(any(), any());
     verify(geometryConverterMock, times(1)).writeGeometryAsString(any());
     verify(extenderApiMock, times(1)).apply(any());
     verify(fileWriterMock, times(1)).base64ToFile(any(), any());
@@ -228,15 +229,19 @@ class ExtendedImageWithDetectedObjectRequestedServiceTest {
     assertDoesNotThrow(
         () -> subject.accept(new ExtendedImageWithDetectedObjectRequested(detectionId)));
 
-    verify(detectedTileRepositoryMock, never()).findAllByZdjJobId(any());
+    verify(detectedTileRepositoryMock, times(1)).findAllByZdjJobId(zdjId);
     verify(geometryConverterMock, never()).apply(any());
     verify(tileFinderMock, never()).getSurroundingTiles(any(), any(), anyInt());
     verify(tiledPixelPolygonFilterMock, never()).filterPolygonsInMask(any(), any());
     verify(geometryConverterMock, never()).writeGeometryAsString(any());
-    verify(eventProducerMock, never()).accept(any());
     verify(bucketComponentMock, never()).download(any());
     verify(extenderApiMock, never()).apply(any());
     verify(fileWriterMock, never()).base64ToFile(any(), any());
     verify(bucketComponentMock, never()).upload(any(), any());
+    var listCaptor = ArgumentCaptor.forClass(List.class);
+    verify(eventProducerMock, times(1)).accept(listCaptor.capture());
+    DetectionVGGRequested event = (DetectionVGGRequested) listCaptor.getValue().getFirst();
+    assertEquals(detectionId, event.getDetectionId());
+    assertTrue(event.getFilteredTiledPixelPolygons().isEmpty());
   }
 }
