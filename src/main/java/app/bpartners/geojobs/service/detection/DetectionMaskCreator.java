@@ -51,10 +51,10 @@ public class DetectionMaskCreator implements Function<List<List<BigDecimal>>, Fi
   }
 
   @Override
-  public File apply(List<List<BigDecimal>> providedGeoJson) {
+  public File apply(List<List<BigDecimal>> pixelPolygon) {
     var pixels =
-        providedGeoJson.stream()
-            .map(list -> new IntXY(list.get(1).intValue(), list.getFirst().intValue()))
+        pixelPolygon.stream()
+            .map(list -> new IntXY(list.getFirst().intValue(), list.getLast().intValue()))
             .toList();
     return drawImage(pixels);
   }

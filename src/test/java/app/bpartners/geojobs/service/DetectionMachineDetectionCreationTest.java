@@ -15,15 +15,20 @@ import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.detection.DetectionMachineDetectionCreation;
 import app.bpartners.geojobs.service.detection.DetectionMachineDetectionStatisticsComputer;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
+import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import org.junit.jupiter.api.Test;
 
 class DetectionMachineDetectionCreationTest {
   ZoneDetectionJobService zoneDetectionJobServiceMock = mock();
   ZoneDetectionJobValidator detectionJobValidatorMock = mock();
   DetectionMachineDetectionStatisticsComputer detectionStatisticsComputerMock = mock();
+  GeometryConverter geometryConverterMock = mock();
   DetectionMachineDetectionCreation subject =
       new DetectionMachineDetectionCreation(
-          zoneDetectionJobServiceMock, detectionJobValidatorMock, detectionStatisticsComputerMock);
+          zoneDetectionJobServiceMock,
+          detectionJobValidatorMock,
+          detectionStatisticsComputerMock,
+          geometryConverterMock);
 
   @Test
   void job_validate_and_processed() {

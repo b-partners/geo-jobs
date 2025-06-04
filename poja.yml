@@ -1,23 +1,20 @@
 compute:
-  api_gateway_timeout: 30000
+  api_gateway_timeout: null
+  frontal_function_invocation_method: http-api
   frontal_function_timeout: 300
   frontal_memory: 512
-  worker_batch: 1
+  with_queues_nb: 2
+  worker_1_batch: 5
+  worker_1_memory: 1024
+  worker_2_batch: 5
+  worker_2_memory: 1024
   worker_function_1_timeout: 900
   worker_function_2_timeout: 900
-  worker_memory: 1024
 concurrency:
   frontal_reserved_concurrent_executions_nb: null
-  worker_reserved_concurrent_executions_nb: 2
+  worker_1_reserved_concurrent_executions_nb: 2
+  worker_2_reserved_concurrent_executions_nb: 2
 database:
-  aurora_auto_pause: 'true'
-  aurora_max_capacity: 64
-  aurora_min_capacity: 64
-  aurora_scale_point: 60
-  aurora_sleep: 900
-  database_non_root_password: /geo-jobs/${Env}/db/user/password
-  database_non_root_username: /geo-jobs/${Env}/db/user/username
-  prod_db_cluster_timeout: '300'
   with_database: None
 emailing:
   ses_source: lou@bpartners.app
@@ -31,7 +28,7 @@ gen_api_client:
   with_publish_to_npm_registry: 'false'
 general:
   app_name: geo-jobs
-  cli_version: 18.3.5
+  cli_version: 20.0.6
   custom_java_deps: poja-custom-java-deps.txt
   custom_java_env_vars: poja-custom-java-env-vars.txt
   custom_java_repositories: poja-custom-java-repositories.txt
@@ -39,7 +36,6 @@ general:
   poja_domain_owner: 088312068315
   poja_python_repository_domain: python-numer-tech
   poja_python_repository_name: numer-python-store
-  with_queues_nb: 2
   with_snapstart: 'true'
 integration:
   with_codeql: 'true'
@@ -53,6 +49,7 @@ networking:
   ssm_subnet1_id: /bpartners-imagery/private/subnet1/id
   ssm_subnet2_id: /bpartners-imagery/private/subnet2/id
   with_own_vpc: 'true'
+scheduled_tasks: null
 testing:
   jacoco_min_coverage: '0.8'
   java_facade_it: FacadeIT

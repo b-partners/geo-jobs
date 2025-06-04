@@ -1,10 +1,11 @@
 package app.bpartners.geojobs.service;
 
-import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
+import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.getCentroidRestPointFromPolygon;
 
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.endpoint.rest.model.Point;
-import app.bpartners.geojobs.endpoint.rest.validator.FeatureTypeChecker;
+import app.bpartners.geojobs.endpoint.rest.model.Polygon;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.model.detection.Detection;
@@ -22,7 +23,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class DetectionFeaturesResultImageRetriever implements Function<Detection, List<Feature>> {
   private final BucketComponent bucketComponent;
-  private final FeatureTypeChecker featureTypeChecker;
   private final CustomBucketComponent customBucketComponent;
 
   @Override
@@ -31,16 +31,15 @@ public class DetectionFeaturesResultImageRetriever implements Function<Detection
     if (providedGeoJsonZone == null) {
       return null;
     }
-    if (!detection.isSucceeded()) {
+    if (!detection.isSucceeded() && !detection.isSynchronous()) {
       return providedGeoJsonZone;
     }
     var detectableObjectModel = detection.getDetectableObjectModel();
     if (detectableObjectModel == null) {
       return providedGeoJsonZone;
     }
-    var featuresHasAllPoints = featureTypeChecker.apply(providedGeoJsonZone, Point.class);
-    var toitureDetection = TOITURE.equals(detectableObjectModel.getModelName());
-    if (toitureDetection && featuresHasAllPoints) {
+
+    if (detection.hasToitureModelName()) {
       var layer = detection.getGeoServerProperties().getGeoServerParameter().getLayers();
       if (layer == null) {
         return providedGeoJsonZone;
@@ -55,19 +54,29 @@ public class DetectionFeaturesResultImageRetriever implements Function<Detection
     var updatedGeoJson = new ArrayList<>(providedGeoJsonZone);
     updatedGeoJson.forEach(
         feature -> {
-          var point = feature.getGeometry().getPoint();
-          var longitude = point.getCoordinates().getFirst();
-          var latitude = point.getCoordinates().getLast();
+          var geometryType = feature.getGeometry().getActualInstance();
+          Point point;
+          switch (geometryType) {
+            case Point ignored -> point = feature.getGeometry().getPoint();
+            case Polygon ignored -> point = getCentroidRestPointFromPolygon(feature);
+            case MultiPolygon ignored -> point = getCentroidRestPointFromPolygon(feature);
+            default ->
+                throw new IllegalArgumentException("Unsupported geometry type: " + geometryType);
+          }
+          if (point != null) {
+            var longitude = point.getCoordinates().getFirst();
+            var latitude = point.getCoordinates().getLast();
+            var originalFileKey =
+                layer + "/extended_original_" + longitude + "_" + latitude + ".jpg";
+            var drawnFileKey = layer + "/extended_drawn_" + longitude + "_" + latitude + ".jpg";
+            var vggFileKey = layer + "/vgg_" + longitude + "_" + latitude + ".json";
 
-          var originalFileKey = layer + "/extended_original_" + longitude + "_" + latitude + ".jpg";
-          var drawnFileKey = layer + "/extended_drawn_" + longitude + "_" + latitude + ".jpg";
-          var vggFileKey = layer + "/vgg_" + longitude + "_" + latitude + ".json";
+            addPropertyIfFileKeyExist(originalFileKey, feature, "original_image_url");
 
-          addPropertyIfFileKeyExist(originalFileKey, feature, "original_image_url");
+            addPropertyIfFileKeyExist(drawnFileKey, feature, "drawn_image_url");
 
-          addPropertyIfFileKeyExist(drawnFileKey, feature, "drawn_image_url");
-
-          addPropertyIfFileKeyExist(vggFileKey, feature, "vgg_file_url");
+            addPropertyIfFileKeyExist(vggFileKey, feature, "vgg_file_url");
+          }
         });
     return updatedGeoJson;
   }

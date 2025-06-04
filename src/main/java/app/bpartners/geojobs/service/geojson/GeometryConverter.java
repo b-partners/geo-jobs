@@ -9,10 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import lombok.SneakyThrows;
 import org.geotools.geojson.geom.GeometryJSON;
 import org.locationtech.jts.geom.*;
@@ -46,10 +43,7 @@ public class GeometryConverter {
   }
 
   public Feature toFeature(
-      String featureId,
-      Integer zoom,
-      HashMap<String, Object> properties,
-      MultiPolygon multiPolygon) {
+      String featureId, Integer zoom, Map<String, Object> properties, MultiPolygon multiPolygon) {
     return Feature.builder()
         .id(featureId)
         .zoom(zoom)
@@ -58,17 +52,21 @@ public class GeometryConverter {
                 .geometryType(MULTI_POLYGON)
                 .actualInstanceStringValue(writeMultiPolygonAsString(multiPolygon))
                 .build())
-        .properties(properties)
+        .properties(new HashMap<>(properties))
         .build();
   }
 
   public MultiPolygon retrieveNearestRoofMultiPolygon(
       app.bpartners.geojobs.endpoint.rest.model.Point point) {
-    if (buildingApi == null) {
+    if (buildingApi == null || point == null) {
       return null;
     }
-    var longitude = point.getCoordinates().getFirst();
-    var latitude = point.getCoordinates().getLast();
+    return retrieveNearestRoofMultiPolygon(point.getCoordinates());
+  }
+
+  public MultiPolygon retrieveNearestRoofMultiPolygon(List<BigDecimal> coordinates) {
+    var longitude = coordinates.getFirst();
+    var latitude = coordinates.getLast();
     var nearestBuilding =
         buildingApi.getNearestBuildingAt(
             longitude.doubleValue(), latitude.doubleValue(), DEFAULT_POLYGON_SIZE_IN_METERS);
@@ -76,31 +74,26 @@ public class GeometryConverter {
     return apply(multiPolygonCoordinates);
   }
 
-  public MultiPolygon apply(
-      app.bpartners.geojobs.endpoint.rest.model.Point point, Double sizeInMeters) {
-    var longitude = point.getCoordinates().getFirst().doubleValue();
-    var latitude = point.getCoordinates().getLast().doubleValue();
-
-    // 1. Convert meters to degrees
-    double halfSize = sizeInMeters / 2.0;
-    double deltaLat = halfSize / APPROXIMATE_METERS_PER_DEGREE_OF_LATITUDE;
-    double deltaLon =
-        halfSize / (APPROXIMATE_METERS_PER_DEGREE_OF_LATITUDE * Math.cos(Math.toRadians(latitude)));
-
-    // 2. Define square corners
-    Coordinate[] coordinates =
-        new Coordinate[] {
-          new Coordinate(longitude - deltaLon, latitude - deltaLat),
-          new Coordinate(longitude + deltaLon, latitude - deltaLat),
-          new Coordinate(longitude + deltaLon, latitude + deltaLat),
-          new Coordinate(longitude - deltaLon, latitude + deltaLat),
-          new Coordinate(longitude - deltaLon, latitude - deltaLat) // Close ring
-        };
-
-    // 3. Build polygon and wrap in MultiPolygon
-    LinearRing shell = geometryFactory.createLinearRing(coordinates);
-    Polygon polygon = geometryFactory.createPolygon(shell, null);
-    return geometryFactory.createMultiPolygon(new Polygon[] {polygon});
+  @SneakyThrows
+  public List<BigDecimal> centroidFromGeometry(Object featureInstance) {
+    ObjectMapper objectMapper = new ObjectMapper();
+    Geometry geometry;
+    switch (featureInstance) {
+      case app.bpartners.geojobs.endpoint.rest.model.MultiPolygon multiPolygon ->
+          geometry = readGeometryFromString(objectMapper.writeValueAsString(multiPolygon));
+      case app.bpartners.geojobs.endpoint.rest.model.Polygon polygon ->
+          geometry = readGeometryFromString(objectMapper.writeValueAsString(polygon));
+      case app.bpartners.geojobs.endpoint.rest.model.Point point ->
+          geometry = readGeometryFromString(objectMapper.writeValueAsString(point));
+      case MultiPolygon multiPolygon -> geometry = multiPolygon;
+      case Polygon polygon -> geometry = polygon;
+      case Point point -> geometry = point;
+      default ->
+          throw new UnsupportedOperationException(
+              "Unsupported feature instance: " + featureInstance);
+    }
+    Coordinate centroid = geometry.getCentroid().getCoordinate();
+    return List.of(BigDecimal.valueOf(centroid.x), BigDecimal.valueOf(centroid.y));
   }
 
   public org.locationtech.jts.geom.Polygon toPolygon(
@@ -246,5 +239,39 @@ public class GeometryConverter {
   public Geometry readGeometryFromString(String geoJsonString) {
     GeometryJSON geometryJSON = new GeometryJSON(15);
     return geometryJSON.read(new StringReader(geoJsonString));
+  }
+
+  private double[] tileXYToLonLatBounds(int x, int y, int z) {
+    double n = Math.pow(2, z);
+
+    double lonLeft = x / n * 360.0 - 180.0;
+    double lonRight = (x + 1) / n * 360.0 - 180.0;
+
+    double latTop = Math.toDegrees(Math.atan(Math.sinh(Math.PI * (1 - 2 * y / n))));
+    double latBottom = Math.toDegrees(Math.atan(Math.sinh(Math.PI * (1 - 2 * (y + 1) / n))));
+
+    return new double[] {lonLeft, latBottom, lonRight, latTop}; // [west, south, east, north]
+  }
+
+  public MultiPolygon getMultiPolygonFromTile(int x, int y, int zoom) {
+    double[] bbox = tileXYToLonLatBounds(x, y, zoom);
+    double west = bbox[0];
+    double south = bbox[1];
+    double east = bbox[2];
+    double north = bbox[3];
+
+    GeometryFactory gf = new GeometryFactory();
+    Coordinate[] coords =
+        new Coordinate[] {
+          new Coordinate(west, south),
+          new Coordinate(west, north),
+          new Coordinate(east, north),
+          new Coordinate(east, south),
+          new Coordinate(west, south) // fermeture du polygone
+        };
+
+    LinearRing shell = gf.createLinearRing(coords);
+    Polygon polygon = gf.createPolygon(shell, null);
+    return gf.createMultiPolygon(new Polygon[] {polygon});
   }
 }

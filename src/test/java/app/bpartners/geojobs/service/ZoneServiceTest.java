@@ -66,6 +66,7 @@ import app.bpartners.geojobs.utils.detection.DetectionCreator;
 import app.bpartners.geojobs.utils.detection.ZoneDetectionJobCreator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -74,6 +75,7 @@ import java.util.Set;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.MultiPolygon;
 import org.mockito.ArgumentCaptor;
 
 class ZoneServiceTest {
@@ -140,17 +142,21 @@ class ZoneServiceTest {
   DetectionMachineDetectionStatisticsComputer detectionMachineDetectionStatisticsComputerMock =
       new DetectionMachineDetectionStatisticsComputer(
           detectionFromStatisticRestMapperMock, zoneDetectionJobServiceMock);
-  DetectionMachineDetectionCreation detectionMachineDetectionCreationMock =
-      new DetectionMachineDetectionCreation(
-          zoneDetectionJobServiceMock,
-          detectionJobValidatorMock,
-          detectionMachineDetectionStatisticsComputerMock);
   RooferDetectionService rooferDetectionService = mock();
   DetectionAddressConsumer detectionAddressConsumerMock = mock();
   GeometryConverter geometryConverterMock = mock();
   FeatureConverter featureConverterMock = mock();
   AreaPictureApi areaPictureApiMock = mock();
   DetectionRoofDelimiterValidator detectionRoofDelimiterValidatorMock = mock();
+  SynchronousDetectionService synchronousDetectionServiceMock = mock();
+  SynchronousDetectionValidator synchronousDetectionValidatorMock = mock();
+  TileMultiPolygonFrame tileMultiPolygonFrameMock = mock();
+  DetectionMachineDetectionCreation detectionMachineDetectionCreationMock =
+      new DetectionMachineDetectionCreation(
+          zoneDetectionJobServiceMock,
+          detectionJobValidatorMock,
+          detectionMachineDetectionStatisticsComputerMock,
+          geometryConverterMock);
   private final String geoServerDummyUrl = "http://dummy";
   private final String e2ApiKey = randomUUID().toString();
   GeoServerConfiguration geoServerConfiguration = new GeoServerConfiguration(geoServerDummyUrl);
@@ -181,7 +187,10 @@ class ZoneServiceTest {
           featureConverterMock,
           areaPictureApiMock,
           geoServerConfiguration,
-          detectionRoofDelimiterValidatorMock);
+          detectionRoofDelimiterValidatorMock,
+          synchronousDetectionServiceMock,
+          synchronousDetectionValidatorMock,
+          tileMultiPolygonFrameMock);
 
   @BeforeEach
   void setUp() {
@@ -221,6 +230,14 @@ class ZoneServiceTest {
     setUpAuthorityRoleProcessingMock(detectionId, null, ROLE_ADMIN);
     when(communityUsedSurfaceServiceMock.persistDetectionWithSurfaceUsage(any(), any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+    var jtsMultiPolygonFrameMock = mock(MultiPolygon.class);
+    when(jtsMultiPolygonFrameMock.contains(any())).thenReturn(true);
+    var longitude = BigDecimal.valueOf(0);
+    var latitude = BigDecimal.valueOf(1);
+    when(geometryConverterMock.centroidFromGeometry(any()))
+        .thenReturn(List.of(longitude, latitude));
+    when(tileMultiPolygonFrameMock.apply(longitude, latitude))
+        .thenReturn(Optional.of(jtsMultiPolygonFrameMock));
 
     var actual =
         subject.processDetection(detectionId, createDetection, communityOwnerId, isRooferMade);

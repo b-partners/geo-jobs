@@ -16,11 +16,11 @@ public abstract class PojaEvent implements Serializable {
 
   @Getter @Setter protected int attemptNb;
 
-  public Duration eventHandlerInitMaxDuration() {
-    return Duration.ofSeconds(90);
-  }
-
   public abstract Duration maxConsumerDuration();
+
+  public Duration eventHandlerInitMaxDuration() {
+    return Duration.ofSeconds(90); // note(init-visibility)
+  }
 
   private Duration randomConsumerBackoffBetweenRetries() {
     return Duration.ofSeconds((int) (random() * maxConsumerBackoffBetweenRetries().toSeconds()));

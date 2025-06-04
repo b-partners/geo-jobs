@@ -30,7 +30,6 @@ Globals:
         AWS_EVENT_STACK_2_SQS_QUEUE_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/2/sqs/mailbox-queue-url}}'
         
         
-        
         SENTRY_DSN: !Sub '{{resolve:ssm:/geo-jobs/sentry/dsn}}'
         SENTRY_ENVIRONMENT: !Ref Env
         TILES_DOWNLOADER_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/tiles/downloader/url}}'
@@ -52,13 +51,13 @@ Globals:
         README_WEBHOOK_SECRET: !Sub '{{resolve:ssm:/geo-jobs/${Env}/readme/webhook/secret}}'
         BPARTNERS_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/bpartners/api/url}}'
         GEOSERVER_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/geoserver/api/url}}'
-
     
         
 
 Parameters:
   Env:
     Type: String
+
 
 Resources:
   FrontalServerlessHttpApi:
@@ -76,7 +75,7 @@ Resources:
           - "*"
         AllowOrigins:
           - "*"
-
+  
   HttpApiIntegration:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
@@ -97,11 +96,10 @@ Resources:
   FrontalFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: app.bpartners.geojobs.ApiEventHandler::handleRequest
+      Handler: app.bpartners.geojobs.handler.ApiEventHandler::handleRequest
       MemorySize: 512
       Timeout: 300
       Role: !Sub '{{resolve:ssm:/geo-jobs/${Env}/execution/role-arn}}'
-      
       Events:
         ApiCall:
           Type: HttpApi
@@ -114,47 +112,32 @@ Resources:
   WorkerFunction1:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: app.bpartners.geojobs.MailboxEventHandler::handleRequest
+      Handler: app.bpartners.geojobs.handler.MailboxEventHandler::handleRequest
       MemorySize: 1024
       Timeout: 900 #note(sqs-visibility)
       Role: !Sub '{{resolve:ssm:/geo-jobs/${Env}/execution/role-arn}}'
-      
       Events:
         AllEvents:
           Type: SQS
           Properties:
             Queue: !Sub '{{resolve:ssm:/geo-jobs/${Env}/1/sqs/mailbox-queue-arn}}'
             BatchSize: 1
-      ReservedConcurrentExecutions: 50
+      ReservedConcurrentExecutions: 2
 
   WorkerFunction2:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: app.bpartners.geojobs.MailboxEventHandler::handleRequest
+      Handler: app.bpartners.geojobs.handler.MailboxEventHandler::handleRequest
       MemorySize: 1024
       Timeout: 900 #note(sqs-visibility)
       Role: !Sub '{{resolve:ssm:/geo-jobs/${Env}/execution/role-arn}}'
-      
       Events:
         AllEvents:
           Type: SQS
           Properties:
             Queue: !Sub '{{resolve:ssm:/geo-jobs/${Env}/2/sqs/mailbox-queue-arn}}'
             BatchSize: 1
-      ReservedConcurrentExecutions: 50
-
-  ApplicationResourceGroup:
-    Type: AWS::ResourceGroups::Group
-    Properties:
-      Name:
-        Fn::Sub: ApplicationInsights-SAM-${AWS::StackName}
-      ResourceQuery:
-        Type: CLOUDFORMATION_STACK_1_0
-  ApplicationInsightsMonitoring:
-    Type: AWS::ApplicationInsights::Application
-    Properties:
-      ResourceGroupName: !Ref ApplicationResourceGroup
-      AutoConfigurationEnabled: 'true'
+      ReservedConcurrentExecutions: 2
 
   ApiUrlSSM:
     Type: AWS::SSM::Parameter
@@ -162,8 +145,10 @@ Resources:
       Name: !Join [ '', [ /geo-jobs/, !Ref Env, /api/url ] ]
       Type: String
       Value: !GetAtt FrontalServerlessHttpApi.ApiEndpoint
-
+  
+  
 Outputs:
   ApiUrl:
-    Description: API Gateway endpoint URL
-    Value: !GetAtt ApiUrlSSM.Value
+    Description: Url to access the frontal function
+    Value: !GetAtt FrontalServerlessHttpApi.ApiEndpoint
+                        

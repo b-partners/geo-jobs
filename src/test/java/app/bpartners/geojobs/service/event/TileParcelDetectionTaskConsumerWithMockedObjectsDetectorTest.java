@@ -7,21 +7,21 @@ import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.job.model.TaskStatus;
+import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
+import app.bpartners.geojobs.service.DetectionMaskFromTileRetriever;
 import app.bpartners.geojobs.service.TileDetectionTaskConsumer;
 import app.bpartners.geojobs.service.detection.DetectionMapper;
-import app.bpartners.geojobs.service.detection.DetectionMaskCreator;
 import app.bpartners.geojobs.service.detection.MockedTileObjectDetector;
+import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.util.ArrayList;
 import org.junit.jupiter.api.Test;
 
 class TileParcelDetectionTaskConsumerWithMockedObjectsDetectorTest {
-  DetectionMaskCreator maskCreator = new DetectionMaskCreator();
-
   @Test
   void can_consume_with_no_error() {
     MachineDetectedTileRepository machineDetectedTileRepositoryMock = mock();
@@ -29,12 +29,17 @@ class TileParcelDetectionTaskConsumerWithMockedObjectsDetectorTest {
     when(machineDetectedTileRepositoryMock.save(any())).thenReturn(new MachineDetectedTile());
     when(detectionMapperMock.toDetectedTile(any(), any(), any(), any(), any()))
         .thenReturn(new MachineDetectedTile());
+    DetectionRepository detectionRepositoryMock = mock();
+    GeometryConverter geometryConverterMock = mock();
+    DetectionMaskFromTileRetriever maskRetrieverMock = mock();
     var subject =
         new TileDetectionTaskConsumer(
             machineDetectedTileRepositoryMock,
             new MockedTileObjectDetector(),
             detectionMapperMock,
-            maskCreator);
+            detectionRepositoryMock,
+            geometryConverterMock,
+            maskRetrieverMock);
 
     var detectableObjectConfigurations = new ArrayList<DetectableObjectConfiguration>();
     var zdjId = "zdjId";

@@ -11,6 +11,8 @@ import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.util.*;
@@ -55,11 +57,16 @@ public class FeatureMapper {
   public static app.bpartners.geojobs.repository.model.Feature toDomainFeature(Feature rest) {
     HashMap<String, Object> properties =
         rest.getProperties() == null ? new HashMap<>() : new HashMap<>(rest.getProperties());
+    return toDomainFeature(rest, properties);
+  }
+
+  public static app.bpartners.geojobs.repository.model.Feature toDomainFeature(
+      Feature rest, Map<String, Object> properties) {
     return app.bpartners.geojobs.repository.model.Feature.builder()
         .id(properties.get("id") == null ? null : properties.get("id").toString())
         .zoom(properties.get("zoom") == null ? null : (Integer) properties.get("zoom"))
         .geometry(toDomainFeatureGeometry(rest.getGeometry()))
-        .properties(properties)
+        .properties(new HashMap<>(properties))
         .build();
   }
 
@@ -72,6 +79,38 @@ public class FeatureMapper {
         .type(FEATURE)
         .geometry(restFeatureGeometry)
         .properties(domain.getProperties());
+  }
+
+  public static Point getCentroidRestPointFromPolygon(Feature feature) {
+    Map<String, Object> properties = feature.getProperties();
+    if (properties == null) {
+      return null;
+    }
+    Point point;
+    try {
+      var domainCentroidPoint =
+          new ObjectMapper()
+              .readValue(
+                  properties.get("centroid").toString(),
+                  app.bpartners.geojobs.repository.model.Feature.class);
+      var restFeaturePoint = toRestFeature(domainCentroidPoint);
+      point = restFeaturePoint.getGeometry().getPoint();
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException(e);
+    }
+    return point;
+  }
+
+  public static Point getPointOrCentroidAttribute(Feature feature) {
+    var geometryType = feature.getGeometry().getActualInstance();
+    Point pointFeature;
+    switch (geometryType) {
+      case Point point -> pointFeature = point;
+      case Polygon ignored -> pointFeature = getCentroidRestPointFromPolygon(feature);
+      case MultiPolygon ignored -> pointFeature = getCentroidRestPointFromPolygon(feature);
+      default -> throw new IllegalStateException("Unexpected geometry type: " + geometryType);
+    }
+    return pointFeature;
   }
 
   @SneakyThrows
