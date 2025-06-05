@@ -14,20 +14,21 @@ import app.bpartners.geojobs.model.geometry.route.UnifiedRoute;
 import app.bpartners.geojobs.model.geometry.route.UnionConf;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.function.TriFunction;
 import org.locationtech.jts.algorithm.MinimumDiameter;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Polygon;
 
 @Slf4j
 public class BoundaryMerger
-    implements TriFunction<Set<TiledPolygon>, DetectableType, Double, Set<LatLonPolygon>> {
+    implements BiFunction<Set<TiledPolygon>, DetectableType, Set<LatLonPolygon>> {
   private final TilingConf tilingConf;
   private final UnionConf unionConf;
   private final NeighbourHoodHandler neighbourHoodHandler;
@@ -69,7 +70,7 @@ public class BoundaryMerger
     return new TiledPolygon(polygon, p.type(), p.originTile(), p.tilingConf());
   }
 
-  private Set<LatLonPolygon> merge(Set<TiledPolygon> polygons, double areaThreshold) {
+  private Set<LatLonPolygon> merge(Set<TiledPolygon> polygons) {
     var origin = new ArrayList<>(polygons).getFirst().originTile();
     var tiledPolygonsWithOffset =
         polygons.stream().map(tile -> withOffset(tile, origin, tilingConf)).toList();
@@ -81,7 +82,7 @@ public class BoundaryMerger
       }
       var aroundPolygons =
           tiledPolygonsWithOffset.stream()
-              .filter(p -> smallestAround(tp, p, areaThreshold))
+              .filter(p -> smallestAround(tp, p, mergeConf.minAreaThreshold()))
               .collect(toSet());
       if (!aroundPolygons.isEmpty()) {
         var smallest = new ArrayList<>(aroundPolygons.stream().map(TiledPolygon::polygon).toList());
@@ -101,7 +102,8 @@ public class BoundaryMerger
       }
     }
     log.info("Already unified polygons: {}", alreadyUnified.size());
-    return result.stream().map(tp -> tp.latLonPolygon(origin)).collect(toSet());
+    var latLonPolygons = result.stream().map(tp -> tp.latLonPolygon(origin)).collect(toSet());
+    return noSuperposition(latLonPolygons, mergeConf.iouAllowed());
   }
 
   private boolean smallestAround(TiledPolygon ref, TiledPolygon other, double areaThreshold) {
@@ -125,16 +127,21 @@ public class BoundaryMerger
 
   private Set<LatLonPolygon> parallelMerge(Set<TiledPolygon> tiledPolygons) {
     var origin = new ArrayList<>(tiledPolygons).getFirst().originTile();
-    // TODO: handle side effect on concurrent execution
-    /**
-     * var polygonsByNeighbourhood = neighbourHoodHandler.aroundN(tiledPolygons);
-     * List<Future<Set<LatLonPolygon>>> futures; try { futures = executorService.invokeAll(
-     * polygonsByNeighbourhood.stream().map(neighbourhoodPolygons -> ((Callable<Set<LatLonPolygon>>)
-     * () -> merge(neighbourhoodPolygons, origin))).collect(toSet())); } catch (InterruptedException
-     * e) { throw new RuntimeException(e); } return
-     * futures.stream().flatMap(this::futureStream).collect(toSet());*
-     */
-    return merge(tiledPolygons, origin);
+    var polygonsByNeighbourhood = neighbourHoodHandler.aroundN(tiledPolygons);
+    List<Future<Set<LatLonPolygon>>> futures;
+    try {
+      futures =
+          executorService.invokeAll(
+              polygonsByNeighbourhood.stream()
+                  .map(
+                      neighbourhoodPolygons ->
+                          ((Callable<Set<LatLonPolygon>>)
+                              () -> merge(neighbourhoodPolygons, origin)))
+                  .collect(toSet()));
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+    return futures.stream().flatMap(this::futureStream).collect(toSet());
   }
 
   private Stream<LatLonPolygon> futureStream(Future<Set<LatLonPolygon>> future) {
@@ -150,11 +157,11 @@ public class BoundaryMerger
         polygons.stream().map(tile -> withOffset(tile, origin, tilingConf)).toList();
 
     var result = new HashSet<TiledPolygon>();
-    var alreadyUnified = new HashSet<Polygon>();
+    var alreadyUnified = new HashSet<Integer>();
     var progress = 0;
 
     for (var tp : tiledPolygonsWithOffset) {
-      if (isAlreadyProcessed(tp.polygon(), alreadyUnified)) {
+      if (alreadyUnified.contains(Objects.hash(tp.polygon()))) {
         continue;
       }
 
@@ -166,7 +173,7 @@ public class BoundaryMerger
       var toUnify = aroundPolygons.stream().map(TiledPolygon::polygon).collect(Collectors.toSet());
       toUnify.add(tp.polygon());
 
-      alreadyUnified.addAll(toUnify);
+      alreadyUnified.addAll(hash(toUnify));
 
       var prettyPolygons = prettier.apply(toUnify);
 
@@ -182,8 +189,8 @@ public class BoundaryMerger
     return result.stream().map(tp -> tp.latLonPolygon(origin)).collect(Collectors.toSet());
   }
 
-  private boolean isAlreadyProcessed(Polygon candidate, Set<Polygon> alreadyProcessed) {
-    return alreadyProcessed.stream().anyMatch(p -> p.equalsTopo(candidate));
+  private Set<Integer> hash(Set<Polygon> toHash) {
+    return toHash.stream().map(Objects::hash).collect(Collectors.toSet());
   }
 
   private boolean shouldBeMerged(TiledPolygon base, TiledPolygon other) {
@@ -211,11 +218,50 @@ public class BoundaryMerger
     }
   }
 
+  public static Set<LatLonPolygon> noSuperposition(
+      Set<LatLonPolygon> polygons, double maxAllowedIoU) {
+    Map<LatLonPolygon, Boolean> isSuperposedByBiggerPolygon = new HashMap<>();
+    var asList = new ArrayList<>(polygons);
+    for (int i = 0; i < asList.size(); i++) {
+      var pi = asList.get(i);
+      var pip = pi.polygon();
+      for (int j = i + 1; j < asList.size(); j++) {
+        var pj = asList.get(j);
+        var pjp = pj.polygon();
+        if (pip.getArea() < pjp.getArea()) {
+          if (isSuperposed(pip, pjp, maxAllowedIoU)) {
+            isSuperposedByBiggerPolygon.put(pi, true);
+          }
+        } else {
+          if (isSuperposed(pjp, pip, maxAllowedIoU)) {
+            isSuperposedByBiggerPolygon.put(pj, true);
+          }
+        }
+      }
+    }
+
+    Set<LatLonPolygon> res = new HashSet<>();
+    for (var p : polygons) {
+      if (!isSuperposedByBiggerPolygon.getOrDefault(p, false)) {
+        res.add(p);
+      }
+    }
+    return res;
+  }
+
+  private static boolean isSuperposed(Polygon smallP, Polygon bigP, double maxAllowedIoU) {
+    try {
+      var inter = smallP.intersection(bigP);
+      return inter.getArea() / smallP.getArea() > maxAllowedIoU;
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
   @Override
-  public Set<LatLonPolygon> apply(
-      Set<TiledPolygon> tiledPolygons, DetectableType detectableType, Double areaThreshold) {
+  public Set<LatLonPolygon> apply(Set<TiledPolygon> tiledPolygons, DetectableType detectableType) {
     return switch (detectableType) {
-      case TOMBE, PASSAGE_PIETON, PISCINE -> merge(tiledPolygons, areaThreshold);
+      case TOMBE, PASSAGE_PIETON, PISCINE -> merge(tiledPolygons);
       default -> parallelMerge(tiledPolygons);
     };
   }

@@ -17,14 +17,18 @@ import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Polygon;
 
 @Slf4j
 public class TombeTest {
   PolygonProvider polygonProvider = new PolygonProvider("/geometry/vgg/line-pathway.json");
   private final TilingConf tilingConf = new TilingConf(20, 1024);
   private final UnionConf unionConf = new UnionConf(5);
-  private final MergeConf mergeConf = new MergeConf(1, 1, 5);
+  /*
+   * Tombe : 4_000
+   * Pathway : 20_000
+   * Pool: 4_000
+   */
+  private final MergeConf mergeConf = new MergeConf(4000, 0.6);
   private final PrettyConf prettyConf = new PrettyConf(1);
   private final BoundaryMerger boundaryMerger =
       new BoundaryMerger(tilingConf, unionConf, mergeConf, prettyConf, 20);
@@ -33,21 +37,13 @@ public class TombeTest {
   void run() {
     var tiledPolygons = polygonProvider.getTiledPolygons(true);
 
-    /*
-     * Tombe : 4_000
-     * Pathway : 20_000
-     * Pool: 4_000
-     */
-    var merged = boundaryMerger.apply(tiledPolygons, TOMBE, 4000.0);
+    var merged = boundaryMerger.apply(tiledPolygons, TOMBE);
 
     var m2toDeg2 = 1E-11; // France
     var minArea = new SquareDegree(112 * m2toDeg2);
     var filteredByMinAreaPolygons = filterByMinArea(merged, minArea);
 
-    var maxAllowedIoU = 0.6;
-    var noSuperpositionPolygons = noSuperposition(filteredByMinAreaPolygons, maxAllowedIoU);
-
-    // new Geojson(noSuperpositionPolygons).saveAsFile("tombes_postprocessed.geojson");
+    // new Geojson(filteredByMinAreaPolygons).saveAsFile("tombes_postprocessed.geojson");
   }
 
   public static Set<LatLonPolygon> invert(Set<LatLonPolygon> noSuperpositionPolygons) {
@@ -82,44 +78,5 @@ public class TombeTest {
       return Optional.empty();
     }
     return Optional.of(latLonPolygon);
-  }
-
-  private Set<LatLonPolygon> noSuperposition(Set<LatLonPolygon> polygons, double maxAllowedIoU) {
-    Map<LatLonPolygon, Boolean> isSuperposedByBiggerPolygon = new HashMap<>();
-    var asList = new ArrayList<>(polygons);
-    for (int i = 0; i < asList.size(); i++) {
-      var pi = asList.get(i);
-      var pip = pi.polygon();
-      for (int j = i + 1; j < asList.size(); j++) {
-        var pj = asList.get(j);
-        var pjp = pj.polygon();
-        if (pip.getArea() < pjp.getArea()) {
-          if (isSuperposed(pip, pjp, maxAllowedIoU)) {
-            isSuperposedByBiggerPolygon.put(pi, true);
-          }
-        } else {
-          if (isSuperposed(pjp, pip, maxAllowedIoU)) {
-            isSuperposedByBiggerPolygon.put(pj, true);
-          }
-        }
-      }
-    }
-
-    Set<LatLonPolygon> res = new HashSet<>();
-    for (var p : polygons) {
-      if (!isSuperposedByBiggerPolygon.getOrDefault(p, false)) {
-        res.add(p);
-      }
-    }
-    return res;
-  }
-
-  private boolean isSuperposed(Polygon smallP, Polygon bigP, double maxAllowedIoU) {
-    try {
-      var inter = smallP.intersection(bigP);
-      return inter.getArea() / smallP.getArea() > maxAllowedIoU;
-    } catch (Exception e) {
-      return false;
-    }
   }
 }

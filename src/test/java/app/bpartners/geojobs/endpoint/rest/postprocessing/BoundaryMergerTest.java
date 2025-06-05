@@ -12,14 +12,14 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 class BoundaryMergerTest {
-  PolygonProvider polygonProvider = new PolygonProvider("/geometry/vgg/bati-map92_modified.json");
+  PolygonProvider polygonProvider = new PolygonProvider("/geometry/vgg/dijon.json");
   private final GeoJsonLoader geoJsonLoader = new GeoJsonLoader();
   TilingConf tilingConf = new TilingConf(20, 1_024);
-  UnionConf unionConf = new UnionConf(50);
-  PrettyConf prettyConf = new PrettyConf(5);
-  MergeConf mergeConf = new MergeConf(1, 1, 2);
+  UnionConf unionConf = new UnionConf(5);
+  PrettyConf prettyConf = new PrettyConf(1);
+  MergeConf mergeConf = new MergeConf(0, 0);
   BoundaryMerger boundaryMerger =
-      new BoundaryMerger(tilingConf, unionConf, mergeConf, prettyConf, 10);
+      new BoundaryMerger(tilingConf, unionConf, mergeConf, prettyConf, 41);
 
   @Test
   void run() {
@@ -32,17 +32,17 @@ class BoundaryMergerTest {
         inverted.stream()
             .map(latLon -> latLon.tiledPolygon(tilingConf))
             .collect(Collectors.toSet());
-    var unified = boundaryMerger.apply(tiledPolygons, BATI_BETON, 0.0);
+    var unified = boundaryMerger.apply(tiledPolygons, BATI_BETON);
 
     // new Geojson(unified).saveAsFile("bati_dijon.geojson");
   }
 
   @Test
   void run_from_vgg() {
-    var tiledPolygons = polygonProvider.getTiledPolygons(true);
+    var tiledPolygons = polygonProvider.getTiledPolygons(false);
 
-    var unified = boundaryMerger.apply(tiledPolygons, BATI_BETON, 0.0);
+    var unified = boundaryMerger.apply(tiledPolygons, BATI_BETON);
 
-    new Geojson(unified).saveAsFile("bati_map_92.geojson");
+    // new Geojson(unified).saveAsFile("castanet-map-87-tree_initial.geojson");
   }
 }

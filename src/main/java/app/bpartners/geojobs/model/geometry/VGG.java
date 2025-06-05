@@ -17,11 +17,13 @@ import lombok.ToString;
 @AllArgsConstructor
 @Builder
 @ToString
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class VGG extends HashMap<String, VGG.Annotation> {
   @AllArgsConstructor
   @Data
   @Builder
   @NoArgsConstructor
+  @JsonIgnoreProperties(ignoreUnknown = true)
   public static class Annotation {
     @JsonProperty("size")
     private Integer size;
