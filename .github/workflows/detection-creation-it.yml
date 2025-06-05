@@ -45,3 +45,53 @@ jobs:
               cat detection-response.json
             exit 1
           fi
+
+      - name: Send POST /detections/*/sync request
+        run: |
+          detection_sync_e2_id=$(uuidgen)
+          echo "Generated detection_sync_e2_id: '$detection_sync_e2_id'"
+          response_file="detection-response.json"
+          
+          http_code=$(curl -s -w "%{http_code}" -X POST "$API_URL/detections/$detection_sync_e2_id/sync" \
+          -H "Content-Type: application/json" \
+          -H "x-api-key: $API_KEY" \
+          --data "@.github/workflows/detection-request-sync.json" \
+          -o "$response_file")
+          
+          echo "HTTP Response Code: $http_code"
+          
+          if [ "${http_code:-0}" -ne 200 ]; then
+            echo "Response Body:"
+              cat $response_file
+            exit 1
+          fi
+          
+          stepName=$(jq -r '.step.name' "$response_file")
+          progression=$(jq -r '.step.status.progression' "$response_file")
+          health=$(jq -r '.step.status.health' "$response_file")
+          vgg_file_url=$(jq -r '.geoJsonZone[0].properties.vgg_file_url' "$response_file")
+          original_image_url=$(jq -r '.geoJsonZone[0].properties.original_image_url' "$response_file")
+          
+          errors=""
+          
+          if [[ "$stepName" != "MACHINE_DETECTION" ]]; then
+            errors+=" detection is not in step MACHINE_DETECTION but : $stepName"$'\n'
+          fi
+
+          if [[ "$progression" != "FINISHED" ]]; then
+            errors+=" detection progression is not FINISHED but : $progression"$'\n'
+          fi
+
+          if [[ "$vgg_file_url" == "null" || -z "$vgg_file_url" ]]; then
+            errors+=" vgg_file_url is actually null or empty"$'\n'
+          fi
+
+          if [[ "$original_image_url" == "null" || -z "$original_image_url" ]]; then
+            errors+=" original_image_url is actually null or empty"$'\n'
+          fi
+          
+          if [[ -n "$errors" ]]; then
+            echo "Response contains unexpected values :"
+            echo "$errors"
+            exit 1
+          fi
