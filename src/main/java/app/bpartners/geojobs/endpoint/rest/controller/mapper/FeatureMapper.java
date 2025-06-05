@@ -83,7 +83,7 @@ public class FeatureMapper {
 
   public static Point getCentroidRestPointFromPolygon(Feature feature) {
     Map<String, Object> properties = feature.getProperties();
-    if (properties == null) {
+    if (properties == null || properties.get("centroid") == null) {
       return null;
     }
     Point point;
