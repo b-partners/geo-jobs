@@ -27,7 +27,7 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Polygon;
 
-public class VGGFactoryTest {
+class VGGFactoryTest {
   private final PolygonProvider polygonProvider =
       new PolygonProvider("/geometry/vgg/pathway.json", null, new IntXY(1024, 1024));
   private final FeatureMapper featureMapper = new FeatureMapper(new GeometryConverter(null));
