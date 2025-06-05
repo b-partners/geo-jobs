@@ -20,7 +20,7 @@ import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.util.*;
 import org.junit.jupiter.api.Test;
 
-public class DetectionVGGRequestServiceTest {
+class DetectionVGGRequestServiceTest {
   DetectionRepository detectionRepositoryMock = mock();
   VGGFactory vggFactory = mock();
   DetectionVGGUpdate detectionVGGUpdate = mock();
@@ -52,7 +52,7 @@ public class DetectionVGGRequestServiceTest {
     var featurePointMock = mock(Feature.class);
     var featureVggResultMock = mock(Feature.class);
     var vggResultMock = mock(VGG.class);
-    Map<Feature, VGG> mapVggFactory = new HashMap<>();
+    var mapVggFactory = new HashMap<Feature, VGG>();
     var newDetectionAfterVggUpdateMock = mock(Detection.class);
     var mockPolygonAsString = "POLYGON ((10.0 10.0))";
 
