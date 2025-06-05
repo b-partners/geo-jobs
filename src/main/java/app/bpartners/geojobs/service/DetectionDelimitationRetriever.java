@@ -39,10 +39,10 @@ public class DetectionDelimitationRetriever implements BiConsumer<Detection, Boo
                         detection.getGeoServerProperties().getGeoServerParameter().getLayers();
                     var restPointFeature =
                         pointExtendedImageRequest.apply(feature, layer, isSynchronous);
-                    var restPoint = restPointFeature.getGeometry().getPoint();
-                    if (restPoint == null) {
+                    if (restPointFeature.getGeometry() == null) {
                       return null;
                     }
+                    var restPoint = restPointFeature.getGeometry().getPoint();
                     var properties =
                         feature.getProperties() == null
                             ? new HashMap<String, Object>()
