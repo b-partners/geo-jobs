@@ -44,6 +44,6 @@ public class PointExtendedImageRequest implements TriFunction<Feature, String, B
     return new Feature()
         .type(FEATURE)
         .properties(new HashMap<>())
-        .geometry(new FeatureGeometry(point));
+        .geometry(point == null ? null : new FeatureGeometry(point));
   }
 }

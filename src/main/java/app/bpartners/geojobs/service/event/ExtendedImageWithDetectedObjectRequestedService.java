@@ -54,7 +54,14 @@ public class ExtendedImageWithDetectedObjectRequestedService
     var detection = detectionRepository.findById(detectionId).orElseThrow();
     var layer = detection.getGeoServerProperties().getGeoServerParameter().getLayers();
     var providedFeatures = detection.getProvidedGeoJsonZone();
-
+    if (providedFeatures.stream()
+        .noneMatch(
+            feature ->
+                feature.getProperties() != null
+                    && feature.getProperties().containsKey("centroid"))) {
+      log.info("Provided geojson not contained inside 3x3 tiles, so ignoring VGG generation");
+      return;
+    }
     var featureWithSurroundingTiles = getFeatureWithSurroundingTiles(providedFeatures);
     var machineDetectedTiles = detectedTileRepository.findAllByZdjJobId(detection.getZdjId());
     var featureWithDetectedObjects =

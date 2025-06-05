@@ -6,21 +6,28 @@ import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
+import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
+import app.bpartners.geojobs.endpoint.rest.model.Point;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.endpoint.rest.model.TileInfoSize;
 import app.bpartners.geojobs.model.DetectedTile;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectType;
+import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Polygon;
 
-public class VGGFactoryTest {
+class VGGFactoryTest {
   private final PolygonProvider polygonProvider =
       new PolygonProvider("/geometry/vgg/pathway.json", null, new IntXY(1024, 1024));
   private final FeatureMapper featureMapper = new FeatureMapper(new GeometryConverter(null));
@@ -151,5 +158,37 @@ public class VGGFactoryTest {
     var filename = actual.keySet().stream().toList().getFirst();
     assertEquals(1, actual.size());
     assertEquals(3, actual.get(filename).getRegions().size());
+  }
+
+  @Test
+  void transform_list_polygons_into_map_ok() {
+    Coordinate[] coordinates =
+        new Coordinate[] {
+          new Coordinate(1, 2), new Coordinate(3, 4), new Coordinate(5, 6), new Coordinate(1, 2)
+        };
+
+    Polygon polygon = geometryFactory.createPolygon(coordinates);
+    PolygonObjectType polygonObjectType = new PolygonObjectType(polygon, DetectableType.TROTTOIR);
+    app.bpartners.geojobs.endpoint.rest.model.Feature feature =
+        new app.bpartners.geojobs.endpoint.rest.model.Feature()
+            .type(app.bpartners.geojobs.endpoint.rest.model.Feature.TypeEnum.FEATURE)
+            .geometry(
+                new FeatureGeometry(
+                    new Point()
+                        .type(Point.TypeEnum.POINT)
+                        .coordinates(List.of(BigDecimal.valueOf(1), BigDecimal.valueOf(2)))))
+            .properties(new HashMap<>(Map.of("id", "feature-1", "zoom", 20)));
+    TiledPixelPolygon tiledPixelPolygon =
+        new TiledPixelPolygon(feature, List.of(polygonObjectType), 10, 20, 20);
+
+    List<TiledPixelPolygon> inputTiledPixelPolygons = List.of(tiledPixelPolygon);
+    Map<app.bpartners.geojobs.endpoint.rest.model.Feature, VGG> result =
+        subject.from(inputTiledPixelPolygons);
+
+    Assertions.assertNotNull(result);
+    assertEquals(1, result.size());
+    Assertions.assertTrue(result.containsKey(feature));
+    VGG actualVgg = result.get(feature);
+    Assertions.assertNotNull(actualVgg);
   }
 }

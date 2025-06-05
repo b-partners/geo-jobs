@@ -15,6 +15,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,9 @@ public class DetectionDelimitationRetriever implements BiConsumer<Detection, Boo
                         detection.getGeoServerProperties().getGeoServerParameter().getLayers();
                     var restPointFeature =
                         pointExtendedImageRequest.apply(feature, layer, isSynchronous);
+                    if (restPointFeature.getGeometry() == null) {
+                      return null;
+                    }
                     var restPoint = restPointFeature.getGeometry().getPoint();
                     var properties =
                         feature.getProperties() == null
@@ -72,6 +76,7 @@ public class DetectionDelimitationRetriever implements BiConsumer<Detection, Boo
                               "Unexpected geometry type: " + geometryType);
                     }
                   })
+              .filter(Objects::nonNull)
               .flatMap(map -> map.entrySet().stream())
               .collect(
                   Collectors.toMap(
@@ -86,12 +91,19 @@ public class DetectionDelimitationRetriever implements BiConsumer<Detection, Boo
                       },
                       Map.Entry::getValue,
                       (v1, v2) -> v1));
+      var detectionBuilder = detection.toBuilder();
+      if (detection.getProvidedGeoJsonZone().stream()
+          .anyMatch(
+              feature ->
+                  feature.getProperties() != null
+                      && feature.getProperties().containsKey("centroid"))) {
+        detectionBuilder.providedGeoJsonZone(
+            detection.getProvidedGeoJsonZone().stream()
+                .map(FeatureMapper::toDomainFeature)
+                .toList());
+      }
       var detectionWithMultiPolygonFromPoint =
-          detection.toBuilder()
-              .providedGeoJsonZone(
-                  detection.getProvidedGeoJsonZone().stream()
-                      .map(FeatureMapper::toDomainFeature)
-                      .toList())
+          detectionBuilder
               .pointDelimitation(new HashMap<>(collectedPointWithItsMultiPolygon))
               .build();
       detectionRepository.save(detectionWithMultiPolygonFromPoint);
