@@ -4,6 +4,8 @@ import static app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.MULTI_
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
@@ -25,6 +27,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LinearRing;
+import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
 
 class VGGFactoryTest {
@@ -166,7 +169,6 @@ class VGGFactoryTest {
         new Coordinate[] {
           new Coordinate(1, 2), new Coordinate(3, 4), new Coordinate(5, 6), new Coordinate(1, 2)
         };
-
     Polygon polygon = geometryFactory.createPolygon(coordinates);
     PolygonObjectType polygonObjectType = new PolygonObjectType(polygon, DetectableType.TROTTOIR);
     app.bpartners.geojobs.endpoint.rest.model.Feature feature =
@@ -182,8 +184,13 @@ class VGGFactoryTest {
         new TiledPixelPolygon(feature, List.of(polygonObjectType), 10, 20, 20);
 
     List<TiledPixelPolygon> inputTiledPixelPolygons = List.of(tiledPixelPolygon);
+    MultiPolygon roofLatLonMultiPolygonMock = mock(MultiPolygon.class);
+    when(roofLatLonMultiPolygonMock.getArea()).thenReturn(1000.0);
+    when(roofLatLonMultiPolygonMock.getNumGeometries()).thenReturn(1);
+    when(roofLatLonMultiPolygonMock.getGeometryN(0)).thenReturn(polygon);
+
     Map<app.bpartners.geojobs.endpoint.rest.model.Feature, VGG> result =
-        subject.from(inputTiledPixelPolygons);
+        subject.from(inputTiledPixelPolygons, roofLatLonMultiPolygonMock);
 
     Assertions.assertNotNull(result);
     assertEquals(1, result.size());

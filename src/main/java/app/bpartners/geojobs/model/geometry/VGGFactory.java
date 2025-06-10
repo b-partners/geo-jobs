@@ -8,6 +8,7 @@ import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.model.DetectedTile;
+import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.model.geometry.area.AreaRateComputerFacade;
 import java.time.Instant;
 import java.util.*;
@@ -17,6 +18,8 @@ import lombok.SneakyThrows;
 import net.sf.geographiclib.Geodesic;
 import net.sf.geographiclib.PolygonArea;
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
@@ -50,7 +53,8 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
     return vgg;
   }
 
-  public Map<Feature, VGG> from(List<TiledPixelPolygon> tiledPixelPolygons) {
+  public Map<Feature, VGG> from(
+      List<TiledPixelPolygon> tiledPixelPolygons, MultiPolygon roofLatLonMultiPolygon) {
     Map<Feature, List<TiledPixelPolygon>> tiledPixelPolygonFilteredByPoint =
         tiledPixelPolygons.stream().collect(Collectors.groupingBy(TiledPixelPolygon::point));
     var vggMap = new HashMap<Feature, VGG>();
@@ -91,19 +95,27 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
                         .toList();
 
                 Map<String, VGG.Annotation.Region> regions = new HashMap<>();
+
                 projectedPolygonObjectTypes.forEach(
                     polygonObjectType -> {
                       var detectedObjectPolygon = polygonObjectType.polygon();
-                      // TODO : compute area using roofGeometryAsTile
                       var label = polygonObjectType.objectType();
+                      var rate =
+                          format(
+                              (polygonObjectType.polygon().getArea()
+                                      / roofLatLonMultiPolygon.getArea())
+                                  * 100);
                       regions.put(
                           String.valueOf(System.nanoTime()),
-                          toVGGRegion(label.name(), null, null, detectedObjectPolygon));
+                          toVGGRegion(label.name(), null, rate, detectedObjectPolygon));
                     });
+
+                var properties =
+                    computeProperties(roofLatLonMultiPolygon, originalPolygonObjectTypes);
                 var annotation =
                     VGG.Annotation.builder()
                         .filename(key)
-                        .properties(new HashMap<>())
+                        .properties(properties)
                         .regions(regions)
                         .build();
                 vgg.putIfAbsent(key, annotation);
@@ -112,6 +124,28 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
           vggMap.put(featurePoint, vgg);
         });
     return vggMap;
+  }
+
+  private HashMap<String, Object> computeProperties(
+      Geometry roofLatLonMultiPolygon, List<PolygonObjectType> originalPolygonObjectTypes) {
+    var rateComputer =
+        new AreaRateComputerFacade(roofLatLonMultiPolygon, originalPolygonObjectTypes);
+    var usureRate = rateComputer.getUsureAreaRate();
+    var humiditeRate = rateComputer.getHumidityAreaRate();
+    var moisissureRate = rateComputer.getMoisissureAreaRate();
+    var globalRateValue = rateComputer.getGlobalRate();
+    var globalRateType = rateComputer.getRate();
+
+    var properties = new HashMap<String, Object>();
+
+    properties.put("roof_area_in_m2", computeRoofArea(roofLatLonMultiPolygon));
+    properties.put("usure_rate", usureRate);
+    properties.put("humidite_rate", humiditeRate);
+    properties.put("moisissure_rate", moisissureRate);
+    properties.put("global_rate_value", globalRateValue);
+    properties.put("global_rate_type", globalRateType);
+
+    return properties;
   }
 
   private Polygon projectPolygonsToCompositeImage(
@@ -211,13 +245,26 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
 
   // Mostly ChatGPT generated
   @SneakyThrows
-  private double computeRoofArea(Polygon polygon) {
+  private double computeRoofArea(Geometry geometry) {
+    Polygon polygon;
+    if (geometry instanceof Polygon) {
+      polygon = (Polygon) geometry;
+    } else if (geometry instanceof MultiPolygon multiPolygon) {
+      if (multiPolygon.getNumGeometries() != 1) {
+        throw new IllegalArgumentException("RoofMultiPolygon must have exactly one geometry");
+      }
+      polygon = (Polygon) multiPolygon.getGeometryN(0);
+    } else {
+      throw new NotImplementedException(
+          "Provided geometry instance not supported to compute roof area in square meter : "
+              + geometry.getGeometryType());
+    }
+
     var coords = polygon.getCoordinates();
     PolygonArea poly = new PolygonArea(Geodesic.WGS84, false);
     for (var point : coords) {
       poly.AddPoint(point.x, point.y);
     }
-    // Calculer la surface en m²
     return format(poly.Compute(false, false).area);
   }
 }

@@ -6,9 +6,11 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.model.DetectedTile;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
+import app.bpartners.geojobs.model.geometry.PolygonObjectType;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import java.util.List;
 import org.locationtech.jts.geom.Polygon;
 
 public class UsureAreaRateComputer extends AreaRateComputer {
@@ -16,10 +18,18 @@ public class UsureAreaRateComputer extends AreaRateComputer {
   private final FeatureMapper featureMapper = new FeatureMapper(new GeometryConverter(null));
   private final double roofArea;
   private final DetectedTile tile;
+  private final List<PolygonObjectType> polygonObjectTypes;
 
   public UsureAreaRateComputer(double roofArea, DetectedTile tile) {
     this.roofArea = roofArea;
     this.tile = tile;
+    this.polygonObjectTypes = null;
+  }
+
+  public UsureAreaRateComputer(double roofArea, List<PolygonObjectType> polygonObjectTypes) {
+    this.roofArea = roofArea;
+    this.polygonObjectTypes = polygonObjectTypes;
+    this.tile = null;
   }
 
   @Override
@@ -28,16 +38,26 @@ public class UsureAreaRateComputer extends AreaRateComputer {
       throw new BadRequestException(
           "Roof area cannot be zero or negative, current value" + roofArea);
     }
-
-    double computedArea =
-        tile.getDetectedObjects().stream()
-            .filter(o -> o.getDetectableObjectType().equals(detectableType))
-            .map(DetectedObject::getFeature)
-            .map(featureMapper::toDomain)
-            .mapToDouble(Polygon::getArea)
-            .sum();
-
-    return (getMalus(detectableType) * computedArea) / roofArea;
+    if (tile == null && polygonObjectTypes != null) {
+      double computedArea =
+          polygonObjectTypes.stream()
+              .filter(o -> detectableType.equals(o.objectType()))
+              .map(PolygonObjectType::polygon)
+              .mapToDouble(Polygon::getArea)
+              .sum();
+      return (getMalus(detectableType) * computedArea) / roofArea;
+    } else if (tile != null) {
+      double computedArea =
+          tile.getDetectedObjects().stream()
+              .filter(o -> o.getDetectableObjectType().equals(detectableType))
+              .map(DetectedObject::getFeature)
+              .map(featureMapper::toDomain)
+              .mapToDouble(Polygon::getArea)
+              .sum();
+      return (getMalus(detectableType) * computedArea) / roofArea;
+    }
+    throw new IllegalStateException(
+        "Both tile and polygonObjectTypes can not be null to compute UsureAreaRate");
   }
 
   private int getMalus(DetectableType detectableType) {
