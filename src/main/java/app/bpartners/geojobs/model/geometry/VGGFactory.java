@@ -1,6 +1,9 @@
 package app.bpartners.geojobs.model.geometry;
 
+import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.model.geometry.area.AreaRateComputerFacade.*;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
+import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
@@ -80,13 +83,50 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
     Map<Feature, List<TiledPixelPolygon>> tiledPixelPolygonFilteredByPoint =
         tiledPixelPolygons.stream().collect(Collectors.groupingBy(TiledPixelPolygon::point));
     var vggMap = new HashMap<Feature, VGG>();
+    int minTileXGlobal =
+        tiledPixelPolygons.stream().mapToInt(TiledPixelPolygon::tileX).min().orElseThrow();
+    int minTileYGlobal =
+        tiledPixelPolygons.stream().mapToInt(TiledPixelPolygon::tileY).min().orElseThrow();
+    int zoom =
+        tiledPixelPolygons.stream().mapToInt(TiledPixelPolygon::zoom).findAny().orElseThrow();
+
+    // TODO: convert provided into pixel
+    var roofPixelPolygon =
+        tiledPixelPolygons.stream()
+            .map(
+                tiledPolygon -> {
+                  var toiturePolygonList =
+                      tiledPolygon.polygons().stream()
+                          .filter(
+                              polygonObjectType ->
+                                  TOITURE_REVETEMENT.equals(polygonObjectType.objectType()))
+                          .toList();
+                  return toiturePolygonList.stream()
+                      .map(
+                          polygonObjectType -> {
+                            var projectedPolygonsToCompositeImage =
+                                projectPolygonsToCompositeImage(
+                                    tiledPolygon.tileX(),
+                                    tiledPolygon.tileY(),
+                                    minTileXGlobal,
+                                    minTileYGlobal,
+                                    DEFAULT_IMG_SIZE,
+                                    polygonObjectType.polygon());
+                            return geometryFactory.createMultiPolygon(
+                                new Polygon[] {projectedPolygonsToCompositeImage});
+                          })
+                      .reduce(unifyMultiPolygon())
+                      .orElseThrow();
+                })
+            .reduce(unifyMultiPolygon())
+            .orElseThrow();
 
     tiledPixelPolygonFilteredByPoint.forEach(
         (featurePoint, tiledPolygons) -> {
           var vgg = new VGG();
-          int minTileX =
+          int minTileXForPoint =
               tiledPolygons.stream().mapToInt(TiledPixelPolygon::tileX).min().orElseThrow();
-          int minTileY =
+          int minTileYForPoint =
               tiledPolygons.stream().mapToInt(TiledPixelPolygon::tileY).min().orElseThrow();
           tiledPolygons.forEach(
               tiledPolygon -> {
@@ -106,8 +146,8 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
                                   projectPolygonsToCompositeImage(
                                       tiledPolygon.tileX(),
                                       tiledPolygon.tileY(),
-                                      minTileX,
-                                      minTileY,
+                                      minTileXForPoint,
+                                      minTileYForPoint,
                                       DEFAULT_IMG_SIZE,
                                       polygonObjectType.polygon());
                               return new PolygonObjectType(
@@ -124,16 +164,25 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
                       var label = polygonObjectType.objectType();
                       var rate =
                           format(
-                              (polygonObjectType.polygon().getArea()
-                                      / roofLatLonMultiPolygon.getArea())
+                              (polygonObjectType.polygon().getArea() / roofPixelPolygon.getArea())
                                   * 100);
                       regions.put(
                           String.valueOf(System.nanoTime()),
                           toVGGRegion(label.name(), null, rate, detectedObjectPolygon));
                     });
-
+                var originTileCoords = new IntXY(minTileXGlobal, minTileYGlobal);
+                var tilingConf = new TilingConf(zoom, DEFAULT_IMG_SIZE);
+                var convertedLatLonRoofPolygon =
+                    new TiledPolygon(
+                            (Polygon) roofLatLonMultiPolygon.getGeometryN(0),
+                            null,
+                            originTileCoords,
+                            tilingConf)
+                        .latLonPolygon()
+                        .polygon();
                 var properties =
-                    computeProperties(roofLatLonMultiPolygon, originalPolygonObjectTypes);
+                    computeProperties(
+                        convertedLatLonRoofPolygon, roofPixelPolygon, originalPolygonObjectTypes);
                 var annotation =
                     VGG.Annotation.builder()
                         .filename(key)
@@ -149,9 +198,10 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
   }
 
   private HashMap<String, Object> computeProperties(
-      Geometry roofLatLonMultiPolygon, List<PolygonObjectType> originalPolygonObjectTypes) {
-    var rateComputer =
-        new AreaRateComputerFacade(roofLatLonMultiPolygon, originalPolygonObjectTypes);
+      Geometry lonLatRoofPolygon,
+      Geometry pixelRoofPolygon,
+      List<PolygonObjectType> originalPolygonObjectTypes) {
+    var rateComputer = new AreaRateComputerFacade(pixelRoofPolygon, originalPolygonObjectTypes);
     var usureRate = rateComputer.getUsureAreaRate();
     var humiditeRate = rateComputer.getHumidityAreaRate();
     var moisissureRate = rateComputer.getMoisissureAreaRate();
@@ -160,7 +210,7 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
 
     var properties = new HashMap<String, Object>();
 
-    properties.put("roof_area_in_m2", computeRoofArea(roofLatLonMultiPolygon));
+    properties.put("roof_area_in_m2", computeRoofArea(lonLatRoofPolygon));
     properties.put("usure_rate", usureRate);
     properties.put("humidite_rate", humiditeRate);
     properties.put("moisissure_rate", moisissureRate);
