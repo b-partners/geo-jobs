@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.endpoint.rest.postprocessing;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
+import static app.bpartners.geojobs.model.geometry.route.ObjectType.green_space;
 import static java.lang.Runtime.getRuntime;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import static java.util.stream.Collectors.toSet;
@@ -153,10 +154,22 @@ public class BoundaryMerger
   }
 
   private Set<LatLonPolygon> merge(Set<TiledPolygon> polygons, IntXY origin) {
+    var type = polygons.iterator().next().type();
     var tiledPolygonsWithOffset =
         polygons.stream().map(tile -> withOffset(tile, origin, tilingConf)).toList();
 
     var result = new HashSet<TiledPolygon>();
+
+    if (type.equals(green_space)) {
+      var toUnify = tiledPolygonsWithOffset.stream().map(TiledPolygon::polygon).collect(toSet());
+      var prettyPolygons = prettier.apply(toUnify);
+      var unified = new UnifiedRoute(prettyPolygons, unionConf).unified();
+      for (var p : unified) {
+        result.add(new TiledPolygon(p, type, origin, tilingConf));
+      }
+      return result.stream().map(tp -> tp.latLonPolygon(origin)).collect(Collectors.toSet());
+    }
+
     var alreadyUnified = new HashSet<Integer>();
     var progress = 0;
 
