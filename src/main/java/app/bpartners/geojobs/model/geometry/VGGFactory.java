@@ -5,7 +5,6 @@ import static app.bpartners.geojobs.model.geometry.area.AreaRateComputerFacade.*
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
 import static java.util.UUID.randomUUID;
-import static net.sf.geographiclib.Geodesic.WGS84;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
@@ -14,14 +13,13 @@ import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.model.DetectedTile;
 import app.bpartners.geojobs.model.geometry.area.AreaRateComputerFacade;
+import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.TileCoordinatesPolygonIntersection;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
-import lombok.SneakyThrows;
-import net.sf.geographiclib.PolygonArea;
 import org.locationtech.jts.geom.*;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
@@ -33,6 +31,7 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
   private final FeatureMapper featureMapper;
   private final TileCoordinatesPolygonIntersection tilePolygonIntersection;
   private final GeometryConverter geometryConverter;
+  private final GeometrySquareMeterArea geometrySquareMeterArea;
 
   @Override
   public VGG convert(Set<Polygon> polygons) {
@@ -217,7 +216,7 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
 
     var properties = new HashMap<String, Object>();
 
-    properties.put("roof_area_in_m2", computeRoofArea(lonLatRoofPolygon));
+    properties.put("roof_area_in_m2", geometrySquareMeterArea.apply(lonLatRoofPolygon));
     properties.put("usure_rate", usureRate);
     properties.put("humidite_rate", humiditeRate);
     properties.put("moisissure_rate", moisissureRate);
@@ -261,7 +260,7 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
             .latLonPolygon()
             .polygon();
     System.out.println(roofGeometryAsTile);
-    var roofAreaInM2 = computeRoofArea(roofGeometryAsTile);
+    var roofAreaInM2 = geometrySquareMeterArea.apply(roofGeometryAsTile);
     for (var detectedTile : detectedTiles) {
       var rateComputer = new AreaRateComputerFacade(roofGeometry, detectedTile);
       var detectedObjects = detectedTile.getDetectedObjects();
@@ -320,47 +319,5 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
                 .allPointsY(allY)
                 .build())
         .build();
-  }
-
-  // Mostly ChatGPT generated
-  @SneakyThrows
-  private double computeRoofArea(Geometry geometry) {
-    if (!(geometry instanceof Polygon || geometry instanceof MultiPolygon)) {
-      throw new IllegalArgumentException("Geometry must be Polygon or MultiPolygon");
-    }
-
-    PolygonArea polyArea = new PolygonArea(WGS84, false);
-
-    if (geometry instanceof Polygon polygon) {
-      addPolygon(polygon, polyArea);
-    } else if (geometry instanceof MultiPolygon multiPolygon) {
-      for (int i = 0; i < multiPolygon.getNumGeometries(); i++) {
-        Polygon p = (Polygon) multiPolygon.getGeometryN(i);
-        addPolygon(p, polyArea);
-      }
-    } else {
-      throw new IllegalArgumentException(
-          "Geometry must be Polygon or MultiPolygon but actual geometry is " + geometry);
-    }
-
-    // Retourne l’aire en m²
-    return polyArea.Compute(false, false).area;
-  }
-
-  private void addPolygon(Polygon polygon, PolygonArea polyArea) {
-    // Ajouter les points de l'enveloppe extérieure
-    addRing(polygon.getExteriorRing(), polyArea);
-
-    // Ajouter les trous éventuels (anneaux intérieurs)
-    for (int i = 0; i < polygon.getNumInteriorRing(); i++) {
-      addRing(polygon.getInteriorRingN(i), polyArea);
-    }
-  }
-
-  private void addRing(LineString ring, PolygonArea polyArea) {
-    Coordinate[] coords = ring.getCoordinates();
-    for (Coordinate coord : coords) {
-      polyArea.AddPoint(coord.y, coord.x); // Attention : GeographicLib attend (lat, lon)
-    }
   }
 }
