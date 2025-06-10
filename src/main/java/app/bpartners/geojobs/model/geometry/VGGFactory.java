@@ -126,6 +126,9 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
                         "No roof pixel polygon retrieved from roofLatLonMultiPolygon : "
                             + roofLatLonMultiPolygon));
 
+    Map<Feature, List<PolygonObjectType>> tiledPixelAllPolygonsByPoint =
+        retrieveAllProjectedObjectsByFeature(tiledPixelPolygonFilteredByPoint);
+
     tiledPixelPolygonFilteredByPoint.forEach(
         (featurePoint, tiledPolygons) -> {
           var vgg = new VGG();
@@ -186,9 +189,14 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
                           String.valueOf(System.nanoTime()),
                           toVGGRegion(label.name(), null, rate, detectedObjectPolygon));
                     });
+
+                // TODO: improve duplicated loop performance
+                var allPolygonObjectTypes =
+                    tiledPixelAllPolygonsByPoint.getOrDefault(featurePoint, null);
+
                 var properties =
                     computeProperties(
-                        roofLatLonMultiPolygon, roofPixelPolygon, originalPolygonObjectTypes);
+                        roofLatLonMultiPolygon, roofPixelPolygon, allPolygonObjectTypes);
                 var annotation =
                     VGG.Annotation.builder()
                         .filename(key)
@@ -201,6 +209,55 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
           vggMap.put(featurePoint, vgg);
         });
     return vggMap;
+  }
+
+  private Map<Feature, List<PolygonObjectType>> retrieveAllProjectedObjectsByFeature(
+      Map<Feature, List<TiledPixelPolygon>> tiledPixelPolygonFilteredByPoint) {
+    return tiledPixelPolygonFilteredByPoint.entrySet().stream()
+        .map(
+            entry -> {
+              var feature = entry.getKey();
+              var tiledPolygons = entry.getValue();
+
+              int minTileXForPoint =
+                  tiledPolygons.stream().mapToInt(TiledPixelPolygon::tileX).min().orElseThrow();
+              int minTileYForPoint =
+                  tiledPolygons.stream().mapToInt(TiledPixelPolygon::tileY).min().orElseThrow();
+
+              var projectedPolygonObjectTypes =
+                  tiledPolygons.stream()
+                      .map(
+                          tiledPolygon ->
+                              tiledPolygon.polygons().stream()
+                                  .map(
+                                      polygonObjectType -> {
+                                        var projectedPolygonsToCompositeImage =
+                                            projectPolygonsToCompositeImage(
+                                                tiledPolygon.tileX(),
+                                                tiledPolygon.tileY(),
+                                                minTileXForPoint,
+                                                minTileYForPoint,
+                                                DEFAULT_IMG_SIZE,
+                                                polygonObjectType.polygon());
+                                        return new PolygonObjectType(
+                                            projectedPolygonsToCompositeImage,
+                                            polygonObjectType.objectType());
+                                      })
+                                  .toList())
+                      .flatMap(List::stream)
+                      .toList();
+              return Map.of(feature, projectedPolygonObjectTypes);
+            })
+        .flatMap(map -> map.entrySet().stream())
+        .collect(
+            Collectors.toMap(
+                Map.Entry::getKey,
+                Map.Entry::getValue,
+                (list1, list2) -> {
+                  List<PolygonObjectType> merged = new ArrayList<>(list1);
+                  merged.addAll(list2);
+                  return merged;
+                }));
   }
 
   private HashMap<String, Object> computeProperties(
