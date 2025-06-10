@@ -2,6 +2,7 @@ package app.bpartners.geojobs.model.geometry;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.model.geometry.area.AreaRateComputerFacade.*;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
 import static java.util.UUID.randomUUID;
 
@@ -91,8 +92,6 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
         tiledPixelPolygons.stream().mapToInt(TiledPixelPolygon::tileX).min().orElseThrow();
     int minTileYGlobal =
         tiledPixelPolygons.stream().mapToInt(TiledPixelPolygon::tileY).min().orElseThrow();
-    int zoom =
-        tiledPixelPolygons.stream().mapToInt(TiledPixelPolygon::zoom).findAny().orElseThrow();
     var tileCoordinates =
         tiledPixelPolygons.stream()
             .map(
@@ -151,6 +150,9 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
                 List<PolygonObjectType> originalPolygonObjectTypes = tiledPolygon.polygons();
                 var projectedPolygonObjectTypes =
                     originalPolygonObjectTypes.stream()
+                        .filter(
+                            polygonObjectType ->
+                                !TOITURE_REVETEMENT.equals(polygonObjectType.objectType()))
                         .map(
                             polygonObjectType -> {
                               var projectedPolygonsToCompositeImage =
@@ -168,7 +170,15 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
                         .toList();
 
                 Map<String, VGG.Annotation.Region> regions = new HashMap<>();
-
+                if (!roofPixelPolygon.isEmpty()) {
+                  regions.put(
+                      String.valueOf(System.nanoTime()),
+                      toVGGRegion(
+                          TOITURE_REVETEMENT.name(),
+                          null,
+                          null,
+                          (Polygon) roofPixelPolygon.getGeometryN(0)));
+                }
                 projectedPolygonObjectTypes.forEach(
                     polygonObjectType -> {
                       var detectedObjectPolygon = polygonObjectType.polygon();
@@ -181,19 +191,9 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
                           String.valueOf(System.nanoTime()),
                           toVGGRegion(label.name(), null, rate, detectedObjectPolygon));
                     });
-                var originTileCoords = new IntXY(minTileXForPoint, minTileYForPoint);
-                var tilingConf = new TilingConf(zoom, DEFAULT_IMG_SIZE);
-                var convertedLatLonRoofPolygon =
-                    new TiledPolygon(
-                            (Polygon) roofLatLonMultiPolygon.getGeometryN(0),
-                            null,
-                            originTileCoords,
-                            tilingConf)
-                        .latLonPolygon()
-                        .polygon();
                 var properties =
                     computeProperties(
-                        convertedLatLonRoofPolygon, roofPixelPolygon, originalPolygonObjectTypes);
+                        roofLatLonMultiPolygon, roofPixelPolygon, originalPolygonObjectTypes);
                 var annotation =
                     VGG.Annotation.builder()
                         .filename(key)
