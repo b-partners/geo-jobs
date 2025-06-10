@@ -135,6 +135,20 @@ public class GeometryConverter {
     return result;
   }
 
+  public Polygon convertToPolygon(List<List<BigDecimal>> points) {
+    if (points == null || points.size() < 4) {
+      throw new IllegalArgumentException("Polygon must contain at least 4 points.");
+    }
+
+    Coordinate[] coordinates =
+        points.stream()
+            .map(pair -> new Coordinate(pair.get(0).doubleValue(), pair.get(1).doubleValue()))
+            .toArray(Coordinate[]::new);
+
+    LinearRing shell = geometryFactory.createLinearRing(coordinates);
+    return geometryFactory.createPolygon(shell);
+  }
+
   public MultiPolygon apply(List<List<List<List<BigDecimal>>>> multiPolygonData) {
     // multiPolygonData = List de Polygones
     Polygon[] polygons = new Polygon[multiPolygonData.size()];

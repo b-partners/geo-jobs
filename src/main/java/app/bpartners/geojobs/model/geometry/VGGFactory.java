@@ -2,17 +2,19 @@ package app.bpartners.geojobs.model.geometry;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.model.geometry.area.AreaRateComputerFacade.*;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.model.DetectedTile;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.model.geometry.area.AreaRateComputerFacade;
+import app.bpartners.geojobs.service.TileCoordinatesPolygonIntersection;
+import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -32,6 +34,8 @@ import org.springframework.stereotype.Component;
 public class VGGFactory implements Converter<Set<Polygon>, VGG> {
   private static final int DEFAULT_IMG_SIZE = 1024;
   private final FeatureMapper featureMapper;
+  private final TileCoordinatesPolygonIntersection tilePolygonIntersection;
+  private final GeometryConverter geometryConverter;
 
   @Override
   public VGG convert(Set<Polygon> polygons) {
@@ -89,37 +93,44 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
         tiledPixelPolygons.stream().mapToInt(TiledPixelPolygon::tileY).min().orElseThrow();
     int zoom =
         tiledPixelPolygons.stream().mapToInt(TiledPixelPolygon::zoom).findAny().orElseThrow();
-
-    // TODO: convert provided into pixel
-    var roofPixelPolygon =
+    var tileCoordinates =
         tiledPixelPolygons.stream()
             .map(
-                tiledPolygon -> {
-                  var toiturePolygonList =
-                      tiledPolygon.polygons().stream()
-                          .filter(
-                              polygonObjectType ->
-                                  TOITURE_REVETEMENT.equals(polygonObjectType.objectType()))
-                          .toList();
-                  return toiturePolygonList.stream()
-                      .map(
-                          polygonObjectType -> {
-                            var projectedPolygonsToCompositeImage =
-                                projectPolygonsToCompositeImage(
-                                    tiledPolygon.tileX(),
-                                    tiledPolygon.tileY(),
-                                    minTileXGlobal,
-                                    minTileYGlobal,
-                                    DEFAULT_IMG_SIZE,
-                                    polygonObjectType.polygon());
-                            return geometryFactory.createMultiPolygon(
-                                new Polygon[] {projectedPolygonsToCompositeImage});
-                          })
-                      .reduce(unifyMultiPolygon())
-                      .orElseThrow();
+                tiledPixelPolygon ->
+                    new TileCoordinates()
+                        .x(tiledPixelPolygon.tileX())
+                        .y(tiledPixelPolygon.tileY())
+                        .z(tiledPixelPolygon.zoom()))
+            .toList();
+    var roofPixelPolygon =
+        tileCoordinates.stream()
+            .map(
+                coordinates -> {
+                  var intersectionCoordinates =
+                      tilePolygonIntersection.intersects(roofLatLonMultiPolygon, coordinates);
+                  if (intersectionCoordinates.isEmpty()) {
+                    return null;
+                  }
+                  var roofPolygonFromTile =
+                      geometryConverter.convertToPolygon(intersectionCoordinates);
+                  var projectedRoofPolygonToCompositeImage =
+                      projectPolygonsToCompositeImage(
+                          coordinates.getX(),
+                          coordinates.getY(),
+                          minTileXGlobal,
+                          minTileYGlobal,
+                          DEFAULT_IMG_SIZE,
+                          roofPolygonFromTile);
+                  return geometryFactory.createMultiPolygon(
+                      new Polygon[] {projectedRoofPolygonToCompositeImage});
                 })
+            .filter(Objects::nonNull)
             .reduce(unifyMultiPolygon())
-            .orElseThrow();
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "No roof pixel polygon retrieved from roofLatLonMultiPolygon : "
+                            + roofLatLonMultiPolygon));
 
     tiledPixelPolygonFilteredByPoint.forEach(
         (featurePoint, tiledPolygons) -> {
@@ -170,7 +181,7 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
                           String.valueOf(System.nanoTime()),
                           toVGGRegion(label.name(), null, rate, detectedObjectPolygon));
                     });
-                var originTileCoords = new IntXY(minTileXGlobal, minTileYGlobal);
+                var originTileCoords = new IntXY(minTileXForPoint, minTileYForPoint);
                 var tilingConf = new TilingConf(zoom, DEFAULT_IMG_SIZE);
                 var convertedLatLonRoofPolygon =
                     new TiledPolygon(

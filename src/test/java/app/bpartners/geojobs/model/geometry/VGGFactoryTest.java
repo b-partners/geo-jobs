@@ -21,6 +21,8 @@ import app.bpartners.geojobs.repository.model.detection.DetectableObjectType;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
+import app.bpartners.geojobs.service.GeometryPixelProjector;
+import app.bpartners.geojobs.service.TileCoordinatesPolygonIntersection;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.io.File;
 import java.io.IOException;
@@ -42,9 +44,12 @@ class VGGFactoryTest {
   private final PolygonProvider polygonProvider =
       new PolygonProvider("/geometry/vgg/pathway.json", null, new IntXY(1024, 1024));
   GeometryConverter geometryConverter = new GeometryConverter(null);
+  TileCoordinatesPolygonIntersection tileCoordinatesPolygonIntersection =
+      new TileCoordinatesPolygonIntersection(new GeometryPixelProjector(), geometryConverter);
   private final FeatureMapper featureMapper = new FeatureMapper(geometryConverter);
 
-  private final VGGFactory subject = new VGGFactory(featureMapper);
+  private final VGGFactory subject =
+      new VGGFactory(featureMapper, tileCoordinatesPolygonIntersection, geometryConverter);
 
   public static DetectedTile detectedTile() {
     String humiditeGeometry =
