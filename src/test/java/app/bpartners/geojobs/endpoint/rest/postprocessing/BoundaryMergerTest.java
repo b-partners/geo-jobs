@@ -1,118 +1,48 @@
 package app.bpartners.geojobs.endpoint.rest.postprocessing;
 
 import static app.bpartners.geojobs.endpoint.rest.postprocessing.tombe.TombeTest.invert;
-import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
-import static org.junit.jupiter.api.Assertions.*;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.BATI_BETON;
 
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
-import app.bpartners.geojobs.model.geometry.IntXY;
-import app.bpartners.geojobs.model.geometry.LineInt;
+import app.bpartners.geojobs.model.geometry.PolygonProvider;
 import app.bpartners.geojobs.model.geometry.route.PrettyConf;
 import app.bpartners.geojobs.model.geometry.route.UnionConf;
 import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import org.junit.jupiter.api.Disabled;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Polygon;
 
 class BoundaryMergerTest {
+  PolygonProvider polygonProvider = new PolygonProvider("/geometry/vgg/dijon.json");
   private final GeoJsonLoader geoJsonLoader = new GeoJsonLoader();
   TilingConf tilingConf = new TilingConf(20, 1_024);
-  UnionConf unionConf = new UnionConf(1);
+  UnionConf unionConf = new UnionConf(5);
   PrettyConf prettyConf = new PrettyConf(1);
-  MergeConf mergeConf = new MergeConf(1, 1, 2);
+  MergeConf mergeConf = new MergeConf(0, 0);
   BoundaryMerger boundaryMerger =
-      new BoundaryMerger(tilingConf, unionConf, prettyConf, mergeConf, 10);
+      new BoundaryMerger(tilingConf, unionConf, mergeConf, prettyConf, 41);
 
   @Test
-  @Disabled("for local run only")
-  void boundary_merge_on_bati() throws IOException, URISyntaxException {
-    var geojsonFile =
-        new File(
-            getClass()
-                .getResource("/ivandry/map95_v2_0.05_fusion_cimetiere_vgg_annotations.json.geojson")
-                .getFile());
+  void run() {
+    var geojsonFile = new File(getClass().getResource("/ivandry/bati.geojson").getFile());
 
-    var latLonPolygons = geoJsonLoader.apply(geojsonFile);
-    var unified = boundaryMerger.apply(latLonPolygons);
+    var polygons = geoJsonLoader.apply(geojsonFile);
+    var inverted = invert(polygons);
 
-    var expectedURI = Paths.get(getClass().getResource("/ivandry/bati_merged.geojson").toURI());
-    var expected = Files.readString(expectedURI);
+    var tiledPolygons =
+        inverted.stream()
+            .map(latLon -> latLon.tiledPolygon(tilingConf))
+            .collect(Collectors.toSet());
+    var unified = boundaryMerger.apply(tiledPolygons, BATI_BETON);
 
-    new Geojson(invert(unified))
-        .saveAsFile("map95_v2_0.05_fusion_cimetiere_vgg_annotations_merged.geojson");
-    // assertEquals(expected, new Geojson(unified).stringValue());
+    // new Geojson(unified).saveAsFile("bati_dijon.geojson");
   }
 
   @Test
-  void is_collinear() {
-    var line = new LineInt(new IntXY(10, 10), new IntXY(60, 60));
-    var sameDirectionWithLine = new LineInt(new IntXY(0, 0), new IntXY(50, 50));
-    var oppositeOfLine = new LineInt(new IntXY(60, 60), new IntXY(10, 10));
-    var nonCollinearWithLine = new LineInt(new IntXY(10, 10), new IntXY(60, 50));
-    var nullLine = new LineInt(new IntXY(10, 10), new IntXY(10, 10));
-    var collinearWithLine = new LineInt(new IntXY(100, 100), new IntXY(150, 150));
+  void run_from_vgg() {
+    var tiledPolygons = polygonProvider.getTiledPolygons(false);
 
-    assertTrue(boundaryMerger.areVectorsCollinear(line, line));
-    assertTrue(boundaryMerger.areVectorsCollinear(line, sameDirectionWithLine));
-    assertTrue(boundaryMerger.areVectorsCollinear(line, oppositeOfLine));
-    assertFalse(boundaryMerger.areVectorsCollinear(line, nonCollinearWithLine));
-    assertTrue(boundaryMerger.areVectorsCollinear(line, nullLine));
-    assertTrue(boundaryMerger.areVectorsCollinear(nullLine, nullLine));
-    assertTrue(boundaryMerger.areVectorsCollinear(line, collinearWithLine));
-  }
+    var unified = boundaryMerger.apply(tiledPolygons, BATI_BETON);
 
-  @Test
-  void is_collinear_enough() {
-    var polyA = rectangle(0, 0, 10, 10);
-    var polyB = rectangle(0, 20, 10, 30);
-    var polyD = rectangle(15, 0, 25, 10);
-    var polyE = rectangle(0, 0, 10, 10);
-    var polyF =
-        geometryFactory.createPolygon(
-            new Coordinate[] {
-              new Coordinate(0, 0),
-              new Coordinate(10, 0),
-              new Coordinate(5, 5),
-              new Coordinate(0, 0)
-            });
-    var polyG =
-        geometryFactory.createPolygon(
-            new Coordinate[] {
-              new Coordinate(0, 0),
-              new Coordinate(5, 5),
-              new Coordinate(10, 0),
-              new Coordinate(0, 0)
-            });
-    var polyH = rectangle(0, 0, 10, 10);
-    var polyI = rectangle(0, -20, 10, -10);
-
-    assertTrue(boundaryMerger.isCollinearEnough(polyA, polyB));
-    assertTrue(boundaryMerger.isCollinearEnough(polyA, polyD));
-    assertTrue(boundaryMerger.isCollinearEnough(polyE, polyF));
-    assertTrue(boundaryMerger.isCollinearEnough(polyG, polyG));
-    assertTrue(boundaryMerger.isCollinearEnough(polyH, polyI));
-  }
-
-  @Test
-  void find_linear_edges() {
-    var polygon = rectangle(0, 0, 10, 10);
-
-    assertEquals(4, boundaryMerger.findLinearEdges(polygon.getCoordinates()).size());
-  }
-
-  private Polygon rectangle(int x1, int y1, int x2, int y2) {
-    return geometryFactory.createPolygon(
-        new Coordinate[] {
-          new Coordinate(x1, y1),
-          new Coordinate(x2, y1),
-          new Coordinate(x2, y2),
-          new Coordinate(x1, y2),
-          new Coordinate(x1, y1)
-        });
+    // new Geojson(unified).saveAsFile("castanet-map-87-tree_initial.geojson");
   }
 }

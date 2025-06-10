@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.model.geometry;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -16,11 +17,13 @@ import lombok.ToString;
 @AllArgsConstructor
 @Builder
 @ToString
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class VGG extends HashMap<String, VGG.Annotation> {
   @AllArgsConstructor
   @Data
   @Builder
   @NoArgsConstructor
+  @JsonIgnoreProperties(ignoreUnknown = true)
   public static class Annotation {
     @JsonProperty("size")
     private Integer size;
@@ -67,6 +70,7 @@ public class VGG extends HashMap<String, VGG.Annotation> {
       @Data
       @Builder
       @NoArgsConstructor
+      @JsonIgnoreProperties(ignoreUnknown = true)
       public static class RegionAttribute {
         private String label;
         private Double confidence;

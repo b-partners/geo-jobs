@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.endpoint.rest.postprocessing.model;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
-import static app.bpartners.geojobs.model.geometry.route.RouteType.routeTypeFrom;
+import static app.bpartners.geojobs.model.geometry.route.ObjectType.routeTypeFrom;
 import static java.lang.Math.PI;
 import static java.lang.Math.cos;
 import static java.lang.Math.floor;
@@ -10,10 +10,11 @@ import static java.lang.Math.pow;
 import static java.lang.Math.round;
 import static java.lang.Math.tan;
 import static java.lang.Math.toRadians;
-import static java.util.stream.Collectors.toSet;
+import static java.util.Comparator.comparingInt;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.*;
 
 import app.bpartners.geojobs.model.geometry.IntXY;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -39,14 +40,17 @@ public record LatLonPolygon(Polygon polygon) {
         Arrays.stream(polygon.getCoordinates())
             .map(m -> originTile(m, tilingConf.z()))
             .map(tileXY -> new Position2D(tileXY.x(), tileXY.y()))
-            .collect(toSet());
-
+            .collect(groupingBy(identity(), collectingAndThen(counting(), Long::intValue)));
     if (origins.size() != 1) {
-      log.warn(String.format("origins.size=1 expected: origins=%s, p=%s", origins, polygon));
+      log.warn("origins.size=1 expected: origins={}, p={}", origins, polygon);
     }
-    var origin = new ArrayList<>(origins).getFirst();
-    var originXY = new IntXY((int) origin.x, (int) origin.y);
-    return originXY;
+    var origin =
+        origins.entrySet().stream()
+            .max(comparingInt(Map.Entry::getValue))
+            .orElseThrow(() -> new IllegalStateException("No origin found"))
+            .getKey();
+
+    return new IntXY((int) origin.x, (int) origin.y);
   }
 
   // Mostly ChatGPT-generated

@@ -2,7 +2,7 @@ package app.bpartners.geojobs.model.geometry.quadrilateral;
 
 import static app.bpartners.geojobs.model.geometry.TestData.compass1Polygon;
 import static app.bpartners.geojobs.model.geometry.plot.PlotConf.DEFAULT_STROKE;
-import static app.bpartners.geojobs.model.geometry.route.RouteType.road;
+import static app.bpartners.geojobs.model.geometry.route.ObjectType.road;
 import static java.awt.Color.BLACK;
 import static java.awt.Color.RED;
 import static java.util.stream.Collectors.toSet;

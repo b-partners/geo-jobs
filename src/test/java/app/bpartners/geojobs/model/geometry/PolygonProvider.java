@@ -1,9 +1,12 @@
 package app.bpartners.geojobs.model.geometry;
 
+import static app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon.toTiledPolygons;
 import static java.nio.channels.FileChannel.MapMode.READ_ONLY;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toSet;
 
+import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon;
+import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.model.geometry.feature.Feature;
 import app.bpartners.geojobs.model.geometry.feature.FeatureListWithOffset;
 import app.bpartners.geojobs.model.geometry.feature.FeatureListWithoutOffset;
@@ -73,6 +76,10 @@ public class PolygonProvider implements Function<Integer, Polygon> {
         ? new FeatureListWithoutOffset(vggAnnotations, imageResolution, is_z_x_y_dot_filetype).get()
         : new FeatureListWithOffset(vggAnnotations, imageResolution, is_z_x_y_dot_filetype, origin)
             .get();
+  }
+
+  public Set<TiledPolygon> getTiledPolygons(boolean z_x_y_dot_filetype) {
+    return toTiledPolygons(new TilingConf(20, 1024), vggAnnotations, z_x_y_dot_filetype);
   }
 
   public Set<Polygon> getPolygons() {

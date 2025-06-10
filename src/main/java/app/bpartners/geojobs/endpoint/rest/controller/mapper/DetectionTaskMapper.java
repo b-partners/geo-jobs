@@ -129,6 +129,7 @@ public class DetectionTaskMapper {
       case HUMIDITE -> HUMIDITE;
       case RISQUE_FEU -> RISQUE_FEU;
       case VELUX -> VELUX;
+      case TOMBE -> null;
       case ESPACE_VERT_PARKING -> ESPACE_VERT_PARKING;
     };
   }

@@ -6,7 +6,7 @@ import app.bpartners.geojobs.endpoint.rest.postprocessing.NeighbourHoodHandler;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.model.geometry.IntXY;
-import app.bpartners.geojobs.model.geometry.route.RouteType;
+import app.bpartners.geojobs.model.geometry.route.ObjectType;
 import java.util.HashSet;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
@@ -24,7 +24,7 @@ public class NeighbourHoodHandlerTest {
 
   Set<TiledPolygon> polygons() {
     TilingConf conf = new TilingConf(1, 256);
-    RouteType type = RouteType.road;
+    ObjectType type = ObjectType.road;
     Polygon dummyPolygon = null;
 
     return new HashSet<>(

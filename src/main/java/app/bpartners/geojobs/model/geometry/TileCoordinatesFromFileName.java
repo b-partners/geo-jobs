@@ -27,7 +27,6 @@ public class TileCoordinatesFromFileName {
   }
 
   private int extract(String filename, int groupPosition) {
-    groupPosition = is_z_x_y_dot_filetype ? groupPosition - 1 : groupPosition;
     var matcher =
         is_z_x_y_dot_filetype
             ? z_x_y_dot_filetype.matcher(filename)
@@ -36,7 +35,6 @@ public class TileCoordinatesFromFileName {
       throw new IllegalArgumentException(
           "File name does not follow expected pattern, filename=" + filename);
     }
-
     return parseInt(matcher.group(groupPosition));
   }
 }
