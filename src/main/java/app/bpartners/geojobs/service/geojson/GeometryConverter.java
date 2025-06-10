@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service.geojson;
 
 import static app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.MULTI_POLYGON;
+import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.model.Feature;
@@ -10,6 +11,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.function.BinaryOperator;
 import lombok.SneakyThrows;
 import org.geotools.geojson.geom.GeometryJSON;
 import org.locationtech.jts.geom.*;
@@ -131,6 +133,20 @@ public class GeometryConverter {
     }
 
     return result;
+  }
+
+  public Polygon convertToPolygon(List<List<BigDecimal>> points) {
+    if (points == null || points.size() < 4) {
+      throw new IllegalArgumentException("Polygon must contain at least 4 points.");
+    }
+
+    Coordinate[] coordinates =
+        points.stream()
+            .map(pair -> new Coordinate(pair.get(0).doubleValue(), pair.get(1).doubleValue()))
+            .toArray(Coordinate[]::new);
+
+    LinearRing shell = geometryFactory.createLinearRing(coordinates);
+    return geometryFactory.createPolygon(shell);
   }
 
   public MultiPolygon apply(List<List<List<List<BigDecimal>>>> multiPolygonData) {
@@ -273,5 +289,18 @@ public class GeometryConverter {
     LinearRing shell = gf.createLinearRing(coords);
     Polygon polygon = gf.createPolygon(shell, null);
     return gf.createMultiPolygon(new Polygon[] {polygon});
+  }
+
+  public static BinaryOperator<MultiPolygon> unifyMultiPolygon() {
+    return (multiPolygon1, multiPolygon2) -> {
+      var unifiedGeometry = multiPolygon1.union(multiPolygon2);
+      if (unifiedGeometry instanceof MultiPolygon multiPolygon) {
+        return multiPolygon;
+      } else if (unifiedGeometry instanceof Polygon polygon) {
+        return app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory
+            .createMultiPolygon(new Polygon[] {polygon});
+      }
+      throw new UnsupportedOperationException("Unsupported unified geometry : " + unifiedGeometry);
+    };
   }
 }

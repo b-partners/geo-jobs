@@ -1,8 +1,8 @@
 package app.bpartners.geojobs.endpoint.rest.postprocessing.continuer;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
-import static app.bpartners.geojobs.model.geometry.route.RouteType.pathway;
-import static app.bpartners.geojobs.model.geometry.route.RouteType.road;
+import static app.bpartners.geojobs.model.geometry.route.ObjectType.pathway;
+import static app.bpartners.geojobs.model.geometry.route.ObjectType.road;
 import static java.lang.Math.PI;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 

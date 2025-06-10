@@ -51,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.Polygon;
 import org.mockito.ArgumentCaptor;
 
 class RooferDetectionServiceTest {
@@ -111,7 +112,7 @@ class RooferDetectionServiceTest {
                         DetectionResponse.ImageData.builder().regions(Map.of()).build()))
                 .build());
     when(machineDetectedTileRepository.save(any())).thenReturn(new MachineDetectedTile());
-    when(vggFactoryMock.from(any(), any())).thenReturn(new VGG());
+    when(vggFactoryMock.from(any(Polygon.class), anyList())).thenReturn(new VGG());
     when(fileWriter.write(any(), any(), any())).thenReturn(mock(File.class));
     when(bucketComponent.presign(any(String.class))).thenReturn(PRESIGNED_URL);
     when(authProvider.getAuthenticatedCommunity())

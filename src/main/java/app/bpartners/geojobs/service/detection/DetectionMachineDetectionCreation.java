@@ -2,9 +2,9 @@ package app.bpartners.geojobs.service.detection;
 
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
-import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
+import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
@@ -20,8 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 import lombok.RequiredArgsConstructor;
-import org.locationtech.jts.geom.MultiPolygon;
-import org.locationtech.jts.geom.Polygon;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -70,17 +68,7 @@ public class DetectionMachineDetectionCreation
                                 + feature.getGeometry().getActualInstance());
                   }
                 })
-            .reduce(
-                (multiPolygon1, multiPolygon2) -> {
-                  var unifiedGeometry = multiPolygon1.union(multiPolygon2);
-                  if (unifiedGeometry instanceof MultiPolygon multiPolygon) {
-                    return multiPolygon;
-                  } else if (unifiedGeometry instanceof Polygon polygon) {
-                    return geometryFactory.createMultiPolygon(new Polygon[] {polygon});
-                  }
-                  throw new UnsupportedOperationException(
-                      "Unsupported unified geometry : " + unifiedGeometry);
-                })
+            .reduce(unifyMultiPolygon())
             .orElseThrow(() -> new IllegalStateException("No provided geojson zone found"));
 
     var tileDetectionTasks =

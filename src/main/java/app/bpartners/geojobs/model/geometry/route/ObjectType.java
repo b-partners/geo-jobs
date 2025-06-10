@@ -12,14 +12,20 @@ import lombok.experimental.Accessors;
 @AllArgsConstructor
 @Accessors(fluent = true)
 @Getter
-public enum RouteType {
+public enum ObjectType {
   road(lengthOnly),
   pathway(lengthOrWidth),
-  sidewalk(lengthOnly);
+  sidewalk(lengthOnly),
+  tomb(lengthOrWidth),
+  tree(lengthOrWidth),
+  batis(lengthOrWidth),
+  green_space(lengthOrWidth),
+  pool(lengthOrWidth),
+  place_standard(lengthOrWidth);
 
   private final ContinuationOrientation continuationOrientation;
 
-  public static RouteType routeTypeFrom(DetectableObjectType detectableType) {
+  public static ObjectType routeTypeFrom(DetectableObjectType detectableType) {
     return switch (detectableType) {
       case PASSAGE_PIETON -> pathway;
       case LINE -> road;
@@ -55,20 +61,15 @@ public enum RouteType {
     };
   }
 
-  public static RouteType routeTypeFrom(String label) {
+  public static ObjectType routeTypeFrom(String label) {
     return switch (label.toLowerCase()) {
-      case "pathway",
-              "passage_pieton",
-              "solar_panel",
-              "bati",
-              "stationnement",
-              "tree",
-              "green_space",
-              "parking",
-              "place_standard",
-              "tombe",
-              "pool" ->
-          pathway;
+      case "pathway", "passage_pieton" -> pathway;
+      case "tombe" -> tomb;
+      case "tree" -> tree;
+      case "bati" -> batis;
+      case "green_space" -> green_space;
+      case "pool" -> pool;
+      case "place_standard" -> place_standard;
       case "line" -> road;
       case "sidewalk" -> sidewalk;
       default -> throw new IllegalArgumentException("Unsupported continuation on " + label);

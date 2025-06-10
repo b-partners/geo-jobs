@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.model.geometry;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
-import static app.bpartners.geojobs.model.geometry.route.RouteType.routeTypeFrom;
+import static app.bpartners.geojobs.model.geometry.route.ObjectType.routeTypeFrom;
 
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;

@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.model.geometry.route;
 
 import static app.bpartners.geojobs.model.geometry.plot.PlotConf.DEFAULT_STROKE;
-import static app.bpartners.geojobs.model.geometry.route.RouteType.routeTypeFrom;
+import static app.bpartners.geojobs.model.geometry.route.ObjectType.routeTypeFrom;
 import static java.awt.Color.BLACK;
 import static java.awt.Color.GREEN;
 import static java.awt.Color.RED;

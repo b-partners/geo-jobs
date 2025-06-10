@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.model.geometry;
 
-import static app.bpartners.geojobs.model.geometry.route.RouteType.road;
+import static app.bpartners.geojobs.model.geometry.route.ObjectType.road;
 import static java.lang.Math.PI;
 import static org.locationtech.jts.geom.util.AffineTransformation.rotationInstance;
 import static org.locationtech.jts.geom.util.AffineTransformation.translationInstance;

@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.endpoint.rest.postprocessing.model;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
-import static app.bpartners.geojobs.model.geometry.route.RouteType.routeTypeFrom;
+import static app.bpartners.geojobs.model.geometry.route.ObjectType.routeTypeFrom;
 import static java.lang.Math.PI;
 import static java.lang.Math.atan;
 import static java.lang.Math.pow;
@@ -14,9 +14,10 @@ import app.bpartners.geojobs.endpoint.rest.model.DetectedTile;
 import app.bpartners.geojobs.model.geometry.IntXY;
 import app.bpartners.geojobs.model.geometry.TileCoordinatesFromFileName;
 import app.bpartners.geojobs.model.geometry.VGG;
-import app.bpartners.geojobs.model.geometry.route.RouteType;
+import app.bpartners.geojobs.model.geometry.route.ObjectType;
 import java.math.BigDecimal;
 import java.util.*;
+import javax.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LinearRing;
@@ -25,11 +26,20 @@ import org.locationtech.jts.geom.Polygon;
 @Slf4j
 // projected: in meter, such as CRS_CODE = "EPSG:3857"
 public record TiledPolygon(
-    Polygon polygon, RouteType type, IntXY originTile, TilingConf tilingConf) {
+    Polygon polygon, ObjectType type, IntXY originTile, TilingConf tilingConf) {
 
   public LatLonPolygon latLonPolygon() {
-    var exteriorLatLonCoordinates = getExteriorLatLonCoordinates(polygon);
-    LinearRing exteriorRing = geometryFactory.createLinearRing(exteriorLatLonCoordinates);
+    var exteriorLatLonCoordinates = getExteriorLatLonCoordinates(polygon, null);
+    return latLonPolygon(exteriorLatLonCoordinates);
+  }
+
+  public LatLonPolygon latLonPolygon(IntXY originTile) {
+    var exteriorLatLonCoordinates = getExteriorLatLonCoordinates(polygon, originTile);
+    return latLonPolygon(exteriorLatLonCoordinates);
+  }
+
+  private LatLonPolygon latLonPolygon(Coordinate[] coords) {
+    LinearRing exteriorRing = geometryFactory.createLinearRing(coords);
 
     var latLonHolesCoordinates = getHolesLatLonCoordinates(polygon);
     LinearRing[] holes = new LinearRing[latLonHolesCoordinates.length];
@@ -37,15 +47,16 @@ public record TiledPolygon(
       holes[i] = geometryFactory.createLinearRing(latLonHolesCoordinates[i]);
     }
     var p = geometryFactory.createPolygon(exteriorRing, holes);
-    var userData = new HashMap<String, RouteType>();
+    var userData = new HashMap<String, ObjectType>();
     userData.put("label", type);
     p.setUserData(userData);
     return new LatLonPolygon(p);
   }
 
-  private Coordinate[] getExteriorLatLonCoordinates(Polygon polygon) {
+  private Coordinate[] getExteriorLatLonCoordinates(Polygon polygon, @Nullable IntXY originTile) {
+    var origin = originTile == null ? this.originTile : originTile;
     return Arrays.stream(polygon.getExteriorRing().getCoordinates())
-        .map(c -> toLatLon(originTile, tilingConf, new IntXY((int) c.x, (int) c.y)))
+        .map(c -> toLatLon(origin, tilingConf, new IntXY((int) c.x, (int) c.y)))
         .toArray(Coordinate[]::new);
   }
 
@@ -150,6 +161,12 @@ public record TiledPolygon(
     for (int i = 0; i < polygonLength; i++) {
       var pixel = new IntXY(allX.get(i).intValue(), allY.get(i).intValue());
       coordinates[i] = new Coordinate(pixel.x(), pixel.y());
+    }
+    if (!coordinates[0].equals(coordinates[coordinates.length - 1])) {
+      var clone = new Coordinate[coordinates.length + 1];
+      System.arraycopy(coordinates, 0, clone, 0, coordinates.length);
+      clone[coordinates.length] = coordinates[0];
+      coordinates = clone;
     }
     return geometryFactory.createPolygon(coordinates);
   }

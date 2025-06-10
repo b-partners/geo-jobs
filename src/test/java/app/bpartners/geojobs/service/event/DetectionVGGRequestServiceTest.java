@@ -17,8 +17,10 @@ import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.service.DetectionVGGUpdate;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import app.bpartners.geojobs.utils.FeatureCreator;
 import java.util.*;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.MultiPolygon;
 
 class DetectionVGGRequestServiceTest {
   DetectionRepository detectionRepositoryMock = mock();
@@ -28,6 +30,7 @@ class DetectionVGGRequestServiceTest {
   DetectionVGGRequestedService subject =
       new DetectionVGGRequestedService(
           detectionRepositoryMock, vggFactory, detectionVGGUpdate, geometryConverter);
+  FeatureCreator featureCreator = new FeatureCreator();
 
   @Test
   void throws_when_detection_not_found() {
@@ -57,6 +60,7 @@ class DetectionVGGRequestServiceTest {
     var mockPolygonAsString = "POLYGON ((10.0 10.0))";
 
     when(detectionMock.getId()).thenReturn(detectionId);
+    when(detectionMock.getProvidedGeoJsonZone()).thenReturn(featureCreator.defaultFeatures());
     when(eventMock.getDetectionId()).thenReturn(detectionId);
     when(detectionRepositoryMock.findById(detectionId)).thenReturn(Optional.of(detectionMock));
     when(eventMock.getFilteredTiledPixelPolygons()).thenReturn(List.of(filteredTiledPixelPolygons));
@@ -66,6 +70,7 @@ class DetectionVGGRequestServiceTest {
     when(polygonObjectTypeSerializableMock.polygonAsString()).thenReturn(mockPolygonAsString);
     when(geometryConverter.readGeometryFromString(eq(mockPolygonAsString)))
         .thenReturn(jtsPolygonResultMock);
+    when(geometryConverter.apply(any())).thenReturn(mock(MultiPolygon.class));
     when(polygonObjectTypeSerializableMock.detectableType()).thenReturn(MOISISSURE_CLAIR);
 
     when(filteredTiledPixelPolygons.point()).thenReturn(featurePointMock);
@@ -75,7 +80,7 @@ class DetectionVGGRequestServiceTest {
 
     mapVggFactory.put(featureVggResultMock, vggResultMock);
 
-    when(vggFactory.from(any(List.class))).thenReturn(mapVggFactory);
+    when(vggFactory.from(any(List.class), any(MultiPolygon.class))).thenReturn(mapVggFactory);
     when(detectionVGGUpdate.apply(eq(mapVggFactory), eq(detectionMock)))
         .thenReturn(newDetectionAfterVggUpdateMock);
     when(detectionRepositoryMock.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
@@ -94,7 +99,7 @@ class DetectionVGGRequestServiceTest {
     verify(filteredTiledPixelPolygons).tileX();
     verify(filteredTiledPixelPolygons).tileY();
     verify(filteredTiledPixelPolygons).zoom();
-    verify(vggFactory).from(any(List.class));
+    verify(vggFactory).from(any(List.class), any(MultiPolygon.class));
     verify(detectionVGGUpdate).apply(eq(mapVggFactory), eq(detectionMock));
     verify(detectionRepositoryMock).save(eq(newDetectionAfterVggUpdateMock));
   }
