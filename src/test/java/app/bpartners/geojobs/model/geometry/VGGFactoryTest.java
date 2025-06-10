@@ -54,7 +54,8 @@ class VGGFactoryTest {
           featureMapper,
           tileCoordinatesPolygonIntersection,
           geometryConverter,
-          new GeometrySquareMeterArea());
+          new GeometrySquareMeterArea(),
+          mock());
 
   public static DetectedTile detectedTile() {
     String humiditeGeometry =

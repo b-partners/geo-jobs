@@ -2,6 +2,7 @@ package app.bpartners.geojobs.model.geometry;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.model.geometry.area.AreaRateComputerFacade.*;
+import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.HOUSES_0;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
 import static java.util.UUID.randomUUID;
@@ -16,6 +17,8 @@ import app.bpartners.geojobs.model.geometry.area.AreaRateComputerFacade;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.TileCoordinatesPolygonIntersection;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import app.bpartners.geojobs.service.tiling.TileFinder;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -32,6 +35,7 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
   private final TileCoordinatesPolygonIntersection tilePolygonIntersection;
   private final GeometryConverter geometryConverter;
   private final GeometrySquareMeterArea geometrySquareMeterArea;
+  private final TileFinder tileFinder;
 
   @Override
   public VGG convert(Set<Polygon> polygons) {
@@ -80,13 +84,17 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
 
   public Map<Feature, VGG> from(
       List<TiledPixelPolygon> tiledPixelPolygons, MultiPolygon roofLatLonMultiPolygon) {
+    Coordinate centroidCoordinates = roofLatLonMultiPolygon.getCentroid().getCoordinate();
+    var longitude = BigDecimal.valueOf(centroidCoordinates.x);
+    var latitude = BigDecimal.valueOf(centroidCoordinates.y);
+    var surroundingTiles =
+        tileFinder.getSurroundingTiles(longitude, latitude, HOUSES_0.getZoomLevel());
     Map<Feature, List<TiledPixelPolygon>> tiledPixelPolygonFilteredByPoint =
         tiledPixelPolygons.stream().collect(Collectors.groupingBy(TiledPixelPolygon::point));
     var vggMap = new HashMap<Feature, VGG>();
-    int minTileXGlobal =
-        tiledPixelPolygons.stream().mapToInt(TiledPixelPolygon::tileX).min().orElseThrow();
-    int minTileYGlobal =
-        tiledPixelPolygons.stream().mapToInt(TiledPixelPolygon::tileY).min().orElseThrow();
+    // Already sorted before so min before
+    int minTileXGlobal = surroundingTiles.getFirst().getX();
+    int minTileYGlobal = surroundingTiles.getFirst().getY();
     var tileCoordinates =
         tiledPixelPolygons.stream()
             .map(
@@ -132,10 +140,10 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
     tiledPixelPolygonFilteredByPoint.forEach(
         (featurePoint, tiledPolygons) -> {
           var vgg = new VGG();
-          int minTileXForPoint =
-              tiledPolygons.stream().mapToInt(TiledPixelPolygon::tileX).min().orElseThrow();
-          int minTileYForPoint =
-              tiledPolygons.stream().mapToInt(TiledPixelPolygon::tileY).min().orElseThrow();
+          // int minTileXForPoint =
+          //    tiledPolygons.stream().mapToInt(TiledPixelPolygon::tileX).min().orElseThrow();
+          // int minTileYForPoint =
+          //    tiledPolygons.stream().mapToInt(TiledPixelPolygon::tileY).min().orElseThrow();
           tiledPolygons.forEach(
               tiledPolygon -> {
                 var key =
@@ -157,8 +165,8 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
                                   projectPolygonsToCompositeImage(
                                       tiledPolygon.tileX(),
                                       tiledPolygon.tileY(),
-                                      minTileXForPoint,
-                                      minTileYForPoint,
+                                      minTileXGlobal,
+                                      minTileYGlobal,
                                       DEFAULT_IMG_SIZE,
                                       polygonObjectType.polygon());
                               return new PolygonObjectType(
