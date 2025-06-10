@@ -25,10 +25,11 @@ import org.springframework.core.io.ClassPathResource;
 class DetectionMaskFromTileRetrieverTest {
   GeometryPixelProjector geometryPixelProjector = mock(GeometryPixelProjector.class);
   GeometryConverter geometryConverterMock = mock();
+  TileCoordinatesPolygonIntersection tilePolygonIntersectionMock =
+      new TileCoordinatesPolygonIntersection(geometryPixelProjector, geometryConverterMock);
   DetectionMaskCreator maskCreatorMock = mock();
   DetectionMaskFromTileRetriever subject =
-      new DetectionMaskFromTileRetriever(
-          geometryPixelProjector, geometryConverterMock, maskCreatorMock);
+      new DetectionMaskFromTileRetriever(maskCreatorMock, tilePolygonIntersectionMock);
 
   @BeforeEach
   void setUp() {
