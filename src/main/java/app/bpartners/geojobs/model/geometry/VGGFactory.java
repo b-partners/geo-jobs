@@ -5,6 +5,7 @@ import static app.bpartners.geojobs.model.geometry.area.AreaRateComputerFacade.*
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
 import static java.util.UUID.randomUUID;
+import static net.sf.geographiclib.Geodesic.WGS84;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
@@ -12,7 +13,6 @@ import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.model.DetectedTile;
-import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.model.geometry.area.AreaRateComputerFacade;
 import app.bpartners.geojobs.service.TileCoordinatesPolygonIntersection;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
@@ -21,12 +21,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
-import net.sf.geographiclib.Geodesic;
 import net.sf.geographiclib.PolygonArea;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.MultiPolygon;
-import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.*;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
 
@@ -329,25 +325,42 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
   // Mostly ChatGPT generated
   @SneakyThrows
   private double computeRoofArea(Geometry geometry) {
-    Polygon polygon;
-    if (geometry instanceof Polygon) {
-      polygon = (Polygon) geometry;
-    } else if (geometry instanceof MultiPolygon multiPolygon) {
-      if (multiPolygon.getNumGeometries() != 1) {
-        throw new IllegalArgumentException("RoofMultiPolygon must have exactly one geometry");
-      }
-      polygon = (Polygon) multiPolygon.getGeometryN(0);
-    } else {
-      throw new NotImplementedException(
-          "Provided geometry instance not supported to compute roof area in square meter : "
-              + geometry.getGeometryType());
+    if (!(geometry instanceof Polygon || geometry instanceof MultiPolygon)) {
+      throw new IllegalArgumentException("Geometry must be Polygon or MultiPolygon");
     }
 
-    var coords = polygon.getCoordinates();
-    PolygonArea poly = new PolygonArea(Geodesic.WGS84, false);
-    for (var point : coords) {
-      poly.AddPoint(point.x, point.y);
+    PolygonArea polyArea = new PolygonArea(WGS84, false);
+
+    if (geometry instanceof Polygon polygon) {
+      addPolygon(polygon, polyArea);
+    } else if (geometry instanceof MultiPolygon multiPolygon) {
+      for (int i = 0; i < multiPolygon.getNumGeometries(); i++) {
+        Polygon p = (Polygon) multiPolygon.getGeometryN(i);
+        addPolygon(p, polyArea);
+      }
+    } else {
+      throw new IllegalArgumentException(
+          "Geometry must be Polygon or MultiPolygon but actual geometry is " + geometry);
     }
-    return format(poly.Compute(false, false).area);
+
+    // Retourne l’aire en m²
+    return polyArea.Compute(false, false).area;
+  }
+
+  private void addPolygon(Polygon polygon, PolygonArea polyArea) {
+    // Ajouter les points de l'enveloppe extérieure
+    addRing(polygon.getExteriorRing(), polyArea);
+
+    // Ajouter les trous éventuels (anneaux intérieurs)
+    for (int i = 0; i < polygon.getNumInteriorRing(); i++) {
+      addRing(polygon.getInteriorRingN(i), polyArea);
+    }
+  }
+
+  private void addRing(LineString ring, PolygonArea polyArea) {
+    Coordinate[] coords = ring.getCoordinates();
+    for (Coordinate coord : coords) {
+      polyArea.AddPoint(coord.y, coord.x); // Attention : GeographicLib attend (lat, lon)
+    }
   }
 }
