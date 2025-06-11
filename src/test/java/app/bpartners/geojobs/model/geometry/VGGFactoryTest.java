@@ -264,6 +264,41 @@ class VGGFactoryTest {
 
   @SneakyThrows
   @Test
+  void no_roof_pixel_found_from_lon_lat_roof_polygon() {
+    var fileContainingFeatures =
+        new ClassPathResource("features/features-containing-address.json").getFile();
+    List<app.bpartners.geojobs.endpoint.rest.model.Feature> featureContainingAddresses =
+        objectMapper.readValue(fileContainingFeatures, new TypeReference<>() {});
+    var featureContainingAddress = featureContainingAddresses.getFirst();
+    var roofLatLonMultiPolygonMock =
+        geometryConverter.apply(
+            featureContainingAddress.getGeometry().getMultiPolygon().getCoordinates());
+    int tileXOutsideLatLonRoofPolygon = 523555;
+    int tileY = 370292;
+    int zoom = 20;
+    var polygonObjectTypeMock = new PolygonObjectType(some20x20Polygon(), MOISISSURE_CLAIR);
+    var tiledPixelPolygons =
+        List.of(
+            new TiledPixelPolygon(
+                featureContainingAddress,
+                List.of(polygonObjectTypeMock),
+                tileXOutsideLatLonRoofPolygon,
+                tileY,
+                zoom));
+
+    var actual =
+        assertThrows(
+            IllegalStateException.class,
+            () -> subject.from(tiledPixelPolygons, roofLatLonMultiPolygonMock));
+
+    assertEquals(
+        "No roof pixel polygon retrieved from roofLatLonMultiPolygon : "
+            + roofLatLonMultiPolygonMock,
+        actual.getMessage());
+  }
+
+  @SneakyThrows
+  @Test
   void retrieve_vgg_from_tiled_polygon_ok() {
     var fileContainingFeatures =
         new ClassPathResource("features/features-containing-address.json").getFile();
