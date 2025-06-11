@@ -5,6 +5,7 @@ import static app.bpartners.geojobs.repository.model.detection.DetectableType.TO
 import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.geojobs.endpoint.rest.postprocessing.BoundaryMerger;
+import app.bpartners.geojobs.endpoint.rest.postprocessing.Geojson;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.MergeConf;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
@@ -16,11 +17,15 @@ import app.bpartners.geojobs.model.geometry.route.UnionConf;
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.algorithm.MinimumDiameter;
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.util.AffineTransformation;
 
 @Slf4j
 public class TombeTest {
-  PolygonProvider polygonProvider = new PolygonProvider("/geometry/vgg/line-pathway.json");
+  PolygonProvider polygonProvider = new PolygonProvider("/geometry/vgg/vgg_annotations_modified.json");
   private final TilingConf tilingConf = new TilingConf(20, 1024);
   private final UnionConf unionConf = new UnionConf(5);
   /*
@@ -41,9 +46,42 @@ public class TombeTest {
 
     var m2toDeg2 = 1E-11; // France
     var minArea = new SquareDegree(112 * m2toDeg2);
-    var filteredByMinAreaPolygons = filterByMinArea(merged, minArea);
+    var filteredByMinAreaPolygons = filterByMinArea(merged, minArea).stream()
+            .map(latLon -> new LatLonPolygon(orient(latLon.polygon())))
+            .collect(toSet());
 
-    // new Geojson(filteredByMinAreaPolygons).saveAsFile("tombes_postprocessed.geojson");
+    new Geojson(filteredByMinAreaPolygons).saveAsFile("tombes_postprocessed.geojson");
+  }
+
+  private Polygon orient(Polygon polygon) {
+      Geometry minRect = new MinimumDiameter(polygon).getMinimumRectangle();
+      Coordinate[] coords = minRect.getCoordinates();
+
+      if (coords.length < 2) return polygon;
+
+      Coordinate p0 = coords[0];
+      Coordinate p1 = coords[1];
+
+      double dx = p1.x - p0.x;
+      double dy = p1.y - p0.y;
+      double angle = Math.atan2(dy, dx);
+
+      double absAngle = Math.abs(angle % Math.PI);
+      if (absAngle > Math.PI / 2) absAngle = Math.PI - absAngle;
+
+      double rotationAngle;
+      if (absAngle <= Math.PI / 4) {
+          rotationAngle = -angle;
+      } else {
+          rotationAngle = -(angle - Math.PI / 2);
+      }
+
+      Coordinate center = polygon.getCentroid().getCoordinate();
+
+      AffineTransformation transform = AffineTransformation
+              .rotationInstance(rotationAngle, center.x, center.y);
+
+      return (Polygon) transform.transform(polygon);
   }
 
   public static Set<LatLonPolygon> invert(Set<LatLonPolygon> noSuperpositionPolygons) {
