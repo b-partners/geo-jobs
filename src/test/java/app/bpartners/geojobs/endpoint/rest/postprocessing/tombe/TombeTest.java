@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.algorithm.MinimumDiameter;
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.geom.util.AffineTransformation;
@@ -53,38 +54,33 @@ public class TombeTest {
     new Geojson(filteredByMinAreaPolygons).saveAsFile("tombes_postprocessed.geojson");
   }
 
-  private Polygon orient(Polygon polygon) {
-      Geometry minRect = new MinimumDiameter(polygon).getMinimumRectangle();
-      Coordinate[] coords = minRect.getCoordinates();
+    private Polygon orient(Polygon polygon) {
+        double horizontalWidth = 3.5E-5;
+        double horizontalHeight = 1.4E-5;
 
-      if (coords.length < 2) return polygon;
+        Coordinate center = polygon.getCentroid().getCoordinate();
 
-      Coordinate p0 = coords[0];
-      Coordinate p1 = coords[1];
+        Envelope env = polygon.getEnvelopeInternal();
+        boolean isVertical = env.getHeight() > env.getWidth();
 
-      double dx = p1.x - p0.x;
-      double dy = p1.y - p0.y;
-      double angle = Math.atan2(dy, dx);
+        double targetWidth = isVertical ? horizontalHeight : horizontalWidth;
+        double targetHeight = isVertical ? horizontalWidth : horizontalHeight;
 
-      double absAngle = Math.abs(angle % Math.PI);
-      if (absAngle > Math.PI / 2) absAngle = Math.PI - absAngle;
+        double minX = center.x - targetWidth / 2;
+        double minY = center.y - targetHeight / 2;
 
-      double rotationAngle;
-      if (absAngle <= Math.PI / 4) {
-          rotationAngle = -angle;
-      } else {
-          rotationAngle = -(angle - Math.PI / 2);
-      }
+        Coordinate[] coords = new Coordinate[] {
+                new Coordinate(minX, minY),
+                new Coordinate(minX + targetWidth, minY),
+                new Coordinate(minX + targetWidth, minY + targetHeight),
+                new Coordinate(minX, minY + targetHeight),
+                new Coordinate(minX, minY)
+        };
 
-      Coordinate center = polygon.getCentroid().getCoordinate();
+        return geometryFactory.createPolygon(coords);
+    }
 
-      AffineTransformation transform = AffineTransformation
-              .rotationInstance(rotationAngle, center.x, center.y);
-
-      return (Polygon) transform.transform(polygon);
-  }
-
-  public static Set<LatLonPolygon> invert(Set<LatLonPolygon> noSuperpositionPolygons) {
+    public static Set<LatLonPolygon> invert(Set<LatLonPolygon> noSuperpositionPolygons) {
     return noSuperpositionPolygons.stream()
         .map(
             p -> {
