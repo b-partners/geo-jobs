@@ -8,22 +8,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 @AllArgsConstructor
 @Builder
 @ToString
 @JsonIgnoreProperties(ignoreUnknown = true)
+@EqualsAndHashCode(callSuper = false)
 public class VGG extends HashMap<String, VGG.Annotation> {
   @AllArgsConstructor
   @Data
   @Builder
   @NoArgsConstructor
   @JsonIgnoreProperties(ignoreUnknown = true)
+  @ToString
+  @EqualsAndHashCode
   public static class Annotation {
     @JsonProperty("size")
     private Integer size;
@@ -87,5 +86,4 @@ public class VGG extends HashMap<String, VGG.Annotation> {
       throw new RuntimeException(e);
     }
   }
-  ;
 }

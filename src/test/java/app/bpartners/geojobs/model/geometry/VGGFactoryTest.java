@@ -4,7 +4,8 @@ import static app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.MULTI_
 import static app.bpartners.geojobs.endpoint.rest.postprocessing.tombe.TombeTest.invert;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -15,6 +16,8 @@ import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.endpoint.rest.model.TileInfoSize;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.GeoJsonLoader;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
+import app.bpartners.geojobs.file.ExtensionGuesser;
+import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.model.DetectedTile;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectType;
@@ -25,6 +28,9 @@ import app.bpartners.geojobs.service.GeometryPixelProjector;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.TileCoordinatesPolygonIntersection;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import app.bpartners.geojobs.service.tiling.TileFinder;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -32,6 +38,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -39,7 +47,9 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
+import org.springframework.core.io.ClassPathResource;
 
+@Slf4j
 class VGGFactoryTest {
   private final GeoJsonLoader geoJsonLoader = new GeoJsonLoader();
   private final PolygonProvider polygonProvider =
@@ -48,14 +58,18 @@ class VGGFactoryTest {
   TileCoordinatesPolygonIntersection tileCoordinatesPolygonIntersection =
       new TileCoordinatesPolygonIntersection(new GeometryPixelProjector(), geometryConverter);
   private final FeatureMapper featureMapper = new FeatureMapper(geometryConverter);
+  private final TileFinder tileFinder = new TileFinder();
+  GeometrySquareMeterArea geometrySquareMeterArea = new GeometrySquareMeterArea();
+  ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+  FileWriter fileWriter = new FileWriter(objectMapper, new ExtensionGuesser());
 
   private final VGGFactory subject =
       new VGGFactory(
           featureMapper,
           tileCoordinatesPolygonIntersection,
           geometryConverter,
-          new GeometrySquareMeterArea(),
-          mock());
+          geometrySquareMeterArea,
+          tileFinder);
 
   public static DetectedTile detectedTile() {
     String humiditeGeometry =
@@ -198,6 +212,19 @@ class VGGFactoryTest {
     assertEquals(3, actual.get(filename).getRegions().size());
   }
 
+  private Polygon some20x20Polygon() {
+    Coordinate[] boundingCoords =
+        new Coordinate[] {
+          new Coordinate(500, 500),
+          new Coordinate(520, 500),
+          new Coordinate(520, 520),
+          new Coordinate(500, 520),
+          new Coordinate(500, 500)
+        };
+    LinearRing shell = geometryFactory.createLinearRing(boundingCoords);
+    return geometryFactory.createPolygon(shell, null);
+  }
+
   @Test
   @Disabled("TODO: update test data and mocks")
   void transform_list_polygons_into_map_ok() {
@@ -233,5 +260,48 @@ class VGGFactoryTest {
     Assertions.assertTrue(result.containsKey(feature));
     VGG actualVgg = result.get(feature);
     Assertions.assertNotNull(actualVgg);
+  }
+
+  @SneakyThrows
+  @Test
+  void retrieve_vgg_from_tiled_polygon_ok() {
+    var fileContainingFeatures =
+        new ClassPathResource("features/features-containing-address.json").getFile();
+    List<app.bpartners.geojobs.endpoint.rest.model.Feature> featureContainingAddresses =
+        objectMapper.readValue(fileContainingFeatures, new TypeReference<>() {});
+    var featureContainingAddress = featureContainingAddresses.getFirst();
+    var roofLatLonMultiPolygonMock =
+        geometryConverter.apply(
+            featureContainingAddress.getGeometry().getMultiPolygon().getCoordinates());
+    int tileX = 523561;
+    int tileY = 370292;
+    int zoom = 20;
+    var polygonObjectTypeMock = new PolygonObjectType(some20x20Polygon(), MOISISSURE_CLAIR);
+    var tiledPixelPolygons =
+        List.of(
+            new TiledPixelPolygon(
+                featureContainingAddress, List.of(polygonObjectTypeMock), tileX, tileY, zoom));
+
+    var actual = subject.from(tiledPixelPolygons, roofLatLonMultiPolygonMock);
+
+    var vggString = new String(actual.get(featureContainingAddress).getBytes(), UTF_8);
+    var expected = new HashMap<app.bpartners.geojobs.endpoint.rest.model.Feature, VGG>();
+    expected.put(featureContainingAddress, new VGG());
+    assertEquals(expected, actual);
+    assertTrue(vggString.contains(expectedVggProperties()));
+    assertTrue(vggString.contains(expectedMoissisureShapeAttributes()));
+    assertTrue(vggString.contains(expectedToitureShapeAttributes()));
+  }
+
+  private String expectedVggProperties() {
+    return "\"properties\":{\"usure_rate\":0.0,\"global_rate_value\":0.37,\"global_rate_type\":\"A\",\"roof_area_in_m2\":902.7026699575654,\"moisissure_rate\":1.24,\"humidite_rate\":0.0}";
+  }
+
+  private String expectedMoissisureShapeAttributes() {
+    return "{\"shape_attributes\":{\"name\":\"Polygon\",\"all_points_x\":[500.0,520.0,520.0,500.0,500.0],\"all_points_y\":[500.0,500.0,520.0,520.0,500.0]},\"region_attributes\":{\"label\":\"MOISISSURE_CLAIR\",\"confidence\":null,\"rate_in_percent\":1.24}}";
+  }
+
+  private String expectedToitureShapeAttributes() {
+    return "{\"shape_attributes\":{\"name\":\"Polygon\",\"all_points_x\":[484.49344289302826,532.4802603125572,773.5527275800705,745.5241132974625,484.49344289302826],\"all_points_y\":[1024.0,865.2850153446198,937.5587880015373,1024.0,1024.0]},\"region_attributes\":{\"label\":\"TOITURE_REVETEMENT\",\"confidence\":null,\"rate_in_percent\":null}";
   }
 }
