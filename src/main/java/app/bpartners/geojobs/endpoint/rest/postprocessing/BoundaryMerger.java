@@ -2,6 +2,7 @@ package app.bpartners.geojobs.endpoint.rest.postprocessing;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.model.geometry.route.ObjectType.green_space;
+import static app.bpartners.geojobs.model.geometry.route.ObjectType.tomb;
 import static java.lang.Runtime.getRuntime;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import static java.util.stream.Collectors.toSet;
@@ -25,6 +26,7 @@ import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.algorithm.MinimumDiameter;
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Polygon;
 
 @Slf4j
@@ -73,11 +75,15 @@ public class BoundaryMerger
 
   private Set<LatLonPolygon> merge(Set<TiledPolygon> polygons) {
     var origin = new ArrayList<>(polygons).getFirst().originTile();
+    var label = new ArrayList<>(polygons).getFirst().type();
     var tiledPolygonsWithOffset =
         polygons.stream().map(tile -> withOffset(tile, origin, tilingConf)).toList();
     var result = new HashSet<TiledPolygon>();
     var alreadyUnified = new HashSet<Polygon>();
+    var progress = 1;
+    var size = tiledPolygonsWithOffset.size();
     for (var tp : tiledPolygonsWithOffset) {
+      log.info("Progression : {}/{}", progress, size);
       if (alreadyUnified.contains(tp.polygon())) {
         continue;
       }
@@ -94,17 +100,26 @@ public class BoundaryMerger
         for (var p : unified) {
           var convexHull = p.convexHull();
           var md = new MinimumDiameter(convexHull);
-          result.add(
-              new TiledPolygon(
-                  (Polygon) md.getMinimumRectangle(), tp.type(), tp.originTile(), tp.tilingConf()));
+          var polygon =
+              tomb.equals(tp.type())
+                  ? (Polygon) p.getEnvelope()
+                  : (Polygon) md.getMinimumRectangle();
+          result.add(new TiledPolygon(polygon, tp.type(), tp.originTile(), tp.tilingConf()));
         }
       } else {
         result.add(tp);
       }
+      progress++;
     }
-    log.info("Already unified polygons: {}", alreadyUnified.size());
-    var latLonPolygons = result.stream().map(tp -> tp.latLonPolygon(origin)).collect(toSet());
-    return noSuperposition(latLonPolygons, mergeConf.iouAllowed());
+
+    var latLonPolygons =
+        result.stream().map(tp -> new LatLonPolygon(tp.polygon())).collect(toSet());
+    var noSuperposition = noSuperposition(latLonPolygons, mergeConf.iouAllowed());
+    return noSuperposition.stream()
+        .map(ll -> new TiledPolygon(ll.polygon(), label, origin, tilingConf))
+        .map(tp -> tomb.equals(tp.type()) ? resize(tp) : tp)
+        .map(TiledPolygon::latLonPolygon)
+        .collect(toSet());
   }
 
   private boolean smallestAround(TiledPolygon ref, TiledPolygon other, double areaThreshold) {
@@ -229,6 +244,48 @@ public class BoundaryMerger
     } catch (Exception e) {
       return false;
     }
+  }
+
+  private TiledPolygon resize(TiledPolygon tile) {
+    var polygon = tile.polygon();
+    final double PAIR_WIDTH = 120;
+    final double PAIR_HEIGHT = 100;
+    final double REDUCED_WIDTH = 100;
+    final double REDUCED_HEIGHT = 50;
+    final double SIZE_THRESHOLD_WIDTH = 130;
+    final double SIZE_THRESHOLD_HEIGHT = 130;
+
+    Coordinate center = polygon.getCentroid().getCoordinate();
+
+    Envelope envelope = polygon.getEnvelopeInternal();
+
+    boolean isVertical = envelope.getHeight() > envelope.getWidth();
+
+    double targetWidth, targetHeight;
+    if (envelope.getWidth() > SIZE_THRESHOLD_WIDTH
+        || envelope.getHeight() > SIZE_THRESHOLD_HEIGHT) {
+      targetWidth = isVertical ? PAIR_HEIGHT : PAIR_WIDTH;
+      targetHeight = isVertical ? PAIR_WIDTH : PAIR_HEIGHT;
+    } else {
+      targetWidth = isVertical ? REDUCED_HEIGHT : REDUCED_WIDTH;
+      targetHeight = isVertical ? REDUCED_WIDTH : REDUCED_HEIGHT;
+    }
+
+    double minX = center.x - targetWidth / 2;
+    double minY = center.y - targetHeight / 2;
+
+    Coordinate[] coords =
+        new Coordinate[] {
+          new Coordinate(minX, minY),
+          new Coordinate(minX + targetWidth, minY),
+          new Coordinate(minX + targetWidth, minY + targetHeight),
+          new Coordinate(minX, minY + targetHeight),
+          new Coordinate(minX, minY)
+        };
+
+    Polygon resized = geometryFactory.createPolygon(coords);
+    resized.setUserData(polygon.getUserData());
+    return new TiledPolygon(resized, tile.type(), tile.originTile(), tile.tilingConf());
   }
 
   public static Set<LatLonPolygon> noSuperposition(

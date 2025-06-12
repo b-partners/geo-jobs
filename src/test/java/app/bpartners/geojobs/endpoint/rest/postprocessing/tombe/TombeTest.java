@@ -5,7 +5,6 @@ import static app.bpartners.geojobs.repository.model.detection.DetectableType.TO
 import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.geojobs.endpoint.rest.postprocessing.BoundaryMerger;
-import app.bpartners.geojobs.endpoint.rest.postprocessing.Geojson;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.MergeConf;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
@@ -14,19 +13,15 @@ import app.bpartners.geojobs.model.geometry.area.Area;
 import app.bpartners.geojobs.model.geometry.area.SquareDegree;
 import app.bpartners.geojobs.model.geometry.route.PrettyConf;
 import app.bpartners.geojobs.model.geometry.route.UnionConf;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
-import org.locationtech.jts.algorithm.MinimumDiameter;
 import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Envelope;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.Polygon;
-import org.locationtech.jts.geom.util.AffineTransformation;
 
 @Slf4j
 public class TombeTest {
-  PolygonProvider polygonProvider = new PolygonProvider("/geometry/vgg/vgg_annotations_modified.json");
   private final TilingConf tilingConf = new TilingConf(20, 1024);
   private final UnionConf unionConf = new UnionConf(5);
   /*
@@ -38,49 +33,9 @@ public class TombeTest {
   private final PrettyConf prettyConf = new PrettyConf(1);
   private final BoundaryMerger boundaryMerger =
       new BoundaryMerger(tilingConf, unionConf, mergeConf, prettyConf, 20);
+  PolygonProvider polygonProvider = new PolygonProvider("/geometry/vgg/dijon.json");
 
-  @Test
-  void run() {
-    var tiledPolygons = polygonProvider.getTiledPolygons(true);
-
-    var merged = boundaryMerger.apply(tiledPolygons, TOMBE);
-
-    var m2toDeg2 = 1E-11; // France
-    var minArea = new SquareDegree(112 * m2toDeg2);
-    var filteredByMinAreaPolygons = filterByMinArea(merged, minArea).stream()
-            .map(latLon -> new LatLonPolygon(orient(latLon.polygon())))
-            .collect(toSet());
-
-    new Geojson(filteredByMinAreaPolygons).saveAsFile("tombes_postprocessed.geojson");
-  }
-
-    private Polygon orient(Polygon polygon) {
-        double horizontalWidth = 3.5E-5;
-        double horizontalHeight = 1.4E-5;
-
-        Coordinate center = polygon.getCentroid().getCoordinate();
-
-        Envelope env = polygon.getEnvelopeInternal();
-        boolean isVertical = env.getHeight() > env.getWidth();
-
-        double targetWidth = isVertical ? horizontalHeight : horizontalWidth;
-        double targetHeight = isVertical ? horizontalWidth : horizontalHeight;
-
-        double minX = center.x - targetWidth / 2;
-        double minY = center.y - targetHeight / 2;
-
-        Coordinate[] coords = new Coordinate[] {
-                new Coordinate(minX, minY),
-                new Coordinate(minX + targetWidth, minY),
-                new Coordinate(minX + targetWidth, minY + targetHeight),
-                new Coordinate(minX, minY + targetHeight),
-                new Coordinate(minX, minY)
-        };
-
-        return geometryFactory.createPolygon(coords);
-    }
-
-    public static Set<LatLonPolygon> invert(Set<LatLonPolygon> noSuperpositionPolygons) {
+  public static Set<LatLonPolygon> invert(Set<LatLonPolygon> noSuperpositionPolygons) {
     return noSuperpositionPolygons.stream()
         .map(
             p -> {
@@ -98,6 +53,15 @@ public class TombeTest {
               return new LatLonPolygon(polygon);
             })
         .collect(toSet());
+  }
+
+  @Test
+  void run() {
+    var tiledPolygons = polygonProvider.getTiledPolygons(false);
+
+    var merged = boundaryMerger.apply(tiledPolygons, TOMBE);
+
+    // new Geojson(merged).saveAsFile("tombes_postprocessed_v7.geojson");
   }
 
   private Set<LatLonPolygon> filterByMinArea(Set<LatLonPolygon> tiledPolygons, Area tombeMinArea) {
