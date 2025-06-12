@@ -10,7 +10,9 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
+import static org.junit.Assert.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -42,9 +44,13 @@ import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.statistic.HealthStatusStatistic;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.job.model.statistic.TaskStatusStatistic;
+import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.model.GeoJobType;
+import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
+import app.bpartners.geojobs.repository.model.detection.DetectableType;
+import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.CommunityUsedSurfaceService;
 import app.bpartners.geojobs.service.ParcelService;
@@ -186,6 +192,57 @@ class ZoneDetectionControllerTest {
     var actual = subject.getDetectionUsage(DetectionSurfaceUnit.SQUARE_DEGREE);
 
     assertEquals(detectionUsageOk, actual);
+  }
+
+  @Test
+  void succeedJob_whenJobNotSucceeded_throwsBadRequestException() {
+    String jobId = "jobId";
+    var job = mock(ZoneDetectionJob.class);
+    when(job.isSucceeded()).thenReturn(false);
+    when(detectionJobServiceMock.findById(jobId)).thenReturn(job);
+
+    BadRequestException exception =
+        assertThrows(BadRequestException.class, () -> subject.succeedJob(jobId));
+    assertTrue(exception.getMessage().contains("Zone detection on status"));
+
+    verify(detectionJobServiceMock).findById(jobId);
+    verify(objectConfigurationRepositoryMock, never()).findAllByDetectionJobId(anyString());
+    verify(eventProducerMock, never()).accept(anyList());
+  }
+
+  @Test
+  void succeedJob_ok() {
+    String jobId = "jobId";
+    var job = mock(ZoneDetectionJob.class);
+    var tilingJob = mock(ZoneTilingJob.class);
+    var status = mock(JobStatus.class);
+    var mockConfig =
+        mock(app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration.class);
+    List<DetectableObjectConfiguration> objectConfigs = List.of(mockConfig);
+
+    when(job.isSucceeded()).thenReturn(true);
+    when(job.getId()).thenReturn(jobId);
+    when(job.getZoneTilingJob()).thenReturn(tilingJob);
+    when(tilingJob.getId()).thenReturn("tilingJobId");
+    when(mockConfig.getObjectType()).thenReturn(DetectableType.TROTTOIR);
+    when(job.getStatus()).thenReturn(status);
+    when(job.getStatusHistory()).thenReturn(List.of(status));
+    when(status.getProgression()).thenReturn(FINISHED);
+    when(status.getHealth()).thenReturn(SUCCEEDED);
+    when(detectionJobServiceMock.findById(jobId)).thenReturn(job);
+    when(objectConfigurationRepositoryMock.findAllByDetectionJobId(jobId))
+        .thenReturn(objectConfigs);
+
+    var result = subject.succeedJob(jobId);
+
+    assertNotNull(result);
+    assertEquals(jobId, result.getId());
+    assertEquals("tilingJobId", result.getZoneTilingJobId());
+    assertNotNull(result.getStatus());
+    assertEquals(FINISHED.name(), result.getStatus().getProgression().name());
+    assertEquals(SUCCEEDED.name(), result.getStatus().getHealth().name());
+    assertNotNull(result.getObjectsToDetect());
+    assertFalse(result.getObjectsToDetect().isEmpty());
   }
 
   private static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob aZDJ(
