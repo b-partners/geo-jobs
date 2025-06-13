@@ -27,6 +27,8 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.TaskStatisticMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionTypeMapper;
+import app.bpartners.geojobs.endpoint.rest.model.CreateDetection;
+import app.bpartners.geojobs.endpoint.rest.model.Detection;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionSurfaceUnit;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionUsage;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
@@ -48,6 +50,7 @@ import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.model.GeoJobType;
+import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
@@ -243,6 +246,33 @@ class ZoneDetectionControllerTest {
     assertEquals(SUCCEEDED.name(), result.getStatus().getHealth().name());
     assertNotNull(result.getObjectsToDetect());
     assertFalse(result.getObjectsToDetect().isEmpty());
+  }
+
+  @Test
+  void processDetectionSynchronously_ok() {
+    String detectionId = "detectionID";
+    var createDetection = mock(CreateDetection.class);
+    var principal = mock(Principal.class);
+    var communityAuth = mock(CommunityAuthorization.class);
+    var expectedDetection = mock(Detection.class);
+    when(authProviderMock.getPrincipal()).thenReturn(principal);
+    when(principal.getPassword()).thenReturn("api-key");
+    when(communityAuthRepositoryMock.findByApiKey("api-key"))
+        .thenReturn(Optional.of(communityAuth));
+    when(communityAuth.getId()).thenReturn("community-id");
+    doNothing().when(detectionAuthorizerMock).accept(detectionId, createDetection, principal);
+    when(zoneServiceMock.processDetectionSynchronously(anyString(), any(), anyString()))
+        .thenReturn(expectedDetection);
+    var actual = subject.processDetectionSynchronously(detectionId, createDetection);
+
+    assertEquals(expectedDetection, actual);
+    verify(zoneServiceMock)
+        .processDetectionSynchronously(detectionId, createDetection, "community-id");
+    verify(detectionAuthorizerMock).accept(detectionId, createDetection, principal);
+    verify(authProviderMock, times(2)).getPrincipal();
+    verify(principal).getPassword();
+    verify(communityAuthRepositoryMock).findByApiKey("api-key");
+    verify(communityAuth).getId();
   }
 
   private static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob aZDJ(
