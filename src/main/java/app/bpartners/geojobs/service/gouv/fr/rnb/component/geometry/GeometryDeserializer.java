@@ -29,7 +29,7 @@ public class GeometryDeserializer extends JsonDeserializer<Geometry> {
             yield new PointCoordinates(point);
           }
           case "Polygon" -> {
-            List<List<BigDecimal>> polygon =
+            List<List<List<BigDecimal>>> polygon =
                 mapper.convertValue(coordsNode, new TypeReference<>() {});
             yield new PolygonCoordinates(polygon);
           }
