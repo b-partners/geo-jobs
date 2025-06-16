@@ -1,11 +1,12 @@
 package app.bpartners.geojobs.service.geojson;
 
 import static app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.MULTI_POLYGON;
-import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.model.Feature;
+import app.bpartners.geojobs.service.GeometryTools;
 import app.bpartners.geojobs.service.gouv.fr.rnb.BuildingApi;
+import app.bpartners.geojobs.service.gouv.fr.rnb.component.Building;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -23,6 +24,7 @@ public class GeometryConverter {
   private static final int DEFAULT_POLYGON_SIZE_IN_METERS = 100;
   private static final double APPROXIMATE_METERS_PER_DEGREE_OF_LATITUDE = 111320.0;
   private final GeometryFactory geometryFactory = new GeometryFactory();
+  private final GeometryTools geometryTools = new GeometryTools();
   private final BuildingApi buildingApi;
 
   public GeometryConverter(BuildingApi buildingApi) {
@@ -64,6 +66,32 @@ public class GeometryConverter {
       return null;
     }
     return retrieveNearestRoofMultiPolygon(point.getCoordinates());
+  }
+
+  public List<MultiPolygon> retrieveRoofPolygonsFrom(List<List<BigDecimal>> polygonCoordinates) {
+    var maxRadius = 1000;
+    var minimumEnclosingRadius = geometryTools.getMinimumEnclosingRadius(polygonCoordinates);
+    if (minimumEnclosingRadius > maxRadius) {
+      throw new UnsupportedOperationException(
+          "Provided multiPolygon zone is larger than supported retrieving roof polygons radius"
+              + " 1000, actual is "
+              + minimumEnclosingRadius);
+    }
+    var jtsMultiPolygon = apply(List.of(List.of((polygonCoordinates))));
+    var centroid = jtsMultiPolygon.getCentroid();
+    var longitude = centroid.getCoordinate().x;
+    var latitude = centroid.getCoordinate().y;
+    return getBuildingsFromCentroid(longitude, latitude, minimumEnclosingRadius);
+  }
+
+  private List<MultiPolygon> getBuildingsFromCentroid(
+      double longitude, double latitude, int maxRadius) {
+    var buildingClosest = buildingApi.getBuildingClosest(longitude, latitude, maxRadius);
+    return buildingClosest.results().stream()
+        .map(Building::rnbId)
+        .map(buildingApi::getBuildingByRnbId)
+        .map(building -> apply(building.shape().getMultiPolygonCoordinates()))
+        .toList();
   }
 
   public MultiPolygon retrieveNearestRoofMultiPolygon(List<BigDecimal> coordinates) {

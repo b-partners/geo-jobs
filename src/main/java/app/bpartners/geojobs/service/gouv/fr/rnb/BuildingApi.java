@@ -59,7 +59,7 @@ public class BuildingApi {
         nearestBuildingDistanceFromPoint);
   }
 
-  private Building getBuildingByRnbId(String rnbId) {
+  public Building getBuildingByRnbId(String rnbId) {
     var endpoint = String.format("%s/api/alpha/buildings/%s/", rnbApiUrl, rnbId);
     var requestEntity = defaultRequestEntity();
     return restTemplate.exchange(endpoint, HttpMethod.GET, requestEntity, Building.class).getBody();
