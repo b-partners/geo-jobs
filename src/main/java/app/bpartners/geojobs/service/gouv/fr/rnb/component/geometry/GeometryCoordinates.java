@@ -8,7 +8,8 @@ public sealed interface GeometryCoordinates
 
 record PointCoordinates(List<BigDecimal> coordinates) implements GeometryCoordinates {}
 
-record PolygonCoordinates(List<List<BigDecimal>> coordinates) implements GeometryCoordinates {}
+record PolygonCoordinates(List<List<List<BigDecimal>>> coordinates)
+    implements GeometryCoordinates {}
 
 record MultiPolygonCoordinates(List<List<List<List<BigDecimal>>>> coordinates)
     implements GeometryCoordinates {}
