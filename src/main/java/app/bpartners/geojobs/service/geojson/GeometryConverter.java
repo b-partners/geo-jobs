@@ -86,7 +86,7 @@ public class GeometryConverter {
 
   private List<MultiPolygon> getBuildingsFromCentroid(
       double longitude, double latitude, int radius, MultiPolygon provided) {
-    var buildingClosest = buildingApi.getBuildingClosest(longitude, latitude, radius);
+    var buildingClosest = buildingApi.getBuildingClosest(latitude, longitude, radius);
     return buildingClosest.results().stream()
         .map(Building::rnbId)
         .map(buildingApi::getBuildingByRnbId)
