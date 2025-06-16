@@ -81,16 +81,19 @@ public class GeometryConverter {
     var centroid = jtsMultiPolygon.getCentroid();
     var longitude = centroid.getCoordinate().x;
     var latitude = centroid.getCoordinate().y;
-    return getBuildingsFromCentroid(longitude, latitude, minimumEnclosingRadius);
+    return getBuildingsFromCentroid(longitude, latitude, minimumEnclosingRadius, jtsMultiPolygon);
   }
 
   private List<MultiPolygon> getBuildingsFromCentroid(
-      double longitude, double latitude, int maxRadius) {
-    var buildingClosest = buildingApi.getBuildingClosest(longitude, latitude, maxRadius);
+      double longitude, double latitude, int radius, MultiPolygon provided) {
+    var buildingClosest = buildingApi.getBuildingClosest(longitude, latitude, radius);
     return buildingClosest.results().stream()
         .map(Building::rnbId)
         .map(buildingApi::getBuildingByRnbId)
         .map(building -> apply(building.shape().getMultiPolygonCoordinates()))
+        .filter(
+            roofMultiPolygon ->
+                provided.contains(roofMultiPolygon) || provided.intersects(roofMultiPolygon))
         .toList();
   }
 
