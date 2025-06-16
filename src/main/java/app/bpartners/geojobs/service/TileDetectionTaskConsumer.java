@@ -2,13 +2,11 @@ package app.bpartners.geojobs.service;
 
 import static java.time.Instant.now;
 
-import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
-import app.bpartners.geojobs.endpoint.rest.model.Point;
-import app.bpartners.geojobs.endpoint.rest.model.Polygon;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
+import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.service.detection.DetectionMapper;
 import app.bpartners.geojobs.service.detection.DetectionResponse;
@@ -17,11 +15,10 @@ import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
-import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.locationtech.jts.geom.MultiPolygon;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -42,46 +39,48 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
     var parcelJobId = tileDetectionTask.getJobId();
     var address = tileDetectionTask.getAddress();
     var point = tileDetectionTask.getPoint();
-    File mask = null;
     var tile = tileDetectionTask.getTile();
+    File mask = null;
+    var tileCoordinates = tile.getCoordinates();
     var detection = detectionRepository.findByZdjId(zoneDetectionJobId).orElse(null);
     if (detection != null) {
       var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
-      if (providedGeoJsonZone != null
-          && providedGeoJsonZone.size() == 1
-          && detection.hasToitureModelName()) {
-        var geometryType = providedGeoJsonZone.getFirst().getGeometry().getActualInstance();
-        List<BigDecimal> coordinates = new ArrayList<>();
-        switch (geometryType) {
-          case Point p -> {
-            var longitude = p.getCoordinates().getFirst();
-            var latitude = p.getCoordinates().getLast();
-            coordinates.add(longitude);
-            coordinates.add(latitude);
+      if (providedGeoJsonZone != null && detection.hasToitureModelName()) {
+        var multiPolygonFromTile =
+            geometryConverter.getMultiPolygonFromTile(
+                tileCoordinates.getX(), tileCoordinates.getY(), tileCoordinates.getZ());
+        var featureWithDelimitations = detection.getFeatureWithDelimitations();
+        var optionalMultiPolygonFeatureMask =
+            featureWithDelimitations.stream()
+                .map(FeatureWithDelimitation::delimitations)
+                .flatMap(List::stream)
+                .filter(
+                    roofFeature -> {
+                      var geometry =
+                          geometryConverter.readGeometryFromString(
+                              roofFeature.getGeometry().getActualInstanceStringValue());
+                      if (geometry instanceof MultiPolygon roofMultiPolygon) {
+                        return roofMultiPolygon.contains(multiPolygonFromTile)
+                            || roofMultiPolygon.intersects(multiPolygonFromTile);
+                      }
+                      return false;
+                    })
+                .findFirst();
+        if (optionalMultiPolygonFeatureMask.isPresent()) {
+          var feature = optionalMultiPolygonFeatureMask.get();
+          var geometryFromFeature =
+              geometryConverter.readGeometryFromString(
+                  feature.getGeometry().getActualInstanceStringValue());
+          if (geometryFromFeature instanceof MultiPolygon roofMultiPolygon) {
+            mask = maskRetriever.apply(tile, roofMultiPolygon);
           }
-          case Polygon polygon -> {
-            var centroidCoordinates = geometryConverter.centroidFromGeometry(polygon);
-            var longitude = centroidCoordinates.getFirst();
-            var latitude = centroidCoordinates.getLast();
-            coordinates.add(longitude);
-            coordinates.add(latitude);
-          }
-          case MultiPolygon multiPolygon -> {
-            var centroidCoordinates = geometryConverter.centroidFromGeometry(multiPolygon);
-            var longitude = centroidCoordinates.getFirst();
-            var latitude = centroidCoordinates.getLast();
-            coordinates.add(longitude);
-            coordinates.add(latitude);
-          }
-          default -> throw new IllegalStateException("Unexpected value: " + geometryType);
+        } else {
+          log.info(
+              "Actual multiPolygon retrieved from tile {} not intersecting with any roof"
+                  + " multiPolygon",
+              multiPolygonFromTile);
+          return;
         }
-
-        var roofMultiPolygon = geometryConverter.retrieveNearestRoofMultiPolygon(coordinates);
-        mask = maskRetriever.apply(tile, roofMultiPolygon);
-      } else {
-        log.info(
-            "Only unique provided geojson supported for now, otherwise" + " providedGeojson={}",
-            providedGeoJsonZone);
       }
     }
 

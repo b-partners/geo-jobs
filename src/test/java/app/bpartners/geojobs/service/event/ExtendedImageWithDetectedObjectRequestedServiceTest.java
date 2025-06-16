@@ -21,6 +21,7 @@ import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.DetectedImageDraw;
+import app.bpartners.geojobs.service.GeometryTiledValidator;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.tile19.ExtenderApi;
 import app.bpartners.geojobs.service.tiling.TileFinder;
@@ -45,6 +46,7 @@ class ExtendedImageWithDetectedObjectRequestedServiceTest {
   GeometryConverter geometryConverterMock = mock();
   EventProducer eventProducerMock = mock();
   DetectionVGGRequestedService detectionVGGRequestedServiceMock = mock();
+  GeometryTiledValidator geometryTiledValidatorMock = mock();
   ExtendedImageWithDetectedObjectRequestedService subject =
       new ExtendedImageWithDetectedObjectRequestedService(
           tileFinderMock,
@@ -56,7 +58,8 @@ class ExtendedImageWithDetectedObjectRequestedServiceTest {
           detectionRepositoryMock,
           geometryConverterMock,
           eventProducerMock,
-          detectionVGGRequestedServiceMock);
+          detectionVGGRequestedServiceMock,
+          geometryTiledValidatorMock);
 
   @Test
   void detection_not_found() {
@@ -118,7 +121,8 @@ class ExtendedImageWithDetectedObjectRequestedServiceTest {
     when(machineDetectedTileMock.getTile()).thenReturn(tileMock);
     when(machineDetectedTileMock.getDetectedObjects()).thenReturn(List.of(detectedObjectMock));
 
-    when(pointMock.getCoordinates()).thenReturn(List.of(longitude, latitude));
+    var pointCoordinates = List.of(longitude, latitude);
+    when(pointMock.getCoordinates()).thenReturn(pointCoordinates);
     when(featureGeometryMock.getPoint()).thenReturn(pointMock);
     when(providedFeatureMock.getProperties()).thenReturn(Map.of("centroid", pointMock));
     when(providedFeatureMock.getGeometry()).thenReturn(featureGeometryMock);
@@ -140,6 +144,8 @@ class ExtendedImageWithDetectedObjectRequestedServiceTest {
         .thenAnswer(invocation -> invocation.getArgument(0));
     var multiPolygonStringValue = "multiPolygonStringValue";
     when(geometryConverterMock.writeGeometryAsString(any())).thenReturn(multiPolygonStringValue);
+    when(geometryConverterMock.centroidFromGeometry(any())).thenReturn(pointCoordinates);
+    when(geometryTiledValidatorMock.apply(any())).thenReturn(true);
 
     assertDoesNotThrow(
         () -> subject.accept(new ExtendedImageWithDetectedObjectRequested(detectionId, false)));

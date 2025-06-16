@@ -40,6 +40,8 @@ import app.bpartners.geojobs.service.detection.DetectionMapper;
 import app.bpartners.geojobs.service.detection.DetectionMaskCreator;
 import app.bpartners.geojobs.service.detection.DetectionResponse;
 import app.bpartners.geojobs.service.detection.TileObjectDetector;
+import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import app.bpartners.geojobs.service.gouv.fr.rnb.BuildingApi;
 import app.bpartners.geojobs.service.tiling.TileValidator;
 import app.bpartners.geojobs.template.HTMLTemplateParser;
 import jakarta.mail.internet.AddressException;
@@ -77,7 +79,9 @@ class RooferDetectionServiceTest {
   Mailer mailer = mock();
   AuthProvider authProvider = mock();
   HTMLTemplateParser htmlTemplateParser = new HTMLTemplateParser();
-  DetectionVGGUpdate detectionVGGUpdate = new DetectionVGGUpdate(fileWriter, bucketComponent);
+  BuildingApi buildingApiMock = mock();
+  DetectionVGGUpdate detectionVGGUpdate =
+      new DetectionVGGUpdate(fileWriter, bucketComponent, new GeometryConverter(buildingApiMock));
   RooferDetectionService subject;
 
   @BeforeEach
