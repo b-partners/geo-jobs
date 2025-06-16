@@ -10,9 +10,7 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
-import static org.junit.Assert.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -126,7 +124,7 @@ class ZoneDetectionControllerTest {
 
   @Test
   void get_zdj_recomputed_status_ok() {
-    String jobId = "jobId";
+    var jobId = randomUUID().toString();
     when(detectionJobServiceMock.findById(jobId))
         .thenReturn(
             aZDJ(
@@ -151,7 +149,7 @@ class ZoneDetectionControllerTest {
 
   @Test
   void get_zdj_tasks_recomputed_status_ok() {
-    String jobId = "jobId";
+    var jobId = randomUUID().toString();
     when(detectionJobServiceMock.findById(jobId))
         .thenReturn(
             aZDJ(
@@ -176,7 +174,7 @@ class ZoneDetectionControllerTest {
 
   @Test
   void get_detection_task_statistics_ok() {
-    String jobId = "jobId";
+    var jobId = randomUUID().toString();
     var domainStatistic = aTaskStatistic(jobId);
     var expected = taskStatisticMapper.toRest(domainStatistic);
     when(detectionJobServiceMock.computeTaskStatistics(jobId)).thenReturn(domainStatistic);
@@ -199,15 +197,15 @@ class ZoneDetectionControllerTest {
 
   @Test
   void succeedJob_whenJobNotSucceeded_throwsBadRequestException() {
-    String jobId = "jobId";
+    var jobId = randomUUID().toString();
     var job = mock(ZoneDetectionJob.class);
     when(job.isSucceeded()).thenReturn(false);
     when(detectionJobServiceMock.findById(jobId)).thenReturn(job);
 
-    BadRequestException exception =
+    BadRequestException actual =
         assertThrows(BadRequestException.class, () -> subject.succeedJob(jobId));
-    assertTrue(exception.getMessage().contains("Zone detection on status"));
 
+    assertTrue(actual.getMessage().contains("Zone detection on status"));
     verify(detectionJobServiceMock).findById(jobId);
     verify(objectConfigurationRepositoryMock, never()).findAllByDetectionJobId(anyString());
     verify(eventProducerMock, never()).accept(anyList());
@@ -215,7 +213,7 @@ class ZoneDetectionControllerTest {
 
   @Test
   void succeedJob_ok() {
-    String jobId = "jobId";
+    var jobId = randomUUID().toString();
     var job = mock(ZoneDetectionJob.class);
     var tilingJob = mock(ZoneTilingJob.class);
     var status = mock(JobStatus.class);
@@ -236,21 +234,21 @@ class ZoneDetectionControllerTest {
     when(objectConfigurationRepositoryMock.findAllByDetectionJobId(jobId))
         .thenReturn(objectConfigs);
 
-    var result = subject.succeedJob(jobId);
+    var actual = subject.succeedJob(jobId);
 
-    assertNotNull(result);
-    assertEquals(jobId, result.getId());
-    assertEquals("tilingJobId", result.getZoneTilingJobId());
-    assertNotNull(result.getStatus());
-    assertEquals(FINISHED.name(), result.getStatus().getProgression().name());
-    assertEquals(SUCCEEDED.name(), result.getStatus().getHealth().name());
-    assertNotNull(result.getObjectsToDetect());
-    assertFalse(result.getObjectsToDetect().isEmpty());
+    assertNotNull(actual);
+    assertEquals(jobId, actual.getId());
+    assertEquals("tilingJobId", actual.getZoneTilingJobId());
+    assertNotNull(actual.getStatus());
+    assertEquals(FINISHED.name(), actual.getStatus().getProgression().name());
+    assertEquals(SUCCEEDED.name(), actual.getStatus().getHealth().name());
+    assertNotNull(actual.getObjectsToDetect());
+    assertFalse(actual.getObjectsToDetect().isEmpty());
   }
 
   @Test
   void processDetectionSynchronously_ok() {
-    String detectionId = "detectionID";
+    var detectionId = randomUUID().toString();
     var createDetection = mock(CreateDetection.class);
     var principal = mock(Principal.class);
     var communityAuth = mock(CommunityAuthorization.class);
@@ -263,6 +261,7 @@ class ZoneDetectionControllerTest {
     doNothing().when(detectionAuthorizerMock).accept(detectionId, createDetection, principal);
     when(zoneServiceMock.processDetectionSynchronously(anyString(), any(), anyString()))
         .thenReturn(expectedDetection);
+
     var actual = subject.processDetectionSynchronously(detectionId, createDetection);
 
     assertEquals(expectedDetection, actual);
