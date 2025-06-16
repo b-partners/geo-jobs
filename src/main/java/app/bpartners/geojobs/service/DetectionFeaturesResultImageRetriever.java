@@ -9,6 +9,7 @@ import app.bpartners.geojobs.endpoint.rest.model.Polygon;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.model.detection.Detection;
+import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Component;
 public class DetectionFeaturesResultImageRetriever implements Function<Detection, List<Feature>> {
   private final BucketComponent bucketComponent;
   private final CustomBucketComponent customBucketComponent;
+  private final GeometryConverter geometryConverter;
 
   @Override
   public List<Feature> apply(Detection detection) {
@@ -55,28 +57,33 @@ public class DetectionFeaturesResultImageRetriever implements Function<Detection
     updatedGeoJson.forEach(
         feature -> {
           var geometryType = feature.getGeometry().getActualInstance();
-          Point point;
+          Point centroidFromProperties;
           switch (geometryType) {
-            case Point ignored -> point = feature.getGeometry().getPoint();
-            case Polygon ignored -> point = getCentroidRestPointFromPolygon(feature);
-            case MultiPolygon ignored -> point = getCentroidRestPointFromPolygon(feature);
+            case Point point -> centroidFromProperties = point;
+            case Polygon ignored ->
+                centroidFromProperties = getCentroidRestPointFromPolygon(feature);
+            case MultiPolygon ignored ->
+                centroidFromProperties = getCentroidRestPointFromPolygon(feature);
             default ->
-                throw new IllegalArgumentException("Unsupported geometry type: " + geometryType);
+                throw new IllegalArgumentException(
+                    "Unsupported geometry type to retrieve centroid from properties : "
+                        + geometryType);
           }
-          if (point != null) {
-            var longitude = point.getCoordinates().getFirst();
-            var latitude = point.getCoordinates().getLast();
-            var originalFileKey =
-                layer + "/extended_original_" + longitude + "_" + latitude + ".jpg";
-            var drawnFileKey = layer + "/extended_drawn_" + longitude + "_" + latitude + ".jpg";
-            var vggFileKey = layer + "/vgg_" + longitude + "_" + latitude + ".json";
+          var centroidCoordinates =
+              centroidFromProperties == null
+                  ? geometryConverter.centroidFromGeometry(geometryType)
+                  : centroidFromProperties.getCoordinates();
+          var longitude = centroidCoordinates.getFirst();
+          var latitude = centroidCoordinates.getLast();
+          var originalFileKey = layer + "/extended_original_" + longitude + "_" + latitude + ".jpg";
+          var drawnFileKey = layer + "/extended_drawn_" + longitude + "_" + latitude + ".jpg";
+          var vggFileKey = layer + "/vgg_" + longitude + "_" + latitude + ".json";
 
-            addPropertyIfFileKeyExist(originalFileKey, feature, "original_image_url");
+          addPropertyIfFileKeyExist(originalFileKey, feature, "original_image_url");
 
-            addPropertyIfFileKeyExist(drawnFileKey, feature, "drawn_image_url");
+          addPropertyIfFileKeyExist(drawnFileKey, feature, "drawn_image_url");
 
-            addPropertyIfFileKeyExist(vggFileKey, feature, "vgg_file_url");
-          }
+          addPropertyIfFileKeyExist(vggFileKey, feature, "vgg_file_url");
         });
     return updatedGeoJson;
   }

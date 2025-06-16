@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.*;
 import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.HOUSES_0;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
@@ -19,6 +18,7 @@ import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.service.DetectedImageDraw;
+import app.bpartners.geojobs.service.GeometryTiledValidator;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.tile19.ExtenderApi;
 import app.bpartners.geojobs.service.tiling.TileFinder;
@@ -46,19 +46,23 @@ public class ExtendedImageWithDetectedObjectRequestedService
   private final GeometryConverter geometryConverter;
   private final EventProducer eventProducer;
   private final DetectionVGGRequestedService detectionVGGRequestedService;
+  private final GeometryTiledValidator geometryTiledValidator;
 
   @Override
   public void accept(ExtendedImageWithDetectedObjectRequested event) {
     var detectionId = event.getDetectionId();
     var isSynchronous = event.getIsSynchronous();
     var detection = detectionRepository.findById(detectionId).orElseThrow();
-    var layer = detection.getGeoServerProperties().getGeoServerParameter().getLayers();
     var providedFeatures = detection.getProvidedGeoJsonZone();
-    if (providedFeatures.stream()
-        .noneMatch(
-            feature ->
-                feature.getProperties() != null
-                    && feature.getProperties().containsKey("centroid"))) {
+    boolean detectionHasAnyFeatureNotContainedInsideFrame =
+        providedFeatures.stream()
+            .anyMatch(
+                feature ->
+                    geometryTiledValidator
+                        .apply(feature.getGeometry().getActualInstance())
+                        .equals(false));
+    // TODO: only skip those features not contained inside frame not all
+    if (detectionHasAnyFeatureNotContainedInsideFrame) {
       log.info("Provided geojson not contained inside 3x3 tiles, so ignoring VGG generation");
       return;
     }
@@ -200,17 +204,14 @@ public class ExtendedImageWithDetectedObjectRequestedService
     return providedFeatures.stream()
         .map(
             feature -> {
-              var point = getPointOrCentroidAttribute(feature);
-              if (point == null) {
-                return null;
-              }
-              var longitude = point.getCoordinates().getFirst();
-              var latitude = point.getCoordinates().getLast();
+              var centroidCoordinates =
+                  geometryConverter.centroidFromGeometry(feature.getGeometry().getActualInstance());
+              var longitude = centroidCoordinates.getFirst();
+              var latitude = centroidCoordinates.getLast();
               var tileCoordinates =
                   tileFinder.getSurroundingTiles(longitude, latitude, HOUSES_0.getZoomLevel());
               return new FeatureWithSurroundingTiles(feature, tileCoordinates);
             })
-        .filter(Objects::nonNull)
         .toList();
   }
 

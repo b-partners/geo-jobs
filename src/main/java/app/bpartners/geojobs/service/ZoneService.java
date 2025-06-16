@@ -2,8 +2,6 @@ package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toDomainFeature;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.*;
-import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
-import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.MULTI_POLYGON;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
@@ -11,7 +9,6 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.CLIENT_EXCEPTION;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
-import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.HOUSES_0;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_BUCKET_FOLDER;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_EXTENSION;
@@ -33,7 +30,6 @@ import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.exception.NotFoundException;
-import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.model.page.BoundedPageSize;
 import app.bpartners.geojobs.model.page.PageFromOne;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
@@ -471,8 +467,7 @@ public class ZoneService {
     var restProvidedGeoJsonZone = createDetection.getGeoJsonZone();
     var domainProvidedGeoJsonZone = getActualProvidedGeoJson(restProvidedGeoJsonZone);
     var multiPolygonGeoJsonZoneToBeProcessed =
-        extractDetectionMultiPolygonGeoJson(
-            detectableObjectModel, restProvidedGeoJsonZone, domainProvidedGeoJsonZone);
+        extractDetectionMultiPolygonGeoJson(restProvidedGeoJsonZone, domainProvidedGeoJsonZone);
     var finalGeoServerProperties =
         extractGeoServerProperties(
             createDetection.getGeoServerProperties(),
@@ -504,8 +499,7 @@ public class ZoneService {
     var restProvidedGeoJsonZone = createDetection.getGeoJsonZone();
     var domainProvidedGeoJsonZone = getActualProvidedGeoJson(restProvidedGeoJsonZone);
     var multiPolygonGeoJsonZoneToBeProcessed =
-        extractDetectionMultiPolygonGeoJson(
-            detectableObjectModel, restProvidedGeoJsonZone, domainProvidedGeoJsonZone);
+        extractDetectionMultiPolygonGeoJson(restProvidedGeoJsonZone, domainProvidedGeoJsonZone);
     var finalGeoServerProperties =
         extractGeoServerProperties(
             createDetection.getGeoServerProperties(),
@@ -556,44 +550,13 @@ public class ZoneService {
   }
 
   private List<app.bpartners.geojobs.repository.model.Feature> extractDetectionMultiPolygonGeoJson(
-      DetectableObjectModel detectableObjectModel,
       List<Feature> geoJsonZone,
       List<app.bpartners.geojobs.repository.model.Feature> providedGeoJsonZone) {
-    var featuresHasAllMultiPolygonInstances =
-        geoJsonZone != null && featureTypeChecker.apply(geoJsonZone, MultiPolygon.class);
-    var featuresHasAllPolygonInstances =
-        geoJsonZone != null && featureTypeChecker.apply(geoJsonZone, Polygon.class);
     var featuresHasAllPointInstances =
         geoJsonZone != null && featureTypeChecker.apply(geoJsonZone, Point.class);
 
     if (providedGeoJsonZone.isEmpty() || geoJsonZone == null) {
       return providedGeoJsonZone;
-    }
-    if (featuresHasAllMultiPolygonInstances) {
-      if (TOITURE.equals(detectableObjectModel.getModelName())) {
-        return multiPolygonFrameFromProvidedFeatures(geoJsonZone, providedGeoJsonZone);
-      }
-      return providedGeoJsonZone;
-    }
-
-    if (featuresHasAllPolygonInstances) {
-      geoJsonZone.forEach(
-          feature -> {
-            List<List<List<BigDecimal>>> polygonCoordinates =
-                feature.getGeometry().getPolygon().getCoordinates();
-            feature
-                .getGeometry()
-                .setActualInstance(
-                    new MultiPolygon()
-                        .type(MULTI_POLYGON)
-                        .coordinates(List.of(polygonCoordinates)));
-          });
-      var featuresFromGeoJsonZone =
-          geoJsonZone.stream().map(FeatureMapper::toDomainFeature).toList();
-      if (TOITURE.equals(detectableObjectModel.getModelName())) {
-        return multiPolygonFrameFromProvidedFeatures(geoJsonZone, featuresFromGeoJsonZone);
-      }
-      return featuresFromGeoJsonZone;
     }
 
     if (featuresHasAllPointInstances) {
@@ -617,36 +580,7 @@ public class ZoneService {
           });
       return geoJsonZone.stream().map(FeatureMapper::toDomainFeature).toList();
     }
-
-    throw new NotImplementedException(
-        "Feature with multiple geometry instances not supported for now.");
-  }
-
-  private List<app.bpartners.geojobs.repository.model.Feature>
-      multiPolygonFrameFromProvidedFeatures(
-          List<Feature> geoJsonZone,
-          List<app.bpartners.geojobs.repository.model.Feature> providedGeoJsonZone) {
-    if (providedGeoJsonZone.size() == 1) {
-      var restFeature = geoJsonZone.getFirst();
-      var restMultiPolygon = restFeature.getGeometry().getMultiPolygon();
-      var jtsMultiPolygonProvided = geometryConverter.apply(restMultiPolygon.getCoordinates());
-      var centroidCoordinates = geometryConverter.centroidFromGeometry(restMultiPolygon);
-      var longitude = centroidCoordinates.getFirst();
-      var latitude = centroidCoordinates.getLast();
-      var jtsMultipolygonFrame = tileMultiPolygonFrame.apply(longitude, latitude).orElseThrow();
-      if (jtsMultipolygonFrame.contains(jtsMultiPolygonProvided)) {
-        return Collections.singletonList(
-            geometryConverter.toFeature(
-                randomUUID().toString(),
-                HOUSES_0.getZoomLevel(),
-                restFeature.getProperties(),
-                jtsMultipolygonFrame));
-      }
-      return providedGeoJsonZone;
-    }
-    throw new NotImplementedException(
-        "Only one geojson multipolygon supported for now, otherwise actual provided size is "
-            + providedGeoJsonZone.size());
+    return providedGeoJsonZone;
   }
 
   private List<BigDecimal> retrieveFirstPoint(List<Feature> geoJsonZone) {
