@@ -83,6 +83,8 @@ public class DetectionDelimitationRetriever implements BiConsumer<Detection, Boo
                   properties.get("zoom") != null
                       ? (Integer) properties.get("zoom")
                       : HOUSES_0.getZoomLevel();
+              var layer = detection.getGeoServerProperties().getGeoServerParameter().getLayers();
+              pointExtendedImageRequest.accept(providedFeature, layer, isSynchronous);
               var geometryType = providedFeature.getGeometry().getActualInstance();
               switch (geometryType) {
                 case Point point -> {
@@ -92,9 +94,6 @@ public class DetectionDelimitationRetriever implements BiConsumer<Detection, Boo
                           zoom,
                           properties,
                           geometryConverter.retrieveNearestRoofMultiPolygon(point));
-                  var layer =
-                      detection.getGeoServerProperties().getGeoServerParameter().getLayers();
-                  pointExtendedImageRequest.accept(providedFeature, layer, isSynchronous);
                   return new FeatureWithDelimitation(
                       toDomainFeature(providedFeature), List.of(multiPolygonFromPointDomain));
                 }

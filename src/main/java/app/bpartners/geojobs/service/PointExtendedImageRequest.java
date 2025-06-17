@@ -10,9 +10,11 @@ import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.function.TriConsumer;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class PointExtendedImageRequest implements TriConsumer<Feature, String, Boolean> {
@@ -25,6 +27,7 @@ public class PointExtendedImageRequest implements TriConsumer<Feature, String, B
   public void accept(Feature feature, String layer, Boolean isSynchronous) {
     var geometry = Objects.requireNonNull(feature.getGeometry()).getActualInstance();
     if (geometryTiledValidator.apply(geometry).equals(false)) {
+      log.info("Provided feature geometry too large to request image: {} ", geometry);
       return;
     }
     var pointCoordinates = geometryConverter.centroidFromGeometry(geometry);
