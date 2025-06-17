@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service;
 
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
+import app.bpartners.geojobs.endpoint.rest.model.Point;
 import app.bpartners.geojobs.endpoint.rest.model.Polygon;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.util.List;
@@ -17,6 +18,9 @@ public class GeometryTiledValidator implements Function<Object, Boolean> {
   @Override
   public Boolean apply(Object geometry) {
     switch (geometry) {
+      case Point ignored -> {
+        return true;
+      }
       case Polygon polygon -> {
         var providedMultiPolygon = geometryConverter.apply(List.of(polygon.getCoordinates()));
         return checkMultiPolygonContainedInFrame(providedMultiPolygon);
