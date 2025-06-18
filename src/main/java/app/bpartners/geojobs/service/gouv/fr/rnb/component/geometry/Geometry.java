@@ -28,8 +28,8 @@ public class Geometry {
     return null;
   }
 
-  public List<List<BigDecimal>> getPolygonCoordinates() {
-    if (coordinates instanceof PolygonCoordinates(List<List<BigDecimal>> polygon)) {
+  public List<List<List<BigDecimal>>> getPolygonCoordinates() {
+    if (coordinates instanceof PolygonCoordinates(List<List<List<BigDecimal>>> polygon)) {
       return polygon;
     }
     return null;

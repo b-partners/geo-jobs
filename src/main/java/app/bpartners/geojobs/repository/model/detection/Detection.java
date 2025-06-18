@@ -83,6 +83,9 @@ public class Detection implements Serializable {
   private HashMap<String, Feature> pointDelimitation;
 
   @JdbcTypeCode(JSON)
+  private List<FeatureWithDelimitation> featureWithDelimitations;
+
+  @JdbcTypeCode(JSON)
   private List<String> convertedAddresses;
 
   @JdbcTypeCode(JSON)

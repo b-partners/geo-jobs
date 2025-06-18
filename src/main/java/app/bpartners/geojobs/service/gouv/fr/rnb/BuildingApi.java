@@ -1,8 +1,11 @@
 package app.bpartners.geojobs.service.gouv.fr.rnb;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.service.gouv.fr.rnb.component.Building;
 import app.bpartners.geojobs.service.gouv.fr.rnb.component.BuildingClosest;
+import java.net.URLDecoder;
 import java.util.Comparator;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -24,6 +27,18 @@ public class BuildingApi {
         UriComponentsBuilder.fromHttpUrl(endpoint)
             .queryParam("radius", radius)
             .queryParam("point", point)
+            .queryParam("from", "tech@birdia.fr");
+
+    var requestEntity = defaultRequestEntity();
+
+    return restTemplate
+        .exchange(builder.build().toUri(), HttpMethod.GET, requestEntity, BuildingClosest.class)
+        .getBody();
+  }
+
+  public BuildingClosest getBuildingByNextUrl(String nextUrl) {
+    UriComponentsBuilder builder =
+        UriComponentsBuilder.fromHttpUrl(URLDecoder.decode(nextUrl, UTF_8))
             .queryParam("from", "tech@birdia.fr");
 
     var requestEntity = defaultRequestEntity();
@@ -59,7 +74,7 @@ public class BuildingApi {
         nearestBuildingDistanceFromPoint);
   }
 
-  private Building getBuildingByRnbId(String rnbId) {
+  public Building getBuildingByRnbId(String rnbId) {
     var endpoint = String.format("%s/api/alpha/buildings/%s/", rnbApiUrl, rnbId);
     var requestEntity = defaultRequestEntity();
     return restTemplate.exchange(endpoint, HttpMethod.GET, requestEntity, Building.class).getBody();

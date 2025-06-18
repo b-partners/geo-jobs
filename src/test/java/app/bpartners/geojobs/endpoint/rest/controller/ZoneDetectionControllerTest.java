@@ -10,7 +10,7 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -25,6 +25,8 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.TaskStatisticMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionTypeMapper;
+import app.bpartners.geojobs.endpoint.rest.model.CreateDetection;
+import app.bpartners.geojobs.endpoint.rest.model.Detection;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionSurfaceUnit;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionUsage;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
@@ -42,9 +44,14 @@ import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.statistic.HealthStatusStatistic;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.job.model.statistic.TaskStatusStatistic;
+import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.model.GeoJobType;
+import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
+import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
+import app.bpartners.geojobs.repository.model.detection.DetectableType;
+import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.CommunityUsedSurfaceService;
 import app.bpartners.geojobs.service.ParcelService;
@@ -117,7 +124,7 @@ class ZoneDetectionControllerTest {
 
   @Test
   void get_zdj_recomputed_status_ok() {
-    String jobId = "jobId";
+    var jobId = randomUUID().toString();
     when(detectionJobServiceMock.findById(jobId))
         .thenReturn(
             aZDJ(
@@ -142,7 +149,7 @@ class ZoneDetectionControllerTest {
 
   @Test
   void get_zdj_tasks_recomputed_status_ok() {
-    String jobId = "jobId";
+    var jobId = randomUUID().toString();
     when(detectionJobServiceMock.findById(jobId))
         .thenReturn(
             aZDJ(
@@ -167,7 +174,7 @@ class ZoneDetectionControllerTest {
 
   @Test
   void get_detection_task_statistics_ok() {
-    String jobId = "jobId";
+    var jobId = randomUUID().toString();
     var domainStatistic = aTaskStatistic(jobId);
     var expected = taskStatisticMapper.toRest(domainStatistic);
     when(detectionJobServiceMock.computeTaskStatistics(jobId)).thenReturn(domainStatistic);
@@ -186,6 +193,85 @@ class ZoneDetectionControllerTest {
     var actual = subject.getDetectionUsage(DetectionSurfaceUnit.SQUARE_DEGREE);
 
     assertEquals(detectionUsageOk, actual);
+  }
+
+  @Test
+  void succeedJob_whenJobNotSucceeded_throwsBadRequestException() {
+    var jobId = randomUUID().toString();
+    var job = mock(ZoneDetectionJob.class);
+    when(job.isSucceeded()).thenReturn(false);
+    when(detectionJobServiceMock.findById(jobId)).thenReturn(job);
+
+    BadRequestException actual =
+        assertThrows(BadRequestException.class, () -> subject.succeedJob(jobId));
+
+    assertTrue(actual.getMessage().contains("Zone detection on status"));
+    verify(detectionJobServiceMock).findById(jobId);
+    verify(objectConfigurationRepositoryMock, never()).findAllByDetectionJobId(anyString());
+    verify(eventProducerMock, never()).accept(anyList());
+  }
+
+  @Test
+  void succeedJob_ok() {
+    var jobId = randomUUID().toString();
+    var job = mock(ZoneDetectionJob.class);
+    var tilingJob = mock(ZoneTilingJob.class);
+    var status = mock(JobStatus.class);
+    var mockConfig =
+        mock(app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration.class);
+    List<DetectableObjectConfiguration> objectConfigs = List.of(mockConfig);
+
+    when(job.isSucceeded()).thenReturn(true);
+    when(job.getId()).thenReturn(jobId);
+    when(job.getZoneTilingJob()).thenReturn(tilingJob);
+    when(tilingJob.getId()).thenReturn("tilingJobId");
+    when(mockConfig.getObjectType()).thenReturn(DetectableType.TROTTOIR);
+    when(job.getStatus()).thenReturn(status);
+    when(job.getStatusHistory()).thenReturn(List.of(status));
+    when(status.getProgression()).thenReturn(FINISHED);
+    when(status.getHealth()).thenReturn(SUCCEEDED);
+    when(detectionJobServiceMock.findById(jobId)).thenReturn(job);
+    when(objectConfigurationRepositoryMock.findAllByDetectionJobId(jobId))
+        .thenReturn(objectConfigs);
+
+    var actual = subject.succeedJob(jobId);
+
+    assertNotNull(actual);
+    assertEquals(jobId, actual.getId());
+    assertEquals("tilingJobId", actual.getZoneTilingJobId());
+    assertNotNull(actual.getStatus());
+    assertEquals(FINISHED.name(), actual.getStatus().getProgression().name());
+    assertEquals(SUCCEEDED.name(), actual.getStatus().getHealth().name());
+    assertNotNull(actual.getObjectsToDetect());
+    assertFalse(actual.getObjectsToDetect().isEmpty());
+  }
+
+  @Test
+  void processDetectionSynchronously_ok() {
+    var detectionId = randomUUID().toString();
+    var createDetection = mock(CreateDetection.class);
+    var principal = mock(Principal.class);
+    var communityAuth = mock(CommunityAuthorization.class);
+    var expectedDetection = mock(Detection.class);
+    when(authProviderMock.getPrincipal()).thenReturn(principal);
+    when(principal.getPassword()).thenReturn("api-key");
+    when(communityAuthRepositoryMock.findByApiKey("api-key"))
+        .thenReturn(Optional.of(communityAuth));
+    when(communityAuth.getId()).thenReturn("community-id");
+    doNothing().when(detectionAuthorizerMock).accept(detectionId, createDetection, principal);
+    when(zoneServiceMock.processDetectionSynchronously(anyString(), any(), anyString()))
+        .thenReturn(expectedDetection);
+
+    var actual = subject.processDetectionSynchronously(detectionId, createDetection);
+
+    assertEquals(expectedDetection, actual);
+    verify(zoneServiceMock)
+        .processDetectionSynchronously(detectionId, createDetection, "community-id");
+    verify(detectionAuthorizerMock).accept(detectionId, createDetection, principal);
+    verify(authProviderMock, times(2)).getPrincipal();
+    verify(principal).getPassword();
+    verify(communityAuthRepositoryMock).findByApiKey("api-key");
+    verify(communityAuth).getId();
   }
 
   private static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob aZDJ(

@@ -61,13 +61,10 @@ public class SynchronousDetectionService
         detectionRepository.save(
             detectionWithCreatedZTJ.toBuilder().zdjId(createdZoneDetectionJob.getId()).build());
 
+    detectionDelimitationRetriever.accept(detectionWithCreatedZDJ, true);
+
     List<Callable<Void>> voidCallable1 =
         List.of(
-            () -> {
-              // Original image retriever step
-              detectionDelimitationRetriever.accept(detectionWithCreatedZDJ, true);
-              return null;
-            },
             () -> {
               // Machine detection step
               detectionMachineDetectionCreation.processMachineDetection(

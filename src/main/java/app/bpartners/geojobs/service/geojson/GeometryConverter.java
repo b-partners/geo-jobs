@@ -1,11 +1,12 @@
 package app.bpartners.geojobs.service.geojson;
 
 import static app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.MULTI_POLYGON;
-import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.model.Feature;
+import app.bpartners.geojobs.service.GeometryTools;
 import app.bpartners.geojobs.service.gouv.fr.rnb.BuildingApi;
+import app.bpartners.geojobs.service.gouv.fr.rnb.component.Building;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -13,16 +14,19 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.BinaryOperator;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.geotools.geojson.geom.GeometryJSON;
 import org.locationtech.jts.geom.*;
 import org.springframework.stereotype.Component;
 
 // Most ChatGPT-generated code
 @Component
+@Slf4j
 public class GeometryConverter {
   private static final int DEFAULT_POLYGON_SIZE_IN_METERS = 100;
   private static final double APPROXIMATE_METERS_PER_DEGREE_OF_LATITUDE = 111320.0;
   private final GeometryFactory geometryFactory = new GeometryFactory();
+  private final GeometryTools geometryTools = new GeometryTools();
   private final BuildingApi buildingApi;
 
   public GeometryConverter(BuildingApi buildingApi) {
@@ -64,6 +68,61 @@ public class GeometryConverter {
       return null;
     }
     return retrieveNearestRoofMultiPolygon(point.getCoordinates());
+  }
+
+  public List<MultiPolygon> retrieveRoofPolygonsFrom(
+      List<List<BigDecimal>> lonLatPolygonCoordinates) {
+    var maxRadius = 1000;
+    var metersPolygonCoordinates =
+        lonLatPolygonCoordinates.stream()
+            .map(coordinate -> lonLatToMeters(coordinate.getFirst(), coordinate.getLast()))
+            .toList();
+    var minimumEnclosingRadius = geometryTools.getMinimumEnclosingRadius(metersPolygonCoordinates);
+    if (minimumEnclosingRadius > maxRadius) {
+      throw new UnsupportedOperationException(
+          "Provided multiPolygon zone is larger than supported retrieving roof polygons radius"
+              + " 1000, actual is "
+              + minimumEnclosingRadius);
+    }
+    var jtsMultiPolygon = apply(List.of(List.of((lonLatPolygonCoordinates))));
+    var centroid = jtsMultiPolygon.getCentroid();
+    var longitude = centroid.getCoordinate().x;
+    var latitude = centroid.getCoordinate().y;
+    return getBuildingsFromCentroid(longitude, latitude, minimumEnclosingRadius, jtsMultiPolygon);
+  }
+
+  private List<MultiPolygon> getBuildingsFromCentroid(
+      double longitude, double latitude, int radius, MultiPolygon provided) {
+    var buildingClosest = buildingApi.getBuildingClosest(latitude, longitude, radius);
+    var buildingIdentifiers =
+        new ArrayList<>(buildingClosest.results().stream().map(Building::rnbId).toList());
+    while (buildingClosest.nextUrl() != null) {
+      buildingClosest = buildingApi.getBuildingByNextUrl(buildingClosest.nextUrl());
+      buildingIdentifiers.addAll(buildingClosest.results().stream().map(Building::rnbId).toList());
+    }
+    return buildingIdentifiers.stream()
+        .map(buildingApi::getBuildingByRnbId)
+        .map(
+            building -> {
+              var geometryType = building.shape().getType();
+              switch (geometryType) {
+                case POLYGON -> {
+                  return apply(List.of(building.shape().getPolygonCoordinates()));
+                }
+                case MULTI_POLYGON -> {
+                  return apply(building.shape().getMultiPolygonCoordinates());
+                }
+                default ->
+                    throw new UnsupportedOperationException(
+                        "Only POLYGON and MULTI_POLYGON can be converted to roof polygons, actual"
+                            + " is "
+                            + geometryType);
+              }
+            })
+        .filter(
+            roofMultiPolygon ->
+                provided.contains(roofMultiPolygon) || provided.intersects(roofMultiPolygon))
+        .toList();
   }
 
   public MultiPolygon retrieveNearestRoofMultiPolygon(List<BigDecimal> coordinates) {
@@ -302,5 +361,13 @@ public class GeometryConverter {
       }
       throw new UnsupportedOperationException("Unsupported unified geometry : " + unifiedGeometry);
     };
+  }
+
+  private List<BigDecimal> lonLatToMeters(BigDecimal lon, BigDecimal lat) {
+    double originShift = 2 * Math.PI * 6378137 / 2.0;
+    double mx = lon.doubleValue() * originShift / 180.0;
+    double my = Math.log(Math.tan((90 + lat.doubleValue()) * Math.PI / 360.0)) / (Math.PI / 180.0);
+    my = my * originShift / 180.0;
+    return List.of(BigDecimal.valueOf(mx), BigDecimal.valueOf(my));
   }
 }

@@ -82,7 +82,6 @@ public class DetectionFromStatisticRestMapper
                 return feature;
               }
               var properties = new HashMap<>(feature.getProperties());
-              properties.remove("centroid");
               properties.remove("vgg_file_key");
               return feature.properties(properties);
             })

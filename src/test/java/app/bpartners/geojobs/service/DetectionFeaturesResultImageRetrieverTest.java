@@ -2,6 +2,7 @@ package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.endpoint.rest.model.Feature.TypeEnum.FEATURE;
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
+import static app.bpartners.geojobs.endpoint.rest.model.Point.TypeEnum.POINT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -11,6 +12,8 @@ import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.model.detection.Detection;
+import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import app.bpartners.geojobs.service.gouv.fr.rnb.BuildingApi;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.time.Duration;
@@ -28,8 +31,11 @@ class DetectionFeaturesResultImageRetrieverTest {
   private static final String PRE_SIGNED_S3_URL = "http://presigned-s3-url.com";
   BucketComponent bucketComponentMock = mock();
   CustomBucketComponent customBucketComponentMock = mock();
+  BuildingApi buildingApiMock = mock(BuildingApi.class);
+  GeometryConverter geometryConverter = new GeometryConverter(buildingApiMock);
   DetectionFeaturesResultImageRetriever subject =
-      new DetectionFeaturesResultImageRetriever(bucketComponentMock, customBucketComponentMock);
+      new DetectionFeaturesResultImageRetriever(
+          bucketComponentMock, customBucketComponentMock, geometryConverter);
 
   @BeforeEach
   void setUp() {
@@ -197,7 +203,8 @@ class DetectionFeaturesResultImageRetrieverTest {
       BigDecimal longitude, BigDecimal latitude, HashMap<String, Object> properties) {
     return new Feature()
         .type(FEATURE)
-        .geometry(new FeatureGeometry(new Point().coordinates(List.of(longitude, latitude))))
+        .geometry(
+            new FeatureGeometry(new Point().type(POINT).coordinates(List.of(longitude, latitude))))
         .properties(properties);
   }
 }
