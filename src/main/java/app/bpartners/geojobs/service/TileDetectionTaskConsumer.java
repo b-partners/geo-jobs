@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service;
 
+import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static java.time.Instant.now;
 
 import app.bpartners.geojobs.job.model.Status;
@@ -19,6 +20,7 @@ import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.MultiPolygon;
+import org.locationtech.jts.geom.Polygon;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -68,12 +70,20 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
                     })
                 .findFirst();
         if (optionalMultiPolygonFeatureMask.isPresent()) {
-          var feature = optionalMultiPolygonFeatureMask.get();
-          var geometryFromFeature =
+          var roofFeature = optionalMultiPolygonFeatureMask.get();
+          var geometryRoofFromFeature =
               geometryConverter.readGeometryFromString(
-                  feature.getGeometry().getActualInstanceStringValue());
-          if (geometryFromFeature instanceof MultiPolygon roofMultiPolygon) {
+                  roofFeature.getGeometry().getActualInstanceStringValue());
+          var intersectionBetweenRoofAndMultiPolygonFromTile =
+              geometryRoofFromFeature.intersection(multiPolygonFromTile);
+          if (intersectionBetweenRoofAndMultiPolygonFromTile
+              instanceof MultiPolygon roofMultiPolygon) {
             mask = maskRetriever.apply(tile, roofMultiPolygon);
+          } else if (intersectionBetweenRoofAndMultiPolygonFromTile
+              instanceof Polygon roofPolygon) {
+            mask =
+                maskRetriever.apply(
+                    tile, geometryFactory.createMultiPolygon(new Polygon[] {roofPolygon}));
           }
         } else {
           log.info(

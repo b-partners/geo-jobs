@@ -166,6 +166,7 @@ class TileDetectionTaskConsumerTest {
         .thenReturn(multiPolygonFromTileMock);
     when(geometryConverterMock.readGeometryFromString(eq("roofGeometryActualInstanceStringValue")))
         .thenReturn(roofMultiPolygonMock);
+    when(roofMultiPolygonMock.intersection(any())).thenReturn(roofMultiPolygonMock);
     when(machineDetectedTileRepositoryMock.save(any())).thenReturn(machineDetectedTileMock);
     when(objectDetectorMock.apply(any(), any(), any())).thenReturn(detectionResponseMock);
     when(detectionMapperMock.toDetectedTile(any(), any(), any(), any(), any()))
