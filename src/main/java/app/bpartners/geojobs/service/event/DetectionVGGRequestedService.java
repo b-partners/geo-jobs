@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service.event;
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
 
 import app.bpartners.geojobs.endpoint.event.model.DetectionVGGRequested;
+import app.bpartners.geojobs.endpoint.rest.model.Point;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.model.geometry.PolygonObjectType;
 import app.bpartners.geojobs.model.geometry.TiledPixelPolygon;
@@ -69,6 +70,8 @@ public class DetectionVGGRequestedService implements Consumer<DetectionVGGReques
                   var geometryType = feature.getGeometry().getActualInstance();
                   MultiPolygon multiPolygon;
                   switch (geometryType) {
+                    case Point point ->
+                        multiPolygon = geometryConverter.retrieveNearestRoofMultiPolygon(point);
                     case app.bpartners.geojobs.endpoint.rest.model.Polygon restPolygon ->
                         multiPolygon =
                             geometryConverter.apply(List.of(restPolygon.getCoordinates()));
