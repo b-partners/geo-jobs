@@ -55,6 +55,7 @@ class ZoneDetectionJobFailedServiceTest {
   void send_email_with_zdj_id() {
     var jobId = randomUUID().toString();
     var emailReceiver = "emailReceiver";
+    var adminEmail = "tech@birdia.fr";
     var zoneDetectionJobMock = mock(ZoneDetectionJob.class);
     when(zoneDetectionJobMock.getId()).thenReturn(jobId);
     when(zoneDetectionJobMock.getEmailReceiver()).thenReturn(emailReceiver);
@@ -66,7 +67,7 @@ class ZoneDetectionJobFailedServiceTest {
 
     var stringCaptor = ArgumentCaptor.forClass(String.class);
     var emailSubject = "Erreur lors du traitement de la détection machine (ZDJ.id=" + jobId + ")";
-    verify(mailerMock, only()).accept(eq(emailReceiver), eq(emailSubject), stringCaptor.capture());
+    verify(mailerMock, only()).accept(eq(adminEmail), eq(emailSubject), stringCaptor.capture());
     var emailBody = stringCaptor.getValue();
     assertEquals(getEmailBody(zoneDetectionJobMock), emailBody);
   }

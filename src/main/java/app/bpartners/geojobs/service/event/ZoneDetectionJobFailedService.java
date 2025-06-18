@@ -20,6 +20,7 @@ import org.thymeleaf.context.Context;
 public class ZoneDetectionJobFailedService implements Consumer<ZoneDetectionJobFailed> {
   private static final String ZONE_DETECTION_JOB_FAILED_MAIL_TEMPLATE =
       "zone_detection_job_failed_template";
+  private static final String ADMIN_EMAIL = "tech@birdia.fr";
   private final DetectionFinishedMailer mailer;
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final DetectionRepository detectionRepository;
@@ -43,7 +44,7 @@ public class ZoneDetectionJobFailedService implements Consumer<ZoneDetectionJobF
     }
 
     mailer.accept(
-        zoneDetectionJob.getEmailReceiver(),
+        optionalDetection.isPresent() ? zoneDetectionJob.getEmailReceiver() : ADMIN_EMAIL,
         subjectBuilder.toString(),
         getBody(optionalDetection, zoneDetectionJob));
   }

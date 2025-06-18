@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class DetectionFinishedMailer implements TriConsumer<String, String, String> {
+  private static final String ADMIN_EMAIL = "tech@birdia.fr";
   private final Mailer mailer;
 
   @Override
@@ -20,7 +21,7 @@ public class DetectionFinishedMailer implements TriConsumer<String, String, Stri
     mailer.accept(
         new Email(
             new InternetAddress(emailReceiver),
-            List.of(new InternetAddress("tech@birdia.fr")),
+            List.of(new InternetAddress(ADMIN_EMAIL)),
             List.of(),
             subject,
             body,
