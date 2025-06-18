@@ -61,7 +61,8 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
                               roofFeature.getGeometry().getActualInstanceStringValue());
                       if (geometry instanceof MultiPolygon roofMultiPolygon) {
                         return roofMultiPolygon.contains(multiPolygonFromTile)
-                            || roofMultiPolygon.intersects(multiPolygonFromTile);
+                            || roofMultiPolygon.intersects(multiPolygonFromTile)
+                            || multiPolygonFromTile.contains(roofMultiPolygon);
                       }
                       return false;
                     })

@@ -75,6 +75,7 @@ class TileDetectionTaskConsumerTest {
             .tile(tileMock)
             .jobId(parcelJobId)
             .build();
+    var multiPolygonFromTileMock = mock(org.locationtech.jts.geom.MultiPolygon.class);
     when(tileMock.getCoordinates()).thenReturn(new TileCoordinates().x(0).y(0).z(20));
     when(roofDelimitationMockDomain.getGeometry()).thenReturn(mock());
     when(featureGeometryMock.getMultiPolygon()).thenReturn(featureMultiPolygonMock);
@@ -87,6 +88,7 @@ class TileDetectionTaskConsumerTest {
     when(roofDelimitationMockDomain.getGeometry()).thenReturn(roofFeatureGeometryMock);
     when(roofMultiPolygonMock.contains(any())).thenReturn(false);
     when(roofMultiPolygonMock.intersects(any())).thenReturn(false);
+    when(multiPolygonFromTileMock.contains(any())).thenReturn(false);
     when(detectionMock.getFeatureWithDelimitations())
         .thenReturn(
             List.of(
@@ -96,6 +98,8 @@ class TileDetectionTaskConsumerTest {
         .thenReturn(Optional.of(detectionMock));
     when(geometryConverterMock.centroidFromGeometry(featureMultiPolygonMock))
         .thenReturn(centroidCoordinates);
+    when(geometryConverterMock.getMultiPolygonFromTile(eq(0), eq(0), eq(20)))
+        .thenReturn(multiPolygonFromTileMock);
     when(machineDetectedTileRepositoryMock.save(any())).thenReturn(machineDetectedTileMock);
     when(objectDetectorMock.apply(any(), any(), any())).thenReturn(detectionResponseMock);
     when(detectionMapperMock.toDetectedTile(any(), any(), any(), any(), any()))
