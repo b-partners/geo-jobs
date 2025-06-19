@@ -43,7 +43,6 @@ import app.bpartners.geojobs.service.dashboard.AreaPictureApi;
 import app.bpartners.geojobs.service.dashboard.component.AreaPictureMapLayer;
 import app.bpartners.geojobs.service.detection.*;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
-import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.geoserver.GeoServerConfiguration;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -87,7 +86,6 @@ public class ZoneService {
   private final GeoJsonConversionJobRepository geoJsonConversionJobRepository;
   private final RooferDetectionService rooferDetectionService;
   private final DetectionAddressConsumer detectionAddressConsumer;
-  private final GeometryConverter geometryConverter;
   private final FeatureConverter featureConverter;
   private final AreaPictureApi areaPictureApi;
   private final GeoServerConfiguration geoServerConfiguration;
@@ -95,6 +93,7 @@ public class ZoneService {
   private final SynchronousDetectionService synchronousDetectionService;
   private final SynchronousDetectionValidator synchronousDetectionValidator;
   private final TileMultiPolygonFrame tileMultiPolygonFrame;
+  private final DetectionAreaValidator detectionAreaValidator;
 
   private List<Feature> readFromFile(File featuresFromShape) {
     try {
@@ -342,7 +341,9 @@ public class ZoneService {
             savedDetection, PENDING, UNKNOWN, CONFIGURING);
       }
       if (!savedDetection.isRooferMade()) {
-        return detectionTilingCreation.apply(savedDetection);
+        var detectionWithTilingCreated = detectionTilingCreation.apply(savedDetection);
+        detectionAreaValidator.accept(detectionWithTilingCreated);
+        return detectionWithTilingCreated;
       }
     }
 
