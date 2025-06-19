@@ -13,14 +13,15 @@ import app.bpartners.geojobs.model.geometry.area.Area;
 import app.bpartners.geojobs.model.geometry.area.SquareDegree;
 import app.bpartners.geojobs.model.geometry.route.PrettyConf;
 import app.bpartners.geojobs.model.geometry.route.UnionConf;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 
 @Slf4j
 public class TombeTest {
-  PolygonProvider polygonProvider = new PolygonProvider("/geometry/vgg/line-pathway.json");
   private final TilingConf tilingConf = new TilingConf(20, 1024);
   private final UnionConf unionConf = new UnionConf(5);
   /*
@@ -32,19 +33,7 @@ public class TombeTest {
   private final PrettyConf prettyConf = new PrettyConf(1);
   private final BoundaryMerger boundaryMerger =
       new BoundaryMerger(tilingConf, unionConf, mergeConf, prettyConf, 20);
-
-  @Test
-  void run() {
-    var tiledPolygons = polygonProvider.getTiledPolygons(true);
-
-    var merged = boundaryMerger.apply(tiledPolygons, TOMBE);
-
-    var m2toDeg2 = 1E-11; // France
-    var minArea = new SquareDegree(112 * m2toDeg2);
-    var filteredByMinAreaPolygons = filterByMinArea(merged, minArea);
-
-    // new Geojson(filteredByMinAreaPolygons).saveAsFile("tombes_postprocessed.geojson");
-  }
+  PolygonProvider polygonProvider = new PolygonProvider("/geometry/vgg/dijon.json");
 
   public static Set<LatLonPolygon> invert(Set<LatLonPolygon> noSuperpositionPolygons) {
     return noSuperpositionPolygons.stream()
@@ -64,6 +53,15 @@ public class TombeTest {
               return new LatLonPolygon(polygon);
             })
         .collect(toSet());
+  }
+
+  @Test
+  void run() {
+    var tiledPolygons = polygonProvider.getTiledPolygons(false);
+
+    var merged = boundaryMerger.apply(tiledPolygons, TOMBE);
+
+    // new Geojson(merged).saveAsFile("tombes_postprocessed_v7.geojson");
   }
 
   private Set<LatLonPolygon> filterByMinArea(Set<LatLonPolygon> tiledPolygons, Area tombeMinArea) {

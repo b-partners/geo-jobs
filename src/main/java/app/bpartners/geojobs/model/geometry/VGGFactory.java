@@ -19,7 +19,6 @@ import app.bpartners.geojobs.service.TileCoordinatesPolygonIntersection;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.tiling.TileFinder;
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
@@ -48,8 +47,7 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
       var confidenceAsDouble =
           confidence == null ? null : Double.parseDouble(confidence.toString());
       Map<String, VGG.Annotation.Region> newRegions = new HashMap<>();
-      newRegions.put(
-          String.valueOf(Instant.now().getNano()), toVGGRegion(label, confidenceAsDouble, null, p));
+      newRegions.put(randomUUID().toString(), toVGGRegion(label, confidenceAsDouble, null, p));
       if (vgg.containsKey(key)) {
         var annotation = vgg.get(key);
         newRegions.putAll(annotation.getRegions());
