@@ -36,7 +36,14 @@ public class AreaPictureApi {
     headers.add(API_KEY_HEADER, apiKey);
     var requestEntity = new HttpEntity<>(crupdateAreaPictureDetails, headers);
 
-    return restTemplate.exchange(endpoint, PUT, requestEntity, AreaPictureDetails.class).getBody();
+    AreaPictureDetails response;
+    try {
+      response =
+          restTemplate.exchange(endpoint, PUT, requestEntity, AreaPictureDetails.class).getBody();
+    } catch (Exception e) {
+      throw new ApiException(SERVER_EXCEPTION, e);
+    }
+    return response;
   }
 
   public List<AreaPictureMapLayer> getAreaPictureMapLayers(
