@@ -1,0 +1,54 @@
+package app.bpartners.geojobs.service;
+
+import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
+
+import app.bpartners.geojobs.endpoint.rest.model.*;
+import app.bpartners.geojobs.model.exception.NotImplementedException;
+import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Consumer;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+@Component
+@RequiredArgsConstructor
+public class DetectionAreaValidator implements Consumer<Detection> {
+  private static final String INDRE_ET_LOIRE_2024_5_CM = "INDRE_ET_LOIRE_2024_5CM";
+  private final GeometrySquareMeterArea geometrySquareMeterArea;
+  private final GeometryConverter geometryConverter;
+
+  @Override
+  public void accept(Detection detection) {
+    var geoJsonZone = detection.getGeoJsonZone();
+    var layer = detection.getGeoServerProperties().getGeoServerParameter().getLayers();
+    var unifiedProvidedPolygon =
+        geoJsonZone.stream()
+            .map(
+                feature -> {
+                  var geometryType = feature.getGeometry().getActualInstance();
+                  org.locationtech.jts.geom.MultiPolygon geometry = null;
+                  switch (geometryType) {
+                    case Point ignored -> {}
+                    case Polygon polygon ->
+                        geometry = geometryConverter.apply(List.of(polygon.getCoordinates()));
+                    case MultiPolygon multiPolygon ->
+                        geometry = geometryConverter.apply(multiPolygon.getCoordinates());
+                    default ->
+                        throw new UnsupportedOperationException(
+                            "Unsupported geometry type for validation: " + geometryType);
+                  }
+                  return geometry;
+                })
+            .filter(Objects::nonNull)
+            .reduce(unifyMultiPolygon())
+            .orElseThrow(() -> new IllegalStateException("Unable to unify provided multiPolygon"));
+    var actualArea = geometrySquareMeterArea.apply(unifiedProvidedPolygon);
+    if (INDRE_ET_LOIRE_2024_5_CM.equals(layer) && actualArea > 10_000.0) {
+      throw new NotImplementedException(
+          "Provided multiPolygon must be under 10 000 meters for zone inside layers "
+              + INDRE_ET_LOIRE_2024_5_CM
+              + " for now");
+    }
+  }
+}

@@ -160,6 +160,7 @@ class ZoneServiceTest {
   private final String geoServerDummyUrl = "http://dummy";
   private final String e2ApiKey = randomUUID().toString();
   GeoServerConfiguration geoServerConfiguration = new GeoServerConfiguration(geoServerDummyUrl);
+  DetectionAreaValidator detectionAreaValidatorMock = mock();
   ZoneService subject =
       new ZoneService(
           zoneDetectionJobServiceMock,
@@ -183,14 +184,14 @@ class ZoneServiceTest {
           geoJsonConversionJobRepositoryMock,
           rooferDetectionService,
           detectionAddressConsumerMock,
-          geometryConverterMock,
           featureConverterMock,
           areaPictureApiMock,
           geoServerConfiguration,
           detectionRoofDelimiterValidatorMock,
           synchronousDetectionServiceMock,
           synchronousDetectionValidatorMock,
-          tileMultiPolygonFrameMock);
+          tileMultiPolygonFrameMock,
+          detectionAreaValidatorMock);
 
   @BeforeEach
   void setUp() {
@@ -215,6 +216,8 @@ class ZoneServiceTest {
     when(areaPictureMapLayerMock.name()).thenReturn(LATEST_DEFAULT_LAYER);
     when(areaPictureApiMock.getAreaPictureMapLayers(anyDouble(), anyDouble(), eq(e2ApiKey)))
         .thenReturn(List.of(areaPictureMapLayerMock));
+
+    doNothing().when(detectionAreaValidatorMock).accept(any());
   }
 
   @Test
