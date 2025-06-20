@@ -2,7 +2,7 @@ package app.bpartners.geojobs.unit;
 
 import static app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.MULTI_POLYGON;
 import static app.bpartners.geojobs.model.CustomObjectMapper.objectMapper;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.PASSAGE_PIETON;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.MOISISSURE_CLAIR;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -47,7 +47,7 @@ class GeoJsonMapperTest {
         .id(randomUUID().toString())
         .feature(feature())
         .computedConfidence(0.95)
-        .detectedObjectType(DetectableObjectType.builder().detectableType(PASSAGE_PIETON).build())
+        .detectedObjectType(DetectableObjectType.builder().detectableType(MOISISSURE_CLAIR).build())
         .build();
   }
 

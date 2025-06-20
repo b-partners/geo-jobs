@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
+import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
 import static java.time.Instant.now;
 
 import app.bpartners.geojobs.job.model.Status;
@@ -17,6 +18,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.util.List;
+import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.MultiPolygon;
@@ -52,7 +54,7 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
             geometryConverter.getMultiPolygonFromTile(
                 tileCoordinates.getX(), tileCoordinates.getY(), tileCoordinates.getZ());
         var featureWithDelimitations = detection.getFeatureWithDelimitations();
-        var optionalMultiPolygonFeatureMask =
+        var roofMultiPolygonIntersected =
             featureWithDelimitations.stream()
                 .map(FeatureWithDelimitation::delimitations)
                 .flatMap(List::stream)
@@ -68,22 +70,33 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
                       }
                       return false;
                     })
-                .findFirst();
-        if (optionalMultiPolygonFeatureMask.isPresent()) {
-          var roofFeature = optionalMultiPolygonFeatureMask.get();
-          var geometryRoofFromFeature =
-              geometryConverter.readGeometryFromString(
-                  roofFeature.getGeometry().getActualInstanceStringValue());
-          var intersectionBetweenRoofAndMultiPolygonFromTile =
-              geometryRoofFromFeature.intersection(multiPolygonFromTile);
-          if (intersectionBetweenRoofAndMultiPolygonFromTile
-              instanceof MultiPolygon roofMultiPolygon) {
-            mask = maskRetriever.apply(tile, roofMultiPolygon);
-          } else if (intersectionBetweenRoofAndMultiPolygonFromTile
-              instanceof Polygon roofPolygon) {
-            mask =
-                maskRetriever.apply(
-                    tile, geometryFactory.createMultiPolygon(new Polygon[] {roofPolygon}));
+                .toList();
+        if (!roofMultiPolygonIntersected.isEmpty()) {
+          var maskMultiPolygon =
+              roofMultiPolygonIntersected.stream()
+                  .map(
+                      roofFeature -> {
+                        var geometryRoofFromFeature =
+                            geometryConverter.readGeometryFromString(
+                                roofFeature.getGeometry().getActualInstanceStringValue());
+                        var intersection =
+                            geometryRoofFromFeature.intersection(multiPolygonFromTile);
+                        if (intersection instanceof MultiPolygon roofMultiPolygon) {
+                          return roofMultiPolygon;
+                        } else if (intersection instanceof Polygon roofPolygon) {
+                          return geometryFactory.createMultiPolygon(new Polygon[] {roofPolygon});
+                        }
+                        return null;
+                      })
+                  .filter(Objects::nonNull)
+                  .reduce(unifyMultiPolygon())
+                  .orElse(null);
+          if (maskMultiPolygon != null) {
+            log.info(
+                "Mask coordinates : {} for tileCoordinates {}", maskMultiPolygon, tileCoordinates);
+            mask = maskRetriever.apply(tile, maskMultiPolygon);
+          } else {
+            log.info("Any mask retrieved for tileCoordinates {}", tile);
           }
         } else {
           log.info(

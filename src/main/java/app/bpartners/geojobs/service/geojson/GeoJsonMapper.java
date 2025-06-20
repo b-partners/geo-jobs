@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service.geojson;
 
 import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.MULTI_POLYGON;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
 import static app.bpartners.geojobs.service.geojson.GeoReferencer.toGeographicalCoordinates;
 
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
@@ -25,7 +26,9 @@ public class GeoJsonMapper {
         .filter(
             detectedObject ->
                 detectedObject.getFeature() != null
-                    && detectedObject.getFeature().getGeometry() != null)
+                    && detectedObject.getFeature().getGeometry() != null
+                    && !TOITURE_REVETEMENT.equals(
+                        detectedObject.getDetectedObjectType().getDetectableType()))
         .forEach(
             object -> {
               var feature = object.getFeature();
