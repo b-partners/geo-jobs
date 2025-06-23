@@ -118,6 +118,7 @@ public class BoundaryMerger
     return noSuperposition.stream()
         .map(ll -> new TiledPolygon(ll.polygon(), label, origin, tilingConf))
         .map(tp -> tomb.equals(tp.type()) ? resize(tp) : tp)
+        .filter(Objects::nonNull)
         .map(TiledPolygon::latLonPolygon)
         .collect(toSet());
   }
@@ -252,9 +253,12 @@ public class BoundaryMerger
     final double PAIR_HEIGHT = 100;
     final double REDUCED_WIDTH = 100;
     final double REDUCED_HEIGHT = 50;
-    final double SIZE_THRESHOLD_WIDTH = 130;
-    final double SIZE_THRESHOLD_HEIGHT = 130;
+    final double SIZE_THRESHOLD_WIDTH = 110;
+    final double SIZE_THRESHOLD_HEIGHT = 110;
 
+    if (polygon.getArea() < 2500) {
+      return null;
+    }
     Coordinate center = polygon.getCentroid().getCoordinate();
 
     Envelope envelope = polygon.getEnvelopeInternal();
@@ -263,7 +267,7 @@ public class BoundaryMerger
 
     double targetWidth, targetHeight;
     if (envelope.getWidth() > SIZE_THRESHOLD_WIDTH
-        || envelope.getHeight() > SIZE_THRESHOLD_HEIGHT) {
+        && envelope.getHeight() > SIZE_THRESHOLD_HEIGHT) {
       targetWidth = isVertical ? PAIR_HEIGHT : PAIR_WIDTH;
       targetHeight = isVertical ? PAIR_WIDTH : PAIR_HEIGHT;
     } else {
