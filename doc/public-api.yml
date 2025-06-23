@@ -593,6 +593,8 @@ components:
             $ref: '#/components/schemas/Feature'
           description: |
             Optional. If so, must provide zone by shape or excel file through its specific endpoint.
+        GeoJsonOutput:
+          $ref: '#/components/schemas/GeoJsonOutput'
     Detection:
       allOf:
         - $ref: '#/components/schemas/CreateDetection'
@@ -675,3 +677,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Point2D'
+    GeoJsonOutput:
+      type: string
+      description: |
+        By default, detection output is a single GEO_JSON file, which can be displayed on a map such as QGIS, representing a single layer.
+        If consumers want to separate result into multiple layers, a ZIP-compressed version is available, with each file representing a specific identified object and its corresponding map layer.
+      enum:
+        - GEO_JSON
+        - ZIP

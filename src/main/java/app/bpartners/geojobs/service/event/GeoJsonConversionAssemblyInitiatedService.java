@@ -21,8 +21,8 @@ import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.GeoJsonConversionJobRepository;
 import app.bpartners.geojobs.repository.GeoJsonConversionTaskRepository;
 import app.bpartners.geojobs.repository.model.detection.Detection;
-import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionTask;
+import app.bpartners.geojobs.service.DetectionService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJson;
 import app.bpartners.geojobs.service.geojson.GeoJsonMapper;
@@ -58,19 +58,24 @@ public class GeoJsonConversionAssemblyInitiatedService
   private final FeatureMapper featureMapper;
   private final GeometryConverter geometryConverter;
   private final GeoJsonMapper geoJsonMapper;
+  private final DetectionService detectionService;
+  private final ZipGeoJsonAssembler zipGeoJsonAssembler;
 
   @Override
   public void accept(GeoJsonConversionAssemblyInitiated event) {
     var conversionJobId = event.getGeoJsonConversionJobId();
-    var conversionTasks = geoJsonConversionTaskRepository.findAllByJobId(conversionJobId);
     var geoJsonConversionJob =
         geoJsonConversionJobRepository.findById(conversionJobId).orElseThrow();
     var zoneDetectionJob =
         zoneDetectionJobService.findById(geoJsonConversionJob.getZoneDetectionJobId());
-    var detection = getDetection(zoneDetectionJob);
-
-    var polygonAddressDelimitation = getPolygonAddressDelimitation(detection);
+    var detection = detectionService.getByZoneDetectionJob(zoneDetectionJob);
+    if (detection != null && detection.isOutputZipped()) {
+      zipGeoJsonAssembler.accept(geoJsonConversionJob);
+      return;
+    }
+    var conversionTasks = geoJsonConversionTaskRepository.findAllByJobId(conversionJobId);
     var geoFeaturesList = getGeoFeaturesList(conversionTasks);
+    var polygonAddressDelimitation = getPolygonAddressDelimitation(detection);
     var geoFeaturesFilteredByAddresses =
         filterGeoFeaturesByAddresses(geoFeaturesList, polygonAddressDelimitation);
     var geoFeaturesFilterByPoint = filterGeoFeaturesByPoint(geoFeaturesList, detection);
@@ -342,28 +347,6 @@ public class GeoJsonConversionAssemblyInitiatedService
               return new PolygonAddress(address, polygon);
             })
         .toList();
-  }
-
-  private Detection getDetection(ZoneDetectionJob zoneDetectionJob) {
-    ZoneDetectionJob machineZDJ =
-        zoneDetectionJobService.getMachineZdjFromZdjId(zoneDetectionJob.getId());
-    ZoneDetectionJob humanZDJ;
-    try {
-      humanZDJ = zoneDetectionJobService.getHumanZdjFromZdjId(zoneDetectionJob.getId());
-    } catch (IllegalArgumentException ignored) {
-      humanZDJ = null;
-    }
-    return detectionRepository
-        .findByZdjId(humanZDJ == null ? null : humanZDJ.getId())
-        .orElseGet(
-            () -> {
-              var optionalDetectionFromMachineZDJ =
-                  detectionRepository.findByZdjId(machineZDJ.getId());
-              if (optionalDetectionFromMachineZDJ.isPresent()) {
-                return optionalDetectionFromMachineZDJ.orElseThrow();
-              }
-              return null;
-            });
   }
 
   private List<GeoJson.GeoFeature> getGeoFeaturesList(List<GeoJsonConversionTask> conversionTasks) {

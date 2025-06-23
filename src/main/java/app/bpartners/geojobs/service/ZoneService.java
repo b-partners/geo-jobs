@@ -2,6 +2,7 @@ package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toDomainFeature;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.*;
+import static app.bpartners.geojobs.endpoint.rest.model.GeoJsonOutput.ZIP;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
@@ -487,6 +488,9 @@ public class ZoneService {
         .providedGeoJsonZone(domainProvidedGeoJsonZone)
         .multiPolygonGeoJsonZone(multiPolygonGeoJsonZoneToBeProcessed)
         .detectableObjectModel(detectableObjectModel)
+        .isOutputZipped(
+            createDetection.getGeoJsonOutput() != null
+                && ZIP.equals(createDetection.getGeoJsonOutput()))
         .build();
   }
 
@@ -519,6 +523,9 @@ public class ZoneService {
         .providedGeoJsonZone(domainProvidedGeoJsonZone)
         .multiPolygonGeoJsonZone(multiPolygonGeoJsonZoneToBeProcessed)
         .detectableObjectModel(detectableObjectModel)
+        .isOutputZipped(
+            createDetection.getGeoJsonOutput() != null
+                && ZIP.equals(createDetection.getGeoJsonOutput()))
         .build();
   }
 
