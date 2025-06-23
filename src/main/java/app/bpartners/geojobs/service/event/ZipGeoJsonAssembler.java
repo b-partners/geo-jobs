@@ -1,20 +1,27 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
+import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.MULTI_POLYGON;
 import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_BUCKET_FOLDER;
-import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_EXTENSION;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionAssemblySucceeded;
+import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
+import app.bpartners.geojobs.endpoint.rest.model.Polygon;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.GeoJsonConversionJobRepository;
 import app.bpartners.geojobs.repository.GeoJsonConversionTaskRepository;
+import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
+import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionJob;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionTask;
 import app.bpartners.geojobs.service.DetectionService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
+import app.bpartners.geojobs.service.geojson.GeoJson;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -47,11 +54,17 @@ public class ZipGeoJsonAssembler implements Consumer<GeoJsonConversionJob> {
     var conversionTasks = geoJsonConversionTaskRepository.findAllByJobId(conversionJobId);
     var zoneDetectionJob =
         zoneDetectionJobService.findById(geoJsonConversionJob.getZoneDetectionJobId());
-    var outputFileName = zoneDetectionJob.getZoneName() + "-final" + GEO_JSON_EXTENSION;
+    var outputFileName = zoneDetectionJob.getZoneName() + "-final.zip";
     var combinedFileKey = GEO_JSON_BUCKET_FOLDER + zoneDetectionJob.getId() + "/" + outputFileName;
     var detection = detectionService.getByZoneDetectionJob(zoneDetectionJob);
 
-    var zipFile = computeZipFile(conversionTasks, outputFileName);
+    var roofFeatures =
+        detection.getFeatureWithDelimitations().stream()
+            .map(FeatureWithDelimitation::delimitations)
+            .flatMap(List::stream)
+            .toList();
+
+    var zipFile = computeZipFile(conversionTasks, outputFileName, roofFeatures);
 
     bucketComponent.upload(zipFile, combinedFileKey);
 
@@ -72,25 +85,41 @@ public class ZipGeoJsonAssembler implements Consumer<GeoJsonConversionJob> {
   }
 
   @SneakyThrows
-  private File computeZipFile(List<GeoJsonConversionTask> conversionTasks, String outputFileName) {
+  private File computeZipFile(
+      List<GeoJsonConversionTask> conversionTasks,
+      String outputFileName,
+      List<Feature> roofFeatures) {
     var suffix = ".zip";
-    var prefix = outputFileName.replaceAll(".geojson", "");
+    var prefix = outputFileName.replaceAll(".zip", "");
     var zipFile = File.createTempFile(prefix, suffix, createTempDirectory());
-    var taskGeoJsonMap = new HashMap<DetectableType, File>();
+    var taskGeoJsonMap = new HashMap<DetectableType, Object>();
     conversionTasks.forEach(
         conversionTask ->
             taskGeoJsonMap.put(
                 conversionTask.getDetectableType(),
                 bucketComponent.download(conversionTask.getFileKey())));
-
+    if (!roofFeatures.isEmpty()) {
+      var roofGeoJsonStringValue = new GeoJson(convertGeoFeatures(roofFeatures)).getStringValue();
+      taskGeoJsonMap.put(TOITURE_REVETEMENT, roofGeoJsonStringValue);
+    }
     try (OutputStream fos = Files.newOutputStream(zipFile.toPath());
         ZipOutputStream zipOut = new ZipOutputStream(fos)) {
       taskGeoJsonMap.forEach(
           (key, value) -> {
-            ZipEntry zipEntry = new ZipEntry(prefix + "_" + key.name() + ".geojson");
+            var zipEntry = new ZipEntry(prefix + "_" + key.name() + ".geojson");
             try {
+              String content;
+              if (value instanceof File file) {
+                content = Files.readString(file.toPath());
+              } else if (value instanceof String string) {
+                content = string;
+              } else {
+                throw new IllegalArgumentException(
+                    "Unsupported type to be converted to geojson content: "
+                        + value.getClass().getSimpleName());
+              }
               zipOut.putNextEntry(zipEntry);
-              zipOut.write(Files.readString(value.toPath()).getBytes());
+              zipOut.write(content.getBytes());
               zipOut.closeEntry();
             } catch (IOException e) {
               throw new RuntimeException(e);
@@ -98,5 +127,28 @@ public class ZipGeoJsonAssembler implements Consumer<GeoJsonConversionJob> {
           });
     }
     return zipFile;
+  }
+
+  private List<GeoJson.GeoFeature> convertGeoFeatures(List<Feature> roofFeatures) {
+    return roofFeatures.stream()
+        .map(
+            feature -> {
+              var restFeature = toRestFeature(feature);
+              MultiPolygon multiPolygon;
+              switch (restFeature.getGeometry().getActualInstance()) {
+                case Polygon polygon ->
+                    multiPolygon =
+                        new MultiPolygon()
+                            .type(MULTI_POLYGON)
+                            .coordinates(List.of(polygon.getCoordinates()));
+                case MultiPolygon roofMultiPolygon -> multiPolygon = roofMultiPolygon;
+                default ->
+                    throw new IllegalStateException(
+                        "Unsupported geometry type to convert to roof multipolygon : "
+                            + restFeature.getGeometry().getActualInstance());
+              }
+              return new GeoJson.GeoFeature(restFeature.getProperties(), multiPolygon);
+            })
+        .toList();
   }
 }

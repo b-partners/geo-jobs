@@ -13,7 +13,9 @@ import app.bpartners.geojobs.file.hash.FileHash;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.GeoJsonConversionJobRepository;
 import app.bpartners.geojobs.repository.GeoJsonConversionTaskRepository;
+import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.Detection;
+import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionJob;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionTask;
@@ -65,7 +67,11 @@ class ZipGeoJsonAssemblerTest {
     var zoneDetectionJobMock = mock(ZoneDetectionJob.class);
     var taskMoisissureMock = mock(GeoJsonConversionTask.class);
     var taskUsureLegerMock = mock(GeoJsonConversionTask.class);
-    var detection = Detection.builder().build();
+    var detection =
+        Detection.builder()
+            .featureWithDelimitations(
+                List.of(new FeatureWithDelimitation(new Feature(), List.of())))
+            .build();
     var featureUsureLegerFile =
         new ClassPathResource("features/feature_usure_leger.json").getFile();
     var featureMoisissureFile =
