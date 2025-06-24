@@ -15,6 +15,7 @@ import app.bpartners.geojobs.model.geometry.route.PrettyConf;
 import app.bpartners.geojobs.model.geometry.route.UnifiedRoute;
 import app.bpartners.geojobs.model.geometry.route.UnionConf;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
+import app.bpartners.geojobs.service.geojson.GeoJson;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -40,17 +41,12 @@ public class BoundaryMerger
   private final ExecutorService executorService =
       newFixedThreadPool(Math.max(1, getRuntime().availableProcessors() / 2));
 
-  public BoundaryMerger(
-      TilingConf tilingConf,
-      UnionConf unionConf,
-      MergeConf mergeConf,
-      PrettyConf prettyConf,
-      int neighbourhoodTileDistance) {
-    this.tilingConf = tilingConf;
-    this.unionConf = unionConf;
+  public BoundaryMerger(int minAreaThreshold, int neighbourhoodTileDistance) {
+    this.tilingConf = TilingConf.getDefaultInstance();
+    this.unionConf = UnionConf.getDefaultInstance();
     this.neighbourHoodHandler = new NeighbourHoodHandler(neighbourhoodTileDistance);
-    this.mergeConf = mergeConf;
-    this.prettier = new PolygonPrettier(prettyConf);
+    this.mergeConf = MergeConf.getInstance(minAreaThreshold);
+    this.prettier = new PolygonPrettier(new PrettyConf(5));
   }
 
   public static TiledPolygon withOffset(TiledPolygon p, IntXY originTile, TilingConf tilingConf) {
@@ -330,6 +326,34 @@ public class BoundaryMerger
     } catch (Exception e) {
       return false;
     }
+  }
+
+  public static Set<LatLonPolygon> invert(Set<LatLonPolygon> noSuperpositionPolygons) {
+    return noSuperpositionPolygons.stream()
+        .map(
+            p -> {
+              var coords =
+                  Arrays.stream(p.polygon().getCoordinates())
+                      .map(c -> new Coordinate(c.y, c.x))
+                      .toArray(Coordinate[]::new);
+              var initialLength = coords.length;
+              if (!coords[0].equals(coords[initialLength - 1])) {
+                coords = Arrays.copyOf(coords, initialLength + 1);
+                coords[initialLength] = coords[0];
+              }
+              var polygon = geometryFactory.createPolygon(coords);
+              polygon.setUserData(p.polygon().getUserData());
+              return new LatLonPolygon(polygon);
+            })
+        .collect(toSet());
+  }
+
+  public Set<LatLonPolygon> apply(GeoJson geoJson, DetectableType detectableType) {
+    var tiledPolygons = new HashSet<TiledPolygon>();
+    return switch (detectableType) {
+      case TOMBE, PASSAGE_PIETON, PISCINE -> merge(tiledPolygons);
+      default -> parallelMerge(tiledPolygons);
+    };
   }
 
   @Override
