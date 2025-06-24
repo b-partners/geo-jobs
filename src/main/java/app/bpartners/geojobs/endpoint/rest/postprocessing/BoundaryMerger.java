@@ -16,6 +16,8 @@ import app.bpartners.geojobs.model.geometry.route.UnifiedRoute;
 import app.bpartners.geojobs.model.geometry.route.UnionConf;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.service.geojson.GeoJson;
+
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -33,6 +35,7 @@ import org.locationtech.jts.geom.Polygon;
 @Slf4j
 public class BoundaryMerger
     implements BiFunction<Set<TiledPolygon>, DetectableType, Set<LatLonPolygon>> {
+  private static final GeoJsonLoader geoJsonLoader = new GeoJsonLoader();
   private final TilingConf tilingConf;
   private final UnionConf unionConf;
   private final NeighbourHoodHandler neighbourHoodHandler;
@@ -348,12 +351,13 @@ public class BoundaryMerger
         .collect(toSet());
   }
 
-  public Set<LatLonPolygon> apply(GeoJson geoJson, DetectableType detectableType) {
-    var tiledPolygons = new HashSet<TiledPolygon>();
-    return switch (detectableType) {
-      case TOMBE, PASSAGE_PIETON, PISCINE -> merge(tiledPolygons);
-      default -> parallelMerge(tiledPolygons);
-    };
+  public Set<LatLonPolygon> apply(File geoJson, DetectableType detectableType) {
+    var loaded = geoJsonLoader.load(geoJson);
+    var inverted = invert(loaded);
+    var polygons = inverted.stream()
+            .map(latLon -> latLon.tiledPolygon(tilingConf))
+            .collect(toSet());
+   return apply(polygons, detectableType);
   }
 
   @Override

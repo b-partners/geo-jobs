@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import app.bpartners.geojobs.service.geojson.GeoJson;
 import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.geojson.feature.FeatureJSON;
 import org.locationtech.jts.geom.MultiPolygon;
@@ -17,7 +19,7 @@ import org.springframework.stereotype.Component;
 public class GeoJsonLoader {
   private static final String DEFAULT_ROUTE_TYPE = "line";
 
-  public Set<LatLonPolygon> apply(File geojsonPath) {
+  public Set<LatLonPolygon> load(File geojsonPath) {
     Set<LatLonPolygon> latLonPolygons = new HashSet<>();
 
     var featureJson = new FeatureJSON();
@@ -51,4 +53,5 @@ public class GeoJsonLoader {
 
     return latLonPolygons;
   }
+
 }

@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 
 class BoundaryMergerTest {
   PolygonProvider polygonProvider = new PolygonProvider("/geometry/vgg/dijon.json");
-  private final GeoJsonLoader geoJsonLoader = new GeoJsonLoader();
   TilingConf tilingConf = new TilingConf(20, 1_024);
   BoundaryMerger boundaryMerger = new BoundaryMerger(4000, 41);
 
@@ -19,14 +18,7 @@ class BoundaryMergerTest {
   void run() {
     var geojsonFile = new File(getClass().getResource("/ivandry/bati.geojson").getFile());
 
-    var polygons = geoJsonLoader.apply(geojsonFile);
-    var inverted = invert(polygons);
-
-    var tiledPolygons =
-        inverted.stream()
-            .map(latLon -> latLon.tiledPolygon(tilingConf))
-            .collect(Collectors.toSet());
-    var unified = boundaryMerger.apply(tiledPolygons, BATI_BETON);
+    var unified = boundaryMerger.apply(geojsonFile, BATI_BETON);
 
     // new Geojson(unified).saveAsFile("bati_dijon.geojson");
   }

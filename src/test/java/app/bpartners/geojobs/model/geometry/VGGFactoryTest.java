@@ -179,7 +179,7 @@ class VGGFactoryTest {
   void geojson_to_vgg() throws IOException {
     var geojsonFile = new File(getClass().getResource("/ivandry/bati.geojson").getFile());
 
-    var polygons = geoJsonLoader.apply(geojsonFile);
+    var polygons = geoJsonLoader.load(geojsonFile);
     var inverted =
         invert(polygons).stream()
             .map(latLonPolygon -> latLonPolygon.tiledPolygon(new TilingConf(20, 1024)))

@@ -64,13 +64,16 @@ public class GeoJsonConversionTaskConsumer implements TaskConsumer<GeoJsonConver
     var fileName = zoneName + "_" + detectableType + "-part" + "-" + pageNumber;
     var fileKey = GEO_JSON_BUCKET_FOLDER + zoneDetectionJobId + "/" + fileName + GEO_JSON_EXTENSION;
     var geoJson = geoJsonConverter.convert(paginatedDetectedTiles);
-    var merger = new BoundaryMerger(detectableType.getMinAreaThreshold(), NEIGHBOURHOOD);
-    var unifiedGeoJson = merger.apply(geoJson, detectableType);
-    var geoJsonAsByte = new Geojson(unifiedGeoJson).stringValue().getBytes();
+    var geoJsonAsByte = geoJson.getStringValue().getBytes();
     var geoJsonAsFile =
         writer.write(geoJsonAsByte, createTempDirectory(), fileName + GEO_JSON_EXTENSION);
 
-    bucketComponent.upload(geoJsonAsFile, fileKey);
+    var merger = new BoundaryMerger(detectableType.getMinAreaThreshold(), NEIGHBOURHOOD);
+    var unifiedGeoJson = merger.apply(geoJsonAsFile, detectableType);
+    var unifiedAsByte = new Geojson(unifiedGeoJson).stringValue().getBytes();
+    var unifiedAsFile = writer.write(unifiedAsByte, createTempDirectory(), fileName + GEO_JSON_EXTENSION);
+
+    bucketComponent.upload(unifiedAsFile, fileKey);
 
     geoJsonConversionTask.setFileKey(fileKey);
   }
