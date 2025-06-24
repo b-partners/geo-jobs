@@ -23,14 +23,13 @@ import app.bpartners.geojobs.repository.GeoJsonConversionTaskRepository;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionTask;
 import app.bpartners.geojobs.service.DetectionService;
+import app.bpartners.geojobs.service.GeoFeatureConverter;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJson;
 import app.bpartners.geojobs.service.geojson.GeoJsonMapper;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -54,12 +53,12 @@ public class GeoJsonConversionAssemblyInitiatedService
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final DetectionRepository detectionRepository;
   private final EventProducer eventProducer;
-  private final ObjectMapper objectMapper;
   private final FeatureMapper featureMapper;
   private final GeometryConverter geometryConverter;
   private final GeoJsonMapper geoJsonMapper;
   private final DetectionService detectionService;
   private final ZipGeoJsonAssembler zipGeoJsonAssembler;
+  private final GeoFeatureConverter geoFeatureConverter;
 
   @Override
   public void accept(GeoJsonConversionAssemblyInitiated event) {
@@ -354,19 +353,7 @@ public class GeoJsonConversionAssemblyInitiatedService
         conversionTasks.stream()
             .map(conversionTask -> bucketComponent.download(conversionTask.getFileKey()))
             .toList();
-    return partialConvertedGeoJsonFiles.stream()
-        .map(
-            file -> {
-              try {
-                List<GeoJson.GeoFeature> geoFeatures =
-                    objectMapper.readValue(file, new TypeReference<>() {});
-                return geoFeatures;
-              } catch (IOException e) {
-                throw new ApiException(SERVER_EXCEPTION, e);
-              }
-            })
-        .flatMap(List::stream)
-        .toList();
+    return geoFeatureConverter.apply(partialConvertedGeoJsonFiles);
   }
 
   private record AddressLabelKey(String address, String label) {}

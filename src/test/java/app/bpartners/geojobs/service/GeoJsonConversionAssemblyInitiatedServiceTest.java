@@ -81,12 +81,12 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
           zoneDetectionJobServiceMock,
           detectionRepositoryMock,
           eventProducerMock,
-          objectMapper,
           featureMapper,
           geometryConverter,
           geoJsonMapper,
           detectionServiceMock,
-          zipGeoJsonAssemblerMock);
+          zipGeoJsonAssemblerMock,
+          new GeoFeatureConverter(objectMapper));
   private final File featureFileWithoutAddressProperty;
   private final File featureContainingAddressFile;
   private final File featureFileWithAddressAndLabelProperty;

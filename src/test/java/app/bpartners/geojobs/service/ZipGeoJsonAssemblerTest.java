@@ -21,8 +21,9 @@ import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionJob;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionTask;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.event.ZipGeoJsonAssembler;
+import app.bpartners.geojobs.service.geojson.GeoJson;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.*;
-import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -41,6 +42,7 @@ class ZipGeoJsonAssemblerTest {
   DetectionRepository detectionRepositoryMock = mock();
   DetectionService detectionServiceMock = mock();
   EventProducer eventProducerMock = mock();
+  GeoFeatureConverter geoFeatureConverter = new GeoFeatureConverter(new ObjectMapper());
   ZipGeoJsonAssembler subject =
       new ZipGeoJsonAssembler(
           geoJsonConversionTaskRepositoryMock,
@@ -49,7 +51,8 @@ class ZipGeoJsonAssemblerTest {
           zoneDetectionJobServiceMock,
           detectionRepositoryMock,
           detectionServiceMock,
-          eventProducerMock);
+          eventProducerMock,
+          geoFeatureConverter);
 
   @SneakyThrows
   @Test
@@ -132,10 +135,10 @@ class ZipGeoJsonAssemblerTest {
     HashMap<String, String> expectedFileSize = new HashMap<>();
     expectedFileSize.put(
         "dummy zone name-final_MOISISSURE_NOIRCIE.geojson",
-        Files.readString(featureMoisissureFile.toPath()));
+        new GeoJson(geoFeatureConverter.apply(featureMoisissureFile)).getStringValue());
     expectedFileSize.put(
         "dummy zone name-final_USURE_LEGER.geojson",
-        Files.readString(featureUsuerLegerFile.toPath()));
+        new GeoJson(geoFeatureConverter.apply(featureUsuerLegerFile)).getStringValue());
     return expectedFileSize;
   }
 

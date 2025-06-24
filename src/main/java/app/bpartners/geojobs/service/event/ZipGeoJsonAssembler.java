@@ -20,6 +20,7 @@ import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionJob;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionTask;
 import app.bpartners.geojobs.service.DetectionService;
+import app.bpartners.geojobs.service.GeoFeatureConverter;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJson;
 import java.io.File;
@@ -47,6 +48,7 @@ public class ZipGeoJsonAssembler implements Consumer<GeoJsonConversionJob> {
   private final DetectionRepository detectionRepository;
   private final DetectionService detectionService;
   private final EventProducer eventProducer;
+  private final GeoFeatureConverter geoFeatureConverter;
 
   @Override
   public void accept(GeoJsonConversionJob geoJsonConversionJob) {
@@ -92,15 +94,17 @@ public class ZipGeoJsonAssembler implements Consumer<GeoJsonConversionJob> {
     var suffix = ".zip";
     var prefix = outputFileName.replaceAll(".zip", "");
     var zipFile = File.createTempFile(prefix, suffix, createTempDirectory());
-    var taskGeoJsonMap = new HashMap<DetectableType, Object>();
+    var taskGeoJsonMap = new HashMap<DetectableType, GeoJson>();
     conversionTasks.forEach(
         conversionTask ->
             taskGeoJsonMap.put(
                 conversionTask.getDetectableType(),
-                bucketComponent.download(conversionTask.getFileKey())));
+                new GeoJson(
+                    geoFeatureConverter.apply(
+                        bucketComponent.download(conversionTask.getFileKey())))));
     if (!roofFeatures.isEmpty()) {
-      var roofGeoJsonStringValue = new GeoJson(convertGeoFeatures(roofFeatures)).getStringValue();
-      taskGeoJsonMap.put(TOITURE_REVETEMENT, roofGeoJsonStringValue);
+      var roofGeoJson = new GeoJson(convertGeoFeatures(roofFeatures));
+      taskGeoJsonMap.put(TOITURE_REVETEMENT, roofGeoJson);
     }
     try (OutputStream fos = Files.newOutputStream(zipFile.toPath());
         ZipOutputStream zipOut = new ZipOutputStream(fos)) {
@@ -108,18 +112,8 @@ public class ZipGeoJsonAssembler implements Consumer<GeoJsonConversionJob> {
           (key, value) -> {
             var zipEntry = new ZipEntry(prefix + "_" + key.name() + ".geojson");
             try {
-              String content;
-              if (value instanceof File file) {
-                content = Files.readString(file.toPath());
-              } else if (value instanceof String string) {
-                content = string;
-              } else {
-                throw new IllegalArgumentException(
-                    "Unsupported type to be converted to geojson content: "
-                        + value.getClass().getSimpleName());
-              }
               zipOut.putNextEntry(zipEntry);
-              zipOut.write(content.getBytes());
+              zipOut.write(value.getStringValue().getBytes());
               zipOut.closeEntry();
             } catch (IOException e) {
               throw new RuntimeException(e);
