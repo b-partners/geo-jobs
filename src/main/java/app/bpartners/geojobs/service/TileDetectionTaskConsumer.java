@@ -4,12 +4,10 @@ import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFacto
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
 import static java.time.Instant.now;
 
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
-import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.service.detection.DetectionMapper;
@@ -37,6 +35,7 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
   private final DetectionRepository detectionRepository;
   private final GeometryConverter geometryConverter;
   private final DetectionMaskFromTileRetriever maskRetriever;
+  private final DetectionProvidedZoneUnifier detectionProvidedZoneUnifier;
 
   @Override
   public void accept(TileDetectionTask tileDetectionTask) {
@@ -52,7 +51,7 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
     if (detection != null) {
       var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
       if (providedGeoJsonZone != null && detection.hasToitureModelName()) {
-        var unifiedProvidedZone = unifyProvidedZone(providedGeoJsonZone, detection);
+        var unifiedProvidedZone = detectionProvidedZoneUnifier.apply(detection);
         var multiPolygonFromTile =
             geometryConverter.getMultiPolygonFromTile(
                 tileCoordinates.getX(), tileCoordinates.getY(), tileCoordinates.getZ());
@@ -152,32 +151,6 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
               });
     }
     machineDetectedTileRepository.save(machineDetectedTile);
-  }
-
-  private MultiPolygon unifyProvidedZone(List<Feature> providedGeoJsonZone, Detection detection) {
-    return providedGeoJsonZone.stream()
-        .map(
-            feature -> {
-              var geometryType = feature.getGeometry().getActualInstance();
-              MultiPolygon multiPolygonJts;
-              switch (geometryType) {
-                case app.bpartners.geojobs.endpoint.rest.model.Polygon polygon ->
-                    multiPolygonJts = geometryConverter.apply(List.of(polygon.getCoordinates()));
-                case app.bpartners.geojobs.endpoint.rest.model.MultiPolygon multiPolygon ->
-                    multiPolygonJts = geometryConverter.apply(multiPolygon.getCoordinates());
-                default ->
-                    throw new UnsupportedOperationException(
-                        "Unsupported geometry type to retrieve multiPolygon for"
-                            + " tileDetectionTask : "
-                            + geometryType);
-              }
-              return multiPolygonJts;
-            })
-        .reduce(unifyMultiPolygon())
-        .orElseThrow(
-            () ->
-                new IllegalArgumentException(
-                    "Unable to unify provided zone for detection.id : " + detection.getId()));
   }
 
   public static TileDetectionTask withNewStatus(

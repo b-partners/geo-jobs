@@ -19,10 +19,12 @@ import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionJob;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionTask;
+import app.bpartners.geojobs.service.DetectionProvidedZoneUnifier;
 import app.bpartners.geojobs.service.DetectionService;
 import app.bpartners.geojobs.service.GeoFeatureConverter;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJson;
+import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -49,6 +51,8 @@ public class ZipGeoJsonAssembler implements Consumer<GeoJsonConversionJob> {
   private final DetectionService detectionService;
   private final EventProducer eventProducer;
   private final GeoFeatureConverter geoFeatureConverter;
+  private final DetectionProvidedZoneUnifier detectionProvidedZoneUnifier;
+  private final GeometryConverter geometryConverter;
 
   @Override
   public void accept(GeoJsonConversionJob geoJsonConversionJob) {
@@ -59,6 +63,7 @@ public class ZipGeoJsonAssembler implements Consumer<GeoJsonConversionJob> {
     var outputFileName = zoneDetectionJob.getZoneName() + "-final.zip";
     var combinedFileKey = GEO_JSON_BUCKET_FOLDER + zoneDetectionJob.getId() + "/" + outputFileName;
     var detection = detectionService.getByZoneDetectionJob(zoneDetectionJob);
+    var unifiedProvidedZone = detectionProvidedZoneUnifier.apply(detection);
 
     var roofFeatures =
         detection.getFeatureWithDelimitations().stream()
@@ -66,7 +71,8 @@ public class ZipGeoJsonAssembler implements Consumer<GeoJsonConversionJob> {
             .flatMap(List::stream)
             .toList();
 
-    var zipFile = computeZipFile(conversionTasks, outputFileName, roofFeatures);
+    var zipFile =
+        computeZipFile(conversionTasks, outputFileName, roofFeatures, unifiedProvidedZone);
 
     bucketComponent.upload(zipFile, combinedFileKey);
 
@@ -90,7 +96,8 @@ public class ZipGeoJsonAssembler implements Consumer<GeoJsonConversionJob> {
   private File computeZipFile(
       List<GeoJsonConversionTask> conversionTasks,
       String outputFileName,
-      List<Feature> roofFeatures) {
+      List<Feature> roofFeatures,
+      org.locationtech.jts.geom.MultiPolygon unifiedProvidedZone) {
     var suffix = ".zip";
     var prefix = outputFileName.replaceAll(".zip", "");
     var zipFile = File.createTempFile(prefix, suffix, createTempDirectory());
@@ -103,7 +110,7 @@ public class ZipGeoJsonAssembler implements Consumer<GeoJsonConversionJob> {
                     geoFeatureConverter.apply(
                         bucketComponent.download(conversionTask.getFileKey())))));
     if (!roofFeatures.isEmpty()) {
-      var roofGeoJson = new GeoJson(convertGeoFeatures(roofFeatures));
+      var roofGeoJson = new GeoJson(convertGeoFeatures(roofFeatures, unifiedProvidedZone));
       taskGeoJsonMap.put(TOITURE_REVETEMENT, roofGeoJson);
     }
     try (OutputStream fos = Files.newOutputStream(zipFile.toPath());
@@ -123,26 +130,56 @@ public class ZipGeoJsonAssembler implements Consumer<GeoJsonConversionJob> {
     return zipFile;
   }
 
-  private List<GeoJson.GeoFeature> convertGeoFeatures(List<Feature> roofFeatures) {
+  private List<GeoJson.GeoFeature> convertGeoFeatures(
+      List<Feature> roofFeatures, org.locationtech.jts.geom.MultiPolygon unifiedProvidedZone) {
     return roofFeatures.stream()
         .map(
             feature -> {
               var restFeature = toRestFeature(feature);
-              MultiPolygon multiPolygon;
+              MultiPolygon convertedMultiPolygon;
               switch (restFeature.getGeometry().getActualInstance()) {
                 case Polygon polygon ->
-                    multiPolygon =
+                    convertedMultiPolygon =
                         new MultiPolygon()
                             .type(MULTI_POLYGON)
                             .coordinates(List.of(polygon.getCoordinates()));
-                case MultiPolygon roofMultiPolygon -> multiPolygon = roofMultiPolygon;
+                case MultiPolygon roofMultiPolygon -> convertedMultiPolygon = roofMultiPolygon;
                 default ->
                     throw new IllegalStateException(
                         "Unsupported geometry type to convert to roof multipolygon : "
                             + restFeature.getGeometry().getActualInstance());
               }
-              return new GeoJson.GeoFeature(restFeature.getProperties(), multiPolygon);
+              var intersectedMultiPolygonRest =
+                  filterRoofMultiPolygonByProvidedZoneIntersection(
+                      unifiedProvidedZone, convertedMultiPolygon);
+              return new GeoJson.GeoFeature(
+                  restFeature.getProperties(), intersectedMultiPolygonRest);
             })
         .toList();
+  }
+
+  private MultiPolygon filterRoofMultiPolygonByProvidedZoneIntersection(
+      org.locationtech.jts.geom.MultiPolygon unifiedProvidedZone,
+      MultiPolygon convertedMultiPolygon) {
+    var jtsRoofMultiPolygon = geometryConverter.apply(convertedMultiPolygon.getCoordinates());
+    var intersectedRoofWithProvidedZone = jtsRoofMultiPolygon.intersection(unifiedProvidedZone);
+    MultiPolygon intersectedMultiPolygonRest;
+    if (intersectedRoofWithProvidedZone instanceof org.locationtech.jts.geom.Polygon polygon) {
+      intersectedMultiPolygonRest =
+          new MultiPolygon()
+              .type(MULTI_POLYGON)
+              .coordinates(List.of(List.of(geometryConverter.polygonToPoints(polygon))));
+    } else if (intersectedRoofWithProvidedZone
+        instanceof org.locationtech.jts.geom.MultiPolygon multiPolygon) {
+      intersectedMultiPolygonRest =
+          new MultiPolygon()
+              .type(MULTI_POLYGON)
+              .coordinates(geometryConverter.multiPolygonToNestedList(multiPolygon));
+    } else {
+      throw new IllegalStateException(
+          "Unsupported geometry type to convert to roof multipolygon : "
+              + intersectedRoofWithProvidedZone);
+    }
+    return intersectedMultiPolygonRest;
   }
 }
