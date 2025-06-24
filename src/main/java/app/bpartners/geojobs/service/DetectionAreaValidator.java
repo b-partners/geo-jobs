@@ -9,8 +9,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class DetectionAreaValidator implements Consumer<Detection> {
@@ -27,9 +29,9 @@ public class DetectionAreaValidator implements Consumer<Detection> {
             .map(
                 feature -> {
                   var geometryType = feature.getGeometry().getActualInstance();
-                  org.locationtech.jts.geom.MultiPolygon geometry = null;
+                  org.locationtech.jts.geom.MultiPolygon geometry;
                   switch (geometryType) {
-                    case Point ignored -> {}
+                    case Point ignored -> geometry = null;
                     case Polygon polygon ->
                         geometry = geometryConverter.apply(List.of(polygon.getCoordinates()));
                     case MultiPolygon multiPolygon ->
@@ -41,9 +43,12 @@ public class DetectionAreaValidator implements Consumer<Detection> {
                   return geometry;
                 })
             .filter(Objects::nonNull)
-            .reduce(unifyMultiPolygon())
-            .orElseThrow(() -> new IllegalStateException("Unable to unify provided multiPolygon"));
-    var actualArea = geometrySquareMeterArea.apply(unifiedProvidedPolygon);
+            .reduce(unifyMultiPolygon());
+    if (unifiedProvidedPolygon.isEmpty()) {
+      log.warn("No unified geometry found from provided geo-json: {}", geoJsonZone);
+      return;
+    }
+    var actualArea = geometrySquareMeterArea.apply(unifiedProvidedPolygon.get());
     if (INDRE_ET_LOIRE_2024_5_CM.equals(layer) && actualArea > 10_000.0) {
       throw new NotImplementedException(
           "Provided multiPolygon must be under 10 000 meters for zone inside layers "
