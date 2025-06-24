@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service.event;
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
 import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.MULTI_POLYGON;
 import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.BACKGROUND;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_BUCKET_FOLDER;
 
@@ -19,6 +20,7 @@ import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionJob;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionTask;
+import app.bpartners.geojobs.service.DetectionBackgroundRetriever;
 import app.bpartners.geojobs.service.DetectionProvidedZoneUnifier;
 import app.bpartners.geojobs.service.DetectionService;
 import app.bpartners.geojobs.service.GeoFeatureConverter;
@@ -53,6 +55,7 @@ public class ZipGeoJsonAssembler implements Consumer<GeoJsonConversionJob> {
   private final GeoFeatureConverter geoFeatureConverter;
   private final DetectionProvidedZoneUnifier detectionProvidedZoneUnifier;
   private final GeometryConverter geometryConverter;
+  private final DetectionBackgroundRetriever detectionBackgroundRetriever;
 
   @Override
   public void accept(GeoJsonConversionJob geoJsonConversionJob) {
@@ -64,15 +67,20 @@ public class ZipGeoJsonAssembler implements Consumer<GeoJsonConversionJob> {
     var combinedFileKey = GEO_JSON_BUCKET_FOLDER + zoneDetectionJob.getId() + "/" + outputFileName;
     var detection = detectionService.getByZoneDetectionJob(zoneDetectionJob);
     var unifiedProvidedZone = detectionProvidedZoneUnifier.apply(detection);
-
     var roofFeatures =
         detection.getFeatureWithDelimitations().stream()
             .map(FeatureWithDelimitation::delimitations)
             .flatMap(List::stream)
             .toList();
+    var providedZoneWithoutRoofMultiPolygon = detectionBackgroundRetriever.apply(detection);
 
     var zipFile =
-        computeZipFile(conversionTasks, outputFileName, roofFeatures, unifiedProvidedZone);
+        computeZipFile(
+            conversionTasks,
+            outputFileName,
+            roofFeatures,
+            unifiedProvidedZone,
+            providedZoneWithoutRoofMultiPolygon);
 
     bucketComponent.upload(zipFile, combinedFileKey);
 
@@ -97,7 +105,8 @@ public class ZipGeoJsonAssembler implements Consumer<GeoJsonConversionJob> {
       List<GeoJsonConversionTask> conversionTasks,
       String outputFileName,
       List<Feature> roofFeatures,
-      org.locationtech.jts.geom.MultiPolygon unifiedProvidedZone) {
+      org.locationtech.jts.geom.MultiPolygon unifiedProvidedZone,
+      org.locationtech.jts.geom.MultiPolygon providedZoneWithoutRoofMultiPolygon) {
     var suffix = ".zip";
     var prefix = outputFileName.replaceAll(".zip", "");
     var zipFile = File.createTempFile(prefix, suffix, createTempDirectory());
@@ -112,6 +121,19 @@ public class ZipGeoJsonAssembler implements Consumer<GeoJsonConversionJob> {
     if (!roofFeatures.isEmpty()) {
       var roofGeoJson = new GeoJson(convertGeoFeatures(roofFeatures, unifiedProvidedZone));
       taskGeoJsonMap.put(TOITURE_REVETEMENT, roofGeoJson);
+    }
+    if (providedZoneWithoutRoofMultiPolygon != null) {
+      taskGeoJsonMap.put(
+          BACKGROUND,
+          new GeoJson(
+              List.of(
+                  new GeoJson.GeoFeature(
+                      new HashMap<>(),
+                      new MultiPolygon()
+                          .type(MULTI_POLYGON)
+                          .coordinates(
+                              geometryConverter.multiPolygonToNestedList(
+                                  providedZoneWithoutRoofMultiPolygon))))));
     }
     try (OutputStream fos = Files.newOutputStream(zipFile.toPath());
         ZipOutputStream zipOut = new ZipOutputStream(fos)) {

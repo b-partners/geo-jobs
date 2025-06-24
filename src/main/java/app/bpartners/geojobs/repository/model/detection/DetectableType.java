@@ -31,5 +31,6 @@ public enum DetectableType {
   BATI_ARDOISE,
   BATI_AUTRES,
   TOMBE,
+  BACKGROUND,
   ESPACE_VERT_PARKING // TODO: to delete and separate
 }

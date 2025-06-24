@@ -131,6 +131,7 @@ public class DetectionTaskMapper {
       case VELUX -> VELUX;
       case TOMBE -> null;
       case ESPACE_VERT_PARKING -> ESPACE_VERT_PARKING;
+      case BACKGROUND -> BACKGROUND;
     };
   }
 }

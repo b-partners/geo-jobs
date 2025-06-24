@@ -47,6 +47,7 @@ class ZipGeoJsonAssemblerTest {
   GeoFeatureConverter geoFeatureConverter = new GeoFeatureConverter(new ObjectMapper());
   DetectionProvidedZoneUnifier detectionProvidedZoneUnifierMock = mock();
   GeometryConverter geometryConverter = new GeometryConverter(mock(BuildingApi.class));
+  DetectionBackgroundRetriever detectionBackgroundRetrieverMock = mock();
   ZipGeoJsonAssembler subject =
       new ZipGeoJsonAssembler(
           geoJsonConversionTaskRepositoryMock,
@@ -58,7 +59,8 @@ class ZipGeoJsonAssemblerTest {
           eventProducerMock,
           geoFeatureConverter,
           detectionProvidedZoneUnifierMock,
-          geometryConverter);
+          geometryConverter,
+          detectionBackgroundRetrieverMock);
 
   @SneakyThrows
   @Test
@@ -86,6 +88,7 @@ class ZipGeoJsonAssemblerTest {
     var featureMoisissureFile =
         new ClassPathResource("features/feature_moisissure_couleur.json").getFile();
 
+    when(detectionBackgroundRetrieverMock.apply(detection)).thenReturn(null);
     when(taskUsureLegerMock.getDetectableType()).thenReturn(USURE_LEGER);
     when(taskUsureLegerMock.getFileKey()).thenReturn(taskUsureLegerFileKey);
     when(taskMoisissureMock.getDetectableType()).thenReturn(MOISISSURE_NOIRCIE);
