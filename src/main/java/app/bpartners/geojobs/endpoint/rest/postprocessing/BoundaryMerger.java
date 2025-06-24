@@ -1,8 +1,7 @@
 package app.bpartners.geojobs.endpoint.rest.postprocessing;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
-import static app.bpartners.geojobs.model.geometry.route.ObjectType.green_space;
-import static app.bpartners.geojobs.model.geometry.route.ObjectType.tomb;
+import static app.bpartners.geojobs.model.geometry.route.ObjectType.*;
 import static java.lang.Runtime.getRuntime;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import static java.util.stream.Collectors.toSet;
@@ -100,7 +99,7 @@ public class BoundaryMerger
           var convexHull = p.convexHull();
           var md = new MinimumDiameter(convexHull);
           var polygon =
-              tomb.equals(tp.type())
+              tombe.equals(tp.type())
                   ? (Polygon) p.getEnvelope()
                   : (Polygon) md.getMinimumRectangle();
           result.add(new TiledPolygon(polygon, tp.type(), tp.originTile(), tp.tilingConf()));
@@ -116,7 +115,7 @@ public class BoundaryMerger
     var noSuperposition = noSuperposition(latLonPolygons, mergeConf.iouAllowed());
     return noSuperposition.stream()
         .map(ll -> new TiledPolygon(ll.polygon(), label, origin, tilingConf))
-        .map(tp -> tomb.equals(tp.type()) ? resize(tp) : tp)
+        .map(tp -> tombe.equals(tp.type()) ? resize(tp) : tp)
         .filter(Objects::nonNull)
         .map(TiledPolygon::latLonPolygon)
         .collect(toSet());
@@ -175,7 +174,7 @@ public class BoundaryMerger
 
     var result = new HashSet<TiledPolygon>();
 
-    if (type.equals(green_space)) {
+    if (type.equals(espace_vert)) {
       var toUnify = tiledPolygonsWithOffset.stream().map(TiledPolygon::polygon).collect(toSet());
       var prettyPolygons = prettier.apply(toUnify);
       var unified = new UnifiedRoute(prettyPolygons, unionConf).unified();
