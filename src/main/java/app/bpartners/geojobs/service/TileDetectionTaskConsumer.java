@@ -4,10 +4,12 @@ import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFacto
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
 import static java.time.Instant.now;
 
+import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
+import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.service.detection.DetectionMapper;
@@ -50,11 +52,12 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
     if (detection != null) {
       var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
       if (providedGeoJsonZone != null && detection.hasToitureModelName()) {
+        var unifiedProvidedZone = unifyProvidedZone(providedGeoJsonZone, detection);
         var multiPolygonFromTile =
             geometryConverter.getMultiPolygonFromTile(
                 tileCoordinates.getX(), tileCoordinates.getY(), tileCoordinates.getZ());
         var featureWithDelimitations = detection.getFeatureWithDelimitations();
-        var roofMultiPolygonIntersected =
+        var roofMultiPolygonIntersectedWithTilePolygon =
             featureWithDelimitations.stream()
                 .map(FeatureWithDelimitation::delimitations)
                 .flatMap(List::stream)
@@ -64,16 +67,17 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
                           geometryConverter.readGeometryFromString(
                               roofFeature.getGeometry().getActualInstanceStringValue());
                       if (geometry instanceof MultiPolygon roofMultiPolygon) {
-                        return roofMultiPolygon.contains(multiPolygonFromTile)
-                            || roofMultiPolygon.intersects(multiPolygonFromTile)
-                            || multiPolygonFromTile.contains(roofMultiPolygon);
+                        return multiPolygonFromTile.intersects(roofMultiPolygon);
+                      }
+                      if (geometry instanceof Polygon roofPolygon) {
+                        return multiPolygonFromTile.intersects(roofPolygon);
                       }
                       return false;
                     })
                 .toList();
-        if (!roofMultiPolygonIntersected.isEmpty()) {
+        if (!roofMultiPolygonIntersectedWithTilePolygon.isEmpty()) {
           var maskMultiPolygon =
-              roofMultiPolygonIntersected.stream()
+              roofMultiPolygonIntersectedWithTilePolygon.stream()
                   .map(
                       roofFeature -> {
                         var geometryRoofFromFeature =
@@ -83,13 +87,26 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
                             geometryRoofFromFeature.intersection(multiPolygonFromTile);
                         if (intersection instanceof MultiPolygon roofMultiPolygon) {
                           return roofMultiPolygon;
-                        } else if (intersection instanceof Polygon roofPolygon) {
+                        }
+                        if (intersection instanceof Polygon roofPolygon) {
                           return geometryFactory.createMultiPolygon(new Polygon[] {roofPolygon});
                         }
                         return null;
                       })
                   .filter(Objects::nonNull)
                   .reduce(unifyMultiPolygon())
+                  .map(
+                      unifiedMaskMultiPolygon -> {
+                        var intersectedMaskWithProvidedZone =
+                            unifiedProvidedZone.intersection(unifiedMaskMultiPolygon);
+                        if (intersectedMaskWithProvidedZone instanceof Polygon polygon) {
+                          return geometryFactory.createMultiPolygon(new Polygon[] {polygon});
+                        }
+                        if (intersectedMaskWithProvidedZone instanceof MultiPolygon multiPolygon) {
+                          return multiPolygon;
+                        }
+                        return null;
+                      })
                   .orElse(null);
           if (maskMultiPolygon != null) {
             log.info(
@@ -97,6 +114,7 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
             mask = maskRetriever.apply(tile, maskMultiPolygon);
           } else {
             log.info("Any mask retrieved for tileCoordinates {}", tile);
+            return;
           }
         } else {
           log.info(
@@ -134,6 +152,32 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
               });
     }
     machineDetectedTileRepository.save(machineDetectedTile);
+  }
+
+  private MultiPolygon unifyProvidedZone(List<Feature> providedGeoJsonZone, Detection detection) {
+    return providedGeoJsonZone.stream()
+        .map(
+            feature -> {
+              var geometryType = feature.getGeometry().getActualInstance();
+              MultiPolygon multiPolygonJts;
+              switch (geometryType) {
+                case app.bpartners.geojobs.endpoint.rest.model.Polygon polygon ->
+                    multiPolygonJts = geometryConverter.apply(List.of(polygon.getCoordinates()));
+                case app.bpartners.geojobs.endpoint.rest.model.MultiPolygon multiPolygon ->
+                    multiPolygonJts = geometryConverter.apply(multiPolygon.getCoordinates());
+                default ->
+                    throw new UnsupportedOperationException(
+                        "Unsupported geometry type to retrieve multiPolygon for"
+                            + " tileDetectionTask : "
+                            + geometryType);
+              }
+              return multiPolygonJts;
+            })
+        .reduce(unifyMultiPolygon())
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    "Unable to unify provided zone for detection.id : " + detection.getId()));
   }
 
   public static TileDetectionTask withNewStatus(

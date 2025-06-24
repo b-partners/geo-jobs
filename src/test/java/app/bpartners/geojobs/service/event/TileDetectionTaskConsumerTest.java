@@ -78,6 +78,9 @@ class TileDetectionTaskConsumerTest {
     var multiPolygonFromTileMock = mock(org.locationtech.jts.geom.MultiPolygon.class);
     when(tileMock.getCoordinates()).thenReturn(new TileCoordinates().x(0).y(0).z(20));
     when(roofDelimitationMockDomain.getGeometry()).thenReturn(mock());
+    when(roofMultiPolygonMock.union(any())).thenReturn(roofMultiPolygonMock);
+    when(geometryConverterMock.apply(featureMultiPolygonMock.getCoordinates()))
+        .thenReturn(roofMultiPolygonMock);
     when(featureGeometryMock.getMultiPolygon()).thenReturn(featureMultiPolygonMock);
     when(featureGeometryMock.getActualInstance()).thenReturn(featureMultiPolygonMock);
     when(featureMock.getGeometry()).thenReturn(featureGeometryMock);
@@ -145,6 +148,8 @@ class TileDetectionTaskConsumerTest {
             .build();
     when(tileMock.getCoordinates()).thenReturn(new TileCoordinates().x(0).y(0).z(20));
     when(roofDelimitationMockDomain.getGeometry()).thenReturn(mock());
+    when(geometryConverterMock.apply(featureMultiPolygonMock.getCoordinates()))
+        .thenReturn(roofMultiPolygonMock);
     when(featureGeometryMock.getMultiPolygon()).thenReturn(featureMultiPolygonMock);
     when(featureGeometryMock.getActualInstance()).thenReturn(featureMultiPolygonMock);
     when(featureMock.getGeometry()).thenReturn(featureGeometryMock);
@@ -155,6 +160,8 @@ class TileDetectionTaskConsumerTest {
     var multiPolygonFromTileMock = mock(org.locationtech.jts.geom.MultiPolygon.class);
     when(roofDelimitationMockDomain.getGeometry()).thenReturn(roofFeatureGeometryMock);
     when(roofMultiPolygonMock.contains(eq(multiPolygonFromTileMock))).thenReturn(true);
+    when(multiPolygonFromTileMock.intersects(roofMultiPolygonMock)).thenReturn(true);
+    when(roofMultiPolygonMock.union(any())).thenReturn(roofMultiPolygonMock);
     when(detectionMock.getFeatureWithDelimitations())
         .thenReturn(
             List.of(
