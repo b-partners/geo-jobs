@@ -71,7 +71,8 @@ public class GeoJsonConversionTaskConsumer implements TaskConsumer<GeoJsonConver
     var merger = new BoundaryMerger(detectableType.getMinAreaThreshold(), NEIGHBOURHOOD);
     var unifiedGeoJson = merger.apply(geoJsonAsFile, detectableType);
     var unifiedAsByte = new Geojson(unifiedGeoJson).stringValue().getBytes();
-    var unifiedAsFile = writer.write(unifiedAsByte, createTempDirectory(), fileName + GEO_JSON_EXTENSION);
+    var unifiedAsFile =
+        writer.write(unifiedAsByte, createTempDirectory(), fileName + GEO_JSON_EXTENSION);
 
     bucketComponent.upload(unifiedAsFile, fileKey);
 

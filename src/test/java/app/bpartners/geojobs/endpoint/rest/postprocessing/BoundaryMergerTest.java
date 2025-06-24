@@ -1,12 +1,10 @@
 package app.bpartners.geojobs.endpoint.rest.postprocessing;
 
-import static app.bpartners.geojobs.endpoint.rest.postprocessing.BoundaryMerger.invert;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.BATI_BETON;
 
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.model.geometry.PolygonProvider;
 import java.io.File;
-import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 class BoundaryMergerTest {

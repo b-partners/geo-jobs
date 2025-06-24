@@ -7,8 +7,6 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import app.bpartners.geojobs.service.geojson.GeoJson;
 import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.geojson.feature.FeatureJSON;
 import org.locationtech.jts.geom.MultiPolygon;
@@ -53,5 +51,4 @@ public class GeoJsonLoader {
 
     return latLonPolygons;
   }
-
 }
