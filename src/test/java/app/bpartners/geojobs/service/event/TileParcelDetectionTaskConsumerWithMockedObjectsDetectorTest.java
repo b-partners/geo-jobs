@@ -14,6 +14,7 @@ import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfigur
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.DetectionMaskFromTileRetriever;
+import app.bpartners.geojobs.service.DetectionProvidedZoneUnifier;
 import app.bpartners.geojobs.service.TileDetectionTaskConsumer;
 import app.bpartners.geojobs.service.detection.DetectionMapper;
 import app.bpartners.geojobs.service.detection.MockedTileObjectDetector;
@@ -39,7 +40,8 @@ class TileParcelDetectionTaskConsumerWithMockedObjectsDetectorTest {
             detectionMapperMock,
             detectionRepositoryMock,
             geometryConverterMock,
-            maskRetrieverMock);
+            maskRetrieverMock,
+            new DetectionProvidedZoneUnifier(geometryConverterMock));
 
     var detectableObjectConfigurations = new ArrayList<DetectableObjectConfiguration>();
     var zdjId = "zdjId";

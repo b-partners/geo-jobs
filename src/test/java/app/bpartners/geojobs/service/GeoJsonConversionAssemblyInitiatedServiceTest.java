@@ -34,6 +34,7 @@ import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionJob;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionTask;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.event.GeoJsonConversionAssemblyInitiatedService;
+import app.bpartners.geojobs.service.event.ZipGeoJsonAssembler;
 import app.bpartners.geojobs.service.geojson.GeoJsonMapper;
 import app.bpartners.geojobs.service.geojson.GeoJsonMultiPolygonCorrector;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
@@ -68,6 +69,9 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
   BuildingApi buildingApiMock = mock();
   FeatureMapper featureMapper = new FeatureMapper(new GeometryConverter(buildingApiMock));
   GeometryConverter geometryConverter = new GeometryConverter(buildingApiMock);
+  DetectionService detectionServiceMock =
+      new DetectionService(zoneDetectionJobServiceMock, detectionRepositoryMock);
+  ZipGeoJsonAssembler zipGeoJsonAssemblerMock = mock();
   GeoJsonConversionAssemblyInitiatedService subject =
       new GeoJsonConversionAssemblyInitiatedService(
           geoJsonConversionTaskRepositoryMock,
@@ -77,10 +81,12 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
           zoneDetectionJobServiceMock,
           detectionRepositoryMock,
           eventProducerMock,
-          objectMapper,
           featureMapper,
           geometryConverter,
-          geoJsonMapper);
+          geoJsonMapper,
+          detectionServiceMock,
+          zipGeoJsonAssemblerMock,
+          new GeoFeatureConverter(objectMapper));
   private final File featureFileWithoutAddressProperty;
   private final File featureContainingAddressFile;
   private final File featureFileWithAddressAndLabelProperty;
@@ -129,8 +135,8 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
         .thenReturn(featureFileWithoutAddressProperty);
     when(bucketComponentMock.upload(any(), any()))
         .thenReturn(new FileHash(FileHashAlgorithm.SHA256, "dummy"));
-    var detectionMock = new Detection();
-    var optionalDetection = Optional.of(detectionMock);
+    var detection = Detection.builder().isOutputZipped(false).build();
+    var optionalDetection = Optional.of(detection);
     when(detectionRepositoryMock.findByZdjId(ZONE_DETECTION_JOB_ID)).thenReturn(optionalDetection);
     when(detectionRepositoryMock.save(any(Detection.class)))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
@@ -212,8 +218,8 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
         .thenReturn(featureFileWithoutAddressProperty);
     when(bucketComponentMock.upload(any(), any()))
         .thenReturn(new FileHash(FileHashAlgorithm.SHA256, "dummy"));
-    var detectionMock = new Detection();
-    var optionalDetection = Optional.of(detectionMock);
+    var detection = Detection.builder().isOutputZipped(false).build();
+    var optionalDetection = Optional.of(detection);
     when(detectionRepositoryMock.findByZdjId(ZONE_DETECTION_JOB_ID)).thenReturn(optionalDetection);
     when(detectionRepositoryMock.save(any(Detection.class)))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
@@ -308,6 +314,7 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
     var geoJsonConversionJob = someConversionJob(geoJsonConversionJobId, zoneDetectionJobId);
     var conversionTask1 = someConversionTask(geoJsonConversionJobId, 1);
     var conversionTask2 = someConversionTask(geoJsonConversionJobId, 2);
+    when(detectionMock.isOutputZipped()).thenReturn(false);
     when(detectionMock.getMultiPolygonGeoJsonZone())
         .thenReturn(mapFeaturesFromFile(featureContainingAddressFile));
     when(zoneDetectionJobMock.getId()).thenReturn(zoneDetectionJobId);
@@ -350,6 +357,42 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
         getFeatureAsString(mapFeaturesFromFile(featureFileWithoutAddressProperty));
     assertTrue(actualGeoJson.contains(expectedFeatureContainingAddressAsString));
     assertFalse(actualGeoJson.contains(featureWithoutAddressAsString));
+  }
+
+  @Test
+  void trigger_zip_assemble() {
+    var geoJsonConversionJobId = randomUUID().toString();
+    var zoneDetectionJobId = randomUUID().toString();
+    var geoJsonConversionJobMock =
+        GeoJsonConversionJob.builder()
+            .id(geoJsonConversionJobId)
+            .zoneDetectionJobId(zoneDetectionJobId)
+            .build();
+    var zoneDetectionJobMock = mock(ZoneDetectionJob.class);
+    var detectionMock = mock(Detection.class);
+    when(geoJsonConversionJobRepositoryMock.findById(geoJsonConversionJobId))
+        .thenReturn(Optional.of(geoJsonConversionJobMock));
+    when(zoneDetectionJobMock.getId()).thenReturn(zoneDetectionJobId);
+    when(zoneDetectionJobServiceMock.getMachineZdjFromZdjId(zoneDetectionJobId))
+        .thenReturn(zoneDetectionJobMock);
+    when(zoneDetectionJobServiceMock.findById(zoneDetectionJobId)).thenReturn(zoneDetectionJobMock);
+    when(detectionRepositoryMock.findByZdjId(zoneDetectionJobId))
+        .thenReturn(Optional.of(detectionMock));
+    when(detectionMock.isOutputZipped()).thenReturn(true);
+
+    assertDoesNotThrow(
+        () ->
+            subject.accept(
+                GeoJsonConversionAssemblyInitiated.builder()
+                    .geoJsonConversionJobId(geoJsonConversionJobId)
+                    .build()));
+
+    verify(zipGeoJsonAssemblerMock).accept(any());
+    verify(geoJsonConversionTaskRepositoryMock, never()).findAllByJobId(any());
+    verify(geoJsonConversionJobRepositoryMock, never()).save(any());
+    verify(bucketComponentMock, never()).upload(any(), any());
+    verify(detectionRepositoryMock, never()).save(any());
+    verify(eventProducerMock, never()).accept(any());
   }
 
   private @NotNull String getFeatureAsString(List<Feature> featureFileWithoutAddressProperty) {

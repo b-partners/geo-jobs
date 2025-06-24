@@ -48,6 +48,7 @@ public class DetectableObjectTypeMapper {
       case VELUX -> DetectableType.VELUX;
       case PARKING -> DetectableType.PARKING;
       case ESPACE_VERT_PARKING -> DetectableType.ESPACE_VERT_PARKING;
+      case BACKGROUND -> DetectableType.BACKGROUND;
       default -> throw new NotImplementedException("Unknown detectable object type " + rest);
     };
   }
@@ -85,6 +86,7 @@ public class DetectableObjectTypeMapper {
       case BATI_ARDOISE -> BATI_ARDOISE;
       case TOMBE -> null;
       case ESPACE_VERT_PARKING -> ESPACE_VERT_PARKING;
+      case BACKGROUND -> BACKGROUND;
     };
   }
 

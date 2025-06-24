@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.endpoint.rest.mapper;
 
+import static app.bpartners.geojobs.endpoint.rest.model.GeoJsonOutput.GEO_JSON;
+import static app.bpartners.geojobs.endpoint.rest.model.GeoJsonOutput.ZIP;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
@@ -67,7 +69,8 @@ public class DetectionFromStatisticRestMapper
             detection.getPolygonRoofDelimitation() == null
                     || detection.getPolygonRoofDelimitation().isEmpty()
                 ? null
-                : new RoofDelimiter().polygon(detection.getPolygonRoofDelimitation()));
+                : new RoofDelimiter().polygon(detection.getPolygonRoofDelimitation()))
+        .geoJsonOutput(detection.isOutputZipped() ? ZIP : GEO_JSON);
   }
 
   private List<Feature> hideUselessRestProperties(List<Feature> features) {

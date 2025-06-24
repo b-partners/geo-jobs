@@ -1395,6 +1395,7 @@ components:
         - BATI_ARDOISE
         - BATI_AUTRES
         - ESPACE_VERT_PARKING
+        - BACKGROUND
     ProcessJobAnnotation:
       type: object
       properties:
@@ -1727,6 +1728,8 @@ components:
             $ref: '#/components/schemas/Feature'
           description: |
             Optional. If so, must shape file or excel file or image file through its specific endpoint.
+        geoJsonOutput:
+          $ref: '#/components/schemas/GeoJsonOutput'
     DetectionStep:
       properties:
         name:
@@ -1806,3 +1809,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Point2D'
+    GeoJsonOutput:
+      type: string
+      description: |
+        By default, detection output is a single GEO_JSON file, which can be displayed on a map such as QGIS, representing a single layer.
+        If consumers want to separate result into multiple layers, a ZIP-compressed version is available, with each file representing a specific identified object and its corresponding map layer.
+      enum:
+        - GEO_JSON
+        - ZIP

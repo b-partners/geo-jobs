@@ -2,6 +2,7 @@ package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toDomainFeature;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.*;
+import static app.bpartners.geojobs.endpoint.rest.model.GeoJsonOutput.GEO_JSON;
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.SUCCEEDED;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.UNKNOWN;
@@ -917,7 +918,8 @@ class ZoneServiceTest {
                             .health(UNKNOWN)
                             .creationDatetime(actual.getStep().getStatus().getCreationDatetime()))
                     .statistics(List.of())
-                    .updatedAt(actual.getStep().getUpdatedAt()));
+                    .updatedAt(actual.getStep().getUpdatedAt()))
+            .geoJsonOutput(GEO_JSON);
     verify(detectionAddressConsumerMock, only()).accept(expected);
     assertEquals(expectedRestDetection, actual);
   }
@@ -968,7 +970,8 @@ class ZoneServiceTest {
                             .health(UNKNOWN)
                             .creationDatetime(actual.getStep().getStatus().getCreationDatetime()))
                     .statistics(List.of())
-                    .updatedAt(actual.getStep().getUpdatedAt()));
+                    .updatedAt(actual.getStep().getUpdatedAt()))
+            .geoJsonOutput(GEO_JSON);
     assertEquals(expectedDetectionSavedEvent, detectionSaved);
     assertEquals(expectedRestDetection, actual);
   }
@@ -1023,7 +1026,8 @@ class ZoneServiceTest {
                             .health(UNKNOWN)
                             .creationDatetime(actual.getStep().getStatus().getCreationDatetime()))
                     .statistics(List.of())
-                    .updatedAt(actual.getStep().getUpdatedAt()));
+                    .updatedAt(actual.getStep().getUpdatedAt()))
+            .geoJsonOutput(GEO_JSON);
     assertEquals(expectedDetectionSavedEvent, detectionSaved);
     assertEquals(expectedRestDetection, actual);
     assertEquals(expectedDetectionExcelFileSaved, detectionExcelFileSaved);
@@ -1091,7 +1095,8 @@ class ZoneServiceTest {
                             .health(UNKNOWN)
                             .creationDatetime(actual.getStep().getStatus().getCreationDatetime()))
                     .statistics(List.of())
-                    .updatedAt(actual.getStep().getUpdatedAt()));
+                    .updatedAt(actual.getStep().getUpdatedAt()))
+            .geoJsonOutput(GEO_JSON);
     assertEquals(
         DetectionSaved.builder().detection(expectedDetectionSaved).build(), detectionProvided);
     assertEquals(expectedDetectionSaved, savedDetection);

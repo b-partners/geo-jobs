@@ -2,6 +2,8 @@ package app.bpartners.geojobs.endpoint.rest.controller;
 
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper.toHealthStatus;
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper.toProgressionEnum;
+import static app.bpartners.geojobs.endpoint.rest.model.GeoJsonOutput.GEO_JSON;
+import static app.bpartners.geojobs.endpoint.rest.model.GeoJsonOutput.ZIP;
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_COMMUNITY;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
@@ -261,7 +263,11 @@ class DetectionControllerIT extends FacadeIT {
             zoneDetectionJob(randomUUID().toString(), zoneTilingJob.getId()));
     var detection =
         detectionRepository.save(
-            detectionCreator.createFromZTJAndZDJ(zoneTilingJob.getId(), zoneDetectionJob.getId()));
+            detectionCreator
+                .createFromZTJAndZDJ(zoneTilingJob.getId(), zoneDetectionJob.getId())
+                .toBuilder()
+                .isOutputZipped(true)
+                .build());
     var statistic = taskStatisticCreator.createProcessingTask(zoneDetectionJob.getId(), DETECTION);
     when(zoneDetectionJobService.getTaskStatistic(any(String.class))).thenReturn(statistic);
 
@@ -273,7 +279,8 @@ class DetectionControllerIT extends FacadeIT {
             .geoJsonZone(featureCreator.defaultFeatures())
             .step(
                 detectionStepStatisticMapper.toRestDetectionStepStatus(
-                    statistic, DetectionStepName.MACHINE_DETECTION));
+                    statistic, DetectionStepName.MACHINE_DETECTION))
+            .geoJsonOutput(ZIP);
     assertEquals(List.of(expected), actual);
   }
 
@@ -290,7 +297,8 @@ class DetectionControllerIT extends FacadeIT {
         new app.bpartners.geojobs.endpoint.rest.model.Detection()
             .id(detection.getEndToEndId())
             .geoJsonZone(featureCreator.defaultFeatures())
-            .step(actual.getFirst().getStep());
+            .step(actual.getFirst().getStep())
+            .geoJsonOutput(GEO_JSON);
     assertEquals(List.of(expected), actual);
   }
 

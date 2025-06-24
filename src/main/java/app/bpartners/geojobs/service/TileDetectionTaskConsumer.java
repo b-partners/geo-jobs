@@ -35,6 +35,7 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
   private final DetectionRepository detectionRepository;
   private final GeometryConverter geometryConverter;
   private final DetectionMaskFromTileRetriever maskRetriever;
+  private final DetectionProvidedZoneUnifier detectionProvidedZoneUnifier;
 
   @Override
   public void accept(TileDetectionTask tileDetectionTask) {
@@ -50,11 +51,12 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
     if (detection != null) {
       var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
       if (providedGeoJsonZone != null && detection.hasToitureModelName()) {
+        var unifiedProvidedZone = detectionProvidedZoneUnifier.apply(detection);
         var multiPolygonFromTile =
             geometryConverter.getMultiPolygonFromTile(
                 tileCoordinates.getX(), tileCoordinates.getY(), tileCoordinates.getZ());
         var featureWithDelimitations = detection.getFeatureWithDelimitations();
-        var roofMultiPolygonIntersected =
+        var roofMultiPolygonIntersectedWithTilePolygon =
             featureWithDelimitations.stream()
                 .map(FeatureWithDelimitation::delimitations)
                 .flatMap(List::stream)
@@ -64,16 +66,17 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
                           geometryConverter.readGeometryFromString(
                               roofFeature.getGeometry().getActualInstanceStringValue());
                       if (geometry instanceof MultiPolygon roofMultiPolygon) {
-                        return roofMultiPolygon.contains(multiPolygonFromTile)
-                            || roofMultiPolygon.intersects(multiPolygonFromTile)
-                            || multiPolygonFromTile.contains(roofMultiPolygon);
+                        return multiPolygonFromTile.intersects(roofMultiPolygon);
+                      }
+                      if (geometry instanceof Polygon roofPolygon) {
+                        return multiPolygonFromTile.intersects(roofPolygon);
                       }
                       return false;
                     })
                 .toList();
-        if (!roofMultiPolygonIntersected.isEmpty()) {
+        if (!roofMultiPolygonIntersectedWithTilePolygon.isEmpty()) {
           var maskMultiPolygon =
-              roofMultiPolygonIntersected.stream()
+              roofMultiPolygonIntersectedWithTilePolygon.stream()
                   .map(
                       roofFeature -> {
                         var geometryRoofFromFeature =
@@ -83,13 +86,26 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
                             geometryRoofFromFeature.intersection(multiPolygonFromTile);
                         if (intersection instanceof MultiPolygon roofMultiPolygon) {
                           return roofMultiPolygon;
-                        } else if (intersection instanceof Polygon roofPolygon) {
+                        }
+                        if (intersection instanceof Polygon roofPolygon) {
                           return geometryFactory.createMultiPolygon(new Polygon[] {roofPolygon});
                         }
                         return null;
                       })
                   .filter(Objects::nonNull)
                   .reduce(unifyMultiPolygon())
+                  .map(
+                      unifiedMaskMultiPolygon -> {
+                        var intersectedMaskWithProvidedZone =
+                            unifiedProvidedZone.intersection(unifiedMaskMultiPolygon);
+                        if (intersectedMaskWithProvidedZone instanceof Polygon polygon) {
+                          return geometryFactory.createMultiPolygon(new Polygon[] {polygon});
+                        }
+                        if (intersectedMaskWithProvidedZone instanceof MultiPolygon multiPolygon) {
+                          return multiPolygon;
+                        }
+                        return null;
+                      })
                   .orElse(null);
           if (maskMultiPolygon != null) {
             log.info(
@@ -97,6 +113,7 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
             mask = maskRetriever.apply(tile, maskMultiPolygon);
           } else {
             log.info("Any mask retrieved for tileCoordinates {}", tile);
+            return;
           }
         } else {
           log.info(
