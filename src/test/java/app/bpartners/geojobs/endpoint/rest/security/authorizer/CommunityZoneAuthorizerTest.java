@@ -28,12 +28,21 @@ class CommunityZoneAuthorizerTest {
   }
 
   @Test
-  void do_nothing_where_admin() {
+  void do_nothing_when_admin() {
     var principal = mock(Principal.class);
     when(principal.isAdmin()).thenReturn(true);
 
     assertDoesNotThrow(() -> subject.accept(new CommunityAuthorization(), List.of(), principal));
     verify(principal, only()).isAdmin();
+  }
+
+  @Test
+  void do_nothing_when_insurance() {
+    var principal = mock(Principal.class);
+    when(principal.isInsurance()).thenReturn(true);
+
+    assertDoesNotThrow(() -> subject.accept(new CommunityAuthorization(), List.of(), principal));
+    verify(principal, times(1)).isInsurance();
   }
 
   @Test
