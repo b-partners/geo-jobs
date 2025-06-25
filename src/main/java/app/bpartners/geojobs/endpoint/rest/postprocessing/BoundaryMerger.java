@@ -172,36 +172,42 @@ public class BoundaryMerger
 
     var result = new HashSet<TiledPolygon>();
 
-    if (type.equals(espace_vert)) {
-      var toUnify = tiledPolygonsWithOffset.stream().map(TiledPolygon::polygon).collect(toSet());
+    var toCheck = List.of("espace_vert", "moisissure", "usure", "humidité");
+    var typeAsString = type.name().toLowerCase();
+    if (toCheck.stream().anyMatch(typeAsString::contains)) {
+      var toUnify =
+          tiledPolygonsWithOffset.stream().map(TiledPolygon::polygon).collect(Collectors.toSet());
+
       var prettyPolygons = prettier.apply(toUnify);
       var unified = new UnifiedRoute(prettyPolygons, unionConf).unified();
+
       for (var p : unified) {
         result.add(new TiledPolygon(p, type, origin, tilingConf));
       }
+
       return result.stream().map(tp -> tp.latLonPolygon(origin)).collect(Collectors.toSet());
     }
 
-    var alreadyUnified = new HashSet<Integer>();
-    var progress = 0;
+    Set<TiledPolygon> alreadyProcessed = new HashSet<>();
+    int progress = 0;
 
     for (var tp : tiledPolygonsWithOffset) {
-      if (alreadyUnified.contains(Objects.hash(tp.polygon()))) {
+      if (alreadyProcessed.contains(tp)) {
         continue;
       }
 
-      var aroundPolygons =
+      var neighbors =
           tiledPolygonsWithOffset.stream()
-              .filter(p -> !p.equals(tp) && shouldBeMerged(tp, p))
+              .filter(other -> !other.equals(tp) && shouldBeMerged(tp, other))
               .collect(Collectors.toSet());
 
-      var toUnify = aroundPolygons.stream().map(TiledPolygon::polygon).collect(Collectors.toSet());
+      var toUnify = neighbors.stream().map(TiledPolygon::polygon).collect(Collectors.toSet());
       toUnify.add(tp.polygon());
 
-      alreadyUnified.addAll(hash(toUnify));
+      alreadyProcessed.addAll(neighbors);
+      alreadyProcessed.add(tp);
 
       var prettyPolygons = prettier.apply(toUnify);
-
       var unified = new UnifiedRoute(prettyPolygons, unionConf).unified();
 
       for (var p : unified) {
@@ -212,10 +218,6 @@ public class BoundaryMerger
     }
 
     return result.stream().map(tp -> tp.latLonPolygon(origin)).collect(Collectors.toSet());
-  }
-
-  private Set<Integer> hash(Set<Polygon> toHash) {
-    return toHash.stream().map(Objects::hash).collect(Collectors.toSet());
   }
 
   private boolean shouldBeMerged(TiledPolygon base, TiledPolygon other) {

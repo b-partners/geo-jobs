@@ -47,7 +47,8 @@ public enum ObjectType {
   cheminee(lengthOrWidth),
   humidite_clair(lengthOrWidth),
   humidite_intense(lengthOrWidth),
-  velux(lengthOrWidth);
+  velux(lengthOrWidth),
+  background(lengthOrWidth);
 
   private final ContinuationOrientation continuationOrientation;
 
@@ -111,6 +112,7 @@ public enum ObjectType {
       case "parking" -> parking;
       case "line", "road", "voie_carrossable" -> line;
       case "velux" -> velux;
+      case "background" -> background;
       default -> throw new IllegalArgumentException("Unsupported continuation on " + label);
     };
   }
