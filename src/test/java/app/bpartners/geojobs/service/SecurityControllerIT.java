@@ -4,6 +4,8 @@ import static app.bpartners.geojobs.endpoint.rest.model.CreateApiKey.ConsumerTyp
 import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.*;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.rest.controller.SecurityController;
@@ -12,16 +14,23 @@ import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityDetectableObjectType;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
+import app.bpartners.geojobs.service.dashboard.UserAccountsApi;
+import app.bpartners.geojobs.service.dashboard.component.UserApiKey;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
 class SecurityControllerIT extends FacadeIT {
   @Autowired SecurityController subject;
   @Autowired CommunityAuthorizationRepository authorizationRepository;
+  @MockBean UserAccountsApi userAccountsApiMock;
 
   @Test
   void generate_api_keys_for_insurance_ok() {
+    when(userAccountsApiMock.updateApiKey(any(), any(), any()))
+        .thenAnswer(invocationOnMock -> new UserApiKey(invocationOnMock.getArgument(1)));
+
     var actual = subject.generateApiKeys(List.of(someCreateApiKey("randomEmail" + randomUUID())));
 
     assertEquals(1, actual.size());
@@ -43,6 +52,8 @@ class SecurityControllerIT extends FacadeIT {
 
   @Test
   void used_email_throws_ko() {
+    when(userAccountsApiMock.updateApiKey(any(), any(), any()))
+        .thenAnswer(invocationOnMock -> new UserApiKey(invocationOnMock.getArgument(1)));
     var consumerEmail = "randomEmail" + randomUUID();
     assertDoesNotThrow(() -> subject.generateApiKeys(List.of(someCreateApiKey(consumerEmail))));
 
