@@ -13,7 +13,7 @@ import java.util.List;
 import org.locationtech.jts.geom.Polygon;
 
 public class MoisissureAreaRateComputer extends AreaRateComputer {
-  private static final double weight = 0.3;
+  private static final double weight = 0.4;
   private final FeatureMapper featureMapper = new FeatureMapper(new GeometryConverter(null));
   private final double roofArea;
   private final DetectedTile tile;
