@@ -25,7 +25,7 @@ public class CommunityZoneAuthorizer
       CommunityAuthorization communityAuthorization,
       List<Feature> candidateFeatures,
       Principal principal) {
-    if (principal.isAdmin()) {
+    if (principal.isAdmin() || principal.isInsurance()) {
       return;
     }
     var candidateFeaturesPolygon =
