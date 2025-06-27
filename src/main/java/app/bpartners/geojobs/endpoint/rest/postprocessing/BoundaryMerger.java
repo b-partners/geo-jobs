@@ -351,7 +351,13 @@ public class BoundaryMerger
   }
 
   public Set<LatLonPolygon> apply(File geoJson, DetectableType detectableType) {
+    if (geoJson == null || geoJson.length() == 0) {
+      return Set.of();
+    }
     var loaded = geoJsonLoader.load(geoJson);
+    if (loaded.isEmpty()) {
+      return Set.of();
+    }
     var inverted = invert(loaded);
     var polygons =
         inverted.stream().map(latLon -> latLon.tiledPolygon(tilingConf)).collect(toSet());

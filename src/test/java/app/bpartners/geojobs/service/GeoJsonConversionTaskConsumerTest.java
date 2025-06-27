@@ -1,8 +1,7 @@
 package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.POLYGON;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.HUMIDITE_INTENSE;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.USURE_IMPORTANTE;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.MACHINE;
 import static java.util.UUID.randomUUID;
@@ -76,7 +75,11 @@ class GeoJsonConversionTaskConsumerTest {
     assertDoesNotThrow(
         () ->
             subject.accept(
-                GeoJsonConversionTask.builder().page(1).jobId(CONVERSION_JOB_ID).build()));
+                GeoJsonConversionTask.builder()
+                    .page(1)
+                    .detectableType(MOISISSURE)
+                    .jobId(CONVERSION_JOB_ID)
+                    .build()));
     var listCaptor = ArgumentCaptor.forClass(List.class);
     verify(humanDetectedTileRepositoryMock, only()).findAllByJobId(any(), any());
     verify(machineDetectedTileRepositoryMock, never()).findAllByZdjJobId(any(), any());
