@@ -11,6 +11,7 @@ import app.bpartners.geojobs.service.GeometryPixelProjector;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.tile19.ExtenderApi;
 import app.bpartners.geojobs.service.tiling.TileFinder;
+import java.util.List;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class TileExtendedImageRequestedService implements Consumer<TileExtendedImageRequested> {
+  private static final int DEFAULT_TILE_SIZE = 1024;
   private final TileFinder finder;
   private final BucketComponent bucketComponent;
   private final ExtenderApi extenderApi;
@@ -44,23 +46,34 @@ public class TileExtendedImageRequestedService implements Consumer<TileExtendedI
                       backgroundLatLon.intersection(multiPolygonFromTile);
                   var fileKey =
                       layer + "/" + coor.getZ() + "/" + coor.getX() + "/" + coor.getY() + ".jpg";
-                  var backgroundPixels =
-                      geometryPixelProjector.toPixels(
-                          intersectionBetweenTileAndBackground,
-                          coor.getX(),
-                          coor.getY(),
-                          coor.getZ(),
-                          1024);
-                  var coordinatesXY =
-                      backgroundPixels.stream()
-                          .map(
-                              coordinates ->
-                                  new IntXY(
-                                      coordinates.getFirst().intValue(),
-                                      coordinates.getLast().intValue()))
-                          .toList();
+                  List<IntXY> coordinatesPixel;
+                  if (intersectionBetweenTileAndBackground.isEmpty()) {
+                    // All images must be directly blured
+                    coordinatesPixel =
+                        List.of(
+                            new IntXY(0, 0),
+                            new IntXY(0, DEFAULT_TILE_SIZE),
+                            new IntXY(DEFAULT_TILE_SIZE, DEFAULT_TILE_SIZE),
+                            new IntXY(DEFAULT_TILE_SIZE, 0));
+                  } else {
+                    var backgroundPixels =
+                        geometryPixelProjector.toPixels(
+                            intersectionBetweenTileAndBackground,
+                            coor.getX(),
+                            coor.getY(),
+                            coor.getZ(),
+                            DEFAULT_TILE_SIZE);
+                    coordinatesPixel =
+                        backgroundPixels.stream()
+                            .map(
+                                coordinates ->
+                                    new IntXY(
+                                        coordinates.getFirst().intValue(),
+                                        coordinates.getLast().intValue()))
+                            .toList();
+                  }
                   var originalImage = bucketComponent.download(fileKey);
-                  return filePolygonDrawer.apply(coordinatesXY, WHITE, originalImage);
+                  return filePolygonDrawer.apply(coordinatesPixel, WHITE, originalImage);
                 })
             .toList();
 
