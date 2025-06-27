@@ -1,7 +1,8 @@
 package app.bpartners.geojobs.endpoint.rest.postprocessing;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
-import static app.bpartners.geojobs.model.geometry.route.ObjectType.*;
+import static app.bpartners.geojobs.model.geometry.route.ObjectType.green_space;
+import static app.bpartners.geojobs.model.geometry.route.ObjectType.tomb;
 import static java.lang.Runtime.getRuntime;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import static java.util.stream.Collectors.toSet;
@@ -14,7 +15,6 @@ import app.bpartners.geojobs.model.geometry.route.PrettyConf;
 import app.bpartners.geojobs.model.geometry.route.UnifiedRoute;
 import app.bpartners.geojobs.model.geometry.route.UnionConf;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
-import java.io.File;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -32,7 +32,6 @@ import org.locationtech.jts.geom.Polygon;
 @Slf4j
 public class BoundaryMerger
     implements BiFunction<Set<TiledPolygon>, DetectableType, Set<LatLonPolygon>> {
-  private static final GeoJsonLoader geoJsonLoader = new GeoJsonLoader();
   private final TilingConf tilingConf;
   private final UnionConf unionConf;
   private final NeighbourHoodHandler neighbourHoodHandler;
@@ -41,12 +40,17 @@ public class BoundaryMerger
   private final ExecutorService executorService =
       newFixedThreadPool(Math.max(1, getRuntime().availableProcessors() / 2));
 
-  public BoundaryMerger(int minAreaThreshold, int neighbourhoodTileDistance) {
-    this.tilingConf = TilingConf.getDefaultInstance();
-    this.unionConf = UnionConf.getDefaultInstance();
+  public BoundaryMerger(
+      TilingConf tilingConf,
+      UnionConf unionConf,
+      MergeConf mergeConf,
+      PrettyConf prettyConf,
+      int neighbourhoodTileDistance) {
+    this.tilingConf = tilingConf;
+    this.unionConf = unionConf;
     this.neighbourHoodHandler = new NeighbourHoodHandler(neighbourhoodTileDistance);
-    this.mergeConf = MergeConf.getInstance(minAreaThreshold);
-    this.prettier = new PolygonPrettier(new PrettyConf(5));
+    this.mergeConf = mergeConf;
+    this.prettier = new PolygonPrettier(prettyConf);
   }
 
   public static TiledPolygon withOffset(TiledPolygon p, IntXY originTile, TilingConf tilingConf) {
@@ -97,7 +101,7 @@ public class BoundaryMerger
           var convexHull = p.convexHull();
           var md = new MinimumDiameter(convexHull);
           var polygon =
-              tombe.equals(tp.type())
+              tomb.equals(tp.type())
                   ? (Polygon) p.getEnvelope()
                   : (Polygon) md.getMinimumRectangle();
           result.add(new TiledPolygon(polygon, tp.type(), tp.originTile(), tp.tilingConf()));
@@ -113,7 +117,7 @@ public class BoundaryMerger
     var noSuperposition = noSuperposition(latLonPolygons, mergeConf.iouAllowed());
     return noSuperposition.stream()
         .map(ll -> new TiledPolygon(ll.polygon(), label, origin, tilingConf))
-        .map(tp -> tombe.equals(tp.type()) ? resize(tp) : tp)
+        .map(tp -> tomb.equals(tp.type()) ? resize(tp) : tp)
         .filter(Objects::nonNull)
         .map(TiledPolygon::latLonPolygon)
         .collect(toSet());
@@ -172,42 +176,36 @@ public class BoundaryMerger
 
     var result = new HashSet<TiledPolygon>();
 
-    var toCheck = List.of("espace_vert", "moisissure", "usure", "humidité");
-    var typeAsString = type.name().toLowerCase();
-    if (toCheck.stream().anyMatch(typeAsString::contains)) {
-      var toUnify =
-          tiledPolygonsWithOffset.stream().map(TiledPolygon::polygon).collect(Collectors.toSet());
-
+    if (type.equals(green_space)) {
+      var toUnify = tiledPolygonsWithOffset.stream().map(TiledPolygon::polygon).collect(toSet());
       var prettyPolygons = prettier.apply(toUnify);
       var unified = new UnifiedRoute(prettyPolygons, unionConf).unified();
-
       for (var p : unified) {
         result.add(new TiledPolygon(p, type, origin, tilingConf));
       }
-
       return result.stream().map(tp -> tp.latLonPolygon(origin)).collect(Collectors.toSet());
     }
 
-    Set<TiledPolygon> alreadyProcessed = new HashSet<>();
-    int progress = 0;
+    var alreadyUnified = new HashSet<Integer>();
+    var progress = 0;
 
     for (var tp : tiledPolygonsWithOffset) {
-      if (alreadyProcessed.contains(tp)) {
+      if (alreadyUnified.contains(Objects.hash(tp.polygon()))) {
         continue;
       }
 
-      var neighbors =
+      var aroundPolygons =
           tiledPolygonsWithOffset.stream()
-              .filter(other -> !other.equals(tp) && shouldBeMerged(tp, other))
+              .filter(p -> !p.equals(tp) && shouldBeMerged(tp, p))
               .collect(Collectors.toSet());
 
-      var toUnify = neighbors.stream().map(TiledPolygon::polygon).collect(Collectors.toSet());
+      var toUnify = aroundPolygons.stream().map(TiledPolygon::polygon).collect(Collectors.toSet());
       toUnify.add(tp.polygon());
 
-      alreadyProcessed.addAll(neighbors);
-      alreadyProcessed.add(tp);
+      alreadyUnified.addAll(hash(toUnify));
 
       var prettyPolygons = prettier.apply(toUnify);
+
       var unified = new UnifiedRoute(prettyPolygons, unionConf).unified();
 
       for (var p : unified) {
@@ -218,6 +216,10 @@ public class BoundaryMerger
     }
 
     return result.stream().map(tp -> tp.latLonPolygon(origin)).collect(Collectors.toSet());
+  }
+
+  private Set<Integer> hash(Set<Polygon> toHash) {
+    return toHash.stream().map(Objects::hash).collect(Collectors.toSet());
   }
 
   private boolean shouldBeMerged(TiledPolygon base, TiledPolygon other) {
@@ -328,40 +330,6 @@ public class BoundaryMerger
     } catch (Exception e) {
       return false;
     }
-  }
-
-  public static Set<LatLonPolygon> invert(Set<LatLonPolygon> noSuperpositionPolygons) {
-    return noSuperpositionPolygons.stream()
-        .map(
-            p -> {
-              var coords =
-                  Arrays.stream(p.polygon().getCoordinates())
-                      .map(c -> new Coordinate(c.y, c.x))
-                      .toArray(Coordinate[]::new);
-              var initialLength = coords.length;
-              if (!coords[0].equals(coords[initialLength - 1])) {
-                coords = Arrays.copyOf(coords, initialLength + 1);
-                coords[initialLength] = coords[0];
-              }
-              var polygon = geometryFactory.createPolygon(coords);
-              polygon.setUserData(p.polygon().getUserData());
-              return new LatLonPolygon(polygon);
-            })
-        .collect(toSet());
-  }
-
-  public Set<LatLonPolygon> apply(File geoJson, DetectableType detectableType) {
-    if (geoJson == null || geoJson.length() == 0) {
-      return Set.of();
-    }
-    var loaded = geoJsonLoader.load(geoJson);
-    if (loaded.isEmpty()) {
-      return Set.of();
-    }
-    var inverted = invert(loaded);
-    var polygons =
-        inverted.stream().map(latLon -> latLon.tiledPolygon(tilingConf)).collect(toSet());
-    return apply(polygons, detectableType);
   }
 
   @Override

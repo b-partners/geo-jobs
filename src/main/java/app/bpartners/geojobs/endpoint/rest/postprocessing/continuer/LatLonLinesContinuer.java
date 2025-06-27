@@ -34,7 +34,7 @@ public final class LatLonLinesContinuer extends LinesContinuer<LatLonPolygon> {
   }
 
   public Set<LatLonPolygon> apply(File geojsonPath) {
-    var latLons = geoJsonLoader.load(geojsonPath);
+    var latLons = geoJsonLoader.apply(geojsonPath);
     return apply(latLons);
   }
 }

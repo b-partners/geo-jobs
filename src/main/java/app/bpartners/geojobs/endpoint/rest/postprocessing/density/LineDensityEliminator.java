@@ -1,7 +1,9 @@
 package app.bpartners.geojobs.endpoint.rest.postprocessing.density;
 
 import static app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon.polygon;
-import static app.bpartners.geojobs.model.geometry.route.ObjectType.*;
+import static app.bpartners.geojobs.model.geometry.route.ObjectType.pathway;
+import static app.bpartners.geojobs.model.geometry.route.ObjectType.road;
+import static app.bpartners.geojobs.model.geometry.route.ObjectType.routeTypeFrom;
 
 import app.bpartners.geojobs.model.geometry.VGG;
 import java.util.function.Function;
@@ -44,7 +46,7 @@ public class LineDensityEliminator implements Function<VGG, VGG> {
         var density = p.getArea() / IMAGE_AREA;
 
         if (density > MAX_DENSITY_THRESHOLD
-            || (line.equals(routeTypeFrom(label)) && density < MIN_LINE_DENSITY_THRESHOLD)
+            || (road.equals(routeTypeFrom(label)) && density < MIN_LINE_DENSITY_THRESHOLD)
             || (pathway.equals(routeTypeFrom(label)) && density < MIN_PATHWAY_DENSITY_THRESHOLD)) {
           iterator.remove();
         }

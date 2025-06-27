@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.model.geometry;
 
 import static app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.MULTI_POLYGON;
-import static app.bpartners.geojobs.endpoint.rest.postprocessing.BoundaryMerger.invert;
+import static app.bpartners.geojobs.endpoint.rest.postprocessing.tombe.TombeTest.invert;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -179,7 +179,7 @@ class VGGFactoryTest {
   void geojson_to_vgg() throws IOException {
     var geojsonFile = new File(getClass().getResource("/ivandry/bati.geojson").getFile());
 
-    var polygons = geoJsonLoader.load(geojsonFile);
+    var polygons = geoJsonLoader.apply(geojsonFile);
     var inverted =
         invert(polygons).stream()
             .map(latLonPolygon -> latLonPolygon.tiledPolygon(new TilingConf(20, 1024)))
