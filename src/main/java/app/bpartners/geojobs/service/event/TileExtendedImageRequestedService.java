@@ -33,7 +33,7 @@ public class TileExtendedImageRequestedService implements Consumer<TileExtendedI
     var layer = event.getLayer();
     var longitude = event.getLongitude();
     var latitude = event.getLatitude();
-    var backgroundLatLon = event.getBackgroundLatLon();
+    var unifiedRoofMultiPolygon = event.getUnifiedRoofMultiPolygon();
     var tileCoordinates = finder.getSurroundingTiles(longitude, latitude, event.getZoom());
     var tileImagesFiles =
         tileCoordinates.stream()
@@ -42,12 +42,15 @@ public class TileExtendedImageRequestedService implements Consumer<TileExtendedI
                   var multiPolygonFromTile =
                       geometryConverter.getMultiPolygonFromTile(
                           coor.getX(), coor.getY(), coor.getZ());
-                  var intersectionBetweenTileAndBackground =
-                      backgroundLatLon.intersection(multiPolygonFromTile);
+                  var intersectionBetweenTileMultiPolygonAndRoofMultiPolygon =
+                      unifiedRoofMultiPolygon.intersection(multiPolygonFromTile);
+                  var notIntersectionBetweenTileMultiPolygonAndRoofMultiPolygon =
+                      multiPolygonFromTile.difference(
+                          intersectionBetweenTileMultiPolygonAndRoofMultiPolygon);
                   var fileKey =
                       layer + "/" + coor.getZ() + "/" + coor.getX() + "/" + coor.getY() + ".jpg";
                   List<IntXY> coordinatesPixel;
-                  if (intersectionBetweenTileAndBackground.isEmpty()) {
+                  if (notIntersectionBetweenTileMultiPolygonAndRoofMultiPolygon.isEmpty()) {
                     // All images must be directly blured
                     coordinatesPixel =
                         List.of(
@@ -58,7 +61,7 @@ public class TileExtendedImageRequestedService implements Consumer<TileExtendedI
                   } else {
                     var backgroundPixels =
                         geometryPixelProjector.toPixels(
-                            intersectionBetweenTileAndBackground,
+                            notIntersectionBetweenTileMultiPolygonAndRoofMultiPolygon,
                             coor.getX(),
                             coor.getY(),
                             coor.getZ(),

@@ -11,19 +11,19 @@ public class TileExtendedImageRequested extends PojaEvent {
   private final BigDecimal latitude;
   private final Integer zoom;
   private final String layer;
-  private final MultiPolygon backgroundLatLon;
+  private final MultiPolygon unifiedRoofMultiPolygon;
 
   public TileExtendedImageRequested(
       BigDecimal longitude,
       BigDecimal latitude,
       Integer zoom,
       String layer,
-      MultiPolygon backgroundLatLon) {
+      MultiPolygon unifiedRoofMultiPolygon) {
     this.longitude = longitude;
     this.latitude = latitude;
     this.zoom = zoom;
     this.layer = layer;
-    this.backgroundLatLon = backgroundLatLon;
+    this.unifiedRoofMultiPolygon = unifiedRoofMultiPolygon;
   }
 
   @Override

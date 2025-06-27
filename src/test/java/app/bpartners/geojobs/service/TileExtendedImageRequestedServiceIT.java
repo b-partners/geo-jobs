@@ -66,15 +66,17 @@ class TileExtendedImageRequestedServiceIT {
     var longitude = BigDecimal.valueOf(-0.249317);
     var layer = "cite:PCRS";
     var zoomLevel = HOUSES_0.getZoomLevel();
-    var backgroundLatLonMock = mock(MultiPolygon.class);
-    when(backgroundLatLonMock.intersection(any()))
+    var unifiedRoofMultiPolygonMock = mock(MultiPolygon.class);
+    when(unifiedRoofMultiPolygonMock.intersection(any()))
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+    when(unifiedRoofMultiPolygonMock.difference(any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
 
     assertDoesNotThrow(
         () ->
             subject.accept(
                 new TileExtendedImageRequested(
-                    longitude, latitude, zoomLevel, layer, backgroundLatLonMock)));
+                    longitude, latitude, zoomLevel, layer, unifiedRoofMultiPolygonMock)));
 
     var fileCaptor = ArgumentCaptor.forClass(File.class);
     var stringCaptor = ArgumentCaptor.forClass(String.class);

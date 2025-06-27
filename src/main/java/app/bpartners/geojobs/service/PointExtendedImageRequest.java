@@ -1,6 +1,8 @@
 package app.bpartners.geojobs.service;
 
+import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
 import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.HOUSES_0;
+import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.TileExtendedImageRequested;
@@ -22,7 +24,6 @@ public class PointExtendedImageRequest {
   private final TileExtendedImageRequestedService tileExtendedImageRequestedService;
   private final GeometryConverter geometryConverter;
   private final GeometryTiledValidator geometryTiledValidator;
-  private final DetectionBackgroundRetriever detectionBackgroundRetriever;
 
   public void accept(Detection detection, Feature feature, String layer, Boolean isSynchronous) {
     var geometry = Objects.requireNonNull(feature.getGeometry()).getActualInstance();
@@ -35,10 +36,40 @@ public class PointExtendedImageRequest {
     var longitude = pointCoordinates.getFirst();
     var latitude = pointCoordinates.getLast();
     var defaultZoomLevel = HOUSES_0.getZoomLevel();
-    var backgroundLatLon = detectionBackgroundRetriever.apply(detection);
+    var unifiedRoofMultiPolygon =
+        detection.getFeatureWithDelimitations().stream()
+            .map(
+                featureWithDelimitation ->
+                    featureWithDelimitation.delimitations().stream()
+                        .map(
+                            f -> {
+                              var geometryType = toRestFeature(f).getGeometry().getActualInstance();
+                              switch (geometryType) {
+                                case Polygon polygon -> {
+                                  return geometryConverter.apply(List.of(polygon.getCoordinates()));
+                                }
+                                case MultiPolygon multiPolygon -> {
+                                  return geometryConverter.apply(multiPolygon.getCoordinates());
+                                }
+                                default ->
+                                    throw new IllegalArgumentException(
+                                        "Unsupported geometry type to extended image: "
+                                            + geometryType);
+                              }
+                            })
+                        .toList())
+            .toList()
+            .stream()
+            .flatMap(List::stream)
+            .reduce(unifyMultiPolygon())
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "Unable to unify delimitation multiPolygon for detection.id: "
+                            + detection.getId()));
     var tileExtendedImageRequested =
         new TileExtendedImageRequested(
-            longitude, latitude, defaultZoomLevel, layer, backgroundLatLon);
+            longitude, latitude, defaultZoomLevel, layer, unifiedRoofMultiPolygon);
     if (isSynchronous) {
       tileExtendedImageRequestedService.accept(tileExtendedImageRequested);
     } else {
