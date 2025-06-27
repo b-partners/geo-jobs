@@ -6,7 +6,7 @@
     },
     "type" : "Feature",
     "properties" : {
-      "label" : "road"
+      "label" : "line"
     }
   } ],
   "type" : "FeatureCollection"

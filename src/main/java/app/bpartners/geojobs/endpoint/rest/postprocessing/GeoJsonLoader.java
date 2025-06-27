@@ -11,11 +11,13 @@ import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.geojson.feature.FeatureJSON;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
+import org.springframework.stereotype.Component;
 
+@Component
 public class GeoJsonLoader {
   private static final String DEFAULT_ROUTE_TYPE = "line";
 
-  public Set<LatLonPolygon> apply(File geojsonPath) {
+  public Set<LatLonPolygon> load(File geojsonPath) {
     Set<LatLonPolygon> latLonPolygons = new HashSet<>();
 
     var featureJson = new FeatureJSON();

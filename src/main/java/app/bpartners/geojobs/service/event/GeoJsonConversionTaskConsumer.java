@@ -2,7 +2,10 @@ package app.bpartners.geojobs.service.event;
 
 import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
 import static app.bpartners.geojobs.model.page.BoundedPageSize.MAX_SIZE;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 
+import app.bpartners.geojobs.endpoint.rest.postprocessing.BoundaryMerger;
+import app.bpartners.geojobs.endpoint.rest.postprocessing.Geojson;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.DetectedTile;
@@ -28,6 +31,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class GeoJsonConversionTaskConsumer implements TaskConsumer<GeoJsonConversionTask> {
+  private static final int NEIGHBOURHOOD = 41;
   public static final String GEO_JSON_EXTENSION = ".geojson";
   public static final String GEO_JSON_BUCKET_FOLDER = "geoJson/";
   private final MachineDetectedTileRepository machineDetectedTileRepository;
@@ -64,7 +68,13 @@ public class GeoJsonConversionTaskConsumer implements TaskConsumer<GeoJsonConver
     var geoJsonAsFile =
         writer.write(geoJsonAsByte, createTempDirectory(), fileName + GEO_JSON_EXTENSION);
 
-    bucketComponent.upload(geoJsonAsFile, fileKey);
+    var merger = new BoundaryMerger(detectableType.getMinAreaThreshold(), NEIGHBOURHOOD);
+    var unifiedGeoJson = merger.apply(geoJsonAsFile, detectableType);
+    var unifiedAsByte = new Geojson(unifiedGeoJson).stringValue().getBytes();
+    var unifiedAsFile =
+        writer.write(unifiedAsByte, createTempDirectory(), fileName + GEO_JSON_EXTENSION);
+
+    bucketComponent.upload(unifiedAsFile, fileKey);
 
     geoJsonConversionTask.setFileKey(fileKey);
   }

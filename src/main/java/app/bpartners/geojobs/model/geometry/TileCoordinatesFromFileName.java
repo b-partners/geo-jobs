@@ -8,7 +8,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class TileCoordinatesFromFileName {
   private static final Pattern filename_z_x_y_dot_filetype =
-      Pattern.compile("(\\w+)_(\\w+)_(\\w+)_(\\w+)\\.(\\w+)");
+      Pattern.compile("([\\w-]+)_(\\w+)_(\\w+)_(\\w+)\\.(\\w+)");
   private static final Pattern z_x_y_dot_filetype =
       Pattern.compile("(\\w+)_(\\w+)_(\\w+)\\.(\\w+)");
 
