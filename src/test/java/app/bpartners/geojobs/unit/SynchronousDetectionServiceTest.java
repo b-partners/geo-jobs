@@ -21,6 +21,7 @@ import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.DetectionDelimitationRetriever;
+import app.bpartners.geojobs.service.PointExtendedImageRequest;
 import app.bpartners.geojobs.service.SynchronousDetectionService;
 import app.bpartners.geojobs.service.detection.DetectionMachineDetectionCreation;
 import app.bpartners.geojobs.service.detection.DetectionTilingCreation;
@@ -45,6 +46,7 @@ class SynchronousDetectionServiceTest {
   ZoneDetectionJobService zoneDetectionJobServiceMock = mock();
   Workers workers = new Workers();
   DetectableObjectConfigurationRepository objectConfigurationRepositoryMock = mock();
+  PointExtendedImageRequest pointExtendedImageRequestMock = mock();
   SynchronousDetectionService subject =
       new SynchronousDetectionService(
           detectionRepositoryMock,
@@ -57,7 +59,8 @@ class SynchronousDetectionServiceTest {
           geoJsonConversionJobServiceMock,
           zoneDetectionJobServiceMock,
           workers,
-          objectConfigurationRepositoryMock);
+          objectConfigurationRepositoryMock,
+          pointExtendedImageRequestMock);
 
   @Test
   void return_succeeded_detection_and_trigger_geo_json_generation() {
@@ -87,7 +90,7 @@ class SynchronousDetectionServiceTest {
     when(zoneDetectionJobServiceMock.saveZDJFromZTJ(finishedZoneTilingJobMock))
         .thenReturn(createdZoneDetectionJob);
     when(detectionRepositoryMock.save(any())).thenReturn(detectionWithCreatedZDJMock);
-    doNothing().when(detectionDelimitationRetrieverMock).accept(detectionWithCreatedZTJMock, true);
+    doNothing().when(detectionDelimitationRetrieverMock).accept(detectionWithCreatedZTJMock);
     doNothing()
         .when(detectionMachineDetectionCreationMock)
         .processMachineDetection(detectionWithCreatedZDJMock, createdZoneDetectionJob, tilingTasks);

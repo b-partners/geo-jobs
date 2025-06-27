@@ -42,6 +42,7 @@ class ZoneTilingJobStatusChangedServiceTest {
   TilingTaskRepository tilingTaskRepositoryMock = mock();
   TilingTaskCreator tilingTaskCreator = new TilingTaskCreator();
   DetectionDelimitationRetriever detectionDelimitationRetrieverMock = mock();
+  PointExtendedImageRequest pointExtendedImageRequestMock = mock();
   ZoneTilingJobStatusChangedService subject =
       new ZoneTilingJobStatusChangedService(
           mailerMock,
@@ -50,7 +51,8 @@ class ZoneTilingJobStatusChangedServiceTest {
           detectionRepositoryMock,
           eventProducerMock,
           objectConfigurationRepositoryMock,
-          detectionDelimitationRetrieverMock);
+          detectionDelimitationRetrieverMock,
+          pointExtendedImageRequestMock);
 
   @BeforeEach
   void setUp() {
@@ -63,6 +65,8 @@ class ZoneTilingJobStatusChangedServiceTest {
                     new Parcel(),
                     FINISHED,
                     SUCCEEDED)));
+
+    doNothing().when(pointExtendedImageRequestMock).accept(any(), any(), any(), any());
   }
 
   @Test

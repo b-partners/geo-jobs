@@ -4,9 +4,7 @@ import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static java.util.UUID.randomUUID;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobStatusChanged;
@@ -16,18 +14,26 @@ import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.JobFinishedMailer;
+import app.bpartners.geojobs.service.PointExtendedImageRequest;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import java.util.ArrayList;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-public class ZoneTilingJobStatusChangedIT extends FacadeIT {
+class ZoneTilingJobStatusChangedIT extends FacadeIT {
   @Autowired private ZoneTilingJobStatusChangedService subject;
   @MockBean private JobFinishedMailer<ZoneTilingJob> mailer;
   @MockBean private ZoneDetectionJobService zdjService;
   @MockBean private DetectionRepository detectionRepository;
+  @MockBean private PointExtendedImageRequest pointExtendedImageRequestMock;
+
+  @BeforeEach
+  public void setUp() {
+    doNothing().when(pointExtendedImageRequestMock).accept(any(), any(), any(), any());
+  }
 
   @Test
   void send_email_ok() {

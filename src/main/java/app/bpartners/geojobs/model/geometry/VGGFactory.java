@@ -322,7 +322,7 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
         new TiledPolygon(roofGeometry, null, originTileCoords, tilingConf)
             .latLonPolygon()
             .polygon();
-    System.out.println(roofGeometryAsTile);
+
     var roofAreaInM2 = geometrySquareMeterArea.apply(roofGeometryAsTile);
     for (var detectedTile : detectedTiles) {
       var rateComputer = new AreaRateComputerFacade(roofGeometry, detectedTile);
