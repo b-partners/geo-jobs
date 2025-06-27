@@ -14,22 +14,20 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class DetectionDelimitationRetriever implements BiConsumer<Detection, Boolean> {
-  private final PointExtendedImageRequest pointExtendedImageRequest;
+public class DetectionDelimitationRetriever implements Consumer<Detection> {
   private final GeometryConverter geometryConverter;
   private final DetectionRepository detectionRepository;
 
   @Override
-  public void accept(Detection detection, Boolean isSynchronous) {
+  public void accept(Detection detection) {
     if (detection.hasToitureModelName()) {
-      var featureWithDelimitationList =
-          computeFeatureWithDelimitationFromDetection(detection, isSynchronous);
+      var featureWithDelimitationList = computeFeatureWithDelimitationFromDetection(detection);
       var featureWithDelimitationMap =
           featureWithDelimitationList.stream()
               .collect(groupingBy(FeatureWithDelimitation::feature))
@@ -71,7 +69,7 @@ public class DetectionDelimitationRetriever implements BiConsumer<Detection, Boo
   }
 
   private List<FeatureWithDelimitation> computeFeatureWithDelimitationFromDetection(
-      Detection detection, Boolean isSynchronous) {
+      Detection detection) {
     return detection.getProvidedGeoJsonZone().stream()
         .map(
             providedFeature -> {
@@ -83,8 +81,6 @@ public class DetectionDelimitationRetriever implements BiConsumer<Detection, Boo
                   properties.get("zoom") != null
                       ? (Integer) properties.get("zoom")
                       : HOUSES_0.getZoomLevel();
-              var layer = detection.getGeoServerProperties().getGeoServerParameter().getLayers();
-              pointExtendedImageRequest.accept(providedFeature, layer, isSynchronous);
               var geometryType = providedFeature.getGeometry().getActualInstance();
               switch (geometryType) {
                 case Point point -> {

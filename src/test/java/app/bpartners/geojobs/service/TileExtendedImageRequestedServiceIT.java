@@ -11,6 +11,7 @@ import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.hash.FileHash;
 import app.bpartners.geojobs.service.event.TileExtendedImageRequestedService;
+import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.tile19.ExtenderApi;
 import app.bpartners.geojobs.service.tiling.TileFinder;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,6 +20,7 @@ import java.math.BigDecimal;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.MultiPolygon;
 import org.mockito.ArgumentCaptor;
 import org.springframework.core.io.ClassPathResource;
 
@@ -27,10 +29,19 @@ class TileExtendedImageRequestedServiceIT {
   TileFinder tileFinder = new TileFinder();
   ExtenderApi extenderApi = new ExtenderApi();
   FileWriter fileWriter = new FileWriter(new ObjectMapper(), new ExtensionGuesser());
+  GeometryPixelProjector geometryPixelProjector = new GeometryPixelProjector();
+  GeometryConverter geometryConverter = new GeometryConverter(mock());
+  FilePolygonDrawer filePolygonDrawer = new FilePolygonDrawer();
 
   TileExtendedImageRequestedService subject =
       new TileExtendedImageRequestedService(
-          tileFinder, bucketComponentMock, extenderApi, fileWriter);
+          tileFinder,
+          bucketComponentMock,
+          extenderApi,
+          fileWriter,
+          geometryPixelProjector,
+          geometryConverter,
+          filePolygonDrawer);
 
   @SneakyThrows
   @BeforeEach
@@ -55,10 +66,15 @@ class TileExtendedImageRequestedServiceIT {
     var longitude = BigDecimal.valueOf(-0.249317);
     var layer = "cite:PCRS";
     var zoomLevel = HOUSES_0.getZoomLevel();
+    var backgroundLatLonMock = mock(MultiPolygon.class);
+    when(backgroundLatLonMock.intersection(any()))
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
 
     assertDoesNotThrow(
         () ->
-            subject.accept(new TileExtendedImageRequested(longitude, latitude, zoomLevel, layer)));
+            subject.accept(
+                new TileExtendedImageRequested(
+                    longitude, latitude, zoomLevel, layer, backgroundLatLonMock)));
 
     var fileCaptor = ArgumentCaptor.forClass(File.class);
     var stringCaptor = ArgumentCaptor.forClass(String.class);

@@ -15,6 +15,7 @@ import app.bpartners.geojobs.service.detection.*;
 import app.bpartners.geojobs.service.event.ExtendedImageWithDetectedObjectRequestedService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
@@ -37,6 +38,7 @@ public class SynchronousDetectionService
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final Workers workers;
   private final DetectableObjectConfigurationRepository detectableObjectConfigurationRepository;
+  private final PointExtendedImageRequest pointExtendedImageRequest;
 
   @Override
   public Detection apply(app.bpartners.geojobs.repository.model.detection.Detection detection) {
@@ -61,19 +63,34 @@ public class SynchronousDetectionService
         detectionRepository.save(
             detectionWithCreatedZTJ.toBuilder().zdjId(createdZoneDetectionJob.getId()).build());
 
-    detectionDelimitationRetriever.accept(detectionWithCreatedZDJ, true);
+    detectionDelimitationRetriever.accept(detectionWithCreatedZDJ);
 
-    List<Callable<Void>> voidCallable1 =
-        List.of(
-            () -> {
-              // Machine detection step
-              detectionMachineDetectionCreation.processMachineDetection(
-                  detectionWithCreatedZDJ, createdZoneDetectionJob, tilingTasks);
-              return null;
-            });
-    workers.invokeAll(voidCallable1);
+    List<Callable<Void>> imageRequestCallableVoidList =
+        detectionWithCreatedZDJ.getProvidedGeoJsonZone().stream()
+            .map(
+                providedFeature -> {
+                  var layer =
+                      detection.getGeoServerProperties().getGeoServerParameter().getLayers();
+                  return (Callable<Void>)
+                      () -> {
+                        pointExtendedImageRequest.accept(
+                            detectionWithCreatedZDJ, providedFeature, layer, true);
+                        return null;
+                      };
+                })
+            .toList();
+    Callable<Void> machineDetectionProcessCallableVoidList =
+        () -> {
+          // Machine detection step
+          detectionMachineDetectionCreation.processMachineDetection(
+              detectionWithCreatedZDJ, createdZoneDetectionJob, tilingTasks);
+          return null;
+        };
+    List<Callable<Void>> firstCallableVoidList = new ArrayList<>(imageRequestCallableVoidList);
+    firstCallableVoidList.add(machineDetectionProcessCallableVoidList);
+    workers.invokeAll(firstCallableVoidList);
 
-    List<Callable<Void>> voidCallable2 =
+    List<Callable<Void>> secondVoidCallable =
         List.of(
             () -> {
               // VGG result computing with drawn image step
@@ -86,7 +103,7 @@ public class SynchronousDetectionService
               geoJsonConversionJobService.getOrComputeGeoJsonConversionJob(createdZoneDetectionJob);
               return null;
             });
-    workers.invokeAll(voidCallable2);
+    workers.invokeAll(secondVoidCallable);
 
     return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
         detectionRepository.findById(detection.getId()).orElseThrow(),
