@@ -31,8 +31,7 @@ public class TombeTest {
    */
   private final MergeConf mergeConf = new MergeConf(4000, 0.6);
   private final PrettyConf prettyConf = new PrettyConf(1);
-  private final BoundaryMerger boundaryMerger =
-      new BoundaryMerger(tilingConf, unionConf, mergeConf, prettyConf, 20);
+  private final BoundaryMerger boundaryMerger = new BoundaryMerger(4000, 20);
   PolygonProvider polygonProvider = new PolygonProvider("/geometry/vgg/dijon.json");
 
   public static Set<LatLonPolygon> invert(Set<LatLonPolygon> noSuperpositionPolygons) {

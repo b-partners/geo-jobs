@@ -40,17 +40,12 @@ public class BoundaryMerger
   private final ExecutorService executorService =
       newFixedThreadPool(Math.max(1, getRuntime().availableProcessors() / 2));
 
-  public BoundaryMerger(
-      TilingConf tilingConf,
-      UnionConf unionConf,
-      MergeConf mergeConf,
-      PrettyConf prettyConf,
-      int neighbourhoodTileDistance) {
-    this.tilingConf = tilingConf;
-    this.unionConf = unionConf;
+  public BoundaryMerger(int minAreaThreshold, int neighbourhoodTileDistance) {
+    this.tilingConf = TilingConf.getDefaultInstance();
+    this.unionConf = UnionConf.getDefaultInstance();
     this.neighbourHoodHandler = new NeighbourHoodHandler(neighbourhoodTileDistance);
-    this.mergeConf = mergeConf;
-    this.prettier = new PolygonPrettier(prettyConf);
+    this.mergeConf = MergeConf.getInstance(minAreaThreshold);
+    this.prettier = new PolygonPrettier(new PrettyConf(5));
   }
 
   public static TiledPolygon withOffset(TiledPolygon p, IntXY originTile, TilingConf tilingConf) {
