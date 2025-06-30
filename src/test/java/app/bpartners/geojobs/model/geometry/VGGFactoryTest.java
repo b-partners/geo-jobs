@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.model.geometry;
 
 import static app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.MULTI_POLYGON;
-import static app.bpartners.geojobs.endpoint.rest.postprocessing.tombe.TombeTest.invert;
+import static app.bpartners.geojobs.endpoint.rest.postprocessing.BoundaryMerger.invert;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 import static java.nio.charset.StandardCharsets.UTF_8;

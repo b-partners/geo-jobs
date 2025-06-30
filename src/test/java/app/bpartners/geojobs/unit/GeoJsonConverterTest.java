@@ -2,10 +2,12 @@ package app.bpartners.geojobs.unit;
 
 import static app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.MULTI_POLYGON;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.LINE;
+import static app.bpartners.geojobs.service.geojson.GeoJson.fromFeatures;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.endpoint.rest.model.TileInfoSize;
+import app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon;
 import app.bpartners.geojobs.model.DetectedTile;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectType;
@@ -31,7 +33,12 @@ class GeoJsonConverterTest {
       throws IOException, URISyntaxException {
     var detectedTiles = List.of(detectedTile());
 
-    var actual = subject.convert(detectedTiles);
+    var features =
+        subject.convert(detectedTiles).getGeoFeatures().stream()
+            .map(LatLonPolygon::latLon)
+            .map(LatLonPolygon::toGeoFeature)
+            .toList();
+    var actual = fromFeatures(features);
 
     var expectedURI = Paths.get(getClass().getResource("/geometry/detected-tile.geojson").toURI());
     var expected = JsonParser.parseString(Files.readString(expectedURI));
