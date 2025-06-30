@@ -51,21 +51,6 @@ class DetectionAreaValidatorTest {
   }
 
   @Test
-  void accept_IllegalStateException() {
-    var pointMock = mock(Point.class);
-    when(featureGeometryMock.getActualInstance()).thenReturn(pointMock);
-    when(mockFeature.getGeometry()).thenReturn(featureGeometryMock);
-    when(detectionMock.getGeoJsonZone()).thenReturn(List.of(mockFeature));
-    when(geoServerParameterMock.getLayers()).thenReturn("layer");
-    when(geoServerPropertiesMock.getGeoServerParameter()).thenReturn(geoServerParameterMock);
-    when(detectionMock.getGeoServerProperties()).thenReturn(geoServerPropertiesMock);
-
-    var actual = assertThrows(IllegalStateException.class, () -> subject.accept(detectionMock));
-
-    assertEquals("Unable to unify provided multiPolygon", actual.getMessage());
-  }
-
-  @Test
   void accept_NotImplementedException() {
     var polygonMock = mock(Polygon.class);
     var multiPolygonMock = mock(org.locationtech.jts.geom.MultiPolygon.class);
@@ -119,5 +104,19 @@ class DetectionAreaValidatorTest {
     verify(geometryConverter).apply(any());
     verify(geometrySquareMeterArea).apply(multiPolygonMock);
     verify(geoServerParameterMock).getLayers();
+  }
+
+  @Test
+  void accept_unifiedProvidedPolygon_is_empty() {
+    var pointMock = mock(Point.class);
+
+    when(featureGeometryMock.getActualInstance()).thenReturn(pointMock);
+    when(mockFeature.getGeometry()).thenReturn(featureGeometryMock);
+    when(detectionMock.getGeoJsonZone()).thenReturn(List.of(mockFeature));
+    when(geoServerParameterMock.getLayers()).thenReturn("layer");
+    when(geoServerPropertiesMock.getGeoServerParameter()).thenReturn(geoServerParameterMock);
+    when(detectionMock.getGeoServerProperties()).thenReturn(geoServerPropertiesMock);
+
+    assertDoesNotThrow(() -> subject.accept(detectionMock));
   }
 }
