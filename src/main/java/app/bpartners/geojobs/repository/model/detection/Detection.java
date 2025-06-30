@@ -54,7 +54,9 @@ public class Detection implements Serializable {
   private String emailReceiver;
   private boolean isRooferMade;
   private boolean isSynchronous;
-  private boolean isOutputZipped;
+
+  @Getter(AccessLevel.NONE)
+  private Boolean isOutputZipped;
 
   @JoinColumn(referencedColumnName = "id", name = "community_owner_id")
   private String communityOwnerId;
@@ -91,6 +93,10 @@ public class Detection implements Serializable {
 
   @JdbcTypeCode(JSON)
   private List<List<BigDecimal>> polygonRoofDelimitation;
+
+  public boolean isOutputZipped() {
+    return isOutputZipped != null && isOutputZipped;
+  }
 
   public List<app.bpartners.geojobs.endpoint.rest.model.Feature> getProvidedGeoJsonZone() {
     return providedGeoJsonZone == null
