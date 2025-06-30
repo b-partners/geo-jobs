@@ -327,6 +327,26 @@ public class BoundaryMerger
     }
   }
 
+  public static Set<LatLonPolygon> invert(Set<LatLonPolygon> noSuperpositionPolygons) {
+    return noSuperpositionPolygons.stream()
+            .map(
+                    p -> {
+                      var coords =
+                              Arrays.stream(p.polygon().getCoordinates())
+                                      .map(c -> new Coordinate(c.y, c.x))
+                                      .toArray(Coordinate[]::new);
+                      var initialLength = coords.length;
+                      if (!coords[0].equals(coords[initialLength - 1])) {
+                        coords = Arrays.copyOf(coords, initialLength + 1);
+                        coords[initialLength] = coords[0];
+                      }
+                      var polygon = geometryFactory.createPolygon(coords);
+                      polygon.setUserData(p.polygon().getUserData());
+                      return new LatLonPolygon(polygon);
+                    })
+            .collect(toSet());
+  }
+
   @Override
   public Set<LatLonPolygon> apply(Set<TiledPolygon> tiledPolygons, DetectableType detectableType) {
     return switch (detectableType) {

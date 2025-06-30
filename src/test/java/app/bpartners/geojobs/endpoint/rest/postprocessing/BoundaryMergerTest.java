@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.postprocessing;
 
-import static app.bpartners.geojobs.endpoint.rest.postprocessing.tombe.TombeTest.invert;
+import static app.bpartners.geojobs.endpoint.rest.postprocessing.BoundaryMerger.invert;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.BATI_BETON;
 
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
