@@ -2,7 +2,11 @@ package app.bpartners.geojobs.service.event;
 
 import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
 import static app.bpartners.geojobs.model.page.BoundedPageSize.MAX_SIZE;
+import static app.bpartners.geojobs.service.geojson.GeoJson.fromFeatures;
 
+import app.bpartners.geojobs.endpoint.rest.postprocessing.BoundaryMerger;
+import app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon;
+import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.DetectedTile;
@@ -14,11 +18,15 @@ import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionTask;
+import app.bpartners.geojobs.service.GeoFeatureConverter;
 import app.bpartners.geojobs.service.TaskConsumer;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
+import app.bpartners.geojobs.service.geojson.GeoJson;
 import app.bpartners.geojobs.service.geojson.GeoJsonConverter;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -30,6 +38,7 @@ import org.springframework.stereotype.Component;
 public class GeoJsonConversionTaskConsumer implements TaskConsumer<GeoJsonConversionTask> {
   public static final String GEO_JSON_EXTENSION = ".geojson";
   public static final String GEO_JSON_BUCKET_FOLDER = "geoJson/";
+  private static final int NEIGHBOUR_SIZE = 41;
   private final MachineDetectedTileRepository machineDetectedTileRepository;
   private final HumanDetectedTileRepository humanDetectedTileRepository;
   private final GeoJsonConversionJobRepository geoJsonConversionJobRepository;
@@ -60,7 +69,14 @@ public class GeoJsonConversionTaskConsumer implements TaskConsumer<GeoJsonConver
     var fileName = zoneName + "_" + detectableType + "-part" + "-" + pageNumber;
     var fileKey = GEO_JSON_BUCKET_FOLDER + zoneDetectionJobId + "/" + fileName + GEO_JSON_EXTENSION;
     var geoJson = geoJsonConverter.convert(paginatedDetectedTiles);
-    var geoJsonAsByte = geoJson.getStringValue().getBytes();
+    var toUnify = geoJson.getGeoFeatures().stream()
+            .map(f -> LatLonPolygon.latLon(f).tiledPolygon(TilingConf.getDefaultInstance()))
+            .collect(Collectors.toSet());
+    var merger = new BoundaryMerger(detectableType.getMinAreaThreshold(), NEIGHBOUR_SIZE);
+    var unified = merger.apply(toUnify, detectableType).stream()
+            .map(LatLonPolygon::toGeoFeature)
+            .toList();
+    var geoJsonAsByte = fromFeatures(unified).getStringValue().getBytes();
     var geoJsonAsFile =
         writer.write(geoJsonAsByte, createTempDirectory(), fileName + GEO_JSON_EXTENSION);
 

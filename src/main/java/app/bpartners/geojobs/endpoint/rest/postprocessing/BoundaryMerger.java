@@ -1,8 +1,7 @@
 package app.bpartners.geojobs.endpoint.rest.postprocessing;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
-import static app.bpartners.geojobs.model.geometry.route.ObjectType.green_space;
-import static app.bpartners.geojobs.model.geometry.route.ObjectType.tomb;
+import static app.bpartners.geojobs.model.geometry.route.ObjectType.*;
 import static java.lang.Runtime.getRuntime;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import static java.util.stream.Collectors.toSet;
@@ -171,7 +170,12 @@ public class BoundaryMerger
 
     var result = new HashSet<TiledPolygon>();
 
-    if (type.equals(green_space)) {
+    var typeAsString = type.name();
+    if (type.equals(green_space)
+            || typeAsString.contains(moisissure.name())
+            || typeAsString.contains(usure.name())
+            || typeAsString.contains(humidite.name())
+    ) {
       var toUnify = tiledPolygonsWithOffset.stream().map(TiledPolygon::polygon).collect(toSet());
       var prettyPolygons = prettier.apply(toUnify);
       var unified = new UnifiedRoute(prettyPolygons, unionConf).unified();

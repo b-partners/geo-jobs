@@ -1,5 +1,8 @@
 package app.bpartners.geojobs.repository.model.detection;
 
+import lombok.Getter;
+
+@Getter
 public enum DetectableType {
   TOITURE_REVETEMENT(0),
   PANNEAU_PHOTOVOLTAIQUE(0),

@@ -15,20 +15,27 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-@AllArgsConstructor
+
 @Getter
 @Setter
 @ToString
 @EqualsAndHashCode
 public class GeoJson implements Serializable {
   private final String stringValue;
+  private final List<GeoFeature> geoFeatures;
 
   public GeoJson(List<GeoFeature> features) {
     stringValue = geojsonString(features);
+    geoFeatures = features;
+  }
+
+  public GeoJson(String featuresAsString, List<GeoFeature> features) {
+    stringValue = featuresAsString;
+    geoFeatures = features;
   }
 
   public static GeoJson fromFeatures(List<GeoFeature> features) {
-    return new GeoJson(geoFeaturesAsString(features));
+    return new GeoJson(geoFeaturesAsString(features), features);
   }
 
   private static String geoFeaturesAsString(List<GeoFeature> geoFeatures) {
