@@ -33,7 +33,8 @@ class GeoJsonConverterTest {
       throws IOException, URISyntaxException {
     var detectedTiles = List.of(detectedTile());
 
-    var features = subject.convert(detectedTiles).getGeoFeatures().stream()
+    var features =
+        subject.convert(detectedTiles).getGeoFeatures().stream()
             .map(LatLonPolygon::latLon)
             .map(LatLonPolygon::toGeoFeature)
             .toList();

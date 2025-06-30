@@ -17,14 +17,12 @@ import static java.util.stream.Collectors.*;
 
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.model.geometry.IntXY;
-
+import app.bpartners.geojobs.service.geojson.GeoJson;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-
-import app.bpartners.geojobs.service.geojson.GeoJson;
 import lombok.extern.slf4j.Slf4j;
 import org.geotools.geometry.Position2D;
 import org.locationtech.jts.geom.Coordinate;
@@ -88,8 +86,8 @@ public record LatLonPolygon(Polygon polygon) {
     return new LatLonPolygon(geometry);
   }
 
-
-  public static Polygon toDomainPolygon(app.bpartners.geojobs.endpoint.rest.model.MultiPolygon multiPolygon) {
+  public static Polygon toDomainPolygon(
+      app.bpartners.geojobs.endpoint.rest.model.MultiPolygon multiPolygon) {
     var coords = multiPolygon.getCoordinates();
 
     if (coords.size() != 1) {
@@ -103,9 +101,12 @@ public record LatLonPolygon(Polygon polygon) {
     for (int i = 0; i < polygonCoords.size(); i++) {
       List<List<BigDecimal>> ring = polygonCoords.get(i);
 
-      Coordinate[] coordinates = ring.stream()
+      Coordinate[] coordinates =
+          ring.stream()
               .filter(point -> !point.isEmpty())
-              .map(point -> new Coordinate(point.getFirst().doubleValue(), point.getLast().doubleValue()))
+              .map(
+                  point ->
+                      new Coordinate(point.getFirst().doubleValue(), point.getLast().doubleValue()))
               .toArray(Coordinate[]::new);
       if (coordinates.length == 0) {
         continue;
@@ -137,16 +138,18 @@ public record LatLonPolygon(Polygon polygon) {
     var properties = (Map<String, Object>) polygon.getUserData();
     List<List<List<List<BigDecimal>>>> multiPolygonCoordinates = new ArrayList<>();
 
-    var ring = Arrays.stream(coordinates)
-                    .map(
-                            coord ->
-                                    List.of(BigDecimal.valueOf(coord.getX()), BigDecimal.valueOf(coord.getY())))
-                    .toList();
+    var ring =
+        Arrays.stream(coordinates)
+            .map(
+                coord ->
+                    List.of(BigDecimal.valueOf(coord.getX()), BigDecimal.valueOf(coord.getY())))
+            .toList();
 
     List<List<List<BigDecimal>>> polygonCoords = new ArrayList<>();
     polygonCoords.add(ring);
     multiPolygonCoordinates.add(polygonCoords);
-    app.bpartners.geojobs.endpoint.rest.model.MultiPolygon multiPolygon = new MultiPolygon().coordinates(multiPolygonCoordinates);
+    app.bpartners.geojobs.endpoint.rest.model.MultiPolygon multiPolygon =
+        new MultiPolygon().coordinates(multiPolygonCoordinates);
     multiPolygon.setType(MULTI_POLYGON);
     return new GeoJson.GeoFeature(properties, multiPolygon);
   }

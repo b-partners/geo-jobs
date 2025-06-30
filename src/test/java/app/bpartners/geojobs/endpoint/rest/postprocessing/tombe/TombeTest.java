@@ -1,24 +1,17 @@
 package app.bpartners.geojobs.endpoint.rest.postprocessing.tombe;
 
-import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOMBE;
 import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.geojobs.endpoint.rest.postprocessing.BoundaryMerger;
-import app.bpartners.geojobs.endpoint.rest.postprocessing.MergeConf;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon;
-import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.model.geometry.PolygonProvider;
 import app.bpartners.geojobs.model.geometry.area.Area;
 import app.bpartners.geojobs.model.geometry.area.SquareDegree;
-import app.bpartners.geojobs.model.geometry.route.PrettyConf;
-import app.bpartners.geojobs.model.geometry.route.UnionConf;
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
-import org.locationtech.jts.geom.Coordinate;
 
 @Slf4j
 public class TombeTest {
