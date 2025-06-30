@@ -95,27 +95,36 @@ public enum ObjectType {
 
   public static ObjectType routeTypeFrom(String label) {
     return switch (label.toLowerCase()) {
+      case "road", "line", "voie_carrossable" -> road;
       case "pathway", "passage_pieton" -> pathway;
-      case "tombe", "tomb" -> tomb;
-      case "tree" -> tree;
-      case "bati" -> batis;
-      case "green_space" -> green_space;
-      case "pool" -> pool;
+      case "sidewalk", "trottoir" -> sidewalk;
+      case "tombe", "tomb" -> tombe;
+      case "arbre", "tree" -> arbre;
+      case "bati_tuiles" -> bati_tuiles;
+      case "bati_beton" -> bati_beton;
+      case "bati_ardoise" -> bati_ardoise;
+      case "bati_autres" -> bati_autres;
+      case "toiture_revetement" -> toiture_revetement;
+      case "espace_vert" -> espace_vert;
+      case "espace_vert_parking" -> espace_vert_parking;
+      case "piscine", "pool" -> piscine;
+      case "panneau_photovoltaique", "solar_panel" -> panneau_photovoltaique;
+      case "parking" -> parking;
       case "place_standard" -> place_standard;
+      case "risque_feu" -> risque_feu;
       case "moisissure" -> moisissure;
       case "moisissure_clair" -> moisissure_clair;
       case "moisissure_couleur" -> moisissure_couleur;
       case "moisissure_noircie" -> moisissure_noircie;
       case "usure" -> usure;
       case "usure_importante" -> usure_importante;
-      case "panneau_photovoltaique", "solar_panel" -> panneau_photovoltaique;
       case "usure_leger" -> usure_leger;
+      case "fissure_cassure" -> fissure_cassure;
       case "humidite" -> humidite;
       case "humidite_clair" -> humidite_clair;
       case "humidite_intense" -> humidite_intense;
-      case "sidewalk", "trottoir" -> sidewalk;
-      case "parking" -> parking;
-      case "line", "road", "voie_carrossable" -> road;
+      case "obstacle" -> obstacle;
+      case "cheminee", "cheminée" -> cheminee;
       case "velux" -> velux;
       case "background" -> background;
       default -> throw new IllegalArgumentException("Unsupported continuation on " + label);
