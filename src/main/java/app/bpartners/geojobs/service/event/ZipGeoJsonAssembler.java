@@ -184,7 +184,10 @@ public class ZipGeoJsonAssembler implements Consumer<GeoJsonConversionJob> {
       org.locationtech.jts.geom.MultiPolygon unifiedProvidedZone,
       MultiPolygon convertedMultiPolygon) {
     var jtsRoofMultiPolygon = geometryConverter.apply(convertedMultiPolygon.getCoordinates());
-    var intersectedRoofWithProvidedZone = jtsRoofMultiPolygon.intersection(unifiedProvidedZone);
+    var intersectedRoofWithProvidedZone =
+        unifiedProvidedZone.isEmpty()
+            ? jtsRoofMultiPolygon
+            : jtsRoofMultiPolygon.intersection(unifiedProvidedZone);
     MultiPolygon intersectedMultiPolygonRest;
     if (intersectedRoofWithProvidedZone instanceof org.locationtech.jts.geom.Polygon polygon) {
       intersectedMultiPolygonRest =
