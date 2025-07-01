@@ -355,6 +355,9 @@ public class BoundaryMerger
     if (tiledPolygons.isEmpty()) {
       return Set.of();
     }
+    if (detectableType == null) {
+      return parallelMerge(tiledPolygons);
+    }
     return switch (detectableType) {
       case TOMBE, PASSAGE_PIETON, PISCINE -> merge(tiledPolygons);
       default -> parallelMerge(tiledPolygons);
