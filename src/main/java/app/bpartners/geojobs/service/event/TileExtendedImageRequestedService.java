@@ -1,11 +1,16 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
+import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
 import static java.awt.Color.WHITE;
 
 import app.bpartners.geojobs.endpoint.event.model.TileExtendedImageRequested;
+import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
+import app.bpartners.geojobs.endpoint.rest.model.Polygon;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.geometry.IntXY;
+import app.bpartners.geojobs.service.DetectionBackgroundRetriever;
 import app.bpartners.geojobs.service.FilePolygonDrawer;
 import app.bpartners.geojobs.service.GeometryPixelProjector;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
@@ -27,13 +32,46 @@ public class TileExtendedImageRequestedService implements Consumer<TileExtendedI
   private final GeometryPixelProjector geometryPixelProjector;
   private final GeometryConverter geometryConverter;
   private final FilePolygonDrawer filePolygonDrawer;
+  private final DetectionBackgroundRetriever detectionBackgroundRetriever;
 
   @Override
   public void accept(TileExtendedImageRequested event) {
     var layer = event.getLayer();
     var longitude = event.getLongitude();
     var latitude = event.getLatitude();
-    var unifiedRoofMultiPolygon = event.getUnifiedRoofMultiPolygon();
+    var detection = event.getDetection();
+    var unifiedRoofMultiPolygon =
+        detection.getFeatureWithDelimitations().stream()
+            .map(
+                featureWithDelimitation ->
+                    featureWithDelimitation.delimitations().stream()
+                        .map(
+                            f -> {
+                              var geometryType = toRestFeature(f).getGeometry().getActualInstance();
+                              switch (geometryType) {
+                                case Polygon polygon -> {
+                                  return geometryConverter.apply(List.of(polygon.getCoordinates()));
+                                }
+                                case MultiPolygon multiPolygon -> {
+                                  return geometryConverter.apply(multiPolygon.getCoordinates());
+                                }
+                                default ->
+                                    throw new IllegalArgumentException(
+                                        "Unsupported geometry type to extended image: "
+                                            + geometryType);
+                              }
+                            })
+                        .toList())
+            .toList()
+            .stream()
+            .flatMap(List::stream)
+            .reduce(unifyMultiPolygon())
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "Unable to unify delimitation multiPolygon for detection.id: "
+                            + detection.getId()));
+    var latLonBackgroundOnProvidedZone = detectionBackgroundRetriever.apply(detection);
     var tileCoordinates = finder.getSurroundingTiles(longitude, latitude, event.getZoom());
     var tileImagesFiles =
         tileCoordinates.stream()

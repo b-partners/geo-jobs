@@ -75,8 +75,7 @@ class TileExtendedImageRequestedServiceIT {
     assertDoesNotThrow(
         () ->
             subject.accept(
-                new TileExtendedImageRequested(
-                    longitude, latitude, zoomLevel, layer, unifiedRoofMultiPolygonMock)));
+                new TileExtendedImageRequested(longitude, latitude, zoomLevel, layer, mock())));
 
     var fileCaptor = ArgumentCaptor.forClass(File.class);
     var stringCaptor = ArgumentCaptor.forClass(String.class);
