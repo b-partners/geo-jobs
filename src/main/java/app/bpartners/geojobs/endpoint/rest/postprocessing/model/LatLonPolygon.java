@@ -35,8 +35,8 @@ public record LatLonPolygon(Polygon polygon) {
   private static final String DEFAULT_LABEL = "line";
 
   public TiledPolygon tiledPolygon(TilingConf tilingConf) {
-    Map<String, String> userData = (Map) polygon.getUserData();
-    var label = userData == null ? DEFAULT_LABEL : userData.get("label");
+    var userData = (Map<String, Object>) polygon.getUserData();
+    var label = userData == null ? DEFAULT_LABEL : userData.get("label").toString();
     var originXY = uniqueOrigin(tilingConf);
     return new TiledPolygon(
         toPixelPolygon(polygon, tilingConf, originXY), routeTypeFrom(label), originXY, tilingConf);
