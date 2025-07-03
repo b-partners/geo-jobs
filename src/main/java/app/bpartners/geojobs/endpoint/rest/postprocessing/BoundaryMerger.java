@@ -170,11 +170,7 @@ public class BoundaryMerger
 
     var result = new HashSet<TiledPolygon>();
 
-    var typeAsString = type.name();
-    if (type.equals(green_space)
-        || typeAsString.contains(moisissure.name())
-        || typeAsString.contains(usure.name())
-        || typeAsString.contains(humidite.name())) {
+    if (type.equals(green_space)) {
       var toUnify = tiledPolygonsWithOffset.stream().map(TiledPolygon::polygon).collect(toSet());
       var prettyPolygons = prettier.apply(toUnify);
       var unified = new UnifiedRoute(prettyPolygons, unionConf).unified();
@@ -194,7 +190,7 @@ public class BoundaryMerger
 
       var aroundPolygons =
           tiledPolygonsWithOffset.stream()
-              .filter(p -> !p.equals(tp) && shouldBeMerged(tp, p))
+              .filter(p -> shouldBeMerged(tp, p))
               .collect(Collectors.toSet());
 
       var toUnify = aroundPolygons.stream().map(TiledPolygon::polygon).collect(Collectors.toSet());
@@ -239,7 +235,7 @@ public class BoundaryMerger
       var refBoundary = basePolygon.getBoundary().buffer(50);
       var otherBoundary = otherPolygon.getBoundary().buffer(50);
       var intersection = refBoundary.intersection(otherBoundary);
-      return intersection.getLength() > 200;
+      return base.type().equals(other.type()) && intersection.getLength() > 200;
     } catch (Exception e) {
       return false;
     }
@@ -354,6 +350,9 @@ public class BoundaryMerger
   public Set<LatLonPolygon> apply(Set<TiledPolygon> tiledPolygons, DetectableType detectableType) {
     if (tiledPolygons.isEmpty()) {
       return Set.of();
+    }
+    if (detectableType == null) {
+      return parallelMerge(tiledPolygons);
     }
     return switch (detectableType) {
       case TOMBE, PASSAGE_PIETON, PISCINE -> merge(tiledPolygons);
