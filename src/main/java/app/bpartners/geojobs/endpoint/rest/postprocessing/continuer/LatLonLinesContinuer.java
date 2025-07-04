@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.postprocessing.continuer;
 
+import static app.bpartners.geojobs.endpoint.rest.postprocessing.BoundaryMerger.invert;
 import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.geojobs.endpoint.rest.postprocessing.GeoJsonLoader;
@@ -35,6 +36,7 @@ public final class LatLonLinesContinuer extends LinesContinuer<LatLonPolygon> {
 
   public Set<LatLonPolygon> apply(File geojsonPath) {
     var latLons = geoJsonLoader.apply(geojsonPath);
-    return apply(latLons);
+    var inverted = invert(latLons);
+    return apply(inverted);
   }
 }
