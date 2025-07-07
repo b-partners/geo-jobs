@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: geo-jobs - Computation and API
+Description: geo-jobs-tuita - Computation and API
 
 Globals:
   Function:
@@ -23,17 +23,16 @@ Globals:
     Environment:
       Variables:
         ENV: !Ref Env
-        AWS_S3_BUCKET: !Sub '{{resolve:ssm:/geo-jobs/${Env}/s3/bucket-name}}'
+        AWS_S3_BUCKET: !Sub '{{resolve:ssm:/geo-jobs-tuita/${Env}/s3/bucket-name}}'
         AWS_SES_SOURCE: lou@bpartners.app
-        AWS_EVENTBRIDGE_BUS: !Sub '{{resolve:ssm:/geo-jobs/${Env}/eventbridge/bus-name}}'
-        AWS_EVENT_STACK_1_SQS_QUEUE_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/1/sqs/mailbox-queue-url}}'
-        AWS_EVENT_STACK_2_SQS_QUEUE_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/2/sqs/mailbox-queue-url}}'
+        AWS_EVENTBRIDGE_BUS: !Sub '{{resolve:ssm:/geo-jobs-tuita/${Env}/eventbridge/bus-name}}'
+        AWS_EVENT_STACK_1_SQS_QUEUE_URL: !Sub '{{resolve:ssm:/geo-jobs-tuita/${Env}/1/sqs/mailbox-queue-url}}'
+        AWS_EVENT_STACK_2_SQS_QUEUE_URL: !Sub '{{resolve:ssm:/geo-jobs-tuita/${Env}/2/sqs/mailbox-queue-url}}'
         
         
-        SENTRY_DSN: !Sub '{{resolve:ssm:/geo-jobs/sentry/dsn}}'
+        SENTRY_DSN: !Sub '{{resolve:ssm:/geo-jobs-tuita/sentry/dsn}}'
         SENTRY_ENVIRONMENT: !Ref Env
         TILES_DOWNLOADER_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/tiles/downloader/url}}'
-        TILE_DETECTION_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/tiles/detection/url}}'
         TILE_DETECTION_API_URLS: !Sub '{{resolve:ssm:/geo-jobs/${Env}/tiles/detection/urls}}'
         ADMIN_API_KEY: !Sub '{{resolve:ssm:/bpartners-geo-jobs/${Env}/admin/api-key}}'
         ANNOTATOR_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/annotator/url}}'
@@ -84,7 +83,7 @@ Resources:
       IntegrationUri: !Sub "${FrontalFunction.Arn}:live"
       PayloadFormatVersion: "1.0"
       IntegrationMethod: ANY
-      TimeoutInMillis: 30000
+      TimeoutInMillis: 120000
 
   DefaultRoute:
     Type: AWS::ApiGatewayV2::Route
@@ -99,7 +98,7 @@ Resources:
       Handler: app.bpartners.geojobs.handler.ApiEventHandler::handleRequest
       MemorySize: 2048
       Timeout: 300
-      Role: !Sub '{{resolve:ssm:/geo-jobs/${Env}/execution/role-arn}}'
+      Role: !Sub '{{resolve:ssm:/geo-jobs-tuita/${Env}/execution/role-arn}}'
       Events:
         ApiCall:
           Type: HttpApi
@@ -115,14 +114,14 @@ Resources:
       Handler: app.bpartners.geojobs.handler.MailboxEventHandler::handleRequest
       MemorySize: 1024
       Timeout: 900 #note(sqs-visibility)
-      Role: !Sub '{{resolve:ssm:/geo-jobs/${Env}/execution/role-arn}}'
+      Role: !Sub '{{resolve:ssm:/geo-jobs-tuita/${Env}/execution/role-arn}}'
       Events:
         AllEvents:
           Type: SQS
           Properties:
-            Queue: !Sub '{{resolve:ssm:/geo-jobs/${Env}/1/sqs/mailbox-queue-arn}}'
-            BatchSize: 1
-      ReservedConcurrentExecutions: 100
+            Queue: !Sub '{{resolve:ssm:/geo-jobs-tuita/${Env}/1/sqs/mailbox-queue-arn}}'
+            BatchSize: 5
+      ReservedConcurrentExecutions: 2
 
   WorkerFunction2:
     Type: AWS::Serverless::Function
@@ -130,19 +129,19 @@ Resources:
       Handler: app.bpartners.geojobs.handler.MailboxEventHandler::handleRequest
       MemorySize: 1024
       Timeout: 900 #note(sqs-visibility)
-      Role: !Sub '{{resolve:ssm:/geo-jobs/${Env}/execution/role-arn}}'
+      Role: !Sub '{{resolve:ssm:/geo-jobs-tuita/${Env}/execution/role-arn}}'
       Events:
         AllEvents:
           Type: SQS
           Properties:
-            Queue: !Sub '{{resolve:ssm:/geo-jobs/${Env}/2/sqs/mailbox-queue-arn}}'
-            BatchSize: 1
-      ReservedConcurrentExecutions: 100
+            Queue: !Sub '{{resolve:ssm:/geo-jobs-tuita/${Env}/2/sqs/mailbox-queue-arn}}'
+            BatchSize: 5
+      ReservedConcurrentExecutions: 2
 
   ApiUrlSSM:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: !Join [ '', [ /geo-jobs/, !Ref Env, /api/url ] ]
+      Name: !Join [ '', [ /geo-jobs-tuita/, !Ref Env, /api/url ] ]
       Type: String
       Value: !GetAtt FrontalServerlessHttpApi.ApiEndpoint
   
