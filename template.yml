@@ -84,7 +84,7 @@ Resources:
       IntegrationUri: !Sub "${FrontalFunction.Arn}:live"
       PayloadFormatVersion: "1.0"
       IntegrationMethod: ANY
-      TimeoutInMillis: 120000
+      TimeoutInMillis: 30000
 
   DefaultRoute:
     Type: AWS::ApiGatewayV2::Route
