@@ -49,9 +49,10 @@ public class DetectionAreaValidator implements Consumer<Detection> {
       return;
     }
     var actualArea = geometrySquareMeterArea.apply(unifiedProvidedPolygon.get());
-    if (INDRE_ET_LOIRE_2024_5_CM.equals(layer) && actualArea > 12_000.0) {
+    if (INDRE_ET_LOIRE_2024_5_CM.equals(layer) && actualArea > 1_000_000.0) {
       throw new NotImplementedException(
-          "Provided multiPolygon must be under 12 000 meters for zone inside layers "
+          "Provided multiPolygon must be under 1 kilometers square (or 1 000 000 meters square) for"
+              + " zone inside layers "
               + INDRE_ET_LOIRE_2024_5_CM
               + " for now, actual area: "
               + actualArea);
