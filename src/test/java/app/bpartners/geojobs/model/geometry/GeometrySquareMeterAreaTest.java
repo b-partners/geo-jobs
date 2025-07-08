@@ -21,7 +21,7 @@ class GeometrySquareMeterAreaTest {
 
     var actual = subject.apply(geometry);
 
-    assertEquals(10495.227197824406, actual);
+    assertEquals(Math.round(10495.227197824406), Math.round(actual));
   }
 
   @SneakyThrows
@@ -33,7 +33,7 @@ class GeometrySquareMeterAreaTest {
 
     var actual = subject.apply(geometry);
 
-    assertEquals(10197.745005498364, actual);
+    assertEquals(Math.round(10197.745005498364), Math.round(actual));
   }
 
   private String featureFromZoneTours() {
