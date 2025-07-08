@@ -85,7 +85,7 @@ Resources:
           Properties:
             Queue: !Sub '{{resolve:ssm:/geo-jobs-tuita/${Env}/1/sqs/mailbox-queue-arn}}'
             BatchSize: 5
-      ReservedConcurrentExecutions: 2
+      ReservedConcurrentExecutions: 10
 
   WorkerFunction2:
     Type: AWS::Serverless::Function
@@ -100,7 +100,7 @@ Resources:
           Properties:
             Queue: !Sub '{{resolve:ssm:/geo-jobs-tuita/${Env}/2/sqs/mailbox-queue-arn}}'
             BatchSize: 5
-      ReservedConcurrentExecutions: 2
+      ReservedConcurrentExecutions: 10
 
   ApiUrlSSM:
     Type: AWS::SSM::Parameter
