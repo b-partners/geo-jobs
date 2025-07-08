@@ -10,6 +10,7 @@ import app.bpartners.geojobs.endpoint.rest.model.Polygon;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.geometry.IntXY;
+import app.bpartners.geojobs.service.DetectionBackgroundRetriever;
 import app.bpartners.geojobs.service.FilePolygonDrawer;
 import app.bpartners.geojobs.service.GeometryPixelProjector;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
@@ -31,6 +32,7 @@ public class TileExtendedImageRequestedService implements Consumer<TileExtendedI
   private final GeometryPixelProjector geometryPixelProjector;
   private final GeometryConverter geometryConverter;
   private final FilePolygonDrawer filePolygonDrawer;
+  private final DetectionBackgroundRetriever detectionBackgroundRetriever;
 
   @Override
   public void accept(TileExtendedImageRequested event) {
@@ -38,6 +40,7 @@ public class TileExtendedImageRequestedService implements Consumer<TileExtendedI
     var longitude = event.getLongitude();
     var latitude = event.getLatitude();
     var detection = event.getDetection();
+    var latLonBackgroundInsideProvidedZone = detectionBackgroundRetriever.apply(detection);
     var unifiedRoofMultiPolygon =
         detection.getFeatureWithDelimitations().stream()
             .map(
@@ -77,23 +80,19 @@ public class TileExtendedImageRequestedService implements Consumer<TileExtendedI
                   var multiPolygonFromTile =
                       geometryConverter.getMultiPolygonFromTile(
                           coor.getX(), coor.getY(), coor.getZ());
-                  var intersectionBetweenTileMultiPolygonAndRoofMultiPolygon =
-                      unifiedRoofMultiPolygon.intersection(multiPolygonFromTile);
+                  var intersectionBetweenTileMultiPolygonAndRoof =
+                      multiPolygonFromTile.intersection(unifiedRoofMultiPolygon);
+                  var intersectionBetweenTileMultiPolygonAndBackground =
+                      multiPolygonFromTile.intersection(latLonBackgroundInsideProvidedZone);
                   var notIntersectionBetweenTileMultiPolygonAndRoofMultiPolygon =
                       multiPolygonFromTile.difference(
-                          intersectionBetweenTileMultiPolygonAndRoofMultiPolygon);
+                          intersectionBetweenTileMultiPolygonAndBackground.union(
+                              intersectionBetweenTileMultiPolygonAndRoof));
+                  List<IntXY> coordinatesPixel;
                   var fileKey =
                       layer + "/" + coor.getZ() + "/" + coor.getX() + "/" + coor.getY() + ".jpg";
-                  List<IntXY> coordinatesPixel;
-                  if (intersectionBetweenTileMultiPolygonAndRoofMultiPolygon.isEmpty()) {
-                    coordinatesPixel =
-                        List.of(
-                            new IntXY(0, 0),
-                            new IntXY(0, DEFAULT_TILE_SIZE),
-                            new IntXY(DEFAULT_TILE_SIZE, DEFAULT_TILE_SIZE),
-                            new IntXY(DEFAULT_TILE_SIZE, 0));
-                  } else if (notIntersectionBetweenTileMultiPolygonAndRoofMultiPolygon.isEmpty()) {
-                    coordinatesPixel = List.of();
+                  if (intersectionBetweenTileMultiPolygonAndBackground.isEmpty()) {
+                    coordinatesPixel = getBlurAllAreaCoordinates();
                   } else {
                     var backgroundPixels =
                         geometryPixelProjector.toPixels(
@@ -124,5 +123,16 @@ public class TileExtendedImageRequestedService implements Consumer<TileExtendedI
     bucketComponent.upload(extendedImageFile, extendedImageKey);
 
     extendedImageFile.delete();
+  }
+
+  private static List<IntXY> getBlurAllAreaCoordinates() {
+    List<IntXY> coordinatesPixel;
+    coordinatesPixel =
+        List.of(
+            new IntXY(0, 0),
+            new IntXY(0, DEFAULT_TILE_SIZE),
+            new IntXY(DEFAULT_TILE_SIZE, DEFAULT_TILE_SIZE),
+            new IntXY(DEFAULT_TILE_SIZE, 0));
+    return coordinatesPixel;
   }
 }
