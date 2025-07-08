@@ -23,7 +23,7 @@ Resources:
       VisibilityTimeout: 901 #note(sqs-visibility): WorkerFunction2.Timeout + 1
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt DeadLetterQueue2.Arn
-        maxReceiveCount: 5
+        maxReceiveCount: 9
       SqsManagedSseEnabled: false
 
   DeadLetterQueue1:

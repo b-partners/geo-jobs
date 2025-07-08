@@ -9,7 +9,7 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = false)
 @ToString
 public class ZTJStatusRecomputingSubmitted extends JobStatusRecomputingSubmitted {
-  private static final long INITIAL_BACKOFF_IN_SECONDS = Duration.ofSeconds(30).toSeconds();
+  private static final long INITIAL_BACKOFF_IN_SECONDS = Duration.ofSeconds(60).toSeconds();
 
   public ZTJStatusRecomputingSubmitted(String jobId) {
     super(jobId, INITIAL_BACKOFF_IN_SECONDS);
