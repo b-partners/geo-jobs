@@ -14,17 +14,66 @@ class GeometrySquareMeterAreaTest {
 
   @SneakyThrows
   @Test
-  void geometry_area() {
-    var feature = new ObjectMapper().readValue(feature(), Feature.class);
+  void geometry_area_pcrs() {
+    var feature = new ObjectMapper().readValue(featureFromZonePCRS(), Feature.class);
     var geometry =
         new GeometryConverter(null).apply(feature.getGeometry().getMultiPolygon().getCoordinates());
 
     var actual = subject.apply(geometry);
 
-    assertEquals(10512.793872714043, actual);
+    assertEquals(10495.227197824406, actual);
   }
 
-  private String feature() {
+  @SneakyThrows
+  @Test
+  void geometry_area_tours() {
+    var feature = new ObjectMapper().readValue(featureFromZoneTours(), Feature.class);
+    var geometry =
+        new GeometryConverter(null).apply(feature.getGeometry().getMultiPolygon().getCoordinates());
+
+    var actual = subject.apply(geometry);
+
+    assertEquals(10197.745005498364, actual);
+  }
+
+  private String featureFromZoneTours() {
+    return """
+           {
+                                "type": "Feature",
+                                "properties": {},
+                                "geometry": {
+                                    "type": "MultiPolygon",
+                                    "coordinates": [
+                                        [
+                                            [
+                                                [
+                                                    0.684264757502766,
+                                                    47.389443733426205
+                                                ],
+                                                [
+                                                    0.684565164912434,
+                                                    47.38865926459548
+                                                ],
+                                                [
+                                                    0.683342077601643,
+                                                    47.388325135436794
+                                                ],
+                                                [
+                                                    0.6828807376510815,
+                                                    47.38925488088589
+                                                ],
+                                                [
+                                                    0.684264757502766,
+                                                    47.389443733426205
+                                                ]
+                                            ]
+                                        ]
+                                    ]
+                                }
+                            }""";
+  }
+
+  private String featureFromZonePCRS() {
     return """
            {
                        "type": "Feature",
