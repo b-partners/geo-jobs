@@ -10,7 +10,6 @@ import app.bpartners.geojobs.endpoint.rest.model.Polygon;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.geometry.IntXY;
-import app.bpartners.geojobs.service.DetectionBackgroundRetriever;
 import app.bpartners.geojobs.service.FilePolygonDrawer;
 import app.bpartners.geojobs.service.GeometryPixelProjector;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
@@ -32,7 +31,6 @@ public class TileExtendedImageRequestedService implements Consumer<TileExtendedI
   private final GeometryPixelProjector geometryPixelProjector;
   private final GeometryConverter geometryConverter;
   private final FilePolygonDrawer filePolygonDrawer;
-  private final DetectionBackgroundRetriever detectionBackgroundRetriever;
 
   @Override
   public void accept(TileExtendedImageRequested event) {
@@ -71,7 +69,6 @@ public class TileExtendedImageRequestedService implements Consumer<TileExtendedI
                     new IllegalStateException(
                         "Unable to unify delimitation multiPolygon for detection.id: "
                             + detection.getId()));
-    var latLonBackgroundOnProvidedZone = detectionBackgroundRetriever.apply(detection);
     var tileCoordinates = finder.getSurroundingTiles(longitude, latitude, event.getZoom());
     var tileImagesFiles =
         tileCoordinates.stream()
@@ -88,14 +85,15 @@ public class TileExtendedImageRequestedService implements Consumer<TileExtendedI
                   var fileKey =
                       layer + "/" + coor.getZ() + "/" + coor.getX() + "/" + coor.getY() + ".jpg";
                   List<IntXY> coordinatesPixel;
-                  if (notIntersectionBetweenTileMultiPolygonAndRoofMultiPolygon.isEmpty()) {
-                    // All images must be directly blured
+                  if (intersectionBetweenTileMultiPolygonAndRoofMultiPolygon.isEmpty()) {
                     coordinatesPixel =
                         List.of(
                             new IntXY(0, 0),
                             new IntXY(0, DEFAULT_TILE_SIZE),
                             new IntXY(DEFAULT_TILE_SIZE, DEFAULT_TILE_SIZE),
                             new IntXY(DEFAULT_TILE_SIZE, 0));
+                  } else if (notIntersectionBetweenTileMultiPolygonAndRoofMultiPolygon.isEmpty()) {
+                    coordinatesPixel = List.of();
                   } else {
                     var backgroundPixels =
                         geometryPixelProjector.toPixels(
