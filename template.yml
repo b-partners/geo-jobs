@@ -84,7 +84,7 @@ Resources:
           Type: SQS
           Properties:
             Queue: !Sub '{{resolve:ssm:/geo-jobs-tuita/${Env}/1/sqs/mailbox-queue-arn}}'
-            BatchSize: 5
+            BatchSize: 1
       ReservedConcurrentExecutions: 10
 
   WorkerFunction2:
@@ -99,7 +99,7 @@ Resources:
           Type: SQS
           Properties:
             Queue: !Sub '{{resolve:ssm:/geo-jobs-tuita/${Env}/2/sqs/mailbox-queue-arn}}'
-            BatchSize: 5
+            BatchSize: 1
       ReservedConcurrentExecutions: 10
 
   ApiUrlSSM:
