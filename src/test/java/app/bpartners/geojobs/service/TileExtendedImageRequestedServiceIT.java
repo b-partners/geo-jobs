@@ -39,6 +39,8 @@ class TileExtendedImageRequestedServiceIT {
   GeometryPixelProjector geometryPixelProjector = new GeometryPixelProjector();
   GeometryConverter geometryConverter = new GeometryConverter(mock());
   FilePolygonDrawer filePolygonDrawer = new FilePolygonDrawer();
+  DetectionBackgroundRetriever detectionBackgroundRetriever =
+      mock(DetectionBackgroundRetriever.class);
 
   TileExtendedImageRequestedService subject =
       new TileExtendedImageRequestedService(
@@ -48,7 +50,8 @@ class TileExtendedImageRequestedServiceIT {
           fileWriter,
           geometryPixelProjector,
           geometryConverter,
-          filePolygonDrawer);
+          filePolygonDrawer,
+          detectionBackgroundRetriever);
 
   @SneakyThrows
   @BeforeEach
@@ -79,6 +82,9 @@ class TileExtendedImageRequestedServiceIT {
     var unifiedRoofMultiPolygonMock = mock(MultiPolygon.class);
     var featureWithDelimitation =
         new FeatureWithDelimitation(repoFeatureMock, List.of(repoFeatureMock));
+    var geometryFactory = new org.locationtech.jts.geom.GeometryFactory().createMultiPolygon(null);
+
+    when(detectionBackgroundRetriever.apply(detectionMock)).thenReturn(geometryFactory);
     when(unifiedRoofMultiPolygonMock.intersection(any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
     when(unifiedRoofMultiPolygonMock.difference(any()))
