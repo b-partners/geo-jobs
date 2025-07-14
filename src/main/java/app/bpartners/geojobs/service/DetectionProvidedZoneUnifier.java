@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service;
 
+import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
 
 import app.bpartners.geojobs.repository.model.detection.Detection;
@@ -8,6 +9,7 @@ import java.util.List;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.MultiPolygon;
+import org.locationtech.jts.geom.Polygon;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -18,11 +20,14 @@ public class DetectionProvidedZoneUnifier implements Function<Detection, MultiPo
   @Override
   public MultiPolygon apply(Detection detection) {
     if (detection == null) {
-      return null;
+      return geometryFactory.createMultiPolygon(new Polygon[0]);
     }
     var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
     if (providedGeoJsonZone == null) {
-      return null;
+      return geometryFactory.createMultiPolygon(new Polygon[0]);
+    }
+    if (providedGeoJsonZone.isEmpty()) {
+      return geometryFactory.createMultiPolygon(new Polygon[0]);
     }
     return providedGeoJsonZone.stream()
         .map(

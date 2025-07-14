@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.postprocessing.model;
 
+import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.MULTI_POLYGON;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.model.geometry.route.ObjectType.routeTypeFrom;
 import static java.lang.Math.PI;
@@ -14,12 +15,18 @@ import static java.util.Comparator.comparingInt;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.*;
 
+import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.model.geometry.IntXY;
+import app.bpartners.geojobs.service.geojson.GeoJson;
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.geotools.geometry.Position2D;
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Polygon;
 
 // unprojected: in degree, such as CRS_CODE = "EPSG:4326"
@@ -28,11 +35,18 @@ public record LatLonPolygon(Polygon polygon) {
   private static final String DEFAULT_LABEL = "line";
 
   public TiledPolygon tiledPolygon(TilingConf tilingConf) {
-    Map<String, String> userData = (Map) polygon.getUserData();
-    var label = userData == null ? DEFAULT_LABEL : userData.get("label");
+    var userData = (Map<String, Object>) polygon.getUserData();
+    var label = userData == null ? DEFAULT_LABEL : userData.get("label").toString();
     var originXY = uniqueOrigin(tilingConf);
     return new TiledPolygon(
         toPixelPolygon(polygon, tilingConf, originXY), routeTypeFrom(label), originXY, tilingConf);
+  }
+
+  public TiledPolygon tiledPolygon(TilingConf tilingConf, IntXY origin) {
+    var userData = (Map<String, Object>) polygon.getUserData();
+    var label = userData == null ? DEFAULT_LABEL : userData.get("label").toString();
+    return new TiledPolygon(
+        toPixelPolygon(polygon, tilingConf, origin), routeTypeFrom(label), origin, tilingConf);
   }
 
   private IntXY uniqueOrigin(TilingConf tilingConf) {
@@ -70,7 +84,83 @@ public record LatLonPolygon(Polygon polygon) {
             .map(c -> toPixel(new LatLon(c.x, c.y), tilingConf, originTile))
             .map(pixel -> new Coordinate(pixel.x(), pixel.y()))
             .toArray(Coordinate[]::new);
-    return geometryFactory.createPolygon(pixelCoordinates);
+    var polygon = geometryFactory.createPolygon(pixelCoordinates);
+    polygon.setUserData(p.getUserData());
+    return polygon;
+  }
+
+  public static LatLonPolygon latLon(GeoJson.GeoFeature geoFeature) {
+    var geometry = toDomainPolygon(geoFeature.getGeometry());
+    geometry.setUserData(geoFeature.getProperties());
+    return new LatLonPolygon(geometry);
+  }
+
+  public static Polygon toDomainPolygon(
+      app.bpartners.geojobs.endpoint.rest.model.MultiPolygon multiPolygon) {
+    var coords = multiPolygon.getCoordinates();
+
+    if (coords.size() != 1) {
+      throw new IllegalArgumentException("Expected a single polygon, but got " + coords.size());
+    }
+
+    List<List<List<BigDecimal>>> polygonCoords = coords.getFirst();
+    LinearRing shell = null;
+    List<LinearRing> holes = new ArrayList<>();
+
+    for (int i = 0; i < polygonCoords.size(); i++) {
+      List<List<BigDecimal>> ring = polygonCoords.get(i);
+
+      Coordinate[] coordinates =
+          ring.stream()
+              .filter(point -> !point.isEmpty())
+              .map(
+                  point ->
+                      new Coordinate(point.getFirst().doubleValue(), point.getLast().doubleValue()))
+              .toArray(Coordinate[]::new);
+      if (coordinates.length == 0) {
+        continue;
+      }
+      if (!coordinates[0].equals2D(coordinates[coordinates.length - 1])) {
+        Coordinate[] closed = new Coordinate[coordinates.length + 1];
+        System.arraycopy(coordinates, 0, closed, 0, coordinates.length);
+        closed[closed.length - 1] = closed[0];
+        coordinates = closed;
+      }
+
+      LinearRing linearRing = geometryFactory.createLinearRing(coordinates);
+      if (i == 0) {
+        shell = linearRing;
+      } else {
+        holes.add(linearRing);
+      }
+    }
+
+    if (shell == null) {
+      throw new IllegalStateException("No shell ring found");
+    }
+
+    return geometryFactory.createPolygon(shell, holes.toArray(new LinearRing[0]));
+  }
+
+  public GeoJson.GeoFeature toGeoFeature() {
+    var coordinates = polygon.getCoordinates();
+    var properties = (Map<String, Object>) polygon.getUserData();
+    List<List<List<List<BigDecimal>>>> multiPolygonCoordinates = new ArrayList<>();
+
+    var ring =
+        Arrays.stream(coordinates)
+            .map(
+                coord ->
+                    List.of(BigDecimal.valueOf(coord.getX()), BigDecimal.valueOf(coord.getY())))
+            .toList();
+
+    List<List<List<BigDecimal>>> polygonCoords = new ArrayList<>();
+    polygonCoords.add(ring);
+    multiPolygonCoordinates.add(polygonCoords);
+    app.bpartners.geojobs.endpoint.rest.model.MultiPolygon multiPolygon =
+        new MultiPolygon().coordinates(multiPolygonCoordinates);
+    multiPolygon.setType(MULTI_POLYGON);
+    return new GeoJson.GeoFeature(properties, multiPolygon);
   }
 
   // Mostly ChatGPT-generated

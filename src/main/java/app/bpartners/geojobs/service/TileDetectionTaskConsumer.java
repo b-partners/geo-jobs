@@ -96,6 +96,9 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
                   .reduce(unifyMultiPolygon())
                   .map(
                       unifiedMaskMultiPolygon -> {
+                        if (unifiedProvidedZone.isEmpty()) {
+                          return unifiedMaskMultiPolygon;
+                        }
                         var intersectedMaskWithProvidedZone =
                             unifiedProvidedZone.intersection(unifiedMaskMultiPolygon);
                         if (intersectedMaskWithProvidedZone instanceof Polygon polygon) {

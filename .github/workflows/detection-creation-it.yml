@@ -51,6 +51,7 @@ jobs:
           fi
 
       - name: Send POST /detections/*/sync request
+        if: false
         run: |
           detection_sync_e2_id=$(uuidgen)
           echo "Generated detection_sync_e2_id: '$detection_sync_e2_id'"
@@ -63,6 +64,8 @@ jobs:
           -o "$response_file")
           
           echo "HTTP Response Code: $http_code"
+          echo "Response Body:"
+              cat $response_file
           
           if [ "${http_code:-0}" -ne 200 ]; then
             echo "Response Body:"

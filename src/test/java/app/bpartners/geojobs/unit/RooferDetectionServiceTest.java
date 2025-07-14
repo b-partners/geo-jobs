@@ -81,7 +81,8 @@ class RooferDetectionServiceTest {
   HTMLTemplateParser htmlTemplateParser = new HTMLTemplateParser();
   BuildingApi buildingApiMock = mock();
   DetectionVGGUpdate detectionVGGUpdate =
-      new DetectionVGGUpdate(fileWriter, bucketComponent, new GeometryConverter(buildingApiMock));
+      new DetectionVGGUpdate(
+          fileWriter, bucketComponent, new GeometryConverter(buildingApiMock), vggFactoryMock);
   RooferDetectionService subject;
 
   @BeforeEach

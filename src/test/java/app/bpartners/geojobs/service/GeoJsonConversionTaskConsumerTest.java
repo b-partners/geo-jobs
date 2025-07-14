@@ -76,7 +76,11 @@ class GeoJsonConversionTaskConsumerTest {
     assertDoesNotThrow(
         () ->
             subject.accept(
-                GeoJsonConversionTask.builder().page(1).jobId(CONVERSION_JOB_ID).build()));
+                GeoJsonConversionTask.builder()
+                    .page(1)
+                    .detectableType(HUMIDITE_INTENSE)
+                    .jobId(CONVERSION_JOB_ID)
+                    .build()));
     var listCaptor = ArgumentCaptor.forClass(List.class);
     verify(humanDetectedTileRepositoryMock, only()).findAllByJobId(any(), any());
     verify(machineDetectedTileRepositoryMock, never()).findAllByZdjJobId(any(), any());

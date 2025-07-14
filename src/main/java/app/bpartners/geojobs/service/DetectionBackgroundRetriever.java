@@ -56,9 +56,14 @@ public class DetectionBackgroundRetriever implements Function<Detection, MultiPo
                     new IllegalStateException(
                         "Unable to unify roof multipolygons for detection: " + detection.getId()));
     var intersectionBetweenProvidedZoneAndUnifiedRoofsMultiPolygon =
-        unifiedProvidedZone.intersection(roofMultipolygon);
+        unifiedProvidedZone.isEmpty()
+            ? roofMultipolygon
+            : unifiedProvidedZone.intersection(roofMultipolygon);
     var providedZoneWithoutRoofs =
-        unifiedProvidedZone.difference(intersectionBetweenProvidedZoneAndUnifiedRoofsMultiPolygon);
+        unifiedProvidedZone.isEmpty()
+            ? intersectionBetweenProvidedZoneAndUnifiedRoofsMultiPolygon
+            : unifiedProvidedZone.difference(
+                intersectionBetweenProvidedZoneAndUnifiedRoofsMultiPolygon);
     switch (providedZoneWithoutRoofs) {
       case org.locationtech.jts.geom.Polygon polygon -> {
         return geometryFactory.createMultiPolygon(

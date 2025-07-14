@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.model.geometry;
 
 import static app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.MULTI_POLYGON;
-import static app.bpartners.geojobs.endpoint.rest.postprocessing.tombe.TombeTest.invert;
+import static app.bpartners.geojobs.endpoint.rest.postprocessing.BoundaryMerger.invert;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -186,7 +186,7 @@ class VGGFactoryTest {
             .collect(Collectors.toSet());
     var actual = subject.from(inverted);
 
-    // Files.write(new File("bati.json").toPath(), actual.getBytes());
+    // Files.write(new File("test.json").toPath(), actual.getBytes());
   }
 
   @Test
