@@ -90,30 +90,39 @@ public class TileExtendedImageRequestedService implements Consumer<TileExtendedI
                       multiPolygonFromTile.intersection(latLonBackgroundInsideProvidedZone);
                   var tileWithoutRoofInsideTileAndZone =
                       multiPolygonFromTile.difference(roofInsideTileAndProvidedZone);
-                  List<IntXY> coordinatesPixel;
+                  List<List<List<IntXY>>> multiPolygonPixelCoordinates;
                   var fileKey =
                       layer + "/" + coor.getZ() + "/" + coor.getX() + "/" + coor.getY() + ".jpg";
                   if (intersectionBetweenTileMultiPolygonAndBackground.isEmpty()) {
-                    coordinatesPixel = getBlurAllAreaCoordinates();
+                    multiPolygonPixelCoordinates = getBlurAllAreaCoordinates();
                   } else {
-                    var backgroundPixels =
-                        geometryPixelProjector.toPixels(
+                    var backgroundMultiPolygonPixels =
+                        geometryPixelProjector.toMultiPolygonPixels(
                             tileWithoutRoofInsideTileAndZone,
                             coor.getX(),
                             coor.getY(),
                             coor.getZ(),
                             DEFAULT_TILE_SIZE);
-                    coordinatesPixel =
-                        backgroundPixels.stream()
+                    multiPolygonPixelCoordinates =
+                        backgroundMultiPolygonPixels.stream()
                             .map(
-                                coordinates ->
-                                    new IntXY(
-                                        coordinates.getFirst().intValue(),
-                                        coordinates.getLast().intValue()))
+                                polygon ->
+                                    polygon.stream()
+                                        .map(
+                                            ring ->
+                                                ring.stream()
+                                                    .map(
+                                                        coordinates ->
+                                                            new IntXY(
+                                                                coordinates.getFirst().intValue(),
+                                                                coordinates.getLast().intValue()))
+                                                    .toList())
+                                        .toList())
                             .toList();
                   }
                   var originalImage = bucketComponent.download(fileKey);
-                  return filePolygonDrawer.apply(coordinatesPixel, WHITE, originalImage);
+                  return filePolygonDrawer.apply(
+                      multiPolygonPixelCoordinates, WHITE, originalImage);
                 })
             .toList();
 
@@ -127,14 +136,13 @@ public class TileExtendedImageRequestedService implements Consumer<TileExtendedI
     extendedImageFile.delete();
   }
 
-  private static List<IntXY> getBlurAllAreaCoordinates() {
-    List<IntXY> coordinatesPixel;
-    coordinatesPixel =
+  private static List<List<List<IntXY>>> getBlurAllAreaCoordinates() {
+    return List.of(
         List.of(
-            new IntXY(0, 0),
-            new IntXY(0, DEFAULT_TILE_SIZE),
-            new IntXY(DEFAULT_TILE_SIZE, DEFAULT_TILE_SIZE),
-            new IntXY(DEFAULT_TILE_SIZE, 0));
-    return coordinatesPixel;
+            List.of(
+                new IntXY(0, 0),
+                new IntXY(0, DEFAULT_TILE_SIZE),
+                new IntXY(DEFAULT_TILE_SIZE, DEFAULT_TILE_SIZE),
+                new IntXY(DEFAULT_TILE_SIZE, 0))));
   }
 }
