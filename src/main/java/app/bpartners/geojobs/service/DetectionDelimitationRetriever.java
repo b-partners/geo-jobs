@@ -90,44 +90,34 @@ public class DetectionDelimitationRetriever implements Consumer<Detection> {
                           zoom,
                           properties,
                           geometryConverter.retrieveNearestRoofMultiPolygon(point));
-                  return new FeatureWithDelimitation(
-                      toDomainFeature(providedFeature), List.of(multiPolygonFromPointDomain));
+                  return List.of(
+                      new FeatureWithDelimitation(
+                          toDomainFeature(providedFeature), List.of(multiPolygonFromPointDomain)));
                 }
 
                 case Polygon providedPolygon -> {
                   var polygonList = providedPolygon.getCoordinates();
-                  return retrieveFeatureWithDelimitation(providedFeature, zoom, polygonList);
+                  return List.of(
+                      retrieveFeatureWithDelimitation(providedFeature, zoom, polygonList));
                 }
 
                 case MultiPolygon providedMultiPolygon -> {
-                  var polygonList = getPolygonFromProvidedMultiPolygon(providedMultiPolygon);
-                  return retrieveFeatureWithDelimitation(providedFeature, zoom, polygonList);
+                  return providedMultiPolygon.getCoordinates().stream()
+                      .map(
+                          polygonList ->
+                              retrieveFeatureWithDelimitation(providedFeature, zoom, polygonList))
+                      .toList();
                 }
                 default ->
                     throw new IllegalStateException("Unexpected geometry type: " + geometryType);
               }
             })
+        .flatMap(List::stream)
         .toList();
-  }
-
-  private List<List<List<BigDecimal>>> getPolygonFromProvidedMultiPolygon(
-      MultiPolygon providedMultiPolygon) {
-    var multiPolygonCoordinates = providedMultiPolygon.getCoordinates();
-    if (multiPolygonCoordinates == null || multiPolygonCoordinates.size() != 1) {
-      throw new UnsupportedOperationException(
-          "Only one polygon allowed for retrieving delimitation retriever,"
-              + " otherwise actual is null, empty or more than one polygon");
-    }
-    return multiPolygonCoordinates.getFirst();
   }
 
   private FeatureWithDelimitation retrieveFeatureWithDelimitation(
       Feature providedFeature, int zoom, List<List<List<BigDecimal>>> polygonList) {
-    if (polygonList == null || polygonList.size() != 1) {
-      throw new UnsupportedOperationException(
-          "Only one polygon allowed for retrieving delimitation retriever,"
-              + " otherwise actual is null, empty or more than one polygon");
-    }
     var polygonCoordinates = polygonList.getFirst();
     var roofMultiPolygonsInsideProvidedPolygon =
         geometryConverter.retrieveRoofPolygonsFrom(polygonCoordinates).stream()
