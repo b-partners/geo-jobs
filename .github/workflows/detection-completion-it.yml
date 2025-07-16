@@ -1,6 +1,9 @@
 name: Detection completion verification IT
 
-on: [ ]
+on:
+  schedule:
+    - cron: '10 * * * *'
+  workflow_dispatch:
 
 env:
   API_URL: ${{ secrets.DETECTION_API_URL }}
