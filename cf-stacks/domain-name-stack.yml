@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: geo-jobs-tuita - Domain name
+Description: geo-jobs - Domain name
 
 Parameters:
   DomainName:
