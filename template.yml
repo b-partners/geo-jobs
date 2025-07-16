@@ -85,7 +85,7 @@ Resources:
           Properties:
             Queue: !Sub '{{resolve:ssm:/geo-jobs/${Env}/1/sqs/mailbox-queue-arn}}'
             BatchSize: 1
-      ReservedConcurrentExecutions: 10
+      ReservedConcurrentExecutions: 100
 
   WorkerFunction2:
     Type: AWS::Serverless::Function
@@ -100,7 +100,7 @@ Resources:
           Properties:
             Queue: !Sub '{{resolve:ssm:/geo-jobs/${Env}/2/sqs/mailbox-queue-arn}}'
             BatchSize: 1
-      ReservedConcurrentExecutions: 10
+      ReservedConcurrentExecutions: 100
 
   ApiUrlSSM:
     Type: AWS::SSM::Parameter
