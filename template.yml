@@ -28,7 +28,7 @@ Globals:
         AWS_EVENTBRIDGE_BUS: !Sub '{{resolve:ssm:/geo-jobs/${Env}/eventbridge/bus-name}}'
         AWS_EVENT_STACK_1_SQS_QUEUE_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/1/sqs/mailbox-queue-url}}'
         AWS_EVENT_STACK_2_SQS_QUEUE_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/2/sqs/mailbox-queue-url}}'
-        
+        AWS_EVENT_STACK_3_SQS_QUEUE_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/3/sqs/mailbox-queue-url}}'
         
         SENTRY_DSN: !Sub '{{resolve:ssm:/geo-jobs/sentry/dsn}}'
         SENTRY_ENVIRONMENT: !Ref Env
@@ -101,6 +101,21 @@ Resources:
             Queue: !Sub '{{resolve:ssm:/geo-jobs/${Env}/2/sqs/mailbox-queue-arn}}'
             BatchSize: 1
       ReservedConcurrentExecutions: 100
+
+  WorkerFunction3:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.bpartners.geojobs.handler.MailboxEventHandler::handleRequest
+      MemorySize: 1024
+      Timeout: 900 #note(sqs-visibility)
+      Role: !Sub '{{resolve:ssm:/geo-jobs/${Env}/execution/role-arn}}'
+      Events:
+        AllEvents:
+          Type: SQS
+          Properties:
+            Queue: !Sub '{{resolve:ssm:/geo-jobs/${Env}/3/sqs/mailbox-queue-arn}}'
+            BatchSize: 1
+      ReservedConcurrentExecutions: 10
 
   ApiUrlSSM:
     Type: AWS::SSM::Parameter
