@@ -1,12 +1,16 @@
 package app.bpartners.geojobs.endpoint.rest.controller.mapper;
 
+import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
 import static app.bpartners.geojobs.endpoint.rest.model.CreateZoneTilingJob.ZoomLevelEnum.fromValue;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
+import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.HOUSES_0;
+import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.model.CreateZoneTilingJob;
+import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.repository.model.ArcgisImageZoom;
 import app.bpartners.geojobs.repository.model.Parcel;
@@ -14,7 +18,12 @@ import app.bpartners.geojobs.repository.model.ParcelTask;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
+import app.bpartners.geojobs.service.DetectionProvidedZoneUnifier;
 import app.bpartners.geojobs.service.ParcelService;
+import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import app.bpartners.geojobs.service.tiling.TileFinder;
+import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -25,6 +34,9 @@ public class ZoneTilingJobMapper {
   private final ParcelService parcelService;
   private final StatusMapper<JobStatus> statusMapper;
   private final ZoomMapper zoomMapper;
+  private final GeometryConverter geometryConverter;
+  private final DetectionProvidedZoneUnifier detectionProvidedZoneUnifier;
+  private final TileFinder tileFinder;
 
   public ZoneTilingJob toDomain(CreateZoneTilingJob rest, Boolean isRooferMade) {
     var generatedId = randomUUID();
@@ -99,16 +111,16 @@ public class ZoneTilingJobMapper {
   public CreateZoneTilingJob from(Detection detection) {
     var overallConfiguration = detection.getGeoServerProperties();
     var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
-    var finalMultiPolygonGeoJsonZone = detection.getMultiPolygonGeoJsonZone();
+    var finalMultiPolygonGeoJsonZone = getMultiPolygonGeoJsonZone(detection);
     var finalGeoJsonZoom =
         finalMultiPolygonGeoJsonZone.getFirst().getProperties().get("zoom") == null
-            ? ArcgisImageZoom.HOUSES_0.getZoomLevel()
+            ? HOUSES_0.getZoomLevel()
             : (Integer) finalMultiPolygonGeoJsonZone.getFirst().getProperties().get("zoom");
     var zoom =
         (providedGeoJsonZone == null || providedGeoJsonZone.isEmpty())
             ? finalGeoJsonZoom
             : providedGeoJsonZone.getFirst().getProperties().get("zoom") == null
-                ? ArcgisImageZoom.HOUSES_0.getZoomLevel()
+                ? HOUSES_0.getZoomLevel()
                 : (Integer) providedGeoJsonZone.getFirst().getProperties().get("zoom");
     return new CreateZoneTilingJob()
         .emailReceiver(detection.getEmailReceiver())
@@ -117,5 +129,43 @@ public class ZoneTilingJobMapper {
         .geoServerUrl(overallConfiguration.getGeoServerUrl())
         .features(finalMultiPolygonGeoJsonZone)
         .zoomLevel(fromValue(ArcgisImageZoom.fromZoomLevel(zoom).name()));
+  }
+
+  private List<Feature> getMultiPolygonGeoJsonZone(Detection detection) {
+    var zoneToProcess = detectionProvidedZoneUnifier.applyMultiGeoJson(detection);
+    int zoomLevel = HOUSES_0.getZoomLevel();
+    var surroundingTileCoordinates =
+        tileFinder.getSurroundingTiles(
+            BigDecimal.valueOf(zoneToProcess.getCentroid().getCoordinate().x),
+            BigDecimal.valueOf(zoneToProcess.getCoordinate().y),
+            zoomLevel);
+    var tileMultiPolygonList =
+        surroundingTileCoordinates.stream()
+            .map(
+                coor ->
+                    geometryConverter.getMultiPolygonFromTile(
+                        coor.getX(), coor.getY(), coor.getZ()))
+            .toList();
+    var surroudingMultiPolygon =
+        tileMultiPolygonList.stream()
+            .reduce(unifyMultiPolygon())
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "Cannot unify multi polygon from tiles to process ZTJ"));
+    if (!zoneToProcess.contains(surroudingMultiPolygon)
+        && zoneToProcess.intersects(zoneToProcess)) {
+      return tileMultiPolygonList.stream()
+          .map(
+              multiPolygon ->
+                  toRestFeature(
+                      geometryConverter.toFeature(
+                          randomUUID().toString(),
+                          zoomLevel,
+                          new HashMap<String, Object>(),
+                          multiPolygon)))
+          .toList();
+    }
+    return detection.getMultiPolygonGeoJsonZone();
   }
 }
