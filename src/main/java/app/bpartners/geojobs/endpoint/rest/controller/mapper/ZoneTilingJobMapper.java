@@ -26,8 +26,10 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @AllArgsConstructor
 public class ZoneTilingJobMapper {
@@ -153,6 +155,10 @@ public class ZoneTilingJobMapper {
                 () ->
                     new IllegalStateException(
                         "Cannot unify multi polygon from tiles to process ZTJ"));
+    log.info("debug zoneToProcess {}", geometryConverter.writeGeometryAsString(zoneToProcess));
+    log.info(
+        "debug surrounding MultiPolygon {}",
+        geometryConverter.writeGeometryAsString(surroudingMultiPolygon));
     if (!zoneToProcess.contains(surroudingMultiPolygon)
         && zoneToProcess.intersects(zoneToProcess)) {
       return tileMultiPolygonList.stream()
