@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
 
+import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.util.List;
@@ -23,13 +24,21 @@ public class DetectionProvidedZoneUnifier implements Function<Detection, MultiPo
       return geometryFactory.createMultiPolygon(new Polygon[0]);
     }
     var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
-    if (providedGeoJsonZone == null) {
+    return apply(detection.getId(), providedGeoJsonZone);
+  }
+
+  public MultiPolygon applyMultiGeoJson(Detection detection) {
+    return apply(detection.getId(), detection.getMultiPolygonGeoJsonZone());
+  }
+
+  private MultiPolygon apply(String detectionId, List<Feature> featureList) {
+    if (featureList == null) {
       return geometryFactory.createMultiPolygon(new Polygon[0]);
     }
-    if (providedGeoJsonZone.isEmpty()) {
+    if (featureList.isEmpty()) {
       return geometryFactory.createMultiPolygon(new Polygon[0]);
     }
-    return providedGeoJsonZone.stream()
+    return featureList.stream()
         .map(
             feature -> {
               var geometryType = feature.getGeometry().getActualInstance();
@@ -51,6 +60,6 @@ public class DetectionProvidedZoneUnifier implements Function<Detection, MultiPo
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
-                    "Unable to unify provided zone for detection.id : " + detection.getId()));
+                    "Unable to unify provided zone for detection.id : " + detectionId));
   }
 }
