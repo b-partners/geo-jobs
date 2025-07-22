@@ -31,8 +31,7 @@ public class DetectionFeaturesResultImageRetriever implements Function<Detection
   public List<Feature> apply(Detection detection) {
     var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
     var splitPolygonGeoJsonZone = detection.getSplitPolygonGeoJsonZone();
-    if (providedGeoJsonZone == null
-        && (splitPolygonGeoJsonZone == null || splitPolygonGeoJsonZone.isEmpty())) {
+    if (providedGeoJsonZone == null && splitPolygonGeoJsonZone == null) {
       return null;
     }
     if (!detection.isSucceeded() && !detection.isSynchronous()) {
