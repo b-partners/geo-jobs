@@ -1,7 +1,10 @@
 package app.bpartners.geojobs.service.geojson;
 
+import static app.bpartners.geojobs.endpoint.rest.model.Feature.TypeEnum.FEATURE;
 import static app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.MULTI_POLYGON;
+import static app.bpartners.geojobs.endpoint.rest.model.Polygon.TypeEnum.POLYGON;
 
+import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.service.GeometryTools;
@@ -60,6 +63,26 @@ public class GeometryConverter {
                 .build())
         .properties(new HashMap<>(properties))
         .build();
+  }
+
+  public app.bpartners.geojobs.endpoint.rest.model.Feature toRestFeature(
+      org.locationtech.jts.geom.Polygon jtsPolygon) {
+    return new app.bpartners.geojobs.endpoint.rest.model.Feature()
+        .type(FEATURE)
+        .properties(new HashMap<>())
+        .geometry(
+            new FeatureGeometry(
+                new app.bpartners.geojobs.endpoint.rest.model.Polygon()
+                    .type(POLYGON)
+                    .coordinates(
+                        List.of(
+                            Arrays.stream(jtsPolygon.getCoordinates()).toList().stream()
+                                .map(
+                                    coordinate ->
+                                        List.of(
+                                            BigDecimal.valueOf(coordinate.getX()),
+                                            BigDecimal.valueOf(coordinate.getY())))
+                                .toList()))));
   }
 
   public MultiPolygon retrieveNearestRoofMultiPolygon(

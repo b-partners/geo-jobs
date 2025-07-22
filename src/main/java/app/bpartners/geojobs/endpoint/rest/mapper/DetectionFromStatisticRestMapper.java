@@ -70,7 +70,8 @@ public class DetectionFromStatisticRestMapper
                     || detection.getPolygonRoofDelimitation().isEmpty()
                 ? null
                 : new RoofDelimiter().polygon(detection.getPolygonRoofDelimitation()))
-        .geoJsonOutput(detection.isOutputZipped() ? ZIP : GEO_JSON);
+        .geoJsonOutput(detection.isOutputZipped() ? ZIP : GEO_JSON)
+        .needsImageOutput(detection.needsImageOutput());
   }
 
   private List<Feature> hideUselessRestProperties(List<Feature> features) {

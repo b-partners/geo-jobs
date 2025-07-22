@@ -1730,6 +1730,9 @@ components:
             Optional. If so, must shape file or excel file or image file through its specific endpoint.
         geoJsonOutput:
           $ref: '#/components/schemas/GeoJsonOutput'
+        needsImageOutput:
+          type: boolean
+          default: false
     DetectionStep:
       properties:
         name:

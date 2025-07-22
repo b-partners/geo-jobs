@@ -58,6 +58,9 @@ public class Detection implements Serializable {
   @Getter(AccessLevel.NONE)
   private Boolean isOutputZipped;
 
+  @Getter(AccessLevel.NONE)
+  private boolean needsImageOutput = false;
+
   @JoinColumn(referencedColumnName = "id", name = "community_owner_id")
   private String communityOwnerId;
 
@@ -83,6 +86,14 @@ public class Detection implements Serializable {
 
   @JdbcTypeCode(JSON)
   @Getter(AccessLevel.NONE)
+  private Feature polygonGeoJsonZone;
+
+  @JdbcTypeCode(JSON)
+  @Getter(AccessLevel.NONE)
+  private List<Feature> splitPolygonGeoJsonZone;
+
+  @JdbcTypeCode(JSON)
+  @Getter(AccessLevel.NONE)
   private HashMap<String, Feature> pointDelimitation;
 
   @JdbcTypeCode(JSON)
@@ -98,6 +109,16 @@ public class Detection implements Serializable {
     return isOutputZipped != null && isOutputZipped;
   }
 
+  public boolean needsImageOutput() {
+    return needsImageOutput;
+  }
+
+  public List<app.bpartners.geojobs.endpoint.rest.model.Feature> getSplitPolygonGeoJsonZone() {
+    return splitPolygonGeoJsonZone == null
+        ? null
+        : splitPolygonGeoJsonZone.stream().map(FeatureMapper::toRestFeature).toList();
+  }
+
   public List<app.bpartners.geojobs.endpoint.rest.model.Feature> getProvidedGeoJsonZone() {
     return providedGeoJsonZone == null
         ? null
@@ -108,6 +129,10 @@ public class Detection implements Serializable {
     return multiPolygonGeoJsonZone == null
         ? null
         : multiPolygonGeoJsonZone.stream().map(FeatureMapper::toRestFeature).toList();
+  }
+
+  public app.bpartners.geojobs.endpoint.rest.model.Feature getPolygonGeoJsonZone() {
+    return polygonGeoJsonZone == null ? null : toRestFeature(polygonGeoJsonZone);
   }
 
   public HashMap<

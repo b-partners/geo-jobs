@@ -2,6 +2,7 @@ package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toDomainFeature;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.*;
+import static app.bpartners.geojobs.endpoint.rest.model.Feature.TypeEnum.FEATURE;
 import static app.bpartners.geojobs.endpoint.rest.model.GeoJsonOutput.ZIP;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
@@ -470,6 +471,7 @@ public class ZoneService {
     var domainProvidedGeoJsonZone = getActualProvidedGeoJson(restProvidedGeoJsonZone);
     var multiPolygonGeoJsonZoneToBeProcessed =
         extractDetectionMultiPolygonGeoJson(restProvidedGeoJsonZone, domainProvidedGeoJsonZone);
+    var polygonGeoJsonZoneToBeProcessed = extractDetectionPolygonGeoJson(restProvidedGeoJsonZone);
     var finalGeoServerProperties =
         extractGeoServerProperties(
             createDetection.getGeoServerProperties(),
@@ -487,10 +489,13 @@ public class ZoneService {
         .geoServerProperties(finalGeoServerProperties)
         .providedGeoJsonZone(domainProvidedGeoJsonZone)
         .multiPolygonGeoJsonZone(multiPolygonGeoJsonZoneToBeProcessed)
+        .polygonGeoJsonZone(polygonGeoJsonZoneToBeProcessed)
         .detectableObjectModel(detectableObjectModel)
         .isOutputZipped(
             createDetection.getGeoJsonOutput() != null
                 && ZIP.equals(createDetection.getGeoJsonOutput()))
+        .needsImageOutput(
+            createDetection.getNeedsImageOutput() != null && createDetection.getNeedsImageOutput())
         .build();
   }
 
@@ -505,6 +510,7 @@ public class ZoneService {
     var domainProvidedGeoJsonZone = getActualProvidedGeoJson(restProvidedGeoJsonZone);
     var multiPolygonGeoJsonZoneToBeProcessed =
         extractDetectionMultiPolygonGeoJson(restProvidedGeoJsonZone, domainProvidedGeoJsonZone);
+    var polygonGeoJsonZoneToBeProcessed = extractDetectionPolygonGeoJson(restProvidedGeoJsonZone);
     var finalGeoServerProperties =
         extractGeoServerProperties(
             createDetection.getGeoServerProperties(),
@@ -522,10 +528,13 @@ public class ZoneService {
         .geoServerProperties(finalGeoServerProperties)
         .providedGeoJsonZone(domainProvidedGeoJsonZone)
         .multiPolygonGeoJsonZone(multiPolygonGeoJsonZoneToBeProcessed)
+        .polygonGeoJsonZone(polygonGeoJsonZoneToBeProcessed)
         .detectableObjectModel(detectableObjectModel)
         .isOutputZipped(
             createDetection.getGeoJsonOutput() != null
                 && ZIP.equals(createDetection.getGeoJsonOutput()))
+        .needsImageOutput(
+            createDetection.getNeedsImageOutput() != null && createDetection.getNeedsImageOutput())
         .build();
   }
 
@@ -555,6 +564,63 @@ public class ZoneService {
           geoServerConfiguration.defaultGeoServerProperties(layers.getFirst());
     }
     return finalGeoServerProperties;
+  }
+
+  private app.bpartners.geojobs.repository.model.Feature extractDetectionPolygonGeoJson(
+      List<Feature> providedGeoJsonZone) {
+    var providedGeoJsonHasPolygonOnly =
+        featureTypeChecker.apply(providedGeoJsonZone, Polygon.class);
+    var featurePolygonFromMultiPolygon =
+        retrieveFeaturePolygonFromMultiPolygon(providedGeoJsonZone);
+    if (featurePolygonFromMultiPolygon != null) return featurePolygonFromMultiPolygon;
+    if (!providedGeoJsonHasPolygonOnly) {
+      return null;
+    }
+    if (providedGeoJsonZone.size() != 1) {
+      return null;
+    }
+    return toDomainFeature(providedGeoJsonZone.getFirst());
+  }
+
+  private app.bpartners.geojobs.repository.model.Feature retrieveFeaturePolygonFromMultiPolygon(
+      List<Feature> providedGeoJsonZone) {
+    if (providedGeoJsonZone.size() == 1
+        && featureTypeChecker.apply(providedGeoJsonZone, MultiPolygon.class)
+        && providedGeoJsonZone.getFirst().getGeometry().getMultiPolygon().getCoordinates().size()
+            == 1
+        && providedGeoJsonZone
+                .getFirst()
+                .getGeometry()
+                .getMultiPolygon()
+                .getCoordinates()
+                .getFirst()
+                .size()
+            == 1
+        && providedGeoJsonZone
+                .getFirst()
+                .getGeometry()
+                .getMultiPolygon()
+                .getCoordinates()
+                .getFirst()
+                .getFirst()
+                .size()
+            >= 4) {
+      return toDomainFeature(
+          new Feature()
+              .type(FEATURE)
+              .properties(providedGeoJsonZone.getFirst().getProperties())
+              .geometry(
+                  new FeatureGeometry(
+                      new Polygon()
+                          .coordinates(
+                              providedGeoJsonZone
+                                  .getFirst()
+                                  .getGeometry()
+                                  .getMultiPolygon()
+                                  .getCoordinates()
+                                  .getFirst()))));
+    }
+    return null;
   }
 
   private List<app.bpartners.geojobs.repository.model.Feature> extractDetectionMultiPolygonGeoJson(
