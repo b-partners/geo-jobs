@@ -10,8 +10,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class GeometrySquareMeterArea implements Function<Geometry, Double> {
 
-  private static final CoordinateReferenceSystem WGS84;
-  private static final CoordinateReferenceSystem LAMBERT_93;
+  public static final CoordinateReferenceSystem WGS84;
+  public static final CoordinateReferenceSystem LAMBERT_93;
 
   static {
     try {
