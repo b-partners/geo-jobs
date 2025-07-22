@@ -2,6 +2,7 @@ package app.bpartners.geojobs.service.lidar;
 
 import static app.bpartners.geojobs.model.geometry.polygon.PolygonReprojection.EPSG_2154;
 import static app.bpartners.geojobs.model.geometry.polygon.PolygonReprojection.EPSG_4326;
+import static java.util.concurrent.Executors.newFixedThreadPool;
 
 import app.bpartners.geojobs.model.geometry.GeometryFactory;
 import app.bpartners.geojobs.model.geometry.polygon.PolygonReprojection;
@@ -11,6 +12,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.function.BiFunction;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Polygon;
@@ -29,15 +32,9 @@ public class LidarPolygonMetricProcessor
   @Override
   public LidarPolygonMetric apply(Polygon polygon, Set<File> lidarFiles) {
     var reprojectedPolygon = this.polygonReprojection.apply(polygon);
-    var polygonPoints = new ArrayList<LASPoint>();
-    var solPoints = new ArrayList<LASPoint>();
-
-    for (var lidarFile : lidarFiles) {
-      var lasReader = new LASReader(lidarFile);
-      var polygonAndSolPoints = getPolygonPointsAndSolPoints(reprojectedPolygon, lasReader);
-      polygonPoints.addAll(polygonAndSolPoints.polygonPoints());
-      solPoints.addAll(polygonAndSolPoints.solPoints());
-    }
+    var allPoints = readLidarPointsInParallel(reprojectedPolygon, lidarFiles);
+    var polygonPoints = allPoints.polygonPoints();
+    var solPoints = allPoints.solPoints();
 
     if (polygonPoints.size() < 2 || solPoints.size() < 2) {
       return new LidarPolygonMetric(polygon, 0, 0);
@@ -51,6 +48,39 @@ public class LidarPolygonMetricProcessor
     var slopeInDegree = calculateSlopeInDegrees(minZPoint, maxZPoint);
     var heightInMeter = calculateHeightInMeters(solPoints, minZPoint);
     return new LidarPolygonMetric(polygon, slopeInDegree, heightInMeter);
+  }
+
+  private PolygonPointsAndSolPoints readLidarPointsInParallel(
+      Polygon reprojectedPolygon, Set<File> lidarFiles) {
+    var polygonPoints = new ArrayList<LASPoint>();
+    var solPoints = new ArrayList<LASPoint>();
+
+    var executor =
+        newFixedThreadPool(Math.min(lidarFiles.size(), Runtime.getRuntime().availableProcessors()));
+    List<Future<PolygonPointsAndSolPoints>> futures = new ArrayList<>();
+
+    for (var lidarFile : lidarFiles) {
+      futures.add(
+          executor.submit(
+              () -> {
+                var lasReader = new LASReader(lidarFile);
+                return getPolygonPointsAndSolPoints(reprojectedPolygon, lasReader);
+              }));
+    }
+
+    try {
+      for (Future<PolygonPointsAndSolPoints> future : futures) {
+        var result = future.get();
+        polygonPoints.addAll(result.polygonPoints());
+        solPoints.addAll(result.solPoints());
+      }
+    } catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException("Error while reading a LIDAR file", e);
+    } finally {
+      executor.shutdown();
+    }
+
+    return new PolygonPointsAndSolPoints(polygonPoints, solPoints);
   }
 
   private static double calculateSlopeInDegrees(LASPoint minZPoint, LASPoint maxZPoint) {
