@@ -30,7 +30,9 @@ public class DetectionFeaturesResultImageRetriever implements Function<Detection
   @Override
   public List<Feature> apply(Detection detection) {
     var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
-    if (providedGeoJsonZone == null) {
+    var splitPolygonGeoJsonZone = detection.getSplitPolygonGeoJsonZone();
+    if (providedGeoJsonZone == null
+        && (splitPolygonGeoJsonZone == null || splitPolygonGeoJsonZone.isEmpty())) {
       return null;
     }
     if (!detection.isSucceeded() && !detection.isSynchronous()) {
@@ -46,14 +48,35 @@ public class DetectionFeaturesResultImageRetriever implements Function<Detection
       if (layer == null) {
         return providedGeoJsonZone;
       }
-      return retrieveFeatureImageFromBucket(providedGeoJsonZone, layer);
+      return retrieveFeatureImageFromBucket(
+          providedGeoJsonZone, splitPolygonGeoJsonZone, layer, detection.needsImageOutput());
     }
     return providedGeoJsonZone;
   }
 
   private ArrayList<Feature> retrieveFeatureImageFromBucket(
-      List<Feature> providedGeoJsonZone, String layer) {
-    var updatedGeoJson = new ArrayList<>(providedGeoJsonZone);
+      List<Feature> providedGeoJsonZone,
+      List<Feature> splitPolygonGeoJsonZone,
+      String layer,
+      boolean detectionNeedsImageOutput) {
+    ArrayList<Feature> updatedGeoJson;
+    if (splitPolygonGeoJsonZone != null
+        && !splitPolygonGeoJsonZone.isEmpty()
+        && detectionNeedsImageOutput) {
+      updatedGeoJson = new ArrayList<>(splitPolygonGeoJsonZone);
+      var providedFeature = providedGeoJsonZone.getFirst();
+      if (providedFeature.getProperties() == null) {
+        HashMap<String, Object> properties = new HashMap<>();
+        properties.put("description", "Original zone provided");
+        providedFeature.setProperties(properties);
+      } else {
+        providedFeature.getProperties().put("description", "Original zone provided");
+      }
+      updatedGeoJson.addFirst(providedFeature);
+    } else {
+      updatedGeoJson = new ArrayList<>(providedGeoJsonZone);
+    }
+
     updatedGeoJson.forEach(
         feature -> {
           var geometryType = feature.getGeometry().getActualInstance();
