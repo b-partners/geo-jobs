@@ -61,7 +61,7 @@ public class Detection implements Serializable {
   @JoinColumn(referencedColumnName = "id", name = "community_owner_id")
   private String communityOwnerId;
 
-  // TODO: save as entity as it map now the domain detectableObject
+  // TODO: save as entity
   @JdbcTypeCode(JSON)
   private List<DetectableObjectConfiguration> detectableObjectConfigurations;
 
