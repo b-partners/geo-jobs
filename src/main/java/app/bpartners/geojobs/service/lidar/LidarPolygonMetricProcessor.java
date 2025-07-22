@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.lidar;
 
+import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.model.geometry.polygon.PolygonReprojection.EPSG_2154;
 import static app.bpartners.geojobs.model.geometry.polygon.PolygonReprojection.EPSG_4326;
 import static java.util.concurrent.Executors.newFixedThreadPool;
@@ -15,11 +16,17 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.BiFunction;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Polygon;
 
+import lombok.extern.slf4j.Slf4j;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.Polygon;
+import org.springframework.stereotype.Component;
+
+@Slf4j
+@Component
 public class LidarPolygonMetricProcessor
-    implements BiFunction<Polygon, Set<File>, LidarPolygonMetricProcessor.LidarPolygonMetric> {
+    implements BiFunction<Polygon, Set<File>, RoofDimension> {
   private static final int BUFFER_SOL_METERS = 2;
   private static final int LIDAR_SOL_CLASSE = 2;
   private static final int LIDAR_BATIMENT_CLASSE = 6;
@@ -30,14 +37,16 @@ public class LidarPolygonMetricProcessor
   }
 
   @Override
-  public LidarPolygonMetric apply(Polygon polygon, Set<File> lidarFiles) {
-    var reprojectedPolygon = this.polygonReprojection.apply(polygon);
-    var allPoints = readLidarPointsInParallel(reprojectedPolygon, lidarFiles);
+  public RoofDimension apply(Polygon roofGeometry, Set<File> lidarFiles) {
+    var projectedRoof = this.polygonReprojection.apply(roofGeometry);
+    var minZ = Double.MAX_VALUE;
+    var maxZ = Double.MIN_VALUE;
+    var allPoints = readLidarPointsInParallel(projectedRoof, lidarFiles);
     var polygonPoints = allPoints.polygonPoints();
     var solPoints = allPoints.solPoints();
 
     if (polygonPoints.size() < 2 || solPoints.size() < 2) {
-      return new LidarPolygonMetric(polygon, 0, 0);
+      return new RoofDimension(roofGeometry, 0, 0);
     }
 
     var minZPoint =
@@ -47,11 +56,11 @@ public class LidarPolygonMetricProcessor
 
     var slopeInDegree = calculateSlopeInDegrees(minZPoint, maxZPoint);
     var heightInMeter = calculateHeightInMeters(solPoints, minZPoint);
-    return new LidarPolygonMetric(polygon, slopeInDegree, heightInMeter);
+    return new RoofDimension(roofGeometry, slopeInDegree, heightInMeter);
   }
 
   private PolygonPointsAndSolPoints readLidarPointsInParallel(
-      Polygon reprojectedPolygon, Set<File> lidarFiles) {
+          Geometry reprojectedPolygon, Set<File> lidarFiles) {
     var polygonPoints = new ArrayList<LASPoint>();
     var solPoints = new ArrayList<LASPoint>();
 
@@ -102,16 +111,18 @@ public class LidarPolygonMetricProcessor
     return round2(minZPoint.getZ() - meanSolZ);
   }
 
-  private static PolygonPointsAndSolPoints getPolygonPointsAndSolPoints(
-      Polygon polygon, LASReader lasReader) {
+  private PolygonPointsAndSolPoints getPolygonPointsAndSolPoints(
+          Geometry polygon, LASReader lasReader) {
     var solGeometry = polygon.buffer(BUFFER_SOL_METERS);
-    var geometryFactory = GeometryFactory.geometryFactory;
     var solPoints = new ArrayList<LASPoint>();
     var polygonPoints = new ArrayList<LASPoint>();
 
     for (var point : lasReader.getPoints()) {
       int pointClassification = point.getClassification();
-      var geometryPoint = geometryFactory.createPoint(new Coordinate(point.getX(), point.getY()));
+      var trueX = point.getX() + lasReader.getHeader().getXScaleFactor() + lasReader.getHeader().getXOffset();
+      var trueY = point.getY() + lasReader.getHeader().getYScaleFactor() + lasReader.getHeader().getYOffset();
+
+      var geometryPoint = geometryFactory.createPoint(new Coordinate(trueX, trueY));
 
       if (pointClassification == LIDAR_BATIMENT_CLASSE) {
         if (polygon.contains(geometryPoint)) {
@@ -136,6 +147,4 @@ public class LidarPolygonMetricProcessor
 
   private record PolygonPointsAndSolPoints(
       List<LASPoint> polygonPoints, List<LASPoint> solPoints) {}
-
-  public record LidarPolygonMetric(Polygon polygon, double slopeInDegrees, double heightInMeters) {}
 }
