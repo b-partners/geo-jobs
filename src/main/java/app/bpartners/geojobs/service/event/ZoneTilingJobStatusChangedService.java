@@ -86,15 +86,34 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
 
         detectionDelimitationRetriever.accept(savedDetection);
 
-        savedDetection
-            .getProvidedGeoJsonZone()
-            .forEach(
-                providedFeature ->
-                    pointExtendedImageRequest.accept(
-                        savedDetection,
-                        providedFeature,
-                        savedDetection.getGeoServerProperties().getGeoServerParameter().getLayers(),
-                        false));
+        if (savedDetection.getSplitPolygonGeoJsonZone() != null
+            && !savedDetection.getSplitPolygonGeoJsonZone().isEmpty()) {
+          savedDetection
+              .getSplitPolygonGeoJsonZone()
+              .forEach(
+                  splitFeature ->
+                      pointExtendedImageRequest.accept(
+                          savedDetection,
+                          splitFeature,
+                          savedDetection
+                              .getGeoServerProperties()
+                              .getGeoServerParameter()
+                              .getLayers(),
+                          false));
+        } else {
+          savedDetection
+              .getProvidedGeoJsonZone()
+              .forEach(
+                  providedFeature ->
+                      pointExtendedImageRequest.accept(
+                          savedDetection,
+                          providedFeature,
+                          savedDetection
+                              .getGeoServerProperties()
+                              .getGeoServerParameter()
+                              .getLayers(),
+                          false));
+        }
       }
       tilingFinishedMailer.accept(ztj);
       log.info("Finished, mail sent, ztj=" + ztj);
