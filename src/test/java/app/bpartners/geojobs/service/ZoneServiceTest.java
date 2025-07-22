@@ -209,7 +209,7 @@ class ZoneServiceTest {
     when(communityAuthRepositoryMock.findById(any()))
         .thenReturn(Optional.of(CommunityAuthorization.builder().apiKey(e2ApiKey).build()));
     when(geoJsonConversionJobRepositoryMock.findByZoneDetectionJobId(any())).thenReturn(List.of());
-    when(featureMapperMock.toDomain(any())).thenReturn(geometryFactory.createPolygon());
+    when(featureMapperMock.toDomainPolygon(any())).thenReturn(geometryFactory.createPolygon());
     when(featureMapperMock.toRest(any(), any(Integer.class), any()))
         .thenReturn(featureCreator.defaultFeatures().getFirst());
 

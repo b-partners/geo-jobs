@@ -29,7 +29,7 @@ public class FeatureMapper {
   private static final Logger log = LoggerFactory.getLogger(FeatureMapper.class);
   private final GeometryConverter geometryConverter;
 
-  public Parcel toDomain(
+  public Parcel toDomainPolygon(
       String parcelId, Feature rest, URL geoServerUrl, GeoServerParameter GeoServerParameter) {
     var id =
         Objects.requireNonNull(rest.getProperties()).get("id") == null
@@ -151,7 +151,7 @@ public class FeatureMapper {
     };
   }
 
-  public org.locationtech.jts.geom.Polygon toDomain(Feature feature) {
+  public org.locationtech.jts.geom.Geometry toDomainGeometry(Feature feature) {
     var geometryType = feature.getGeometry().getActualInstance();
     switch (geometryType) {
       case Point ignored -> throw new NotImplementedException("Point geometry type not supported");
@@ -166,15 +166,33 @@ public class FeatureMapper {
       case MultiPolygon multiPolygon -> {
         var multiPolygonCoordinates = multiPolygon.getCoordinates();
         if (multiPolygonCoordinates.size() != 1) {
-          log.info("MultiPolygon with more than one polygon not supported, first element used");
+          log.info(
+              "MultiPolygon {} with more than one polygon not supported, first element used",
+              multiPolygonCoordinates);
         }
-        var polygonCoordinates = multiPolygonCoordinates.getFirst();
-        if (polygonCoordinates.size() != 1) {
-          log.info("Polygon with more than one ring not supported, first element used");
-        }
-        return geometryConverter.convertToPolygon(polygonCoordinates.getFirst());
+        return geometryConverter.apply(multiPolygonCoordinates);
       }
       default -> throw new NotImplementedException("Unknown geometry type " + geometryType);
+    }
+  }
+
+  public org.locationtech.jts.geom.Polygon toDomainPolygon(Feature feature) {
+    var geometry = toDomainGeometry(feature);
+    switch (geometry) {
+      case org.locationtech.jts.geom.Polygon polygon -> {
+        return polygon;
+      }
+      case org.locationtech.jts.geom.MultiPolygon multiPolygon -> {
+        if (multiPolygon.getNumGeometries() > 0) {
+          log.info(
+              "MultiPolygon {} with more than one polygon not supported, first element used",
+              multiPolygon);
+        }
+        return (org.locationtech.jts.geom.Polygon) multiPolygon.getGeometryN(0);
+      }
+      default ->
+          throw new NotImplementedException(
+              "Not supported geometry to convert to polygon " + geometry);
     }
   }
 
