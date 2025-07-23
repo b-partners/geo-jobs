@@ -27,6 +27,7 @@ public class DetectionProvidedZoneUnifier implements Function<Detection, MultiPo
       return geometryFactory.createMultiPolygon(new Polygon[0]);
     }
     var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
+    log.info("Provided geojson {}", providedGeoJsonZone);
     return apply(detection.getId(), providedGeoJsonZone);
   }
 
@@ -35,13 +36,13 @@ public class DetectionProvidedZoneUnifier implements Function<Detection, MultiPo
   }
 
   private MultiPolygon apply(String detectionId, List<Feature> featureList) {
+    log.info("Feature lists {} for detection.id {}", featureList, detectionId);
     if (featureList == null) {
       return geometryFactory.createMultiPolygon(new Polygon[0]);
     }
     if (featureList.isEmpty()) {
       return geometryFactory.createMultiPolygon(new Polygon[0]);
     }
-    log.info("Feature lists {} for detection.id {}", featureList, detectionId);
     return featureList.stream()
         .map(
             feature -> {
