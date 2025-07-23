@@ -20,8 +20,10 @@ import app.bpartners.geojobs.service.tiling.TileFinder;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TileExtendedImageRequestedService implements Consumer<TileExtendedImageRequested> {
@@ -42,6 +44,7 @@ public class TileExtendedImageRequestedService implements Consumer<TileExtendedI
     var longitude = event.getLongitude();
     var latitude = event.getLatitude();
     var detection = event.getDetection();
+    log.info("Provided geojson {}", detection.getProvidedGeoJsonZone());
     var latLonBackgroundInsideProvidedZone = detectionBackgroundRetriever.apply(detection);
     var providedZone = detectionProvidedZoneUnifier.apply(detection);
     var unifiedRoofMultiPolygon =
