@@ -24,10 +24,14 @@ public class GeometrySquareMeterArea implements Function<Geometry, Double> {
 
   @Override
   public Double apply(Geometry geometry) {
+    return project(geometry, WGS84, LAMBERT_93).getArea();
+  }
+
+  public Geometry project(Geometry geometry,
+                          CoordinateReferenceSystem source, CoordinateReferenceSystem target) {
     try {
-      var transform = CRS.findMathTransform(WGS84, LAMBERT_93, true);
-      Geometry projected = JTS.transform(geometry, transform);
-      return projected.getArea(); // en m²
+      var transform = CRS.findMathTransform(source, target, true);
+      return JTS.transform(geometry, transform);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
