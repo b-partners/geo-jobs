@@ -154,9 +154,6 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
                 List<PolygonObjectType> originalPolygonObjectTypes = tiledPolygon.polygons();
                 var projectedPolygonObjectTypes =
                     originalPolygonObjectTypes.stream()
-                        .filter(
-                            polygonObjectType ->
-                                !TOITURE_REVETEMENT.equals(polygonObjectType.objectType()))
                         .map(
                             polygonObjectType -> {
                               var projectedPolygonsToCompositeImage =

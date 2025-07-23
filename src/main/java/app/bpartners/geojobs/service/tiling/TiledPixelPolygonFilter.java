@@ -31,8 +31,7 @@ public class TiledPixelPolygonFilter {
                                     tiledPixelPolygon.tileX(),
                                     tiledPixelPolygon.tileY(),
                                     tiledPixelPolygon.zoom());
-                            return preparedMask.intersects(geoPolygon)
-                                && !TOITURE_REVETEMENT.equals(pixelPolygon.objectType());
+                            return preparedMask.intersects(geoPolygon);
                           })
                       .toList();
               return new TiledPixelPolygon(
