@@ -12,9 +12,11 @@ import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.util.List;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class DetectionBackgroundRetriever implements Function<Detection, MultiPolygon> {
@@ -28,6 +30,7 @@ public class DetectionBackgroundRetriever implements Function<Detection, MultiPo
           "Only detection using TOITURE model is supported for now, otherwise actual is "
               + detection.getDetectableObjectModel().getModelName());
     }
+    log.info("Provided geojson {}", detection.getProvidedGeoJsonZone());
     var unifiedProvidedZone = detectionProvidedZoneUnifier.apply(detection);
     var roofMultipolygon =
         detection.getFeatureWithDelimitations().stream()
