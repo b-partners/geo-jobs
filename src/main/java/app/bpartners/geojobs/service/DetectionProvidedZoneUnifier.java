@@ -43,6 +43,7 @@ public class DetectionProvidedZoneUnifier implements Function<Detection, MultiPo
     if (featureList.isEmpty()) {
       return geometryFactory.createMultiPolygon(new Polygon[0]);
     }
+    log.info("Feature lists {} for detection.id {}", featureList, detectionId);
     return featureList.stream()
         .map(
             feature -> {
