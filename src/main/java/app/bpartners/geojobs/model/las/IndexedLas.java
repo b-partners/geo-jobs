@@ -7,11 +7,13 @@ import com.github.mreutegg.laszip4j.LASReader;
 import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 
+@Slf4j
 public class IndexedLas {
 
   private final IndexedGeometries indexedGeometries;
@@ -25,12 +27,17 @@ public class IndexedLas {
 
     var lasReader = new LASReader(lasFile);
     var geometryFactory = new GeometryFactory();
-    lasReader
-        .getPoints()
-        .forEach(
-            lasPoint ->
-                jtsPoints.add(
-                    geometryFactory.createPoint(new Coordinate(lasPoint.getX(), lasPoint.getY()))));
+    var nbPoints = 0;
+    log.info("Reading lasPoints from: " + lasFile.getPath());
+    for (var lasPoint : lasReader.getPoints()) {
+      if (++nbPoints % 1_000_000 == 0) {
+        log.info("Number of lasPoints read: " + nbPoints);
+      }
+      int x = lasPoint.getX();
+      int y = lasPoint.getY();
+      jtsPoints.add(geometryFactory.createPoint(new Coordinate(x, y)));
+    }
+    log.info("Total number of lasPoints read: " + nbPoints);
 
     return new IndexedGeometries(jtsPoints);
   }
