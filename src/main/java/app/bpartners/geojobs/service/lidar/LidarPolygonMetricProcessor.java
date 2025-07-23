@@ -1,22 +1,29 @@
 package app.bpartners.geojobs.service.lidar;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
-import static app.bpartners.geojobs.model.geometry.polygon.PolygonReprojection.EPSG_2154;
-import static app.bpartners.geojobs.model.geometry.polygon.PolygonReprojection.EPSG_4326;
+import static app.bpartners.geojobs.service.GeometrySquareMeterArea.LAMBERT_93;
+import static app.bpartners.geojobs.service.GeometrySquareMeterArea.WGS84;
+import static java.lang.Float.compare;
+import static java.lang.Runtime.getRuntime;
 import static java.util.concurrent.Executors.newFixedThreadPool;
+import static java.util.stream.Collectors.toSet;
 
-import app.bpartners.geojobs.model.geometry.GeometryFactory;
-import app.bpartners.geojobs.model.geometry.polygon.PolygonReprojection;
+import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import com.github.mreutegg.laszip4j.LASPoint;
 import com.github.mreutegg.laszip4j.LASReader;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.BiFunction;
+import java.util.stream.Stream;
 
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
@@ -25,126 +32,50 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
+@AllArgsConstructor
 public class LidarPolygonMetricProcessor
-    implements BiFunction<Polygon, Set<File>, RoofDimension> {
-  private static final int BUFFER_SOL_METERS = 2;
+    implements BiFunction<Polygon, Set<File>, Dimension> {
   private static final int LIDAR_SOL_CLASSE = 2;
   private static final int LIDAR_BATIMENT_CLASSE = 6;
-  private final PolygonReprojection polygonReprojection;
+  private final GeometrySquareMeterArea projector;
 
-  public LidarPolygonMetricProcessor() {
-    this.polygonReprojection = new PolygonReprojection(EPSG_4326, EPSG_2154);
-  }
 
   @Override
-  public RoofDimension apply(Polygon roofGeometry, Set<File> lidarFiles) {
-    var projectedRoof = this.polygonReprojection.apply(roofGeometry);
-    var minZ = Double.MAX_VALUE;
-    var maxZ = Double.MIN_VALUE;
-    var allPoints = readLidarPointsInParallel(projectedRoof, lidarFiles);
-    var polygonPoints = allPoints.polygonPoints();
-    var solPoints = allPoints.solPoints();
-
-    if (polygonPoints.size() < 2 || solPoints.size() < 2) {
-      return new RoofDimension(roofGeometry, 0, 0);
-    }
-
-    var minZPoint =
-        polygonPoints.stream().min((a, b) -> Float.compare(a.getZ(), b.getZ())).orElseThrow();
-    var maxZPoint =
-        polygonPoints.stream().max((a, b) -> Float.compare(a.getZ(), b.getZ())).orElseThrow();
-
-    var slopeInDegree = calculateSlopeInDegrees(minZPoint, maxZPoint);
-    var heightInMeter = calculateHeightInMeters(solPoints, minZPoint);
-    return new RoofDimension(roofGeometry, slopeInDegree, heightInMeter);
+  public Dimension apply(Polygon roofGeometry, Set<File> lidarFiles) {
+    var projectedRoof = projector.project(roofGeometry, WGS84, LAMBERT_93);
+    var file = new ArrayList<>(lidarFiles).getFirst();
+    return getLidarPoints(projectedRoof, file);
   }
 
-  private PolygonPointsAndSolPoints readLidarPointsInParallel(
-          Geometry reprojectedPolygon, Set<File> lidarFiles) {
-    var polygonPoints = new ArrayList<LASPoint>();
-    var solPoints = new ArrayList<LASPoint>();
 
-    var executor =
-        newFixedThreadPool(Math.min(lidarFiles.size(), Runtime.getRuntime().availableProcessors()));
-    List<Future<PolygonPointsAndSolPoints>> futures = new ArrayList<>();
+  private Dimension getLidarPoints(Geometry polygon, File file) {
+    var roofEnvelope = polygon.getEnvelopeInternal();
+    var lasReader = new LASReader(file);
+    var roofPoints = new HashSet<LidarPoint>();
+    var solPoints = new HashSet<LidarPoint>();
+    var lasReaderPoints = lasReader.getPoints();
+    var lasHeader = lasReader.getHeader();
+    var xScale = lasHeader.getXScaleFactor();
+    var xOffset = lasHeader.getXOffset();
+    var yScale = lasHeader.getYScaleFactor();
+    var yOffset = lasHeader.getYOffset();
 
-    for (var lidarFile : lidarFiles) {
-      futures.add(
-          executor.submit(
-              () -> {
-                var lasReader = new LASReader(lidarFile);
-                return getPolygonPointsAndSolPoints(reprojectedPolygon, lasReader);
-              }));
-    }
+    var filtered = lasReader.insideRectangle(
+            roofEnvelope.getMinX(), roofEnvelope.getMinY(), roofEnvelope.getMaxX(), roofEnvelope.getMaxY()).getPoints();
 
-    try {
-      for (Future<PolygonPointsAndSolPoints> future : futures) {
-        var result = future.get();
-        polygonPoints.addAll(result.polygonPoints());
-        solPoints.addAll(result.solPoints());
-      }
-    } catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException("Error while reading a LIDAR file", e);
-    } finally {
-      executor.shutdown();
-    }
+    for (var p : filtered) {
+      int label = p.getClassification();
 
-    return new PolygonPointsAndSolPoints(polygonPoints, solPoints);
-  }
-
-  private static double calculateSlopeInDegrees(LASPoint minZPoint, LASPoint maxZPoint) {
-    double dx = maxZPoint.getX() - minZPoint.getX();
-    double dy = maxZPoint.getY() - minZPoint.getY();
-    double dz = maxZPoint.getZ() - minZPoint.getZ();
-    double distance = Math.sqrt(dx * dx + dy * dy);
-
-    if (distance > 0) {
-      return round2(Math.toDegrees(Math.atan(dz / distance)));
-    }
-
-    return 0;
-  }
-
-  private static double calculateHeightInMeters(List<LASPoint> solPoints, LASPoint minZPoint) {
-    double meanSolZ = solPoints.stream().mapToDouble(LASPoint::getZ).average().orElseThrow();
-
-    return round2(minZPoint.getZ() - meanSolZ);
-  }
-
-  private PolygonPointsAndSolPoints getPolygonPointsAndSolPoints(
-          Geometry polygon, LASReader lasReader) {
-    var solGeometry = polygon.buffer(BUFFER_SOL_METERS);
-    var solPoints = new ArrayList<LASPoint>();
-    var polygonPoints = new ArrayList<LASPoint>();
-
-    for (var point : lasReader.getPoints()) {
-      int pointClassification = point.getClassification();
-      var trueX = point.getX() + lasReader.getHeader().getXScaleFactor() + lasReader.getHeader().getXOffset();
-      var trueY = point.getY() + lasReader.getHeader().getYScaleFactor() + lasReader.getHeader().getYOffset();
-
-      var geometryPoint = geometryFactory.createPoint(new Coordinate(trueX, trueY));
-
-      if (pointClassification == LIDAR_BATIMENT_CLASSE) {
-        if (polygon.contains(geometryPoint)) {
-          polygonPoints.add(point);
-        }
+      if (label == LIDAR_BATIMENT_CLASSE) {
+        roofPoints.add(new LidarPoint(p, label));
         continue;
       }
-
-      if (pointClassification == LIDAR_SOL_CLASSE) {
-        if (solGeometry.contains(geometryPoint)) {
-          solPoints.add(point);
-        }
+      if (label == LIDAR_SOL_CLASSE){
+        solPoints.add(new LidarPoint(p, label));
       }
     }
-
-    return new PolygonPointsAndSolPoints(polygonPoints, solPoints);
+    var roof = new Roof(roofPoints);
+    var sol = new Sol(solPoints);
+    return new Dimension(roof, sol);
   }
-
-  private static double round2(double value) {
-    return Math.ceil(value * 100) / 100.0;
-  }
-
-  private record PolygonPointsAndSolPoints(
-      List<LASPoint> polygonPoints, List<LASPoint> solPoints) {}
 }

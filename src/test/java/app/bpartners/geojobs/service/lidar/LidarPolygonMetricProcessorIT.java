@@ -16,7 +16,7 @@ public class LidarPolygonMetricProcessorIT extends FacadeIT {
     @Test
     void compute_roof_slope(){
         var lidarTile1 = new File(getClass().getResource("/lidar/LHD_FXX_0451_6622_PTS_C_LAMB93_IGN69.copc.laz").getFile());
-        var lidarTile2 = new File(getClass().getResource("/lidar/LHD_FXX_0451_6623_PTS_C_LAMB93_IGN69.copc.laz").getFile());
+        //var lidarTile2 = new File(getClass().getResource("/lidar/LHD_FXX_0451_6623_PTS_C_LAMB93_IGN69.copc.laz").getFile());
 
         var coordinates = new Coordinate[] {
                 new Coordinate(-0.24943324176473425, 46.65206839265869),
@@ -27,9 +27,9 @@ public class LidarPolygonMetricProcessorIT extends FacadeIT {
         };
         var roofGeometry = geometryFactory.createPolygon(coordinates);
 
-        var actual = subject.apply(roofGeometry, Set.of(lidarTile1, lidarTile2));
+        var actual = subject.apply(roofGeometry, Set.of(lidarTile1));
 
-        System.out.println("Height=" + actual.height());
-        System.out.println("pente=" + actual.slope());
+        System.out.println("Height=" + actual.getHeightInMeters());
+        System.out.println("pente=" + actual.getSlopeInDegrees());
     }
 }
