@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service.event;
 
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
+import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
 
 import app.bpartners.geojobs.endpoint.event.model.ZoneVggRequested;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.MultiPolygon;
+import org.locationtech.jts.geom.Polygon;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -43,13 +45,36 @@ public class ZoneVggRequestedService implements Consumer<ZoneVggRequested> {
     var intersectedTileCoordinates = getTileCoordinatesIntersected(zoneTilingJobIdentifier);
     var tiledPixelPolygons = getTiledPixelPolygon(zoneDetectionJobIdentifier, providedPolygonZone);
     var latLonRoofMultiPolygon = retrieveLatLonRoofMultiPolygon(detection, providedPolygonZone);
+    var latLonRoofInsideProvidedZone =
+        getLatLonRoofMultiPolygon(latLonRoofMultiPolygon, providedPolygonZone);
 
     var vggMap =
-        vggFactory.from(tiledPixelPolygons, latLonRoofMultiPolygon, intersectedTileCoordinates);
+        vggFactory.from(
+            tiledPixelPolygons, latLonRoofInsideProvidedZone, intersectedTileCoordinates);
 
     var newDetection = detectionVGGUpdate.apply(vggMap, detection);
 
     detectionRepository.save(newDetection);
+  }
+
+  private MultiPolygon getLatLonRoofMultiPolygon(
+      MultiPolygon latLonRoofMultiPolygon, Feature providedPolygonZone) {
+    var latLonRoofInsideProvidedZone =
+        latLonRoofMultiPolygon.intersection(
+            geometryConverter.apply(
+                List.of(providedPolygonZone.getGeometry().getPolygon().getCoordinates())));
+    MultiPolygon latLonRoofInsideProvidedZoneMultiPolygon;
+    if (latLonRoofInsideProvidedZone instanceof MultiPolygon multiPolygon) {
+      latLonRoofInsideProvidedZoneMultiPolygon = multiPolygon;
+    } else if (latLonRoofInsideProvidedZone instanceof Polygon polygon) {
+      latLonRoofInsideProvidedZoneMultiPolygon =
+          geometryFactory.createMultiPolygon(new Polygon[] {polygon});
+    } else {
+      throw new IllegalStateException(
+          "Unable to convert latLonRoofInsideProvidedZone to MultiPolygon : "
+              + geometryConverter.writeGeometryAsString(latLonRoofMultiPolygon));
+    }
+    return latLonRoofInsideProvidedZoneMultiPolygon;
   }
 
   private List<TileCoordinates> getTileCoordinatesIntersected(String zoneTilingJobIdentifier) {
