@@ -16,6 +16,7 @@ import app.bpartners.geojobs.repository.TilingTaskRepository;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.DetectionVGGUpdate;
+import app.bpartners.geojobs.service.PolygonCloser;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.util.List;
 import java.util.function.Consumer;
@@ -33,6 +34,7 @@ public class ZoneVggRequestedService implements Consumer<ZoneVggRequested> {
   private final GeometryConverter geometryConverter;
   private final TilingTaskRepository tilingTaskRepository;
   private final DetectionVGGUpdate detectionVGGUpdate;
+  private final PolygonCloser polygonCloser;
 
   @Override
   public void accept(ZoneVggRequested event) {
@@ -130,8 +132,9 @@ public class ZoneVggRequestedService implements Consumer<ZoneVggRequested> {
                                         .getGeometry()
                                         .getMultiPolygon()
                                         .getCoordinates());
+                            var forcedClosedPolygonPixel = polygonCloser.apply(polygonPixel);
                             return new PolygonObjectType(
-                                polygonPixel, detectedObject.getDetectableObjectType());
+                                forcedClosedPolygonPixel, detectedObject.getDetectableObjectType());
                           })
                       .toList();
               var tileCoordinates = detectedTile.getTile().getCoordinates();
