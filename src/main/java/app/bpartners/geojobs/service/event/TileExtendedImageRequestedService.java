@@ -10,6 +10,7 @@ import app.bpartners.geojobs.endpoint.rest.model.Polygon;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.geometry.IntXY;
+import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.service.DetectionBackgroundRetriever;
 import app.bpartners.geojobs.service.DetectionProvidedZoneUnifier;
 import app.bpartners.geojobs.service.FilePolygonDrawer;
@@ -37,13 +38,16 @@ public class TileExtendedImageRequestedService implements Consumer<TileExtendedI
   private final FilePolygonDrawer filePolygonDrawer;
   private final DetectionBackgroundRetriever detectionBackgroundRetriever;
   private final DetectionProvidedZoneUnifier detectionProvidedZoneUnifier;
+  private final DetectionRepository detectionRepository;
 
   @Override
   public void accept(TileExtendedImageRequested event) {
     var layer = event.getLayer();
     var longitude = event.getLongitude();
     var latitude = event.getLatitude();
-    var detection = event.getDetection();
+    var detectionIdentifier = event.getDetectionIdentifier();
+    var detection = detectionRepository.findById(detectionIdentifier).orElseThrow();
+    
     log.info("Provided geojson {}", detection.getProvidedGeoJsonZone());
     var latLonBackgroundInsideProvidedZone = detectionBackgroundRetriever.apply(detection);
     var providedZone = detectionProvidedZoneUnifier.apply(detection);
