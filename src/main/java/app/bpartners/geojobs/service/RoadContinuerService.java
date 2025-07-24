@@ -13,23 +13,29 @@ import app.bpartners.geojobs.model.geometry.route.UnionConf;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
+import org.springframework.stereotype.Service;
 
+@Service
 @AllArgsConstructor
 public class RoadContinuerService {
   private static final AlphaConf DEFAULT_ALPHA_CONF = new AlphaConf(0.55d, 1);
   private static final UnionConf DEFAULT_UNION_CONF = new UnionConf(1);
 
-  public Geojson continueRoute(String geojsonString, TilingConf tilingConf) throws IOException {
+  @SneakyThrows
+  public File continueRoute(String geojsonString, TilingConf tilingConf) throws IOException {
     var toBeContinuedFile = getGeoJsonFromString(geojsonString);
     var toBeContinuedGeoJSON = new Geojson(toBeContinuedFile);
 
     var continuer = getLatLonContinuer(getRouteContinuationConf(toBeContinuedGeoJSON), tilingConf);
-    return new Geojson(continuer.apply(toBeContinuedFile));
+    return getGeoJsonFromString(new Geojson(continuer.apply(toBeContinuedFile)).stringValue());
   }
 
   public static File getGeoJsonFromString(String geoJsonString) throws IOException {
-    File tempFile = File.createTempFile("geojson-", ".geojson");
+    String uuidName = UUID.randomUUID().toString();
+    File tempFile = File.createTempFile("continued-geojson-" + uuidName, ".geojson");
     tempFile.deleteOnExit();
 
     ObjectMapper mapper = new ObjectMapper();
