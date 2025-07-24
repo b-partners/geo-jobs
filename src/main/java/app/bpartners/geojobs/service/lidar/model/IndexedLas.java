@@ -1,9 +1,6 @@
 package app.bpartners.geojobs.service.lidar.model;
 
-import static java.util.stream.Collectors.toSet;
-
 import app.bpartners.geojobs.model.geometry.IndexedGeometries;
-import com.github.mreutegg.laszip4j.LASHeader;
 import com.github.mreutegg.laszip4j.LASReader;
 import java.io.File;
 import java.util.HashSet;
@@ -12,37 +9,33 @@ import java.util.function.Predicate;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Geometry;
 
+import static java.util.stream.Collectors.toSet;
+
 @Slf4j
 public class IndexedLas {
   private final IndexedGeometries indexedGeometries;
-  private final LASHeader lasHeader;
-  private final Set<LidarClass> classifications;
-
-  public IndexedLas(File lasFile) {
-    this(lasFile, new HashSet<>());
-  }
+  private final Set<LidarClass> classesToKeep;
 
   public IndexedLas(File lasFile, Set<LidarClass> classesToKeep) {
     var lasReader = new LASReader(lasFile);
-    lasHeader = lasReader.getHeader();
-    classifications = classesToKeep;
+    this.classesToKeep = classesToKeep;
 
     log.info("Reading lasPoints from: " + lasFile.getPath());
-    indexedGeometries = lasPoints(lasReader);
+    this.indexedGeometries = lasPoints(lasReader);
   }
 
   private IndexedGeometries lasPoints(LASReader lasReader) {
     Set<Geometry> jtsPoints = new HashSet<>();
+    var lasHeader = lasReader.getHeader();
     var nbPoints = 0;
-    var isClassificationEmpty = classifications.isEmpty();
 
     for (var lasPoint : lasReader.getPoints()) {
+      var classification = LidarClass.fromValue(lasPoint.getClassification());
       if (++nbPoints % 1_000_000 == 0) {
         log.info("Number of lasPoints read: " + nbPoints);
       }
 
-      if (!isClassificationEmpty
-          && !classifications.contains(LidarClass.fromValue(lasPoint.getClassification()))) {
+      if(!classesToKeep.contains(classification)){
         continue;
       }
 
@@ -55,8 +48,10 @@ public class IndexedLas {
 
   public Set<LasPointGeometry> containedIn(
       Geometry container, Predicate<LasPointGeometry> predicate) {
+    Predicate<Geometry> geometryPredicate = (g) -> predicate.test((LasPointGeometry) g);
+
     return indexedGeometries
-        .containedIn(container, (g) -> predicate.test((LasPointGeometry) predicate))
+        .containedIn(container, geometryPredicate)
         .stream()
         .map(this::toLasPoint)
         .collect(toSet());

@@ -2,6 +2,7 @@ package app.bpartners.geojobs.model.geometry;
 
 import static org.junit.Assert.assertTrue;
 
+import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
@@ -28,7 +29,7 @@ class IndexedGeometriesTest {
             });
     var point1 = geometryFactory.createPoint(new Coordinate(90, 90));
 
-    var indexedGeometries = new IndexedGeometries(Set.of(polygon1, point1));
+    var indexedGeometries = new IndexedGeometries(List.of(polygon1, point1));
 
     assertTrue(
         indexedGeometries.containedIn(geometryFactory.createPoint(new Coordinate(5, 5))).isEmpty());

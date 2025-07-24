@@ -21,8 +21,15 @@ class IndexedLasTest {
     var indexedLas = new IndexedLas(lasFile);
 
     var geometryFactory = new GeometryFactory();
-    var x0 = 7030070;
-    var y0 = 7520660;
+
+    var xScale = 0.01;
+    var xOffset = 300_000;
+
+    var yScale = 0.01;
+    var yOffset = 1600000;
+
+    var x0 = (7030070 * xScale) + xOffset;
+    var y0 = (7520660 * yScale) + yOffset;
     assertEquals(
         2,
         indexedLas

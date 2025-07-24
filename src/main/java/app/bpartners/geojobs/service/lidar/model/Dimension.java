@@ -8,19 +8,34 @@ public record Dimension(Roof roof, Sol sol) {
   }
 
   public double getSlopeInDegrees() {
-    var minZPoint =
-        roof.points().stream()
-            .min(Comparator.comparingDouble(p -> p.getCoordinate().getZ()))
-            .orElseThrow();
+    if(hasInvalidPointCount()){
+      return 0;
+    }
 
-    var maxZPoint =
-        roof.points().stream()
-            .max(Comparator.comparingDouble(p -> p.getCoordinate().getZ()))
-            .orElseThrow();
+    double minZ = Double.MAX_VALUE;
+    double maxZ = Double.MIN_VALUE;
+    LasPointGeometry minZPoint = null;
+    LasPointGeometry maxZPoint = null;
+
+    for (var p : roof.points()) {
+      double z = p.getLasPoint().getZ();
+
+      if (z < minZ) {
+        minZ = z;
+        minZPoint = p;
+      } else if (z > maxZ) {
+        maxZ = z;
+        maxZPoint = p;
+      }
+    }
+
+    if (minZPoint == null || maxZPoint == null) {
+      throw new IllegalStateException("No points found in roof");
+    }
 
     double dx = maxZPoint.getCoordinate().getX() - minZPoint.getCoordinate().getX();
     double dy = maxZPoint.getCoordinate().getY() - minZPoint.getCoordinate().getY();
-    double dz = maxZPoint.getCoordinate().getZ() - minZPoint.getCoordinate().getZ();
+    double dz = maxZPoint.getLasPoint().getZ() - minZPoint.getLasPoint().getZ();
     double distance = Math.sqrt(dx * dx + dy * dy);
 
     if (distance > 0) {
@@ -31,14 +46,22 @@ public record Dimension(Roof roof, Sol sol) {
   }
 
   public double getHeightInMeters() {
+    if(hasInvalidPointCount()){
+      return 0;
+    }
+
     var minZPoint =
         roof.points().stream()
             .min(Comparator.comparingDouble(a -> a.getCoordinate().getZ()))
             .orElseThrow();
 
     double meanSolZ =
-        sol.points().stream().mapToDouble(p -> p.getCoordinate().getZ()).average().orElseThrow();
+        sol.points().stream().mapToDouble(p -> p.getLasPoint().getZ()).average().orElseThrow();
 
-    return round2(minZPoint.getCoordinate().getZ() - meanSolZ);
+    return round2(minZPoint.getLasPoint().getZ() - meanSolZ);
+  }
+
+  private boolean hasInvalidPointCount(){
+    return roof.points().size() < 2 || sol.points().size() < 2;
   }
 }

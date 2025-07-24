@@ -4,11 +4,13 @@ import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFacto
 
 import com.github.mreutegg.laszip4j.LASHeader;
 import com.github.mreutegg.laszip4j.LASPoint;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.geom.impl.CoordinateArraySequence;
 
 @Getter
+@EqualsAndHashCode(callSuper = false)
 public class LasPointGeometry extends Point {
   private final LASHeader lasHeader;
   private final LASPoint lasPoint;
