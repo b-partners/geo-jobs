@@ -226,9 +226,20 @@ public class GeometryConverter {
         points.stream()
             .map(pair -> new Coordinate(pair.get(0).doubleValue(), pair.get(1).doubleValue()))
             .toArray(Coordinate[]::new);
-
-    LinearRing shell = geometryFactory.createLinearRing(coordinates);
+    var ensureClosed = ensureClosed(coordinates);
+    LinearRing shell = geometryFactory.createLinearRing(ensureClosed);
     return geometryFactory.createPolygon(shell);
+  }
+
+  private static Coordinate[] ensureClosed(Coordinate[] coords) {
+    if (coords.length == 0) return coords;
+    if (!coords[0].equals2D(coords[coords.length - 1])) {
+      Coordinate[] closed = new Coordinate[coords.length + 1];
+      System.arraycopy(coords, 0, closed, 0, coords.length);
+      closed[coords.length] = coords[0];
+      return closed;
+    }
+    return coords;
   }
 
   public MultiPolygon apply(List<List<List<List<BigDecimal>>>> multiPolygonData) {
