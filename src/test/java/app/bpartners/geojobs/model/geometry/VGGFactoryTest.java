@@ -253,7 +253,10 @@ class VGGFactoryTest {
     when(roofLatLonMultiPolygonMock.getGeometryN(0)).thenReturn(polygon);
 
     Map<app.bpartners.geojobs.endpoint.rest.model.Feature, VGG> result =
-        subject.from(inputTiledPixelPolygons, roofLatLonMultiPolygonMock);
+        subject.from(
+            inputTiledPixelPolygons,
+            roofLatLonMultiPolygonMock,
+            List.of(new TileCoordinates().x(0).y(0).z(20)));
 
     Assertions.assertNotNull(result);
     assertEquals(1, result.size());
@@ -289,7 +292,11 @@ class VGGFactoryTest {
     var actual =
         assertThrows(
             IllegalStateException.class,
-            () -> subject.from(tiledPixelPolygons, roofLatLonMultiPolygonMock));
+            () ->
+                subject.from(
+                    tiledPixelPolygons,
+                    roofLatLonMultiPolygonMock,
+                    List.of(new TileCoordinates().x(0).y(0).z(20))));
 
     assertEquals(
         "No roof pixel polygon retrieved from roofLatLonMultiPolygon : "
@@ -318,7 +325,11 @@ class VGGFactoryTest {
             new TiledPixelPolygon(
                 featureContainingAddress, List.of(polygonObjectTypeMock), tileX, tileY, zoom));
 
-    var actual = subject.from(tiledPixelPolygons, roofLatLonMultiPolygonMock);
+    var actual =
+        subject.from(
+            tiledPixelPolygons,
+            roofLatLonMultiPolygonMock,
+            List.of(new TileCoordinates().x(tileX).y(tileY).z(20)));
 
     var vggString = new String(actual.get(featureContainingAddress).getBytes(), UTF_8);
     var expected = new HashMap<app.bpartners.geojobs.endpoint.rest.model.Feature, VGG>();

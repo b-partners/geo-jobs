@@ -41,7 +41,6 @@ public class DetectionVGGUpdate implements BiFunction<VGG, Detection, Detection>
 
   public Detection apply(Map<Feature, VGG> vgg, Detection detection) {
     var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
-    var featureWithDelimitations = detection.getFeatureWithDelimitations();
     var layer = detection.getGeoServerProperties().getGeoServerParameter().getLayers();
     var updatedGeoJsonZone =
         providedGeoJsonZone.stream()
@@ -57,14 +56,19 @@ public class DetectionVGGUpdate implements BiFunction<VGG, Detection, Detection>
                           .findAny();
 
                   if (optionalVgg.isPresent()) {
-                    var centroid =
-                        geometryConverter.centroidFromGeometry(
-                            providedFeature.getGeometry().getActualInstance());
-                    var longitude = centroid.getFirst();
-                    var latitude = centroid.getLast();
-
-                    var filename = layer + "/vgg_" + longitude + "_" + latitude;
-                    var fileKey = filename + ".json";
+                    String fileName;
+                    if (detection.getPolygonGeoJsonZone() != null) {
+                      fileName = detection.getZoneName();
+                    } else {
+                      var centroid =
+                          geometryConverter.centroidFromGeometry(
+                              providedFeature.getGeometry().getActualInstance());
+                      var longitude = centroid.getFirst();
+                      var latitude = centroid.getLast();
+                      fileName = longitude + "_" + latitude;
+                    }
+                    var fileFormat = layer + "/vgg_" + fileName;
+                    var fileKey = fileFormat + ".json";
                     var vggJson = optionalVgg.get().getValue();
                     var properties = vggJson.values().stream().toList().getFirst().getProperties();
                     var merger = new BoundaryMerger(0, NEIGHBOUR_SIZE, false);
@@ -77,7 +81,7 @@ public class DetectionVGGUpdate implements BiFunction<VGG, Detection, Detection>
                           updatedVgg.put(k, v);
                         });
                     var vggAsByte = updatedVgg.getBytes();
-                    var vggAsFile = fileWriter.write(vggAsByte, createTempDirectory(), filename);
+                    var vggAsFile = fileWriter.write(vggAsByte, createTempDirectory(), fileFormat);
                     bucketComponent.upload(vggAsFile, fileKey);
 
                     var propertiesWithVggFileKey =
