@@ -4,6 +4,7 @@ import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.ExtendedImageWithDetectedObjectRequested;
+import app.bpartners.geojobs.endpoint.event.model.ZoneVggRequested;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryJobRequested;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobSucceeded;
 import app.bpartners.geojobs.repository.AnnotationDeliveryConfigurationRepository;
@@ -80,6 +81,9 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
       if (detection != null) {
         eventProducer.accept(
             List.of(new ExtendedImageWithDetectedObjectRequested(detection.getId(), false)));
+        if (detection.needsImageOutput() && detection.getPolygonGeoJsonZone() != null) {
+          eventProducer.accept(List.of(new ZoneVggRequested(detection.getId())));
+        }
       }
       geoJsonConversionJobService.getOrComputeGeoJsonConversionJob(succeededZoneDetectionJob);
       return;
