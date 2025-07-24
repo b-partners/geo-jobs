@@ -30,7 +30,7 @@ public class FilePolygonDrawer implements TriFunction<List<List<List<IntXY>>>, C
     Graphics2D g2d = imageWithAlpha.createGraphics();
     g2d.drawImage(originalImage, 0, 0, null);
     g2d.setColor(color);
-    var opacity = 0.85f;
+    var opacity = 0.9f;
     g2d.setComposite(AlphaComposite.getInstance(SRC_OVER, opacity));
 
     if (!multiPolygonPixels.isEmpty()) {
