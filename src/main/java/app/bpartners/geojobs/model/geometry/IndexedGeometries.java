@@ -3,6 +3,8 @@ package app.bpartners.geojobs.model.geometry;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
+
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.index.strtree.STRtree;
@@ -25,13 +27,17 @@ public class IndexedGeometries {
   }
 
   public Set<Geometry> containedIn(Geometry container) {
+    return containedIn(container, g -> true);
+  }
+
+  public Set<Geometry> containedIn(Geometry container, Predicate<Geometry> predicate) {
     Set<Geometry> res = new HashSet<>();
 
     // R-Tree uses Envelope as keys for Geometry values
     // We need to test whether candidate results are truly contained
     List<Geometry> containedCandidates = rtree.query(container.getEnvelopeInternal());
     for (var containedCandidate : containedCandidates) {
-      if (container.contains(containedCandidate)) {
+      if (container.contains(containedCandidate) && predicate.test(containedCandidate)) {
         res.add(containedCandidate);
       }
     }

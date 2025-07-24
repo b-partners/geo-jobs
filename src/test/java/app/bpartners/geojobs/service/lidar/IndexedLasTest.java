@@ -1,8 +1,10 @@
-package app.bpartners.geojobs.model.las;
+package app.bpartners.geojobs.service.lidar;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.File;
+
+import app.bpartners.geojobs.service.lidar.model.IndexedLas;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;

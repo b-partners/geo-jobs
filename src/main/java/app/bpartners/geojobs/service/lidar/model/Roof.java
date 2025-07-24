@@ -1,0 +1,5 @@
+package app.bpartners.geojobs.service.lidar.model;
+
+import java.util.Set;
+
+public record Roof(Set<LasPointGeometry> points) {}
