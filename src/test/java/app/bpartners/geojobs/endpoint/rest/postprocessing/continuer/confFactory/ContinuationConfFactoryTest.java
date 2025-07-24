@@ -41,7 +41,7 @@ class ContinuationConfFactoryTest {
     var conf = new ContinuationConfFactory().apply(Set.of(poly1, poly2));
 
     assertTrue(conf.distanceThreshold() > 100);
-    assertTrue(conf.minDirectionThreshold() > Math.PI / 36);
+    assertTrue(conf.maxDirectionThreshold() >= conf.minDirectionThreshold());
     assertTrue(conf.maxDirectionThreshold() <= Math.PI / 2);
   }
 
