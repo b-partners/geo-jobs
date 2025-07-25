@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.endpoint.rest.controller;
 
-import app.bpartners.geojobs.endpoint.rest.postprocessing.mapper.FileMapper;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.service.geojson.GeoJsonContinuerService;
 import lombok.AllArgsConstructor;
@@ -16,7 +15,6 @@ import java.nio.file.Files;
 @RestController
 public class GeoJsonContinuerController {
     private final GeoJsonContinuerService geoJsonContinuerService;
-    private final FileMapper fileMapper;
     private final BucketComponent bucketComponent;
 
     @PostMapping("/continue")
