@@ -3,7 +3,6 @@ package app.bpartners.geojobs.endpoint.rest.controller;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.GeoJsonLoader;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.Geojson;
-import app.bpartners.geojobs.endpoint.rest.postprocessing.mapper.FileMapper;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.geometry.VGGFactory;
@@ -37,7 +36,6 @@ public class GeoJsonContinuerControllerTest {
 
     @Autowired private MockMvc mockMvc;
 
-    @MockBean private FileMapper fileMapper;
     @MockBean private GeoJsonContinuerService geoJsonContinuerService;
     @MockBean private BucketComponent bucketComponent;
 
@@ -50,12 +48,11 @@ public class GeoJsonContinuerControllerTest {
     @Test
     void continueGeoJson_shouldReturnPresignedUrl() throws Exception {
         GeoJsonLoader loader = new GeoJsonLoader();
-        Set<LatLonPolygon> polygons = loader.apply(new File("src/test/resources/geojson/route-ivandry.geojson"));
+        Set<LatLonPolygon> polygons = loader.apply(new File("src/test/resources/ivandry/route-ivandry.geojson"));
         Geojson realGeojson = new Geojson(polygons);
 
         String expectedUrl = "https://presigned.url/result";
 
-        when(fileMapper.apply(any())).thenReturn(realGeojson);
         when(geoJsonContinuerService.continueGeojson(any())).thenReturn(realGeojson);
         when(bucketComponent.presign(anyString())).thenReturn(expectedUrl);
 
