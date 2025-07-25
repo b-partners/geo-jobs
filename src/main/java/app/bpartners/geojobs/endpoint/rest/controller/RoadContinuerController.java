@@ -24,7 +24,7 @@ public class RoadContinuerController {
   private String adminApiKey;
 
   @SneakyThrows
-  @PostMapping("/roadcontinuer")
+  @PostMapping("/road-continuer")
   public String roadContinuer(
       @RequestBody String geojson, @RequestParam int zoom, @RequestParam int imageSize) {
     var tilingConf = new TilingConf(zoom, imageSize);
