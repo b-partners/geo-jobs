@@ -38,6 +38,7 @@ class LatLonLinesContinuerTest {
     // assertEquals(expected, new Geojson(continued).stringValue());
   }
 
+  //Test with the provided service from GeoJobs, it is the same as continue_ivandy but with different geoJson
   @Test
   void continue_amboditsiry() throws IOException, URISyntaxException {
     var actualGeojson =
@@ -68,6 +69,7 @@ class LatLonLinesContinuerTest {
     return new RoutesContinuationConf(alphaConf, unionConf, continuationConf, prettyConf);
   }
 
+  //Test with our own service
   @Test
   void continue_service_test() throws IOException, URISyntaxException {
     GeoJsonContinuerService geoJsonContinuerService = new GeoJsonContinuerService();
