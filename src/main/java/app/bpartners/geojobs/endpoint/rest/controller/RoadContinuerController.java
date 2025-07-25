@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.endpoint.rest.controller;
 
-import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.service.BucketServiceRoadContinuer;
 import app.bpartners.geojobs.service.RoadContinuerService;
 import lombok.AllArgsConstructor;
@@ -26,9 +25,9 @@ public class RoadContinuerController {
   @SneakyThrows
   @PostMapping("/road-continuer")
   public String roadContinuer(
-      @RequestBody String geojson, @RequestParam int zoom, @RequestParam int imageSize) {
-    var tilingConf = new TilingConf(zoom, imageSize);
-    var gj = roadContinuerService.continueRoute(geojson, tilingConf);
-    return bsrc.getContinuedRoutePresignedUrl(gj, adminApiKey);
+      @RequestBody String geojson, @RequestParam Integer zoom, @RequestParam Integer imageSize) {
+    var tilingConf = roadContinuerService.getTilingConf(zoom, imageSize);
+    var geoJSONFile = roadContinuerService.continueRoute(geojson, tilingConf);
+    return bsrc.getContinuedRoutePresignedUrl(geoJSONFile, adminApiKey);
   }
 }

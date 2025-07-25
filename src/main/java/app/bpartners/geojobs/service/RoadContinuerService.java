@@ -33,6 +33,13 @@ public class RoadContinuerService {
     return getGeoJsonFromString(new Geojson(continuer.apply(toBeContinuedFile)).stringValue());
   }
 
+  public TilingConf getTilingConf(Integer zoom, Integer imgSize) {
+    int fZoom = (zoom == null) ? 20 : zoom;
+    int fImgSize = (imgSize == null) ? 1_024 : imgSize;
+
+    return new TilingConf(fZoom, fImgSize);
+  }
+
   public static File getGeoJsonFromString(String geoJsonString) throws IOException {
     String uuidName = UUID.randomUUID().toString();
     File tempFile = File.createTempFile("continued-geojson-" + uuidName, ".geojson");
