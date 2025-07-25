@@ -81,6 +81,62 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SingleUserInfo"
+  '/roadContunier':
+      post:
+        tags:
+          - ImageProcessing
+        operationId: processImage
+        description: Traitement d'une image à partir d'un JSON, zoom et taille.
+        parameters:
+          - in: query
+            name: geojson
+            required: true
+            description: Objet JSON sous forme de chaîne (par exemple, GeoJSON).
+            schema:
+              type: string
+              example: '{"type":"FeatureCollection",
+"features":[{"type":"Feature",
+"properties":{},"geometry":
+{"type":"Polygon","coordinates":[
+[[2.34536647796631,48.84728060362838],[2.34592169523239,48.84715881317847],[2.34583586454392,48.84698406984162],[2.3452752828598,48.84709527021744],[2.34536647796631,48.84728060362838]]]}},{"type":"Feature","properties":{},"geometry":{"type":"Polygon","coordinates":[[[2.34592169523239,48.84715881317847],[2.34583586454392,48.84698406984162],[2.34639376401901,48.84684462775155],[2.34647959470749,48.84702290174694],[2.34592169523239,48.84715881317847]]]}}]}'
+          - in: query
+            name: zoom
+            required: true
+            description: Niveau de zoom de l’image
+            schema:
+              type: integer
+              example: 18
+          - in: query
+            name: size
+            required: true
+            description: Taille de l’image (en pixels)
+            schema:
+              type: integer
+              example: 512
+        responses:
+          '200':
+            description: GeoJson traité avec succès
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Image processed
+                    imageUrl:
+                      type: string
+                      example: https://cdn.birdia.fr/image/result.png
+          '500':
+            description: Requête invalide
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    error:
+                      type: string
+                      example: "Invalid JSON input"
   '/jobs/{id}/annotationProcessing':
     post:
       tags:
