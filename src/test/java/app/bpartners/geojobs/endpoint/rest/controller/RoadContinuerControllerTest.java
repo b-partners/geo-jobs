@@ -8,6 +8,7 @@ import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.service.BucketServiceRoadContinuer;
 import app.bpartners.geojobs.service.RoadContinuerService;
 import java.io.File;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,15 +38,15 @@ class RoadContinuerControllerTest {
     Integer imageSize = 1_024;
     File mockGeoJsonFile = new File("mock.geojson");
     var tilingConf = new TilingConf(zoom, imageSize);
+    var expected = Map.of("url", "https://presigned.url/mock.geojson");
 
     when(roadContinuerService.getTilingConf(zoom, imageSize)).thenReturn(tilingConf);
     when(roadContinuerService.continueRoute(geojsonInput, tilingConf)).thenReturn(mockGeoJsonFile);
-    when(bsrc.getContinuedRoutePresignedUrl(mockGeoJsonFile, "dummyApiKey"))
-        .thenReturn("https://presigned.url/mock.geojson");
+    when(bsrc.getContinuedRoutePresignedUrl(mockGeoJsonFile, "dummyApiKey")).thenReturn(expected);
 
-    String result = controller.roadContinuer(geojsonInput, zoom, imageSize);
+    var actual = controller.roadContinuer(geojsonInput, zoom, imageSize);
 
-    assertEquals("https://presigned.url/mock.geojson", result);
+    assertEquals(expected, actual);
     verify(roadContinuerService).getTilingConf(zoom, imageSize);
     verify(roadContinuerService).continueRoute(geojsonInput, tilingConf);
     verify(bsrc).getContinuedRoutePresignedUrl(mockGeoJsonFile, "dummyApiKey");
