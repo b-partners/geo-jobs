@@ -67,4 +67,20 @@ class LatLonLinesContinuerTest {
     var prettyConf = new PrettyConf(0);
     return new RoutesContinuationConf(alphaConf, unionConf, continuationConf, prettyConf);
   }
+
+  @Test
+  void continue_service_test() throws IOException, URISyntaxException {
+    GeoJsonContinuerService geoJsonContinuerService = new GeoJsonContinuerService();
+
+    File input = new File(getClass().getResource("/amboditsiry/route-amboditsiry.geojson").getFile());
+    var expectedURI =
+            Paths.get(
+                    getClass().getResource("/amboditsiry/route-amboditsiry-continued.geojson").toURI());
+
+    var actual = geoJsonContinuerService.continueGeojson(input);
+    var expectedContinued = Files.readString(expectedURI);
+
+    assertEquals(expectedContinued, actual.stringValue());
+    assertTrue(actual.polygons().size() > 0);
+  }
 }
