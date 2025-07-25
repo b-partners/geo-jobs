@@ -83,7 +83,7 @@ public class RoadContinuerServiceTest {
 
   @SneakyThrows
   @Test
-  void test_quai_de_bourbon() {
+  void test_ambohijatovo_crossed() {
     var resource = getClass().getResource("/geojson/ambohijatovo-crossed.geojson");
     assertNotNull(resource);
     var file = new File(resource.toURI());
