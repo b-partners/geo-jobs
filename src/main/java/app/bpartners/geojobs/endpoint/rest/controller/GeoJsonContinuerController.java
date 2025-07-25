@@ -3,9 +3,8 @@ package app.bpartners.geojobs.endpoint.rest.controller;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.service.geojson.GeoJsonContinuerService;
 import lombok.AllArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,17 +16,18 @@ public class GeoJsonContinuerController {
     private final GeoJsonContinuerService geoJsonContinuerService;
     private final BucketComponent bucketComponent;
 
-    @PostMapping("/continue")
-    public String continueGeoJson(@RequestBody File geojsonInput) throws IOException {
-        var result = geoJsonContinuerService.continueGeojson(geojsonInput);
+    @PostMapping(value = "/continue")
+    public String continueGeoJson(@RequestParam("file") MultipartFile file) throws IOException {
+        File tempInput = File.createTempFile("geojson-input-", ".geojson");
+        file.transferTo(tempInput);
 
-        var prefix = "geojson-result-";
-        var suffix = ".geojson";
-        var tempFile = File.createTempFile(prefix, suffix);
-        Files.writeString(tempFile.toPath(), result.toString());
+        var result = geoJsonContinuerService.continueGeojson(tempInput);
 
-        var bucketKey = "geojson/results/" + tempFile.getName();
-        bucketComponent.upload(tempFile, bucketKey);
+        File tempOutput = File.createTempFile("geojson-result-", ".geojson");
+        Files.writeString(tempOutput.toPath(), result.toString());
+
+        String bucketKey = "geojson/results/" + tempOutput.getName();
+        bucketComponent.upload(tempOutput, bucketKey);
 
         return bucketComponent.presign(bucketKey);
     }
