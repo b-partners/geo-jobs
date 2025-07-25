@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
 @AllArgsConstructor
@@ -22,8 +21,7 @@ public class GeoJsonContinuerController {
 
     @PostMapping("/continue")
     public String continueGeoJson(@RequestBody File geojsonInput) throws IOException {
-        var geojsonToContinue = fileMapper.apply(geojsonInput);
-        var result = geoJsonContinuerService.continueGeojson(geojsonToContinue);
+        var result = geoJsonContinuerService.continueGeojson(geojsonInput);
 
         var prefix = "geojson-result-";
         var suffix = ".geojson";
