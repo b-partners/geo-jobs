@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import app.bpartners.geojobs.endpoint.rest.postprocessing.Geojson;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.continuer.LatLonLinesContinuer;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
@@ -11,6 +12,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Set;
+import lombok.SneakyThrows;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -20,7 +23,12 @@ import org.mockito.MockedStatic;
 
 public class RoadContinuerServiceTest {
 
-  RoadContinuerService subject = new RoadContinuerService();
+  private RoadContinuerService subject;
+
+  @BeforeEach
+  void setUp() {
+    subject = new RoadContinuerService();
+  }
 
   @Test
   void testGetGeoJsonFromString_createsTempFile() throws IOException {
@@ -71,5 +79,22 @@ public class RoadContinuerServiceTest {
       File expected = subject.continueRoute(input, tilingConf);
       assertNotNull(expected);
     }
+  }
+
+  @SneakyThrows
+  @Test
+  void test_quai_de_bourbon() {
+    var resource = getClass().getResource("/geojson/ambohijatovo-crossed.geojson");
+    assertNotNull(resource);
+    var file = new File(resource.toURI());
+    String content = Files.readString(file.toPath(), StandardCharsets.UTF_8);
+
+    var tilingConf = new TilingConf(17, 1_024);
+    var continued = subject.continueRoute(content, tilingConf);
+
+    var polygonSize = new Geojson(continued).polygons().size();
+
+    assertTrue(continued.exists());
+    assertEquals(1, polygonSize);
   }
 }
