@@ -1,15 +1,17 @@
 package app.bpartners.geojobs.endpoint.rest.controller;
 
-import app.bpartners.geojobs.endpoint.rest.postprocessing.Geojson;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.mapper.FileMapper;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.service.geojson.GeoJsonContinuerService;
 import lombok.AllArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 @AllArgsConstructor
 @RestController
@@ -18,20 +20,19 @@ public class GeoJsonContinuerController {
     private final FileMapper fileMapper;
     private final BucketComponent bucketComponent;
 
-    @GetMapping("/continue")
-    public String continueGeoJson(@RequestBody File geojsonInput) {
+    @PostMapping("/continue")
+    public String continueGeoJson(@RequestBody File geojsonInput) throws IOException {
         var geojsonToContinue = fileMapper.apply(geojsonInput);
         var result = geoJsonContinuerService.continueGeojson(geojsonToContinue);
 
-        var fileName = "geojson-result-" + System.currentTimeMillis() + ".geojson";
-        var tempPath = System.getProperty("java.io.tmpdir") + "/" + fileName;
+        var prefix = "geojson-result-";
+        var suffix = ".geojson";
+        var tempFile = File.createTempFile(prefix, suffix);
+        Files.writeString(tempFile.toPath(), result.toString());
 
-        result.saveAsFile(tempPath);
-        File outputFile = new File(tempPath);
+        var bucketKey = "geojson/results/" + tempFile.getName();
+        bucketComponent.upload(tempFile, bucketKey);
 
-        String s3Key = "geojson/results/" + fileName;
-        bucketComponent.upload(outputFile, s3Key);
-
-        return bucketComponent.presign(s3Key);
+        return bucketComponent.presign(bucketKey);
     }
 }
