@@ -53,6 +53,10 @@ public class Geojson {
         while (featuresIterator.hasNext()) {
           SimpleFeature feature = (SimpleFeature) featuresIterator.next();
           Polygon polygon = getPolygon(feature);
+
+          if (!polygon.isValid())
+            throw new IllegalArgumentException("Invalid polygon geometry: " + polygon.toText());
+
           latLonPolygons.add(new LatLonPolygon(polygon));
         }
       }
@@ -80,10 +84,14 @@ public class Geojson {
       var multiPolygon = (MultiPolygon) feature.getDefaultGeometry();
       if (multiPolygon.getNumGeometries() != 1) {
         throw new RuntimeException(
-            "Only mulitpolygons with single polygon supported but got: " + multiPolygon);
+            "Only multipolygon with single polygon supported but got: " + multiPolygon);
       }
       polygon = (Polygon) multiPolygon.getGeometryN(0);
     }
+
+    if (!polygon.isValid())
+      throw new IllegalArgumentException("Invalid polygon geometry: " + polygon.toText());
+
     polygon.setUserData(userData);
     return polygon;
   }
