@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service.event;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.ZoneImageRequested;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobCreated;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobFailed;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobStatusChanged;
@@ -86,33 +87,23 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
 
         detectionDelimitationRetriever.accept(savedDetection);
 
+        savedDetection
+            .getProvidedGeoJsonZone()
+            .forEach(
+                providedFeature ->
+                    pointExtendedImageRequest.accept(
+                        savedDetection,
+                        providedFeature,
+                        savedDetection.getGeoServerProperties().getGeoServerParameter().getLayers(),
+                        false));
+
         if (savedDetection.getSplitPolygonGeoJsonZone() != null
-            && !savedDetection.getSplitPolygonGeoJsonZone().isEmpty()) {
-          savedDetection
-              .getSplitPolygonGeoJsonZone()
-              .forEach(
-                  splitFeature ->
-                      pointExtendedImageRequest.accept(
-                          savedDetection,
-                          splitFeature,
-                          savedDetection
-                              .getGeoServerProperties()
-                              .getGeoServerParameter()
-                              .getLayers(),
-                          false));
-        } else {
-          savedDetection
-              .getProvidedGeoJsonZone()
-              .forEach(
-                  providedFeature ->
-                      pointExtendedImageRequest.accept(
-                          savedDetection,
-                          providedFeature,
-                          savedDetection
-                              .getGeoServerProperties()
-                              .getGeoServerParameter()
-                              .getLayers(),
-                          false));
+            && savedDetection.getSplitPolygonGeoJsonZone() != null) {
+          eventProducer.accept(
+              List.of(
+                  ZoneImageRequested.builder()
+                      .detectionIdentifier(savedDetection.getId())
+                      .build()));
         }
       }
       tilingFinishedMailer.accept(ztj);

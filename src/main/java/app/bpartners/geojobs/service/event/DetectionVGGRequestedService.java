@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.HOUSES_0;
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
 
 import app.bpartners.geojobs.endpoint.event.model.DetectionVGGRequested;
@@ -11,11 +12,14 @@ import app.bpartners.geojobs.model.geometry.VGGFactory;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.service.DetectionVGGUpdate;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import app.bpartners.geojobs.service.tiling.TileFinder;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
 import org.springframework.stereotype.Service;
@@ -28,6 +32,7 @@ public class DetectionVGGRequestedService implements Consumer<DetectionVGGReques
   private final VGGFactory vggFactory;
   private final DetectionVGGUpdate detectionVGGUpdate;
   private final GeometryConverter geometryConverter;
+  private final TileFinder tileFinder;
 
   @Override
   public void accept(DetectionVGGRequested event) {
@@ -86,7 +91,15 @@ public class DetectionVGGRequestedService implements Consumer<DetectionVGGReques
             .reduce(unifyMultiPolygon())
             .orElseThrow(() -> new NotFoundException("No roof polygon found for provided zone"));
 
-    var featureVgg = vggFactory.from(filteredTiledPixelPolygonsDeserialized, latLonRoofPolygon);
+    Coordinate centroidCoordinates = latLonRoofPolygon.getCentroid().getCoordinate();
+    var longitude = BigDecimal.valueOf(centroidCoordinates.x);
+    var latitude = BigDecimal.valueOf(centroidCoordinates.y);
+    var surroundingTiles =
+        tileFinder.getSurroundingTiles(longitude, latitude, HOUSES_0.getZoomLevel());
+
+    var featureVgg =
+        vggFactory.from(
+            filteredTiledPixelPolygonsDeserialized, latLonRoofPolygon, surroundingTiles);
 
     var newDetection = detectionVGGUpdate.apply(featureVgg, detection);
 
