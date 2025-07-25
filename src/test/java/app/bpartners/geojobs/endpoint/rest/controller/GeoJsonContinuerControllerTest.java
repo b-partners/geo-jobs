@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.controller;
 
+import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.GeoJsonLoader;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.Geojson;
@@ -32,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(GeoJsonContinuerController.class)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-public class GeoJsonContinuerControllerTest {
+public class GeoJsonContinuerControllerTest extends FacadeIT {
 
     @Autowired private MockMvc mockMvc;
 
@@ -48,18 +49,22 @@ public class GeoJsonContinuerControllerTest {
     @Test
     void continueGeoJson_shouldReturnPresignedUrl() throws Exception {
         GeoJsonLoader loader = new GeoJsonLoader();
-        Set<LatLonPolygon> polygons = loader.apply(new File("src/test/resources/ivandry/route-ivandry.geojson"));
+        File geojsonFile = new File("src/test/resources/ivandry/route-ivandry.geojson");
+        Set<LatLonPolygon> polygons = loader.apply(geojsonFile);
         Geojson realGeojson = new Geojson(polygons);
+        String expectedUrl = "http://presigned.url/result";
 
-        String expectedUrl = "https://presigned.url/result";
-
+        // Mocking service methods
         when(geoJsonContinuerService.continueGeojson(any())).thenReturn(realGeojson);
         when(bucketComponent.presign(anyString())).thenReturn(expectedUrl);
 
-        // When/Then
+        // On lit le vrai contenu JSON depuis le fichier (comme dans une vraie requête)
+        String rawGeoJson = new String(Files.readAllBytes(Paths.get(geojsonFile.toURI())));
+
+        // Exécution de la requête
         mockMvc.perform(post("/continue")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(polygons.toString()))
+                        .content(rawGeoJson))
                 .andExpect(status().isOk())
                 .andExpect(content().string(expectedUrl));
     }
