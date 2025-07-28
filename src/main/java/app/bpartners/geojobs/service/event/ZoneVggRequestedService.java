@@ -132,9 +132,9 @@ public class ZoneVggRequestedService implements Consumer<ZoneVggRequested> {
                                         .getGeometry()
                                         .getMultiPolygon()
                                         .getCoordinates());
-                            var forcedClosedPolygonPixel = polygonCloser.apply(polygonPixel);
+                            var closedPolygon = polygonCloser.apply(polygonPixel);
                             return new PolygonObjectType(
-                                forcedClosedPolygonPixel, detectedObject.getDetectableObjectType());
+                                closedPolygon, detectedObject.getDetectableObjectType());
                           })
                       .toList();
               var tileCoordinates = detectedTile.getTile().getCoordinates();
