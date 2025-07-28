@@ -20,6 +20,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.geotools.geojson.geom.GeometryJSON;
 import org.locationtech.jts.geom.*;
+import org.locationtech.jts.geom.util.GeometryFixer;
 import org.springframework.stereotype.Component;
 
 // Most ChatGPT-generated code
@@ -226,9 +227,18 @@ public class GeometryConverter {
         points.stream()
             .map(pair -> new Coordinate(pair.get(0).doubleValue(), pair.get(1).doubleValue()))
             .toArray(Coordinate[]::new);
-    var ensureClosed = ensureClosed(coordinates);
-    LinearRing shell = geometryFactory.createLinearRing(ensureClosed);
-    return geometryFactory.createPolygon(shell);
+
+    coordinates = ensureClosed(coordinates);
+
+    LinearRing shell = geometryFactory.createLinearRing(coordinates);
+
+    Polygon polygon = geometryFactory.createPolygon(shell);
+
+    if (!polygon.isValid()) {
+      polygon = (Polygon) GeometryFixer.fix(polygon); // ou polygon.buffer(0)
+    }
+
+    return polygon;
   }
 
   private static Coordinate[] ensureClosed(Coordinate[] coords) {
