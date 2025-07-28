@@ -26,18 +26,19 @@ public class LidarPolygonMetricProcessor implements BiFunction<Polygon, Set<File
 
   @Override
   public Dimension apply(Polygon roofGeometry, Set<File> lidarFiles) {
-    var projectedRoof = projector.project(roofGeometry, WGS84, LAMBERT_93);
-    var solGeometry = roofGeometry.buffer(SOL_BUFFER_METERS);
-    return getDimensionInParallel(roofGeometry, solGeometry, lidarFiles);
+    var projectedRoofGeometry = projector.project(roofGeometry, WGS84, LAMBERT_93);
+    var solGeometry = projectedRoofGeometry.buffer(SOL_BUFFER_METERS);
+
+    return getDimensionFromMultipleFiles(projectedRoofGeometry, solGeometry, lidarFiles);
   }
 
-  private Dimension getDimensionInParallel(
-      Geometry projectedRoof, Geometry solGeometry, Set<File> lidarFiles) {
+  private Dimension getDimensionFromMultipleFiles(
+      Geometry roofGeometry, Geometry solGeometry, Set<File> lidarFiles) {
     Set<LasPointGeometry> roofPoints = new HashSet<>();
     Set<LasPointGeometry> solPoints = new HashSet<>();
 
     for (var lidarFile : lidarFiles) {
-      var result = getDimension(projectedRoof, solGeometry, lidarFile);
+      var result = getDimension(roofGeometry, solGeometry, lidarFile);
       roofPoints.addAll(result.roof().points());
       solPoints.addAll(result.sol().points());
     }
@@ -51,8 +52,8 @@ public class LidarPolygonMetricProcessor implements BiFunction<Polygon, Set<File
   private Dimension getDimension(Geometry roofGeometry, Geometry solGeometry, File file) {
     var indexedLas = new IndexedLas(file, Set.of(BATIMENT, SOL));
 
-    var roofPoints = indexedLas.containedIn(roofGeometry, testClassification(BATIMENT));
     var solPoints = indexedLas.containedIn(solGeometry, testClassification(SOL));
+    var roofPoints = indexedLas.containedIn(roofGeometry, testClassification(BATIMENT));
 
     var roof = new Roof(roofPoints);
     var sol = new Sol(solPoints);
@@ -60,9 +61,6 @@ public class LidarPolygonMetricProcessor implements BiFunction<Polygon, Set<File
   }
 
   private static Predicate<LasPointGeometry> testClassification(LidarClass expectedClass) {
-    return (p) -> {
-      var candidateClass = fromValue(p.getLasPoint().getClassification());
-      return expectedClass.equals(candidateClass);
-    };
+    return (p) -> expectedClass.equals(p.getClassification());
   }
 }

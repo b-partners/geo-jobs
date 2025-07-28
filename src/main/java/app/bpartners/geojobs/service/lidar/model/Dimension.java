@@ -8,7 +8,7 @@ public record Dimension(Roof roof, Sol sol) {
   }
 
   public double getSlopeInDegrees() {
-    if(hasInvalidPointCount()){
+    if (hasInvalidPointCount()) {
       return 0;
     }
 
@@ -18,12 +18,14 @@ public record Dimension(Roof roof, Sol sol) {
     LasPointGeometry maxZPoint = null;
 
     for (var p : roof.points()) {
-      double z = p.getLasPoint().getZ();
+      double z = p.getCoordinate().getZ();
 
       if (z < minZ) {
         minZ = z;
         minZPoint = p;
-      } else if (z > maxZ) {
+      }
+
+      if (z > maxZ) {
         maxZ = z;
         maxZPoint = p;
       }
@@ -35,7 +37,7 @@ public record Dimension(Roof roof, Sol sol) {
 
     double dx = maxZPoint.getCoordinate().getX() - minZPoint.getCoordinate().getX();
     double dy = maxZPoint.getCoordinate().getY() - minZPoint.getCoordinate().getY();
-    double dz = maxZPoint.getLasPoint().getZ() - minZPoint.getLasPoint().getZ();
+    double dz = maxZPoint.getCoordinate().getZ() - minZPoint.getCoordinate().getZ();
     double distance = Math.sqrt(dx * dx + dy * dy);
 
     if (distance > 0) {
@@ -46,22 +48,22 @@ public record Dimension(Roof roof, Sol sol) {
   }
 
   public double getHeightInMeters() {
-    if(hasInvalidPointCount()){
+    if (hasInvalidPointCount()) {
       return 0;
     }
 
     var minZPoint =
         roof.points().stream()
-            .min(Comparator.comparingDouble(a -> a.getCoordinate().getZ()))
+            .min(Comparator.comparingDouble(p -> p.getCoordinate().getZ()))
             .orElseThrow();
 
-    double meanSolZ =
-        sol.points().stream().mapToDouble(p -> p.getLasPoint().getZ()).average().orElseThrow();
+    var meanSolZ =
+        sol.points().stream().mapToDouble(p -> p.getCoordinate().getZ()).average().orElseThrow();
 
-    return round2(minZPoint.getLasPoint().getZ() - meanSolZ);
+    return round2(minZPoint.getCoordinate().getZ() - meanSolZ);
   }
 
-  private boolean hasInvalidPointCount(){
+  private boolean hasInvalidPointCount() {
     return roof.points().size() < 2 || sol.points().size() < 2;
   }
 }

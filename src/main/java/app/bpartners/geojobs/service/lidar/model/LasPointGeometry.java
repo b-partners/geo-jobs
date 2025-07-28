@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service.lidar.model;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
+import static app.bpartners.geojobs.service.lidar.model.LidarClass.fromValue;
 
 import com.github.mreutegg.laszip4j.LASHeader;
 import com.github.mreutegg.laszip4j.LASPoint;
@@ -10,16 +11,13 @@ import org.locationtech.jts.geom.*;
 import org.locationtech.jts.geom.impl.CoordinateArraySequence;
 
 @Getter
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(callSuper = true)
 public class LasPointGeometry extends Point {
-  private final LASHeader lasHeader;
-  private final LASPoint lasPoint;
+  @EqualsAndHashCode.Include private final LidarClass classification;
 
   public LasPointGeometry(LASPoint lasPoint, LASHeader lasHeader) {
     super(lasPointToSequence(lasPoint, lasHeader), geometryFactory);
-
-    this.lasHeader = lasHeader;
-    this.lasPoint = lasPoint;
+    this.classification = fromValue(lasPoint.getClassification());
   }
 
   private static CoordinateSequence lasPointToSequence(LASPoint point, LASHeader header) {

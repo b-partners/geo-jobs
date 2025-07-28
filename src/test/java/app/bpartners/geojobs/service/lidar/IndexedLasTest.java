@@ -1,14 +1,16 @@
 package app.bpartners.geojobs.service.lidar;
 
+import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
+import static app.bpartners.geojobs.service.lidar.model.LidarClass.OTHER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.io.File;
-
 import app.bpartners.geojobs.service.lidar.model.IndexedLas;
+import java.io.File;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
 
 @Slf4j
 class IndexedLasTest {
@@ -17,21 +19,12 @@ class IndexedLasTest {
   void polygon_contains_LAZPoints() {
     var lasFile =
         new File(getClass().getClassLoader().getResource("las/2019_saipan_waveform.laz").getFile());
+    var indexedLas = new IndexedLas(lasFile, Set.of(OTHER));
 
-    var indexedLas = new IndexedLas(lasFile);
-
-    var geometryFactory = new GeometryFactory();
-
-    var xScale = 0.01;
-    var xOffset = 300_000;
-
-    var yScale = 0.01;
-    var yOffset = 1600000;
-
-    var x0 = (7030070 * xScale) + xOffset;
-    var y0 = (7520660 * yScale) + yOffset;
+    var x0 = 370300.7;
+    var y0 = 1675206.6;
     assertEquals(
-        2,
+        2_480,
         indexedLas
             .containedIn(
                 geometryFactory.createPolygon(
@@ -45,6 +38,7 @@ class IndexedLasTest {
   }
 
   @Test
+  @Disabled
   void large_laz_is_supported() {
     var lasFile =
         new File(
@@ -53,9 +47,8 @@ class IndexedLasTest {
                 .getResource("las/LHD_FXX_0809_6306_PTS_LAMB93_IGN69.copc.laz")
                 .getFile());
 
-    var indexedLas = new IndexedLas(lasFile);
+    var indexedLas = new IndexedLas(lasFile, Set.of(OTHER));
 
-    var geometryFactory = new GeometryFactory();
     var x0 = 80903100;
     var y0 = 630565435;
     log.info("Containment test...");

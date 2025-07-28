@@ -16,8 +16,8 @@ public enum LidarClass {
 
   public static LidarClass fromValue(int value) {
     return switch (value) {
-      case 6 -> BATIMENT;
       case 2 -> SOL;
+      case 6 -> BATIMENT;
       default -> OTHER;
     };
   }
