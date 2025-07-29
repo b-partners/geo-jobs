@@ -14,21 +14,9 @@ import java.nio.file.Files;
 @RestController
 public class GeoJsonContinuerController {
     private final GeoJsonContinuerService geoJsonContinuerService;
-    private final BucketComponent bucketComponent;
 
     @PostMapping(value = "/continue")
     public String continueGeoJson(@RequestParam("file") MultipartFile file) throws IOException {
-        File tempInput = File.createTempFile("geojson-input-", ".geojson");
-        file.transferTo(tempInput);
-
-        var result = geoJsonContinuerService.continueGeojson(tempInput);
-
-        File tempOutput = File.createTempFile("geojson-result-", ".geojson");
-        Files.writeString(tempOutput.toPath(), result.toString());
-
-        String bucketKey = "geojson/results/" + tempOutput.getName();
-        bucketComponent.upload(tempOutput, bucketKey);
-
-        return bucketComponent.presign(bucketKey);
+        return geoJsonContinuerService.generatePresignedUrl(file);
     }
 }
