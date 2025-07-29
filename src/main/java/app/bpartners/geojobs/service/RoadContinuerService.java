@@ -5,6 +5,7 @@ import app.bpartners.geojobs.endpoint.rest.postprocessing.continuer.LatLonLinesC
 import app.bpartners.geojobs.endpoint.rest.postprocessing.continuer.confFactory.ContinuationConfFactory;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.continuer.confFactory.PrettyConfFactory;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
+import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.geometry.quadrilateral.model.AlphaConf;
 import app.bpartners.geojobs.model.geometry.route.ContinuationConf;
 import app.bpartners.geojobs.model.geometry.route.PrettyConf;
@@ -13,6 +14,7 @@ import app.bpartners.geojobs.model.geometry.route.UnionConf;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Map;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
@@ -24,8 +26,10 @@ public class RoadContinuerService {
   private static final AlphaConf DEFAULT_ALPHA_CONF = new AlphaConf(0.55d, 1);
   private static final UnionConf DEFAULT_UNION_CONF = new UnionConf(1);
 
+  private final BucketComponent bucketComponent;
+
   @SneakyThrows
-  public File continueRoute(String geojsonString, TilingConf tilingConf) {
+  public Map<String, String> continueRoute(String geojsonString, TilingConf tilingConf) {
     File toBeContinuedFile = getGeoJsonFromString(geojsonString);
     Geojson toBeContinuedGeoJSON = new Geojson(toBeContinuedFile);
 
@@ -33,7 +37,18 @@ public class RoadContinuerService {
         getLatLonContinuer(getRouteContinuationConf(toBeContinuedGeoJSON), tilingConf);
     var continuedPolygons = continuer.apply(toBeContinuedFile);
 
-    return getGeoJsonFromString(new Geojson(continuedPolygons).stringValue());
+    var continuedGeoJsonFile = getGeoJsonFromString(new Geojson(continuedPolygons).stringValue());
+
+    return getPresignedURL(continuedGeoJsonFile);
+  }
+
+  private Map<String, String> getPresignedURL(File continuedGeoJsonFile) {
+    String bucketKey = "continuedRoads/" + UUID.randomUUID() + ".geojson";
+    bucketComponent.upload(continuedGeoJsonFile, bucketKey);
+
+    String presignURL = bucketComponent.presign(bucketKey);
+
+    return Map.of("url", presignURL);
   }
 
   public TilingConf getTilingConf(Integer zoom, Integer imgSize) {

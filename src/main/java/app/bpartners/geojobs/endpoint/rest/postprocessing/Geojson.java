@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,6 +24,7 @@ import lombok.experimental.Accessors;
 import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.geojson.feature.FeatureJSON;
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
 
@@ -45,55 +47,64 @@ public class Geojson {
 
   private static Set<LatLonPolygon> latLonPolygon(File geojsonPath) {
     Set<LatLonPolygon> latLonPolygons = new HashSet<>();
+    FeatureJSON featureJson = new FeatureJSON();
 
-    var featureJson = new FeatureJSON();
-    try (FileReader reader = new FileReader(geojsonPath)) {
-      var featureCollection = featureJson.readFeatureCollection(reader);
-      try (var featuresIterator = featureCollection.features()) {
-        while (featuresIterator.hasNext()) {
-          SimpleFeature feature = (SimpleFeature) featuresIterator.next();
+    try (FileReader reader = new FileReader(geojsonPath);
+        var featuresIterator = featureJson.readFeatureCollection(reader).features()) {
+
+      while (featuresIterator.hasNext()) {
+        SimpleFeature feature = (SimpleFeature) featuresIterator.next();
+        try {
           Polygon polygon = getPolygon(feature);
-
-          if (!polygon.isValid())
-            throw new IllegalArgumentException("Invalid polygon geometry: " + polygon.toText());
-
           latLonPolygons.add(new LatLonPolygon(polygon));
+        } catch (IllegalArgumentException ex) {
+          throw new IllegalStateException("Failed to process feature: " + feature.getID(), ex);
         }
       }
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+
+    } catch (IOException ioEx) {
+      throw new UncheckedIOException(
+          "Failed to read GeoJSON file: " + geojsonPath.getAbsolutePath(), ioEx);
     }
     return latLonPolygons;
   }
 
   private static Polygon getPolygon(SimpleFeature feature) {
-    var userData = new HashMap<String, Object>();
-    var confidence =
-        feature.getProperty("confidence") == null
-            ? null
-            : feature.getProperty("confidence").getValue();
-    var label =
-        feature.getProperty("label") == null ? null : feature.getProperty("label").getValue();
+    Object confidence = getPropertySafe(feature, "confidence");
+    Object label = getPropertySafe(feature, "label");
 
-    userData.put("label", label);
-    userData.put("confidence", confidence);
-    Polygon polygon;
-    try {
-      polygon = (Polygon) feature.getDefaultGeometry();
-    } catch (ClassCastException e) {
-      var multiPolygon = (MultiPolygon) feature.getDefaultGeometry();
-      if (multiPolygon.getNumGeometries() != 1) {
-        throw new RuntimeException(
-            "Only multipolygon with single polygon supported but got: " + multiPolygon);
-      }
-      polygon = (Polygon) multiPolygon.getGeometryN(0);
-    }
+    Polygon polygon = extractPolygonGeometry(feature);
 
     if (!polygon.isValid())
       throw new IllegalArgumentException("Invalid polygon geometry: " + polygon.toText());
 
+    Map<String, Object> userData = new HashMap<>();
+    if (label != null) userData.put("label", label);
+    if (confidence != null) userData.put("confidence", confidence);
+
     polygon.setUserData(userData);
     return polygon;
+  }
+
+  private static Object getPropertySafe(SimpleFeature feature, String propName) {
+    var property = feature.getProperty(propName);
+    return (property != null) ? property.getValue() : null;
+  }
+
+  private static Polygon extractPolygonGeometry(SimpleFeature feature) {
+    Geometry geometry = (Geometry) feature.getDefaultGeometry();
+    if (geometry instanceof Polygon polygon) {
+      return polygon;
+    } else if (geometry instanceof MultiPolygon multiPolygon) {
+      if (multiPolygon.getNumGeometries() != 1) {
+        throw new IllegalArgumentException(
+            "Unsupported: MultiPolygon with more than one geometry: " + multiPolygon);
+      }
+      return (Polygon) multiPolygon.getGeometryN(0);
+    } else {
+      throw new IllegalArgumentException(
+          "Unsupported geometry type: " + geometry.getGeometryType());
+    }
   }
 
   // Mostly ChatGPT-generated

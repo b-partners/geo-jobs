@@ -3,31 +3,34 @@ package app.bpartners.geojobs.service;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import app.bpartners.geojobs.endpoint.rest.postprocessing.Geojson;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.continuer.LatLonLinesContinuer;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
+import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.hash.FileHash;
+import app.bpartners.geojobs.file.hash.FileHashAlgorithm;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Map;
 import java.util.Set;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.LinearRing;
-import org.locationtech.jts.geom.Polygon;
 import org.mockito.MockedStatic;
 
 public class RoadContinuerServiceTest {
 
+  private BucketComponent bucketComponent;
   private RoadContinuerService subject;
 
   @BeforeEach
-  void setUp() {
-    subject = new RoadContinuerService();
+  public void setUp() {
+    bucketComponent = mock(BucketComponent.class);
+    subject = new RoadContinuerService(bucketComponent);
   }
 
   @Test
@@ -40,61 +43,76 @@ public class RoadContinuerServiceTest {
   }
 
   @Test
-  void continueRoute_ok() throws IOException {
-    String input =
+  void test_success_continuation_with_empty_features() throws Exception {
+    var input =
         """
-        {
-          "features" : [ ],
-          "type" : "FeatureCollection"
-        }""";
-    TilingConf tilingConf = TilingConf.getDefaultInstance();
+            {
+              "features" : [ ],
+              "type" : "FeatureCollection"
+            }
+        """;
+    var tilingConf = TilingConf.getDefaultInstance();
+
     File fileMock = File.createTempFile("geojson-test-", ".geojson");
     Files.writeString(fileMock.toPath(), input, StandardCharsets.UTF_8);
 
-    GeometryFactory geometryFactory = new GeometryFactory();
+    var polygon =
+        new GeometryFactory()
+            .createPolygon(
+                new Coordinate[] {
+                  new Coordinate(0, 0),
+                  new Coordinate(1, 0),
+                  new Coordinate(1, 1),
+                  new Coordinate(0, 1),
+                  new Coordinate(0, 0)
+                });
+    var latLonPolygon = new LatLonPolygon(polygon);
+    String mockedURL = "https://mocked/continued.geojson";
 
-    Coordinate[] coordinates =
-        new Coordinate[] {
-          new Coordinate(0, 0),
-          new Coordinate(1, 0),
-          new Coordinate(1, 1),
-          new Coordinate(0, 1),
-          new Coordinate(0, 0)
-        };
+    when(bucketComponent.upload(any(File.class), anyString()))
+        .thenReturn(new FileHash(FileHashAlgorithm.SHA256, "DummyValue"));
 
-    LinearRing shell = geometryFactory.createLinearRing(coordinates);
-    Polygon polygon = geometryFactory.createPolygon(shell, null);
+    when(bucketComponent.presign(anyString())).thenReturn(mockedURL);
 
-    LatLonPolygon latLonPolygon = new LatLonPolygon(polygon);
-
-    try (MockedStatic<RoadContinuerService> mockedStatic =
+    try (MockedStatic<RoadContinuerService> staticMock =
         mockStatic(RoadContinuerService.class, CALLS_REAL_METHODS)) {
-      mockedStatic
-          .when(() -> RoadContinuerService.getGeoJsonFromString(input))
-          .thenReturn(fileMock);
+      staticMock.when(() -> RoadContinuerService.getGeoJsonFromString(input)).thenReturn(fileMock);
 
-      LatLonLinesContinuer latLonLinesContinuerMock = mock(LatLonLinesContinuer.class);
-      when(latLonLinesContinuerMock.apply(any(File.class))).thenReturn(Set.of(latLonPolygon));
+      var continuerMock = mock(LatLonLinesContinuer.class);
+      when(continuerMock.apply(any(File.class))).thenReturn(Set.of(latLonPolygon));
 
-      File expected = subject.continueRoute(input, tilingConf);
-      assertNotNull(expected);
+      var result = subject.continueRoute(input, tilingConf);
+
+      assertNotNull(result);
+      assertEquals(mockedURL, result.get("url"));
+
+      verify(bucketComponent).upload(any(File.class), anyString());
+      verify(bucketComponent).presign(anyString());
     }
   }
 
   @SneakyThrows
   @Test
-  void test_ambohijatovo_crossed() {
-    var resource = getClass().getResource("/geojson/ambohijatovo-crossed.geojson");
-    assertNotNull(resource);
-    var file = new File(resource.toURI());
-    String content = Files.readString(file.toPath(), StandardCharsets.UTF_8);
+  void test_continuation_with_ambohijatovo_geojson_content() {
+    var resourceUrl = getClass().getResource("/geojson/ambohijatovo-crossed.geojson");
+    assertNotNull(resourceUrl);
 
-    var tilingConf = new TilingConf(17, 1_024);
-    var continued = subject.continueRoute(content, tilingConf);
+    var geojsonFile = new File(resourceUrl.toURI());
+    String geojsonContent = Files.readString(geojsonFile.toPath(), StandardCharsets.UTF_8);
+    var tilingConf = new TilingConf(17, 1024);
+    String mockedURL = "https://mocked/ambohijatovo-continued.geojson";
 
-    var polygonSize = new Geojson(continued).polygons().size();
+    when(bucketComponent.upload(any(File.class), anyString()))
+        .thenReturn(new FileHash(FileHashAlgorithm.SHA256, "DummyValue"));
 
-    assertTrue(continued.exists());
-    assertEquals(1, polygonSize);
+    when(bucketComponent.presign(anyString())).thenReturn(mockedURL);
+
+    Map<String, String> result = subject.continueRoute(geojsonContent, tilingConf);
+
+    assertNotNull(result);
+    assertEquals(mockedURL, result.get("url"));
+
+    verify(bucketComponent).upload(any(File.class), anyString());
+    verify(bucketComponent).presign(anyString());
   }
 }

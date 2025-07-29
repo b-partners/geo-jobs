@@ -168,6 +168,8 @@ public class SecurityConf {
                     .requestMatchers(GET, "/detections")
                     .hasAnyAuthority(
                         ROLE_ADMIN.name(), ROLE_COMMUNITY.name(), ROLE_INSURANCE.name())
+                    .requestMatchers(POST, "/road-continuer")
+                    .hasAnyAuthority(ROLE_ADMIN.name())
                     .requestMatchers(GET, "/usage")
                     .hasAnyAuthority(
                         ROLE_ADMIN.name(), ROLE_COMMUNITY.name(), ROLE_INSURANCE.name())
