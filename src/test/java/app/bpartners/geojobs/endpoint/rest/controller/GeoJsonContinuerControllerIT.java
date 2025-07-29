@@ -12,7 +12,7 @@ import java.io.File;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
-public class GeoJsonContinuerControllerTestIT {
+public class GeoJsonContinuerControllerIT {
     private final BucketComponent  bucketComponentMock = Mockito.mock(BucketComponent.class);
     private final GeoJsonContinuerService geoJsonContinuerServiceMock = Mockito.mock(GeoJsonContinuerService.class);
     private final GeoJsonContinuerController controller = new GeoJsonContinuerController(geoJsonContinuerServiceMock, bucketComponentMock);
