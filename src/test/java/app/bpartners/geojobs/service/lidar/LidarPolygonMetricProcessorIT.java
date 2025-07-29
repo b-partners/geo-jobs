@@ -5,10 +5,14 @@ import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFacto
 import app.bpartners.geojobs.conf.FacadeIT;
 import java.io.File;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.springframework.beans.factory.annotation.Autowired;
 
+@Slf4j
+@Disabled
 public class LidarPolygonMetricProcessorIT extends FacadeIT {
   @Autowired LidarPolygonMetricProcessor subject;
 
@@ -31,9 +35,11 @@ public class LidarPolygonMetricProcessorIT extends FacadeIT {
         };
 
     var roofGeometry = geometryFactory.createPolygon(coordinates);
-    var actual = subject.apply(roofGeometry, Set.of(lidarTile1));
+    var actual = subject.apply(roofGeometry, Set.of(lidarTile1, lidarTile2));
 
-    System.out.println("Height=" + actual.getHeightInMeters());
-    System.out.println("Pente=" + actual.getSlopeInDegrees());
+    var slope = actual.getSlopeInDegrees();
+    var height = actual.getHeightInMeters();
+
+    log.info("slope: {}, height: {}", slope, height);
   }
 }

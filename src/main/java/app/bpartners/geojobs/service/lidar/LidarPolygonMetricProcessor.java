@@ -45,15 +45,17 @@ public class LidarPolygonMetricProcessor implements BiFunction<Polygon, Set<File
 
     var roof = new Roof(roofPoints);
     var sol = new Sol(solPoints);
-
     return new Dimension(roof, sol);
   }
 
   private Dimension getDimension(Geometry roofGeometry, Geometry solGeometry, File file) {
     var indexedLas = new IndexedLas(file, Set.of(BATIMENT, SOL));
 
-    var solPoints = indexedLas.containedIn(solGeometry, testClassification(SOL));
     var roofPoints = indexedLas.containedIn(roofGeometry, testClassification(BATIMENT));
+    log.info("Found roof points {} in the file: {}", roofPoints.size(), file.getName());
+
+    var solPoints = indexedLas.containedIn(solGeometry, testClassification(SOL));
+    log.info("Found sol points {} in the file: {}", solPoints.size(), file.getName());
 
     var roof = new Roof(roofPoints);
     var sol = new Sol(solPoints);
