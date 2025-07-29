@@ -18,6 +18,7 @@ import java.nio.file.Paths;
 import org.junit.jupiter.api.Test;
 
 class LatLonLinesContinuerTest {
+  private final TilingConf tilingConf = new TilingConf(17, 1_024);
 
   @Test
   void continue_ivandry() throws IOException, URISyntaxException {
@@ -25,7 +26,6 @@ class LatLonLinesContinuerTest {
         new File(getClass().getResource("/ivandry/route-ivandry.geojson").getFile());
 
     var routesContinuationConf = routesContinuationConf();
-    var tilingConf = new TilingConf(17, 1_024);
     var latLonLinesContinuer = new LatLonLinesContinuer(routesContinuationConf, tilingConf, 10);
     var continued = latLonLinesContinuer.apply(ivandryGeojson);
 
@@ -46,7 +46,7 @@ class LatLonLinesContinuerTest {
     var subjectGeojsonFile = new File(subjectResource.toURI());
 
     var routesContinuationConf = routesContinuationConf();
-    var tilingConf = new TilingConf(17, 1_024);
+
     var latLonLinesContinuer = new LatLonLinesContinuer(routesContinuationConf, tilingConf, 10);
     var continued = latLonLinesContinuer.apply(subjectGeojsonFile);
 
@@ -64,7 +64,6 @@ class LatLonLinesContinuerTest {
 
     File subjectFile = new File(subjectResource.toURI());
     RoutesContinuationConf routesContinuationConf = routesContinuationConf();
-    var tilingConf = new TilingConf(17, 1_024);
 
     var subject = new LatLonLinesContinuer(routesContinuationConf, tilingConf, 10);
 
@@ -88,7 +87,6 @@ class LatLonLinesContinuerTest {
 
     File subjectGeojsonFile = new File(subjectResource.toURI());
     var routesContinuationConf = routesContinuationConf();
-    var tilingConf = new TilingConf(17, 1_024);
 
     var latLonLinesContinuer = new LatLonLinesContinuer(routesContinuationConf, tilingConf, 10);
     var continued = latLonLinesContinuer.apply(subjectGeojsonFile);
@@ -109,7 +107,7 @@ class LatLonLinesContinuerTest {
     File subjectGeojsonFile = new File(subjectResource.toURI());
 
     RoutesContinuationConf routesContinuationConf = routesContinuationConf();
-    var tilingConf = new TilingConf(17, 1_024);
+
     var subject = new LatLonLinesContinuer(routesContinuationConf, tilingConf, 10);
     var continued = subject.apply(subjectGeojsonFile);
 
@@ -128,7 +126,7 @@ class LatLonLinesContinuerTest {
     File subjectGeojsonFile = new File(subjectResource.toURI());
 
     RoutesContinuationConf routesContinuationConf = routesContinuationConf();
-    var tilingConf = new TilingConf(17, 1_024);
+
     var subject = new LatLonLinesContinuer(routesContinuationConf, tilingConf, 10);
 
     var continuedPolygons = subject.apply(subjectGeojsonFile);
@@ -146,7 +144,7 @@ class LatLonLinesContinuerTest {
     var subjectGeojsonFile = new File(subjectResource.toURI());
 
     var routesContinuationConf = routesContinuationConf();
-    var tilingConf = new TilingConf(17, 1_024);
+
     var latLonLinesContinuer = new LatLonLinesContinuer(routesContinuationConf, tilingConf, 10);
     var continued = latLonLinesContinuer.apply(subjectGeojsonFile);
 
@@ -165,7 +163,7 @@ class LatLonLinesContinuerTest {
     File subjectGeojsonFile = new File(subjectResource.toURI());
 
     RoutesContinuationConf routesContinuationConf = routesContinuationConf();
-    var tilingConf = new TilingConf(17, 1_024);
+
     var latLonLinesContinuer = new LatLonLinesContinuer(routesContinuationConf, tilingConf, 10);
     var continued = latLonLinesContinuer.apply(subjectGeojsonFile);
 
@@ -184,7 +182,7 @@ class LatLonLinesContinuerTest {
     var subjectGeojsonFile = new File(subjectResource.toURI());
 
     RoutesContinuationConf routesContinuationConf = routesContinuationConf();
-    var tilingConf = new TilingConf(17, 1_024);
+
     var latLonLinesContinuer = new LatLonLinesContinuer(routesContinuationConf, tilingConf, 10);
     var continued = latLonLinesContinuer.apply(subjectGeojsonFile);
 
@@ -203,7 +201,7 @@ class LatLonLinesContinuerTest {
     var subjectGeojsonFile = new File(subjectResource.toURI());
 
     RoutesContinuationConf routesContinuationConf = routesContinuationConf();
-    var tilingConf = new TilingConf(17, 1_024);
+
     var subject = new LatLonLinesContinuer(routesContinuationConf, tilingConf, 10);
     var continued = subject.apply(subjectGeojsonFile);
 
@@ -222,7 +220,7 @@ class LatLonLinesContinuerTest {
     var subjectGeojsonFile = new File(subjectResource.toURI());
 
     RoutesContinuationConf routesContinuationConf = routesContinuationConf();
-    var tilingConf = new TilingConf(17, 1_024);
+
     var subject = new LatLonLinesContinuer(routesContinuationConf, tilingConf, 10);
     var continued = subject.apply(subjectGeojsonFile);
 
