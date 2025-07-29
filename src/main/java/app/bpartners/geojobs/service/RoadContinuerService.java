@@ -1,9 +1,10 @@
 package app.bpartners.geojobs.service;
 
+import static java.lang.Math.PI;
+
+import app.bpartners.geojobs.endpoint.rest.postprocessing.GeoJsonValidator;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.Geojson;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.continuer.LatLonLinesContinuer;
-import app.bpartners.geojobs.endpoint.rest.postprocessing.continuer.confFactory.ContinuationConfFactory;
-import app.bpartners.geojobs.endpoint.rest.postprocessing.continuer.confFactory.PrettyConfFactory;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.geometry.quadrilateral.model.AlphaConf;
@@ -17,43 +18,51 @@ import java.nio.file.Files;
 import java.util.Map;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
-import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
 public class RoadContinuerService {
-  private static final AlphaConf DEFAULT_ALPHA_CONF = new AlphaConf(0.55d, 1);
+  private static final AlphaConf DEFAULT_ALPHA_CONF = new AlphaConf(0.5d, 1);
   private static final UnionConf DEFAULT_UNION_CONF = new UnionConf(1);
+  private static final PrettyConf DEFAULT_PRETTY_CONF = new PrettyConf(0);
+  private static final int DEFAULT_NEIGHBOUR_THRESHOLD = 10;
+  private static final ContinuationConf DEFAULT_CONTINUATION_CONF =
+      new ContinuationConf(PI / 12, PI / 6, 500);
 
   private final BucketComponent bucketComponent;
+  private final GeoJsonValidator geoJsonValidator;
 
-  @SneakyThrows
-  public Map<String, String> continueRoute(String geojsonString, TilingConf tilingConf) {
-    File toBeContinuedFile = getGeoJsonFromString(geojsonString);
-    Geojson toBeContinuedGeoJSON = new Geojson(toBeContinuedFile);
+  public Map<String, String> continueRoute(String geojsonString, Integer zoom, Integer imgSize) {
+    var tilingConf = getTilingConf(zoom, imgSize);
+    try {
+      File toBeContinuedFile = getGeoJsonFromString(geojsonString);
+      if (geoJsonValidator.test(toBeContinuedFile)) {
+        LatLonLinesContinuer continuer = getLatLonContinuer(getRouteContinuationConf(), tilingConf);
+        var continuedPolygons = continuer.apply(toBeContinuedFile);
+        var continuedGeoJsonFile =
+            getGeoJsonFromString(new Geojson(continuedPolygons).stringValue());
 
-    LatLonLinesContinuer continuer =
-        getLatLonContinuer(getRouteContinuationConf(toBeContinuedGeoJSON), tilingConf);
-    var continuedPolygons = continuer.apply(toBeContinuedFile);
-
-    var continuedGeoJsonFile = getGeoJsonFromString(new Geojson(continuedPolygons).stringValue());
-
-    return getPresignedURL(continuedGeoJsonFile);
+        return getPresignedURL(continuedGeoJsonFile);
+      }
+      throw new RuntimeException("Could not proceed to polygon road continuation");
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private Map<String, String> getPresignedURL(File continuedGeoJsonFile) {
-    String bucketKey = "continuedRoads/" + UUID.randomUUID() + ".geojson";
+    var bucketKey = "continuedRoads/" + UUID.randomUUID() + ".geojson";
     bucketComponent.upload(continuedGeoJsonFile, bucketKey);
-
     String presignURL = bucketComponent.presign(bucketKey);
 
     return Map.of("url", presignURL);
   }
 
   public TilingConf getTilingConf(Integer zoom, Integer imgSize) {
-    int fZoom = (zoom == null) ? 20 : zoom;
-    int fImgSize = (imgSize == null) ? 1_024 : imgSize;
+    var defaultConf = TilingConf.getDefaultInstance();
+    int fZoom = (zoom == null) ? defaultConf.z() : zoom;
+    int fImgSize = (imgSize == null) ? defaultConf.imgSize() : imgSize;
 
     return new TilingConf(fZoom, fImgSize);
   }
@@ -68,14 +77,12 @@ public class RoadContinuerService {
 
   private static LatLonLinesContinuer getLatLonContinuer(
       RoutesContinuationConf routesContinuationConf, TilingConf tilingConf) {
-    return new LatLonLinesContinuer(routesContinuationConf, tilingConf, 10);
+    return new LatLonLinesContinuer(
+        routesContinuationConf, tilingConf, DEFAULT_NEIGHBOUR_THRESHOLD);
   }
 
-  private static RoutesContinuationConf getRouteContinuationConf(Geojson geojson) {
-    ContinuationConf continuationConf = new ContinuationConfFactory().apply(geojson.polygons());
-    PrettyConf prettyConf = new PrettyConfFactory().apply(geojson.polygons());
-
+  private static RoutesContinuationConf getRouteContinuationConf() {
     return new RoutesContinuationConf(
-        DEFAULT_ALPHA_CONF, DEFAULT_UNION_CONF, continuationConf, prettyConf);
+        DEFAULT_ALPHA_CONF, DEFAULT_UNION_CONF, DEFAULT_CONTINUATION_CONF, DEFAULT_PRETTY_CONF);
   }
 }
