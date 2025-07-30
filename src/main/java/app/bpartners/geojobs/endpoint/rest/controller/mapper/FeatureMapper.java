@@ -133,8 +133,6 @@ public class FeatureMapper {
       app.bpartners.geojobs.repository.model.Feature.FeatureGeometry featureGeometry) {
     var actualInstanceStringValue = featureGeometry.getActualInstanceStringValue();
     var type = featureGeometry.getGeometryType();
-    log.info(
-        "Actual instance string value: {}, geometry type: {}", actualInstanceStringValue, type);
     if (actualInstanceStringValue == null || type == null) {
       return null;
     }
@@ -155,7 +153,6 @@ public class FeatureMapper {
 
   public org.locationtech.jts.geom.Geometry toDomainGeometry(Feature feature) {
     var geometryType = feature.getGeometry().getActualInstance();
-    log.info("Geometry type: {}", geometryType);
     switch (geometryType) {
       case Point ignored -> throw new NotImplementedException("Point geometry type not supported");
       case Polygon polygon -> {

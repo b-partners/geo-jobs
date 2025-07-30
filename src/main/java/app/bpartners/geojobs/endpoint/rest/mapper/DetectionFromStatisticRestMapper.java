@@ -72,7 +72,7 @@ public class DetectionFromStatisticRestMapper
             detection.getPolygonRoofDelimitation() == null
                     || detection.getPolygonRoofDelimitation().isEmpty()
                 ? null
-                    : retrieveRoofDelimiter(detection))
+                : retrieveRoofDelimiter(detection))
         .geoJsonOutput(detection.isOutputZipped() ? ZIP : GEO_JSON)
         .needsImageOutput(detection.needsImageOutput());
   }
