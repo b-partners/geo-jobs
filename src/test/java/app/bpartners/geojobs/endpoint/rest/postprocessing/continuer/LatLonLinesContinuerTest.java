@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import app.bpartners.geojobs.endpoint.rest.postprocessing.Geojson;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
+import app.bpartners.geojobs.file.FileWriter;
+import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.geometry.quadrilateral.model.AlphaConf;
 import app.bpartners.geojobs.model.geometry.route.ContinuationConf;
 import app.bpartners.geojobs.model.geometry.route.PrettyConf;
@@ -18,9 +20,11 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 class LatLonLinesContinuerTest {
-  GeoJsonContinuerService geoJsonContinuerService = new GeoJsonContinuerService();
+  private final BucketComponent  bucketComponentMock = Mockito.mock(BucketComponent.class);
+  private final FileWriter fileWriterMock = Mockito.mock(FileWriter.class);
 
   @Test
   void continue_ivandry() throws IOException, URISyntaxException {
@@ -72,7 +76,7 @@ class LatLonLinesContinuerTest {
   //Test with our own service
   @Test
   void continue_service_test() throws IOException, URISyntaxException {
-    GeoJsonContinuerService geoJsonContinuerService = new GeoJsonContinuerService();
+    GeoJsonContinuerService geoJsonContinuerService = new GeoJsonContinuerService(bucketComponentMock, fileWriterMock);
 
     File input = new File(getClass().getResource("/amboditsiry/route-amboditsiry.geojson").getFile());
     var expectedURI =

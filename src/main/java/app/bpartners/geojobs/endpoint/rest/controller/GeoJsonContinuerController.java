@@ -1,14 +1,11 @@
 package app.bpartners.geojobs.endpoint.rest.controller;
 
-import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.service.geojson.GeoJsonContinuerService;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 
 @AllArgsConstructor
 @RestController
