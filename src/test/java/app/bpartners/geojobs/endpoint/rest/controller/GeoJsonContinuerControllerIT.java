@@ -2,7 +2,6 @@ package app.bpartners.geojobs.endpoint.rest.controller;
 
 
 import app.bpartners.geojobs.endpoint.rest.postprocessing.Geojson;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.service.geojson.GeoJsonContinuerService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -13,7 +12,6 @@ import java.io.File;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 public class GeoJsonContinuerControllerIT {
-    private final BucketComponent  bucketComponentMock = Mockito.mock(BucketComponent.class);
     private final GeoJsonContinuerService geoJsonContinuerServiceMock = Mockito.mock(GeoJsonContinuerService.class);
     private final GeoJsonContinuerController controller = new GeoJsonContinuerController(geoJsonContinuerServiceMock);
 
@@ -28,13 +26,12 @@ public class GeoJsonContinuerControllerIT {
         var mockResult = mock(Geojson.class);
 
         when(geoJsonContinuerServiceMock.continueGeojson(any(File.class))).thenReturn(mockResult);
-        when(bucketComponentMock.presign(anyString()))
+        when(geoJsonContinuerServiceMock.generatePresignedUrl(file))
                 .thenReturn("https://url-presigned");
 
         String resultUrl = controller.continueGeoJson(file);
 
-        verify(bucketComponentMock).upload(any(File.class), anyString());
-        verify(bucketComponentMock).presign(anyString());
+        verify(geoJsonContinuerServiceMock).generatePresignedUrl(file);
 
         assertEquals("https://url-presigned", resultUrl);
     }
