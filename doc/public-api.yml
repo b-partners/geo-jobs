@@ -341,6 +341,36 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RevokeApiKeyResponse'
+  '/continue':
+    post:
+      tags:
+        - Continuation
+      operationId: PolygonsContinuer
+      summary: geoJson continuer
+      description:
+        Takes a geoJSON as an input and returns a presigned URL as an output
+      security:
+        - ApiKeyAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: The geoJson data that will be continued
+      responses:
+        200:
+          description: Presigned URL
+          content:
+            text/plain:
+              schema:
+                type: string
 components:
   securitySchemes:
     ApiKeyAuth:
