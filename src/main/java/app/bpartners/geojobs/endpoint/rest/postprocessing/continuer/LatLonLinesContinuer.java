@@ -29,7 +29,8 @@ public final class LatLonLinesContinuer extends LinesContinuer<LatLonPolygon> {
   public Set<LatLonPolygon> apply(Set<LatLonPolygon> latLonPolygons) {
     var tilingConf = parallelTiledLinesContinuer.getTiledLinesContinuer().tilingConf();
     var tiledPolygons =
-        latLonPolygons.stream().map(p -> p.tiledPolygon(tilingConf)).collect(toSet());
+        latLonPolygons.stream()
+                .map(p -> p.tiledPolygon(tilingConf)).collect(toSet());
     var continuedTiledPolygons = parallelTiledLinesContinuer.apply(tiledPolygons);
     return continuedTiledPolygons.stream().map(TiledPolygon::latLonPolygon).collect(toSet());
   }
