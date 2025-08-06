@@ -53,7 +53,11 @@ public class GeoJsonValidator {
     }
 
     private boolean isValidPolygonCoordinates(JsonNode coordinates) {
-        throw new NotImplementedException("To be implemented::logic to check if the coodinates of a polygon is correct");
+        if(!coordinates.isArray() || coordinates.isEmpty()) {
+            return false;
+        }
+
+        return true;
     }
 
     public JsonNode readFile(File file) throws IOException {
