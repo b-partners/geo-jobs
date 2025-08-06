@@ -77,7 +77,7 @@ public class BucketComponent {
                     .destination(destination)
                     .build());
     download.completionFuture().join();
-    return destination; 
+    return destination;
   }
 
   private String prefixFromBucketKey(String bucketKey) {

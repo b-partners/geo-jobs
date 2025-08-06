@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 class LatLonLinesContinuerTest {
-  private final BucketComponent  bucketComponentMock = Mockito.mock(BucketComponent.class);
+  private final BucketComponent bucketComponentMock = Mockito.mock(BucketComponent.class);
   private final FileWriter fileWriterMock = Mockito.mock(FileWriter.class);
 
   @Test
@@ -42,7 +42,8 @@ class LatLonLinesContinuerTest {
     // assertEquals(expected, new Geojson(continued).stringValue());
   }
 
-  //Test with the provided service from GeoJobs, it is the same as continue_ivandy but with different geoJson
+  // Test with the provided service from GeoJobs, it is the same as continue_ivandy but with
+  // different geoJson
   @Test
   void continue_amboditsiry() throws IOException, URISyntaxException {
     var actualGeojson =
@@ -73,15 +74,17 @@ class LatLonLinesContinuerTest {
     return new RoutesContinuationConf(alphaConf, unionConf, continuationConf, prettyConf);
   }
 
-  //Test with our own service
+  // Test with our own service
   @Test
   void continue_service_test() throws IOException, URISyntaxException {
-    GeoJsonContinuerService geoJsonContinuerService = new GeoJsonContinuerService(bucketComponentMock, fileWriterMock);
+    GeoJsonContinuerService geoJsonContinuerService =
+        new GeoJsonContinuerService(bucketComponentMock, fileWriterMock);
 
-    File input = new File(getClass().getResource("/amboditsiry/route-amboditsiry.geojson").getFile());
+    File input =
+        new File(getClass().getResource("/amboditsiry/route-amboditsiry.geojson").getFile());
     var expectedURI =
-            Paths.get(
-                    getClass().getResource("/amboditsiry/route-amboditsiry-continued.geojson").toURI());
+        Paths.get(
+            getClass().getResource("/amboditsiry/route-amboditsiry-continued.geojson").toURI());
 
     var actual = geoJsonContinuerService.continueGeojson(input);
     var expectedContinued = Files.readString(expectedURI);
