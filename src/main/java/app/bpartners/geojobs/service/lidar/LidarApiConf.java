@@ -2,20 +2,18 @@ package app.bpartners.geojobs.service.lidar;
 
 import java.util.HashMap;
 import java.util.Map;
+import lombok.Getter;
 import org.locationtech.jts.geom.Envelope;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
+@Getter
 @Configuration
 public class LidarApiConf {
   private final String url;
 
   public LidarApiConf(@Value("${ign.lidar.api.url}") String url) {
     this.url = url;
-  }
-
-  public String getUrl() {
-    return url;
   }
 
   public Map<String, String> getDefaultParams(Envelope bbox) {
