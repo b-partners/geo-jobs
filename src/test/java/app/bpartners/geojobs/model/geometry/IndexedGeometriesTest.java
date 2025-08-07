@@ -1,8 +1,8 @@
 package app.bpartners.geojobs.model.geometry;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
@@ -33,17 +33,16 @@ class IndexedGeometriesTest {
 
     assertTrue(
         indexedGeometries.containedIn(geometryFactory.createPoint(new Coordinate(5, 5))).isEmpty());
-    assertTrue(
-        indexedGeometries
-            .containedIn(
-                geometryFactory.createPolygon(
-                    new Coordinate[] {
-                      new Coordinate(0, 0),
-                      new Coordinate(100, 0),
-                      new Coordinate(0, 100),
-                      new Coordinate(0, 0)
-                    }))
-            .equals(Set.of(polygon1)));
+    assertEquals(
+        indexedGeometries.containedIn(
+            geometryFactory.createPolygon(
+                new Coordinate[] {
+                  new Coordinate(0, 0),
+                  new Coordinate(100, 0),
+                  new Coordinate(0, 100),
+                  new Coordinate(0, 0)
+                })),
+        Set.of(polygon1));
     assertTrue(
         indexedGeometries
             .containedIn(
@@ -55,12 +54,11 @@ class IndexedGeometriesTest {
                       new Coordinate(10, 10)
                     }))
             .isEmpty());
-    assertTrue(
-        indexedGeometries
-            .containedIn(
-                geometryFactory.createPoint(
-                    // point contains point
-                    new Coordinate(90, 90)))
-            .equals(Set.of(point1)));
+    assertEquals(
+        indexedGeometries.containedIn(
+            geometryFactory.createPoint(
+                // point contains point
+                new Coordinate(90, 90))),
+        Set.of(point1));
   }
 }

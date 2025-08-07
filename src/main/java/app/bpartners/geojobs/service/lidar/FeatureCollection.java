@@ -25,12 +25,12 @@ public class FeatureCollection implements Serializable {
   @JsonIgnoreProperties(ignoreUnknown = true)
   public static class Feature implements Serializable {
     private static final String DEFAULT_FEATURE_TYPE = "Feature";
-    private Map<String, Object> properties;
+    private Map<String, Serializable> properties;
     private String type;
 
     public Feature() {}
 
-    public Feature(Map<String, Object> properties) {
+    public Feature(Map<String, Serializable> properties) {
       this.properties = properties;
       this.type = DEFAULT_FEATURE_TYPE;
     }

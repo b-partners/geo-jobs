@@ -27,27 +27,31 @@ class GeometrySquareMeterAreaTest {
   }
 
   @Test
-  void change_polygon_crs(){
-    var coordinates = new Coordinate[] {
-            new Coordinate(639000, 6833000),
-            new Coordinate(639000, 6834000),
-            new Coordinate(638000, 6834000),
-            new Coordinate(638000, 6833000),
-            new Coordinate(639000, 6833000)
-    };
+  void change_polygon_crs() {
+    var coordinates =
+        new Coordinate[] {
+          new Coordinate(639000, 6833000),
+          new Coordinate(639000, 6834000),
+          new Coordinate(638000, 6834000),
+          new Coordinate(638000, 6833000),
+          new Coordinate(639000, 6833000)
+        };
     var roofGeometry = geometryFactory.createPolygon(coordinates);
 
-    var expectedCoords = new Coordinate[] {
-            new Coordinate(2.172788043543686, 48.59432975513147),
-            new Coordinate(2.172645960661405, 48.60332446371527),
-            new Coordinate(2.1590837968932357, 48.60322944328981),
-            new Coordinate(2.159228208479135, 48.594234750323594),
-            new Coordinate(2.172788043543686, 48.59432975513147)
-    };
+    var expectedCoords =
+        new Coordinate[] {
+          new Coordinate(2.172788043543686, 48.59432975513147),
+          new Coordinate(2.172645960661405, 48.60332446371527),
+          new Coordinate(2.1590837968932357, 48.60322944328981),
+          new Coordinate(2.159228208479135, 48.594234750323594),
+          new Coordinate(2.172788043543686, 48.59432975513147)
+        };
 
     var expectedP = geometryFactory.createPolygon(expectedCoords);
 
-    var projected = subject.project(roofGeometry, GeometrySquareMeterArea.LAMBERT_93, GeometrySquareMeterArea.WGS84);
+    var projected =
+        subject.project(
+            roofGeometry, GeometrySquareMeterArea.LAMBERT_93, GeometrySquareMeterArea.WGS84);
 
     assertEquals(expectedP, projected);
   }

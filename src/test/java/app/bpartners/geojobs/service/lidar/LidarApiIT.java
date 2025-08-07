@@ -20,7 +20,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
-public class LidarApiIT extends FacadeIT {
+class LidarApiIT extends FacadeIT {
   @Autowired LidarApi subject;
   @MockBean RestTemplate restTemplate;
   @MockBean FileWriter fileWriter;
@@ -34,7 +34,8 @@ public class LidarApiIT extends FacadeIT {
                     .features(
                         List.of(
                             FeatureCollection.Feature.builder()
-                                .properties(Map.of("url", "https://dummy.com"))
+                                .properties(
+                                    Map.of("url", "https://storage.sbg.cloud.ovh.net/dummy.laz"))
                                 .build()))
                     .build(),
                 OK));

@@ -27,8 +27,8 @@ public class GeometrySquareMeterArea implements Function<Geometry, Double> {
     return project(geometry, WGS84, LAMBERT_93).getArea();
   }
 
-  public Geometry project(Geometry geometry,
-                          CoordinateReferenceSystem source, CoordinateReferenceSystem target) {
+  public Geometry project(
+      Geometry geometry, CoordinateReferenceSystem source, CoordinateReferenceSystem target) {
     try {
       var transform = CRS.findMathTransform(source, target, true);
       return JTS.transform(geometry, transform);

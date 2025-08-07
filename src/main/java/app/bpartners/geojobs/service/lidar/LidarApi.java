@@ -25,6 +25,8 @@ public class LidarApi implements Function<Set<Envelope>, Set<File>> {
   private final LidarApiConf conf;
   private final RestTemplate restTemplate;
   private final FileWriter fileWriter;
+  private static final Set<String> ALLOWED_URL_PREFIXES =
+      Set.of("https://storage.sbg.cloud.ovh.net/", "https://lidar.data.gouv.fr/");
 
   @Override
   public Set<File> apply(Set<Envelope> bboxes) {
@@ -48,7 +50,11 @@ public class LidarApi implements Function<Set<Envelope>, Set<File>> {
       }
     }
 
-    return uniqueUrls.stream().map(this::downloadToTempFile).filter(Optional::isPresent).map(Optional::get).collect(toSet());
+    return uniqueUrls.stream()
+        .map(this::downloadToTempFile)
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .collect(toSet());
   }
 
   public Set<File> apply(List<Geometry> geometries) {
@@ -58,11 +64,21 @@ public class LidarApi implements Function<Set<Envelope>, Set<File>> {
 
   private Optional<File> downloadToTempFile(String fileUrl) {
     try {
+      if (!isSafeUrl(fileUrl)) {
+        log.warn("Unsafe URL blocked: {}", fileUrl);
+        return Optional.empty();
+      }
+
       var data = Optional.ofNullable(restTemplate.getForObject(fileUrl, byte[].class));
       return data.map(bytes -> fileWriter.apply(bytes, null));
     } catch (Exception e) {
       log.error("Failed to download LAZ file from {}", fileUrl, e);
       throw new RuntimeException("Could not download file: " + fileUrl, e);
     }
+  }
+
+  public static boolean isSafeUrl(String url) {
+    if (url == null) return false;
+    return ALLOWED_URL_PREFIXES.stream().anyMatch(url::startsWith);
   }
 }

@@ -82,7 +82,9 @@ public record Dimension(Roof roof, Sol sol) {
   }
 
   private static Coordinate centroidXY(List<LasPointGeometry> points) {
-    double sumX = 0, sumY = 0;
+    double sumX = 0;
+    double sumY = 0;
+
     for (var p : points) {
       sumX += p.getCoordinate().getX();
       sumY += p.getCoordinate().getY();

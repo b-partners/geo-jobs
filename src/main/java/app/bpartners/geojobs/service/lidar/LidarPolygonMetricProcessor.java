@@ -38,7 +38,7 @@ public class LidarPolygonMetricProcessor implements Function<List<Polygon>, List
 
   private List<Dimension> getDimensionsFromMultipleFiles(
       List<Geometry> roofGeometries, List<Geometry> solGeometries, Set<File> lidarFiles) {
-    List<Dimension> results = roofGeometries.stream().map((g) -> Dimension.empty()).toList();
+    List<Dimension> results = roofGeometries.stream().map(g -> Dimension.empty()).toList();
 
     for (var lidarFile : lidarFiles) {
       var dimensions = getDimensions(roofGeometries, solGeometries, lidarFile);
@@ -76,6 +76,6 @@ public class LidarPolygonMetricProcessor implements Function<List<Polygon>, List
   }
 
   private static Predicate<LasPointGeometry> testClassification(LidarClass expectedClass) {
-    return (p) -> expectedClass.equals(p.getClassification());
+    return p -> expectedClass.equals(p.getClassification());
   }
 }

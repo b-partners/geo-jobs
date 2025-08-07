@@ -49,7 +49,7 @@ public class IndexedLas {
 
   public Set<LasPointGeometry> containedIn(
       Geometry container, Predicate<LasPointGeometry> predicate) {
-    Predicate<Geometry> geometryPredicate = (g) -> predicate.test((LasPointGeometry) g);
+    Predicate<Geometry> geometryPredicate = g -> predicate.test((LasPointGeometry) g);
 
     return indexedGeometries.containedIn(container, geometryPredicate).stream()
         .map(this::toLasPoint)
@@ -61,8 +61,8 @@ public class IndexedLas {
   }
 
   private LasPointGeometry toLasPoint(Geometry geometry) {
-    if (geometry instanceof LasPointGeometry) {
-      return (LasPointGeometry) geometry;
+    if (geometry instanceof LasPointGeometry lasPointGeometry) {
+      return lasPointGeometry;
     }
 
     throw new RuntimeException(

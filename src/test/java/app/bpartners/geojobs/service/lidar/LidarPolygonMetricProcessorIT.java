@@ -8,7 +8,6 @@ import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
@@ -18,12 +17,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 @Slf4j
-public class LidarPolygonMetricProcessorIT extends FacadeIT {
+class LidarPolygonMetricProcessorIT extends FacadeIT {
   @Autowired LidarPolygonMetricProcessor subject;
   @MockBean LidarApi lidarApiMock;
 
   @Test
-  void compute_roof_slope_and_height_with_multiple_roof_geometries() throws IOException {
+  void compute_roof_slope_and_height_with_multiple_roof_geometries() {
     var lasFile =
         new File(
             requireNonNull(
