@@ -61,9 +61,32 @@ public class GeoJsonValidator {
             if(!ring.isArray() || ring.isEmpty() || !(ring.size() < 4)) {
                 return false;
             }
+
+            JsonNode firstRing = ring.get(0);
+            JsonNode lastRing = ring.get(ring.size() - 1);
+
+            if (!ringEquals(firstRing, lastRing)) {
+                return false;
+            }
+
+            for (JsonNode ringPoint : ring) {
+                if(!ringPoint.isArray() || ringPoint.isEmpty() || ringPoint.size() < 2) {
+                    return false;
+                }
+
+                double lon = ringPoint.get(0).asDouble();
+                double lat = ringPoint.get(1).asDouble();
+                if (lon < -180 || lon > 180 || lat < -90 || lat > 90) {
+                    return false;
+                }
+            }
         }
 
         return true;
+    }
+
+    private boolean ringEquals(JsonNode firstRing, JsonNode lastRing) {
+        throw new NotImplementedException("Not implemented");
     }
 
     public JsonNode readFile(File file) throws IOException {
