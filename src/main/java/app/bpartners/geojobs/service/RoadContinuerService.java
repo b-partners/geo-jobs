@@ -13,15 +13,19 @@ import app.bpartners.geojobs.model.geometry.route.PrettyConf;
 import app.bpartners.geojobs.model.geometry.route.RoutesContinuationConf;
 import app.bpartners.geojobs.model.geometry.route.UnionConf;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Map;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class RoadContinuerService {
   private static final AlphaConf DEFAULT_ALPHA_CONF = new AlphaConf(0.5d, 1);
   private static final UnionConf DEFAULT_UNION_CONF = new UnionConf(1);
@@ -33,41 +37,7 @@ public class RoadContinuerService {
   private final BucketComponent bucketComponent;
   private final GeoJsonValidator geoJsonValidator;
 
-  public Map<String, String> continueRoute(String geojsonString, Integer zoom, Integer imgSize) {
-    var tilingConf = getTilingConf(zoom, imgSize);
-    try {
-      File toBeContinuedFile = getGeoJsonFromString(geojsonString);
-      if (geoJsonValidator.test(toBeContinuedFile)) {
-        LatLonLinesContinuer continuer = getLatLonContinuer(getRouteContinuationConf(), tilingConf);
-        var continuedPolygons = continuer.apply(toBeContinuedFile);
-        var continuedGeoJsonFile =
-            getGeoJsonFromString(new Geojson(continuedPolygons).stringValue());
-
-        return getPresignedURL(continuedGeoJsonFile);
-      }
-      throw new RuntimeException("Could not proceed to polygon road continuation");
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private Map<String, String> getPresignedURL(File continuedGeoJsonFile) {
-    var bucketKey = "continuedRoads/" + UUID.randomUUID() + ".geojson";
-    bucketComponent.upload(continuedGeoJsonFile, bucketKey);
-    String presignURL = bucketComponent.presign(bucketKey);
-
-    return Map.of("url", presignURL);
-  }
-
-  public TilingConf getTilingConf(Integer zoom, Integer imgSize) {
-    var defaultConf = TilingConf.getDefaultInstance();
-    int fZoom = (zoom == null) ? defaultConf.z() : zoom;
-    int fImgSize = (imgSize == null) ? defaultConf.imgSize() : imgSize;
-
-    return new TilingConf(fZoom, fImgSize);
-  }
-
-  public static File getGeoJsonFromString(String geoJsonString) throws IOException {
+  private static File getGeoJsonFromString(String geoJsonString) throws IOException {
     String uuidName = UUID.randomUUID().toString();
     File tempFile = File.createTempFile("continued-geojson-" + uuidName, ".geojson");
 
@@ -84,5 +54,55 @@ public class RoadContinuerService {
   private static RoutesContinuationConf getRouteContinuationConf() {
     return new RoutesContinuationConf(
         DEFAULT_ALPHA_CONF, DEFAULT_UNION_CONF, DEFAULT_CONTINUATION_CONF, DEFAULT_PRETTY_CONF);
+  }
+
+  public static File convertMultipartFileToFile(MultipartFile multipart) throws IOException {
+    String uuidName = UUID.randomUUID().toString();
+    File tempFile = File.createTempFile("to-be-continued-geojson-" + uuidName, ".geojson");
+
+    try (FileOutputStream fos = new FileOutputStream(tempFile)) {
+      fos.write(multipart.getBytes());
+    }
+    return tempFile;
+  }
+
+  public Map<String, String> continueRoute(MultipartFile geoJSON, Integer zoom, Integer imgSize)
+      throws IOException {
+    if (!geoJsonValidator.isLikelyGeoJson(geoJSON))
+      throw new IllegalArgumentException("Should be a geojson file");
+
+    File geoJsonFile = convertMultipartFileToFile(geoJSON);
+    var tilingConf = getTilingConf(zoom, imgSize);
+
+    geoJsonValidator.test(geoJsonFile);
+    log.info(
+        "Continuing route polygons of geojson={} with zoom={} and imgSize={}",
+        geoJSON.getOriginalFilename(),
+        zoom,
+        imgSize);
+
+    var continuer = getLatLonContinuer(getRouteContinuationConf(), tilingConf);
+    var continuedPolygons = continuer.apply(geoJsonFile);
+
+    File continuedGeoJsonFile = getGeoJsonFromString(new Geojson(continuedPolygons).stringValue());
+    log.info("Continuation process finished");
+
+    return getPresignedURL(continuedGeoJsonFile);
+  }
+
+  private Map<String, String> getPresignedURL(File continuedGeoJsonFile) {
+    var bucketKey = "continuedRoads/" + UUID.randomUUID() + ".geojson";
+    bucketComponent.upload(continuedGeoJsonFile, bucketKey);
+    String presignURL = bucketComponent.presign(bucketKey);
+    log.info("Generated presigned URL: {}", presignURL);
+    return Map.of("url", presignURL);
+  }
+
+  public TilingConf getTilingConf(Integer zoom, Integer imgSize) {
+    var defaultConf = TilingConf.getDefaultInstance();
+    int fZoom = (zoom == null) ? defaultConf.z() : zoom;
+    int fImgSize = (imgSize == null) ? defaultConf.imgSize() : imgSize;
+
+    return new TilingConf(fZoom, fImgSize);
   }
 }

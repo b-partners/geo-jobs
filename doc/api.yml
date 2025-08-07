@@ -1020,7 +1020,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RevokeApiKeyResponse'
-  '/route-continuer':
+  '/road-continuer':
     post:
       tags:
         - Road continuation
@@ -1028,11 +1028,30 @@ paths:
       summary: Continue roads' polygons
       security:
         - ApiKeyAuth: [ ]
+      parameters:
+        - name: zoom
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: imageSize
+          in: query
+          required: true
+          schema:
+            type: integer
       requestBody:
+        required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Feature'
+              type: object
+              description: A GeoJSON file
+              properties:
+                geojson-file:
+                  type: string
+                  format: binary
+              required:
+                - geojson-file
       responses:
         200:
           description: Unified road polygon(s)
@@ -1044,7 +1063,7 @@ paths:
                   url:
                     type: string
                     format: uri
-                    example: "https://example.com/file/abc123?token=xyz"
+                    example: "https://bucket-name.s3.amazonaws.com/output.geojson?signature=..."
         403:
           $ref: "#/components/responses/403"
 

@@ -1,20 +1,40 @@
 package app.bpartners.geojobs.endpoint.rest.postprocessing;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.function.Predicate;
 import lombok.AllArgsConstructor;
 import org.locationtech.jts.geom.*;
 import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
 
 @Component
 @AllArgsConstructor
 public class GeoJsonValidator implements Predicate<File> {
   private final ObjectMapper mapper;
   private final GeometryFactory geometryFactory = new GeometryFactory();
+
+  // reference: https://datatracker.ietf.org/doc/html/rfc7946#section-12
+  public boolean isLikelyGeoJson(MultipartFile file) {
+    String filename = Optional.ofNullable(file.getOriginalFilename()).orElse("").toLowerCase();
+    String mimeType = Optional.ofNullable(file.getContentType()).orElse("").toLowerCase();
+
+    boolean validExtension = filename.endsWith(".geojson");
+    boolean validMimeType =
+        mimeType.equals("application/geo+json")
+            || mimeType.equals("application/json")
+            || mimeType.contains("geo")
+            || mimeType.contains("json");
+
+    return validExtension && validMimeType;
+  }
 
   @Override
   public boolean test(File file) {
@@ -44,8 +64,10 @@ public class GeoJsonValidator implements Predicate<File> {
               "Feature #" + i + " contains an invalid polygon geometry");
       }
       return true;
-    } catch (Exception e) {
-      throw new RuntimeException(e);
+    } catch (JsonProcessingException e) {
+      throw new IllegalArgumentException("Malformed JSON in GeoJSON file", e);
+    } catch (IOException e) {
+      throw new UncheckedIOException("Failed to read the GeoJSON file", e);
     }
   }
 
