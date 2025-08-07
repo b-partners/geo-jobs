@@ -17,6 +17,10 @@ public class GeoJsonValidator {
         try {
             var inputContent = readFile(file);
 
+            if (file == null || file.isEmpty()) {
+                return false;
+            }
+
             if (!"FeatureCollection".equals(inputContent.get("type").toString())) {
                 return false;
             }
