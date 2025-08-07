@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 
 @Component
@@ -13,11 +13,11 @@ import java.io.IOException;
 public class GeoJsonValidator {
     private final ObjectMapper objectMapper;
 
-    public boolean isValid(File file) {
+    public boolean isValid(MultipartFile file) {
         try {
             var inputContent = readFile(file);
 
-            if (file == null || file.isEmpty()) {
+            if (file.isEmpty()) {
                 return false;
             }
 
@@ -97,7 +97,7 @@ public class GeoJsonValidator {
                 && firstRing.get(1).asDouble() == lastRing.get(1).asDouble();
     }
 
-    public JsonNode readFile(File file) throws IOException {
-        return objectMapper.readTree(file);
+    private JsonNode readFile(MultipartFile file) throws IOException {
+        return objectMapper.readTree(file.getInputStream());
     }
 }
