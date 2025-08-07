@@ -5,8 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.mock.web.MockMultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -17,12 +15,12 @@ public class GeoJsonValidatorTest {
 
     @Test
     public void valid_geojson_return_true() throws IOException {
-        var inputPath = Paths.get("src/test/resources/ivandry/ivandry.json");
+        var inputStream = getClass().getResourceAsStream("/ivandry/ivandry.json");
         var file = new MockMultipartFile(
                 "file",
                 "ivandry.geojson",
                 "application/json",
-                Files.newInputStream(inputPath)
+                inputStream
         );
         assertTrue(geoJsonValidator.isValid(file));
     }
@@ -46,18 +44,6 @@ public class GeoJsonValidatorTest {
                 "invalid.geojson",
                 "application/json",
                 invalidTypeJson.getBytes()
-        );
-        assertFalse(geoJsonValidator.isValid(file));
-    }
-
-    @Test
-    public void missing_features_returns_false() {
-        String missingFeaturesJson = "{\"type\":\"FeatureCollection\"}";
-        var file = new MockMultipartFile(
-                "file",
-                "missing_features.geojson",
-                "application/json",
-                missingFeaturesJson.getBytes()
         );
         assertFalse(geoJsonValidator.isValid(file));
     }

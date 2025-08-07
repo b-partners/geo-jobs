@@ -14,14 +14,14 @@ public class GeoJsonValidator {
     private final ObjectMapper objectMapper;
 
     public boolean isValid(MultipartFile file) {
+        if (file.isEmpty()) {
+            return false;
+        }
+
         try {
             var inputContent = readFile(file);
 
-            if (file.isEmpty()) {
-                return false;
-            }
-
-            if (!"FeatureCollection".equals(inputContent.get("type").toString())) {
+            if (!"FeatureCollection".equals(inputContent.get("type").asText())) {
                 return false;
             }
 
@@ -31,7 +31,7 @@ public class GeoJsonValidator {
             }
 
             for (JsonNode feature : features) {
-                if (!"Feature".equals(feature.get("type").toString())) {
+                if (!"Feature".equals(feature.get("type").asText())) {
                     return false;
                 }
 
@@ -39,7 +39,7 @@ public class GeoJsonValidator {
                 if (!geometry.isObject()) {
                     return false;
                 }
-                if (!"Polygon".equals(geometry.get("type").toString())) {
+                if (!"Polygon".equals(geometry.get("type").asText())) {
                     return false;
                 }
 
@@ -61,7 +61,7 @@ public class GeoJsonValidator {
         }
 
         for (JsonNode ring : coordinates) {
-            if (!ring.isArray() || ring.isEmpty() || !(ring.size() < 4)) {
+            if (!ring.isArray() || ring.size() < 4) {
                 return false;
             }
 
