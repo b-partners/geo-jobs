@@ -57,6 +57,12 @@ public class GeoJsonValidator {
             return false;
         }
 
+        for(JsonNode ring: coordinates) {
+            if(!ring.isArray() || ring.isEmpty() || !(ring.size() < 4)) {
+                return false;
+            }
+        }
+
         return true;
     }
 
