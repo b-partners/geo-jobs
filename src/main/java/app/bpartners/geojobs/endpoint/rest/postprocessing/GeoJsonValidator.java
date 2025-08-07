@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.endpoint.rest.postprocessing;
 
-import app.bpartners.geojobs.model.exception.NotImplementedException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
@@ -28,20 +27,20 @@ public class GeoJsonValidator {
             }
 
             for (JsonNode feature : features) {
-                if(!"Feature".equals(feature.get("type").toString())) {
+                if (!"Feature".equals(feature.get("type").toString())) {
                     return false;
                 }
 
                 JsonNode geometry = feature.get("geometry");
-                if(!geometry.isObject()) {
+                if (!geometry.isObject()) {
                     return false;
                 }
-                if(!"Polygon".equals(geometry.get("type").toString())) {
+                if (!"Polygon".equals(geometry.get("type").toString())) {
                     return false;
                 }
 
                 JsonNode coordinates = geometry.get("coordinates");
-                if(!isValidPolygonCoordinates(coordinates)) {
+                if (!isValidPolygonCoordinates(coordinates)) {
                     return false;
                 }
             }
@@ -53,12 +52,12 @@ public class GeoJsonValidator {
     }
 
     private boolean isValidPolygonCoordinates(JsonNode coordinates) {
-        if(!coordinates.isArray() || coordinates.isEmpty()) {
+        if (!coordinates.isArray() || coordinates.isEmpty()) {
             return false;
         }
 
-        for(JsonNode ring: coordinates) {
-            if(!ring.isArray() || ring.isEmpty() || !(ring.size() < 4)) {
+        for (JsonNode ring : coordinates) {
+            if (!ring.isArray() || ring.isEmpty() || !(ring.size() < 4)) {
                 return false;
             }
 
@@ -70,7 +69,7 @@ public class GeoJsonValidator {
             }
 
             for (JsonNode ringPoint : ring) {
-                if(!ringPoint.isArray() || ringPoint.isEmpty() || ringPoint.size() < 2) {
+                if (!ringPoint.isArray() || ringPoint.isEmpty() || ringPoint.size() < 2) {
                     return false;
                 }
 
@@ -86,10 +85,15 @@ public class GeoJsonValidator {
     }
 
     private boolean ringEquals(JsonNode firstRing, JsonNode lastRing) {
-        throw new NotImplementedException("Not implemented");
+        if (firstRing.size() < 2 && lastRing.size() < 2) {
+            return false;
+        }
+
+        return firstRing.get(0).asDouble() == lastRing.get(0).asDouble()
+                && firstRing.get(1).asDouble() == lastRing.get(1).asDouble();
     }
 
     public JsonNode readFile(File file) throws IOException {
-        return  objectMapper.readTree(file);
+        return objectMapper.readTree(file);
     }
 }
