@@ -35,7 +35,7 @@ public class GeoJsonValidator {
         }
 
         JsonNode geometry = feature.get("geometry");
-        if (!geometry.isObject()) {
+        if ( geometry == null || !geometry.isObject()) {
           return false;
         }
         if (!"Polygon".equals(geometry.get("type").asText())) {
