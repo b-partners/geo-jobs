@@ -96,7 +96,7 @@ public class GeoJsonValidator {
         && firstRing.get(1).asDouble() == lastRing.get(1).asDouble();
   }
 
-  private JsonNode readFile(MultipartFile file) throws IOException {
+  JsonNode readFile(MultipartFile file) throws IOException {
     return objectMapper.readTree(file.getInputStream());
   }
 }
