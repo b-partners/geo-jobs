@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service.geojson;
 import static app.bpartners.geojobs.model.continuationConf.LatLonLinesContinuer.*;
 import static app.bpartners.geojobs.model.continuationConf.RoutesContinuationConf.*;
 
+import app.bpartners.geojobs.endpoint.rest.postprocessing.GeoJsonValidator;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.Geojson;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.continuer.LatLonLinesContinuer;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon;
@@ -18,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Set;
 import lombok.AllArgsConstructor;
+import org.apache.commons.fileupload2.core.MultipartInput;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class GeoJsonContinuerService {
   private final BucketComponent bucketComponent;
   private final FileWriter fileWriter;
+  private final GeoJsonValidator geoJsonValidator;
 
   private final RoutesContinuationConf routesContinuationConf = routesContinuationConfVal();
   private final LatLonLinesContinuer latLonLinesContinuer =
@@ -55,6 +58,9 @@ public class GeoJsonContinuerService {
   }
 
   public String generatePresignedUrl(MultipartFile file) throws IOException {
+      if(!geoJsonValidator.isValid(file)){
+          throw new MultipartInput.FileUploadBoundaryException("Invalid format of geojson");
+      }
     byte[] fileBytes = file.getBytes();
     File tempDir = FileWriter.createTempDirectory();
     File tempInput = fileWriter.apply(fileBytes, tempDir);
