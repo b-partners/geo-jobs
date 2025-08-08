@@ -3,7 +3,10 @@ package app.bpartners.geojobs.endpoint.rest.postprocessing;
 import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -15,14 +18,18 @@ public class GeoJsonValidatorTest {
 
     @Test
     public void valid_geojson_return_true() throws IOException {
-        var inputStream = getClass().getResourceAsStream("/ivandry/ivandry.json");
-        var file = new MockMultipartFile(
-                "file",
-                "ivandry.geojson",
-                "application/json",
-                inputStream
-        );
-        assertTrue(geoJsonValidator.isValid(file));
+        var ivandryGeojson =
+                new File(getClass().getResource("/ivandry/route-ivandry.geojson").getFile());
+
+        try (var inputStream = new FileInputStream(ivandryGeojson)) {
+            MultipartFile file = new MockMultipartFile(
+                    "file",
+                    ivandryGeojson.getName(),
+                    "application/json",
+                    inputStream);
+
+            assertTrue(geoJsonValidator.isValid(file));
+        }
     }
 
     @Test
