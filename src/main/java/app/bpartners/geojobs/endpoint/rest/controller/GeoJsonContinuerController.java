@@ -13,9 +13,10 @@ public class GeoJsonContinuerController {
 
   @PostMapping(value = "/continue")
   public String continueGeoJson(
-          @RequestParam("file") MultipartFile file,
-          @RequestParam("imageSize") Integer imgSize,
-          @RequestParam("zoom") Integer zoom) throws IOException {
-    return geoJsonContinuerService.generatePresignedUrl(file,imgSize,zoom);
+      @RequestParam("file") MultipartFile file,
+      @RequestParam("imageSize") Integer imgSize,
+      @RequestParam("zoom") Integer zoom)
+      throws IOException {
+    return geoJsonContinuerService.generatePresignedUrl(file, imgSize, zoom);
   }
 }

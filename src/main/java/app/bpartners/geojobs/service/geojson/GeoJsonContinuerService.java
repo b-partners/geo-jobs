@@ -32,8 +32,8 @@ public class GeoJsonContinuerService {
 
   private final RoutesContinuationConf routesContinuationConf = routesContinuationConfVal();
 
-  public Geojson continueGeojson(File geoJsonToContinue,Integer imgSize, Integer zoom) {
-      var latLonLinesContinuer = getLatLonLinesContinuer(imgSize,zoom);
+  public Geojson continueGeojson(File geoJsonToContinue, Integer imgSize, Integer zoom) {
+    var latLonLinesContinuer = getLatLonLinesContinuer(imgSize, zoom);
     Set<LatLonPolygon> features = latLonLinesContinuer.apply(geoJsonToContinue);
     return new Geojson(features);
   }
@@ -51,18 +51,19 @@ public class GeoJsonContinuerService {
     return new RoutesContinuationConf(alphaConf, unionConf, continuationConf, prettyConf);
   }
 
-//  private static TilingConf tilingConfVal() {
-//    return new TilingConf(DEFAULT_Z.getValue(), DEFAULT_IMG_SIZE.getValue());
-//  }
+  //  private static TilingConf tilingConfVal() {
+  //    return new TilingConf(DEFAULT_Z.getValue(), DEFAULT_IMG_SIZE.getValue());
+  //  }
 
-  public String generatePresignedUrl(MultipartFile file,Integer imgSize, Integer zoom) throws IOException {
-      if(!geoJsonValidator.isValid(file)){
-          throw new MultipartInput.FileUploadBoundaryException("Invalid format of geojson");
-      }
+  public String generatePresignedUrl(MultipartFile file, Integer imgSize, Integer zoom)
+      throws IOException {
+    if (!geoJsonValidator.isValid(file)) {
+      throw new MultipartInput.FileUploadBoundaryException("Invalid format of geojson");
+    }
     byte[] fileBytes = file.getBytes();
     File tempDir = FileWriter.createTempDirectory();
     File tempInput = fileWriter.apply(fileBytes, tempDir);
-    var result = continueGeojson(tempInput,imgSize,zoom);
+    var result = continueGeojson(tempInput, imgSize, zoom);
 
     byte[] resultBytes = result.toString().getBytes();
     File tempOutput = fileWriter.write(resultBytes, tempDir, "geojson-output");
@@ -73,8 +74,11 @@ public class GeoJsonContinuerService {
   }
 
   private LatLonLinesContinuer getLatLonLinesContinuer(Integer imgSize, Integer zoom) {
-      imgSize = imgSize == null ? DEFAULT_IMG_SIZE.getValue() : imgSize;
-      zoom = zoom == null ? DEFAULT_Z.getValue() : zoom;
-      return new LatLonLinesContinuer(this.routesContinuationConf,new TilingConf(zoom,imgSize),DEFAULT_NEIGHBOURHOOD.getValue());
+    imgSize = imgSize == null ? DEFAULT_IMG_SIZE.getValue() : imgSize;
+    zoom = zoom == null ? DEFAULT_Z.getValue() : zoom;
+    return new LatLonLinesContinuer(
+        this.routesContinuationConf,
+        new TilingConf(zoom, imgSize),
+        DEFAULT_NEIGHBOURHOOD.getValue());
   }
 }

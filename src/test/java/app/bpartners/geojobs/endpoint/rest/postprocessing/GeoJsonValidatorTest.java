@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.endpoint.rest.postprocessing;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.FileInputStream;
@@ -8,25 +10,20 @@ import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 public class GeoJsonValidatorTest {
   ObjectMapper objectMapper = new ObjectMapper();
   GeoJsonValidator geoJsonValidator = new GeoJsonValidator(objectMapper);
 
-    @Test
-    public void read_file_returns_expected_jsonnode() throws IOException {
-        String json =
-                "{\"type\":\"FeatureCollection\",\"features\":[]}";
-        var file = new MockMultipartFile(
-                "file", "test.geojson", "application/json", json.getBytes()
-        );
+  @Test
+  public void read_file_returns_expected_jsonnode() throws IOException {
+    String json = "{\"type\":\"FeatureCollection\",\"features\":[]}";
+    var file = new MockMultipartFile("file", "test.geojson", "application/json", json.getBytes());
 
-        var parsedNode = geoJsonValidator.readFile(file);
+    var parsedNode = geoJsonValidator.readFile(file);
 
-        assertEquals("FeatureCollection", parsedNode.get("type").asText());
-        assertTrue(parsedNode.get("features").isArray());
-    }
+    assertEquals("FeatureCollection", parsedNode.get("type").asText());
+    assertTrue(parsedNode.get("features").isArray());
+  }
 
   @Test
   public void valid_geojson_return_true() throws IOException {

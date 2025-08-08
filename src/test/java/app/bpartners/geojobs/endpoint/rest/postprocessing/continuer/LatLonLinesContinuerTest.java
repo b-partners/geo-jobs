@@ -80,7 +80,7 @@ class LatLonLinesContinuerTest {
   @Test
   void continue_service_test() throws IOException, URISyntaxException {
     GeoJsonContinuerService geoJsonContinuerService =
-        new GeoJsonContinuerService(bucketComponentMock, fileWriterMock,geoJsonValidatorMock);
+        new GeoJsonContinuerService(bucketComponentMock, fileWriterMock, geoJsonValidatorMock);
 
     File input =
         new File(getClass().getResource("/amboditsiry/route-amboditsiry.geojson").getFile());
@@ -88,7 +88,7 @@ class LatLonLinesContinuerTest {
         Paths.get(
             getClass().getResource("/amboditsiry/route-amboditsiry-continued.geojson").toURI());
 
-    var actual = geoJsonContinuerService.continueGeojson(input,1_024,17);
+    var actual = geoJsonContinuerService.continueGeojson(input, 1_024, 17);
     var expectedContinued = Files.readString(expectedURI);
 
     assertEquals(expectedContinued, actual.stringValue());
