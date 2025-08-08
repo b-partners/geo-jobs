@@ -88,7 +88,7 @@ class LatLonLinesContinuerTest {
         Paths.get(
             getClass().getResource("/amboditsiry/route-amboditsiry-continued.geojson").toURI());
 
-    var actual = geoJsonContinuerService.continueGeojson(input);
+    var actual = geoJsonContinuerService.continueGeojson(input,1_024,17);
     var expectedContinued = Files.readString(expectedURI);
 
     assertEquals(expectedContinued, actual.stringValue());

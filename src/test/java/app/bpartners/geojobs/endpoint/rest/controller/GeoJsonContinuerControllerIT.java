@@ -15,6 +15,8 @@ public class GeoJsonContinuerControllerIT {
       Mockito.mock(GeoJsonContinuerService.class);
   private final GeoJsonContinuerController controller =
       new GeoJsonContinuerController(geoJsonContinuerServiceMock);
+    private final Integer imgSize = 1_024;
+    private final Integer zoom = 17;
 
   @Test
   void continueGeoJson_shouldReturnPresignedUrl() throws Exception {
@@ -24,13 +26,13 @@ public class GeoJsonContinuerControllerIT {
 
     var mockResult = mock(Geojson.class);
 
-    when(geoJsonContinuerServiceMock.continueGeojson(any(File.class))).thenReturn(mockResult);
-    when(geoJsonContinuerServiceMock.generatePresignedUrl(file))
+    when(geoJsonContinuerServiceMock.continueGeojson(any(File.class),imgSize,zoom)).thenReturn(mockResult);
+    when(geoJsonContinuerServiceMock.generatePresignedUrl(file,imgSize,zoom))
         .thenReturn("https://url-presigned");
 
-    String resultUrl = controller.continueGeoJson(file);
+    String resultUrl = controller.continueGeoJson(file,imgSize,zoom);
 
-    verify(geoJsonContinuerServiceMock).generatePresignedUrl(file);
+    verify(geoJsonContinuerServiceMock).generatePresignedUrl(file,imgSize,zoom);
 
     assertEquals("https://url-presigned", resultUrl);
   }
