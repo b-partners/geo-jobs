@@ -110,6 +110,10 @@ public class Detection implements Serializable {
         : multiPolygonGeoJsonZone.stream().map(FeatureMapper::toRestFeature).toList();
   }
 
+  public List<Feature> getDomainProvidedGeoJsonZone() {
+    return providedGeoJsonZone;
+  }
+
   public HashMap<
           app.bpartners.geojobs.endpoint.rest.model.Feature,
           app.bpartners.geojobs.endpoint.rest.model.Feature>

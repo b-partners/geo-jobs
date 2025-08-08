@@ -17,6 +17,7 @@ import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionExcelFileSaved;
+import app.bpartners.geojobs.endpoint.event.model.DetectionRoofSlopeAndHeightRequested;
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerificationSent;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
@@ -300,6 +301,11 @@ public class ZoneService {
     var savedDetection =
         detectionRepository.save(
             detection.toBuilder().polygonRoofDelimitation(polygonDelimitation).build());
+
+    var roofSlopeAndHeightRequested =
+        DetectionRoofSlopeAndHeightRequested.builder().detectionId(detectionId).build();
+    eventProducer.accept(List.of(roofSlopeAndHeightRequested));
+
     return rooferDetectionService.apply(savedDetection);
   }
 
