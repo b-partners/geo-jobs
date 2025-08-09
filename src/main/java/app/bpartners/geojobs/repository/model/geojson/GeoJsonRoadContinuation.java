@@ -14,16 +14,16 @@ import lombok.Setter;
 @Setter
 public class GeoJsonRoadContinuation {
   @Id
-  @Column(name = "rc_id")
+  @Column(name = "rc_id", nullable = false)
   private String id;
 
-  @Column(name = "original_geojson_path")
+  @Column(name = "original_geojson_path", nullable = false)
   private String originalGeoJsonPath;
 
   @Column(name = "continued_geojson_path")
   private String continuedGeoJsonPath;
 
   @Enumerated(EnumType.STRING)
-  @Column(columnDefinition = "process_status")
+  @Column(columnDefinition = "process_status",  nullable = false)
   private RoadContinuationProcessStatus status;
 }
