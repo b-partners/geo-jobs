@@ -13,8 +13,6 @@ import app.bpartners.geojobs.model.geometry.route.PrettyConf;
 import app.bpartners.geojobs.model.geometry.route.RoutesContinuationConf;
 import app.bpartners.geojobs.model.geometry.route.UnionConf;
 import app.bpartners.geojobs.repository.GeoJsonRoadContinuationRepository;
-import app.bpartners.geojobs.repository.model.geojson.GeoJsonRoadContinuation;
-import app.bpartners.geojobs.repository.model.geojson.RoadContinuationProcessStatus;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -23,7 +21,6 @@ import java.util.Map;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -75,17 +72,22 @@ public class RoadContinuerService {
       throw new IllegalArgumentException("Should be a geojson file");
 
     File geoJsonFile = convertMultipartFileToFile(geoJSON);
-    var tilingConf = getTilingConf(zoom, imgSize);
+    return continueRoute(geoJsonFile, zoom, imgSize);
+  }
 
-    geoJsonValidator.test(geoJsonFile);
+  public Map<String, String> continueRoute(File geoJSONFile, Integer zoom, Integer imgSize)
+      throws IOException {
+    geoJsonValidator.test(geoJSONFile);
+
+    var tilingConf = getTilingConf(zoom, imgSize);
     log.info(
         "Continuing route polygons of geojson={} with zoom={} and imgSize={}",
-        geoJSON.getOriginalFilename(),
+        geoJSONFile.getName(),
         zoom,
         imgSize);
 
     var continuer = getLatLonContinuer(getRouteContinuationConf(), tilingConf);
-    var continuedPolygons = continuer.apply(geoJsonFile);
+    var continuedPolygons = continuer.apply(geoJSONFile);
 
     File continuedGeoJsonFile = getGeoJsonFromString(new Geojson(continuedPolygons).stringValue());
     log.info("Continuation process finished");
@@ -105,39 +107,6 @@ public class RoadContinuerService {
     var defaultConf = TilingConf.getDefaultInstance();
     int fZoom = (zoom == null) ? defaultConf.z() : zoom;
     int fImgSize = (imgSize == null) ? defaultConf.imgSize() : imgSize;
-
     return new TilingConf(fZoom, fImgSize);
-  }
-
-  @Async
-  public void continueRouteAsync(
-      File geoJsonFile, Integer zoom, Integer imageSize, String continuationId) {
-    log.info("Starting async continuation for id={}", continuationId);
-
-    GeoJsonRoadContinuation continuation =
-        continuationRepository
-            .findById(continuationId)
-            .orElseThrow(
-                () ->
-                    new IllegalArgumentException("No continuation found for id=" + continuationId));
-
-    Map<String, String> result;
-    try {
-      var tilingConf = getTilingConf(zoom, imageSize);
-      geoJsonValidator.test(geoJsonFile);
-      var continuer = getLatLonContinuer(getRouteContinuationConf(), tilingConf);
-      var continuedPolygons = continuer.apply(geoJsonFile);
-      File continuedGeoJsonFile =
-          getGeoJsonFromString(new Geojson(continuedPolygons).stringValue());
-      result = getPresignedURL(continuedGeoJsonFile);
-    } catch (IOException e) {
-      throw new RuntimeException("Error during route continuation", e);
-    }
-
-    continuation.setContinuedGeoJsonPath(result.get("url"));
-    continuation.setStatus(RoadContinuationProcessStatus.CONTINUED);
-    continuationRepository.save(continuation);
-
-    log.info("Async continuation finished for id={}", continuationId);
   }
 }

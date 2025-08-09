@@ -11,6 +11,8 @@ import lombok.*;
 @ToString
 public class RoadContinuationRequested extends PojaEvent {
   private final File geoJSON;
+  private final Integer zoom;
+  private final Integer imageSize;
 
   @Override
   public Duration maxConsumerDuration() {
