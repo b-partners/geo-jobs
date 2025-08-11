@@ -47,7 +47,7 @@ public class PolygonOrientation implements Supplier<Double> {
     return 0.5 * atan2(2 * sumXY, sumXX - sumYY);
   }
 
-  public double angle(){
+  public double angle() {
     var minRect = MinimumDiameter.getMinimumRectangle(polygon);
     Coordinate[] coords = minRect.getCoordinates();
 

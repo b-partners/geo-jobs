@@ -90,7 +90,7 @@ public record TiledPolygon(
     return annotations.stream()
         .map(
             annotation -> {
-              var filename = "20_" + annotation.getFilename();
+              var filename = annotation.getFilename();
               var regions = annotation.getRegions();
               return newTiledPolygons(filename, regions, tilingConf, isZXYDotFiletype);
             })
