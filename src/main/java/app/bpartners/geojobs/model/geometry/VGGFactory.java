@@ -14,6 +14,7 @@ import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.model.DetectedTile;
 import app.bpartners.geojobs.model.geometry.area.AreaRateComputerFacade;
+import app.bpartners.geojobs.model.geometry.area.DominantRoof;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.TileCoordinatesPolygonIntersection;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
@@ -312,9 +313,9 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
     return polygon.getFactory().createPolygon(newCoords);
   }
 
-  public VGG from(Polygon roofGeometry, List<DetectedTile> detectedTiles) {
+  public VGG from(Polygon roofGeometry, DetectedTile detectedTile) {
     var vgg = new VGG();
-    var originTile = detectedTiles.getFirst().getTile();
+    var originTile = detectedTile.getTile();
     var originTileCoords =
         new IntXY(originTile.getCoordinates().getX(), originTile.getCoordinates().getY());
     var tilingConf =
@@ -325,42 +326,42 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
             .polygon();
 
     var roofAreaInM2 = geometrySquareMeterArea.apply(roofGeometryAsTile);
-    for (var detectedTile : detectedTiles) {
-      var rateComputer = new AreaRateComputerFacade(roofGeometry, detectedTile);
-      var detectedObjects = detectedTile.getDetectedObjects();
-      var tile = detectedTile.getTile().getCoordinates();
-      var key =
-          String.format("%s_%s_%s_%s.jpg", randomUUID(), tile.getZ(), tile.getX(), tile.getY());
+    var rateComputer = new AreaRateComputerFacade(roofGeometry, detectedTile);
+    var detectedObjects = detectedTile.getDetectedObjects();
+    var tile = detectedTile.getTile().getCoordinates();
+    var key = String.format("%s_%s_%s_%s.jpg", randomUUID(), tile.getZ(), tile.getX(), tile.getY());
 
-      var usureRate = rateComputer.getUsureAreaRate();
-      var humiditeRate = rateComputer.getHumidityAreaRate();
-      var moisissureRate = rateComputer.getMoisissureAreaRate();
-      var globalRateValue = rateComputer.getGlobalRate();
-      var globalRateType = rateComputer.getRate();
+    var dominantRoofs = new DominantRoof(detectedTile).get();
 
-      Map<String, VGG.Annotation.Region> regions = new HashMap<>();
-      for (var object : detectedObjects) {
-        var label = object.getDetectableObjectType();
-        var confidence = object.getComputedConfidence();
-        var polygon = featureMapper.toDomainPolygon(object.getFeature());
-        var rate = format((polygon.getArea() / roofGeometry.getArea()) * 100);
-        regions.put(
-            String.valueOf(System.nanoTime()),
-            toVGGRegion(label.name(), confidence, rate, polygon));
-      }
+    var usureRate = rateComputer.getUsureAreaRate();
+    var humiditeRate = rateComputer.getHumidityAreaRate();
+    var moisissureRate = rateComputer.getMoisissureAreaRate();
+    var globalRateValue = rateComputer.getGlobalRate();
+    var globalRateType = rateComputer.getRate();
 
-      var properties = new HashMap<String, Object>();
-      properties.put("roof_area_in_m2", roofAreaInM2);
-      properties.put("usure_rate", usureRate);
-      properties.put("humidite_rate", humiditeRate);
-      properties.put("moisissure_rate", moisissureRate);
-      properties.put("global_rate_value", globalRateValue);
-      properties.put("global_rate_type", globalRateType);
-
-      var annotation =
-          VGG.Annotation.builder().filename(key).properties(properties).regions(regions).build();
-      vgg.putIfAbsent(key, annotation);
+    Map<String, VGG.Annotation.Region> regions = new HashMap<>();
+    for (var object : detectedObjects) {
+      var label = object.getDetectableObjectType();
+      var confidence = object.getComputedConfidence();
+      var polygon = featureMapper.toDomainPolygon(object.getFeature());
+      var rate = format((polygon.getArea() / roofGeometry.getArea()) * 100);
+      regions.put(
+          String.valueOf(System.nanoTime()), toVGGRegion(label.name(), confidence, rate, polygon));
     }
+
+    var properties = new HashMap<String, Object>();
+    properties.put("roof_area_in_m2", roofAreaInM2);
+    properties.put("revetement_1", dominantRoofs.greatest());
+    properties.put("revetement_2", dominantRoofs.second());
+    properties.put("usure_rate", usureRate);
+    properties.put("humidite_rate", humiditeRate);
+    properties.put("moisissure_rate", moisissureRate);
+    properties.put("global_rate_value", globalRateValue);
+    properties.put("global_rate_type", globalRateType);
+
+    var annotation =
+        VGG.Annotation.builder().filename(key).properties(properties).regions(regions).build();
+    vgg.putIfAbsent(key, annotation);
     return vgg;
   }
 
