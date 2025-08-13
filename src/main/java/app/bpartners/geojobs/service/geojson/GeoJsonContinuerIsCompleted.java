@@ -1,9 +1,8 @@
 package app.bpartners.geojobs.service.geojson;
 
 import app.bpartners.geojobs.endpoint.event.model.PojaEvent;
-import lombok.*;
-
 import java.time.Duration;
+import lombok.*;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -12,16 +11,16 @@ import java.time.Duration;
 @EqualsAndHashCode(callSuper = false)
 @ToString
 public class GeoJsonContinuerIsCompleted extends PojaEvent {
-    private String bucketKey;
-    private String presigneURL;
+  private String bucketKey;
+  private String presigneURL;
 
-    @Override
-    public Duration maxConsumerDuration() {
-        return Duration.ofMinutes(3L);
-    }
+  @Override
+  public Duration maxConsumerDuration() {
+    return Duration.ofMinutes(3L);
+  }
 
-    @Override
-    public Duration maxConsumerBackoffBetweenRetries() {
-        return Duration.ofMinutes(1L);
-    }
+  @Override
+  public Duration maxConsumerBackoffBetweenRetries() {
+    return Duration.ofMinutes(1L);
+  }
 }

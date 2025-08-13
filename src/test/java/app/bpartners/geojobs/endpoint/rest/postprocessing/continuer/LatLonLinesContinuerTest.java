@@ -82,7 +82,8 @@ class LatLonLinesContinuerTest {
   @Test
   void continue_service_test() throws IOException, URISyntaxException {
     GeoJsonContinuerService geoJsonContinuerService =
-        new GeoJsonContinuerService(bucketComponentMock, fileWriterMock, geoJsonValidatorMock, eventProducer);
+        new GeoJsonContinuerService(
+            bucketComponentMock, fileWriterMock, geoJsonValidatorMock, eventProducer);
 
     File input =
         new File(getClass().getResource("/amboditsiry/route-amboditsiry.geojson").getFile());

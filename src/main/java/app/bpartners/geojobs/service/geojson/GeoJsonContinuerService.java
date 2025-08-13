@@ -68,12 +68,12 @@ public class GeoJsonContinuerService {
     bucketComponent.upload(tempOutput, bucketKey);
     var presigneURL = bucketComponent.presign(bucketKey);
 
-    eventProducer.accept(List.of(
+    eventProducer.accept(
+        List.of(
             GeoJsonContinuerIsCompleted.builder()
-                    .bucketKey(bucketKey)
-                    .presigneURL(presigneURL)
-                    .build()
-    ));
+                .bucketKey(bucketKey)
+                .presigneURL(presigneURL)
+                .build()));
 
     return presigneURL;
   }
