@@ -280,6 +280,7 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
     var globalRateType = rateComputer.getRate();
 
     var properties = new HashMap<String, Object>();
+    var dominantRoofs = new DominantRoof(originalPolygonObjectTypes).get();
 
     properties.put("roof_area_in_m2", geometrySquareMeterArea.apply(lonLatRoofPolygon));
     properties.put("usure_rate", usureRate);
@@ -287,6 +288,8 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
     properties.put("moisissure_rate", moisissureRate);
     properties.put("global_rate_value", globalRateValue);
     properties.put("global_rate_type", globalRateType);
+    properties.put("revetement_1", dominantRoofs.greatest());
+    properties.put("revetement_2", dominantRoofs.second());
 
     return properties;
   }
