@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.service.tiling;
 
-
 import app.bpartners.geojobs.model.geometry.TiledPixelPolygon;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
