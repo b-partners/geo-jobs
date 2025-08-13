@@ -227,6 +227,7 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
               int minTileYForPoint =
                   tiledPolygons.stream().mapToInt(TiledPixelPolygon::tileY).min().orElseThrow();
 
+              var featureMap = new HashMap<Feature, List<PolygonObjectType>>();
               var projectedPolygonObjectTypes =
                   tiledPolygons.stream()
                       .map(
@@ -249,7 +250,10 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
                                   .toList())
                       .flatMap(List::stream)
                       .toList();
-              return Map.of(feature, projectedPolygonObjectTypes);
+
+              featureMap.put(feature, projectedPolygonObjectTypes);
+
+              return featureMap;
             })
         .flatMap(map -> map.entrySet().stream())
         .collect(
@@ -338,7 +342,7 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
       for (var object : detectedObjects) {
         var label = object.getDetectableObjectType();
         var confidence = object.getComputedConfidence();
-        var polygon = featureMapper.toDomain(object.getFeature());
+        var polygon = featureMapper.toDomainPolygon(object.getFeature());
         var rate = format((polygon.getArea() / roofGeometry.getArea()) * 100);
         regions.put(
             String.valueOf(System.nanoTime()),
