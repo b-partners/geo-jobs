@@ -155,6 +155,7 @@ public class ZoneTilingJobMapper {
                 () ->
                     new IllegalStateException(
                         "Cannot unify multi polygon from tiles to process ZTJ"));
+    
     log.info(
         "Surrounding multi polygon: {}",
         geometryConverter.writeGeometryAsString(surroundingMultiPolygon));
