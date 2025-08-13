@@ -28,7 +28,7 @@ class LatLonLinesContinuerTest {
   private final BucketComponent bucketComponentMock = Mockito.mock(BucketComponent.class);
   private final FileWriter fileWriterMock = Mockito.mock(FileWriter.class);
   private final GeoJsonValidator geoJsonValidatorMock = Mockito.mock(GeoJsonValidator.class);
-  private final EventProducer eventProducer = Mockito.mock(EventProducer.class);
+  private final EventProducer eventProducerMock = Mockito.mock(EventProducer.class);
 
   @Test
   void continue_ivandry() throws IOException, URISyntaxException {
@@ -83,7 +83,7 @@ class LatLonLinesContinuerTest {
   void continue_service_test() throws IOException, URISyntaxException {
     GeoJsonContinuerService geoJsonContinuerService =
         new GeoJsonContinuerService(
-            bucketComponentMock, fileWriterMock, geoJsonValidatorMock, eventProducer);
+            bucketComponentMock, fileWriterMock, geoJsonValidatorMock, eventProducerMock);
 
     File input =
         new File(getClass().getResource("/amboditsiry/route-amboditsiry.geojson").getFile());
