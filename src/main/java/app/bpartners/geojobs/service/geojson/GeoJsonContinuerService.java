@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service.geojson;
 import static app.bpartners.geojobs.model.continuationConf.LatLonLinesContinuer.*;
 import static app.bpartners.geojobs.model.continuationConf.RoutesContinuationConf.*;
 
+import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.GeoJsonValidator;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.Geojson;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.continuer.LatLonLinesContinuer;
@@ -17,6 +18,7 @@ import app.bpartners.geojobs.model.geometry.route.RoutesContinuationConf;
 import app.bpartners.geojobs.model.geometry.route.UnionConf;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,7 @@ public class GeoJsonContinuerService {
   private final BucketComponent bucketComponent;
   private final FileWriter fileWriter;
   private final GeoJsonValidator geoJsonValidator;
+  private final EventProducer eventProducer;
 
   private final RoutesContinuationConf routesContinuationConf = routesContinuationConfVal();
 
@@ -50,27 +53,29 @@ public class GeoJsonContinuerService {
     return new RoutesContinuationConf(alphaConf, unionConf, continuationConf, prettyConf);
   }
 
-  //  private static TilingConf tilingConfVal() {
-  //    return new TilingConf(DEFAULT_Z.getValue(), DEFAULT_IMG_SIZE.getValue());
-  //  }
-
   public String generatePresignedUrl(MultipartFile file, Integer imgSize, Integer zoom)
       throws IOException {
-    /*if (!geoJsonValidator.isValid(file)) {
-      throw new MultipartInput.FileUploadBoundaryException("Invalid format of geojson");
-    }*/
     geoJsonValidator.accept(file);
-    byte[] fileBytes = file.getBytes();
-    File tempDir = FileWriter.createTempDirectory();
-    File tempInput = fileWriter.apply(fileBytes, tempDir);
+    var fileBytes = file.getBytes();
+    var tempDir = FileWriter.createTempDirectory();
+    var tempInput = fileWriter.apply(fileBytes, tempDir);
     var result = continueGeojson(tempInput, imgSize, zoom);
 
-    byte[] resultBytes = result.toString().getBytes();
-    File tempOutput = fileWriter.write(resultBytes, tempDir, "geojson-output");
+    var resultBytes = result.toString().getBytes();
+    var tempOutput = fileWriter.write(resultBytes, tempDir, "geojson-output");
 
-    String bucketKey = "geojson/result/" + tempOutput.getName();
+    var bucketKey = "geojson/result/" + tempOutput.getName();
     bucketComponent.upload(tempOutput, bucketKey);
-    return bucketComponent.presign(bucketKey);
+    var presigneURL = bucketComponent.presign(bucketKey);
+
+    eventProducer.accept(List.of(
+            GeoJsonContinuerIsCompleted.builder()
+                    .bucketKey(bucketKey)
+                    .presigneURL(presigneURL)
+                    .build()
+    ));
+
+    return presigneURL;
   }
 
   private LatLonLinesContinuer getLatLonLinesContinuer(Integer imgSize, Integer zoom) {
