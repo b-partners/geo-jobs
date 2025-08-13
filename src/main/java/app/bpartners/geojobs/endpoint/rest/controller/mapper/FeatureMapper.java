@@ -248,4 +248,10 @@ public class FeatureMapper {
 
     return feature;
   }
+
+  public org.locationtech.jts.geom.Polygon domainToJtsPolygon(
+      app.bpartners.geojobs.repository.model.Feature domainFeature) {
+    var rest = toRestFeature(domainFeature);
+    return toDomainPolygon(rest);
+  }
 }

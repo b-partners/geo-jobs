@@ -1805,6 +1805,10 @@ components:
       description: |
         Optional. Mandatory only when doing sync detection using TOITURE model.
       properties:
+        roofSlopeInDegree:
+          type: number
+        roofHeightInMeter:
+          type: number
         polygon:
           type: array
           items:

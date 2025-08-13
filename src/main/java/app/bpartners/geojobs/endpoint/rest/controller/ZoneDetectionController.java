@@ -10,6 +10,7 @@ import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobSucceeded
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectConfigurationMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionSurfaceUnitMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionTaskMapper;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.RoofDelimiterMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.TaskStatisticMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMapper;
@@ -71,6 +72,7 @@ public class ZoneDetectionController {
   private final FileWriter fileWriter;
   private final MediaTypeGuesser mediaTypeGuesser;
   private final ConfigureAddressValidator configureAddressValidator;
+  private final RoofDelimiterMapper roofDelimiterMapper;
 
   @PostMapping("/detectionJobs/{id}/succeed")
   public app.bpartners.geojobs.endpoint.rest.model.ZoneDetectionJob succeedJob(
@@ -264,7 +266,9 @@ public class ZoneDetectionController {
     var communityAuthorization =
         communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
     var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId).orElse(null);
-    return zoneService.configureRoofDelimiter(detectionId, communityOwnerId, polygonDelimitations);
+    var roofDelimiterFeature = roofDelimiterMapper.toDomainFeature(roofDelimiter);
+    return zoneService.configureRoofDelimiter(
+        detectionId, communityOwnerId, polygonDelimitations, roofDelimiterFeature);
   }
 
   @PostMapping("/detections/{id}/roofer/email")
