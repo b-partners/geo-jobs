@@ -9,7 +9,7 @@ on:
         type: choice
         required: false
         description: 'Redrive which env dead letters?'
-        default: 'prod'
+        default: 'preprod'
         options:
           - 'prod'
           - 'preprod'
@@ -21,7 +21,7 @@ jobs:
 
     env:
       AWS_REGION: eu-west-3
-      ENV: ${{ github.event.inputs.branch || 'prod' }}
+      ENV: ${{ github.event.inputs.branch || 'preprod' }}
       ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
 
     steps:
