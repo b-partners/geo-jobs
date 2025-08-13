@@ -3,16 +3,17 @@ package app.bpartners.geojobs.endpoint.rest.postprocessing;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
+import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 @Component
 @AllArgsConstructor
-public class GeoJsonValidator {
+public class GeoJsonValidator implements Consumer<MultipartFile> {
   private final ObjectMapper objectMapper;
 
-  public boolean isValid(MultipartFile file) {
+  boolean isValid(MultipartFile file) {
     if (file.isEmpty()) {
       return false;
     }
@@ -98,5 +99,12 @@ public class GeoJsonValidator {
 
   JsonNode readFile(MultipartFile file) throws IOException {
     return objectMapper.readTree(file.getInputStream());
+  }
+
+  @Override
+  public void accept(MultipartFile multipartFile) {
+    if (!isValid(multipartFile)) {
+      throw new RuntimeException("Invalid geojson file");
+    }
   }
 }

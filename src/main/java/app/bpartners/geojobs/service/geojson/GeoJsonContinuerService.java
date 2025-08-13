@@ -19,7 +19,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Set;
 import lombok.AllArgsConstructor;
-import org.apache.commons.fileupload2.core.MultipartInput;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -57,9 +56,10 @@ public class GeoJsonContinuerService {
 
   public String generatePresignedUrl(MultipartFile file, Integer imgSize, Integer zoom)
       throws IOException {
-    if (!geoJsonValidator.isValid(file)) {
+    /*if (!geoJsonValidator.isValid(file)) {
       throw new MultipartInput.FileUploadBoundaryException("Invalid format of geojson");
-    }
+    }*/
+    geoJsonValidator.accept(file);
     byte[] fileBytes = file.getBytes();
     File tempDir = FileWriter.createTempDirectory();
     File tempInput = fileWriter.apply(fileBytes, tempDir);
