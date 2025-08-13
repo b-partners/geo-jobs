@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.service.tiling;
 
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
 
 import app.bpartners.geojobs.model.geometry.TiledPixelPolygon;
 import java.util.List;
