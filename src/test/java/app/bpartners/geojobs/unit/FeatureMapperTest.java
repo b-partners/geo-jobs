@@ -76,7 +76,7 @@ class FeatureMapperTest {
 
   @Test
   void feature_to_geo_tools_polygon_mapper_ok() {
-    Polygon polygon = subject.toDomain(expectedFeature());
+    Polygon polygon = subject.toDomainPolygon(expectedFeature());
 
     assertEquals(expectedPolygon(), polygon);
   }

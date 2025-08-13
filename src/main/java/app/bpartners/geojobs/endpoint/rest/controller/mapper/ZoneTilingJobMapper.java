@@ -148,13 +148,14 @@ public class ZoneTilingJobMapper {
                     geometryConverter.getMultiPolygonFromTile(
                         coor.getX(), coor.getY(), coor.getZ()))
             .toList();
-    var surroudingMultiPolygon =
+    var surroundingMultiPolygon =
         tileMultiPolygonList.stream()
             .reduce(unifyMultiPolygon())
             .orElseThrow(
                 () ->
                     new IllegalStateException(
                         "Cannot unify multi polygon from tiles to process ZTJ"));
+
     log.info("debug zoneToProcess {}", geometryConverter.writeGeometryAsString(zoneToProcess));
     log.info(
         "debug surrounding MultiPolygon {}",

@@ -5,6 +5,8 @@ import static app.bpartners.geojobs.repository.model.detection.DetectableType.TO
 import static app.bpartners.geojobs.service.geojson.GeoReferencer.toGeographicalCoordinates;
 
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
+import app.bpartners.geojobs.endpoint.rest.model.Point;
+import app.bpartners.geojobs.endpoint.rest.model.Polygon;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import java.math.BigDecimal;
@@ -33,33 +35,54 @@ public class GeoJsonMapper {
             object -> {
               var feature = object.getFeature();
               var geometry = feature.getGeometry();
-              log.info("detected object geometry: {}", geometry);
               var actualGeometryInstance = geometry.getActualInstance();
-              if (actualGeometryInstance.getClass().equals(MultiPolygon.class)) {
-                var multiPolygon = (MultiPolygon) actualGeometryInstance;
-                if (multiPolygon.getCoordinates() == null) {
-                  throw new IllegalArgumentException("Multipolygon coordinates should not be null");
+              switch (actualGeometryInstance) {
+                case Point point ->
+                    throw new NotImplementedException(
+                        "Unable to convert Point " + point + " to GeoJson");
+                case Polygon polygon -> {
+                  var multiPolygonCoordinatesFromPolygon = List.of(polygon.getCoordinates());
+                  geoFeatures.add(
+                      convertMultiPolygonToGeoFeature(
+                          xTile,
+                          yTile,
+                          zoom,
+                          imageWidth,
+                          object,
+                          new MultiPolygon().coordinates(multiPolygonCoordinatesFromPolygon)));
                 }
-                var fixedMultiPolygon = geoJsonMultiPolygonCorrector.apply(multiPolygon);
-                geoFeatures.add(
-                    mapToFeature(
-                        xTile,
-                        yTile,
-                        zoom,
-                        imageWidth,
-                        object,
-                        Objects.requireNonNull(fixedMultiPolygon.getCoordinates())));
-              } else {
-                throw new NotImplementedException(
-                    "Only MultiPolygon geometry is supported for now but actual geometry class : "
-                        + geometry.getActualInstance().getClass()
-                        + " for detectedObject(id="
-                        + object.getId()
-                        + ", type="
-                        + object.getDetectedObjectType().getDetectableType());
+                case MultiPolygon multiPolygon -> {
+                  if (multiPolygon.getCoordinates() == null) {
+                    throw new IllegalArgumentException(
+                        "Multipolygon coordinates should not be null");
+                  }
+                  geoFeatures.add(
+                      convertMultiPolygonToGeoFeature(
+                          xTile, yTile, zoom, imageWidth, object, multiPolygon));
+                }
+                default ->
+                    throw new IllegalArgumentException(
+                        "Unknown geometry instance to map to geo json " + actualGeometryInstance);
               }
             });
     return geoFeatures;
+  }
+
+  private GeoJson.GeoFeature convertMultiPolygonToGeoFeature(
+      int xTile,
+      int yTile,
+      int zoom,
+      int imageWidth,
+      DetectedObject object,
+      MultiPolygon multiPolygon) {
+    var fixedMultiPolygon = geoJsonMultiPolygonCorrector.apply(multiPolygon);
+    return mapToFeature(
+        xTile,
+        yTile,
+        zoom,
+        imageWidth,
+        object,
+        Objects.requireNonNull(fixedMultiPolygon.getCoordinates()));
   }
 
   private GeoJson.GeoFeature mapToFeature(
