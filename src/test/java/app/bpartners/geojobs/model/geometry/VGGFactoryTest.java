@@ -85,6 +85,19 @@ class VGGFactoryTest {
           ] ] ]
         }
         """;
+    String tuile =
+        """
+        {
+          "type": "MultiPolygon",
+          "coordinates": [ [ [
+            [ 100.0, 200.0 ],
+            [ 150.0, 210.0 ],
+            [ 160.0, 180.0 ],
+            [ 120.0, 170.0 ],
+            [ 100.0, 200.0 ]
+          ] ] ]
+        }
+        """;
     String usureGeometry =
         """
         {
@@ -155,6 +168,18 @@ class VGGFactoryTest {
                             .geometry(
                                 Feature.FeatureGeometry.builder()
                                     .geometryType(MULTI_POLYGON)
+                                    .actualInstanceStringValue(tuile)
+                                    .build())
+                            .build())
+                    .detectedObjectType(
+                        DetectableObjectType.builder().detectableType(BATI_TUILES).build())
+                    .build(),
+                DetectedObject.builder()
+                    .feature(
+                        feature.toBuilder()
+                            .geometry(
+                                Feature.FeatureGeometry.builder()
+                                    .geometryType(MULTI_POLYGON)
                                     .actualInstanceStringValue(moisissure)
                                     .build())
                             .build())
@@ -190,7 +215,7 @@ class VGGFactoryTest {
   }
 
   @Test
-  void detected_tiles_to_vgg_ok() {
+  void detected_tiles_to_vgg_ok() throws IOException {
     Coordinate[] boundingCoords =
         new Coordinate[] {
           new Coordinate(465.95744680851067, 282.97872340425533),
@@ -205,11 +230,12 @@ class VGGFactoryTest {
     LinearRing shell = geometryFactory.createLinearRing(boundingCoords);
     Polygon roofGeometry = geometryFactory.createPolygon(shell, null);
 
-    var actual = subject.from(roofGeometry, List.of(detectedTile()));
+    var actual = subject.from(roofGeometry, detectedTile());
 
     var filename = actual.keySet().stream().toList().getFirst();
+
     assertEquals(1, actual.size());
-    assertEquals(3, actual.get(filename).getRegions().size());
+    assertEquals(4, actual.get(filename).getRegions().size());
   }
 
   private Polygon some20x20Polygon() {

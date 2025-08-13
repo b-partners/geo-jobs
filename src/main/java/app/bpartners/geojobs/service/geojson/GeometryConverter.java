@@ -112,10 +112,11 @@ public class GeometryConverter {
                 case MULTI_POLYGON -> {
                   return apply(building.shape().getMultiPolygonCoordinates());
                 }
-                default -> throw new UnsupportedOperationException(
-                    "Only POLYGON and MULTI_POLYGON can be converted to roof polygons, actual"
-                        + " is "
-                        + geometryType);
+                default ->
+                    throw new UnsupportedOperationException(
+                        "Only POLYGON and MULTI_POLYGON can be converted to roof polygons, actual"
+                            + " is "
+                            + geometryType);
               }
             })
         .filter(
@@ -139,17 +140,18 @@ public class GeometryConverter {
     ObjectMapper objectMapper = new ObjectMapper();
     Geometry geometry;
     switch (featureInstance) {
-      case app.bpartners.geojobs.endpoint.rest.model.MultiPolygon multiPolygon -> geometry =
-          readGeometryFromString(objectMapper.writeValueAsString(multiPolygon));
-      case app.bpartners.geojobs.endpoint.rest.model.Polygon polygon -> geometry =
-          readGeometryFromString(objectMapper.writeValueAsString(polygon));
-      case app.bpartners.geojobs.endpoint.rest.model.Point point -> geometry =
-          readGeometryFromString(objectMapper.writeValueAsString(point));
+      case app.bpartners.geojobs.endpoint.rest.model.MultiPolygon multiPolygon ->
+          geometry = readGeometryFromString(objectMapper.writeValueAsString(multiPolygon));
+      case app.bpartners.geojobs.endpoint.rest.model.Polygon polygon ->
+          geometry = readGeometryFromString(objectMapper.writeValueAsString(polygon));
+      case app.bpartners.geojobs.endpoint.rest.model.Point point ->
+          geometry = readGeometryFromString(objectMapper.writeValueAsString(point));
       case MultiPolygon multiPolygon -> geometry = multiPolygon;
       case Polygon polygon -> geometry = polygon;
       case Point point -> geometry = point;
-      default -> throw new UnsupportedOperationException(
-          "Unsupported feature instance: " + featureInstance);
+      default ->
+          throw new UnsupportedOperationException(
+              "Unsupported feature instance: " + featureInstance);
     }
     Coordinate centroid = geometry.getCentroid().getCoordinate();
     return List.of(BigDecimal.valueOf(centroid.x), BigDecimal.valueOf(centroid.y));

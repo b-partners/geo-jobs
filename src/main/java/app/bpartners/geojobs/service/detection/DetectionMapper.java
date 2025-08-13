@@ -145,21 +145,16 @@ public class DetectionMapper {
 
   private DetectableType toDetectableType(String label) {
     return switch (label.toUpperCase()) {
-      case ROOF_STRING_VALUE,
-              ROOF_ARDOISE_STRING_VALUE,
-              ROOF_AUTRES_STRING_VALUE,
-              ROOF_TUILES_STRING_VALUE,
-              TOITURE_REVETEMENT_STRING_VALUE ->
-          DetectableType.TOITURE_REVETEMENT;
+      case ROOF_STRING_VALUE, TOITURE_REVETEMENT_STRING_VALUE -> DetectableType.TOITURE_REVETEMENT;
       case SOLAR_PANEL_STRING_VALUE, PV_STRING_VALUE, PANNEAU_PHOTOVOLTAIQUE_STRING_VALUE ->
           DetectableType.PANNEAU_PHOTOVOLTAIQUE;
       case TREE_STRING_VALUE, ARBRE_STRING_VALUE -> DetectableType.ARBRE;
       case PATHWAY_STRING_VALUE, PASSAGE_PIETON_STRING_VALUE -> DetectableType.PASSAGE_PIETON;
       case POOL_STRING_VALUE, PISCINE_STRING_VALUE -> DetectableType.PISCINE;
-      case BATI_TUILES_STRING_VALUE -> DetectableType.BATI_TUILES;
+      case BATI_TUILES_STRING_VALUE, ROOF_TUILES_STRING_VALUE -> DetectableType.BATI_TUILES;
       case BATI_BETON_STRING_VALUE -> DetectableType.BATI_BETON;
-      case BATI_ARDOISE_STRING_VALUE -> DetectableType.BATI_ARDOISE;
-      case BATI_AUTRES_STRING_VALUE -> DetectableType.BATI_AUTRES;
+      case BATI_ARDOISE_STRING_VALUE, ROOF_ARDOISE_STRING_VALUE -> DetectableType.BATI_ARDOISE;
+      case BATI_AUTRES_STRING_VALUE, ROOF_AUTRES_STRING_VALUE -> DetectableType.BATI_AUTRES;
       case LINE_STRING_VALUE -> DetectableType.LINE;
       case TROTTOIR_STRING_VALUE -> DetectableType.TROTTOIR;
       case PARKING_STRING_VALUE -> DetectableType.PARKING;
