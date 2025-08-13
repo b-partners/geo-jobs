@@ -4,6 +4,7 @@ import static java.lang.Math.PI;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.GeoJsonValidator;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.Geojson;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
@@ -27,6 +28,7 @@ class LatLonLinesContinuerTest {
   private final BucketComponent bucketComponentMock = Mockito.mock(BucketComponent.class);
   private final FileWriter fileWriterMock = Mockito.mock(FileWriter.class);
   private final GeoJsonValidator geoJsonValidatorMock = Mockito.mock(GeoJsonValidator.class);
+  private final EventProducer eventProducer = Mockito.mock(EventProducer.class);
 
   @Test
   void continue_ivandry() throws IOException, URISyntaxException {
@@ -80,7 +82,7 @@ class LatLonLinesContinuerTest {
   @Test
   void continue_service_test() throws IOException, URISyntaxException {
     GeoJsonContinuerService geoJsonContinuerService =
-        new GeoJsonContinuerService(bucketComponentMock, fileWriterMock, geoJsonValidatorMock);
+        new GeoJsonContinuerService(bucketComponentMock, fileWriterMock, geoJsonValidatorMock, eventProducer);
 
     File input =
         new File(getClass().getResource("/amboditsiry/route-amboditsiry.geojson").getFile());
