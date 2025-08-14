@@ -84,8 +84,16 @@ public class DetectionFromStatisticRestMapper
     }
 
     var featureDelimitation = featureWithDelimitations.getFirst().delimitations().getFirst();
-    var roofSlope = (double) featureDelimitation.getProperties().get(ROOF_SLOPE_PROPERTY_NAME);
-    var roofHeight = (double) featureDelimitation.getProperties().get(ROOF_HEIGHT_PROPERTY_NAME);
+    var properties = featureDelimitation.getProperties();
+    if (properties == null
+        || !properties.containsKey(ROOF_SLOPE_PROPERTY_NAME)
+        || !properties.containsKey(ROOF_HEIGHT_PROPERTY_NAME)) {
+      return new RoofDelimiter().polygon(detection.getPolygonRoofDelimitation());
+    }
+
+    var roofSlope = ((Number) properties.get(ROOF_SLOPE_PROPERTY_NAME)).doubleValue();
+    var roofHeight = ((Number) properties.get(ROOF_HEIGHT_PROPERTY_NAME)).doubleValue();
+
     return new RoofDelimiter()
         .polygon(detection.getPolygonRoofDelimitation())
         .roofSlopeInDegree(BigDecimal.valueOf(roofSlope))
