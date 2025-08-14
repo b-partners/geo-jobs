@@ -30,7 +30,7 @@ public class GeoJsonContinuerService {
   private final BucketComponent bucketComponent;
   private final FileWriter fileWriter;
   private final GeoJsonValidator geoJsonValidator;
-  private final EventProducer eventProducer;
+  private final EventProducer<GeoJsonContinuerIsCompleted> eventProducer;
 
   private final RoutesContinuationConf routesContinuationConf = routesContinuationConfVal();
 
@@ -55,27 +55,21 @@ public class GeoJsonContinuerService {
 
   public String generatePresignedUrl(MultipartFile file, Integer imgSize, Integer zoom)
       throws IOException {
-    geoJsonValidator.accept(file);
     var fileBytes = file.getBytes();
     var tempDir = FileWriter.createTempDirectory();
     var tempInput = fileWriter.apply(fileBytes, tempDir);
     var result = continueGeojson(tempInput, imgSize, zoom);
+    eventProducer.accept(List.of(
+            GeoJsonContinuerIsCompleted.builder()
+            .geoJson(result).build()
+    ));
 
     var resultBytes = result.toString().getBytes();
     var tempOutput = fileWriter.write(resultBytes, tempDir, "geojson-output");
 
     var bucketKey = "geojson/result/" + tempOutput.getName();
     bucketComponent.upload(tempOutput, bucketKey);
-    var presigneURL = bucketComponent.presign(bucketKey);
-
-    eventProducer.accept(
-        List.of(
-            GeoJsonContinuerIsCompleted.builder()
-                .bucketKey(bucketKey)
-                .presigneURL(presigneURL)
-                .build()));
-
-    return presigneURL;
+    return bucketComponent.presign(bucketKey);
   }
 
   private LatLonLinesContinuer getLatLonLinesContinuer(Integer imgSize, Integer zoom) {
