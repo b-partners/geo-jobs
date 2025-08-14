@@ -59,10 +59,7 @@ public class GeoJsonContinuerService {
     var tempDir = FileWriter.createTempDirectory();
     var tempInput = fileWriter.apply(fileBytes, tempDir);
     var result = continueGeojson(tempInput, imgSize, zoom);
-    eventProducer.accept(List.of(
-            GeoJsonContinuerIsCompleted.builder()
-            .geoJson(result).build()
-    ));
+    eventProducer.accept(List.of(GeoJsonContinuerIsCompleted.builder().geoJson(result).build()));
 
     var resultBytes = result.toString().getBytes();
     var tempOutput = fileWriter.write(resultBytes, tempDir, "geojson-output");

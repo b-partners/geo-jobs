@@ -13,7 +13,7 @@ import lombok.*;
 public class GeoJsonContinuerIsCompleted extends PojaEvent {
   private app.bpartners.geojobs.endpoint.rest.postprocessing.Geojson geoJson;
 
-    @Override
+  @Override
   public Duration maxConsumerDuration() {
     return Duration.ofMinutes(3L);
   }

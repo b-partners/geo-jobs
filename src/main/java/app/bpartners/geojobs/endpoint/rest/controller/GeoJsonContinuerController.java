@@ -11,15 +11,15 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 public class GeoJsonContinuerController {
   private final GeoJsonContinuerService geoJsonContinuerService;
-    private final GeoJsonValidator geoJsonValidator;
+  private final GeoJsonValidator geoJsonValidator;
 
-    @PostMapping(value = "/continue")
+  @PostMapping(value = "/continue")
   public String continueGeoJson(
       @RequestParam("file") MultipartFile file,
       @RequestParam("imageSize") Integer imgSize,
       @RequestParam("zoom") Integer zoom)
       throws IOException {
-      geoJsonValidator.accept(file);
+    geoJsonValidator.accept(file);
     return geoJsonContinuerService.generatePresignedUrl(file, imgSize, zoom);
   }
 }
