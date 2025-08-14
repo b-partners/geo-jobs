@@ -63,19 +63,11 @@ public record Dimension(Roof roof, Sol sol) {
   }
 
   private static List<LasPointGeometry> getLowerZPoints(List<LasPointGeometry> sorted) {
-    if (sorted.isEmpty()) {
-      return List.of();
-    }
-
     int count = Math.max(1, (int) (sorted.size() * LOWEST_Z_RATIO));
     return sorted.subList(0, Math.min(count, sorted.size()));
   }
 
   private static List<LasPointGeometry> getHigherZPoints(List<LasPointGeometry> sorted) {
-    if (sorted.isEmpty()) {
-      return List.of();
-    }
-
     int count = Math.max(1, (int) (sorted.size() * HIGHEST_Z_RATIO));
     int fromIndex = Math.max(0, sorted.size() - count);
     return sorted.subList(fromIndex, sorted.size());

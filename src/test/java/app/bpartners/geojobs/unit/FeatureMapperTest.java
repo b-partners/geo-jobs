@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.unit;
 
+import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toDomainFeature;
 import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.MULTI_POLYGON;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -86,5 +87,12 @@ class FeatureMapperTest {
     Feature feature = subject.toRest(expectedPolygon(), 20, id);
 
     assertEquals(expectedFeature(), feature);
+  }
+
+  @Test
+  void feature_to_geo_tools_polygon_mapper_with_null_zoom_ok() {
+    var polygon = subject.domainToJtsPolygon(toDomainFeature(expectedFeature()));
+
+    assertEquals(expectedPolygon(), polygon);
   }
 }

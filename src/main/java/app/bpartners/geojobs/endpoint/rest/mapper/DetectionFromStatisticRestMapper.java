@@ -2,6 +2,8 @@ package app.bpartners.geojobs.endpoint.rest.mapper;
 
 import static app.bpartners.geojobs.endpoint.rest.model.GeoJsonOutput.GEO_JSON;
 import static app.bpartners.geojobs.endpoint.rest.model.GeoJsonOutput.ZIP;
+import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightRequestedService.ROOF_HEIGHT_PROPERTY_NAME;
+import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightRequestedService.ROOF_SLOPE_PROPERTY_NAME;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
@@ -16,6 +18,7 @@ import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.repository.model.GeoJobType;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.service.DetectionFeaturesResultImageRetriever;
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
@@ -69,8 +72,24 @@ public class DetectionFromStatisticRestMapper
             detection.getPolygonRoofDelimitation() == null
                     || detection.getPolygonRoofDelimitation().isEmpty()
                 ? null
-                : new RoofDelimiter().polygon(detection.getPolygonRoofDelimitation()))
+                : retrieveRoofDelimiter(detection))
         .geoJsonOutput(detection.isOutputZipped() ? ZIP : GEO_JSON);
+  }
+
+  private static RoofDelimiter retrieveRoofDelimiter(Detection detection) {
+    var featureWithDelimitations = detection.getFeatureWithDelimitations();
+
+    if (featureWithDelimitations == null || featureWithDelimitations.isEmpty()) {
+      return new RoofDelimiter().polygon(detection.getPolygonRoofDelimitation());
+    }
+
+    var featureDelimitation = featureWithDelimitations.getFirst().delimitations().getFirst();
+    var roofSlope = (double) featureDelimitation.getProperties().get(ROOF_SLOPE_PROPERTY_NAME);
+    var roofHeight = (double) featureDelimitation.getProperties().get(ROOF_HEIGHT_PROPERTY_NAME);
+    return new RoofDelimiter()
+        .polygon(detection.getPolygonRoofDelimitation())
+        .roofSlopeInDegree(BigDecimal.valueOf(roofSlope))
+        .roofHeightInMeter(BigDecimal.valueOf(roofHeight));
   }
 
   private List<Feature> hideUselessRestProperties(List<Feature> features) {
