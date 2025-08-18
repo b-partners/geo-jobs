@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.endpoint.event.model;
 
-import app.bpartners.geojobs.repository.model.detection.Detection;
 import java.math.BigDecimal;
 import java.time.Duration;
 import lombok.Getter;
@@ -11,15 +10,19 @@ public class TileExtendedImageRequested extends PojaEvent {
   private final BigDecimal latitude;
   private final Integer zoom;
   private final String layer;
-  private final Detection detection;
+  private final String detectionIdentifier;
 
   public TileExtendedImageRequested(
-      BigDecimal longitude, BigDecimal latitude, Integer zoom, String layer, Detection detection) {
+      BigDecimal longitude,
+      BigDecimal latitude,
+      Integer zoom,
+      String layer,
+      String detectionIdentifier) {
     this.longitude = longitude;
     this.latitude = latitude;
     this.zoom = zoom;
     this.layer = layer;
-    this.detection = detection;
+    this.detectionIdentifier = detectionIdentifier;
   }
 
   @Override

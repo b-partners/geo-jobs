@@ -161,6 +161,7 @@ public class ExtendedImageWithDetectedObjectRequestedService
                                                   .getGeometry()
                                                   .getMultiPolygon()
                                                   .getCoordinates());
+                                      log.info("debug polygon to be projected {}", polygon);
                                       var detectableObjectType =
                                           detectedObject.getDetectableObjectType();
                                       return new PolygonObjectType(polygon, detectableObjectType);
