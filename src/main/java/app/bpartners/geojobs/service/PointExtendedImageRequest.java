@@ -36,7 +36,8 @@ public class PointExtendedImageRequest {
     var defaultZoomLevel = HOUSES_0.getZoomLevel();
 
     var tileExtendedImageRequested =
-        new TileExtendedImageRequested(longitude, latitude, defaultZoomLevel, layer, detection);
+        new TileExtendedImageRequested(
+            longitude, latitude, defaultZoomLevel, layer, detection.getId());
     if (isSynchronous) {
       tileExtendedImageRequestedService.accept(tileExtendedImageRequested);
     } else {

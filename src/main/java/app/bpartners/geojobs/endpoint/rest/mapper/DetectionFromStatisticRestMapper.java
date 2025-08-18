@@ -69,7 +69,8 @@ public class DetectionFromStatisticRestMapper
                 ? List.of()
                 : detection.getConvertedAddresses())
         .roofDelimiter(retrieveRoofDelimiter(detection))
-        .geoJsonOutput(detection.isOutputZipped() ? ZIP : GEO_JSON);
+        .geoJsonOutput(detection.isOutputZipped() ? ZIP : GEO_JSON)
+        .needsImageOutput(detection.needsImageOutput());
   }
 
   private static RoofDelimiter retrieveRoofDelimiter(Detection detection) {

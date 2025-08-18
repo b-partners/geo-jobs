@@ -90,10 +90,11 @@ public class DetectionTaskMapper {
 
   private DetectedObject toRest(
       app.bpartners.geojobs.repository.model.detection.DetectedObject detectedObject) {
+    var confidence = detectedObject.getComputedConfidence();
     return new DetectedObject()
         .detectedObjectType(toRest(detectedObject.getDetectableObjectType()))
         .feature(detectedObject.getFeature())
-        .confidence(BigDecimal.valueOf(detectedObject.getComputedConfidence()))
+        .confidence(confidence == null ? null : BigDecimal.valueOf(confidence))
         .detectorVersion("TODO"); // TODO
   }
 
