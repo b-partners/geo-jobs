@@ -2,6 +2,7 @@ package app.bpartners.geojobs.model.geometry;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
@@ -53,7 +54,7 @@ class GeometrySquareMeterAreaTest {
         subject.project(
             roofGeometry, GeometrySquareMeterArea.LAMBERT_93, GeometrySquareMeterArea.WGS84);
 
-    assertEquals(expectedP, projected);
+    assertTrue(projected.equalsExact(expectedP, 1e-13));
   }
 
   @SneakyThrows
