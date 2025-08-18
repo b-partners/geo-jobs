@@ -14,6 +14,7 @@ import app.bpartners.geojobs.file.ExtensionGuesser;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.hash.FileHash;
+import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
 import app.bpartners.geojobs.service.event.TileExtendedImageRequestedService;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
@@ -45,6 +46,7 @@ class TileExtendedImageRequestedServiceIT {
       mock(DetectionBackgroundRetriever.class);
   DetectionProvidedZoneUnifier detectionProvidedZoneUnifier =
       new DetectionProvidedZoneUnifier(geometryConverter);
+  DetectionRepository detectionRepositoryMock = mock();
 
   TileExtendedImageRequestedService subject =
       new TileExtendedImageRequestedService(
@@ -56,7 +58,8 @@ class TileExtendedImageRequestedServiceIT {
           geometryConverter,
           filePolygonDrawer,
           detectionBackgroundRetriever,
-          detectionProvidedZoneUnifier);
+          detectionProvidedZoneUnifier,
+          detectionRepositoryMock);
 
   @SneakyThrows
   @BeforeEach
@@ -81,7 +84,7 @@ class TileExtendedImageRequestedServiceIT {
     var longitude = BigDecimal.valueOf(-0.249317);
     var layer = "cite:PCRS";
     var zoomLevel = HOUSES_0.getZoomLevel();
-    var detectionID = randomUUID().toString();
+    var detectionIdentifier = randomUUID().toString();
     var detectionMock = mock(app.bpartners.geojobs.repository.model.detection.Detection.class);
     var repoFeatureMock = mock(app.bpartners.geojobs.repository.model.Feature.class);
     var unifiedRoofMultiPolygonMock = mock(MultiPolygon.class);
@@ -89,12 +92,14 @@ class TileExtendedImageRequestedServiceIT {
         new FeatureWithDelimitation(repoFeatureMock, List.of(repoFeatureMock));
     var geometryFactory = new org.locationtech.jts.geom.GeometryFactory().createMultiPolygon(null);
 
+    when(detectionRepositoryMock.findById(detectionIdentifier))
+        .thenReturn(java.util.Optional.of(detectionMock));
     when(detectionBackgroundRetriever.apply(detectionMock)).thenReturn(geometryFactory);
     when(unifiedRoofMultiPolygonMock.intersection(any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
     when(unifiedRoofMultiPolygonMock.difference(any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
-    when(detectionMock.getId()).thenReturn(detectionID);
+    when(detectionMock.getId()).thenReturn(detectionIdentifier);
     when(detectionMock.getFeatureWithDelimitations()).thenReturn(List.of(featureWithDelimitation));
 
     try (MockedStatic<FeatureMapper> mockedStatic = mockStatic(FeatureMapper.class)) {
@@ -118,7 +123,7 @@ class TileExtendedImageRequestedServiceIT {
           () ->
               subject.accept(
                   new TileExtendedImageRequested(
-                      longitude, latitude, zoomLevel, layer, detectionMock)));
+                      longitude, latitude, zoomLevel, layer, detectionIdentifier)));
 
       var fileCaptor = ArgumentCaptor.forClass(File.class);
       var stringCaptor = ArgumentCaptor.forClass(String.class);
