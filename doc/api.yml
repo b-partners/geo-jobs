@@ -1101,7 +1101,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AuthorizedZone'
+        detectableObjectModel:
+          $ref: '#/components/schemas/DetectableObjectModel'
         detectableObjectTypes:
+          deprecated: true
           type: array
           items:
             $ref: '#/components/schemas/DetectableObjectType'
