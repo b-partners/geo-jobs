@@ -2,7 +2,7 @@ name: Detection completion verification IT
 
 on:
   schedule:
-    - cron: '15 * * * *'
+    - cron: '20 * * * *'
   workflow_dispatch:
 
 env:
