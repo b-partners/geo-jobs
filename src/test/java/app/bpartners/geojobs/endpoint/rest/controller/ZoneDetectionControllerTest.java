@@ -24,6 +24,7 @@ import app.bpartners.geojobs.endpoint.rest.security.authorizer.DetectionAuthoriz
 import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.endpoint.rest.validator.ConfigureAddressValidator;
+import app.bpartners.geojobs.endpoint.rest.validator.CreateDetectionValidator;
 import app.bpartners.geojobs.endpoint.rest.validator.GetUsageValidator;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.file.FileWriter;
@@ -83,6 +84,7 @@ class ZoneDetectionControllerTest {
   MediaTypeGuesser mediaTypeGuesserMock = mock();
   ConfigureAddressValidator configureAddressValidatorMock = mock();
   RoofDelimiterMapper roofDelimiterMapperMock = mock();
+  CreateDetectionValidator createDetectionValidatorMock = mock(CreateDetectionValidator.class);
   ZoneDetectionController subject =
       new ZoneDetectionController(
           parcelServiceMock,
@@ -106,7 +108,8 @@ class ZoneDetectionControllerTest {
           fileWriterMock,
           mediaTypeGuesserMock,
           configureAddressValidatorMock,
-          roofDelimiterMapperMock);
+          roofDelimiterMapperMock,
+          createDetectionValidatorMock);
 
   @BeforeEach
   void setup() {
@@ -114,6 +117,7 @@ class ZoneDetectionControllerTest {
         .thenReturn(new Principal("dummyApiKey", Set.of(new Authority(ROLE_ADMIN))));
     when(communityAuthRepositoryMock.findByApiKey(any())).thenReturn(Optional.empty());
     when(roofDelimiterMapperMock.toDomainFeature(any())).thenReturn(mock());
+    doNothing().when(createDetectionValidatorMock).accept(any());
   }
 
   @Test

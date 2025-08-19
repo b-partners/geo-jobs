@@ -18,6 +18,7 @@ import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.authorizer.DetectionAuthorizer;
 import app.bpartners.geojobs.endpoint.rest.validator.ConfigureAddressValidator;
+import app.bpartners.geojobs.endpoint.rest.validator.CreateDetectionValidator;
 import app.bpartners.geojobs.endpoint.rest.validator.GetUsageValidator;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.file.FileWriter;
@@ -73,6 +74,7 @@ public class ZoneDetectionController {
   private final MediaTypeGuesser mediaTypeGuesser;
   private final ConfigureAddressValidator configureAddressValidator;
   private final RoofDelimiterMapper roofDelimiterMapper;
+  private final CreateDetectionValidator createDetectionValidator;
 
   @PostMapping("/detectionJobs/{id}/succeed")
   public app.bpartners.geojobs.endpoint.rest.model.ZoneDetectionJob succeedJob(
@@ -219,6 +221,7 @@ public class ZoneDetectionController {
   @PostMapping("/detections/{id}")
   public Detection processDetection(
       @PathVariable(name = "id") String detectionId, @RequestBody CreateDetection createDetection) {
+    createDetectionValidator.accept(createDetection);
     detectionAuthorizer.accept(detectionId, createDetection, authProvider.getPrincipal());
     var communityAuthorization =
         communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
@@ -251,6 +254,7 @@ public class ZoneDetectionController {
   @PostMapping("/detections/{id}/sync")
   public Detection processDetectionSynchronously(
       @PathVariable(name = "id") String detectionId, @RequestBody CreateDetection createDetection) {
+    createDetectionValidator.accept(createDetection);
     detectionAuthorizer.accept(detectionId, createDetection, authProvider.getPrincipal());
     var communityAuthorization =
         communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
