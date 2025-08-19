@@ -291,6 +291,13 @@ public class GeometryConverter {
       }
       coordinates[i] = new Coordinate(point.get(0).doubleValue(), point.get(1).doubleValue());
     }
+    if (coordinates.length > 0 && !coordinates[0].equals2D(coordinates[coordinates.length - 1])) {
+
+      Coordinate[] closed = new Coordinate[coordinates.length + 1];
+      System.arraycopy(coordinates, 0, closed, 0, coordinates.length);
+      closed[closed.length - 1] = coordinates[0];
+      coordinates = closed;
+    }
     return geometryFactory.createLinearRing(coordinates);
   }
 

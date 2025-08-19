@@ -52,6 +52,7 @@ public enum ObjectType {
   humidite_clair(lengthOrWidth),
   humidite_intense(lengthOrWidth),
   velux(lengthOrWidth),
+  concession(lengthOrWidth),
   background(lengthOrWidth);
 
   private final ContinuationOrientation continuationOrientation;
@@ -130,6 +131,7 @@ public enum ObjectType {
       case "cheminee", "cheminée" -> cheminee;
       case "velux" -> velux;
       case "background" -> background;
+      case "concession" -> concession;
       default -> throw new IllegalArgumentException("Unsupported continuation on " + label);
     };
   }

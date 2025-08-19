@@ -1101,7 +1101,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AuthorizedZone'
+        detectableObjectModel:
+          $ref: '#/components/schemas/DetectableObjectModel'
         detectableObjectTypes:
+          deprecated: true
           type: array
           items:
             $ref: '#/components/schemas/DetectableObjectType'
@@ -1805,6 +1808,10 @@ components:
       description: |
         Optional. Mandatory only when doing sync detection using TOITURE model.
       properties:
+        roofSlopeInDegree:
+          type: number
+        roofHeightInMeter:
+          type: number
         polygon:
           type: array
           items:
