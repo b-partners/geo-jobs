@@ -25,12 +25,14 @@ import java.math.BigDecimal;
 import java.util.List;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import org.springframework.core.io.ClassPathResource;
 
+@Disabled("TODO: set again when extender image server available again")
 class TileExtendedImageRequestedServiceIT {
   BucketComponent bucketComponentMock = mock(BucketComponent.class);
   TileFinder tileFinder = new TileFinder();
