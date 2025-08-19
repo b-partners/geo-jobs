@@ -49,6 +49,17 @@ class DetectionFromStatisticRestMapperTest {
         .build();
   }
 
+  private static Detection detectionWithoutFeatureDelimitation() {
+    return Detection.builder()
+        .vggFileKey("vgg-key")
+        .shapeFileKey("shape-key")
+        .geojsonS3FileKey("geojson-key")
+        .imageFileKey("image-key")
+        .pdfFileKey("pdf-key")
+        .vggFileKey("vgg-key")
+        .build();
+  }
+
   private static Detection detectionWithFeatureDelimitation(double slope, double height) {
     HashMap<String, Object> properties =
         new HashMap<>(Map.of(ROOF_SLOPE_PROPERTY_NAME, slope, ROOF_HEIGHT_PROPERTY_NAME, height));
