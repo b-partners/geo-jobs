@@ -15,11 +15,9 @@ public class GeoJsonContinuerController {
 
   @PostMapping(value = "/continue")
   public String continueGeoJson(
-      @RequestParam("file") byte[] fileToUpload,
-      @RequestParam("imageSize") Integer imgSize,
-      @RequestParam("zoom") Integer zoom) {
+      @RequestParam("file") byte[] fileToUpload) {
     var file = fileWriter.apply(fileToUpload, null);
     geoJsonValidator.accept(file);
-    return geoJsonContinuerService.generatePresignedUrl(file, imgSize, zoom);
+    return geoJsonContinuerService.generatePresignedUrl(file);
   }
 }

@@ -30,8 +30,8 @@ public class GeoJsonContinuerService {
 
   private final RoutesContinuationConf routesContinuationConf = routesContinuationConfVal();
 
-  public Geojson continueGeojson(File geoJsonToContinue, Integer imgSize, Integer zoom) {
-    var latLonLinesContinuer = getLatLonLinesContinuer(imgSize, zoom);
+  public Geojson continueGeojson(File geoJsonToContinue) {
+    var latLonLinesContinuer = getLatLonLinesContinuer();
     Set<LatLonPolygon> features = latLonLinesContinuer.apply(geoJsonToContinue);
     return new Geojson(features);
   }
@@ -49,11 +49,11 @@ public class GeoJsonContinuerService {
     return new RoutesContinuationConf(alphaConf, unionConf, continuationConf, prettyConf);
   }
 
-  public String generatePresignedUrl(File file, Integer imgSize, Integer zoom) {
+  public String generatePresignedUrl(File file) {
     var fileBytes = fileWriter.writeAsByte(file);
     var tempDir = FileWriter.createTempDirectory();
     var tempInput = fileWriter.apply(fileBytes, tempDir);
-    var result = continueGeojson(tempInput, imgSize, zoom);
+    var result = continueGeojson(tempInput);
     eventProducer.accept(List.of(GeoJsonContinuerIsCompleted.builder().geoJson(result).build()));
 
     var resultBytes = result.toString().getBytes();
@@ -64,12 +64,10 @@ public class GeoJsonContinuerService {
     return bucketComponent.presign(bucketKey);
   }
 
-  private LatLonLinesContinuer getLatLonLinesContinuer(Integer imgSize, Integer zoom) {
-    imgSize = imgSize == null ? DEFAULT_IMG_SIZE.getValue() : imgSize;
-    zoom = zoom == null ? DEFAULT_Z.getValue() : zoom;
+  private LatLonLinesContinuer getLatLonLinesContinuer() {
     return new LatLonLinesContinuer(
         this.routesContinuationConf,
-        new TilingConf(zoom, imgSize),
+        new TilingConf(DEFAULT_Z.getValue(), DEFAULT_IMG_SIZE.getValue()),
         DEFAULT_NEIGHBOURHOOD.getValue());
   }
 }
