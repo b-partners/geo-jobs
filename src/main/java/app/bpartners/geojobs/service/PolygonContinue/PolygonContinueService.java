@@ -1,60 +1,66 @@
 package app.bpartners.geojobs.service.PolygonContinue;
 
+import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.consumer.PolygonFusionRequested;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.GeoJsonLoader;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.Geojson;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon;
-import app.bpartners.geojobs.entity.async.PolygonFusionEvent;
-import app.bpartners.geojobs.entity.async.PolygonFusionEventProducer;
+import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.geometry.polygon.MultiPolygonUnion;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-@EnableAsync
 @Service
 @AllArgsConstructor
 @Slf4j
 public class PolygonContinueService {
-
     private final GeometryConverter geometryConverter;
     private final GeoJsonLoader geoJsonLoader;
     private final BucketComponent bucketComponent;
-    private final PolygonFusionEventProducer polygonFusionEventProducer;
-
+    private final EventProducer<PolygonFusionRequested> eventProducer;
     /**
-     * Point d'entree asynchrone pour la fusion des polygones. Publie un PolygonFusionEvent a la fin.
-     * Retourne un CompletableFuture contenant le resultat.
+     * Point d'entrée asynchrone pour la fusion des polygones.
+     * Publie l'événement dès la création du fichier input,
+     * puis effectue les étapes locales (validation, fusion, sauvegarde, upload).
      */
-    @Async
-    public CompletableFuture<Map<String, String>> fusionnerPolygonesAsync(
+    public Map<String, String> fusionnerPolygonesAsync(
             MultipartFile file, String bucket, String key
-    ) throws IOException {
-        Map<String, String> result = fusionnerPolygones(file, bucket, key);
-        // Publier un événement ici (voir étape 2)
-        polygonFusionEventProducer.publish(new PolygonFusionEvent(result));
-        return CompletableFuture.completedFuture(result);
+    ) {
+        try {
+            File inputFile = convertMultipartFileToFile(file);
+            eventProducer.accept(List.of(new PolygonFusionRequested(inputFile)));
+
+            List<Polygon> validPolygons = loadAndValidatePolygons(inputFile);
+            Geometry resultGeometry = mergePolygonsIfNeeded(validPolygons);
+            File outputFile = saveGeometryAsGeoJson(resultGeometry);
+            Map<String, String> result = new HashMap<>(uploadAndGetUrl(outputFile, bucket, key));
+            result.put("localPath", outputFile.getAbsolutePath());
+            return result;
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to fusion polygon", e);
+        }
     }
+
+
 
     /**
      * Point d'entree pour fusionner et uploader les polygones.
      * Retourne une map avec l'URL S3 et le chemin local du fichier fusionne.
      */
-    public Map<String, String> fusionnerPolygones(MultipartFile file, String bucket, String key)
-            throws IOException {
+    public Map<String, String> fusionnerPolygones(MultipartFile file, String bucket, String key) {
 
         File inputFile = convertMultipartFileToFile(file);
         List<Polygon> validPolygons = loadAndValidatePolygons(inputFile);
@@ -69,20 +75,26 @@ public class PolygonContinueService {
     /**
      * Convertit un MultipartFile en fichier temporaire.
      */
-    private File convertMultipartFileToFile(MultipartFile multipart) throws IOException {
+    private File convertMultipartFileToFile(MultipartFile multipart) {
         String uuidName = UUID.randomUUID().toString();
-        File tempFile = File.createTempFile("fusion-input-" + uuidName, ".geojson");
-
-        try (FileOutputStream fos = new FileOutputStream(tempFile)) {
-            fos.write(multipart.getBytes());
+        try {
+            File tempFile = File.createTempFile("fusion-input-" + uuidName, ".geojson");
+            try (FileOutputStream fos = new FileOutputStream(tempFile)) {
+                fos.write(multipart.getBytes());
+            }
+            return tempFile;
+        } catch (Exception e) {
+            // Log et rethrow l'exception en runtime si besoin
+            throw new RuntimeException("Failed to convert MultipartFile to File", e);
         }
-        return tempFile;
     }
+
 
     /**
      * Charge et valide les polygones depuis un fichier GeoJSON.
      */
-    private List<Polygon> loadAndValidatePolygons(File inputFile) throws IOException {
+    @SneakyThrows
+    private List<Polygon> loadAndValidatePolygons(File inputFile) {
         Set<LatLonPolygon> polygons = geoJsonLoader.apply(inputFile);
 
         List<Polygon> validPolygons = polygons.stream()
@@ -136,7 +148,8 @@ public class PolygonContinueService {
     /**
      * Sauvegarde la geometrie fusionnee au format GeoJSON dans un fichier temporaire.
      */
-    private File saveGeometryAsGeoJson(Geometry geometry) throws IOException {
+    @SneakyThrows
+    private File saveGeometryAsGeoJson(Geometry geometry) {
         Set<LatLonPolygon> mergedPolygons = new HashSet<>();
 
         if (geometry instanceof MultiPolygon multi) {
