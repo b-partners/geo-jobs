@@ -29,7 +29,6 @@ import org.springframework.web.multipart.MultipartFile;
 public class GeoJsonContinuerService {
   private final BucketComponent bucketComponent;
   private final FileWriter fileWriter;
-  private final GeoJsonValidator geoJsonValidator;
   private final EventProducer<GeoJsonContinuerIsCompleted> eventProducer;
 
   private final RoutesContinuationConf routesContinuationConf = routesContinuationConfVal();
