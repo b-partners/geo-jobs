@@ -82,7 +82,7 @@ jobs:
             if [[ -n "$incident_lines" ]]; then
               while IFS='|' read -r id incident_name incident_status; do
                 echo "Incident : $incident_name ($incident_status)"
-                if [ "$incident_name" != "Internal Server Error" ]; then
+                if [[ "$incident_name" != *"Internal server error"* ]]; then
                   in_status_response=$(curl -s -o in-status-response.json -w "%{http_code}" -X POST $in_status_api_url/v1/$IN_STATUS_PAGE_ID/incidents/$IN_STATUS_500_TMPL_ID \
                   -H "Authorization: Bearer $IN_STATUS_API_KEY")
                   incident_id=$(jq -r '.id' in-status-response.json)
