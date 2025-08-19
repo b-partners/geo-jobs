@@ -4,7 +4,6 @@ import static app.bpartners.geojobs.model.continuationConf.LatLonLinesContinuer.
 import static app.bpartners.geojobs.model.continuationConf.RoutesContinuationConf.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.rest.postprocessing.GeoJsonValidator;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.Geojson;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.continuer.LatLonLinesContinuer;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon;
