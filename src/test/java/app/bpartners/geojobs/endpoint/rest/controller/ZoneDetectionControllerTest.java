@@ -34,6 +34,7 @@ import app.bpartners.geojobs.endpoint.rest.security.authorizer.DetectionAuthoriz
 import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.endpoint.rest.validator.ConfigureAddressValidator;
+import app.bpartners.geojobs.endpoint.rest.validator.CreateDetectionValidator;
 import app.bpartners.geojobs.endpoint.rest.validator.GetUsageValidator;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.file.FileWriter;
@@ -91,6 +92,7 @@ class ZoneDetectionControllerTest {
   FileWriter fileWriterMock = mock();
   MediaTypeGuesser mediaTypeGuesserMock = mock();
   ConfigureAddressValidator configureAddressValidatorMock = mock();
+  CreateDetectionValidator createDetectionValidatorMock = mock(CreateDetectionValidator.class);
   ZoneDetectionController subject =
       new ZoneDetectionController(
           parcelServiceMock,
@@ -113,13 +115,15 @@ class ZoneDetectionControllerTest {
           detectionAuthorizerMock,
           fileWriterMock,
           mediaTypeGuesserMock,
-          configureAddressValidatorMock);
+          configureAddressValidatorMock,
+          createDetectionValidatorMock);
 
   @BeforeEach
   void setup() {
     when(authProviderMock.getPrincipal())
         .thenReturn(new Principal("dummyApiKey", Set.of(new Authority(ROLE_ADMIN))));
     when(communityAuthRepositoryMock.findByApiKey(any())).thenReturn(Optional.empty());
+    doNothing().when(createDetectionValidatorMock).accept(any());
   }
 
   @Test
