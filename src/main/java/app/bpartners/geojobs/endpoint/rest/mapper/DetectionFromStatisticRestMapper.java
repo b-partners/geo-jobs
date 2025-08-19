@@ -68,19 +68,20 @@ public class DetectionFromStatisticRestMapper
             detection.getConvertedAddresses() == null
                 ? List.of()
                 : detection.getConvertedAddresses())
-        .roofDelimiter(
-            detection.getPolygonRoofDelimitation() == null
-                    || detection.getPolygonRoofDelimitation().isEmpty()
-                ? null
-                : retrieveRoofDelimiter(detection))
+        .roofDelimiter(retrieveRoofDelimiter(detection))
         .geoJsonOutput(detection.isOutputZipped() ? ZIP : GEO_JSON);
   }
 
   private static RoofDelimiter retrieveRoofDelimiter(Detection detection) {
+    var polygonRoofDelimitation = detection.getPolygonRoofDelimitation();
     var featureWithDelimitations = detection.getFeatureWithDelimitations();
 
     if (featureWithDelimitations == null || featureWithDelimitations.isEmpty()) {
-      return new RoofDelimiter().polygon(detection.getPolygonRoofDelimitation());
+      if (polygonRoofDelimitation == null || polygonRoofDelimitation.isEmpty()) {
+        return null;
+      }
+
+      return new RoofDelimiter().polygon(polygonRoofDelimitation);
     }
 
     var featureDelimitation = featureWithDelimitations.getFirst().delimitations().getFirst();
@@ -88,14 +89,14 @@ public class DetectionFromStatisticRestMapper
     if (properties == null
         || !properties.containsKey(ROOF_SLOPE_PROPERTY_NAME)
         || !properties.containsKey(ROOF_HEIGHT_PROPERTY_NAME)) {
-      return new RoofDelimiter().polygon(detection.getPolygonRoofDelimitation());
+      return new RoofDelimiter().polygon(polygonRoofDelimitation);
     }
 
     var roofSlope = ((Number) properties.get(ROOF_SLOPE_PROPERTY_NAME)).doubleValue();
     var roofHeight = ((Number) properties.get(ROOF_HEIGHT_PROPERTY_NAME)).doubleValue();
 
     return new RoofDelimiter()
-        .polygon(detection.getPolygonRoofDelimitation())
+        .polygon(polygonRoofDelimitation)
         .roofSlopeInDegree(BigDecimal.valueOf(roofSlope))
         .roofHeightInMeter(BigDecimal.valueOf(roofHeight));
   }

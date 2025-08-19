@@ -17,7 +17,6 @@ import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionExcelFileSaved;
-import app.bpartners.geojobs.endpoint.event.model.DetectionRoofSlopeAndHeightRequested;
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerificationSent;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
@@ -39,7 +38,6 @@ import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.GeoJsonConversionJobRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.detection.Detection;
-import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionJob;
 import app.bpartners.geojobs.service.dashboard.AreaPictureApi;
@@ -290,10 +288,7 @@ public class ZoneService {
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection configureRoofDelimiter(
-      String detectionId,
-      String communityOwnerId,
-      List<List<BigDecimal>> polygonDelimitation,
-      app.bpartners.geojobs.repository.model.Feature roofDelimiterFeature) {
+      String detectionId, String communityOwnerId, List<List<BigDecimal>> polygonDelimitation) {
     var detection =
         detectionRepository
             .findByEndToEndIdAndCommunityOwnerId(detectionId, communityOwnerId)
@@ -303,21 +298,9 @@ public class ZoneService {
                         "Detection with provided ID = " + detectionId + " not found"));
     detectionRoofDelimiterValidator.accept(detection);
 
-    var featureWithDelimitations =
-        Optional.ofNullable(detection.getFeatureWithDelimitations()).orElse(new ArrayList<>());
-    featureWithDelimitations.add(
-        new FeatureWithDelimitation(roofDelimiterFeature, List.of(roofDelimiterFeature)));
-
     var savedDetection =
         detectionRepository.save(
-            detection.toBuilder()
-                .polygonRoofDelimitation(polygonDelimitation)
-                .featureWithDelimitations(featureWithDelimitations)
-                .build());
-
-    var roofSlopeAndHeightRequested =
-        DetectionRoofSlopeAndHeightRequested.builder().detectionId(detectionId).build();
-    eventProducer.accept(List.of(roofSlopeAndHeightRequested));
+            detection.toBuilder().polygonRoofDelimitation(polygonDelimitation).build());
 
     return rooferDetectionService.apply(savedDetection);
   }
