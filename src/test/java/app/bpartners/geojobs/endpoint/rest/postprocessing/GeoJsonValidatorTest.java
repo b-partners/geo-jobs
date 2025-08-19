@@ -4,21 +4,30 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
-import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import org.junit.jupiter.api.Test;
-import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.web.multipart.MultipartFile;
 
 public class GeoJsonValidatorTest {
   ObjectMapper objectMapper = new ObjectMapper();
   GeoJsonValidator geoJsonValidator = new GeoJsonValidator(objectMapper);
 
+    private File createTempFileTest(String geojsonContent, String fileName) throws IOException {
+        var suffix = ".geojson";
+        var tempFileTest = File.createTempFile(fileName, suffix);
+
+        try (var writer = new FileWriter(tempFileTest)) {
+            writer.write(geojsonContent);
+        }
+
+        tempFileTest.deleteOnExit();
+        return tempFileTest;
+    }
+
   @Test
   public void read_file_returns_expected_jsonnode() throws IOException {
-    String json = "{\"type\":\"FeatureCollection\",\"features\":[]}";
-    var file = new MockMultipartFile("file", "test.geojson", "application/json", json.getBytes());
-
+    var json = "{\"type\":\"FeatureCollection\",\"features\":[]}";
+    var file = createTempFileTest(json, "expected_geojson");
     var parsedNode = geoJsonValidator.readFile(file);
 
     assertEquals("FeatureCollection", parsedNode.get("type").asText());
@@ -30,95 +39,83 @@ public class GeoJsonValidatorTest {
     var ivandryGeojson =
         new File(getClass().getResource("/ivandry/route-ivandry.geojson").getFile());
 
-    try (var inputStream = new FileInputStream(ivandryGeojson)) {
-      MultipartFile file =
-          new MockMultipartFile("file", ivandryGeojson.getName(), "application/json", inputStream);
-
-      assertTrue(geoJsonValidator.isValid(file));
-    }
+      assertTrue(geoJsonValidator.isValid(ivandryGeojson));
   }
 
   @Test
-  public void empty_file_returns_false() {
-    var file = new MockMultipartFile("file", "empty.geojson", "application/json", new byte[0]);
+  public void empty_file_returns_false() throws IOException {
+        var file = createTempFileTest("", "empty_geojson");
     assertFalse(geoJsonValidator.isValid(file));
   }
 
   @Test
-  public void invalid_type_returns_false() {
-    String invalidTypeJson = "{\"type\":\"InvalidType\",\"features\":[]}";
-    var file =
-        new MockMultipartFile(
-            "file", "invalid.geojson", "application/json", invalidTypeJson.getBytes());
+  public void invalid_type_returns_false() throws IOException {
+    var invalidTypeJson = "{\"type\":\"InvalidType\",\"features\":[]}";
+      var file = createTempFileTest(invalidTypeJson, "expected_geojson");
+
     assertFalse(geoJsonValidator.isValid(file));
   }
 
   @Test
-  public void empty_features_returns_false() {
-    String emptyFeaturesJson = "{\"type\":\"FeatureCollection\",\"features\":[]}";
-    var file =
-        new MockMultipartFile(
-            "file", "empty_features.geojson", "application/json", emptyFeaturesJson.getBytes());
+  public void empty_features_returns_false() throws IOException {
+    var emptyFeaturesJson = "{\"type\":\"FeatureCollection\",\"features\":[]}";
+      var file = createTempFileTest(emptyFeaturesJson, "expected_geojson");
+
     assertFalse(geoJsonValidator.isValid(file));
   }
 
   @Test
-  public void invalid_feature_type_returns_false() {
-    String invalidFeatureJson =
+  public void invalid_feature_type_returns_false() throws IOException {
+    var invalidFeatureJson =
         "{\"type\":\"FeatureCollection\",\"features\":[{\"type\":\"InvalidType\"}]}";
-    var file =
-        new MockMultipartFile(
-            "file", "invalid_feature.geojson", "application/json", invalidFeatureJson.getBytes());
+      var file = createTempFileTest(invalidFeatureJson, "expected_geojson");
+
     assertFalse(geoJsonValidator.isValid(file));
   }
 
   @Test
-  public void missing_geometry_returns_false() {
-    String missingGeometryJson =
+  public void missing_geometry_returns_false() throws IOException {
+    var missingGeometryJson =
         "{\"type\":\"FeatureCollection\",\"features\":[{\"type\":\"Feature\"}]}";
-    var file =
-        new MockMultipartFile(
-            "file", "missing_geometry.geojson", "application/json", missingGeometryJson.getBytes());
+      var file = createTempFileTest(missingGeometryJson, "expected_geojson");
+
     assertFalse(geoJsonValidator.isValid(file));
   }
 
   @Test
-  public void invalid_geometry_type_returns_false() {
-    String invalidGeometryJson =
+  public void invalid_geometry_type_returns_false() throws IOException {
+    var invalidGeometryJson =
         "{\"type\":\"FeatureCollection\",\"features\":[{\"type\":\"Feature\",\"geometry\":{\"type\":\"Point\"}}]}";
-    var file =
-        new MockMultipartFile(
-            "file", "invalid_geometry.geojson", "application/json", invalidGeometryJson.getBytes());
+      var file = createTempFileTest(invalidGeometryJson, "expected_geojson");
+
     assertFalse(geoJsonValidator.isValid(file));
   }
 
   @Test
-  public void invalid_coordinates_structure_returns_false() {
-    String invalidCoordsJson =
+  public void invalid_coordinates_structure_returns_false() throws IOException {
+    var invalidCoordsJson =
         "{\"type\":\"FeatureCollection\",\"features\":[{\"type\":\"Feature\",\"geometry\":{\"type\":\"Polygon\",\"coordinates\":\"invalid\"}}]}";
-    var file =
-        new MockMultipartFile(
-            "file", "invalid_coords.geojson", "application/json", invalidCoordsJson.getBytes());
+
+      var file = createTempFileTest(invalidCoordsJson, "expected_geojson");
+
     assertFalse(geoJsonValidator.isValid(file));
   }
 
   @Test
-  public void invalid_polygon_coordinates_returns_false() {
-    String invalidPolygonJson =
+  public void invalid_polygon_coordinates_returns_false() throws IOException {
+    var invalidPolygonJson =
         "{\"type\":\"FeatureCollection\",\"features\":[{\"type\":\"Feature\",\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[0,0],[1,1]]]}}]}";
-    var file =
-        new MockMultipartFile(
-            "file", "invalid_polygon.geojson", "application/json", invalidPolygonJson.getBytes());
+      var file = createTempFileTest(invalidPolygonJson, "expected_geojson");
+
     assertFalse(geoJsonValidator.isValid(file));
   }
 
   @Test
-  public void invalid_lat_lon_values_returns_false() {
-    String invalidLatLonJson =
+  public void invalid_lat_lon_values_returns_false() throws IOException {
+    var invalidLatLonJson =
         "{\"type\":\"FeatureCollection\",\"features\":[{\"type\":\"Feature\",\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[200,100],[100,200],[200,100]]]}}]}";
-    var file =
-        new MockMultipartFile(
-            "file", "invalid_latlon.geojson", "application/json", invalidLatLonJson.getBytes());
+
+      var file = createTempFileTest(invalidLatLonJson, "expected_geojson");
     assertFalse(geoJsonValidator.isValid(file));
   }
 }
