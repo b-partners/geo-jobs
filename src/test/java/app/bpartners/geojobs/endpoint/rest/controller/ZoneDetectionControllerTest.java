@@ -83,7 +83,6 @@ class ZoneDetectionControllerTest {
   FileWriter fileWriterMock = mock();
   MediaTypeGuesser mediaTypeGuesserMock = mock();
   ConfigureAddressValidator configureAddressValidatorMock = mock();
-  RoofDelimiterMapper roofDelimiterMapperMock = mock();
   CreateDetectionValidator createDetectionValidatorMock = mock(CreateDetectionValidator.class);
   ZoneDetectionController subject =
       new ZoneDetectionController(
@@ -108,15 +107,14 @@ class ZoneDetectionControllerTest {
           fileWriterMock,
           mediaTypeGuesserMock,
           configureAddressValidatorMock,
-          roofDelimiterMapperMock,
           createDetectionValidatorMock);
+          configureAddressValidatorMock);
 
   @BeforeEach
   void setup() {
     when(authProviderMock.getPrincipal())
         .thenReturn(new Principal("dummyApiKey", Set.of(new Authority(ROLE_ADMIN))));
     when(communityAuthRepositoryMock.findByApiKey(any())).thenReturn(Optional.empty());
-    when(roofDelimiterMapperMock.toDomainFeature(any())).thenReturn(mock());
     doNothing().when(createDetectionValidatorMock).accept(any());
   }
 
@@ -283,9 +281,7 @@ class ZoneDetectionControllerTest {
     when(principal.getPassword()).thenReturn("api-key");
     when(roofDelimiter.getPolygon()).thenReturn(roofDelimitation);
     when(communityAuthRepositoryMock.findByApiKey("api-key")).thenReturn(Optional.of(mock()));
-    when(roofDelimiterMapperMock.toDomainFeature(roofDelimiter)).thenReturn(mock());
-    when(zoneServiceMock.configureRoofDelimiter(any(), any(), any(), any()))
-        .thenReturn(expectedDetection);
+    when(zoneServiceMock.configureRoofDelimiter(any(), any(), any())).thenReturn(expectedDetection);
 
     var actual = subject.configureDetectionRoofDelimiter("detectionId", roofDelimiter);
 

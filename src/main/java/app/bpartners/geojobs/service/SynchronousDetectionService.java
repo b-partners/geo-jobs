@@ -6,6 +6,8 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.concurrency.Workers;
+import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.DetectionRoofSlopeAndHeightRequested;
 import app.bpartners.geojobs.endpoint.event.model.ExtendedImageWithDetectedObjectRequested;
 import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
@@ -39,6 +41,7 @@ public class SynchronousDetectionService
   private final Workers workers;
   private final DetectableObjectConfigurationRepository detectableObjectConfigurationRepository;
   private final PointExtendedImageRequest pointExtendedImageRequest;
+  private final EventProducer eventProducer;
 
   @Override
   public Detection apply(app.bpartners.geojobs.repository.model.detection.Detection detection) {
@@ -64,6 +67,11 @@ public class SynchronousDetectionService
             detectionWithCreatedZTJ.toBuilder().zdjId(createdZoneDetectionJob.getId()).build());
 
     detectionDelimitationRetriever.accept(detectionWithCreatedZDJ);
+
+    // Has to be async for the moment
+    eventProducer.accept(
+        List.of(
+            DetectionRoofSlopeAndHeightRequested.builder().detectionId(detection.getId()).build()));
 
     List<Callable<Void>> imageRequestCallableVoidList =
         detectionWithCreatedZDJ.getProvidedGeoJsonZone().stream()

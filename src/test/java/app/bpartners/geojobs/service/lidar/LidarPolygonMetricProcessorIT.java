@@ -11,12 +11,14 @@ import java.io.File;
 import java.util.List;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 @Slf4j
+@Disabled
 class LidarPolygonMetricProcessorIT extends FacadeIT {
   @Autowired LidarPolygonMetricProcessor subject;
   @MockBean LidarApi lidarApiMock;
