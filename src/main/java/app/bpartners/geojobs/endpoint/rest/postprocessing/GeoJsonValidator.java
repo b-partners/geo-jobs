@@ -2,19 +2,20 @@ package app.bpartners.geojobs.endpoint.rest.postprocessing;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.springframework.web.multipart.MultipartFile;
 
 @Component
 @AllArgsConstructor
-public class GeoJsonValidator implements Consumer<MultipartFile> {
+public class GeoJsonValidator implements Consumer<File> {
   private final ObjectMapper objectMapper;
 
-  boolean isValid(MultipartFile file) {
-    if (file.isEmpty()) {
+  boolean isValid(File file) throws IOException {
+    if (Files.readString(file.toPath()).trim().isEmpty()) {
       return false;
     }
 
@@ -97,14 +98,18 @@ public class GeoJsonValidator implements Consumer<MultipartFile> {
         && firstRing.get(1).asDouble() == lastRing.get(1).asDouble();
   }
 
-  JsonNode readFile(MultipartFile file) throws IOException {
-    return objectMapper.readTree(file.getInputStream());
+  JsonNode readFile(File file) throws IOException {
+    return objectMapper.readTree(file);
   }
 
   @Override
-  public void accept(MultipartFile multipartFile) {
-    if (!isValid(multipartFile)) {
-      throw new RuntimeException("Invalid geojson file");
+  public void accept(File multipartFile) {
+    try {
+      if (!isValid(multipartFile)) {
+        throw new RuntimeException("Invalid geojson file");
+      }
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 }

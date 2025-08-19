@@ -16,12 +16,10 @@ import app.bpartners.geojobs.model.geometry.route.PrettyConf;
 import app.bpartners.geojobs.model.geometry.route.RoutesContinuationConf;
 import app.bpartners.geojobs.model.geometry.route.UnionConf;
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 @AllArgsConstructor
 @Service
@@ -51,9 +49,8 @@ public class GeoJsonContinuerService {
     return new RoutesContinuationConf(alphaConf, unionConf, continuationConf, prettyConf);
   }
 
-  public String generatePresignedUrl(MultipartFile file, Integer imgSize, Integer zoom)
-      throws IOException {
-    var fileBytes = file.getBytes();
+  public String generatePresignedUrl(File file, Integer imgSize, Integer zoom) {
+    var fileBytes = fileWriter.writeAsByte(file);
     var tempDir = FileWriter.createTempDirectory();
     var tempInput = fileWriter.apply(fileBytes, tempDir);
     var result = continueGeojson(tempInput, imgSize, zoom);
