@@ -79,7 +79,7 @@ public class GeoJsonContinuerRequestedService implements Consumer<GeoJsonContinu
 
   private void uploadAndSaveToRepository(String id, String fileKey, Geojson geojsonContinued) {
     var geoJsonAsByte = fileWriter.writeAsByte(geojsonContinued);
-    var file = fileWriter.apply(geoJsonAsByte, null);
+    var file = fileWriter.apply(geoJsonAsByte, FileWriter.createTempDirectory());
     var geoJsonContinuation =
         new GeoJsonContinuation(id, fileKey, Status.ProgressionStatus.FINISHED);
 
