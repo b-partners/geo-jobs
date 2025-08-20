@@ -50,7 +50,7 @@ public class GeoJsonContinuerRequestedService implements Consumer<GeoJsonContinu
     uploadAndSaveToRepository(id, fileKey, geoJsonContinued);
   }
 
-  private app.bpartners.geojobs.endpoint.rest.postprocessing.Geojson continueGeojson(
+  public app.bpartners.geojobs.endpoint.rest.postprocessing.Geojson continueGeojson(
       File geoJsonToContinue) {
     var latLonLinesContinuer = getLatLonLinesContinuer();
     var latLonPolygons = latLonLinesContinuer.apply(geoJsonToContinue);
