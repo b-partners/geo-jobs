@@ -131,6 +131,8 @@ public class SecurityConf {
                     .hasAuthority(ROLE_ADMIN.name())
                     .requestMatchers(PUT, "/parcelization")
                     .hasAuthority(ROLE_ADMIN.name())
+                    .requestMatchers(POST, "/geojson/*/continue")
+                    .hasAnyAuthority(ROLE_ADMIN.name())
                     .requestMatchers(POST, "/detections/*")
                     .hasAnyAuthority(
                         ROLE_ADMIN.name(), ROLE_COMMUNITY.name(), ROLE_INSURANCE.name())
