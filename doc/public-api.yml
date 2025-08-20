@@ -361,16 +361,11 @@ paths:
       requestBody:
         required: true
         content:
-          multipart/form-data:
+          application/octet-stream:
             schema:
-              type: object
-              required:
-                - file
-              properties:
-                file:
-                  type: string
-                  format: binary
-                  description: The geoJson data that will be continued
+              type: string
+              format: binary
+              description: The geoJson data that will be continued
       responses:
         200:
           description: Presigned URL
