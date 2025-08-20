@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.service.PolygonContinue;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.consumer.PolygonFusionRequested;
+import app.bpartners.geojobs.endpoint.event.consumer.PolygonContinueRequested;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.GeoJsonLoader;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.Geojson;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon;
@@ -28,15 +28,12 @@ public class PolygonContinueService {
     private final GeometryConverter geometryConverter;
     private final GeoJsonLoader geoJsonLoader;
     private final BucketComponent bucketComponent;
-    private final EventProducer<PolygonFusionRequested> eventProducer;
+    private final EventProducer<PolygonContinueRequested> eventProducer;
 
-    /**
-     * Point d'entrée asynchrone pour la fusion des polygones.
-     */
-    public Map<String, String> fusionnerPolygonesAsync(MultipartFile file) {
+    public Map<String, String> PolygonsContinueAsync(MultipartFile file) {
         try {
             File inputFile = convertMultipartFileToFile(file);
-            eventProducer.accept(List.of(new PolygonFusionRequested(inputFile)));
+            eventProducer.accept(List.of(new PolygonContinueRequested(inputFile)));
 
             List<Polygon> validPolygons = loadAndValidatePolygons(inputFile);
             Geometry resultGeometry = mergePolygonsIfNeeded(validPolygons);
@@ -46,15 +43,14 @@ public class PolygonContinueService {
             return result;
 
         } catch (Exception e) {
-            throw new RuntimeException("Failed to fusion polygon", e);
+            throw new RuntimeException("Failed to continue polygons", e);
         }
     }
 
-    /** Convertit un MultipartFile en fichier temporaire. */
     private File convertMultipartFileToFile(MultipartFile multipart) {
         String uuidName = UUID.randomUUID().toString();
         try {
-            File tempFile = File.createTempFile("fusion-input-" + uuidName, ".geojson");
+            File tempFile = File.createTempFile("polygons-input-" + uuidName, ".geojson");
             try (FileOutputStream fos = new FileOutputStream(tempFile)) {
                 fos.write(multipart.getBytes());
             }
@@ -64,7 +60,6 @@ public class PolygonContinueService {
         }
     }
 
-    /** Transforme le contenu d'un fichier GeoJSON en une liste de Polygon. */
     @SneakyThrows
     private List<Polygon> loadAndValidatePolygons(File inputFile) {
         Set<LatLonPolygon> polygons = geoJsonLoader.apply(inputFile);
@@ -75,12 +70,11 @@ public class PolygonContinueService {
                 .collect(Collectors.toList());
 
         if (validPolygons.isEmpty()) {
-            throw new IllegalArgumentException("Impossible de transformer le fichier en une liste de polygones valides");
+            throw new IllegalArgumentException("Unable to convert the file into a list of valid polygons");
         }
         return validPolygons;
     }
 
-    /** Détermine si les polygones doivent être fusionnés et retourne la géométrie finale. */
     private Geometry mergePolygonsIfNeeded(List<Polygon> validPolygons) {
         if (shouldMergePolygons(validPolygons)) {
             return mergePolygons(validPolygons);
@@ -106,31 +100,33 @@ public class PolygonContinueService {
         return (union.getNumGeometries() > 1) ? union.convexHull() : union;
     }
 
-    /** Sauvegarde la géométrie fusionnée au format GeoJSON. */
-    @SneakyThrows
     private File saveGeometryAsGeoJson(Geometry geometry) {
         Set<LatLonPolygon> mergedPolygons = new HashSet<>();
-
-        if (geometry instanceof MultiPolygon multi) {
-            for (int i = 0; i < multi.getNumGeometries(); i++) {
-                mergedPolygons.add(new LatLonPolygon((Polygon) multi.getGeometryN(i)));
+        try {
+            if (geometry instanceof MultiPolygon multi) {
+                for (int i = 0; i < multi.getNumGeometries(); i++) {
+                    mergedPolygons.add(new LatLonPolygon((Polygon) multi.getGeometryN(i)));
+                }
+            } else if (geometry instanceof Polygon poly) {
+                mergedPolygons.add(new LatLonPolygon(poly));
             }
-        } else if (geometry instanceof Polygon poly) {
-            mergedPolygons.add(new LatLonPolygon(poly));
-        }
 
-        Geojson geojson = new Geojson(mergedPolygons);
-        File outputFile = File.createTempFile("merged", ".geojson");
-        geojson.saveAsFile(outputFile.getAbsolutePath());
-        return outputFile;
+            Geojson geojson = new Geojson(mergedPolygons);
+            File outputFile = File.createTempFile("merged", ".geojson");
+            geojson.saveAsFile(outputFile.getAbsolutePath());
+            return outputFile;
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to save geometry as GeoJSON", e);
+        }
     }
 
-    /** Upload le fichier vers S3 et retourne l'URL présignée. */
+
     private Map<String, String> uploadAndGetUrl(File file) {
         String bucketKey = file.getName();
         bucketComponent.upload(file, bucketKey);
         String presignedUrl = bucketComponent.presign(bucketKey);
-        log.info("Fichier fusionné uploadé avec URL : {}", presignedUrl);
+        log.info("Polygon continue file successfully uploaded. URL: {}", presignedUrl);
         return Map.of("url", presignedUrl);
     }
 }
