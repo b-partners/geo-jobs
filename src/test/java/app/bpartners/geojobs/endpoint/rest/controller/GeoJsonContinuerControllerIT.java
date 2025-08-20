@@ -23,61 +23,60 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 
 class GeoJsonContinuerControllerIT extends FacadeIT {
 
-    @Autowired private GeoJsonContinuerController subject;
+  @Autowired private GeoJsonContinuerController subject;
 
-    @MockBean private BucketComponent bucketComponent;
-    @MockBean private EventProducer eventProducer;
-    @MockBean private GeoJsonContinuationRepository repository;
-    @MockBean private FileWriter fileWriter;
+  @MockBean private BucketComponent bucketComponent;
+  @MockBean private EventProducer eventProducer;
+  @MockBean private GeoJsonContinuationRepository repository;
+  @MockBean private FileWriter fileWriter;
 
-    private static byte[] fileToByteArray(File file) throws IOException {
-        try (FileInputStream fis = new FileInputStream(file)) {
-            return fis.readAllBytes();
-        }
+  private static byte[] fileToByteArray(File file) throws IOException {
+    try (FileInputStream fis = new FileInputStream(file)) {
+      return fis.readAllBytes();
     }
+  }
 
-    @Test
-    void test_continueGeoJson_existingFile() throws Exception {
-        var resource = getClass().getResource("/amboditsiry/route-amboditsiry.geojson");
-        assertNotNull(resource);
+  @Test
+  void test_continueGeoJson_existingFile() throws Exception {
+    var resource = getClass().getResource("/amboditsiry/route-amboditsiry.geojson");
+    assertNotNull(resource);
 
-        var file = new File(resource.toURI());
-        var fileBytes = fileToByteArray(file);
+    var file = new File(resource.toURI());
+    var fileBytes = fileToByteArray(file);
 
-        var preSignedUrl = "https://mocked-s3-url.com/test-geojson-continued.geojson";
+    var preSignedUrl = "https://mocked-s3-url.com/test-geojson-continued.geojson";
 
-        var fakeContinuation = GeoJsonContinuation.builder()
-                .id("test-id")
-                .fileKey("continuations/geojson/test-id.geojson")
-                .build();
+    var fakeContinuation =
+        GeoJsonContinuation.builder()
+            .id("test-id")
+            .fileKey("continuations/geojson/test-id.geojson")
+            .build();
 
-        when(fileWriter.apply(any(byte[].class), any())).thenReturn(file);
-        when(bucketComponent.presign(anyString(), any(Duration.class))).thenReturn(URI.create(preSignedUrl).toURL());
-        when(repository.findById(anyString()))
-                .thenReturn(Optional.empty())
-                .thenReturn(Optional.of(fakeContinuation));
-        when(bucketComponent.upload(any(File.class), anyString())).thenReturn(null);
+    when(fileWriter.apply(any(byte[].class), any())).thenReturn(file);
+    when(bucketComponent.presign(anyString(), any(Duration.class)))
+        .thenReturn(URI.create(preSignedUrl).toURL());
+    when(repository.findById(anyString()))
+        .thenReturn(Optional.empty())
+        .thenReturn(Optional.of(fakeContinuation));
+    when(bucketComponent.upload(any(File.class), anyString())).thenReturn(null);
 
-        var actual = subject.continueGeoJson("test-id", fileBytes);
+    var actual = subject.continueGeoJson("test-id", fileBytes);
 
-        assertNotNull(actual);
-        assertEquals(preSignedUrl, actual);
+    assertNotNull(actual);
+    assertEquals(preSignedUrl, actual);
 
-        verify(eventProducer, times(1)).accept(any());
-        verify(bucketComponent).presign(anyString(), any(Duration.class));
-    }
+    verify(eventProducer, times(1)).accept(any());
+    verify(bucketComponent).presign(anyString(), any(Duration.class));
+  }
 
-    @Test
-    void test_continueGeoJson_invalidFile() throws Exception {
-        var resource = getClass().getResource("/shape/dummy.shape");
-        assertNotNull(resource);
+  @Test
+  void test_continueGeoJson_invalidFile() throws Exception {
+    var resource = getClass().getResource("/shape/dummy.shape");
+    assertNotNull(resource);
 
-        var file = new File(resource.toURI());
-        var fileBytes = fileToByteArray(file);
+    var file = new File(resource.toURI());
+    var fileBytes = fileToByteArray(file);
 
-        assertThrows(
-                Exception.class,
-                () -> subject.continueGeoJson("test-id", fileBytes)
-        );
-    }
+    assertThrows(Exception.class, () -> subject.continueGeoJson("test-id", fileBytes));
+  }
 }
