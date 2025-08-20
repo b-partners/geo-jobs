@@ -21,7 +21,7 @@ public class GeoJsonContinuation {
   private String id;
 
   @Column(name = "file_key")
-  private String fileyKey;
+  private String fileKey;
 
   @Enumerated(EnumType.STRING)
   @JdbcTypeCode(NAMED_ENUM)

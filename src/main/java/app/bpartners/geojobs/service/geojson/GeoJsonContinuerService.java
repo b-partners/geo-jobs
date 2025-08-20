@@ -30,6 +30,6 @@ public class GeoJsonContinuerService {
         repository
             .findById(id)
             .orElseThrow(() -> new NotFoundException("geojson with id " + id + " not found"));
-    return bucketComponent.presign(geoJson.getFileyKey(), Duration.ofHours(1L)).toString();
+    return bucketComponent.presign(geoJson.getFileKey(), Duration.ofHours(1L)).toString();
   }
 }
