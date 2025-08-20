@@ -341,7 +341,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RevokeApiKeyResponse'
-  '/continue':
+  '/geojson/{id}/continue':
     post:
       tags:
         - Continuation
@@ -351,6 +351,13 @@ paths:
         Takes a geoJSON as an input and returns a presigned URL as an output
       security:
         - ApiKeyAuth: [ ]
+      parameters:
+        - in : path
+          name: id
+          schema:
+            type: string
+            description: Geojson identifier
+          required: true
       requestBody:
         required: true
         content:

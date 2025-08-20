@@ -13,9 +13,9 @@ public class GeoJsonContinuerController {
   private final GeoJsonValidator geoJsonValidator;
   private final FileWriter fileWriter;
 
-  @PostMapping(value = "/continue")
+  @PostMapping("/geojson/{id}/continue")
   public String continueGeoJson(
-      @RequestParam("id") String id, @RequestParam("file") byte[] fileToUpload) {
+      @PathVariable("id") String id, @RequestParam("file") byte[] fileToUpload) {
     var file = fileWriter.apply(fileToUpload, null);
     geoJsonValidator.accept(file);
     return geoJsonContinuerService.generatePresignedUrl(id, file);
