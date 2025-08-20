@@ -68,9 +68,8 @@ public class Geojson {
         feature.getProperty("confidence") == null
             ? null
             : feature.getProperty("confidence").getValue();
-    var label = feature.getProperty("label") == null
-            ? null
-            : feature.getProperty("label").getValue();
+    var label =
+        feature.getProperty("label") == null ? null : feature.getProperty("label").getValue();
     userData.put("label", label);
     userData.put("confidence", confidence);
     Polygon polygon;
