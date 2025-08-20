@@ -5,7 +5,6 @@ import app.bpartners.geojobs.endpoint.event.consumer.PolygonFusionRequested;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.GeoJsonLoader;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.Geojson;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon;
-import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.geometry.polygon.MultiPolygonUnion;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
@@ -30,14 +29,11 @@ public class PolygonContinueService {
     private final GeoJsonLoader geoJsonLoader;
     private final BucketComponent bucketComponent;
     private final EventProducer<PolygonFusionRequested> eventProducer;
+
     /**
      * Point d'entrée asynchrone pour la fusion des polygones.
-     * Publie l'événement dès la création du fichier input,
-     * puis effectue les étapes locales (validation, fusion, sauvegarde, upload).
      */
-    public Map<String, String> fusionnerPolygonesAsync(
-            MultipartFile file, String bucket, String key
-    ) {
+    public Map<String, String> fusionnerPolygonesAsync(MultipartFile file) {
         try {
             File inputFile = convertMultipartFileToFile(file);
             eventProducer.accept(List.of(new PolygonFusionRequested(inputFile)));
@@ -45,7 +41,7 @@ public class PolygonContinueService {
             List<Polygon> validPolygons = loadAndValidatePolygons(inputFile);
             Geometry resultGeometry = mergePolygonsIfNeeded(validPolygons);
             File outputFile = saveGeometryAsGeoJson(resultGeometry);
-            Map<String, String> result = new HashMap<>(uploadAndGetUrl(outputFile, bucket, key));
+            Map<String, String> result = new HashMap<>(uploadAndGetUrl(outputFile));
             result.put("localPath", outputFile.getAbsolutePath());
             return result;
 
@@ -54,27 +50,7 @@ public class PolygonContinueService {
         }
     }
 
-
-
-    /**
-     * Point d'entree pour fusionner et uploader les polygones.
-     * Retourne une map avec l'URL S3 et le chemin local du fichier fusionne.
-     */
-    public Map<String, String> fusionnerPolygones(MultipartFile file, String bucket, String key) {
-
-        File inputFile = convertMultipartFileToFile(file);
-        List<Polygon> validPolygons = loadAndValidatePolygons(inputFile);
-        Geometry resultGeometry = mergePolygonsIfNeeded(validPolygons);
-        File outputFile = saveGeometryAsGeoJson(resultGeometry);
-
-        Map<String, String> result = new HashMap<>(uploadAndGetUrl(outputFile, bucket, key));
-        result.put("localPath", outputFile.getAbsolutePath());
-        return result;
-    }
-
-    /**
-     * Convertit un MultipartFile en fichier temporaire.
-     */
+    /** Convertit un MultipartFile en fichier temporaire. */
     private File convertMultipartFileToFile(MultipartFile multipart) {
         String uuidName = UUID.randomUUID().toString();
         try {
@@ -84,15 +60,11 @@ public class PolygonContinueService {
             }
             return tempFile;
         } catch (Exception e) {
-            // Log et rethrow l'exception en runtime si besoin
             throw new RuntimeException("Failed to convert MultipartFile to File", e);
         }
     }
 
-
-    /**
-     * Charge et valide les polygones depuis un fichier GeoJSON.
-     */
+    /** Transforme le contenu d'un fichier GeoJSON en une liste de Polygon. */
     @SneakyThrows
     private List<Polygon> loadAndValidatePolygons(File inputFile) {
         Set<LatLonPolygon> polygons = geoJsonLoader.apply(inputFile);
@@ -103,18 +75,14 @@ public class PolygonContinueService {
                 .collect(Collectors.toList());
 
         if (validPolygons.isEmpty()) {
-            throw new IllegalArgumentException("Aucun polygone valide trouvé dans le fichier");
+            throw new IllegalArgumentException("Impossible de transformer le fichier en une liste de polygones valides");
         }
         return validPolygons;
     }
 
-    /**
-     * Determine si les polygones doivent etre fusionnes et retourne la geometrie finale.
-     */
+    /** Détermine si les polygones doivent être fusionnés et retourne la géométrie finale. */
     private Geometry mergePolygonsIfNeeded(List<Polygon> validPolygons) {
-        boolean shouldMerge = shouldMergePolygons(validPolygons);
-
-        if (shouldMerge) {
+        if (shouldMergePolygons(validPolygons)) {
             return mergePolygons(validPolygons);
         } else {
             return geometryConverter.getGeometryFactory()
@@ -122,18 +90,12 @@ public class PolygonContinueService {
         }
     }
 
-    /**
-     * Verifie si les polygones sont proches pour être fusionnes.
-     */
     private boolean shouldMergePolygons(List<Polygon> polygons) {
         if (polygons.size() <= 1) return false;
         double thresholdDistance = 0.0005; // ~50m
         return polygons.get(0).distance(polygons.get(1)) < thresholdDistance;
     }
 
-    /**
-     * Fusionne plusieurs polygones en un seul (avec enveloppe convexe si necessaire).
-     */
     private Geometry mergePolygons(List<Polygon> polygons) {
         MultiPolygonUnion unionOperator = new MultiPolygonUnion();
         MultiPolygon union = geometryConverter.getGeometryFactory().createMultiPolygon(new Polygon[0]);
@@ -141,13 +103,10 @@ public class PolygonContinueService {
         for (Polygon polygon : polygons) {
             union = unionOperator.apply(union, polygon);
         }
-
         return (union.getNumGeometries() > 1) ? union.convexHull() : union;
     }
 
-    /**
-     * Sauvegarde la geometrie fusionnee au format GeoJSON dans un fichier temporaire.
-     */
+    /** Sauvegarde la géométrie fusionnée au format GeoJSON. */
     @SneakyThrows
     private File saveGeometryAsGeoJson(Geometry geometry) {
         Set<LatLonPolygon> mergedPolygons = new HashSet<>();
@@ -166,12 +125,11 @@ public class PolygonContinueService {
         return outputFile;
     }
 
-    /**
-     * Upload le fichier vers S3 et retourne l'URL presignee.
-     */
-    private Map<String, String> uploadAndGetUrl(File file, String bucket, String key) {
-        bucketComponent.upload(file, key);
-        String presignedUrl = bucketComponent.presign(key);
+    /** Upload le fichier vers S3 et retourne l'URL présignée. */
+    private Map<String, String> uploadAndGetUrl(File file) {
+        String bucketKey = file.getName();
+        bucketComponent.upload(file, bucketKey);
+        String presignedUrl = bucketComponent.presign(bucketKey);
         log.info("Fichier fusionné uploadé avec URL : {}", presignedUrl);
         return Map.of("url", presignedUrl);
     }

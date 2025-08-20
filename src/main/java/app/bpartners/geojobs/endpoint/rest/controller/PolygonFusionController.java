@@ -19,11 +19,9 @@ public class PolygonFusionController {
 
     @PostMapping("/fusionner")
     public Map<String, String> fusionner(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam("bucket") String bucket,
-            @RequestParam("key") String outputKey
+            @RequestParam("file") MultipartFile file
     ) {
         fileGeoJsonValidator.accept(file);
-        return polygonContinueService.fusionnerPolygonesAsync(file, bucket, outputKey);
+        return polygonContinueService.fusionnerPolygonesAsync(file);
     }
 }

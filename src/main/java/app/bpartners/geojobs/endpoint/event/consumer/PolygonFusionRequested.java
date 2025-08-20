@@ -9,8 +9,8 @@ import java.io.File;
 import java.time.Duration;
 
 /**
- * Événement déclenché à la fin d’un job de fusion de polygones, contenant les résultats.
- * Étend {@link PojaEvent} et identifie sa source comme "PolygonFusion".
+ * Événement indiquant que l'union de polygones a été demandé,
+ * contenant en particulier le fichier concerné.
  */
 @AllArgsConstructor
 @Getter

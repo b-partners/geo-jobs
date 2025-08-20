@@ -17,15 +17,19 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.mock.web.MockMultipartFile;
 import software.amazon.awssdk.services.eventbridge.EventBridgeClient;
+import software.amazon.awssdk.services.eventbridge.model.PutEventsRequest;
+import software.amazon.awssdk.services.eventbridge.model.PutEventsResponse;
+import software.amazon.awssdk.services.eventbridge.model.PutEventsResultEntry;
 
 import java.io.File;
 import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class PolygonFusionMultiControllerIT extends FacadeIT {
 
@@ -34,45 +38,43 @@ public class PolygonFusionMultiControllerIT extends FacadeIT {
 
     @Test
     void testPolygonFusionAndPrintMergedPath() throws Exception {
-        File fakeGeoJson = new File("src/test/resources/fake.geojson");
-        byte[] geojsonContent = Files.readAllBytes(fakeGeoJson.toPath());
+        File initialGeoJson = new File("src/test/resources/initialPolygons.geojson");
+        byte[] geojsonContent = Files.readAllBytes(initialGeoJson.toPath());
         MockMultipartFile mockFile = new MockMultipartFile(
-                "file", "fake.geojson", "application/geo+json", geojsonContent
+                "file", "initialPolygons.geojson", "application/geo+json", geojsonContent
         );
 
-        BuildingApi buildingApi = new BuildingApi() {};
-        GeometryConverter geometryConverter = new GeometryConverter(buildingApi);
+        GeometryConverter geometryConverter = new GeometryConverter(new BuildingApi());
 
         BucketComponent bucketComponent = new BucketComponent(null) {
             @Override
             public FileHash upload(File file, String bucketKey) {
                 return new FileHash(null, "dummy-hash");
             }
-
             @Override
             public String presign(String bucketKey) {
                 return "file://" + bucketKey;
             }
         };
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        EventBridgeClient eventBridgeClient = mock(EventBridgeClient.class);
-        String eventBusName = "default";
+        // Mock EventBridgeClient
+        EventBridgeClient mockClient = mock(EventBridgeClient.class);
+        PutEventsResponse initialPolygonsResponse = PutEventsResponse.builder()
+                .entries(PutEventsResultEntry.builder().eventId("dummy-event-id").build())
+                .build();
 
-        ListGrouper<PolygonFusionRequested> listGrouper = new ListGrouper<>() {
-            @Override
-            public List<List<PolygonFusionRequested>> apply(List<PolygonFusionRequested> items, Integer size) {
-                List<List<PolygonFusionRequested>> grouped = new ArrayList<>();
-                grouped.add(new ArrayList<>(items));
-                return grouped;
-            }
-        };
+        when(mockClient.putEvents(any(PutEventsRequest.class))).thenReturn(initialPolygonsResponse);
 
         EventProducer<PolygonFusionRequested> eventProducer = new EventProducer<>(
-                objectMapper,
-                eventBridgeClient,
-                eventBusName,
-                listGrouper
+                new ObjectMapper(),
+                mockClient,
+                "default",
+                new ListGrouper<PolygonFusionRequested>() {
+                    @Override
+                    public List<List<PolygonFusionRequested>> apply(List<PolygonFusionRequested> items, Integer size) {
+                        return List.of(items);
+                    }
+                }
         );
 
         PolygonContinueService service = new PolygonContinueService(
@@ -82,11 +84,8 @@ public class PolygonFusionMultiControllerIT extends FacadeIT {
                 eventProducer
         );
 
-        Map<String, String> result = service.fusionnerPolygones(
-                mockFile,
-                "fake-bucket",
-                "output/fused.geojson"
-        );
+        Map<String, String> result = service.fusionnerPolygonesAsync(mockFile);
+
         System.out.println("Chemin du polygon fusionné : " + result.get("localPath"));
         assertNotNull(result.get("localPath"));
         assertNotNull(result.get("url"));
