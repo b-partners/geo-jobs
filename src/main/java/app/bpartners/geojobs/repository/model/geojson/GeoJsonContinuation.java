@@ -13,6 +13,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 @NoArgsConstructor
 @Getter
 @Setter
+@Builder
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = false)
 public class GeoJsonContinuation {
