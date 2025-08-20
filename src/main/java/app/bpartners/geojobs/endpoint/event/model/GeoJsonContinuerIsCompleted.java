@@ -1,6 +1,5 @@
-package app.bpartners.geojobs.service.geojson;
+package app.bpartners.geojobs.endpoint.event.model;
 
-import app.bpartners.geojobs.endpoint.event.model.PojaEvent;
 import java.time.Duration;
 import lombok.*;
 

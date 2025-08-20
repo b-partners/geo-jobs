@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service.geojson;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.GeoJsonContinuerIsCompleted;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.GeoJsonContinuationRepository;

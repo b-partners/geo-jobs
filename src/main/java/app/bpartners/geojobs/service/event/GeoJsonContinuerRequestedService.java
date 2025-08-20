@@ -7,6 +7,7 @@ import static app.bpartners.geojobs.model.continuationConf.RoutesContinuationCon
 import static app.bpartners.geojobs.model.continuationConf.RoutesContinuationConf.DEFAULT_MIN_DIRECTION_THRESHOLD;
 import static app.bpartners.geojobs.model.continuationConf.RoutesContinuationConf.DEFAULT_PRETTY_CONF;
 
+import app.bpartners.geojobs.endpoint.event.model.GeoJsonContinuerIsCompleted;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.Geojson;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.continuer.LatLonLinesContinuer;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
@@ -20,7 +21,6 @@ import app.bpartners.geojobs.model.geometry.route.RoutesContinuationConf;
 import app.bpartners.geojobs.model.geometry.route.UnionConf;
 import app.bpartners.geojobs.repository.GeoJsonContinuationRepository;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonContinuation;
-import app.bpartners.geojobs.service.geojson.GeoJsonContinuerIsCompleted;
 import java.io.File;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
