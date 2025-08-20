@@ -53,8 +53,8 @@ class LatLonLinesContinuerTest {
 
     var routesContinuationConf = routesContinuationConf();
     var tilingConf = new TilingConf(17, 1_024);
-    var latLongLinesContinuer = new LatLonLinesContinuer(routesContinuationConf, tilingConf, 10);
-    var continued = latLongLinesContinuer.apply(actualGeojson);
+    var latLonLinesContinuer = new LatLonLinesContinuer(routesContinuationConf, tilingConf, 10);
+    var continued = latLonLinesContinuer.apply(actualGeojson);
     var expectedURI =
         Paths.get(
             getClass().getResource("/amboditsiry/route-amboditsiry-continued.geojson").toURI());
