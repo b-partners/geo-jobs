@@ -41,11 +41,8 @@ public class GeoJsonContinuerRequestedService implements Consumer<GeoJsonContinu
     var id = geoJsonContinuerIsCompleted.getId();
     var fileKey = geoJsonContinuerIsCompleted.getFileKey();
     var geoJsonFile = bucketComponent.download(fileKey);
-    if (repository.findById(geoJsonContinuerIsCompleted.getId()).isEmpty()) {
-      log.info(
-          "the geojson continuation with id{} is being treated",
-          geoJsonContinuerIsCompleted.getId());
-    }
+    log.info(
+        "the geojson continuation with id{} is being treated", geoJsonContinuerIsCompleted.getId());
     var geoJsonContinued = continueGeojson(geoJsonFile);
     uploadAndSaveToRepository(id, fileKey, geoJsonContinued);
   }
