@@ -11,7 +11,8 @@ import lombok.*;
 @EqualsAndHashCode(callSuper = false)
 @ToString
 public class GeoJsonContinuerIsCompleted extends PojaEvent {
-  private app.bpartners.geojobs.endpoint.rest.postprocessing.Geojson geoJson;
+  private String id;
+  private String fileKey;
 
   @Override
   public Duration maxConsumerDuration() {
