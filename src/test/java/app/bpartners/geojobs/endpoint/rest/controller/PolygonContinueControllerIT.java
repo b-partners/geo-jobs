@@ -3,7 +3,7 @@ package app.bpartners.geojobs.endpoint.rest.controller;
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.datastructure.ListGrouper;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.consumer.PolygonFusionRequested;
+import app.bpartners.geojobs.endpoint.event.consumer.PolygonContinueRequested;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.GeoJsonLoader;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.hash.FileHash;
@@ -31,13 +31,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class PolygonFusionMultiControllerIT extends FacadeIT {
+public class PolygonContinueControllerIT extends FacadeIT {
 
     @Autowired
     private GeoJsonLoader geoJsonLoader;
 
     @Test
-    void testPolygonFusionAndPrintMergedPath() throws Exception {
+    void testPolygonContinueAndPrintMergedPath() throws Exception {
         File initialGeoJson = new File("src/test/resources/initialPolygons.geojson");
         byte[] geojsonContent = Files.readAllBytes(initialGeoJson.toPath());
         MockMultipartFile mockFile = new MockMultipartFile(
@@ -57,7 +57,6 @@ public class PolygonFusionMultiControllerIT extends FacadeIT {
             }
         };
 
-        // Mock EventBridgeClient
         EventBridgeClient mockClient = mock(EventBridgeClient.class);
         PutEventsResponse initialPolygonsResponse = PutEventsResponse.builder()
                 .entries(PutEventsResultEntry.builder().eventId("dummy-event-id").build())
@@ -65,13 +64,13 @@ public class PolygonFusionMultiControllerIT extends FacadeIT {
 
         when(mockClient.putEvents(any(PutEventsRequest.class))).thenReturn(initialPolygonsResponse);
 
-        EventProducer<PolygonFusionRequested> eventProducer = new EventProducer<>(
+        EventProducer<PolygonContinueRequested> eventProducer = new EventProducer<>(
                 new ObjectMapper(),
                 mockClient,
                 "default",
-                new ListGrouper<PolygonFusionRequested>() {
+                new ListGrouper<PolygonContinueRequested>() {
                     @Override
-                    public List<List<PolygonFusionRequested>> apply(List<PolygonFusionRequested> items, Integer size) {
+                    public List<List<PolygonContinueRequested>> apply(List<PolygonContinueRequested> items, Integer size) {
                         return List.of(items);
                     }
                 }
@@ -84,9 +83,9 @@ public class PolygonFusionMultiControllerIT extends FacadeIT {
                 eventProducer
         );
 
-        Map<String, String> result = service.fusionnerPolygonesAsync(mockFile);
+        Map<String, String> result = service.PolygonsContinueAsync(mockFile);
 
-        System.out.println("Chemin du polygon fusionné : " + result.get("localPath"));
+        System.out.println("Path of the continued polygon: " + result.get("localPath"));
         assertNotNull(result.get("localPath"));
         assertNotNull(result.get("url"));
     }

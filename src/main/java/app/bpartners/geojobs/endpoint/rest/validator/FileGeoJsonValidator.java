@@ -12,14 +12,8 @@ import org.springframework.web.multipart.MultipartFile;
 @Component
 @AllArgsConstructor
 public class FileGeoJsonValidator implements Consumer<MultipartFile> {
-
     private final ObjectMapper objectMapper;
 
-
-
-    /**
-     * Vérifie que le fichier GeoJSON contient uniquement de polygones valides.
-     */
     boolean isValid(MultipartFile file) {
         if (file.isEmpty()) return false;
         try {
@@ -36,13 +30,10 @@ public class FileGeoJsonValidator implements Consumer<MultipartFile> {
             }
             return true;
         } catch (IOException e) {
-            throw new RuntimeException("Erreur de lecture du fichier GeoJSON", e);
+            throw new RuntimeException("Error reading the GeoJSON file", e);
         }
     }
 
-    /**
-     * Vérifie la validité des coordonnées
-     */
     private boolean isValidPolygonCoordinates(JsonNode coordinates) {
         if (!coordinates.isArray() || coordinates.isEmpty()) return false;
         for (JsonNode ring : coordinates) {
@@ -58,9 +49,6 @@ public class FileGeoJsonValidator implements Consumer<MultipartFile> {
         return true;
     }
 
-    /**
-     * Vérifie que le premier et le dernier point d'un anneau sont identiques.
-     */
     private boolean ringEquals(JsonNode first, JsonNode last) {
         return first.get(0).asDouble() == last.get(0).asDouble() &&
                 first.get(1).asDouble() == last.get(1).asDouble();
@@ -69,7 +57,7 @@ public class FileGeoJsonValidator implements Consumer<MultipartFile> {
     @Override
     public void accept(MultipartFile multipartFile) {
         if (!isValid(multipartFile)) {
-            throw new RuntimeException("Fichier GeoJSON invalide : doit contenir uniquement des polygones valides");
+            throw new RuntimeException("GeoJSON file is invalid");
         }
     }
 }
