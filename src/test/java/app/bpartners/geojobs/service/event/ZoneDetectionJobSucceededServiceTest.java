@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 import static java.util.UUID.randomUUID;
@@ -26,6 +27,7 @@ import app.bpartners.geojobs.service.DetectionFinishedMailer;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import app.bpartners.geojobs.template.HTMLTemplateParser;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -260,6 +262,10 @@ class ZoneDetectionJobSucceededServiceTest {
         new ExtendedImageWithDetectedObjectRequested(detectionId, false),
         actualExtendedImageWithDetectedObjectRequested);
     assertEquals(new ZoneVggRequested(detectionId), actualZoneVggRequested);
+    assertEquals(EVENT_STACK_2, actualZoneVggRequested.getEventStack());
+    assertEquals(Duration.ofSeconds(30L), actualZoneVggRequested.maxConsumerDuration());
+    assertEquals(
+        Duration.ofSeconds(30L), actualZoneVggRequested.maxConsumerBackoffBetweenRetries());
   }
 
   private String expectedEmailContainingDetectionWhenNoResultRetrieved(String detectionE2Id) {
