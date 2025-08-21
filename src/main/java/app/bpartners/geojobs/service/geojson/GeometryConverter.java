@@ -369,7 +369,12 @@ public class GeometryConverter {
 
   @SneakyThrows
   public Geometry readGeometryFromString(String geoJsonString) {
-    GeometryJSON geometryJSON = new GeometryJSON(15);
+    return readGeometryFromString(geoJsonString, 15);
+  }
+
+  @SneakyThrows
+  public Geometry readGeometryFromString(String geoJsonString, int decimals) {
+    GeometryJSON geometryJSON = new GeometryJSON(decimals);
     return geometryJSON.read(new StringReader(geoJsonString));
   }
 

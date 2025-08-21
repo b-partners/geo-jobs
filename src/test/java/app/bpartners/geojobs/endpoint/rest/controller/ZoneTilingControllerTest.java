@@ -19,7 +19,7 @@ import app.bpartners.geojobs.repository.TilingTaskRepository;
 import app.bpartners.geojobs.repository.model.FilteredTilingJob;
 import app.bpartners.geojobs.service.DetectionProvidedZoneUnifier;
 import app.bpartners.geojobs.service.ParcelService;
-import app.bpartners.geojobs.service.TilePolygonSplitter;
+import app.bpartners.geojobs.service.TilePolygonRetriever;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.tiling.TileFinder;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
@@ -42,7 +42,7 @@ class ZoneTilingControllerTest {
   TileFinder tileFinderMock = mock();
   DetectionProvidedZoneUnifier providedZoneUnifierMock = mock();
   GeometryConverter geometryConverterMock = mock();
-  TilePolygonSplitter tilePolygonSplitterMock = mock();
+  TilePolygonRetriever tilePolygonRetrieverMock = mock();
   ZoneTilingJobMapper tilingJobMapper =
       new ZoneTilingJobMapper(
           parcelServiceMock,
@@ -51,7 +51,7 @@ class ZoneTilingControllerTest {
           geometryConverterMock,
           providedZoneUnifierMock,
           tileFinderMock,
-          tilePolygonSplitterMock);
+          tilePolygonRetrieverMock);
 
   ZoneTilingController subject =
       new ZoneTilingController(
