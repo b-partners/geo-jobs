@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.*;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
 import static java.util.UUID.randomUUID;
@@ -29,6 +30,7 @@ import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.*;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.utils.tiling.TilingTaskCreator;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -171,5 +173,9 @@ class ZoneTilingJobStatusChangedServiceTest {
     assertEquals(
         new ZoneDetectionJobCreated(zoneDetectionJobFromZTJ), actualZoneDetectionJobCreated);
     assertEquals(new ZoneImageRequested(detectionIdentifier), actualZoneImageRequested);
+    assertEquals(Duration.ofSeconds(30L), actualZoneImageRequested.maxConsumerDuration());
+    assertEquals(
+        Duration.ofSeconds(30L), actualZoneImageRequested.maxConsumerBackoffBetweenRetries());
+    assertEquals(EVENT_STACK_2, actualZoneImageRequested.getEventStack());
   }
 }
