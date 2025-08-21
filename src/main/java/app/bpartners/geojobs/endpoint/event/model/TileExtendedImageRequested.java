@@ -2,9 +2,11 @@ package app.bpartners.geojobs.endpoint.event.model;
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 @Getter
+@EqualsAndHashCode(callSuper = false)
 public class TileExtendedImageRequested extends PojaEvent {
   private final BigDecimal longitude;
   private final BigDecimal latitude;
