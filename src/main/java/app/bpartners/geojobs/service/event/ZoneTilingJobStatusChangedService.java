@@ -98,7 +98,7 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
                         false));
 
         if (savedDetection.getSplitPolygonGeoJsonZone() != null
-            && savedDetection.getSplitPolygonGeoJsonZone() != null) {
+            && !savedDetection.getSplitPolygonGeoJsonZone().isEmpty()) {
           eventProducer.accept(
               List.of(
                   ZoneImageRequested.builder()
