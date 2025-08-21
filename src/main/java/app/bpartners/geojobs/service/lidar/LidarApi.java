@@ -49,7 +49,7 @@ public class LidarApi implements Function<Set<Envelope>, Set<File>> {
       }
     }
 
-    return uniqueUrls.stream()
+    return uniqueUrls.parallelStream()
         .map(this::downloadToTempFile)
         .filter(Optional::isPresent)
         .map(Optional::get)
@@ -74,6 +74,7 @@ public class LidarApi implements Function<Set<Envelope>, Set<File>> {
       }
 
       var tempFile = File.createTempFile("lidar-", ".laz");
+
       try (var outputStream = new FileOutputStream(tempFile)) {
         outputStream.write(data);
       }
