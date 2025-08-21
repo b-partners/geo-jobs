@@ -15,17 +15,28 @@ import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.util.*;
 import java.util.function.BiFunction;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 public class DetectionVGGUpdate implements BiFunction<VGG, Detection, Detection> {
   private static final String VGG_BUCKET_FOLDER = "vgg/";
   private final FileWriter fileWriter;
   private final BucketComponent bucketComponent;
   private final GeometryConverter geometryConverter;
   private final VGGFactory vggFactory;
+  private final BoundaryMerger merger;
+
+  public DetectionVGGUpdate(
+      FileWriter fileWriter,
+      BucketComponent bucketComponent,
+      GeometryConverter geometryConverter,
+      VGGFactory vggFactory) {
+    this.fileWriter = fileWriter;
+    this.bucketComponent = bucketComponent;
+    this.geometryConverter = geometryConverter;
+    this.vggFactory = vggFactory;
+    merger = new BoundaryMerger(0, NEIGHBOUR_SIZE, false);
+  }
 
   @Override
   public Detection apply(VGG vgg, Detection detection) {
@@ -71,7 +82,6 @@ public class DetectionVGGUpdate implements BiFunction<VGG, Detection, Detection>
                     var fileKey = fileFormat + ".json";
                     var vggJson = optionalVgg.get().getValue();
                     var properties = vggJson.values().stream().toList().getFirst().getProperties();
-                    var merger = new BoundaryMerger(0, NEIGHBOUR_SIZE, false);
                     var unified = merger.apply(vggJson);
                     var unifiedVgg = vggFactory.from(unified);
                     var updatedVgg = new VGG();
