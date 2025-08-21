@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class TilePolygonSplitter implements Function<Polygon, List<Polygon>> {
+public class TilePolygonRetriever implements Function<Polygon, List<Polygon>> {
   private final TileFinder tileFinder;
   private final GeometryConverter geometryConverter;
 
