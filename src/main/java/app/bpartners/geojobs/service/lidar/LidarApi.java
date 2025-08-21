@@ -49,7 +49,7 @@ public class LidarApi implements Function<Set<Envelope>, Set<File>> {
       }
     }
 
-    return uniqueUrls.stream()
+    return uniqueUrls.parallelStream()
         .map(this::downloadToTempFile)
         .filter(Optional::isPresent)
         .map(Optional::get)
