@@ -48,10 +48,9 @@ public class PolygonContinueControllerIT extends FacadeIT {
         MockMultipartFile mockFile = new MockMultipartFile(
                 "file", "initialPolygons.geojson", "application/geo+json", geojsonContent
         );
+        var geometryConverter = new GeometryConverter(new BuildingApi());
 
-        GeometryConverter geometryConverter = new GeometryConverter(new BuildingApi());
-
-        BucketComponent bucketComponent = new BucketComponent(null) {
+        var bucketComponent = new BucketComponent(null) {
             @Override
             public FileHash upload(File file, String bucketKey) {
                 return new FileHash(null, "dummy-hash");
@@ -62,7 +61,7 @@ public class PolygonContinueControllerIT extends FacadeIT {
             }
         };
 
-        EventBridgeClient mockClient = mock(EventBridgeClient.class);
+        var mockClient = mock(EventBridgeClient.class);
         PutEventsResponse initialPolygonsResponse = PutEventsResponse.builder()
                 .entries(PutEventsResultEntry.builder().eventId("dummy-event-id").build())
                 .build();
@@ -70,15 +69,7 @@ public class PolygonContinueControllerIT extends FacadeIT {
         when(mockClient.putEvents(any(PutEventsRequest.class))).thenReturn(initialPolygonsResponse);
 
         EventProducer<PolygonContinueRequested> eventProducer = new EventProducer<>(
-                new ObjectMapper(),
-                mockClient,
-                "default",
-                new ListGrouper<PolygonContinueRequested>() {
-                    @Override
-                    public List<List<PolygonContinueRequested>> apply(List<PolygonContinueRequested> items, Integer size) {
-                        return List.of(items);
-                    }
-                }
+                new ObjectMapper(), mockClient, "default", new ListGrouper<>() {}
         );
 
         PolygonContinueService service = new PolygonContinueService(
@@ -89,7 +80,9 @@ public class PolygonContinueControllerIT extends FacadeIT {
                 repository
         );
 
+
         Map<String, String> result = service.PolygonsContinueAsync(mockFile);
+
 
         System.out.println("Path of the continued polygon: " + result.get("localPath"));
         assertNotNull(result.get("localPath"));

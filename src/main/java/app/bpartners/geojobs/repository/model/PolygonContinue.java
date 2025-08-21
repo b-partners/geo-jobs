@@ -5,8 +5,6 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 
-import java.io.File;
-
 import static org.hibernate.type.SqlTypes.NAMED_ENUM;
 
 @Entity
