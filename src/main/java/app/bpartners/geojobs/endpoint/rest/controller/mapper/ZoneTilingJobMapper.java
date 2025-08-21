@@ -19,7 +19,7 @@ import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.DetectionProvidedZoneUnifier;
 import app.bpartners.geojobs.service.ParcelService;
-import app.bpartners.geojobs.service.TilePolygonSplitter;
+import app.bpartners.geojobs.service.TilePolygonRetriever;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.tiling.TileFinder;
 import java.math.BigDecimal;
@@ -40,7 +40,7 @@ public class ZoneTilingJobMapper {
   private final GeometryConverter geometryConverter;
   private final DetectionProvidedZoneUnifier detectionProvidedZoneUnifier;
   private final TileFinder tileFinder;
-  private final TilePolygonSplitter tilePolygonSplitter;
+  private final TilePolygonRetriever tilePolygonRetriever;
 
   public ZoneTilingJob toDomain(CreateZoneTilingJob rest, Boolean isRooferMade) {
     var generatedId = randomUUID();
@@ -141,7 +141,7 @@ public class ZoneTilingJobMapper {
       var geometryInstance = polygonGeoJsonZone.getGeometry().getActualInstance();
       if (Objects.requireNonNull(geometryInstance) instanceof Polygon p) {
         var geometryPolygon = geometryConverter.convertToPolygon(p.getCoordinates().getFirst());
-        var splitTilePolygons = tilePolygonSplitter.apply(geometryPolygon);
+        var splitTilePolygons = tilePolygonRetriever.apply(geometryPolygon);
         var splitFeatures =
             splitTilePolygons.stream().map(geometryConverter::toRestFeature).toList();
 
