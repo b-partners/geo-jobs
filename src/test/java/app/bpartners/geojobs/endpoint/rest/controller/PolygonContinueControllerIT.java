@@ -7,11 +7,13 @@ import app.bpartners.geojobs.endpoint.event.consumer.PolygonContinueRequested;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.GeoJsonLoader;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.hash.FileHash;
+import app.bpartners.geojobs.repository.PolygonContinueRepository;
 import app.bpartners.geojobs.service.PolygonContinue.PolygonContinueService;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.gouv.fr.rnb.BuildingApi;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -35,6 +37,9 @@ public class PolygonContinueControllerIT extends FacadeIT {
 
     @Autowired
     private GeoJsonLoader geoJsonLoader;
+
+    @Mock
+    private PolygonContinueRepository repository;
 
     @Test
     void testPolygonContinueAndPrintMergedPath() throws Exception {
@@ -80,7 +85,8 @@ public class PolygonContinueControllerIT extends FacadeIT {
                 geometryConverter,
                 geoJsonLoader,
                 bucketComponent,
-                eventProducer
+                eventProducer,
+                repository
         );
 
         Map<String, String> result = service.PolygonsContinueAsync(mockFile);

@@ -7,9 +7,12 @@ import app.bpartners.geojobs.endpoint.rest.postprocessing.Geojson;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.geometry.polygon.MultiPolygonUnion;
+import app.bpartners.geojobs.repository.PolygonContinueRepository;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.security.MessageDigest;
 import java.util.*;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
@@ -29,10 +32,17 @@ public class PolygonContinueService {
     private final GeoJsonLoader geoJsonLoader;
     private final BucketComponent bucketComponent;
     private final EventProducer<PolygonContinueRequested> eventProducer;
+    private final PolygonContinueRepository repository;
 
     public Map<String, String> PolygonsContinueAsync(MultipartFile file) {
         try {
             File inputFile = convertMultipartFileToFile(file);
+            String bucketKey = generateBucketKey(inputFile);
+            var polygonContinueGeoJson = repository.findById(bucketKey);
+
+            if (polygonContinueGeoJson.isPresent()) {
+                return uploadAndGetUrl(inputFile);
+            }
             eventProducer.accept(List.of(new PolygonContinueRequested(inputFile)));
 
             List<Polygon> validPolygons = loadAndValidatePolygons(inputFile);
@@ -121,11 +131,26 @@ public class PolygonContinueService {
         }
     }
 
+    private String generateBucketKey(File file) {
+        try (FileInputStream fis = new FileInputStream(file)) {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] buffer = new byte[8192];
+            int n;
+            while ((n = fis.read(buffer)) != -1) {
+                digest.update(buffer, 0, n);
+            }
+            String fullHash = HexFormat.of().formatHex(digest.digest());
+            return fullHash.substring(0, 16);
+        } catch (Exception e) {
+            throw new RuntimeException("failed to generate bucketKey", e);
+        }
+    }
+
 
     private Map<String, String> uploadAndGetUrl(File file) {
-        String bucketKey = file.getName();
-        bucketComponent.upload(file, bucketKey);
-        String presignedUrl = bucketComponent.presign(bucketKey);
+        String bucket = "polygon/bucket:"+ generateBucketKey(file) +"/"+ file.getName();
+        bucketComponent.upload(file, bucket);
+        String presignedUrl = bucketComponent.presign(bucket);
         log.info("Polygon continue file successfully uploaded. URL: {}", presignedUrl);
         return Map.of("url", presignedUrl);
     }
