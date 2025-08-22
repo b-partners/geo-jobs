@@ -127,9 +127,17 @@ class ZoneServiceTest {
   TaskStatisticCreator taskStatisticCreator = new TaskStatisticCreator();
   DetectionFeaturesResultImageRetriever featureImageRetrieverMock =
       mock(DetectionFeaturesResultImageRetriever.class);
+  DetectionImageAttributeRetriever imageAttributeRetrieverMock =
+      mock(DetectionImageAttributeRetriever.class);
+  DetectionVggAttributeRetriever vggAttributeRetrieverMock =
+      mock(DetectionVggAttributeRetriever.class);
   DetectionFromStatisticRestMapper detectionFromStatisticRestMapperMock =
       new DetectionFromStatisticRestMapper(
-          bucketComponentMock, stepStatisticMapper, featureImageRetrieverMock);
+          bucketComponentMock,
+          stepStatisticMapper,
+          featureImageRetrieverMock,
+          imageAttributeRetrieverMock,
+          vggAttributeRetrieverMock);
   FeatureMapper featureMapperMock = mock();
   DetectionTilingStatisticsComputer detectionTilingStatisticsComputerMock =
       new DetectionTilingStatisticsComputer(
