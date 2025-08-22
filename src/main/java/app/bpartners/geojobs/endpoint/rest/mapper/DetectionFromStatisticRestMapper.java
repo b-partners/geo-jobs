@@ -47,13 +47,13 @@ public class DetectionFromStatisticRestMapper
   public app.bpartners.geojobs.endpoint.rest.model.Detection apply(
       Detection detection, TaskStatistic statistic, DetectionStepName detectionStepName) {
     var features = featuresImageRetriever.apply(detection);
-    var featuresWithHiddenProperties = hideUselessRestProperties(features);
+    var imageUrl = imageAttributeRetriever.apply(detection);
+    var vggUrl = vggAttributeRetriever.apply(detection);
     var excelUrl = bucketComponent.presign(detection.getExcelFileKey());
     var shapeUrl = bucketComponent.presign(detection.getShapeFileKey());
     var geojsonUrl = bucketComponent.presign(detection.getGeojsonS3FileKey());
     var pdfUrl = bucketComponent.presign(detection.getPdfFileKey());
-    var imageUrl = imageAttributeRetriever.apply(detection);
-    var vggUrl = vggAttributeRetriever.apply(detection);
+    var featuresWithHiddenProperties = hideUselessRestProperties(features);
     return new app.bpartners.geojobs.endpoint.rest.model.Detection()
         .id(detection.getEndToEndId())
         .emailReceiver(detection.getEmailReceiver())
@@ -106,6 +106,7 @@ public class DetectionFromStatisticRestMapper
         .roofHeightInMeter(BigDecimal.valueOf(roofHeight));
   }
 
+  // TODO: Careful ! This method creates a side effect, must be corrected
   private List<Feature> hideUselessRestProperties(List<Feature> features) {
     if (features == null) {
       return null;
