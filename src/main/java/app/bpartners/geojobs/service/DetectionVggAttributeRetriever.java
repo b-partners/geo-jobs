@@ -19,7 +19,14 @@ public class DetectionVggAttributeRetriever implements Function<Detection, Strin
       var properties = polygonGeoJsonZone.getProperties();
       if (properties != null) {
         var vggFileKeyFromProperties = properties.get("vgg_file_key");
-        if (vggFileKeyFromProperties != null) {
+        if (vggFileKeyFromProperties == null) {
+          if (detection.getProvidedGeoJsonZone().size() == 1) {
+            var propertiesFromProvided =
+                detection.getProvidedGeoJsonZone().getFirst().getProperties();
+            var vggFileKeyFromProvidedPolygon = propertiesFromProvided.get("vgg_file_key");
+            return bucketComponent.presign((String) vggFileKeyFromProvidedPolygon);
+          }
+        } else {
           try {
             return bucketComponent.presign((String) vggFileKeyFromProperties);
           } catch (RuntimeException e) {
