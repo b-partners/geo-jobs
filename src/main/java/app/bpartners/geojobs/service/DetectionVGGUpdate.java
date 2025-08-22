@@ -80,17 +80,9 @@ public class DetectionVGGUpdate implements BiFunction<VGG, Detection, Detection>
                     }
                     var fileFormat = layer + "/vgg_" + fileName;
                     var fileKey = fileFormat + ".json";
+
                     var vggJson = optionalVgg.get().getValue();
-                    var properties = vggJson.values().stream().toList().getFirst().getProperties();
-                    var unified = merger.apply(vggJson);
-                    var unifiedVgg = vggFactory.from(unified);
-                    var updatedVgg = new VGG();
-                    unifiedVgg.forEach(
-                        (k, v) -> {
-                          v.setProperties(properties);
-                          updatedVgg.put(k, v);
-                        });
-                    var vggAsByte = updatedVgg.getBytes();
+                    var vggAsByte = vggJson.getBytes();
                     var vggAsFile = fileWriter.write(vggAsByte, createTempDirectory(), fileFormat);
                     bucketComponent.upload(vggAsFile, fileKey);
 
