@@ -26,7 +26,6 @@ import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
 import org.springframework.stereotype.Service;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ZoneVggRequestedService implements Consumer<ZoneVggRequested> {
@@ -134,11 +133,7 @@ public class ZoneVggRequestedService implements Consumer<ZoneVggRequested> {
                                         .getGeometry()
                                         .getMultiPolygon()
                                         .getCoordinates());
-                            log.info("debug zone polygon to be projected {}", polygonPixel);
                             var closedPolygon = polygonCloser.apply(polygonPixel);
-                            log.info(
-                                "debug zone force closed polygon to be projected {}",
-                                closedPolygon);
                             return new PolygonObjectType(
                                 closedPolygon, detectedObject.getDetectableObjectType());
                           })
