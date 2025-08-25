@@ -414,7 +414,7 @@ public class GeometryConverter {
 
   public static BinaryOperator<MultiPolygon> unifyMultiPolygon() {
     return (multiPolygon1, multiPolygon2) -> {
-      var unifiedGeometry = multiPolygon1.union(multiPolygon2);
+      var unifiedGeometry = multiPolygon1.union(multiPolygon2).buffer(0);
       if (unifiedGeometry instanceof MultiPolygon multiPolygon) {
         return multiPolygon;
       } else if (unifiedGeometry instanceof Polygon polygon) {
