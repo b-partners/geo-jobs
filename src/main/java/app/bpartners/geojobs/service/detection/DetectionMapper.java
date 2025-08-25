@@ -180,8 +180,10 @@ public class DetectionMapper {
   private app.bpartners.geojobs.repository.model.Feature toFeature(
       DetectionResponse.ImageData.ShapeAttributes shapeAttributes, int zoom) {
     List<List<BigDecimal>> coordinates = new ArrayList<>();
-    var allX = shapeAttributes.getAllPointsX();
-    var allY = shapeAttributes.getAllPointsY();
+    var allX =
+        shapeAttributes.getAllPointsX().stream().map(x -> new BigDecimal(x.intValue())).toList();
+    var allY =
+        shapeAttributes.getAllPointsY().stream().map(y -> new BigDecimal(y.intValue())).toList();
     IntStream.range(0, allX.size())
         .forEach(i -> coordinates.add(List.of(allX.get(i), allY.get(i))));
     var featureId = randomUUID().toString();
