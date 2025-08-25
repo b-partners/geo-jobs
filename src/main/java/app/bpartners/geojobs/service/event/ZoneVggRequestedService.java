@@ -2,6 +2,7 @@ package app.bpartners.geojobs.service.event;
 
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
 
 import app.bpartners.geojobs.endpoint.event.model.ZoneVggRequested;
@@ -21,10 +22,12 @@ import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ZoneVggRequestedService implements Consumer<ZoneVggRequested> {
@@ -125,6 +128,8 @@ public class ZoneVggRequestedService implements Consumer<ZoneVggRequested> {
                   detectedTile.getDetectedObjects().stream()
                       .map(
                           detectedObject -> {
+                            var detectableType =
+                                detectedObject.getDetectedObjectType().getDetectableType();
                             var polygonCoordinates =
                                 detectedObject
                                     .getFeature()
@@ -134,6 +139,11 @@ public class ZoneVggRequestedService implements Consumer<ZoneVggRequested> {
                                     .getFirst()
                                     .getFirst();
                             var closedPolygon = polygonCoordinatesCloser.apply(polygonCoordinates);
+                            if (List.of(BATI_TUILES, BATI_ARDOISE, BATI_BETON, BATI_AUTRES)
+                                .contains(detectableType)) {
+                              log.info("debug original polygon coordinates {}", polygonCoordinates);
+                              log.info("debug forced closed polygon coordinates {}", closedPolygon);
+                            }
                             var polygonPixel =
                                 geometryConverter.toPolygon(List.of(List.of(closedPolygon)));
                             return new PolygonObjectType(
