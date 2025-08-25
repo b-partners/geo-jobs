@@ -22,6 +22,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.locationtech.jts.geom.*;
+import org.locationtech.jts.geom.util.AffineTransformation;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
 
@@ -302,13 +303,8 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
   }
 
   private Polygon translatePolygon(Polygon polygon, int offsetX, int offsetY) {
-    Coordinate[] coords = polygon.getCoordinates();
-    Coordinate[] newCoords =
-        Arrays.stream(coords)
-            .map(coord -> new Coordinate(coord.x + offsetX, coord.y + offsetY))
-            .toArray(Coordinate[]::new);
-
-    return polygon.getFactory().createPolygon(newCoords);
+    AffineTransformation translation = AffineTransformation.translationInstance(offsetX, offsetY);
+    return (Polygon) translation.transform(polygon);
   }
 
   public VGG from(Polygon roofGeometry, DetectedTile detectedTile) {
