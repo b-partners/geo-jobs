@@ -14,17 +14,13 @@ import app.bpartners.geojobs.model.geometry.VGGFactory;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
-import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.DetectionVGGUpdate;
 import app.bpartners.geojobs.service.PolygonCoordinatesCloser;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
-import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.MultiPolygon;
@@ -125,59 +121,43 @@ public class ZoneVggRequestedService implements Consumer<ZoneVggRequested> {
   private List<TiledPixelPolygon> getTiledPixelPolygon(
       String zoneDetectionJobIdentifier, Feature polygonGeoJsonZone) {
     var detectedTileList = detectedTileRepository.findAllByZdjJobId(zoneDetectionJobIdentifier);
-    var tileCoordinatesWithPolygonList = new ArrayList<TileCoordinatesWithPolygon>();
-    var tiledPixelPolygons =
-        detectedTileList.stream()
-            .map(
-                detectedTile -> {
-                  var tileCoordinates = detectedTile.getTile().getCoordinates();
-                  var polygonObjectTypes =
-                      detectedTile.getDetectedObjects().stream()
-                          .map(
-                              detectedObject -> {
-                                var detectableType =
-                                    detectedObject.getDetectedObjectType().getDetectableType();
-                                var polygonCoordinates =
-                                    detectedObject
-                                        .getFeature()
-                                        .getGeometry()
-                                        .getMultiPolygon()
-                                        .getCoordinates()
-                                        .getFirst()
-                                        .getFirst();
-                                var closedPolygon =
-                                    polygonCoordinatesCloser.apply(polygonCoordinates);
-                                if (List.of(BATI_TUILES, BATI_ARDOISE, BATI_BETON, BATI_AUTRES)
-                                    .contains(detectableType)) {
-                                  tileCoordinatesWithPolygonList.add(
-                                      new TileCoordinatesWithPolygon(
-                                          detectedTile.getTile().getCoordinates(),
-                                          polygonCoordinates,
-                                          detectableType));
-                                }
-                                var polygonPixel =
-                                    geometryConverter.toPolygon(List.of(List.of(closedPolygon)));
-                                return new PolygonObjectType(
-                                    polygonPixel, detectedObject.getDetectableObjectType());
-                              })
-                          .toList();
-                  return new TiledPixelPolygon(
-                      polygonGeoJsonZone,
-                      polygonObjectTypes,
-                      tileCoordinates.getX(),
-                      tileCoordinates.getY(),
-                      tileCoordinates.getZ());
-                })
-            .toList();
-    log.info(
-        "debug coordinates grouped {}",
-        tileCoordinatesWithPolygonList.stream()
-            .collect(Collectors.groupingBy(TileCoordinatesWithPolygon::tileCoordinates)));
-    return tiledPixelPolygons;
+    return detectedTileList.stream()
+        .map(
+            detectedTile -> {
+              var polygonObjectTypes =
+                  detectedTile.getDetectedObjects().stream()
+                      .map(
+                          detectedObject -> {
+                            var detectableType =
+                                detectedObject.getDetectedObjectType().getDetectableType();
+                            var polygonCoordinates =
+                                detectedObject
+                                    .getFeature()
+                                    .getGeometry()
+                                    .getMultiPolygon()
+                                    .getCoordinates()
+                                    .getFirst()
+                                    .getFirst();
+                            var closedPolygon = polygonCoordinatesCloser.apply(polygonCoordinates);
+                            if (List.of(BATI_TUILES, BATI_ARDOISE, BATI_BETON, BATI_AUTRES)
+                                .contains(detectableType)) {
+                              log.info("debug original polygon coordinates {}", polygonCoordinates);
+                              log.info("debug forced closed polygon coordinates {}", closedPolygon);
+                            }
+                            var polygonPixel =
+                                geometryConverter.toPolygon(List.of(List.of(closedPolygon)));
+                            return new PolygonObjectType(
+                                polygonPixel, detectedObject.getDetectableObjectType());
+                          })
+                      .toList();
+              var tileCoordinates = detectedTile.getTile().getCoordinates();
+              return new TiledPixelPolygon(
+                  polygonGeoJsonZone,
+                  polygonObjectTypes,
+                  tileCoordinates.getX(),
+                  tileCoordinates.getY(),
+                  tileCoordinates.getZ());
+            })
+        .toList();
   }
-
-  private record TileCoordinatesWithPolygon(
-      TileCoordinates tileCoordinates,
-      List<List<BigDecimal>> polygonCoordinates,
-      DetectableType objectType) {}
 }
