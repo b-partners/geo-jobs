@@ -27,7 +27,7 @@ import app.bpartners.geojobs.repository.model.detection.*;
 import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.DetectionVGGUpdate;
-import app.bpartners.geojobs.service.PolygonCloser;
+import app.bpartners.geojobs.service.PolygonCoordinatesCloser;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +46,7 @@ class ZoneVggRequestedServiceTest {
   GeometryConverter geometryConverterMock = mock();
   TilingTaskRepository tilingTaskRepositoryMock = mock();
   DetectionVGGUpdate detectionVGGUpdateMock = mock();
-  PolygonCloser polygonCloserMock = new PolygonCloser();
+  PolygonCoordinatesCloser polygonCoordinatesCloser = new PolygonCoordinatesCloser();
 
   ZoneVggRequestedService subject =
       new ZoneVggRequestedService(
@@ -56,7 +56,7 @@ class ZoneVggRequestedServiceTest {
           geometryConverterMock,
           tilingTaskRepositoryMock,
           detectionVGGUpdateMock,
-          polygonCloserMock);
+          polygonCoordinatesCloser);
 
   @Test
   void compute_vgg_for_zone_and_update_detection_vgg() {

@@ -16,7 +16,7 @@ import app.bpartners.geojobs.repository.TilingTaskRepository;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.DetectionVGGUpdate;
-import app.bpartners.geojobs.service.PolygonCloser;
+import app.bpartners.geojobs.service.PolygonCoordinatesCloser;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.util.List;
 import java.util.function.Consumer;
@@ -34,7 +34,7 @@ public class ZoneVggRequestedService implements Consumer<ZoneVggRequested> {
   private final GeometryConverter geometryConverter;
   private final TilingTaskRepository tilingTaskRepository;
   private final DetectionVGGUpdate detectionVGGUpdate;
-  private final PolygonCloser polygonCloser;
+  private final PolygonCoordinatesCloser polygonCoordinatesCloser;
 
   @Override
   public void accept(ZoneVggRequested event) {
@@ -125,16 +125,19 @@ public class ZoneVggRequestedService implements Consumer<ZoneVggRequested> {
                   detectedTile.getDetectedObjects().stream()
                       .map(
                           detectedObject -> {
+                            var polygonCoordinates =
+                                detectedObject
+                                    .getFeature()
+                                    .getGeometry()
+                                    .getMultiPolygon()
+                                    .getCoordinates()
+                                    .getFirst()
+                                    .getFirst();
+                            var closedPolygon = polygonCoordinatesCloser.apply(polygonCoordinates);
                             var polygonPixel =
-                                geometryConverter.toPolygon(
-                                    detectedObject
-                                        .getFeature()
-                                        .getGeometry()
-                                        .getMultiPolygon()
-                                        .getCoordinates());
-                            var closedPolygon = polygonCloser.apply(polygonPixel);
+                                geometryConverter.toPolygon(List.of(List.of(closedPolygon)));
                             return new PolygonObjectType(
-                                closedPolygon, detectedObject.getDetectableObjectType());
+                                polygonPixel, detectedObject.getDetectableObjectType());
                           })
                       .toList();
               var tileCoordinates = detectedTile.getTile().getCoordinates();
