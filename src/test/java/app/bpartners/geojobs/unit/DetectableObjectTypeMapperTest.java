@@ -72,7 +72,12 @@ class DetectableObjectTypeMapperTest {
             HUMIDITE_INTENSE,
             HUMIDITE_CLAIR,
             HUMIDITE,
-            RISQUE_FEU);
+            RISQUE_FEU,
+            VELUX,
+            BATI_ARDOISE,
+            BATI_TUILES,
+            BATI_BETON,
+            BATI_AUTRES);
     assertEquals(expected, actual);
   }
 
@@ -290,7 +295,7 @@ class DetectableObjectTypeMapperTest {
                         objectConfiguration.getObjectType(),
                         objectConfiguration.getMinConfidenceForDetection()))
             .toList();
-    assertEquals(17, detectableObjectWithReferenceConfidences.size());
+    assertEquals(22, detectableObjectWithReferenceConfidences.size());
     assertTrue(
         detectableObjectWithReferenceConfidences.contains(
             new DetectableObjectWithReferenceConfidence(DetectableType.ARBRE, 0.2504)));

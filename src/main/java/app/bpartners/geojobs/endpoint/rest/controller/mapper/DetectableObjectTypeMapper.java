@@ -7,7 +7,6 @@ import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.USU
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.model.*;
-import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import java.util.ArrayList;
@@ -49,7 +48,10 @@ public class DetectableObjectTypeMapper {
       case PARKING -> DetectableType.PARKING;
       case ESPACE_VERT_PARKING -> DetectableType.ESPACE_VERT_PARKING;
       case BACKGROUND -> DetectableType.BACKGROUND;
-      default -> throw new NotImplementedException("Unknown detectable object type " + rest);
+      case BATI_TUILES -> DetectableType.BATI_TUILES;
+      case BATI_ARDOISE -> DetectableType.BATI_ARDOISE;
+      case BATI_BETON -> DetectableType.BATI_BETON;
+      case BATI_AUTRES -> DetectableType.BATI_AUTRES;
     };
   }
 
@@ -128,6 +130,11 @@ public class DetectableObjectTypeMapper {
     objectTypes.add(HUMIDITE_CLAIR);
     objectTypes.add(HUMIDITE);
     objectTypes.add(RISQUE_FEU);
+    objectTypes.add(VELUX);
+    objectTypes.add(BATI_ARDOISE);
+    objectTypes.add(BATI_TUILES);
+    objectTypes.add(BATI_BETON);
+    objectTypes.add(BATI_AUTRES);
     return objectTypes;
   }
 
