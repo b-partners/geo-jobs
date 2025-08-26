@@ -21,6 +21,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -91,9 +92,19 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
                   } catch (URISyntaxException e) {
                     throw new RuntimeException(e);
                   }
-                  ResponseEntity<DetectionResponse> responseEntity =
-                      restTemplate.postForEntity(
-                          uriBuilder.toUriString(), request, DetectionResponse.class);
+                  log.info("Attempting to call API for detection {} ", apiUrl);
+                  ResponseEntity<DetectionResponse> responseEntity;
+                  try {
+                    responseEntity =
+                        restTemplate.postForEntity(
+                            uriBuilder.toUriString(), request, DetectionResponse.class);
+                  } catch (HttpStatusCodeException e) {
+                    log.error(
+                        "Error while calling API for detection {} with exception {}",
+                        apiUrl,
+                        e.getMessage());
+                    return null;
+                  }
                   if (responseEntity.getStatusCode().value() == 200) {
                     return new DetectionResponseAggregator.DetectionResponseUrl(
                         responseEntity.getBody(), apiUrl);
