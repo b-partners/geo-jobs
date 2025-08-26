@@ -1399,6 +1399,7 @@ components:
         - BATI_AUTRES
         - ESPACE_VERT_PARKING
         - BACKGROUND
+        - ROAD
     ProcessJobAnnotation:
       type: object
       properties:
