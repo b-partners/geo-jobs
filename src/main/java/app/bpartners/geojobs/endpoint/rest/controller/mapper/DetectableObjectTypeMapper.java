@@ -52,12 +52,14 @@ public class DetectableObjectTypeMapper {
       case BATI_ARDOISE -> DetectableType.BATI_ARDOISE;
       case BATI_BETON -> DetectableType.BATI_BETON;
       case BATI_AUTRES -> DetectableType.BATI_AUTRES;
+      case ROAD -> DetectableType.ROAD;
     };
   }
 
   public DetectableObjectType toRest(DetectableType domain) {
     return switch (domain) {
       case PISCINE -> PISCINE;
+      case ROAD -> ROAD;
       case TOITURE_REVETEMENT -> TOITURE_REVETEMENT;
       case ARBRE -> ARBRE;
       case PASSAGE_PIETON -> PASSAGE_PIETON;
@@ -111,7 +113,7 @@ public class DetectableObjectTypeMapper {
     return objectTypes;
   }
 
-  private List<DetectableObjectType> detectableObjectTypeForToitureModel() {
+  public static List<DetectableObjectType> detectableObjectTypeForToitureModel() {
     List<DetectableObjectType> objectTypes = new ArrayList<>();
     objectTypes.add(TOITURE_REVETEMENT);
     objectTypes.add(PANNEAU_PHOTOVOLTAIQUE);
