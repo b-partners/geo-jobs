@@ -102,6 +102,7 @@ public class DetectionTaskMapper {
     if (detectableType == null) return null;
     return switch (detectableType) {
       case PANNEAU_PHOTOVOLTAIQUE -> PANNEAU_PHOTOVOLTAIQUE;
+      case ROAD -> ROAD;
       case TOITURE_REVETEMENT -> TOITURE_REVETEMENT;
       case ARBRE -> ARBRE;
       case PISCINE -> PISCINE;
