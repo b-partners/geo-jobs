@@ -4,7 +4,7 @@ import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static app.bpartners.geojobs.endpoint.rest.security.authenticator.ApiKeyAuthenticator.API_KEY_HEADER;
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_COMMUNITY;
 import static app.bpartners.geojobs.repository.model.SurfaceUnit.SQUARE_DEGREE;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.ARBRE;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -78,10 +78,12 @@ class CommunityAuthenticatedAccessIT extends FacadeIT {
     var detectableObjectModel = new DetectableObjectModel();
     detectableObjectModel.setModelName(TOITURE);
     var createDetection = new CreateDetection().detectableObjectModel(detectableObjectModel);
-    var error =
+
+    var actual =
         assertThrows(
             ApiException.class, () -> detectionApi.processDetection(detectionId, createDetection));
-    assertTrue(error.getMessage().contains(ARBRE.name()));
+
+    assertTrue(actual.getMessage().contains(TOITURE_REVETEMENT.name()));
   }
 
   void setupClientWithApiKey() {
