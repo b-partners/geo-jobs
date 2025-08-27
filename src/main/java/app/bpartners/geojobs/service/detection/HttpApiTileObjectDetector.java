@@ -115,7 +115,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
             .filter(Objects::nonNull)
             .toList();
 
-    return detectionResponseAggregator.apply(detectionResponses, defaultDetectionApiUrl);
+    return detectionResponseAggregator.apply(detectionResponses);
   }
 
   @SneakyThrows
