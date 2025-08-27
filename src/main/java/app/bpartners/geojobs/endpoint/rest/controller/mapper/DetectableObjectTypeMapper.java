@@ -48,6 +48,12 @@ public class DetectableObjectTypeMapper {
       case VELUX -> DetectableType.VELUX;
       case PARKING -> DetectableType.PARKING;
       case ESPACE_VERT_PARKING -> DetectableType.ESPACE_VERT_PARKING;
+      case BATI_ASPHALTE_BITUME -> DetectableType.BATI_ASPHALTE_BITUME;
+      case BATI_BAC_ACIER -> DetectableType.BATI_BAC_ACIER;
+      case BATI_FIBRO_CIMENT -> DetectableType.BATI_FIBRO_CIMENT;
+      case BATI_GRAVIER -> DetectableType.BATI_GRAVIER;
+      case BATI_TOLE_ONDULEE -> DetectableType.BATI_TOLE_ONDULEE;
+      case BATI_ZINC -> DetectableType.BATI_ZINC;
       case BACKGROUND -> DetectableType.BACKGROUND;
       case ROAD -> DetectableType.ROAD;
       default -> throw new NotImplementedException("Unknown detectable object type " + rest);
@@ -86,8 +92,14 @@ public class DetectableObjectTypeMapper {
       case BATI_BETON -> BATI_BETON;
       case BATI_AUTRES -> BATI_AUTRES;
       case BATI_ARDOISE -> BATI_ARDOISE;
-      case TOMBE -> null;
       case ESPACE_VERT_PARKING -> ESPACE_VERT_PARKING;
+      case BATI_ASPHALTE_BITUME -> BATI_ASPHALTE_BITUME;
+      case BATI_BAC_ACIER -> BATI_BAC_ACIER;
+      case BATI_FIBRO_CIMENT -> BATI_FIBRO_CIMENT;
+      case BATI_GRAVIER -> BATI_GRAVIER;
+      case BATI_TOLE_ONDULEE -> BATI_TOLE_ONDULEE;
+      case BATI_ZINC -> BATI_ZINC;
+      case TOMBE -> null;
       case BACKGROUND -> BACKGROUND;
     };
   }

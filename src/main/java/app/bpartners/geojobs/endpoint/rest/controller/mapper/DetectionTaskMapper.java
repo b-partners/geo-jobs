@@ -131,8 +131,14 @@ public class DetectionTaskMapper {
       case HUMIDITE -> HUMIDITE;
       case RISQUE_FEU -> RISQUE_FEU;
       case VELUX -> VELUX;
-      case TOMBE -> null;
+      case BATI_ASPHALTE_BITUME -> BATI_ASPHALTE_BITUME;
       case ESPACE_VERT_PARKING -> ESPACE_VERT_PARKING;
+      case BATI_BAC_ACIER -> BATI_BAC_ACIER;
+      case BATI_FIBRO_CIMENT -> BATI_FIBRO_CIMENT;
+      case BATI_GRAVIER -> BATI_GRAVIER;
+      case BATI_TOLE_ONDULEE -> BATI_TOLE_ONDULEE;
+      case BATI_ZINC -> BATI_ZINC;
+      case TOMBE -> null;
       case BACKGROUND -> BACKGROUND;
     };
   }

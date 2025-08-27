@@ -130,6 +130,7 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
 
     DetectionResponse response =
         objectsDetector.apply(tileDetectionTask, mask, detectableObjectConfigurations);
+    // TODO: call BATI Model detection API here
     MachineDetectedTile machineDetectedTile =
         detectionMapper.toDetectedTile(
             response, tile, tileDetectionTask.getParcelId(), zoneDetectionJobId, parcelJobId);

@@ -100,7 +100,7 @@ class VggPolygonDrawer {
       case TROTTOIR -> "#54deb7";
       case LINE -> "#ff3388";
       case ESPACE_VERT -> "#e39724";
-      case VOIE_CARROSSABLE -> "TODO";
+      case VOIE_CARROSSABLE -> "#7f8c8d";
       case PARKING -> "#8c463e";
       case MOISISSURE, MOISISSURE_CLAIR, MOISISSURE_COULEUR, MOISISSURE_NOIRCIE -> "#5d8c3e";
       case USURE, USURE_IMPORTANTE, USURE_LEGER -> "#3e718c";
@@ -114,9 +114,15 @@ class VggPolygonDrawer {
       case BATI_BETON -> "#425c20";
       case BATI_ARDOISE -> "#5299bf";
       case BATI_AUTRES -> "#de6ce0";
-      case TOMBE -> null;
+      case BATI_ASPHALTE_BITUME -> "#4d4d4d";
+      case BATI_BAC_ACIER -> "#708090";
+      case BATI_FIBRO_CIMENT -> "#9ca79c";
+      case BATI_GRAVIER -> "#b2a89f";
+      case BATI_TOLE_ONDULEE -> "#c0c0c0";
+      case BATI_ZINC -> "#7f9a9a";
+      case TOMBE -> "#6e4b3a";
       case ESPACE_VERT_PARKING -> "#93c47d";
-      case BACKGROUND -> null;
+      case BACKGROUND -> "#ffffff";
     };
   }
 }
