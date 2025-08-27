@@ -14,12 +14,15 @@ import app.bpartners.geojobs.model.geometry.VGGFactory;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
+import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
+import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.DetectionVGGUpdate;
 import app.bpartners.geojobs.service.PolygonCoordinatesCloser;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,10 +48,14 @@ public class ZoneVggRequestedService implements Consumer<ZoneVggRequested> {
     var detection = detectionRepository.findById(detectionIdentifier).orElseThrow();
     var zoneDetectionJobIdentifier = detection.getZdjId();
     var zoneTilingJobIdentifier = detection.getZtjId();
-
+    var detectableTypes =
+        detection.getDetectableObjectConfigurations().stream()
+            .map(DetectableObjectConfiguration::getObjectType)
+            .toList();
     var providedPolygonZone = detection.getPolygonGeoJsonZone();
     var intersectedTileCoordinates = getTileCoordinatesIntersected(zoneTilingJobIdentifier);
-    var tiledPixelPolygons = getTiledPixelPolygon(zoneDetectionJobIdentifier, providedPolygonZone);
+    var tiledPixelPolygons =
+        getTiledPixelPolygon(zoneDetectionJobIdentifier, providedPolygonZone, detectableTypes);
     var latLonRoofMultiPolygon = retrieveLatLonRoofMultiPolygon(detection, providedPolygonZone);
     var latLonRoofInsideProvidedZone =
         getLatLonRoofMultiPolygon(latLonRoofMultiPolygon, providedPolygonZone);
@@ -119,7 +126,9 @@ public class ZoneVggRequestedService implements Consumer<ZoneVggRequested> {
   }
 
   private List<TiledPixelPolygon> getTiledPixelPolygon(
-      String zoneDetectionJobIdentifier, Feature polygonGeoJsonZone) {
+      String zoneDetectionJobIdentifier,
+      Feature polygonGeoJsonZone,
+      List<DetectableType> detectableTypes) {
     var detectedTileList = detectedTileRepository.findAllByZdjJobId(zoneDetectionJobIdentifier);
     return detectedTileList.stream()
         .map(
@@ -130,6 +139,9 @@ public class ZoneVggRequestedService implements Consumer<ZoneVggRequested> {
                           detectedObject -> {
                             var detectableType =
                                 detectedObject.getDetectedObjectType().getDetectableType();
+                            if (!detectableTypes.contains(detectableType)) {
+                              return null;
+                            }
                             var polygonCoordinates =
                                 detectedObject
                                     .getFeature()
@@ -139,16 +151,12 @@ public class ZoneVggRequestedService implements Consumer<ZoneVggRequested> {
                                     .getFirst()
                                     .getFirst();
                             var closedPolygon = polygonCoordinatesCloser.apply(polygonCoordinates);
-                            if (List.of(BATI_TUILES, BATI_ARDOISE, BATI_BETON, BATI_AUTRES)
-                                .contains(detectableType)) {
-                              log.info("debug original polygon coordinates {}", polygonCoordinates);
-                              log.info("debug forced closed polygon coordinates {}", closedPolygon);
-                            }
                             var polygonPixel =
                                 geometryConverter.toPolygon(List.of(List.of(closedPolygon)));
                             return new PolygonObjectType(
                                 polygonPixel, detectedObject.getDetectableObjectType());
                           })
+                      .filter(Objects::nonNull)
                       .toList();
               var tileCoordinates = detectedTile.getTile().getCoordinates();
               return new TiledPixelPolygon(
