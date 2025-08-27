@@ -6,8 +6,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 public class DetectionResponseAggregator
     implements BiFunction<
@@ -28,6 +30,7 @@ public class DetectionResponseAggregator
     for (var r : responseUrls) {
       DetectionResponse response = r.detectionResponse();
       String actualUrl = r.apiUrl();
+      log.info("debug response rstRaw {}; url {}", response.getRstRaw().toString(), actualUrl);
 
       if (response.getRstRaw() == null) continue;
 
@@ -93,6 +96,7 @@ public class DetectionResponseAggregator
     aggregated.setSrcImageUrl(responseUrls.getFirst().detectionResponse().getSrcImageUrl());
     aggregated.setRstImageUrl(responseUrls.getFirst().detectionResponse().getRstImageUrl());
     aggregated.setRstRaw(aggregatedRstRaw);
+    log.info("aggregated rstRaw {}", aggregatedRstRaw);
 
     return aggregated;
   }
