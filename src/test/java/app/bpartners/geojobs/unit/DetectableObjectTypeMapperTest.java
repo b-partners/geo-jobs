@@ -288,7 +288,7 @@ class DetectableObjectTypeMapperTest {
                         objectConfiguration.getObjectType(),
                         objectConfiguration.getMinConfidenceForDetection()))
             .toList();
-    assertEquals(17, detectableObjectWithReferenceConfidences.size());
+    assertEquals(15, detectableObjectWithReferenceConfidences.size());
     assertTrue(
         detectableObjectWithReferenceConfidences.contains(
             new DetectableObjectWithReferenceConfidence(DetectableType.TOITURE_REVETEMENT, 0.252)));

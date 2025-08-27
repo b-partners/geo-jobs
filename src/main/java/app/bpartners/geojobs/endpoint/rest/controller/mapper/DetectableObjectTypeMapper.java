@@ -127,6 +127,7 @@ public class DetectableObjectTypeMapper {
     objectTypes.add(HUMIDITE_INTENSE);
     objectTypes.add(HUMIDITE_CLAIR);
     objectTypes.add(HUMIDITE);
+    objectTypes.add(VELUX);
     return objectTypes;
   }
 
