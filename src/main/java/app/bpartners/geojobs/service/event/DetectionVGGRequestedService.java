@@ -10,6 +10,7 @@ import app.bpartners.geojobs.model.geometry.PolygonObjectType;
 import app.bpartners.geojobs.model.geometry.TiledPixelPolygon;
 import app.bpartners.geojobs.model.geometry.VGGFactory;
 import app.bpartners.geojobs.repository.DetectionRepository;
+import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.service.DetectionVGGUpdate;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.tiling.TileFinder;
@@ -39,6 +40,10 @@ public class DetectionVGGRequestedService implements Consumer<DetectionVGGReques
     var detectionId = event.getDetectionId();
     var detection = detectionRepository.findById(detectionId).orElseThrow();
     var filteredTiledPixelPolygons = event.getFilteredTiledPixelPolygons();
+    var detectableObjectTypes =
+        detection.getDetectableObjectConfigurations().stream()
+            .map(DetectableObjectConfiguration::getObjectType)
+            .toList();
     var filteredTiledPixelPolygonsDeserialized =
         filteredTiledPixelPolygons.stream()
             .map(
@@ -51,9 +56,10 @@ public class DetectionVGGRequestedService implements Consumer<DetectionVGGReques
                                 var geometry =
                                     geometryConverter.readGeometryFromString(
                                         polygonObjectTypeSerializable.polygonAsString());
-                                if (geometry instanceof Polygon polygon) {
-                                  return new PolygonObjectType(
-                                      polygon, polygonObjectTypeSerializable.detectableType());
+                                var detectableType = polygonObjectTypeSerializable.detectableType();
+                                if (geometry instanceof Polygon polygon
+                                    && detectableObjectTypes.contains(detectableType)) {
+                                  return new PolygonObjectType(polygon, detectableType);
                                 }
                                 return null;
                               })

@@ -91,6 +91,7 @@ class VggPolygonDrawer {
 
   private static String getColorFromDetectedType(DetectableType detectableType) {
     return switch (detectableType) {
+      case ROAD -> null;
       case TOITURE_REVETEMENT -> "#DFFF00";
       case PANNEAU_PHOTOVOLTAIQUE -> "#0E4EB3";
       case PISCINE -> "#0DCBD2";
