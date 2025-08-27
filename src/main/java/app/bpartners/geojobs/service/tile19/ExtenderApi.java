@@ -37,7 +37,7 @@ public class ExtenderApi implements Function<List<File>, String> {
     headers.setContentType(MediaType.MULTIPART_FORM_DATA);
     HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
 
-    var url = TILE_EXTENDER_API_URL +  "/extend/existing-tiles";
+    var url = TILE_EXTENDER_API_URL + "/extend/existing-tiles";
     return restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class).getBody();
   }
 }
