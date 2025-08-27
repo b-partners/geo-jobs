@@ -15,6 +15,7 @@ import org.springframework.web.client.RestTemplate;
 @Component
 public class ExtenderApi implements Function<List<File>, String> {
   private final RestTemplate restTemplate = new RestTemplate();
+  private String TILE_EXTENDER_API_URL = System.getenv("TILE_EXTENDER_API_URL");
 
   @Override
   public String apply(List<File> imageFiles) {
@@ -36,7 +37,7 @@ public class ExtenderApi implements Function<List<File>, String> {
     headers.setContentType(MediaType.MULTIPART_FORM_DATA);
     HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
 
-    var url = "https://ifdovpj3xe.execute-api.eu-west-3.amazonaws.com/extend/existing-tiles";
+    var url = TILE_EXTENDER_API_URL + "/extend/existing-tiles";
     return restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class).getBody();
   }
 }
