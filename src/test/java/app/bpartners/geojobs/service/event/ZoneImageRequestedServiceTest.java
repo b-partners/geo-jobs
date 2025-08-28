@@ -19,12 +19,14 @@ import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
+import app.bpartners.geojobs.service.TileImageBlur;
 import app.bpartners.geojobs.service.TileImagesAssembler;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.io.File;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class ZoneImageRequestedServiceTest {
@@ -35,6 +37,7 @@ class ZoneImageRequestedServiceTest {
   TileImagesAssembler tileImageAssemblerMock = mock();
   TilingTaskRepository tilingTaskRepositoryMock = mock();
   GeometrySquareMeterArea geometrySquareMeterAreaMock = mock();
+  TileImageBlur tileImageBlurMock = mock();
   ZoneImageRequestedService subject =
       new ZoneImageRequestedService(
           detectionRepositoryMock,
@@ -42,7 +45,13 @@ class ZoneImageRequestedServiceTest {
           bucketComponentMock,
           tileImageAssemblerMock,
           tilingTaskRepositoryMock,
-          geometrySquareMeterAreaMock);
+          geometrySquareMeterAreaMock,
+          tileImageBlurMock);
+
+  @BeforeEach
+  void setUp() {
+    when(tileImageBlurMock.apply(any(), any())).thenAnswer(invocation -> invocation.getArgument(1));
+  }
 
   @Test
   void terminate_and_warn_when_zone_area_greater_than_one_kilometre_square() {

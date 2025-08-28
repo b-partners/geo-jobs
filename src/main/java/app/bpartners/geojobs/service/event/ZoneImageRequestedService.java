@@ -6,6 +6,7 @@ import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
 import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
+import app.bpartners.geojobs.service.TileImageBlur;
 import app.bpartners.geojobs.service.TileImagesAssembler;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.util.List;
@@ -26,6 +27,7 @@ public class ZoneImageRequestedService implements Consumer<ZoneImageRequested> {
   private final TileImagesAssembler tileImagesAssembler;
   private final TilingTaskRepository tilingTaskRepository;
   private final GeometrySquareMeterArea geometrySquareMeterArea;
+  private final TileImageBlur tileImageBlur;
 
   @SneakyThrows
   @Override
@@ -61,8 +63,9 @@ public class ZoneImageRequestedService implements Consumer<ZoneImageRequested> {
                 tile ->
                     tile.toBuilder().image(bucketComponent.download(tile.getBucketPath())).build())
             .toList();
+    var tilesWithBlur = tileImageBlur.apply(detection, tilesWithImages);
 
-    var assembleImageFile = tileImagesAssembler.apply(tilesWithImages);
+    var assembleImageFile = tileImagesAssembler.apply(tilesWithBlur);
 
     bucketComponent.upload(assembleImageFile, "zone_images/" + detection.getId() + ".jpg");
   }
