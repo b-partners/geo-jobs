@@ -9,36 +9,31 @@ import static org.mockito.Mockito.*;
 import app.bpartners.geojobs.endpoint.event.model.TileExtendedImageRequested;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
+import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
+import app.bpartners.geojobs.endpoint.rest.model.GeoServerProperties;
 import app.bpartners.geojobs.endpoint.rest.model.Polygon;
-import app.bpartners.geojobs.file.ExtensionGuesser;
-import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.hash.FileHash;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
 import app.bpartners.geojobs.service.event.TileExtendedImageRequestedService;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
-import app.bpartners.geojobs.service.tile19.ExtenderApi;
 import app.bpartners.geojobs.service.tiling.TileFinder;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import app.bpartners.geojobs.utils.ImageComparator;
 import java.io.File;
 import java.math.BigDecimal;
 import java.util.List;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import org.springframework.core.io.ClassPathResource;
 
-@Disabled("TODO:  I/O error on POST request")
 class TileExtendedImageRequestedServiceIT {
   BucketComponent bucketComponentMock = mock(BucketComponent.class);
   TileFinder tileFinder = new TileFinder();
-  ExtenderApi extenderApi = new ExtenderApi();
-  FileWriter fileWriter = new FileWriter(new ObjectMapper(), new ExtensionGuesser());
   GeometryPixelProjector geometryPixelProjector = new GeometryPixelProjector();
   GeometryConverter geometryConverter = new GeometryConverter(mock());
   FilePolygonDrawer filePolygonDrawer = new FilePolygonDrawer();
@@ -46,20 +41,24 @@ class TileExtendedImageRequestedServiceIT {
       mock(DetectionBackgroundRetriever.class);
   DetectionProvidedZoneUnifier detectionProvidedZoneUnifier =
       new DetectionProvidedZoneUnifier(geometryConverter);
+  TileImagesAssembler tileImagesAssembler = new TileImagesAssembler();
   DetectionRepository detectionRepositoryMock = mock();
+  TileImageBlur tileImageBlur =
+      new TileImageBlur(
+          geometryPixelProjector,
+          geometryConverter,
+          filePolygonDrawer,
+          detectionBackgroundRetriever,
+          detectionProvidedZoneUnifier);
+  ImageComparator imageComparator = new ImageComparator();
 
   TileExtendedImageRequestedService subject =
       new TileExtendedImageRequestedService(
           tileFinder,
           bucketComponentMock,
-          extenderApi,
-          fileWriter,
-          geometryPixelProjector,
-          geometryConverter,
-          filePolygonDrawer,
-          detectionBackgroundRetriever,
-          detectionProvidedZoneUnifier,
-          detectionRepositoryMock);
+          detectionRepositoryMock,
+          tileImageBlur,
+          tileImagesAssembler);
 
   @SneakyThrows
   @BeforeEach
@@ -92,6 +91,11 @@ class TileExtendedImageRequestedServiceIT {
         new FeatureWithDelimitation(repoFeatureMock, List.of(repoFeatureMock));
     var geometryFactory = new org.locationtech.jts.geom.GeometryFactory().createMultiPolygon(null);
 
+    when(detectionMock.getId()).thenReturn(detectionIdentifier);
+    when(detectionMock.getFeatureWithDelimitations()).thenReturn(List.of(featureWithDelimitation));
+    when(detectionMock.getGeoServerProperties())
+        .thenReturn(
+            new GeoServerProperties().geoServerParameter(new GeoServerParameter().layers(layer)));
     when(detectionRepositoryMock.findById(detectionIdentifier))
         .thenReturn(java.util.Optional.of(detectionMock));
     when(detectionBackgroundRetriever.apply(detectionMock)).thenReturn(geometryFactory);
@@ -99,9 +103,6 @@ class TileExtendedImageRequestedServiceIT {
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
     when(unifiedRoofMultiPolygonMock.difference(any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
-    when(detectionMock.getId()).thenReturn(detectionIdentifier);
-    when(detectionMock.getFeatureWithDelimitations()).thenReturn(List.of(featureWithDelimitation));
-
     try (MockedStatic<FeatureMapper> mockedStatic = mockStatic(FeatureMapper.class)) {
       var restFeatureMock = mock(app.bpartners.geojobs.endpoint.rest.model.Feature.class);
       var geometryMock = mock(FeatureGeometry.class);
@@ -123,7 +124,7 @@ class TileExtendedImageRequestedServiceIT {
           () ->
               subject.accept(
                   new TileExtendedImageRequested(
-                      longitude, latitude, zoomLevel, layer, detectionIdentifier)));
+                      longitude, latitude, zoomLevel, detectionIdentifier)));
 
       var fileCaptor = ArgumentCaptor.forClass(File.class);
       var stringCaptor = ArgumentCaptor.forClass(String.class);
@@ -139,7 +140,12 @@ class TileExtendedImageRequestedServiceIT {
               + ".jpg";
 
       assertEquals(expectedKey, extendedFileKey);
-      assertNotNull(extendedFile);
+      assertTrue(imageComparator.apply(expectedAssembledImage(), extendedFile));
     }
+  }
+
+  @SneakyThrows
+  private File expectedAssembledImage() {
+    return new ClassPathResource("/images/expected_3x3_assemble_image.jpg").getFile();
   }
 }

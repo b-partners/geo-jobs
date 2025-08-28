@@ -91,11 +91,7 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
             .getProvidedGeoJsonZone()
             .forEach(
                 providedFeature ->
-                    pointExtendedImageRequest.accept(
-                        savedDetection,
-                        providedFeature,
-                        savedDetection.getGeoServerProperties().getGeoServerParameter().getLayers(),
-                        false));
+                    pointExtendedImageRequest.accept(savedDetection, providedFeature, false));
 
         if (savedDetection.getSplitPolygonGeoJsonZone() != null
             && !savedDetection.getSplitPolygonGeoJsonZone().isEmpty()) {
