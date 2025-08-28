@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.springframework.web.client.RestTemplate;
 
 @Disabled("TODO: local use only, disable otherwise")
 class UserAccountsApiIT {
@@ -16,7 +17,7 @@ class UserAccountsApiIT {
   final String userApiKey = System.getenv("USER_API_KEY");
   final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
   SecurityApi securityApi = new SecurityApi(apiConfiguration, objectMapper);
-  UserAccountsApi subject = new UserAccountsApi(apiConfiguration, securityApi);
+  UserAccountsApi subject = new UserAccountsApi(new RestTemplate(), apiConfiguration, securityApi);
 
   @Test
   void get_users_by_email() {

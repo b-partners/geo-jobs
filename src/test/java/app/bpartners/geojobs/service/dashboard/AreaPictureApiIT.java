@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.RestTemplate;
 
 // TODO : add unit mock test
 @Disabled("TODO: local use only, disable otherwise")
@@ -24,7 +25,8 @@ class AreaPictureApiIT {
   ApiConfiguration apiConfiguration = new ApiConfiguration(System.getenv("BPARTNERS_API_URL"));
   final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
   SecurityApi securityApi = new SecurityApi(apiConfiguration, objectMapper);
-  UserAccountsApi userAccountsApi = new UserAccountsApi(apiConfiguration, securityApi);
+  UserAccountsApi userAccountsApi =
+      new UserAccountsApi(new RestTemplate(), apiConfiguration, securityApi);
   AreaPictureApi subject = new AreaPictureApi(apiConfiguration, userAccountsApi);
   final String apiKey = System.getenv("API_KEY");
 
