@@ -2,14 +2,12 @@ package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
-import static java.time.Instant.now;
 
-import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
-import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
-import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
+import app.bpartners.geojobs.repository.model.detection.*;
+import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.detection.DetectionMapper;
 import app.bpartners.geojobs.service.detection.DetectionResponse;
 import app.bpartners.geojobs.service.detection.TileObjectDetector;
@@ -17,6 +15,7 @@ import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
@@ -46,6 +45,7 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
     var point = tileDetectionTask.getPoint();
     var tile = tileDetectionTask.getTile();
     File mask = null;
+    List<DetectedObject> detectedRoof = new ArrayList<>();
     var tileCoordinates = tile.getCoordinates();
     var detection = detectionRepository.findByZdjId(zoneDetectionJobId).orElse(null);
     if (detection != null) {
@@ -114,6 +114,15 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
             log.info(
                 "Mask coordinates : {} for tileCoordinates {}", maskMultiPolygon, tileCoordinates);
             mask = maskRetriever.apply(tile, maskMultiPolygon);
+            detectedRoof =
+                getDetectedRoof(
+                    detectableObjectConfigurations,
+                    tileDetectionTask,
+                    mask,
+                    tile,
+                    zoneDetectionJobId,
+                    parcelJobId);
+
           } else {
             log.info("Any mask retrieved for tileCoordinates {}", tile);
             return;
@@ -130,12 +139,14 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
 
     DetectionResponse response =
         objectsDetector.apply(tileDetectionTask, mask, detectableObjectConfigurations);
-    // TODO: call BATI Model detection API here
+
     MachineDetectedTile machineDetectedTile =
         detectionMapper.toDetectedTile(
             response, tile, tileDetectionTask.getParcelId(), zoneDetectionJobId, parcelJobId);
 
-    if (machineDetectedTile.getDetectedObjects() != null) {
+    var detectedObjects = machineDetectedTile.getDetectedObjects();
+
+    if (detectedObjects != null) {
       machineDetectedTile
           .getDetectedObjects()
           .forEach(
@@ -153,22 +164,31 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
                   }
                 }
               });
+
+      detectedObjects = new ArrayList<>(detectedObjects);
+      detectedObjects.addAll(detectedRoof);
     }
+
+    machineDetectedTile.setDetectedObjects(detectedObjects);
     machineDetectedTileRepository.save(machineDetectedTile);
   }
 
-  public static TileDetectionTask withNewStatus(
-      TileDetectionTask task,
-      Status.ProgressionStatus progression,
-      Status.HealthStatus health,
-      String message) {
-    return (TileDetectionTask)
-        task.hasNewStatus(
-            Status.builder()
-                .progression(progression)
-                .health(health)
-                .creationDatetime(now())
-                .message(message)
-                .build());
+  private List<DetectedObject> getDetectedRoof(
+      List<DetectableObjectConfiguration> detectableObjectConfigurations,
+      TileDetectionTask tileDetectionTask,
+      File mask,
+      Tile tile,
+      String zoneDetectionJobId,
+      String parcelJobId) {
+    var roofConf =
+        detectableObjectConfigurations.stream()
+            .map(conf -> conf.toBuilder().objectType(DetectableType.BATI_AUTRES).build())
+            .map(c -> (DetectableObjectConfiguration) c)
+            .toList();
+    DetectionResponse roof = objectsDetector.apply(tileDetectionTask, mask, roofConf);
+    MachineDetectedTile detectedTile =
+        detectionMapper.toDetectedTile(
+            roof, tile, tileDetectionTask.getParcelId(), zoneDetectionJobId, parcelJobId);
+    return detectedTile.getDetectedObjects();
   }
 }

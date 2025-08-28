@@ -125,7 +125,8 @@ class TileDetectionTaskConsumerTest {
 
   @Test
   void generate_mask_for_toiture_detection_and_save_machine_detected_tile() {
-    var detectableObjectConfigurations = List.of(mock(DetectableObjectConfiguration.class));
+    List<DetectableObjectConfiguration> detectableObjectConfigurations =
+        List.of(DetectableObjectConfiguration.builder().objectType(MOISISSURE).build());
     var zoneDetectionJobId = randomUUID().toString();
     var parcelId = randomUUID().toString();
     var parcelJobId = randomUUID().toString();
@@ -191,7 +192,7 @@ class TileDetectionTaskConsumerTest {
     verify(machineDetectedTileRepositoryMock, times(1)).save(detectedTileCaptor.capture());
     verify(objectDetectorMock)
         .apply(eq(tileDetectionTask), eq(maskFileMock), eq(detectableObjectConfigurations));
-    verify(detectionMapperMock)
+    verify(detectionMapperMock, times(2))
         .toDetectedTile(
             eq(detectionResponseMock),
             eq(tileMock),
