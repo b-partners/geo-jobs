@@ -8,7 +8,7 @@ import app.bpartners.geojobs.service.dashboard.component.Account;
 import app.bpartners.geojobs.service.dashboard.component.User;
 import app.bpartners.geojobs.service.dashboard.component.UserApiKey;
 import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -17,24 +17,11 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
+@RequiredArgsConstructor
 public class UserAccountsApi {
   private final RestTemplate restTemplate;
   private final ApiConfiguration apiConfiguration;
   private final SecurityApi securityApi;
-
-  public UserAccountsApi(ApiConfiguration apiConfiguration, SecurityApi securityApi) {
-    this.restTemplate = new RestTemplate();
-    this.apiConfiguration = apiConfiguration;
-    this.securityApi = securityApi;
-  }
-
-  @Autowired
-  public UserAccountsApi(
-      RestTemplate restTemplate, ApiConfiguration apiConfiguration, SecurityApi securityApi) {
-    this.restTemplate = restTemplate;
-    this.apiConfiguration = apiConfiguration;
-    this.securityApi = securityApi;
-  }
 
   public List<Account> getAccountsByUserId(String userId, String apiKey) {
     String endpoint =
