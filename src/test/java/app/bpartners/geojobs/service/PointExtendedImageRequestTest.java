@@ -48,7 +48,7 @@ class PointExtendedImageRequestTest {
     var geometryActualInstance = featureGeometry.getActualInstance();
     when(geometryTiledValidatorMock.apply(geometryActualInstance)).thenReturn(false);
 
-    assertDoesNotThrow(() -> subject.accept(detectionMock, feature, layer, isSynchronous));
+    assertDoesNotThrow(() -> subject.accept(detectionMock, feature, isSynchronous));
 
     verify(geometryConverterMock, never()).centroidFromGeometry(any());
     verify(tileExtendedImageRequestedServiceMock, never()).accept(any());
@@ -82,7 +82,7 @@ class PointExtendedImageRequestTest {
     when(geometryConverterMock.centroidFromGeometry(geometryActualInstance))
         .thenReturn(List.of(longitude, latitude));
 
-    assertDoesNotThrow(() -> subject.accept(detectionMock, feature, layer, isSynchronous));
+    assertDoesNotThrow(() -> subject.accept(detectionMock, feature, isSynchronous));
 
     verify(geometryConverterMock).centroidFromGeometry(any());
     verify(tileExtendedImageRequestedServiceMock, never()).accept(any());
@@ -90,7 +90,7 @@ class PointExtendedImageRequestTest {
         .accept(
             List.of(
                 new TileExtendedImageRequested(
-                    longitude, latitude, defaultZoom, layer, detectionIdentifier)));
+                    longitude, latitude, defaultZoom, detectionIdentifier)));
   }
 
   @Test
@@ -108,7 +108,6 @@ class PointExtendedImageRequestTest {
                             List.of(BigDecimal.valueOf(0.0), BigDecimal.valueOf(0.0))))));
     var feature = new Feature().geometry(featureGeometry);
     var geometryActualInstance = featureGeometry.getActualInstance();
-    var layer = "cite:PCRS";
     var isSynchronous = true;
     var longitude = BigDecimal.valueOf(0.25);
     var latitude = BigDecimal.valueOf(0.25);
@@ -120,13 +119,12 @@ class PointExtendedImageRequestTest {
     when(geometryConverterMock.centroidFromGeometry(geometryActualInstance))
         .thenReturn(List.of(longitude, latitude));
 
-    assertDoesNotThrow(() -> subject.accept(detectionMock, feature, layer, isSynchronous));
+    assertDoesNotThrow(() -> subject.accept(detectionMock, feature, isSynchronous));
 
     verify(geometryConverterMock).centroidFromGeometry(any());
     verify(tileExtendedImageRequestedServiceMock)
         .accept(
-            new TileExtendedImageRequested(
-                longitude, latitude, defaultZoom, layer, detectionIdentifier));
+            new TileExtendedImageRequested(longitude, latitude, defaultZoom, detectionIdentifier));
     verify(eventProducerMock, never()).accept(any());
   }
 }

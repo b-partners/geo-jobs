@@ -76,7 +76,7 @@ class ZoneTilingJobStatusChangedServiceTest {
                     FINISHED,
                     SUCCEEDED)));
 
-    doNothing().when(pointExtendedImageRequestMock).accept(any(), any(), any(), any());
+    doNothing().when(pointExtendedImageRequestMock).accept(any(), any(), any());
   }
 
   @Test
@@ -159,7 +159,7 @@ class ZoneTilingJobStatusChangedServiceTest {
     when(objectConfigurationRepositoryMock.saveAll(any()))
         .thenAnswer(invocation -> invocation.getArgument(0));
     doNothing().when(detectionDelimitationRetrieverMock).accept(detection);
-    doNothing().when(pointExtendedImageRequestMock).accept(any(), any(), any(), any());
+    doNothing().when(pointExtendedImageRequestMock).accept(any(), any(), any());
     doNothing().when(mailerMock).accept(any());
 
     assertDoesNotThrow(() -> subject.accept(ztjStatusChanged));
