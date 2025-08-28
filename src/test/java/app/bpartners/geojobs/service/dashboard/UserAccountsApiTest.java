@@ -12,7 +12,7 @@ import java.net.URI;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -23,22 +23,17 @@ import org.springframework.web.client.RestTemplate;
 
 public class UserAccountsApiTest extends FacadeIT {
   @MockBean RestTemplate mockRestTemplate;
-  ApiConfiguration mockApiConfiguration;
-  SecurityApi mockSecurityApi;
-  UserAccountsApi subject;
+  @MockBean ApiConfiguration mockApiConfiguration;
+  @MockBean SecurityApi mockSecurityApi;
+  @Autowired UserAccountsApi subject;
 
   @BeforeEach
   void setUp() {
     mockSetUp();
-
-    subject = new UserAccountsApi(mockRestTemplate, mockApiConfiguration, mockSecurityApi);
   }
 
   void mockSetUp() {
-    mockApiConfiguration = Mockito.mock(ApiConfiguration.class);
     when(mockApiConfiguration.getDashboardApiUrl()).thenReturn("https://mocked.dashboard.api");
-
-    mockSecurityApi = Mockito.mock(SecurityApi.class);
     when(mockSecurityApi.retrieveUserId("_user-api-key_")).thenReturn("_user-id_");
   }
 
