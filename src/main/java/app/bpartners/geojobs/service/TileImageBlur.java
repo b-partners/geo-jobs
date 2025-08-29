@@ -27,7 +27,6 @@ public class TileImageBlur implements BiFunction<Detection, List<Tile>, List<Til
 
   @Override
   public List<Tile> apply(Detection detection, List<Tile> tiles) {
-    var layer = detection.getGeoServerProperties().getGeoServerParameter().getLayers();
     var latLonBackgroundInsideProvidedZone = detectionBackgroundRetriever.apply(detection);
     var providedZone = detectionProvidedZoneUnifier.apply(detection);
     var unifiedRoofMultiPolygon =
