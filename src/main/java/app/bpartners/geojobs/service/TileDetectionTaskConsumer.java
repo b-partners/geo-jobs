@@ -35,7 +35,6 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
   private final DetectionRepository detectionRepository;
   private final GeometryConverter geometryConverter;
   private final DetectionMaskFromTileRetriever maskRetriever;
-  private final DetectionProvidedZoneUnifier detectionProvidedZoneUnifier;
 
   @Override
   public void accept(TileDetectionTask tileDetectionTask) {
@@ -51,7 +50,6 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
     if (detection != null) {
       var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
       if (providedGeoJsonZone != null && detection.hasToitureModelName()) {
-        var unifiedProvidedZone = detectionProvidedZoneUnifier.apply(detection);
         var multiPolygonFromTile =
             geometryConverter.getMultiPolygonFromTile(
                 tileCoordinates.getX(), tileCoordinates.getY(), tileCoordinates.getZ());
@@ -94,21 +92,6 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
                       })
                   .filter(Objects::nonNull)
                   .reduce(unifyMultiPolygon())
-                  .map(
-                      unifiedMaskMultiPolygon -> {
-                        if (unifiedProvidedZone.isEmpty()) {
-                          return unifiedMaskMultiPolygon;
-                        }
-                        var intersectedMaskWithProvidedZone =
-                            unifiedProvidedZone.intersection(unifiedMaskMultiPolygon);
-                        if (intersectedMaskWithProvidedZone instanceof Polygon polygon) {
-                          return geometryFactory.createMultiPolygon(new Polygon[] {polygon});
-                        }
-                        if (intersectedMaskWithProvidedZone instanceof MultiPolygon multiPolygon) {
-                          return multiPolygon;
-                        }
-                        return null;
-                      })
                   .orElse(null);
           if (maskMultiPolygon != null) {
             log.info(

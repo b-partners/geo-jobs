@@ -19,7 +19,6 @@ import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.DetectionMaskFromTileRetriever;
-import app.bpartners.geojobs.service.DetectionProvidedZoneUnifier;
 import app.bpartners.geojobs.service.TileDetectionTaskConsumer;
 import app.bpartners.geojobs.service.detection.DetectionMapper;
 import app.bpartners.geojobs.service.detection.DetectionResponse;
@@ -39,8 +38,6 @@ class TileDetectionTaskConsumerTest {
   DetectionRepository detectionRepositoryMock = mock();
   GeometryConverter geometryConverterMock = mock();
   DetectionMaskFromTileRetriever maskRetrieverMock = mock();
-  DetectionProvidedZoneUnifier detectionProvidedZoneUnifierMock =
-      new DetectionProvidedZoneUnifier(geometryConverterMock);
   TileDetectionTaskConsumer subject =
       new TileDetectionTaskConsumer(
           machineDetectedTileRepositoryMock,
@@ -48,8 +45,7 @@ class TileDetectionTaskConsumerTest {
           detectionMapperMock,
           detectionRepositoryMock,
           geometryConverterMock,
-          maskRetrieverMock,
-          detectionProvidedZoneUnifierMock);
+          maskRetrieverMock);
 
   @Test
   void do_nothing_as_roof_polygon_not_intersecting_with_tile_polygon() {
