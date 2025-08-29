@@ -30,7 +30,6 @@ public class DetectionBackgroundRetriever implements Function<Detection, MultiPo
           "Only detection using TOITURE model is supported for now, otherwise actual is "
               + detection.getDetectableObjectModel().getModelName());
     }
-    log.info("Provided geojson {}", detection.getProvidedGeoJsonZone());
     var unifiedProvidedZone = detectionProvidedZoneUnifier.apply(detection);
     var roofMultipolygon =
         detection.getFeatureWithDelimitations().stream()
