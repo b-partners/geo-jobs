@@ -19,7 +19,8 @@ class FileApiIT extends FacadeIT {
   final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
   SecurityApi securityApi = new SecurityApi(apiConfiguration, objectMapper);
   @Autowired RestTemplate restTemplate;
-  UserAccountsApi userAccountsApi = new UserAccountsApi(restTemplate, apiConfiguration, securityApi);
+  UserAccountsApi userAccountsApi =
+      new UserAccountsApi(restTemplate, apiConfiguration, securityApi);
   FileApi subject = new FileApi(restTemplate, apiConfiguration, userAccountsApi);
   final String apiKey = System.getenv("API_KEY");
 
