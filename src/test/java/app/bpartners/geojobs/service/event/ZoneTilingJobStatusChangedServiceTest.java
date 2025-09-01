@@ -152,6 +152,7 @@ class ZoneTilingJobStatusChangedServiceTest {
             .geoServerProperties(
                 new GeoServerProperties().geoServerParameter(new GeoServerParameter()))
             .splitPolygonGeoJsonZone(List.of(new Feature()))
+            .needsImageOutput(true)
             .build();
     when(detectionRepositoryMock.findByZtjId(newJob.getId()))
         .thenReturn(Optional.ofNullable(detection));

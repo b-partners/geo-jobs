@@ -94,7 +94,8 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
                     pointExtendedImageRequest.accept(savedDetection, providedFeature, false));
 
         if (savedDetection.getSplitPolygonGeoJsonZone() != null
-            && !savedDetection.getSplitPolygonGeoJsonZone().isEmpty()) {
+            && !savedDetection.getSplitPolygonGeoJsonZone().isEmpty()
+            && savedDetection.needsImageOutput()) {
           eventProducer.accept(
               List.of(
                   ZoneImageRequested.builder()
