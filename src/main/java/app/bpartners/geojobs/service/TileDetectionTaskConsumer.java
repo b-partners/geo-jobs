@@ -95,7 +95,9 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
                   .orElse(null);
           if (maskMultiPolygon != null) {
             log.info(
-                "Mask coordinates : {} for tileCoordinates {}", maskMultiPolygon, tileCoordinates);
+                "Mask coordinates : {} for tileCoordinates {}",
+                geometryConverter.writeGeometryAsString(maskMultiPolygon),
+                tileCoordinates);
             mask = maskRetriever.apply(tile, maskMultiPolygon);
           } else {
             log.info("Any mask retrieved for tileCoordinates {}", tile);
