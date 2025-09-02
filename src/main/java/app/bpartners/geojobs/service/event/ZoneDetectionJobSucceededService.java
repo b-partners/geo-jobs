@@ -23,11 +23,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.context.Context;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJobSucceeded> {
@@ -54,10 +56,17 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
     boolean machineDetectionFoundAnyDetectedTileFromDetectableConfiguration =
         detectableObjectConfigurations.stream()
             .anyMatch(
-                detectableConfiguration ->
-                    machineDetectedTileRepository.countByZdjJobIdAndDetectableType(
-                            succeededJobId, detectableConfiguration.getObjectType().name())
-                        > 0);
+                detectableConfiguration -> {
+                  var detectableType = detectableConfiguration.getObjectType().name();
+                  var detectedTileCount =
+                      machineDetectedTileRepository.countByZdjJobIdAndDetectableType(
+                          succeededJobId, detectableType);
+                  log.info(
+                      "Detected tile count {} for detectableType {}",
+                      detectedTileCount,
+                      detectableType);
+                  return detectedTileCount > 0;
+                });
     if (!machineDetectionFoundAnyDetectedTileFromDetectableConfiguration) {
       var succeededDatetime = succeededZoneDetectionJob.getStatus().getCreationDatetime();
       var zoneName = succeededZoneDetectionJob.getZoneName();
