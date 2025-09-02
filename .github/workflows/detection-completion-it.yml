@@ -85,6 +85,7 @@ jobs:
                 curl -s -o /dev/null -X POST $in_status_api_url/v2/$IN_STATUS_PAGE_ID/incidents/"$id"/incident-updates/$IN_STATUS_RESOLVE_500_TMPL_ID \
                 -H "Authorization: Bearer $IN_STATUS_API_KEY"
                 echo "Resolving internal server error incident : $id"
+              fi
             done <<< "$incident_lines"
           fi
 
