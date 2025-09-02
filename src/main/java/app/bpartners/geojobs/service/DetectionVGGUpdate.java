@@ -102,9 +102,8 @@ public class DetectionVGGUpdate implements BiFunction<VGG, Detection, Detection>
                         .geometry(providedFeature.getGeometry())
                         .properties(propertiesWithVggFileKey);
                   }
-                  return null;
+                  return providedFeature;
                 })
-            .filter(Objects::nonNull)
             .toList();
 
     return detection.toBuilder()
