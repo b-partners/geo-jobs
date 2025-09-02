@@ -15,8 +15,10 @@ import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.util.*;
 import java.util.function.BiFunction;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 public class DetectionVGGUpdate implements BiFunction<VGG, Detection, Detection> {
   private static final String VGG_BUCKET_FOLDER = "vgg/";
@@ -53,6 +55,12 @@ public class DetectionVGGUpdate implements BiFunction<VGG, Detection, Detection>
   public Detection apply(Map<Feature, VGG> vgg, Detection detection) {
     var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
     var layer = detection.getGeoServerProperties().getGeoServerParameter().getLayers();
+    log.info("Provided geojson {}", providedGeoJsonZone);
+    log.info(
+        "Vgg and its features : {}",
+        vgg.entrySet().stream()
+            .map(entry -> entry.getKey().toString() + " : " + entry.getValue().toString())
+            .toList());
     var updatedGeoJsonZone =
         providedGeoJsonZone.stream()
             .map(
