@@ -83,7 +83,7 @@ class TileDetectionTaskConsumerIT {
     geometry.setActualInstanceStringValue(
         """
 {
-  "type": "Polygon",
+  "type": "MultiPolygon",
   "coordinates": [
     [
       [
