@@ -1,20 +1,34 @@
 package app.bpartners.geojobs.service.detection;
 
-import app.bpartners.geojobs.store.ParameterStoreConf;
+import app.bpartners.geojobs.file.bucket.BucketComponent;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import software.amazon.awssdk.services.ssm.model.GetParameterRequest;
 
 @Component
 @RequiredArgsConstructor
 public class TileObjectDetectorConf {
   private final String env = System.getenv("ENV");
-  private final ParameterStoreConf parameterStoreConf;
+  private final BucketComponent bucketComponent;
 
   public String getTileDetectionApiUrls() {
-    var parameterName = String.format("/geo-jobs/%s/tiles/detection/urls", env);
-    var parameterRequest = GetParameterRequest.builder().name(parameterName).build();
-    var parameterResponse = parameterStoreConf.getSsmClient().getParameter(parameterRequest);
-    return parameterResponse.parameter().value();
+    File configFile = null;
+    try {
+      configFile = getTileDetectionApiUrlsFile();
+      return Files.readString(configFile.toPath());
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    } finally {
+      if (configFile != null) {
+        configFile.delete();
+      }
+    }
+  }
+
+  public File getTileDetectionApiUrlsFile() {
+    var filename = "tileDetectionApiUrls." + env + ".json";
+    return bucketComponent.download(filename);
   }
 }
