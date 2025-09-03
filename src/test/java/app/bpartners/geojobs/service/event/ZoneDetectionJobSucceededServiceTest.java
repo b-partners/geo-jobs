@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 import static java.util.UUID.randomUUID;
@@ -8,9 +9,11 @@ import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.ExtendedImageWithDetectedObjectRequested;
+import app.bpartners.geojobs.endpoint.event.model.ZoneVggRequested;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryJobRequested;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobSucceeded;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel;
+import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.repository.AnnotationDeliveryConfigurationRepository;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
@@ -24,6 +27,7 @@ import app.bpartners.geojobs.service.DetectionFinishedMailer;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import app.bpartners.geojobs.template.HTMLTemplateParser;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -233,6 +237,8 @@ class ZoneDetectionJobSucceededServiceTest {
     var zoneDetectionJobMock = mock(ZoneDetectionJob.class);
     var detectionMock = mock(Detection.class);
     when(detectionMock.getId()).thenReturn(detectionId);
+    when(detectionMock.needsImageOutput()).thenReturn(true);
+    when(detectionMock.getPolygonGeoJsonZone()).thenReturn(new Feature());
     when(zoneDetectionJobServiceMock.countInDoubtDetectedTileToDeliveryById(succeededJobId))
         .thenReturn(0L);
     when(zoneDetectionJobServiceMock.findById(succeededJobId)).thenReturn(zoneDetectionJobMock);
@@ -248,11 +254,18 @@ class ZoneDetectionJobSucceededServiceTest {
         .getOrComputeGeoJsonConversionJob(zoneDetectionJobMock);
     verify(configurationRepositoryMock, never()).findLatestConfiguration();
     var listCaptor = ArgumentCaptor.forClass(List.class);
-    verify(eventProducerMock, only()).accept(listCaptor.capture());
-    var actualEventProduced =
-        (ExtendedImageWithDetectedObjectRequested) listCaptor.getValue().getFirst();
+    verify(eventProducerMock, times(2)).accept(listCaptor.capture());
+    var actualExtendedImageWithDetectedObjectRequested =
+        (ExtendedImageWithDetectedObjectRequested) listCaptor.getAllValues().getFirst().getFirst();
+    var actualZoneVggRequested = (ZoneVggRequested) listCaptor.getAllValues().getLast().getFirst();
     assertEquals(
-        new ExtendedImageWithDetectedObjectRequested(detectionId, false), actualEventProduced);
+        new ExtendedImageWithDetectedObjectRequested(detectionId, false),
+        actualExtendedImageWithDetectedObjectRequested);
+    assertEquals(new ZoneVggRequested(detectionId), actualZoneVggRequested);
+    assertEquals(EVENT_STACK_2, actualZoneVggRequested.getEventStack());
+    assertEquals(Duration.ofSeconds(30L), actualZoneVggRequested.maxConsumerDuration());
+    assertEquals(
+        Duration.ofSeconds(30L), actualZoneVggRequested.maxConsumerBackoffBetweenRetries());
   }
 
   private String expectedEmailContainingDetectionWhenNoResultRetrieved(String detectionE2Id) {

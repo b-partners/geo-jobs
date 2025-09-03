@@ -76,16 +76,13 @@ public class SynchronousDetectionService
     List<Callable<Void>> imageRequestCallableVoidList =
         detectionWithCreatedZDJ.getProvidedGeoJsonZone().stream()
             .map(
-                providedFeature -> {
-                  var layer =
-                      detection.getGeoServerProperties().getGeoServerParameter().getLayers();
-                  return (Callable<Void>)
-                      () -> {
-                        pointExtendedImageRequest.accept(
-                            detectionWithCreatedZDJ, providedFeature, layer, true);
-                        return null;
-                      };
-                })
+                providedFeature ->
+                    (Callable<Void>)
+                        () -> {
+                          pointExtendedImageRequest.accept(
+                              detectionWithCreatedZDJ, providedFeature, true);
+                          return null;
+                        })
             .toList();
     Callable<Void> machineDetectionProcessCallableVoidList =
         () -> {

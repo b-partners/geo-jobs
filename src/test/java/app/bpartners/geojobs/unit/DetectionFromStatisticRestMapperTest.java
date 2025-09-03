@@ -14,6 +14,8 @@ import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
 import app.bpartners.geojobs.service.DetectionFeaturesResultImageRetriever;
+import app.bpartners.geojobs.service.DetectionImageAttributeRetriever;
+import app.bpartners.geojobs.service.DetectionVggAttributeRetriever;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,12 +25,18 @@ class DetectionFromStatisticRestMapperTest {
   BucketComponent bucketComponentMock = mock();
   DetectionStepStatisticMapper detectionStepStatisticMapperMock = mock();
   DetectionFeaturesResultImageRetriever detectionFeaturesResultImageRetrieverMock = mock();
+  DetectionImageAttributeRetriever imageAttributeRetrieverMock =
+      mock(DetectionImageAttributeRetriever.class);
+  DetectionVggAttributeRetriever vggAttributeRetrieverMock =
+      mock(DetectionVggAttributeRetriever.class);
 
   DetectionFromStatisticRestMapper subject =
       new DetectionFromStatisticRestMapper(
           bucketComponentMock,
           detectionStepStatisticMapperMock,
-          detectionFeaturesResultImageRetrieverMock);
+          detectionFeaturesResultImageRetrieverMock,
+          imageAttributeRetrieverMock,
+          vggAttributeRetrieverMock);
 
   private static Detection detectionWithoutFeatureDelimitation() {
     return Detection.builder()

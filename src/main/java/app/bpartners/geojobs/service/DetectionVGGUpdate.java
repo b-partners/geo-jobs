@@ -15,17 +15,30 @@ import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.util.*;
 import java.util.function.BiFunction;
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
-@RequiredArgsConstructor
 public class DetectionVGGUpdate implements BiFunction<VGG, Detection, Detection> {
   private static final String VGG_BUCKET_FOLDER = "vgg/";
   private final FileWriter fileWriter;
   private final BucketComponent bucketComponent;
   private final GeometryConverter geometryConverter;
   private final VGGFactory vggFactory;
+  private final BoundaryMerger merger;
+
+  public DetectionVGGUpdate(
+      FileWriter fileWriter,
+      BucketComponent bucketComponent,
+      GeometryConverter geometryConverter,
+      VGGFactory vggFactory) {
+    this.fileWriter = fileWriter;
+    this.bucketComponent = bucketComponent;
+    this.geometryConverter = geometryConverter;
+    this.vggFactory = vggFactory;
+    merger = new BoundaryMerger(0, NEIGHBOUR_SIZE, false);
+  }
 
   @Override
   public Detection apply(VGG vgg, Detection detection) {
@@ -41,8 +54,13 @@ public class DetectionVGGUpdate implements BiFunction<VGG, Detection, Detection>
 
   public Detection apply(Map<Feature, VGG> vgg, Detection detection) {
     var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
-    var featureWithDelimitations = detection.getFeatureWithDelimitations();
     var layer = detection.getGeoServerProperties().getGeoServerParameter().getLayers();
+    log.info("Provided geojson {}", providedGeoJsonZone);
+    log.info(
+        "Vgg and its features : {}",
+        vgg.entrySet().stream()
+            .map(entry -> entry.getKey().toString() + " : " + entry.getValue().toString())
+            .toList());
     var updatedGeoJsonZone =
         providedGeoJsonZone.stream()
             .map(
@@ -57,17 +75,21 @@ public class DetectionVGGUpdate implements BiFunction<VGG, Detection, Detection>
                           .findAny();
 
                   if (optionalVgg.isPresent()) {
-                    var centroid =
-                        geometryConverter.centroidFromGeometry(
-                            providedFeature.getGeometry().getActualInstance());
-                    var longitude = centroid.getFirst();
-                    var latitude = centroid.getLast();
-
-                    var filename = layer + "/vgg_" + longitude + "_" + latitude;
-                    var fileKey = filename + ".json";
+                    String fileName;
+                    if (detection.getPolygonGeoJsonZone() != null) {
+                      fileName = detection.getZoneName();
+                    } else {
+                      var centroid =
+                          geometryConverter.centroidFromGeometry(
+                              providedFeature.getGeometry().getActualInstance());
+                      var longitude = centroid.getFirst();
+                      var latitude = centroid.getLast();
+                      fileName = longitude + "_" + latitude;
+                    }
+                    var fileFormat = layer + "/vgg_" + fileName;
+                    var fileKey = fileFormat + ".json";
                     var vggJson = optionalVgg.get().getValue();
                     var properties = vggJson.values().stream().toList().getFirst().getProperties();
-                    var merger = new BoundaryMerger(0, NEIGHBOUR_SIZE, false);
                     var unified = merger.apply(vggJson);
                     var unifiedVgg = vggFactory.from(unified);
                     var updatedVgg = new VGG();
@@ -77,7 +99,7 @@ public class DetectionVGGUpdate implements BiFunction<VGG, Detection, Detection>
                           updatedVgg.put(k, v);
                         });
                     var vggAsByte = updatedVgg.getBytes();
-                    var vggAsFile = fileWriter.write(vggAsByte, createTempDirectory(), filename);
+                    var vggAsFile = fileWriter.write(vggAsByte, createTempDirectory(), fileFormat);
                     bucketComponent.upload(vggAsFile, fileKey);
 
                     var propertiesWithVggFileKey =
@@ -88,9 +110,8 @@ public class DetectionVGGUpdate implements BiFunction<VGG, Detection, Detection>
                         .geometry(providedFeature.getGeometry())
                         .properties(propertiesWithVggFileKey);
                   }
-                  return null;
+                  return providedFeature;
                 })
-            .filter(Objects::nonNull)
             .toList();
 
     return detection.toBuilder()

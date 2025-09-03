@@ -33,9 +33,7 @@ import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
-import app.bpartners.geojobs.service.DetectionFeaturesResultImageRetriever;
-import app.bpartners.geojobs.service.DetectionVGGUpdate;
-import app.bpartners.geojobs.service.RooferDetectionService;
+import app.bpartners.geojobs.service.*;
 import app.bpartners.geojobs.service.detection.DetectionMapper;
 import app.bpartners.geojobs.service.detection.DetectionMaskCreator;
 import app.bpartners.geojobs.service.detection.DetectionResponse;
@@ -75,9 +73,17 @@ class RooferDetectionServiceTest {
       mock(DetectionFeaturesResultImageRetriever.class);
   DetectionStepStatisticMapper detectionStepStatisticMapper =
       new DetectionStepStatisticMapper(statusMapper);
+  DetectionImageAttributeRetriever imageAttributeRetrieverMock =
+      mock(DetectionImageAttributeRetriever.class);
+  DetectionVggAttributeRetriever vggAttributeRetrieverMock =
+      mock(DetectionVggAttributeRetriever.class);
   DetectionFromStatisticRestMapper detectionFromStatisticRestMapper =
       new DetectionFromStatisticRestMapper(
-          bucketComponent, detectionStepStatisticMapper, featureImageRetrieverMock);
+          bucketComponent,
+          detectionStepStatisticMapper,
+          featureImageRetrieverMock,
+          imageAttributeRetrieverMock,
+          vggAttributeRetrieverMock);
   Mailer mailer = mock();
   AuthProvider authProvider = mock();
   HTMLTemplateParser htmlTemplateParser = new HTMLTemplateParser();

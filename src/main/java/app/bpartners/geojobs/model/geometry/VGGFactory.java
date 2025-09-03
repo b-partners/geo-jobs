@@ -2,7 +2,6 @@ package app.bpartners.geojobs.model.geometry;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.model.geometry.area.AreaRateComputerFacade.*;
-import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.HOUSES_0;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
 import static java.util.UUID.randomUUID;
@@ -19,11 +18,11 @@ import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.TileCoordinatesPolygonIntersection;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.tiling.TileFinder;
-import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.locationtech.jts.geom.*;
+import org.locationtech.jts.geom.util.AffineTransformation;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
 
@@ -82,18 +81,15 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
   }
 
   public Map<Feature, VGG> from(
-      List<TiledPixelPolygon> tiledPixelPolygons, MultiPolygon roofLatLonMultiPolygon) {
-    Coordinate centroidCoordinates = roofLatLonMultiPolygon.getCentroid().getCoordinate();
-    var longitude = BigDecimal.valueOf(centroidCoordinates.x);
-    var latitude = BigDecimal.valueOf(centroidCoordinates.y);
-    var surroundingTiles =
-        tileFinder.getSurroundingTiles(longitude, latitude, HOUSES_0.getZoomLevel());
+      List<TiledPixelPolygon> tiledPixelPolygons,
+      MultiPolygon roofLatLonMultiPolygon,
+      List<TileCoordinates> envelop) {
     Map<Feature, List<TiledPixelPolygon>> tiledPixelPolygonFilteredByPoint =
         tiledPixelPolygons.stream().collect(Collectors.groupingBy(TiledPixelPolygon::point));
     var vggMap = new HashMap<Feature, VGG>();
     // Already sorted before so min before
-    int minTileXGlobal = surroundingTiles.getFirst().getX();
-    int minTileYGlobal = surroundingTiles.getFirst().getY();
+    int minTileXGlobal = envelop.getFirst().getX();
+    int minTileYGlobal = envelop.getFirst().getY();
     var tileCoordinates =
         tiledPixelPolygons.stream()
             .map(
@@ -307,13 +303,8 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
   }
 
   private Polygon translatePolygon(Polygon polygon, int offsetX, int offsetY) {
-    Coordinate[] coords = polygon.getCoordinates();
-    Coordinate[] newCoords =
-        Arrays.stream(coords)
-            .map(coord -> new Coordinate(coord.x + offsetX, coord.y + offsetY))
-            .toArray(Coordinate[]::new);
-
-    return polygon.getFactory().createPolygon(newCoords);
+    AffineTransformation translation = AffineTransformation.translationInstance(offsetX, offsetY);
+    return (Polygon) translation.transform(polygon);
   }
 
   public VGG from(Polygon roofGeometry, DetectedTile detectedTile) {
