@@ -3,8 +3,8 @@ package app.bpartners.geojobs.service.lidar;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toSet;
 
-import app.bpartners.geojobs.file.FileWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -24,7 +24,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 public class LidarApi implements Function<Set<Envelope>, Set<File>> {
   private final LidarApiConf conf;
   private final RestTemplate restTemplate;
-  private final FileWriter fileWriter;
   private static final Set<String> ALLOWED_URL_PREFIXES =
       Set.of("https://storage.sbg.cloud.ovh.net/", "https://lidar.data.gouv.fr/");
 
@@ -50,7 +49,7 @@ public class LidarApi implements Function<Set<Envelope>, Set<File>> {
       }
     }
 
-    return uniqueUrls.stream()
+    return uniqueUrls.parallelStream()
         .map(this::downloadToTempFile)
         .filter(Optional::isPresent)
         .map(Optional::get)
@@ -69,8 +68,18 @@ public class LidarApi implements Function<Set<Envelope>, Set<File>> {
         return Optional.empty();
       }
 
-      var data = Optional.ofNullable(restTemplate.getForObject(fileUrl, byte[].class));
-      return data.map(bytes -> fileWriter.apply(bytes, null));
+      byte[] data = restTemplate.getForObject(fileUrl, byte[].class);
+      if (data == null) {
+        return Optional.empty();
+      }
+
+      var tempFile = File.createTempFile("lidar-", ".laz");
+
+      try (var outputStream = new FileOutputStream(tempFile)) {
+        outputStream.write(data);
+      }
+
+      return Optional.of(tempFile);
     } catch (Exception e) {
       log.error("Failed to download LAZ file from {}", fileUrl, e);
       throw new RuntimeException("Could not download file: " + fileUrl, e);

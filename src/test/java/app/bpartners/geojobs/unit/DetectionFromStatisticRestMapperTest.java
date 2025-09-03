@@ -2,8 +2,7 @@ package app.bpartners.geojobs.unit;
 
 import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightRequestedService.ROOF_HEIGHT_PROPERTY_NAME;
 import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightRequestedService.ROOF_SLOPE_PROPERTY_NAME;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -30,6 +29,17 @@ class DetectionFromStatisticRestMapperTest {
           bucketComponentMock,
           detectionStepStatisticMapperMock,
           detectionFeaturesResultImageRetrieverMock);
+
+  private static Detection detectionWithoutFeatureDelimitation() {
+    return Detection.builder()
+        .vggFileKey("vgg-key")
+        .shapeFileKey("shape-key")
+        .geojsonS3FileKey("geojson-key")
+        .imageFileKey("image-key")
+        .pdfFileKey("pdf-key")
+        .vggFileKey("vgg-key")
+        .build();
+  }
 
   private static Detection detectionWithFeatureDelimitation(double slope, double height) {
     HashMap<String, Object> properties =
@@ -69,6 +79,45 @@ class DetectionFromStatisticRestMapperTest {
     assertEquals(
         expectedSlope, actualDetection.getRoofDelimiter().getRoofSlopeInDegree().doubleValue());
     assertEquals(
-        expectedSlope, actualDetection.getRoofDelimiter().getRoofSlopeInDegree().doubleValue());
+        expectedHeight, actualDetection.getRoofDelimiter().getRoofHeightInMeter().doubleValue());
+  }
+
+  @Test
+  void polygon_roof_delimiter_should_be_null_when_no_feature_with_delimitation_is_present() {
+    var detection = detectionWithoutFeatureDelimitation();
+
+    when(detectionFeaturesResultImageRetrieverMock.apply(any())).thenReturn(List.of());
+    when(bucketComponentMock.presign(any())).thenReturn("https://dummy.com");
+    when(detectionStepStatisticMapperMock.toRestDetectionStepStatus(any(), any()))
+        .thenReturn(mock());
+
+    var actualDetection = subject.apply(detection, mock(), mock());
+    assertNull(actualDetection.getRoofDelimiter());
+  }
+
+  @Test
+  void slope_and_height_should_be_null_when_no_only_polygon_roof_delimitation_is_present() {
+    var detection =
+        Detection.builder()
+            .polygonRoofDelimitation(mock())
+            .vggFileKey("vgg-key")
+            .shapeFileKey("shape-key")
+            .geojsonS3FileKey("geojson-key")
+            .imageFileKey("image-key")
+            .pdfFileKey("pdf-key")
+            .vggFileKey("vgg-key")
+            .build();
+
+    when(detectionFeaturesResultImageRetrieverMock.apply(any())).thenReturn(List.of());
+    when(bucketComponentMock.presign(any())).thenReturn("https://dummy.com");
+    when(detectionStepStatisticMapperMock.toRestDetectionStepStatus(any(), any()))
+        .thenReturn(mock());
+
+    var actualDetection = subject.apply(detection, mock(), mock());
+    var roofDelimiter = actualDetection.getRoofDelimiter();
+    assertNotNull(roofDelimiter);
+    assertNull(roofDelimiter.getRoofSlopeInDegree());
+    assertNull(roofDelimiter.getRoofHeightInMeter());
+    assertNull(roofDelimiter.getRoofSlopeInDegree());
   }
 }

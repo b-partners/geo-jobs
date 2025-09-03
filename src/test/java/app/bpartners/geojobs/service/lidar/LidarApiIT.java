@@ -8,7 +8,6 @@ import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpStatus.OK;
 
 import app.bpartners.geojobs.conf.FacadeIT;
-import app.bpartners.geojobs.file.FileWriter;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +22,6 @@ import org.springframework.web.client.RestTemplate;
 class LidarApiIT extends FacadeIT {
   @Autowired LidarApi subject;
   @MockBean RestTemplate restTemplate;
-  @MockBean FileWriter fileWriter;
 
   @Test
   void get_lidar_laz_file_urls_ok() {
@@ -44,7 +42,6 @@ class LidarApiIT extends FacadeIT {
 
     when(restTemplate.getForObject(any(String.class), eq(byte[].class)))
         .thenReturn(new byte[] {1, 2, 3});
-    when(fileWriter.apply(any(), any())).thenReturn(mock(File.class));
 
     var randomBbox = new Envelope(635142.88, 635289.49, 6859875.04, 6859993.81);
 

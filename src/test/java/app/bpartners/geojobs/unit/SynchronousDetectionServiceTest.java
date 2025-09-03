@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.concurrency.Workers;
+import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.ExtendedImageWithDetectedObjectRequested;
 import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionStep;
@@ -47,6 +48,7 @@ class SynchronousDetectionServiceTest {
   Workers workers = new Workers();
   DetectableObjectConfigurationRepository objectConfigurationRepositoryMock = mock();
   PointExtendedImageRequest pointExtendedImageRequestMock = mock();
+  EventProducer eventProducerMock = mock();
   SynchronousDetectionService subject =
       new SynchronousDetectionService(
           detectionRepositoryMock,
@@ -60,7 +62,8 @@ class SynchronousDetectionServiceTest {
           zoneDetectionJobServiceMock,
           workers,
           objectConfigurationRepositoryMock,
-          pointExtendedImageRequestMock);
+          pointExtendedImageRequestMock,
+          eventProducerMock);
 
   @Test
   void return_succeeded_detection_and_trigger_geo_json_generation() {
@@ -80,6 +83,7 @@ class SynchronousDetectionServiceTest {
     when(detectionMock.getId()).thenReturn(detectionId);
     when(detectionMock.getDetectableObjectConfigurations())
         .thenReturn(List.of(new DetectableObjectConfiguration()));
+    doNothing().when(eventProducerMock).accept(any());
     when(detectionWithCreatedZTJMock.getZtjId()).thenReturn(zoneTilingJobId);
     when(detectionWithCreatedZTJMock.toBuilder()).thenReturn(new Detection().toBuilder());
     when(createdZoneDetectionJob.getId()).thenReturn(zoneDetectionJobId);
