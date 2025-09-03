@@ -7,6 +7,8 @@ import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.lidar.model.*;
 import com.github.mreutegg.laszip4j.LASReader;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
@@ -33,8 +35,24 @@ public class LidarPolygonMetricProcessor implements Function<List<Polygon>, List
     var solGeometries =
         projectedRoofGeometries.stream().map(g -> g.buffer(SOL_BUFFER_METERS)).toList();
 
-    return getDimensionsFromMultipleFiles(
-        projectedRoofGeometries, solGeometries, downloadedLidarFiles);
+    var dimensions =
+        getDimensionsFromMultipleFiles(
+            projectedRoofGeometries, solGeometries, downloadedLidarFiles);
+
+    deleteTempFiles(downloadedLidarFiles);
+
+    return dimensions;
+  }
+
+  public static void deleteTempFiles(Set<File> files) {
+    log.info("Cleanup lidar files");
+    for (var file : files) {
+      try {
+        Files.deleteIfExists(file.toPath());
+      } catch (IOException e) {
+        log.warn("Failed to delete file {}", file.getPath(), e);
+      }
+    }
   }
 
   private List<Dimension> getDimensionsFromMultipleFiles(
