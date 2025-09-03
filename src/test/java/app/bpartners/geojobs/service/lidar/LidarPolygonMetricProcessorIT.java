@@ -3,8 +3,7 @@ package app.bpartners.geojobs.service.lidar;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static java.util.Objects.requireNonNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import java.io.File;
