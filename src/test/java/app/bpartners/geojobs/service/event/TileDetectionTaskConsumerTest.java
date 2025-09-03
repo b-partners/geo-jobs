@@ -90,7 +90,7 @@ class TileDetectionTaskConsumerTest {
         .thenReturn("roofGeometryActualInstanceStringValue");
     when(roofDelimitationMockDomain.getGeometry()).thenReturn(roofFeatureGeometryMock);
     when(roofMultiPolygonMock.contains(any())).thenReturn(false);
-    when(roofMultiPolygonMock.intersects(any())).thenReturn(false);
+    when(roofMultiPolygonMock.intersection(any())).thenReturn(null);
     when(multiPolygonFromTileMock.contains(any())).thenReturn(false);
     when(detectionMock.getFeatureWithDelimitations())
         .thenReturn(
@@ -160,8 +160,8 @@ class TileDetectionTaskConsumerTest {
     var multiPolygonFromTileMock = mock(org.locationtech.jts.geom.MultiPolygon.class);
     when(roofDelimitationMockDomain.getGeometry()).thenReturn(roofFeatureGeometryMock);
     when(roofMultiPolygonMock.contains(eq(multiPolygonFromTileMock))).thenReturn(true);
-    when(multiPolygonFromTileMock.intersects(roofMultiPolygonMock)).thenReturn(true);
-    when(roofMultiPolygonMock.union(any())).thenReturn(roofMultiPolygonMock);
+    when(multiPolygonFromTileMock.intersection(roofMultiPolygonMock))
+        .thenReturn(roofMultiPolygonMock);
     when(detectionMock.getFeatureWithDelimitations())
         .thenReturn(
             List.of(

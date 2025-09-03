@@ -120,7 +120,6 @@ public class DetectionMapper {
       DetectionResponse.ImageData.Region region, String detectedTileId, Integer zoom) {
     var regionAttributes = region.getRegionAttributes();
     var label = regionAttributes.get(REGION_LABEL_PROPERTY);
-    log.info("debug label retrieved: {}", label);
     Double confidence = null;
     try {
       if (regionAttributes.containsKey(REGION_CONFIDENCE_PROPERTY)) {

@@ -132,11 +132,9 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
     }
     var detectableTypes =
         tileDetectionApiUrls.stream().map(TileDetectorUrl::getObjectType).toList();
-    if (new HashSet<>(detectableTypes)
-        .containsAll(
-            objectConfigurations.stream()
-                .map(DetectableObjectConfiguration::getObjectType)
-                .toList())) {
+    var detectableTypesFromObjectConfiguration =
+        objectConfigurations.stream().map(DetectableObjectConfiguration::getObjectType).toList();
+    if (new HashSet<>(detectableTypes).containsAll(detectableTypesFromObjectConfiguration)) {
       return urls;
     }
     urls.add(defaultDetectionApiUrl);

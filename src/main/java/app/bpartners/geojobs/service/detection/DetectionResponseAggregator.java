@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.service.detection;
 
+import static java.util.UUID.randomUUID;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +29,7 @@ public class DetectionResponseAggregator
       if (response.getRstRaw() == null) continue;
 
       for (Map.Entry<String, DetectionResponse.ImageData> entry : response.getRstRaw().entrySet()) {
-        String imgKey = entry.getKey();
+        var imgKey = entry.getKey() + "_" + randomUUID();
         DetectionResponse.ImageData imgData = entry.getValue();
 
         DetectionResponse.ImageData aggregatedImgData =
