@@ -68,18 +68,57 @@ class TileDetectionTaskConsumerIT {
     var parcelJobId = randomUUID().toString();
 
     var detectionMock = mock(Detection.class);
-    var providedFeature = new Feature();
+    var providedFeature = new app.bpartners.geojobs.endpoint.rest.model.Feature();
     when(detectionMock.getId()).thenReturn(detectionIdentifier);
     when(detectionMock.hasToitureModelName()).thenReturn(true);
     when(detectionMock.getProvidedGeoJsonZone()).thenReturn(List.of(providedFeature));
     when(detectionMock.getDetectableObjectConfigurations())
         .thenReturn(createDetectableObjectConfigurations(detectionIdentifier, detectionJobId));
+
+    app.bpartners.geojobs.repository.model.Feature.FeatureGeometry geometry =
+        new app.bpartners.geojobs.repository.model.Feature.FeatureGeometry();
+
+    geometry.setGeometryType(
+        app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.MULTI_POLYGON);
+    geometry.setActualInstanceStringValue(
+        """
+{
+  "type": "Polygon",
+  "coordinates": [
+    [
+      [
+        [7.001380920410156, 43.55065076822822],
+        [7.001271383246328, 43.550651153395584],
+        [7.001269834513988, 43.550646706078226],
+        [7.001241150953786, 43.55062614280176],
+        [7.001235036387186, 43.550627269241545],
+        [7.001234033877726, 43.55061289199318],
+        [7.00125133009923, 43.55061225397956],
+        [7.00124907444506, 43.55057990517163],
+        [7.001235484564402, 43.55058040646799],
+        [7.001233497239312, 43.550569669104384],
+        [7.001158197839128, 43.55057334756624],
+        [7.00116400714788, 43.55063889819283],
+        [7.001143004582222, 43.55063967290642],
+        [7.001150299949268, 43.55070877227807],
+        [7.001380920410156, 43.550711491964144],
+        [7.001380920410156, 43.55065076822822]
+      ]
+    ]
+  ]
+}
+""");
+
+    app.bpartners.geojobs.repository.model.Feature feature =
+        new app.bpartners.geojobs.repository.model.Feature();
+    feature.setProperties(new java.util.HashMap<>());
+    feature.setGeometry(geometry);
+
     when(detectionMock.getFeatureWithDelimitations())
         .thenReturn(
             List.of(
                 new FeatureWithDelimitation(
-                    new app.bpartners.geojobs.repository.model.Feature(),
-                    List.of(new app.bpartners.geojobs.repository.model.Feature()))) // TODO
+                    new app.bpartners.geojobs.repository.model.Feature(), List.of(feature)))
             );
     when(detectionRepositoryMock.findByZdjId(detectionJobId))
         .thenReturn(Optional.of(detectionMock));
