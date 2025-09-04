@@ -55,7 +55,6 @@ public class DetectionVGGUpdate implements BiFunction<VGG, Detection, Detection>
   public Detection apply(Map<Feature, VGG> vgg, Detection detection) {
     var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
     var layer = detection.getGeoServerProperties().getGeoServerParameter().getLayers();
-    log.info("Provided geojson {}", providedGeoJsonZone);
     log.info(
         "Vgg and its features : {}",
         vgg.entrySet().stream()

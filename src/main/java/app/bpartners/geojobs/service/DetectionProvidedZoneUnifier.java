@@ -27,7 +27,6 @@ public class DetectionProvidedZoneUnifier implements Function<Detection, MultiPo
       return geometryFactory.createMultiPolygon(new Polygon[0]);
     }
     var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
-    log.info("Provided geojson {}", providedGeoJsonZone);
     return apply(detection.getId(), providedGeoJsonZone);
   }
 

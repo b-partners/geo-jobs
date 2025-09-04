@@ -236,7 +236,6 @@ public class GeometryConverter {
 
     if (!polygon.isValid()) {
       var fixGeometry = GeometryFixer.fix(polygon);
-      log.info("Fixed polygon : {}", writeGeometryAsString(fixGeometry));
       if (fixGeometry instanceof Polygon) {
         polygon = (Polygon) fixGeometry; // ou polygon.buffer(0)
       } else if (fixGeometry instanceof MultiPolygon) {
