@@ -35,7 +35,6 @@ public class DetectionProvidedZoneUnifier implements Function<Detection, MultiPo
   }
 
   private MultiPolygon apply(String detectionId, List<Feature> featureList) {
-    log.info("Feature lists {} for detection.id {}", featureList, detectionId);
     if (featureList == null) {
       return geometryFactory.createMultiPolygon(new Polygon[0]);
     }
