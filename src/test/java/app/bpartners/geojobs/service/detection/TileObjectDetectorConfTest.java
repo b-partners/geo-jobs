@@ -12,6 +12,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.SneakyThrows;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +29,6 @@ class TileObjectDetectorConfIT extends FacadeIT {
   @SneakyThrows
   @BeforeEach
   void setUp() {
-
     mockFile = File.createTempFile("test", ".json");
     String mockContent =
         """
@@ -42,6 +42,11 @@ class TileObjectDetectorConfIT extends FacadeIT {
           }]
         """;
     Files.writeString(mockFile.toPath(), mockContent);
+  }
+
+  @AfterEach
+  void tearDown() {
+    mockFile.delete();
   }
 
   @SneakyThrows
