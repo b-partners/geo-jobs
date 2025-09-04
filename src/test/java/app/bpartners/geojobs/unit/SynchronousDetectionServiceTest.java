@@ -22,11 +22,11 @@ import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.DetectionDelimitationRetriever;
-import app.bpartners.geojobs.service.PointExtendedImageRequest;
 import app.bpartners.geojobs.service.SynchronousDetectionService;
 import app.bpartners.geojobs.service.detection.DetectionMachineDetectionCreation;
 import app.bpartners.geojobs.service.detection.DetectionTilingCreation;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
+import app.bpartners.geojobs.service.event.ZoneImageRequestedService;
 import app.bpartners.geojobs.service.event.ZoneVggRequestedService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
@@ -46,7 +46,7 @@ class SynchronousDetectionServiceTest {
   ZoneDetectionJobService zoneDetectionJobServiceMock = mock();
   Workers workers = new Workers();
   DetectableObjectConfigurationRepository objectConfigurationRepositoryMock = mock();
-  PointExtendedImageRequest pointExtendedImageRequestMock = mock();
+  ZoneImageRequestedService zoneImageRequestedServiceMock = mock();
   EventProducer eventProducerMock = mock();
   SynchronousDetectionService subject =
       new SynchronousDetectionService(
@@ -61,7 +61,7 @@ class SynchronousDetectionServiceTest {
           zoneDetectionJobServiceMock,
           workers,
           objectConfigurationRepositoryMock,
-          pointExtendedImageRequestMock,
+          zoneImageRequestedServiceMock,
           eventProducerMock);
 
   @Test

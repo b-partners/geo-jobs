@@ -8,12 +8,14 @@ import static java.util.UUID.randomUUID;
 import app.bpartners.geojobs.concurrency.Workers;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionRoofSlopeAndHeightRequested;
+import app.bpartners.geojobs.endpoint.event.model.ZoneImageRequested;
 import app.bpartners.geojobs.endpoint.event.model.ZoneVggRequested;
 import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.service.detection.*;
+import app.bpartners.geojobs.service.event.ZoneImageRequestedService;
 import app.bpartners.geojobs.service.event.ZoneVggRequestedService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
@@ -39,7 +41,7 @@ public class SynchronousDetectionService
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final Workers workers;
   private final DetectableObjectConfigurationRepository detectableObjectConfigurationRepository;
-  private final PointExtendedImageRequest pointExtendedImageRequest;
+  private final ZoneImageRequestedService zoneImageRequestedService;
   private final EventProducer eventProducer;
 
   @Override
@@ -72,14 +74,15 @@ public class SynchronousDetectionService
         List.of(
             DetectionRoofSlopeAndHeightRequested.builder().detectionId(detection.getId()).build()));
 
+    // TODO: is PointExtendedImageRequest still necessary ?
     List<Callable<Void>> imageRequestCallableVoidList =
         detectionWithCreatedZDJ.getProvidedGeoJsonZone().stream()
             .map(
                 providedFeature ->
                     (Callable<Void>)
                         () -> {
-                          pointExtendedImageRequest.accept(
-                              detectionWithCreatedZDJ, providedFeature, true);
+                          zoneImageRequestedService.accept(
+                              new ZoneImageRequested(detection.getId()));
                           return null;
                         })
             .toList();
