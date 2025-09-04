@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-class TileObjectDetectorConfIT extends FacadeIT {
+class TileObjectDetectorConfTest extends FacadeIT {
   ObjectMapper jsonMapper = new ObjectMapper();
 
   @Autowired TileObjectDetectorConf subject;
