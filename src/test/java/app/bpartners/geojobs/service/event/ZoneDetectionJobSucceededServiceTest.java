@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.ExtendedImageWithDetectedObjectRequested;
 import app.bpartners.geojobs.endpoint.event.model.ZoneVggRequested;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryJobRequested;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobSucceeded;
@@ -254,13 +253,8 @@ class ZoneDetectionJobSucceededServiceTest {
         .getOrComputeGeoJsonConversionJob(zoneDetectionJobMock);
     verify(configurationRepositoryMock, never()).findLatestConfiguration();
     var listCaptor = ArgumentCaptor.forClass(List.class);
-    verify(eventProducerMock, times(2)).accept(listCaptor.capture());
-    var actualExtendedImageWithDetectedObjectRequested =
-        (ExtendedImageWithDetectedObjectRequested) listCaptor.getAllValues().getFirst().getFirst();
+    verify(eventProducerMock, times(1)).accept(listCaptor.capture());
     var actualZoneVggRequested = (ZoneVggRequested) listCaptor.getAllValues().getLast().getFirst();
-    assertEquals(
-        new ExtendedImageWithDetectedObjectRequested(detectionId, false),
-        actualExtendedImageWithDetectedObjectRequested);
     assertEquals(new ZoneVggRequested(detectionId), actualZoneVggRequested);
     assertEquals(EVENT_STACK_2, actualZoneVggRequested.getEventStack());
     assertEquals(Duration.ofSeconds(30L), actualZoneVggRequested.maxConsumerDuration());

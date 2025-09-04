@@ -8,13 +8,13 @@ import static java.util.UUID.randomUUID;
 import app.bpartners.geojobs.concurrency.Workers;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionRoofSlopeAndHeightRequested;
-import app.bpartners.geojobs.endpoint.event.model.ExtendedImageWithDetectedObjectRequested;
+import app.bpartners.geojobs.endpoint.event.model.ZoneVggRequested;
 import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.service.detection.*;
-import app.bpartners.geojobs.service.event.ExtendedImageWithDetectedObjectRequestedService;
+import app.bpartners.geojobs.service.event.ZoneVggRequestedService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import java.util.ArrayList;
@@ -34,8 +34,7 @@ public class SynchronousDetectionService
   private final ZoneTilingJobService zoneTilingJobService;
   private final DetectionMachineDetectionCreation detectionMachineDetectionCreation;
   private final DetectionDelimitationRetriever detectionDelimitationRetriever;
-  private final ExtendedImageWithDetectedObjectRequestedService
-      extendedImageWithDetectedObjectRequestedService;
+  private final ZoneVggRequestedService zoneVggRequestedService;
   private final GeoJsonConversionJobService geoJsonConversionJobService;
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final Workers workers;
@@ -98,9 +97,8 @@ public class SynchronousDetectionService
     List<Callable<Void>> secondVoidCallable =
         List.of(
             () -> {
-              // VGG result computing with drawn image step
-              extendedImageWithDetectedObjectRequestedService.accept(
-                  new ExtendedImageWithDetectedObjectRequested(detection.getId(), true));
+              // VGG result computing step
+              zoneVggRequestedService.accept(new ZoneVggRequested(detection.getId()));
               return null;
             },
             () -> {
