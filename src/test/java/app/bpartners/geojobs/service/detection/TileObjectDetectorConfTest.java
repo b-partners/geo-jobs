@@ -25,7 +25,8 @@ class TileObjectDetectorConfTest extends FacadeIT {
                 .getFile());
 
     when(bucketComponentMock.download(any(String.class))).thenReturn(mockFile);
-    var expected = """
+    var expected =
+        """
 [
   {
     "objectType": "DUMMY",
