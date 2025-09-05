@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.detection;
 
+import static java.util.Objects.requireNonNull;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -26,27 +27,15 @@ class TileObjectDetectorConfTest extends FacadeIT {
   @MockBean BucketComponent bucketComponentMock;
   File mockFile;
 
-  @SneakyThrows
   @BeforeEach
   void setUp() {
-    mockFile = File.createTempFile("test", ".json");
-    String mockContent =
-        """
-        [{
-            "objectType": "PISCINE",
-            "url": "dummy"
-          },
-          {
-            "objectType": "PASSAGE_PIETON",
-            "url": "dummy"
-          }]
-        """;
-    Files.writeString(mockFile.toPath(), mockContent);
-  }
-
-  @AfterEach
-  void tearDown() {
-    mockFile.delete();
+    mockFile = new File(
+        requireNonNull(
+            getClass()
+                .getClassLoader()
+                .getResource("conf/tileObjectDetectorApiUrls.json"))
+            .getFile());
+    ;
   }
 
   @SneakyThrows
