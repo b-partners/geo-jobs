@@ -2,7 +2,6 @@ package app.bpartners.geojobs.service.event;
 
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
 
 import app.bpartners.geojobs.endpoint.event.model.ZoneVggRequested;
@@ -20,6 +19,7 @@ import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.DetectionVGGUpdate;
 import app.bpartners.geojobs.service.PolygonCoordinatesCloser;
+import app.bpartners.geojobs.service.TileCoordinatesPolygonIntersection;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.util.Comparator;
 import java.util.List;
@@ -42,6 +42,7 @@ public class ZoneVggRequestedService implements Consumer<ZoneVggRequested> {
   private final TilingTaskRepository tilingTaskRepository;
   private final DetectionVGGUpdate detectionVGGUpdate;
   private final PolygonCoordinatesCloser polygonCoordinatesCloser;
+  private final TileCoordinatesPolygonIntersection tileCoordinatesPolygonIntersection;
 
   @Override
   public void accept(ZoneVggRequested event) {
@@ -54,43 +55,39 @@ public class ZoneVggRequestedService implements Consumer<ZoneVggRequested> {
             .map(DetectableObjectConfiguration::getObjectType)
             .toList();
     var providedPolygonZone = detection.getPolygonGeoJsonZone();
-    var intersectedTileCoordinates = getTileCoordinatesIntersected(zoneTilingJobIdentifier);
-    var tiledPixelPolygons =
-        getTiledPixelPolygon(zoneDetectionJobIdentifier, providedPolygonZone, detectableTypes);
+
     var latLonRoofMultiPolygon = retrieveLatLonRoofMultiPolygon(detection, providedPolygonZone);
     var latLonRoofInsideProvidedZone =
-        getLatLonRoofMultiPolygon(latLonRoofMultiPolygon, providedPolygonZone);
+        computeLatLonRoofIntersectionWithProvided(latLonRoofMultiPolygon, providedPolygonZone);
+    var tileCoordinates = retrieveTileCoordinates(zoneTilingJobIdentifier);
+    var tiledPixelPolygons =
+        getTiledPixelPolygon(zoneDetectionJobIdentifier, providedPolygonZone, detectableTypes);
 
-    var vggMap =
-        vggFactory.from(
-            tiledPixelPolygons, latLonRoofInsideProvidedZone, intersectedTileCoordinates);
+    var vggMap = vggFactory.from(tiledPixelPolygons, latLonRoofInsideProvidedZone, tileCoordinates);
 
     var newDetection = detectionVGGUpdate.apply(vggMap, detection);
 
     detectionRepository.save(newDetection);
   }
 
-  private MultiPolygon getLatLonRoofMultiPolygon(
+  private MultiPolygon computeLatLonRoofIntersectionWithProvided(
       MultiPolygon latLonRoofMultiPolygon, Feature providedPolygonZone) {
-    var latLonRoofInsideProvidedZone =
-        latLonRoofMultiPolygon.intersection(
-            geometryConverter.apply(
-                List.of(providedPolygonZone.getGeometry().getPolygon().getCoordinates())));
-    MultiPolygon latLonRoofInsideProvidedZoneMultiPolygon;
+    var providedZoneGeometry =
+        geometryConverter.apply(
+            List.of(providedPolygonZone.getGeometry().getPolygon().getCoordinates()));
+    var latLonRoofInsideProvidedZone = latLonRoofMultiPolygon.intersection(providedZoneGeometry);
     if (latLonRoofInsideProvidedZone instanceof MultiPolygon multiPolygon) {
-      latLonRoofInsideProvidedZoneMultiPolygon = multiPolygon;
-    } else if (latLonRoofInsideProvidedZone instanceof Polygon polygon) {
-      latLonRoofInsideProvidedZoneMultiPolygon =
-          geometryFactory.createMultiPolygon(new Polygon[] {polygon});
-    } else {
-      throw new IllegalStateException(
-          "Unable to convert latLonRoofInsideProvidedZone to MultiPolygon : "
-              + geometryConverter.writeGeometryAsString(latLonRoofMultiPolygon));
+      return multiPolygon;
     }
-    return latLonRoofInsideProvidedZoneMultiPolygon;
+    if (latLonRoofInsideProvidedZone instanceof Polygon polygon) {
+      return geometryFactory.createMultiPolygon(new Polygon[] {polygon});
+    }
+    throw new IllegalStateException(
+        "Unable to convert latLonRoofInsideProvidedZone to MultiPolygon : "
+            + geometryConverter.writeGeometryAsString(latLonRoofMultiPolygon));
   }
 
-  private List<TileCoordinates> getTileCoordinatesIntersected(String zoneTilingJobIdentifier) {
+  private List<TileCoordinates> retrieveTileCoordinates(String zoneTilingJobIdentifier) {
     var tilingTasks = tilingTaskRepository.findAllByJobId(zoneTilingJobIdentifier);
     return tilingTasks.stream()
         .map(
@@ -134,10 +131,23 @@ public class ZoneVggRequestedService implements Consumer<ZoneVggRequested> {
       String zoneDetectionJobIdentifier,
       Feature polygonGeoJsonZone,
       List<DetectableType> detectableTypes) {
+    var providedLatLonPolygonGeometry =
+        geometryConverter.apply(
+            List.of(polygonGeoJsonZone.getGeometry().getPolygon().getCoordinates()));
     var detectedTileList = detectedTileRepository.findAllByZdjJobId(zoneDetectionJobIdentifier);
     return detectedTileList.stream()
         .map(
             detectedTile -> {
+              var tileCoordinates = detectedTile.getTile().getCoordinates();
+              var intersectionBetweenDetectedTileAndProvidedZone =
+                  tileCoordinatesPolygonIntersection.intersects(
+                      providedLatLonPolygonGeometry, tileCoordinates);
+              if (intersectionBetweenDetectedTileAndProvidedZone.isEmpty()) {
+                return null;
+              }
+              var providedZoneInsideTilePixel =
+                  geometryConverter.convertToPolygon(
+                      intersectionBetweenDetectedTileAndProvidedZone);
               var polygonObjectTypes =
                   detectedTile.getDetectedObjects().stream()
                       .map(
@@ -156,14 +166,20 @@ public class ZoneVggRequestedService implements Consumer<ZoneVggRequested> {
                                     .getFirst()
                                     .getFirst();
                             var closedPolygon = polygonCoordinatesCloser.apply(polygonCoordinates);
-                            var polygonPixel =
+                            var detectedObjectPolygonPixel =
                                 geometryConverter.toPolygon(List.of(List.of(closedPolygon)));
-                            return new PolygonObjectType(
-                                polygonPixel, detectedObject.getDetectableObjectType());
+                            var intersectionBetweenDetectedObjectAndProvidedZone =
+                                detectedObjectPolygonPixel.intersection(
+                                    providedZoneInsideTilePixel);
+                            if (intersectionBetweenDetectedObjectAndProvidedZone
+                                instanceof Polygon polygon) {
+                              return new PolygonObjectType(
+                                  polygon, detectedObject.getDetectableObjectType());
+                            }
+                            return null;
                           })
                       .filter(Objects::nonNull)
                       .toList();
-              var tileCoordinates = detectedTile.getTile().getCoordinates();
               return new TiledPixelPolygon(
                   polygonGeoJsonZone,
                   polygonObjectTypes,

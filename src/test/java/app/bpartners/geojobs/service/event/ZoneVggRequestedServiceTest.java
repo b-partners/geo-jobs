@@ -28,6 +28,7 @@ import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.DetectionVGGUpdate;
 import app.bpartners.geojobs.service.PolygonCoordinatesCloser;
+import app.bpartners.geojobs.service.TileCoordinatesPolygonIntersection;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +48,7 @@ class ZoneVggRequestedServiceTest {
   TilingTaskRepository tilingTaskRepositoryMock = mock();
   DetectionVGGUpdate detectionVGGUpdateMock = mock();
   PolygonCoordinatesCloser polygonCoordinatesCloser = new PolygonCoordinatesCloser();
+  TileCoordinatesPolygonIntersection tileCoordinatesPolygonIntersectionMock = mock();
 
   ZoneVggRequestedService subject =
       new ZoneVggRequestedService(
@@ -56,7 +58,8 @@ class ZoneVggRequestedServiceTest {
           geometryConverterMock,
           tilingTaskRepositoryMock,
           detectionVGGUpdateMock,
-          polygonCoordinatesCloser);
+          polygonCoordinatesCloser,
+          tileCoordinatesPolygonIntersectionMock);
 
   @Test
   void compute_vgg_for_zone_and_update_detection_vgg() {
@@ -144,6 +147,7 @@ class ZoneVggRequestedServiceTest {
     when(detectionRepositoryMock.save(detectionMock)).thenReturn(detectionMock);
 
     assertDoesNotThrow(() -> subject.accept(new ZoneVggRequested(detectionIdentifier)));
+    // TODO: add more assertions
   }
 
   private @NotNull List<TiledPixelPolygon> expectedTiledPixelPolygon(
