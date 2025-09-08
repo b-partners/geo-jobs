@@ -87,7 +87,10 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
     Map<Feature, List<TiledPixelPolygon>> tiledPixelPolygonFilteredByPoint =
         tiledPixelPolygons.stream().collect(Collectors.groupingBy(TiledPixelPolygon::point));
     var vggMap = new HashMap<Feature, VGG>();
-    // Already sorted before so min before
+    envelop.sort(
+        Comparator.comparing(TileCoordinates::getZ)
+            .thenComparing(TileCoordinates::getY)
+            .thenComparing(TileCoordinates::getX));
     int minTileXGlobal = envelop.getFirst().getX();
     int minTileYGlobal = envelop.getFirst().getY();
     var tileCoordinates =
@@ -103,13 +106,13 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
         tileCoordinates.stream()
             .map(
                 coordinates -> {
-                  var intersectionCoordinates =
+                  var roofPixelIntersection =
                       tilePolygonIntersection.intersects(roofLatLonMultiPolygon, coordinates);
-                  if (intersectionCoordinates.isEmpty()) {
+                  if (roofPixelIntersection.isEmpty()) {
                     return null;
                   }
                   var roofPolygonFromTile =
-                      geometryConverter.convertToPolygon(intersectionCoordinates);
+                      geometryConverter.convertToPolygon(roofPixelIntersection);
                   var projectedRoofPolygonToCompositeImage =
                       projectPolygonsToCompositeImage(
                           coordinates.getX(),
