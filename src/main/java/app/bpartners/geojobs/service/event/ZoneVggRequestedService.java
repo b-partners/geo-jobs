@@ -21,6 +21,7 @@ import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.DetectionVGGUpdate;
 import app.bpartners.geojobs.service.PolygonCoordinatesCloser;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -96,6 +97,10 @@ public class ZoneVggRequestedService implements Consumer<ZoneVggRequested> {
             parcelTilingTask ->
                 parcelTilingTask.getTiles().stream().map(Tile::getCoordinates).toList())
         .flatMap(List::stream)
+        .sorted(
+            Comparator.comparing(TileCoordinates::getZ)
+                .thenComparing(TileCoordinates::getY)
+                .thenComparing(TileCoordinates::getX))
         .toList();
   }
 

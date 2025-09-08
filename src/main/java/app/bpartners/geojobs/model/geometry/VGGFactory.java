@@ -87,10 +87,6 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
     Map<Feature, List<TiledPixelPolygon>> tiledPixelPolygonFilteredByPoint =
         tiledPixelPolygons.stream().collect(Collectors.groupingBy(TiledPixelPolygon::point));
     var vggMap = new HashMap<Feature, VGG>();
-    envelop.sort(
-        Comparator.comparing(TileCoordinates::getZ)
-            .thenComparing(TileCoordinates::getY)
-            .thenComparing(TileCoordinates::getX));
     int minTileXGlobal = envelop.getFirst().getX();
     int minTileYGlobal = envelop.getFirst().getY();
     var tileCoordinates =
