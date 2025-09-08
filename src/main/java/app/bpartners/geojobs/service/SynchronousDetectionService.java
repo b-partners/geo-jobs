@@ -106,8 +106,6 @@ public class SynchronousDetectionService
             });
     workers.invokeAll(secondVoidCallable);
 
-    var actualDetection = detectionRepository.findById(detection.getId()).orElseThrow();
-
     return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
         detectionRepository.findById(detection.getId()).orElseThrow(),
         FINISHED,
