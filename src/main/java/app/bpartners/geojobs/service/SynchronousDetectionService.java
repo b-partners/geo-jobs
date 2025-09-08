@@ -75,17 +75,11 @@ public class SynchronousDetectionService
             DetectionRoofSlopeAndHeightRequested.builder().detectionId(detection.getId()).build()));
 
     // TODO: is PointExtendedImageRequest still necessary ?
-    List<Callable<Void>> imageRequestCallableVoidList =
-        detectionWithCreatedZDJ.getProvidedGeoJsonZone().stream()
-            .map(
-                providedFeature ->
-                    (Callable<Void>)
-                        () -> {
-                          zoneImageRequestedService.accept(
-                              new ZoneImageRequested(detection.getId()));
-                          return null;
-                        })
-            .toList();
+    Callable<Void> imageRequestCallableVoidList =
+        () -> {
+          zoneImageRequestedService.accept(new ZoneImageRequested(detection.getId()));
+          return null;
+        };
     Callable<Void> machineDetectionProcessCallableVoidList =
         () -> {
           // Machine detection step
@@ -93,7 +87,8 @@ public class SynchronousDetectionService
               detectionWithCreatedZDJ, createdZoneDetectionJob, tilingTasks);
           return null;
         };
-    List<Callable<Void>> firstCallableVoidList = new ArrayList<>(imageRequestCallableVoidList);
+    List<Callable<Void>> firstCallableVoidList = new ArrayList<>();
+    firstCallableVoidList.add(imageRequestCallableVoidList);
     firstCallableVoidList.add(machineDetectionProcessCallableVoidList);
     workers.invokeAll(firstCallableVoidList);
 
@@ -110,6 +105,8 @@ public class SynchronousDetectionService
               return null;
             });
     workers.invokeAll(secondVoidCallable);
+
+    var actualDetection = detectionRepository.findById(detection.getId()).orElseThrow();
 
     return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
         detectionRepository.findById(detection.getId()).orElseThrow(),
