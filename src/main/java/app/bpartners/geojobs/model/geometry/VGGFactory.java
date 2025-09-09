@@ -152,6 +152,12 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
                     originalPolygonObjectTypes.stream()
                         .map(
                             polygonObjectType -> {
+                              var detectedObjectPolygon = polygonObjectType.polygon();
+                              var xCoordinates = getAllXCoordinates(detectedObjectPolygon);
+                              var yCoordinates = getAllYCoordinates(detectedObjectPolygon);
+                              if (xCoordinates.isEmpty() || yCoordinates.isEmpty()) {
+                                return null;
+                              }
                               var projectedPolygonsToCompositeImage =
                                   projectPolygonsToCompositeImage(
                                       tiledPolygon.tileX(),
@@ -159,11 +165,12 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
                                       minTileXGlobal,
                                       minTileYGlobal,
                                       DEFAULT_IMG_SIZE,
-                                      polygonObjectType.polygon());
+                                      detectedObjectPolygon);
                               return new PolygonObjectType(
                                   projectedPolygonsToCompositeImage,
                                   polygonObjectType.objectType());
                             })
+                        .filter(Objects::nonNull)
                         .toList();
 
                 Map<String, VGG.Annotation.Region> regions = new HashMap<>();
@@ -360,8 +367,8 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
 
   private VGG.Annotation.Region toVGGRegion(
       String label, Double confidence, Double rate, Polygon geometry) {
-    List<Double> allX = Arrays.stream(geometry.getCoordinates()).map(coor -> coor.x).toList();
-    List<Double> allY = Arrays.stream(geometry.getCoordinates()).map(coor -> coor.y).toList();
+    List<Double> allX = getAllXCoordinates(geometry);
+    List<Double> allY = getAllYCoordinates(geometry);
     var name = "Polygon";
     return VGG.Annotation.Region.builder()
         .regionAttribute(
@@ -377,5 +384,13 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
                 .allPointsY(allY)
                 .build())
         .build();
+  }
+
+  private List<Double> getAllYCoordinates(Polygon polygon) {
+    return Arrays.stream(polygon.getCoordinates()).map(coor -> coor.y).toList();
+  }
+
+  private List<Double> getAllXCoordinates(Polygon polygon) {
+    return Arrays.stream(polygon.getCoordinates()).map(coor -> coor.x).toList();
   }
 }
