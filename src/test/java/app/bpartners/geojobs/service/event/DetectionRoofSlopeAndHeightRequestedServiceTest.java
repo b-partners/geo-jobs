@@ -14,9 +14,11 @@ import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
 import app.bpartners.geojobs.service.lidar.LidarPolygonMetricProcessor;
 import app.bpartners.geojobs.service.lidar.model.Dimension;
+import jakarta.persistence.EntityManager;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Polygon;
 
@@ -24,10 +26,19 @@ class DetectionRoofSlopeAndHeightRequestedServiceTest {
   FeatureMapper featureMapperMock = mock();
   DetectionRepository detectionRepositoryMock = mock();
   LidarPolygonMetricProcessor lidarPolygonMetricProcessorMock = mock();
+  EntityManager entityManagerMock = mock();
 
   DetectionRoofSlopeAndHeightRequestedService subject =
       new DetectionRoofSlopeAndHeightRequestedService(
-          detectionRepositoryMock, lidarPolygonMetricProcessorMock, featureMapperMock);
+          detectionRepositoryMock,
+          lidarPolygonMetricProcessorMock,
+          featureMapperMock,
+          entityManagerMock);
+
+  @BeforeEach
+  void setUp() {
+    doNothing().when(entityManagerMock).clear();
+  }
 
   @Test
   void save_slope_and_height_ok() {
