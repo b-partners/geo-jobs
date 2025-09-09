@@ -82,6 +82,9 @@ class SynchronousDetectionServiceTest {
     when(detectionMock.getId()).thenReturn(detectionId);
     when(detectionMock.getDetectableObjectConfigurations())
         .thenReturn(List.of(new DetectableObjectConfiguration()));
+    when(detectionWithVGGAndImagesFinished.getVggFileKey())
+        .thenReturn(null)
+        .thenReturn("vggFileKey");
     doNothing().when(eventProducerMock).accept(any());
     when(detectionWithCreatedZTJMock.getZtjId()).thenReturn(zoneTilingJobId);
     when(detectionWithCreatedZTJMock.toBuilder()).thenReturn(new Detection().toBuilder());

@@ -19,17 +19,22 @@ import app.bpartners.geojobs.service.event.ZoneImageRequestedService;
 import app.bpartners.geojobs.service.event.ZoneVggRequestedService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class SynchronousDetectionService
     implements Function<app.bpartners.geojobs.repository.model.detection.Detection, Detection> {
+  private static final int MAX_RETRY_ATTEMPTS = 4;
   private final DetectionRepository detectionRepository;
   private final DetectionFromStatisticRestMapper detectionFromStatisticRestMapper;
   private final DetectionTilingCreation detectionTilingCreation;
@@ -44,6 +49,7 @@ public class SynchronousDetectionService
   private final ZoneImageRequestedService zoneImageRequestedService;
   private final EventProducer eventProducer;
 
+  @SneakyThrows
   @Override
   public Detection apply(app.bpartners.geojobs.repository.model.detection.Detection detection) {
     // Tiling step
@@ -105,6 +111,34 @@ public class SynchronousDetectionService
               return null;
             });
     workers.invokeAll(secondVoidCallable);
+
+    return attemptVggFileKeyRetrieve(detection);
+  }
+
+  @SneakyThrows
+  private Detection attemptVggFileKeyRetrieve(
+      app.bpartners.geojobs.repository.model.detection.Detection detection) {
+    log.info(
+        "Waiting for ZoneVGGRequested to be computed for detection.e2Id: {}",
+        detection.getEndToEndId());
+    for (int attempt = 0; attempt <= MAX_RETRY_ATTEMPTS; attempt++) {
+      var actualDetection = detectionRepository.findById(detection.getId()).orElseThrow();
+
+      if (actualDetection.getVggFileKey() != null) {
+        return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
+            actualDetection, FINISHED, SUCCEEDED, MACHINE_DETECTION);
+      }
+
+      if (attempt < MAX_RETRY_ATTEMPTS) {
+        log.info(
+            "VGG fileKey still null for detection.e2Id: {} (attempt {}/{}) → waiting 5s before"
+                + " retry",
+            detection.getEndToEndId(),
+            attempt + 1,
+            MAX_RETRY_ATTEMPTS);
+        Thread.sleep(Duration.ofSeconds(5L));
+      }
+    }
 
     return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
         detectionRepository.findById(detection.getId()).orElseThrow(),
