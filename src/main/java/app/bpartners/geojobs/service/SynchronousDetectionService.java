@@ -54,6 +54,12 @@ public class SynchronousDetectionService
   @SneakyThrows
   @Override
   public Detection apply(app.bpartners.geojobs.repository.model.detection.Detection detection) {
+    detectionDelimitationRetriever.accept(detection);
+    // Roof slope and height requested step
+    eventProducer.accept(
+        List.of(
+            DetectionRoofSlopeAndHeightRequested.builder().detectionId(detection.getId()).build()));
+
     // Tiling step
     var detectionWithCreatedZTJ = detectionTilingCreation.processTiling(detection);
     var zoneTilingJobId = detectionWithCreatedZTJ.getZtjId();
@@ -75,14 +81,6 @@ public class SynchronousDetectionService
         detectionRepository.save(
             detectionWithCreatedZTJ.toBuilder().zdjId(createdZoneDetectionJob.getId()).build());
 
-    detectionDelimitationRetriever.accept(detectionWithCreatedZDJ);
-
-    // Has to be async for the moment
-    eventProducer.accept(
-        List.of(
-            DetectionRoofSlopeAndHeightRequested.builder().detectionId(detection.getId()).build()));
-
-    // TODO: is PointExtendedImageRequest still necessary ?
     Callable<Void> imageRequestCallableVoidList =
         () -> {
           zoneImageRequestedService.accept(new ZoneImageRequested(detection.getId()));
