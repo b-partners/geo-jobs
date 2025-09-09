@@ -19,6 +19,7 @@ import app.bpartners.geojobs.service.event.ZoneImageRequestedService;
 import app.bpartners.geojobs.service.event.ZoneVggRequestedService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
+import jakarta.persistence.EntityManager;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,6 +49,7 @@ public class SynchronousDetectionService
   private final DetectableObjectConfigurationRepository detectableObjectConfigurationRepository;
   private final ZoneImageRequestedService zoneImageRequestedService;
   private final EventProducer eventProducer;
+  private final EntityManager entityManager;
 
   @SneakyThrows
   @Override
@@ -122,6 +124,7 @@ public class SynchronousDetectionService
         "Waiting for ZoneVGGRequested to be computed for detection.e2Id: {}",
         detection.getEndToEndId());
     for (int attempt = 0; attempt <= MAX_RETRY_ATTEMPTS; attempt++) {
+      entityManager.clear();
       var actualDetection = detectionRepository.findById(detection.getId()).orElseThrow();
 
       if (actualDetection.getVggFileKey() != null) {

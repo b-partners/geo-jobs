@@ -30,6 +30,7 @@ import app.bpartners.geojobs.service.event.ZoneImageRequestedService;
 import app.bpartners.geojobs.service.event.ZoneVggRequestedService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
+import jakarta.persistence.EntityManager;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -47,6 +48,7 @@ class SynchronousDetectionServiceTest {
   Workers workers = new Workers();
   DetectableObjectConfigurationRepository objectConfigurationRepositoryMock = mock();
   ZoneImageRequestedService zoneImageRequestedServiceMock = mock();
+  EntityManager entityManagerMock = mock();
   EventProducer eventProducerMock = mock();
   SynchronousDetectionService subject =
       new SynchronousDetectionService(
@@ -62,7 +64,8 @@ class SynchronousDetectionServiceTest {
           workers,
           objectConfigurationRepositoryMock,
           zoneImageRequestedServiceMock,
-          eventProducerMock);
+          eventProducerMock,
+          entityManagerMock);
 
   @Test
   void return_succeeded_detection_and_trigger_geo_json_generation() {
@@ -103,6 +106,7 @@ class SynchronousDetectionServiceTest {
     doNothing().when(zoneVggRequestedServiceMock).accept(new ZoneVggRequested(detectionId));
     when(detectionRepositoryMock.findById(detectionId))
         .thenReturn(Optional.of(detectionWithVGGAndImagesFinished));
+    doNothing().when(entityManagerMock).clear();
 
     when(restDetectionResult.getStep())
         .thenReturn(
