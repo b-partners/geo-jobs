@@ -35,7 +35,7 @@ import org.springframework.stereotype.Service;
 @AllArgsConstructor
 public class SynchronousDetectionService
     implements Function<app.bpartners.geojobs.repository.model.detection.Detection, Detection> {
-  private static final int MAX_RETRY_ATTEMPTS = 4;
+  private static final int MAX_RETRY_ATTEMPTS = 2;
   private final DetectionRepository detectionRepository;
   private final DetectionFromStatisticRestMapper detectionFromStatisticRestMapper;
   private final DetectionTilingCreation detectionTilingCreation;
