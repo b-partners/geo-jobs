@@ -5,10 +5,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 @Component
 @Getter
+@Slf4j
 public class TileObjectDetectorConf {
   private final BucketComponent bucketComponent;
   private final String tileDetectionApiUrls;
@@ -19,12 +21,15 @@ public class TileObjectDetectorConf {
   }
 
   public String getFromS3() {
-    String apiUrls;
     try {
       File configFile = bucketComponent.download("conf/tileDetectionApiUrls.json");
-      apiUrls = Files.readString(configFile.toPath());
-      Files.deleteIfExists(configFile.toPath());
-      return apiUrls;
+      if (configFile != null) {
+        var apiUrls = Files.readString(configFile.toPath());
+        Files.deleteIfExists(configFile.toPath());
+        return apiUrls;
+      }
+      log.error("Tile object detection api urls not found.");
+      return "";
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
