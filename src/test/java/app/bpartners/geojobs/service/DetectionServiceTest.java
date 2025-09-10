@@ -46,7 +46,7 @@ class DetectionServiceTest {
 
     when(featureMock.getProperties()).thenReturn(new HashMap<>());
     when(featureWithDelimitationMock.delimitations()).thenReturn(List.of(featureMock));
-    when(detectionRepositoryMock.findById(detectionIdentifier))
+    when(detectionRepositoryMock.findByEndToEndId(detectionIdentifier))
         .thenReturn(Optional.of(detectionMock));
     when(detectionMock.getId()).thenReturn(detectionIdentifier);
     when(detectionMock.getFeatureWithDelimitations())
@@ -81,7 +81,7 @@ class DetectionServiceTest {
                     ROOF_SLOPE_PROPERTY_NAME, 1.0,
                     ROOF_HEIGHT_PROPERTY_NAME, 1.0)));
     when(featureWithDelimitationMock.delimitations()).thenReturn(List.of(featureMock));
-    when(detectionRepositoryMock.findById(detectionIdentifier))
+    when(detectionRepositoryMock.findByEndToEndId(detectionIdentifier))
         .thenReturn(Optional.of(detectionMock));
     when(detectionMock.getId()).thenReturn(detectionIdentifier);
     when(detectionMock.getFeatureWithDelimitations())
@@ -99,7 +99,8 @@ class DetectionServiceTest {
   @Test
   void throw_not_found_when_detection_not_found() {
     var detectionIdentifier = randomUUID().toString();
-    when(detectionRepositoryMock.findById(detectionIdentifier)).thenReturn(Optional.empty());
+    when(detectionRepositoryMock.findByEndToEndId(detectionIdentifier))
+        .thenReturn(Optional.empty());
 
     var actual =
         assertThrows(

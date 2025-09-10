@@ -49,7 +49,7 @@ public class DetectionService {
       String detectionIdentifier) {
     var detection =
         detectionRepository
-            .findById(detectionIdentifier)
+            .findByEndToEndId(detectionIdentifier)
             .orElseThrow(
                 () -> new NotFoundException("Detection.id " + detectionIdentifier + " not found."));
 
