@@ -4,30 +4,29 @@ import app.bpartners.geojobs.file.bucket.BucketComponent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import lombok.RequiredArgsConstructor;
+import lombok.Getter;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
+@Getter
 public class TileObjectDetectorConf {
   private final BucketComponent bucketComponent;
+  private final String tileDetectionApiUrls;
 
-  public String getTileDetectionApiUrls() {
-    File configFile = null;
-    try {
-      configFile = getTileDetectionApiUrlsFile();
-      return Files.readString(configFile.toPath());
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    } finally {
-      if (configFile != null) {
-        configFile.delete();
-      }
-    }
+  public TileObjectDetectorConf(BucketComponent bucketComponent) {
+    this.bucketComponent = bucketComponent;
+    this.tileDetectionApiUrls = getFromS3();
   }
 
-  public File getTileDetectionApiUrlsFile() {
-    var filename = "conf/tileDetectionApiUrls.json";
-    return bucketComponent.download(filename);
+  public String getFromS3() {
+    String apiUrls;
+    try {
+      File configFile = bucketComponent.download("conf/tileDetectionApiUrls.json");
+      apiUrls = Files.readString(configFile.toPath());
+      Files.deleteIfExists(configFile.toPath());
+      return apiUrls;
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

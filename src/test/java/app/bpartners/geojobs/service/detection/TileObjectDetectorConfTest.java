@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service.detection;
 
 import static java.util.Objects.requireNonNull;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -8,6 +9,7 @@ import static org.mockito.Mockito.when;
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import java.io.File;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -37,8 +39,12 @@ class TileObjectDetectorConfTest extends FacadeIT {
     "url": "dummy"
   }
 ]""";
-    var actual = subject.getTileDetectionApiUrls();
+    var actual = new AtomicReference<>();
+    assertDoesNotThrow(
+        () -> {
+          actual.set(subject.getTileDetectionApiUrls());
+        });
 
-    assertEquals(expected, actual);
+    assertEquals(expected, actual.get());
   }
 }
