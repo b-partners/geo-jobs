@@ -7,7 +7,6 @@ import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.concurrency.Workers;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.DetectionRoofSlopeAndHeightRequested;
 import app.bpartners.geojobs.endpoint.event.model.ZoneImageRequested;
 import app.bpartners.geojobs.endpoint.event.model.ZoneVggRequested;
 import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
@@ -55,10 +54,6 @@ public class SynchronousDetectionService
   @Override
   public Detection apply(app.bpartners.geojobs.repository.model.detection.Detection detection) {
     detectionDelimitationRetriever.accept(detection);
-    // Roof slope and height requested step
-    eventProducer.accept(
-        List.of(
-            DetectionRoofSlopeAndHeightRequested.builder().detectionId(detection.getId()).build()));
 
     // Tiling step
     var detectionWithCreatedZTJ = detectionTilingCreation.processTiling(detection);

@@ -31,6 +31,7 @@ import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.service.CommunityUsedSurfaceService;
+import app.bpartners.geojobs.service.DetectionService;
 import app.bpartners.geojobs.service.ParcelService;
 import app.bpartners.geojobs.service.ZoneService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
@@ -40,12 +41,7 @@ import java.util.Collections;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @AllArgsConstructor
@@ -73,6 +69,7 @@ public class ZoneDetectionController {
   private final MediaTypeGuesser mediaTypeGuesser;
   private final ConfigureAddressValidator configureAddressValidator;
   private final CreateDetectionValidator createDetectionValidator;
+  private final DetectionService detectionService;
 
   @PostMapping("/detectionJobs/{id}/succeed")
   public app.bpartners.geojobs.endpoint.rest.model.ZoneDetectionJob succeedJob(
@@ -259,6 +256,12 @@ public class ZoneDetectionController {
     var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId).orElse(null);
     return zoneService.processDetectionSynchronously(
         detectionId, createDetection, communityOwnerId);
+  }
+
+  @PutMapping("/detections/{id}/roofs/properties")
+  public Detection computeDetectionRoofsProperties(
+      @PathVariable(name = "id") String detectionIdentifier) {
+    return detectionService.computeRoofsProperties(detectionIdentifier);
   }
 
   @PostMapping("/detections/{id}/roofDelimiter")
