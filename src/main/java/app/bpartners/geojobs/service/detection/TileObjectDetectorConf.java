@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class TileObjectDetectorConf {
-  private final String env = System.getenv("ENV");
   private final BucketComponent bucketComponent;
 
   public String getTileDetectionApiUrls() {
@@ -28,7 +27,7 @@ public class TileObjectDetectorConf {
   }
 
   public File getTileDetectionApiUrlsFile() {
-    var filename = "tileDetectionApiUrls." + env + ".json";
+    var filename = "tileDetectionApiUrls.json";
     return bucketComponent.download(filename);
   }
 }
