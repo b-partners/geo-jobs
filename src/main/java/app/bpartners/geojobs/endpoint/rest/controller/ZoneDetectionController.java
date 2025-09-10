@@ -260,8 +260,8 @@ public class ZoneDetectionController {
 
   @PutMapping("/detections/{id}/roofs/properties")
   public Detection computeDetectionRoofsProperties(
-      @PathVariable(name = "id") String detectionIdentifier) {
-    return detectionService.computeRoofsProperties(detectionIdentifier);
+      @PathVariable(name = "id") String detectionE2Id) {
+    return detectionService.computeRoofsProperties(detectionE2Id);
   }
 
   @PostMapping("/detections/{id}/roofDelimiter")

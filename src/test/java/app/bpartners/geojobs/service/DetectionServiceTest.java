@@ -38,6 +38,7 @@ class DetectionServiceTest {
 
   @Test
   void compute_roofs_properties_when_not_containing_slope_and_height_property() {
+    var detectionE2Id = randomUUID().toString();
     var detectionIdentifier = randomUUID().toString();
     var detectionMock = mock(Detection.class);
     var featureWithDelimitationMock = mock(FeatureWithDelimitation.class);
@@ -46,15 +47,16 @@ class DetectionServiceTest {
 
     when(featureMock.getProperties()).thenReturn(new HashMap<>());
     when(featureWithDelimitationMock.delimitations()).thenReturn(List.of(featureMock));
-    when(detectionRepositoryMock.findByEndToEndId(detectionIdentifier))
+    when(detectionRepositoryMock.findByEndToEndId(detectionE2Id))
         .thenReturn(Optional.of(detectionMock));
     when(detectionMock.getId()).thenReturn(detectionIdentifier);
+    when(detectionMock.getEndToEndId()).thenReturn(detectionE2Id);
     when(detectionMock.getFeatureWithDelimitations())
         .thenReturn(List.of(featureWithDelimitationMock));
     doNothing().when(detectionRoofSlopeValidatorMock).accept(detectionMock);
-    when(zoneServiceMock.getProcessedDetection(detectionIdentifier)).thenReturn(restDetectionMock);
+    when(zoneServiceMock.getProcessedDetection(detectionE2Id)).thenReturn(restDetectionMock);
 
-    var actual = subject.computeRoofsProperties(detectionIdentifier);
+    var actual = subject.computeRoofsProperties(detectionE2Id);
 
     var listCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducerMock, times(1)).accept(listCaptor.capture());
@@ -68,7 +70,7 @@ class DetectionServiceTest {
 
   @Test
   void do_not_compute_roofs_properties_when_already_containing_slope_and_height_property() {
-    var detectionIdentifier = randomUUID().toString();
+    var detectionE2Id = randomUUID().toString();
     var detectionMock = mock(Detection.class);
     var featureWithDelimitationMock = mock(FeatureWithDelimitation.class);
     var featureMock = mock(Feature.class);
@@ -81,15 +83,15 @@ class DetectionServiceTest {
                     ROOF_SLOPE_PROPERTY_NAME, 1.0,
                     ROOF_HEIGHT_PROPERTY_NAME, 1.0)));
     when(featureWithDelimitationMock.delimitations()).thenReturn(List.of(featureMock));
-    when(detectionRepositoryMock.findByEndToEndId(detectionIdentifier))
+    when(detectionRepositoryMock.findByEndToEndId(detectionE2Id))
         .thenReturn(Optional.of(detectionMock));
-    when(detectionMock.getId()).thenReturn(detectionIdentifier);
+    when(detectionMock.getEndToEndId()).thenReturn(detectionE2Id);
     when(detectionMock.getFeatureWithDelimitations())
         .thenReturn(List.of(featureWithDelimitationMock));
     doNothing().when(detectionRoofSlopeValidatorMock).accept(detectionMock);
-    when(zoneServiceMock.getProcessedDetection(detectionIdentifier)).thenReturn(restDetectionMock);
+    when(zoneServiceMock.getProcessedDetection(detectionE2Id)).thenReturn(restDetectionMock);
 
-    var actual = subject.computeRoofsProperties(detectionIdentifier);
+    var actual = subject.computeRoofsProperties(detectionE2Id);
 
     verify(eventProducerMock, never()).accept(any());
 
@@ -98,15 +100,13 @@ class DetectionServiceTest {
 
   @Test
   void throw_not_found_when_detection_not_found() {
-    var detectionIdentifier = randomUUID().toString();
-    when(detectionRepositoryMock.findByEndToEndId(detectionIdentifier))
-        .thenReturn(Optional.empty());
+    var detectionE2Id = randomUUID().toString();
+    when(detectionRepositoryMock.findByEndToEndId(detectionE2Id)).thenReturn(Optional.empty());
 
     var actual =
-        assertThrows(
-            NotFoundException.class, () -> subject.computeRoofsProperties(detectionIdentifier));
+        assertThrows(NotFoundException.class, () -> subject.computeRoofsProperties(detectionE2Id));
 
-    var expectedExceptionMessage = "Detection.id " + detectionIdentifier + " not found.";
+    var expectedExceptionMessage = "Detection.e2Id " + detectionE2Id + " not found.";
     assertEquals(expectedExceptionMessage, actual.getMessage());
   }
 }

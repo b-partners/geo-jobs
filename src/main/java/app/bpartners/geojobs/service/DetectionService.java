@@ -46,12 +46,12 @@ public class DetectionService {
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection computeRoofsProperties(
-      String detectionIdentifier) {
+      String detectionE2Id) {
     var detection =
         detectionRepository
-            .findByEndToEndId(detectionIdentifier)
+            .findByEndToEndId(detectionE2Id)
             .orElseThrow(
-                () -> new NotFoundException("Detection.id " + detectionIdentifier + " not found."));
+                () -> new NotFoundException("Detection.e2Id " + detectionE2Id + " not found."));
 
     detectionRoofSlopeValidator.accept(detection);
 
@@ -72,6 +72,6 @@ public class DetectionService {
                   .detectionId(detection.getId())
                   .build()));
     }
-    return zoneService.getProcessedDetection(detection.getId());
+    return zoneService.getProcessedDetection(detection.getEndToEndId());
   }
 }
