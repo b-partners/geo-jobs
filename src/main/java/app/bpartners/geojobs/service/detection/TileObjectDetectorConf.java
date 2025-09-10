@@ -27,7 +27,7 @@ public class TileObjectDetectorConf {
   }
 
   public File getTileDetectionApiUrlsFile() {
-    var filename = "tileDetectionApiUrls.json";
+    var filename = "conf/tileDetectionApiUrls.json";
     return bucketComponent.download(filename);
   }
 }
