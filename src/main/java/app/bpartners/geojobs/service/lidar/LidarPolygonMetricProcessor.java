@@ -39,12 +39,12 @@ public class LidarPolygonMetricProcessor implements Function<List<Polygon>, List
         getDimensionsFromMultipleFiles(
             projectedRoofGeometries, solGeometries, downloadedLidarFiles);
 
-    deleteTempFiles(downloadedLidarFiles);
+    cleanUpLidarFiles(downloadedLidarFiles);
 
     return dimensions;
   }
 
-  public static void deleteTempFiles(Set<File> files) {
+  public static void cleanUpLidarFiles(Set<File> files) {
     log.info("Cleanup lidar files");
     for (var file : files) {
       try {
@@ -108,7 +108,7 @@ public class LidarPolygonMetricProcessor implements Function<List<Polygon>, List
       var dimension = dimensions.get(i);
       var solGeometry = solGeometries.get(i);
 
-      if (notInsideGeometry(solPoint, solGeometry)) {
+      if (isOutsideEnvelopeOfGeometry(solPoint, solGeometry)) {
         continue;
       }
 
@@ -125,7 +125,7 @@ public class LidarPolygonMetricProcessor implements Function<List<Polygon>, List
       var dimension = dimensions.get(i);
       var roofGeometry = roofGeometries.get(i);
 
-      if (notInsideGeometry(roofPoint, roofGeometry)) {
+      if (isOutsideEnvelopeOfGeometry(roofPoint, roofGeometry)) {
         continue;
       }
 
@@ -136,7 +136,7 @@ public class LidarPolygonMetricProcessor implements Function<List<Polygon>, List
     }
   }
 
-  private static boolean notInsideGeometry(LasPointGeometry point, Geometry geometry) {
+  private static boolean isOutsideEnvelopeOfGeometry(LasPointGeometry point, Geometry geometry) {
     var envelope = geometry.getEnvelopeInternal();
     double minX = envelope.getMinX();
     double maxX = envelope.getMaxX();

@@ -6,10 +6,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.conf.FacadeIT;
+import app.bpartners.geojobs.file.FileWriter;
 import java.io.File;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Set;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,17 +24,22 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 class LidarPolygonMetricProcessorIT extends FacadeIT {
   @Autowired LidarPolygonMetricProcessor subject;
   @MockBean LidarApi lidarApiMock;
+  @Autowired FileWriter fileWriter;
+  File lasFile;
+
+  @BeforeEach
+  void setUp() {
+    lasFile = createLidarTestTempFile();
+  }
+
+  @AfterEach
+  @SneakyThrows
+  void cleanUp() {
+    Files.deleteIfExists(lasFile.toPath());
+  }
 
   @Test
   void compute_roof_slope_and_height_with_multiple_roof_geometries() {
-    var lasFile =
-        new File(
-            requireNonNull(
-                    getClass()
-                        .getClassLoader()
-                        .getResource("las/LHD_FXX_0644_6859_PTS_O_LAMB93_IGN69.copc.laz"))
-                .getFile());
-
     when(lidarApiMock.apply(any(List.class))).thenReturn(Set.of(lasFile));
 
     var roof1Coordinates =
@@ -103,5 +113,21 @@ class LidarPolygonMetricProcessorIT extends FacadeIT {
       assertEquals(expectedRoofPts[i], dimension.roof().points().size());
       assertEquals(expectedSolPts[i], dimension.sol().points().size());
     }
+  }
+
+  @SneakyThrows
+  private File createLidarTestTempFile() {
+    var lasFileFromResource =
+        new File(
+            requireNonNull(
+                    getClass()
+                        .getClassLoader()
+                        .getResource("las/LHD_FXX_0644_6859_PTS_O_LAMB93_IGN69.copc.laz"))
+                .getFile());
+
+    return fileWriter.write(
+        Files.readAllBytes(lasFileFromResource.toPath()),
+        FileWriter.createTempDirectory(),
+        lasFileFromResource.getName());
   }
 }
