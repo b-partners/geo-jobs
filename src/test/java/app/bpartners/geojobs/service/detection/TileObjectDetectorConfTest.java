@@ -1,58 +1,61 @@
 package app.bpartners.geojobs.service.detection;
 
-import static java.util.Objects.requireNonNull;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import java.io.File;
-import java.util.concurrent.atomic.AtomicReference;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
+import software.amazon.awssdk.awscore.exception.AwsServiceException;
 
 class TileObjectDetectorConfTest {
   BucketComponent bucketComponentMock = mock(BucketComponent.class);
-  TileObjectDetectorConf subject;
+  TileObjectDetectorConf subject = new TileObjectDetectorConf(bucketComponentMock);
 
+  @SneakyThrows
   @Test
   void get_tile_detection_api_urls() {
-    var mockFile =
-        new File(
-            requireNonNull(
-                    getClass().getClassLoader().getResource("conf/tileObjectDetectorApiUrls.json"))
-                .getFile());
-    when(bucketComponentMock.download(any(String.class))).thenReturn(mockFile);
+    var expectedDetectionApiUrls = expectedFileContent();
+    var tileObjectDetectorConfFileMock = mock(File.class);
+    var filesMockedStatic = mockStatic(Files.class);
+    var filePatchMock = mock(Path.class);
 
-    subject = new TileObjectDetectorConf(bucketComponentMock);
-
-    var expected =
-        """
-[
-  {
-    "objectType": "DUMMY",
-    "url": "dummy"
-  },
-  {
-    "objectType": "DUMMY",
-    "url": "dummy"
-  }
-]""";
-    var actual = new AtomicReference<>();
-    assertDoesNotThrow(
-        () -> {
-          actual.set(subject.getTileDetectionApiUrls());
-        });
-
-    assertEquals(expected, actual.get());
-  }
-
-  @Test
-  void get_tile_detection_api_urls_blank() {
-    when(bucketComponentMock.download(any(String.class))).thenReturn(null);
-    subject = new TileObjectDetectorConf(bucketComponentMock);
+    when(tileObjectDetectorConfFileMock.toPath()).thenReturn(filePatchMock);
+    filesMockedStatic
+        .when(() -> Files.readString(filePatchMock))
+        .thenReturn(expectedDetectionApiUrls);
+    when(bucketComponentMock.download("conf/null/tileDetectionApiUrls.json"))
+        .thenReturn(tileObjectDetectorConfFileMock);
 
     var actual = subject.getTileDetectionApiUrls();
 
-    assertTrue(actual.isBlank());
+    assertEquals(expectedDetectionApiUrls, actual);
+
+    filesMockedStatic.close();
+  }
+
+  private String expectedFileContent() {
+    return """
+           [
+             {
+               "objectType": "DUMMY",
+               "url": "dummy"
+             },
+             {
+               "objectType": "DUMMY",
+               "url": "dummy"
+             }
+           ]""";
+  }
+
+  @Test
+  void download_failed_and_throws_exception() {
+    doThrow(AwsServiceException.class).when(bucketComponentMock).download(any(String.class));
+
+    assertThrows(AwsServiceException.class, () -> subject.getTileDetectionApiUrls());
   }
 }

@@ -1,42 +1,39 @@
 package app.bpartners.geojobs.service.detection;
 
+import static java.nio.file.Files.deleteIfExists;
+import static java.nio.file.Files.readString;
+
 import app.bpartners.geojobs.file.bucket.BucketComponent;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
 public class TileObjectDetectorConf {
+  private static final String BUCKET_KEY_TILE_DETECTION_API_URLS_JSON =
+      "conf/%s/tileDetectionApiUrls.json";
   private final BucketComponent bucketComponent;
+  private final String env = System.getenv("ENV");
   private String tileDetectionApiUrls;
 
   public TileObjectDetectorConf(BucketComponent bucketComponent) {
     this.bucketComponent = bucketComponent;
-    this.tileDetectionApiUrls = null;
   }
 
   public String getTileDetectionApiUrls() {
-    if (this.tileDetectionApiUrls == null) {
-      this.tileDetectionApiUrls = getFromS3();
+    if (tileDetectionApiUrls == null) {
+      tileDetectionApiUrls = getObjectDetectorConfFromS3();
     }
-    return this.tileDetectionApiUrls;
+    return tileDetectionApiUrls;
   }
 
-  public String getFromS3() {
-    try {
-      File configFile = bucketComponent.download("conf/tileDetectionApiUrls.json");
-      if (configFile != null) {
-        var apiUrls = Files.readString(configFile.toPath());
-        Files.deleteIfExists(configFile.toPath());
-        return apiUrls;
-      }
-      log.error("Tile object detection api urls not found.");
-      return "";
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+  @SneakyThrows
+  private String getObjectDetectorConfFromS3() {
+    var objectDetectorConfBucketKey = String.format(BUCKET_KEY_TILE_DETECTION_API_URLS_JSON, env);
+    var objectDetectorConfFile = bucketComponent.download(objectDetectorConfBucketKey);
+    var apiUrls = readString(objectDetectorConfFile.toPath());
+    deleteIfExists(objectDetectorConfFile.toPath());
+    return apiUrls;
   }
 }
