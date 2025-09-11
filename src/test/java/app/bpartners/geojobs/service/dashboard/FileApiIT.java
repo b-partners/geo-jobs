@@ -21,7 +21,7 @@ class FileApiIT extends FacadeIT {
   @Autowired RestTemplate restTemplate;
   UserAccountsApi userAccountsApi =
       new UserAccountsApi(restTemplate, apiConfiguration, securityApi);
-  FileApi subject = new FileApi(apiConfiguration, userAccountsApi);
+  FileApi subject = new FileApi(restTemplate, apiConfiguration, userAccountsApi);
   final String apiKey = System.getenv("API_KEY");
 
   @SneakyThrows
