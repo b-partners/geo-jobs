@@ -69,4 +69,14 @@ class RoofDelimiterMapperTest {
 
     assertEquals(polygon, polygonFromFeature);
   }
+
+  @Test
+  void domainFeature_toRestPolygon_ok() {
+    var roofDelimiter = subject.toDomainFeature(sampleRoofDelimiter());
+    var expected = sampleRoofDelimiter().getPolygon();
+
+    var actual = subject.toRestPolygon(roofDelimiter);
+
+    assertEquals(expected, actual);
+  }
 }

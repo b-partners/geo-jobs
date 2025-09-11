@@ -8,6 +8,7 @@ import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionStepStatisticMapper;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.RoofDelimiterMapper;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionStepName;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.RoofDelimiter;
@@ -43,6 +44,7 @@ public class DetectionFromStatisticRestMapper
   private final DetectionFeaturesResultImageRetriever featuresImageRetriever;
   private final DetectionImageAttributeRetriever imageAttributeRetriever;
   private final DetectionVggAttributeRetriever vggAttributeRetriever;
+  private final RoofDelimiterMapper roofDelimiterMapper;
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection apply(
       Detection detection, TaskStatistic statistic, DetectionStepName detectionStepName) {
@@ -77,7 +79,7 @@ public class DetectionFromStatisticRestMapper
         .needsImageOutput(detection.needsImageOutput());
   }
 
-  private static RoofDelimiter retrieveRoofDelimiter(Detection detection) {
+  private RoofDelimiter retrieveRoofDelimiter(Detection detection) {
     var polygonRoofDelimitation = detection.getPolygonRoofDelimitation();
     var featureWithDelimitations = detection.getFeatureWithDelimitations();
 
@@ -101,7 +103,7 @@ public class DetectionFromStatisticRestMapper
     var roofHeight = ((Number) properties.get(ROOF_HEIGHT_PROPERTY_NAME)).doubleValue();
 
     return new RoofDelimiter()
-        .polygon(polygonRoofDelimitation)
+        .polygon(roofDelimiterMapper.toRestPolygon(featureDelimitation))
         .roofSlopeInDegree(BigDecimal.valueOf(roofSlope))
         .roofHeightInMeter(BigDecimal.valueOf(roofHeight));
   }
