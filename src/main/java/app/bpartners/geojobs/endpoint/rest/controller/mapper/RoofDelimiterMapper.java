@@ -7,6 +7,9 @@ import static java.util.UUID.randomUUID;
 import app.bpartners.geojobs.endpoint.rest.model.RoofDelimiter;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.repository.model.Feature;
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Polygon;
@@ -38,5 +41,15 @@ public class RoofDelimiterMapper {
             .toArray(Coordinate[]::new);
 
     return geometryFactory.createPolygon(coordinates);
+  }
+
+  public List<List<BigDecimal>> toRestPolygon(Feature feature) {
+    var jtsPolygon = featureMapper.domainToJtsPolygon(feature);
+    return Arrays.stream(jtsPolygon.getCoordinates())
+        .map(
+            coordinate ->
+                List.of(
+                    BigDecimal.valueOf(coordinate.getX()), BigDecimal.valueOf(coordinate.getY())))
+        .toList();
   }
 }

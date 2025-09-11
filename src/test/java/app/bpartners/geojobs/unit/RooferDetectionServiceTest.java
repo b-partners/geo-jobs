@@ -14,6 +14,7 @@ import static org.mockito.Mockito.*;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionProcessSucceeded;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionStepStatisticMapper;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.RoofDelimiterMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
 import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel;
@@ -77,13 +78,15 @@ class RooferDetectionServiceTest {
       mock(DetectionImageAttributeRetriever.class);
   DetectionVggAttributeRetriever vggAttributeRetrieverMock =
       mock(DetectionVggAttributeRetriever.class);
+  RoofDelimiterMapper roofDelimiterMapperMock = mock();
   DetectionFromStatisticRestMapper detectionFromStatisticRestMapper =
       new DetectionFromStatisticRestMapper(
           bucketComponent,
           detectionStepStatisticMapper,
           featureImageRetrieverMock,
           imageAttributeRetrieverMock,
-          vggAttributeRetrieverMock);
+          vggAttributeRetrieverMock,
+          roofDelimiterMapperMock);
   Mailer mailer = mock();
   AuthProvider authProvider = mock();
   HTMLTemplateParser htmlTemplateParser = new HTMLTemplateParser();

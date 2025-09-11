@@ -8,6 +8,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionStepStatisticMapper;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.RoofDelimiterMapper;
 import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.repository.model.Feature;
@@ -25,6 +26,7 @@ class DetectionFromStatisticRestMapperTest {
   BucketComponent bucketComponentMock = mock();
   DetectionStepStatisticMapper detectionStepStatisticMapperMock = mock();
   DetectionFeaturesResultImageRetriever detectionFeaturesResultImageRetrieverMock = mock();
+  RoofDelimiterMapper roofDelimiterMapperMock = mock();
   DetectionImageAttributeRetriever imageAttributeRetrieverMock =
       mock(DetectionImageAttributeRetriever.class);
   DetectionVggAttributeRetriever vggAttributeRetrieverMock =
@@ -36,7 +38,8 @@ class DetectionFromStatisticRestMapperTest {
           detectionStepStatisticMapperMock,
           detectionFeaturesResultImageRetrieverMock,
           imageAttributeRetrieverMock,
-          vggAttributeRetrieverMock);
+          vggAttributeRetrieverMock,
+          roofDelimiterMapperMock);
 
   private static Detection detectionWithoutFeatureDelimitation() {
     return Detection.builder()
@@ -73,6 +76,7 @@ class DetectionFromStatisticRestMapperTest {
     var expectedHeight = 5d;
     var detection = detectionWithFeatureDelimitation(expectedSlope, expectedHeight);
 
+    when(roofDelimiterMapperMock.toRestPolygon(any())).thenReturn(mock());
     when(detectionFeaturesResultImageRetrieverMock.apply(any())).thenReturn(List.of());
     when(bucketComponentMock.presign(any())).thenReturn("https://dummy.com");
     when(detectionStepStatisticMapperMock.toRestDetectionStepStatus(any(), any()))
@@ -94,6 +98,7 @@ class DetectionFromStatisticRestMapperTest {
   void polygon_roof_delimiter_should_be_null_when_no_feature_with_delimitation_is_present() {
     var detection = detectionWithoutFeatureDelimitation();
 
+    when(roofDelimiterMapperMock.toRestPolygon(any())).thenReturn(mock());
     when(detectionFeaturesResultImageRetrieverMock.apply(any())).thenReturn(List.of());
     when(bucketComponentMock.presign(any())).thenReturn("https://dummy.com");
     when(detectionStepStatisticMapperMock.toRestDetectionStepStatus(any(), any()))
@@ -116,6 +121,7 @@ class DetectionFromStatisticRestMapperTest {
             .vggFileKey("vgg-key")
             .build();
 
+    when(roofDelimiterMapperMock.toRestPolygon(any())).thenReturn(mock());
     when(detectionFeaturesResultImageRetrieverMock.apply(any())).thenReturn(List.of());
     when(bucketComponentMock.presign(any())).thenReturn("https://dummy.com");
     when(detectionStepStatisticMapperMock.toRestDetectionStepStatus(any(), any()))
@@ -126,6 +132,5 @@ class DetectionFromStatisticRestMapperTest {
     assertNotNull(roofDelimiter);
     assertNull(roofDelimiter.getRoofSlopeInDegree());
     assertNull(roofDelimiter.getRoofHeightInMeter());
-    assertNull(roofDelimiter.getRoofSlopeInDegree());
   }
 }

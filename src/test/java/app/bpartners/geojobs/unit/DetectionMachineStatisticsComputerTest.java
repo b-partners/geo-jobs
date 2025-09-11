@@ -9,6 +9,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionStepStatisticMapper;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.RoofDelimiterMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
 import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
@@ -39,6 +40,7 @@ class DetectionMachineStatisticsComputerTest {
       mock(DetectionImageAttributeRetriever.class);
   DetectionVggAttributeRetriever vggAttributeRetrieverMock =
       mock(DetectionVggAttributeRetriever.class);
+  RoofDelimiterMapper roofDelimiterMapperMock = mock();
   DetectionMachineDetectionStatisticsComputer subject;
 
   @BeforeEach
@@ -51,7 +53,8 @@ class DetectionMachineStatisticsComputerTest {
             detectionStepStatisticMapper,
             featureImageRetrieverMock,
             imageAttributeRetrieverMock,
-            vggAttributeRetrieverMock);
+            vggAttributeRetrieverMock,
+            roofDelimiterMapperMock);
     subject =
         new DetectionMachineDetectionStatisticsComputer(
             detectionFromStatisticRestMapper, zoneDetectionJobServiceMock);
