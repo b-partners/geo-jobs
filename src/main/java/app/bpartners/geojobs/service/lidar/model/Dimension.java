@@ -2,6 +2,8 @@ package app.bpartners.geojobs.service.lidar.model;
 
 import static java.util.Comparator.comparingDouble;
 
+import app.bpartners.geojobs.service.lidar.preprocessing.RoofPointsCleaner;
+import app.bpartners.geojobs.service.lidar.preprocessing.SolPointsCleaner;
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
@@ -11,8 +13,9 @@ public record Dimension(Roof roof, Sol sol) {
   private static final int MIN_VALID_POINT_COUNT = 5;
   private static final double LOWEST_Z_RATIO = 0.30;
   private static final double HIGHEST_Z_RATIO = 0.20;
-  private static final double XY_TOLERANCE_METERS = 0.3;
-  private static final double Z_DISCONTINUITY_THRESHOLD = 0.5;
+
+  private static final SolPointsCleaner solPointsCleaner = new SolPointsCleaner();
+  private static final RoofPointsCleaner roofPointsCleaner = new RoofPointsCleaner();
 
   public static Dimension empty() {
     return new Dimension(new Roof(new HashSet<>()), new Sol(new HashSet<>()));
@@ -23,9 +26,9 @@ public record Dimension(Roof roof, Sol sol) {
       return 0;
     }
 
-    var cleanedPoints = cleanAndSortByZ(roof.points());
-    var lowPoints = getLowerZPoints(cleanedPoints);
-    var highPoints = getHigherZPoints(cleanedPoints);
+    var sortedRoofPointsByZ = sortedByZ(roofPointsCleaner.compute(roof.points()));
+    var lowPoints = getLowerZPoints(sortedRoofPointsByZ);
+    var highPoints = getHigherZPoints(sortedRoofPointsByZ);
 
     var zMin = lowPoints.stream().mapToDouble(p -> p.getCoordinate().getZ()).average().orElse(0);
     var zMax = highPoints.stream().mapToDouble(p -> p.getCoordinate().getZ()).average().orElse(0);
@@ -45,19 +48,20 @@ public record Dimension(Roof roof, Sol sol) {
       return 0;
     }
 
-    var cleanedRoofPoints = cleanAndSortByZ(roof.points());
-    var highPoints = getHigherZPoints(cleanedRoofPoints);
+    var cleanedRoofPoints = roofPointsCleaner.compute(roof.points());
+    var sortedRoofPointsByZ = sortedByZ(cleanedRoofPoints);
+    var highPoints = getHigherZPoints(sortedRoofPointsByZ);
     double zMax =
         highPoints.stream().mapToDouble(p -> p.getCoordinate().getZ()).average().orElse(0);
 
-    var cleanedSolPoints = cleanAndSortByZ(sol.points());
+    var sortedSolPointsByZ = sortedByZ(solPointsCleaner.compute(sol.points()));
     var meanSolZ =
-        cleanedSolPoints.stream().mapToDouble(p -> p.getCoordinate().getZ()).average().orElse(0);
+        sortedSolPointsByZ.stream().mapToDouble(p -> p.getCoordinate().getZ()).average().orElse(0);
 
     return ceil2(zMax - meanSolZ);
   }
 
-  private boolean hasInvalidPointCount() {
+  public boolean hasInvalidPointCount() {
     return roof.points().size() < MIN_VALID_POINT_COUNT
         || sol.points().size() < MIN_VALID_POINT_COUNT;
   }
@@ -84,66 +88,11 @@ public record Dimension(Roof roof, Sol sol) {
     return new Coordinate(sumX / points.size(), sumY / points.size());
   }
 
-  private static List<LasPointGeometry> extractMainZClusterFromSortedPoints(
-      List<LasPointGeometry> sortedPoints) {
-    List<List<LasPointGeometry>> clusters = new ArrayList<>();
-    List<LasPointGeometry> currentCluster = new ArrayList<>();
-
-    for (var currentPoint : sortedPoints) {
-      if (currentCluster.isEmpty()) {
-        currentCluster.add(currentPoint);
-        continue;
-      }
-
-      var prevPoint = currentCluster.getLast();
-      var zDiff = Math.abs(currentPoint.getCoordinate().getZ() - prevPoint.getCoordinate().getZ());
-      if (zDiff > Z_DISCONTINUITY_THRESHOLD) {
-        clusters.add(currentCluster);
-        currentCluster = new ArrayList<>();
-      }
-
-      currentCluster.add(currentPoint);
-    }
-
-    if (!currentCluster.isEmpty()) {
-      clusters.add(currentCluster);
-    }
-
-    return clusters.stream()
-        .max(Comparator.comparingInt(List::size))
-        .orElse(Collections.emptyList());
-  }
-
   private static double ceil2(double value) {
     return Math.ceil(value * 100) / 100.0;
   }
 
-  private static List<LasPointGeometry> cleanAndSortByZ(Set<LasPointGeometry> points) {
-    var withoutDuplicates = removeDuplicateXYKeepHighestZ(points);
-    var sortedPoints =
-        withoutDuplicates.stream().sorted(comparingDouble(p -> p.getCoordinate().getZ())).toList();
-
-    return extractMainZClusterFromSortedPoints(sortedPoints);
-  }
-
-  private static Set<LasPointGeometry> removeDuplicateXYKeepHighestZ(Set<LasPointGeometry> points) {
-    Map<String, LasPointGeometry> map = new HashMap<>();
-    for (var p : points) {
-      double x = p.getCoordinate().getX();
-      double y = p.getCoordinate().getY();
-
-      long xKey = Math.round(x / XY_TOLERANCE_METERS);
-      long yKey = Math.round(y / XY_TOLERANCE_METERS);
-      var key = String.format("%s_%s", xKey, yKey);
-
-      map.compute(
-          key,
-          (k, existing) ->
-              (existing == null || p.getCoordinate().getZ() > existing.getCoordinate().getZ())
-                  ? p
-                  : existing);
-    }
-
-    return new HashSet<>(map.values());
+  private static List<LasPointGeometry> sortedByZ(Set<LasPointGeometry> points) {
+    return points.stream().sorted(comparingDouble(p -> p.getCoordinate().getZ())).toList();
   }
 }
