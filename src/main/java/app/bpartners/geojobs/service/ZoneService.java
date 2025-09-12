@@ -308,19 +308,19 @@ public class ZoneService {
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection processDetectionSynchronously(
       String detectionId, CreateDetection createDetection, String communityOwnerId) {
-    synchronousDetectionValidator.accept(createDetection);
+    var validatedCreateDetection = synchronousDetectionValidator.apply(createDetection);
 
     var optionalDetection =
         detectionRepository.findByEndToEndIdAndCommunityOwnerId(detectionId, communityOwnerId);
     Detection detectionToBeProcessed;
     detectionToBeProcessed =
         optionalDetection.orElseGet(
-            () -> createDetectionJob(detectionId, createDetection, communityOwnerId));
+            () -> createDetectionJob(detectionId, validatedCreateDetection, communityOwnerId));
     var savedDetectionToBeProcessed =
         detectionRepository.save(
             detectionToBeProcessed.toBuilder()
                 .providedGeoJsonZone(
-                    createDetection.getGeoJsonZone().stream()
+                    validatedCreateDetection.getGeoJsonZone().stream()
                         .map(FeatureMapper::toDomainFeature)
                         .toList())
                 .build());
