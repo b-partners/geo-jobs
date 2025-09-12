@@ -89,7 +89,8 @@ public enum ObjectType {
               BATI_BETON,
               BATI_ARDOISE,
               BATI_AUTRES,
-              BACKGROUND ->
+              BACKGROUND,
+              ROAD ->
           throw new IllegalArgumentException("Unsupported continuation on " + detectableType);
     };
   }

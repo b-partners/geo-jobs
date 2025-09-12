@@ -9,6 +9,7 @@ import app.bpartners.geojobs.endpoint.rest.model.Point;
 import app.bpartners.geojobs.endpoint.rest.model.Polygon;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
+import app.bpartners.geojobs.service.PolygonCoordinatesCloser;
 import java.math.BigDecimal;
 import java.util.*;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class GeoJsonMapper {
   private final GeoJsonMultiPolygonCorrector geoJsonMultiPolygonCorrector;
+  private final PolygonCoordinatesCloser polygonCoordinatesCloser = new PolygonCoordinatesCloser();
 
   public List<GeoJson.GeoFeature> toGeoFeatures(
       int xTile, int yTile, int zoom, int imageWidth, List<DetectedObject> detectedObjects) {
@@ -150,14 +152,7 @@ public class GeoJsonMapper {
                           if (geoPolygon.isEmpty()) {
                             return geoPolygon;
                           }
-                          List<BigDecimal> first = geoPolygon.getFirst();
-                          List<BigDecimal> last = geoPolygon.getLast();
-                          if (!first.equals(last)) {
-                            List<List<BigDecimal>> closedGeoPolygon = new ArrayList<>(geoPolygon);
-                            closedGeoPolygon.add(new ArrayList<>(first));
-                            return closedGeoPolygon;
-                          }
-                          return geoPolygon;
+                          return polygonCoordinatesCloser.apply(geoPolygon);
                         })
                     .toList())
         .toList();

@@ -8,6 +8,7 @@ import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionStepStatisticMapper;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.RoofDelimiterMapper;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionStepName;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.RoofDelimiter;
@@ -18,6 +19,8 @@ import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.repository.model.GeoJobType;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.service.DetectionFeaturesResultImageRetriever;
+import app.bpartners.geojobs.service.DetectionImageAttributeRetriever;
+import app.bpartners.geojobs.service.DetectionVggAttributeRetriever;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
@@ -39,17 +42,20 @@ public class DetectionFromStatisticRestMapper
   private final BucketComponent bucketComponent;
   private final DetectionStepStatisticMapper detectionStepStatisticMapper;
   private final DetectionFeaturesResultImageRetriever featuresImageRetriever;
+  private final DetectionImageAttributeRetriever imageAttributeRetriever;
+  private final DetectionVggAttributeRetriever vggAttributeRetriever;
+  private final RoofDelimiterMapper roofDelimiterMapper;
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection apply(
       Detection detection, TaskStatistic statistic, DetectionStepName detectionStepName) {
     var features = featuresImageRetriever.apply(detection);
-    var featuresWithHiddenProperties = hideUselessRestProperties(features);
+    var imageUrl = imageAttributeRetriever.apply(detection);
+    var vggUrl = vggAttributeRetriever.apply(detection);
     var excelUrl = bucketComponent.presign(detection.getExcelFileKey());
     var shapeUrl = bucketComponent.presign(detection.getShapeFileKey());
     var geojsonUrl = bucketComponent.presign(detection.getGeojsonS3FileKey());
-    var imageUrl = bucketComponent.presign(detection.getImageFileKey());
     var pdfUrl = bucketComponent.presign(detection.getPdfFileKey());
-    var vggUrl = bucketComponent.presign(detection.getVggFileKey());
+    var featuresWithHiddenProperties = hideUselessRestProperties(features);
     return new app.bpartners.geojobs.endpoint.rest.model.Detection()
         .id(detection.getEndToEndId())
         .emailReceiver(detection.getEmailReceiver())
@@ -68,19 +74,21 @@ public class DetectionFromStatisticRestMapper
             detection.getConvertedAddresses() == null
                 ? List.of()
                 : detection.getConvertedAddresses())
-        .roofDelimiter(
-            detection.getPolygonRoofDelimitation() == null
-                    || detection.getPolygonRoofDelimitation().isEmpty()
-                ? null
-                : retrieveRoofDelimiter(detection))
-        .geoJsonOutput(detection.isOutputZipped() ? ZIP : GEO_JSON);
+        .roofDelimiter(retrieveRoofDelimiter(detection))
+        .geoJsonOutput(detection.isOutputZipped() ? ZIP : GEO_JSON)
+        .needsImageOutput(detection.needsImageOutput());
   }
 
-  private static RoofDelimiter retrieveRoofDelimiter(Detection detection) {
+  private RoofDelimiter retrieveRoofDelimiter(Detection detection) {
+    var polygonRoofDelimitation = detection.getPolygonRoofDelimitation();
     var featureWithDelimitations = detection.getFeatureWithDelimitations();
 
     if (featureWithDelimitations == null || featureWithDelimitations.isEmpty()) {
-      return new RoofDelimiter().polygon(detection.getPolygonRoofDelimitation());
+      if (polygonRoofDelimitation == null || polygonRoofDelimitation.isEmpty()) {
+        return null;
+      }
+
+      return new RoofDelimiter().polygon(polygonRoofDelimitation);
     }
 
     var featureDelimitation = featureWithDelimitations.getFirst().delimitations().getFirst();
@@ -88,18 +96,19 @@ public class DetectionFromStatisticRestMapper
     if (properties == null
         || !properties.containsKey(ROOF_SLOPE_PROPERTY_NAME)
         || !properties.containsKey(ROOF_HEIGHT_PROPERTY_NAME)) {
-      return new RoofDelimiter().polygon(detection.getPolygonRoofDelimitation());
+      return new RoofDelimiter().polygon(polygonRoofDelimitation);
     }
 
     var roofSlope = ((Number) properties.get(ROOF_SLOPE_PROPERTY_NAME)).doubleValue();
     var roofHeight = ((Number) properties.get(ROOF_HEIGHT_PROPERTY_NAME)).doubleValue();
 
     return new RoofDelimiter()
-        .polygon(detection.getPolygonRoofDelimitation())
+        .polygon(roofDelimiterMapper.toRestPolygon(featureDelimitation))
         .roofSlopeInDegree(BigDecimal.valueOf(roofSlope))
         .roofHeightInMeter(BigDecimal.valueOf(roofHeight));
   }
 
+  // TODO: Careful ! This method creates a side effect, must be corrected
   private List<Feature> hideUselessRestProperties(List<Feature> features) {
     if (features == null) {
       return null;

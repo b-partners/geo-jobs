@@ -9,8 +9,7 @@ import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMulti
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
-import app.bpartners.geojobs.endpoint.rest.model.CreateZoneTilingJob;
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.repository.model.ArcgisImageZoom;
 import app.bpartners.geojobs.repository.model.Parcel;
@@ -20,11 +19,13 @@ import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.DetectionProvidedZoneUnifier;
 import app.bpartners.geojobs.service.ParcelService;
+import app.bpartners.geojobs.service.TilePolygonRetriever;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.tiling.TileFinder;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -39,6 +40,7 @@ public class ZoneTilingJobMapper {
   private final GeometryConverter geometryConverter;
   private final DetectionProvidedZoneUnifier detectionProvidedZoneUnifier;
   private final TileFinder tileFinder;
+  private final TilePolygonRetriever tilePolygonRetriever;
 
   public ZoneTilingJob toDomain(CreateZoneTilingJob rest, Boolean isRooferMade) {
     var generatedId = randomUUID();
@@ -113,11 +115,11 @@ public class ZoneTilingJobMapper {
   public CreateZoneTilingJob from(Detection detection) {
     var overallConfiguration = detection.getGeoServerProperties();
     var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
-    var finalMultiPolygonGeoJsonZone = getMultiPolygonGeoJsonZone(detection);
+    var finalGeoJsonZone = getFinalGeoJsonZone(detection);
     var finalGeoJsonZoom =
-        finalMultiPolygonGeoJsonZone.getFirst().getProperties().get("zoom") == null
+        finalGeoJsonZone.getFirst().getProperties().get("zoom") == null
             ? HOUSES_0.getZoomLevel()
-            : (Integer) finalMultiPolygonGeoJsonZone.getFirst().getProperties().get("zoom");
+            : (Integer) finalGeoJsonZone.getFirst().getProperties().get("zoom");
     var zoom =
         (providedGeoJsonZone == null || providedGeoJsonZone.isEmpty())
             ? finalGeoJsonZoom
@@ -129,11 +131,30 @@ public class ZoneTilingJobMapper {
         .zoneName(detection.getZoneName())
         .geoServerParameter(overallConfiguration.getGeoServerParameter())
         .geoServerUrl(overallConfiguration.getGeoServerUrl())
-        .features(finalMultiPolygonGeoJsonZone)
+        .features(finalGeoJsonZone)
         .zoomLevel(fromValue(ArcgisImageZoom.fromZoomLevel(zoom).name()));
   }
 
-  private List<Feature> getMultiPolygonGeoJsonZone(Detection detection) {
+  private List<Feature> getFinalGeoJsonZone(Detection detection) {
+    var polygonGeoJsonZone = detection.getPolygonGeoJsonZone();
+    if (detection.needsImageOutput() && polygonGeoJsonZone != null) {
+      var geometryInstance = polygonGeoJsonZone.getGeometry().getActualInstance();
+      if (Objects.requireNonNull(geometryInstance) instanceof Polygon p) {
+        var geometryPolygon = geometryConverter.convertToPolygon(p.getCoordinates().getFirst());
+        var splitTilePolygons = tilePolygonRetriever.apply(geometryPolygon);
+        var splitFeatures =
+            splitTilePolygons.stream().map(geometryConverter::toRestFeature).toList();
+
+        // /!\ Be careful here, there may be a side effect
+        detection.setSplitPolygonGeoJsonZone(
+            splitFeatures.stream().map(FeatureMapper::toDomainFeature).toList());
+
+        return splitFeatures;
+      }
+      throw new IllegalStateException(
+          "Unsupported geometry type to retrieve final geo json zone " + geometryInstance);
+    }
+
     var zoneToProcess = detectionProvidedZoneUnifier.applyMultiGeoJson(detection);
     int zoomLevel = HOUSES_0.getZoomLevel();
     var surroundingTileCoordinates =

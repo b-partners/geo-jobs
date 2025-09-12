@@ -7,6 +7,7 @@ import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
 import app.bpartners.geojobs.service.lidar.LidarPolygonMetricProcessor;
 import app.bpartners.geojobs.service.lidar.model.Dimension;
+import jakarta.persistence.EntityManager;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
@@ -18,27 +19,26 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class DetectionRoofSlopeAndHeightRequestedService
     implements Consumer<DetectionRoofSlopeAndHeightRequested> {
+  public static final String ROOF_SLOPE_PROPERTY_NAME = "roof_slope_in_degrees";
+  public static final String ROOF_HEIGHT_PROPERTY_NAME = "roof_height_in_meters";
   private final DetectionRepository detectionRepository;
   private final LidarPolygonMetricProcessor lidarPolygonMetricProcessor;
   private final FeatureMapper featureMapper;
-
-  public static final String ROOF_SLOPE_PROPERTY_NAME = "roof_slope_in_degrees";
-  public static final String ROOF_HEIGHT_PROPERTY_NAME = "roof_height_in_meters";
+  private final EntityManager entityManager;
 
   @Override
   public void accept(DetectionRoofSlopeAndHeightRequested requested) {
+    var detectionIdentifier = requested.getDetectionId();
     var detection =
         detectionRepository
-            .findById(requested.getDetectionId())
+            .findById(detectionIdentifier)
             .orElseThrow(
-                () ->
-                    new RuntimeException(
-                        "Detection={" + requested.getDetectionId() + "} not found"));
+                () -> new RuntimeException("Detection={" + detectionIdentifier + "} not found"));
 
     var featureWithDelimitations = detection.getFeatureWithDelimitations();
     if (featureWithDelimitations == null) {
       throw new IllegalArgumentException(
-          "FeatureWithDelimitation is null for detection={" + requested.getDetectionId() + "}");
+          "FeatureWithDelimitation is null for detection={" + detectionIdentifier + "}");
     }
 
     var roofGeometries = toPolygons(featureWithDelimitations);
@@ -46,8 +46,11 @@ public class DetectionRoofSlopeAndHeightRequestedService
     var newFeaturesWithDelimitations =
         addSlopeAndHeightCalculationInFeatures(featureWithDelimitations, dimensions);
 
-    detection.setFeatureWithDelimitations(newFeaturesWithDelimitations);
-    detectionRepository.save(detection);
+    // Clear cache as between process begin and end, detection may be updated
+    entityManager.clear();
+    var actualDetection = detectionRepository.findById(detectionIdentifier).orElseThrow();
+    detectionRepository.save(
+        actualDetection.toBuilder().featureWithDelimitations(newFeaturesWithDelimitations).build());
   }
 
   private List<Polygon> toPolygons(List<FeatureWithDelimitation> featureWithDelimitations) {
