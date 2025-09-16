@@ -16,8 +16,10 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class DetectionDelimitationRetriever implements Consumer<Detection> {
@@ -71,8 +73,12 @@ public class DetectionDelimitationRetriever implements Consumer<Detection> {
 
   private List<FeatureWithDelimitation> computeFeatureWithDelimitationFromDetectionFacade(
       Detection detection) {
+    if (detection.getGeoJsonDelimitationType() == null) {
+      log.warn("GeoJsonDelimitationTypeEnum is null, defaulting to ZONE");
+      return computeFeatureWithDelimitationFromDetection(detection);
+    }
+
     return switch (detection.getGeoJsonDelimitationType()) {
-      case null -> computeFeatureWithDelimitationFromDetection(detection);
       case ZONE -> computeFeatureWithDelimitationFromDetection(detection);
       case ROOF -> computeFeatureWithDelimitationFromProvidedGeoJson(detection);
     };

@@ -593,6 +593,8 @@ components:
             $ref: '#/components/schemas/Feature'
           description: |
             Optional. If so, must provide zone by shape or excel file through its specific endpoint.
+        GeoJsonOutput:
+          $ref: '#/components/schemas/GeoJsonOutput'
         geoJsonDelimitationType:
           type: string
           enum:

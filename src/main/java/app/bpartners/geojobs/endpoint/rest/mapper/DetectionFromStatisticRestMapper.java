@@ -8,7 +8,6 @@ import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionStepStatisticMapper;
-import app.bpartners.geojobs.endpoint.rest.controller.mapper.GeoJsonDelimitationTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.RoofDelimiterMapper;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionStepName;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
@@ -46,7 +45,6 @@ public class DetectionFromStatisticRestMapper
   private final DetectionImageAttributeRetriever imageAttributeRetriever;
   private final DetectionVggAttributeRetriever vggAttributeRetriever;
   private final RoofDelimiterMapper roofDelimiterMapper;
-  private final GeoJsonDelimitationTypeMapper geoJsonDelimitationTypeMapper;
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection apply(
       Detection detection, TaskStatistic statistic, DetectionStepName detectionStepName) {
@@ -70,8 +68,7 @@ public class DetectionFromStatisticRestMapper
         .pdfUrl(pdfUrl)
         .vggUrl(vggUrl)
         .geoServerProperties(detection.getGeoServerProperties())
-        .geoJsonDelimitationType(
-            geoJsonDelimitationTypeMapper.toRest(detection.getGeoJsonDelimitationType()))
+        .geoJsonDelimitationType(detection.getGeoJsonDelimitationType())
         .detectableObjectModel(detection.getDetectableObjectModel())
         .step(detectionStepStatisticMapper.toRestDetectionStepStatus(statistic, detectionStepName))
         .addresses(
