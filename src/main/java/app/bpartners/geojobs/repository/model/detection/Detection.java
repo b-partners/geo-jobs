@@ -3,7 +3,9 @@ package app.bpartners.geojobs.repository.model.detection;
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
+import static jakarta.persistence.EnumType.STRING;
 import static org.hibernate.type.SqlTypes.JSON;
+import static org.hibernate.type.SqlTypes.NAMED_ENUM;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
@@ -105,6 +107,10 @@ public class Detection implements Serializable {
   @JdbcTypeCode(JSON)
   private List<List<BigDecimal>> polygonRoofDelimitation;
 
+  @Enumerated(STRING)
+  @JdbcTypeCode(NAMED_ENUM)
+  private GeoJsonDelimitationType geoJsonDelimitationType;
+
   public boolean isOutputZipped() {
     return isOutputZipped != null && isOutputZipped;
   }
@@ -123,6 +129,10 @@ public class Detection implements Serializable {
     return providedGeoJsonZone == null
         ? null
         : providedGeoJsonZone.stream().map(FeatureMapper::toRestFeature).toList();
+  }
+
+  public List<Feature> getDomainProvidedGeoJsonZone() {
+    return providedGeoJsonZone;
   }
 
   public List<app.bpartners.geojobs.endpoint.rest.model.Feature> getMultiPolygonGeoJsonZone() {

@@ -27,7 +27,8 @@ public class DetectionDelimitationRetriever implements Consumer<Detection> {
   @Override
   public void accept(Detection detection) {
     if (detection.hasToitureModelName()) {
-      var featureWithDelimitationList = computeFeatureWithDelimitationFromDetection(detection);
+      var featureWithDelimitationList =
+          computeFeatureWithDelimitationFromDetectionFacade(detection);
       var featureWithDelimitationMap =
           featureWithDelimitationList.stream()
               .collect(groupingBy(FeatureWithDelimitation::feature))
@@ -66,6 +67,23 @@ public class DetectionDelimitationRetriever implements Consumer<Detection> {
               .build();
       detectionRepository.save(detectionWithDelimitations);
     }
+  }
+
+  private List<FeatureWithDelimitation> computeFeatureWithDelimitationFromDetectionFacade(
+      Detection detection) {
+    return switch (detection.getGeoJsonDelimitationType()) {
+      case null -> computeFeatureWithDelimitationFromDetection(detection);
+      case ZONE -> computeFeatureWithDelimitationFromDetection(detection);
+      case ROOF -> computeFeatureWithDelimitationFromProvidedGeoJson(detection);
+    };
+  }
+
+  private List<FeatureWithDelimitation> computeFeatureWithDelimitationFromProvidedGeoJson(
+      Detection detection) {
+    var providedGeoJsonZone = detection.getDomainProvidedGeoJsonZone();
+    return providedGeoJsonZone.stream()
+        .map(feature -> new FeatureWithDelimitation(feature, List.of(feature)))
+        .toList();
   }
 
   private List<FeatureWithDelimitation> computeFeatureWithDelimitationFromDetection(

@@ -22,6 +22,7 @@ import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerificationSent;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.GeoJsonDelimitationTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
@@ -96,6 +97,7 @@ public class ZoneService {
   private final SynchronousDetectionValidator synchronousDetectionValidator;
   private final TileMultiPolygonFrame tileMultiPolygonFrame;
   private final DetectionAreaValidator detectionAreaValidator;
+  private final GeoJsonDelimitationTypeMapper geoJsonDelimitationTypeMapper;
 
   private List<Feature> readFromFile(File featuresFromShape) {
     try {
@@ -498,6 +500,8 @@ public class ZoneService {
                 && ZIP.equals(createDetection.getGeoJsonOutput()))
         .needsImageOutput(
             createDetection.getNeedsImageOutput() != null && createDetection.getNeedsImageOutput())
+        .geoJsonDelimitationType(
+            geoJsonDelimitationTypeMapper.toDomain(createDetection.getGeoJsonDelimitationType()))
         .build();
   }
 
@@ -537,6 +541,8 @@ public class ZoneService {
                 && ZIP.equals(createDetection.getGeoJsonOutput()))
         .needsImageOutput(
             createDetection.getNeedsImageOutput() != null && createDetection.getNeedsImageOutput())
+        .geoJsonDelimitationType(
+            geoJsonDelimitationTypeMapper.toDomain(createDetection.getGeoJsonDelimitationType()))
         .build();
   }
 
