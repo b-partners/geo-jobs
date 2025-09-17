@@ -16,8 +16,10 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class DetectionDelimitationRetriever implements Consumer<Detection> {
@@ -27,7 +29,8 @@ public class DetectionDelimitationRetriever implements Consumer<Detection> {
   @Override
   public void accept(Detection detection) {
     if (detection.hasToitureModelName()) {
-      var featureWithDelimitationList = computeFeatureWithDelimitationFromDetection(detection);
+      var featureWithDelimitationList =
+          computeFeatureWithDelimitationFromDetectionFacade(detection);
       var featureWithDelimitationMap =
           featureWithDelimitationList.stream()
               .collect(groupingBy(FeatureWithDelimitation::feature))
@@ -66,6 +69,27 @@ public class DetectionDelimitationRetriever implements Consumer<Detection> {
               .build();
       detectionRepository.save(detectionWithDelimitations);
     }
+  }
+
+  private List<FeatureWithDelimitation> computeFeatureWithDelimitationFromDetectionFacade(
+      Detection detection) {
+    if (detection.getGeoJsonDelimitationType() == null) {
+      log.warn("GeoJsonDelimitationTypeEnum is null, defaulting to ZONE");
+      return computeFeatureWithDelimitationFromDetection(detection);
+    }
+
+    return switch (detection.getGeoJsonDelimitationType()) {
+      case ZONE -> computeFeatureWithDelimitationFromDetection(detection);
+      case ROOF -> computeFeatureWithDelimitationFromProvidedGeoJson(detection);
+    };
+  }
+
+  private List<FeatureWithDelimitation> computeFeatureWithDelimitationFromProvidedGeoJson(
+      Detection detection) {
+    var providedGeoJsonZone = detection.getDomainProvidedGeoJsonZone();
+    return providedGeoJsonZone.stream()
+        .map(feature -> new FeatureWithDelimitation(feature, List.of(feature)))
+        .toList();
   }
 
   private List<FeatureWithDelimitation> computeFeatureWithDelimitationFromDetection(

@@ -68,6 +68,7 @@ public class DetectionFromStatisticRestMapper
         .pdfUrl(pdfUrl)
         .vggUrl(vggUrl)
         .geoServerProperties(detection.getGeoServerProperties())
+        .geoJsonDelimitationType(detection.getGeoJsonDelimitationType())
         .detectableObjectModel(detection.getDetectableObjectModel())
         .step(detectionStepStatisticMapper.toRestDetectionStepStatus(statistic, detectionStepName))
         .addresses(

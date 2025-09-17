@@ -128,6 +128,7 @@ class ZoneServiceTest {
   DetectionVggAttributeRetriever vggAttributeRetrieverMock =
       mock(DetectionVggAttributeRetriever.class);
   RoofDelimiterMapper roofDelimiterMapper = mock();
+  GeoJsonDelimitationTypeMapper geoJsonDelimitationTypeMapper = mock();
   DetectionFromStatisticRestMapper detectionFromStatisticRestMapperMock =
       new DetectionFromStatisticRestMapper(
           bucketComponentMock,
@@ -198,7 +199,8 @@ class ZoneServiceTest {
           synchronousDetectionServiceMock,
           synchronousDetectionValidatorMock,
           tileMultiPolygonFrameMock,
-          detectionAreaValidatorMock);
+          detectionAreaValidatorMock,
+          geoJsonDelimitationTypeMapper);
 
   @BeforeEach
   void setUp() {
