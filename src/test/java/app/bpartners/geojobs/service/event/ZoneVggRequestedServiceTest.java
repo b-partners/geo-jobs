@@ -12,6 +12,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.endpoint.event.model.ZoneVggRequested;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.model.geometry.PolygonObjectType;
 import app.bpartners.geojobs.model.geometry.TiledPixelPolygon;
@@ -49,6 +50,7 @@ class ZoneVggRequestedServiceTest {
   DetectionVGGUpdate detectionVGGUpdateMock = mock();
   PolygonCoordinatesCloser polygonCoordinatesCloser = new PolygonCoordinatesCloser();
   TileCoordinatesPolygonIntersection tileCoordinatesPolygonIntersectionMock = mock();
+  FeatureMapper featureMapperMock = mock();
 
   ZoneVggRequestedService subject =
       new ZoneVggRequestedService(
@@ -59,7 +61,8 @@ class ZoneVggRequestedServiceTest {
           tilingTaskRepositoryMock,
           detectionVGGUpdateMock,
           polygonCoordinatesCloser,
-          tileCoordinatesPolygonIntersectionMock);
+          tileCoordinatesPolygonIntersectionMock,
+          featureMapperMock);
 
   @Test
   void compute_vgg_for_zone_and_update_detection_vgg() {

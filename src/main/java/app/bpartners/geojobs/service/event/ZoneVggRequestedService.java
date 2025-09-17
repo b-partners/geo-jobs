@@ -5,6 +5,7 @@ import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFacto
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
 
 import app.bpartners.geojobs.endpoint.event.model.ZoneVggRequested;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.model.geometry.PolygonObjectType;
@@ -21,6 +22,7 @@ import app.bpartners.geojobs.service.DetectionVGGUpdate;
 import app.bpartners.geojobs.service.PolygonCoordinatesCloser;
 import app.bpartners.geojobs.service.TileCoordinatesPolygonIntersection;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -43,6 +45,7 @@ public class ZoneVggRequestedService implements Consumer<ZoneVggRequested> {
   private final DetectionVGGUpdate detectionVGGUpdate;
   private final PolygonCoordinatesCloser polygonCoordinatesCloser;
   private final TileCoordinatesPolygonIntersection tileCoordinatesPolygonIntersection;
+  private final FeatureMapper featureMapper;
 
   @Override
   public void accept(ZoneVggRequested event) {
@@ -110,13 +113,7 @@ public class ZoneVggRequestedService implements Consumer<ZoneVggRequested> {
         .map(
             featureWithDelimitation ->
                 featureWithDelimitation.delimitations().stream()
-                    .map(
-                        feature ->
-                            geometryConverter.apply(
-                                toRestFeature(feature)
-                                    .getGeometry()
-                                    .getMultiPolygon()
-                                    .getCoordinates()))
+                    .map(feature -> geometryConverter.apply(getRestMultipolygonData(feature)))
                     .toList())
         .flatMap(List::stream)
         .reduce(unifyMultiPolygon())
@@ -125,6 +122,18 @@ public class ZoneVggRequestedService implements Consumer<ZoneVggRequested> {
                 new IllegalStateException(
                     "Unable to unify roof multiPolygon to request zone VGG for detection.id="
                         + detection.getId()));
+  }
+
+  private List<List<List<List<BigDecimal>>>> getRestMultipolygonData(
+      app.bpartners.geojobs.repository.model.Feature feature) {
+    var restFeature = toRestFeature(feature);
+    var jtsGeometry = featureMapper.toDomainGeometry(restFeature);
+
+    if (jtsGeometry instanceof Polygon) {
+      return List.of(restFeature.getGeometry().getPolygon().getCoordinates());
+    }
+
+    return restFeature.getGeometry().getMultiPolygon().getCoordinates();
   }
 
   private List<TiledPixelPolygon> getTiledPixelPolygon(
