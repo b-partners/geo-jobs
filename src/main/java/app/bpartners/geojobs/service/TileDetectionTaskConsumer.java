@@ -9,9 +9,8 @@ import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
-import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.service.detection.DetectionMapper;
-import app.bpartners.geojobs.service.detection.DetectionResponse;
+import app.bpartners.geojobs.service.detection.RoofCoveringDetector;
 import app.bpartners.geojobs.service.detection.TileObjectDetector;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -20,6 +19,7 @@ import java.io.File;
 import java.util.List;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
@@ -35,7 +35,9 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
   private final DetectionRepository detectionRepository;
   private final GeometryConverter geometryConverter;
   private final DetectionMaskFromTileRetriever maskRetriever;
+  private final RoofCoveringDetector roofCoveringDetector;
 
+  @SneakyThrows
   @Override
   public void accept(TileDetectionTask tileDetectionTask) {
     var detectableObjectConfigurations = tileDetectionTask.getDetectableObjectConfigurations();
@@ -110,12 +112,25 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
         }
       }
     }
-
-    DetectionResponse response =
+    var detectionResponse =
         objectsDetector.apply(tileDetectionTask, mask, detectableObjectConfigurations);
-    MachineDetectedTile machineDetectedTile =
+    var roofCoveringResponse =
+        roofCoveringDetector.apply(
+            tile.toBuilder()
+                .detectionE2Id(detection != null ? detection.getEndToEndId() : null)
+                .build(),
+            mask);
+    var machineDetectedTile =
         detectionMapper.toDetectedTile(
-            response, tile, tileDetectionTask.getParcelId(), zoneDetectionJobId, parcelJobId);
+            detectionResponse,
+            tile,
+            tileDetectionTask.getParcelId(),
+            zoneDetectionJobId,
+            parcelJobId);
+    if (roofCoveringResponse != null) {
+      machineDetectedTile.setPrimaryRoofCovering(roofCoveringResponse.primary());
+      machineDetectedTile.setSecondaryRoofCovering(roofCoveringResponse.secondary());
+    }
 
     if (machineDetectedTile.getDetectedObjects() != null) {
       machineDetectedTile
