@@ -12,6 +12,7 @@ import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.service.detection.DetectionMapper;
 import app.bpartners.geojobs.service.detection.DetectionResponse;
+import app.bpartners.geojobs.service.detection.RoofCoveringDetector;
 import app.bpartners.geojobs.service.detection.TileObjectDetector;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -20,6 +21,7 @@ import java.io.File;
 import java.util.List;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
@@ -35,7 +37,9 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
   private final DetectionRepository detectionRepository;
   private final GeometryConverter geometryConverter;
   private final DetectionMaskFromTileRetriever maskRetriever;
+  private final RoofCoveringDetector roofCoveringDetector;
 
+  @SneakyThrows
   @Override
   public void accept(TileDetectionTask tileDetectionTask) {
     var detectableObjectConfigurations = tileDetectionTask.getDetectableObjectConfigurations();
@@ -116,6 +120,18 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
     MachineDetectedTile machineDetectedTile =
         detectionMapper.toDetectedTile(
             response, tile, tileDetectionTask.getParcelId(), zoneDetectionJobId, parcelJobId);
+
+    var roofCoveringDetectionResponse = roofCoveringDetector.apply(tile, mask);
+
+    if (roofCoveringDetectionResponse != null) {
+      machineDetectedTile.setPrimaryRoofCovering(roofCoveringDetectionResponse.primary());
+      machineDetectedTile.setSecondaryRoofCovering(roofCoveringDetectionResponse.secondary());
+    } else {
+      log.warn(
+          "RoofCoveringDetector returned null response for tile {}. Skipping roof covering"
+              + " mapping.",
+          tile);
+    }
 
     if (machineDetectedTile.getDetectedObjects() != null) {
       machineDetectedTile

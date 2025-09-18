@@ -33,6 +33,9 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 
 class TileDetectionTaskConsumerIT {
   private static final String DUMMY_BUCKET_NAME = "dummyBucketName";
@@ -42,6 +45,7 @@ class TileDetectionTaskConsumerIT {
   TileObjectDetectorConf tileObjectDetectorConfMock = mock();
   DetectionRepository detectionRepositoryMock = mock();
   CustomBucketComponent customBucketComponentMock = mock();
+  RestTemplate restTemplateMock = mock();
 
   GeometryConverter geometryConverter = new GeometryConverter(null);
   ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
@@ -61,6 +65,9 @@ class TileDetectionTaskConsumerIT {
           "dummyApiUrl",
           tileObjectDetectorConfMock,
           detectionResponseAggregator);
+  RoofCoveringDetector roofCoveringDetector =
+      new RoofCoveringDetector(
+          objectMapper, restTemplateMock, "dummyUrl", "dummyToken", customBucketComponentMock);
 
   TileDetectionTaskConsumer subject =
       new TileDetectionTaskConsumer(
@@ -69,7 +76,8 @@ class TileDetectionTaskConsumerIT {
           detectionMapper,
           detectionRepositoryMock,
           geometryConverter,
-          maskRetriever);
+          maskRetriever,
+          roofCoveringDetector);
 
   @SneakyThrows
   @Test
@@ -110,7 +118,14 @@ class TileDetectionTaskConsumerIT {
     when(tileObjectDetectorConfMock.getTileDetectionApiUrls()).thenReturn(tileDetectionApiUrls());
     when(machineDetectedTileRepositoryMock.save(any()))
         .thenAnswer(invocation -> invocation.getArgument(0));
-
+    when(restTemplateMock.postForEntity(
+            any(String.class), any(), eq(RoofCoveringDetectionResponse.class)))
+        .thenReturn(
+            new ResponseEntity<>(
+                new RoofCoveringDetectionResponse(
+                    new RoofCovering(RoofCoveringType.ROOF_ARDOISE, 1100),
+                    new RoofCovering(RoofCoveringType.ROOF_TUILES, 1000)),
+                HttpStatus.OK));
     assertDoesNotThrow(
         () ->
             subject.accept(
