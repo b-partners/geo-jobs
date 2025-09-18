@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.service;
 
-import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toDomainFeature;
+import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.*;
 import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.HOUSES_0;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.*;
@@ -84,11 +84,39 @@ public class DetectionDelimitationRetriever implements Consumer<Detection> {
     };
   }
 
+  private app.bpartners.geojobs.repository.model.Feature getRoofMultipolygonFromProvidedFeature(
+      app.bpartners.geojobs.repository.model.Feature feature) {
+    var restFeature = toRestFeature(feature);
+    Map<String, Object> properties =
+        restFeature.getProperties() == null ? new HashMap<>() : restFeature.getProperties();
+    properties.put("zoom", feature.getZoom() == null ? HOUSES_0.getZoomLevel() : feature.getZoom());
+    restFeature.setProperties(properties);
+
+    var geometryType = getGeometryType(restFeature.getGeometry().getActualInstance());
+    switch (geometryType) {
+      case POLYGON:
+        var multipolygonGeometry =
+            new FeatureGeometry(
+                new MultiPolygon()
+                    .type(MultiPolygon.TypeEnum.MULTI_POLYGON)
+                    .coordinates(List.of(restFeature.getGeometry().getPolygon().getCoordinates())));
+        restFeature.setGeometry(multipolygonGeometry);
+        return toDomainFeature(restFeature);
+      case MULTI_POLYGON:
+        return toDomainFeature(restFeature);
+      default:
+        throw new IllegalStateException("Point is not supported");
+    }
+  }
+
   private List<FeatureWithDelimitation> computeFeatureWithDelimitationFromProvidedGeoJson(
       Detection detection) {
     var providedGeoJsonZone = detection.getDomainProvidedGeoJsonZone();
     return providedGeoJsonZone.stream()
-        .map(feature -> new FeatureWithDelimitation(feature, List.of(feature)))
+        .map(
+            feature ->
+                new FeatureWithDelimitation(
+                    feature, List.of(getRoofMultipolygonFromProvidedFeature(feature))))
         .toList();
   }
 
