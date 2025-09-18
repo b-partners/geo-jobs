@@ -114,7 +114,7 @@ public class FeatureMapper {
     return featureDomain;
   }
 
-  private static Geometry.TypeEnum getGeometryType(Object actualInstance) {
+  public static Geometry.TypeEnum getGeometryType(Object actualInstance) {
     var clazz = actualInstance.getClass();
     if (clazz.equals(MultiPolygon.class)) {
       return Geometry.TypeEnum.MULTI_POLYGON;
