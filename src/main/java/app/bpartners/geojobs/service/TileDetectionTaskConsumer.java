@@ -2,9 +2,7 @@ package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
-import static java.time.Instant.now;
 
-import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
@@ -87,19 +85,6 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
         if (!roofMultiPolygonIntersectedWithTilePolygon.isEmpty()) {
           var maskMultiPolygon =
               roofMultiPolygonIntersectedWithTilePolygon.stream()
-                  //                      .map(roofMultiPolygon -> {
-                  //                          var geometry =
-                  // multiPolygonFromTile.difference(roofMultiPolygon);
-                  //                          if( geometry instanceof MultiPolygon multiPolygon ) {
-                  //                              return multiPolygon;
-                  //                          }
-                  //                          if( geometry instanceof Polygon polygon ) {
-                  //                              return geometryFactory.createMultiPolygon(new
-                  // Polygon[] {polygon});
-                  //                          }
-                  //                          return null;
-                  //                      })
-                  //                  .filter(Objects::nonNull)
                   .reduce(unifyMultiPolygon())
                   .orElse(null);
           mask = maskRetriever.apply(tile, maskMultiPolygon);
@@ -152,20 +137,5 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
               });
     }
     machineDetectedTileRepository.save(machineDetectedTile);
-  }
-
-  public static TileDetectionTask withNewStatus(
-      TileDetectionTask task,
-      Status.ProgressionStatus progression,
-      Status.HealthStatus health,
-      String message) {
-    return (TileDetectionTask)
-        task.hasNewStatus(
-            Status.builder()
-                .progression(progression)
-                .health(health)
-                .creationDatetime(now())
-                .message(message)
-                .build());
   }
 }

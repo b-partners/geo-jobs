@@ -67,10 +67,6 @@ public class MachineDetectedTile implements Serializable {
   @Column(name = "secondary_roof_covering_area")
   private Long secondaryRoofCoveringArea;
 
-  public String describe() {
-    return "DetectedTile(id=" + id + ",tile=" + tile + "," + "jobId=" + zdjJobId + ")";
-  }
-
   public void setPrimaryRoofCovering(RoofCovering covering) {
     primaryRoofCoveringArea = covering == null ? null : covering.area();
     primaryRoofCoveringType = covering == null ? null : covering.coating();
