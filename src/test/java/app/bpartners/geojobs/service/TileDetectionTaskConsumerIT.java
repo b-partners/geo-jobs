@@ -2,6 +2,8 @@ package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
+import static app.bpartners.geojobs.repository.model.detection.RoofCoveringType.ROOF_ARDOISE;
+import static app.bpartners.geojobs.repository.model.detection.RoofCoveringType.ROOF_TUILES;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -67,7 +69,7 @@ class TileDetectionTaskConsumerIT {
           detectionResponseAggregator);
   RoofCoveringDetector roofCoveringDetector =
       new RoofCoveringDetector(
-          objectMapper, restTemplateMock, "dummyUrl", "dummyToken", customBucketComponentMock);
+          objectMapper, restTemplateMock, "dummyUrl", customBucketComponentMock);
 
   TileDetectionTaskConsumer subject =
       new TileDetectionTaskConsumer(
@@ -119,12 +121,11 @@ class TileDetectionTaskConsumerIT {
     when(machineDetectedTileRepositoryMock.save(any()))
         .thenAnswer(invocation -> invocation.getArgument(0));
     when(restTemplateMock.postForEntity(
-            any(String.class), any(), eq(RoofCoveringDetectionResponse.class)))
+            any(String.class), any(), eq(RoofCoveringDetector.RoofCoveringDetectionResponse.class)))
         .thenReturn(
             new ResponseEntity<>(
-                new RoofCoveringDetectionResponse(
-                    new RoofCovering(RoofCoveringType.ROOF_ARDOISE, 1100),
-                    new RoofCovering(RoofCoveringType.ROOF_TUILES, 1000)),
+                new RoofCoveringDetector.RoofCoveringDetectionResponse(
+                    new RoofCovering(ROOF_ARDOISE, 1100), new RoofCovering(ROOF_TUILES, 1000)),
                 HttpStatus.OK));
     assertDoesNotThrow(
         () ->
@@ -148,6 +149,10 @@ class TileDetectionTaskConsumerIT {
         (actual.getDetectedObjects().stream()
             .map(DetectedObject::getDetectableObjectType)
             .collect(Collectors.toSet())));
+    assertEquals(ROOF_ARDOISE, actual.getPrimaryRoofCoveringType());
+    assertEquals(ROOF_TUILES, actual.getSecondaryRoofCoveringType());
+    assertEquals(1100, actual.getPrimaryRoofCoveringArea());
+    assertEquals(1000, actual.getSecondaryRoofCoveringArea());
   }
 
   private Set<DetectableType> expectedDetectedObjectTypes() {

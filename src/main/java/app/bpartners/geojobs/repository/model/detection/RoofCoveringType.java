@@ -1,5 +1,8 @@
 package app.bpartners.geojobs.repository.model.detection;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import java.util.Arrays;
+
 public enum RoofCoveringType {
   ROOF_ARDOISE,
   ROOF_ASPHALTE_BITUME,
@@ -12,14 +15,13 @@ public enum RoofCoveringType {
   ROOF_TUILES,
   ROOF_ZINC;
 
-  public static RoofCoveringType of(String stringValue) {
-    if (stringValue == null) return null;
-    for (RoofCoveringType type : values()) {
-      if (type.name().toLowerCase().equals(stringValue)) {
-        return type;
-      }
-    }
-    throw new IllegalArgumentException("Unknown RoofCoveringType: " + stringValue);
+  // Used for mapping
+  @JsonCreator
+  public static RoofCoveringType fromString(String value) {
+    return Arrays.stream(values())
+        .filter(e -> e.name().equalsIgnoreCase(value))
+        .findFirst()
+        .orElseThrow(() -> new IllegalArgumentException("Unknown value: " + value));
   }
 
   @Override

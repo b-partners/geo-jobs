@@ -1,9 +1,11 @@
 package app.bpartners.geojobs.service.detection;
 
+import static java.util.UUID.randomUUID;
 import static org.apache.commons.io.FileUtils.readFileToByteArray;
 
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.net.URI;
@@ -14,7 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
@@ -26,75 +27,72 @@ public class RoofCoveringDetector {
   private final ObjectMapper om;
   private final RestTemplate restTemplate;
   private final String roofCoveringDetectionApiUrl;
-  private final String roofCoveringDetectionApiToken;
   private final CustomBucketComponent bucketComponent;
 
   public RoofCoveringDetector(
       ObjectMapper om,
       RestTemplate restTemplate,
       @Value("${roof.covering.detection.api.url}") String roofCoveringDetectionApiUrl,
-      @Value("${roof.covering.detection.api.token}") String roofCoveringDetectionApiToken,
       CustomBucketComponent bucketComponent) {
     this.om = om;
     this.restTemplate = restTemplate;
     this.roofCoveringDetectionApiUrl = roofCoveringDetectionApiUrl;
-    this.roofCoveringDetectionApiToken = roofCoveringDetectionApiToken;
     this.bucketComponent = bucketComponent;
   }
 
   @SneakyThrows
-  public RoofCoveringDetectionResponse apply(Tile tile, File mask) {
-    File file =
+  public RoofCoveringDetectionResponse apply(Tile tile, File maskFile) {
+    var tileImageFile =
         bucketComponent.download(
             bucketComponent.getBucketConf().getBucketName(), tile.getBucketPath());
-    String imageBase64 = Base64.getEncoder().encodeToString(readFileToByteArray(file));
-    String maskBase64 =
-        mask == null ? null : Base64.getEncoder().encodeToString(readFileToByteArray(mask));
-
-    return apply(imageBase64, maskBase64);
+    var imageBase64 = Base64.getEncoder().encodeToString(readFileToByteArray(tileImageFile));
+    var maskBase64 =
+        maskFile == null ? null : Base64.getEncoder().encodeToString(readFileToByteArray(maskFile));
+    var coveringDetectionProjectName = randomUUID().toString();
+    if (tile.getDetectionE2Id() == null) {
+      log.info(
+          "Actual project name for roof covering detection is {}", coveringDetectionProjectName);
+    }
+    return apply(
+        new RoofCoveringDetectionPayload(
+            imageBase64,
+            maskBase64,
+            tile.getBucketPath(),
+            tile.getDetectionE2Id() == null
+                ? coveringDetectionProjectName
+                : tile.getDetectionE2Id()));
   }
 
   @SneakyThrows
-  public RoofCoveringDetectionResponse apply(String imageBase64, String maskBase64) {
-
-    HttpHeaders headers = new HttpHeaders();
-    headers.add("Authorization", "Bearer " + roofCoveringDetectionApiToken);
+  private RoofCoveringDetectionResponse apply(RoofCoveringDetectionPayload payload) {
+    var headers = new HttpHeaders();
     headers.add("Content-Type", "application/json");
-
-    RoofCoveringDetectionPayload payload =
-        new RoofCoveringDetectionPayload(imageBase64, maskBase64);
-
-    String requestBody = om.writeValueAsString(payload);
-
-    HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
-
-    UriComponentsBuilder uriBuilder;
-    ResponseEntity<RoofCoveringDetectionResponse> responseEntity;
+    var requestBody = om.writeValueAsString(payload);
+    var request = new HttpEntity<>(requestBody, headers);
 
     try {
-      uriBuilder =
-          UriComponentsBuilder.fromUri(new URI(roofCoveringDetectionApiUrl + "Prod/coatings"));
-      responseEntity =
+      var uriBuilder =
+          UriComponentsBuilder.fromUri(new URI(roofCoveringDetectionApiUrl + "/coatings"));
+      var response =
           restTemplate.postForEntity(
               uriBuilder.toUriString(), request, RoofCoveringDetectionResponse.class);
-
-      if (responseEntity.getStatusCode().value() != 200) {
-        log.info(
-            "Got HTTP code {} while calling API for roof covering detection {}",
-            responseEntity.getStatusCode(),
-            roofCoveringDetectionApiUrl);
+      if (response.getStatusCode().value() == 200) {
+        return response.getBody();
       }
-
-      return responseEntity.getBody();
-    } catch (URISyntaxException e) {
-      throw new RuntimeException(e);
-    } catch (HttpStatusCodeException e) {
+    } catch (URISyntaxException | HttpStatusCodeException e) {
       log.error(
           "Error while calling API for roof covering detection {} with exception {}",
           roofCoveringDetectionApiUrl,
           e.getMessage());
     }
-
     return null;
   }
+
+  public record RoofCoveringDetectionPayload(
+      @JsonProperty("image_base64") String imageBase64,
+      @JsonProperty("binary_mask_base64") String binaryMaskBase64,
+      @JsonProperty("filename") String filename,
+      @JsonProperty("projectname") String projectName) {}
+
+  public record RoofCoveringDetectionResponse(RoofCovering primary, RoofCovering secondary) {}
 }

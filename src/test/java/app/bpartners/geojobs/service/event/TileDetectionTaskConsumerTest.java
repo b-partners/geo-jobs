@@ -108,7 +108,7 @@ class TileDetectionTaskConsumerTest {
         .thenReturn(roofMultiPolygonMock);
     when(roofCoveringDetectorMock.apply(any(Tile.class), any(File.class)))
         .thenReturn(
-            new RoofCoveringDetectionResponse(
+            new RoofCoveringDetector.RoofCoveringDetectionResponse(
                 new RoofCovering(RoofCoveringType.ROOF_ARDOISE, 1100),
                 new RoofCovering(RoofCoveringType.ROOF_TUILES, 1000)));
 
@@ -147,6 +147,10 @@ class TileDetectionTaskConsumerTest {
             .tile(tileMock)
             .jobId(parcelJobId)
             .build();
+    var tileBuilderMock = mock(Tile.TileBuilder.class);
+    when(tileBuilderMock.detectionE2Id(any())).thenReturn(tileBuilderMock);
+    when(tileBuilderMock.build()).thenReturn(tileMock);
+    when(tileMock.toBuilder()).thenReturn(tileBuilderMock);
     when(tileMock.getCoordinates()).thenReturn(new TileCoordinates().x(0).y(0).z(20));
     when(roofDelimitationMockDomain.getGeometry()).thenReturn(mock());
     when(geometryConverterMock.apply(featureMultiPolygonMock.getCoordinates()))
@@ -182,7 +186,7 @@ class TileDetectionTaskConsumerTest {
     when(maskRetrieverMock.apply(tileMock, roofMultiPolygonMock)).thenReturn(maskFileMock);
     when(roofCoveringDetectorMock.apply(any(Tile.class), any(File.class)))
         .thenReturn(
-            new RoofCoveringDetectionResponse(
+            new RoofCoveringDetector.RoofCoveringDetectionResponse(
                 new RoofCovering(RoofCoveringType.ROOF_ARDOISE, 1100),
                 new RoofCovering(RoofCoveringType.ROOF_TUILES, 1000)));
 
@@ -226,6 +230,10 @@ class TileDetectionTaskConsumerTest {
             .tile(tileMock)
             .jobId(parcelJobId)
             .build();
+    var tileBuilderMock = mock(Tile.TileBuilder.class);
+    when(tileBuilderMock.detectionE2Id(any())).thenReturn(tileBuilderMock);
+    when(tileBuilderMock.build()).thenReturn(tileMock);
+    when(tileMock.toBuilder()).thenReturn(tileBuilderMock);
     when(featureGeometryMock.getMultiPolygon()).thenReturn(featureMultiPolygonMock);
     when(featureGeometryMock.getActualInstance()).thenReturn(featureMultiPolygonMock);
     when(featureMock.getGeometry()).thenReturn(featureGeometryMock);
@@ -246,7 +254,7 @@ class TileDetectionTaskConsumerTest {
         .thenReturn(new MachineDetectedTile());
     when(roofCoveringDetectorMock.apply(any(Tile.class), eq(null)))
         .thenReturn(
-            new RoofCoveringDetectionResponse(
+            new RoofCoveringDetector.RoofCoveringDetectionResponse(
                 new RoofCovering(RoofCoveringType.ROOF_ARDOISE, 1100),
                 new RoofCovering(RoofCoveringType.ROOF_TUILES, 1000)));
 

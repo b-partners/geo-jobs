@@ -1,6 +1,7 @@
-DO $$
+DO
+$$
     BEGIN
-        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'roof_type') THEN
+        IF NOT EXISTS (SELECT FROM pg_type WHERE typname = 'roof_covering_type') THEN
             CREATE TYPE roof_covering_type AS ENUM (
                 'roof_ardoise',
                 'roof_asphalte_bitume',
@@ -14,16 +15,11 @@ DO $$
                 'roof_zinc'
                 );
         END IF;
-    END$$;
+    END
+$$;
 
-ALTER TABLE IF EXISTS detected_tile
-    ADD COLUMN IF NOT EXISTS primary_roof_covering_type roof_covering_type;
-
-ALTER TABLE IF EXISTS detected_tile
-    ADD COLUMN IF NOT EXISTS primary_roof_covering_area double precision;
-
-ALTER TABLE IF EXISTS detected_tile
-    ADD COLUMN IF NOT EXISTS secondary_roof_covering_type roof_covering_type;
-
-ALTER TABLE IF EXISTS detected_tile
-    ADD COLUMN IF NOT EXISTS secondary_roof_covering_area double precision;
+ALTER TABLE IF EXISTS "detected_tile"
+    ADD COLUMN IF NOT EXISTS primary_roof_covering_type   roof_covering_type,
+    ADD COLUMN IF NOT EXISTS primary_roof_covering_area   numeric,
+    ADD COLUMN IF NOT EXISTS secondary_roof_covering_type roof_covering_type,
+    ADD COLUMN IF NOT EXISTS secondary_roof_covering_area numeric;

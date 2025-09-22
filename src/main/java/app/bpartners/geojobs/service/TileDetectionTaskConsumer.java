@@ -9,9 +9,7 @@ import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
-import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.service.detection.DetectionMapper;
-import app.bpartners.geojobs.service.detection.DetectionResponse;
 import app.bpartners.geojobs.service.detection.RoofCoveringDetector;
 import app.bpartners.geojobs.service.detection.TileObjectDetector;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
@@ -114,23 +112,24 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
         }
       }
     }
-
-    DetectionResponse response =
+    var detectionResponse =
         objectsDetector.apply(tileDetectionTask, mask, detectableObjectConfigurations);
-    MachineDetectedTile machineDetectedTile =
+    var roofCoveringResponse =
+        roofCoveringDetector.apply(
+            tile.toBuilder()
+                .detectionE2Id(detection != null ? detection.getEndToEndId() : null)
+                .build(),
+            mask);
+    var machineDetectedTile =
         detectionMapper.toDetectedTile(
-            response, tile, tileDetectionTask.getParcelId(), zoneDetectionJobId, parcelJobId);
-
-    var roofCoveringDetectionResponse = roofCoveringDetector.apply(tile, mask);
-
-    if (roofCoveringDetectionResponse != null) {
-      machineDetectedTile.setPrimaryRoofCovering(roofCoveringDetectionResponse.primary());
-      machineDetectedTile.setSecondaryRoofCovering(roofCoveringDetectionResponse.secondary());
-    } else {
-      log.warn(
-          "RoofCoveringDetector returned null response for tile {}. Skipping roof covering"
-              + " mapping.",
-          tile);
+            detectionResponse,
+            tile,
+            tileDetectionTask.getParcelId(),
+            zoneDetectionJobId,
+            parcelJobId);
+    if (roofCoveringResponse != null) {
+      machineDetectedTile.setPrimaryRoofCovering(roofCoveringResponse.primary());
+      machineDetectedTile.setSecondaryRoofCovering(roofCoveringResponse.secondary());
     }
 
     if (machineDetectedTile.getDetectedObjects() != null) {
