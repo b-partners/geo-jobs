@@ -134,10 +134,6 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
     tiledPixelPolygonFilteredByPoint.forEach(
         (featurePoint, tiledPolygons) -> {
           var vgg = new VGG();
-          // int minTileXForPoint =
-          //    tiledPolygons.stream().mapToInt(TiledPixelPolygon::tileX).min().orElseThrow();
-          // int minTileYForPoint =
-          //    tiledPolygons.stream().mapToInt(TiledPixelPolygon::tileY).min().orElseThrow();
           tiledPolygons.forEach(
               tiledPolygon -> {
                 var key =
