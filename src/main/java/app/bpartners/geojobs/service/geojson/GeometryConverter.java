@@ -37,21 +37,6 @@ public class GeometryConverter {
     this.buildingApi = buildingApi;
   }
 
-  @SneakyThrows
-  public Feature toFeature(
-      Integer zoom,
-      HashMap<String, Object> properties,
-      app.bpartners.geojobs.endpoint.rest.model.Point restPoint) {
-    return Feature.builder()
-        .zoom(zoom)
-        .properties(properties)
-        .geometry(
-            new Feature.FeatureGeometry(
-                app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.POINT,
-                new ObjectMapper().writeValueAsString(restPoint)))
-        .build();
-  }
-
   public Feature toFeature(
       String featureId, Integer zoom, Map<String, Object> properties, MultiPolygon multiPolygon) {
     return Feature.builder()
@@ -136,6 +121,14 @@ public class GeometryConverter {
                 case MULTI_POLYGON -> {
                   return apply(building.shape().getMultiPolygonCoordinates());
                 }
+                case POINT -> {
+                  log.warn(
+                      "No building obtain from around longitude={}, latitude={} with radius={}",
+                      longitude,
+                      latitude,
+                      radius);
+                  return null;
+                }
                 default ->
                     throw new UnsupportedOperationException(
                         "Only POLYGON and MULTI_POLYGON can be converted to roof polygons, actual"
@@ -143,6 +136,7 @@ public class GeometryConverter {
                             + geometryType);
               }
             })
+        .filter(Objects::nonNull)
         .filter(
             roofMultiPolygon ->
                 provided.contains(roofMultiPolygon) || provided.intersects(roofMultiPolygon))
@@ -336,7 +330,7 @@ public class GeometryConverter {
     for (int i = 0; i < ringData.size(); i++) {
       List<BigDecimal> point = ringData.get(i);
       if (point.size() < 2) {
-        throw new IllegalArgumentException("Each point must have at least 2 coordinates (x, y)");
+        throw new IllegalArgumentException("Each feature must have at least 2 coordinates (x, y)");
       }
       coordinates[i] = new Coordinate(point.get(0).doubleValue(), point.get(1).doubleValue());
     }
@@ -422,6 +416,23 @@ public class GeometryConverter {
       }
       throw new UnsupportedOperationException("Unsupported unified geometry : " + unifiedGeometry);
     };
+  }
+
+  public static MultiPolygon getRoofMultiPolygon(
+      app.bpartners.geojobs.endpoint.rest.model.Feature roofFeature) {
+    GeometryConverter geometryConverter = new GeometryConverter(null);
+    MultiPolygon roofGeometry;
+    var geometryInstance = roofFeature.getGeometry().getActualInstance();
+    switch (geometryInstance) {
+      case app.bpartners.geojobs.endpoint.rest.model.Polygon restPolygon ->
+          roofGeometry = geometryConverter.apply(List.of(restPolygon.getCoordinates()));
+      case app.bpartners.geojobs.endpoint.rest.model.MultiPolygon restMultiPolygon ->
+          roofGeometry = geometryConverter.apply(restMultiPolygon.getCoordinates());
+      default ->
+          throw new IllegalStateException(
+              "Unsupported geometry type for roof: " + geometryInstance);
+    }
+    return roofGeometry;
   }
 
   private List<BigDecimal> lonLatToMeters(BigDecimal lon, BigDecimal lat) {
