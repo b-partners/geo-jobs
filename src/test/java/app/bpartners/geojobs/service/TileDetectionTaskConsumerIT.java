@@ -125,7 +125,7 @@ class TileDetectionTaskConsumerIT {
         .thenReturn(
             new ResponseEntity<>(
                 new RoofCoveringDetector.RoofCoveringDetectionResponse(
-                    new RoofCovering(ROOF_ARDOISE, 1100), new RoofCovering(ROOF_TUILES, 1000)),
+                    new RoofCovering(ROOF_ARDOISE, 1100L), new RoofCovering(ROOF_TUILES, 1000L)),
                 HttpStatus.OK));
     assertDoesNotThrow(
         () ->

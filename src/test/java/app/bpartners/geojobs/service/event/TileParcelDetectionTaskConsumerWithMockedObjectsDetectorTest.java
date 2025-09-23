@@ -38,8 +38,8 @@ class TileParcelDetectionTaskConsumerWithMockedObjectsDetectorTest {
     when(roofCoveringDetectorMock.apply(any(Tile.class), any(File.class)))
         .thenReturn(
             new RoofCoveringDetector.RoofCoveringDetectionResponse(
-                new RoofCovering(RoofCoveringType.ROOF_ARDOISE, 1100),
-                new RoofCovering(RoofCoveringType.ROOF_TUILES, 1000)));
+                new RoofCovering(RoofCoveringType.ROOF_ARDOISE, 1100L),
+                new RoofCovering(RoofCoveringType.ROOF_TUILES, 1000L)));
 
     var subject =
         new TileDetectionTaskConsumer(

@@ -50,6 +50,6 @@ class RoofCoveringDetectorIT extends FacadeIT {
 
   private RoofCoveringDetector.@NotNull RoofCoveringDetectionResponse expectedCovering() {
     return new RoofCoveringDetector.RoofCoveringDetectionResponse(
-        new RoofCovering(ROOF_TUILES, 80140), new RoofCovering(ROOF_ASPHALTE_BITUME, 31096));
+        new RoofCovering(ROOF_TUILES, 80140L), new RoofCovering(ROOF_ASPHALTE_BITUME, 31096L));
   }
 }

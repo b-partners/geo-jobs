@@ -48,7 +48,7 @@ public class DetectionRoofPropertiesRequestedService
         detection.getFeatureWithDelimitations().stream()
             .map(
                 featureWithDelimitation -> {
-                  var roofFeatures = featureWithDelimitation.getDelimitations();
+                  var roofFeatures = featureWithDelimitation.getRestDelimitations();
                   var domainFeaturesWithCovering =
                       roofFeatures.stream()
                           .map(
@@ -92,7 +92,15 @@ public class DetectionRoofPropertiesRequestedService
                                                         detectedTile.getSecondaryRoofCoveringType(),
                                                         detectedTile
                                                             .getSecondaryRoofCoveringArea())))
-                                        .flatMap(d -> Stream.of(d.primary(), d.secondary()))
+                                        .flatMap(
+                                            d ->
+                                                Stream.concat(
+                                                    Stream.ofNullable(d.primary()),
+                                                    Stream.ofNullable(d.secondary())))
+                                        .filter(
+                                            o ->
+                                                o != null
+                                                    && (o.coating() != null && o.area() != null))
                                         .collect(
                                             Collectors.groupingBy(
                                                 RoofCovering::coating,

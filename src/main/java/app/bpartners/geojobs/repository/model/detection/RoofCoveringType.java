@@ -23,9 +23,4 @@ public enum RoofCoveringType {
         .findFirst()
         .orElseThrow(() -> new IllegalArgumentException("Unknown value: " + value));
   }
-
-  @Override
-  public String toString() {
-    return name().toLowerCase();
-  }
 }

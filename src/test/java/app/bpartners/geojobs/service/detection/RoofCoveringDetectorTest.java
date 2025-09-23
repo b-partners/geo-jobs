@@ -78,7 +78,7 @@ class RoofCoveringDetectorTest {
 
   private RoofCoveringDetector.RoofCoveringDetectionResponse getRoofCoveringDetectionBody() {
     return new RoofCoveringDetector.RoofCoveringDetectionResponse(
-        new RoofCovering(ROOF_ARDOISE, 1343), new RoofCovering(ROOF_TUILES, 1000));
+        new RoofCovering(ROOF_ARDOISE, 1343L), new RoofCovering(ROOF_TUILES, 1000L));
   }
 
   @SneakyThrows

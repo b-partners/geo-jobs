@@ -62,6 +62,11 @@ public class DetectionDelimitationRetriever implements Consumer<Detection> {
             }
           });
 
+      log.info(
+          "debug featureWithDelimitationList {}",
+          featureWithDelimitationList.stream()
+              .map(FeatureWithDelimitation::toString)
+              .collect(toList()));
       var detectionWithDelimitations =
           detection.toBuilder()
               .pointDelimitation(pointDelimitation)
