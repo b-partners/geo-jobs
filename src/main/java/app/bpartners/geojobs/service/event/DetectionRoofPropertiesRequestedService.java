@@ -13,11 +13,13 @@ import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.repository.model.detection.RoofCoveringType;
 import app.bpartners.geojobs.service.detection.RoofCovering;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -148,5 +150,44 @@ public class DetectionRoofPropertiesRequestedService
 
   private record DetectedRoofCoveringArea(RoofCovering primary, RoofCovering secondary) {}
 
-  public record DetectedRoofCovering(RoofCoveringType primary, RoofCoveringType secondary) {}
+  public static final class DetectedRoofCovering {
+    @JsonProperty private final RoofCoveringType primary;
+    @JsonProperty private final RoofCoveringType secondary;
+
+    public DetectedRoofCovering() {
+      this(null, null);
+    }
+
+    public DetectedRoofCovering(RoofCoveringType primary, RoofCoveringType secondary) {
+      this.primary = primary;
+      this.secondary = secondary;
+    }
+
+    public RoofCoveringType primary() {
+      return primary;
+    }
+
+    public RoofCoveringType secondary() {
+      return secondary;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) return true;
+      if (obj == null || obj.getClass() != this.getClass()) return false;
+      var that = (DetectedRoofCovering) obj;
+      return Objects.equals(this.primary, that.primary)
+          && Objects.equals(this.secondary, that.secondary);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(primary, secondary);
+    }
+
+    @Override
+    public String toString() {
+      return "DetectedRoofCovering[" + "primary=" + primary + ", " + "secondary=" + secondary + ']';
+    }
+  }
 }

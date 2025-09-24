@@ -238,6 +238,7 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
             (feature, tiledPixelPolygonGroupByFeature) -> {
               var vgg = new VGG();
               var roofMultiPolygon = getRoofMultiPolygon(feature);
+              var polygonRoofPixelList = new ArrayList<Polygon>();
               Map<String, VGG.Annotation.Region> regions = new HashMap<>();
               List<PolygonGroup> projectedPolygonGroups =
                   tiledPixelPolygonGroupByFeature.stream()
@@ -256,6 +257,7 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
                               polygonGroups.add(
                                   new PolygonGroup(
                                       TOITURE_REVETEMENT, List.of(polygonRoofPixelPolygon)));
+                              polygonRoofPixelList.add(polygonRoofPixelPolygon);
                             }
                             return polygonGroups.stream()
                                 .map(
@@ -294,50 +296,40 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
                       .stream()
                       .map(e -> new PolygonGroup(e.getKey(), e.getValue()))
                       .toList();
-              var roofPolygonGroup =
-                  projectedPolygonGroups.stream()
-                      .filter(pg -> TOITURE_REVETEMENT.equals(pg.objectType()))
-                      .findFirst()
-                      .orElse(null);
-
               projectedPolygonGroups.forEach(
                   polygonGroup -> {
                     var label = polygonGroup.objectType().name();
                     var geometryUnified = polygonGroup.geometryUnified();
-                    if (geometryUnified == null) {
-                      log.warn(
-                          "Unable to unify geometry for label {}, actual polygons {}",
-                          label,
-                          polygonGroup.polygons());
-                      return;
-                    }
-                    var rate =
-                        TOITURE_REVETEMENT.equals(polygonGroup.objectType())
-                            ? null
-                            : format(
-                                (geometryUnified.getArea()
-                                        / roofPolygonGroup.geometryUnified().getArea())
-                                    * 100);
-                    if (geometryUnified instanceof Polygon polygon) {
-                      regions.put(
-                          String.valueOf(System.nanoTime()),
-                          toVGGRegion(label, null, rate, polygon));
-                    } else if (geometryUnified instanceof MultiPolygon multiPolygon) {
-                      for (int i = 0; i < multiPolygon.getNumGeometries(); i++) {
-                        if (multiPolygon.getGeometryN(i) instanceof Polygon polygon) {
+                    switch (geometryUnified) {
+                      case null ->
+                          log.warn(
+                              "Unable to unify geometry for label {}, actual polygons {}",
+                              label,
+                              polygonGroup.polygons());
+                      case Polygon polygon ->
                           regions.put(
                               String.valueOf(System.nanoTime()),
-                              toVGGRegion(label, null, rate, polygon));
+                              toVGGRegion(label, null, null, polygon));
+                      case MultiPolygon multiPolygon -> {
+                        for (int i = 0; i < multiPolygon.getNumGeometries(); i++) {
+                          if (multiPolygon.getGeometryN(i) instanceof Polygon polygon) {
+                            regions.put(
+                                String.valueOf(System.nanoTime()),
+                                toVGGRegion(label, null, null, polygon));
+                          }
                         }
                       }
+                      default -> {}
                     }
                   });
 
               var detectedRoofCovering = retrieveCoveringProperties(feature);
+              var roofPixelPolygonGroup =
+                  new PolygonGroup(TOITURE_REVETEMENT, List.copyOf(polygonRoofPixelList));
               var properties =
                   computeProperties(
                       roofMultiPolygon,
-                      roofPolygonGroup.geometryUnified(),
+                      roofPixelPolygonGroup.geometryUnified(),
                       detectedRoofCovering,
                       projectedPolygonGroups.stream()
                           .map(
@@ -382,7 +374,7 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
     }
     try {
       return objectMapper.readValue(
-          (String) feature.getProperties().get("covering"),
+          feature.getProperties().get("covering").toString(),
           DetectionRoofPropertiesRequestedService.DetectedRoofCovering.class);
     } catch (JsonProcessingException e) {
       return null;
