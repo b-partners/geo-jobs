@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
+import static app.bpartners.geojobs.endpoint.rest.model.Detection.GeoJsonDelimitationTypeEnum.ROOF;
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
 import static java.awt.Color.WHITE;
 
@@ -13,6 +14,7 @@ import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.util.List;
 import java.util.function.BiFunction;
 import lombok.RequiredArgsConstructor;
+import org.locationtech.jts.geom.Geometry;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -70,8 +72,16 @@ public class TileImageBlur implements BiFunction<Detection, List<Tile>, List<Til
                       tileCoordinates.getX(), tileCoordinates.getY(), tileCoordinates.getZ());
               var roofInsideTileAndProvidedZone =
                   multiPolygonFromTile.intersection(roofInsideProvidedZone);
-              var intersectionBetweenTileMultiPolygonAndBackground =
-                  multiPolygonFromTile.intersection(latLonBackgroundInsideProvidedZone);
+
+              Geometry intersectionBetweenTileMultiPolygonAndBackground;
+              if (ROOF.equals(detection.getGeoJsonDelimitationType())) {
+                intersectionBetweenTileMultiPolygonAndBackground =
+                    multiPolygonFromTile.difference(roofInsideTileAndProvidedZone);
+              } else {
+                intersectionBetweenTileMultiPolygonAndBackground =
+                    multiPolygonFromTile.intersection(latLonBackgroundInsideProvidedZone);
+              }
+
               var tileWithoutRoofInsideTileAndZone =
                   multiPolygonFromTile.difference(roofInsideTileAndProvidedZone);
               List<List<List<IntXY>>> multiPolygonPixelCoordinates;

@@ -3,10 +3,13 @@ package app.bpartners.geojobs.repository.model.detection;
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
+import static jakarta.persistence.EnumType.STRING;
 import static org.hibernate.type.SqlTypes.JSON;
+import static org.hibernate.type.SqlTypes.NAMED_ENUM;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
+import app.bpartners.geojobs.endpoint.rest.model.Detection.GeoJsonDelimitationTypeEnum;
 import app.bpartners.geojobs.endpoint.rest.validator.FeatureTypeChecker;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.model.Feature;
@@ -105,6 +108,10 @@ public class Detection implements Serializable {
   @JdbcTypeCode(JSON)
   private List<List<BigDecimal>> polygonRoofDelimitation;
 
+  @Enumerated(STRING)
+  @JdbcTypeCode(NAMED_ENUM)
+  private GeoJsonDelimitationTypeEnum geoJsonDelimitationType;
+
   public boolean isOutputZipped() {
     return isOutputZipped != null && isOutputZipped;
   }
@@ -123,6 +130,10 @@ public class Detection implements Serializable {
     return providedGeoJsonZone == null
         ? null
         : providedGeoJsonZone.stream().map(FeatureMapper::toRestFeature).toList();
+  }
+
+  public List<Feature> getDomainProvidedGeoJsonZone() {
+    return providedGeoJsonZone == null ? List.of() : providedGeoJsonZone;
   }
 
   public List<app.bpartners.geojobs.endpoint.rest.model.Feature> getMultiPolygonGeoJsonZone() {

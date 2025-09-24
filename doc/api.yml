@@ -1752,6 +1752,11 @@ components:
             $ref: '#/components/schemas/Feature'
           description: |
             Optional. If so, must shape file or excel file or image file through its specific endpoint.
+        geoJsonDelimitationType:
+          type: string
+          enum:
+            - ROOF
+            - ZONE
         geoJsonOutput:
           $ref: '#/components/schemas/GeoJsonOutput'
         needsImageOutput:
