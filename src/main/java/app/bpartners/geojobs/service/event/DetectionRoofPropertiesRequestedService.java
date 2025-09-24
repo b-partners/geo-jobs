@@ -9,6 +9,7 @@ import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
+import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.repository.model.detection.RoofCoveringType;
 import app.bpartners.geojobs.service.detection.RoofCovering;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
@@ -37,13 +38,13 @@ public class DetectionRoofPropertiesRequestedService
   public void accept(DetectionRoofPropertiesRequested event) {
     var detectionIdentifier = event.getDetectionIdentifier();
     var detection = detectionRepository.findById(detectionIdentifier).orElseThrow();
-    var detectionWithRoofProperties = apply(detection);
+    var machineDetectedTiles =
+        machineDetectedTileRepository.findAllByZdjJobId(detection.getZdjId());
+    var detectionWithRoofProperties = apply(detection, machineDetectedTiles);
     detectionRepository.save(detectionWithRoofProperties);
   }
 
-  public Detection apply(Detection detection) {
-    var machineDetectedTiles =
-        machineDetectedTileRepository.findAllByZdjJobId(detection.getZdjId());
+  public Detection apply(Detection detection, List<MachineDetectedTile> machineDetectedTiles) {
     var featureWithDelimitationsCovering =
         detection.getFeatureWithDelimitations().stream()
             .map(

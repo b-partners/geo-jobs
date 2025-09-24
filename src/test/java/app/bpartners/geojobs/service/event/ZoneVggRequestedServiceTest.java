@@ -67,7 +67,7 @@ class ZoneVggRequestedServiceTest {
 
   @BeforeEach
   void setUp() {
-    when(detectionRoofPropertiesRequestedServiceMock.apply(any()))
+    when(detectionRoofPropertiesRequestedServiceMock.apply(any(), any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
   }
 
