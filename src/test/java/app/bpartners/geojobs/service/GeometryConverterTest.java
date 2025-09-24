@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
 import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
@@ -34,6 +35,7 @@ class GeometryConverterTest {
     return "{\"type\":\"MultiPolygon\",\"coordinates\":[[[[7.00103759765625,43.55053877556738],[7.00103759765625,43.55078760402636],[7.001380920410156,43.55078760402636],[7.001380920410156,43.55053877556738],[7.00103759765625,43.55053877556738]]]]}";
   }
 
+  @Disabled("TODO: UnknownHostException from https://rnb-api.beta.gouv.fr in GitHub CI")
   @Test
   void retrieveRoofPolygonsFrom_ok() {
     var expected = expectedRetrievedRoofPolygons();
