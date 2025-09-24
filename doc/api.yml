@@ -646,6 +646,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Detection'
+  '/detections/{id}/step':
+    put:
+      tags:
+        - Detection
+      operationId: updateDetectionStep
+      summary: Update detection step
+      description: |
+        Update detection step
+      security:
+        - ApiKeyAuth: [ ]
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          description: Detection identifier
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DetectionStep'
+      responses:
+        200:
+          description: Detection with updated step
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detection'
   '/detections/{id}/addresses':
     post:
       tags:
