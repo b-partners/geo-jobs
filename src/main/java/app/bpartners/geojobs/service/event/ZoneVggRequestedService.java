@@ -52,7 +52,6 @@ public class ZoneVggRequestedService implements Consumer<ZoneVggRequested> {
         detectedTileRepository.findAllByZdjJobId(retrievedDetection.getZdjId());
     var detectionWithRoofProperties =
         detectionRoofPropertiesRequestedService.apply(retrievedDetection, machineDetectedTiles);
-    var zoneDetectionJobIdentifier = detectionWithRoofProperties.getZdjId();
     var polygonGeoJsonZone = detectionWithRoofProperties.getPolygonGeoJsonZone();
     var detectableTypes =
         detectionWithRoofProperties.getDetectableObjectConfigurations().stream()
@@ -60,17 +59,14 @@ public class ZoneVggRequestedService implements Consumer<ZoneVggRequested> {
             .toList();
     var latLonRoofFeatures =
         detectionWithRoofProperties.getFeatureWithDelimitations().stream()
-            .map(FeatureWithDelimitation::getRestFeature)
+            .map(FeatureWithDelimitation::getRestDelimitations)
+            .flatMap(features -> features != null ? features.stream() : null)
             .filter(Objects::nonNull)
             .toList();
     var tileCoordinates = retrieveTileCoordinates(detectionWithRoofProperties);
     var tiledPixelPolygons =
         getTiledPixelPolygon(
-            zoneDetectionJobIdentifier,
-            polygonGeoJsonZone,
-            latLonRoofFeatures,
-            detectableTypes,
-            machineDetectedTiles);
+            polygonGeoJsonZone, latLonRoofFeatures, detectableTypes, machineDetectedTiles);
 
     var vggMap = vggFactory.from(tiledPixelPolygons, tileCoordinates);
 
@@ -106,7 +102,6 @@ public class ZoneVggRequestedService implements Consumer<ZoneVggRequested> {
   }
 
   private List<TiledPixelPolygon> getTiledPixelPolygon(
-      String zoneDetectionJobIdentifier,
       Feature polygonGeoJsonZone,
       List<Feature> latLonRoofFeatures,
       List<DetectableType> detectableTypes,
