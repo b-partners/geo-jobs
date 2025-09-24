@@ -2,7 +2,7 @@ package app.bpartners.geojobs.model.geometry;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.model.geometry.area.AreaRateComputerFacade.*;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.getRoofMultiPolygon;
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
 import static java.util.UUID.randomUUID;
@@ -238,7 +238,6 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
             (feature, tiledPixelPolygonGroupByFeature) -> {
               var vgg = new VGG();
               var roofMultiPolygon = getRoofMultiPolygon(feature);
-              var polygonRoofPixelList = new ArrayList<Polygon>();
               Map<String, VGG.Annotation.Region> regions = new HashMap<>();
               List<PolygonGroup> projectedPolygonGroups =
                   tiledPixelPolygonGroupByFeature.stream()
@@ -257,7 +256,6 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
                               polygonGroups.add(
                                   new PolygonGroup(
                                       TOITURE_REVETEMENT, List.of(polygonRoofPixelPolygon)));
-                              polygonRoofPixelList.add(polygonRoofPixelPolygon);
                             }
                             return polygonGroups.stream()
                                 .map(
@@ -296,9 +294,12 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
                       .stream()
                       .map(e -> new PolygonGroup(e.getKey(), e.getValue()))
                       .toList();
+              var polygonObjectTypesFromProjectedPolygonGroup = new ArrayList<PolygonObjectType>();
               projectedPolygonGroups.forEach(
                   polygonGroup -> {
-                    var label = polygonGroup.objectType().name();
+                    var objectType = polygonGroup.objectType();
+                    var label = objectType.name();
+                    var polygons = new ArrayList<Polygon>();
                     var geometryUnified = polygonGroup.geometryUnified();
                     switch (geometryUnified) {
                       case null ->
@@ -306,13 +307,16 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
                               "Unable to unify geometry for label {}, actual polygons {}",
                               label,
                               polygonGroup.polygons());
-                      case Polygon polygon ->
-                          regions.put(
-                              String.valueOf(System.nanoTime()),
-                              toVGGRegion(label, null, null, polygon));
+                      case Polygon polygon -> {
+                        polygons.add(polygon);
+                        regions.put(
+                            String.valueOf(System.nanoTime()),
+                            toVGGRegion(label, null, null, polygon));
+                      }
                       case MultiPolygon multiPolygon -> {
                         for (int i = 0; i < multiPolygon.getNumGeometries(); i++) {
                           if (multiPolygon.getGeometryN(i) instanceof Polygon polygon) {
+                            polygons.add(polygon);
                             regions.put(
                                 String.valueOf(System.nanoTime()),
                                 toVGGRegion(label, null, null, polygon));
@@ -321,36 +325,29 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
                       }
                       default -> {}
                     }
+                    var polygonObjectTypes =
+                        polygons.stream()
+                            .map(polygon -> new PolygonObjectType(polygon, objectType))
+                            .toList();
+                    polygonObjectTypesFromProjectedPolygonGroup.addAll(polygonObjectTypes);
                   });
 
               var detectedRoofCovering = retrieveCoveringProperties(feature);
               var roofPixelPolygonGroup =
-                  new PolygonGroup(TOITURE_REVETEMENT, List.copyOf(polygonRoofPixelList));
+                  projectedPolygonGroups.stream()
+                      .filter(polygonGroup -> TOITURE_REVETEMENT.equals(polygonGroup.objectType()))
+                      .findFirst()
+                      .orElseThrow(
+                          () ->
+                              new UnsupportedOperationException(
+                                  "No roof converted in pixel for feature " + feature));
+              var roofPixelPolygonGeometry = roofPixelPolygonGroup.geometryUnified();
               var properties =
                   computeProperties(
                       roofMultiPolygon,
-                      roofPixelPolygonGroup.geometryUnified(),
+                      roofPixelPolygonGeometry,
                       detectedRoofCovering,
-                      projectedPolygonGroups.stream()
-                          .map(
-                              polygonGroup -> {
-                                var geometry = polygonGroup.geometryUnified();
-                                if (geometry instanceof Polygon polygon) {
-                                  return new PolygonObjectType(polygon, polygonGroup.objectType());
-                                }
-                                if (geometry instanceof MultiPolygon multiPolygon) {
-                                  for (int i = 0; i < multiPolygon.getNumGeometries(); i++) {
-                                    if (multiPolygon.getGeometryN(i) instanceof Polygon polygon) {
-                                      return new PolygonObjectType(
-                                          polygon, polygonGroup.objectType());
-                                    }
-                                  }
-                                }
-                                return null;
-                              })
-                          .filter(Objects::nonNull)
-                          .collect(Collectors.toSet()));
-
+                      polygonObjectTypesFromProjectedPolygonGroup);
               var key = randomUUID().toString();
               var annotation =
                   VGG.Annotation.builder()
@@ -495,7 +492,7 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
       Geometry lonLatRoofPolygon,
       Geometry roofPixelPolygon,
       DetectionRoofPropertiesRequestedService.DetectedRoofCovering detectedRoofCovering,
-      Set<PolygonObjectType> polygonObjectTypes) {
+      Collection<PolygonObjectType> polygonObjectTypes) {
     var rateComputer = new AreaRateComputerFacade(roofPixelPolygon, polygonObjectTypes);
     var usureRate = rateComputer.getUsureAreaRate();
     var humiditeRate = rateComputer.getHumidityAreaRate();
