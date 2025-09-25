@@ -23,6 +23,7 @@ import app.bpartners.geojobs.service.TileCoordinatesPolygonIntersection;
 import app.bpartners.geojobs.service.event.DetectionRoofPropertiesRequestedService;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -333,6 +334,7 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
                   });
 
               var detectedRoofCovering = retrieveCoveringProperties(feature);
+              var addresses = retrieveAddressesProperty(feature);
               var roofPixelPolygonGroup =
                   projectedPolygonGroups.stream()
                       .filter(polygonGroup -> TOITURE_REVETEMENT.equals(polygonGroup.objectType()))
@@ -347,6 +349,7 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
                       roofMultiPolygon,
                       roofPixelPolygonGeometry,
                       detectedRoofCovering,
+                      addresses,
                       polygonObjectTypesFromProjectedPolygonGroup);
               var key = randomUUID().toString();
               var annotation =
@@ -373,6 +376,20 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
       return objectMapper.readValue(
           feature.getProperties().get("covering").toString(),
           DetectionRoofPropertiesRequestedService.DetectedRoofCovering.class);
+    } catch (JsonProcessingException e) {
+      return null;
+    }
+  }
+
+  private List<String> retrieveAddressesProperty(Feature feature) {
+    if (feature.getProperties() == null
+        || (feature.getProperties().isEmpty()
+            || feature.getProperties().get("addresses") == null)) {
+      return null;
+    }
+    try {
+      return objectMapper.readValue(
+          feature.getProperties().get("addresses").toString(), new TypeReference<>() {});
     } catch (JsonProcessingException e) {
       return null;
     }
@@ -492,6 +509,7 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
       Geometry lonLatRoofPolygon,
       Geometry roofPixelPolygon,
       DetectionRoofPropertiesRequestedService.DetectedRoofCovering detectedRoofCovering,
+      List<String> addresses,
       Collection<PolygonObjectType> polygonObjectTypes) {
     var rateComputer = new AreaRateComputerFacade(roofPixelPolygon, polygonObjectTypes);
     var usureRate = rateComputer.getUsureAreaRate();
@@ -508,6 +526,7 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
     properties.put("moisissure_rate", moisissureRate);
     properties.put("global_rate_value", globalRateValue);
     properties.put("global_rate_type", globalRateType);
+    properties.put("addresses", addresses);
     if (detectedRoofCovering != null) {
       properties.put(
           "revetement_1",
