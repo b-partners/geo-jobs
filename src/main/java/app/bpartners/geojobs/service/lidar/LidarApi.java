@@ -25,7 +25,10 @@ public class LidarApi implements Function<Set<Envelope>, Set<File>> {
   private final LidarApiConf conf;
   private final RestTemplate restTemplate;
   private static final Set<String> ALLOWED_URL_PREFIXES =
-      Set.of("https://storage.sbg.cloud.ovh.net/", "https://lidar.data.gouv.fr/");
+      Set.of(
+          "https://storage.sbg.cloud.ovh.net/",
+          "https://lidar.data.gouv.fr/",
+          "https://data.geopf.fr/");
 
   @Override
   public Set<File> apply(Set<Envelope> bboxes) {
