@@ -112,6 +112,10 @@ public class Detection implements Serializable {
   @JdbcTypeCode(NAMED_ENUM)
   private GeoJsonDelimitationTypeEnum geoJsonDelimitationType;
 
+  @OneToOne
+  @JoinColumn(referencedColumnName = "id", name = "detection_step_id")
+  private DetectionStep step;
+
   public boolean isOutputZipped() {
     return isOutputZipped != null && isOutputZipped;
   }

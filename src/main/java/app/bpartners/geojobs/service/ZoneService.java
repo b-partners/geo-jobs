@@ -24,6 +24,7 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTyp
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.GeoJsonDelimitationTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
+import app.bpartners.geojobs.endpoint.rest.mapper.RestDetectionStepMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.validator.FeatureTypeChecker;
@@ -98,6 +99,7 @@ public class ZoneService {
   private final TileMultiPolygonFrame tileMultiPolygonFrame;
   private final DetectionAreaValidator detectionAreaValidator;
   private final GeoJsonDelimitationTypeMapper geoJsonDelimitationTypeMapper;
+  private final RestDetectionStepMapper restDetectionStepMapper;
 
   private List<Feature> readFromFile(File featuresFromShape) {
     try {
@@ -739,5 +741,21 @@ public class ZoneService {
     rooferDetectionService.sendEmail(prospect, pdfFile);
     return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
         detection, FINISHED, SUCCEEDED, MACHINE_DETECTION);
+  }
+
+  public app.bpartners.geojobs.endpoint.rest.model.Detection updateDetectionStep(
+      String detectionId, DetectionStep step) {
+    var detection = getDetectionById(detectionId);
+
+    var statistic = zoneDetectionJobService.getTaskStatistic(detection.getZdjId());
+
+    var updatedDetection =
+        detection.toBuilder().step(restDetectionStepMapper.toRepository(step)).build();
+    var restUpdatedDetection =
+        detectionFromStatisticRestMapper.apply(detection, statistic, step.getName());
+
+    detectionRepository.save(updatedDetection);
+
+    return restUpdatedDetection;
   }
 }
