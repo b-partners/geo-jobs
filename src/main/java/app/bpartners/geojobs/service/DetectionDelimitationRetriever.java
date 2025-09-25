@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Component;
 public class DetectionDelimitationRetriever implements Consumer<Detection> {
   private final GeometryConverter geometryConverter;
   private final DetectionRepository detectionRepository;
+  private final ObjectMapper objectMapper;
 
   @Override
   public void accept(Detection detection) {
@@ -122,6 +124,7 @@ public class DetectionDelimitationRetriever implements Consumer<Detection> {
     return roofFeature;
   }
 
+  @SneakyThrows
   private void updateAddressesFeaturePropertyFromRNB(
       List<List<List<BigDecimal>>> polygonCoordinates, Map<String, Object> properties) {
     var roofDetailsList = geometryConverter.retrieveRoofPolygonsFrom(polygonCoordinates.getFirst());
@@ -133,7 +136,8 @@ public class DetectionDelimitationRetriever implements Consumer<Detection> {
           "Multiple roof polygons found for provided polygon, choosing nearest one: {}",
           roofDetailsList.getFirst().addresses());
     }
-    properties.put("addresses", roofDetailsList.getFirst().addresses());
+    properties.put(
+        "addresses", objectMapper.writeValueAsString(roofDetailsList.getFirst().addresses()));
   }
 
   private List<FeatureWithDelimitation> computeFeatureWithDelimitationFromProvidedGeoJson(
@@ -203,7 +207,12 @@ public class DetectionDelimitationRetriever implements Consumer<Detection> {
             .map(
                 roofDetails -> {
                   HashMap<String, Object> properties = new HashMap<>();
-                  properties.put("addresses", roofDetails.addresses());
+                  try {
+                    properties.put(
+                        "addresses", objectMapper.writeValueAsString(roofDetails.addresses()));
+                  } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                  }
                   return geometryConverter.toFeature(
                       randomUUID().toString(), zoom, properties, roofDetails.latLonGeometry());
                 })

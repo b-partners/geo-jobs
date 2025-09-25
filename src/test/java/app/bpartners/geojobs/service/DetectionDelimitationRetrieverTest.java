@@ -17,19 +17,23 @@ import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
 class DetectionDelimitationRetrieverTest {
   GeometryConverter geometryConverterMock = mock();
   DetectionRepository detectionRepositoryMock = mock();
+  ObjectMapper objectMapperMock = mock();
   DetectionDelimitationRetriever subject =
-      new DetectionDelimitationRetriever(geometryConverterMock, detectionRepositoryMock);
+      new DetectionDelimitationRetriever(
+          geometryConverterMock, detectionRepositoryMock, objectMapperMock);
 
+  @SneakyThrows
   @Test
   void feature_with_delimitation_from_provided_geoJson_when_geoJsonDelimitation_type_is_roof()
       throws JsonProcessingException {
