@@ -57,13 +57,18 @@ class GeometryConverterTest {
     var actualFeatureJsonValues =
         actual.stream()
             .map(
-                multiPolygon -> {
+                roofDetails -> {
                   try {
+                    HashMap<String, Object> properties = new HashMap<>();
+                    properties.put("addresses", roofDetails.addresses());
                     return new ObjectMapper()
                         .writeValueAsString(
                             toRestFeature(
                                 subject.toFeature(
-                                    randomUUID().toString(), 20, new HashMap<>(), multiPolygon)));
+                                    randomUUID().toString(),
+                                    20,
+                                    properties,
+                                    roofDetails.latLonGeometry())));
                   } catch (JsonProcessingException e) {
                     throw new RuntimeException(e);
                   }

@@ -179,9 +179,12 @@ public class DetectionDelimitationRetriever implements Consumer<Detection> {
     var roofMultiPolygonsInsideProvidedPolygon =
         geometryConverter.retrieveRoofPolygonsFrom(polygonCoordinates).stream()
             .map(
-                multiPolygon ->
-                    geometryConverter.toFeature(
-                        randomUUID().toString(), zoom, new HashMap<>(), multiPolygon))
+                roofDetails -> {
+                  HashMap<String, Object> properties = new HashMap<>();
+                  properties.put("addresses", roofDetails.addresses());
+                  return geometryConverter.toFeature(
+                      randomUUID().toString(), zoom, properties, roofDetails.latLonGeometry());
+                })
             .toList();
     return new FeatureWithDelimitation(
         toDomainFeature(providedFeature), roofMultiPolygonsInsideProvidedPolygon);
