@@ -125,7 +125,7 @@ public class DetectionRoofPropertiesRequestedService
                                 Map<String, Object> properties =
                                     roofFeature.getProperties() == null
                                         ? new HashMap<>()
-                                        : new HashMap<>(roofFeature.getProperties());
+                                        : roofFeature.getProperties();
                                 try {
                                   properties.put(
                                       "covering",
