@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Component;
 public class DetectionDelimitationRetriever implements Consumer<Detection> {
   private final GeometryConverter geometryConverter;
   private final DetectionRepository detectionRepository;
+  private final ObjectMapper objectMapper;
 
   @Override
   public void accept(Detection detection) {
@@ -62,6 +64,11 @@ public class DetectionDelimitationRetriever implements Consumer<Detection> {
             }
           });
 
+      log.info(
+          "debug featureWithDelimitationList {}",
+          featureWithDelimitationList.stream()
+              .map(FeatureWithDelimitation::toString)
+              .collect(toList()));
       var detectionWithDelimitations =
           detection.toBuilder()
               .pointDelimitation(pointDelimitation)
@@ -90,23 +97,47 @@ public class DetectionDelimitationRetriever implements Consumer<Detection> {
     Map<String, Object> properties =
         restFeature.getProperties() == null ? new HashMap<>() : restFeature.getProperties();
     properties.put("zoom", feature.getZoom() == null ? HOUSES_0.getZoomLevel() : feature.getZoom());
-    restFeature.setProperties(properties);
 
     var geometryType = getGeometryType(restFeature.getGeometry().getActualInstance());
+    app.bpartners.geojobs.repository.model.Feature roofFeature;
     switch (geometryType) {
-      case POLYGON:
+      case POLYGON -> {
+        var polygonCoordinates = restFeature.getGeometry().getPolygon().getCoordinates();
+        updateAddressesFeaturePropertyFromRNB(polygonCoordinates, properties);
         var multipolygonGeometry =
             new FeatureGeometry(
                 new MultiPolygon()
                     .type(MultiPolygon.TypeEnum.MULTI_POLYGON)
-                    .coordinates(List.of(restFeature.getGeometry().getPolygon().getCoordinates())));
+                    .coordinates(List.of(polygonCoordinates)));
         restFeature.setGeometry(multipolygonGeometry);
-        return toDomainFeature(restFeature);
-      case MULTI_POLYGON:
-        return toDomainFeature(restFeature);
-      default:
-        throw new IllegalStateException("Point is not supported");
+        roofFeature = toDomainFeature(restFeature);
+      }
+      case MULTI_POLYGON -> {
+        var polygonCoordinates =
+            restFeature.getGeometry().getMultiPolygon().getCoordinates().getFirst();
+        updateAddressesFeaturePropertyFromRNB(polygonCoordinates, properties);
+        roofFeature = toDomainFeature(restFeature);
+      }
+      default -> throw new IllegalStateException("Point is not supported");
     }
+    restFeature.setProperties(properties);
+    return roofFeature;
+  }
+
+  @SneakyThrows
+  private void updateAddressesFeaturePropertyFromRNB(
+      List<List<List<BigDecimal>>> polygonCoordinates, Map<String, Object> properties) {
+    var roofDetailsList = geometryConverter.retrieveRoofPolygonsFrom(polygonCoordinates.getFirst());
+    if (roofDetailsList.isEmpty()) {
+      return;
+    }
+    if (roofDetailsList.size() > 1) {
+      log.info(
+          "Multiple roof polygons found for provided polygon, choosing nearest one: {}",
+          roofDetailsList.getFirst().addresses());
+    }
+    properties.put(
+        "addresses", objectMapper.writeValueAsString(roofDetailsList.getFirst().addresses()));
   }
 
   private List<FeatureWithDelimitation> computeFeatureWithDelimitationFromProvidedGeoJson(
@@ -174,9 +205,17 @@ public class DetectionDelimitationRetriever implements Consumer<Detection> {
     var roofMultiPolygonsInsideProvidedPolygon =
         geometryConverter.retrieveRoofPolygonsFrom(polygonCoordinates).stream()
             .map(
-                multiPolygon ->
-                    geometryConverter.toFeature(
-                        randomUUID().toString(), zoom, new HashMap<>(), multiPolygon))
+                roofDetails -> {
+                  HashMap<String, Object> properties = new HashMap<>();
+                  try {
+                    properties.put(
+                        "addresses", objectMapper.writeValueAsString(roofDetails.addresses()));
+                  } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                  }
+                  return geometryConverter.toFeature(
+                      randomUUID().toString(), zoom, properties, roofDetails.latLonGeometry());
+                })
             .toList();
     return new FeatureWithDelimitation(
         toDomainFeature(providedFeature), roofMultiPolygonsInsideProvidedPolygon);
