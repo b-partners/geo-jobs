@@ -24,7 +24,8 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTyp
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.GeoJsonDelimitationTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
-import app.bpartners.geojobs.endpoint.rest.mapper.RestDetectionStepMapper;
+import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStepMapper;
+import app.bpartners.geojobs.endpoint.rest.mapper.DetectionStepMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.validator.FeatureTypeChecker;
@@ -38,6 +39,7 @@ import app.bpartners.geojobs.model.page.BoundedPageSize;
 import app.bpartners.geojobs.model.page.PageFromOne;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
+import app.bpartners.geojobs.repository.DetectionStepRepository;
 import app.bpartners.geojobs.repository.GeoJsonConversionJobRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.detection.Detection;
@@ -99,7 +101,9 @@ public class ZoneService {
   private final TileMultiPolygonFrame tileMultiPolygonFrame;
   private final DetectionAreaValidator detectionAreaValidator;
   private final GeoJsonDelimitationTypeMapper geoJsonDelimitationTypeMapper;
-  private final RestDetectionStepMapper restDetectionStepMapper;
+  private final DetectionStepMapper detectionStepMapper;
+  private final DetectionStepRepository detectionStepRepository;
+  private final DetectionFromStepMapper detectionFromStepMapper;
 
   private List<Feature> readFromFile(File featuresFromShape) {
     try {
@@ -745,17 +749,11 @@ public class ZoneService {
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection updateDetectionStep(
       String detectionId, DetectionStep step) {
+
+    detectionStepRepository.save(detectionStepMapper.toRepository(step));
+
     var detection = getDetectionById(detectionId);
 
-    var statistic = zoneDetectionJobService.getTaskStatistic(detection.getZdjId());
-
-    var updatedDetection =
-        detection.toBuilder().step(restDetectionStepMapper.toRepository(step)).build();
-    var restUpdatedDetection =
-        detectionFromStatisticRestMapper.apply(detection, statistic, step.getName());
-
-    detectionRepository.save(updatedDetection);
-
-    return restUpdatedDetection;
+    return detectionFromStepMapper.apply(detection, detectionStepMapper.toRepository(step));
   }
 }

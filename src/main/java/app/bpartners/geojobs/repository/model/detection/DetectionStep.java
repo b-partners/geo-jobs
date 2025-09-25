@@ -1,9 +1,7 @@
 package app.bpartners.geojobs.repository.model.detection;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.*;
+import java.time.Instant;
 import lombok.*;
 
 @Entity
@@ -12,15 +10,19 @@ import lombok.*;
 @Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
+@Table(name = "detection_step")
 public class DetectionStep {
   @Id private String id;
 
   private DetectionStepName name;
 
-  @OneToOne(mappedBy = "step")
-  private Detection detection;
+  private Status.Progression progression;
 
-  @OneToOne
-  @JoinColumn(referencedColumnName = "id", name = "status_id")
-  private Status status;
+  private Status.Health health;
+
+  @Column(name = "creation_datetime")
+  private Instant creationDatetime;
+
+  @Column(name = "detection_id")
+  private String detectionId;
 }

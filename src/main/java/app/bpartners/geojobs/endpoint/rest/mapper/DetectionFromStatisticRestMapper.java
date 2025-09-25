@@ -80,7 +80,7 @@ public class DetectionFromStatisticRestMapper
         .needsImageOutput(detection.needsImageOutput());
   }
 
-  private RoofDelimiter retrieveRoofDelimiter(Detection detection) {
+  public RoofDelimiter retrieveRoofDelimiter(Detection detection) {
     var polygonRoofDelimitation = detection.getPolygonRoofDelimitation();
     var featureWithDelimitations = detection.getFeatureWithDelimitations();
 
@@ -110,7 +110,7 @@ public class DetectionFromStatisticRestMapper
   }
 
   // TODO: Careful ! This method creates a side effect, must be corrected
-  private List<Feature> hideUselessRestProperties(List<Feature> features) {
+  public List<Feature> hideUselessRestProperties(List<Feature> features) {
     if (features == null) {
       return null;
     }

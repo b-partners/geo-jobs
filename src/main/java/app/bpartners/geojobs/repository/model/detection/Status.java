@@ -1,20 +1,8 @@
 package app.bpartners.geojobs.repository.model.detection;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import lombok.*;
 
-@Entity
-@Getter
-@Setter
-@Builder(toBuilder = true)
-@AllArgsConstructor
-@NoArgsConstructor
 public class Status {
-  @Id private String id;
-  private Progression progression;
-  private Health health;
-
   @Getter
   @AllArgsConstructor
   public enum Progression {

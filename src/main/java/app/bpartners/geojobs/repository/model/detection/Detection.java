@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -112,9 +113,15 @@ public class Detection implements Serializable {
   @JdbcTypeCode(NAMED_ENUM)
   private GeoJsonDelimitationTypeEnum geoJsonDelimitationType;
 
-  @OneToOne
-  @JoinColumn(referencedColumnName = "id", name = "detection_step_id")
-  private DetectionStep step;
+  @OneToMany
+  @JoinColumn(name = "detection_id")
+  private List<DetectionStep> detectionSteps;
+
+  public DetectionStep getStep() {
+    return detectionSteps.stream()
+        .max(Comparator.comparing(DetectionStep::getCreationDatetime))
+        .orElse(null);
+  }
 
   public boolean isOutputZipped() {
     return isOutputZipped != null && isOutputZipped;
