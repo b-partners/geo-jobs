@@ -11,15 +11,6 @@ public class Status {
     FINISHED("FINISHED");
 
     private final String value;
-
-    public static Progression fromValue(String value) {
-      for (Progression progression : Progression.values()) {
-        if (progression.value.equalsIgnoreCase(value)) {
-          return progression;
-        }
-      }
-      throw new IllegalArgumentException("No enum constant Progression." + value);
-    }
   }
 
   @Getter
@@ -31,14 +22,5 @@ public class Status {
     RETRYING("RETRYING");
 
     private final String value;
-
-    public static Health fromValue(String value) {
-      for (Health health : Health.values()) {
-        if (health.value.equalsIgnoreCase(value)) {
-          return health;
-        }
-      }
-      throw new IllegalArgumentException("No enum constant Health." + value);
-    }
   }
 }

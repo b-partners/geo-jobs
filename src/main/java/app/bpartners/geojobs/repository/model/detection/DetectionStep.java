@@ -11,6 +11,8 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "detection_step")
+@EqualsAndHashCode
+@ToString
 public class DetectionStep {
   @Id private String id;
 

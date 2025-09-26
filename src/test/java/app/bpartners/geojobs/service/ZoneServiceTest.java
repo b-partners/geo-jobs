@@ -29,6 +29,8 @@ import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerificationSent;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.*;
 import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
+import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStepMapper;
+import app.bpartners.geojobs.endpoint.rest.mapper.DetectionStepMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
@@ -41,10 +43,7 @@ import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.model.exception.BadRequestException;
-import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
-import app.bpartners.geojobs.repository.DetectionRepository;
-import app.bpartners.geojobs.repository.GeoJsonConversionJobRepository;
-import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
+import app.bpartners.geojobs.repository.*;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.GeoJobType;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
@@ -169,6 +168,9 @@ class ZoneServiceTest {
   private final String e2ApiKey = randomUUID().toString();
   GeoServerConfiguration geoServerConfiguration = new GeoServerConfiguration(geoServerDummyUrl);
   DetectionAreaValidator detectionAreaValidatorMock = mock();
+  DetectionStepMapper detectionStepMapper = new DetectionStepMapper();
+  DetectionStepRepository detectionStepRepositoryMock = mock();
+  DetectionFromStepMapper detectionFromStepMapperMock = mock();
   ZoneService subject =
       new ZoneService(
           zoneDetectionJobServiceMock,
@@ -200,7 +202,10 @@ class ZoneServiceTest {
           synchronousDetectionValidatorMock,
           tileMultiPolygonFrameMock,
           detectionAreaValidatorMock,
-          geoJsonDelimitationTypeMapper);
+          geoJsonDelimitationTypeMapper,
+          detectionStepMapper,
+          detectionStepRepositoryMock,
+          detectionFromStepMapperMock);
 
   @BeforeEach
   void setUp() {
@@ -1204,5 +1209,31 @@ class ZoneServiceTest {
             + detection3.getId()
             + ") geoJson as it is already being configuring",
         actual3.getMessage());
+  }
+
+  @Test
+  void update_detection_step() {
+    var detectionId = randomUUID().toString();
+    var repoDetection =
+        detectionCreator.create(detectionId, randomUUID().toString(), randomUUID().toString());
+    var restStep =
+        new DetectionStep()
+            .name(MACHINE_DETECTION)
+            .status(new Status().progression(Status.ProgressionEnum.FINISHED).health(SUCCEEDED));
+    when(detectionStepRepositoryMock.save(any()))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+    when(detectionRepositoryMock.existsById(any(String.class))).thenReturn(true);
+    when(detectionRepositoryMock.findById(detectionId)).thenReturn(Optional.of(repoDetection));
+    var expectedRestDetection = new Detection().step(restStep);
+    when(detectionFromStepMapperMock.apply(any(), any())).thenReturn(expectedRestDetection);
+
+    var actual = subject.updateDetectionStep(detectionId, restStep);
+
+    var repoStepCaptor =
+        ArgumentCaptor.forClass(
+            app.bpartners.geojobs.repository.model.detection.DetectionStep.class);
+    verify(detectionStepRepositoryMock, times(1)).save(repoStepCaptor.capture());
+    verify(detectionRepositoryMock, times(1)).findById(detectionId);
+    assertEquals(expectedRestDetection, actual);
   }
 }
