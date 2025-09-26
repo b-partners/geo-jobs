@@ -32,7 +32,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 @Builder(toBuilder = true)
 @Getter
 @Setter
-@EqualsAndHashCode
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(name = "detection")
 public class Detection implements Serializable {
   @Id private String id;
