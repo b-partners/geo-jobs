@@ -1,9 +1,8 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightRequestedService.ROOF_HEIGHT_PROPERTY_NAME;
-import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightRequestedService.ROOF_SLOPE_PROPERTY_NAME;
+import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightRequestedService.*;
+import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.AVAILABLE;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.model.DetectionRoofSlopeAndHeightRequested;
@@ -12,8 +11,10 @@ import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
-import app.bpartners.geojobs.service.lidar.LidarPolygonMetricProcessor;
-import app.bpartners.geojobs.service.lidar.model.Dimension;
+import app.bpartners.geojobs.service.lidar.LidarRoofsAnalysisProcessor;
+import app.bpartners.geojobs.service.lidar.LidarRoofsAnalysisProcessor.RoofsAnalysisResult;
+import app.bpartners.geojobs.service.lidar.model.roof.LidarRoofData;
+import app.bpartners.geojobs.service.lidar.model.roof.RoofProperties;
 import jakarta.persistence.EntityManager;
 import java.util.HashMap;
 import java.util.List;
@@ -25,13 +26,13 @@ import org.locationtech.jts.geom.Polygon;
 class DetectionRoofSlopeAndHeightRequestedServiceTest {
   FeatureMapper featureMapperMock = mock();
   DetectionRepository detectionRepositoryMock = mock();
-  LidarPolygonMetricProcessor lidarPolygonMetricProcessorMock = mock();
+  LidarRoofsAnalysisProcessor lidarRoofsAnalysisProcessorMock = mock();
   EntityManager entityManagerMock = mock();
 
   DetectionRoofSlopeAndHeightRequestedService subject =
       new DetectionRoofSlopeAndHeightRequestedService(
           detectionRepositoryMock,
-          lidarPolygonMetricProcessorMock,
+          lidarRoofsAnalysisProcessorMock,
           featureMapperMock,
           entityManagerMock);
 
@@ -49,12 +50,18 @@ class DetectionRoofSlopeAndHeightRequestedServiceTest {
 
     var detection = detection();
     when(detectionRepositoryMock.findById(detectionId)).thenReturn(Optional.of(detection));
-    when(featureMapperMock.domainToJtsPolygon(any())).thenReturn(mock(Polygon.class));
+    when(featureMapperMock.domainToGeometry(any())).thenReturn(mock(Polygon.class));
 
-    var dimensionMock = mock(Dimension.class);
-    when(dimensionMock.getSlopeInDegrees()).thenReturn(expectedRoofSlope);
-    when(dimensionMock.getHeightInMeters()).thenReturn(expectedRoofHeight);
-    when(lidarPolygonMetricProcessorMock.apply(anyList())).thenReturn(List.of(dimensionMock));
+    var data = mock(LidarRoofData.class);
+    var result = mock(RoofsAnalysisResult.class);
+    var properties = mock(RoofProperties.class);
+
+    when(data.status()).thenReturn(AVAILABLE);
+    when(properties.getData()).thenReturn(data);
+    when(result.getProperties(any())).thenReturn(properties);
+    when(properties.getSlopeInDegree()).thenReturn(expectedRoofSlope);
+    when(properties.getHeightInMeter()).thenReturn(expectedRoofHeight);
+    when(lidarRoofsAnalysisProcessorMock.apply(anySet())).thenReturn(result);
 
     subject.accept(requested);
 
@@ -62,9 +69,12 @@ class DetectionRoofSlopeAndHeightRequestedServiceTest {
         detection.getFeatureWithDelimitations().getFirst().delimitations().getFirst();
     var actualRoofSlope = firstDelimitation.getProperties().get(ROOF_SLOPE_PROPERTY_NAME);
     var actualRoofHeight = firstDelimitation.getProperties().get(ROOF_HEIGHT_PROPERTY_NAME);
+    var actualRoofDataStatus =
+        firstDelimitation.getProperties().get(LIDAR_DATA_STATUS_PROPERTY_NAME);
 
     assertEquals(expectedRoofSlope, actualRoofSlope);
     assertEquals(expectedRoofHeight, actualRoofHeight);
+    assertEquals(AVAILABLE, actualRoofDataStatus);
     verify(detectionRepositoryMock).save(detection);
   }
 

@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.service.lidar;
+package app.bpartners.geojobs.service.lidar.api;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.io.Serializable;

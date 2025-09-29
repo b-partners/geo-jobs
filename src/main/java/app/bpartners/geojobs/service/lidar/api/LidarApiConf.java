@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.service.lidar;
+package app.bpartners.geojobs.service.lidar.api;
 
 import java.util.HashMap;
 import java.util.Map;
