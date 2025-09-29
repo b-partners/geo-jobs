@@ -249,9 +249,9 @@ public class FeatureMapper {
     return feature;
   }
 
-  public org.locationtech.jts.geom.Polygon domainToJtsPolygon(
+  public org.locationtech.jts.geom.Geometry domainToGeometry(
       app.bpartners.geojobs.repository.model.Feature domainFeature) {
     var rest = toRestFeature(domainFeature);
-    return toDomainPolygon(rest);
+    return toDomainGeometry(rest);
   }
 }
