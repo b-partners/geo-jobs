@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.AVAILABLE;
 import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.geojobs.endpoint.event.model.DetectionRoofSlopeAndHeightRequested;
@@ -16,9 +17,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Geometry;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DetectionRoofSlopeAndHeightRequestedService
@@ -48,6 +51,11 @@ public class DetectionRoofSlopeAndHeightRequestedService
           "FeatureWithDelimitation is null for detection={" + detectionIdentifier + "}");
     }
 
+    if (isAlreadyProcessedAsSuccess(featureWithDelimitations)) {
+      log.warn("Detection={{}} lidar properties has already been processed", detectionIdentifier);
+      return;
+    }
+
     var roofGeometries = toGeometries(featureWithDelimitations);
     var roofsAnalysesResult = lidarRoofsAnalysisProcessor.apply(roofGeometries);
     var featuresWithDelimitationsWithRoofProperties =
@@ -62,6 +70,18 @@ public class DetectionRoofSlopeAndHeightRequestedService
             .build());
 
     zoneVggRequestedService.accept(new ZoneVggRequested(detection.getId()));
+  }
+
+  private boolean isAlreadyProcessedAsSuccess(
+      List<FeatureWithDelimitation> featureWithDelimitations) {
+    return featureWithDelimitations.stream()
+        .map(FeatureWithDelimitation::delimitations)
+        .flatMap(List::stream)
+        .anyMatch(
+            feature ->
+                feature.getProperties() != null
+                    && AVAILABLE.equals(
+                        feature.getProperties().get(LIDAR_DATA_STATUS_PROPERTY_NAME)));
   }
 
   private Set<Geometry> toGeometries(List<FeatureWithDelimitation> featureWithDelimitations) {
