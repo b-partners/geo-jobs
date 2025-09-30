@@ -27,6 +27,7 @@ class DetectionRoofSlopeAndHeightRequestedServiceTest {
   FeatureMapper featureMapperMock = mock();
   DetectionRepository detectionRepositoryMock = mock();
   LidarRoofsAnalysisProcessor lidarRoofsAnalysisProcessorMock = mock();
+  ZoneVggRequestedService zoneVggRequestedServiceMock = mock();
   EntityManager entityManagerMock = mock();
 
   DetectionRoofSlopeAndHeightRequestedService subject =
@@ -34,11 +35,13 @@ class DetectionRoofSlopeAndHeightRequestedServiceTest {
           detectionRepositoryMock,
           lidarRoofsAnalysisProcessorMock,
           featureMapperMock,
-          entityManagerMock);
+          entityManagerMock,
+          zoneVggRequestedServiceMock);
 
   @BeforeEach
   void setUp() {
     doNothing().when(entityManagerMock).clear();
+    doNothing().when(zoneVggRequestedServiceMock).accept(any());
   }
 
   @Test

@@ -51,6 +51,7 @@ public class LidarRoofsAnalysisProcessor
 
       return new RoofsAnalysisResult(mergeSameRoofBoundary(roofsDataPerFiles));
     } catch (Exception e) {
+      log.error(e.getMessage());
       return new RoofsAnalysisResult(
           mergeSameRoofBoundary(List.of(emptyFrom(allRoofsData, EXTRACTION_ERROR))));
     }
