@@ -59,7 +59,7 @@ class LidarRoofsAnalysisProcessorIT extends FacadeIT {
     var projected =
         roofGeometries.stream().map(g -> projector.project(g, WGS84, LAMBERT_93)).collect(toSet());
 
-    when(lidarApiMock.getUniqueLidarFilesUrls(roofGeometries)).thenReturn(Map.of("url", projected));
+    when(lidarApiMock.getUniqueLidarFilesUrls(projected)).thenReturn(Map.of("url", projected));
     when(lidarApiMock.download(any())).thenReturn(Optional.of(lasFile));
 
     var roofsAnalysisResult = subject.apply(roofGeometries);
