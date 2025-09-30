@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service.event;
 import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.geojobs.endpoint.event.model.DetectionRoofSlopeAndHeightRequested;
+import app.bpartners.geojobs.endpoint.event.model.ZoneVggRequested;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.Feature;
@@ -30,6 +31,7 @@ public class DetectionRoofSlopeAndHeightRequestedService
   private final LidarRoofsAnalysisProcessor lidarRoofsAnalysisProcessor;
   private final FeatureMapper featureMapper;
   private final EntityManager entityManager;
+  private final ZoneVggRequestedService zoneVggRequestedService;
 
   @Override
   public void accept(DetectionRoofSlopeAndHeightRequested requested) {
@@ -58,6 +60,8 @@ public class DetectionRoofSlopeAndHeightRequestedService
         actualDetection.toBuilder()
             .featureWithDelimitations(featuresWithDelimitationsWithRoofProperties)
             .build());
+
+    zoneVggRequestedService.accept(new ZoneVggRequested(detection.getId()));
   }
 
   private Set<Geometry> toGeometries(List<FeatureWithDelimitation> featureWithDelimitations) {

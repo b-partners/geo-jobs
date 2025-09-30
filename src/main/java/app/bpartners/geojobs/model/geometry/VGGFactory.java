@@ -3,6 +3,7 @@ package app.bpartners.geojobs.model.geometry;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.model.geometry.area.AreaRateComputerFacade.*;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
+import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightRequestedService.*;
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.getRoofMultiPolygon;
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
 import static java.util.UUID.randomUUID;
@@ -346,6 +347,7 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
               var roofPixelPolygonGeometry = roofPixelPolygonGroup.geometryUnified();
               var properties =
                   computeProperties(
+                      feature,
                       roofMultiPolygon,
                       roofPixelPolygonGeometry,
                       detectedRoofCovering,
@@ -506,6 +508,7 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
   }
 
   private HashMap<String, Object> computeProperties(
+      Feature feature,
       Geometry lonLatRoofPolygon,
       Geometry roofPixelPolygon,
       DetectionRoofPropertiesRequestedService.DetectedRoofCovering detectedRoofCovering,
@@ -518,6 +521,8 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
     var globalRateValue = rateComputer.getGlobalRate();
     var globalRateType = rateComputer.getRate();
 
+    var featureProperties =
+        feature.getProperties() == null ? new HashMap<String, Object>() : feature.getProperties();
     var properties = new HashMap<String, Object>();
 
     properties.put("roof_area_in_m2", geometrySquareMeterArea.apply(lonLatRoofPolygon));
@@ -527,6 +532,17 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
     properties.put("global_rate_value", globalRateValue);
     properties.put("global_rate_type", globalRateType);
     properties.put("addresses", addresses);
+
+    // Lidar properties
+    if (featureProperties.containsKey(LIDAR_DATA_STATUS_PROPERTY_NAME)) {
+      properties.put("roof_slope_in_degrees", featureProperties.get(ROOF_SLOPE_PROPERTY_NAME));
+      properties.put("roof_height_in_meters", featureProperties.get(ROOF_HEIGHT_PROPERTY_NAME));
+      properties.put(
+          "roof_slope_data_status", featureProperties.get(LIDAR_DATA_STATUS_PROPERTY_NAME));
+      properties.put(
+          "roof_height_data_status", featureProperties.get(LIDAR_DATA_STATUS_PROPERTY_NAME));
+    }
+
     if (detectedRoofCovering != null) {
       properties.put(
           "revetement_1",
