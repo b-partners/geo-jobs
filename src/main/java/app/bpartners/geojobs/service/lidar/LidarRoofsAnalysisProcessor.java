@@ -40,7 +40,7 @@ public class LidarRoofsAnalysisProcessor
     try {
       Map<String, Set<Geometry>> lidarFilesUrl =
           lidarApi.getUniqueLidarFilesUrls(
-              allRoofsData.stream().map(data -> data.roof().boundaryEPSG4326()).collect(toSet()));
+              allRoofsData.stream().map(data -> data.roof().boundaryLambert93()).collect(toSet()));
       List<Set<LidarRoofData>> roofsDataPerFiles =
           lidarFilesUrl.entrySet().parallelStream()
               .map(
