@@ -1,18 +1,12 @@
-package app.bpartners.geojobs.service.lidar;
+package app.bpartners.geojobs.service.lidar.api;
 
 import static java.util.Objects.requireNonNull;
-import static java.util.stream.Collectors.toSet;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.Function;
+import java.util.*;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -21,7 +15,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 @Component
 @AllArgsConstructor
 @Slf4j
-public class LidarApi implements Function<Set<Envelope>, Set<File>> {
+public class LidarApi {
   private final LidarApiConf conf;
   private final RestTemplate restTemplate;
   private static final Set<String> ALLOWED_URL_PREFIXES =
@@ -30,13 +24,12 @@ public class LidarApi implements Function<Set<Envelope>, Set<File>> {
           "https://lidar.data.gouv.fr/",
           "https://data.geopf.fr/");
 
-  @Override
-  public Set<File> apply(Set<Envelope> bboxes) {
-    Set<String> uniqueUrls = new HashSet<>();
+  public Map<String, Set<Geometry>> getUniqueLidarFilesUrls(Collection<Geometry> geometries) {
+    Map<String, Set<Geometry>> filesUrls = new HashMap<>();
 
-    for (var bbox : bboxes) {
+    for (var geometry : geometries) {
       var uriBuilder = UriComponentsBuilder.fromHttpUrl(conf.getUrl());
-      conf.getDefaultParams(bbox).forEach(uriBuilder::queryParam);
+      conf.getDefaultParams(geometry.getEnvelopeInternal()).forEach(uriBuilder::queryParam);
 
       var features =
           requireNonNull(
@@ -48,36 +41,26 @@ public class LidarApi implements Function<Set<Envelope>, Set<File>> {
       for (var feature : features) {
         var url = feature.getProperties().get("url").toString();
         log.info("LAZ File to download: {}", url);
-        uniqueUrls.add(url);
+        filesUrls.computeIfAbsent(url, key -> new HashSet<>()).add(geometry);
       }
     }
 
-    return uniqueUrls.parallelStream()
-        .map(this::downloadToTempFile)
-        .filter(Optional::isPresent)
-        .map(Optional::get)
-        .collect(toSet());
+    return filesUrls;
   }
 
-  public Set<File> apply(List<Geometry> geometries) {
-    var bboxes = geometries.stream().map(Geometry::getEnvelopeInternal).collect(toSet());
-    return apply(bboxes);
-  }
+  public Optional<File> download(String fileUrl) {
+    if (!isSafeUrl(fileUrl)) {
+      log.warn("Unsafe URL blocked: {}", fileUrl);
+      return Optional.empty();
+    }
 
-  private Optional<File> downloadToTempFile(String fileUrl) {
     try {
-      if (!isSafeUrl(fileUrl)) {
-        log.warn("Unsafe URL blocked: {}", fileUrl);
-        return Optional.empty();
-      }
-
       byte[] data = restTemplate.getForObject(fileUrl, byte[].class);
       if (data == null) {
         return Optional.empty();
       }
 
       var tempFile = File.createTempFile("lidar-", ".laz");
-
       try (var outputStream = new FileOutputStream(tempFile)) {
         outputStream.write(data);
       }
