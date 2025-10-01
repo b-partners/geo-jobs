@@ -336,6 +336,9 @@ public class ZoneService {
       CreateDetection createDetection,
       String communityOwnerId,
       boolean isRooferMade) {
+    if (createDetection.getGeoJsonZone() == null) {
+      createDetection.setGeoJsonZone(new ArrayList<>());
+    }
     var optionalDetection =
         detectionRepository.findByEndToEndIdAndCommunityOwnerId(detectionId, communityOwnerId);
 
