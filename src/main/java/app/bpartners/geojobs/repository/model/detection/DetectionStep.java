@@ -20,6 +20,8 @@ import org.hibernate.annotations.JdbcTypeCode;
 public class DetectionStep {
   @Id private String id;
 
+  @Enumerated(STRING)
+  @JdbcTypeCode(NAMED_ENUM)
   private DetectionStepName name;
 
   @Enumerated(STRING)
