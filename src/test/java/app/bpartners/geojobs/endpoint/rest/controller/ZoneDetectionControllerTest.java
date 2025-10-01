@@ -36,6 +36,7 @@ import app.bpartners.geojobs.job.model.statistic.HealthStatusStatistic;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
 import app.bpartners.geojobs.job.model.statistic.TaskStatusStatistic;
 import app.bpartners.geojobs.model.exception.BadRequestException;
+import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.model.GeoJobType;
@@ -50,7 +51,6 @@ import app.bpartners.geojobs.service.ParcelService;
 import app.bpartners.geojobs.service.ZoneService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -286,20 +286,13 @@ class ZoneDetectionControllerTest {
 
   @Test
   void configureRoofDelimiter_ok() {
-    var expectedDetection = mock(Detection.class);
-    var roofDelimiter = mock(RoofDelimiter.class);
-    var principal = mock(Principal.class);
-    List<List<BigDecimal>> roofDelimitation = mock();
+    var actualException =
+        assertThrows(
+            NotImplementedException.class,
+            () -> subject.configureDetectionRoofDelimiter("detectionId", new RoofDelimiter()));
 
-    when(authProviderMock.getPrincipal()).thenReturn(principal);
-    when(principal.getPassword()).thenReturn("api-key");
-    when(roofDelimiter.getPolygon()).thenReturn(roofDelimitation);
-    when(communityAuthRepositoryMock.findByApiKey("api-key")).thenReturn(Optional.of(mock()));
-    when(zoneServiceMock.configureRoofDelimiter(any(), any(), any())).thenReturn(expectedDetection);
-
-    var actual = subject.configureDetectionRoofDelimiter("detectionId", roofDelimiter);
-
-    assertEquals(expectedDetection, actual);
+    assertEquals(
+        "POST /detections/{id}/roofDelimiter not supported anymore.", actualException.getMessage());
   }
 
   private static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob aZDJ(

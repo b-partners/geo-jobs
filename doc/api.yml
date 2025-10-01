@@ -18,7 +18,6 @@ info:
     1. If your zone is described by a **GeoJson**, then just set accordingly the `geoJsonZone` field in the payload.
     2. If your zone is described by a **Shape file**, then upload it in a second call `POST /detections/{id}/shape`.
     3. If your zone is described by a list of addresses in an **Excel file**, then upload it in a second call `POST /detections/{id}/excel`.
-    4. If your zone is described by an **Image**, then upload it in a second call `POST /detections/{id}/image`.
     
     # Examples
     
@@ -568,11 +567,11 @@ paths:
           required: false
       responses:
         200:
-          description: Image of provided address
+          description: Image details of provided address
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ImageOfAddress'
+                $ref: '#/components/schemas/ImageDetails'
   '/detections':
     get:
       tags:
@@ -697,30 +696,6 @@ paths:
       responses:
         200:
           description: Detection launched with provided textual addresses
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Detection'
-  '/detections/{id}/roofDelimiter':
-    post:
-      tags:
-        - Roof
-      summary: Launch detection on delimited roof
-      operationId: detectOnDelimitedRoof
-      description: |
-        Provide roof delimiter used in `BP_TOITURE` model and launches detection.
-      security:
-        - ApiKeyAuth: [ ]
-      parameters:
-        - $ref: '#/components/parameters/IdentifierParameter'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RoofDelimiter'
-      responses:
-        200:
-          description: Detection launched on roof delimiter
           content:
             application/json:
               schema:
@@ -860,38 +835,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Detection'
-
-  '/detections/{id}/image':
-    post:
-      tags:
-        - Image
-      operationId: detectImage
-      summary: Submit detection over an image
-      description: |
-        For security reasons, only image already previously queried from `GET /image` are supported for the moment.
-        This ensures that only small enough images are submitted, and that images quality fit the requirements of our AI models.
-      security:
-        - ApiKeyAuth: [ ]
-      parameters:
-        - $ref: '#/components/parameters/IdentifierParameter'
-      requestBody:
-        description: Image from a specific textual address to be detected
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                file:
-                  type: string
-                  format: binary
-      responses:
-        200:
-          description: Detection with updated image file uploaded url
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Detection'
-
   '/detections/{id}/pdf':
     post:
       tags:
@@ -1535,16 +1478,19 @@ components:
           type: string
           format: date-time
         coordinates:
-          type: object
-          properties:
-            x:
-              type: integer
-            y:
-              type: integer
-            z:
-              type: integer
+          allOf:
+            - $ref: '#/components/schemas/TileCoordinates'
         bucketPath:
           type: string
+    TileCoordinates:
+      type: object
+      properties:
+        x:
+          type: integer
+        y:
+          type: integer
+        z:
+          type: integer
     TileInfo:
       properties:
         size:
@@ -1555,14 +1501,8 @@ components:
             height:
               type: integer
         coordinates:
-          type: object
-          properties:
-            x:
-              type: integer
-            y:
-              type: integer
-            z:
-              type: integer
+          allOf:
+            - $ref: '#/components/schemas/TileCoordinates'
     DetectedTile:
       properties:
         tileId:
@@ -1854,8 +1794,24 @@ components:
       properties:
         address:
           type: string
+    ImageDetails:
+      allOf:
+        - $ref: '#/components/schemas/ImageOfAddress'
+      properties:
+        minTileCoordinates:
+          $ref: '#/components/schemas/TileCoordinates'
+        currentGeoPosition:
+          $ref: '#/components/schemas/GeoPosition'
+    GeoPosition:
+      type: object
+      properties:
+        longitude:
+          type: number
+        latitude:
+          type: number
     ImageOfAddress:
       type: object
+      deprecated: true
       properties:
         address:
           type: string
