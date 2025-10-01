@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -115,7 +116,7 @@ public class Detection implements Serializable {
 
   @OneToMany
   @JoinColumn(name = "detection_id")
-  private List<DetectionStep> detectionSteps;
+  private List<DetectionStep> detectionSteps = new ArrayList<>();
 
   public DetectionStep getStep() {
     return detectionSteps.stream()
