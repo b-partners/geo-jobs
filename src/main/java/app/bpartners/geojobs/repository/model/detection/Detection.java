@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,7 +32,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 @Builder(toBuilder = true)
 @Getter
 @Setter
-@EqualsAndHashCode
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(name = "detection")
 public class Detection implements Serializable {
   @Id private String id;
@@ -111,6 +112,16 @@ public class Detection implements Serializable {
   @Enumerated(STRING)
   @JdbcTypeCode(NAMED_ENUM)
   private GeoJsonDelimitationTypeEnum geoJsonDelimitationType;
+
+  @OneToMany
+  @JoinColumn(name = "detection_id")
+  private List<DetectionStep> detectionSteps;
+
+  public DetectionStep getStep() {
+    return detectionSteps.stream()
+        .max(Comparator.comparing(DetectionStep::getCreationDatetime))
+        .orElse(null);
+  }
 
   public boolean isOutputZipped() {
     return isOutputZipped != null && isOutputZipped;

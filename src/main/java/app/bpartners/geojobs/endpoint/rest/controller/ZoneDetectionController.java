@@ -226,6 +226,12 @@ public class ZoneDetectionController {
         detectionId, createDetection, communityOwnerId, isRooferMade);
   }
 
+  @PutMapping("/detections/{id}/step")
+  public Detection updateDetectionStep(
+      @PathVariable(name = "id") String detectionId, @RequestBody DetectionStep step) {
+    return zoneService.updateDetectionStep(detectionId, step);
+  }
+
   @PostMapping("/detections/{id}/addresses")
   public Detection configureDetectionAddresses(
       @PathVariable(name = "id") String detectionId, @RequestBody List<Address> addresses) {

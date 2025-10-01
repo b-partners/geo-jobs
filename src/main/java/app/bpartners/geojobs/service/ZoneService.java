@@ -24,6 +24,8 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTyp
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.GeoJsonDelimitationTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
+import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStepMapper;
+import app.bpartners.geojobs.endpoint.rest.mapper.DetectionStepMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.validator.FeatureTypeChecker;
@@ -37,6 +39,7 @@ import app.bpartners.geojobs.model.page.BoundedPageSize;
 import app.bpartners.geojobs.model.page.PageFromOne;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
+import app.bpartners.geojobs.repository.DetectionStepRepository;
 import app.bpartners.geojobs.repository.GeoJsonConversionJobRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.detection.Detection;
@@ -98,6 +101,9 @@ public class ZoneService {
   private final TileMultiPolygonFrame tileMultiPolygonFrame;
   private final DetectionAreaValidator detectionAreaValidator;
   private final GeoJsonDelimitationTypeMapper geoJsonDelimitationTypeMapper;
+  private final DetectionStepMapper detectionStepMapper;
+  private final DetectionStepRepository detectionStepRepository;
+  private final DetectionFromStepMapper detectionFromStepMapper;
 
   private List<Feature> readFromFile(File featuresFromShape) {
     try {
@@ -742,5 +748,14 @@ public class ZoneService {
     rooferDetectionService.sendEmail(prospect, pdfFile);
     return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
         detection, FINISHED, SUCCEEDED, MACHINE_DETECTION);
+  }
+
+  public app.bpartners.geojobs.endpoint.rest.model.Detection updateDetectionStep(
+      String detectionId, DetectionStep step) {
+    detectionStepRepository.save(detectionStepMapper.toDomain(step));
+
+    var detection = getDetectionById(detectionId);
+
+    return detectionFromStepMapper.apply(detection, detectionStepMapper.toDomain(step));
   }
 }
