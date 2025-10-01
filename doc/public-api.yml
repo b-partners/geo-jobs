@@ -570,11 +570,12 @@ components:
         roofDelimiter:
           $ref: '#/components/schemas/RoofDelimiter'
     DetectionStepName:
+      type: string
       enum:
-        - CONFIGURING
+        - REQUEST_ACCEPTED
         - TILING
         - MACHINE_DETECTION
-        - HUMAN_DETECTION
+        - POST_PROCESSING
     DetectionStepStatistic:
       allOf:
         - $ref: '#/components/schemas/StatusStatistic'
