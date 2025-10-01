@@ -2,6 +2,7 @@ package app.bpartners.geojobs.endpoint.rest.mapper;
 
 import static app.bpartners.geojobs.endpoint.rest.model.GeoJsonOutput.GEO_JSON;
 import static app.bpartners.geojobs.endpoint.rest.model.GeoJsonOutput.ZIP;
+import static app.bpartners.geojobs.repository.model.GeoJobType.GEO_JSON_CONVERSION;
 import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightRequestedService.ROOF_HEIGHT_PROPERTY_NAME;
 import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightRequestedService.ROOF_SLOPE_PROPERTY_NAME;
 import static java.time.Instant.now;
@@ -154,9 +155,9 @@ public class DetectionFromStatisticRestMapper
   private GeoJobType fromDetectionStep(DetectionStepName stepName) {
     return switch (stepName) {
       case TILING -> GeoJobType.TILING;
-      case CONFIGURING -> GeoJobType.CONFIGURING;
-      case MACHINE_DETECTION, HUMAN_DETECTION -> GeoJobType.DETECTION;
-      case GEO_JSON_CONVERSION -> GeoJobType.GEO_JSON_CONVERSION;
+      case REQUEST_ACCEPTED -> GeoJobType.REQUEST_ACCEPTED;
+      case MACHINE_DETECTION -> GeoJobType.DETECTION;
+      case POST_PROCESSING -> GEO_JSON_CONVERSION;
     };
   }
 }

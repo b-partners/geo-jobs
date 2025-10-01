@@ -127,7 +127,7 @@ public class ZoneService {
     var savedDetection = detectionRepository.save(detection);
     eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
     return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
-        savedDetection, PROCESSING, UNKNOWN, CONFIGURING);
+        savedDetection, PROCESSING, UNKNOWN, REQUEST_ACCEPTED);
   }
 
   private Detection getDetectionById(String detectionId) {
@@ -160,7 +160,7 @@ public class ZoneService {
         List.of(DetectionExcelFileSaved.builder().detection(savedDetection).build()));
     eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
     return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
-        savedDetection, PENDING, UNKNOWN, CONFIGURING);
+        savedDetection, PENDING, UNKNOWN, REQUEST_ACCEPTED);
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection configureDetectionAddresses(
@@ -172,7 +172,7 @@ public class ZoneService {
     detectionAddressConsumer.accept(savedDetection);
 
     return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
-        savedDetection, PROCESSING, UNKNOWN, CONFIGURING);
+        savedDetection, PROCESSING, UNKNOWN, REQUEST_ACCEPTED);
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection configureShapeFile(
@@ -185,7 +185,7 @@ public class ZoneService {
         detectionRepository.save(detection.toBuilder().shapeFileKey(bucketKey).build());
     eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
     return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
-        savedDetection, PENDING, UNKNOWN, CONFIGURING);
+        savedDetection, PENDING, UNKNOWN, REQUEST_ACCEPTED);
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection configureImageFile(
@@ -198,7 +198,7 @@ public class ZoneService {
         detectionRepository.save(detection.toBuilder().imageFileKey(bucketKey).build());
     eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
     return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
-        savedDetection, PENDING, UNKNOWN, CONFIGURING);
+        savedDetection, PENDING, UNKNOWN, REQUEST_ACCEPTED);
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection uploadPdfFile(
@@ -228,7 +228,7 @@ public class ZoneService {
             detection.toBuilder().geojsonS3FileKey(geoJsonResultFileKey).build());
     eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
     return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
-        detection, FINISHED, SUCCEEDED, GEO_JSON_CONVERSION);
+        detection, FINISHED, SUCCEEDED, POST_PROCESSING);
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection getProcessedDetection(
@@ -236,11 +236,11 @@ public class ZoneService {
     var detection = getDetectionByE2IdOrId(detectionId);
     if (detection.isSucceeded()) {
       return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
-          detection, FINISHED, SUCCEEDED, GEO_JSON_CONVERSION);
+          detection, FINISHED, SUCCEEDED, POST_PROCESSING);
     }
     if (detection.isStillOnConfiguringStep()) {
       return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
-          detection, PENDING, UNKNOWN, CONFIGURING);
+          detection, PENDING, UNKNOWN, REQUEST_ACCEPTED);
     }
     if (detection.isStillOnTilingStep()) {
       if (detection.isTilingPending()) {
@@ -258,21 +258,21 @@ public class ZoneService {
           zoneDetectionJobService.countInDoubtDetectedTileToDeliveryById(zoneDetectionJob.getId());
       if (inDoubtDetectedTileToDelivery > 0) {
         return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
-            detection, PROCESSING, UNKNOWN, HUMAN_DETECTION);
+            detection, PROCESSING, UNKNOWN, POST_PROCESSING);
       }
       var geoJsonConversionJob = findActualGeoJsonConversionJob(zoneDetectionJob.getId());
       if (geoJsonConversionJob != null) {
         if (geoJsonConversionJob.isSucceeded()) {
           return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
-              detection, FINISHED, SUCCEEDED, GEO_JSON_CONVERSION);
+              detection, FINISHED, SUCCEEDED, POST_PROCESSING);
         }
         if (geoJsonConversionJob.isProcessing()) {
           return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
-              detection, PROCESSING, UNKNOWN, GEO_JSON_CONVERSION);
+              detection, PROCESSING, UNKNOWN, POST_PROCESSING);
         }
         if (geoJsonConversionJob.isPending()) {
           return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
-              detection, PENDING, UNKNOWN, GEO_JSON_CONVERSION);
+              detection, PENDING, UNKNOWN, POST_PROCESSING);
         }
       }
       return detectionMachineDetectionStatisticsComputer.apply(detection, detection.getZdjId());
@@ -347,7 +347,7 @@ public class ZoneService {
           createDetectionJob(detectionId, createDetection, communityOwnerId, isRooferMade);
       if (savedDetection.isStillOnConfiguringStep()) {
         return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
-            savedDetection, PENDING, UNKNOWN, CONFIGURING);
+            savedDetection, PENDING, UNKNOWN, REQUEST_ACCEPTED);
       }
       if (!savedDetection.isRooferMade()) {
         var detectionWithTilingCreated = detectionTilingCreation.apply(savedDetection);
@@ -361,7 +361,7 @@ public class ZoneService {
       if (peristedDetection.isStillOnConfiguringStep()) {
         if (peristedDetection.getImageFileKey() == null) {
           return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
-              peristedDetection, PENDING, UNKNOWN, CONFIGURING);
+              peristedDetection, PENDING, UNKNOWN, REQUEST_ACCEPTED);
         }
         var toSave =
             peristedDetection.toBuilder()
@@ -400,7 +400,7 @@ public class ZoneService {
     var detectionJobId = detection.getZdjId();
     if (detection.isStillOnConfiguringStep()) {
       return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
-          detection, PENDING, UNKNOWN, CONFIGURING);
+          detection, PENDING, UNKNOWN, REQUEST_ACCEPTED);
     }
     if (tilingJobId == null) {
       return detectionTilingCreation.apply(detection);
@@ -719,7 +719,7 @@ public class ZoneService {
       return detectionFromStatisticRestMapper.apply(
           detection, zoneTilingJobService.getTaskStatistic(detection.getZtjId()), TILING);
     }
-    return detectionFromStatisticRestMapper.apply(detection, new TaskStatistic(), CONFIGURING);
+    return detectionFromStatisticRestMapper.apply(detection, new TaskStatistic(), REQUEST_ACCEPTED);
   }
 
   private GeoJsonConversionJob findActualGeoJsonConversionJob(String zoneDetectionJobId) {

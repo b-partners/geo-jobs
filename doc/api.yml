@@ -1675,12 +1675,12 @@ components:
         - UNDERSCORE
         - SLASH
     DetectionStepName:
+      type: string
       enum:
-        - CONFIGURING
+        - REQUEST_ACCEPTED
         - TILING
         - MACHINE_DETECTION
-        - HUMAN_DETECTION
-        - GEO_JSON_CONVERSION
+        - POST_PROCESSING
     DetectionStepStatistic:
       allOf:
         - $ref: '#/components/schemas/StatusStatistic'

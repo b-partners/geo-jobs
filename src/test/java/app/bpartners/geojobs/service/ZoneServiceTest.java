@@ -285,7 +285,7 @@ class ZoneServiceTest {
     var actual =
         subject.processDetection(detectionId, createDetection, communityOwnerId, isRooferMade);
 
-    assertEquals(CONFIGURING, actual.getStep().getName());
+    assertEquals(REQUEST_ACCEPTED, actual.getStep().getName());
     assertEquals(Status.ProgressionEnum.PENDING, actual.getStep().getStatus().getProgression());
     assertEquals(UNKNOWN, actual.getStep().getStatus().getHealth());
   }
@@ -473,7 +473,7 @@ class ZoneServiceTest {
     var actual =
         subject.processDetection(detectionId, createDetection, communityOwnerId, isRooferMade);
 
-    assertEquals(CONFIGURING, actual.getStep().getName());
+    assertEquals(REQUEST_ACCEPTED, actual.getStep().getName());
     assertEquals(Status.ProgressionEnum.PENDING, actual.getStep().getStatus().getProgression());
     assertEquals(UNKNOWN, actual.getStep().getStatus().getHealth());
   }
@@ -507,7 +507,7 @@ class ZoneServiceTest {
 
     var actual = subject.getProcessedDetection(detectionId);
 
-    assertEquals(CONFIGURING, actual.getStep().getName());
+    assertEquals(REQUEST_ACCEPTED, actual.getStep().getName());
     assertEquals(Status.ProgressionEnum.PENDING, actual.getStep().getStatus().getProgression());
     assertEquals(UNKNOWN, actual.getStep().getStatus().getHealth());
   }
@@ -529,7 +529,7 @@ class ZoneServiceTest {
 
     var actual = subject.getProcessedDetection(detectionId);
 
-    assertEquals(GEO_JSON_CONVERSION, actual.getStep().getName());
+    assertEquals(POST_PROCESSING, actual.getStep().getName());
     assertEquals(Status.ProgressionEnum.FINISHED, actual.getStep().getStatus().getProgression());
     assertEquals(SUCCEEDED, actual.getStep().getStatus().getHealth());
   }
@@ -599,7 +599,7 @@ class ZoneServiceTest {
 
     var actual = subject.getProcessedDetection(detectionId);
 
-    assertEquals(HUMAN_DETECTION, actual.getStep().getName());
+    assertEquals(POST_PROCESSING, actual.getStep().getName());
     assertEquals(Status.ProgressionEnum.PROCESSING, actual.getStep().getStatus().getProgression());
     assertEquals(UNKNOWN, actual.getStep().getStatus().getHealth());
   }
@@ -683,7 +683,7 @@ class ZoneServiceTest {
 
     var actual = subject.getProcessedDetection(detectionId);
 
-    assertEquals(GEO_JSON_CONVERSION, actual.getStep().getName());
+    assertEquals(POST_PROCESSING, actual.getStep().getName());
     assertEquals(Status.ProgressionEnum.FINISHED, actual.getStep().getStatus().getProgression());
     assertEquals(SUCCEEDED, actual.getStep().getStatus().getHealth());
   }
@@ -732,7 +732,7 @@ class ZoneServiceTest {
 
     var actual = subject.getProcessedDetection(detectionId);
 
-    assertEquals(GEO_JSON_CONVERSION, actual.getStep().getName());
+    assertEquals(POST_PROCESSING, actual.getStep().getName());
     assertEquals(Status.ProgressionEnum.PENDING, actual.getStep().getStatus().getProgression());
     assertEquals(UNKNOWN, actual.getStep().getStatus().getHealth());
   }
@@ -799,7 +799,7 @@ class ZoneServiceTest {
 
     var actual = subject.getProcessedDetection(detectionId);
 
-    assertEquals(GEO_JSON_CONVERSION, actual.getStep().getName());
+    assertEquals(POST_PROCESSING, actual.getStep().getName());
     assertEquals(Status.ProgressionEnum.PROCESSING, actual.getStep().getStatus().getProgression());
     assertEquals(UNKNOWN, actual.getStep().getStatus().getHealth());
   }
@@ -828,7 +828,7 @@ class ZoneServiceTest {
 
     var actual = subject.getProcessedDetection(detectionId);
 
-    assertEquals(GEO_JSON_CONVERSION, actual.getStep().getName());
+    assertEquals(POST_PROCESSING, actual.getStep().getName());
     assertEquals(Status.ProgressionEnum.FINISHED, actual.getStep().getStatus().getProgression());
     assertEquals(SUCCEEDED, actual.getStep().getStatus().getHealth());
   }
@@ -919,7 +919,7 @@ class ZoneServiceTest {
             .detectableObjectModel(detection.getDetectableObjectModel())
             .step(
                 new DetectionStep()
-                    .name(CONFIGURING)
+                    .name(REQUEST_ACCEPTED)
                     .status(
                         new Status()
                             .progression(Status.ProgressionEnum.PROCESSING)
@@ -971,7 +971,7 @@ class ZoneServiceTest {
             .detectableObjectModel(detection.getDetectableObjectModel())
             .step(
                 new DetectionStep()
-                    .name(CONFIGURING)
+                    .name(REQUEST_ACCEPTED)
                     .status(
                         new Status()
                             .progression(Status.ProgressionEnum.PENDING)
@@ -1027,7 +1027,7 @@ class ZoneServiceTest {
             .detectableObjectModel(detection.getDetectableObjectModel())
             .step(
                 new DetectionStep()
-                    .name(CONFIGURING)
+                    .name(REQUEST_ACCEPTED)
                     .status(
                         new Status()
                             .progression(Status.ProgressionEnum.PENDING)
@@ -1096,7 +1096,7 @@ class ZoneServiceTest {
             .detectableObjectModel(detection.getDetectableObjectModel())
             .step(
                 new DetectionStep()
-                    .name(CONFIGURING)
+                    .name(REQUEST_ACCEPTED)
                     .status(
                         new Status()
                             .progression(Status.ProgressionEnum.PROCESSING)
@@ -1122,7 +1122,7 @@ class ZoneServiceTest {
 
     var actual = subject.configureGeoJsonResult(detectionId, fileMock);
 
-    assertEquals(GEO_JSON_CONVERSION, actual.getStep().getName());
+    assertEquals(POST_PROCESSING, actual.getStep().getName());
     assertEquals(Status.ProgressionEnum.FINISHED, actual.getStep().getStatus().getProgression());
     assertEquals(SUCCEEDED, actual.getStep().getStatus().getHealth());
     var stringCaptor = ArgumentCaptor.forClass(String.class);
