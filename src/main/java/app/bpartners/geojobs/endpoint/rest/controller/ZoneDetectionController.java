@@ -24,6 +24,7 @@ import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.MediaTypeGuesser;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.model.exception.BadRequestException;
+import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.model.page.BoundedPageSize;
 import app.bpartners.geojobs.model.page.PageFromOne;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
@@ -267,11 +268,8 @@ public class ZoneDetectionController {
   @PostMapping("/detections/{id}/roofDelimiter")
   public Detection configureDetectionRoofDelimiter(
       @PathVariable(name = "id") String detectionId, @RequestBody RoofDelimiter roofDelimiter) {
-    var polygonDelimitations = roofDelimiter.getPolygon();
-    var communityAuthorization =
-        communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
-    var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId).orElse(null);
-    return zoneService.configureRoofDelimiter(detectionId, communityOwnerId, polygonDelimitations);
+    // TODO : delete implementation on ZoneService
+    throw new NotImplementedException("POST /detections/{id}/roofDelimiter not supported anymore.");
   }
 
   @PostMapping("/detections/{id}/roofer/email")
