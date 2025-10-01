@@ -749,10 +749,10 @@ public class ZoneService {
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection updateDetectionStep(
       String detectionId, DetectionStep step) {
-    detectionStepRepository.save(detectionStepMapper.toRepository(step));
+    detectionStepRepository.save(detectionStepMapper.toDomain(step));
 
     var detection = getDetectionById(detectionId);
 
-    return detectionFromStepMapper.apply(detection, detectionStepMapper.toRepository(step));
+    return detectionFromStepMapper.apply(detection, detectionStepMapper.toDomain(step));
   }
 }

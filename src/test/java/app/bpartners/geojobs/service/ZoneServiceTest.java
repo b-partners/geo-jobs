@@ -130,12 +130,14 @@ class ZoneServiceTest {
   GeoJsonDelimitationTypeMapper geoJsonDelimitationTypeMapper = mock();
   DetectionFromStatisticRestMapper detectionFromStatisticRestMapperMock =
       new DetectionFromStatisticRestMapper(
-          bucketComponentMock,
-          stepStatisticMapper,
-          featureImageRetrieverMock,
-          imageAttributeRetrieverMock,
-          vggAttributeRetrieverMock,
-          roofDelimiterMapper);
+          new DetectionFromStepMapper(
+              bucketComponentMock,
+              featureImageRetrieverMock,
+              imageAttributeRetrieverMock,
+              vggAttributeRetrieverMock,
+              new DetectionStepMapper(),
+              roofDelimiterMapper),
+          stepStatisticMapper);
   FeatureMapper featureMapperMock = mock();
   DetectionTilingStatisticsComputer detectionTilingStatisticsComputerMock =
       new DetectionTilingStatisticsComputer(
@@ -1225,7 +1227,10 @@ class ZoneServiceTest {
     when(detectionRepositoryMock.existsById(any(String.class))).thenReturn(true);
     when(detectionRepositoryMock.findById(detectionId)).thenReturn(Optional.of(repoDetection));
     var expectedRestDetection = new Detection().step(restStep);
-    when(detectionFromStepMapperMock.apply(any(), any())).thenReturn(expectedRestDetection);
+    when(detectionFromStepMapperMock.apply(
+            any(app.bpartners.geojobs.repository.model.detection.Detection.class),
+            any(app.bpartners.geojobs.repository.model.detection.DetectionStep.class)))
+        .thenReturn(expectedRestDetection);
 
     var actual = subject.updateDetectionStep(detectionId, restStep);
 

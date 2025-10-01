@@ -8,17 +8,17 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class DetectionStepMapper {
-  public app.bpartners.geojobs.repository.model.detection.DetectionStep toRepository(
+  public app.bpartners.geojobs.repository.model.detection.DetectionStep toDomain(
       DetectionStep step) {
     return app.bpartners.geojobs.repository.model.detection.DetectionStep.builder()
         .name(
             app.bpartners.geojobs.repository.model.detection.DetectionStepName.fromValue(
                 step.getName().getValue()))
         .progression(
-            app.bpartners.geojobs.repository.model.detection.Status.Progression.valueOf(
+            app.bpartners.geojobs.job.model.Status.ProgressionStatus.valueOf(
                 step.getStatus().getProgression().getValue()))
         .health(
-            app.bpartners.geojobs.repository.model.detection.Status.Health.valueOf(
+            app.bpartners.geojobs.job.model.Status.HealthStatus.valueOf(
                 step.getStatus().getHealth().getValue()))
         .creationDatetime(Instant.now())
         .build();
@@ -30,7 +30,11 @@ public class DetectionStepMapper {
         .status(
             new app.bpartners.geojobs.endpoint.rest.model.Status()
                 .creationDatetime(step.getCreationDatetime())
-                .progression(Status.ProgressionEnum.valueOf(step.getProgression().getValue()))
-                .health(Status.HealthEnum.valueOf(step.getHealth().getValue())));
+                .progression(
+                    Status.ProgressionEnum.valueOf(
+                        step.getProgression().name())) // TODO: use existing restMapper
+                .health(
+                    Status.HealthEnum.valueOf(
+                        step.getHealth().name()))); // TODO: user existing restMapper
   }
 }

@@ -1,8 +1,12 @@
 package app.bpartners.geojobs.repository.model.detection;
 
+import static jakarta.persistence.EnumType.STRING;
+import static org.hibernate.type.SqlTypes.NAMED_ENUM;
+
 import jakarta.persistence.*;
 import java.time.Instant;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
 
 @Entity
 @Getter
@@ -18,9 +22,13 @@ public class DetectionStep {
 
   private DetectionStepName name;
 
-  private Status.Progression progression;
+  @Enumerated(STRING)
+  @JdbcTypeCode(NAMED_ENUM)
+  private app.bpartners.geojobs.job.model.Status.ProgressionStatus progression;
 
-  private Status.Health health;
+  @Enumerated(STRING)
+  @JdbcTypeCode(NAMED_ENUM)
+  private app.bpartners.geojobs.job.model.Status.HealthStatus health;
 
   @Column(name = "creation_datetime")
   private Instant creationDatetime;

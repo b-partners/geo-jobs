@@ -3,10 +3,10 @@ package app.bpartners.geojobs.endpoint.rest.mapper;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.RoofDelimiterMapper;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.repository.model.detection.DetectionStep;
 import app.bpartners.geojobs.repository.model.detection.DetectionStepName;
-import app.bpartners.geojobs.repository.model.detection.Status;
 import app.bpartners.geojobs.service.DetectionFeaturesResultImageRetriever;
 import app.bpartners.geojobs.service.DetectionImageAttributeRetriever;
 import app.bpartners.geojobs.service.DetectionVggAttributeRetriever;
@@ -25,6 +25,7 @@ class DetectionFromStepMapperTest {
       mock(DetectionVggAttributeRetriever.class);
   DetectionFromStatisticRestMapper detectionFromStatisticRestMapperMock =
       mock(DetectionFromStatisticRestMapper.class);
+  RoofDelimiterMapper roofDelimiterMapperMock = mock();
   DetectionStepMapper detectionStepMapper = new DetectionStepMapper();
 
   DetectionFromStepMapper subject =
@@ -33,8 +34,8 @@ class DetectionFromStepMapperTest {
           detectionFeaturesResultImageRetrieverMock,
           detectionImageAttributeRetrieverMock,
           detectionVggAttributeRetrieverMock,
-          detectionFromStatisticRestMapperMock,
-          detectionStepMapper);
+          detectionStepMapper,
+          roofDelimiterMapperMock);
 
   @Test
   void should_map_repository_detection_and_step_to_rest_detection() {
@@ -51,8 +52,8 @@ class DetectionFromStepMapperTest {
     var step = new DetectionStep();
     step.setId("step-1");
     step.setName(DetectionStepName.CONFIGURING);
-    step.setProgression(Status.Progression.PROCESSING);
-    step.setHealth(Status.Health.SUCCEEDED);
+    step.setProgression(app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING);
+    step.setHealth(app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED);
     step.setCreationDatetime(Instant.now());
     step.setDetectionId("end2end-123");
 
@@ -65,10 +66,7 @@ class DetectionFromStepMapperTest {
     when(bucketComponentMock.presign("shape-key")).thenReturn("shape-url");
     when(bucketComponentMock.presign("geojson-key")).thenReturn("geojson-url");
     when(bucketComponentMock.presign("pdf-key")).thenReturn("pdf-url");
-    when(detectionFromStatisticRestMapperMock.hideUselessRestProperties(any()))
-        .thenReturn(List.of()); // cleaned features
-    when(detectionFromStatisticRestMapperMock.retrieveRoofDelimiter(repoDetection))
-        .thenReturn(null);
+    when(roofDelimiterMapperMock.toRestPolygon(any())).thenReturn(mock());
 
     var actual = subject.apply(repoDetection, step);
 
