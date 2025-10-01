@@ -4,6 +4,7 @@ import app.bpartners.geojobs.endpoint.rest.model.DetectionStep;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionStepName;
 import app.bpartners.geojobs.endpoint.rest.model.Status;
 import java.time.Instant;
+import java.util.UUID;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -11,6 +12,7 @@ public class DetectionStepMapper {
   public app.bpartners.geojobs.repository.model.detection.DetectionStep toDomain(
       DetectionStep step) {
     return app.bpartners.geojobs.repository.model.detection.DetectionStep.builder()
+        .id(UUID.randomUUID().toString())
         .name(
             app.bpartners.geojobs.repository.model.detection.DetectionStepName.fromValue(
                 step.getName().getValue()))
