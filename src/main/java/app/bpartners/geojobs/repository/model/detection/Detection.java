@@ -119,9 +119,11 @@ public class Detection implements Serializable {
   private List<DetectionStep> detectionSteps = new ArrayList<>();
 
   public DetectionStep getStep() {
-    return detectionSteps.stream()
-        .max(Comparator.comparing(DetectionStep::getCreationDatetime))
-        .orElse(null);
+    return detectionSteps == null
+        ? null
+        : detectionSteps.stream()
+            .max(Comparator.comparing(DetectionStep::getCreationDatetime))
+            .orElse(null);
   }
 
   public boolean isOutputZipped() {
