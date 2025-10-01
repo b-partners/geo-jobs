@@ -39,6 +39,7 @@ import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.model.exception.BadRequestException;
+import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.model.page.BoundedPageSize;
 import app.bpartners.geojobs.model.page.PageFromOne;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
@@ -358,35 +359,13 @@ class DetectionControllerIT extends FacadeIT {
   @SneakyThrows
   @Test
   void configure_image_file_ok() {
-    var presignedUrl = "http://localhost/presignedImageFile";
-    File dummyImageFile = new ClassPathResource("/geometry/mask.png").getFile();
-    var communityOwnerId = randomUUID().toString();
-    var savedCommunity =
-        communityAuthRepository.save(
-            CommunityAuthorization.builder()
-                .id(communityOwnerId)
-                .name("dummy")
-                .apiKey("dummy")
-                .maxSurfaceUnit(SQUARE_DEGREE)
-                .maxSurface(10)
-                .build());
-    var e2Id = randomUUID().toString();
-    var detection =
-        detectionRepository.save(
-            detectionWithoutZdj(null).toBuilder()
-                .endToEndId(e2Id)
-                .communityOwnerId(communityOwnerId)
-                .build());
-    when(bucketComponentMock.presign(any())).thenReturn(presignedUrl);
+    var actualException =
+        assertThrows(
+            NotImplementedException.class,
+            () -> subject.configureRooferDetectionImageFile(randomUUID().toString(), new byte[0]));
 
-    var actual =
-        subject.configureRooferDetectionImageFile(e2Id, fileWriter.writeAsByte(dummyImageFile));
-
-    assertNull(detection.getImageFileKey());
-    assertEquals(presignedUrl, actual.getImageUrl());
-
-    detectionRepository.delete(detection);
-    communityAuthRepository.delete(savedCommunity);
+    assertEquals(
+        "POST /detections/{id}/image not supported anymore.", actualException.getMessage());
   }
 
   @SneakyThrows

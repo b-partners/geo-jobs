@@ -183,8 +183,7 @@ public class ZoneDetectionController {
   @PostMapping("/detections/{id}/image")
   public Detection configureRooferDetectionImageFile(
       @PathVariable(name = "id") String detectionId, @RequestBody byte[] imageAsByte) {
-    File imageFile = fileWriter.apply(imageAsByte, null);
-    return zoneService.configureImageFile(detectionId, imageFile);
+    throw new NotImplementedException("POST /detections/{id}/image not supported anymore.");
   }
 
   @PostMapping("/detections/{id}/pdf")

@@ -18,7 +18,6 @@ info:
     1. If your zone is described by a **GeoJson**, then just set accordingly the `geoJsonZone` field in the payload.
     2. If your zone is described by a **Shape file**, then upload it in a second call `POST /detections/{id}/shape`.
     3. If your zone is described by a list of addresses in an **Excel file**, then upload it in a second call `POST /detections/{id}/excel`.
-    4. If your zone is described by an **Image**, then upload it in a second call `POST /detections/{id}/image`.
     
     # Examples
     
@@ -836,38 +835,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Detection'
-
-  '/detections/{id}/image':
-    post:
-      tags:
-        - Image
-      operationId: detectImage
-      summary: Submit detection over an image
-      description: |
-        For security reasons, only image already previously queried from `GET /image` are supported for the moment.
-        This ensures that only small enough images are submitted, and that images quality fit the requirements of our AI models.
-      security:
-        - ApiKeyAuth: [ ]
-      parameters:
-        - $ref: '#/components/parameters/IdentifierParameter'
-      requestBody:
-        description: Image from a specific textual address to be detected
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                file:
-                  type: string
-                  format: binary
-      responses:
-        200:
-          description: Detection with updated image file uploaded url
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Detection'
-
   '/detections/{id}/pdf':
     post:
       tags:
