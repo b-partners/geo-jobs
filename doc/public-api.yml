@@ -122,11 +122,11 @@ paths:
           required: false
       responses:
         200:
-          description: Image of provided address
+          description: Image details of provided address
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ImageOfAddress'
+                $ref: '#/components/schemas/ImageDetails'
   '/detections/{id}/image':
     post:
       tags:
@@ -690,3 +690,27 @@ components:
       enum:
         - GEO_JSON
         - ZIP
+    ImageDetails:
+      allOf:
+        - $ref: '#/components/schemas/ImageOfAddress'
+      properties:
+        minTileCoordinates:
+          $ref: '#/components/schemas/TileCoordinates'
+        currentGeoPosition:
+          $ref: '#/components/schemas/GeoPosition'
+    GeoPosition:
+      type: object
+      properties:
+        longitude:
+          type: number
+        latitude:
+          type: number
+    TileCoordinates:
+      type: object
+      properties:
+        x:
+          type: integer
+        y:
+          type: integer
+        z:
+          type: integer
