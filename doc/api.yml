@@ -568,11 +568,11 @@ paths:
           required: false
       responses:
         200:
-          description: Image of provided address
+          description: Image details of provided address
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ImageOfAddress'
+                $ref: '#/components/schemas/ImageDetails'
   '/detections':
     get:
       tags:
@@ -1535,16 +1535,19 @@ components:
           type: string
           format: date-time
         coordinates:
-          type: object
-          properties:
-            x:
-              type: integer
-            y:
-              type: integer
-            z:
-              type: integer
+          allOf:
+            - $ref: '#/components/schemas/TileCoordinates'
         bucketPath:
           type: string
+    TileCoordinates:
+      type: object
+      properties:
+        x:
+          type: integer
+        y:
+          type: integer
+        z:
+          type: integer
     TileInfo:
       properties:
         size:
@@ -1555,14 +1558,8 @@ components:
             height:
               type: integer
         coordinates:
-          type: object
-          properties:
-            x:
-              type: integer
-            y:
-              type: integer
-            z:
-              type: integer
+          allOf:
+            - $ref: '#/components/schemas/TileCoordinates'
     DetectedTile:
       properties:
         tileId:
@@ -1854,8 +1851,24 @@ components:
       properties:
         address:
           type: string
+    ImageDetails:
+      allOf:
+        - $ref: '#/components/schemas/ImageOfAddress'
+      properties:
+        minTileCoordinates:
+          $ref: '#/components/schemas/TileCoordinates'
+        currentGeoPosition:
+          $ref: '#/components/schemas/GeoPosition'
+    GeoPosition:
+      type: object
+      properties:
+        longitude:
+          type: number
+        latitude:
+          type: number
     ImageOfAddress:
       type: object
+      deprecated: true
       properties:
         address:
           type: string
