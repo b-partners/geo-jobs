@@ -3,6 +3,7 @@ package app.bpartners.geojobs.repository.model.detection;
 import static jakarta.persistence.EnumType.STRING;
 import static org.hibernate.type.SqlTypes.NAMED_ENUM;
 
+import app.bpartners.geojobs.endpoint.rest.model.DetectionStepName;
 import jakarta.persistence.*;
 import java.time.Instant;
 import lombok.*;

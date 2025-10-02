@@ -4,9 +4,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.RoofDelimiterMapper;
+import app.bpartners.geojobs.endpoint.rest.model.DetectionStepName;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.repository.model.detection.DetectionStep;
-import app.bpartners.geojobs.repository.model.detection.DetectionStepName;
 import app.bpartners.geojobs.service.DetectionFeaturesResultImageRetriever;
 import app.bpartners.geojobs.service.DetectionImageAttributeRetriever;
 import app.bpartners.geojobs.service.DetectionVggAttributeRetriever;
@@ -23,8 +23,6 @@ class DetectionFromStepMapperTest {
       mock(DetectionImageAttributeRetriever.class);
   DetectionVggAttributeRetriever detectionVggAttributeRetrieverMock =
       mock(DetectionVggAttributeRetriever.class);
-  DetectionFromStatisticRestMapper detectionFromStatisticRestMapperMock =
-      mock(DetectionFromStatisticRestMapper.class);
   RoofDelimiterMapper roofDelimiterMapperMock = mock();
   DetectionStepMapper detectionStepMapper = new DetectionStepMapper();
 
@@ -51,7 +49,7 @@ class DetectionFromStepMapperTest {
 
     var step = new DetectionStep();
     step.setId("step-1");
-    step.setName(DetectionStepName.CONFIGURING);
+    step.setName(DetectionStepName.REQUEST_ACCEPTED);
     step.setProgression(app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING);
     step.setHealth(app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED);
     step.setCreationDatetime(Instant.now());

@@ -13,9 +13,7 @@ public class DetectionStepMapper {
       DetectionStep step) {
     return app.bpartners.geojobs.repository.model.detection.DetectionStep.builder()
         .id(UUID.randomUUID().toString())
-        .name(
-            app.bpartners.geojobs.repository.model.detection.DetectionStepName.fromValue(
-                step.getName().getValue()))
+        .name(step.getName())
         .progression(
             app.bpartners.geojobs.job.model.Status.ProgressionStatus.valueOf(
                 step.getStatus().getProgression().getValue()))
