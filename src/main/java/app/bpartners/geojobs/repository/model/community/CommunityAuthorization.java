@@ -7,6 +7,7 @@ import static jakarta.persistence.FetchType.LAZY;
 import static org.hibernate.type.SqlTypes.ARRAY;
 import static org.hibernate.type.SqlTypes.NAMED_ENUM;
 
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.model.ModelName;
 import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
 import app.bpartners.geojobs.repository.model.SurfaceUnit;
@@ -15,10 +16,7 @@ import jakarta.persistence.*;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 
@@ -50,6 +48,7 @@ public class CommunityAuthorization implements Serializable {
   private List<CommunityAuthorizedZone> authorizedZones;
 
   @OneToMany(fetch = EAGER, mappedBy = "communityAuthorizationId", cascade = ALL)
+  @Getter(AccessLevel.NONE)
   private List<CommunityDetectableObjectType> detectableObjectTypes;
 
   @OneToMany(mappedBy = "communityAuthorizationId", cascade = ALL)
@@ -68,4 +67,24 @@ public class CommunityAuthorization implements Serializable {
   @Enumerated(STRING)
   @JdbcTypeCode(NAMED_ENUM)
   private Authority.Role role;
+
+  public List<CommunityDetectableObjectType> getDetectableObjectTypes() {
+    if (this.detectableModels != null && !detectableModels.isEmpty()) {
+      var detectableObjectTypeMapper = new DetectableObjectTypeMapper();
+      return detectableModels.stream()
+          .map(detectableObjectTypeMapper::mapFromModel)
+          .flatMap(
+              stream ->
+                  stream.stream()
+                      .map(
+                          detectableObjectType ->
+                              CommunityDetectableObjectType.builder()
+                                  .type(detectableObjectTypeMapper.toDomain(detectableObjectType))
+                                  .communityAuthorizationId(this.id)
+                                  .id(null) // as it is not persisted, always will be different
+                                  .build()))
+          .toList();
+    }
+    return detectableObjectTypes;
+  }
 }

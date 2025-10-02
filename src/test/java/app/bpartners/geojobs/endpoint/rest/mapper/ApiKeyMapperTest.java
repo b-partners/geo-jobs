@@ -11,7 +11,6 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTyp
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorizedZone;
-import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -58,11 +57,5 @@ class ApiKeyMapperTest {
             .role(ROLE_INSURANCE)
             .build(),
         actual.getFirst());
-  }
-
-  private List<DetectableType> toitureModelObjectTypes() {
-    return detectableObjectTypeMapper.mapFromModel(TOITURE).stream()
-        .map(detectableObjectType -> DetectableType.valueOf(detectableObjectType.name()))
-        .toList();
   }
 }

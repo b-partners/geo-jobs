@@ -14,13 +14,9 @@ import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.rest.controller.SecurityController;
 import app.bpartners.geojobs.endpoint.rest.model.CreateApiKey;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel;
-import app.bpartners.geojobs.endpoint.rest.model.ModelName;
-import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
-import app.bpartners.geojobs.repository.model.community.CommunityDetectableObjectType;
-import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.service.dashboard.UserAccountsApi;
 import app.bpartners.geojobs.service.dashboard.component.UserApiKey;
 import java.util.List;
@@ -46,7 +42,8 @@ class SecurityControllerIT extends FacadeIT {
     assertEquals(1, actual.size());
     var actualKey = actual.getFirst().getKey();
     var actualCommunity = authorizationRepository.findByApiKey(actualKey).orElse(null);
-    assertEquals(CommunityAuthorization.builder()
+    assertEquals(
+        CommunityAuthorization.builder()
             .id(actualCommunity.getId())
             .apiKey(actualKey)
             .creationDatetime(actualCommunity.getCreationDatetime())
@@ -56,7 +53,8 @@ class SecurityControllerIT extends FacadeIT {
             .role(ROLE_INSURANCE)
             .maxSurfaceUnit(SQUARE_DEGREE)
             .authorizedZones(List.of())
-            .build(), actualCommunity);
+            .build(),
+        actualCommunity);
     assertTrue(actualCommunity.getAuthorizedZones().isEmpty());
   }
 
