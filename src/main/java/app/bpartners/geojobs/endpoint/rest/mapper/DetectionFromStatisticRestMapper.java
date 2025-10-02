@@ -1,7 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.mapper;
 
 import static app.bpartners.geojobs.repository.model.GeoJobType.GEO_JSON_CONVERSION;
-
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
