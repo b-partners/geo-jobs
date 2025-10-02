@@ -4,8 +4,10 @@ import static jakarta.persistence.CascadeType.ALL;
 import static jakarta.persistence.EnumType.STRING;
 import static jakarta.persistence.FetchType.EAGER;
 import static jakarta.persistence.FetchType.LAZY;
+import static org.hibernate.type.SqlTypes.ARRAY;
 import static org.hibernate.type.SqlTypes.NAMED_ENUM;
 
+import app.bpartners.geojobs.endpoint.rest.model.ModelName;
 import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
 import app.bpartners.geojobs.repository.model.SurfaceUnit;
 import app.bpartners.geojobs.repository.model.detection.Detection;
@@ -58,6 +60,10 @@ public class CommunityAuthorization implements Serializable {
 
   @OneToMany(mappedBy = "communityOwnerId", fetch = LAZY)
   private List<RevokedApiKey> revokedApiKeys;
+
+  @Enumerated(STRING)
+  @JdbcTypeCode(ARRAY)
+  private List<ModelName> detectableModels;
 
   @Enumerated(STRING)
   @JdbcTypeCode(NAMED_ENUM)

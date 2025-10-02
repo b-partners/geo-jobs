@@ -5,14 +5,12 @@ import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_INSURANCE;
 import static app.bpartners.geojobs.repository.model.SurfaceUnit.SQUARE_DEGREE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ApiKeyMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorizedZone;
-import app.bpartners.geojobs.repository.model.community.CommunityDetectableObjectType;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -38,8 +36,8 @@ class ApiKeyMapperTest {
                     .consumerType(INSURANCE)));
 
     assertEquals(1, actual.size());
+
     var communityAuthorizationId = actual.getFirst().getId();
-    var detectableObjectTypes = toitureModelObjectTypes();
     assertEquals(
         CommunityAuthorization.builder()
             .id(communityAuthorizationId)
@@ -55,18 +53,11 @@ class ApiKeyMapperTest {
                         .multiPolygon(new MultiPolygon())
                         .communityAuthorizationId(communityAuthorizationId)
                         .build()))
-            .detectableObjectTypes(actual.getFirst().getDetectableObjectTypes())
+            .detectableObjectTypes(null)
+            .detectableModels(List.of(TOITURE))
             .role(ROLE_INSURANCE)
             .build(),
         actual.getFirst());
-    assertEquals(
-        detectableObjectTypes,
-        actual.getFirst().getDetectableObjectTypes().stream()
-            .map(CommunityDetectableObjectType::getType)
-            .toList());
-    assertTrue(
-        actual.getFirst().getDetectableObjectTypes().stream()
-            .noneMatch(d -> d.getType().equals(DetectableType.PASSAGE_PIETON)));
   }
 
   private List<DetectableType> toitureModelObjectTypes() {

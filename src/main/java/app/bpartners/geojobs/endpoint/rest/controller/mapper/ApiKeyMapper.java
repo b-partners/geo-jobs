@@ -36,37 +36,23 @@ public class ApiKeyMapper {
         && createApiKey.getDetectableObjectTypes().isEmpty()) {
       log.warn("DEPRECATED: detectableObjectTypes still used. Instead, use detectableObjectModel");
     }
-    var communityDetectableObjectTypes = computeDetectableObjectTypes(createApiKey, newCommunityId);
     var maxSurface = createApiKey.getMaxSurface();
     return CommunityAuthorization.builder()
         .id(newCommunityId)
         .apiKey(randomUUID().toString())
         .name(createApiKey.getConsumerName())
         .email(createApiKey.getConsumerEmail())
-        .detectableObjectTypes(communityDetectableObjectTypes)
+        .detectableObjectTypes(null)
+        .detectableModels(
+            createApiKey.getDetectableObjectModel() != null
+                    && createApiKey.getDetectableObjectModel().getModelName() != null
+                ? List.of(createApiKey.getDetectableObjectModel().getModelName())
+                : null)
         .maxSurface(maxSurface == null ? 0 : maxSurface.doubleValue())
         .maxSurfaceUnit(SQUARE_DEGREE)
         .role(toDomain(createApiKey.getConsumerType()))
         .authorizedZones(toCommunityAuthorizedZone(createApiKey, newCommunityId))
         .build();
-  }
-
-  private List<CommunityDetectableObjectType> computeDetectableObjectTypes(
-      CreateApiKey createApiKey, String newCommunityId) {
-    var detectableObjectModel = createApiKey.getDetectableObjectModel();
-    if (detectableObjectModel != null && detectableObjectModel.getModelName() != null) {
-      var modelName = detectableObjectModel.getModelName();
-      return detectableObjectTypeMapper.mapFromModel(modelName).stream()
-          .map(
-              detectableObjectType ->
-                  toCommunityDetectableObjectType(newCommunityId, detectableObjectType))
-          .toList();
-    }
-    return createApiKey.getDetectableObjectTypes().stream()
-        .map(
-            detectableObjectType ->
-                toCommunityDetectableObjectType(newCommunityId, detectableObjectType))
-        .toList();
   }
 
   private List<CommunityAuthorizedZone> toCommunityAuthorizedZone(
