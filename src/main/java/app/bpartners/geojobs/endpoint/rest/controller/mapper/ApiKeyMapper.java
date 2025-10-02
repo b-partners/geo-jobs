@@ -6,6 +6,7 @@ import static java.util.UUID.randomUUID;
 import app.bpartners.geojobs.endpoint.rest.model.CreateApiKey;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType;
 import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
+import app.bpartners.geojobs.endpoint.rest.validator.CreateApiKeyValidator;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorizedZone;
 import app.bpartners.geojobs.repository.model.community.CommunityDetectableObjectType;
@@ -19,11 +20,13 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ApiKeyMapper {
   private final DetectableObjectTypeMapper detectableObjectTypeMapper;
+  private final CreateApiKeyValidator createApiKeyValidator;
 
   public List<CommunityAuthorization> toCommunityAuthorization(List<CreateApiKey> createApiKeys) {
     return createApiKeys.stream()
         .map(
             createApiKey -> {
+              createApiKeyValidator.accept(createApiKey);
               var newCommunityId = randomUUID().toString();
               return toCommunityAuthorization(createApiKey, newCommunityId);
             })
@@ -32,17 +35,13 @@ public class ApiKeyMapper {
 
   private CommunityAuthorization toCommunityAuthorization(
       CreateApiKey createApiKey, String newCommunityId) {
-    if (createApiKey.getDetectableObjectTypes() != null
-        && createApiKey.getDetectableObjectTypes().isEmpty()) {
-      log.warn("DEPRECATED: detectableObjectTypes still used. Instead, use detectableObjectModel");
-    }
     var maxSurface = createApiKey.getMaxSurface();
     return CommunityAuthorization.builder()
         .id(newCommunityId)
         .apiKey(randomUUID().toString())
         .name(createApiKey.getConsumerName())
         .email(createApiKey.getConsumerEmail())
-        .detectableObjectTypes(null)
+        .detectableObjectTypes(null) // deprecated
         .detectableModels(
             createApiKey.getDetectableObjectModel() != null
                     && createApiKey.getDetectableObjectModel().getModelName() != null
