@@ -215,6 +215,10 @@ public class DetectableObjectTypeMapper {
     return objectTypes;
   }
 
+  private List<DetectableObjectType> detectableObjectTypeForStationnementModel() {
+    throw new NotImplementedException("Not implemented yet");
+  }
+
   public List<DetectableObjectConfiguration> mapDefaultConfigurationsFromModel(
       String detectionId, ModelName modelName) {
     var objectTypes = mapFromModel(modelName);
