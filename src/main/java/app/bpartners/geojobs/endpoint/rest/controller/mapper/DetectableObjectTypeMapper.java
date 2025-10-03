@@ -107,6 +107,12 @@ public class DetectableObjectTypeMapper {
       case CONFIRMITE_PLU -> objectTypes.addAll(detectableObjectTypeForConformitePluModel());
       case TROTTOIRS -> objectTypes.addAll(detectableObjectTypeForTrottoirsModel());
       case OLD -> objectTypes.addAll(detectableObjectTypeForOldModel());
+      case CYCL -> objectTypes.addAll(detectableObjectTypeForCyclModel());
+      case SIGN -> objectTypes.addAll(detectableObjectTypeForSignModel());
+      case VEGETATION -> objectTypes.addAll(detectableObjectTypeForVegetationModel());
+      case TAMPONS -> objectTypes.addAll(detectableObjectTypeForTamponsModel());
+      case CIMETIERE -> objectTypes.addAll(detectableObjectTypeForCimetiereModel());
+      case STATIONNEMENT -> objectTypes.addAll(detectableObjectTypeForStationnementModel());
     }
     return objectTypes;
   }
