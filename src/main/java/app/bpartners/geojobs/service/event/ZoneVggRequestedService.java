@@ -157,8 +157,10 @@ public class ZoneVggRequestedService implements Consumer<ZoneVggRequested> {
                                           geometryConverter.toPolygon(
                                               List.of(List.of(closedPolygon)));
                                       var intersectionBetweenDetectedObjectAndProvidedZone =
-                                          detectedObjectPolygonPixel.intersection(
-                                              providedZoneAndRoofInsideTilePixelGeometry);
+                                          detectedObjectPolygonPixel
+                                              .intersection(
+                                                  providedZoneAndRoofInsideTilePixelGeometry)
+                                              .buffer(0);
                                       if (intersectionBetweenDetectedObjectAndProvidedZone
                                           instanceof Polygon polygon) {
                                         return new PolygonObjectType(
