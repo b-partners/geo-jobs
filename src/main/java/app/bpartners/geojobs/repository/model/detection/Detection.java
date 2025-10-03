@@ -60,7 +60,6 @@ public class Detection implements Serializable {
   private String zoneName;
 
   private String emailReceiver;
-  private boolean isRooferMade;
   private boolean isSynchronous;
 
   @Getter(AccessLevel.NONE)
