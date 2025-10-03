@@ -156,11 +156,9 @@ public class DetectableObjectTypeMapper {
 
   private List<DetectableObjectType> detectableObjectTypeForConformitePluModel() {
     List<DetectableObjectType> objectTypes = new ArrayList<>();
-    objectTypes.add(TOITURE_REVETEMENT);
-    objectTypes.add(ARBRE);
+    objectTypes.add(BATI);
     objectTypes.add(VELUX);
     objectTypes.add(PANNEAU_PHOTOVOLTAIQUE);
-    objectTypes.add(ESPACE_VERT);
     objectTypes.add(PISCINE);
     return objectTypes;
   }

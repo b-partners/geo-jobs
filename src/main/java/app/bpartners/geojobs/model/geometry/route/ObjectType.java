@@ -89,6 +89,7 @@ public enum ObjectType {
               BATI_BETON,
               BATI_ARDOISE,
               BATI_AUTRES,
+              BATI,
               BACKGROUND,
               SURFACES_ARTIFICIALISEES,
               SURFACES_PERMEABLES,

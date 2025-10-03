@@ -1395,6 +1395,7 @@ components:
         - BATI_BETON
         - BATI_ARDOISE
         - BATI_AUTRES
+        - BATI
         - ESPACE_VERT_PARKING
         - BACKGROUND
         - ROAD
