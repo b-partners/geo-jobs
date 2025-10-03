@@ -1216,16 +1216,20 @@ class ZoneServiceTest {
   @Test
   void update_detection_step() {
     var detectionId = randomUUID().toString();
-    var repoDetection =
+    var detectionEntity =
         detectionCreator.create(detectionId, randomUUID().toString(), randomUUID().toString());
     var restStep =
         new DetectionStep()
             .name(MACHINE_DETECTION)
             .status(new Status().progression(Status.ProgressionEnum.FINISHED).health(SUCCEEDED));
+    var principalMock = mock(Principal.class);
+    when(principalMock.getPassword()).thenReturn("dummy");
+    when(authProviderMock.getPrincipal()).thenReturn(principalMock);
     when(detectionStepRepositoryMock.save(any()))
         .thenAnswer(invocation -> invocation.getArgument(0));
     when(detectionRepositoryMock.existsById(any(String.class))).thenReturn(true);
-    when(detectionRepositoryMock.findById(detectionId)).thenReturn(Optional.of(repoDetection));
+    when(detectionRepositoryMock.findByEndToEndIdAndCommunityOwnerId(eq(detectionId), any()))
+        .thenReturn(Optional.of(detectionEntity));
     var expectedRestDetection = new Detection().step(restStep);
     when(detectionFromStepMapperMock.apply(
             any(app.bpartners.geojobs.repository.model.detection.Detection.class),
@@ -1238,7 +1242,8 @@ class ZoneServiceTest {
         ArgumentCaptor.forClass(
             app.bpartners.geojobs.repository.model.detection.DetectionStep.class);
     verify(detectionStepRepositoryMock, times(1)).save(repoStepCaptor.capture());
-    verify(detectionRepositoryMock, times(1)).findById(detectionId);
+    verify(detectionRepositoryMock, times(1))
+        .findByEndToEndIdAndCommunityOwnerId(eq(detectionId), any());
     assertEquals(expectedRestDetection, actual);
   }
 }
