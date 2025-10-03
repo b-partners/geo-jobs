@@ -25,6 +25,7 @@ import static org.mockito.Mockito.*;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionExcelFileSaved;
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
+import app.bpartners.geojobs.endpoint.event.model.DetectionTilingRequested;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerificationSent;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.*;
 import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
@@ -236,8 +237,8 @@ class ZoneServiceTest {
   }
 
   @Test
-  void admin_role_process_tiling_when_all_data_ok() {
-    var detectionId = randomUUID().toString();
+  void admin_role_process_request_accepted_when_all_data_ok() {
+    var detectionIdentifier = randomUUID().toString();
     var isRooferMade = false;
     var createDetection =
         new CreateDetection()
@@ -245,7 +246,7 @@ class ZoneServiceTest {
             .geoServerProperties(null)
             .geoJsonZone(featureCreator.defaultFeatures());
     String communityOwnerId = randomUUID().toString();
-    setUpAuthorityRoleProcessingMock(detectionId, null, ROLE_ADMIN);
+    setUpAuthorityRoleProcessingMock(detectionIdentifier, null, ROLE_ADMIN);
     when(communityUsedSurfaceServiceMock.persistDetectionWithSurfaceUsage(any(), any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
     var jtsMultiPolygonFrameMock = mock(MultiPolygon.class);
@@ -258,14 +259,22 @@ class ZoneServiceTest {
         .thenReturn(Optional.of(jtsMultiPolygonFrameMock));
 
     var actual =
-        subject.processDetection(detectionId, createDetection, communityOwnerId, isRooferMade);
+        subject.processDetection(
+            detectionIdentifier, createDetection, communityOwnerId, isRooferMade);
 
     var expectedGeoServerProperties =
         geoServerConfiguration.defaultGeoServerProperties(LATEST_DEFAULT_LAYER);
-    assertEquals(TILING, actual.getStep().getName());
-    assertEquals(Status.ProgressionEnum.PENDING, actual.getStep().getStatus().getProgression());
+    var listCaptor = ArgumentCaptor.forClass(List.class);
+    verify(eventProducerMock, times(2)).accept(listCaptor.capture());
+    var actualEvent = (DetectionTilingRequested) listCaptor.getAllValues().getLast().getFirst();
+    assertEquals(REQUEST_ACCEPTED, actual.getStep().getName());
+    assertEquals(Status.ProgressionEnum.PROCESSING, actual.getStep().getStatus().getProgression());
     assertEquals(UNKNOWN, actual.getStep().getStatus().getHealth());
     assertEquals(expectedGeoServerProperties, actual.getGeoServerProperties());
+    assertEquals(
+        new DetectionTilingRequested(
+            actualEvent.getDetectionIdentifier()), // internal detection no retrieved here
+        actualEvent);
   }
 
   @Test

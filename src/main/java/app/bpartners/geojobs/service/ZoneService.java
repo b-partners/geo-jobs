@@ -19,6 +19,7 @@ import static java.util.UUID.randomUUID;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionExcelFileSaved;
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
+import app.bpartners.geojobs.endpoint.event.model.DetectionTilingRequested;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerificationSent;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
@@ -364,9 +365,9 @@ public class ZoneService {
             savedDetection, PENDING, UNKNOWN, REQUEST_ACCEPTED);
       }
       if (!savedDetection.isRooferMade()) {
-        var detectionWithTilingCreated = detectionTilingCreation.apply(savedDetection);
-        detectionAreaValidator.accept(detectionWithTilingCreated);
-        return detectionWithTilingCreated;
+        eventProducer.accept(List.of(new DetectionTilingRequested(savedDetection.getId())));
+        return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
+            savedDetection, PROCESSING, UNKNOWN, REQUEST_ACCEPTED);
       }
     }
 
@@ -394,18 +395,7 @@ public class ZoneService {
           peristedDetection, FINISHED, SUCCEEDED, MACHINE_DETECTION);
     }
 
-    return processCommunityDetection(detectionId);
-  }
-
-  public app.bpartners.geojobs.endpoint.rest.model.Detection processCommunityDetection(
-      String detectionId) {
-    var detection =
-        detectionRepository
-            .findById(detectionId)
-            .or(() -> detectionRepository.findByEndToEndId(detectionId))
-            .orElseThrow(
-                () -> new NotFoundException("Detection(id=" + detectionId + ") not found"));
-    return processDetectionSteps(detection);
+    return processDetectionSteps(peristedDetection);
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection processDetectionSteps(
