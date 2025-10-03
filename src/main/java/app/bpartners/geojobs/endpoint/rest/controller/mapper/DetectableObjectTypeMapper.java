@@ -22,34 +22,52 @@ public class DetectableObjectTypeMapper {
 
   public DetectableType toDomain(DetectableObjectType rest) {
     return switch (rest) {
-      case PISCINE -> DetectableType.PISCINE;
       case TOITURE_REVETEMENT -> DetectableType.TOITURE_REVETEMENT;
-      case ARBRE -> DetectableType.ARBRE;
-      case PASSAGE_PIETON -> DetectableType.PASSAGE_PIETON;
+      case TOITURE -> DetectableType.TOITURE;
       case PANNEAU_PHOTOVOLTAIQUE -> DetectableType.PANNEAU_PHOTOVOLTAIQUE;
+      case PISCINE -> DetectableType.PISCINE;
+      case PASSAGE_PIETON -> DetectableType.PASSAGE_PIETON;
+      case ARBRE -> DetectableType.ARBRE;
+      case ARBRE_INDIVIDUALISE -> DetectableType.ARBRE_INDIVIDUALISE;
+      case CANOPE -> DetectableType.CANOPE;
       case TROTTOIR -> DetectableType.TROTTOIR;
       case LINE -> DetectableType.LINE;
+      case ESPACE_ARBORE -> DetectableType.ESPACE_ARBORE;
       case ESPACE_VERT -> DetectableType.ESPACE_VERT;
       case VOIE_CARROSSABLE -> DetectableType.VOIE_CARROSSABLE;
-      case MOISISSURE_CLAIR -> DetectableType.MOISISSURE_CLAIR;
+      case PARKING -> DetectableType.PARKING;
       case MOISISSURE_COULEUR -> DetectableType.MOISISSURE_COULEUR;
+      case MOISISSURE_CLAIR -> DetectableType.MOISISSURE_CLAIR;
       case MOISISSURE_NOIRCIE -> DetectableType.MOISISSURE_NOIRCIE;
       case MOISISSURE -> DetectableType.MOISISSURE;
-      case USURE_IMPORTANTE -> DetectableType.USURE_IMPORTANTE;
       case USURE_LEGER -> DetectableType.USURE_LEGER;
+      case USURE_IMPORTANTE -> DetectableType.USURE_IMPORTANTE;
       case USURE -> DetectableType.USURE;
       case FISSURE_CASSURE -> DetectableType.FISSURE_CASSURE;
       case OBSTACLE -> DetectableType.OBSTACLE;
       case CHEMINEE -> DetectableType.CHEMINEE;
-      case HUMIDITE_INTENSE -> DetectableType.HUMIDITE_INTENSE;
       case HUMIDITE_CLAIR -> DetectableType.HUMIDITE_CLAIR;
+      case HUMIDITE_INTENSE -> DetectableType.HUMIDITE_INTENSE;
       case HUMIDITE -> DetectableType.HUMIDITE;
       case RISQUE_FEU -> DetectableType.RISQUE_FEU;
       case VELUX -> DetectableType.VELUX;
-      case PARKING -> DetectableType.PARKING;
+      case BATI_TUILES -> DetectableType.BATI_TUILES;
+      case BATI_BETON -> DetectableType.BATI_BETON;
+      case BATI_ARDOISE -> DetectableType.BATI_ARDOISE;
+      case BATI_AUTRES -> DetectableType.BATI_AUTRES;
+      case BATI -> DetectableType.BATI;
       case ESPACE_VERT_PARKING -> DetectableType.ESPACE_VERT_PARKING;
       case BACKGROUND -> DetectableType.BACKGROUND;
       case ROAD -> DetectableType.ROAD;
+      case SURFACES_ARTIFICIALISEES -> DetectableType.SURFACES_ARTIFICIALISEES;
+      case SURFACES_PERMEABLES -> DetectableType.SURFACES_PERMEABLES;
+      case PISTES_CYCLABLES -> DetectableType.PISTES_CYCLABLES;
+      case SYMBOLES_CYCLABLES -> DetectableType.SYMBOLES_CYCLABLES;
+      case MARQUAGES_VOIRIES -> DetectableType.MARQUAGES_VOIRIES;
+      case CIMETIERE -> DetectableType.CIMETIERE;
+      case TOMBE_SIMPLE -> DetectableType.TOMBE_SIMPLE;
+      case TOMBE_DOUBLE -> DetectableType.TOMBE_DOUBLE;
+      case TOMBE_NON_GEOMETRIQUE -> DetectableType.TOMBE_NON_GEOMETRIQUE;
       default -> throw new NotImplementedException("Unknown detectable object type " + rest);
     };
   }
@@ -89,6 +107,20 @@ public class DetectableObjectTypeMapper {
       case TOMBE -> null;
       case ESPACE_VERT_PARKING -> ESPACE_VERT_PARKING;
       case BACKGROUND -> BACKGROUND;
+      case TOITURE -> TOITURE;
+      case ARBRE_INDIVIDUALISE -> ARBRE_INDIVIDUALISE;
+      case CANOPE -> CANOPE;
+      case ESPACE_ARBORE -> ESPACE_ARBORE;
+      case BATI -> BATI;
+      case SURFACES_ARTIFICIALISEES -> SURFACES_ARTIFICIALISEES;
+      case SURFACES_PERMEABLES -> SURFACES_PERMEABLES;
+      case PISTES_CYCLABLES -> PISTES_CYCLABLES;
+      case SYMBOLES_CYCLABLES -> SYMBOLES_CYCLABLES;
+      case MARQUAGES_VOIRIES -> MARQUAGES_VOIRIES;
+      case CIMETIERE -> CIMETIERE;
+      case TOMBE_SIMPLE -> TOMBE_SIMPLE;
+      case TOMBE_DOUBLE -> TOMBE_DOUBLE;
+      case TOMBE_NON_GEOMETRIQUE -> TOMBE_NON_GEOMETRIQUE;
     };
   }
 
