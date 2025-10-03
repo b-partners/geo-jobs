@@ -143,8 +143,6 @@ public class DetectableObjectTypeMapper {
     List<DetectableObjectType> objectTypes = new ArrayList<>();
     objectTypes.add(PARKING);
     objectTypes.add(PANNEAU_PHOTOVOLTAIQUE);
-    objectTypes.add(ARBRE);
-    objectTypes.add(ESPACE_VERT);
     return objectTypes;
   }
 
