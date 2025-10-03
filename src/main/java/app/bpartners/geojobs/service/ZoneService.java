@@ -14,6 +14,7 @@ import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.S
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_BUCKET_FOLDER;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_EXTENSION;
+import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
@@ -221,8 +222,8 @@ public class ZoneService {
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection configureGeoJsonResult(
-      String detectionId, File geoJsonFile) {
-    var detection = getDetectionById(detectionId);
+      String detectionId, String communityOwnerId, File geoJsonFile) {
+    var detection = getDetectionByE2eId(detectionId, communityOwnerId);
     var geoJsonResultFileKey =
         GEO_JSON_BUCKET_FOLDER
             + detection.getId()
@@ -234,6 +235,21 @@ public class ZoneService {
         detectionRepository.save(
             detection.toBuilder().geojsonS3FileKey(geoJsonResultFileKey).build());
     eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
+
+    if (!savedDetection.isOnStepPostProcessingSucceeded()) {
+      return updateDetectionStep(
+          savedDetection.getId(),
+          new DetectionStep()
+              .name(POST_PROCESSING)
+              .status(
+                  new Status()
+                      .progression(Status.ProgressionEnum.FINISHED)
+                      .health(Status.HealthEnum.SUCCEEDED)
+                      .creationDatetime(now()))
+              .statistics(List.of())
+              .updatedAt(now()));
+    }
+
     return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
         detection, FINISHED, SUCCEEDED, POST_PROCESSING);
   }

@@ -1150,13 +1150,34 @@ class ZoneServiceTest {
   @Test
   void configure_geo_json_result() {
     var detectionId = randomUUID().toString();
+    var communityOwnerId = randomUUID().toString();
     var fileMock = mock(File.class);
-    when(detectionRepositoryMock.findById(detectionId))
-        .thenReturn(Optional.of(new app.bpartners.geojobs.repository.model.detection.Detection()));
+
+    var principalMock = mock(Principal.class);
+    when(principalMock.getPassword()).thenReturn(randomUUID().toString());
+    when(authProviderMock.getPrincipal()).thenReturn(principalMock);
+    when(detectionRepositoryMock.findByEndToEndIdAndCommunityOwnerId(any(), any()))
+        .thenReturn(
+            Optional.of(
+                new app.bpartners.geojobs.repository.model.detection.Detection()
+                    .toBuilder()
+                        .id(detectionId)
+                        .endToEndId(communityOwnerId)
+                        .detectionSteps(
+                            List.of(
+                                app.bpartners.geojobs.repository.model.detection.DetectionStep
+                                    .builder()
+                                    .name(POST_PROCESSING)
+                                    .progression(FINISHED)
+                                    .health(
+                                        app.bpartners.geojobs.job.model.Status.HealthStatus
+                                            .SUCCEEDED)
+                                    .build()))
+                        .build()));
     when(detectionRepositoryMock.save(any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
 
-    var actual = subject.configureGeoJsonResult(detectionId, fileMock);
+    var actual = subject.configureGeoJsonResult(detectionId, communityOwnerId, fileMock);
 
     assertEquals(POST_PROCESSING, actual.getStep().getName());
     assertEquals(Status.ProgressionEnum.FINISHED, actual.getStep().getStatus().getProgression());

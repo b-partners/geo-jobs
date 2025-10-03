@@ -1,7 +1,10 @@
 package app.bpartners.geojobs.repository.model.detection;
 
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
+import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.POST_PROCESSING;
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
+import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static jakarta.persistence.EnumType.STRING;
 import static org.hibernate.type.SqlTypes.JSON;
@@ -124,6 +127,16 @@ public class Detection implements Serializable {
         : detectionSteps.stream()
             .max(Comparator.comparing(DetectionStep::getCreationDatetime))
             .orElse(null);
+  }
+
+  public boolean isOnStepPostProcessingSucceeded() {
+    var detectionStep = getStep();
+    if (detectionStep == null) {
+      return false;
+    }
+    return POST_PROCESSING.equals(detectionStep.getName())
+        && FINISHED.equals(detectionStep.getProgression())
+        && SUCCEEDED.equals(detectionStep.getHealth());
   }
 
   public boolean isOutputZipped() {
