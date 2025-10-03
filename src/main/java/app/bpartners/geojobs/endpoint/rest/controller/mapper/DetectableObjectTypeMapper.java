@@ -167,8 +167,6 @@ public class DetectableObjectTypeMapper {
     List<DetectableObjectType> objectTypes = new ArrayList<>();
     objectTypes.add(TROTTOIR);
     objectTypes.add(VOIE_CARROSSABLE);
-    objectTypes.add(ARBRE);
-    objectTypes.add(ESPACE_VERT_PARKING);
     return objectTypes;
   }
 
