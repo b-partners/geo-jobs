@@ -240,6 +240,14 @@ public class ZoneService {
   public app.bpartners.geojobs.endpoint.rest.model.Detection getProcessedDetection(
       String detectionId) {
     var detection = getDetectionByE2IdOrId(detectionId);
+    if (detection.getStep() != null) {
+      var detectionStep = detection.getStep();
+      return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
+          detection,
+          detectionStep.getProgression(),
+          detectionStep.getHealth(),
+          detectionStep.getName());
+    }
     if (detection.isSucceeded()) {
       return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
           detection, FINISHED, SUCCEEDED, POST_PROCESSING);

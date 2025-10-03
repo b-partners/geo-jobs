@@ -6,8 +6,7 @@ import static app.bpartners.geojobs.endpoint.rest.model.GeoJsonOutput.GEO_JSON;
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.SUCCEEDED;
 import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.UNKNOWN;
-import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
-import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_COMMUNITY;
+import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.*;
 import static app.bpartners.geojobs.file.hash.FileHashAlgorithm.SHA256;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
@@ -497,7 +496,7 @@ class ZoneServiceTest {
   }
 
   @Test
-  void read_detection_ok() {
+  void read_detection_with_computed_step_ok() {
     var detectionId = randomUUID().toString();
     var tilingId = randomUUID().toString();
     var detection = detectionCreator.create(detectionId, tilingId, null);
@@ -516,6 +515,27 @@ class ZoneServiceTest {
 
     assertEquals(REQUEST_ACCEPTED, actual.getStep().getName());
     assertEquals(Status.ProgressionEnum.PENDING, actual.getStep().getStatus().getProgression());
+    assertEquals(UNKNOWN, actual.getStep().getStatus().getHealth());
+  }
+
+  @Test
+  void read_detection_with_persisted_step_ok() {
+    var detectionId = randomUUID().toString();
+    var detectionMock = mock(app.bpartners.geojobs.repository.model.detection.Detection.class);
+    when(detectionMock.getId()).thenReturn(detectionId);
+    when(detectionMock.getStep())
+        .thenReturn(
+            app.bpartners.geojobs.repository.model.detection.DetectionStep.builder()
+                .name(POST_PROCESSING)
+                .progression(PROCESSING)
+                .health(app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN)
+                .build());
+    setUpAuthorityRoleProcessingMock(detectionId, detectionMock, ROLE_INSURANCE);
+
+    var actual = subject.getProcessedDetection(detectionId);
+
+    assertEquals(POST_PROCESSING, actual.getStep().getName());
+    assertEquals(Status.ProgressionEnum.PROCESSING, actual.getStep().getStatus().getProgression());
     assertEquals(UNKNOWN, actual.getStep().getStatus().getHealth());
   }
 
