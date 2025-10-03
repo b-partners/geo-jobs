@@ -166,7 +166,7 @@ class ZoneServiceTest {
   private final String geoServerDummyUrl = "http://dummy";
   private final String e2ApiKey = randomUUID().toString();
   GeoServerConfiguration geoServerConfiguration = new GeoServerConfiguration(geoServerDummyUrl);
-  DetectionAreaValidator detectionAreaValidatorMock = mock();
+  DetectionSupportedAreaValidator detectionAreaValidatorMock = mock();
   DetectionStepMapper detectionStepMapper = new DetectionStepMapper();
   DetectionStepRepository detectionStepRepositoryMock = mock();
   DetectionFromStepMapper detectionFromStepMapperMock = mock();

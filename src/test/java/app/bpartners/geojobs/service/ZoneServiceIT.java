@@ -10,11 +10,12 @@ import static org.mockito.Mockito.*;
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionStep;
 import app.bpartners.geojobs.endpoint.rest.model.Status;
+import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
+import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.repository.*;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
-import app.bpartners.geojobs.service.detection.*;
 import app.bpartners.geojobs.utils.FeatureCreator;
 import app.bpartners.geojobs.utils.detection.DetectionCreator;
 import java.time.Instant;
@@ -37,6 +38,7 @@ class ZoneServiceIT extends FacadeIT {
   @Autowired ZoneService subject;
   @Autowired private ZoneTilingJobRepository zoneTilingJobRepository;
   @Autowired private ZoneDetectionJobRepository zoneDetectionJobRepository;
+  @MockBean AuthProvider authProviderMock;
 
   @BeforeEach
   void setUp() {
@@ -45,6 +47,9 @@ class ZoneServiceIT extends FacadeIT {
 
   @Test
   void update_detection_step() {
+    var principalMock = mock(Principal.class);
+    when(principalMock.getPassword()).thenReturn("dummy");
+    when(authProviderMock.getPrincipal()).thenReturn(principalMock);
     var detectionId = randomUUID().toString();
     var ztjId = randomUUID().toString();
     var zdjId = randomUUID().toString();
