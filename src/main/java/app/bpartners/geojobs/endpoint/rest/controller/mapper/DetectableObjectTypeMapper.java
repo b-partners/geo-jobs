@@ -114,6 +114,7 @@ public class DetectableObjectTypeMapper {
   public static List<DetectableObjectType> detectableObjectTypeForToitureModel() {
     List<DetectableObjectType> objectTypes = new ArrayList<>();
     objectTypes.add(TOITURE_REVETEMENT);
+    //objectTypes.add(ARBRE);
     objectTypes.add(PANNEAU_PHOTOVOLTAIQUE);
     objectTypes.add(MOISISSURE_NOIRCIE);
     objectTypes.add(MOISISSURE_CLAIR);
@@ -122,11 +123,12 @@ public class DetectableObjectTypeMapper {
     objectTypes.add(USURE_IMPORTANTE);
     objectTypes.add(USURE_LEGER);
     objectTypes.add(USURE);
+    //objectTypes.add(FISSURE_CASSURE);
     objectTypes.add(OBSTACLE);
     objectTypes.add(CHEMINEE);
-    objectTypes.add(HUMIDITE_INTENSE);
-    objectTypes.add(HUMIDITE_CLAIR);
+    objectTypes.add(HUMIDITE_INTENSE);objectTypes.add(HUMIDITE_CLAIR);
     objectTypes.add(HUMIDITE);
+    //objectTypes.add(RISQUE_FEU);
     objectTypes.add(VELUX);
     return objectTypes;
   }
