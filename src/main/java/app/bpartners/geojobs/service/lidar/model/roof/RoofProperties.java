@@ -15,8 +15,8 @@ public class RoofProperties {
   private final RoofPointsCleaner roofPointsCleaner;
   private final GroundPointsCleaner groundPointsCleaner;
 
-  private static final double LOWEST_Z_RATIO = 0.30;
-  private static final double HIGHEST_Z_RATIO = 0.20;
+  private static final double LOWEST_Z_RATIO = 0.3;
+  private static final double HIGHEST_Z_RATIO = 0.2;
   private static final short MINIMUM_ROOF_POINTS_COUNT = 5;
   private static final short MINIMUM_GROUND_POINTS_COUNT = 5;
 
