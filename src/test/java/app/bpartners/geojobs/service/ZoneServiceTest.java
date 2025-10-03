@@ -1177,7 +1177,7 @@ class ZoneServiceTest {
     when(detectionRepositoryMock.save(any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
 
-    var actual = subject.configureGeoJsonResult(detectionId, communityOwnerId, fileMock);
+    var actual = subject.configureGeoJsonResult(detectionId, fileMock);
 
     assertEquals(POST_PROCESSING, actual.getStep().getName());
     assertEquals(Status.ProgressionEnum.FINISHED, actual.getStep().getStatus().getProgression());

@@ -222,8 +222,8 @@ public class ZoneService {
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection configureGeoJsonResult(
-      String detectionId, String communityOwnerId, File geoJsonFile) {
-    var detection = getDetectionByE2eId(detectionId, communityOwnerId);
+      String detectionId, File geoJsonFile) {
+    var detection = getDetectionByE2IdOrId(detectionId);
     var geoJsonResultFileKey =
         GEO_JSON_BUCKET_FOLDER
             + detection.getId()
@@ -238,7 +238,7 @@ public class ZoneService {
 
     if (!savedDetection.isOnStepPostProcessingSucceeded()) {
       return updateDetectionStep(
-          savedDetection.getId(),
+          savedDetection.getEndToEndId(),
           new DetectionStep()
               .name(POST_PROCESSING)
               .status(

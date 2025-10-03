@@ -210,10 +210,7 @@ public class ZoneDetectionController {
   public Detection configureDetectionGeoJsonResult(
       @PathVariable(name = "id") String detectionId, @RequestBody byte[] geoJsonResult) {
     File geojsonFile = fileWriter.apply(geoJsonResult, null);
-    var communityAuthorization =
-        communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
-    var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId).orElse(null);
-    return zoneService.configureGeoJsonResult(detectionId, communityOwnerId, geojsonFile);
+    return zoneService.configureGeoJsonResult(detectionId, geojsonFile);
   }
 
   @PostMapping("/detections/{id}")
