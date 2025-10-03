@@ -1,5 +1,8 @@
 package app.bpartners.geojobs.service.event;
 
+import static java.math.RoundingMode.UP;
+import static java.util.Locale.FRANCE;
+
 import app.bpartners.geojobs.endpoint.event.model.DetectionAreaUnsupported;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.mail.Email;
@@ -12,6 +15,9 @@ import app.bpartners.geojobs.template.HTMLTemplateParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.mail.internet.InternetAddress;
 import java.io.File;
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
@@ -63,11 +69,21 @@ public class DetectionAreaUnsupportedService implements Consumer<DetectionAreaUn
     var context = new Context();
     context.setVariable("detection", detection);
     context.setVariable("communityOwner", communityOwner);
-    context.setVariable("computedAreaInM2", computedArea);
-    context.setVariable("computedAreaInKm2", computedArea / 1_000_000.0);
+    context.setVariable("computedAreaInM2", formatAreaWithWhiteSpace(computedArea));
+    context.setVariable(
+        "computedAreaInKm2",
+        BigDecimal.valueOf(computedArea / 1_000_000.0).setScale(2, UP).doubleValue());
     context.setVariable("detectionNeedsImageOutput", detection.needsImageOutput() ? "Oui" : "Non");
     context.setVariable("detectionOutputType", detection.isOutputZipped() ? "ZIP" : "GeoJson");
     return htmlTemplateParser.apply(DETECTION_AREA_UNSUPPORTED_TEMPLATE, context);
+  }
+
+  private String formatAreaWithWhiteSpace(Double computedArea) {
+    var roundedValue = BigDecimal.valueOf(computedArea).setScale(0, UP).longValue();
+    DecimalFormatSymbols symbols = new DecimalFormatSymbols(FRANCE);
+    symbols.setGroupingSeparator('\u00A0');
+    DecimalFormat df = new DecimalFormat("#,###", symbols);
+    return df.format(roundedValue);
   }
 
   @SneakyThrows

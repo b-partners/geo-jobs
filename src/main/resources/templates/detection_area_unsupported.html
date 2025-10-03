@@ -73,14 +73,14 @@
 <body>
 <div class="email-content">
     <h1>Bonjour,</h1>
-    <p>La détection suivante comporte une géométrie (polygone ou multiPolygone) ayant une superficie
-        <span th:text="${computedAreaInM2}"></span> m^2 ou <span th:text="${computedAreaInKm2}"></span> km^2  excédant le kilomètre carré.</p>
+    <p>La détection suivante comporte une géométrie (polygone ou multiPolygone) ayant une superficie de
+        <span th:text="${computedAreaInM2}"></span> m^2 ou d'environ <span th:text="${computedAreaInKm2}"></span> km^2
+        excédant 1 kilomètre carré (ou 1 000 000 m^2).</p>
     <div class="info">
         <p><strong>ID interne de la détection : </strong><span th:text="${detection.getId()}" class="highlight"></span>
         </p>
         <p><strong>ID de la détection fourni par le consommateur : </strong><span
                 th:text="${detection.getEndToEndId()}" class="highlight"></span></p>
-        <p><strong>Surface calculée :</strong> <span th:text="${computedArea}"></span></p>
         <p><strong>Nom du consommateur : </strong> <span th:text="${communityOwner.getName()}"></span></p>
         <p><strong>Email du consommateur : </strong> <span th:text="${communityOwner.getEmail()}"></span></p>
         <p><strong>Nom de la zone fournie : </strong><span th:text="${detection.getZoneName()}"></span></p>
