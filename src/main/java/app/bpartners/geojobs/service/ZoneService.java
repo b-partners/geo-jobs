@@ -14,16 +14,20 @@ import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.S
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_BUCKET_FOLDER;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_EXTENSION;
+import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionExcelFileSaved;
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
+import app.bpartners.geojobs.endpoint.event.model.DetectionTilingRequested;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerificationSent;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.GeoJsonDelimitationTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
+import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStepMapper;
+import app.bpartners.geojobs.endpoint.rest.mapper.DetectionStepMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.validator.FeatureTypeChecker;
@@ -37,6 +41,7 @@ import app.bpartners.geojobs.model.page.BoundedPageSize;
 import app.bpartners.geojobs.model.page.PageFromOne;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
+import app.bpartners.geojobs.repository.DetectionStepRepository;
 import app.bpartners.geojobs.repository.GeoJsonConversionJobRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.detection.Detection;
@@ -98,6 +103,9 @@ public class ZoneService {
   private final TileMultiPolygonFrame tileMultiPolygonFrame;
   private final DetectionAreaValidator detectionAreaValidator;
   private final GeoJsonDelimitationTypeMapper geoJsonDelimitationTypeMapper;
+  private final DetectionStepMapper detectionStepMapper;
+  private final DetectionStepRepository detectionStepRepository;
+  private final DetectionFromStepMapper detectionFromStepMapper;
 
   private List<Feature> readFromFile(File featuresFromShape) {
     try {
@@ -215,7 +223,7 @@ public class ZoneService {
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection configureGeoJsonResult(
       String detectionId, File geoJsonFile) {
-    var detection = getDetectionById(detectionId);
+    var detection = getDetectionByE2IdOrId(detectionId);
     var geoJsonResultFileKey =
         GEO_JSON_BUCKET_FOLDER
             + detection.getId()
@@ -227,6 +235,21 @@ public class ZoneService {
         detectionRepository.save(
             detection.toBuilder().geojsonS3FileKey(geoJsonResultFileKey).build());
     eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
+
+    if (!savedDetection.isOnStepPostProcessingSucceeded()) {
+      return updateDetectionStep(
+          savedDetection.getEndToEndId(),
+          new DetectionStep()
+              .name(POST_PROCESSING)
+              .status(
+                  new Status()
+                      .progression(Status.ProgressionEnum.FINISHED)
+                      .health(Status.HealthEnum.SUCCEEDED)
+                      .creationDatetime(now()))
+              .statistics(List.of())
+              .updatedAt(now()));
+    }
+
     return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
         detection, FINISHED, SUCCEEDED, POST_PROCESSING);
   }
@@ -234,6 +257,14 @@ public class ZoneService {
   public app.bpartners.geojobs.endpoint.rest.model.Detection getProcessedDetection(
       String detectionId) {
     var detection = getDetectionByE2IdOrId(detectionId);
+    if (detection.getStep() != null) {
+      var detectionStep = detection.getStep();
+      return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
+          detection,
+          detectionStep.getProgression(),
+          detectionStep.getHealth(),
+          detectionStep.getName());
+    }
     if (detection.isSucceeded()) {
       return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
           detection, FINISHED, SUCCEEDED, POST_PROCESSING);
@@ -350,9 +381,9 @@ public class ZoneService {
             savedDetection, PENDING, UNKNOWN, REQUEST_ACCEPTED);
       }
       if (!savedDetection.isRooferMade()) {
-        var detectionWithTilingCreated = detectionTilingCreation.apply(savedDetection);
-        detectionAreaValidator.accept(detectionWithTilingCreated);
-        return detectionWithTilingCreated;
+        eventProducer.accept(List.of(new DetectionTilingRequested(savedDetection.getId())));
+        return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
+            savedDetection, PROCESSING, UNKNOWN, REQUEST_ACCEPTED);
       }
     }
 
@@ -380,18 +411,7 @@ public class ZoneService {
           peristedDetection, FINISHED, SUCCEEDED, MACHINE_DETECTION);
     }
 
-    return processCommunityDetection(detectionId);
-  }
-
-  public app.bpartners.geojobs.endpoint.rest.model.Detection processCommunityDetection(
-      String detectionId) {
-    var detection =
-        detectionRepository
-            .findById(detectionId)
-            .or(() -> detectionRepository.findByEndToEndId(detectionId))
-            .orElseThrow(
-                () -> new NotFoundException("Detection(id=" + detectionId + ") not found"));
-    return processDetectionSteps(detection);
+    return processDetectionSteps(peristedDetection);
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection processDetectionSteps(
@@ -742,5 +762,17 @@ public class ZoneService {
     rooferDetectionService.sendEmail(prospect, pdfFile);
     return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
         detection, FINISHED, SUCCEEDED, MACHINE_DETECTION);
+  }
+
+  public app.bpartners.geojobs.endpoint.rest.model.Detection updateDetectionStep(
+      String detectionId, DetectionStep step) {
+    var detection = getDetectionByE2IdOrId(detectionId);
+
+    // TODO: could be more arranged (for eg. detection.addStep(newStep) then save detection with new
+    // step)
+    detectionStepRepository.save(detectionStepMapper.toDomain(detection.getId(), step));
+
+    return detectionFromStepMapper.apply(
+        detection, detectionStepMapper.toDomain(detection.getId(), step));
   }
 }

@@ -244,7 +244,7 @@ class DetectionControllerIT extends FacadeIT {
     subject.processDetection(randomUUID().toString(), createDetection());
 
     var listCaptor = ArgumentCaptor.forClass(List.class);
-    verify(eventProducer, times(4)).accept(listCaptor.capture());
+    verify(eventProducer, times(2)).accept(listCaptor.capture());
     var detectionSavedEvent =
         (DetectionSaved)
             listCaptor.getAllValues().stream()

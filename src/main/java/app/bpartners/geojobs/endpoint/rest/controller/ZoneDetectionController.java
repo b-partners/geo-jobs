@@ -209,8 +209,8 @@ public class ZoneDetectionController {
   @PostMapping("/detections/{id}/geoJsonResult")
   public Detection configureDetectionGeoJsonResult(
       @PathVariable(name = "id") String detectionId, @RequestBody byte[] geoJsonResult) {
-    File shapeFile = fileWriter.apply(geoJsonResult, null);
-    return zoneService.configureGeoJsonResult(detectionId, shapeFile);
+    File geojsonFile = fileWriter.apply(geoJsonResult, null);
+    return zoneService.configureGeoJsonResult(detectionId, geojsonFile);
   }
 
   @PostMapping("/detections/{id}")
@@ -224,6 +224,12 @@ public class ZoneDetectionController {
     var isRooferMade = false;
     return zoneService.processDetection(
         detectionId, createDetection, communityOwnerId, isRooferMade);
+  }
+
+  @PutMapping("/detections/{id}/step")
+  public Detection updateDetectionStep(
+      @PathVariable(name = "id") String detectionId, @RequestBody DetectionStep step) {
+    return zoneService.updateDetectionStep(detectionId, step);
   }
 
   @PostMapping("/detections/{id}/addresses")
