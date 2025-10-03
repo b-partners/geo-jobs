@@ -191,6 +191,15 @@ public class DetectableObjectTypeMapper {
     return List.of(MARQUAGES_VOIRIES);
   }
 
+  private List<DetectableObjectType> detectableObjectTypeForVegetationModel() {
+    List<DetectableObjectType> objectTypes = new ArrayList<>();
+    objectTypes.add(ESPACE_VERT);
+    objectTypes.add(ESPACE_ARBORE);
+    objectTypes.add(ARBRE_INDIVIDUALISE);
+    objectTypes.add(CANOPE);
+    return objectTypes;
+  }
+
   public List<DetectableObjectConfiguration> mapDefaultConfigurationsFromModel(
       String detectionId, ModelName modelName) {
     var objectTypes = mapFromModel(modelName);

@@ -1372,8 +1372,11 @@ components:
         - PISCINE
         - PASSAGE_PIETON
         - ARBRE
+        - ARBRE_INDIVIDUALISE
+        - CANOPE
         - TROTTOIR
         - LINE
+        - ESPACE_ARBORE
         - ESPACE_VERT
         - VOIE_CARROSSABLE
         - PARKING
