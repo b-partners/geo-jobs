@@ -106,6 +106,7 @@ public class ZoneService {
   private final DetectionStepMapper detectionStepMapper;
   private final DetectionStepRepository detectionStepRepository;
   private final DetectionFromStepMapper detectionFromStepMapper;
+  private final RoofAnalysisMailer roofAnalysisMailer;
 
   private List<Feature> readFromFile(File featuresFromShape) {
     try {
@@ -759,7 +760,7 @@ public class ZoneService {
       String detectionId, Prospect prospect) {
     var detection = detectionRepository.findByEndToEndId(detectionId).orElseThrow();
     var pdfFile = bucketComponent.download(detection.getPdfFileKey());
-    rooferDetectionService.sendEmail(prospect, pdfFile);
+    roofAnalysisMailer.accept(prospect, pdfFile);
     return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
         detection, FINISHED, SUCCEEDED, MACHINE_DETECTION);
   }

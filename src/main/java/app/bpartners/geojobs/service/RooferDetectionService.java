@@ -5,16 +5,12 @@ import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.HOUSES_0;
-import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionProcessSucceeded;
 import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
-import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
-import app.bpartners.geojobs.mail.Email;
-import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.model.DetectedTile;
 import app.bpartners.geojobs.model.geometry.VGGFactory;
 import app.bpartners.geojobs.repository.DetectionRepository;
@@ -24,29 +20,20 @@ import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.detection.DetectionMapper;
 import app.bpartners.geojobs.service.detection.DetectionMaskCreator;
 import app.bpartners.geojobs.service.detection.TileObjectDetector;
-import app.bpartners.geojobs.template.HTMLTemplateParser;
-import jakarta.mail.internet.InternetAddress;
-import java.io.File;
 import java.math.BigDecimal;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import lombok.AllArgsConstructor;
-import lombok.SneakyThrows;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LinearRing;
 import org.springframework.stereotype.Service;
-import org.thymeleaf.context.Context;
 
 @Service
 @AllArgsConstructor
 public class RooferDetectionService
     implements Function<app.bpartners.geojobs.repository.model.detection.Detection, Detection> {
-  private static final String TEMPLATE_NAME = "roofer_detection_made";
-  private static final String env = System.getenv("ENV");
   private final TileObjectDetector detector;
   private final DetectionMaskCreator detectionMaskCreator;
   private final DetectionMapper detectionMapper;
@@ -55,9 +42,6 @@ public class RooferDetectionService
   private final DetectionRepository detectionRepository;
   private final EventProducer<GeoJsonConversionProcessSucceeded> eventProducer;
   private final DetectionFromStatisticRestMapper detectionFromStatisticRestMapper;
-  private final Mailer mailer;
-  private final AuthProvider authProvider;
-  private final HTMLTemplateParser htmlTemplateParser;
   private final DetectionVGGUpdate detectionVGGUpdate;
 
   @Override
@@ -146,32 +130,5 @@ public class RooferDetectionService
 
     LinearRing shell = geometryFactory.createLinearRing(coordinates);
     return geometryFactory.createPolygon(shell);
-  }
-
-  @SneakyThrows
-  public void sendEmail(Prospect prospect, File detectionResultPdf) {
-    var formattedCreationDatetime =
-        DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")
-            .format(now().atZone(ZoneId.of("Europe/Paris")));
-    var address = prospect.getAddress();
-    Context context = new Context();
-    context.setVariable("firstName", prospect.getFirstName());
-    context.setVariable("lastName", prospect.getLastName());
-    context.setVariable("phoneNumber", prospect.getPhone());
-    context.setVariable("email", prospect.getEmail());
-    context.setVariable("address", address);
-    context.setVariable("creationDatetime", formattedCreationDatetime);
-    var emailBody = htmlTemplateParser.apply(TEMPLATE_NAME, context);
-
-    mailer.accept(
-        new Email(
-            new InternetAddress(authProvider.getAuthenticatedCommunity().getEmail()),
-            List.of(new InternetAddress("tech@birdia.fr")),
-            List.of(),
-            String.format(
-                "%sAnalyse de la toiture de l’adresse %s",
-                !env.equalsIgnoreCase("prod") ? "[" + env + "] " : "", address),
-            emailBody,
-            List.of(detectionResultPdf)));
   }
 }

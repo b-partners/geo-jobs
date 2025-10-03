@@ -173,6 +173,7 @@ class ZoneServiceTest {
   DetectionStepMapper detectionStepMapper = new DetectionStepMapper();
   DetectionStepRepository detectionStepRepositoryMock = mock();
   DetectionFromStepMapper detectionFromStepMapperMock = mock();
+  RoofAnalysisMailer roofAnalysisMailerMock = mock(RoofAnalysisMailer.class);
   ZoneService subject =
       new ZoneService(
           zoneDetectionJobServiceMock,
@@ -207,7 +208,8 @@ class ZoneServiceTest {
           geoJsonDelimitationTypeMapper,
           detectionStepMapper,
           detectionStepRepositoryMock,
-          detectionFromStepMapperMock);
+          detectionFromStepMapperMock,
+          roofAnalysisMailerMock);
 
   @BeforeEach
   void setUp() {

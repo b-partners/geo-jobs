@@ -7,7 +7,6 @@ import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.SUCCEE
 import static app.bpartners.geojobs.endpoint.rest.model.Status.ProgressionEnum.FINISHED;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -22,12 +21,10 @@ import app.bpartners.geojobs.endpoint.rest.mapper.DetectionStepMapper;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel;
 import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
-import app.bpartners.geojobs.endpoint.rest.model.Prospect;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.job.model.JobStatus;
-import app.bpartners.geojobs.mail.Email;
 import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.model.geometry.VGG;
 import app.bpartners.geojobs.model.geometry.VGGFactory;
@@ -45,8 +42,6 @@ import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.gouv.fr.rnb.BuildingApi;
 import app.bpartners.geojobs.service.tiling.TileValidator;
 import app.bpartners.geojobs.template.HTMLTemplateParser;
-import jakarta.mail.internet.AddressException;
-import jakarta.mail.internet.InternetAddress;
 import java.io.File;
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -56,7 +51,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Polygon;
-import org.mockito.ArgumentCaptor;
 
 @Disabled("TODO: flaky test on CI")
 class RooferDetectionServiceTest {
@@ -112,9 +106,6 @@ class RooferDetectionServiceTest {
             detectionRepository,
             eventProducer,
             detectionFromStatisticRestMapper,
-            mailer,
-            authProvider,
-            htmlTemplateParser,
             detectionVGGUpdate);
 
     when(featureImageRetrieverMock.apply(any()))
@@ -152,19 +143,6 @@ class RooferDetectionServiceTest {
     assertEquals(MACHINE_DETECTION, actual.getStep().getName());
     assertEquals(FINISHED, actual.getStep().getStatus().getProgression());
     assertEquals(SUCCEEDED, actual.getStep().getStatus().getHealth());
-  }
-
-  @Test
-  void send_mail() throws AddressException {
-    var prospect = new Prospect();
-    var file = mock(File.class);
-    var emailCaptor = ArgumentCaptor.forClass(Email.class);
-
-    subject.sendEmail(prospect, file);
-
-    verify(mailer, only()).accept(emailCaptor.capture());
-
-    assertTrue(emailCaptor.getValue().cc().contains(new InternetAddress("tech@birdia.fr")));
   }
 
   Detection detection() {
