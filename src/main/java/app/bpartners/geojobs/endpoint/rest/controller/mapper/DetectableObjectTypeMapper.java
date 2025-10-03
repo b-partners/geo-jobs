@@ -135,9 +135,7 @@ public class DetectableObjectTypeMapper {
   }
 
   private List<DetectableObjectType> detectableObjectTypeForLomModel() {
-    List<DetectableObjectType> objectTypes = new ArrayList<>();
-    objectTypes.add(PASSAGE_PIETON);
-    return objectTypes;
+    return List.of(PASSAGE_PIETON);
   }
 
   private List<DetectableObjectType> detectableObjectTypeForClimatResilienceModel() {
