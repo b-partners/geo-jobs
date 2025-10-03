@@ -1404,6 +1404,7 @@ components:
         - SURFACES_PERMEABLES
         - PISTES_CYCLABLES
         - SYMBOLES_CYCLABLES
+        - MARQUAGES_VOIRIES
     ProcessJobAnnotation:
       type: object
       properties:

@@ -189,6 +189,10 @@ public class DetectableObjectTypeMapper {
     return objectTypes;
   }
 
+  private List<DetectableObjectType> detectableObjectTypeForSignModel() {
+    return List.of(MARQUAGES_VOIRIES);
+  }
+
   public List<DetectableObjectConfiguration> mapDefaultConfigurationsFromModel(
       String detectionId, ModelName modelName) {
     var objectTypes = mapFromModel(modelName);
