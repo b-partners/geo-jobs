@@ -12,6 +12,8 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionStepStatis
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.RoofDelimiterMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
 import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
+import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStepMapper;
+import app.bpartners.geojobs.endpoint.rest.mapper.DetectionStepMapper;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
@@ -49,12 +51,14 @@ class DetectionMachineStatisticsComputerTest {
         .thenAnswer(invocation -> ((Detection) invocation.getArgument(0)).getProvidedGeoJsonZone());
     detectionFromStatisticRestMapper =
         new DetectionFromStatisticRestMapper(
-            bucketComponentMock,
-            detectionStepStatisticMapper,
-            featureImageRetrieverMock,
-            imageAttributeRetrieverMock,
-            vggAttributeRetrieverMock,
-            roofDelimiterMapperMock);
+            new DetectionFromStepMapper(
+                bucketComponentMock,
+                featureImageRetrieverMock,
+                imageAttributeRetrieverMock,
+                vggAttributeRetrieverMock,
+                new DetectionStepMapper(),
+                roofDelimiterMapperMock),
+            detectionStepStatisticMapper);
     subject =
         new DetectionMachineDetectionStatisticsComputer(
             detectionFromStatisticRestMapper, zoneDetectionJobServiceMock);

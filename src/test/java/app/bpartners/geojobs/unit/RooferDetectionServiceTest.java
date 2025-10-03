@@ -17,6 +17,8 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionStepStatis
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.RoofDelimiterMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
 import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
+import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStepMapper;
+import app.bpartners.geojobs.endpoint.rest.mapper.DetectionStepMapper;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel;
 import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
@@ -81,12 +83,14 @@ class RooferDetectionServiceTest {
   RoofDelimiterMapper roofDelimiterMapperMock = mock();
   DetectionFromStatisticRestMapper detectionFromStatisticRestMapper =
       new DetectionFromStatisticRestMapper(
-          bucketComponent,
-          detectionStepStatisticMapper,
-          featureImageRetrieverMock,
-          imageAttributeRetrieverMock,
-          vggAttributeRetrieverMock,
-          roofDelimiterMapperMock);
+          new DetectionFromStepMapper(
+              bucketComponent,
+              featureImageRetrieverMock,
+              imageAttributeRetrieverMock,
+              vggAttributeRetrieverMock,
+              new DetectionStepMapper(),
+              roofDelimiterMapperMock),
+          detectionStepStatisticMapper);
   Mailer mailer = mock();
   AuthProvider authProvider = mock();
   HTMLTemplateParser htmlTemplateParser = new HTMLTemplateParser();
