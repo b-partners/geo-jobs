@@ -324,19 +324,12 @@ class ZoneDetectionJobControllerIT extends FacadeIT {
 
     var actual = subject.processDetection(detectionId, detectionCreation);
 
-    assertNotNull(actual, "Detection should not be null");
     assertEquals(detectionId, actual.getId());
     assertEquals("emptyZoneName", actual.getZoneName());
     assertEquals("john@mail.com", actual.getEmailReceiver());
-
-    assertNotNull(actual.getGeoJsonZone());
-    assertTrue(
-        actual.getGeoJsonZone().isEmpty(), "GeoJson zone should be empty when input was null");
-
-    assertNotNull(actual.getStep());
     assertEquals(DetectionStepName.REQUEST_ACCEPTED, actual.getStep().getName());
-    assertNotNull(actual.getStep().getStatus());
     assertEquals(Status.ProgressionEnum.PENDING, actual.getStep().getStatus().getProgression());
     assertEquals(Status.HealthEnum.UNKNOWN, actual.getStep().getStatus().getHealth());
+    assertTrue(actual.getGeoJsonZone() != null && actual.getGeoJsonZone().isEmpty());
   }
 }
