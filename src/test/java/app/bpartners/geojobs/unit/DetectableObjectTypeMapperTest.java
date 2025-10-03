@@ -161,8 +161,7 @@ class DetectableObjectTypeMapperTest {
     System.out.println(detectableObjectWithReferenceConfidences);
     assertTrue(
         detectableObjectWithReferenceConfidences.contains(
-            new DetectableObjectWithReferenceConfidence(
-                DetectableType.SURFACES_PERMEABLES, 1.0)));
+            new DetectableObjectWithReferenceConfidence(DetectableType.SURFACES_PERMEABLES, 1.0)));
     assertTrue(
         detectableObjectWithReferenceConfidences.contains(
             new DetectableObjectWithReferenceConfidence(DetectableType.SURFACES_PERMEABLES, 1.0)));
@@ -241,7 +240,8 @@ class DetectableObjectTypeMapperTest {
             new DetectableObjectWithReferenceConfidence(DetectableType.PARKING, 0.252)));
     assertTrue(
         detectableObjectWithReferenceConfidences.contains(
-            new DetectableObjectWithReferenceConfidence(DetectableType.PANNEAU_PHOTOVOLTAIQUE, 0.27)));
+            new DetectableObjectWithReferenceConfidence(
+                DetectableType.PANNEAU_PHOTOVOLTAIQUE, 0.27)));
   }
 
   @Test
