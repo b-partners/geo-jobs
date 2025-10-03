@@ -67,6 +67,7 @@ public enum ObjectType {
               USURE,
               HUMIDITE,
               TOITURE_REVETEMENT,
+              TOITURE,
               ESPACE_VERT_PARKING,
               PANNEAU_PHOTOVOLTAIQUE,
               PISCINE,
