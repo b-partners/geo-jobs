@@ -182,6 +182,13 @@ public class DetectableObjectTypeMapper {
     return objectTypes;
   }
 
+  private List<DetectableObjectType> detectableObjectTypeForCyclModel() {
+    List<DetectableObjectType> objectTypes = new ArrayList<>();
+    objectTypes.add(PISTES_CYCLABLES);
+    objectTypes.add(SYMBOLES_CYCLABLES);
+    return objectTypes;
+  }
+
   public List<DetectableObjectConfiguration> mapDefaultConfigurationsFromModel(
       String detectionId, ModelName modelName) {
     var objectTypes = mapFromModel(modelName);

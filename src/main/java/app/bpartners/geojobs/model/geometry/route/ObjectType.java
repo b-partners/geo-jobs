@@ -94,6 +94,8 @@ public enum ObjectType {
               BACKGROUND,
               SURFACES_ARTIFICIALISEES,
               SURFACES_PERMEABLES,
+              PISTES_CYCLABLES,
+              SYMBOLES_CYCLABLES,
               ROAD ->
           throw new IllegalArgumentException("Unsupported continuation on " + detectableType);
     };

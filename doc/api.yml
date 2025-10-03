@@ -1402,6 +1402,8 @@ components:
         - ROAD
         - SURFACES_ARTIFICIALISEES
         - SURFACES_PERMEABLES
+        - PISTES_CYCLABLES
+        - SYMBOLES_CYCLABLES
     ProcessJobAnnotation:
       type: object
       properties:
