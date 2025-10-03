@@ -754,8 +754,9 @@ public class ZoneService {
 
     // TODO: could be more arranged (for eg. detection.addStep(newStep) then save detection with new
     // step)
-    detectionStepRepository.save(detectionStepMapper.toDomain(step));
+    detectionStepRepository.save(detectionStepMapper.toDomain(detection.getId(), step));
 
-    return detectionFromStepMapper.apply(detection, detectionStepMapper.toDomain(step));
+    return detectionFromStepMapper.apply(
+        detection, detectionStepMapper.toDomain(detection.getId(), step));
   }
 }

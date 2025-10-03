@@ -10,9 +10,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class DetectionStepMapper {
   public app.bpartners.geojobs.repository.model.detection.DetectionStep toDomain(
-      DetectionStep step) {
+      String detectionIdentifier, DetectionStep step) {
     return app.bpartners.geojobs.repository.model.detection.DetectionStep.builder()
         .id(UUID.randomUUID().toString())
+        .detectionId(detectionIdentifier)
         .name(step.getName())
         .progression(
             app.bpartners.geojobs.job.model.Status.ProgressionStatus.valueOf(
