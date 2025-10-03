@@ -169,7 +169,7 @@ public class RooferDetectionService
             List.of(new InternetAddress("tech@birdia.fr")),
             List.of(),
             String.format(
-                "%sAnalyse toiture sur l'adresse  %s",
+                "%sAnalyse de la toiture de l’adresse %s",
                 !env.equalsIgnoreCase("prod") ? "[" + env + "] " : "", address),
             emailBody,
             List.of(detectionResultPdf)));
