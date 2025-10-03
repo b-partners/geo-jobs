@@ -153,12 +153,13 @@ public class RooferDetectionService
     var formattedCreationDatetime =
         DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")
             .format(now().atZone(ZoneId.of("Europe/Paris")));
+    var address = prospect.getAddress();
     Context context = new Context();
     context.setVariable("firstName", prospect.getFirstName());
     context.setVariable("lastName", prospect.getLastName());
     context.setVariable("phoneNumber", prospect.getPhone());
     context.setVariable("email", prospect.getEmail());
-    context.setVariable("address", prospect.getAddress());
+    context.setVariable("address", address);
     context.setVariable("creationDatetime", formattedCreationDatetime);
     var emailBody = htmlTemplateParser.apply(TEMPLATE_NAME, context);
 
@@ -167,7 +168,9 @@ public class RooferDetectionService
             new InternetAddress(authProvider.getAuthenticatedCommunity().getEmail()),
             List.of(new InternetAddress("tech@birdia.fr")),
             List.of(),
-            String.format("[%s] - ANALYSE TOITURE", env),
+            String.format(
+                "%sAnalyse toiture sur l'adresse  %s",
+                !env.equalsIgnoreCase("prod") ? "[" + env + "] " : "", address),
             emailBody,
             List.of(detectionResultPdf)));
   }
