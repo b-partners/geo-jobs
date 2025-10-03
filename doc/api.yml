@@ -1398,6 +1398,8 @@ components:
         - ESPACE_VERT_PARKING
         - BACKGROUND
         - ROAD
+        - SURFACES_ARTIFICIALISEES
+        - SURFACES_PERMEABLES
     ProcessJobAnnotation:
       type: object
       properties:
