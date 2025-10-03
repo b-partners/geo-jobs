@@ -100,6 +100,10 @@ public enum ObjectType {
               PISTES_CYCLABLES,
               SYMBOLES_CYCLABLES,
               MARQUAGES_VOIRIES,
+              CIMETIERE,
+              TOMBE_SIMPLE,
+              TOMBE_DOUBLE,
+              TOMBE_NON_GEOMETRIQUE,
               ROAD ->
           throw new IllegalArgumentException("Unsupported continuation on " + detectableType);
     };

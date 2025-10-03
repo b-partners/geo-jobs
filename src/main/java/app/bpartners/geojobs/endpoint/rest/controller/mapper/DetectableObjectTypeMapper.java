@@ -200,6 +200,21 @@ public class DetectableObjectTypeMapper {
     return objectTypes;
   }
 
+  private List<DetectableObjectType> detectableObjectTypeForTamponsModel() {
+    throw new NotImplementedException("Not implemented yet");
+  }
+
+  private List<DetectableObjectType> detectableObjectTypeForCimetiereModel() {
+    List<DetectableObjectType> objectTypes = new ArrayList<>();
+    objectTypes.add(ESPACE_VERT);
+    objectTypes.add(ESPACE_ARBORE);
+    objectTypes.add(CIMETIERE);
+    objectTypes.add(TOMBE_SIMPLE);
+    objectTypes.add(TOMBE_DOUBLE);
+    objectTypes.add(TOMBE_NON_GEOMETRIQUE);
+    return objectTypes;
+  }
+
   public List<DetectableObjectConfiguration> mapDefaultConfigurationsFromModel(
       String detectionId, ModelName modelName) {
     var objectTypes = mapFromModel(modelName);
