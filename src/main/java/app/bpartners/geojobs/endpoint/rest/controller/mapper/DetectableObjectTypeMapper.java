@@ -136,8 +136,6 @@ public class DetectableObjectTypeMapper {
   private List<DetectableObjectType> detectableObjectTypeForLomModel() {
     List<DetectableObjectType> objectTypes = new ArrayList<>();
     objectTypes.add(PASSAGE_PIETON);
-    objectTypes.add(TROTTOIR);
-    objectTypes.add(VOIE_CARROSSABLE);
     return objectTypes;
   }
 
