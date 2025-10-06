@@ -14,6 +14,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.context.Context;
 
 @Service
@@ -27,6 +28,7 @@ public class DetectionSucceededService implements Consumer<DetectionSucceeded> {
   private final ZoneDetectionJobRepository zoneDetectionJobRepository;
 
   @Override
+  @Transactional
   public void accept(DetectionSucceeded detectionSucceeded) {
     var detectionIdentifier = detectionSucceeded.getDetectionIdentifier();
     var detection = detectionRepository.findById(detectionIdentifier).orElseThrow();
