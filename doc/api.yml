@@ -1371,8 +1371,11 @@ components:
         - PISCINE
         - PASSAGE_PIETON
         - ARBRE
+        - ARBRE_INDIVIDUALISE
+        - CANOPE
         - TROTTOIR
         - LINE
+        - ESPACE_ARBORE
         - ESPACE_VERT
         - VOIE_CARROSSABLE
         - PARKING
@@ -1395,9 +1398,19 @@ components:
         - BATI_BETON
         - BATI_ARDOISE
         - BATI_AUTRES
+        - BATI
         - ESPACE_VERT_PARKING
         - BACKGROUND
         - ROAD
+        - SURFACES_ARTIFICIALISEES
+        - SURFACES_PERMEABLES
+        - PISTES_CYCLABLES
+        - SYMBOLES_CYCLABLES
+        - MARQUAGES_VOIRIES
+        - CIMETIERE
+        - TOMBE_SIMPLE
+        - TOMBE_DOUBLE
+        - TOMBE_NON_GEOMETRIQUE
     ProcessJobAnnotation:
       type: object
       properties:
@@ -1703,8 +1716,14 @@ components:
         - BP_ZAN
         - BP_CLIMAT_RESILIENCE
         - BP_CONFIRMITE_PLU
-        - BP_TROTTOIRS
+        - BP_VOIRIE_TROTTOIRS
         - BP_OLD
+        - BP_CYCL
+        - BP_SIGN
+        - BP_VEGETATION
+        - BP_TAMPONS
+        - BP_CIMETIERE
+        - BP_STATIONNEMENT
     CreateDetection:
       type: object
       properties:
