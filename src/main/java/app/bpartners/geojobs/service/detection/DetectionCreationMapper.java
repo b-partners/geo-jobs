@@ -27,13 +27,11 @@ import java.math.BigDecimal;
 import java.util.List;
 import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
-import org.apache.commons.lang3.function.TriFunction;
 import org.springframework.stereotype.Component;
 
 @Component
 @AllArgsConstructor
-public class DetectionCreationMapper
-    implements TriFunction<CreateDetection, String, String, Detection> {
+public class DetectionCreationMapper {
   private final DetectableObjectTypeMapper detectableObjectTypeMapper;
   private final FeatureTypeChecker featureTypeChecker;
   private final CommunityAuthorizationRepository communityAuthRepository;
@@ -43,9 +41,11 @@ public class DetectionCreationMapper
   private final TileMultiPolygonFrame tileMultiPolygonFrame;
   private final GeoJsonDelimitationTypeMapper geoJsonDelimitationTypeMapper;
 
-  @Override
   public Detection apply(
-      CreateDetection createDetection, String detectionE2Id, @Nullable String communityOwnerId) {
+      CreateDetection createDetection,
+      String detectionE2Id,
+      @Nullable String communityOwnerId,
+      boolean isSynchronous) {
     var detectableObjectModel = createDetection.getDetectableObjectModel();
     var modelName = detectableObjectModel.getModelName();
     var detectionId = randomUUID().toString();
@@ -67,7 +67,7 @@ public class DetectionCreationMapper
         .endToEndId(detectionE2Id)
         .emailReceiver(createDetection.getEmailReceiver())
         .zoneName(createDetection.getZoneName())
-        .isSynchronous(true)
+        .isSynchronous(isSynchronous)
         .communityOwnerId(communityOwnerId)
         .detectableObjectConfigurations(detectableObjectConfigurations)
         .geoServerProperties(finalGeoServerProperties)

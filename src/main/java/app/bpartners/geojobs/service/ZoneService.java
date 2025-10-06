@@ -301,7 +301,8 @@ public class ZoneService {
     Detection detectionToBeProcessed;
     detectionToBeProcessed =
         optionalDetection.orElseGet(
-            () -> createDetectionJob(detectionId, validatedCreateDetection, communityOwnerId));
+            () ->
+                createDetectionJob(detectionId, validatedCreateDetection, communityOwnerId, true));
     var savedDetectionToBeProcessed =
         detectionRepository.save(
             detectionToBeProcessed.toBuilder()
@@ -323,7 +324,8 @@ public class ZoneService {
         detectionRepository.findByEndToEndIdAndCommunityOwnerId(detectionId, communityOwnerId);
 
     if (optionalDetection.isEmpty()) {
-      var savedDetection = createDetectionJob(detectionId, createDetection, communityOwnerId);
+      var savedDetection =
+          createDetectionJob(detectionId, createDetection, communityOwnerId, false);
       if (savedDetection.isStillOnConfiguringStep()) {
         return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
             savedDetection, PENDING, UNKNOWN, REQUEST_ACCEPTED);
@@ -381,9 +383,13 @@ public class ZoneService {
   }
 
   private Detection createDetectionJob(
-      String detectionE2Id, CreateDetection createDetection, @Nullable String communityOwnerId) {
+      String detectionE2Id,
+      CreateDetection createDetection,
+      @Nullable String communityOwnerId,
+      boolean isSynchronous) {
     var detectionToSave =
-        detectionCreationMapper.apply(createDetection, detectionE2Id, communityOwnerId);
+        detectionCreationMapper.apply(
+            createDetection, detectionE2Id, communityOwnerId, isSynchronous);
     List<Feature> geoJsonZone =
         createDetection.getGeoJsonZone() == null ? List.of() : createDetection.getGeoJsonZone();
     var persistedDetection =
