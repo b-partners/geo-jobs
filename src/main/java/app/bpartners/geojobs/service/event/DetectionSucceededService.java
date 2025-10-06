@@ -7,10 +7,12 @@ import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.detection.Detection;
+import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.service.DetectionFinishedMailer;
 import app.bpartners.geojobs.template.HTMLTemplateParser;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -76,7 +78,10 @@ public class DetectionSucceededService implements Consumer<DetectionSucceeded> {
   }
 
   private String apply(String zoneDetectionJobId, JobStatus detectionJobStatus) {
-    var optionalZoneDetectionJob = zoneDetectionJobRepository.findById(zoneDetectionJobId);
+    Optional<ZoneDetectionJob> optionalZoneDetectionJob =
+        zoneDetectionJobId == null
+            ? Optional.empty()
+            : zoneDetectionJobRepository.findById(zoneDetectionJobId);
     var optionalDetection = detectionRepository.findByZdjId(zoneDetectionJobId);
     var machineZoneDetectionJob = optionalZoneDetectionJob.orElse(null);
     var machineZoneDetectionJobStatus =
