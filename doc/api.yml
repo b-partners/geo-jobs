@@ -1094,7 +1094,13 @@ components:
           items:
             $ref: '#/components/schemas/AuthorizedZone'
         detectableObjectModel:
-          $ref: '#/components/schemas/DetectableObjectModel'
+          deprecated: true
+          allOf:
+            - $ref: '#/components/schemas/DetectableObjectModel'
+        allowedModels:
+          type: array
+          items:
+            $ref: '#/components/schemas/DetectableObjectModel'
         detectableObjectTypes:
           deprecated: true
           type: array

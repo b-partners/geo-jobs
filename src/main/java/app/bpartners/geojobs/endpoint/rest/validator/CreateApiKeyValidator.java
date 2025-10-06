@@ -16,11 +16,16 @@ public class CreateApiKeyValidator implements Consumer<CreateApiKey> {
     if (createApiKey.getConsumerEmail() == null) {
       exceptionMessageBuilder.append("CreateApiKey.consumerEmail is mandatory. ");
     }
-    if (createApiKey.getDetectableObjectModel() == null) {
-      exceptionMessageBuilder.append("CreateApiKey.detectableObjectModel is mandatory. ");
+    if (createApiKey.getDetectableObjectModel() == null && createApiKey.getAllowedModels() == null
+        || (createApiKey.getDetectableObjectModel() == null
+            && createApiKey.getAllowedModels() != null
+            && createApiKey.getAllowedModels().isEmpty())) {
+      exceptionMessageBuilder.append(
+          "Either CreateApiKey.detectableObjectModel is mandatory or CreateApiKey.allowedModels is"
+              + " mandatory. ");
     }
-    ;
-    if (createApiKey.getDetectableObjectModel().getModelName() == null) {
+    if (createApiKey.getDetectableObjectModel() != null
+        && createApiKey.getDetectableObjectModel().getModelName() == null) {
       exceptionMessageBuilder.append("CreateApiKey.detectableObjectModel.modelName is mandatory. ");
     }
     if (createApiKey.getConsumerType() == null) {

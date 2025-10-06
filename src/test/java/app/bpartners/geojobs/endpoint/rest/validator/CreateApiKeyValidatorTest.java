@@ -47,4 +47,22 @@ class CreateApiKeyValidatorTest {
             + " CreateApiKey.consumerType is mandatory.",
         actualException.getMessage());
   }
+
+  @Test
+  void throws_mandatory_detectable_object_model_attribute_missing_exception() {
+    var createApiKeyMock = mock(CreateApiKey.class);
+    when(createApiKeyMock.getConsumerEmail()).thenReturn("dummyConsumerEmail");
+    when(createApiKeyMock.getConsumerName()).thenReturn("dummyConsumerName");
+    when(createApiKeyMock.getConsumerType()).thenReturn(INSURANCE);
+    when(createApiKeyMock.getDetectableObjectModel()).thenReturn(null);
+    when(createApiKeyMock.getAllowedModels()).thenReturn(null);
+
+    var actualException =
+        assertThrows(BadRequestException.class, () -> subject.accept(createApiKeyMock));
+
+    assertEquals(
+        "Either CreateApiKey.detectableObjectModel is mandatory or CreateApiKey.allowedModels is"
+            + " mandatory. ",
+        actualException.getMessage());
+  }
 }
