@@ -23,7 +23,6 @@ public class DetectableObjectTypeMapper {
   public DetectableType toDomain(DetectableObjectType rest) {
     return switch (rest) {
       case TOITURE_REVETEMENT -> DetectableType.TOITURE_REVETEMENT;
-      case TOITURE -> DetectableType.TOITURE;
       case PANNEAU_PHOTOVOLTAIQUE -> DetectableType.PANNEAU_PHOTOVOLTAIQUE;
       case PISCINE -> DetectableType.PISCINE;
       case PASSAGE_PIETON -> DetectableType.PASSAGE_PIETON;
@@ -68,7 +67,6 @@ public class DetectableObjectTypeMapper {
       case TOMBE_SIMPLE -> DetectableType.TOMBE_SIMPLE;
       case TOMBE_DOUBLE -> DetectableType.TOMBE_DOUBLE;
       case TOMBE_NON_GEOMETRIQUE -> DetectableType.TOMBE_NON_GEOMETRIQUE;
-      default -> throw new NotImplementedException("Unknown detectable object type " + rest);
     };
   }
 
@@ -107,7 +105,6 @@ public class DetectableObjectTypeMapper {
       case TOMBE -> null;
       case ESPACE_VERT_PARKING -> ESPACE_VERT_PARKING;
       case BACKGROUND -> BACKGROUND;
-      case TOITURE -> TOITURE;
       case ARBRE_INDIVIDUALISE -> ARBRE_INDIVIDUALISE;
       case CANOPE -> CANOPE;
       case ESPACE_ARBORE -> ESPACE_ARBORE;
@@ -210,7 +207,6 @@ public class DetectableObjectTypeMapper {
     List<DetectableObjectType> objectTypes = new ArrayList<>();
     objectTypes.add(ARBRE);
     objectTypes.add(ESPACE_VERT);
-    objectTypes.add(TOITURE);
     objectTypes.add(VOIE_CARROSSABLE);
     objectTypes.add(TROTTOIR);
     objectTypes.add(PARKING);

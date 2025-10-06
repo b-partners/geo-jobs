@@ -134,7 +134,6 @@ public class DetectionTaskMapper {
       case TOMBE -> null;
       case ESPACE_VERT_PARKING -> ESPACE_VERT_PARKING;
       case BACKGROUND -> BACKGROUND;
-      case TOITURE -> TOITURE;
       case ARBRE_INDIVIDUALISE -> ARBRE_INDIVIDUALISE;
       case CANOPE -> CANOPE;
       case ESPACE_ARBORE -> ESPACE_ARBORE;

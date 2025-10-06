@@ -1367,7 +1367,6 @@ components:
       type: string
       enum:
         - TOITURE_REVETEMENT
-        - TOITURE
         - PANNEAU_PHOTOVOLTAIQUE
         - PISCINE
         - PASSAGE_PIETON

@@ -131,15 +131,7 @@ class DetectableObjectTypeMapperTest {
 
     var actual = subject.mapFromModel(object);
 
-    var expected =
-        List.of(
-            ARBRE,
-            ESPACE_VERT,
-            DetectableObjectType.TOITURE,
-            VOIE_CARROSSABLE,
-            TROTTOIR,
-            PARKING,
-            RISQUE_FEU);
+    var expected = List.of(ARBRE, ESPACE_VERT, VOIE_CARROSSABLE, TROTTOIR, PARKING, RISQUE_FEU);
     assertEquals(expected, actual);
   }
 
@@ -158,7 +150,6 @@ class DetectableObjectTypeMapperTest {
                         objectConfiguration.getMinConfidenceForDetection()))
             .toList();
     // assertEquals(6, detectableObjectWithReferenceConfidences.size());
-    System.out.println(detectableObjectWithReferenceConfidences);
     assertTrue(
         detectableObjectWithReferenceConfidences.contains(
             new DetectableObjectWithReferenceConfidence(DetectableType.SURFACES_PERMEABLES, 1.0)));
@@ -317,17 +308,12 @@ class DetectableObjectTypeMapperTest {
                         objectConfiguration.getObjectType(),
                         objectConfiguration.getMinConfidenceForDetection()))
             .toList();
-    System.out.println(detectableObjectWithReferenceConfidences);
-
     assertTrue(
         detectableObjectWithReferenceConfidences.contains(
             new DetectableObjectWithReferenceConfidence(DetectableType.ARBRE, 0.2504)));
     assertTrue(
         detectableObjectWithReferenceConfidences.contains(
             new DetectableObjectWithReferenceConfidence(DetectableType.ESPACE_VERT, 0.251)));
-    assertTrue(
-        detectableObjectWithReferenceConfidences.contains(
-            new DetectableObjectWithReferenceConfidence(DetectableType.TOITURE, 1.0)));
     assertTrue(
         detectableObjectWithReferenceConfidences.contains(
             new DetectableObjectWithReferenceConfidence(DetectableType.VOIE_CARROSSABLE, 0.0)));

@@ -37,7 +37,6 @@ public enum DetectableType {
   TOMBE(4000),
   BACKGROUND(0),
   ESPACE_VERT_PARKING(0), // TODO: to delete and separate
-  TOITURE(0),
   ARBRE_INDIVIDUALISE(0),
   CANOPE(0),
   ESPACE_ARBORE(0),
