@@ -1716,7 +1716,7 @@ components:
         - BP_ZAN
         - BP_CLIMAT_RESILIENCE
         - BP_CONFIRMITE_PLU
-        - BP_TROTTOIRS
+        - BP_VOIRIE_TROTTOIRS
         - BP_OLD
         - BP_CYCL
         - BP_SIGN

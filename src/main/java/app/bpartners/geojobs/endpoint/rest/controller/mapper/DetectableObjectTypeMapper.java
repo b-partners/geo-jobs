@@ -134,7 +134,7 @@ public class DetectableObjectTypeMapper {
       case ZAN -> objectTypes.addAll(detectableObjectTypeForZanModel());
       case CLIMAT_RESILIENCE -> objectTypes.addAll(detectableObjectTypeForClimatResilienceModel());
       case CONFIRMITE_PLU -> objectTypes.addAll(detectableObjectTypeForConformitePluModel());
-      case TROTTOIRS -> objectTypes.addAll(detectableObjectTypeForTrottoirsModel());
+      case VOIRIE_TROTTOIRS -> objectTypes.addAll(detectableObjectTypeForVoirieTrottoirsModel());
       case OLD -> objectTypes.addAll(detectableObjectTypeForOldModel());
       case CYCL -> objectTypes.addAll(detectableObjectTypeForCyclModel());
       case SIGN -> objectTypes.addAll(detectableObjectTypeForSignModel());
@@ -196,7 +196,7 @@ public class DetectableObjectTypeMapper {
     return objectTypes;
   }
 
-  private List<DetectableObjectType> detectableObjectTypeForTrottoirsModel() {
+  private List<DetectableObjectType> detectableObjectTypeForVoirieTrottoirsModel() {
     List<DetectableObjectType> objectTypes = new ArrayList<>();
     objectTypes.add(TROTTOIR);
     objectTypes.add(VOIE_CARROSSABLE);

@@ -117,7 +117,7 @@ class DetectableObjectTypeMapperTest {
 
   @Test
   void map_from_modl_BP_Trottoirs_Model() {
-    var object = new DetectableObjectModel().modelName(TROTTOIRS);
+    var object = new DetectableObjectModel().modelName(VOIRIE_TROTTOIRS);
 
     var actual = subject.mapFromModel(object);
 
@@ -192,7 +192,7 @@ class DetectableObjectTypeMapperTest {
   void map_bp_trottoirs_model_object_type_with_its_variable_reference_confidence() {
     var detectionId = randomUUID().toString();
 
-    var actual = subject.mapDefaultConfigurationsFromModel(detectionId, TROTTOIRS);
+    var actual = subject.mapDefaultConfigurationsFromModel(detectionId, VOIRIE_TROTTOIRS);
 
     var detectableObjectWithReferenceConfidences =
         actual.stream()
