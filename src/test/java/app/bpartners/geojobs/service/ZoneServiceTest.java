@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service;
 
+import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.*;
 import static app.bpartners.geojobs.endpoint.rest.model.GeoJsonOutput.GEO_JSON;
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
@@ -24,6 +25,7 @@ import static org.mockito.Mockito.*;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionExcelFileSaved;
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
+import app.bpartners.geojobs.endpoint.event.model.DetectionSucceeded;
 import app.bpartners.geojobs.endpoint.event.model.DetectionTilingRequested;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerificationSent;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.*;
@@ -63,6 +65,7 @@ import app.bpartners.geojobs.utils.detection.ZoneDetectionJobCreator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -1098,12 +1101,21 @@ class ZoneServiceTest {
 
     var actual = subject.configureGeoJsonResult(detectionId, fileMock);
 
+    var stringCaptor = ArgumentCaptor.forClass(String.class);
+    var listCaptor = ArgumentCaptor.forClass(List.class);
     assertEquals(POST_PROCESSING, actual.getStep().getName());
     assertEquals(Status.ProgressionEnum.FINISHED, actual.getStep().getStatus().getProgression());
     assertEquals(SUCCEEDED, actual.getStep().getStatus().getHealth());
-    var stringCaptor = ArgumentCaptor.forClass(String.class);
     verify(bucketComponentMock, times(1)).upload(eq(fileMock), stringCaptor.capture());
     verify(detectionRepositoryMock).save(any());
+    verify(eventProducerMock, times(2)).accept(listCaptor.capture());
+    var detectionSucceededEvent =
+        (DetectionSucceeded) listCaptor.getAllValues().getLast().getFirst();
+    assertEquals(new DetectionSucceeded(detectionId), detectionSucceededEvent);
+    assertEquals(EVENT_STACK_2, detectionSucceededEvent.getEventStack());
+    assertEquals(Duration.ofSeconds(30L), detectionSucceededEvent.maxConsumerDuration());
+    assertEquals(
+        Duration.ofSeconds(30L), detectionSucceededEvent.maxConsumerBackoffBetweenRetries());
     assertTrue(stringCaptor.getValue().contains(GEO_JSON_BUCKET_FOLDER));
   }
 

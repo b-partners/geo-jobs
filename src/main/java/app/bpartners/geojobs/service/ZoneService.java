@@ -15,6 +15,7 @@ import static java.time.Instant.now;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionExcelFileSaved;
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
+import app.bpartners.geojobs.endpoint.event.model.DetectionSucceeded;
 import app.bpartners.geojobs.endpoint.event.model.DetectionTilingRequested;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerificationSent;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
@@ -189,19 +190,23 @@ public class ZoneService {
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection configureGeoJsonResult(
-      String detectionId, File geoJsonFile) {
-    var detection = getDetectionByE2IdOrId(detectionId);
+      String detectionE2Id, File geoJsonFile) {
+    var detection = getDetectionByE2IdOrId(detectionE2Id);
     var geoJsonResultFileKey =
         GEO_JSON_BUCKET_FOLDER
             + detection.getId()
             + "/"
             + detection.getZoneName()
             + GEO_JSON_EXTENSION;
+
     bucketComponent.upload(geoJsonFile, geoJsonResultFileKey);
+
     var savedDetection =
         detectionRepository.save(
             detection.toBuilder().geojsonS3FileKey(geoJsonResultFileKey).build());
+
     eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
+    eventProducer.accept(List.of(new DetectionSucceeded(detection.getId())));
 
     if (!savedDetection.isOnStepPostProcessingSucceeded()) {
       return updateDetectionStep(
@@ -216,7 +221,6 @@ public class ZoneService {
               .statistics(List.of())
               .updatedAt(now()));
     }
-
     return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
         detection, FINISHED, SUCCEEDED, POST_PROCESSING);
   }
