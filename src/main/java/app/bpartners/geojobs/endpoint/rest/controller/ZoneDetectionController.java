@@ -221,9 +221,7 @@ public class ZoneDetectionController {
     var communityAuthorization =
         communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
     var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId).orElse(null);
-    var isRooferMade = false;
-    return zoneService.processDetection(
-        detectionId, createDetection, communityOwnerId, isRooferMade);
+    return zoneService.processDetection(detectionId, createDetection, communityOwnerId);
   }
 
   @PutMapping("/detections/{id}/step")
@@ -243,13 +241,7 @@ public class ZoneDetectionController {
   @PostMapping("/detections/{id}/roofer")
   public Detection processRooferDetection(
       @PathVariable(name = "id") String detectionId, @RequestBody CreateDetection createDetection) {
-    detectionAuthorizer.accept(detectionId, createDetection, authProvider.getPrincipal());
-    var communityAuthorization =
-        communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
-    var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId).orElse(null);
-    var isRooferMade = true;
-    return zoneService.processDetection(
-        detectionId, createDetection, communityOwnerId, isRooferMade);
+    throw new NotImplementedException("POST /detections/{id}/roofer not supported anymore.");
   }
 
   @PostMapping("/detections/{id}/sync")
@@ -273,7 +265,6 @@ public class ZoneDetectionController {
   @PostMapping("/detections/{id}/roofDelimiter")
   public Detection configureDetectionRoofDelimiter(
       @PathVariable(name = "id") String detectionId, @RequestBody RoofDelimiter roofDelimiter) {
-    // TODO : delete implementation on ZoneService
     throw new NotImplementedException("POST /detections/{id}/roofDelimiter not supported anymore.");
   }
 
