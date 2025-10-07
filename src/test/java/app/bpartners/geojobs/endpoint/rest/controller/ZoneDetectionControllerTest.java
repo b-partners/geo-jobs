@@ -295,6 +295,44 @@ class ZoneDetectionControllerTest {
         "POST /detections/{id}/roofDelimiter not supported anymore.", actualException.getMessage());
   }
 
+  @Test
+  void updateDetectionStep_ok() {
+    when(zoneServiceMock.updateDetectionStep(anyString(), any(DetectionStep.class)))
+        .thenAnswer(
+            invocation -> {
+              String detectionId = invocation.getArgument(0);
+              DetectionStep step = invocation.getArgument(1);
+
+              return new Detection().id(detectionId).step(step);
+            });
+
+    Detection expected =
+        new Detection()
+            .id("detectionId")
+            .step(new DetectionStep().name(DetectionStepName.REQUEST_ACCEPTED));
+    Detection actual =
+        subject.updateDetectionStep(
+            "detectionId", new DetectionStep().name(DetectionStepName.REQUEST_ACCEPTED));
+
+    assertNotNull(actual);
+    assertEquals(expected, actual);
+  }
+
+  @Test
+  void configureDetectionAddresses_ok() {
+    var addresses = List.of(new Address().address("dummyAddress"));
+    var addressesStrings = addresses.stream().map(Address::getAddress).toList();
+    when(zoneServiceMock.configureDetectionAddresses(anyString(), any()))
+        .thenReturn(new Detection().addresses(addressesStrings));
+
+    Detection actual = subject.configureDetectionAddresses("detectionId", addresses);
+
+    assertNotNull(actual);
+    assertEquals(addressesStrings, actual.getAddresses());
+
+    verify(zoneServiceMock).configureDetectionAddresses("detectionId", addressesStrings);
+  }
+
   private static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob aZDJ(
       String jobId, Status.ProgressionStatus progressionStatus, Status.HealthStatus healthStatus) {
     return app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.builder()
