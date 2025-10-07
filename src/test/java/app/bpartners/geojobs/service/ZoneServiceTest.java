@@ -197,7 +197,6 @@ class ZoneServiceTest {
           synchronousDetectionServiceMock,
           synchronousDetectionValidatorMock,
           detectionStepMapper,
-          detectionStepRepositoryMock,
           detectionFromStepMapperMock,
           roofAnalysisMailerMock,
           new DetectionCreationMapper(
@@ -1206,8 +1205,6 @@ class ZoneServiceTest {
     var principalMock = mock(Principal.class);
     when(principalMock.getPassword()).thenReturn("dummy");
     when(authProviderMock.getPrincipal()).thenReturn(principalMock);
-    when(detectionStepRepositoryMock.save(any()))
-        .thenAnswer(invocation -> invocation.getArgument(0));
     when(detectionRepositoryMock.existsById(any(String.class))).thenReturn(true);
     when(detectionRepositoryMock.findByEndToEndIdAndCommunityOwnerId(eq(detectionId), any()))
         .thenReturn(Optional.of(detectionEntity));
@@ -1219,10 +1216,6 @@ class ZoneServiceTest {
 
     var actual = subject.updateDetectionStep(detectionId, restStep);
 
-    var repoStepCaptor =
-        ArgumentCaptor.forClass(
-            app.bpartners.geojobs.repository.model.detection.DetectionStep.class);
-    verify(detectionStepRepositoryMock, times(1)).save(repoStepCaptor.capture());
     verify(detectionRepositoryMock, times(1))
         .findByEndToEndIdAndCommunityOwnerId(eq(detectionId), any());
     assertEquals(expectedRestDetection, actual);
