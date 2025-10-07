@@ -7,7 +7,6 @@ import static app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType.USU
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.model.*;
-import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import java.util.ArrayList;
@@ -235,7 +234,8 @@ public class DetectableObjectTypeMapper {
   }
 
   private List<DetectableObjectType> detectableObjectTypeForTamponsModel() {
-    throw new NotImplementedException("Not implemented yet");
+    // TODO: not implemented
+    return new ArrayList<>();
   }
 
   private List<DetectableObjectType> detectableObjectTypeForCimetiereModel() {
@@ -250,7 +250,8 @@ public class DetectableObjectTypeMapper {
   }
 
   private List<DetectableObjectType> detectableObjectTypeForStationnementModel() {
-    throw new NotImplementedException("Not implemented yet");
+    // TODO: not implemented
+    return new ArrayList<>();
   }
 
   public List<DetectableObjectConfiguration> mapDefaultConfigurationsFromModel(
