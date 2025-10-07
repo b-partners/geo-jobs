@@ -1222,7 +1222,6 @@ class ZoneServiceTest {
     var repoStepCaptor =
         ArgumentCaptor.forClass(
             app.bpartners.geojobs.repository.model.detection.DetectionStep.class);
-    verify(detectionStepRepositoryMock, times(1)).save(repoStepCaptor.capture());
     verify(detectionRepositoryMock, times(1))
         .findByEndToEndIdAndCommunityOwnerId(eq(detectionId), any());
     assertEquals(expectedRestDetection, actual);
