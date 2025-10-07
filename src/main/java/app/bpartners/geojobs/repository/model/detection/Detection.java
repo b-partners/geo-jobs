@@ -117,7 +117,7 @@ public class Detection implements Serializable {
   @JdbcTypeCode(NAMED_ENUM)
   private GeoJsonDelimitationTypeEnum geoJsonDelimitationType;
 
-  @OneToMany(fetch = EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+  @OneToMany(fetch = EAGER, cascade = CascadeType.ALL)
   @JoinColumn(name = "detection_id")
   private List<DetectionStep> detectionSteps = new ArrayList<>();
 
