@@ -1710,6 +1710,21 @@ components:
           $ref: '#/components/schemas/ModelName'
     ModelName:
       type: string
+      description: |
+        Possible values and included objects :
+          - **BP_TOITURE** : Toiture, velux, panneau photovoltaique, moisissure, usure, fissure cassure, obstacle, cheminee, humidite, risque feu, ombre
+          - **BP_LOM** : Passage piéton
+          - **BP_ZAN** : Arbre, espace vert, toiture, voie carrossable, trottoir, parking
+          - **BP_CLIMAT_RESILIENCE** : Parking, panneau photovoltaique
+          - **BP_CONFIRMITE_PLU** : Bati, velux, panneau photovoltaique, Piscine
+          - **BP_VOIRIE_TROTTOIRS** : Trottoir, voie carrossable
+          - **BP_OLD** : Arbre, espace vert, toiture, voie carrossable, trottoir, parking, risquefeu
+          - **BP_CYCL** : Pistes cyclables, symboles cyclables 
+          - **BP_SIGN** : Marquages voiries
+          - **BP_VEGETATION** : Espace vert, Espace arboré, arbre individualisé, canopée
+          - **BP_TAMPONS** : Tampons de voiries, avaloirs, tampons hydroliques
+          - **BP_CIMETIERE** : Cimetière, espace arboré, espace vert, tombe simple, tombe double, tombe non géométrique
+          - **BP_STATIONNEMENT** : Parking
       enum:
         - BP_TOITURE
         - BP_LOM
