@@ -26,7 +26,7 @@ class ApiKeyMapperTest {
   DetectableObjectTypeMapper detectableObjectTypeMapper = new DetectableObjectTypeMapper();
 
   @Test
-  void map_api_key_rest_to_domain() {
+  void map_api_key_rest_from_detectable_object_model_to_domain() {
     doNothing().when(createApiKeyValidatorMock).accept(any());
 
     var actual =
@@ -39,7 +39,50 @@ class ApiKeyMapperTest {
                     .authorizedZones(
                         List.of(new AuthorizedZone().name("zoneName").zone(new MultiPolygon())))
                     .detectableObjectModel(new DetectableObjectModel().modelName(TOITURE))
-                    .detectableObjectTypes(List.of(DetectableObjectType.PASSAGE_PIETON))
+                    .detectableObjectTypes(null)
+                    .consumerType(INSURANCE)));
+
+    assertEquals(1, actual.size());
+
+    var communityAuthorizationId = actual.getFirst().getId();
+    assertEquals(
+        CommunityAuthorization.builder()
+            .id(communityAuthorizationId)
+            .apiKey(actual.getFirst().getApiKey())
+            .name("consumerName")
+            .email("consumer@email.com")
+            .maxSurfaceUnit(SQUARE_DEGREE)
+            .authorizedZones(
+                List.of(
+                    CommunityAuthorizedZone.builder()
+                        .id(actual.getFirst().getAuthorizedZones().getFirst().getId())
+                        .name("zoneName")
+                        .multiPolygon(new MultiPolygon())
+                        .communityAuthorizationId(communityAuthorizationId)
+                        .build()))
+            .detectableObjectTypes(null)
+            .detectableModels(List.of(TOITURE))
+            .role(ROLE_INSURANCE)
+            .build(),
+        actual.getFirst());
+  }
+
+  @Test
+  void map_api_key_rest_from_allowed_models_to_domain() {
+    doNothing().when(createApiKeyValidatorMock).accept(any());
+
+    var actual =
+        subject.toCommunityAuthorization(
+            List.of(
+                new CreateApiKey()
+                    .consumerName("consumerName")
+                    .consumerEmail("consumer@email.com")
+                    .maxSurface(null)
+                    .allowedModels(List.of(new DetectableObjectModel().modelName(TOITURE)))
+                    .authorizedZones(
+                        List.of(new AuthorizedZone().name("zoneName").zone(new MultiPolygon())))
+                    .detectableObjectModel(null)
+                    .detectableObjectTypes(null)
                     .consumerType(INSURANCE)));
 
     assertEquals(1, actual.size());

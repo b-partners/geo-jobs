@@ -4,13 +4,16 @@ import static app.bpartners.geojobs.repository.model.SurfaceUnit.SQUARE_DEGREE;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.model.CreateApiKey;
+import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectType;
+import app.bpartners.geojobs.endpoint.rest.model.ModelName;
 import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
 import app.bpartners.geojobs.endpoint.rest.validator.CreateApiKeyValidator;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorizedZone;
 import app.bpartners.geojobs.repository.model.community.CommunityDetectableObjectType;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -42,16 +45,25 @@ public class ApiKeyMapper {
         .name(createApiKey.getConsumerName())
         .email(createApiKey.getConsumerEmail())
         .detectableObjectTypes(null) // deprecated
-        .detectableModels(
-            createApiKey.getDetectableObjectModel() != null
-                    && createApiKey.getDetectableObjectModel().getModelName() != null
-                ? List.of(createApiKey.getDetectableObjectModel().getModelName())
-                : null)
+        .detectableModels(getDetectableModels(createApiKey))
         .maxSurface(maxSurface == null ? 0 : maxSurface.doubleValue())
         .maxSurfaceUnit(SQUARE_DEGREE)
         .role(toDomain(createApiKey.getConsumerType()))
         .authorizedZones(toCommunityAuthorizedZone(createApiKey, newCommunityId))
         .build();
+  }
+
+  private List<ModelName> getDetectableModels(CreateApiKey createApiKey) {
+    if (createApiKey.getAllowedModels() != null && !createApiKey.getAllowedModels().isEmpty()) {
+      return createApiKey.getAllowedModels().stream()
+          .map(DetectableObjectModel::getModelName)
+          .filter(Objects::nonNull)
+          .toList();
+    }
+    return createApiKey.getDetectableObjectModel() != null
+            && createApiKey.getDetectableObjectModel().getModelName() != null
+        ? List.of(createApiKey.getDetectableObjectModel().getModelName())
+        : null;
   }
 
   private List<CommunityAuthorizedZone> toCommunityAuthorizedZone(
