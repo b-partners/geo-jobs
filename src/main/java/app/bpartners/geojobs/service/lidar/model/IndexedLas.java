@@ -4,6 +4,7 @@ import static app.bpartners.geojobs.service.lidar.model.LidarClass.fromValue;
 import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.geojobs.model.geometry.IndexedGeometries;
+import app.bpartners.geojobs.service.lidar.model.geometry.LasPointGeometry;
 import com.github.mreutegg.laszip4j.LASReader;
 import java.io.File;
 import java.util.HashSet;

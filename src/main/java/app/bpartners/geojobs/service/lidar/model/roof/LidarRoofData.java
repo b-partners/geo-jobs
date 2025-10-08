@@ -2,8 +2,8 @@ package app.bpartners.geojobs.service.lidar.model.roof;
 
 import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.*;
 
-import app.bpartners.geojobs.service.lidar.model.DelimitedPoints;
 import app.bpartners.geojobs.service.lidar.model.LidarDataStatus;
+import app.bpartners.geojobs.service.lidar.model.geometry.DelimitedPoints;
 import lombok.Builder;
 import org.locationtech.jts.geom.Geometry;
 

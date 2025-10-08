@@ -1,8 +1,9 @@
-package app.bpartners.geojobs.service.lidar.model;
+package app.bpartners.geojobs.service.lidar.model.geometry;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.service.lidar.model.LidarClass.fromValue;
 
+import app.bpartners.geojobs.service.lidar.model.LidarClass;
 import com.github.mreutegg.laszip4j.LASHeader;
 import com.github.mreutegg.laszip4j.LASPoint;
 import lombok.EqualsAndHashCode;
@@ -26,5 +27,22 @@ public class LasPointGeometry extends Point {
     double z = point.getZ() * header.getZScaleFactor() + header.getZOffset();
 
     return new CoordinateArraySequence(new Coordinate[] {new Coordinate(x, y, z)});
+  }
+
+  public LasPointGeometry(double x, double y, double z, LidarClass classification) {
+    super(new CoordinateArraySequence(new Coordinate[] {new Coordinate(x, y, z)}), geometryFactory);
+    this.classification = classification;
+  }
+
+  public boolean isNearByX(LasPointGeometry other, double epsilon) {
+    return Math.abs(this.getX() - other.getX()) < epsilon;
+  }
+
+  public boolean isNearByY(LasPointGeometry other, double epsilon) {
+    return Math.abs(this.getY() - other.getY()) < epsilon;
+  }
+
+  public boolean isNearByZ(LasPointGeometry other, double epsilon) {
+    return Math.abs(this.getCoordinate().getZ() - other.getCoordinate().getZ()) < epsilon;
   }
 }

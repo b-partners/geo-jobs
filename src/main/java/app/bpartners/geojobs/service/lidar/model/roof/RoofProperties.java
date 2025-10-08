@@ -2,7 +2,7 @@ package app.bpartners.geojobs.service.lidar.model.roof;
 
 import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.*;
 
-import app.bpartners.geojobs.service.lidar.model.LasPointGeometry;
+import app.bpartners.geojobs.service.lidar.model.geometry.LasPointGeometry;
 import app.bpartners.geojobs.service.lidar.preprocessing.ground.GroundPointsCleaner;
 import app.bpartners.geojobs.service.lidar.preprocessing.roof.RoofPointsCleaner;
 import java.util.*;

@@ -8,6 +8,7 @@ import static java.util.stream.Collectors.toSet;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.lidar.api.LidarApi;
 import app.bpartners.geojobs.service.lidar.model.*;
+import app.bpartners.geojobs.service.lidar.model.geometry.LasPointGeometry;
 import app.bpartners.geojobs.service.lidar.model.roof.LidarRoofData;
 import app.bpartners.geojobs.service.lidar.model.roof.RoofProperties;
 import com.github.mreutegg.laszip4j.LASReader;
