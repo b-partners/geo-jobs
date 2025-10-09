@@ -19,8 +19,6 @@ import java.nio.file.Files;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-
-import app.bpartners.geojobs.test.Main;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
@@ -51,22 +49,6 @@ class LidarRoofsAnalysisProcessorIT extends FacadeIT {
     Files.deleteIfExists(lasFile.toPath());
   }
 
-    @Test
-    void test() {
-        var roofGeometry1 = roofGeometry1();
-        var roofGeometries = Set.of(roofGeometry1);
-        var projected = roofGeometries.stream().map(g -> projector.project(g, WGS84, LAMBERT_93)).collect(toSet());
-
-        when(lidarApiMock.getUniqueLidarFilesUrls(projected)).thenReturn(Map.of("url", projected));
-        when(lidarApiMock.download(any())).thenReturn(Optional.of(lasFile));
-
-        var roofsAnalysisResult = subject.apply(roofGeometries);
-
-        for (var geometry : roofGeometries) {
-            var actual = roofsAnalysisResult.getProperties(geometry);
-            Main.savePoints( "/home/ricka/Lidar/roof.geojson", actual.cleanedRoofData());
-        }
-    }
   @Test
   void compute_roof_slope_and_height_with_multiple_roof_geometries() {
     var roofGeometry1 = roofGeometry1();

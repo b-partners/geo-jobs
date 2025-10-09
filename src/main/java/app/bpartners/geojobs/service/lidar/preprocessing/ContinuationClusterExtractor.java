@@ -5,7 +5,8 @@ import app.bpartners.geojobs.service.lidar.model.geometry.LasPointGeometry;
 import java.util.*;
 import java.util.function.Function;
 
-public record ContinuationClusterExtractor(Axis axis, double discontinuityThreshold)  implements Function<Collection<LasPointGeometry>, List<List<LasPointGeometry>>> {
+public record ContinuationClusterExtractor(Axis axis, double discontinuityThreshold)
+    implements Function<Collection<LasPointGeometry>, List<List<LasPointGeometry>>> {
   @Override
   public List<List<LasPointGeometry>> apply(Collection<LasPointGeometry> points) {
     List<List<LasPointGeometry>> clusters = new ArrayList<>();
@@ -34,7 +35,8 @@ public record ContinuationClusterExtractor(Axis axis, double discontinuityThresh
     return clusters;
   }
 
-  private static List<LasPointGeometry> sortedByAxis(Axis axis, Collection<LasPointGeometry> points) {
+  private static List<LasPointGeometry> sortedByAxis(
+      Axis axis, Collection<LasPointGeometry> points) {
     return new HashSet<>(points)
         .stream().sorted(Comparator.comparingDouble(p -> p.getCoordinate(axis))).toList();
   }

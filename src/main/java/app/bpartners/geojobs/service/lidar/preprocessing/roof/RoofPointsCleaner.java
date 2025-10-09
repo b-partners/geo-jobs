@@ -1,17 +1,17 @@
 package app.bpartners.geojobs.service.lidar.preprocessing.roof;
 
+import static app.bpartners.geojobs.service.lidar.model.geometry.Axis.Z;
+
 import app.bpartners.geojobs.service.lidar.model.geometry.LasPointGeometry;
 import app.bpartners.geojobs.service.lidar.preprocessing.ContinuationClusterExtractor;
 import app.bpartners.geojobs.service.lidar.preprocessing.DuplicatePointsOnTwoAxesCleaner;
-
 import java.util.*;
 import java.util.function.Function;
 
-import static app.bpartners.geojobs.service.lidar.model.geometry.Axis.Z;
-
 public record RoofPointsCleaner(
     DuplicatePointsOnTwoAxesCleaner duplicateXYPointsCleaner,
-    ContinuationClusterExtractor pointsZContinuationClusterExtractor) implements Function<Collection<LasPointGeometry>, Set<LasPointGeometry>> {
+    ContinuationClusterExtractor pointsZContinuationClusterExtractor)
+    implements Function<Collection<LasPointGeometry>, Set<LasPointGeometry>> {
   private static final double XY_TOLERANCE_METERS = 0.1;
   private static final double Z_DISCONTINUITY_THRESHOLD = 0.1;
 

@@ -34,15 +34,15 @@ public class LasPointGeometry extends Point {
     this.classification = classification;
   }
 
-  public boolean isNear(LasPointGeometry other, Axis axis, double epsilon){
-      return Math.abs(getCoordinate(axis) - other.getCoordinate(axis)) < epsilon;
+  public boolean isNear(LasPointGeometry other, Axis axis, double epsilon) {
+    return Math.abs(getCoordinate(axis) - other.getCoordinate(axis)) < epsilon;
   }
 
-  public double getCoordinate(Axis axis){
-      return switch (axis){
-          case X -> getX();
-          case Y -> getY();
-          case Z -> getCoordinate().getZ();
-      };
+  public double getCoordinate(Axis axis) {
+    return switch (axis) {
+      case X -> getX();
+      case Y -> getY();
+      case Z -> getCoordinate().getZ();
+    };
   }
 }
