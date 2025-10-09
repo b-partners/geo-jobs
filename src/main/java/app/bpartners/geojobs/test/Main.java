@@ -3,7 +3,8 @@ package app.bpartners.geojobs.test;
 import app.bpartners.geojobs.service.lidar.model.LidarClass;
 import app.bpartners.geojobs.service.lidar.model.geometry.InclinedSurfaceSeparator;
 import app.bpartners.geojobs.service.lidar.model.geometry.LasPointGeometry;
-import app.bpartners.geojobs.service.lidar.model.geometry.LasPointGroupedByX;
+
+import java.io.File;
 import java.io.FileWriter;
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
@@ -11,12 +12,14 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class Main {
   public static void main(String[] args) {
-    var points = four_plans_plus_bottom();
-    var surfaces = new InclinedSurfaceSeparator().apply(points);
+    var points1 = GeoJsonLoader.readPoints(new File("/home/ricka/Lidar/roof.geojson"));
+    var points2 = four_plans_plus_bottom();
+    var surfaces = new InclinedSurfaceSeparator().apply(points2);
 
     log.info("surfaces.size={}", surfaces.size());
     for (int i = 0; i < surfaces.size(); i++) {
       var surface = surfaces.get(i);
+      log.info("variation={}, slope={}", surface.slope(), surface.variation(0.5));
       savePoints("/home/ricka/Lidar/Surfaces/surface" + i + ".geojson", surface.points());
     }
   }
@@ -83,9 +86,9 @@ public class Main {
   public static List<LasPointGeometry> four_plans_plus_bottom() {
     List<LasPointGeometry> allPoints = new ArrayList<>();
 
-    int nExtraX = 10;
-    int nPointsPerPlan = 50;
-    double xStep = 2;
+    int nExtraX = 20;
+    int nPointsPerPlan = 100;
+    double xStep = 0.5;
     double yStep = 0.2;
     double zNoise = 0;
     double yNoise = 0;
@@ -109,7 +112,7 @@ public class Main {
       // --- Plan montant (2ème plan) ---
       double zUpStart = zBase;
       double yUpStart = startY + nPointsPerPlan * yStep;
-      double zStepUp = 0.6;
+      double zStepUp = 0.08;
       for (int i = 0; i < nPointsPerPlan; i++) {
         double x = baseX + Math.random() * xNoise;
         double y = yUpStart + i * yStep + Math.random() * yNoise;
@@ -120,7 +123,7 @@ public class Main {
       // --- Plan descendant (3ème plan) ---
       double zDownStart = zUpStart + nPointsPerPlan * zStepUp;
       double yDownStart = yUpStart + nPointsPerPlan * yStep;
-      double zStepDown = -0.6;
+      double zStepDown = -0.08;
       for (int i = 0; i < nPointsPerPlan; i++) {
         double x = baseX + Math.random() * xNoise;
         double y = yDownStart + i * yStep + Math.random() * yNoise;

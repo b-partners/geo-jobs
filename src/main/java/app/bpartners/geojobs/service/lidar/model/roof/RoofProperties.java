@@ -76,12 +76,12 @@ public class RoofProperties {
     return data.ground().points().size() < MINIMUM_GROUND_POINTS_COUNT;
   }
 
-  private Set<LasPointGeometry> cleanedRoofData() {
-    return roofPointsCleaner.compute(data.roof().points());
+  public Set<LasPointGeometry> cleanedRoofData() {
+    return roofPointsCleaner.apply(data.roof().points());
   }
 
-  private Set<LasPointGeometry> cleanedGroundData() {
-    return groundPointsCleaner.compute(data.ground().points());
+  public Set<LasPointGeometry> cleanedGroundData() {
+    return groundPointsCleaner.apply(data.ground().points());
   }
 
   private static List<LasPointGeometry> getLowerZPoints(List<LasPointGeometry> sorted) {

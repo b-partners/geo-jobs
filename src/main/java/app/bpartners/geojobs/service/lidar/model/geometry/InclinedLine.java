@@ -1,12 +1,15 @@
 package app.bpartners.geojobs.service.lidar.model.geometry;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
+
 import lombok.extern.slf4j.Slf4j;
+
+import static app.bpartners.geojobs.service.lidar.model.geometry.Axis.*;
 
 @Slf4j
 public record InclinedLine(List<LasPointGeometry> points) {
+  private static final short MINIMUM_LINE_POINT_COUNT = 2;
+
   public static InclinedLine empty() {
     return new InclinedLine(new ArrayList<>());
   }
@@ -16,7 +19,7 @@ public record InclinedLine(List<LasPointGeometry> points) {
   }
 
   public double slope() {
-    if (points.size() < 2) {
+    if (points.size() < MINIMUM_LINE_POINT_COUNT) {
       return 0.0;
     }
 
@@ -45,65 +48,30 @@ public record InclinedLine(List<LasPointGeometry> points) {
       return false;
     }
 
-    return this.isNearByX(other, epsilonX)
-        && this.isNearByY(other, epsilonY)
-        && this.isNearByZ(other, epsilonZ);
+    var x =  this.isNear(other, X, epsilonX);
+    var y = this.isNear(other, Y,  epsilonY);
+    var z = this.isNear(other, Z, epsilonZ);
+
+    log.info("x={}, y={}, z={}", x, y, z);
+    return x && y && z;
   }
 
-  public boolean isNearByX(InclinedLine other, double epsilonX) {
-    var thisPointsSortedByX =
-        points.stream().sorted(Comparator.comparing(LasPointGeometry::getX)).toList();
-    var otherPointsSortedByX =
-        other.points().stream().sorted(Comparator.comparing(LasPointGeometry::getX)).toList();
+  public boolean isNear(InclinedLine other, Axis axis, double epsilon){
+      var thisPointsSortedByAxis =
+              points.stream().sorted(Comparator.comparing(p -> p.getCoordinate(axis))).toList();
+      var otherPointsSortedByAxis =
+              other.points().stream().sorted(Comparator.comparing(p -> p.getCoordinate(axis))).toList();
 
-    var thisMinXPoint = thisPointsSortedByX.getFirst();
-    var thisMaxXPoint = thisPointsSortedByX.getLast();
+      var thisMinXPoint = thisPointsSortedByAxis.getFirst();
+      var thisMaxXPoint = thisPointsSortedByAxis.getLast();
 
-    var otherMinXPoint = otherPointsSortedByX.getFirst();
-    var otherMaxXPoint = otherPointsSortedByX.getLast();
+      var otherMinXPoint = otherPointsSortedByAxis.getFirst();
+      var otherMaxXPoint = otherPointsSortedByAxis.getLast();
 
-    return thisMaxXPoint.isNearByX(otherMinXPoint, epsilonX)
-        || thisMaxXPoint.isNearByX(otherMaxXPoint, epsilonX)
-        || thisMinXPoint.isNearByX(otherMaxXPoint, epsilonX)
-        || thisMinXPoint.isNearByX(otherMinXPoint, epsilonX);
-  }
-
-  public boolean isNearByY(InclinedLine other, double epsilonY) {
-    var thisPointsSortedByY =
-        points.stream().sorted(Comparator.comparing(LasPointGeometry::getY)).toList();
-    var otherPointsSortedByY =
-        other.points().stream().sorted(Comparator.comparing(LasPointGeometry::getY)).toList();
-
-    var thisMinYPoint = thisPointsSortedByY.getFirst();
-    var thisMaxYPoint = thisPointsSortedByY.getLast();
-
-    var otherMinYPoint = otherPointsSortedByY.getFirst();
-    var otherMaxYPoint = otherPointsSortedByY.getLast();
-
-    return thisMaxYPoint.isNearByY(otherMinYPoint, epsilonY)
-        || thisMaxYPoint.isNearByY(otherMaxYPoint, epsilonY)
-        || thisMinYPoint.isNearByY(otherMaxYPoint, epsilonY)
-        || thisMinYPoint.isNearByY(otherMinYPoint, epsilonY);
-  }
-
-  public boolean isNearByZ(InclinedLine other, double epsilonZ) {
-    var thisPointsSortedByZ =
-        points.stream().sorted(Comparator.comparing(p -> p.getCoordinate().getZ())).toList();
-    var otherPointsSortedByZ =
-        other.points().stream()
-            .sorted(Comparator.comparing(p -> p.getCoordinate().getZ()))
-            .toList();
-
-    var thisMinZPoint = thisPointsSortedByZ.getFirst();
-    var thisMaxZPoint = thisPointsSortedByZ.getLast();
-
-    var otherMinZPoint = otherPointsSortedByZ.getFirst();
-    var otherMaxZPoint = otherPointsSortedByZ.getLast();
-
-    return thisMaxZPoint.isNearByZ(otherMinZPoint, epsilonZ)
-        || thisMaxZPoint.isNearByZ(otherMaxZPoint, epsilonZ)
-        || thisMinZPoint.isNearByZ(otherMaxZPoint, epsilonZ)
-        || thisMinZPoint.isNearByZ(otherMinZPoint, epsilonZ);
+      return thisMaxXPoint.isNear(otherMinXPoint, axis, epsilon)
+          || thisMaxXPoint.isNear(otherMaxXPoint, axis, epsilon)
+          || thisMinXPoint.isNear(otherMaxXPoint, axis, epsilon)
+          || thisMinXPoint.isNear(otherMinXPoint, axis, epsilon);
   }
 
   public static List<InclinedLine> from(
@@ -124,24 +92,24 @@ public record InclinedLine(List<LasPointGeometry> points) {
           continue;
         }
 
-        if (!inclinedLine.points().getLast().isNearByY(currentPoint, epsilonY)) {
+        if (!inclinedLine.points().getLast().isNear(currentPoint, Y, epsilonY)) {
           notUsedPoints.add(currentPoint);
           continue;
         }
 
-        if (!lastValidPoint.isNearByZ(currentPoint, epsilonZ)) {
+        if (!lastValidPoint.isNear(currentPoint, Z, epsilonZ)) {
           notUsedPoints.add(currentPoint);
           continue;
         }
 
         if (inclinedLine.points().size() == 1) {
-          zVariation = ZVariation.from(lastValidPoint, currentPoint, epsilonZ);
+          zVariation = ZVariation.from(lastValidPoint, currentPoint, 0);
           lastValidPoint = currentPoint;
           inclinedLine.points().add(currentPoint);
           continue;
         }
 
-        var newZVariation = ZVariation.from(lastValidPoint, currentPoint, epsilonZ);
+        var newZVariation = ZVariation.from(lastValidPoint, currentPoint, 0);
         if (zVariation.equals(newZVariation)) {
           lastValidPoint = currentPoint;
         }
@@ -162,15 +130,15 @@ public record InclinedLine(List<LasPointGeometry> points) {
     FALLING;
 
     public static ZVariation from(LasPointGeometry a, LasPointGeometry b, double epsilon) {
-      if (b.getCoordinate().getZ() > a.getCoordinate().getZ()) {
-        return RISING;
-      }
+        if(a.isNear(b, Z, epsilon)) {
+            return NONE;
+        }
 
-      if (a.getCoordinate().getZ() > b.getCoordinate().getZ()) {
+        if (b.getCoordinate().getZ() > a.getCoordinate().getZ()) {
+            return RISING;
+        }
+
         return FALLING;
-      }
-
-      return NONE;
     }
   }
 }
