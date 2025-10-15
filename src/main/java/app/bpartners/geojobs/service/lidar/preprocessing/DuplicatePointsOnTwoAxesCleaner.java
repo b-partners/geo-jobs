@@ -51,8 +51,8 @@ public record DuplicatePointsOnTwoAxesCleaner(
             existing.getCoordinate(Z) > current.getCoordinate(Z) ? existing : current);
   }
 
-  public static DuplicatePointsOnTwoAxesCleaner zyKeepFirst(double epsilonZ, double epsilonY) {
+  public static DuplicatePointsOnTwoAxesCleaner zyKeepBottom(double epsilonZ, double epsilonY) {
     return new DuplicatePointsOnTwoAxesCleaner(
-        Z, Y, epsilonZ, epsilonY, (existing, ignored) -> existing);
+        Z, Y, epsilonZ, epsilonY, (existing, actual) -> existing.getCoordinate().getZ() > actual.getCoordinate().getZ() ? actual : existing);
   }
 }

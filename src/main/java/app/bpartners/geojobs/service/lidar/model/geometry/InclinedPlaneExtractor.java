@@ -14,7 +14,7 @@ import java.util.function.Function;
 public class InclinedPlaneExtractor
     implements Function<Collection<LasPointGeometry>, Collection<InclinedPlane>> {
   public static final int DEFAULT_MINIMUM_LINE_POINT_COUNT = 2;
-  public static final int DEFAULT_MINIMUM_PLANE_POINT_COUNT = 30;
+  public static final int DEFAULT_MINIMUM_PLANE_POINT_COUNT = 50;
 
   public static final double DEFAULT_LINE_POINT_DY = 1;
   public static final double DEFAULT_LINE_POINT_DZ = 0.25;
@@ -33,8 +33,8 @@ public class InclinedPlaneExtractor
   public InclinedPlaneExtractor(InclinedPlaneExtractorConf conf) {
     this.conf = conf;
     this.alignerByX = new Aligner(X);
-    this.grouperByX = new Grouper(X, 1);
-    this.duplicatePointsOnZYCleaner = DuplicatePointsOnTwoAxesCleaner.zyKeepFirst(0.3, 0.3);
+    this.grouperByX = new Grouper(X, 0.5);
+    this.duplicatePointsOnZYCleaner = DuplicatePointsOnTwoAxesCleaner.zyKeepBottom(0.3, 0.1);
   }
 
   public InclinedPlaneExtractor() {
