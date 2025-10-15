@@ -594,6 +594,9 @@ components:
             type: string
         roofDelimiter:
           $ref: '#/components/schemas/RoofDelimiter'
+        creationDatetime:
+          type: string
+          format: date-time
     DetectionStepName:
       type: string
       enum:

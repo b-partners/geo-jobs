@@ -74,7 +74,8 @@ public class DetectionFromStepMapper
                 : detection.getConvertedAddresses())
         .roofDelimiter(retrieveRoofDelimiter(detection))
         .geoJsonOutput(detection.isOutputZipped() ? ZIP : GEO_JSON)
-        .needsImageOutput(detection.needsImageOutput());
+        .needsImageOutput(detection.needsImageOutput())
+        .creationDatetime(detection.getCreationDatetime());
   }
 
   // TODO: Careful ! This method creates a side effect, must be corrected
