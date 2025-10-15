@@ -1,12 +1,11 @@
 package app.bpartners.geojobs.service.lidar.model.geometry;
 
-import app.bpartners.geojobs.service.lidar.preprocessing.Grouper;
+import static app.bpartners.geojobs.service.lidar.model.geometry.Axis.Y;
 
+import app.bpartners.geojobs.service.lidar.preprocessing.Grouper;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
-import static app.bpartners.geojobs.service.lidar.model.geometry.Axis.Y;
 
 public record InclinedPlane(ArrayList<InclinedLine> lines) {
   public List<LasPointGeometry> points() {
@@ -27,14 +26,10 @@ public record InclinedPlane(ArrayList<InclinedLine> lines) {
     lines.add(inclinedLine);
   }
 
-  private List<LasPointGeometry> cleaned(Collection<LasPointGeometry> points){
+  private List<LasPointGeometry> cleaned(Collection<LasPointGeometry> points) {
     var grouper = new Grouper(Y, 0.5);
     var cleaned = grouper.apply(points);
 
-    return cleaned
-        .stream()
-        .filter(p -> p.size() > 20)
-        .flatMap(List::stream)
-        .toList();
+    return cleaned.stream().filter(p -> p.size() > 20).flatMap(List::stream).toList();
   }
 }

@@ -53,6 +53,11 @@ public record DuplicatePointsOnTwoAxesCleaner(
 
   public static DuplicatePointsOnTwoAxesCleaner zyKeepBottom(double epsilonZ, double epsilonY) {
     return new DuplicatePointsOnTwoAxesCleaner(
-        Z, Y, epsilonZ, epsilonY, (existing, actual) -> existing.getCoordinate().getZ() > actual.getCoordinate().getZ() ? actual : existing);
+        Z,
+        Y,
+        epsilonZ,
+        epsilonY,
+        (existing, actual) ->
+            existing.getCoordinate().getZ() > actual.getCoordinate().getZ() ? actual : existing);
   }
 }
