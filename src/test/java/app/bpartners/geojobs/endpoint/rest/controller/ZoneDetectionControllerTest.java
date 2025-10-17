@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.controller;
 
+import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.REQUEST_ACCEPTED;
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.FAILED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.RETRYING;
@@ -297,25 +298,18 @@ class ZoneDetectionControllerTest {
 
   @Test
   void updateDetectionStep_ok() {
-    when(zoneServiceMock.updateDetectionStep(anyString(), any(DetectionStep.class)))
-        .thenAnswer(
-            invocation -> {
-              String detectionId = invocation.getArgument(0);
-              DetectionStep step = invocation.getArgument(1);
+    var detectionMock = mock(Detection.class);
+    when(zoneServiceMock.updateDetectionStep(anyString(), anyString(), any(DetectionStep.class)))
+        .thenReturn(detectionMock);
 
-              return new Detection().id(detectionId).step(step);
-            });
-
-    Detection expected =
-        new Detection()
-            .id("detectionId")
-            .step(new DetectionStep().name(DetectionStepName.REQUEST_ACCEPTED));
     Detection actual =
-        subject.updateDetectionStep(
-            "detectionId", new DetectionStep().name(DetectionStepName.REQUEST_ACCEPTED));
+        subject.updateCommunityDetectionStep(
+            randomUUID().toString(),
+            randomUUID().toString(),
+            new DetectionStep().name(REQUEST_ACCEPTED));
 
     assertNotNull(actual);
-    assertEquals(expected, actual);
+    assertEquals(detectionMock, actual);
   }
 
   @Test

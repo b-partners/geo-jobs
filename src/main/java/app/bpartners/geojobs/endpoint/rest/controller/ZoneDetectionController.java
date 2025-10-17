@@ -227,7 +227,15 @@ public class ZoneDetectionController {
   @PutMapping("/detections/{id}/step")
   public Detection updateDetectionStep(
       @PathVariable(name = "id") String detectionId, @RequestBody DetectionStep step) {
-    return zoneService.updateDetectionStep(detectionId, step);
+    return zoneService.updateDetectionStep(detectionId, null, step);
+  }
+
+  @PutMapping("/communities/{communityId}/detections/{id}/step")
+  public Detection updateCommunityDetectionStep(
+      @PathVariable(name = "communityId") String communityOwnerId,
+      @PathVariable(name = "id") String detectionId,
+      @RequestBody DetectionStep step) {
+    return zoneService.updateDetectionStep(detectionId, communityOwnerId, step);
   }
 
   @PostMapping("/detections/{id}/addresses")

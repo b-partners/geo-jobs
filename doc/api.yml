@@ -647,6 +647,7 @@ paths:
                 $ref: '#/components/schemas/Detection'
   '/detections/{id}/step':
     put:
+      deprecated: true
       tags:
         - Detection
       operationId: updateDetectionStep
@@ -656,6 +657,41 @@ paths:
       security:
         - ApiKeyAuth: [ ]
       parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          description: Detection identifier
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DetectionStep'
+      responses:
+        200:
+          description: Detection with updated step
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detection'
+  '/communities/{communityOwnerId}/detections/{id}/step':
+    put:
+      tags:
+        - Detection
+      operationId: updateCommunityDetectionStep
+      summary: Update detection step for specific community detection
+      description: |
+        Update detection step for specific community detection
+      security:
+        - ApiKeyAuth: [ ]
+      parameters:
+        - in: path
+          name: communityOwnerId
+          schema:
+            type: string
+          description: Community owner identifier
+          required: true
         - in: path
           name: id
           schema:

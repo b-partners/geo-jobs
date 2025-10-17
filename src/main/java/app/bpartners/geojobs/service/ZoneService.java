@@ -209,6 +209,7 @@ public class ZoneService {
     if (!savedDetection.isOnStepPostProcessingSucceeded()) {
       return updateDetectionStep(
           savedDetection.getEndToEndId(),
+          null,
           new DetectionStep()
               .name(POST_PROCESSING)
               .status(
@@ -448,8 +449,11 @@ public class ZoneService {
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection updateDetectionStep(
-      String detectionId, DetectionStep step) {
-    Detection detection = getDetectionByE2IdOrId(detectionId);
+      String detectionId, String communityOwnerId, DetectionStep step) {
+    Detection detection =
+        communityOwnerId == null
+            ? getDetectionByE2IdOrId(detectionId)
+            : getDetectionByE2eId(detectionId, communityOwnerId);
 
     detection.addStep(detectionStepMapper.toDomain(detection.getId(), step));
     detectionRepository.save(detection);
