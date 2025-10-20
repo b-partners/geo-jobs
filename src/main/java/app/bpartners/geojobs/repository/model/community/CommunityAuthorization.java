@@ -78,13 +78,6 @@ public class CommunityAuthorization implements Serializable {
   @JdbcTypeCode(NAMED_ENUM)
   private Authority.Role role;
 
-  @PrePersist
-  public void onCreation() {
-    if (dashboardApiKey == null) {
-      this.dashboardApiKey = apiKey;
-    }
-  }
-
   public CommunityAuthorizationApiKey getMostRecentApiKey() {
     return apiKeys != null && !apiKeys.isEmpty()
         ? apiKeys.stream()
@@ -95,6 +88,13 @@ public class CommunityAuthorization implements Serializable {
 
   public String getApiKey() {
     return getMostRecentApiKey() == null ? apiKey : getMostRecentApiKey().getKeyValue();
+  }
+
+  @PrePersist
+  public void onCreation() {
+    if (dashboardApiKey == null) {
+      this.dashboardApiKey = apiKey;
+    }
   }
 
   public List<CommunityDetectableObjectType> getDetectableObjectTypes() {
