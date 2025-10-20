@@ -38,6 +38,7 @@ import app.bpartners.geojobs.service.ZoneService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import java.io.File;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -302,10 +303,12 @@ public class ZoneDetectionController {
   public List<Detection> getDetections(
       @RequestParam(name = "page", defaultValue = "1", required = false) PageFromOne page,
       @RequestParam(name = "pageSize", defaultValue = "10", required = false)
-          BoundedPageSize pageSize) {
+          BoundedPageSize pageSize,
+      @RequestParam(name = "from", required = false, defaultValue = "") Instant from,
+      @RequestParam(name = "to", required = false) Instant to) {
     var communityAuthorization =
         communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
     var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId);
-    return zoneService.getDetectionsByCriteria(communityOwnerId, page, pageSize);
+    return zoneService.getDetectionsByCriteria(communityOwnerId, page, pageSize, from, to);
   }
 }

@@ -586,6 +586,18 @@ paths:
           name: pageSize
           schema:
             $ref: "#/components/schemas/PageSize"
+        - in: query
+          name: from
+          schema:
+            type: string
+            format: date-time
+          required: false
+        - in: query
+          name: to
+          schema:
+            type: string
+            format: date-time
+          required: false
       responses:
         200:
           description: List of detections
@@ -1852,6 +1864,9 @@ components:
             type: string
         roofDelimiter:
           $ref: '#/components/schemas/RoofDelimiter'
+        creationDatetime:
+          type: string
+          format: date-time
     Prospect:
       type: object
       properties:

@@ -275,16 +275,18 @@ class DetectionControllerIT extends FacadeIT {
     var statistic = taskStatisticCreator.createProcessingTask(zoneDetectionJob.getId(), DETECTION);
     when(zoneDetectionJobService.getTaskStatistic(any(String.class))).thenReturn(statistic);
 
-    var actual = subject.getDetections(new PageFromOne(1), new BoundedPageSize(10));
+    var actual = subject.getDetections(new PageFromOne(1), new BoundedPageSize(10), null, null);
 
     var expected =
         new app.bpartners.geojobs.endpoint.rest.model.Detection()
             .id(detection.getEndToEndId())
+            .creationDatetime(detection.getCreationDatetime())
             .geoJsonZone(featureCreator.defaultFeatures())
             .step(
                 detectionStepStatisticMapper.toRestDetectionStepStatus(
                     statistic, DetectionStepName.MACHINE_DETECTION))
             .geoJsonOutput(ZIP);
+    assertNotNull(detection.getCreationDatetime());
     assertEquals(List.of(expected), actual);
   }
 
@@ -295,14 +297,16 @@ class DetectionControllerIT extends FacadeIT {
         detectionRepository.save(
             detectionWithoutZdj(zoneTilingJob.getId(), featureCreator.defaultFeatures()));
 
-    var actual = subject.getDetections(new PageFromOne(1), new BoundedPageSize(10));
+    var actual = subject.getDetections(new PageFromOne(1), new BoundedPageSize(10), null, null);
 
     var expected =
         new app.bpartners.geojobs.endpoint.rest.model.Detection()
             .id(detection.getEndToEndId())
+            .creationDatetime(detection.getCreationDatetime())
             .geoJsonZone(featureCreator.defaultFeatures())
             .step(actual.getFirst().getStep())
             .geoJsonOutput(GEO_JSON);
+    assertNotNull(detection.getCreationDatetime());
     assertEquals(List.of(expected), actual);
   }
 
@@ -316,7 +320,7 @@ class DetectionControllerIT extends FacadeIT {
                     .endToEndId(randomUUID().toString())
                     .build());
 
-    var actualList = subject.getDetections(new PageFromOne(1), new BoundedPageSize(1));
+    var actualList = subject.getDetections(new PageFromOne(1), new BoundedPageSize(1), null, null);
 
     assertEquals(detection.getEndToEndId(), actualList.getFirst().getId());
   }

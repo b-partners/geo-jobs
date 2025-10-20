@@ -8,6 +8,7 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static jakarta.persistence.EnumType.STRING;
 import static jakarta.persistence.FetchType.EAGER;
+import static java.time.Instant.now;
 import static org.hibernate.type.SqlTypes.JSON;
 import static org.hibernate.type.SqlTypes.NAMED_ENUM;
 
@@ -22,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -120,6 +122,14 @@ public class Detection implements Serializable {
   @OneToMany(fetch = EAGER, cascade = CascadeType.ALL)
   @JoinColumn(name = "detection_id")
   private List<DetectionStep> detectionSteps = new ArrayList<>();
+
+  @Column(nullable = true, updatable = false)
+  private Instant creationDatetime;
+
+  @PrePersist
+  protected void onCreate() {
+    this.creationDatetime = now();
+  }
 
   public void addStep(DetectionStep step) {
     if (detectionSteps == null) {
