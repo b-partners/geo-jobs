@@ -50,7 +50,7 @@ public class DetectionAddressConversionJobService
     var e2ApiKey =
         communityAuthorizationRepository
             .findById(detection.getCommunityOwnerId())
-            .map(CommunityAuthorization::getApiKey)
+            .map(CommunityAuthorization::getDashboardApiKey)
             .orElseThrow();
     getTasks(job)
         .forEach(
