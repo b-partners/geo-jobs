@@ -35,7 +35,6 @@ import app.bpartners.geojobs.model.page.BoundedPageSize;
 import app.bpartners.geojobs.model.page.PageFromOne;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
-import app.bpartners.geojobs.repository.DetectionStepRepository;
 import app.bpartners.geojobs.repository.GeoJsonConversionJobRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.detection.Detection;
@@ -85,7 +84,6 @@ public class ZoneService {
   private final SynchronousDetectionService synchronousDetectionService;
   private final SynchronousDetectionValidator synchronousDetectionValidator;
   private final DetectionStepMapper detectionStepMapper;
-  private final DetectionStepRepository detectionStepRepository;
   private final DetectionFromStepMapper detectionFromStepMapper;
   private final RoofAnalysisMailer roofAnalysisMailer;
   private final DetectionCreationMapper detectionCreationMapper;
@@ -213,6 +211,7 @@ public class ZoneService {
     if (!savedDetection.isOnStepPostProcessingSucceeded()) {
       return updateDetectionStep(
           savedDetection.getEndToEndId(),
+          null,
           new DetectionStep()
               .name(POST_PROCESSING)
               .status(
@@ -469,12 +468,14 @@ public class ZoneService {
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection updateDetectionStep(
-      String detectionId, DetectionStep step) {
-    var detection = getDetectionByE2IdOrId(detectionId);
+      String detectionId, String communityOwnerId, DetectionStep step) {
+    Detection detection =
+        communityOwnerId == null
+            ? getDetectionByE2IdOrId(detectionId)
+            : getDetectionByE2eId(detectionId, communityOwnerId);
 
-    // TODO: could be more arranged (for eg. detection.addStep(newStep) then save detection with new
-    // step)
-    detectionStepRepository.save(detectionStepMapper.toDomain(detection.getId(), step));
+    detection.addStep(detectionStepMapper.toDomain(detection.getId(), step));
+    detectionRepository.save(detection);
 
     return detectionFromStepMapper.apply(
         detection, detectionStepMapper.toDomain(detection.getId(), step));

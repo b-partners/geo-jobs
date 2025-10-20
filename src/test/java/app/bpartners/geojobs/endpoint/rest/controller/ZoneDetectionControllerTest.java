@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.controller;
 
+import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.REQUEST_ACCEPTED;
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.FAILED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.RETRYING;
@@ -293,6 +294,37 @@ class ZoneDetectionControllerTest {
 
     assertEquals(
         "POST /detections/{id}/roofDelimiter not supported anymore.", actualException.getMessage());
+  }
+
+  @Test
+  void updateDetectionStep_ok() {
+    var detectionMock = mock(Detection.class);
+    when(zoneServiceMock.updateDetectionStep(anyString(), anyString(), any(DetectionStep.class)))
+        .thenReturn(detectionMock);
+
+    Detection actual =
+        subject.updateCommunityDetectionStep(
+            randomUUID().toString(),
+            randomUUID().toString(),
+            new DetectionStep().name(REQUEST_ACCEPTED));
+
+    assertNotNull(actual);
+    assertEquals(detectionMock, actual);
+  }
+
+  @Test
+  void configureDetectionAddresses_ok() {
+    var addresses = List.of(new Address().address("dummyAddress"));
+    var addressesStrings = addresses.stream().map(Address::getAddress).toList();
+    when(zoneServiceMock.configureDetectionAddresses(anyString(), any()))
+        .thenReturn(new Detection().addresses(addressesStrings));
+
+    Detection actual = subject.configureDetectionAddresses("detectionId", addresses);
+
+    assertNotNull(actual);
+    assertEquals(addressesStrings, actual.getAddresses());
+
+    verify(zoneServiceMock).configureDetectionAddresses("detectionId", addressesStrings);
   }
 
   private static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob aZDJ(

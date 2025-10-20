@@ -14,12 +14,14 @@ import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.repository.*;
+import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.utils.FeatureCreator;
 import app.bpartners.geojobs.utils.detection.DetectionCreator;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +41,7 @@ class ZoneServiceIT extends FacadeIT {
   @Autowired private ZoneTilingJobRepository zoneTilingJobRepository;
   @Autowired private ZoneDetectionJobRepository zoneDetectionJobRepository;
   @MockBean AuthProvider authProviderMock;
+  @MockBean CommunityAuthorizationRepository communityAuthorizationRepository;
 
   @BeforeEach
   void setUp() {
@@ -48,12 +51,18 @@ class ZoneServiceIT extends FacadeIT {
   @Test
   void update_detection_step() {
     var principalMock = mock(Principal.class);
-    when(principalMock.getPassword()).thenReturn("dummy");
+    var apiKey = randomUUID().toString();
+    var communityAuthorization = mock(CommunityAuthorization.class);
+
+    when(communityAuthorization.getId()).thenReturn(null);
+    when(communityAuthorizationRepository.findByApiKey(apiKey))
+        .thenReturn(Optional.of(communityAuthorization));
+    when(principalMock.getApiKey()).thenReturn(apiKey);
     when(authProviderMock.getPrincipal()).thenReturn(principalMock);
     var detectionId = randomUUID().toString();
     var ztjId = randomUUID().toString();
     var zdjId = randomUUID().toString();
-    var repoDetection = detectionCreator.create(detectionId, ztjId, zdjId);
+    var detection = detectionCreator.create(detectionId, ztjId, zdjId);
     var zoneTilingJob =
         new ZoneTilingJob()
             .toBuilder()
@@ -65,7 +74,7 @@ class ZoneServiceIT extends FacadeIT {
     var zoneDetectionJob = new ZoneDetectionJob().toBuilder().id(zdjId).build();
     zoneDetectionJobRepository.save(zoneDetectionJob);
     zoneTilingJobRepository.save(zoneTilingJob);
-    detectionRepository.save(repoDetection);
+    detectionRepository.save(detection);
 
     var restStep =
         new DetectionStep()
@@ -76,7 +85,7 @@ class ZoneServiceIT extends FacadeIT {
     when(imageAttributeRetriever.apply(any())).thenReturn(null);
     when(vggAttributeRetriever.apply(any())).thenReturn(null);
 
-    var actual = subject.updateDetectionStep(detectionId, restStep);
+    var actual = subject.updateDetectionStep(detectionId, null, restStep);
     var savedSteps = detectionStepRepository.findAll();
 
     assertFalse(savedSteps.isEmpty());

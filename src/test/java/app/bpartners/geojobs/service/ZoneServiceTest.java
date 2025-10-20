@@ -197,7 +197,6 @@ class ZoneServiceTest {
           synchronousDetectionServiceMock,
           synchronousDetectionValidatorMock,
           detectionStepMapper,
-          detectionStepRepositoryMock,
           detectionFromStepMapperMock,
           roofAnalysisMailerMock,
           new DetectionCreationMapper(
@@ -1204,12 +1203,18 @@ class ZoneServiceTest {
             .name(MACHINE_DETECTION)
             .status(new Status().progression(Status.ProgressionEnum.FINISHED).health(SUCCEEDED));
     var principalMock = mock(Principal.class);
-    when(principalMock.getPassword()).thenReturn("dummy");
+    var communityAuthorizationMock = mock(CommunityAuthorization.class);
+    var apiKey = randomUUID().toString();
+    var communityOwnerId = randomUUID().toString();
+
+    when(communityAuthorizationMock.getId()).thenReturn(communityOwnerId);
+    when(communityAuthRepositoryMock.findByApiKey(apiKey))
+        .thenReturn(Optional.of(communityAuthorizationMock));
+    when(principalMock.getApiKey()).thenReturn(apiKey);
     when(authProviderMock.getPrincipal()).thenReturn(principalMock);
-    when(detectionStepRepositoryMock.save(any()))
-        .thenAnswer(invocation -> invocation.getArgument(0));
     when(detectionRepositoryMock.existsById(any(String.class))).thenReturn(true);
-    when(detectionRepositoryMock.findByEndToEndIdAndCommunityOwnerId(eq(detectionId), any()))
+    when(detectionRepositoryMock.findByEndToEndIdAndCommunityOwnerId(
+            eq(detectionId), eq(communityOwnerId)))
         .thenReturn(Optional.of(detectionEntity));
     var expectedRestDetection = new Detection().step(restStep);
     when(detectionFromStepMapperMock.apply(
@@ -1217,12 +1222,8 @@ class ZoneServiceTest {
             any(app.bpartners.geojobs.repository.model.detection.DetectionStep.class)))
         .thenReturn(expectedRestDetection);
 
-    var actual = subject.updateDetectionStep(detectionId, restStep);
+    var actual = subject.updateDetectionStep(detectionId, communityOwnerId, restStep);
 
-    var repoStepCaptor =
-        ArgumentCaptor.forClass(
-            app.bpartners.geojobs.repository.model.detection.DetectionStep.class);
-    verify(detectionStepRepositoryMock, times(1)).save(repoStepCaptor.capture());
     verify(detectionRepositoryMock, times(1))
         .findByEndToEndIdAndCommunityOwnerId(eq(detectionId), any());
     assertEquals(expectedRestDetection, actual);

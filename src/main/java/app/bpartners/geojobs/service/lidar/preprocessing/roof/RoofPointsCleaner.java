@@ -9,7 +9,7 @@ public record RoofPointsCleaner(
     DuplicateXYPointsCleaner duplicateXYPointsCleaner,
     PointsZContinuationClusterExtractor pointsZContinuationClusterExtractor) {
   private static final double XY_TOLERANCE_METERS = 0.3;
-  private static final double Z_DISCONTINUITY_THRESHOLD = 0.5;
+  private static final double Z_DISCONTINUITY_THRESHOLD = 0.1;
 
   public RoofPointsCleaner() {
     this(
