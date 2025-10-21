@@ -468,11 +468,17 @@ paths:
                   $ref: "#/components/schemas/DetectedParcel"
         '500':
           $ref: '#/components/responses/500'
-  '/detectionJobs/{id}/geojsonsUrl':
+  '/communities/{communityId}/detectionJobs/{id}/geojsonsUrl':
     get:
       tags:
         - MachineDetection
       parameters:
+        - in: path
+          name: communityId
+          required: true
+          description: Client CommunityAuthorizationId
+          schema:
+            type: string
         - in: path
           name: id
           required: true

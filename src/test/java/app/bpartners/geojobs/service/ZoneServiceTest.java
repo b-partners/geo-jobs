@@ -1098,7 +1098,7 @@ class ZoneServiceTest {
     when(detectionRepositoryMock.save(any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
 
-    var actual = subject.configureGeoJsonResult(detectionId, fileMock);
+    var actual = subject.configureGeoJsonResult(communityOwnerId, detectionId, fileMock);
 
     var stringCaptor = ArgumentCaptor.forClass(String.class);
     var listCaptor = ArgumentCaptor.forClass(List.class);

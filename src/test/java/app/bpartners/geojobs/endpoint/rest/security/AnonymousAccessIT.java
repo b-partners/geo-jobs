@@ -77,7 +77,9 @@ public class AnonymousAccessIT extends FacadeIT {
     var e = assertThrows(ApiException.class, () -> machineDetectionApi.getDetectionJobs(1, 2));
     assertTrue(e.getMessage().contains("Bad credentials"));
 
-    e = assertThrows(ApiException.class, () -> machineDetectionApi.getZDJGeojsonsUrl("dummy"));
+    e =
+        assertThrows(
+            ApiException.class, () -> machineDetectionApi.getZDJGeojsonsUrl("dummy", "dummy"));
     assertTrue(e.getMessage().contains("Bad credentials"));
   }
 }
