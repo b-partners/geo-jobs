@@ -24,6 +24,7 @@ import jakarta.persistence.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -128,7 +129,7 @@ public class Detection implements Serializable {
 
   @PrePersist
   protected void onCreate() {
-    this.creationDatetime = now();
+    this.creationDatetime = now().truncatedTo(ChronoUnit.MICROS);
   }
 
   public void addStep(DetectionStep step) {
