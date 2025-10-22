@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
+import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionAssemblySucceeded;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.job.model.JobStatus;
@@ -31,6 +32,8 @@ class GeoJsonConversionAssemblySucceededServiceTest {
   HTMLTemplateParser htmlTemplateParser = new HTMLTemplateParser();
   DetectionRepository detectionRepositoryMock = mock(DetectionRepository.class);
   BucketComponent bucketComponentMock = mock(BucketComponent.class);
+  EventProducer eventProducerMock = mock(EventProducer.class);
+
   ZoneDetectionJobRepository zoneDetectionJobRepositoryMock =
       mock(ZoneDetectionJobRepository.class);
   GeoJsonConversionAssemblySucceededService subject =
@@ -40,7 +43,9 @@ class GeoJsonConversionAssemblySucceededServiceTest {
               htmlTemplateParser,
               detectionRepositoryMock,
               bucketComponentMock,
-              zoneDetectionJobRepositoryMock));
+              zoneDetectionJobRepositoryMock),
+          eventProducerMock,
+          detectionRepositoryMock);
   private final String zoneDetectionJobId = randomUUID().toString();
   private final String detectionE2Id = randomUUID().toString();
 
@@ -54,6 +59,7 @@ class GeoJsonConversionAssemblySucceededServiceTest {
     when(detectionMock.getEndToEndId()).thenReturn(detectionE2Id);
     var geoJsonFileKey = randomUUID().toString();
     when(detectionMock.getGeojsonS3FileKey()).thenReturn(geoJsonFileKey);
+    when(detectionMock.isSynchronous()).thenReturn(false);
     when(bucketComponentMock.presign(geoJsonFileKey)).thenReturn(HTTP_LOCALHOST_PRESIGNED_URL);
     when(detectionRepositoryMock.findByZdjId(zoneDetectionJobId))
         .thenReturn(Optional.of(detectionMock));

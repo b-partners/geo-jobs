@@ -1,8 +1,12 @@
 package app.bpartners.geojobs.service.event;
 
+import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionAssemblySucceeded;
+import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionProcessSucceeded;
+import app.bpartners.geojobs.repository.DetectionRepository;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -13,6 +17,8 @@ import org.springframework.stereotype.Service;
 public class GeoJsonConversionAssemblySucceededService
     implements Consumer<GeoJsonConversionAssemblySucceeded> {
   private final DetectionSucceededService detectionSucceededService;
+  private final EventProducer eventProducer;
+  private final DetectionRepository detectionRepository;
 
   @SneakyThrows
   @Override
@@ -26,6 +32,7 @@ public class GeoJsonConversionAssemblySucceededService
     var zoneDetectionJobId = geoJsonConversionJob.getZoneDetectionJobId();
     var geoJsonConversionJobStatus = geoJsonConversionJob.getStatus();
     var emailReceiver = geoJsonConversionJob.getEmailReceiver();
+    var optionalDetection = detectionRepository.findByZdjId(zoneDetectionJobId);
 
     detectionSucceededService.accept(
         zoneDetectionJobId,
@@ -33,5 +40,9 @@ public class GeoJsonConversionAssemblySucceededService
         zoneName,
         formattedCreationDatetime,
         emailReceiver);
+
+    optionalDetection.ifPresent(
+        detection ->
+            eventProducer.accept(List.of(new GeoJsonConversionProcessSucceeded(detection))));
   }
 }
