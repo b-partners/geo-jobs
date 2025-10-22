@@ -51,16 +51,16 @@ class GeoJsonConversionAssemblySucceededServiceTest {
 
   @BeforeEach
   void setUp() {
+    var geoJsonFileKey = randomUUID().toString();
     var zoneDetectionJob = mock(ZoneDetectionJob.class);
     when(zoneDetectionJob.getId()).thenReturn(zoneDetectionJobId);
     when(zoneDetectionJobRepositoryMock.findById(any())).thenReturn(Optional.of(zoneDetectionJob));
 
+    when(bucketComponentMock.presign(geoJsonFileKey)).thenReturn(HTTP_LOCALHOST_PRESIGNED_URL);
     var detectionMock = mock(Detection.class);
     when(detectionMock.getEndToEndId()).thenReturn(detectionE2Id);
-    var geoJsonFileKey = randomUUID().toString();
     when(detectionMock.getGeojsonS3FileKey()).thenReturn(geoJsonFileKey);
     when(detectionMock.isSynchronous()).thenReturn(false);
-    when(bucketComponentMock.presign(geoJsonFileKey)).thenReturn(HTTP_LOCALHOST_PRESIGNED_URL);
     when(detectionRepositoryMock.findByZdjId(zoneDetectionJobId))
         .thenReturn(Optional.of(detectionMock));
   }
@@ -93,6 +93,34 @@ class GeoJsonConversionAssemblySucceededServiceTest {
         .accept(eq(emailReceiver), eq(emailSubject), stringCaptor.capture());
     var emailBodyCaptured = stringCaptor.getValue();
     assertEquals(expectedEmailBody(geoJsonSucceededDatetime), emailBodyCaptured);
+  }
+
+  @Test
+  void do_not_trigger_detection_finished_mailer_when_detection_sync() {
+    reset(detectionRepositoryMock);
+    var detectionMock = mock(Detection.class);
+    when(detectionMock.getEndToEndId()).thenReturn(detectionE2Id);
+    when(detectionMock.isSynchronous()).thenReturn(true);
+    when(detectionRepositoryMock.findByZdjId(zoneDetectionJobId))
+        .thenReturn(Optional.of(detectionMock));
+
+    var succeededGeoJsonConversionJobMock = mock(GeoJsonConversionJob.class);
+    var jobStatusMock = mock(JobStatus.class);
+    var creationDatetime = now();
+    var emailReceiver = "emailReceiver";
+    var zoneName = "zoneName";
+    when(jobStatusMock.getCreationDatetime()).thenReturn(creationDatetime);
+    when(succeededGeoJsonConversionJobMock.getZoneDetectionJobId()).thenReturn(zoneDetectionJobId);
+    when(succeededGeoJsonConversionJobMock.getStatus()).thenReturn(jobStatusMock);
+    when(succeededGeoJsonConversionJobMock.getEmailReceiver()).thenReturn(emailReceiver);
+    when(succeededGeoJsonConversionJobMock.getZoneName()).thenReturn(zoneName);
+
+    assertDoesNotThrow(
+        () ->
+            subject.accept(
+                new GeoJsonConversionAssemblySucceeded(succeededGeoJsonConversionJobMock)));
+
+    verify(detectionFinishedMailerMock, never()).accept(anyString(), anyString(), anyString());
   }
 
   private @NotNull String expectedEmailBody(String geoJsonSucceededDatetime) {

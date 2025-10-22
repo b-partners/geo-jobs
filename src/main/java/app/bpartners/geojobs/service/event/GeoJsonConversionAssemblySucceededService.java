@@ -33,7 +33,12 @@ public class GeoJsonConversionAssemblySucceededService
     var geoJsonConversionJobStatus = geoJsonConversionJob.getStatus();
     var emailReceiver = geoJsonConversionJob.getEmailReceiver();
     var optionalDetection = detectionRepository.findByZdjId(zoneDetectionJobId);
-
+    if (optionalDetection.isPresent()) {
+      var detection = optionalDetection.get();
+      if (detection.isSynchronous()) {
+        return;
+      }
+    }
     detectionSucceededService.accept(
         zoneDetectionJobId,
         geoJsonConversionJobStatus,
