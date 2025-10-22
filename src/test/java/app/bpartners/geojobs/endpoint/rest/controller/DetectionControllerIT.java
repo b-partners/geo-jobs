@@ -289,8 +289,8 @@ class DetectionControllerIT extends FacadeIT {
             .geoJsonOutput(ZIP);
 
     // reordering the unordered geoJsonZone.properties because the test use a strict comparaison
-    orderGeoJsonProperties(expected);
-    orderGeoJsonProperties(actual.getFirst());
+    expected = orderGeoJsonProperties(expected);
+    actual = List.of(orderGeoJsonProperties(actual.getFirst()));
 
     assertNotNull(detection.getCreationDatetime());
     assertEquals(List.of(expected), actual);
@@ -314,19 +314,24 @@ class DetectionControllerIT extends FacadeIT {
             .geoJsonOutput(GEO_JSON);
 
     // reordering the unordered geoJsonZone.properties because the test use a strict comparaison
-    orderGeoJsonProperties(expected);
-    orderGeoJsonProperties(actual.getFirst());
+    expected = orderGeoJsonProperties(expected);
+    actual = List.of(orderGeoJsonProperties(actual.getFirst()));
 
     assertNotNull(detection.getCreationDatetime());
     assertEquals(List.of(expected), actual);
   }
 
-  private static void orderGeoJsonProperties(
+  private static app.bpartners.geojobs.endpoint.rest.model.Detection orderGeoJsonProperties(
       app.bpartners.geojobs.endpoint.rest.model.Detection detection) {
-    detection.geoJsonZone(
-        detection.getGeoJsonZone().stream()
-            .map(f -> f.properties(new TreeMap<>(f.getProperties())))
-            .toList());
+    return new app.bpartners.geojobs.endpoint.rest.model.Detection()
+        .id(detection.getId())
+        .creationDatetime(detection.getCreationDatetime())
+        .step(detection.getStep())
+        .geoJsonOutput(detection.getGeoJsonOutput())
+        .geoJsonZone(
+            detection.getGeoJsonZone().stream()
+                .map(f -> f.properties(new TreeMap<>(f.getProperties())))
+                .toList());
   }
 
   @Test
