@@ -468,11 +468,11 @@ paths:
                   $ref: "#/components/schemas/DetectedParcel"
         '500':
           $ref: '#/components/responses/500'
-  '/communities/{communityId}/detections/{id}/geoJsonResult':
+  '/communities/{communityId}/detections/{id}/fileResult':
     post:
       tags:
         - Detection
-      operationId: configureDetectionGeoJsonResult
+      operationId: configureDetectionFileResult
       parameters:
         - in: path
           name: communityId
@@ -482,18 +482,23 @@ paths:
           required: true
         - in: path
           name: id
-          description: Detection identifier
+          description: Detection e2eId
           schema:
             type: string
           required: true
       requestBody:
         required: true
         content:
-          application/octet-stream:
+          multipart/form-data:
             schema:
-              type: string
-              format: binary
-              description: GeoJSON or ZIP file to upload
+              type: object
+              properties:
+                file:
+                  format: binary
+                  description: GeoJSON or ZIP file to upload
+                extensionType:
+                  format: string
+                  description: File extension
       responses:
         '200':
           description: Detection with updated geojson URL
