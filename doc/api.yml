@@ -468,17 +468,50 @@ paths:
                   $ref: "#/components/schemas/DetectedParcel"
         '500':
           $ref: '#/components/responses/500'
-  '/communities/{communityId}/detectionJobs/{id}/geojsonsUrl':
+  '/communities/{communityId}/detections/{id}/geoJsonResult/':
+    post:
+      tags:
+        - MachineDetection
+      operationId: configureDetectionGeoJsonResult
+      parameters:
+        - in: path
+          name: communityId
+          description: Community Authorization ID
+          schema:
+            type: string
+          required: true
+        - in: path
+          name: id
+          description: ZDJ Identifier
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+            description: GeoJSON or ZIP file to upload
+      responses:
+        '200':
+          description: Corresponding detection information
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Detection'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+  '/detectionJobs/{id}/geojsonsUrl':
     get:
       tags:
         - MachineDetection
       parameters:
-        - in: path
-          name: communityId
-          required: true
-          description: Client CommunityAuthorizationId
-          schema:
-            type: string
         - in: path
           name: id
           required: true
