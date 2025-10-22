@@ -468,21 +468,21 @@ paths:
                   $ref: "#/components/schemas/DetectedParcel"
         '500':
           $ref: '#/components/responses/500'
-  '/communities/{communityId}/detections/{id}/geoJsonResult/':
+  '/communities/{communityId}/detections/{id}/geoJsonResult':
     post:
       tags:
-        - MachineDetection
+        - Detection
       operationId: configureDetectionGeoJsonResult
       parameters:
         - in: path
           name: communityId
-          description: Community Authorization ID
+          description: Community owner identifier
           schema:
             type: string
           required: true
         - in: path
           name: id
-          description: ZDJ Identifier
+          description: Detection identifier
           schema:
             type: string
           required: true
@@ -493,10 +493,10 @@ paths:
             schema:
               type: string
               format: binary
-            description: GeoJSON or ZIP file to upload
+              description: GeoJSON or ZIP file to upload
       responses:
         '200':
-          description: Corresponding detection information
+          description: Detection with updated geojson URL
           content:
             application/json:
               schema:
