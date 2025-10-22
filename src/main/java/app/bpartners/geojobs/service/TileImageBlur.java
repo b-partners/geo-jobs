@@ -31,38 +31,13 @@ public class TileImageBlur implements BiFunction<Detection, List<Tile>, List<Til
   public List<Tile> apply(Detection detection, List<Tile> tiles) {
     var latLonBackgroundInsideProvidedZone = detectionBackgroundRetriever.apply(detection);
     var providedZone = detectionProvidedZoneUnifier.apply(detection);
-    var unifiedRoofMultiPolygon =
-        detection.getFeatureWithDelimitations().stream()
-            .map(
-                featureWithDelimitation ->
-                    featureWithDelimitation.delimitations().stream()
-                        .map(
-                            f -> {
-                              var geometryType = toRestFeature(f).getGeometry().getActualInstance();
-                              switch (geometryType) {
-                                case Polygon polygon -> {
-                                  return geometryConverter.apply(List.of(polygon.getCoordinates()));
-                                }
-                                case MultiPolygon multiPolygon -> {
-                                  return geometryConverter.apply(multiPolygon.getCoordinates());
-                                }
-                                default ->
-                                    throw new IllegalArgumentException(
-                                        "Unsupported geometry type to extended image: "
-                                            + geometryType);
-                              }
-                            })
-                        .toList())
-            .toList()
-            .stream()
-            .flatMap(List::stream)
-            .reduce(unifyMultiPolygon())
-            .orElseThrow(
-                () ->
-                    new IllegalStateException(
-                        "Unable to unify delimitation multiPolygon for detection.id: "
-                            + detection.getId()));
-    var roofInsideProvidedZone = providedZone.intersection(unifiedRoofMultiPolygon);
+    Geometry roofInsideProvidedZone;
+    if (detection.getGeoJsonDelimitationType().equals(ROOF)) {
+      roofInsideProvidedZone = providedZone;
+    } else {
+      var unifiedRoofMultiPolygon = getUnifiedRoofMultiPolygon(detection);
+      roofInsideProvidedZone = providedZone.intersection(unifiedRoofMultiPolygon);
+    }
     return tiles.stream()
         .map(
             tile -> {
@@ -117,6 +92,38 @@ public class TileImageBlur implements BiFunction<Detection, List<Tile>, List<Til
               return tile.toBuilder().image(imageWithBlur).build();
             })
         .toList();
+  }
+
+  private org.locationtech.jts.geom.MultiPolygon getUnifiedRoofMultiPolygon(Detection detection) {
+    return detection.getFeatureWithDelimitations().stream()
+        .map(
+            featureWithDelimitation ->
+                featureWithDelimitation.delimitations().stream()
+                    .map(
+                        f -> {
+                          var geometryType = toRestFeature(f).getGeometry().getActualInstance();
+                          switch (geometryType) {
+                            case Polygon polygon -> {
+                              return geometryConverter.apply(List.of(polygon.getCoordinates()));
+                            }
+                            case MultiPolygon multiPolygon -> {
+                              return geometryConverter.apply(multiPolygon.getCoordinates());
+                            }
+                            default ->
+                                throw new IllegalArgumentException(
+                                    "Unsupported geometry type to extended image: " + geometryType);
+                          }
+                        })
+                    .toList())
+        .toList()
+        .stream()
+        .flatMap(List::stream)
+        .reduce(unifyMultiPolygon())
+        .orElseThrow(
+            () ->
+                new IllegalStateException(
+                    "Unable to unify delimitation multiPolygon for detection.id: "
+                        + detection.getId()));
   }
 
   private List<List<List<IntXY>>> getBlurAllAreaCoordinates() {
