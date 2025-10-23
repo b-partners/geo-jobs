@@ -207,11 +207,13 @@ public class ZoneDetectionController {
     return zoneService.configureExcelFile(detectionId, excelFile);
   }
 
-  @PostMapping("/detections/{id}/geoJsonResult")
+  @PostMapping("/communities/{communityId}/detections/{id}/geoJsonResult")
   public Detection configureDetectionGeoJsonResult(
-      @PathVariable(name = "id") String detectionId, @RequestBody byte[] geoJsonResult) {
+      @PathVariable(name = "communityId") String communityId,
+      @PathVariable(name = "id") String detectionId,
+      @RequestBody byte[] geoJsonResult) {
     File geojsonFile = fileWriter.apply(geoJsonResult, null);
-    return zoneService.configureGeoJsonResult(detectionId, geojsonFile);
+    return zoneService.configureGeoJsonResult(communityId, detectionId, geojsonFile);
   }
 
   @PostMapping("/detections/{id}")

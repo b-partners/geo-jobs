@@ -190,8 +190,12 @@ public class ZoneService {
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection configureGeoJsonResult(
-      String detectionE2Id, File geoJsonFile) {
-    var detection = getDetectionByE2IdOrId(detectionE2Id);
+      String communityId, String detectionE2Id, File geoJsonFile) {
+    if (communityId == null) {
+      throw new IllegalArgumentException(
+          "To sumbit result, communityAuthorizationId should not be null");
+    }
+    var detection = getDetectionByE2eId(detectionE2Id, communityId);
     var geoJsonResultFileKey =
         GEO_JSON_BUCKET_FOLDER
             + detection.getId()
@@ -211,7 +215,7 @@ public class ZoneService {
     if (!savedDetection.isOnStepPostProcessingSucceeded()) {
       return updateDetectionStep(
           savedDetection.getEndToEndId(),
-          null,
+          communityId,
           new DetectionStep()
               .name(POST_PROCESSING)
               .status(
