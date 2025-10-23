@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.service;
 
-import static app.bpartners.geojobs.repository.model.SurfaceUnit.SQUARE_DEGREE;
+import static app.bpartners.geojobs.repository.model.SurfaceUnit.SQUARE_METER;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
@@ -29,9 +29,9 @@ public class CommunityUsedSurfaceService {
   private final CommunityUsedSurfaceRepository communityUsedSurfaceRepository;
   private final CommunityAuthorizationRepository communityAuthRepository;
   private final DetectionSurfaceValueMapper surfaceValueMapper;
-  private final FeatureSurfaceService featureSurfaceService;
   private final DetectionRepository detectionRepository;
   private static final double DEFAULT_USED_SURFACE_VALUE = 0.0;
+  private final DetectionAreaComputer detectionAreaComputer;
 
   public Optional<CommunityUsedSurface> getTotalUsedSurfaceByCommunityId(
       String communityId, SurfaceUnit unit) {
@@ -107,8 +107,8 @@ public class CommunityUsedSurfaceService {
     if (detection.getCommunityOwnerId() != null) {
       var newSurfaceUsage =
           CommunityUsedSurface.builder()
-              .unit(SQUARE_DEGREE)
-              .usedSurface(featureSurfaceService.getAreaValue(features))
+              .unit(SQUARE_METER)
+              .usedSurface(detectionAreaComputer.apply(features))
               .communityAuthorizationId(detection.getCommunityOwnerId())
               .build();
       appendLastUsedSurface(newSurfaceUsage);
