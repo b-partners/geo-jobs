@@ -62,6 +62,7 @@ import java.io.File;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.TreeMap;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -286,6 +287,11 @@ class DetectionControllerIT extends FacadeIT {
                 detectionStepStatisticMapper.toRestDetectionStepStatus(
                     statistic, DetectionStepName.MACHINE_DETECTION))
             .geoJsonOutput(ZIP);
+
+    // reordering the unordered geoJsonZone.properties because the test use a strict comparaison
+    expected = orderGeoJsonProperties(expected);
+    actual = List.of(orderGeoJsonProperties(actual.getFirst()));
+
     assertNotNull(detection.getCreationDatetime());
     assertEquals(List.of(expected), actual);
   }
@@ -306,8 +312,26 @@ class DetectionControllerIT extends FacadeIT {
             .geoJsonZone(featureCreator.defaultFeatures())
             .step(actual.getFirst().getStep())
             .geoJsonOutput(GEO_JSON);
+
+    // reordering the unordered geoJsonZone.properties because the test use a strict comparaison
+    expected = orderGeoJsonProperties(expected);
+    actual = List.of(orderGeoJsonProperties(actual.getFirst()));
+
     assertNotNull(detection.getCreationDatetime());
     assertEquals(List.of(expected), actual);
+  }
+
+  private static app.bpartners.geojobs.endpoint.rest.model.Detection orderGeoJsonProperties(
+      app.bpartners.geojobs.endpoint.rest.model.Detection detection) {
+    return new app.bpartners.geojobs.endpoint.rest.model.Detection()
+        .id(detection.getId())
+        .creationDatetime(detection.getCreationDatetime())
+        .step(detection.getStep())
+        .geoJsonOutput(detection.getGeoJsonOutput())
+        .geoJsonZone(
+            detection.getGeoJsonZone().stream()
+                .map(f -> f.properties(new TreeMap<>(f.getProperties())))
+                .toList());
   }
 
   @Test
