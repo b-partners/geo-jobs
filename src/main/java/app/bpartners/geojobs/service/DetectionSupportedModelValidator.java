@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class DetectionSupportedModelValidator implements Consumer<Detection> {
   public static final List<ModelName> UNSUPPORTED_MODELS =
-      List.of(VEGETATION, VOIRIE_TROTTOIRS, TAMPONS, SIGN, CIMETIERE);
+      List.of(VEGETATION, VOIRIE_TROTTOIRS, TAMPONS, SIGN, CIMETIERE, OLD, CYCL);
 
   @Override
   public void accept(Detection detection) {
