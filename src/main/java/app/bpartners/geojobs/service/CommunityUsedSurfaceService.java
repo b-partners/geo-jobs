@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service;
 
+import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_INSURANCE;
 import static app.bpartners.geojobs.repository.model.SurfaceUnit.SQUARE_METER;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
@@ -88,9 +89,14 @@ public class CommunityUsedSurfaceService {
     return new DetectionUsage()
         .totalUsedSurface(
             surfaceValueMapper.toSurfaceValue(totalUsedSurface.getUsedSurface(), unit))
-        .remainingSurface(surfaceValueMapper.toSurfaceValue(remainingSurface, unit))
+        .remainingSurface(
+            ROLE_INSURANCE.equals(communityAuthorization.getRole())
+                ? null
+                : surfaceValueMapper.toSurfaceValue(remainingSurface, unit))
         .maxAuthorizedSurface(
-            surfaceValueMapper.toSurfaceValue(maxAuthorizedSurface.getUsedSurface(), unit))
+            ROLE_INSURANCE.equals(communityAuthorization.getRole())
+                ? null
+                : surfaceValueMapper.toSurfaceValue(maxAuthorizedSurface.getUsedSurface(), unit))
         .lastDatetimeSurfaceUsage(totalUsedSurface.getUsageDatetime());
   }
 
