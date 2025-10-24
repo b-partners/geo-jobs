@@ -43,6 +43,8 @@ import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.hash.FileHash;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
+import app.bpartners.geojobs.mail.Email;
+import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.repository.*;
@@ -59,11 +61,13 @@ import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.geoserver.GeoServerConfiguration;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
+import app.bpartners.geojobs.template.HTMLTemplateParser;
 import app.bpartners.geojobs.utils.FeatureCreator;
 import app.bpartners.geojobs.utils.TaskStatisticCreator;
 import app.bpartners.geojobs.utils.detection.DetectionCreator;
 import app.bpartners.geojobs.utils.detection.ZoneDetectionJobCreator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.mail.internet.AddressException;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -178,6 +182,8 @@ class ZoneServiceTest {
   DetectionFromStepMapper detectionFromStepMapperMock = mock();
   RoofAnalysisMailer roofAnalysisMailerMock = mock(RoofAnalysisMailer.class);
   FileWriter fileWriterMock = mock();
+  Mailer mailerMock = mock();
+  HTMLTemplateParser htmlTemplateParserMock = mock();
 
   ZoneService subject =
       new ZoneService(
@@ -213,7 +219,9 @@ class ZoneServiceTest {
               geoServerConfiguration,
               tileMultiPolygonFrameMock,
               geoJsonDelimitationTypeMapper),
-          fileWriterMock);
+          fileWriterMock,
+          mailerMock,
+          htmlTemplateParserMock);
 
   @BeforeEach
   void setUp() {
@@ -1075,7 +1083,7 @@ class ZoneServiceTest {
   }
 
   @Test
-  void configure_detection_file_result() throws IOException {
+  void configure_detection_file_result() throws IOException, AddressException {
     var detectionId = randomUUID().toString();
     var communityOwnerId = randomUUID().toString();
     var multiPartFileMock = mock(MultipartFile.class);
@@ -1091,6 +1099,7 @@ class ZoneServiceTest {
                 new app.bpartners.geojobs.repository.model.detection.Detection()
                     .toBuilder()
                         .id(detectionId)
+                        .emailReceiver("random@gmail.com")
                         .endToEndId(communityOwnerId)
                         .detectionSteps(
                             List.of(
@@ -1107,7 +1116,6 @@ class ZoneServiceTest {
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
     when(multiPartFileMock.getBytes()).thenReturn(bytes);
     when(fileWriterMock.apply(bytes, null)).thenReturn(fileMock);
-
     var actual =
         subject.configureFileResult(communityOwnerId, detectionId, multiPartFileMock, "geojson");
 

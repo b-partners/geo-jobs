@@ -37,6 +37,7 @@ import app.bpartners.geojobs.service.ParcelService;
 import app.bpartners.geojobs.service.ZoneService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
+import jakarta.mail.internet.AddressException;
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
@@ -215,7 +216,7 @@ public class ZoneDetectionController {
       @PathVariable(name = "id") String detectionId,
       @RequestPart(value = "file") MultipartFile file,
       @RequestParam(value = "extensionType", defaultValue = "zip") String extensionType)
-      throws IOException {
+      throws IOException, AddressException {
     log.info("Extension={}", extensionType);
     return zoneService.configureFileResult(communityOwnerId, detectionId, file, extensionType);
   }
