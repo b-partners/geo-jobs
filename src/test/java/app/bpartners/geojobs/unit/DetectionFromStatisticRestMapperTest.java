@@ -22,7 +22,6 @@ import app.bpartners.geojobs.service.DetectionImageTileInfoOriginRetriever;
 import app.bpartners.geojobs.service.DetectionVggAttributeRetriever;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 class DetectionFromStatisticRestMapperTest {
@@ -60,10 +59,17 @@ class DetectionFromStatisticRestMapperTest {
         .build();
   }
 
-  private static Detection detectionWithFeatureDelimitation(double slope, double height) {
-    HashMap<String, Object> properties =
-        new HashMap<>(Map.of(ROOF_SLOPE_PROPERTY_NAME, slope, ROOF_HEIGHT_PROPERTY_NAME, height));
-    var feature = Feature.builder().properties(properties).build();
+  private static Detection detectionWithFeatureDelimitation(Double slope, Double height) {
+    HashMap<String, Object> properties = new HashMap<>();
+
+    if (slope != null) {
+      properties.put(ROOF_SLOPE_PROPERTY_NAME, slope);
+    }
+
+    if (height != null) {
+      properties.put(ROOF_HEIGHT_PROPERTY_NAME, height);
+    }
+    var feature = Feature.builder().geometry(mock()).properties(properties).build();
     var featureDelimitation = new FeatureWithDelimitation(feature, List.of(feature));
 
     return Detection.builder()
@@ -141,5 +147,22 @@ class DetectionFromStatisticRestMapperTest {
     assertNotNull(roofDelimiter);
     assertNull(roofDelimiter.getRoofSlopeInDegree());
     assertNull(roofDelimiter.getRoofHeightInMeter());
+  }
+
+  @Test
+  void polygon_should_not_be_null_if_feature_delimitation_already_present() {
+    var detection = detectionWithFeatureDelimitation(null, null);
+
+    when(imageTileInfoOriginRetrieverMock.apply(any())).thenReturn(mock());
+    when(roofDelimiterMapperMock.toRestPolygon(any())).thenReturn(List.of());
+    when(detectionFeaturesResultImageRetrieverMock.apply(any())).thenReturn(List.of());
+    when(bucketComponentMock.presign(any())).thenReturn("https://dummy.com");
+    when(detectionStepStatisticMapperMock.toRestDetectionStepStatus(any(), any()))
+        .thenReturn(mock());
+
+    var actualDetection = subject.apply(detection, mock(), mock());
+
+    assertNotNull(actualDetection.getRoofDelimiter());
+    assertNotNull(actualDetection.getRoofDelimiter().getPolygon());
   }
 }

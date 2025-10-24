@@ -119,7 +119,7 @@ public class DetectionFromStepMapper
     if (properties == null
         || !properties.containsKey(ROOF_SLOPE_PROPERTY_NAME)
         || !properties.containsKey(ROOF_HEIGHT_PROPERTY_NAME)) {
-      return new RoofDelimiter().polygon(polygonRoofDelimitation);
+      return new RoofDelimiter().polygon(roofDelimiterMapper.toRestPolygon(featureDelimitation));
     }
 
     var roofSlope = ((Number) properties.get(ROOF_SLOPE_PROPERTY_NAME)).doubleValue();
