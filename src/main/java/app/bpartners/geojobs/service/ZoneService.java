@@ -211,7 +211,6 @@ public class ZoneService {
         GEO_JSON_EXTENSION.contains(extension)
             ? GEO_JSON_BUCKET_FOLDER + detection.getId() + "/" + detection.getZoneName() + extension
             : ZIP_BUCKET_FOLDER + detection.getId() + "/" + detection.getZoneName() + extension;
-    log.info("ResultFileKey={}", resultFileKey);
     byte[] fileBytes = file.getBytes();
     File toUpload = fileWriter.apply(fileBytes, null);
     bucketComponent.upload(toUpload, resultFileKey);

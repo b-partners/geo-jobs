@@ -21,11 +21,11 @@ public class FileResultCQEmailInitiated extends PojaEvent {
 
   @Override
   public Duration maxConsumerDuration() {
-    return null;
+    return Duration.ofSeconds(30L);
   }
 
   @Override
   public Duration maxConsumerBackoffBetweenRetries() {
-    return null;
+    return Duration.ofSeconds(30L);
   }
 }

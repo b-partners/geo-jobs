@@ -46,8 +46,6 @@ public class FileResultCQEmailInitiatedService implements Consumer<FileResultCQE
     } catch (AddressException e) {
       throw new RuntimeException(e);
     }
-
-    log.info("CQ File result email sent");
   }
 
   private String apply(Detection detection) {
