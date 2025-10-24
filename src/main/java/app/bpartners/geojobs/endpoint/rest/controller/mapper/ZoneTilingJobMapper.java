@@ -150,7 +150,7 @@ public class ZoneTilingJobMapper {
           "Unsupported geometry type to retrieve final geo json zone " + geometryInstance);
     }
 
-    var zoneToProcess = detectionProvidedZoneUnifier.applyMultiGeoJson(detection);
+    var zoneToProcess = detectionProvidedZoneUnifier.apply(detection);
     var finalGeoJsonZone = new ArrayList<Feature>();
     for (int i = 0; i < zoneToProcess.getNumGeometries(); i++) {
       var geometry = zoneToProcess.getGeometryN(i);
