@@ -8,7 +8,6 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.CLIENT_EXCEPTION;
 import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.DetectionType.HUMAN;
-import static app.bpartners.geojobs.service.DetectionFinishedMailer.ADMIN_EMAIL;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_BUCKET_FOLDER;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_EXTENSION;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.ZIP_BUCKET_FOLDER;
@@ -21,6 +20,7 @@ import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
 import app.bpartners.geojobs.endpoint.event.model.DetectionSucceeded;
 import app.bpartners.geojobs.endpoint.event.model.DetectionTilingRequested;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerificationSent;
+import app.bpartners.geojobs.endpoint.event.model.zone.FileResultCQEmailInitiated;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
 import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStepMapper;
@@ -31,7 +31,6 @@ import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.job.model.Job;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
-import app.bpartners.geojobs.mail.Email;
 import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.model.exception.BadRequestException;
@@ -52,14 +51,10 @@ import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import app.bpartners.geojobs.template.HTMLTemplateParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.mail.internet.AddressException;
-import jakarta.mail.internet.InternetAddress;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
@@ -67,7 +62,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.thymeleaf.context.Context;
 
 @Service
 @AllArgsConstructor
@@ -102,7 +96,6 @@ public class ZoneService {
   private final DetectionCreationMapper detectionCreationMapper;
   private final FileWriter fileWriter;
   private final Mailer mailer;
-  private final String FILE_RESULT_SUBMISSION_FINISHED = "detection_cq_finished";
   private final HTMLTemplateParser htmlTemplateParser;
 
   private List<Feature> readFromFile(File featuresFromShape) {
@@ -208,7 +201,7 @@ public class ZoneService {
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection configureFileResult(
       String communityId, String detectionE2eId, MultipartFile file, String extensionType)
-      throws IOException, AddressException {
+      throws IOException {
     if (communityId == null) {
       throw new IllegalArgumentException("To sumbit result, communityAuthorizationId is mandatory");
     }
@@ -244,29 +237,11 @@ public class ZoneService {
               .updatedAt(now()));
     }
 
-    String emailSubject =
-        String.format("Résultat de l'analyse après contrôle qualité sur la zone %s", detection.getZoneName());
-
-    mailer.accept(
-        new Email(
-            new InternetAddress(detection.getEmailReceiver()),
-            List.of(new InternetAddress(ADMIN_EMAIL)),
-            List.of(),
-            emailSubject,
-            apply(detection),
-            List.of()));
+    eventProducer.accept(
+        List.of(FileResultCQEmailInitiated.builder().detection(detection).build()));
 
     return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
         detection, FINISHED, SUCCEEDED, POST_PROCESSING);
-  }
-
-  private String apply(Detection detection) {
-    Context context = new Context();
-    context.setVariable("zoneName", detection.getZoneName());
-    context.setVariable("detectionE2EId", detection.getEndToEndId());
-    context.setVariable("geojsonUrl", bucketComponent.presign(detection.getGeojsonS3FileKey()));
-
-    return htmlTemplateParser.apply(FILE_RESULT_SUBMISSION_FINISHED, context);
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection getProcessedDetection(

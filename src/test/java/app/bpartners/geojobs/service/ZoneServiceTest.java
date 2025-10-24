@@ -43,7 +43,6 @@ import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.hash.FileHash;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
-import app.bpartners.geojobs.mail.Email;
 import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.model.exception.BadRequestException;
@@ -67,7 +66,6 @@ import app.bpartners.geojobs.utils.TaskStatisticCreator;
 import app.bpartners.geojobs.utils.detection.DetectionCreator;
 import app.bpartners.geojobs.utils.detection.ZoneDetectionJobCreator;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.mail.internet.AddressException;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -78,12 +76,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.mockito.ArgumentCaptor;
 import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 class ZoneServiceTest {
   private static final String FEATURE_FILE_NAME_OK =
       "src"
@@ -1083,7 +1083,7 @@ class ZoneServiceTest {
   }
 
   @Test
-  void configure_detection_file_result() throws IOException, AddressException {
+  void configure_detection_file_result() throws IOException {
     var detectionId = randomUUID().toString();
     var communityOwnerId = randomUUID().toString();
     var multiPartFileMock = mock(MultipartFile.class);
@@ -1126,9 +1126,15 @@ class ZoneServiceTest {
     assertEquals(SUCCEEDED, actual.getStep().getStatus().getHealth());
     verify(bucketComponentMock, times(1)).upload(eq(fileMock), stringCaptor.capture());
     verify(detectionRepositoryMock).save(any());
-    verify(eventProducerMock, times(2)).accept(listCaptor.capture());
+    verify(eventProducerMock, times(3)).accept(listCaptor.capture());
     var detectionSucceededEvent =
-        (DetectionSucceeded) listCaptor.getAllValues().getLast().getFirst();
+        (DetectionSucceeded)
+            listCaptor.getAllValues().stream()
+                .flatMap(List::stream)
+                .filter(DetectionSucceeded.class::isInstance)
+                .map(DetectionSucceeded.class::cast)
+                .findFirst()
+                .orElseThrow();
     assertEquals(new DetectionSucceeded(detectionId), detectionSucceededEvent);
     assertEquals(EVENT_STACK_2, detectionSucceededEvent.getEventStack());
     assertEquals(Duration.ofSeconds(30L), detectionSucceededEvent.maxConsumerDuration());
