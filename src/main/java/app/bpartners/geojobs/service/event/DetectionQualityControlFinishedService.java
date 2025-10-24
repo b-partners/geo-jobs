@@ -1,8 +1,9 @@
 package app.bpartners.geojobs.service.event;
 
 import static app.bpartners.geojobs.service.DetectionFinishedMailer.ADMIN_EMAIL;
+import static java.time.Instant.now;
 
-import app.bpartners.geojobs.endpoint.event.model.zone.FileResultCQEmailInitiated;
+import app.bpartners.geojobs.endpoint.event.model.zone.DetectionQualityControlFinished;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.mail.Email;
 import app.bpartners.geojobs.mail.Mailer;
@@ -10,6 +11,8 @@ import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.template.HTMLTemplateParser;
 import jakarta.mail.internet.AddressException;
 import jakarta.mail.internet.InternetAddress;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
@@ -20,19 +23,22 @@ import org.thymeleaf.context.Context;
 @Service
 @Slf4j
 @AllArgsConstructor
-public class FileResultCQEmailInitiatedService implements Consumer<FileResultCQEmailInitiated> {
+public class DetectionQualityControlFinishedService
+    implements Consumer<DetectionQualityControlFinished> {
   private Mailer mailer;
   private BucketComponent bucketComponent;
   private HTMLTemplateParser htmlTemplateParser;
-  private final String FILE_RESULT_SUBMISSION_FINISHED = "detection_cq_finished_template";
+  private static final String FILE_RESULT_SUBMISSION_FINISHED = "detection_cq_finished_template";
 
   @Override
-  public void accept(FileResultCQEmailInitiated fileResultCQEmailInitiated) {
-    var detection = fileResultCQEmailInitiated.getDetection();
+  public void accept(DetectionQualityControlFinished detectionQualityControlFinished) {
+    var detection = detectionQualityControlFinished.getDetection();
     String emailSubject =
         String.format(
-            "[Contrôle Qualité] Résultat de l'analyse après contrôle qualité sur la zone %s",
-            detection.getZoneName());
+            "Résultat final de la détection portant l'ID %s disponible le %s",
+            detection.getEndToEndId(),
+            DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+                .format(now().atZone(ZoneId.of("Europe/Paris"))));
 
     try {
       mailer.accept(
