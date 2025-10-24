@@ -28,6 +28,7 @@ public class CommunityZoneSurfaceAuthorizer
     var newSurfaceValueToDetect = detectionAreaComputer.apply(candidateFeatures);
     var candidateSurface =
         totalUsedSurface
+            .filter(communityUsedSurface -> communityUsedSurface.getUnit().equals(SQUARE_METER))
             .map(
                 communityUsedSurface ->
                     communityUsedSurface.getUsedSurface() + newSurfaceValueToDetect)
