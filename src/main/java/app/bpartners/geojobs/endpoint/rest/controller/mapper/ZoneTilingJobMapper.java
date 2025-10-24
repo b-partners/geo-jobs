@@ -137,7 +137,7 @@ public class ZoneTilingJobMapper {
 
   private List<Feature> getFinalGeoJsonZone(Detection detection) {
     var polygonGeoJsonZone = detection.getPolygonGeoJsonZone();
-    if (detection.needsImageOutput() && polygonGeoJsonZone != null) {
+    if (polygonGeoJsonZone != null) {
       var geometryInstance = polygonGeoJsonZone.getGeometry().getActualInstance();
       if (Objects.requireNonNull(geometryInstance) instanceof Polygon p) {
         var geometryPolygon = geometryConverter.convertToPolygon(p.getCoordinates().getFirst());
