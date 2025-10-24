@@ -18,6 +18,7 @@ import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
 import app.bpartners.geojobs.service.DetectionFeaturesResultImageRetriever;
 import app.bpartners.geojobs.service.DetectionImageAttributeRetriever;
+import app.bpartners.geojobs.service.DetectionImageTileInfoOriginRetriever;
 import app.bpartners.geojobs.service.DetectionVggAttributeRetriever;
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +34,7 @@ class DetectionFromStatisticRestMapperTest {
       mock(DetectionImageAttributeRetriever.class);
   DetectionVggAttributeRetriever vggAttributeRetrieverMock =
       mock(DetectionVggAttributeRetriever.class);
+  DetectionImageTileInfoOriginRetriever imageTileInfoOriginRetrieverMock = mock();
   DetectionFromStepMapper detectionFromStepMapperMock =
       new DetectionFromStepMapper(
           bucketComponentMock,
@@ -40,7 +42,8 @@ class DetectionFromStatisticRestMapperTest {
           imageAttributeRetrieverMock,
           vggAttributeRetrieverMock,
           new DetectionStepMapper(),
-          roofDelimiterMapperMock);
+          roofDelimiterMapperMock,
+          imageTileInfoOriginRetrieverMock);
 
   DetectionFromStatisticRestMapper subject =
       new DetectionFromStatisticRestMapper(
@@ -81,6 +84,7 @@ class DetectionFromStatisticRestMapperTest {
     var expectedHeight = 5d;
     var detection = detectionWithFeatureDelimitation(expectedSlope, expectedHeight);
 
+    when(imageTileInfoOriginRetrieverMock.apply(any())).thenReturn(mock());
     when(roofDelimiterMapperMock.toRestPolygon(any())).thenReturn(mock());
     when(detectionFeaturesResultImageRetrieverMock.apply(any())).thenReturn(List.of());
     when(bucketComponentMock.presign(any())).thenReturn("https://dummy.com");
