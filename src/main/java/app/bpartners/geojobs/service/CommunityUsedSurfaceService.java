@@ -10,7 +10,6 @@ import app.bpartners.geojobs.endpoint.rest.model.DetectionUsage;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
-import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.CommunityUsedSurfaceRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
@@ -105,7 +104,8 @@ public class CommunityUsedSurfaceService {
     if (communityUsedSurface.getUnit().equals(unit)) {
       return communityUsedSurface;
     }
-    throw new NotImplementedException("Conversion of surface units is not supported yet");
+    // TODO : convert SQUARE_DEGREE to SQUARE_METER
+    return communityUsedSurface;
   }
 
   @Transactional
