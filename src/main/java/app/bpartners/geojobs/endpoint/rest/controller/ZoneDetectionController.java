@@ -214,8 +214,9 @@ public class ZoneDetectionController {
       @PathVariable(name = "communityId") String communityOwnerId,
       @PathVariable(name = "id") String detectionId,
       @RequestPart(value = "file") MultipartFile file,
-      @RequestPart(value = "extensionType") String extensionType)
+      @RequestParam(value = "extensionType", defaultValue = "zip") String extensionType)
       throws IOException {
+    log.info("Extension={}", extensionType);
     return zoneService.configureFileResult(communityOwnerId, detectionId, file, extensionType);
   }
 

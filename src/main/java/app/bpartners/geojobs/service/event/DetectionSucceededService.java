@@ -71,7 +71,9 @@ public class DetectionSucceededService implements Consumer<DetectionSucceeded> {
       String formattedCreationDatetime,
       String emailReceiver) {
     var emailSubject =
-        String.format("Résultat de l'analyse après contrôle qualité sur la zone %s terminée le %s", zoneName, formattedCreationDatetime);
+        String.format(
+            "Résultat de l'analyse après contrôle qualité sur la zone %s terminée le %s",
+            zoneName, formattedCreationDatetime);
     var emailBody = apply(zoneDetectionJobId, detectionJobStatus);
 
     mailer.accept(emailReceiver, emailSubject, emailBody);
