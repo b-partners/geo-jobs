@@ -1867,6 +1867,9 @@ components:
         needsImageOutput:
           type: boolean
           default: false
+        toNotify:
+          type: boolean
+          default: false
     DetectionStep:
       properties:
         name:
