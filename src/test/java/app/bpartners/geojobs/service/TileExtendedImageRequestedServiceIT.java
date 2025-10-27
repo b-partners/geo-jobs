@@ -37,8 +37,8 @@ class TileExtendedImageRequestedServiceIT {
   FilePolygonDrawer filePolygonDrawer = new FilePolygonDrawer();
   DetectionBackgroundRetriever detectionBackgroundRetriever =
       mock(DetectionBackgroundRetriever.class);
-  DetectionProvidedZoneUnifier detectionProvidedZoneUnifier =
-      new DetectionProvidedZoneUnifier(geometryConverter);
+  DetectionZoneToProcessProvider detectionProvidedZoneUnifier =
+      new DetectionZoneToProcessProvider(geometryConverter);
   TileImagesAssembler tileImagesAssembler = new TileImagesAssembler();
   DetectionRepository detectionRepositoryMock = mock();
   TileImageBlur tileImageBlur =
