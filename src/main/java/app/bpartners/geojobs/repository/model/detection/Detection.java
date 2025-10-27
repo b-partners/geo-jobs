@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -145,6 +146,31 @@ public class Detection implements Serializable {
         : detectionSteps.stream()
             .max(Comparator.comparing(DetectionStep::getCreationDatetime))
             .orElse(null);
+  }
+
+  public boolean hasMultipleGeometryToProcess() {
+    var restProvidedGeoJsonZone = getProvidedGeoJsonZone();
+    AtomicLong totalGeometryCount = new AtomicLong(0);
+
+    restProvidedGeoJsonZone.forEach(
+        feature -> {
+          if (feature.getGeometry() == null) return;
+
+          var actual = feature.getGeometry().getActualInstance();
+
+          if (actual instanceof Point) {
+            totalGeometryCount.incrementAndGet();
+          } else if (actual instanceof Polygon) {
+            totalGeometryCount.incrementAndGet();
+          } else if (actual instanceof MultiPolygon multiPolygon) {
+            totalGeometryCount.incrementAndGet();
+            if (multiPolygon.getCoordinates() != null && multiPolygon.getCoordinates().size() > 1) {
+              totalGeometryCount.addAndGet(multiPolygon.getCoordinates().size() - 1);
+            }
+          }
+        });
+
+    return totalGeometryCount.get() > 1;
   }
 
   public boolean isOnStepPostProcessingSucceeded() {

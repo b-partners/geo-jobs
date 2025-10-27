@@ -86,9 +86,7 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
     }
 
     if (zoneDetectionJobService.countInDoubtDetectedTileToDeliveryById(succeededJobId) == 0L) {
-      if (detection != null
-          && detection.needsImageOutput()
-          && detection.getPolygonGeoJsonZone() != null) {
+      if (detection != null && detection.needsImageOutput()) {
         eventProducer.accept(List.of(new ZoneVggRequested(detection.getId())));
       }
       geoJsonConversionJobService.getOrComputeGeoJsonConversionJob(succeededZoneDetectionJob);

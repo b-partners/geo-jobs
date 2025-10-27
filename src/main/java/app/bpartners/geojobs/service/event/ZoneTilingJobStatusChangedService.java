@@ -12,7 +12,6 @@ import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.DetectionDelimitationRetriever;
 import app.bpartners.geojobs.service.JobFinishedMailer;
-import app.bpartners.geojobs.service.PointExtendedImageRequest;
 import app.bpartners.geojobs.service.StatusChangedHandler;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import java.util.List;
@@ -32,7 +31,6 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
   private final EventProducer eventProducer;
   private final DetectableObjectConfigurationRepository objectConfigurationRepository;
   private final DetectionDelimitationRetriever detectionDelimitationRetriever;
-  private final PointExtendedImageRequest pointExtendedImageRequest;
 
   @Override
   public void accept(ZoneTilingJobStatusChanged event) {
@@ -47,8 +45,7 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
             newJob,
             detectionRepository,
             objectConfigurationRepository,
-            detectionDelimitationRetriever,
-            pointExtendedImageRequest);
+            detectionDelimitationRetriever);
 
     var onFailedHandler = new onFailedJobHandler(eventProducer, newJob);
 
@@ -63,8 +60,7 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
       ZoneTilingJob ztj,
       DetectionRepository detectionRepository,
       DetectableObjectConfigurationRepository objectConfigurationRepository,
-      DetectionDelimitationRetriever detectionDelimitationRetriever,
-      PointExtendedImageRequest pointExtendedImageRequest)
+      DetectionDelimitationRetriever detectionDelimitationRetriever)
       implements Runnable {
 
     @Override
@@ -87,15 +83,7 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
 
         detectionDelimitationRetriever.accept(savedDetection);
 
-        savedDetection
-            .getProvidedGeoJsonZone()
-            .forEach(
-                providedFeature ->
-                    pointExtendedImageRequest.accept(savedDetection, providedFeature, false));
-
-        if (savedDetection.getSplitPolygonGeoJsonZone() != null
-            && !savedDetection.getSplitPolygonGeoJsonZone().isEmpty()
-            && savedDetection.needsImageOutput()) {
+        if (savedDetection.needsImageOutput()) {
           eventProducer.accept(
               List.of(
                   ZoneImageRequested.builder()
