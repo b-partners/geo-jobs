@@ -33,7 +33,7 @@ public class CreateDetectionValidator implements Consumer<CreateDetection> {
                   feature ->
                       feature.getGeometry() != null
                           && feature.getGeometry().getActualInstance() instanceof Point)
-              .toList();
+              .collect(Collectors.toSet());
       if (providedPoints.size() > 1) {
         throw new NotImplementedException(
             "Only one point is supported to generate image, otherwise actual provided geojson are "
