@@ -39,6 +39,13 @@ public class ZoneImageRequestedService implements Consumer<ZoneImageRequested> {
   public void accept(ZoneImageRequested event) {
     var detectionIdentifier = event.getDetectionIdentifier();
     var detection = detectionRepository.findById(detectionIdentifier).orElseThrow();
+    if (detection.hasMultipleGeometryToProcess()) {
+      log.error(
+          "Unable to generate images for detection with multiple geometries: "
+              + detectionIdentifier
+              + " - skipping.");
+      return;
+    }
     var polygonGeometry =
         geometryConverter.convertToPolygon(
             detection

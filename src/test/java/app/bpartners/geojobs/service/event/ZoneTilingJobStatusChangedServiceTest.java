@@ -52,7 +52,6 @@ class ZoneTilingJobStatusChangedServiceTest {
   TilingTaskRepository tilingTaskRepositoryMock = mock();
   TilingTaskCreator tilingTaskCreator = new TilingTaskCreator();
   DetectionDelimitationRetriever detectionDelimitationRetrieverMock = mock();
-  PointExtendedImageRequest pointExtendedImageRequestMock = mock();
   ZoneTilingJobStatusChangedService subject =
       new ZoneTilingJobStatusChangedService(
           mailerMock,
@@ -61,8 +60,7 @@ class ZoneTilingJobStatusChangedServiceTest {
           detectionRepositoryMock,
           eventProducerMock,
           objectConfigurationRepositoryMock,
-          detectionDelimitationRetrieverMock,
-          pointExtendedImageRequestMock);
+          detectionDelimitationRetrieverMock);
 
   @BeforeEach
   void setUp() {
@@ -75,8 +73,6 @@ class ZoneTilingJobStatusChangedServiceTest {
                     new Parcel(),
                     FINISHED,
                     SUCCEEDED)));
-
-    doNothing().when(pointExtendedImageRequestMock).accept(any(), any(), any());
   }
 
   @Test
@@ -160,7 +156,6 @@ class ZoneTilingJobStatusChangedServiceTest {
     when(objectConfigurationRepositoryMock.saveAll(any()))
         .thenAnswer(invocation -> invocation.getArgument(0));
     doNothing().when(detectionDelimitationRetrieverMock).accept(detection);
-    doNothing().when(pointExtendedImageRequestMock).accept(any(), any(), any());
     doNothing().when(mailerMock).accept(any());
 
     assertDoesNotThrow(() -> subject.accept(ztjStatusChanged));

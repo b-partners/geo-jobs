@@ -51,6 +51,13 @@ public class ZoneVggRequestedService implements Consumer<ZoneVggRequested> {
   public void accept(ZoneVggRequested event) {
     var detectionIdentifier = event.getDetectionIdentifier();
     var retrievedDetection = detectionRepository.findById(detectionIdentifier).orElseThrow();
+    if (retrievedDetection.hasMultipleGeometryToProcess()) {
+      log.error(
+          "Unable to compute VGG for detection with multiple geometries: "
+              + detectionIdentifier
+              + " - skipping.");
+      return;
+    }
     var machineDetectedTiles =
         detectedTileRepository.findAllByZdjJobId(retrievedDetection.getZdjId());
     var detectionWithRoofProperties =
