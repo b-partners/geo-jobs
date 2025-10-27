@@ -7,14 +7,14 @@ import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.concurrency.Workers;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.ZoneImageRequested;
+import app.bpartners.geojobs.endpoint.event.model.FeatureImageRequested;
 import app.bpartners.geojobs.endpoint.event.model.ZoneVggRequested;
 import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.service.detection.*;
-import app.bpartners.geojobs.service.event.ZoneImageRequestedService;
+import app.bpartners.geojobs.service.event.FeatureImageRequestedService;
 import app.bpartners.geojobs.service.event.ZoneVggRequestedService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
@@ -46,7 +46,7 @@ public class SynchronousDetectionService
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final Workers workers;
   private final DetectableObjectConfigurationRepository detectableObjectConfigurationRepository;
-  private final ZoneImageRequestedService zoneImageRequestedService;
+  private final FeatureImageRequestedService featureImageRequestedService;
   private final EventProducer eventProducer;
   private final EntityManager entityManager;
 
@@ -78,7 +78,8 @@ public class SynchronousDetectionService
 
     Callable<Void> imageRequestCallableVoidList =
         () -> {
-          zoneImageRequestedService.accept(new ZoneImageRequested(detection.getId()));
+          featureImageRequestedService.accept(
+              new FeatureImageRequested(detection.getId(), detection.getPolygonGeoJsonZone()));
           return null;
         };
     Callable<Void> machineDetectionProcessCallableVoidList =

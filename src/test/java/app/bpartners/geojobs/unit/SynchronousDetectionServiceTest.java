@@ -26,7 +26,7 @@ import app.bpartners.geojobs.service.SynchronousDetectionService;
 import app.bpartners.geojobs.service.detection.DetectionMachineDetectionCreation;
 import app.bpartners.geojobs.service.detection.DetectionTilingCreation;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
-import app.bpartners.geojobs.service.event.ZoneImageRequestedService;
+import app.bpartners.geojobs.service.event.FeatureImageRequestedService;
 import app.bpartners.geojobs.service.event.ZoneVggRequestedService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
@@ -47,7 +47,7 @@ class SynchronousDetectionServiceTest {
   ZoneDetectionJobService zoneDetectionJobServiceMock = mock();
   Workers workers = new Workers();
   DetectableObjectConfigurationRepository objectConfigurationRepositoryMock = mock();
-  ZoneImageRequestedService zoneImageRequestedServiceMock = mock();
+  FeatureImageRequestedService featureImageRequestedServiceMock = mock();
   EntityManager entityManagerMock = mock();
   EventProducer eventProducerMock = mock();
   SynchronousDetectionService subject =
@@ -63,7 +63,7 @@ class SynchronousDetectionServiceTest {
           zoneDetectionJobServiceMock,
           workers,
           objectConfigurationRepositoryMock,
-          zoneImageRequestedServiceMock,
+          featureImageRequestedServiceMock,
           eventProducerMock,
           entityManagerMock);
 

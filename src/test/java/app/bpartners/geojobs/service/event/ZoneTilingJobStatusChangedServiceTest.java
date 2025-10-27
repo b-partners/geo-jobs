@@ -1,6 +1,8 @@
 package app.bpartners.geojobs.service.event;
 
 import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
+import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toDomainFeature;
+import static app.bpartners.geojobs.endpoint.rest.model.Feature.TypeEnum.FEATURE;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.*;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
 import static java.util.UUID.randomUUID;
@@ -10,12 +12,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.ZoneImageRequested;
+import app.bpartners.geojobs.endpoint.event.model.FeatureImageRequested;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobCreated;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobFailed;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobStatusChanged;
+import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerProperties;
+import app.bpartners.geojobs.endpoint.rest.model.Polygon;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status.HealthStatus;
 import app.bpartners.geojobs.job.model.Status.ProgressionStatus;
@@ -30,6 +34,7 @@ import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.*;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.utils.tiling.TilingTaskCreator;
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -143,7 +148,7 @@ class ZoneTilingJobStatusChangedServiceTest {
     var detection =
         Detection.builder()
             .id(detectionIdentifier)
-            .providedGeoJsonZone(List.of(new Feature()))
+            .providedGeoJsonZone(List.of(toDomainFeature(getProvidedFeature())))
             .detectableObjectConfigurations(List.of())
             .geoServerProperties(
                 new GeoServerProperties().geoServerParameter(new GeoServerParameter()))
@@ -164,14 +169,26 @@ class ZoneTilingJobStatusChangedServiceTest {
     verify(eventProducerMock, times(2)).accept(listCaptor.capture());
     var actualZoneDetectionJobCreated =
         (ZoneDetectionJobCreated) listCaptor.getAllValues().getFirst().getFirst();
-    var actualZoneImageRequested =
-        (ZoneImageRequested) listCaptor.getAllValues().getLast().getFirst();
+    var actualFeatureImageRequested =
+        (FeatureImageRequested) listCaptor.getAllValues().getLast().getFirst();
     assertEquals(
         new ZoneDetectionJobCreated(zoneDetectionJobFromZTJ), actualZoneDetectionJobCreated);
-    assertEquals(new ZoneImageRequested(detectionIdentifier), actualZoneImageRequested);
-    assertEquals(Duration.ofSeconds(30L), actualZoneImageRequested.maxConsumerDuration());
     assertEquals(
-        Duration.ofSeconds(30L), actualZoneImageRequested.maxConsumerBackoffBetweenRetries());
-    assertEquals(EVENT_STACK_2, actualZoneImageRequested.getEventStack());
+        new FeatureImageRequested(detectionIdentifier, getProvidedFeature()),
+        actualFeatureImageRequested);
+    assertEquals(Duration.ofSeconds(30L), actualFeatureImageRequested.maxConsumerDuration());
+    assertEquals(
+        Duration.ofSeconds(30L), actualFeatureImageRequested.maxConsumerBackoffBetweenRetries());
+    assertEquals(EVENT_STACK_2, actualFeatureImageRequested.getEventStack());
+  }
+
+  private static app.bpartners.geojobs.endpoint.rest.model.Feature getProvidedFeature() {
+    return new app.bpartners.geojobs.endpoint.rest.model.Feature()
+        .type(FEATURE)
+        .geometry(
+            new FeatureGeometry(
+                new Polygon()
+                    .coordinates(
+                        List.of(List.of(List.of(BigDecimal.valueOf(0), BigDecimal.valueOf(1)))))));
   }
 }
