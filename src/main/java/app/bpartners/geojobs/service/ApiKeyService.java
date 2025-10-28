@@ -1,5 +1,8 @@
 package app.bpartners.geojobs.service;
 
+import static java.time.Instant.now;
+import static java.util.UUID.randomUUID;
+
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.security.ApiKey;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
@@ -9,9 +12,6 @@ import app.bpartners.geojobs.service.dashboard.UserAccountsApi;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import static java.time.Instant.now;
-import static java.util.UUID.randomUUID;
 
 @Service
 public class ApiKeyService {

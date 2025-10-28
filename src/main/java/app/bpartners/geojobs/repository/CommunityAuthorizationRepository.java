@@ -11,4 +11,6 @@ public interface CommunityAuthorizationRepository
   Optional<CommunityAuthorization> findByApiKey(String apiKey);
 
   Optional<CommunityAuthorization> findByEmail(String email);
+
+  Optional<CommunityAuthorization> findByDashboardApiKey(String actualKey);
 }
