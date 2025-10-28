@@ -6,7 +6,6 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.concurrency.Workers;
-import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.FeatureImageRequested;
 import app.bpartners.geojobs.endpoint.event.model.FeatureVggRequested;
 import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
@@ -47,7 +46,6 @@ public class SynchronousDetectionService
   private final Workers workers;
   private final DetectableObjectConfigurationRepository detectableObjectConfigurationRepository;
   private final FeatureImageRequestedService featureImageRequestedService;
-  private final EventProducer eventProducer;
   private final EntityManager entityManager;
 
   @SneakyThrows

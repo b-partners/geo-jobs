@@ -9,7 +9,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.concurrency.Workers;
-import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.FeatureVggRequested;
 import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionStep;
@@ -49,7 +48,6 @@ class SynchronousDetectionServiceTest {
   DetectableObjectConfigurationRepository objectConfigurationRepositoryMock = mock();
   FeatureImageRequestedService featureImageRequestedServiceMock = mock();
   EntityManager entityManagerMock = mock();
-  EventProducer eventProducerMock = mock();
   SynchronousDetectionService subject =
       new SynchronousDetectionService(
           detectionRepositoryMock,
@@ -64,7 +62,6 @@ class SynchronousDetectionServiceTest {
           workers,
           objectConfigurationRepositoryMock,
           featureImageRequestedServiceMock,
-          eventProducerMock,
           entityManagerMock);
 
   @Test
@@ -88,7 +85,6 @@ class SynchronousDetectionServiceTest {
     when(detectionWithVGGAndImagesFinished.getVggFileKey())
         .thenReturn(null)
         .thenReturn("vggFileKey");
-    doNothing().when(eventProducerMock).accept(any());
     when(detectionWithCreatedZTJMock.getZtjId()).thenReturn(zoneTilingJobId);
     when(detectionWithCreatedZTJMock.toBuilder()).thenReturn(new Detection().toBuilder());
     when(createdZoneDetectionJob.getId()).thenReturn(zoneDetectionJobId);
