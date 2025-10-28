@@ -6,7 +6,6 @@ import static app.bpartners.geojobs.endpoint.rest.model.Polygon.TypeEnum.POLYGON
 import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.HOUSES_0;
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.getRoofMultiPolygon;
 
-import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.FeatureVggRequested;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
@@ -45,7 +44,6 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
   private final TileCoordinatesPolygonIntersection tileCoordinatesPolygonIntersection;
   private final FeatureMapper featureMapper;
   private final DetectionRoofPropertiesRequestedService detectionRoofPropertiesRequestedService;
-  private final EventProducer eventProducer;
   private final TileFinder tileFinder;
 
   @Override

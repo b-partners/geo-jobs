@@ -11,7 +11,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.FeatureVggRequested;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
@@ -52,7 +51,6 @@ class FeatureVggRequestedServiceTest {
   TileCoordinatesPolygonIntersection tileCoordinatesPolygonIntersectionMock = mock();
   FeatureMapper featureMapperMock = mock();
   DetectionRoofPropertiesRequestedService detectionRoofPropertiesRequestedServiceMock = mock();
-  EventProducer eventProducerMock = mock();
   TileFinder tileFinderMock = mock();
 
   FeatureVggRequestedService subject =
@@ -66,7 +64,6 @@ class FeatureVggRequestedServiceTest {
           tileCoordinatesPolygonIntersectionMock,
           featureMapperMock,
           detectionRoofPropertiesRequestedServiceMock,
-          eventProducerMock,
           tileFinderMock);
 
   @Test
