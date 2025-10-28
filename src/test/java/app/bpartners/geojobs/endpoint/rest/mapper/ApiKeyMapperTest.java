@@ -50,6 +50,7 @@ class ApiKeyMapperTest {
         CommunityAuthorization.builder()
             .id(communityAuthorizationId)
             .apiKey(actual.getFirst().getApiKey())
+            .apiKeys(actual.getFirst().getApiKeys())
             .dashboardApiKey(actual.getFirst().getApiKey())
             .name("consumerName")
             .email("consumer@email.com")
