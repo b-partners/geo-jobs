@@ -9,6 +9,7 @@ import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.repository.model.detection.DetectionStep;
 import app.bpartners.geojobs.service.DetectionFeaturesResultImageRetriever;
 import app.bpartners.geojobs.service.DetectionImageAttributeRetriever;
+import app.bpartners.geojobs.service.DetectionImageTileInfoOriginRetriever;
 import app.bpartners.geojobs.service.DetectionVggAttributeRetriever;
 import java.time.Instant;
 import java.util.List;
@@ -25,6 +26,7 @@ class DetectionFromStepMapperTest {
       mock(DetectionVggAttributeRetriever.class);
   RoofDelimiterMapper roofDelimiterMapperMock = mock();
   DetectionStepMapper detectionStepMapper = new DetectionStepMapper();
+  DetectionImageTileInfoOriginRetriever imageTileInfoOriginRetrieverMock = mock();
 
   DetectionFromStepMapper subject =
       new DetectionFromStepMapper(
@@ -33,7 +35,8 @@ class DetectionFromStepMapperTest {
           detectionImageAttributeRetrieverMock,
           detectionVggAttributeRetrieverMock,
           detectionStepMapper,
-          roofDelimiterMapperMock);
+          roofDelimiterMapperMock,
+          imageTileInfoOriginRetrieverMock);
 
   @Test
   void should_map_repository_detection_and_step_to_rest_detection() {
@@ -65,6 +68,7 @@ class DetectionFromStepMapperTest {
     when(bucketComponentMock.presign("geojson-key")).thenReturn("geojson-url");
     when(bucketComponentMock.presign("pdf-key")).thenReturn("pdf-url");
     when(roofDelimiterMapperMock.toRestPolygon(any())).thenReturn(mock());
+    when(imageTileInfoOriginRetrieverMock.apply(any())).thenReturn(mock());
 
     var actual = subject.apply(repoDetection, step);
 

@@ -13,6 +13,7 @@ import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.repository.model.detection.DetectionStep;
 import app.bpartners.geojobs.service.DetectionFeaturesResultImageRetriever;
 import app.bpartners.geojobs.service.DetectionImageAttributeRetriever;
+import app.bpartners.geojobs.service.DetectionImageTileInfoOriginRetriever;
 import app.bpartners.geojobs.service.DetectionVggAttributeRetriever;
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -33,6 +34,7 @@ public class DetectionFromStepMapper
   private final DetectionVggAttributeRetriever vggAttributeRetriever;
   private final DetectionStepMapper detectionStepMapper;
   private final RoofDelimiterMapper roofDelimiterMapper;
+  private final DetectionImageTileInfoOriginRetriever imageTileInfoOriginRetriever;
 
   @Override
   public Detection apply(
@@ -52,6 +54,7 @@ public class DetectionFromStepMapper
     var geojsonUrl = bucketComponent.presign(detection.getGeojsonS3FileKey());
     var pdfUrl = bucketComponent.presign(detection.getPdfFileKey());
     var featuresWithHiddenProperties = hideUselessRestProperties(features);
+    var imageTileInfoOrigin = imageTileInfoOriginRetriever.apply(detection);
 
     return new Detection()
         .id(detection.getEndToEndId())
@@ -62,6 +65,7 @@ public class DetectionFromStepMapper
         .geoJsonZone(featuresWithHiddenProperties)
         .geoJsonUrl(geojsonUrl)
         .imageUrl(imageUrl)
+        .imageTileInfoOrigin(imageTileInfoOrigin)
         .pdfUrl(pdfUrl)
         .vggUrl(vggUrl)
         .geoServerProperties(detection.getGeoServerProperties())
@@ -115,7 +119,7 @@ public class DetectionFromStepMapper
     if (properties == null
         || !properties.containsKey(ROOF_SLOPE_PROPERTY_NAME)
         || !properties.containsKey(ROOF_HEIGHT_PROPERTY_NAME)) {
-      return new RoofDelimiter().polygon(polygonRoofDelimitation);
+      return new RoofDelimiter().polygon(roofDelimiterMapper.toRestPolygon(featureDelimitation));
     }
 
     var roofSlope = ((Number) properties.get(ROOF_SLOPE_PROPERTY_NAME)).doubleValue();
