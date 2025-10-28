@@ -81,6 +81,17 @@ public class FeatureImageRequestedService implements Consumer<FeatureImageReques
           "Address " + detection.getZoneName() + " not supported for now");
     }
 
-    bucketComponent.upload(assembleImageFile, "zone_images/" + detection.getId() + ".jpg");
+    if (event.getFeatureNb() == 0) {
+      bucketComponent.upload(assembleImageFile, "zone_images/" + detection.getId() + ".jpg");
+    }
+    bucketComponent.upload(
+        assembleImageFile,
+        "zone_images/"
+            + detection.getId()
+            + "/"
+            + event.getFeatureNb()
+            + "/"
+            + detection.getZoneName()
+            + ".jpg");
   }
 }

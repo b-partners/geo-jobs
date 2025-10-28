@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
+import static java.lang.System.currentTimeMillis;
 import static java.util.UUID.randomUUID;
 import static javax.imageio.ImageIO.read;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -80,7 +81,7 @@ class FeatureImageRequestedServiceTest {
     when(geometrySquareMeterAreaMock.apply(polygonGeometryMock)).thenReturn(ONE_KILOMETRE_AREA + 1);
 
     assertDoesNotThrow(
-        () -> subject.accept(new FeatureImageRequested(detectionIdentifier, getFeature())));
+        () -> subject.accept(new FeatureImageRequested(detectionIdentifier, getFeature(), 0)));
     verify(tilingTaskRepositoryMock, never()).findAllByJobId(any());
     verify(bucketComponentMock, never()).download(any());
     verify(tileImageAssemblerMock, never()).apply(any());
@@ -110,11 +111,13 @@ class FeatureImageRequestedServiceTest {
     var imageFileMock = mock(File.class);
     var assembleImageFileMock = mock(File.class);
     var randomBucketPath = randomUUID().toString();
+    var randomZoneName = "random zone name " + currentTimeMillis();
 
     MockedStatic<ImageIO> imageIOMockedStatic = mockStatic(ImageIO.class);
     imageIOMockedStatic.when(() -> read(any(File.class))).thenReturn(mock(BufferedImage.class));
     when(detectionMock.getId()).thenReturn(detectionIdentifier);
     when(detectionMock.getZtjId()).thenReturn(tilingJobIdentifier);
+    when(detectionMock.getZoneName()).thenReturn(randomZoneName);
     when(detectionRepositoryMock.findById(detectionIdentifier))
         .thenReturn(Optional.of(detectionMock));
     var polygonGeometryMock = mock(org.locationtech.jts.geom.Polygon.class);
@@ -143,15 +146,23 @@ class FeatureImageRequestedServiceTest {
     when(bucketComponentMock.upload(
             assembleImageFileMock, "zone_images/" + detectionIdentifier + ".jpg"))
         .thenReturn(mock(FileHash.class));
+    when(bucketComponentMock.upload(
+            assembleImageFileMock,
+            "zone_images/" + detectionIdentifier + "/" + 0 + "/" + randomZoneName + ".jpg"))
+        .thenReturn(mock(FileHash.class));
 
     assertDoesNotThrow(
-        () -> subject.accept(new FeatureImageRequested(detectionIdentifier, getFeature())));
+        () -> subject.accept(new FeatureImageRequested(detectionIdentifier, getFeature(), 0)));
 
     verify(tilingTaskRepositoryMock).findAllByJobId(tilingJobIdentifier);
     verify(bucketComponentMock).download(randomBucketPath);
     verify(tileImageAssemblerMock).apply(tilesWithImagesMock);
     verify(bucketComponentMock)
         .upload(assembleImageFileMock, "zone_images/" + detectionIdentifier + ".jpg");
+    verify(bucketComponentMock)
+        .upload(
+            assembleImageFileMock,
+            "zone_images/" + detectionIdentifier + "/" + 0 + "/" + randomZoneName + ".jpg");
     imageIOMockedStatic.close();
   }
 }

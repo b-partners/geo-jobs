@@ -79,7 +79,7 @@ public class SynchronousDetectionService
     Callable<Void> imageRequestCallableVoidList =
         () -> {
           featureImageRequestedService.accept(
-              new FeatureImageRequested(detection.getId(), detection.getPolygonGeoJsonZone()));
+              new FeatureImageRequested(detection.getId(), detection.getPolygonGeoJsonZone(), 0));
           return null;
         };
     Callable<Void> machineDetectionProcessCallableVoidList =

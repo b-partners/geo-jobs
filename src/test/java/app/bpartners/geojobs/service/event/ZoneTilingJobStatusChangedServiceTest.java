@@ -174,7 +174,7 @@ class ZoneTilingJobStatusChangedServiceTest {
     assertEquals(
         new ZoneDetectionJobCreated(zoneDetectionJobFromZTJ), actualZoneDetectionJobCreated);
     assertEquals(
-        new FeatureImageRequested(detectionIdentifier, getProvidedFeature()),
+        new FeatureImageRequested(detectionIdentifier, getProvidedFeature(), 0),
         actualFeatureImageRequested);
     assertEquals(Duration.ofSeconds(30L), actualFeatureImageRequested.maxConsumerDuration());
     assertEquals(

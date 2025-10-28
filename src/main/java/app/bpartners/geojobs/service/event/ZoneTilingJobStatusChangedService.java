@@ -84,12 +84,13 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
         detectionDelimitationRetriever.accept(savedDetection);
 
         if (savedDetection.needsImageOutput()) {
-          savedDetection
-              .getProvidedGeoJsonZone()
-              .forEach(
-                  feature ->
-                      eventProducer.accept(
-                          List.of(new FeatureImageRequested(savedDetection.getId(), feature))));
+          var detectionIdentifier = savedDetection.getId();
+          var providedGeoJsonZone = savedDetection.getProvidedGeoJsonZone();
+          for (int i = 0; i < providedGeoJsonZone.size(); i++) {
+            eventProducer.accept(
+                List.of(
+                    new FeatureImageRequested(detectionIdentifier, providedGeoJsonZone.get(i), i)));
+          }
         }
       }
       tilingFinishedMailer.accept(ztj);

@@ -8,7 +8,6 @@ import java.time.Duration;
 import lombok.*;
 
 @NoArgsConstructor
-@AllArgsConstructor
 @Builder(toBuilder = true)
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -16,6 +15,13 @@ import lombok.*;
 public class FeatureImageRequested extends PojaEvent {
   private String detectionIdentifier;
   private Feature feature;
+  private int featureNb = 0;
+
+  public FeatureImageRequested(String detectionIdentifier, Feature feature, int featureNb) {
+    this.detectionIdentifier = detectionIdentifier;
+    this.feature = feature;
+    this.featureNb = featureNb;
+  }
 
   @Override
   public Duration maxConsumerDuration() {
