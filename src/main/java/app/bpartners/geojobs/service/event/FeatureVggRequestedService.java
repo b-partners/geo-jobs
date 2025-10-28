@@ -60,7 +60,11 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
         detectionRoofPropertiesRequestedService.applyRoofPropertiesOnDelimitation(
             machineDetectedTiles,
             detection.getFeatureWithDelimitations().stream()
-                .filter(f -> f.getRestFeature() != null && f.getRestFeature().equals(feature))
+                .filter(
+                    f ->
+                        f.getRestFeature() != null
+                            && f.getRestFeature().getGeometry() != null
+                            && f.getRestFeature().getGeometry().equals(feature.getGeometry()))
                 .findFirst()
                 .orElseThrow());
     var polygonGeoJson = getPolygonGeoJsonFromFeature(feature);
