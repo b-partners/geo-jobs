@@ -19,6 +19,7 @@ import java.net.URI;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -72,7 +73,8 @@ class DetectionFeaturesResultImageRetrieverTest {
             new GeoServerProperties().geoServerParameter(new GeoServerParameter().layers(layer)));
     when(bucketComponentMock.presign(
             layer + "/extended_original_" + longitude + "_" + latitude + ".jpg",
-            Duration.ofHours(1L)))
+            Duration.ofHours(1L),
+            Optional.empty()))
         .thenReturn(new URI(PRE_SIGNED_S3_URL).toURL());
 
     var actual = subject.apply(detectionMock);

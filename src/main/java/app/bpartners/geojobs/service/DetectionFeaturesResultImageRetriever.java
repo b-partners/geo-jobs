@@ -10,10 +10,14 @@ import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -124,7 +128,9 @@ public class DetectionFeaturesResultImageRetriever implements Function<Detection
             .isPresent();
     if (fileExist) {
       try {
-        var propertyUrl = bucketComponent.presign(fileKey, Duration.ofHours(1L));
+        var addressesList = retrieveAddressesProperty(feature);
+        var customFileName = getFileName(fileProperty, addressesList);
+        var propertyUrl = bucketComponent.presign(fileKey, Duration.ofHours(1L), customFileName);
         var properties =
             feature.getProperties() == null
                 ? new HashMap<String, Object>()
@@ -134,6 +140,43 @@ public class DetectionFeaturesResultImageRetriever implements Function<Detection
       } catch (RuntimeException ignored) {
         log.warn("Unable to presign file {}, exception caught {}", fileKey, ignored.getMessage());
       }
+    }
+  }
+
+  private Optional<String> getFileName(String fileProperty, List<String> addressesList) {
+    Optional<String> customFileName;
+    if ("original_image_url".equals(fileProperty)) {
+      if (addressesList != null && !addressesList.isEmpty()) {
+        customFileName =
+            Optional.of(
+                "original_image_url_".concat(addressesList.stream().findFirst().orElseThrow()));
+      } else {
+        customFileName = Optional.empty();
+      }
+    } else if ("vgg_file_url".equals(fileProperty)) {
+      if (addressesList != null && !addressesList.isEmpty()) {
+        customFileName =
+            Optional.of("vgg_file_url_".concat(addressesList.stream().findFirst().orElseThrow()));
+      } else {
+        customFileName = Optional.empty();
+      }
+    } else {
+      customFileName = Optional.empty();
+    }
+    return customFileName;
+  }
+
+  private List<String> retrieveAddressesProperty(Feature feature) {
+    if (feature.getProperties() == null
+        || (feature.getProperties().isEmpty()
+            || feature.getProperties().get("addresses") == null)) {
+      return null;
+    }
+    try {
+      return new ObjectMapper()
+          .readValue(feature.getProperties().get("addresses").toString(), new TypeReference<>() {});
+    } catch (JsonProcessingException e) {
+      return null;
     }
   }
 }
