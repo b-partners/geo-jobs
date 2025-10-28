@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.RoofDelimiterMapper;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionStepName;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.DetectionStep;
 import app.bpartners.geojobs.service.DetectionFeaturesResultImageRetriever;
 import app.bpartners.geojobs.service.DetectionImageAttributeRetriever;
@@ -49,6 +50,7 @@ class DetectionFromStepMapperTest {
     repoDetection.setGeojsonS3FileKey("geojson-key");
     repoDetection.setPdfFileKey("pdf-key");
     repoDetection.setConvertedAddresses(List.of("addr1", "addr2"));
+    repoDetection.setProvidedGeoJsonZone(List.of(mock(Feature.class)));
 
     var step = new DetectionStep();
     step.setId("step-1");

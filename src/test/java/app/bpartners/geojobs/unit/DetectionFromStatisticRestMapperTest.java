@@ -50,6 +50,7 @@ class DetectionFromStatisticRestMapperTest {
 
   private static Detection detectionWithoutFeatureDelimitation() {
     return Detection.builder()
+        .providedGeoJsonZone(List.of(mock(Feature.class)))
         .vggFileKey("vgg-key")
         .shapeFileKey("shape-key")
         .geojsonS3FileKey("geojson-key")
@@ -73,6 +74,7 @@ class DetectionFromStatisticRestMapperTest {
     var featureDelimitation = new FeatureWithDelimitation(feature, List.of(feature));
 
     return Detection.builder()
+        .providedGeoJsonZone(List.of(feature))
         .polygonRoofDelimitation(mock())
         .vggFileKey("vgg-key")
         .shapeFileKey("shape-key")
@@ -128,6 +130,7 @@ class DetectionFromStatisticRestMapperTest {
     var detection =
         Detection.builder()
             .polygonRoofDelimitation(mock())
+            .providedGeoJsonZone(List.of(mock(Feature.class)))
             .vggFileKey("vgg-key")
             .shapeFileKey("shape-key")
             .geojsonS3FileKey("geojson-key")
