@@ -4,8 +4,6 @@ import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.HOUSES_0;
 import static javax.imageio.ImageIO.read;
 
 import app.bpartners.geojobs.endpoint.event.model.FeatureImageRequested;
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
-import app.bpartners.geojobs.endpoint.rest.model.Point;
 import app.bpartners.geojobs.file.WhiteImageDetector;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
@@ -22,7 +20,6 @@ import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.locationtech.jts.geom.Polygon;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -44,7 +41,7 @@ public class FeatureImageRequestedService implements Consumer<FeatureImageReques
   @Override
   public void accept(FeatureImageRequested event) {
     var feature = event.getFeature();
-    var polygonGeometry = retrievePolygonGeometry(feature);
+    var polygonGeometry = geometryConverter.retrievePolygonGeometry(feature);
     if (polygonGeometry == null) return;
     var detectionIdentifier = event.getDetectionIdentifier();
     var actualArea = geometrySquareMeterArea.apply(polygonGeometry);
@@ -85,38 +82,5 @@ public class FeatureImageRequestedService implements Consumer<FeatureImageReques
     }
 
     bucketComponent.upload(assembleImageFile, "zone_images/" + detection.getId() + ".jpg");
-  }
-
-  private Polygon retrievePolygonGeometry(Feature feature) {
-    var geometryInstance = feature.getGeometry().getActualInstance();
-    switch (geometryInstance) {
-      case Point point -> {
-        var nearestRoofMultiPolygon = geometryConverter.retrieveNearestRoofMultiPolygon(point);
-        if (nearestRoofMultiPolygon.getNumGeometries() > 1) {
-          log.error(
-              "Unable to handle multiple polygons to generate image for feature : {}", feature);
-          return null;
-        } else {
-          return (Polygon) nearestRoofMultiPolygon.getGeometryN(0);
-        }
-      }
-      case app.bpartners.geojobs.endpoint.rest.model.Polygon restPolygon -> {
-        return geometryConverter.convertToPolygon(restPolygon.getCoordinates().getFirst());
-      }
-      case app.bpartners.geojobs.endpoint.rest.model.MultiPolygon restMultiPolygon -> {
-        var jtsMultiPolygon = geometryConverter.apply(restMultiPolygon.getCoordinates());
-        if (jtsMultiPolygon.getNumGeometries() > 1) {
-          log.error(
-              "Unable to handle multiple polygons to generate image for feature : {}", feature);
-          return null;
-        } else {
-          return (Polygon) jtsMultiPolygon.getGeometryN(0);
-        }
-      }
-      default -> {
-        log.error("Unable to handle geometry type : {}", geometryInstance);
-        return null;
-      }
-    }
   }
 }

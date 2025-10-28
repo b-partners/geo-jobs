@@ -10,7 +10,7 @@ import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.concurrency.Workers;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.ZoneVggRequested;
+import app.bpartners.geojobs.endpoint.event.model.FeatureVggRequested;
 import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionStep;
 import app.bpartners.geojobs.endpoint.rest.model.Status;
@@ -27,7 +27,7 @@ import app.bpartners.geojobs.service.detection.DetectionMachineDetectionCreation
 import app.bpartners.geojobs.service.detection.DetectionTilingCreation;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.event.FeatureImageRequestedService;
-import app.bpartners.geojobs.service.event.ZoneVggRequestedService;
+import app.bpartners.geojobs.service.event.FeatureVggRequestedService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import jakarta.persistence.EntityManager;
@@ -42,7 +42,7 @@ class SynchronousDetectionServiceTest {
   ZoneTilingJobService zoneTilingJobServiceMock = mock();
   DetectionMachineDetectionCreation detectionMachineDetectionCreationMock = mock();
   DetectionDelimitationRetriever detectionDelimitationRetrieverMock = mock();
-  ZoneVggRequestedService zoneVggRequestedServiceMock = mock();
+  FeatureVggRequestedService featureVggRequestedServiceMock = mock();
   GeoJsonConversionJobService geoJsonConversionJobServiceMock = mock();
   ZoneDetectionJobService zoneDetectionJobServiceMock = mock();
   Workers workers = new Workers();
@@ -58,7 +58,7 @@ class SynchronousDetectionServiceTest {
           zoneTilingJobServiceMock,
           detectionMachineDetectionCreationMock,
           detectionDelimitationRetrieverMock,
-          zoneVggRequestedServiceMock,
+          featureVggRequestedServiceMock,
           geoJsonConversionJobServiceMock,
           zoneDetectionJobServiceMock,
           workers,
@@ -103,7 +103,9 @@ class SynchronousDetectionServiceTest {
     doNothing()
         .when(detectionMachineDetectionCreationMock)
         .processMachineDetection(detectionWithCreatedZDJMock, createdZoneDetectionJob, tilingTasks);
-    doNothing().when(zoneVggRequestedServiceMock).accept(new ZoneVggRequested(detectionId));
+    doNothing()
+        .when(featureVggRequestedServiceMock)
+        .accept(new FeatureVggRequested(detectionId, null, 0));
     when(detectionRepositoryMock.findById(detectionId))
         .thenReturn(Optional.of(detectionWithVGGAndImagesFinished));
     doNothing().when(entityManagerMock).clear();

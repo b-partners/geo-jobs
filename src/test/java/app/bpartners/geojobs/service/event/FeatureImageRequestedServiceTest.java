@@ -93,7 +93,13 @@ class FeatureImageRequestedServiceTest {
             new FeatureGeometry(
                 new Polygon()
                     .coordinates(
-                        List.of(List.of(List.of(BigDecimal.valueOf(0), BigDecimal.valueOf(1)))))));
+                        List.of(
+                            List.of(
+                                List.of(BigDecimal.valueOf(0), BigDecimal.valueOf(10)),
+                                List.of(BigDecimal.valueOf(10), BigDecimal.valueOf(10)),
+                                List.of(BigDecimal.valueOf(10), BigDecimal.valueOf(0)),
+                                List.of(BigDecimal.valueOf(0), BigDecimal.valueOf(0)),
+                                List.of(BigDecimal.valueOf(0), BigDecimal.valueOf(10)))))));
   }
 
   @Test
@@ -112,7 +118,7 @@ class FeatureImageRequestedServiceTest {
     when(detectionRepositoryMock.findById(detectionIdentifier))
         .thenReturn(Optional.of(detectionMock));
     var polygonGeometryMock = mock(org.locationtech.jts.geom.Polygon.class);
-    when(geometryConverterMock.convertToPolygon(any())).thenReturn(polygonGeometryMock);
+    when(geometryConverterMock.retrievePolygonGeometry(any())).thenReturn(polygonGeometryMock);
     when(geometrySquareMeterAreaMock.apply(polygonGeometryMock)).thenReturn(ONE_KILOMETRE_AREA);
     var tilesWithImagesMock =
         List.of(
