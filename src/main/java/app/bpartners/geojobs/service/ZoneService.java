@@ -489,7 +489,9 @@ public class ZoneService {
     detection.addStep(detectionStepMapper.toDomain(detection.getId(), step));
     detectionRepository.save(detection);
 
-    eventProducer.accept(List.of(detection));
+    if (detection.isToNotify()) {
+      eventProducer.accept(List.of(detection));
+    }
 
     return detectionFromStepMapper.apply(
         detection, detectionStepMapper.toDomain(detection.getId(), step));

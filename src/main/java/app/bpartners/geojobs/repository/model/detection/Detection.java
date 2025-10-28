@@ -93,6 +93,9 @@ public class Detection extends PojaEvent implements Serializable {
   @Getter(AccessLevel.NONE)
   private List<Feature> providedGeoJsonZone;
 
+  @Column(name = "to_notify", nullable = false)
+  private boolean toNotify = false;
+
   @JdbcTypeCode(JSON)
   @Getter(AccessLevel.NONE)
   private List<Feature> multiPolygonGeoJsonZone;
