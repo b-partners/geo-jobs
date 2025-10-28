@@ -40,11 +40,12 @@ class SecurityControllerIT extends FacadeIT {
 
     assertEquals(1, actual.size());
     var actualKey = actual.getFirst().getKey();
-    var actualCommunity = authorizationRepository.findByApiKey(actualKey).orElse(null);
+    var actualCommunity = authorizationRepository.findByDashboardApiKey(actualKey).orElse(null);
     assertEquals(
         CommunityAuthorization.builder()
             .id(actualCommunity.getId())
             .apiKey(actualKey)
+            .apiKeys(actualCommunity.getApiKeys())
             .creationDatetime(actualCommunity.getCreationDatetime())
             .name("dummyConsumerName")
             .email(consumerEmail)
