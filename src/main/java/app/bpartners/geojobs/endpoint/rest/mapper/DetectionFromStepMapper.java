@@ -46,9 +46,11 @@ public class DetectionFromStepMapper
   public Detection apply(
       app.bpartners.geojobs.repository.model.detection.Detection detection,
       app.bpartners.geojobs.endpoint.rest.model.DetectionStep restStep) {
+    var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
+    var geometryProvidedCount = providedGeoJsonZone == null ? 0 : providedGeoJsonZone.size();
     var features = featuresImageRetriever.apply(detection);
-    var imageUrl = imageAttributeRetriever.apply(detection);
-    var vggUrl = vggAttributeRetriever.apply(detection);
+    var imageUrl = geometryProvidedCount != 1 ? null : imageAttributeRetriever.apply(detection);
+    var vggUrl = geometryProvidedCount != 1 ? null : vggAttributeRetriever.apply(detection);
     var excelUrl = bucketComponent.presign(detection.getExcelFileKey());
     var shapeUrl = bucketComponent.presign(detection.getShapeFileKey());
     var geojsonUrl = bucketComponent.presign(detection.getGeojsonS3FileKey());

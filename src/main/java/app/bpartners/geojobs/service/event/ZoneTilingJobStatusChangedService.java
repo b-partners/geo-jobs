@@ -3,7 +3,7 @@ package app.bpartners.geojobs.service.event;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.ZoneImageRequested;
+import app.bpartners.geojobs.endpoint.event.model.FeatureImageRequested;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobCreated;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobFailed;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobStatusChanged;
@@ -84,11 +84,13 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
         detectionDelimitationRetriever.accept(savedDetection);
 
         if (savedDetection.needsImageOutput()) {
-          eventProducer.accept(
-              List.of(
-                  ZoneImageRequested.builder()
-                      .detectionIdentifier(savedDetection.getId())
-                      .build()));
+          var detectionIdentifier = savedDetection.getId();
+          var providedGeoJsonZone = savedDetection.getProvidedGeoJsonZone();
+          for (int i = 0; i < providedGeoJsonZone.size(); i++) {
+            eventProducer.accept(
+                List.of(
+                    new FeatureImageRequested(detectionIdentifier, providedGeoJsonZone.get(i), i)));
+          }
         }
       }
       tilingFinishedMailer.accept(ztj);
