@@ -1,8 +1,6 @@
 package app.bpartners.geojobs.service;
 
-import static java.time.Instant.now;
-import static java.util.UUID.randomUUID;
-
+import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.security.ApiKey;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
@@ -11,6 +9,9 @@ import app.bpartners.geojobs.service.dashboard.UserAccountsApi;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import static java.time.Instant.now;
+import static java.util.UUID.randomUUID;
 
 @Service
 public class ApiKeyService {
@@ -28,6 +29,12 @@ public class ApiKeyService {
   }
 
   public List<ApiKey> generateApiKeys(List<CommunityAuthorization> authorizations) {
+    for (CommunityAuthorization auth : authorizations) {
+      if (communityAuthorizationRepository.findByEmail(auth.getEmail()).isPresent()) {
+        throw new BadRequestException("Email=" + auth.getEmail() + " is already used");
+      }
+    }
+
     var communityAuthorizations = handleExistingCommunities(authorizations);
 
     communityAuthorizations.forEach(
