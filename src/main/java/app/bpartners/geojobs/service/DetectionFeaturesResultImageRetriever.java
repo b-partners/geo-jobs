@@ -10,9 +10,6 @@ import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -70,6 +67,11 @@ public class DetectionFeaturesResultImageRetriever implements Function<Detection
     var zoneDetectionJobId = detection.getZdjId();
     for (int featureNb = 0; featureNb < updatedGeoJson.size(); featureNb++) {
       var feature = updatedGeoJson.get(featureNb);
+      if (feature.getProperties() == null) {
+        feature.setProperties(new HashMap<>());
+      }
+      feature.getProperties().put("zone_name", zoneName);
+      feature.getProperties().put("nb", featureNb);
       var geometryType = feature.getGeometry().getActualInstance();
       Point centroidFromProperties;
       switch (geometryType) {
@@ -105,6 +107,10 @@ public class DetectionFeaturesResultImageRetriever implements Function<Detection
           "vgg/" + zoneDetectionJobId + "/" + featureNb + "/" + zoneName + ".json",
           feature,
           "vgg_file_url");
+
+      if (feature.getProperties().containsKey("zone_name"))
+        feature.getProperties().remove("zone_name");
+      if (feature.getProperties().containsKey("nb")) feature.getProperties().remove("nb");
     }
     return updatedGeoJson;
   }
@@ -128,9 +134,18 @@ public class DetectionFeaturesResultImageRetriever implements Function<Detection
             .isPresent();
     if (fileExist) {
       try {
-        var addressesList = retrieveAddressesProperty(feature);
-        var customFileName = getFileName(fileProperty, addressesList);
-        var propertyUrl = bucketComponent.presign(fileKey, Duration.ofHours(1L), customFileName);
+        Optional<String> customFileName =
+            feature.getProperties() != null
+                    && feature.getProperties().containsKey("zone_name")
+                    && feature.getProperties().containsKey("nb")
+                ? Optional.of(
+                    feature.getProperties().get("zone_name")
+                        + "_"
+                        + feature.getProperties().get("nb")
+                        + (fileProperty.contains("image_url") ? ".jpg" : ".json"))
+                : Optional.empty();
+        var propertyUrl =
+            customBucketComponent.presign(fileKey, Duration.ofHours(1L), customFileName);
         var properties =
             feature.getProperties() == null
                 ? new HashMap<String, Object>()
@@ -140,43 +155,6 @@ public class DetectionFeaturesResultImageRetriever implements Function<Detection
       } catch (RuntimeException ignored) {
         log.warn("Unable to presign file {}, exception caught {}", fileKey, ignored.getMessage());
       }
-    }
-  }
-
-  private Optional<String> getFileName(String fileProperty, List<String> addressesList) {
-    Optional<String> customFileName;
-    if ("original_image_url".equals(fileProperty)) {
-      if (addressesList != null && !addressesList.isEmpty()) {
-        customFileName =
-            Optional.of(
-                "original_image_url_".concat(addressesList.stream().findFirst().orElseThrow()));
-      } else {
-        customFileName = Optional.empty();
-      }
-    } else if ("vgg_file_url".equals(fileProperty)) {
-      if (addressesList != null && !addressesList.isEmpty()) {
-        customFileName =
-            Optional.of("vgg_file_url_".concat(addressesList.stream().findFirst().orElseThrow()));
-      } else {
-        customFileName = Optional.empty();
-      }
-    } else {
-      customFileName = Optional.empty();
-    }
-    return customFileName;
-  }
-
-  private List<String> retrieveAddressesProperty(Feature feature) {
-    if (feature.getProperties() == null
-        || (feature.getProperties().isEmpty()
-            || feature.getProperties().get("addresses") == null)) {
-      return null;
-    }
-    try {
-      return new ObjectMapper()
-          .readValue(feature.getProperties().get("addresses").toString(), new TypeReference<>() {});
-    } catch (JsonProcessingException e) {
-      return null;
     }
   }
 }
