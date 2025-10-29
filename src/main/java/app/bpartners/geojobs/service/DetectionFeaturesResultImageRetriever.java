@@ -14,6 +14,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -66,6 +67,11 @@ public class DetectionFeaturesResultImageRetriever implements Function<Detection
     var zoneDetectionJobId = detection.getZdjId();
     for (int featureNb = 0; featureNb < updatedGeoJson.size(); featureNb++) {
       var feature = updatedGeoJson.get(featureNb);
+      if (feature.getProperties() == null) {
+        feature.setProperties(new HashMap<>());
+      }
+      feature.getProperties().put("zone_name", zoneName);
+      feature.getProperties().put("nb", featureNb);
       var geometryType = feature.getGeometry().getActualInstance();
       Point centroidFromProperties;
       switch (geometryType) {
@@ -101,6 +107,10 @@ public class DetectionFeaturesResultImageRetriever implements Function<Detection
           "vgg/" + zoneDetectionJobId + "/" + featureNb + "/" + zoneName + ".json",
           feature,
           "vgg_file_url");
+
+      if (feature.getProperties().containsKey("zone_name"))
+        feature.getProperties().remove("zone_name");
+      if (feature.getProperties().containsKey("nb")) feature.getProperties().remove("nb");
     }
     return updatedGeoJson;
   }
@@ -124,7 +134,18 @@ public class DetectionFeaturesResultImageRetriever implements Function<Detection
             .isPresent();
     if (fileExist) {
       try {
-        var propertyUrl = bucketComponent.presign(fileKey, Duration.ofHours(1L));
+        Optional<String> customFileName =
+            feature.getProperties() != null
+                    && feature.getProperties().containsKey("zone_name")
+                    && feature.getProperties().containsKey("nb")
+                ? Optional.of(
+                    feature.getProperties().get("zone_name")
+                        + "_"
+                        + feature.getProperties().get("nb")
+                        + (fileProperty.contains("image_url") ? ".jpg" : ".json"))
+                : Optional.empty();
+        var propertyUrl =
+            customBucketComponent.presign(fileKey, Duration.ofHours(1L), customFileName);
         var properties =
             feature.getProperties() == null
                 ? new HashMap<String, Object>()
