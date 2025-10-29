@@ -2,10 +2,11 @@ package app.bpartners.geojobs.service.event;
 
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.TILING;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
-import static app.bpartners.geojobs.service.event.DetectionStepUpdated.computeStaticDetectionStepUpdateEmailBody;
+import static app.bpartners.geojobs.service.event.DetectionStepUpdatedService.computeStaticDetectionStepUpdateEmailBody;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
+import app.bpartners.geojobs.endpoint.event.model.DetectionStepUpdated;
 import app.bpartners.geojobs.mail.Email;
 import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.repository.model.detection.Detection;
@@ -16,9 +17,9 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
-class DetectionStepUpdatedTest {
+class DetectionStepUpdatedServiceTest {
   Mailer mailerMock = mock();
-  DetectionStepUpdated subject = new DetectionStepUpdated(mailerMock);
+  DetectionStepUpdatedService subject = new DetectionStepUpdatedService(mailerMock);
 
   @Test
   void accept_ok() throws AddressException {
@@ -31,7 +32,7 @@ class DetectionStepUpdatedTest {
             .emailReceiver("emailReceiver")
             .build();
 
-    subject.accept(detection);
+    subject.accept(DetectionStepUpdated.builder().detection(detection).build());
 
     String htmlBody = computeStaticDetectionStepUpdateEmailBody(detection);
     var emailCaptor = ArgumentCaptor.forClass(Email.class);

@@ -12,7 +12,6 @@ import static java.time.Instant.now;
 import static org.hibernate.type.SqlTypes.JSON;
 import static org.hibernate.type.SqlTypes.NAMED_ENUM;
 
-import app.bpartners.geojobs.endpoint.event.model.PojaEvent;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.model.Detection.GeoJsonDelimitationTypeEnum;
@@ -24,7 +23,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -44,7 +42,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 @Setter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(name = "detection")
-public class Detection extends PojaEvent implements Serializable {
+public class Detection implements Serializable {
   @Id private String id;
   private String endToEndId;
 
@@ -259,15 +257,5 @@ public class Detection extends PojaEvent implements Serializable {
 
   public boolean isHumanDetectionStepProcessing(ZoneDetectionJob zoneDetectionJob) {
     return isMachineDetectionFinished(zoneDetectionJob) && geojsonS3FileKey == null;
-  }
-
-  @Override
-  public Duration maxConsumerDuration() {
-    return Duration.ofMinutes(3L);
-  }
-
-  @Override
-  public Duration maxConsumerBackoffBetweenRetries() {
-    return Duration.ofMinutes(3L);
   }
 }

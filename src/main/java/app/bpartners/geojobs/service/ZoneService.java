@@ -17,6 +17,7 @@ import static java.time.Instant.parse;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionExcelFileSaved;
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
+import app.bpartners.geojobs.endpoint.event.model.DetectionStepUpdated;
 import app.bpartners.geojobs.endpoint.event.model.DetectionTilingRequested;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerificationSent;
 import app.bpartners.geojobs.endpoint.event.model.zone.DetectionQualityControlFinished;
@@ -496,7 +497,7 @@ public class ZoneService {
     detectionRepository.save(detection);
 
     if (detection.isToNotify()) {
-      eventProducer.accept(List.of(detection));
+      eventProducer.accept(List.of(DetectionStepUpdated.builder().detection(detection).build()));
     }
 
     return detectionFromStepMapper.apply(
