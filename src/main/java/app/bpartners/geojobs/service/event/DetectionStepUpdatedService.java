@@ -2,6 +2,7 @@ package app.bpartners.geojobs.service.event;
 
 import static java.time.Instant.now;
 
+import app.bpartners.geojobs.endpoint.event.model.DetectionStepUpdated;
 import app.bpartners.geojobs.mail.Email;
 import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.repository.model.detection.Detection;
@@ -19,13 +20,14 @@ import org.thymeleaf.context.Context;
 
 @Service
 @AllArgsConstructor
-public class DetectionStepUpdated implements Consumer<Detection> {
+public class DetectionStepUpdatedService implements Consumer<DetectionStepUpdated> {
   public final Mailer mailer;
   private static final String ADMIN_EMAIL = "tech@birdia.fr";
   private static final String DETECTION_STEP_UPDATED = "detection_step_updated";
 
   @Override
-  public void accept(Detection detection) {
+  public void accept(DetectionStepUpdated detectionStepUpdated) {
+    var detection = detectionStepUpdated.getDetection();
     List<InternetAddress> bcc = List.of();
     var env = System.getenv("ENV");
     String subject =
