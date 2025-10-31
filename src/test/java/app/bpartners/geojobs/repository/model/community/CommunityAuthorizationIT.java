@@ -73,7 +73,7 @@ class CommunityAuthorizationIT extends FacadeIT {
 
     var detectionID = UUID.randomUUID().toString();
     when(detectionCreationMapperMock.apply(
-        any(CreateDetection.class), anyString(), anyString(), anyBoolean()))
+            any(CreateDetection.class), anyString(), anyString(), anyBoolean()))
         .thenReturn(detection(detectionID));
 
     var actual = detectionApi.processDetection(detectionID, createDetection());
@@ -86,12 +86,10 @@ class CommunityAuthorizationIT extends FacadeIT {
     setupClientWithInvalidApiKey();
     var detectionID = UUID.randomUUID().toString();
 
-    var exception = assertThrows(
-        ApiException.class,
-        () ->
-            detectionApi.processDetection(
-                detectionID, createDetection())
-    );
+    var exception =
+        assertThrows(
+            ApiException.class,
+            () -> detectionApi.processDetection(detectionID, createDetection()));
 
     assertTrue(exception.getMessage().contains("403"));
     assertTrue(exception.getMessage().contains("FORBIDDEN"));
@@ -119,8 +117,7 @@ class CommunityAuthorizationIT extends FacadeIT {
 
   void setupClient(String apiKey) {
     var authenticatedClient = new ApiClient();
-    authenticatedClient.setRequestInterceptor(
-        builder -> builder.header(API_KEY_HEADER, apiKey));
+    authenticatedClient.setRequestInterceptor(builder -> builder.header(API_KEY_HEADER, apiKey));
     authenticatedClient.setScheme("http");
     authenticatedClient.setHost("localhost");
     authenticatedClient.setPort(port);
