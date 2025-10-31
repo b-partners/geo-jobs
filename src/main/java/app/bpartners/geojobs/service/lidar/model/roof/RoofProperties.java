@@ -76,7 +76,7 @@ public class RoofProperties {
     return data.ground().points().size() < MINIMUM_GROUND_POINTS_COUNT;
   }
 
-  private Set<LasPointGeometry> cleanedRoofData() {
+  public Set<LasPointGeometry> cleanedRoofData() {
     return roofPointsCleaner.compute(data.roof().points());
   }
 

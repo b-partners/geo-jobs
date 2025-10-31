@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.service.lidar;
+package app.bpartners.geojobs.service.lidar.model.geometry;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.service.GeometrySquareMeterArea.LAMBERT_93;
@@ -9,7 +9,6 @@ import static java.util.Objects.requireNonNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
-import app.bpartners.geojobs.service.lidar.model.geometry.IndexedLas;
 import java.io.File;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;

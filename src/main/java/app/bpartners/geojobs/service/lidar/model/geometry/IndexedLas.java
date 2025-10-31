@@ -66,7 +66,7 @@ public class IndexedLas {
       return lasPointGeometry;
     }
 
-    throw new RuntimeException(
+    throw new IllegalArgumentException(
         "All geometries obtained from LAS file must be points, yet got: " + geometry);
   }
 }

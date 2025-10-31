@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.service.lidar;
+package app.bpartners.geojobs.service.lidar.api;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -9,8 +9,6 @@ import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpStatus.OK;
 
 import app.bpartners.geojobs.conf.FacadeIT;
-import app.bpartners.geojobs.service.lidar.api.FeatureCollection;
-import app.bpartners.geojobs.service.lidar.api.LidarApi;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;

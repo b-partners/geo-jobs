@@ -6,10 +6,14 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
+@Getter
 @RequiredArgsConstructor
 public class Plane3D {
-  @Getter private final double a, b, c, d;
-  @Getter private final Set<LasPointGeometry> points;
+  private final double a;
+  private final double b;
+  private final double c;
+  private final double d;
+  private final Set<LasPointGeometry> points;
 
   public static Plane3D fit(LasPointGeometry p1, LasPointGeometry p2, LasPointGeometry p3) {
     var v1 = p2.subtract(p1);
