@@ -4,7 +4,7 @@ import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFacto
 import static app.bpartners.geojobs.utils.lidar.LidarRoofsAnalysisProcessorCreator.LARGE_LIDAR_FILE_PATH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import app.bpartners.geojobs.service.lidar.model.roof.RoofProperties;
+import app.bpartners.geojobs.service.lidar.model.geometry.roof.RoofProperties;
 import app.bpartners.geojobs.utils.lidar.LidarRoofsAnalysisProcessorCreator;
 import java.io.File;
 import java.nio.file.Files;
@@ -41,8 +41,8 @@ class Planes3DExtractorTest {
     var processor = processorCreator.create(roofGeometries, lidarFile);
     var processResult = processor.apply(roofGeometries);
 
-    var points = processResult.getData(roofGeometry1).roof().points();
-    var planes = subject.apply(points);
+    var property = new RoofProperties(processResult.getData(roofGeometry1));
+    var planes = subject.apply(property.getCleanedRoofPoints());
 
     assertEquals(1, planes.size());
   }
@@ -55,7 +55,7 @@ class Planes3DExtractorTest {
     var processResult = processor.apply(roofGeometries);
 
     var properties = new RoofProperties(processResult.getData(roofGeometry3));
-    var planes = subject.apply(properties.cleanedRoofData());
+    var planes = subject.apply(properties.getCleanedRoofPoints());
 
     assertEquals(2, planes.size());
   }

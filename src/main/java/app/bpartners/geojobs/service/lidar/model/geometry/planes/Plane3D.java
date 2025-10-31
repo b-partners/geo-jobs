@@ -15,6 +15,8 @@ public class Plane3D {
   private final double d;
   private final Set<LasPointGeometry> points;
 
+  private Plane3DSlopeInDegrees slopeInDegrees;
+
   public static Plane3D fit(LasPointGeometry p1, LasPointGeometry p2, LasPointGeometry p3) {
     var v1 = p2.subtract(p1);
     var v2 = p3.subtract(p1);
@@ -41,5 +43,13 @@ public class Plane3D {
 
   public static Plane3D empty() {
     return new Plane3D(0, 0, 0, 0, Set.of());
+  }
+
+  public Plane3DSlopeInDegrees getSlopeInDegrees() {
+    if (slopeInDegrees == null) {
+      slopeInDegrees = new Plane3DSlopeInDegrees(points);
+    }
+
+    return slopeInDegrees;
   }
 }
