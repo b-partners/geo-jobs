@@ -3,7 +3,6 @@ package app.bpartners.geojobs.service.lidar.model.geometry;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 
 import app.bpartners.geojobs.model.geometry.PolylineSimplifier;
-import app.bpartners.geojobs.service.lidar.model.LasPointGeometry;
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.algorithm.hull.ConcaveHull;

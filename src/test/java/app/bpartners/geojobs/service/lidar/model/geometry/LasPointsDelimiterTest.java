@@ -1,10 +1,9 @@
-package app.bpartners.geojobs.service.lidar.geometry;
+package app.bpartners.geojobs.service.lidar.model.geometry;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.utils.lidar.LidarRoofsAnalysisProcessorCreator.LARGE_LIDAR_FILE_PATH;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import app.bpartners.geojobs.service.lidar.model.geometry.LasPointsDelimiter;
 import app.bpartners.geojobs.utils.lidar.LidarRoofsAnalysisProcessorCreator;
 import java.io.File;
 import java.nio.file.Files;
