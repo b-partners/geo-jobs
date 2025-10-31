@@ -1,8 +1,7 @@
 package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.*;
-import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
-import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.*;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
@@ -17,7 +16,6 @@ import static java.time.Instant.parse;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionExcelFileSaved;
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
-import app.bpartners.geojobs.endpoint.event.model.DetectionStepUpdated;
 import app.bpartners.geojobs.endpoint.event.model.DetectionTilingRequested;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerificationSent;
 import app.bpartners.geojobs.endpoint.event.model.zone.DetectionQualityControlFinished;
@@ -342,6 +340,7 @@ public class ZoneService {
     if (optionalDetection.isEmpty()) {
       var savedDetection =
           createDetectionJob(detectionId, createDetection, communityOwnerId, false);
+      sendMailDetectionStepUpdated(savedDetection, REQUEST_ACCEPTED, UNKNOWN);
       if (savedDetection.isStillOnConfiguringStep()) {
         return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
             savedDetection, PENDING, UNKNOWN, REQUEST_ACCEPTED);
@@ -351,6 +350,23 @@ public class ZoneService {
           savedDetection, PROCESSING, UNKNOWN, REQUEST_ACCEPTED);
     }
     return processDetectionSteps(optionalDetection.get());
+  }
+
+  private void sendMailDetectionStepUpdated(
+      Detection detection,
+      DetectionStepName stepName,
+      app.bpartners.geojobs.job.model.Status.HealthStatus healthStatus) {
+    if (detection.isToNotify()) {
+      eventProducer.accept(
+          List.of(
+              detection.toBuilder()
+                  .detectionSteps(
+                      List.of(
+                          app.bpartners.geojobs.repository.model.detection.DetectionStep.builder()
+                              .name(stepName)
+                              .health(healthStatus)
+                              .build()))));
+    }
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection processDetectionSteps(
@@ -368,10 +384,12 @@ public class ZoneService {
     if (!zoneTilingJob.isSucceeded()) {
       return detectionTilingStatisticsComputer.apply(detection, tilingJobId);
     }
+    sendMailDetectionStepUpdated(detection, TILING, detection.getStep().getHealth());
     var machineZoneDetectionJob = zoneDetectionJobService.findById(detectionJobId);
 
     if (machineZoneDetectionJob.isPending() && zoneTilingJob.isFinished()) {
       detectionMachineDetectionCreation.apply(detection, zoneTilingJob);
+      sendMailDetectionStepUpdated(detection, MACHINE_DETECTION, detection.getStep().getHealth());
     }
     if (machineZoneDetectionJob.isFinished()) {
       if (zoneDetectionJobService.countInDoubtDetectedTileToDeliveryById(detectionJobId) == 0L) {
@@ -381,8 +399,19 @@ public class ZoneService {
         processVerificationOrGenerateGeoJson(detection, humanZoneDetectionJob);
       }
     }
-    return detectionMachineDetectionStatisticsComputer.apply(
-        detection, machineZoneDetectionJob.getId());
+    var machineDetection =
+        detectionMachineDetectionStatisticsComputer.apply(
+            detection, machineZoneDetectionJob.getId());
+    var machineDetectionHealth =
+        machineDetection.getStep().getStatus().getHealth() == Status.HealthEnum.SUCCEEDED
+            ? SUCCEEDED
+            : machineDetection.getStep().getStatus().getHealth() == Status.HealthEnum.FAILED
+                ? FAILED
+                : machineDetection.getStep().getStatus().getHealth() == Status.HealthEnum.RETRYING
+                    ? RETRYING
+                    : UNKNOWN;
+    sendMailDetectionStepUpdated(detection, MACHINE_DETECTION, machineDetectionHealth);
+    return machineDetection;
   }
 
   private void processVerificationOrGenerateGeoJson(
@@ -495,10 +524,6 @@ public class ZoneService {
 
     detection.addStep(detectionStepMapper.toDomain(detection.getId(), step));
     detectionRepository.save(detection);
-
-    if (detection.isToNotify()) {
-      eventProducer.accept(List.of(DetectionStepUpdated.builder().detection(detection).build()));
-    }
 
     return detectionFromStepMapper.apply(
         detection, detectionStepMapper.toDomain(detection.getId(), step));
