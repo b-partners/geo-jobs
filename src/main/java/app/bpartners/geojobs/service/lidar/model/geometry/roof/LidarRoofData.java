@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.service.lidar.model.roof;
+package app.bpartners.geojobs.service.lidar.model.geometry.roof;
 
 import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.*;
 

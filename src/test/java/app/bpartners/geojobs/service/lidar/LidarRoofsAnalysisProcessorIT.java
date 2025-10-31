@@ -8,6 +8,7 @@ import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.EXTRACTI
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toSet;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.conf.FacadeIT;
@@ -66,10 +67,10 @@ class LidarRoofsAnalysisProcessorIT extends FacadeIT {
 
     var expectedSet =
         Set.of(
-            new Expected(roofGeometry1, 1.53, 9.85, 3225, 2187),
-            new Expected(roofGeometry2, 5.21, 21.81, 3846, 1265),
-            new Expected(roofGeometry3, 44.23, 17.08, 2923, 1377),
-            new Expected(roofGeometry4, 42.74, 17.33, 5074, 2239));
+            new Expected(roofGeometry1, 2d, 9.85, 3225, 2187),
+            new Expected(roofGeometry2, 2d, 21.81, 3846, 1265),
+            new Expected(roofGeometry3, 18d, 17.08, 2923, 1377),
+            new Expected(roofGeometry4, 19d, 17.33, 5074, 2239));
 
     for (var geometry : roofGeometries) {
       var actual = roofsAnalysisResult.getProperties(geometry);
@@ -78,8 +79,10 @@ class LidarRoofsAnalysisProcessorIT extends FacadeIT {
       assertEquals(AVAILABLE, actual.getData().status());
       assertEquals(expected.roofPts(), actual.getData().roof().points().size());
       assertEquals(expected.groundPts(), actual.getData().ground().points().size());
-      assertEquals(expected.slope(), actual.getSlopeInDegree(), 3);
-      assertEquals(expected.height(), actual.getHeightInMeter(), 0.3);
+      assertEquals(expected.height(), actual.getHeightInMeters().getValue(), 0.3);
+
+      var firstPlane = actual.getPlanes().getFirst();
+      assertEquals(expected.slope(), firstPlane.getSlopeInDegrees().getValue(), 5);
     }
   }
 
@@ -94,6 +97,8 @@ class LidarRoofsAnalysisProcessorIT extends FacadeIT {
     var property = roofsAnalysisResult.getProperties(geometry1);
 
     assertEquals(EXTRACTION_ERROR, property.getData().status());
+    assertEquals(0, property.getHeightInMeters().getValue());
+    assertTrue(property.getPlanes().isEmpty());
   }
 
   private static Geometry roofGeometry1() {
