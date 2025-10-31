@@ -9,7 +9,7 @@ import static java.util.Objects.requireNonNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
-import app.bpartners.geojobs.service.lidar.model.IndexedLas;
+import app.bpartners.geojobs.service.lidar.model.geometry.IndexedLas;
 import java.io.File;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
