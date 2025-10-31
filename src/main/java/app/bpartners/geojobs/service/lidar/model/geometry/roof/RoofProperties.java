@@ -9,8 +9,12 @@ import app.bpartners.geojobs.service.lidar.preprocessing.roof.RoofPointsCleaner;
 import java.util.*;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
 
+@Slf4j
 @RequiredArgsConstructor
 public class RoofProperties {
   @Getter private final LidarRoofData data;
@@ -55,7 +59,7 @@ public class RoofProperties {
       var rawPlanes = extractor.apply(getCleanedRoofPoints());
       planes =
           rawPlanes.stream()
-              .map(plane -> new RoofPlane3D((Polygon) data.roof().boundaryLambert93(), plane))
+              .map(plane -> new RoofPlane3D(toPolygon(data.roof().boundaryLambert93()), plane))
               .toList();
     }
 
@@ -88,5 +92,18 @@ public class RoofProperties {
       cleanedGroundPoints = cleaner.apply(data.ground().points());
     }
     return cleanedGroundPoints;
+  }
+
+  private static Polygon toPolygon(Geometry geometry) {
+    return switch (geometry) {
+      case Polygon polygon -> polygon;
+      case MultiPolygon multiPolygon -> {
+        if (1 != multiPolygon.getNumGeometries()) {
+          log.warn("Unsupported polygon type");
+        }
+        yield (Polygon) multiPolygon.getGeometryN(0);
+      }
+      default -> throw new IllegalArgumentException("Unexpected type retrieved");
+    };
   }
 }
