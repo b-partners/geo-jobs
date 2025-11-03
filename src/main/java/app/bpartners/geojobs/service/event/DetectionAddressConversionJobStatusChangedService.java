@@ -134,7 +134,8 @@ public class DetectionAddressConversionJobStatusChangedService
                 .geoServerProperties(geoServerConfiguration.defaultGeoServerProperties(null))
                 .build());
 
-    eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
+    eventProducer.accept(
+        List.of(DetectionSaved.builder().detectionIdentifier(savedDetection.getId()).build()));
 
     zoneService.processDetectionSteps(savedDetection);
   }

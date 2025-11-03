@@ -254,7 +254,9 @@ class DetectionControllerIT extends FacadeIT {
                 .orElseThrow()
                 .getFirst();
     assertEquals(
-        DetectionSaved.builder().detection(detectionSavedEvent.getDetection()).build(),
+        DetectionSaved.builder()
+            .detectionIdentifier(detectionSavedEvent.getDetectionIdentifier())
+            .build(),
         detectionSavedEvent);
     assertEquals(Duration.ofMinutes(3L), detectionSavedEvent.maxConsumerDuration());
     assertEquals(Duration.ofMinutes(1L), detectionSavedEvent.maxConsumerBackoffBetweenRetries());

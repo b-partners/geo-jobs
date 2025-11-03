@@ -932,7 +932,7 @@ class ZoneServiceTest {
     var detectionSaved = (DetectionSaved) listCaptor.getValue().getFirst();
     var expectedSavedDetection = detection.toBuilder().shapeFileKey(shapeFileBucketKey).build();
     var expectedDetectionSavedEvent =
-        DetectionSaved.builder().detection(expectedSavedDetection).build();
+        DetectionSaved.builder().detectionIdentifier(expectedSavedDetection.getId()).build();
     var expectedRestDetection =
         new Detection()
             .id(detectionE2eId)
@@ -986,7 +986,7 @@ class ZoneServiceTest {
         (DetectionExcelFileSaved) listCaptor.getAllValues().getFirst().getFirst();
     var expectedSavedDetection = detection.toBuilder().excelFileKey(excelFileBucketKey).build();
     var expectedDetectionSavedEvent =
-        DetectionSaved.builder().detection(expectedSavedDetection).build();
+        DetectionSaved.builder().detectionIdentifier(expectedSavedDetection.getId()).build();
     var expectedDetectionExcelFileSaved =
         DetectionExcelFileSaved.builder().detection(expectedSavedDetection).build();
     var expectedRestDetection =
@@ -1078,7 +1078,7 @@ class ZoneServiceTest {
                     .updatedAt(actual.getStep().getUpdatedAt()))
             .geoJsonOutput(GEO_JSON);
     assertEquals(
-        DetectionSaved.builder().detection(expectedDetectionSaved).build(), detectionProvided);
+        DetectionSaved.builder().detectionIdentifier(detectionId).build(), detectionProvided);
     assertEquals(expectedDetectionSaved, savedDetection);
     assertEquals(expectedRestDetection, actual);
   }
