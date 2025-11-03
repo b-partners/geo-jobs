@@ -91,6 +91,8 @@ public class SecurityConf {
         .authorizeHttpRequests(
             authorizationManagerRequestMatcherRegistry ->
                 authorizationManagerRequestMatcherRegistry
+                    .requestMatchers(GET, "/captcha/token")
+                    .authenticated()
                     .requestMatchers(anonymousPath)
                     .anonymous()
                     .requestMatchers(OPTIONS, "/**")
