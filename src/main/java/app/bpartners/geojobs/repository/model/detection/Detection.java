@@ -91,6 +91,9 @@ public class Detection implements Serializable {
   @Getter(AccessLevel.NONE)
   private List<Feature> providedGeoJsonZone;
 
+  @Column(name = "to_notify", nullable = false)
+  private boolean toNotify;
+
   @JdbcTypeCode(JSON)
   @Getter(AccessLevel.NONE)
   private List<Feature> multiPolygonGeoJsonZone;

@@ -63,6 +63,7 @@ public class DetectionFromStepMapper
         .emailReceiver(detection.getEmailReceiver())
         .zoneName(detection.getZoneName())
         .excelUrl(excelUrl)
+        .toNotify(detection.isToNotify())
         .shapeUrl(shapeUrl)
         .geoJsonZone(featuresWithHiddenProperties)
         .geoJsonUrl(geojsonUrl)
