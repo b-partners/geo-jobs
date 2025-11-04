@@ -97,8 +97,6 @@ public class SecurityConf {
                     .permitAll()
                     .requestMatchers(GET, "/image")
                     .authenticated()
-                    .requestMatchers(GET, "/captcha/token")
-                    .authenticated()
                     .requestMatchers("/jobs/*/annotationProcessing")
                     .hasAuthority(ROLE_ADMIN.name())
                     .requestMatchers(GET, "/tilingJobs", "/tilingJobs/**")
