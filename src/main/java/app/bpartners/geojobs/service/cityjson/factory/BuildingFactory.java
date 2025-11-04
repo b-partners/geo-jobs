@@ -10,6 +10,8 @@ import org.citygml4j.core.model.building.Building;
 import org.citygml4j.core.model.core.AbstractSpaceBoundaryProperty;
 
 public class BuildingFactory {
+  private BuildingFactory() {}
+
   public static Building make(BuildingData roofData) {
     var building = new Building();
     building.setId(roofData.id());

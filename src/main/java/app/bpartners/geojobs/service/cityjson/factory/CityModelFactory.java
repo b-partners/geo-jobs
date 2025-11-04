@@ -6,6 +6,8 @@ import org.citygml4j.core.model.core.AbstractCityObjectProperty;
 import org.citygml4j.core.model.core.CityModel;
 
 public class CityModelFactory {
+  private CityModelFactory() {}
+
   public static CityModel make(List<BuildingData> buildingData) {
     var cityObjects =
         buildingData.stream()

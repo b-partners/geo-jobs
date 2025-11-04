@@ -7,6 +7,8 @@ import java.util.List;
 import org.locationtech.jts.geom.*;
 
 public class BuildingWallPolygonFactory {
+  private BuildingWallPolygonFactory() {}
+
   public static List<Polygon> make(Polygon roofPolygon, double groundZ) {
     List<Polygon> walls = new ArrayList<>();
 
