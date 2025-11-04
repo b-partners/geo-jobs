@@ -22,7 +22,8 @@ public class Planes3DExtractor implements Function<Collection<LasPointGeometry>,
     this.onePlane3DExtractor = new OnePlane3DExtractor(PLANE_EXTRACTION_ITERATION, threshold);
     this.plane3DContinuationCluster =
         new Plane3DContinuationCluster(continuationThreshold, minimumPointCount);
-    this.plane3DMerger = new Plane3DMerger(MERGER_EPSILON_SLOPE, MERGER_EPSILON_DISTANCE, MERGER_SMALL_AREA);
+    this.plane3DMerger =
+        new Plane3DMerger(MERGER_EPSILON_SLOPE, MERGER_EPSILON_DISTANCE, MERGER_SMALL_AREA);
   }
 
   @Override

@@ -7,6 +7,8 @@ import org.citygml4j.cityjson.model.metadata.ReferenceSystem;
 public class MetadataFactory {
   private static final String LAMBERT_93 = "EPSG:2154";
 
+  private MetadataFactory() {}
+
   public static Metadata make(String id, String title) {
     var metadata = new Metadata();
 

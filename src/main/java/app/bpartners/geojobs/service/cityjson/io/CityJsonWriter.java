@@ -23,10 +23,8 @@ public class CityJsonWriter {
         writer.withMetadata(metadata).writeCityObject(cityModel);
       }
       log.info("Finished writing CityJSON to file '{}'", path);
-    } catch (CityJSONContextException e) {
-      log.error("Error when trying to get instance of CityJSONContext, cause={}", e.getMessage());
-      throw new RuntimeException(e);
-    } catch (CityJSONWriteException e) {
+    } catch (CityJSONWriteException | CityJSONContextException e) {
+      log.error("Error when trying to write CityJSON, cause={}", e.getMessage());
       throw new CityJsonException(e.getMessage());
     }
   }

@@ -16,6 +16,8 @@ import org.xmlobjects.gml.model.geometry.primitives.SurfaceProperty;
 public class ConstructionSurfaceFactory {
   private static final int CRS_DIMENSION = 3;
 
+  private ConstructionSurfaceFactory() {}
+
   public static AbstractConstructionSurface make(
       ConstructionSurfaceType type, PolygonWithProperties polygonWithProperties) {
     var surface = getSurface(type);

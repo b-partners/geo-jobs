@@ -7,6 +7,8 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Polygon;
 
 public class BuildingGroundPolygonFactory {
+  private BuildingGroundPolygonFactory() {}
+
   public static Polygon make(Polygon roofPolygon, double groundZ) {
     var coordinates = roofPolygon.getExteriorRing().getCoordinates();
     var groundCoordinates =

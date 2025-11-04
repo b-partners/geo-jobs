@@ -9,6 +9,8 @@ import org.citygml4j.core.model.generics.IntAttribute;
 import org.citygml4j.core.model.generics.StringAttribute;
 
 public class GenericAttributeFactory {
+  private GenericAttributeFactory() {}
+
   public static List<AbstractGenericAttributeProperty> make(Map<String, Object> properties) {
     return properties.entrySet().stream()
         .map(entry -> makeGenericAttribute(entry.getKey(), entry.getValue()))
