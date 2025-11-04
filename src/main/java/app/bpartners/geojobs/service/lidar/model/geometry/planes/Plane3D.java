@@ -64,4 +64,8 @@ public class Plane3D {
 
     return delimitation;
   }
+
+  public double getArea() {
+    return getDelimitation().getArea();
+  }
 }
