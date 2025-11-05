@@ -341,6 +341,9 @@ public class ZoneService {
     if (createDetection.getGeoJsonZone() == null) {
       createDetection.setGeoJsonZone(new ArrayList<>());
     }
+    if (createDetection.getZoneName() != null && createDetection.getZoneName().contains(".")) {
+      createDetection.setZoneName(createDetection.getZoneName().replaceAll("\\.", "_"));
+    }
     var optionalDetection =
         detectionRepository.findByEndToEndIdAndCommunityOwnerId(detectionId, communityOwnerId);
 
