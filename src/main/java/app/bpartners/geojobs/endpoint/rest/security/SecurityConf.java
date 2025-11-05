@@ -184,6 +184,8 @@ public class SecurityConf {
                     .hasAnyAuthority(ROLE_ADMIN.name())
                     .requestMatchers(DELETE, "/keys")
                     .hasAnyAuthority(ROLE_COMMUNITY.name(), ROLE_INSURANCE.name())
+                    .requestMatchers(PUT, "/city-jsons")
+                    .authenticated()
                     .anyRequest()
                     .denyAll())
         .csrf(AbstractHttpConfigurer::disable)

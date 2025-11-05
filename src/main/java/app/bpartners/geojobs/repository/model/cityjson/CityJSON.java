@@ -1,14 +1,12 @@
 package app.bpartners.geojobs.repository.model.cityjson;
 
-import app.bpartners.geojobs.repository.model.Feature;
+import static jakarta.persistence.FetchType.LAZY;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.JdbcTypeCode;
-
-import static org.hibernate.type.SqlTypes.JSON;
 
 @Data
 @Builder(toBuilder = true)
@@ -17,12 +15,12 @@ import static org.hibernate.type.SqlTypes.JSON;
 @Table(name = "city_json")
 @Entity
 public class CityJSON {
-    @Id private String id;
+  @Id private String id;
 
-    @Column(name = "delimitation")
-    @JdbcTypeCode(JSON)
-    private Feature delimitation;
+  @Column(name = "s3_file_key", nullable = false)
+  private String s3FileKey;
 
-    @Column(name = "s3_file_key", nullable = false)
-    private String s3FileKey;
+  @ManyToOne(fetch = LAZY)
+  @JoinColumn(name = "city_json_request_id", nullable = false)
+  private CityJSONRequest request;
 }
