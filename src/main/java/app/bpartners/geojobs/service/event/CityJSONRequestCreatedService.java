@@ -38,9 +38,6 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
   @Override
   public void accept(CityJSONRequestCreated created) {
     var request = cityJSONRequestRepository.findById(created.getRequestId()).orElseThrow();
-    if (request.cannotBeProcessed()) {
-      return;
-    }
 
     try {
       var lidarAnalysisResult = lidarProcessor.apply(toGeometries(request.getDelimitations()));
