@@ -3,6 +3,7 @@ package app.bpartners.geojobs.repository.model.cityjson;
 import static jakarta.persistence.FetchType.LAZY;
 
 import jakarta.persistence.*;
+import java.io.Serializable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,7 +15,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Table(name = "city_json")
 @Entity
-public class CityJSON {
+public class CityJSON implements Serializable {
   @Id private String id;
 
   @Column(name = "s3_file_key", nullable = false)

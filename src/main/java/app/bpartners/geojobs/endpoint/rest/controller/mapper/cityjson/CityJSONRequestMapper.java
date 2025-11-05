@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.endpoint.rest.controller.mapper.cityjson;
 
+import static java.time.Instant.now;
+
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.CityJSONRequest;
 import app.bpartners.geojobs.endpoint.rest.model.CreateCityJSONRequest;
@@ -34,6 +36,7 @@ public class CityJSONRequestMapper {
     return new CityJSONRequest()
         .id(cityJSONRequest.getId())
         .delimitations(restDelimitations)
+        .status(CityJSONRequestStatusMapper.toRest(cityJSONRequest.getStatus()))
         .cityJsons(restCityJsons);
   }
 
@@ -47,6 +50,7 @@ public class CityJSONRequestMapper {
 
     return app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest.builder()
         .id(createCityJSONRequest.getId())
+        .creationDatetime(now())
         .communityOwnerId(communityOwnerId)
         .delimitations(domainDelimitations)
         .build();

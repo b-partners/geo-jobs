@@ -1,11 +1,10 @@
 package app.bpartners.geojobs.endpoint.event.model;
 
-import java.time.Duration;
+import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_4;
 
 import app.bpartners.geojobs.endpoint.event.EventStack;
+import java.time.Duration;
 import lombok.*;
-
-import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_4;
 
 @AllArgsConstructor
 @Data

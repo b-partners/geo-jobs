@@ -38,13 +38,11 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
   @Override
   public void accept(CityJSONRequestCreated created) {
     var request = cityJSONRequestRepository.findById(created.getRequestId()).orElseThrow();
-    if (!request.canBeProcessed()) {
+    if (request.cannotBeProcessed()) {
       return;
     }
 
     try {
-      updateStatus(request, PROCESSING);
-
       var lidarAnalysisResult = lidarProcessor.apply(toGeometries(request.getDelimitations()));
       var cityJson = toCityJSON(request, lidarAnalysisResult);
 
@@ -63,7 +61,7 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
     var fileKey = String.format("city_jsons/%s_%s.json", request.getId(), id);
 
     bucketComponent.upload(file, fileKey);
-    return CityJSON.builder().id(id).s3FileKey(fileKey).build();
+    return CityJSON.builder().request(request).id(id).s3FileKey(fileKey).build();
   }
 
   private Set<Geometry> toGeometries(List<Feature> delimitations) {

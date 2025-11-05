@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.service;
 
+import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStatus.PROCESSING;
+
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.CityJSONRequestCreated;
 import app.bpartners.geojobs.repository.CityJSONRequestRepository;
@@ -17,11 +19,12 @@ public class CityJSONRequestService {
   public CityJSONRequest process(CityJSONRequest cityJSONRequest) {
     var optionalRequest = cityJSONRequestRepository.findById(cityJSONRequest.getId());
 
-    if (optionalRequest.isPresent() && !optionalRequest.get().canBeProcessed()) {
+    if (optionalRequest.isPresent() && optionalRequest.get().cannotBeProcessed()) {
       return optionalRequest.get();
     }
 
-    var saved = cityJSONRequestRepository.save(cityJSONRequest);
+    var saved =
+        cityJSONRequestRepository.save(cityJSONRequest.toBuilder().status(PROCESSING).build());
     eventProducer.accept(
         List.of(CityJSONRequestCreated.builder().requestId(saved.getId()).build()));
 

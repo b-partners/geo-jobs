@@ -1,7 +1,5 @@
 package app.bpartners.geojobs.repository.model.cityjson;
 
-import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStatus.FINISHED;
-import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStatus.PROCESSING;
 import static jakarta.persistence.EnumType.STRING;
 import static jakarta.persistence.FetchType.EAGER;
 import static java.time.Instant.now;
@@ -49,10 +47,7 @@ public class CityJSONRequest implements Serializable {
     this.creationDatetime = now().truncatedTo(ChronoUnit.MICROS);
   }
 
-  private final List<CityJSONRequestStatus> CANNOT_BE_PROCESSED_STATUS =
-      List.of(FINISHED, PROCESSING);
-
-  public boolean canBeProcessed() {
-    return status == null || !CANNOT_BE_PROCESSED_STATUS.contains(status);
+  public boolean cannotBeProcessed() {
+    return status != null;
   }
 }
