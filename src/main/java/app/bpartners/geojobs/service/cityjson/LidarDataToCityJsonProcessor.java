@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.cityjson;
 
+import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.AVAILABLE;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.service.cityjson.exception.CityJsonException;
@@ -35,6 +36,7 @@ public class LidarDataToCityJsonProcessor
   public File apply(LidarRoofsAnalysisProcessor.RoofsAnalysisResult roofsAnalysisResults) {
     var buildingsData =
         roofsAnalysisResults.roofsData().values().stream()
+            .filter(data -> AVAILABLE.equals(data.status()))
             .map(LidarDataToCityJsonProcessor::toBuildingData)
             .toList();
 
