@@ -124,7 +124,8 @@ public class ZoneService {
         readFromFile(featuresFromShape).stream().map(FeatureMapper::toDomainFeature).toList();
     detection.setProvidedGeoJsonZone(features);
     var savedDetection = detectionRepository.save(detection);
-    eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
+    eventProducer.accept(
+        List.of(DetectionSaved.builder().detectionIdentifier(savedDetection.getId()).build()));
     return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
         savedDetection, PROCESSING, UNKNOWN, REQUEST_ACCEPTED);
   }
@@ -157,7 +158,8 @@ public class ZoneService {
         detectionRepository.save(detection.toBuilder().excelFileKey(bucketKey).build());
     eventProducer.accept(
         List.of(DetectionExcelFileSaved.builder().detection(savedDetection).build()));
-    eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
+    eventProducer.accept(
+        List.of(DetectionSaved.builder().detectionIdentifier(savedDetection.getId()).build()));
     return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
         savedDetection, PENDING, UNKNOWN, REQUEST_ACCEPTED);
   }
@@ -182,7 +184,8 @@ public class ZoneService {
     bucketComponent.upload(shapeFile, bucketKey);
     var savedDetection =
         detectionRepository.save(detection.toBuilder().shapeFileKey(bucketKey).build());
-    eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
+    eventProducer.accept(
+        List.of(DetectionSaved.builder().detectionIdentifier(savedDetection.getId()).build()));
     return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
         savedDetection, PENDING, UNKNOWN, REQUEST_ACCEPTED);
   }
@@ -194,7 +197,8 @@ public class ZoneService {
     bucketComponent.upload(imageFile, bucketKey);
     var savedDetection =
         detectionRepository.save(detection.toBuilder().pdfFileKey(bucketKey).build());
-    eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
+    eventProducer.accept(
+        List.of(DetectionSaved.builder().detectionIdentifier(savedDetection.getId()).build()));
     return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
         savedDetection, FINISHED, SUCCEEDED, MACHINE_DETECTION);
   }
@@ -218,7 +222,8 @@ public class ZoneService {
     var savedDetection =
         detectionRepository.save(detection.toBuilder().geojsonS3FileKey(resultFileKey).build());
 
-    eventProducer.accept(List.of(DetectionSaved.builder().detection(savedDetection).build()));
+    eventProducer.accept(
+        List.of(DetectionSaved.builder().detectionIdentifier(savedDetection.getId()).build()));
     eventProducer.accept(
         List.of(DetectionQualityControlFinished.builder().detection(savedDetection).build()));
 
@@ -408,10 +413,11 @@ public class ZoneService {
             createDetection, detectionE2Id, communityOwnerId, isSynchronous);
     List<Feature> geoJsonZone =
         createDetection.getGeoJsonZone() == null ? List.of() : createDetection.getGeoJsonZone();
-    var persistedDetection =
+    var savedDetection =
         communityUsedSurfaceService.persistDetectionWithSurfaceUsage(detectionToSave, geoJsonZone);
-    eventProducer.accept(List.of(DetectionSaved.builder().detection(persistedDetection).build()));
-    return persistedDetection;
+    eventProducer.accept(
+        List.of(DetectionSaved.builder().detectionIdentifier(savedDetection.getId()).build()));
+    return savedDetection;
   }
 
   public List<app.bpartners.geojobs.endpoint.rest.model.Detection> getDetectionsByCriteria(
