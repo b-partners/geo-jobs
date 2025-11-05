@@ -20,10 +20,10 @@ import lombok.NoArgsConstructor;
 public class CityJSON {
   @Id private String id;
 
-  @Column(nullable = false)
+  @Column(nullable = false, name = "s3_file_key")
   private String s3FileKey;
 
-  @Column(updatable = false)
+  @Column(updatable = false, name = "creation_datetime")
   private Instant creationDatetime;
 
   @PrePersist

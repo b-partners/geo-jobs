@@ -43,9 +43,8 @@ public class DetectionCityJSONGenerator implements BiConsumer<Detection, RoofsAn
 
     entityManager.clear();
     var actualDetection = detectionRepository.findById(detection.getId()).orElseThrow();
-    actualDetection.toBuilder().cityJsons(cityJSONModels).build();
 
-    detectionRepository.save(actualDetection);
+    detectionRepository.save(actualDetection.toBuilder().cityJsons(cityJSONModels).build());
   }
 
   private List<CityJSON> uploadAndMapToCityJSONModel(Detection detection, Set<File> cityJSONFiles) {

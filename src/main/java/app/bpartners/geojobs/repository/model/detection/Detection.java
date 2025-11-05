@@ -139,7 +139,7 @@ public class Detection implements Serializable {
   }
 
   @OneToMany(fetch = EAGER, mappedBy = "detection", cascade = CascadeType.ALL)
-  private List<CityJSON> cityJsons = new ArrayList<>();
+  private List<CityJSON> cityJsons;
 
   public void addStep(DetectionStep step) {
     if (detectionSteps == null) {
@@ -266,13 +266,13 @@ public class Detection implements Serializable {
   }
 
   public boolean isLidarAnalysisAlreadyProcessedAsSuccess() {
-    var featureWithDelimitations = getFeatureWithDelimitations();
-    if (featureWithDelimitations == null) {
+    var delimitedFeatures = getFeatureWithDelimitations();
+    if (delimitedFeatures == null) {
       return false;
     }
 
     var delimitations =
-        featureWithDelimitations.stream()
+        delimitedFeatures.stream()
             .map(FeatureWithDelimitation::delimitations)
             .flatMap(List::stream)
             .toList();

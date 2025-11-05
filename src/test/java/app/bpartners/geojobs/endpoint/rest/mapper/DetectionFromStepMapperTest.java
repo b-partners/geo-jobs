@@ -71,6 +71,7 @@ class DetectionFromStepMapperTest {
     when(bucketComponentMock.presign("pdf-key")).thenReturn("pdf-url");
     when(roofDelimiterMapperMock.toRestPolygon(any())).thenReturn(mock());
     when(imageTileInfoOriginRetrieverMock.apply(any())).thenReturn(mock());
+    when(detectionCityJsonsAttributeRetriever.apply(any())).thenReturn(List.of());
 
     var actual = subject.apply(repoDetection, step);
 

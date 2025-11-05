@@ -11,10 +11,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
-import app.bpartners.geojobs.conf.FacadeIT;
+import app.bpartners.geojobs.file.ExtensionGuesser;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.lidar.api.LidarApi;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.Map;
@@ -27,15 +28,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 
 @Slf4j
-class LidarRoofsAnalysisProcessorIT extends FacadeIT {
-  @Autowired LidarRoofsAnalysisProcessor subject;
-  @MockBean LidarApi lidarApiMock;
-  @Autowired FileWriter fileWriter;
-  @Autowired GeometrySquareMeterArea projector;
+class LidarRoofsAnalysisProcessorTest {
+  LidarApi lidarApiMock = mock();
+  GeometrySquareMeterArea projector = new GeometrySquareMeterArea();
+  FileWriter fileWriter = new FileWriter(new ObjectMapper(), new ExtensionGuesser());
+
+  LidarRoofsAnalysisProcessor subject = new LidarRoofsAnalysisProcessor(lidarApiMock, projector);
 
   File lasFile;
 

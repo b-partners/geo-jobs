@@ -243,7 +243,7 @@ class ZoneServiceTest {
     when(featureMapperMock.toRest(any(), any(Integer.class), any()))
         .thenReturn(featureCreator.defaultFeatures().getFirst());
     when(imageTileInfoOriginRetrieverMock.apply(any())).thenReturn(null);
-    when(detectionCityJsonsAttributeRetrieverMock.apply(any())).thenReturn(null);
+    when(detectionCityJsonsAttributeRetrieverMock.apply(any())).thenReturn(List.of());
 
     var areaPictureMapLayerMock = mock(AreaPictureMapLayer.class);
     when(areaPictureMapLayerMock.name()).thenReturn(LATEST_DEFAULT_LAYER);
