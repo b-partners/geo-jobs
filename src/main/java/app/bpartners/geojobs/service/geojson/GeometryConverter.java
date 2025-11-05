@@ -46,7 +46,7 @@ public class GeometryConverter {
         .zoom(zoom)
         .geometry(
             Feature.FeatureGeometry.builder()
-                .geometryType(POINT)
+                .geometryType(MULTI_POLYGON)
                 .actualInstanceStringValue(writeMultiPolygonAsString(multiPolygon))
                 .build())
         .properties(new HashMap<>(properties))
