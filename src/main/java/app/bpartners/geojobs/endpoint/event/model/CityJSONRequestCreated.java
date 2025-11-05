@@ -10,8 +10,9 @@ import lombok.*;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Builder(toBuilder = true)
+@NoArgsConstructor
 public class CityJSONRequestCreated extends PojaEvent {
-  private final String requestId;
+  private String requestId;
 
   @Override
   public Duration maxConsumerDuration() {
