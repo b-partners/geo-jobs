@@ -1,14 +1,14 @@
 package app.bpartners.geojobs.service;
 
-import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightRequestedService.ROOF_HEIGHT_PROPERTY_NAME;
-import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightRequestedService.ROOF_SLOPE_PROPERTY_NAME;
+import static app.bpartners.geojobs.service.event.DetectionLidarAnalysisRequestedService.ROOF_HEIGHT_PROPERTY_NAME;
+import static app.bpartners.geojobs.service.event.DetectionLidarAnalysisRequestedService.ROOF_SLOPE_PROPERTY_NAME;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.DetectionRoofSlopeAndHeightRequested;
+import app.bpartners.geojobs.endpoint.event.model.DetectionLidarAnalysisRequested;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.Feature;
@@ -61,9 +61,9 @@ class DetectionServiceTest {
     var listCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducerMock, times(1)).accept(listCaptor.capture());
     var detectionRoofSlopeEvent =
-        (DetectionRoofSlopeAndHeightRequested) listCaptor.getValue().getFirst();
+        (DetectionLidarAnalysisRequested) listCaptor.getValue().getFirst();
     assertEquals(
-        DetectionRoofSlopeAndHeightRequested.builder().detectionId(detectionIdentifier).build(),
+        DetectionLidarAnalysisRequested.builder().detectionId(detectionIdentifier).build(),
         detectionRoofSlopeEvent);
     assertEquals(restDetectionMock, actual);
   }

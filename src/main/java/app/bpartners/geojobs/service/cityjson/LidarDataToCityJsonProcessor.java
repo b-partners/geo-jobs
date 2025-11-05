@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.cityjson;
 
+import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.AVAILABLE;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.service.cityjson.exception.CityJsonException;
@@ -8,7 +9,6 @@ import app.bpartners.geojobs.service.cityjson.factory.BuildingWallPolygonFactory
 import app.bpartners.geojobs.service.cityjson.factory.CityJsonFactory;
 import app.bpartners.geojobs.service.cityjson.model.BuildingData;
 import app.bpartners.geojobs.service.cityjson.model.PolygonWithProperties;
-import app.bpartners.geojobs.service.lidar.LidarRoofsAnalysisProcessor;
 import app.bpartners.geojobs.service.lidar.model.geometry.LasPointGeometry;
 import app.bpartners.geojobs.service.lidar.model.geometry.roof.LidarRoofData;
 import app.bpartners.geojobs.service.lidar.model.geometry.roof.RoofPlane3D;
@@ -16,6 +16,7 @@ import app.bpartners.geojobs.service.lidar.model.geometry.roof.RoofProperties;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,17 +25,17 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class LidarDataToCityJsonProcessor
-    implements Function<LidarRoofsAnalysisProcessor.RoofsAnalysisResult, File> {
+public class LidarDataToCityJsonProcessor implements Function<Set<LidarRoofData>, File> {
 
   private final CityJsonFactory cityJsonFactory;
   private static final String PLANE_SLOPE_KEY = "slope_in_degrees";
   private static final String ROOF_HEIGHT_KEY = "height_in_meters";
 
   @Override
-  public File apply(LidarRoofsAnalysisProcessor.RoofsAnalysisResult roofsAnalysisResults) {
+  public File apply(Set<LidarRoofData> roofsData) {
     var buildingsData =
-        roofsAnalysisResults.roofsData().values().stream()
+        roofsData.stream()
+            .filter(roofData -> AVAILABLE.equals(roofData.status()))
             .map(LidarDataToCityJsonProcessor::toBuildingData)
             .toList();
 

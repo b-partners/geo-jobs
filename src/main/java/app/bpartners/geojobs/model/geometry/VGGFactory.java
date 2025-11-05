@@ -3,7 +3,7 @@ package app.bpartners.geojobs.model.geometry;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.model.geometry.area.AreaRateComputerFacade.*;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
-import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightRequestedService.*;
+import static app.bpartners.geojobs.service.event.DetectionLidarAnalysisRequestedService.*;
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.getRoofMultiPolygon;
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
 import static java.util.UUID.randomUUID;

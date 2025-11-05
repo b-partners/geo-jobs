@@ -8,10 +8,7 @@ import app.bpartners.geojobs.endpoint.rest.model.DetectionStepName;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.DetectionStep;
-import app.bpartners.geojobs.service.DetectionFeaturesResultImageRetriever;
-import app.bpartners.geojobs.service.DetectionImageAttributeRetriever;
-import app.bpartners.geojobs.service.DetectionImageTileInfoOriginRetriever;
-import app.bpartners.geojobs.service.DetectionVggAttributeRetriever;
+import app.bpartners.geojobs.service.*;
 import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -29,6 +26,8 @@ class DetectionFromStepMapperTest {
   DetectionStepMapper detectionStepMapper = new DetectionStepMapper();
   DetectionImageTileInfoOriginRetriever imageTileInfoOriginRetrieverMock = mock();
 
+  DetectionCityJsonsAttributeRetriever detectionCityJsonsAttributeRetriever = mock();
+
   DetectionFromStepMapper subject =
       new DetectionFromStepMapper(
           bucketComponentMock,
@@ -37,7 +36,8 @@ class DetectionFromStepMapperTest {
           detectionVggAttributeRetrieverMock,
           detectionStepMapper,
           roofDelimiterMapperMock,
-          imageTileInfoOriginRetrieverMock);
+          imageTileInfoOriginRetrieverMock,
+          detectionCityJsonsAttributeRetriever);
 
   @Test
   void should_map_repository_detection_and_step_to_rest_detection() {

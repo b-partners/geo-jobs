@@ -1904,6 +1904,10 @@ components:
           type: string
         shapeUrl:
           type: string
+        cityJsons:
+          type: array
+          items:
+            $ref: "#/components/schemas/CityJSON"
         excelUrl:
           type: string
         imageUrl:
@@ -1963,6 +1967,13 @@ components:
         address:
           type: string
         imageBase64:
+          type: string
+    CityJSON:
+      type: object
+      properties:
+        id:
+          type: string
+        url:
           type: string
     RoofDelimiter:
       type: object

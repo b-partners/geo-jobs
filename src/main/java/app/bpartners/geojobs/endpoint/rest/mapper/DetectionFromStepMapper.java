@@ -2,8 +2,8 @@ package app.bpartners.geojobs.endpoint.rest.mapper;
 
 import static app.bpartners.geojobs.endpoint.rest.model.GeoJsonOutput.GEO_JSON;
 import static app.bpartners.geojobs.endpoint.rest.model.GeoJsonOutput.ZIP;
-import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightRequestedService.ROOF_HEIGHT_PROPERTY_NAME;
-import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightRequestedService.ROOF_SLOPE_PROPERTY_NAME;
+import static app.bpartners.geojobs.service.event.DetectionLidarAnalysisRequestedService.ROOF_HEIGHT_PROPERTY_NAME;
+import static app.bpartners.geojobs.service.event.DetectionLidarAnalysisRequestedService.ROOF_SLOPE_PROPERTY_NAME;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.RoofDelimiterMapper;
 import app.bpartners.geojobs.endpoint.rest.model.Detection;
@@ -11,10 +11,7 @@ import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.RoofDelimiter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.repository.model.detection.DetectionStep;
-import app.bpartners.geojobs.service.DetectionFeaturesResultImageRetriever;
-import app.bpartners.geojobs.service.DetectionImageAttributeRetriever;
-import app.bpartners.geojobs.service.DetectionImageTileInfoOriginRetriever;
-import app.bpartners.geojobs.service.DetectionVggAttributeRetriever;
+import app.bpartners.geojobs.service.*;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
@@ -35,6 +32,7 @@ public class DetectionFromStepMapper
   private final DetectionStepMapper detectionStepMapper;
   private final RoofDelimiterMapper roofDelimiterMapper;
   private final DetectionImageTileInfoOriginRetriever imageTileInfoOriginRetriever;
+  private final DetectionCityJsonsAttributeRetriever detectionCityJsonsRetriever;
 
   @Override
   public Detection apply(
@@ -57,6 +55,7 @@ public class DetectionFromStepMapper
     var pdfUrl = bucketComponent.presign(detection.getPdfFileKey());
     var featuresWithHiddenProperties = hideUselessRestProperties(features);
     var imageTileInfoOrigin = imageTileInfoOriginRetriever.apply(detection);
+    var cityJsons = detectionCityJsonsRetriever.apply(detection);
 
     return new Detection()
         .id(detection.getEndToEndId())
@@ -71,6 +70,7 @@ public class DetectionFromStepMapper
         .imageTileInfoOrigin(imageTileInfoOrigin)
         .pdfUrl(pdfUrl)
         .vggUrl(vggUrl)
+        .cityJsons(cityJsons)
         .geoServerProperties(detection.getGeoServerProperties())
         .geoJsonDelimitationType(detection.getGeoJsonDelimitationType())
         .detectableObjectModel(detection.getDetectableObjectModel())

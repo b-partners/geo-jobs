@@ -6,6 +6,7 @@ import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
+import static app.bpartners.geojobs.service.event.DetectionLidarAnalysisRequestedService.LIDAR_DATA_STATUS_PROPERTY_NAME;
 import static jakarta.persistence.EnumType.STRING;
 import static jakarta.persistence.FetchType.EAGER;
 import static java.time.Instant.now;
@@ -18,6 +19,8 @@ import app.bpartners.geojobs.endpoint.rest.model.Detection.GeoJsonDelimitationTy
 import app.bpartners.geojobs.endpoint.rest.validator.FeatureTypeChecker;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.model.Feature;
+import app.bpartners.geojobs.repository.model.cityjson.CityJSON;
+import app.bpartners.geojobs.service.lidar.model.LidarDataStatus;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.*;
@@ -134,6 +137,9 @@ public class Detection implements Serializable {
   protected void onCreate() {
     this.creationDatetime = now().truncatedTo(ChronoUnit.MICROS);
   }
+
+  @OneToMany(fetch = EAGER, mappedBy = "detection", cascade = CascadeType.ALL)
+  private List<CityJSON> cityJsons = new ArrayList<>();
 
   public void addStep(DetectionStep step) {
     if (detectionSteps == null) {
@@ -257,5 +263,31 @@ public class Detection implements Serializable {
 
   public boolean isHumanDetectionStepProcessing(ZoneDetectionJob zoneDetectionJob) {
     return isMachineDetectionFinished(zoneDetectionJob) && geojsonS3FileKey == null;
+  }
+
+  public boolean isLidarAnalysisAlreadyProcessedAsSuccess() {
+    var featureWithDelimitations = getFeatureWithDelimitations();
+    if (featureWithDelimitations == null) {
+      return false;
+    }
+
+    var delimitations =
+        featureWithDelimitations.stream()
+            .map(FeatureWithDelimitation::delimitations)
+            .flatMap(List::stream)
+            .toList();
+
+    var processedStatus = List.of(LidarDataStatus.AVAILABLE, LidarDataStatus.PENDING);
+    return delimitations.stream()
+        .anyMatch(
+            feature -> {
+              if (feature.getProperties() == null) {
+                return false;
+              }
+
+              var status =
+                  (LidarDataStatus) feature.getProperties().get(LIDAR_DATA_STATUS_PROPERTY_NAME);
+              return status != null && processedStatus.contains(status);
+            });
   }
 }

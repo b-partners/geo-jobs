@@ -1,17 +1,19 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightRequestedService.*;
+import static app.bpartners.geojobs.service.event.DetectionLidarAnalysisRequestedService.*;
 import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.AVAILABLE;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import app.bpartners.geojobs.endpoint.event.model.DetectionRoofSlopeAndHeightRequested;
+import app.bpartners.geojobs.concurrency.Workers;
+import app.bpartners.geojobs.endpoint.event.model.DetectionLidarAnalysisRequested;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
+import app.bpartners.geojobs.service.DetectionCityJSONGenerator;
 import app.bpartners.geojobs.service.lidar.LidarRoofsAnalysisProcessor;
 import app.bpartners.geojobs.service.lidar.LidarRoofsAnalysisProcessor.RoofsAnalysisResult;
 import app.bpartners.geojobs.service.lidar.model.geometry.planes.Plane3DSlopeInDegrees;
@@ -25,25 +27,30 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Polygon;
 
-class DetectionRoofSlopeAndHeightRequestedServiceTest {
+class DetectionLidarAnalysisRequestedServiceTest {
   FeatureMapper featureMapperMock = mock();
   DetectionRepository detectionRepositoryMock = mock();
   LidarRoofsAnalysisProcessor lidarRoofsAnalysisProcessorMock = mock();
   FeatureVggRequestedService zoneVggRequestedServiceMock = mock();
   EntityManager entityManagerMock = mock();
+  DetectionCityJSONGenerator cityJSONGeneratorMock = mock();
+  Workers workers = new Workers();
 
-  DetectionRoofSlopeAndHeightRequestedService subject =
-      new DetectionRoofSlopeAndHeightRequestedService(
-          detectionRepositoryMock,
-          lidarRoofsAnalysisProcessorMock,
+  DetectionLidarAnalysisRequestedService subject =
+      new DetectionLidarAnalysisRequestedService(
           featureMapperMock,
           entityManagerMock,
-          zoneVggRequestedServiceMock);
+          detectionRepositoryMock,
+          zoneVggRequestedServiceMock,
+          lidarRoofsAnalysisProcessorMock,
+          cityJSONGeneratorMock,
+          workers);
 
   @BeforeEach
   void setUp() {
     doNothing().when(entityManagerMock).clear();
     doNothing().when(zoneVggRequestedServiceMock).accept(any());
+    doNothing().when(cityJSONGeneratorMock).accept(any(), any());
   }
 
   @Test
@@ -53,7 +60,7 @@ class DetectionRoofSlopeAndHeightRequestedServiceTest {
 
     var detection = detection();
     var requested =
-        DetectionRoofSlopeAndHeightRequested.builder().detectionId(detection.getId()).build();
+        DetectionLidarAnalysisRequested.builder().detectionId(detection.getId()).build();
     when(detectionRepositoryMock.findById(detection.getId())).thenReturn(Optional.of(detection));
     when(featureMapperMock.domainToGeometry(any())).thenReturn(mock(Polygon.class));
 
@@ -74,6 +81,7 @@ class DetectionRoofSlopeAndHeightRequestedServiceTest {
     var height = mock(RoofHeightInMeters.class);
     when(height.getValue()).thenReturn(expectedRoofHeight);
     when(properties.getHeightInMeters()).thenReturn(height);
+
     when(lidarRoofsAnalysisProcessorMock.apply(anySet())).thenReturn(result);
 
     subject.accept(requested);
@@ -88,13 +96,13 @@ class DetectionRoofSlopeAndHeightRequestedServiceTest {
     assertEquals(expectedRoofSlope, actualRoofSlope);
     assertEquals(expectedRoofHeight, actualRoofHeight);
     assertEquals(AVAILABLE, actualRoofDataStatus);
-    verify(detectionRepositoryMock, times(1)).save(detection);
+    verify(detectionRepositoryMock, times(2)).save(any());
   }
 
   @Test
   void throw_when_detection_not_found() {
     var detectionId = "missing-id";
-    var requested = DetectionRoofSlopeAndHeightRequested.builder().detectionId(detectionId).build();
+    var requested = DetectionLidarAnalysisRequested.builder().detectionId(detectionId).build();
 
     when(detectionRepositoryMock.findById(detectionId)).thenReturn(Optional.empty());
 
@@ -103,26 +111,24 @@ class DetectionRoofSlopeAndHeightRequestedServiceTest {
   }
 
   @Test
-  void throw_when_polygon_delimitation_null() {
+  void stopped_if_feature_with_delimitation_is_not_present() {
     var detectionId = "detection-id";
-    var requested = DetectionRoofSlopeAndHeightRequested.builder().detectionId(detectionId).build();
+    var requested = DetectionLidarAnalysisRequested.builder().detectionId(detectionId).build();
     var detectionMock = mock(Detection.class);
 
     when(detectionMock.getFeatureWithDelimitations()).thenReturn(null);
     when(detectionRepositoryMock.findById(detectionId)).thenReturn(Optional.of(detectionMock));
 
-    var error = assertThrows(RuntimeException.class, () -> subject.accept(requested));
-    assertTrue(
-        error
-            .getMessage()
-            .contains("FeatureWithDelimitation is null for detection={" + detectionId + "}"));
+    subject.accept(requested);
+
+    verify(lidarRoofsAnalysisProcessorMock, never()).apply(anySet());
   }
 
   @Test
   void already_processed_detection_should_not_be_processed() {
     var detectionId = "detection-already-processed-id";
     var detectionAlreadyProcessed = detectionAlreadyProcessed();
-    var requested = DetectionRoofSlopeAndHeightRequested.builder().detectionId(detectionId).build();
+    var requested = DetectionLidarAnalysisRequested.builder().detectionId(detectionId).build();
 
     when(detectionRepositoryMock.findById(any()))
         .thenReturn(Optional.of(detectionAlreadyProcessed));

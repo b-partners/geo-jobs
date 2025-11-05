@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.unit;
 
-import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightRequestedService.ROOF_HEIGHT_PROPERTY_NAME;
-import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightRequestedService.ROOF_SLOPE_PROPERTY_NAME;
+import static app.bpartners.geojobs.service.event.DetectionLidarAnalysisRequestedService.ROOF_HEIGHT_PROPERTY_NAME;
+import static app.bpartners.geojobs.service.event.DetectionLidarAnalysisRequestedService.ROOF_SLOPE_PROPERTY_NAME;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -16,10 +16,7 @@ import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
-import app.bpartners.geojobs.service.DetectionFeaturesResultImageRetriever;
-import app.bpartners.geojobs.service.DetectionImageAttributeRetriever;
-import app.bpartners.geojobs.service.DetectionImageTileInfoOriginRetriever;
-import app.bpartners.geojobs.service.DetectionVggAttributeRetriever;
+import app.bpartners.geojobs.service.*;
 import java.util.HashMap;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -34,6 +31,7 @@ class DetectionFromStatisticRestMapperTest {
   DetectionVggAttributeRetriever vggAttributeRetrieverMock =
       mock(DetectionVggAttributeRetriever.class);
   DetectionImageTileInfoOriginRetriever imageTileInfoOriginRetrieverMock = mock();
+  DetectionCityJsonsAttributeRetriever detectionCityJsonsAttributeRetrieverMock = mock();
   DetectionFromStepMapper detectionFromStepMapperMock =
       new DetectionFromStepMapper(
           bucketComponentMock,
@@ -42,7 +40,8 @@ class DetectionFromStatisticRestMapperTest {
           vggAttributeRetrieverMock,
           new DetectionStepMapper(),
           roofDelimiterMapperMock,
-          imageTileInfoOriginRetrieverMock);
+          imageTileInfoOriginRetrieverMock,
+          detectionCityJsonsAttributeRetrieverMock);
 
   DetectionFromStatisticRestMapper subject =
       new DetectionFromStatisticRestMapper(
@@ -92,6 +91,7 @@ class DetectionFromStatisticRestMapperTest {
     var expectedHeight = 5d;
     var detection = detectionWithFeatureDelimitation(expectedSlope, expectedHeight);
 
+    when(detectionCityJsonsAttributeRetrieverMock.apply(any())).thenReturn(mock());
     when(imageTileInfoOriginRetrieverMock.apply(any())).thenReturn(mock());
     when(roofDelimiterMapperMock.toRestPolygon(any())).thenReturn(mock());
     when(detectionFeaturesResultImageRetrieverMock.apply(any())).thenReturn(List.of());

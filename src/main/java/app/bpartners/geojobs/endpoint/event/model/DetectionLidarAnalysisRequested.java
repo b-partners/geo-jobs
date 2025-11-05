@@ -12,12 +12,12 @@ import lombok.*;
 @EqualsAndHashCode(callSuper = false)
 @AllArgsConstructor
 @NoArgsConstructor
-public class DetectionRoofSlopeAndHeightRequested extends PojaEvent {
+public class DetectionLidarAnalysisRequested extends PojaEvent {
   private String detectionId;
 
   @Override
   public Duration maxConsumerDuration() {
-    return Duration.ofMinutes(8);
+    return Duration.ofMinutes(20);
   }
 
   @Override

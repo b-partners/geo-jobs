@@ -1,10 +1,10 @@
 package app.bpartners.geojobs.service;
 
-import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightRequestedService.ROOF_HEIGHT_PROPERTY_NAME;
-import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightRequestedService.ROOF_SLOPE_PROPERTY_NAME;
+import static app.bpartners.geojobs.service.event.DetectionLidarAnalysisRequestedService.ROOF_HEIGHT_PROPERTY_NAME;
+import static app.bpartners.geojobs.service.event.DetectionLidarAnalysisRequestedService.ROOF_SLOPE_PROPERTY_NAME;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.DetectionRoofSlopeAndHeightRequested;
+import app.bpartners.geojobs.endpoint.event.model.DetectionLidarAnalysisRequested;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.detection.Detection;
@@ -68,9 +68,7 @@ public class DetectionService {
                                     != null))) {
       eventProducer.accept(
           List.of(
-              DetectionRoofSlopeAndHeightRequested.builder()
-                  .detectionId(detection.getId())
-                  .build()));
+              DetectionLidarAnalysisRequested.builder().detectionId(detection.getId()).build()));
     }
     return zoneService.getProcessedDetection(detection.getEndToEndId());
   }

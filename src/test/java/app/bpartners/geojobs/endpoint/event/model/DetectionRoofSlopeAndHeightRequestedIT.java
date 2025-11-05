@@ -13,19 +13,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 class DetectionRoofSlopeAndHeightRequestedIT extends FacadeIT {
   @Autowired ObjectMapper om;
 
-  private DetectionRoofSlopeAndHeightRequested detectionRoofSlopeAndHeightRequested() {
-    return DetectionRoofSlopeAndHeightRequested.builder().detectionId("detection-id").build();
+  private DetectionLidarAnalysisRequested detectionLidarAnalysisRequested() {
+    return DetectionLidarAnalysisRequested.builder().detectionId("detection-id").build();
   }
 
   @Test
   void serialize_then_deserialize() throws JsonProcessingException {
-    var original = detectionRoofSlopeAndHeightRequested();
+    var original = detectionLidarAnalysisRequested();
 
     var serialized = om.writeValueAsString(original);
-    var deserialized = om.readValue(serialized, DetectionRoofSlopeAndHeightRequested.class);
+    var deserialized = om.readValue(serialized, DetectionLidarAnalysisRequested.class);
 
     assertEquals(original, deserialized);
-    assertEquals(Duration.ofMinutes(8), deserialized.maxConsumerDuration());
+    assertEquals(Duration.ofMinutes(20), deserialized.maxConsumerDuration());
     assertEquals(Duration.ofMinutes(2), deserialized.maxConsumerBackoffBetweenRetries());
     assertEquals(EVENT_STACK_4, deserialized.getEventStack());
   }

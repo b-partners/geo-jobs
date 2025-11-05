@@ -1,21 +1,27 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.AVAILABLE;
+import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.EXTRACTION_ERROR;
+import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.PENDING;
 import static java.util.stream.Collectors.toSet;
 
-import app.bpartners.geojobs.endpoint.event.model.DetectionRoofSlopeAndHeightRequested;
+import app.bpartners.geojobs.concurrency.Workers;
+import app.bpartners.geojobs.endpoint.event.model.DetectionLidarAnalysisRequested;
 import app.bpartners.geojobs.endpoint.event.model.FeatureVggRequested;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.Feature;
+import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
+import app.bpartners.geojobs.service.DetectionCityJSONGenerator;
 import app.bpartners.geojobs.service.lidar.LidarRoofsAnalysisProcessor;
 import app.bpartners.geojobs.service.lidar.LidarRoofsAnalysisProcessor.RoofsAnalysisResult;
+import app.bpartners.geojobs.service.lidar.model.LidarDataStatus;
 import app.bpartners.geojobs.service.lidar.model.geometry.planes.Plane3D;
 import jakarta.persistence.EntityManager;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,20 +31,22 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class DetectionRoofSlopeAndHeightRequestedService
-    implements Consumer<DetectionRoofSlopeAndHeightRequested> {
+public class DetectionLidarAnalysisRequestedService
+    implements Consumer<DetectionLidarAnalysisRequested> {
   public static final String ROOF_SLOPE_PROPERTY_NAME = "roof_slope_in_degrees";
   public static final String ROOF_HEIGHT_PROPERTY_NAME = "roof_height_in_meters";
   public static final String LIDAR_DATA_STATUS_PROPERTY_NAME = "lidar_data_status";
 
-  private final DetectionRepository detectionRepository;
-  private final LidarRoofsAnalysisProcessor lidarRoofsAnalysisProcessor;
   private final FeatureMapper featureMapper;
   private final EntityManager entityManager;
+  private final DetectionRepository detectionRepository;
   private final FeatureVggRequestedService zoneVggRequestedService;
+  private final LidarRoofsAnalysisProcessor lidarRoofsAnalysisProcessor;
+  private final DetectionCityJSONGenerator detectionCityJSONGenerator;
+  private final Workers workers;
 
   @Override
-  public void accept(DetectionRoofSlopeAndHeightRequested requested) {
+  public void accept(DetectionLidarAnalysisRequested requested) {
     var detectionIdentifier = requested.getDetectionId();
     var detection =
         detectionRepository
@@ -48,15 +56,26 @@ public class DetectionRoofSlopeAndHeightRequestedService
 
     var featureWithDelimitations = detection.getFeatureWithDelimitations();
     if (featureWithDelimitations == null) {
-      throw new IllegalArgumentException(
-          "FeatureWithDelimitation is null for detection={" + detectionIdentifier + "}");
+      log.error("FeatureWithDelimitation is null for detection={{}}", detectionIdentifier);
+      return;
     }
 
-    if (isAlreadyProcessedAsSuccess(featureWithDelimitations)) {
+    if (detection.isLidarAnalysisAlreadyProcessedAsSuccess()) {
       log.warn("Detection={{}} lidar properties has already been processed", detectionIdentifier);
       return;
     }
 
+    try {
+      updateLidarDataStatus(detection, PENDING);
+      compute(detectionIdentifier, featureWithDelimitations);
+    } catch (Exception e) {
+      log.error(e.getMessage());
+      updateLidarDataStatus(detection, EXTRACTION_ERROR);
+    }
+  }
+
+  private void compute(
+      String detectionIdentifier, List<FeatureWithDelimitation> featureWithDelimitations) {
     var roofGeometries = toGeometries(featureWithDelimitations);
     var roofsAnalysesResult = lidarRoofsAnalysisProcessor.apply(roofGeometries);
     var featuresWithDelimitationsWithRoofProperties =
@@ -70,20 +89,23 @@ public class DetectionRoofSlopeAndHeightRequestedService
             .featureWithDelimitations(featuresWithDelimitationsWithRoofProperties)
             .build());
 
-    zoneVggRequestedService.accept(
-        new FeatureVggRequested(detection.getId(), detection.getPolygonGeoJsonZone(), 0));
-  }
+    // Vgg
+    Callable<Void> vggRequest =
+        () -> {
+          zoneVggRequestedService.accept(
+              new FeatureVggRequested(
+                  detectionIdentifier, actualDetection.getPolygonGeoJsonZone(), 0));
+          return null;
+        };
 
-  private boolean isAlreadyProcessedAsSuccess(
-      List<FeatureWithDelimitation> featureWithDelimitations) {
-    return featureWithDelimitations.stream()
-        .map(FeatureWithDelimitation::delimitations)
-        .flatMap(List::stream)
-        .anyMatch(
-            feature ->
-                feature.getProperties() != null
-                    && AVAILABLE.equals(
-                        feature.getProperties().get(LIDAR_DATA_STATUS_PROPERTY_NAME)));
+    // CityJSON
+    Callable<Void> cityJsonRequest =
+        () -> {
+          detectionCityJSONGenerator.accept(actualDetection, roofsAnalysesResult);
+          return null;
+        };
+
+    workers.invokeAll(List.of(vggRequest, cityJsonRequest));
   }
 
   private Set<Geometry> toGeometries(List<FeatureWithDelimitation> featureWithDelimitations) {
@@ -117,5 +139,25 @@ public class DetectionRoofSlopeAndHeightRequestedService
     }
 
     return featureWithDelimitations;
+  }
+
+  private void updateLidarDataStatus(Detection detection, LidarDataStatus status) {
+    var featureWithDelimitations = detection.getFeatureWithDelimitations();
+    for (var featureWithDelimitation : featureWithDelimitations) {
+      for (var delimitation : featureWithDelimitation.delimitations()) {
+        if (delimitation.getProperties() == null) {
+          delimitation.setProperties(new HashMap<>());
+        }
+        var properties = delimitation.getProperties();
+        properties.put(LIDAR_DATA_STATUS_PROPERTY_NAME, status);
+      }
+    }
+
+    entityManager.clear();
+    var actualDetection = detectionRepository.findById(detection.getId()).orElseThrow();
+    var actualDetectionWithNewStatus =
+        actualDetection.toBuilder().featureWithDelimitations(featureWithDelimitations).build();
+
+    detectionRepository.save(actualDetectionWithNewStatus);
   }
 }

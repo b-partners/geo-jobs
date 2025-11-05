@@ -49,6 +49,7 @@ public class LidarApi {
   }
 
   public Optional<File> download(String fileUrl) {
+    log.info("Downloading file: {}", fileUrl);
     if (!isSafeUrl(fileUrl)) {
       log.warn("Unsafe URL blocked: {}", fileUrl);
       return Optional.empty();

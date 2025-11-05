@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import app.bpartners.geojobs.service.cityjson.factory.CityJsonFactory;
 import app.bpartners.geojobs.utils.lidar.LidarRoofsAnalysisProcessorCreator;
 import java.nio.file.Files;
+import java.util.HashSet;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
@@ -29,7 +30,7 @@ class LidarDataToCityJsonProcessorTest {
                 "las/LHD_FXX_0644_6859_PTS_O_LAMB93_IGN69.copc.laz"));
 
     var analysisResult = processor.apply(roofsGeometries);
-    var actual = subject.apply(analysisResult);
+    var actual = subject.apply(new HashSet<>(analysisResult.roofsData().values()));
 
     assertNotNull(actual);
     assertTrue(Files.exists(actual.toPath()));
