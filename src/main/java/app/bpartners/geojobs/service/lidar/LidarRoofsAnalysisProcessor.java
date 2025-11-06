@@ -170,10 +170,14 @@ public class LidarRoofsAnalysisProcessor {
       var roofLambert93 =
           projector.project(roofEPSG4326WithProperties.geometry(), WGS84, LAMBERT_93);
       var groundLambert93 = roofLambert93.buffer(ROOF_GROUND_BUFFER_METERS);
+      Map<String, Object> properties =
+          roofEPSG4326WithProperties.properties() == null
+              ? new HashMap<>()
+              : roofEPSG4326WithProperties.properties();
 
       lidarData.add(
           LidarRoofData.empty(
-              new HashMap<>(roofEPSG4326WithProperties.properties()),
+              properties,
               roofEPSG4326WithProperties.geometry(),
               roofLambert93,
               null,
