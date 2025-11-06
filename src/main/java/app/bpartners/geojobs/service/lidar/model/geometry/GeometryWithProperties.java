@@ -19,11 +19,6 @@ public record GeometryWithProperties(Geometry geometry, Map<String, Object> prop
           throw new IllegalArgumentException("Unsupported Geometry Type");
         }
 
-        var firstGeometry = multiPolygon.getGeometryN(0);
-        if (!(firstGeometry instanceof Polygon)) {
-          throw new IllegalArgumentException("Unsupported Geometry Type");
-        }
-
         yield (Polygon) multiPolygon.getGeometryN(0);
       }
       default -> throw new IllegalArgumentException("Unsupported Geometry Type");

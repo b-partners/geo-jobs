@@ -1,8 +1,7 @@
 package app.bpartners.geojobs.service.lidar;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
-import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.AVAILABLE;
-import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.EXTRACTION_ERROR;
+import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -11,6 +10,8 @@ import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.service.lidar.api.LidarApi;
 import app.bpartners.geojobs.utils.lidar.LidarRoofsAnalysisProcessorCreator;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
@@ -56,7 +57,7 @@ class LidarRoofsAnalysisProcessorTest {
   }
 
   @Test
-  void status_should_be_runtime_when_unchecked_exception_happens() {
+  void status_should_be_extraction_error_when_unchecked_exception_happens() {
     var geometry1 = roofGeometry1();
     var lidarApiMock = mock(LidarApi.class);
 
@@ -69,6 +70,25 @@ class LidarRoofsAnalysisProcessorTest {
     var property = roofsAnalysisResult.getProperties(geometry1);
 
     assertEquals(EXTRACTION_ERROR, property.getData().status());
+    assertEquals(0, property.getHeightInMeters().getValue());
+    assertTrue(property.getPlanes().isEmpty());
+  }
+
+  @Test
+  void status_should_be_unavailable_when_no_lidar_was_found() {
+    var geometry1 = roofGeometry1();
+    var lidarApiMock = mock(LidarApi.class);
+
+    when(lidarApiMock.getUniqueLidarFilesUrls(any())).thenReturn(Map.of("url", Set.of(geometry1)));
+    when(lidarApiMock.download(any())).thenReturn(Optional.empty());
+
+    var subject = processorCreator.create(lidarApiMock);
+
+    var roofsAnalysisResult = subject.from(Set.of(geometry1));
+
+    var property = roofsAnalysisResult.getProperties(geometry1);
+
+    assertEquals(UNAVAILABLE, property.getData().status());
     assertEquals(0, property.getHeightInMeters().getValue());
     assertTrue(property.getPlanes().isEmpty());
   }
