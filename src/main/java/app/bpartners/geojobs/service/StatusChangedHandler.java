@@ -1,13 +1,31 @@
 package app.bpartners.geojobs.service;
 
+import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.DetectionAddressConversionJobStatusChanged;
+import app.bpartners.geojobs.endpoint.event.model.DetectionStepUpdated;
+import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionJobStatusChanged;
 import app.bpartners.geojobs.endpoint.event.model.PojaEvent;
+import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryJobStatusChanged;
+import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationRetrievingJobStatusChanged;
+import app.bpartners.geojobs.endpoint.event.model.parcel.ParcelDetectionJobStatusChanged;
+import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobStatusChanged;
+import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobStatusChanged;
 import app.bpartners.geojobs.job.model.Status;
+import app.bpartners.geojobs.repository.DetectionRepository;
+import app.bpartners.geojobs.repository.model.detection.Detection;
+import java.util.List;
+import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class StatusChangedHandler {
+  private final DetectionRepository detectionRepository;
+  private final EventProducer eventProducer;
+
   public void handle(
       PojaEvent event, Status newStatus, Status oldStatus, Runnable onFinish, Runnable onFailed) {
     var newProgression = newStatus.getProgression();
@@ -39,6 +57,54 @@ public class StatusChangedHandler {
         }
       }
       case FINISHED -> log.info(doNothingMessage);
+    }
+    sendStatusUpdateEvent(event);
+  }
+
+  public void sendStatusUpdateEvent(PojaEvent event) {
+    Optional<Detection> optionalDetection;
+
+    switch (event) {
+      case AnnotationDeliveryJobStatusChanged annotationDeliveryJobStatusChanged -> {
+        var job = annotationDeliveryJobStatusChanged.getNewJob();
+        optionalDetection = detectionRepository.findByZdjId(job.getDetectionJobId());
+      }
+      case AnnotationRetrievingJobStatusChanged annotationRetrievingJobStatusChanged -> {
+        var job = annotationRetrievingJobStatusChanged.getNewJob();
+        optionalDetection = detectionRepository.findByZdjId(job.getDetectionJobId());
+      }
+      case DetectionAddressConversionJobStatusChanged
+              detectionAddressConversionJobStatusChanged -> {
+        var job = detectionAddressConversionJobStatusChanged.getNewJob();
+        optionalDetection = detectionRepository.findById(job.getDetectionId());
+      }
+      case GeoJsonConversionJobStatusChanged geoJsonConversionJobStatusChanged -> {
+        var job = geoJsonConversionJobStatusChanged.getNewJob();
+        optionalDetection = detectionRepository.findByZdjId(job.getZoneDetectionJobId());
+      }
+      case ParcelDetectionJobStatusChanged parcelDetectionJobStatusChanged -> {
+        return;
+      }
+      case ZoneDetectionJobStatusChanged zoneDetectionJobStatusChanged -> {
+        var zoneDetectionJobId =
+            zoneDetectionJobStatusChanged.getNewJob().getZoneTilingJob().getId();
+        optionalDetection = detectionRepository.findByZdjId(zoneDetectionJobId);
+      }
+      case ZoneTilingJobStatusChanged zoneTilingJobStatusChanged -> {
+        var zoneTilingJobId = zoneTilingJobStatusChanged.getNewJob().getId();
+        optionalDetection = detectionRepository.findByZtjId(zoneTilingJobId);
+      }
+      default -> throw new IllegalArgumentException("Unsupported event type " + event);
+    }
+
+    if (optionalDetection.isEmpty()) {
+      log.warn("No detection found for event {}", event);
+      return;
+    }
+
+    Detection detection = optionalDetection.get();
+    if (detection.isToNotify()) {
+      eventProducer.accept(List.of(new DetectionStepUpdated(detection)));
     }
   }
 }
