@@ -2,6 +2,7 @@ package app.bpartners.geojobs.service.cityjson.factory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.citygml4j.core.model.core.AbstractGenericAttribute;
 import org.citygml4j.core.model.core.AbstractGenericAttributeProperty;
@@ -16,6 +17,7 @@ public class GenericAttributeFactory {
   public static List<AbstractGenericAttributeProperty> make(Map<String, Object> properties) {
     return properties.entrySet().stream()
         .map(entry -> makeGenericAttribute(entry.getKey(), entry.getValue()))
+        .filter(Objects::nonNull)
         .map(AbstractGenericAttributeProperty::new)
         .toList();
   }
@@ -27,7 +29,7 @@ public class GenericAttributeFactory {
       case String stringValue -> new StringAttribute(key, stringValue);
       default -> {
         log.error("Unsupported attribute type: {}", value.getClass());
-        yield null;
+        yield new StringAttribute(key, String.valueOf(value));
       }
     };
   }
