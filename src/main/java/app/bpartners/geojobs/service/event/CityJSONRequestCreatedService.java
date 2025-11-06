@@ -1,7 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStatus.*;
-import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.geojobs.endpoint.event.model.CityJSONRequestCreated;
@@ -15,8 +14,12 @@ import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStatus;
 import app.bpartners.geojobs.service.cityjson.LidarDataToCityJsonProcessor;
 import app.bpartners.geojobs.service.lidar.LidarRoofsAnalysisProcessor;
 import app.bpartners.geojobs.service.lidar.LidarRoofsAnalysisProcessor.RoofsAnalysisResult;
+import app.bpartners.geojobs.service.lidar.model.LidarDataStatus;
+import app.bpartners.geojobs.service.lidar.model.geometry.GeometryWithProperties;
 import jakarta.persistence.EntityManager;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
@@ -40,9 +43,19 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
     var request = cityJSONRequestRepository.findById(created.getRequestId()).orElseThrow();
 
     try {
-      var lidarAnalysisResult = lidarProcessor.apply(toGeometries(request.getDelimitations()));
-      var cityJson = toCityJSON(request, lidarAnalysisResult);
+      var lidarAnalysisResult =
+          lidarProcessor.apply(toGeometryWithProperties(request.getDelimitations()));
+      if (isError(lidarAnalysisResult)) {
+        updateStatus(request, FAILED);
+        return;
+      }
 
+      if (isUnavailable(lidarAnalysisResult)) {
+        updateStatus(request, UNAVAILABLE);
+        return;
+      }
+
+      var cityJson = toCityJSON(request, lidarAnalysisResult);
       var updated = request.toBuilder().status(FINISHED).cityJsons(List.of(cityJson)).build();
       entityManager.clear();
       cityJSONRequestRepository.save(updated);
@@ -52,17 +65,38 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
     }
   }
 
-  private CityJSON toCityJSON(CityJSONRequest request, RoofsAnalysisResult lidarAnalysisResult) {
-    var file = cityJsonProcessor.apply(lidarAnalysisResult);
-    var id = randomUUID().toString();
-    var fileKey = String.format("city_jsons/%s_%s.json", request.getId(), id);
-
-    bucketComponent.upload(file, fileKey);
-    return CityJSON.builder().request(request).id(id).s3FileKey(fileKey).build();
+  private static boolean isUnavailable(RoofsAnalysisResult roofsAnalysisResult) {
+    return roofsAnalysisResult.roofsData().values().stream()
+        .allMatch(data -> LidarDataStatus.UNAVAILABLE.equals(data.status()));
   }
 
-  private Set<Geometry> toGeometries(List<Feature> delimitations) {
-    return delimitations.stream().map(featureMapper::domainToGeometry).collect(toSet());
+  private static boolean isError(RoofsAnalysisResult roofsAnalysisResult) {
+    return roofsAnalysisResult.roofsData().values().stream()
+        .allMatch(data -> LidarDataStatus.EXTRACTION_ERROR.equals(data.status()));
+  }
+
+  private CityJSON toCityJSON(CityJSONRequest request, RoofsAnalysisResult lidarAnalysisResult) {
+    var filename = String.format("%s.json", request.getId());
+    var fileKey = String.format("city_jsons/%s", filename);
+    var file = cityJsonProcessor.apply(filename, lidarAnalysisResult);
+
+    bucketComponent.upload(file, fileKey);
+
+    return CityJSON.builder().id(filename).request(request).s3FileKey(fileKey).build();
+  }
+
+  private Set<GeometryWithProperties> toGeometryWithProperties(List<Feature> delimitations) {
+    return delimitations.stream()
+        .map(
+            delimitation -> {
+              Geometry geometry = featureMapper.domainToGeometry(delimitation);
+              Map<String, Object> properties =
+                  delimitation.getProperties() == null
+                      ? new HashMap<>()
+                      : delimitation.getProperties();
+              return new GeometryWithProperties(geometry, properties);
+            })
+        .collect(toSet());
   }
 
   private void updateStatus(CityJSONRequest request, CityJSONRequestStatus status) {

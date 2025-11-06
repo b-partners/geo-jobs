@@ -8,16 +8,17 @@ import app.bpartners.geojobs.service.cityjson.factory.BuildingGroundPolygonFacto
 import app.bpartners.geojobs.service.cityjson.factory.BuildingWallPolygonFactory;
 import app.bpartners.geojobs.service.cityjson.factory.CityJsonFactory;
 import app.bpartners.geojobs.service.cityjson.model.BuildingData;
-import app.bpartners.geojobs.service.cityjson.model.PolygonWithProperties;
 import app.bpartners.geojobs.service.lidar.LidarRoofsAnalysisProcessor;
+import app.bpartners.geojobs.service.lidar.model.geometry.GeometryWithProperties;
 import app.bpartners.geojobs.service.lidar.model.geometry.LasPointGeometry;
 import app.bpartners.geojobs.service.lidar.model.geometry.roof.LidarRoofData;
 import app.bpartners.geojobs.service.lidar.model.geometry.roof.RoofPlane3D;
 import app.bpartners.geojobs.service.lidar.model.geometry.roof.RoofProperties;
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -26,21 +27,21 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class LidarDataToCityJsonProcessor
-    implements Function<LidarRoofsAnalysisProcessor.RoofsAnalysisResult, File> {
+    implements BiFunction<String, LidarRoofsAnalysisProcessor.RoofsAnalysisResult, File> {
 
   private final CityJsonFactory cityJsonFactory;
   private static final String PLANE_SLOPE_KEY = "slope_in_degrees";
   private static final String ROOF_HEIGHT_KEY = "height_in_meters";
+  private static final String ID_KEY = "id";
 
   @Override
-  public File apply(LidarRoofsAnalysisProcessor.RoofsAnalysisResult roofsAnalysisResults) {
+  public File apply(
+      String id, LidarRoofsAnalysisProcessor.RoofsAnalysisResult roofsAnalysisResults) {
     var buildingsData =
         roofsAnalysisResults.roofsData().values().stream()
             .filter(data -> AVAILABLE.equals(data.status()))
             .map(LidarDataToCityJsonProcessor::toBuildingData)
             .toList();
-
-    var id = randomUUID().toString();
 
     try {
       var cityJsonFile = cityJsonFactory.make(id, id, buildingsData);
@@ -70,35 +71,46 @@ public class LidarDataToCityJsonProcessor
 
     var grounds = planes.stream().map(plane -> createGround(plane, groundZ)).toList();
 
+    var properties = getProperties(lidarRoofData, height);
+    var id = properties.getOrDefault(ID_KEY, randomUUID().toString());
+
     return BuildingData.builder()
-        .id(randomUUID().toString())
-        .properties(Map.of(ROOF_HEIGHT_KEY, height))
-        .roofs(roofs)
+        .id(String.valueOf(id))
         .walls(walls)
+        .roofs(roofs)
         .grounds(grounds)
+        .properties(properties)
         .build();
   }
 
-  private static PolygonWithProperties toPolygonWithProperties(RoofPlane3D plane) {
+  private static Map<String, Object> getProperties(LidarRoofData data, double height) {
+    Map<String, Object> properties =
+        data.properties() == null ? new HashMap<>() : data.properties();
+    properties.put(ROOF_HEIGHT_KEY, height);
+
+    return properties;
+  }
+
+  private static GeometryWithProperties toPolygonWithProperties(RoofPlane3D plane) {
     var slope = plane.getSlopeInDegrees().getValue();
-    return PolygonWithProperties.builder()
-        .polygon(plane.getDelimitation())
+    return GeometryWithProperties.builder()
+        .geometry(plane.getDelimitation())
         .properties(Map.of(PLANE_SLOPE_KEY, slope))
         .build();
   }
 
-  private static List<PolygonWithProperties> createWalls(RoofPlane3D plane, double groundZ) {
+  private static List<GeometryWithProperties> createWalls(RoofPlane3D plane, double groundZ) {
     var roofPolygon = plane.getDelimitation();
     var wallsPolygons = BuildingWallPolygonFactory.make(roofPolygon, groundZ);
 
     return wallsPolygons.stream()
-        .map(polygon -> new PolygonWithProperties(polygon, Map.of()))
+        .map(polygon -> new GeometryWithProperties(polygon, Map.of()))
         .toList();
   }
 
-  private static PolygonWithProperties createGround(RoofPlane3D plane, double groundZ) {
+  private static GeometryWithProperties createGround(RoofPlane3D plane, double groundZ) {
     var roofPolygon = plane.getDelimitation();
     var groundPolygon = BuildingGroundPolygonFactory.make(roofPolygon, groundZ);
-    return new PolygonWithProperties(groundPolygon, Map.of());
+    return new GeometryWithProperties(groundPolygon, Map.of());
   }
 }

@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service.cityjson;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
+import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -22,17 +23,15 @@ class LidarDataToCityJsonProcessorTest {
   @Test
   void generate_cityjson_ok() {
     var roofsGeometries = Set.of(roofGeometry1());
-    var processor =
-        processorCreator.create(
-            roofsGeometries,
-            processorCreator.createTempFileFromResources(
-                "las/LHD_FXX_0644_6859_PTS_O_LAMB93_IGN69.copc.laz"));
+    var processor = processorCreator.create(roofsGeometries);
 
-    var analysisResult = processor.apply(roofsGeometries);
-    var actual = subject.apply(analysisResult);
+    var id = randomUUID().toString();
+    var analysisResult = processor.from(roofsGeometries);
+    var actual = subject.apply(id, analysisResult);
 
     assertNotNull(actual);
     assertTrue(Files.exists(actual.toPath()));
+    assertTrue(actual.getPath().endsWith(id + ".json"));
   }
 
   private static Geometry roofGeometry1() {

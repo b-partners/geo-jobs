@@ -4,7 +4,7 @@ import static app.bpartners.geojobs.service.cityjson.model.ConstructionSurfaceTy
 
 import app.bpartners.geojobs.service.cityjson.model.BuildingData;
 import app.bpartners.geojobs.service.cityjson.model.ConstructionSurfaceType;
-import app.bpartners.geojobs.service.cityjson.model.PolygonWithProperties;
+import app.bpartners.geojobs.service.lidar.model.geometry.GeometryWithProperties;
 import java.util.List;
 import org.citygml4j.core.model.building.Building;
 import org.citygml4j.core.model.core.AbstractSpaceBoundaryProperty;
@@ -32,7 +32,7 @@ public class BuildingFactory {
   }
 
   public static List<AbstractSpaceBoundaryProperty> toAbstractSpaceBoundaryProperty(
-      ConstructionSurfaceType type, List<PolygonWithProperties> polygonsWithProperties) {
+      ConstructionSurfaceType type, List<GeometryWithProperties> polygonsWithProperties) {
     return polygonsWithProperties.stream()
         .map(polygonWithProperties -> ConstructionSurfaceFactory.make(type, polygonWithProperties))
         .map(AbstractSpaceBoundaryProperty::new)

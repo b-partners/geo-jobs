@@ -2,7 +2,7 @@ package app.bpartners.geojobs.service.event;
 
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toDomainFeature;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
-import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStatus.FINISHED;
+import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStatus.*;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -19,7 +19,11 @@ import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
 import app.bpartners.geojobs.service.cityjson.LidarDataToCityJsonProcessor;
 import app.bpartners.geojobs.service.lidar.LidarRoofsAnalysisProcessor;
+import app.bpartners.geojobs.service.lidar.LidarRoofsAnalysisProcessor.RoofsAnalysisResult;
+import app.bpartners.geojobs.service.lidar.model.LidarDataStatus;
+import app.bpartners.geojobs.service.lidar.model.geometry.roof.LidarRoofData;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,13 +55,56 @@ class CityJSONRequestCreatedServiceIT extends FacadeIT {
 
   @Test
   void generate_ok() {
-    when(lidarProcessorMock.apply(anySet())).thenReturn(mock());
-    when(cityJsonProcessorMock.apply(any())).thenReturn(mock());
+    when(lidarProcessorMock.apply(anySet())).thenReturn(analysisResult(LidarDataStatus.AVAILABLE));
+    when(cityJsonProcessorMock.apply(any(), any())).thenReturn(mock());
 
     subject.accept(CityJSONRequestCreated.builder().requestId(REQUEST_ID).build());
 
-    var actualDetection = cityJSONRequestRepository.findById(REQUEST_ID).orElseThrow();
-    assertEquals(FINISHED, actualDetection.getStatus());
+    var actualRequest = cityJSONRequestRepository.findById(REQUEST_ID).orElseThrow();
+    assertEquals(FINISHED, actualRequest.getStatus());
+  }
+
+  @Test
+  void should_be_unavailable_when_lidar_data_is_unavailable() {
+    when(lidarProcessorMock.apply(anySet()))
+        .thenReturn(analysisResult(LidarDataStatus.UNAVAILABLE));
+
+    subject.accept(CityJSONRequestCreated.builder().requestId(REQUEST_ID).build());
+
+    var actualRequest = cityJSONRequestRepository.findById(REQUEST_ID).orElseThrow();
+
+    assertEquals(UNAVAILABLE, actualRequest.getStatus());
+    verify(cityJsonProcessorMock, never()).apply(any(), any());
+  }
+
+  @Test
+  void should_be_failed_when_lidar_data_is_extraction_error() {
+    when(lidarProcessorMock.apply(anySet()))
+        .thenReturn(analysisResult(LidarDataStatus.EXTRACTION_ERROR));
+
+    subject.accept(CityJSONRequestCreated.builder().requestId(REQUEST_ID).build());
+
+    var actualRequest = cityJSONRequestRepository.findById(REQUEST_ID).orElseThrow();
+
+    assertEquals(FAILED, actualRequest.getStatus());
+    verify(cityJsonProcessorMock, never()).apply(any(), any());
+  }
+
+  @Test
+  void should_be_failed_when_exception_is_raised() {
+    when(lidarProcessorMock.apply(anySet())).thenThrow(new RuntimeException());
+
+    subject.accept(CityJSONRequestCreated.builder().requestId(REQUEST_ID).build());
+
+    var actualRequest = cityJSONRequestRepository.findById(REQUEST_ID).orElseThrow();
+
+    assertEquals(FAILED, actualRequest.getStatus());
+    verify(cityJsonProcessorMock, never()).apply(any(), any());
+  }
+
+  private static RoofsAnalysisResult analysisResult(LidarDataStatus status) {
+    return new RoofsAnalysisResult(
+        Map.of(randomUUID().toString(), LidarRoofData.builder().status(status).build()));
   }
 
   private CityJSONRequest request() {
