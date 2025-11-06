@@ -1,54 +1,26 @@
 package app.bpartners.geojobs.service.lidar;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
-import static app.bpartners.geojobs.service.GeometrySquareMeterArea.LAMBERT_93;
-import static app.bpartners.geojobs.service.GeometrySquareMeterArea.WGS84;
 import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.AVAILABLE;
 import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.EXTRACTION_ERROR;
-import static java.util.Objects.requireNonNull;
-import static java.util.stream.Collectors.toSet;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-import app.bpartners.geojobs.conf.FacadeIT;
-import app.bpartners.geojobs.file.FileWriter;
-import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.lidar.api.LidarApi;
-import java.io.File;
-import java.nio.file.Files;
-import java.util.Map;
-import java.util.Optional;
+import app.bpartners.geojobs.utils.lidar.LidarRoofsAnalysisProcessorCreator;
 import java.util.Set;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 
 @Slf4j
-class LidarRoofsAnalysisProcessorIT extends FacadeIT {
-  @Autowired LidarRoofsAnalysisProcessor subject;
-  @MockBean LidarApi lidarApiMock;
-  @Autowired FileWriter fileWriter;
-  @Autowired GeometrySquareMeterArea projector;
-
-  File lasFile;
-
-  @BeforeEach
-  void setUp() {
-    lasFile = createLidarTestTempFile();
-  }
-
-  @AfterEach
-  @SneakyThrows
-  void cleanUp() {
-    Files.deleteIfExists(lasFile.toPath());
-  }
+class LidarRoofsAnalysisProcessorTest {
+  private static final LidarRoofsAnalysisProcessorCreator processorCreator =
+      new LidarRoofsAnalysisProcessorCreator();
 
   @Test
   void compute_roof_slope_and_height_with_multiple_roof_geometries() {
@@ -57,11 +29,8 @@ class LidarRoofsAnalysisProcessorIT extends FacadeIT {
     var roofGeometry3 = roofGeometry3();
     var roofGeometry4 = roofGeometry4();
     var roofGeometries = Set.of(roofGeometry1, roofGeometry2, roofGeometry3, roofGeometry4);
-    var projected =
-        roofGeometries.stream().map(g -> projector.project(g, WGS84, LAMBERT_93)).collect(toSet());
 
-    when(lidarApiMock.getUniqueLidarFilesUrls(projected)).thenReturn(Map.of("url", projected));
-    when(lidarApiMock.download(any())).thenReturn(Optional.of(lasFile));
+    var subject = processorCreator.create(roofGeometries);
 
     var roofsAnalysisResult = subject.from(roofGeometries);
 
@@ -89,8 +58,11 @@ class LidarRoofsAnalysisProcessorIT extends FacadeIT {
   @Test
   void status_should_be_runtime_when_unchecked_exception_happens() {
     var geometry1 = roofGeometry1();
+    var lidarApiMock = mock(LidarApi.class);
 
-    when(lidarApiMock.getUniqueLidarFilesUrls(anySet())).thenThrow(new RuntimeException());
+    when(lidarApiMock.getUniqueLidarFilesUrls(any())).thenThrow();
+
+    var subject = processorCreator.create(lidarApiMock);
 
     var roofsAnalysisResult = subject.from(Set.of(geometry1));
 
@@ -161,22 +133,6 @@ class LidarRoofsAnalysisProcessorIT extends FacadeIT {
           new Coordinate(2.2440344995304145, 48.825080630434144)
         };
     return geometryFactory.createPolygon(roof4Coordinates);
-  }
-
-  @SneakyThrows
-  private File createLidarTestTempFile() {
-    var lasFileFromResource =
-        new File(
-            requireNonNull(
-                    getClass()
-                        .getClassLoader()
-                        .getResource("las/LHD_FXX_0644_6859_PTS_O_LAMB93_IGN69.copc.laz"))
-                .getFile());
-
-    return fileWriter.write(
-        Files.readAllBytes(lasFileFromResource.toPath()),
-        FileWriter.createTempDirectory(),
-        lasFileFromResource.getName());
   }
 
   private static Expected getExpected(Set<Expected> expectedSet, Geometry geometry) {

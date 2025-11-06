@@ -23,11 +23,7 @@ class LidarDataToCityJsonProcessorTest {
   @Test
   void generate_cityjson_ok() {
     var roofsGeometries = Set.of(roofGeometry1());
-    var processor =
-        processorCreator.create(
-            roofsGeometries,
-            processorCreator.createTempFileFromResources(
-                "las/LHD_FXX_0644_6859_PTS_O_LAMB93_IGN69.copc.laz"));
+    var processor = processorCreator.create(roofsGeometries);
 
     var id = randomUUID().toString();
     var analysisResult = processor.from(roofsGeometries);
