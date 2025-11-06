@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import app.bpartners.geojobs.service.lidar.model.geometry.DelimitedPoints;
 import java.util.HashSet;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 class LidarRoofDataTest {
@@ -31,6 +32,7 @@ class LidarRoofDataTest {
         LidarRoofData.builder()
             .roof(delimitedPoints)
             .ground(delimitedPoints)
+            .properties(Map.of())
             .status(AVAILABLE)
             .build();
 

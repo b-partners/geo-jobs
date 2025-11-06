@@ -40,11 +40,18 @@ public record LidarRoofData(
   }
 
   public LidarRoofData merge(LidarRoofData other) {
-    var merged = this.toBuilder().status(getMergedStatus(this.status(), other.status())).build();
+    var merged =
+        this.toBuilder()
+            .status(getMergedStatus(this.status(), other.status()))
+            .properties(this.properties() == null ? new HashMap<>() : properties)
+            .build();
 
     merged.roof().points().addAll(other.roof().points());
     merged.ground().points().addAll(other.ground().points());
-    merged.properties().putAll(other.properties());
+
+    if (other.properties() != null) {
+      merged.properties().putAll(other.properties());
+    }
 
     return merged;
   }
