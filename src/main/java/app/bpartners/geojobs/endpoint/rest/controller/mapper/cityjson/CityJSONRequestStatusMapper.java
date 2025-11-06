@@ -10,6 +10,7 @@ public class CityJSONRequestStatusMapper {
     return switch (status) {
       case null -> null;
       case FINISHED -> CityJSONRequestStatus.FINISHED;
+      case UNAVAILABLE -> CityJSONRequestStatus.UNAVAILABLE;
       case FAILED -> CityJSONRequestStatus.FAILED;
       case PROCESSING -> CityJSONRequestStatus.PROCESSING;
     };

@@ -2012,10 +2012,12 @@ components:
         - FINISHED
         - FAILED
         - PROCESSING
+        - UNAVAILABLE
       enum:
         - FINISHED
         - FAILED
         - PROCESSING
+        - UNAVAILABLE
     CityJSONRequest:
       type: object
       allOf:

@@ -37,7 +37,7 @@ class LasPointsDelimiterTest {
     var roofGeometry1 = roofGeometry1();
     var roofGeometries = Set.of(roofGeometry1);
     var processor = processorCreator.create(roofGeometries, lidarFile);
-    var processResult = processor.apply(roofGeometries);
+    var processResult = processor.from(roofGeometries);
 
     var points = processResult.getData(roofGeometry1).roof().points();
     var actual = new LasPointsDelimiter(points);

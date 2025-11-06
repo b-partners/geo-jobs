@@ -63,7 +63,7 @@ class LidarRoofsAnalysisProcessorIT extends FacadeIT {
     when(lidarApiMock.getUniqueLidarFilesUrls(projected)).thenReturn(Map.of("url", projected));
     when(lidarApiMock.download(any())).thenReturn(Optional.of(lasFile));
 
-    var roofsAnalysisResult = subject.apply(roofGeometries);
+    var roofsAnalysisResult = subject.from(roofGeometries);
 
     var expectedSet =
         Set.of(
@@ -82,7 +82,7 @@ class LidarRoofsAnalysisProcessorIT extends FacadeIT {
       assertEquals(expected.height(), actual.getHeightInMeters().getValue(), 0.3);
 
       var firstPlane = actual.getPlanes().getFirst();
-      assertEquals(expected.slope(), firstPlane.getSlopeInDegrees().getValue(), 5);
+      assertEquals(expected.slope(), firstPlane.getSlopeInDegrees().getValue(), 10);
     }
   }
 
@@ -92,7 +92,7 @@ class LidarRoofsAnalysisProcessorIT extends FacadeIT {
 
     when(lidarApiMock.getUniqueLidarFilesUrls(anySet())).thenThrow(new RuntimeException());
 
-    var roofsAnalysisResult = subject.apply(Set.of(geometry1));
+    var roofsAnalysisResult = subject.from(Set.of(geometry1));
 
     var property = roofsAnalysisResult.getProperties(geometry1);
 

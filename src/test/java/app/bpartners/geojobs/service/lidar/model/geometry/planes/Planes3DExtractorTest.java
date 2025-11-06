@@ -39,7 +39,7 @@ class Planes3DExtractorTest {
     var roofGeometry1 = roofGeometry1();
     var roofGeometries = Set.of(roofGeometry1);
     var processor = processorCreator.create(roofGeometries, lidarFile);
-    var processResult = processor.apply(roofGeometries);
+    var processResult = processor.from(roofGeometries);
 
     var property = new RoofProperties(processResult.getData(roofGeometry1));
     var planes = subject.apply(property.getCleanedRoofPoints());
@@ -52,7 +52,7 @@ class Planes3DExtractorTest {
     var roofGeometry3 = roofGeometry3();
     var roofGeometries = Set.of(roofGeometry3);
     var processor = processorCreator.create(roofGeometries, lidarFile);
-    var processResult = processor.apply(roofGeometries);
+    var processResult = processor.from(roofGeometries);
 
     var properties = new RoofProperties(processResult.getData(roofGeometry3));
     var planes = subject.apply(properties.getCleanedRoofPoints());
