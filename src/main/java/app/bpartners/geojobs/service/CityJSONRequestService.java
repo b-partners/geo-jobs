@@ -19,7 +19,7 @@ public class CityJSONRequestService {
   public CityJSONRequest process(CityJSONRequest cityJSONRequest) {
     var optionalRequest = cityJSONRequestRepository.findById(cityJSONRequest.getId());
 
-    if (optionalRequest.isPresent() && optionalRequest.get().cannotBeProcessed()) {
+    if (optionalRequest.isPresent()) {
       return optionalRequest.get();
     }
 
