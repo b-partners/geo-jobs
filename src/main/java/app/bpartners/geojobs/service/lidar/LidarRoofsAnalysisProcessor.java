@@ -59,7 +59,7 @@ public class LidarRoofsAnalysisProcessor {
 
       return new RoofsAnalysisResult(mergeSameRoofBoundary(roofsDataPerFiles));
     } catch (Exception e) {
-      log.error(e.getMessage());
+      log.error("Failed to retrieve lidar data", e);
       return new RoofsAnalysisResult(
           mergeSameRoofBoundary(List.of(emptyFrom(allRoofsData, EXTRACTION_ERROR))));
     }
@@ -99,7 +99,7 @@ public class LidarRoofsAnalysisProcessor {
       }
       file = optionalFile.get();
     } catch (Exception e) {
-      log.error(e.getMessage());
+      log.error("Failed to download fileUrl={}", fileUrl, e);
       return emptyFrom(roofsData, EXTRACTION_ERROR);
     }
 
