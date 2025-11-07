@@ -24,17 +24,23 @@ import jakarta.mail.internet.InternetAddress;
 import java.io.File;
 import java.util.List;
 import lombok.SneakyThrows;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class AnnotationDeliveryJobStatusChangedServiceTest {
   ZoneDetectionJobCreator zoneDetectionJobCreator = new ZoneDetectionJobCreator();
-  StatusChangedHandler statusChangedHandlerMock = new StatusChangedHandler();
+  StatusChangedHandler statusChangedHandlerMock = mock();
   AnnotationService annotationServiceMock = mock();
   ZoneDetectionJobService zoneDetectionJobServiceMock = mock();
   Mailer mailerMock = mock();
   AnnotationDeliveryJobStatusChangedService subject =
       new AnnotationDeliveryJobStatusChangedService(
           statusChangedHandlerMock, annotationServiceMock, zoneDetectionJobServiceMock, mailerMock);
+
+  @BeforeEach
+  void setUp() {
+    doNothing().when(statusChangedHandlerMock).handle(any(), any(), any(), any(), any());
+  }
 
   @Test
   void accept_finished_event_ok() {

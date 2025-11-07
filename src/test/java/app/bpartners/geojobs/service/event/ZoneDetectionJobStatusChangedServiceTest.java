@@ -13,11 +13,16 @@ import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobStatusCha
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobSucceeded;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
+import app.bpartners.geojobs.repository.DetectionRepository;
+import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.service.JobFinishedMailer;
 import app.bpartners.geojobs.service.StatusChangedHandler;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -25,10 +30,18 @@ class ZoneDetectionJobStatusChangedServiceTest {
   private static final String JOB_ID = "mockDetectionJobId";
   JobFinishedMailer<ZoneDetectionJob> detectionFinishedMailerMock = mock();
   EventProducer eventProducerMock = mock();
-  StatusChangedHandler statusChangedHandler = new StatusChangedHandler();
+  DetectionRepository detectionRepositoryMock = mock();
+  StatusChangedHandler statusChangedHandler = new StatusChangedHandler(detectionRepositoryMock, eventProducerMock);
   ZoneDetectionJobStatusChangedService subject =
       new ZoneDetectionJobStatusChangedService(
           detectionFinishedMailerMock, eventProducerMock, statusChangedHandler);
+
+  @BeforeEach
+  void setUp() {
+    doNothing().when(eventProducerMock).accept(anyList());
+    when(detectionRepositoryMock.findByZdjId(JOB_ID)).thenReturn(Optional.of(new Detection()));
+    when(detectionRepositoryMock.findByZtjId(JOB_ID)).thenReturn(Optional.of(new Detection()));
+  }
 
   @Test
   void mail_if_succeeded() {
