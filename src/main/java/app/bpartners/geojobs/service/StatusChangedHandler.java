@@ -57,7 +57,7 @@ public class StatusChangedHandler {
     sendStatusUpdateEvent(event);
   }
 
-  public void sendStatusUpdateEvent(PojaEvent event) {
+  private void sendStatusUpdateEvent(PojaEvent event) {
     Optional<Detection> optionalDetection;
 
     switch (event) {
