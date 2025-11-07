@@ -52,7 +52,8 @@ class ZoneTilingJobStatusChangedServiceTest {
   ZoneDetectionJobService zoneDetectionJobServiceMock = mock();
   DetectionRepository detectionRepositoryMock = mock();
   EventProducer eventProducerMock = mock();
-  StatusChangedHandler statusChangedHandler = new StatusChangedHandler(detectionRepositoryMock, eventProducerMock);
+  StatusChangedHandler statusChangedHandler =
+      new StatusChangedHandler(detectionRepositoryMock, eventProducerMock);
   DetectableObjectConfigurationRepository objectConfigurationRepositoryMock = mock();
   TilingTaskRepository tilingTaskRepositoryMock = mock();
   TilingTaskCreator tilingTaskCreator = new TilingTaskCreator();

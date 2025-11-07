@@ -21,7 +21,6 @@ import app.bpartners.geojobs.service.StatusChangedHandler;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -31,7 +30,8 @@ class ZoneDetectionJobStatusChangedServiceTest {
   JobFinishedMailer<ZoneDetectionJob> detectionFinishedMailerMock = mock();
   EventProducer eventProducerMock = mock();
   DetectionRepository detectionRepositoryMock = mock();
-  StatusChangedHandler statusChangedHandler = new StatusChangedHandler(detectionRepositoryMock, eventProducerMock);
+  StatusChangedHandler statusChangedHandler =
+      new StatusChangedHandler(detectionRepositoryMock, eventProducerMock);
   ZoneDetectionJobStatusChangedService subject =
       new ZoneDetectionJobStatusChangedService(
           detectionFinishedMailerMock, eventProducerMock, statusChangedHandler);

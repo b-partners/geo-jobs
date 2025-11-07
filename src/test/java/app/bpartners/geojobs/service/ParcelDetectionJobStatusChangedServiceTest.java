@@ -20,7 +20,6 @@ import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
 import app.bpartners.geojobs.service.event.ParcelDetectionJobStatusChangedService;
 import java.util.ArrayList;
 import java.util.Optional;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -28,7 +27,8 @@ public class ParcelDetectionJobStatusChangedServiceTest {
   private static final String JOB_ID = "jobId";
   DetectionRepository detectionRepositoryMock = mock();
   EventProducer eventProducerMock = mock();
-  StatusChangedHandler statusChangedHandler = new StatusChangedHandler(detectionRepositoryMock, eventProducerMock);
+  StatusChangedHandler statusChangedHandler =
+      new StatusChangedHandler(detectionRepositoryMock, eventProducerMock);
   ParcelDetectionTaskRepository parcelDetectionTaskRepositoryMock = mock();
   TaskStatusService<ParcelDetectionTask> taskStatusServiceMock = mock();
   ParcelDetectionJobStatusChangedService subject =
