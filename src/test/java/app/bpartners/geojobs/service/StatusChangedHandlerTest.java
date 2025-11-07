@@ -102,7 +102,7 @@ class StatusChangedHandlerTest {
         .thenReturn(Optional.of(obtainedDetection));
 
     var geoJsonJobEvent = getGeoJsonEvent(jobId, zoneDetectionJobId);
-    var zoneTilingJobEvent = getZoneTilingJobEvent(jobId, zoneDetectionJobId);
+    var zoneTilingJobEvent = getZoneTilingJobEvent(jobId);
     var zoneDetectionJobEvent = getZoneDetectionJobEvent(jobId, zoneDetectionJobId);
 
     subject.handle(
@@ -127,7 +127,7 @@ class StatusChangedHandlerTest {
     verify(eventProducerMock, never()).accept(any());
   }
 
-  private ZoneTilingJobStatusChanged getZoneTilingJobEvent(String jobId, String zoneTilingJobId) {
+  private ZoneTilingJobStatusChanged getZoneTilingJobEvent(String jobId) {
     ZoneTilingJob oldJob =
         new ZoneTilingJob()
             .toBuilder()
@@ -231,6 +231,9 @@ class StatusChangedHandlerTest {
   }
 
   private record OnEventRunnable(Job newJob, EventProducer eventProducer) implements Runnable {
+    /**
+     * Do Nothing
+     * */
     @Override
     public void run() {}
   }
