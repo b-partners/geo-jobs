@@ -1,13 +1,9 @@
 package app.bpartners.geojobs.service;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.DetectionAddressConversionJobStatusChanged;
 import app.bpartners.geojobs.endpoint.event.model.DetectionStepUpdated;
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionJobStatusChanged;
 import app.bpartners.geojobs.endpoint.event.model.PojaEvent;
-import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryJobStatusChanged;
-import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationRetrievingJobStatusChanged;
-import app.bpartners.geojobs.endpoint.event.model.parcel.ParcelDetectionJobStatusChanged;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobStatusChanged;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobStatusChanged;
 import app.bpartners.geojobs.job.model.Status;
@@ -65,25 +61,9 @@ public class StatusChangedHandler {
     Optional<Detection> optionalDetection;
 
     switch (event) {
-      case AnnotationDeliveryJobStatusChanged annotationDeliveryJobStatusChanged -> {
-        var job = annotationDeliveryJobStatusChanged.getNewJob();
-        optionalDetection = detectionRepository.findByZdjId(job.getDetectionJobId());
-      }
-      case AnnotationRetrievingJobStatusChanged annotationRetrievingJobStatusChanged -> {
-        var job = annotationRetrievingJobStatusChanged.getNewJob();
-        optionalDetection = detectionRepository.findByZdjId(job.getDetectionJobId());
-      }
-      case DetectionAddressConversionJobStatusChanged
-              detectionAddressConversionJobStatusChanged -> {
-        var job = detectionAddressConversionJobStatusChanged.getNewJob();
-        optionalDetection = detectionRepository.findById(job.getDetectionId());
-      }
       case GeoJsonConversionJobStatusChanged geoJsonConversionJobStatusChanged -> {
         var job = geoJsonConversionJobStatusChanged.getNewJob();
         optionalDetection = detectionRepository.findByZdjId(job.getZoneDetectionJobId());
-      }
-      case ParcelDetectionJobStatusChanged parcelDetectionJobStatusChanged -> {
-        return;
       }
       case ZoneDetectionJobStatusChanged zoneDetectionJobStatusChanged -> {
         var zoneDetectionJobId =
@@ -94,11 +74,13 @@ public class StatusChangedHandler {
         var zoneTilingJobId = zoneTilingJobStatusChanged.getNewJob().getId();
         optionalDetection = detectionRepository.findByZtjId(zoneTilingJobId);
       }
-      default -> throw new IllegalArgumentException("Unsupported event type " + event);
+      default -> {
+        return;
+      }
     }
 
     if (optionalDetection.isEmpty()) {
-      log.warn("No detection found for event {}", event);
+      log.info("No detection attached to event {}", event);
       return;
     }
 
