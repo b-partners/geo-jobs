@@ -26,7 +26,6 @@ import jakarta.mail.internet.InternetAddress;
 import java.io.File;
 import java.util.List;
 import java.util.Optional;
-
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,7 +34,8 @@ class AnnotationDeliveryJobStatusChangedServiceTest {
   ZoneDetectionJobCreator zoneDetectionJobCreator = new ZoneDetectionJobCreator();
   DetectionRepository detectionRepositoryMock = mock();
   EventProducer eventProducerMock = mock();
-  StatusChangedHandler statusChangedHandlerMock = new StatusChangedHandler(detectionRepositoryMock, eventProducerMock);
+  StatusChangedHandler statusChangedHandlerMock =
+      new StatusChangedHandler(detectionRepositoryMock, eventProducerMock);
   AnnotationService annotationServiceMock = mock();
   ZoneDetectionJobService zoneDetectionJobServiceMock = mock();
   Mailer mailerMock = mock();
