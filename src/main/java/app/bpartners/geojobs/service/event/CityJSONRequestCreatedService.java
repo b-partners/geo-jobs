@@ -46,6 +46,7 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
       var lidarAnalysisResult =
           lidarProcessor.apply(toGeometryWithProperties(request.getDelimitations()));
       if (isError(lidarAnalysisResult)) {
+        log.error("All data from lidar analysis was failed");
         updateStatus(request, FAILED);
         return;
       }

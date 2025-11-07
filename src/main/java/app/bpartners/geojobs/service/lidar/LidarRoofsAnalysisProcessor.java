@@ -99,6 +99,7 @@ public class LidarRoofsAnalysisProcessor {
       }
       file = optionalFile.get();
     } catch (Exception e) {
+      log.error(e.getMessage());
       return emptyFrom(roofsData, EXTRACTION_ERROR);
     }
 
