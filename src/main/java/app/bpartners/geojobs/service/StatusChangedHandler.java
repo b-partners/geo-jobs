@@ -58,24 +58,23 @@ public class StatusChangedHandler {
   }
 
   private void sendStatusUpdateEvent(PojaEvent event) {
-    Optional<Detection> optionalDetection;
-
-    optionalDetection = switch (event) {
-      case GeoJsonConversionJobStatusChanged geoJsonConversionJobStatusChanged -> {
-        var job = geoJsonConversionJobStatusChanged.getNewJob();
-        yield detectionRepository.findByZdjId(job.getZoneDetectionJobId());
-      }
-      case ZoneDetectionJobStatusChanged zoneDetectionJobStatusChanged -> {
-        var zoneDetectionJobId =
-            zoneDetectionJobStatusChanged.getNewJob().getZoneTilingJob().getId();
-        yield  detectionRepository.findByZdjId(zoneDetectionJobId);
-      }
-      case ZoneTilingJobStatusChanged zoneTilingJobStatusChanged -> {
-        var zoneTilingJobId = zoneTilingJobStatusChanged.getNewJob().getId();
-        yield  detectionRepository.findByZtjId(zoneTilingJobId);
-      }
-      default -> Optional.empty();
-    };
+    Optional<Detection> optionalDetection =
+        switch (event) {
+          case GeoJsonConversionJobStatusChanged geoJsonConversionJobStatusChanged -> {
+            var job = geoJsonConversionJobStatusChanged.getNewJob();
+            yield detectionRepository.findByZdjId(job.getZoneDetectionJobId());
+          }
+          case ZoneDetectionJobStatusChanged zoneDetectionJobStatusChanged -> {
+            var zoneDetectionJobId =
+                zoneDetectionJobStatusChanged.getNewJob().getZoneTilingJob().getId();
+            yield detectionRepository.findByZdjId(zoneDetectionJobId);
+          }
+          case ZoneTilingJobStatusChanged zoneTilingJobStatusChanged -> {
+            var zoneTilingJobId = zoneTilingJobStatusChanged.getNewJob().getId();
+            yield detectionRepository.findByZtjId(zoneTilingJobId);
+          }
+          default -> Optional.empty();
+        };
 
     if (optionalDetection.isEmpty()) {
       log.info("No detection attached to event {}", event);

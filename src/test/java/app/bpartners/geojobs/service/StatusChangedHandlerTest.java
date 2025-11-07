@@ -231,9 +231,7 @@ class StatusChangedHandlerTest {
   }
 
   private record OnEventRunnable(Job newJob, EventProducer eventProducer) implements Runnable {
-    /**
-     * Do Nothing
-     * */
+    /** Do Nothing */
     @Override
     public void run() {}
   }
