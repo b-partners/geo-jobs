@@ -60,24 +60,22 @@ public class StatusChangedHandler {
   private void sendStatusUpdateEvent(PojaEvent event) {
     Optional<Detection> optionalDetection;
 
-    switch (event) {
+    optionalDetection = switch (event) {
       case GeoJsonConversionJobStatusChanged geoJsonConversionJobStatusChanged -> {
         var job = geoJsonConversionJobStatusChanged.getNewJob();
-        optionalDetection = detectionRepository.findByZdjId(job.getZoneDetectionJobId());
+        yield detectionRepository.findByZdjId(job.getZoneDetectionJobId());
       }
       case ZoneDetectionJobStatusChanged zoneDetectionJobStatusChanged -> {
         var zoneDetectionJobId =
             zoneDetectionJobStatusChanged.getNewJob().getZoneTilingJob().getId();
-        optionalDetection = detectionRepository.findByZdjId(zoneDetectionJobId);
+        yield  detectionRepository.findByZdjId(zoneDetectionJobId);
       }
       case ZoneTilingJobStatusChanged zoneTilingJobStatusChanged -> {
         var zoneTilingJobId = zoneTilingJobStatusChanged.getNewJob().getId();
-        optionalDetection = detectionRepository.findByZtjId(zoneTilingJobId);
+        yield  detectionRepository.findByZtjId(zoneTilingJobId);
       }
-      default -> {
-        return;
-      }
-    }
+      default -> Optional.empty();
+    };
 
     if (optionalDetection.isEmpty()) {
       log.info("No detection attached to event {}", event);
