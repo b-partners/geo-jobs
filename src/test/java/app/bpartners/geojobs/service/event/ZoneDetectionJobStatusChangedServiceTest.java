@@ -16,11 +16,13 @@ import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
+import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.JobFinishedMailer;
 import app.bpartners.geojobs.service.StatusChangedHandler;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -94,6 +96,10 @@ class ZoneDetectionJobStatusChangedServiceTest {
       Status.ProgressionStatus progression, Status.HealthStatus health) {
     var statusHistory = new ArrayList<JobStatus>();
     statusHistory.add(JobStatus.builder().progression(progression).health(health).build());
-    return ZoneDetectionJob.builder().id(JOB_ID).statusHistory(statusHistory).build();
+    return ZoneDetectionJob.builder()
+        .id(JOB_ID)
+        .statusHistory(statusHistory)
+        .zoneTilingJob(new ZoneTilingJob().toBuilder().id(UUID.randomUUID().toString()).build())
+        .build();
   }
 }
