@@ -27,6 +27,7 @@ public class BuildingWallPolygonFactory {
           geometryFactory.createPolygon(new Coordinate[] {bottom1, bottom2, top2, top1, bottom1});
 
       double height = Math.max(top1.getZ(), top2.getZ()) - groundZ;
+      height = Math.round(height * 100.0) / 100.0;
 
       walls.add(new GeometryWithProperties(wall, Map.of(HEIGHT_KEY, height)));
     }
