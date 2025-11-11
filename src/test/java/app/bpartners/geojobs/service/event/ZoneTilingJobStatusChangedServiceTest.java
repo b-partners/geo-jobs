@@ -66,7 +66,8 @@ class ZoneTilingJobStatusChangedServiceTest {
           detectionRepositoryMock,
           eventProducerMock,
           objectConfigurationRepositoryMock,
-          detectionDelimitationRetrieverMock);
+          detectionDelimitationRetrieverMock,
+          tilingTaskRepositoryMock);
 
   @BeforeEach
   void setUp() {
@@ -166,6 +167,7 @@ class ZoneTilingJobStatusChangedServiceTest {
         .thenAnswer(invocation -> invocation.getArgument(0));
     doNothing().when(detectionDelimitationRetrieverMock).accept(detection);
     doNothing().when(mailerMock).accept(any());
+    when(tilingTaskRepositoryMock.findAllByJobId(any())).thenReturn(List.of());
 
     assertDoesNotThrow(() -> subject.accept(ztjStatusChanged));
 
