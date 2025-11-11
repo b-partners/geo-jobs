@@ -101,11 +101,7 @@ public class LidarDataToCityJsonProcessor
 
   private static List<GeometryWithProperties> createWalls(RoofPlane3D plane, double groundZ) {
     var roofPolygon = plane.getDelimitation();
-    var wallsPolygons = BuildingWallPolygonFactory.make(roofPolygon, groundZ);
-
-    return wallsPolygons.stream()
-        .map(polygon -> new GeometryWithProperties(polygon, Map.of()))
-        .toList();
+    return BuildingWallPolygonFactory.make(roofPolygon, groundZ);
   }
 
   private static GeometryWithProperties createGround(RoofPlane3D plane, double groundZ) {
