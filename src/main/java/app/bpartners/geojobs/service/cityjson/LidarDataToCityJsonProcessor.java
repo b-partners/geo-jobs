@@ -31,7 +31,6 @@ public class LidarDataToCityJsonProcessor
 
   private final CityJsonFactory cityJsonFactory;
   private static final String PLANE_SLOPE_KEY = "slope_in_degrees";
-  private static final String ROOF_HEIGHT_KEY = "height_in_meters";
   private static final String ID_KEY = "id";
 
   @Override
@@ -55,7 +54,6 @@ public class LidarDataToCityJsonProcessor
   private static BuildingData toBuildingData(LidarRoofData lidarRoofData) {
     var roofProperty = new RoofProperties(lidarRoofData);
     var planes = roofProperty.getPlanes();
-    var height = roofProperty.getHeightInMeters().getValue();
     var groundZ =
         roofProperty.getCleanedGroundPoints().stream()
             .mapToDouble(LasPointGeometry::getZ)
@@ -71,7 +69,7 @@ public class LidarDataToCityJsonProcessor
 
     var grounds = planes.stream().map(plane -> createGround(plane, groundZ)).toList();
 
-    var properties = getProperties(lidarRoofData, height);
+    var properties = getProperties(lidarRoofData);
     var id = properties.getOrDefault(ID_KEY, randomUUID().toString());
 
     return BuildingData.builder()
@@ -83,12 +81,8 @@ public class LidarDataToCityJsonProcessor
         .build();
   }
 
-  private static Map<String, Object> getProperties(LidarRoofData data, double height) {
-    Map<String, Object> properties =
-        data.properties() == null ? new HashMap<>() : data.properties();
-    properties.put(ROOF_HEIGHT_KEY, height);
-
-    return properties;
+  private static Map<String, Object> getProperties(LidarRoofData data) {
+    return data.properties() == null ? new HashMap<>() : data.properties();
   }
 
   private static GeometryWithProperties toPolygonWithProperties(RoofPlane3D plane) {
