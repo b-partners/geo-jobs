@@ -16,7 +16,7 @@ public class CityJSONRequestCreated extends PojaEvent {
 
   @Override
   public Duration maxConsumerDuration() {
-    return Duration.ofMinutes(20);
+    return Duration.ofMinutes(5);
   }
 
   @Override

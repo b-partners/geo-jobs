@@ -3,7 +3,7 @@ package app.bpartners.geojobs.endpoint.rest.controller;
 import static app.bpartners.geojobs.endpoint.rest.model.CityJSONRequestStatus.PROCESSING;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static java.util.UUID.randomUUID;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -17,6 +17,7 @@ import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.model.exception.BadRequestException;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,8 +39,9 @@ class CityJSONControllerIT extends FacadeIT {
     doNothing().when(eventProducerMock).accept(anyList());
 
     var principal = mock(Principal.class);
-    when(authProviderMock.getPrincipal()).thenReturn(principal);
+    when(principal.isAdmin()).thenReturn(true);
     when(principal.getPassword()).thenReturn(randomUUID().toString());
+    when(authProviderMock.getPrincipal()).thenReturn(principal);
   }
 
   @Test
@@ -53,11 +55,69 @@ class CityJSONControllerIT extends FacadeIT {
             .delimitations(payload.getDelimitations())
             .status(PROCESSING);
 
-    var actual = subject.processCityJSONRequest(payload);
+    var actual = subject.processCityJSONRequest(payload, payload.getId());
 
     assertEquals(expected.getStatus(), actual.getStatus());
     assertEquals(expected.getId(), actual.getId());
     assertEquals(expected.getCityJsons(), actual.getCityJsons());
+    assertEquals(PROCESSING, actual.getStatus());
+  }
+
+  @Test
+  void should_throw_if_empty_delimitations_if_given() {
+    var payloadId = randomUUID().toString();
+    var payloadWithEmptyDelimitations =
+        new CreateCityJSONRequest().id(payloadId).delimitations(List.of());
+
+    var exception =
+        assertThrows(
+            BadRequestException.class,
+            () -> subject.processCityJSONRequest(payloadWithEmptyDelimitations, payloadId));
+    assertTrue(exception.getMessage().contains("CityJSONRequest.delimitations"));
+  }
+
+  @Test
+  void should_throw_if_null_id__given() {
+    var payloadWithNullDelimitations = new CreateCityJSONRequest();
+
+    var exception =
+        assertThrows(
+            BadRequestException.class,
+            () -> subject.processCityJSONRequest(payloadWithNullDelimitations, null));
+    assertTrue(exception.getMessage().contains("CityJSONRequest.id is mandatory"));
+  }
+
+  @Test
+  void should_throw_if_null_delimitations_if_given() {
+    var payloadId = randomUUID().toString();
+    var payloadWithNullDelimitations = new CreateCityJSONRequest().id(payloadId);
+
+    var exception =
+        assertThrows(
+            BadRequestException.class,
+            () -> subject.processCityJSONRequest(payloadWithNullDelimitations, payloadId));
+    assertTrue(exception.getMessage().contains("CityJSONRequest.delimitations"));
+  }
+
+  @Test
+  void should_get_correctly_processed_city_json_request() {
+    var payloadId = randomUUID().toString();
+    var payload = new CreateCityJSONRequest().id(payloadId).delimitations(List.of(feature()));
+
+    subject.processCityJSONRequest(payload, payloadId);
+
+    var expected =
+        new CityJSONRequest()
+            .id(payload.getId())
+            .delimitations(payload.getDelimitations())
+            .status(PROCESSING);
+
+    var actual = subject.getById(payloadId);
+
+    assertEquals(expected.getStatus(), actual.getStatus());
+    assertEquals(expected.getId(), actual.getId());
+    assertEquals(expected.getCityJsons(), actual.getCityJsons());
+    assertEquals(PROCESSING, actual.getStatus());
   }
 
   private Feature feature() {
