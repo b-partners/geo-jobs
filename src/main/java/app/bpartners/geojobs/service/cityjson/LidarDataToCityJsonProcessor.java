@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service.cityjson;
 
 import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.AVAILABLE;
+import static app.bpartners.geojobs.service.lidar.utils.MathUtilities.round2;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.service.cityjson.exception.CityJsonException;
@@ -88,7 +89,7 @@ public class LidarDataToCityJsonProcessor
 
   private static GeometryWithProperties toPolygonWithProperties(RoofPlane3D plane) {
     var slope = plane.getSlopeInDegrees().getValue();
-    var area = plane.getArea();
+    var area = round2(plane.getArea());
 
     return GeometryWithProperties.builder()
         .geometry(plane.getDelimitation())

@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service.cityjson.factory;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
+import static app.bpartners.geojobs.service.lidar.utils.MathUtilities.round2;
 
 import app.bpartners.geojobs.service.lidar.model.geometry.GeometryWithProperties;
 import app.bpartners.geojobs.service.lidar.model.geometry.Polygon3DArea;
@@ -30,14 +31,13 @@ public class BuildingWallPolygonFactory {
 
       var area = new Polygon3DArea(wall).getValue();
       double height = Math.max(top1.getZ(), top2.getZ()) - groundZ;
-      height = Math.round(height * 100.0) / 100.0;
 
       walls.add(
           new GeometryWithProperties(
               wall,
               Map.of(
-                  HEIGHT_KEY, height,
-                  AREA_KEY, area)));
+                  HEIGHT_KEY, round2(height),
+                  AREA_KEY, round2(area))));
     }
 
     return walls;
