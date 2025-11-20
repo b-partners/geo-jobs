@@ -4,6 +4,7 @@ import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestSta
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.CityJSONRequestCreated;
+import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.CityJSONRequestRepository;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
 import java.util.List;
@@ -29,5 +30,14 @@ public class CityJSONRequestService {
         List.of(CityJSONRequestCreated.builder().requestId(saved.getId()).build()));
 
     return saved;
+  }
+
+  public CityJSONRequest getById(String requestId) {
+    var optionalRequest = cityJSONRequestRepository.findById(requestId);
+    if (optionalRequest.isEmpty()) {
+      throw new NotFoundException(String.format("CityJSONRequest.id=%s was not found", requestId));
+    }
+
+    return optionalRequest.get();
   }
 }
