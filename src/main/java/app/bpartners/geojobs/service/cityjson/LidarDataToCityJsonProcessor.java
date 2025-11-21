@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service.cityjson;
 
 import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.AVAILABLE;
+import static app.bpartners.geojobs.service.lidar.utils.MathUtilities.round2;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.service.cityjson.exception.CityJsonException;
@@ -30,6 +31,7 @@ public class LidarDataToCityJsonProcessor
     implements BiFunction<String, LidarRoofsAnalysisProcessor.RoofsAnalysisResult, File> {
 
   private final CityJsonFactory cityJsonFactory;
+  private static final String AREA_KEY = "area_in_square_meters";
   private static final String PLANE_SLOPE_KEY = "slope_in_degrees";
   private static final String ID_KEY = "id";
 
@@ -87,9 +89,11 @@ public class LidarDataToCityJsonProcessor
 
   private static GeometryWithProperties toPolygonWithProperties(RoofPlane3D plane) {
     var slope = plane.getSlopeInDegrees().getValue();
+    var area = round2(plane.getArea());
+
     return GeometryWithProperties.builder()
         .geometry(plane.getDelimitation())
-        .properties(Map.of(PLANE_SLOPE_KEY, slope))
+        .properties(Map.of(PLANE_SLOPE_KEY, slope, AREA_KEY, area))
         .build();
   }
 
