@@ -11,59 +11,41 @@ public class Polygon3DArea {
 
   public double getValue() {
     if (value == null) {
-      value = compute3DPolygonArea(polygon.getCoordinates());
+      value = compute3DPolygonArea(polygon);
     }
 
     return value;
   }
 
-  // https://surveytransfer.net/qgis-3d-area-calculation-solving-the-impossible-polygon-surface-calculation/
-  // https://github.com/caoguolin/3D-Polygon-area
-  public static double compute3DPolygonArea(Coordinate[] coordinates) {
-    if (coordinates.length < 3) {
-      return 0.0;
-    }
+  public static double compute3DPolygonArea(Polygon polygon) {
+    var coordinates = polygon.getCoordinates();
+    if (coordinates.length < 3) return 0.0;
 
-    double p1x = coordinates[0].getX();
-    double p1y = coordinates[0].getY();
-    double p1z = coordinates[0].getZ();
+    double totalArea = 0.0;
 
-    double p2x = coordinates[1].getX();
-    double p2y = coordinates[1].getY();
-    double p2z = coordinates[1].getZ();
-
-    double p3x = coordinates[2].getX();
-    double p3y = coordinates[2].getY();
-    double p3z = coordinates[2].getZ();
-
-    double a1 = (p2y - p1y) * (p3z - p1z) - (p3y - p1y) * (p2z - p1z);
-    double a2 = (p3x - p1x) * (p2z - p1z) - (p2x - p1x) * (p3z - p1z);
-    double a3 = (p2x - p1x) * (p3y - p1y) - (p3x - p1x) * (p2y - p1y);
-
-    double norm = Math.sqrt(a1 * a1 + a2 * a2 + a3 * a3);
-
-    double cosnx = a1 / norm;
-    double cosny = a2 / norm;
-    double cosnz = a3 / norm;
-
-    int n = coordinates.length;
-    double s =
-        cosnz * (coordinates[n - 1].getX() * p1y - p1x * coordinates[n - 1].getY())
-            + cosnx * (coordinates[n - 1].getY() * p1z - p1y * coordinates[n - 1].getZ())
-            + cosny * (coordinates[n - 1].getZ() * p1x - p1z * coordinates[n - 1].getX());
-
-    // -2 because JTS polygons are closed, but this algorithm expects an open polygon
-    for (int i = 0; i < n - 2; i++) {
+    var p0 = coordinates[0];
+    for (int i = 1; i < coordinates.length - 2; i++) {
       var p1 = coordinates[i];
       var p2 = coordinates[i + 1];
-      double ss =
-          cosnz * (p1.getX() * p2.getY() - p2.getX() * p1.getY())
-              + cosnx * (p1.getY() * p2.getZ() - p2.getY() * p1.getZ())
-              + cosny * (p1.getZ() * p2.getX() - p2.getZ() * p1.getX());
-      s += ss;
+      totalArea += triangle3DArea(p0, p1, p2);
     }
 
-    s = Math.abs(s / 2.0);
-    return s;
+    return totalArea;
+  }
+
+  private static double triangle3DArea(Coordinate a, Coordinate b, Coordinate c) {
+    double abx = b.x - a.x;
+    double aby = b.y - a.y;
+    double abz = b.z - a.z;
+
+    double acx = c.x - a.x;
+    double acy = c.y - a.y;
+    double acz = c.z - a.z;
+
+    double cx = aby * acz - abz * acy;
+    double cy = abz * acx - abx * acz;
+    double cz = abx * acy - aby * acx;
+
+    return 0.5 * Math.sqrt(cx * cx + cy * cy + cz * cz);
   }
 }
