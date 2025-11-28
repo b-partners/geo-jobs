@@ -1,17 +1,21 @@
 package app.bpartners.geojobs.service.geojson;
 
+import static app.bpartners.geojobs.endpoint.rest.model.Detection.GeoJsonDelimitationTypeEnum.PARCEL;
 import static app.bpartners.geojobs.endpoint.rest.model.Feature.TypeEnum.FEATURE;
 import static app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.MULTI_POLYGON;
 import static app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.POINT;
 import static app.bpartners.geojobs.endpoint.rest.model.Polygon.TypeEnum.POLYGON;
 
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
+import app.bpartners.geojobs.endpoint.rest.model.Detection;
 import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.model.geometry.RoofDetails;
 import app.bpartners.geojobs.repository.model.Feature;
-import app.bpartners.geojobs.service.GeometryTools;
+import app.bpartners.geojobs.service.PolygonInsideCircleDistanceComputer;
 import app.bpartners.geojobs.service.gouv.fr.rnb.BuildingApi;
 import app.bpartners.geojobs.service.gouv.fr.rnb.component.Building;
+import app.bpartners.geojobs.service.ign.IgnCadastreFeatureFetcher;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -30,13 +34,16 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class GeometryConverter {
   private static final int DEFAULT_POLYGON_SIZE_IN_METERS = 100;
-  private static final double APPROXIMATE_METERS_PER_DEGREE_OF_LATITUDE = 111320.0;
   private final GeometryFactory geometryFactory = new GeometryFactory();
-  private final GeometryTools geometryTools = new GeometryTools();
+  private final PolygonInsideCircleDistanceComputer circleDistanceComputer =
+      new PolygonInsideCircleDistanceComputer();
   private final BuildingApi buildingApi;
+  private final IgnCadastreFeatureFetcher ignCadastreFeatureFetcher;
 
-  public GeometryConverter(BuildingApi buildingApi) {
+  public GeometryConverter(
+      BuildingApi buildingApi, IgnCadastreFeatureFetcher ignCadastreFeatureFetcher) {
     this.buildingApi = buildingApi;
+    this.ignCadastreFeatureFetcher = ignCadastreFeatureFetcher;
   }
 
   public Feature toFeature(
@@ -47,7 +54,7 @@ public class GeometryConverter {
         .geometry(
             Feature.FeatureGeometry.builder()
                 .geometryType(MULTI_POLYGON)
-                .actualInstanceStringValue(writeMultiPolygonAsString(multiPolygon))
+                .actualInstanceStringValue(writeGeometryAsString(multiPolygon))
                 .build())
         .properties(new HashMap<>(properties))
         .build();
@@ -61,7 +68,7 @@ public class GeometryConverter {
         .geometry(
             Feature.FeatureGeometry.builder()
                 .geometryType(POINT)
-                .actualInstanceStringValue(writeMultiPolygonAsString(point))
+                .actualInstanceStringValue(writeGeometryAsString(point))
                 .build())
         .properties(new HashMap<>(properties))
         .build();
@@ -97,23 +104,23 @@ public class GeometryConverter {
 
   public List<RoofDetails> retrieveRoofPolygonsFrom(
       List<List<BigDecimal>> lonLatPolygonCoordinates) {
+    var jtsMultiPolygon = apply(List.of(List.of((lonLatPolygonCoordinates))));
+    var centroid = jtsMultiPolygon.getCentroid();
+    var longitude = centroid.getCoordinate().x;
+    var latitude = centroid.getCoordinate().y;
     var maxRadius = 1000;
-    var metersPolygonCoordinates =
-        lonLatPolygonCoordinates.stream()
-            .map(coordinate -> lonLatToMeters(coordinate.getFirst(), coordinate.getLast()))
-            .toList();
-    var minimumEnclosingRadius = geometryTools.getMinimumEnclosingRadius(metersPolygonCoordinates);
+    var minimumEnclosingRadius =
+        circleDistanceComputer.apply(
+            List.of(BigDecimal.valueOf(longitude), BigDecimal.valueOf(latitude)),
+            lonLatPolygonCoordinates);
     if (minimumEnclosingRadius > maxRadius) {
       throw new UnsupportedOperationException(
           "Provided multiPolygon zone is larger than supported retrieving roof polygons radius"
               + " 1000, actual is "
               + minimumEnclosingRadius);
     }
-    var jtsMultiPolygon = apply(List.of(List.of((lonLatPolygonCoordinates))));
-    var centroid = jtsMultiPolygon.getCentroid();
-    var longitude = centroid.getCoordinate().x;
-    var latitude = centroid.getCoordinate().y;
-    return getBuildingsFromCentroid(longitude, latitude, minimumEnclosingRadius, jtsMultiPolygon);
+    return getBuildingsFromCentroid(
+        longitude, latitude, minimumEnclosingRadius.intValue(), jtsMultiPolygon);
   }
 
   private List<RoofDetails> getBuildingsFromCentroid(
@@ -356,6 +363,25 @@ public class GeometryConverter {
     return coordinates;
   }
 
+  public List<List<List<List<BigDecimal>>>> geometryToMultiPolygonCoordinates(Geometry geometry) {
+    if (geometry instanceof MultiPolygon) {
+      return multiPolygonToNestedList((MultiPolygon) geometry);
+    } else if (geometry instanceof Polygon polygon) {
+      List<List<List<List<BigDecimal>>>> coordinates = new ArrayList<>();
+      List<List<List<BigDecimal>>> polygonList = new ArrayList<>();
+      // Partie extérieure (shell)
+      polygonList.add(linearRingToList(polygon.getExteriorRing()));
+
+      // Trous éventuels (holes)
+      for (int j = 0; j < polygon.getNumInteriorRing(); j++) {
+        polygonList.add(linearRingToList(polygon.getInteriorRingN(j)));
+      }
+      coordinates.add(polygonList);
+      return coordinates;
+    }
+    throw new UnsupportedOperationException("Unsupported geometry type: " + geometry.getClass());
+  }
+
   private List<List<BigDecimal>> linearRingToList(LineString ring) {
     List<List<BigDecimal>> coordsList = new ArrayList<>();
 
@@ -388,15 +414,16 @@ public class GeometryConverter {
   }
 
   @SneakyThrows
-  public String writeMultiPolygonAsString(Geometry geometry) {
+  public String writeGeometryAsString(Geometry geometry) {
     GeometryJSON geometryJSON = new GeometryJSON(15);
     StringWriter writer = new StringWriter();
     geometryJSON.write(geometry, writer);
     return writer.toString();
   }
 
+  // TODO: use it directly for others
   @SneakyThrows
-  public String writeGeometryAsString(Geometry geometry) {
+  public static String staticWriteGeometryAsString(Geometry geometry) {
     GeometryJSON geometryJSON = new GeometryJSON(15);
     StringWriter writer = new StringWriter();
     geometryJSON.write(geometry, writer);
@@ -461,43 +488,32 @@ public class GeometryConverter {
     };
   }
 
-  public static MultiPolygon getRoofMultiPolygon(
+  // Could be ROOF or PARCEL multiPolygon
+  public static MultiPolygon getMultiPolygonZoneProcessed(
       app.bpartners.geojobs.endpoint.rest.model.Feature roofFeature) {
-    GeometryConverter geometryConverter = new GeometryConverter(null);
-    MultiPolygon roofGeometry;
+    GeometryConverter geometryConverter = new GeometryConverter(null, null);
     var geometryInstance = roofFeature.getGeometry().getActualInstance();
     switch (geometryInstance) {
-      case app.bpartners.geojobs.endpoint.rest.model.Polygon restPolygon ->
-          roofGeometry = geometryConverter.apply(List.of(restPolygon.getCoordinates()));
-      case app.bpartners.geojobs.endpoint.rest.model.MultiPolygon restMultiPolygon ->
-          roofGeometry = geometryConverter.apply(restMultiPolygon.getCoordinates());
+      case app.bpartners.geojobs.endpoint.rest.model.Polygon restPolygon -> {
+        return geometryConverter.apply(List.of(restPolygon.getCoordinates()));
+      }
+      case app.bpartners.geojobs.endpoint.rest.model.MultiPolygon restMultiPolygon -> {
+        return geometryConverter.apply(restMultiPolygon.getCoordinates());
+      }
       default ->
           throw new IllegalStateException(
               "Unsupported geometry type for roof: " + geometryInstance);
     }
-    return roofGeometry;
   }
 
-  private List<BigDecimal> lonLatToMeters(BigDecimal lon, BigDecimal lat) {
-    double originShift = 2 * Math.PI * 6378137 / 2.0;
-    double mx = lon.doubleValue() * originShift / 180.0;
-    double my = Math.log(Math.tan((90 + lat.doubleValue()) * Math.PI / 360.0)) / (Math.PI / 180.0);
-    my = my * originShift / 180.0;
-    return List.of(BigDecimal.valueOf(mx), BigDecimal.valueOf(my));
-  }
-
-  public Polygon retrievePolygonGeometry(
-      app.bpartners.geojobs.endpoint.rest.model.Feature feature) {
+  @SneakyThrows
+  public Polygon retrieveZonePolygonGeometryProcessed(
+      app.bpartners.geojobs.endpoint.rest.model.Feature feature,
+      Detection.GeoJsonDelimitationTypeEnum delimitationTypeEnum) {
     var geometryInstance = feature.getGeometry().getActualInstance();
     switch (geometryInstance) {
       case app.bpartners.geojobs.endpoint.rest.model.Point point -> {
-        var nearestRoofMultiPolygon = retrieveNearestRoofMultiPolygon(point);
-        if (nearestRoofMultiPolygon.getNumGeometries() > 1) {
-          log.error("Unable to handle multiple polygons for feature : {}", feature);
-          return null;
-        } else {
-          return (Polygon) nearestRoofMultiPolygon.getGeometryN(0);
-        }
+        return retrievePolygonZoneGeomFromPoint(delimitationTypeEnum, point);
       }
       case app.bpartners.geojobs.endpoint.rest.model.Polygon restPolygon -> {
         return convertToPolygon(restPolygon.getCoordinates().getFirst());
@@ -516,5 +532,47 @@ public class GeometryConverter {
         return null;
       }
     }
+  }
+
+  @SneakyThrows
+  private Polygon retrievePolygonZoneGeomFromPoint(
+      Detection.GeoJsonDelimitationTypeEnum delimitationTypeEnum,
+      app.bpartners.geojobs.endpoint.rest.model.Point point) {
+    MultiPolygon zoneToRetrievePolygon;
+    if (PARCEL.equals(delimitationTypeEnum)) {
+      var parcelFeaturesFromPoint =
+          ignCadastreFeatureFetcher.apply(
+              readGeometryFromString(new ObjectMapper().writeValueAsString(point)));
+      if (parcelFeaturesFromPoint.isEmpty()) {
+        log.warn("No parcel found for point {}", point);
+        return null;
+      }
+      zoneToRetrievePolygon = retrieveNearestParcelMultiPolygon(parcelFeaturesFromPoint);
+    } else {
+      zoneToRetrievePolygon = retrieveNearestRoofMultiPolygon(point);
+    }
+    if (zoneToRetrievePolygon.getNumGeometries() > 1) {
+      log.error("Unable to retrieve polygon zone processed for : {}", point.toString());
+      return null;
+    } else {
+      return (Polygon) zoneToRetrievePolygon.getGeometryN(0);
+    }
+  }
+
+  private MultiPolygon retrieveNearestParcelMultiPolygon(List<Feature> parcelFeaturesFromPoint) {
+    MultiPolygon nearestRoofMultiPolygon;
+    var firstParcelFeature = FeatureMapper.toRestFeature(parcelFeaturesFromPoint.getFirst());
+    var parcelInstance = firstParcelFeature.getGeometry().getActualInstance();
+    switch (parcelInstance) {
+      case app.bpartners.geojobs.endpoint.rest.model.Polygon restPolygon -> {
+        nearestRoofMultiPolygon = apply(List.of(restPolygon.getCoordinates()));
+      }
+      case app.bpartners.geojobs.endpoint.rest.model.MultiPolygon restMultiPolygon -> {
+        nearestRoofMultiPolygon = apply(restMultiPolygon.getCoordinates());
+      }
+      default ->
+          throw new IllegalStateException("Unsupported parcel geometry type : " + parcelInstance);
+    }
+    return nearestRoofMultiPolygon;
   }
 }

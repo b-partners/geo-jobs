@@ -20,7 +20,8 @@ class GeometrySquareMeterAreaTest {
   void geometry_area_pcrs() {
     var feature = new ObjectMapper().readValue(featureFromZonePCRS(), Feature.class);
     var geometry =
-        new GeometryConverter(null).apply(feature.getGeometry().getMultiPolygon().getCoordinates());
+        new GeometryConverter(null, null)
+            .apply(feature.getGeometry().getMultiPolygon().getCoordinates());
 
     var actual = subject.apply(geometry);
 
@@ -62,7 +63,8 @@ class GeometrySquareMeterAreaTest {
   void geometry_area_tours() {
     var feature = new ObjectMapper().readValue(featureFromZoneTours(), Feature.class);
     var geometry =
-        new GeometryConverter(null).apply(feature.getGeometry().getMultiPolygon().getCoordinates());
+        new GeometryConverter(null, null)
+            .apply(feature.getGeometry().getMultiPolygon().getCoordinates());
 
     var actual = subject.apply(geometry);
 

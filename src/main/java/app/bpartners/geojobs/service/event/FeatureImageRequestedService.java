@@ -4,12 +4,14 @@ import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.HOUSES_0;
 import static javax.imageio.ImageIO.read;
 
 import app.bpartners.geojobs.endpoint.event.model.FeatureImageRequested;
+import app.bpartners.geojobs.endpoint.rest.model.Point;
 import app.bpartners.geojobs.file.WhiteImageDetector;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
 import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
+import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.TileImageBlur;
 import app.bpartners.geojobs.service.TileImagesAssembler;
@@ -41,10 +43,13 @@ public class FeatureImageRequestedService implements Consumer<FeatureImageReques
   @Override
   public void accept(FeatureImageRequested event) {
     var feature = event.getFeature();
-    var polygonGeometry = geometryConverter.retrievePolygonGeometry(feature);
-    if (polygonGeometry == null) return;
     var detectionIdentifier = event.getDetectionIdentifier();
-    var actualArea = geometrySquareMeterArea.apply(polygonGeometry);
+    var detection = detectionRepository.findById(detectionIdentifier).orElseThrow();
+    var zonePolygonGeometryProcessed =
+        geometryConverter.retrieveZonePolygonGeometryProcessed(
+            feature, detection.getGeoJsonDelimitationType());
+    if (zonePolygonGeometryProcessed == null) return;
+    var actualArea = geometrySquareMeterArea.apply(zonePolygonGeometryProcessed);
     if (actualArea > ONE_KILOMETRE_SQUARE_AREA) {
       log.warn(
           "Feature image requested not implemented for zone over 1km^2, otherwise actual provided"
@@ -54,12 +59,11 @@ public class FeatureImageRequestedService implements Consumer<FeatureImageReques
           feature);
       return;
     }
-    var detection = detectionRepository.findById(detectionIdentifier).orElseThrow();
     // TODO : paginate finding tilingTasks to optimize performance
     var tilingJobIdentifier = detection.getZtjId();
     var tilingTasks = tilingTaskRepository.findAllByJobId(tilingJobIdentifier);
     var tileCoordinatesEnvelopingPolygon =
-        tileFinder.getFromGeoJsonPolygon(polygonGeometry, HOUSES_0.getZoomLevel());
+        tileFinder.getFromGeoJsonPolygon(zonePolygonGeometryProcessed, HOUSES_0.getZoomLevel());
     var tiles =
         tilingTasks.stream()
             .map(ParcelTilingTask::getTiles)
@@ -72,7 +76,13 @@ public class FeatureImageRequestedService implements Consumer<FeatureImageReques
                 tile ->
                     tile.toBuilder().image(bucketComponent.download(tile.getBucketPath())).build())
             .toList();
-    var tilesWithBlur = tileImageBlur.apply(detection, tilesWithImages);
+    List<Tile> tilesWithBlur;
+    if (feature.getGeometry() != null
+        && feature.getGeometry().getActualInstance() instanceof Point) {
+      tilesWithBlur = tileImageBlur.apply(zonePolygonGeometryProcessed, tilesWithImages);
+    } else {
+      tilesWithBlur = tileImageBlur.apply(detection, tilesWithImages);
+    }
 
     var assembleImageFile = tileImagesAssembler.apply(tilesWithBlur);
 

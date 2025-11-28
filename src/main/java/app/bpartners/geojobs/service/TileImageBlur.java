@@ -8,6 +8,7 @@ import static org.locationtech.jts.geom.util.GeometryCombiner.combine;
 
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.endpoint.rest.model.Polygon;
+import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.model.geometry.IntXY;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
@@ -32,18 +33,7 @@ public class TileImageBlur implements BiFunction<Detection, List<Tile>, List<Til
   private final DetectionBackgroundRetriever detectionBackgroundRetriever;
   private final DetectionZoneToProcessProvider detectionProvidedZoneUnifier;
 
-  @Override
-  public List<Tile> apply(Detection detection, List<Tile> tiles) {
-    var latLonBackgroundInsideProvidedZone = detectionBackgroundRetriever.apply(detection);
-    var providedZone = detectionProvidedZoneUnifier.apply(detection);
-    Geometry roofInsideProvidedZone;
-    if (detection.getGeoJsonDelimitationType().equals(ROOF)) {
-      roofInsideProvidedZone = providedZone;
-    } else {
-      var unifiedRoofMultiPolygon = getUnifiedRoofMultiPolygon(detection);
-      roofInsideProvidedZone =
-          handleGeometryCollectionType(providedZone.intersection(unifiedRoofMultiPolygon));
-    }
+  public List<Tile> apply(Geometry polygonGeometry, List<Tile> tiles) {
     return tiles.stream()
         .map(
             tile -> {
@@ -51,50 +41,16 @@ public class TileImageBlur implements BiFunction<Detection, List<Tile>, List<Til
               var multiPolygonFromTile =
                   geometryConverter.getMultiPolygonFromTile(
                       tileCoordinates.getX(), tileCoordinates.getY(), tileCoordinates.getZ());
-              var roofInsideTileAndProvidedZone =
-                  handleGeometryCollectionType(
-                      multiPolygonFromTile.intersection(roofInsideProvidedZone));
-
-              Geometry intersectionBetweenTileMultiPolygonAndBackground;
-              if (ROOF.equals(detection.getGeoJsonDelimitationType())) {
-                intersectionBetweenTileMultiPolygonAndBackground =
-                    multiPolygonFromTile.difference(roofInsideTileAndProvidedZone);
-              } else {
-                intersectionBetweenTileMultiPolygonAndBackground =
-                    handleGeometryCollectionType(
-                        multiPolygonFromTile.intersection(latLonBackgroundInsideProvidedZone));
-              }
-
-              var tileWithoutRoofInsideTileAndZone =
-                  multiPolygonFromTile.difference(roofInsideTileAndProvidedZone);
               List<List<List<IntXY>>> multiPolygonPixelCoordinates;
-              if (intersectionBetweenTileMultiPolygonAndBackground == null
-                  || intersectionBetweenTileMultiPolygonAndBackground.isEmpty()) {
+              if (!multiPolygonFromTile.intersects(polygonGeometry)) {
                 multiPolygonPixelCoordinates = getBlurAllAreaCoordinates();
               } else {
-                var backgroundMultiPolygonPixels =
-                    geometryPixelProjector.toMultiPolygonPixels(
-                        tileWithoutRoofInsideTileAndZone,
-                        tileCoordinates.getX(),
-                        tileCoordinates.getY(),
-                        tileCoordinates.getZ(),
-                        DEFAULT_TILE_SIZE);
+                var roofInsideTile =
+                    handleGeometryCollectionType(
+                        multiPolygonFromTile.intersection(polygonGeometry));
+                var tileWithoutRoof = multiPolygonFromTile.difference(roofInsideTile);
                 multiPolygonPixelCoordinates =
-                    backgroundMultiPolygonPixels.stream()
-                        .map(
-                            polygon ->
-                                polygon.stream()
-                                    .map(
-                                        ring ->
-                                            ring.stream()
-                                                .map(
-                                                    coordinates ->
-                                                        new IntXY(
-                                                            coordinates.getFirst().intValue(),
-                                                            coordinates.getLast().intValue()))
-                                                .toList())
-                                    .toList())
-                        .toList();
+                    retrievePixelBackgroundCoordinates(tileCoordinates, tileWithoutRoof);
               }
               var imageWithBlur =
                   filePolygonDrawer.apply(multiPolygonPixelCoordinates, WHITE, tile.getImage());
@@ -103,8 +59,149 @@ public class TileImageBlur implements BiFunction<Detection, List<Tile>, List<Til
         .toList();
   }
 
+  private List<List<List<IntXY>>> retrievePixelBackgroundCoordinates(
+      TileCoordinates tileCoordinates, Geometry tileWithoutRoof) {
+    List<List<List<IntXY>>> multiPolygonPixelCoordinates;
+    var backgroundMultiPolygonPixels =
+        geometryPixelProjector.toMultiPolygonPixels(
+            tileWithoutRoof,
+            tileCoordinates.getX(),
+            tileCoordinates.getY(),
+            tileCoordinates.getZ(),
+            DEFAULT_TILE_SIZE);
+    multiPolygonPixelCoordinates =
+        backgroundMultiPolygonPixels.stream()
+            .map(
+                polygon ->
+                    polygon.stream()
+                        .map(
+                            ring ->
+                                ring.stream()
+                                    .map(
+                                        coordinates ->
+                                            new IntXY(
+                                                coordinates.getFirst().intValue(),
+                                                coordinates.getLast().intValue()))
+                                    .toList())
+                        .toList())
+            .toList();
+    return multiPolygonPixelCoordinates;
+  }
+
+  @Override
+  public List<Tile> apply(Detection detection, List<Tile> tiles) {
+    var latLonBackgroundInsideProvidedZone = detectionBackgroundRetriever.apply(detection);
+    var providedZone = detectionProvidedZoneUnifier.apply(detection);
+    var geoJsonDelimitationType = detection.getGeoJsonDelimitationType();
+    Geometry zoneToExcludeInsideProvidedZone;
+    switch (geoJsonDelimitationType) {
+      case ROOF -> zoneToExcludeInsideProvidedZone = providedZone;
+      case ZONE -> {
+        var unifiedRoofMultiPolygon = getUnifiedRoofMultiPolygon(detection);
+        zoneToExcludeInsideProvidedZone =
+            handleGeometryCollectionType(providedZone.intersection(unifiedRoofMultiPolygon));
+      }
+      case PARCEL -> {
+        var unifiedParcelsMultiPolygon = getUnifiedParcelsMultiPolygon(detection);
+        zoneToExcludeInsideProvidedZone =
+            handleGeometryCollectionType(providedZone.intersection(unifiedParcelsMultiPolygon));
+      }
+      default ->
+          throw new IllegalArgumentException(
+              "Unsupported geoJsonDelimitationType: " + geoJsonDelimitationType);
+    }
+    var bluredTiles =
+        tiles.stream()
+            .map(
+                tile -> {
+                  boolean isBlured = false;
+                  var tileCoordinates = tile.getCoordinates();
+                  var multiPolygonFromTile =
+                      geometryConverter.getMultiPolygonFromTile(
+                          tileCoordinates.getX(), tileCoordinates.getY(), tileCoordinates.getZ());
+                  var excludedZoneInsideTileAndProvidedZone =
+                      handleGeometryCollectionType(
+                          multiPolygonFromTile.intersection(zoneToExcludeInsideProvidedZone));
+
+                  Geometry intersectionBetweenTileMultiPolygonAndBackground;
+                  if (ROOF.equals(geoJsonDelimitationType)) {
+                    intersectionBetweenTileMultiPolygonAndBackground =
+                        multiPolygonFromTile.difference(excludedZoneInsideTileAndProvidedZone);
+                  } else {
+                    intersectionBetweenTileMultiPolygonAndBackground =
+                        handleGeometryCollectionType(
+                            multiPolygonFromTile.intersection(latLonBackgroundInsideProvidedZone));
+                  }
+
+                  var tileWithoutRoofInsideTileAndZone =
+                      multiPolygonFromTile.difference(excludedZoneInsideTileAndProvidedZone);
+                  List<List<List<IntXY>>> multiPolygonPixelCoordinates;
+                  if (intersectionBetweenTileMultiPolygonAndBackground == null
+                      || intersectionBetweenTileMultiPolygonAndBackground.isEmpty()) {
+                    multiPolygonPixelCoordinates = getBlurAllAreaCoordinates();
+                    isBlured = true;
+                  } else {
+                    multiPolygonPixelCoordinates =
+                        retrievePixelBackgroundCoordinates(
+                            tileCoordinates, tileWithoutRoofInsideTileAndZone);
+                  }
+                  var imageWithBlur =
+                      filePolygonDrawer.apply(multiPolygonPixelCoordinates, WHITE, tile.getImage());
+                  return tile.toBuilder().image(imageWithBlur).isBlured(isBlured).build();
+                })
+            .toList();
+    if (bluredTiles.stream().allMatch(Tile::isBlured)) {
+      log.info(
+          "Returning original images as error occurred during blurring images for tiles {}",
+          tiles.stream()
+                  .map(
+                      tile ->
+                          "x:"
+                              + tile.getCoordinates().getX()
+                              + "/ y: "
+                              + tile.getCoordinates().getY())
+                  .toList()
+              + " ; ");
+      return tiles;
+    }
+    return bluredTiles;
+  }
+
   private org.locationtech.jts.geom.MultiPolygon getUnifiedRoofMultiPolygon(Detection detection) {
     return detection.getFeatureWithDelimitations().stream()
+        .map(
+            featureWithDelimitation ->
+                featureWithDelimitation.delimitations().stream()
+                    .map(
+                        f -> {
+                          var geometryType = toRestFeature(f).getGeometry().getActualInstance();
+                          switch (geometryType) {
+                            case Polygon polygon -> {
+                              return geometryConverter.apply(List.of(polygon.getCoordinates()));
+                            }
+                            case MultiPolygon multiPolygon -> {
+                              return geometryConverter.apply(multiPolygon.getCoordinates());
+                            }
+                            default ->
+                                throw new IllegalArgumentException(
+                                    "Unsupported geometry type to extended image: " + geometryType);
+                          }
+                        })
+                    .toList())
+        .toList()
+        .stream()
+        .flatMap(List::stream)
+        .reduce(unifyMultiPolygon())
+        .orElseThrow(
+            () ->
+                new IllegalStateException(
+                    "Unable to unify delimitation multiPolygon for detection.id: "
+                        + detection.getId()));
+  }
+
+  private org.locationtech.jts.geom.MultiPolygon getUnifiedParcelsMultiPolygon(
+      Detection detection) {
+    return detection.getParcelDelimitations().stream()
         .map(
             featureWithDelimitation ->
                 featureWithDelimitation.delimitations().stream()
