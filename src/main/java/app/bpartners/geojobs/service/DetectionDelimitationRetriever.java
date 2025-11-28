@@ -6,6 +6,7 @@ import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.*;
 
 import app.bpartners.geojobs.endpoint.rest.model.*;
+import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
@@ -88,6 +89,7 @@ public class DetectionDelimitationRetriever implements Consumer<Detection> {
     return switch (detection.getGeoJsonDelimitationType()) {
       case ZONE -> computeFeatureWithDelimitationFromDetection(detection);
       case ROOF -> computeFeatureWithDelimitationFromProvidedGeoJson(detection);
+      case PARCEL -> throw new NotImplementedException("Not implemented yet");
     };
   }
 
