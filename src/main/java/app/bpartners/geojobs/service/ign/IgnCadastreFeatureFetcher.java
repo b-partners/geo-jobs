@@ -6,10 +6,12 @@ import static org.springframework.http.HttpMethod.GET;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.service.ign.schemas.IgnFeature;
 import app.bpartners.geojobs.service.ign.schemas.IgnResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -41,16 +43,16 @@ public class IgnCadastreFeatureFetcher implements Function<Geometry, List<Featur
     return responseBody.features.stream().map(this::mapToFeature).toList();
   }
 
+  @SneakyThrows
   private Feature mapToFeature(IgnFeature ignFeature) {
-
-    var ignGeometry = ignFeature.geometry.toString();
+    var ignGeometryJsonValue = new ObjectMapper().writeValueAsString(ignFeature.geometry);
     return Feature.builder()
         .properties(
             ignFeature.properties == null ? new HashMap<>() : new HashMap<>(ignFeature.properties))
         .geometry(
             Feature.FeatureGeometry.builder()
-                .geometryType(retrieveGeometryType(ignGeometry))
-                .actualInstanceStringValue(ignGeometry)
+                .geometryType(retrieveGeometryType(ignGeometryJsonValue))
+                .actualInstanceStringValue(ignGeometryJsonValue)
                 .build())
         .build();
   }
