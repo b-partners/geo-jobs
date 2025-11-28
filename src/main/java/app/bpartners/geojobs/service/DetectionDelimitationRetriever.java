@@ -6,11 +6,11 @@ import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.*;
 
 import app.bpartners.geojobs.endpoint.rest.model.*;
-import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import app.bpartners.geojobs.service.ign.IgnCadastreFeatureFetcher;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
@@ -28,68 +28,40 @@ public class DetectionDelimitationRetriever implements Consumer<Detection> {
   private final GeometryConverter geometryConverter;
   private final DetectionRepository detectionRepository;
   private final ObjectMapper objectMapper;
+  private final IgnCadastreFeatureFetcher ignCadastreFeatureFetcher;
 
   @Override
   public void accept(Detection detection) {
     if (detection.hasToitureModelName()) {
-      var featureWithDelimitationList =
-          computeFeatureWithDelimitationFromDetectionFacade(detection);
-      var featureWithDelimitationMap =
-          featureWithDelimitationList.stream()
-              .collect(groupingBy(FeatureWithDelimitation::feature))
-              .entrySet()
-              .stream()
-              .collect(
-                  toMap(
-                      entry -> {
-                        try {
-                          app.bpartners.geojobs.repository.model.Feature providedFeature =
-                              entry.getKey();
-                          return new ObjectMapper().writeValueAsString(providedFeature);
-                        } catch (JsonProcessingException e) {
-                          throw new RuntimeException(e);
-                        }
-                      },
-                      featureListEntry ->
-                          featureListEntry.getValue().stream()
-                              .map(FeatureWithDelimitation::delimitations)
-                              .flatMap(List::stream)
-                              .toList(),
-                      (v1, v2) -> v1));
-
-      var pointDelimitation = new HashMap<String, app.bpartners.geojobs.repository.model.Feature>();
-      featureWithDelimitationMap.forEach(
-          (key, value) -> {
-            if (value.size() == 1) {
-              pointDelimitation.put(key, value.getFirst());
-            }
-          });
-
-      log.info(
-          "debug featureWithDelimitationList {}",
-          featureWithDelimitationList.stream()
-              .map(FeatureWithDelimitation::toString)
-              .collect(toList()));
-      var detectionWithDelimitations =
-          detection.toBuilder()
-              .pointDelimitation(pointDelimitation)
-              .featureWithDelimitations(featureWithDelimitationList)
-              .build();
+      var detectionWithDelimitations = computeDelimitationsFromDetectionFacade(detection);
       detectionRepository.save(detectionWithDelimitations);
     }
   }
 
-  private List<FeatureWithDelimitation> computeFeatureWithDelimitationFromDetectionFacade(
-      Detection detection) {
+  private Detection computeDelimitationsFromDetectionFacade(Detection detection) {
     if (detection.getGeoJsonDelimitationType() == null) {
       log.warn("GeoJsonDelimitationTypeEnum is null, defaulting to ZONE");
-      return computeFeatureWithDelimitationFromDetection(detection);
+      var zoneDelimitations = computeFeatureWithDelimitationFromDetection(detection);
+      return detection.toBuilder().featureWithDelimitations(zoneDelimitations).build();
     }
-
     return switch (detection.getGeoJsonDelimitationType()) {
-      case ZONE -> computeFeatureWithDelimitationFromDetection(detection);
-      case ROOF -> computeFeatureWithDelimitationFromProvidedGeoJson(detection);
-      case PARCEL -> throw new NotImplementedException("Not implemented yet");
+      case ZONE -> {
+        var zoneDelimitations = computeFeatureWithDelimitationFromDetection(detection);
+        yield detection.toBuilder().featureWithDelimitations(zoneDelimitations).build();
+      }
+      case ROOF -> {
+        var roofDelimitations = computeFeatureWithDelimitationFromProvidedGeoJson(detection);
+        yield detection.toBuilder().featureWithDelimitations(roofDelimitations).build();
+      }
+      case PARCEL -> {
+        var parcelDelimitations =
+            computeParcelDelimitation(detection.getDomainProvidedGeoJsonZone());
+        var roofDelimitations = computeFeatureWithDelimitationFromProvidedGeoJson(detection);
+        yield detection.toBuilder()
+            .featureWithDelimitations(roofDelimitations)
+            .parcelDelimitations(parcelDelimitations)
+            .build();
+      }
     };
   }
 
@@ -140,6 +112,20 @@ public class DetectionDelimitationRetriever implements Consumer<Detection> {
     }
     properties.put(
         "addresses", objectMapper.writeValueAsString(roofDetailsList.getFirst().addresses()));
+  }
+
+  private List<FeatureWithDelimitation> computeParcelDelimitation(
+      List<app.bpartners.geojobs.repository.model.Feature> providedGeoJsonZone) {
+    return providedGeoJsonZone.stream()
+        .map(
+            providedFeature -> {
+              var geometry = providedFeature.getGeometry();
+              var geometryStringValue = geometry.getActualInstanceStringValue();
+              var jtsGeometry = geometryConverter.readGeometryFromString(geometryStringValue);
+              var retrievedParcelFeatures = ignCadastreFeatureFetcher.apply(jtsGeometry);
+              return new FeatureWithDelimitation(providedFeature, retrievedParcelFeatures);
+            })
+        .toList();
   }
 
   private List<FeatureWithDelimitation> computeFeatureWithDelimitationFromProvidedGeoJson(
