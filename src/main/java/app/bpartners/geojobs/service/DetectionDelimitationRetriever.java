@@ -3,7 +3,6 @@ package app.bpartners.geojobs.service;
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.*;
 import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.HOUSES_0;
 import static java.util.UUID.randomUUID;
-import static java.util.stream.Collectors.*;
 
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.repository.DetectionRepository;
@@ -39,24 +38,25 @@ public class DetectionDelimitationRetriever implements Consumer<Detection> {
   }
 
   private Detection computeDelimitationsFromDetectionFacade(Detection detection) {
+    final var restProvidedGeoJsonZone = detection.getProvidedGeoJsonZone();
+    final var domainProvidedGeoJsonZone = detection.getDomainProvidedGeoJsonZone();
     if (detection.getGeoJsonDelimitationType() == null) {
       log.warn("GeoJsonDelimitationTypeEnum is null, defaulting to ZONE");
-      var zoneDelimitations = computeFeatureWithDelimitationFromDetection(detection);
+      var zoneDelimitations = findRoofDelimitations(restProvidedGeoJsonZone);
       return detection.toBuilder().featureWithDelimitations(zoneDelimitations).build();
     }
     return switch (detection.getGeoJsonDelimitationType()) {
       case ZONE -> {
-        var zoneDelimitations = computeFeatureWithDelimitationFromDetection(detection);
+        var zoneDelimitations = findRoofDelimitations(restProvidedGeoJsonZone);
         yield detection.toBuilder().featureWithDelimitations(zoneDelimitations).build();
       }
       case ROOF -> {
-        var roofDelimitations = computeFeatureWithDelimitationFromProvidedGeoJson(detection);
+        var roofDelimitations = convertProvidedToDelimitation(domainProvidedGeoJsonZone);
         yield detection.toBuilder().featureWithDelimitations(roofDelimitations).build();
       }
       case PARCEL -> {
-        var parcelDelimitations =
-            computeParcelDelimitation(detection.getDomainProvidedGeoJsonZone());
-        var roofDelimitations = computeFeatureWithDelimitationFromProvidedGeoJson(detection);
+        var parcelDelimitations = computeParcelDelimitation(domainProvidedGeoJsonZone);
+        var roofDelimitations = findRoofDelimitations(restProvidedGeoJsonZone);
         yield detection.toBuilder()
             .featureWithDelimitations(roofDelimitations)
             .parcelDelimitations(parcelDelimitations)
@@ -128,9 +128,8 @@ public class DetectionDelimitationRetriever implements Consumer<Detection> {
         .toList();
   }
 
-  private List<FeatureWithDelimitation> computeFeatureWithDelimitationFromProvidedGeoJson(
-      Detection detection) {
-    var providedGeoJsonZone = detection.getDomainProvidedGeoJsonZone();
+  private List<FeatureWithDelimitation> convertProvidedToDelimitation(
+      List<app.bpartners.geojobs.repository.model.Feature> providedGeoJsonZone) {
     return providedGeoJsonZone.stream()
         .map(
             feature ->
@@ -139,9 +138,8 @@ public class DetectionDelimitationRetriever implements Consumer<Detection> {
         .toList();
   }
 
-  private List<FeatureWithDelimitation> computeFeatureWithDelimitationFromDetection(
-      Detection detection) {
-    return detection.getProvidedGeoJsonZone().stream()
+  private List<FeatureWithDelimitation> findRoofDelimitations(List<Feature> providedGeoJsonZone) {
+    return providedGeoJsonZone.stream()
         .map(
             providedFeature -> {
               var properties =

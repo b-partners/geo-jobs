@@ -1,17 +1,17 @@
 package app.bpartners.geojobs.service.ign;
 
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.staticWriteGeometryAsString;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.springframework.http.HttpMethod.GET;
-import static org.springframework.web.util.UriUtils.encodeQueryParam;
 
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.service.ign.schemas.IgnFeature;
 import app.bpartners.geojobs.service.ign.schemas.IgnResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -33,8 +33,7 @@ public class IgnCadastreFeatureFetcher implements Function<Geometry, List<Featur
     } else {
       geoJson = staticWriteGeometryAsString(geometry);
     }
-    var encodedGeom = encodeQueryParam(geoJson, UTF_8);
-    var response = restTemplate.exchange(URL, GET, null, IgnResponse.class, encodedGeom);
+    var response = restTemplate.exchange(URL, GET, null, IgnResponse.class, geoJson);
 
     var responseBody = response.getBody();
     if (responseBody == null || responseBody.features == null || responseBody.features.isEmpty()) {
@@ -44,16 +43,16 @@ public class IgnCadastreFeatureFetcher implements Function<Geometry, List<Featur
     return responseBody.features.stream().map(this::mapToFeature).toList();
   }
 
+  @SneakyThrows
   private Feature mapToFeature(IgnFeature ignFeature) {
-
-    var ignGeometry = ignFeature.geometry.toString();
+    var ignGeometryJsonValue = new ObjectMapper().writeValueAsString(ignFeature.geometry);
     return Feature.builder()
         .properties(
             ignFeature.properties == null ? new HashMap<>() : new HashMap<>(ignFeature.properties))
         .geometry(
             Feature.FeatureGeometry.builder()
-                .geometryType(retrieveGeometryType(ignGeometry))
-                .actualInstanceStringValue(ignGeometry)
+                .geometryType(retrieveGeometryType(ignGeometryJsonValue))
+                .actualInstanceStringValue(ignGeometryJsonValue)
                 .build())
         .build();
   }
