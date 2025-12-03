@@ -98,7 +98,7 @@ public class LidarDataToCityJsonProcessor
       RoofPlane3D plane, double area2DScale, double distance2DScale) {
     var slope = plane.getSlopeInDegrees().getValue();
     var area2D = plane.get2DArea() * area2DScale;
-    var area3D = Math.abs(round2(area2D / Math.cos(slope)));
+    var area3D = Math.abs(round2(area2D / Math.cos(Math.toRadians(slope))));
 
     return GeometryWithProperties.builder()
         .geometry(plane.getDelimitation())
