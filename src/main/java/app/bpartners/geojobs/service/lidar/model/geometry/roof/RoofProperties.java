@@ -60,6 +60,10 @@ public class RoofProperties {
       planes =
           rawPlanes.stream()
               .map(plane -> new RoofPlane3D(toPolygon(data.roof().boundaryLambert93()), plane))
+              .filter(
+                  plane ->
+                      plane.getDelimitation().getCoordinates().length > 2
+                          && plane.get2DArea() > 0.5)
               .toList();
     }
 
