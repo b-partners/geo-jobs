@@ -84,6 +84,9 @@ public class Detection implements Serializable {
   @JdbcTypeCode(JSON)
   private DetectableObjectModel detectableObjectModel;
 
+  @JdbcTypeCode(JSON)
+  private List<DetectableObjectModel> detectableObjectModelList;
+
   // TODO: save as entity
   @JdbcTypeCode(JSON)
   private GeoServerProperties geoServerProperties;
