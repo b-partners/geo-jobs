@@ -146,8 +146,8 @@ public class Detection implements Serializable {
   }
 
   private void setDetectableObjectModels() {
-    if (detectableObjectModelList != null && !detectableObjectModelList.isEmpty()) {
-      detectableObjectModel = null;
+    if (detectableObjectModelList == null) {
+      detectableObjectModelList = new ArrayList<>();
     }
   }
 
