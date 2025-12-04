@@ -22,6 +22,7 @@ import app.bpartners.geojobs.service.PolygonCoordinatesCloser;
 import app.bpartners.geojobs.service.TileCoordinatesPolygonIntersection;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.tiling.TileFinder;
+import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
@@ -46,9 +47,11 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
   private final FeatureMapper featureMapper;
   private final DetectionRoofPropertiesRequestedService detectionRoofPropertiesRequestedService;
   private final TileFinder tileFinder;
+  private final EntityManager entityManager;
 
   @Override
   public void accept(FeatureVggRequested event) {
+    entityManager.clear();
     var detectionIdentifier = event.getDetectionIdentifier();
     var feature = event.getFeature();
     var detection = detectionRepository.findById(detectionIdentifier).orElseThrow();
