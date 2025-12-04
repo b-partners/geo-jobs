@@ -42,6 +42,9 @@ public class DetectionCreationMapper {
       boolean isSynchronous) {
     var detectableObjectModel = createDetection.getDetectableObjectModel();
     var detectableObjectModelList = createDetection.getDetectableObjectModelList();
+    if (detectableObjectModelList != null && !detectableObjectModelList.isEmpty()) {
+      detectableObjectModel = null;
+    }
     var detectionId = randomUUID().toString();
     var detectableObjectConfigurations =
         getDetectableObjectConfigurations(detectionId, createDetection);
