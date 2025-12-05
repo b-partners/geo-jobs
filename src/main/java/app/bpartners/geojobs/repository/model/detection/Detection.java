@@ -142,10 +142,6 @@ public class Detection implements Serializable {
   @PrePersist
   protected void onCreate() {
     this.creationDatetime = now().truncatedTo(ChronoUnit.MICROS);
-    setDetectableObjectModels();
-  }
-
-  private void setDetectableObjectModels() {
     if (detectableObjectModelList == null) {
       detectableObjectModelList = new ArrayList<>();
     }
