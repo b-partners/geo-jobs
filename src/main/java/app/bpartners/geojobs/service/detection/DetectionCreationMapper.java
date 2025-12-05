@@ -97,10 +97,9 @@ public class DetectionCreationMapper {
           .getDetectableObjectModelList()
           .forEach(
               model ->
-                detectableObjectConfigurations.addAll(
-                    detectableObjectTypeMapper.mapDefaultConfigurationsFromModel(
-                        detectionId, model.getModelName()))
-              );
+                  detectableObjectConfigurations.addAll(
+                      detectableObjectTypeMapper.mapDefaultConfigurationsFromModel(
+                          detectionId, model.getModelName())));
     }
 
     return detectableObjectConfigurations;
