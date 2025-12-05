@@ -26,6 +26,7 @@ import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
@@ -60,21 +61,27 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
       return;
     }
     var machineDetectedTiles = detectedTileRepository.findAllByZdjJobId(detection.getZdjId());
-    log.info(
-        "actual feature {} VS delimitations {}",
-        feature.getGeometry(),
-        detection.getFeatureWithDelimitations());
+    var featureWithDelimitationList = detection.getFeatureWithDelimitations();
+    var actualDelimitation =
+        featureWithDelimitationList.stream()
+            .filter(
+                f ->
+                    f.getRestFeature() != null
+                        && f.getRestFeature().getGeometry() != null
+                        && f.getRestFeature().getGeometry().equals(feature.getGeometry()))
+            .findFirst()
+            .orElse(
+                featureWithDelimitationList.size() == 1
+                        && featureWithDelimitationList.getFirst().getRestDelimitations() != null
+                        && featureWithDelimitationList.getFirst().getRestDelimitations().size() == 1
+                    ? featureWithDelimitationList.getFirst()
+                    : null);
+    if (actualDelimitation == null) {
+      throw new NoSuchElementException("No delimitation found for " + feature.getGeometry());
+    }
     var featureDelimitationWithRoofProperties =
         detectionRoofPropertiesRequestedService.applyRoofPropertiesOnDelimitation(
-            machineDetectedTiles,
-            detection.getFeatureWithDelimitations().stream()
-                .filter(
-                    f ->
-                        f.getRestFeature() != null
-                            && f.getRestFeature().getGeometry() != null
-                            && f.getRestFeature().getGeometry().equals(feature.getGeometry()))
-                .findFirst()
-                .orElseThrow());
+            machineDetectedTiles, actualDelimitation);
     var polygonGeoJson = getPolygonGeoJsonFromFeature(feature);
     if (polygonGeoJson == null) return;
     var detectableTypes =
