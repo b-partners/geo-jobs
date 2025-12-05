@@ -19,7 +19,6 @@ import app.bpartners.geojobs.service.dashboard.AreaPictureApi;
 import app.bpartners.geojobs.service.dashboard.component.AreaPictureMapLayer;
 import app.bpartners.geojobs.service.geoserver.GeoServerConfiguration;
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
@@ -85,24 +84,19 @@ public class DetectionCreationMapper {
 
   private List<DetectableObjectConfiguration> getDetectableObjectConfigurations(
       String detectionId, CreateDetection createDetection) {
-    List<DetectableObjectConfiguration> detectableObjectConfigurations;
     if (createDetection.getDetectableObjectModelList() == null
         || createDetection.getDetectableObjectModelList().isEmpty()) {
-      detectableObjectConfigurations =
-          detectableObjectTypeMapper.mapDefaultConfigurationsFromModel(
-              detectionId, createDetection.getDetectableObjectModel().getModelName());
-    } else {
-      detectableObjectConfigurations = new ArrayList<>();
-      createDetection
-          .getDetectableObjectModelList()
-          .forEach(
-              model ->
-                  detectableObjectConfigurations.addAll(
-                      detectableObjectTypeMapper.mapDefaultConfigurationsFromModel(
-                          detectionId, model.getModelName())));
+      return detectableObjectTypeMapper.mapDefaultConfigurationsFromModel(
+          detectionId, createDetection.getDetectableObjectModel().getModelName());
     }
 
-    return detectableObjectConfigurations;
+    return createDetection.getDetectableObjectModelList().stream()
+        .flatMap(
+            model ->
+                detectableObjectTypeMapper
+                    .mapDefaultConfigurationsFromModel(detectionId, model.getModelName())
+                    .stream())
+        .toList();
   }
 
   private List<Feature> getActualProvidedGeoJson(
