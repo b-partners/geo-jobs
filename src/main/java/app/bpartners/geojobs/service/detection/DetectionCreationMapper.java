@@ -96,11 +96,11 @@ public class DetectionCreationMapper {
       createDetection
           .getDetectableObjectModelList()
           .forEach(
-              model -> {
+              model ->
                 detectableObjectConfigurations.addAll(
                     detectableObjectTypeMapper.mapDefaultConfigurationsFromModel(
-                        detectionId, model.getModelName()));
-              });
+                        detectionId, model.getModelName()))
+              );
     }
 
     return detectableObjectConfigurations;
