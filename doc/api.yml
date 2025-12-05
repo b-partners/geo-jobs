@@ -25,7 +25,7 @@ info:
     1. Submit detection request through `POST /detections/{id}` where `{id}` is yours to be created
     using the example request body accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/geojson/detection_toiture_payload_example.json).
     Note that `detectableObjectModel` property must be set to `BP_TOITURE` and `geoServerProperties` property to `null`.
-    To use multiple model put them in the `detectableObjectModelList` property.
+    To handle models through one detection, use `detectableObjectModelList` instead of detectableObjectModel.
     2. Track the progress of your detection through `GET /detections/{id}`. 
     Detection is finished when `geoJsonUrl` property containing your detection result is not null.
     Expected geojson example result is accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/toiture_analysis_result_example.geojson)
@@ -34,7 +34,7 @@ info:
     1. Submit detection request through `POST /detections/{id}` where `{id}` is yours to be created
     using the example request body accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/detection_creation_using_toiture_model_example.json). 
     Note that `detectableObjectModel` property must be set to `BP_TOITURE` and `geoServerProperties` property to `null`.
-    To use multiple model put them in the `detectableObjectModelList` property.
+    To handle models through one detection, use `detectableObjectModelList` instead of detectableObjectModel.
     2. Submit list of addresses contained inside an **Excel file** in a second call `POST /detections/{id}/excel`. 
     Example can be found [here](https://github.com/b-partners/geo-jobs/raw/refs/heads/preprod/examples/detection/excel/excel_addresses_example.xlsx)
     3. Track the progress of your detection through `GET /detections/{id}`. 
@@ -1197,8 +1197,7 @@ components:
         emailReceiver: "<your-email-address>"
         zoneName: "<your-zone-name>"
         geoServerProperties: null
-        detectableObjectModel:
-          modelName: "BP_TOITURE"
+        detectableObjectModel: null
         detectableObjectModelList:
           - modelName: "BP_TOITURE"
           - modelName: "BP_VEGETATION"
@@ -1932,8 +1931,8 @@ components:
           items:
             $ref: '#/components/schemas/DetectableObjectModel'
           description: |
-            List of model to use for the detection. 
-            If an empty list is given, the (only) used model will be the one given in detectableObjectModel.
+            List of model to be processed for the detection. 
+            If empty or null, detection model will be retrieved from detectableObjectModel attribute.
         geoJsonZone:
           type: array
           items:
