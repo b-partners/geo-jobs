@@ -60,6 +60,10 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
       return;
     }
     var machineDetectedTiles = detectedTileRepository.findAllByZdjJobId(detection.getZdjId());
+    log.info(
+        "actual feature {} VS delimitations {}",
+        feature.getGeometry(),
+        detection.getFeatureWithDelimitations());
     var featureDelimitationWithRoofProperties =
         detectionRoofPropertiesRequestedService.applyRoofPropertiesOnDelimitation(
             machineDetectedTiles,
