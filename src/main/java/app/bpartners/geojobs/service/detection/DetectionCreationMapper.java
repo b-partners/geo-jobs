@@ -86,6 +86,12 @@ public class DetectionCreationMapper {
       String detectionId, CreateDetection createDetection) {
     if (createDetection.getDetectableObjectModelList() == null
         || createDetection.getDetectableObjectModelList().isEmpty()) {
+
+      if (createDetection.getDetectableObjectModel() == null) {
+        throw new IllegalArgumentException(
+            "No detectable object model provided for detectionId: " + detectionId);
+      }
+
       return detectableObjectTypeMapper.mapDefaultConfigurationsFromModel(
           detectionId, createDetection.getDetectableObjectModel().getModelName());
     }
