@@ -96,6 +96,11 @@ public class LidarApi {
 
   private boolean hasValidContent(String url) {
     try {
+      if (!isSafeUrl(url)) {
+        log.warn("Unsafe URL blocked for HEAD: {}", url);
+        return false;
+      }
+
       var headers = restTemplate.headForHeaders(url);
       long contentLength = headers.getContentLength();
       log.info("Content-Length={} for fileUrl={}", contentLength, url);
@@ -118,6 +123,7 @@ public class LidarApi {
   private static Set<String> getUrlsFromFeatures(List<FeatureCollection.Feature> features) {
     return features.stream()
         .map(feature -> feature.getProperties().get("url").toString())
+        .filter(LidarApi::isSafeUrl)
         .collect(toSet());
   }
 
