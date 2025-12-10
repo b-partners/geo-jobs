@@ -228,10 +228,11 @@ public class DetectableObjectTypeMapper {
 
   private List<DetectableObjectType> detectableObjectTypeForVegetationModel() {
     List<DetectableObjectType> objectTypes = new ArrayList<>();
-    objectTypes.add(ESPACE_VERT);
-    objectTypes.add(ESPACE_ARBORE);
-    objectTypes.add(ARBRE_INDIVIDUALISE);
-    objectTypes.add(CANOPE);
+    // objectTypes.add(ESPACE_VERT);
+    // objectTypes.add(ESPACE_ARBORE);
+    // objectTypes.add(ARBRE_INDIVIDUALISE);
+    // objectTypes.add(CANOPE);
+    objectTypes.add(ARBRE);
     return objectTypes;
   }
 
