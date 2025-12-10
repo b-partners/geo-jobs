@@ -84,6 +84,9 @@ public class Detection implements Serializable {
   @JdbcTypeCode(JSON)
   private DetectableObjectModel detectableObjectModel;
 
+  @JdbcTypeCode(JSON)
+  private List<DetectableObjectModel> detectableObjectModelList;
+
   // TODO: save as entity
   @JdbcTypeCode(JSON)
   private GeoServerProperties geoServerProperties;
@@ -139,6 +142,9 @@ public class Detection implements Serializable {
   @PrePersist
   protected void onCreate() {
     this.creationDatetime = now().truncatedTo(ChronoUnit.MICROS);
+    if (detectableObjectModelList == null) {
+      detectableObjectModelList = new ArrayList<>();
+    }
   }
 
   public void addStep(DetectionStep step) {
