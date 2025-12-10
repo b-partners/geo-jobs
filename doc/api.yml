@@ -24,7 +24,8 @@ info:
     ### Detection on roof objects providing geojson multiPolygon
     1. Submit detection request through `POST /detections/{id}` where `{id}` is yours to be created
     using the example request body accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/geojson/detection_toiture_payload_example.json).
-    Note that `detectableObjectModel` property must be set to `BP_TOITURE` and `geoServerProperties` property to `null`
+    Note that `detectableObjectModel` property must be set to `BP_TOITURE` and `geoServerProperties` property to `null`.
+    To handle models through one detection, use `detectableObjectModelList` instead of detectableObjectModel.
     2. Track the progress of your detection through `GET /detections/{id}`. 
     Detection is finished when `geoJsonUrl` property containing your detection result is not null.
     Expected geojson example result is accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/toiture_analysis_result_example.geojson)
@@ -33,6 +34,7 @@ info:
     1. Submit detection request through `POST /detections/{id}` where `{id}` is yours to be created
     using the example request body accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/detection_creation_using_toiture_model_example.json). 
     Note that `detectableObjectModel` property must be set to `BP_TOITURE` and `geoServerProperties` property to `null`.
+    To handle models through one detection, use `detectableObjectModelList` instead of detectableObjectModel.
     2. Submit list of addresses contained inside an **Excel file** in a second call `POST /detections/{id}/excel`. 
     Example can be found [here](https://github.com/b-partners/geo-jobs/raw/refs/heads/preprod/examples/detection/excel/excel_addresses_example.xlsx)
     3. Track the progress of your detection through `GET /detections/{id}`. 
@@ -697,6 +699,8 @@ paths:
             examples:
               detectionForRoof:
                 $ref: '#/components/examples/DetectionUsingToitureModel'
+              detectionForRoofAndVegetation:
+                $ref: '#/components/examples/DetectionUsingToitureAndVegetationModel'
       responses:
         200:
           description: Detection created or launched
@@ -1179,6 +1183,24 @@ components:
         geoServerProperties: null
         detectableObjectModel:
           modelName: "BP_TOITURE"
+        detectableObjectModelList:
+          - modelName: "BP_TOITURE"
+        geoJsonZone:
+          - type: "Feature"
+            geometry:
+              type: "MultiPolygon"
+              coordinates:
+                - [ [ [ [ -0.24908199906349182, 46.651815670805505 ], [ -0.24908166378736496, 46.65181521051821 ], [ -0.24908166378736496, 46.65181452008728 ], [ -0.24908099323511124, 46.651813829656334 ], [ -0.24908099323511124, 46.65180807606479 ], [ -0.249084010720253, 46.65180807606479 ], [ -0.24908434599637985, 46.65180853635213 ], [ -0.2490846812725067, 46.651808996639474 ], [ -0.24908501654863358, 46.651809687070475 ], [ -0.24908535182476044, 46.65181037750147 ], [ -0.24908535182476044, 46.65181152821978 ], [ -0.2490856871008873, 46.651811988507106 ], [ -0.2490873634815216, 46.65181313922538 ], [ -0.2490873634815216, 46.65181521051821 ], [ -0.24908669292926788, 46.65181544066185 ], [ -0.2490856871008873, 46.651815670805505 ], [ -0.24908535182476044, 46.65181590094914 ], [ -0.24908199906349182, 46.651815670805505 ] ] ] ]
+    DetectionUsingToitureAndVegetationModel:
+      summary: Detection using BP_TOITURE and BP_VEGETATION model
+      value:
+        emailReceiver: "<your-email-address>"
+        zoneName: "<your-zone-name>"
+        geoServerProperties: null
+        detectableObjectModel: null
+        detectableObjectModelList:
+          - modelName: "BP_TOITURE"
+          - modelName: "BP_VEGETATION"
         geoJsonZone:
           - type: "Feature"
             geometry:
@@ -1904,6 +1926,13 @@ components:
           description: Optional Configuration properties for the GeoServer.
         detectableObjectModel:
           $ref: '#/components/schemas/DetectableObjectModel'
+        detectableObjectModelList:
+          type: array
+          items:
+            $ref: '#/components/schemas/DetectableObjectModel'
+          description: |
+            List of model to be processed for the detection. 
+            If empty or null, detection model will be retrieved from detectableObjectModel attribute.
         geoJsonZone:
           type: array
           items:
