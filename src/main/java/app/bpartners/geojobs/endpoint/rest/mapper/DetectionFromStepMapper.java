@@ -79,7 +79,6 @@ public class DetectionFromStepMapper
         .geoJsonDelimitationType(detection.getGeoJsonDelimitationType())
         .detectableObjectModel(detection.getDetectableObjectModel())
         .step(restStep)
-        .detectableObjectModelList(detection.getDetectableObjectModelList())
         .addresses(
             detection.getConvertedAddresses() == null
                 ? List.of()
