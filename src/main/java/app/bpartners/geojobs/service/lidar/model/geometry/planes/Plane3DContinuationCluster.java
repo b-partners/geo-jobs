@@ -3,84 +3,134 @@ package app.bpartners.geojobs.service.lidar.model.geometry.planes;
 import app.bpartners.geojobs.service.lidar.model.geometry.LasPointGeometry;
 import java.util.*;
 import java.util.function.Function;
-import lombok.RequiredArgsConstructor;
-import org.jgrapht.Graph;
-import org.jgrapht.alg.connectivity.ConnectivityInspector;
-import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.SimpleGraph;
 
-@RequiredArgsConstructor
+/**
+ * Performs 3D clustering of points in a Plane3D based on a maximum distance. Points within the
+ * given radius are connected. The largest connected cluster is returned as the main cluster, while
+ * other points are considered outliers.
+ */
 public class Plane3DContinuationCluster
     implements Function<Plane3D, Plane3DContinuationCluster.Result> {
-  private final double neighborRadius;
-  private final double minClusterSize;
+  private final double radius;
+  private final int minClusterSize;
+
+  /**
+   * @param radius maximum distance to consider points connected
+   * @param minClusterSize minimum number of points to consider a valid cluster
+   */
+  public Plane3DContinuationCluster(double radius, int minClusterSize) {
+    this.radius = radius;
+    this.minClusterSize = minClusterSize;
+  }
 
   @Override
   public Result apply(Plane3D plane) {
     var points = new ArrayList<>(plane.getPoints());
-    if (points.isEmpty()) {
+    int n = points.size();
+    if (n == 0) {
       return new Result(Plane3D.empty(), List.of());
     }
 
-    // Step 1. Build a simple graph where points are vertices
-    var graph = getIntegerDefaultEdgeGraph(points, neighborRadius);
-    if (graph.edgeSet().isEmpty()) {
-      return new Result(Plane3D.empty(), List.of());
-    }
+    // Create a 3D spatial grid for faster neighbor search
+    var grid = createGrid(points);
 
-    // Step 3. Find connected components
-    var inspector = new ConnectivityInspector<>(graph);
-    var components = inspector.connectedSets();
+    // Connect points within the radius using Union-Find
+    var unionFind = connectConnectedPoints(n, grid, points);
 
-    // Step 4. Find the largest component
-    var largest = components.stream().max(Comparator.comparingInt(Set::size)).orElse(Set.of());
+    // Count the size of each cluster
+    var clusterSize = getClusterSize(n, unionFind);
 
-    if (largest.size() < minClusterSize) {
-      return new Result(Plane3D.empty(), List.of());
-    }
-
-    // Step 5. Keep only the points in that component
-    return getResult(plane, points, largest);
-  }
-
-  private static Result getResult(
-      Plane3D plane, List<LasPointGeometry> points, Set<Integer> largest) {
-    Set<LasPointGeometry> inliers = new HashSet<>();
-    Set<LasPointGeometry> outliers = new HashSet<>();
-
-    for (int i = 0; i < points.size(); i++) {
-      var p = points.get(i);
-      if (largest.contains(i)) {
-        inliers.add(p);
-      } else {
-        outliers.add(p);
+    // Find the largest cluster
+    int bestRoot = -1;
+    int bestSize = -1;
+    for (var e : clusterSize.entrySet()) {
+      if (e.getValue() > bestSize) {
+        bestSize = e.getValue();
+        bestRoot = e.getKey();
       }
     }
 
-    return new Result(plane.with(inliers), new ArrayList<>(outliers));
-  }
-
-  private static Graph<Integer, DefaultEdge> getIntegerDefaultEdgeGraph(
-      List<LasPointGeometry> points, double neighborRadius) {
-    Graph<Integer, DefaultEdge> graph = new SimpleGraph<>(DefaultEdge.class);
-
-    for (int i = 0; i < points.size(); i++) {
-      graph.addVertex(i);
+    // If no cluster is large enough, return empty
+    if (bestSize < minClusterSize) {
+      return new Result(Plane3D.empty(), List.of());
     }
 
-    // Step 2. Connect points that are within the neighbor radius
+    // Separate points into the main cluster and outliers
+    Set<LasPointGeometry> in = new HashSet<>();
+    List<LasPointGeometry> out = new ArrayList<>();
+
+    for (int i = 0; i < n; i++) {
+      if (unionFind.find(i) == bestRoot) {
+        in.add(points.get(i));
+      } else out.add(points.get(i));
+    }
+
+    return new Result(plane.with(in), out);
+  }
+
+  /** Count the size of each cluster */
+  private Map<Integer, Integer> getClusterSize(
+      int pointsSize, UnionFindLasPointGeometry unionFind) {
+    Map<Integer, Integer> count = new HashMap<>();
+    for (int i = 0; i < pointsSize; i++) {
+      int root = unionFind.find(i);
+      count.put(root, count.getOrDefault(root, 0) + 1);
+    }
+    return count;
+  }
+
+  /** Create a 3D spatial grid for faster neighbor search */
+  private Map<CellIndex, List<Integer>> createGrid(List<LasPointGeometry> points) {
+    Map<CellIndex, List<Integer>> grid = new HashMap<>();
     for (int i = 0; i < points.size(); i++) {
-      var p1 = points.get(i);
-      for (int j = i + 1; j < points.size(); j++) {
-        var p2 = points.get(j);
-        if (p1.distance(p2) <= neighborRadius) {
-          graph.addEdge(i, j);
+      var p = points.get(i);
+      int ix = (int) Math.floor(p.getX() / radius);
+      int iy = (int) Math.floor(p.getY() / radius);
+      int iz = (int) Math.floor(p.getZ() / radius);
+      grid.computeIfAbsent(new CellIndex(ix, iy, iz), k -> new ArrayList<>()).add(i);
+    }
+    return grid;
+  }
+
+  // Connect points within the radius using Union-Find
+  private UnionFindLasPointGeometry connectConnectedPoints(
+      int pointSize, Map<CellIndex, List<Integer>> grid, List<LasPointGeometry> points) {
+    var unionFind = new UnionFindLasPointGeometry(pointSize);
+
+    for (int i = 0; i < pointSize; i++) {
+      var p = points.get(i);
+      int ix = (int) Math.floor(p.getX() / radius);
+      int iy = (int) Math.floor(p.getY() / radius);
+      int iz = (int) Math.floor(p.getZ() / radius);
+
+      for (int dx = -1; dx <= 1; dx++) {
+        for (int dy = -1; dy <= 1; dy++) {
+          for (int dz = -1; dz <= 1; dz++) {
+            var cell = new CellIndex(ix + dx, iy + dy, iz + dz);
+            var neigh = grid.get(cell);
+            if (neigh == null) {
+              continue;
+            }
+
+            var left = points.get(i);
+            for (int j : neigh) {
+              if (j <= i) {
+                continue;
+              }
+
+              if (left.distance(points.get(j)) <= radius) {
+                unionFind.union(i, j);
+              }
+            }
+          }
         }
       }
     }
 
-    return graph;
+    return unionFind;
   }
+
+  private record CellIndex(int x, int y, int z) {}
 
   public record Result(Plane3D plane, List<LasPointGeometry> outliers) {}
 }

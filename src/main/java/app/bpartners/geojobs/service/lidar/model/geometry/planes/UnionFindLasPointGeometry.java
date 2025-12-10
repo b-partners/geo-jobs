@@ -1,0 +1,42 @@
+package app.bpartners.geojobs.service.lidar.model.geometry.planes;
+
+import lombok.Getter;
+
+@Getter
+class UnionFindLasPointGeometry {
+  private final int[] parent;
+  private final int[] size;
+
+  UnionFindLasPointGeometry(int n) {
+    parent = new int[n];
+    size = new int[n];
+    for (int i = 0; i < n; i++) {
+      parent[i] = i;
+      size[i] = 1;
+    }
+  }
+
+  int find(int x) {
+    if (parent[x] != x) {
+      parent[x] = find(parent[x]);
+    }
+    return parent[x];
+  }
+
+  void union(int a, int b) {
+    a = find(a);
+    b = find(b);
+
+    if (a == b) {
+      return;
+    }
+
+    if (size[a] < size[b]) {
+      parent[a] = b;
+      size[b] += size[a];
+    } else {
+      parent[b] = a;
+      size[a] += size[b];
+    }
+  }
+}
