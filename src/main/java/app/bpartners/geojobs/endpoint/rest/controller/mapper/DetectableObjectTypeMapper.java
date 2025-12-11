@@ -229,7 +229,7 @@ public class DetectableObjectTypeMapper {
   private List<DetectableObjectType> detectableObjectTypeForVegetationModel() {
     List<DetectableObjectType> objectTypes = new ArrayList<>();
     // TODO: uncomment when handled by detection API
-    // objectTypes.add(ESPACE_VERT);
+    objectTypes.add(ESPACE_VERT);
     // objectTypes.add(ESPACE_ARBORE);
     // objectTypes.add(ARBRE_INDIVIDUALISE);
     // objectTypes.add(CANOPE);
