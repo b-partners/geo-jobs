@@ -77,7 +77,8 @@ public class SynchronousDetectionService
     Callable<Void> imageRequestCallableVoidList =
         () -> {
           featureImageRequestedService.accept(
-              new FeatureImageRequested(detection.getId(), detection.getPolygonGeoJsonZone(), 0));
+              new FeatureImageRequested(
+                  detection.getId(), detection.getProvidedGeoJsonZone().getFirst(), 0));
           return null;
         };
     Callable<Void> machineDetectionProcessCallableVoidList =
@@ -88,23 +89,32 @@ public class SynchronousDetectionService
           return null;
         };
     List<Callable<Void>> firstCallableVoidList = new ArrayList<>();
-    firstCallableVoidList.add(imageRequestCallableVoidList);
+    if (detection.needsImageOutput()) {
+      firstCallableVoidList.add(imageRequestCallableVoidList);
+    }
     firstCallableVoidList.add(machineDetectionProcessCallableVoidList);
     workers.invokeAll(firstCallableVoidList);
 
-    List<Callable<Void>> secondVoidCallable =
-        List.of(
-            () -> {
-              // VGG result computing step
-              zoneVggRequestedService.accept(
-                  new FeatureVggRequested(detection.getId(), detection.getPolygonGeoJsonZone(), 0));
-              return null;
-            },
-            () -> {
-              // GeoJson Result Requested __EVENT__ step
-              geoJsonConversionJobService.getOrComputeGeoJsonConversionJob(createdZoneDetectionJob);
-              return null;
-            });
+    Callable<Void> featureVggRequestedCallableVoid =
+        () -> {
+          // VGG result computing step
+          zoneVggRequestedService.accept(
+              new FeatureVggRequested(
+                  detection.getId(), detection.getProvidedGeoJsonZone().getFirst(), 0));
+          return null;
+        };
+    Callable<Void> geoJsonRequestedCallableVoid =
+        () -> {
+          // GeoJson Result Requested __EVENT__ step
+          geoJsonConversionJobService.getOrComputeGeoJsonConversionJob(createdZoneDetectionJob);
+          return null;
+        };
+
+    List<Callable<Void>> secondVoidCallable = new ArrayList<>();
+    if (detection.needsImageOutput()) {
+      secondVoidCallable.add(featureVggRequestedCallableVoid);
+    }
+    secondVoidCallable.add(geoJsonRequestedCallableVoid);
     workers.invokeAll(secondVoidCallable);
 
     return attemptVggFileKeyRetrieve(detection);

@@ -4,19 +4,18 @@ import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.HOUSES_0;
 import static javax.imageio.ImageIO.read;
 
 import app.bpartners.geojobs.endpoint.event.model.FeatureImageRequested;
-import app.bpartners.geojobs.endpoint.rest.model.Point;
 import app.bpartners.geojobs.file.WhiteImageDetector;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.TilingTaskRepository;
 import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
-import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.TileImageBlur;
 import app.bpartners.geojobs.service.TileImagesAssembler;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.tiling.TileFinder;
+import jakarta.persistence.EntityManager;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
@@ -38,10 +37,12 @@ public class FeatureImageRequestedService implements Consumer<FeatureImageReques
   private final TileImageBlur tileImageBlur;
   private final WhiteImageDetector whiteImageDetector;
   private final TileFinder tileFinder;
+  private final EntityManager entityManager;
 
   @SneakyThrows
   @Override
   public void accept(FeatureImageRequested event) {
+    entityManager.clear();
     var feature = event.getFeature();
     var detectionIdentifier = event.getDetectionIdentifier();
     var detection = detectionRepository.findById(detectionIdentifier).orElseThrow();
@@ -76,14 +77,7 @@ public class FeatureImageRequestedService implements Consumer<FeatureImageReques
                 tile ->
                     tile.toBuilder().image(bucketComponent.download(tile.getBucketPath())).build())
             .toList();
-    List<Tile> tilesWithBlur;
-    if (feature.getGeometry() != null
-        && feature.getGeometry().getActualInstance() instanceof Point) {
-      tilesWithBlur = tileImageBlur.apply(zonePolygonGeometryProcessed, tilesWithImages);
-    } else {
-      tilesWithBlur = tileImageBlur.apply(detection, tilesWithImages);
-    }
-
+    var tilesWithBlur = tileImageBlur.apply(zonePolygonGeometryProcessed, tilesWithImages);
     var assembleImageFile = tileImagesAssembler.apply(tilesWithBlur);
 
     if (whiteImageDetector.apply(read(assembleImageFile))) {
