@@ -261,9 +261,13 @@ public class Detection implements Serializable {
   }
 
   public boolean hasToitureModelName() {
-    return detectableObjectModel != null
-        && detectableObjectModel.getModelName() != null
-        && TOITURE.equals(detectableObjectModel.getModelName());
+    return (detectableObjectModelList != null
+            && !detectableObjectModelList.isEmpty()
+            && detectableObjectModelList.stream()
+                .anyMatch(model -> TOITURE.equals(model.getModelName())))
+        || (detectableObjectModel != null
+            && detectableObjectModel.getModelName() != null
+            && TOITURE.equals(detectableObjectModel.getModelName()));
   }
 
   public boolean isSucceeded() {
