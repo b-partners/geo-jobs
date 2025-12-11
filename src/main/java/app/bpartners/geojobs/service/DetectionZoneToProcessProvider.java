@@ -5,6 +5,7 @@ import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
 
+import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.ModelName;
 import app.bpartners.geojobs.endpoint.rest.model.Point;
@@ -44,9 +45,13 @@ public class DetectionZoneToProcessProvider implements Function<Detection, Multi
       return List.of();
     }
     var geoJsonDelimitationType = detection.getGeoJsonDelimitationType();
-    var actualModel = detection.getDetectableObjectModel().getModelName();
+    var detectableObjectModelList = detection.getDetectableObjectModelList();
+    var actualModelNames =
+        detectableObjectModelList != null && !detectableObjectModelList.isEmpty()
+            ? detectableObjectModelList.stream().map(DetectableObjectModel::getModelName).toList()
+            : List.of(Objects.requireNonNull(detection.getDetectableObjectModel().getModelName()));
     var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
-    return apply(providedGeoJsonZone, actualModel, geoJsonDelimitationType);
+    return apply(providedGeoJsonZone, actualModelNames, geoJsonDelimitationType);
   }
 
   private MultiPolygon apply(String detectionId, List<Feature> featureList) {
@@ -85,7 +90,7 @@ public class DetectionZoneToProcessProvider implements Function<Detection, Multi
 
   public List<JtsGeoFeature> apply(
       List<Feature> featureList,
-      ModelName modelName,
+      List<ModelName> modelNames,
       app.bpartners.geojobs.endpoint.rest.model.Detection.GeoJsonDelimitationTypeEnum
           geoJsonDelimitationType) {
     if (featureList == null) {
@@ -105,7 +110,7 @@ public class DetectionZoneToProcessProvider implements Function<Detection, Multi
               var geometryType = geometry.getActualInstance();
               return switch (geometryType) {
                 case Point point -> {
-                  if (TOITURE.equals(modelName)) {
+                  if (modelNames.contains(TOITURE)) {
                     if (PARCEL.equals(geoJsonDelimitationType)) {
                       try {
                         var parcelsNearestPoint =
