@@ -36,8 +36,25 @@ public class DetectionZoneToProcessProvider implements Function<Detection, Multi
     if (detection == null) {
       return geometryFactory.createMultiPolygon(new Polygon[0]);
     }
-    var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
-    return apply(detection.getId(), providedGeoJsonZone);
+    var jtsGeoFeatures = applyInternalGeoFeatures(detection);
+    return jtsGeoFeatures.stream()
+        .map(JtsGeoFeature::geometry)
+        .map(
+            geometry -> {
+              if (geometry instanceof org.locationtech.jts.geom.Polygon polygon) {
+                return geometryFactory.createMultiPolygon(new Polygon[] {polygon});
+              }
+              if (geometry instanceof MultiPolygon multiPolygon) {
+                return multiPolygon;
+              }
+              return null;
+            })
+        .filter(Objects::nonNull)
+        .reduce(unifyMultiPolygon())
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    "Unable to unify provided zone for detection.id : " + detection.getId()));
   }
 
   public List<JtsGeoFeature> applyInternalGeoFeatures(Detection detection) {
@@ -52,40 +69,6 @@ public class DetectionZoneToProcessProvider implements Function<Detection, Multi
             : List.of(Objects.requireNonNull(detection.getDetectableObjectModel().getModelName()));
     var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
     return apply(providedGeoJsonZone, actualModelNames, geoJsonDelimitationType);
-  }
-
-  private MultiPolygon apply(String detectionId, List<Feature> featureList) {
-    if (featureList == null) {
-      return geometryFactory.createMultiPolygon(new Polygon[0]);
-    }
-    if (featureList.isEmpty()) {
-      return geometryFactory.createMultiPolygon(new Polygon[0]);
-    }
-    return featureList.stream()
-        .map(
-            feature -> {
-              var geometry = feature.getGeometry();
-              if (geometry == null) {
-                return null;
-              }
-              var geometryType = geometry.getActualInstance();
-              return switch (geometryType) {
-                case Point point -> geometryConverter.retrieveNearestRoofMultiPolygon(point);
-                case app.bpartners.geojobs.endpoint.rest.model.Polygon polygon ->
-                    geometryConverter.apply(List.of(polygon.getCoordinates()));
-                case app.bpartners.geojobs.endpoint.rest.model.MultiPolygon multiPolygon ->
-                    geometryConverter.apply(multiPolygon.getCoordinates());
-                default ->
-                    throw new UnsupportedOperationException(
-                        "Unsupported geometry type to retrieve zone to process : " + geometryType);
-              };
-            })
-        .filter(Objects::nonNull)
-        .reduce(unifyMultiPolygon())
-        .orElseThrow(
-            () ->
-                new IllegalArgumentException(
-                    "Unable to unify provided zone for detection.id : " + detectionId));
   }
 
   public List<JtsGeoFeature> apply(
