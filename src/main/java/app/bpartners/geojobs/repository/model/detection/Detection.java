@@ -31,8 +31,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.JdbcTypeCode;
 
+@Slf4j
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
@@ -80,9 +82,6 @@ public class Detection implements Serializable {
   // TODO: save as entity
   @JdbcTypeCode(JSON)
   private List<DetectableObjectConfiguration> detectableObjectConfigurations;
-
-  @JdbcTypeCode(JSON)
-  private DetectableObjectModel detectableObjectModel;
 
   @JdbcTypeCode(JSON)
   private List<DetectableObjectModel> detectableObjectModelList;
@@ -138,6 +137,24 @@ public class Detection implements Serializable {
 
   @Column(nullable = true, updatable = false)
   private Instant creationDatetime;
+
+  @JdbcTypeCode(JSON)
+  @Getter(AccessLevel.NONE)
+  private DetectableObjectModel detectableObjectModel;
+
+  public DetectableObjectModel getDetectableObjectModel() {
+    if (detectableObjectModelList != null && !detectableObjectModelList.isEmpty()) {
+      if (detectableObjectModelList.size() > 1) {
+        log.info(
+            "More than one detectable object model found for detection {}. Using the first one: {}",
+            id,
+            detectableObjectModelList.getFirst().getModelName());
+      }
+      return detectableObjectModelList.getFirst();
+    }
+    if (detectableObjectModel != null) return detectableObjectModel;
+    return null;
+  }
 
   @PrePersist
   protected void onCreate() {
