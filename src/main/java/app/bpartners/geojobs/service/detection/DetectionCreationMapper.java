@@ -44,16 +44,21 @@ public class DetectionCreationMapper {
       boolean isSynchronous) {
     var detectableObjectModel = createDetection.getDetectableObjectModel();
     var detectableObjectModelList = createDetection.getDetectableObjectModelList();
-    if (detectableObjectModelList != null && !detectableObjectModelList.isEmpty()) {
-      detectableObjectModel = null;
-    }
     var detectionId = randomUUID().toString();
     var detectableObjectConfigurations =
         getDetectableObjectConfigurations(detectionId, createDetection);
     var providedGeoJson = createDetection.getGeoJsonZone();
     var domainProvidedGeoJsonZone = getActualProvidedGeoJson(providedGeoJson);
+    List<ModelName> modelNames =
+        detectableObjectModel != null
+            ? List.of(detectableObjectModel.getModelName())
+            : (detectableObjectModelList != null
+                ? detectableObjectModelList.stream()
+                    .map(DetectableObjectModel::getModelName)
+                    .toList()
+                : List.of());
     var polygonGeoJsonZoneToBeProcessed =
-        extractDetectionPolygonGeoJson(providedGeoJson, modelName);
+        extractDetectionPolygonGeoJson(providedGeoJson, modelNames);
     var finalGeoServerProperties =
         extractGeoServerProperties(
             createDetection.getGeoServerProperties(),
@@ -139,8 +144,8 @@ public class DetectionCreationMapper {
 
   private app.bpartners.geojobs.repository.model.Feature extractDetectionPolygonGeoJson(
       List<app.bpartners.geojobs.endpoint.rest.model.Feature> providedGeoJsonZone,
-      ModelName modelName) {
-    if (TOITURE.equals(modelName)
+      List<ModelName> modelNames) {
+    if (modelNames.contains(TOITURE)
         && providedGeoJsonZone.size() == 1
         && providedGeoJsonZone.getFirst().getGeometry() != null
         && providedGeoJsonZone.getFirst().getGeometry().getActualInstance()
