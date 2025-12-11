@@ -8,9 +8,7 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-public class LidarApiFallbackUrl {
-  private static final String NEW_DATA_URL_FOR_UNAVAILABLE_DATA_FORMAT =
-      "https://data.geopf.fr/telechargement/download/LiDARHD-NUALID/NUALHD_1-0__LAZ_LAMB93_EJ_2025-07-24/LHD_FXX_%04d_%04d_PTS_LAMB93_IGN69.copc.laz";
+public class FallbackLidarApi {
   private static final String NEW_DATA_URL_FOR_DEPRECATED_DTA_FORMAT =
       "https://data.geopf.fr/telechargement/download/LiDARHD-NUALID/NUALHD_1-0__LAZ_LAMB93_KA_2025-07-22/LHD_FXX_%04d_%04d_PTS_LAMB93_IGN69.copc.laz";
 
@@ -30,20 +28,9 @@ public class LidarApiFallbackUrl {
     return tiles;
   }
 
-  private static Set<String> getLidarTilesForUnavailableData(
-      double minX, double minY, double maxX, double maxY) {
-    return getLidarTilesFromBBOX(minX, minY, maxX, maxY, NEW_DATA_URL_FOR_UNAVAILABLE_DATA_FORMAT);
-  }
-
   private static Set<String> getLidarTilesForDeprecatedData(
       double minX, double minY, double maxX, double maxY) {
     return getLidarTilesFromBBOX(minX, minY, maxX, maxY, NEW_DATA_URL_FOR_DEPRECATED_DTA_FORMAT);
-  }
-
-  public Set<String> getUniqueLidarUrlsForUnavailableData(Envelope envelope) {
-    log.info("Using fallback URL because files are not yet available on WFS");
-    return getLidarTilesForUnavailableData(
-        envelope.getMinX(), envelope.getMinY(), envelope.getMaxX(), envelope.getMaxY());
   }
 
   public Set<String> getUniqueLidarUrlsForDeprecatedData(Envelope envelope) {

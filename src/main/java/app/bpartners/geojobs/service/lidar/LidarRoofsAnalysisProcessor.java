@@ -6,7 +6,7 @@ import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.*;
 import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
-import app.bpartners.geojobs.service.lidar.api.LidarApi;
+import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
 import app.bpartners.geojobs.service.lidar.model.*;
 import app.bpartners.geojobs.service.lidar.model.geometry.GeometryWithProperties;
 import app.bpartners.geojobs.service.lidar.model.geometry.LasPointGeometry;
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class LidarRoofsAnalysisProcessor {
-  private final LidarApi lidarApi;
+  private final LidarApiFacade lidarApi;
   private final GeometrySquareMeterArea projector;
 
   private static final int ROOF_GROUND_BUFFER_METERS = 3;
@@ -49,7 +49,7 @@ public class LidarRoofsAnalysisProcessor {
     try {
       Map<String, Set<Geometry>> lidarFilesUrl =
           lidarApi.getUniqueLidarFilesUrls(
-              allRoofsData.stream().map(data -> data.roof().boundaryLambert93()).collect(toSet()));
+              allRoofsData.stream().map(data -> data.roof().boundaryEPSG4326()).collect(toSet()));
 
       if (lidarFilesUrl.isEmpty()) {
         return new RoofsAnalysisResult(
