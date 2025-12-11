@@ -13,6 +13,7 @@ import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel;
 import app.bpartners.geojobs.endpoint.rest.validator.FeatureTypeChecker;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.service.dashboard.AreaPictureApi;
+import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.geoserver.GeoServerConfiguration;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -22,6 +23,7 @@ class DetectionCreationMapperTest {
   DetectableObjectTypeMapper detectableObjectTypeMapper = new DetectableObjectTypeMapper();
   FeatureTypeChecker featureTypeChecker = new FeatureTypeChecker();
   GeoJsonDelimitationTypeMapper geoJsonDelimitationTypeMapper = new GeoJsonDelimitationTypeMapper();
+  GeometryConverter geometryConverterMock = mock();
 
   DetectionCreationMapper subject =
       new DetectionCreationMapper(
@@ -30,7 +32,8 @@ class DetectionCreationMapperTest {
           mock(CommunityAuthorizationRepository.class),
           mock(AreaPictureApi.class),
           mock(GeoServerConfiguration.class),
-          geoJsonDelimitationTypeMapper);
+          geoJsonDelimitationTypeMapper,
+          geometryConverterMock);
 
   @Test
   void map_detection_with_detectable_object_model_list_ok() {
@@ -40,9 +43,8 @@ class DetectionCreationMapperTest {
 
     var actual = subject.apply(createDetection, detectionE2Id, communityOwnerId, false);
 
-    assertFalse(actual.getDetectableObjectModelList().isEmpty());
-    assertNull(actual.getDetectableObjectModel());
-    assertFalse(actual.getDetectableObjectConfigurations().isEmpty());
+    assertTrue(actual.getDetectableObjectModelList().containsAll(detectableObjectModelList()));
+    assertFalse(actual.getDetectableObjectConfigurations().isEmpty()); // TODO
   }
 
   @Test
