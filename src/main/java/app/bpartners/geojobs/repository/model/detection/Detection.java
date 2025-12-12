@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.repository.model.detection;
 
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
+import static app.bpartners.geojobs.endpoint.rest.model.Detection.GeoJsonDelimitationTypeEnum.PARCEL;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.POST_PROCESSING;
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
@@ -141,6 +142,10 @@ public class Detection implements Serializable {
   @JdbcTypeCode(JSON)
   @Getter(AccessLevel.NONE)
   private DetectableObjectModel detectableObjectModel;
+
+  public boolean hasParcelDelimitationType() {
+    return getGeoJsonDelimitationType() != null && PARCEL.equals(getGeoJsonDelimitationType());
+  }
 
   public DetectableObjectModel getDetectableObjectModel() {
     if (detectableObjectModelList != null && !detectableObjectModelList.isEmpty()) {

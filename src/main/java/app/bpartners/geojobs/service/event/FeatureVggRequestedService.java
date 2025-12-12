@@ -24,7 +24,6 @@ import app.bpartners.geojobs.service.TileCoordinatesPolygonIntersection;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.ign.IgnCadastreFeatureFetcher;
 import app.bpartners.geojobs.service.tiling.TileFinder;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
@@ -66,6 +65,7 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
       log.error("Only BP_TOITURE model is supported to generated VGG from now");
       return;
     }
+    boolean isParcelDetection = detection.hasParcelDelimitationType();
     var machineDetectedTiles = detectedTileRepository.findAllByZdjJobId(detection.getZdjId());
     var featureWithDelimitationList = detection.getFeatureWithDelimitations();
     var actualDelimitation =
@@ -98,11 +98,15 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
     var latLonRoofFeatures = featureDelimitationWithRoofProperties.getRestDelimitations();
     var tiledPixelPolygons =
         getTiledPixelPolygon(
-            polygonGeoJson, latLonRoofFeatures, detectableTypes, machineDetectedTiles);
+            polygonGeoJson,
+            latLonRoofFeatures,
+            detectableTypes,
+            machineDetectedTiles,
+            isParcelDetection);
     var featureTileCoordinates =
         retrieveFeatureTileCoordinates(feature, detection.getGeoJsonDelimitationType());
 
-    var vggMap = vggFactory.from(tiledPixelPolygons, featureTileCoordinates);
+    var vggMap = vggFactory.from(tiledPixelPolygons, featureTileCoordinates, isParcelDetection);
 
     var newDetection = detectionVGGUpdate.apply(vggMap.values(), detection, event.getFeatureNb());
 
@@ -117,7 +121,7 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
       case Point point -> {
         List<List<List<List<BigDecimal>>>> geometryMultiPolygonCoordinates;
         if (PARCEL.equals(delimitationTypeEnum)) {
-            geometryMultiPolygonCoordinates = retrieveParcelMultiPolygonCoordinates(point);
+          geometryMultiPolygonCoordinates = retrieveParcelMultiPolygonCoordinates(point);
         } else {
           geometryMultiPolygonCoordinates =
               geometryConverter.multiPolygonToNestedList(
@@ -168,36 +172,37 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
     return polygonGeoJsonZone;
   }
 
-    @SneakyThrows
-    private List<List<List<List<BigDecimal>>>> retrieveParcelMultiPolygonCoordinates(Point point)  {
-        var parcelsNearestPoint =
-            ignCadastreFeatureFetcher.apply(
-                geometryConverter.readGeometryFromString(
-                    new ObjectMapper().writeValueAsString(point)));
-        if (parcelsNearestPoint.size() > 1) {
-          log.warn(
-              "More than one parcel found for point {}, used first {}",
-                  point,
-              parcelsNearestPoint.getFirst());
-        }
-        return convertParcelToGeometryMultiPolygonCoordinates(parcelsNearestPoint);
+  @SneakyThrows
+  private List<List<List<List<BigDecimal>>>> retrieveParcelMultiPolygonCoordinates(Point point) {
+    var parcelsNearestPoint =
+        ignCadastreFeatureFetcher.apply(
+            geometryConverter.readGeometryFromString(new ObjectMapper().writeValueAsString(point)));
+    if (parcelsNearestPoint.size() > 1) {
+      log.warn(
+          "More than one parcel found for point {}, used first {}",
+          point,
+          parcelsNearestPoint.getFirst());
     }
+    return convertParcelToGeometryMultiPolygonCoordinates(parcelsNearestPoint);
+  }
 
-    private List<List<List<List<BigDecimal>>>> convertParcelToGeometryMultiPolygonCoordinates(List<app.bpartners.geojobs.repository.model.Feature> parcelsNearestPoint) {
-        var restFeature = toRestFeature(parcelsNearestPoint.getFirst());
-        var actualParcelInstance = restFeature.getGeometry().getActualInstance();
-        switch (actualParcelInstance) {
-            case app.bpartners.geojobs.endpoint.rest.model.Polygon polygon -> {
-                return List.of(polygon.getCoordinates());
-            }
-            case MultiPolygon multiPolygon -> {
-                return multiPolygon.getCoordinates();
-            }
-            default ->           throw new IllegalStateException("Unexpected geometry type: " + actualParcelInstance);
-        }
+  private List<List<List<List<BigDecimal>>>> convertParcelToGeometryMultiPolygonCoordinates(
+      List<app.bpartners.geojobs.repository.model.Feature> parcelsNearestPoint) {
+    var restFeature = toRestFeature(parcelsNearestPoint.getFirst());
+    var actualParcelInstance = restFeature.getGeometry().getActualInstance();
+    switch (actualParcelInstance) {
+      case app.bpartners.geojobs.endpoint.rest.model.Polygon polygon -> {
+        return List.of(polygon.getCoordinates());
+      }
+      case MultiPolygon multiPolygon -> {
+        return multiPolygon.getCoordinates();
+      }
+      default ->
+          throw new IllegalStateException("Unexpected geometry type: " + actualParcelInstance);
     }
+  }
 
-    private List<TileCoordinates> retrieveFeatureTileCoordinates(
+  private List<TileCoordinates> retrieveFeatureTileCoordinates(
       Feature feature, Detection.GeoJsonDelimitationTypeEnum delimitationTypeEnum) {
     var polygonGeometry =
         geometryConverter.retrieveZonePolygonGeometryProcessed(feature, delimitationTypeEnum);
@@ -225,7 +230,8 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
       Feature polygonGeoJsonZone,
       List<Feature> latLonRoofFeatures,
       List<DetectableType> detectableTypes,
-      List<MachineDetectedTile> detectedTileList) {
+      List<MachineDetectedTile> detectedTileList,
+      boolean isParcelDetection) {
     var providedLatLonPolygonGeometry =
         geometryConverter.apply(
             List.of(polygonGeoJsonZone.getGeometry().getPolygon().getCoordinates()));
@@ -233,7 +239,7 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
     return latLonRoofFeatures.stream()
         .map(
             roofFeature -> {
-              var roofGeometry = getMultiPolygonZoneProcessed(roofFeature);
+              var geometryProcessed = getMultiPolygonZoneProcessed(roofFeature, isParcelDetection);
               return detectedTileList.stream()
                   .map(
                       detectedTile -> {
@@ -242,7 +248,7 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
                             tileCoordinatesPolygonIntersection.intersection(
                                 providedLatLonPolygonGeometry, tileCoordinates);
                         var providedZoneAndRoofInsideTileGeometry =
-                            providedZoneInsideTileGeometry.intersection(roofGeometry);
+                            providedZoneInsideTileGeometry.intersection(geometryProcessed);
                         var providedZoneAndRoofInsideTilePolygonCoordinates =
                             tileCoordinatesPolygonIntersection.intersects(
                                 providedZoneAndRoofInsideTileGeometry, tileCoordinates);

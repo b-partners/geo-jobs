@@ -226,7 +226,9 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
   }
 
   public Map<Feature, VGG> from(
-      List<TiledPixelPolygon> tiledPixelPolygons, List<TileCoordinates> envelop) {
+      List<TiledPixelPolygon> tiledPixelPolygons,
+      List<TileCoordinates> envelop,
+      boolean isParcelDetection) {
     var vggMap = new HashMap<Feature, VGG>();
     int minTileXGlobal = envelop.getFirst().getX();
     int minTileYGlobal = envelop.getFirst().getY();
@@ -239,7 +241,7 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
         .forEach(
             (feature, tiledPixelPolygonGroupByFeature) -> {
               var vgg = new VGG();
-              var roofMultiPolygon = getMultiPolygonZoneProcessed(feature);
+              var roofMultiPolygon = getMultiPolygonZoneProcessed(feature, isParcelDetection);
               Map<String, VGG.Annotation.Region> regions = new HashMap<>();
               List<PolygonGroup> projectedPolygonGroups =
                   tiledPixelPolygonGroupByFeature.stream()

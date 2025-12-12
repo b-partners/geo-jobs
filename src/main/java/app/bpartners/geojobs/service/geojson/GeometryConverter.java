@@ -28,6 +28,7 @@ import org.geotools.geojson.geom.GeometryJSON;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.geom.util.GeometryFixer;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 // Most ChatGPT-generated code
 @Component
@@ -490,20 +491,30 @@ public class GeometryConverter {
 
   // Could be ROOF or PARCEL multiPolygon
   public static MultiPolygon getMultiPolygonZoneProcessed(
-      app.bpartners.geojobs.endpoint.rest.model.Feature roofFeature) {
+      app.bpartners.geojobs.endpoint.rest.model.Feature roofFeature, boolean isParcelDetection) {
     GeometryConverter geometryConverter = new GeometryConverter(null, null);
     var geometryInstance = roofFeature.getGeometry().getActualInstance();
+    MultiPolygon zoneMultiPolygon;
     switch (geometryInstance) {
-      case app.bpartners.geojobs.endpoint.rest.model.Polygon restPolygon -> {
-        return geometryConverter.apply(List.of(restPolygon.getCoordinates()));
-      }
-      case app.bpartners.geojobs.endpoint.rest.model.MultiPolygon restMultiPolygon -> {
-        return geometryConverter.apply(restMultiPolygon.getCoordinates());
-      }
+      case app.bpartners.geojobs.endpoint.rest.model.Polygon restPolygon ->
+          zoneMultiPolygon = geometryConverter.apply(List.of(restPolygon.getCoordinates()));
+      case app.bpartners.geojobs.endpoint.rest.model.MultiPolygon restMultiPolygon ->
+          zoneMultiPolygon = geometryConverter.apply(restMultiPolygon.getCoordinates());
       default ->
           throw new IllegalStateException(
               "Unsupported geometry type for roof: " + geometryInstance);
     }
+    if (isParcelDetection) {
+      var parcelFetcher = new IgnCadastreFeatureFetcher(new RestTemplate());
+      var parcelFeaturesFromPoint = parcelFetcher.apply(zoneMultiPolygon);
+      if (parcelFeaturesFromPoint.isEmpty()) {
+        log.warn("No parcel found for zoneMultiPolygon {}", zoneMultiPolygon.toText());
+        return null;
+      }
+      return new GeometryConverter(null, parcelFetcher)
+          .retrieveNearestParcelMultiPolygon(parcelFeaturesFromPoint);
+    }
+    return zoneMultiPolygon;
   }
 
   @SneakyThrows
