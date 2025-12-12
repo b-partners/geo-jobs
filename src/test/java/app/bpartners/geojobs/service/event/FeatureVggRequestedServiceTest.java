@@ -68,7 +68,8 @@ class FeatureVggRequestedServiceTest {
           detectionRoofPropertiesRequestedServiceMock,
           tileFinderMock,
           mock(),
-          ignCadastreFeatureFetcherMock);
+          ignCadastreFeatureFetcherMock,
+          mock());
 
   @Test
   void compute_vgg_for_zone_and_update_detection_vgg() {
