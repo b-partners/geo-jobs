@@ -506,7 +506,7 @@ public class GeometryConverter {
     }
     if (isParcelDetection) {
       var parcelFetcher = new IgnCadastreFeatureFetcher(new RestTemplate());
-      var parcelFeaturesFromPoint = parcelFetcher.apply(zoneMultiPolygon);
+      var parcelFeaturesFromPoint = parcelFetcher.apply(zoneMultiPolygon.getCentroid());
       if (parcelFeaturesFromPoint.isEmpty()) {
         log.warn("No parcel found for zoneMultiPolygon {}", zoneMultiPolygon.toText());
         return null;
