@@ -494,27 +494,33 @@ public class GeometryConverter {
       app.bpartners.geojobs.endpoint.rest.model.Feature roofFeature, boolean isParcelDetection) {
     GeometryConverter geometryConverter = new GeometryConverter(null, null);
     var geometryInstance = roofFeature.getGeometry().getActualInstance();
-    MultiPolygon zoneMultiPolygon;
+    MultiPolygon roofMultiPolygon;
     switch (geometryInstance) {
       case app.bpartners.geojobs.endpoint.rest.model.Polygon restPolygon ->
-          zoneMultiPolygon = geometryConverter.apply(List.of(restPolygon.getCoordinates()));
+          roofMultiPolygon = geometryConverter.apply(List.of(restPolygon.getCoordinates()));
       case app.bpartners.geojobs.endpoint.rest.model.MultiPolygon restMultiPolygon ->
-          zoneMultiPolygon = geometryConverter.apply(restMultiPolygon.getCoordinates());
+          roofMultiPolygon = geometryConverter.apply(restMultiPolygon.getCoordinates());
       default ->
           throw new IllegalStateException(
               "Unsupported geometry type for roof: " + geometryInstance);
     }
     if (isParcelDetection) {
       var parcelFetcher = new IgnCadastreFeatureFetcher(new RestTemplate());
-      var parcelFeaturesFromPoint = parcelFetcher.apply(zoneMultiPolygon.getCentroid());
+      var internalConverter = new GeometryConverter(null, parcelFetcher);
+      log.info(
+          "Roof multiPolygon used to retrieve parcel : {}",
+          internalConverter.writeGeometryAsString(roofMultiPolygon));
+      var parcelFeaturesFromPoint = parcelFetcher.apply(roofMultiPolygon.getCentroid());
       if (parcelFeaturesFromPoint.isEmpty()) {
-        log.warn("No parcel found for zoneMultiPolygon {}", zoneMultiPolygon.toText());
+        log.warn("No parcel found for roofMultiPolygon {}", roofMultiPolygon.toText());
         return null;
       }
-      return new GeometryConverter(null, parcelFetcher)
-          .retrieveNearestParcelMultiPolygon(parcelFeaturesFromPoint);
+      var parcelMultiPolygon =
+          internalConverter.retrieveNearestParcelMultiPolygon(parcelFeaturesFromPoint);
+      log.info("Parcel retrieved {}", internalConverter.writeGeometryAsString(parcelMultiPolygon));
+      return parcelMultiPolygon;
     }
-    return zoneMultiPolygon;
+    return roofMultiPolygon;
   }
 
   @SneakyThrows
