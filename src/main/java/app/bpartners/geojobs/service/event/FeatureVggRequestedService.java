@@ -291,8 +291,9 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
                                       var closedPolygon =
                                           polygonCoordinatesCloser.apply(polygonCoordinates);
                                       var detectedObjectPolygonPixel =
-                                          geometryConverter.toPolygon(
-                                              List.of(List.of(closedPolygon)));
+                                          geometryConverter
+                                              .toPolygon(List.of(List.of(closedPolygon)))
+                                              .buffer(0);
                                       var intersectionBetweenDetectedObjectAndProvidedZone =
                                           detectedObjectPolygonPixel
                                               .intersection(
