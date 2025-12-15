@@ -12,7 +12,7 @@ import app.bpartners.geojobs.file.ExtensionGuesser;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.lidar.LidarRoofsAnalysisProcessor;
-import app.bpartners.geojobs.service.lidar.api.LidarApi;
+import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.nio.file.Files;
@@ -37,7 +37,7 @@ public class LidarRoofsAnalysisProcessorCreator {
     return new LidarRoofsAnalysisProcessor(lidarApiMock, projector);
   }
 
-  public LidarRoofsAnalysisProcessor create(LidarApi lidarApi) {
+  public LidarRoofsAnalysisProcessor create(LidarApiFacade lidarApi) {
     return new LidarRoofsAnalysisProcessor(lidarApi, projector);
   }
 
@@ -51,8 +51,8 @@ public class LidarRoofsAnalysisProcessorCreator {
         lasFileFromResource.getName());
   }
 
-  private static LidarApi lidarApiMock(Set<Geometry> lambert93Geometries, File file) {
-    LidarApi lidarApiMock = mock();
+  private static LidarApiFacade lidarApiMock(Set<Geometry> lambert93Geometries, File file) {
+    LidarApiFacade lidarApiMock = mock();
 
     when(lidarApiMock.getUniqueLidarFilesUrls(any()))
         .thenReturn(Map.of("url", lambert93Geometries));
