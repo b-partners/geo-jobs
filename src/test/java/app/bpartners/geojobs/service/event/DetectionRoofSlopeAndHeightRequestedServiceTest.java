@@ -8,17 +8,17 @@ import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.model.DetectionRoofSlopeAndHeightRequested;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
+import app.bpartners.geojobs.model.lidar.planes.Plane3DSlopeInDegrees;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
 import app.bpartners.geojobs.service.lidar.LidarRoofsAnalysisProcessor;
 import app.bpartners.geojobs.service.lidar.LidarRoofsAnalysisProcessor.RoofsAnalysisResult;
-import app.bpartners.geojobs.service.lidar.model.geometry.planes.Plane3DSlopeInDegrees;
+import app.bpartners.geojobs.service.lidar.model.geometry.roof.Building3DProperties;
+import app.bpartners.geojobs.service.lidar.model.geometry.roof.BuildingHeightInMeters;
 import app.bpartners.geojobs.service.lidar.model.geometry.roof.LidarRoofData;
-import app.bpartners.geojobs.service.lidar.model.geometry.roof.RoofHeightInMeters;
 import app.bpartners.geojobs.service.lidar.model.geometry.roof.RoofPlane3D;
-import app.bpartners.geojobs.service.lidar.model.geometry.roof.RoofProperties;
 import jakarta.persistence.EntityManager;
 import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -59,7 +59,7 @@ class DetectionRoofSlopeAndHeightRequestedServiceTest {
 
     var data = mock(LidarRoofData.class);
     var result = mock(RoofsAnalysisResult.class);
-    var properties = mock(RoofProperties.class);
+    var properties = mock(Building3DProperties.class);
 
     when(data.status()).thenReturn(AVAILABLE);
     when(properties.getData()).thenReturn(data);
@@ -69,9 +69,9 @@ class DetectionRoofSlopeAndHeightRequestedServiceTest {
     var slope = mock(Plane3DSlopeInDegrees.class);
     when(plane.getSlopeInDegrees()).thenReturn(slope);
     when(slope.getValue()).thenReturn(expectedRoofSlope);
-    when(properties.getPlanes()).thenReturn(List.of(plane));
+    when(properties.getRoofPlanes()).thenReturn(List.of(plane));
 
-    var height = mock(RoofHeightInMeters.class);
+    var height = mock(BuildingHeightInMeters.class);
     when(height.getValue()).thenReturn(expectedRoofHeight);
     when(properties.getHeightInMeters()).thenReturn(height);
     when(lidarRoofsAnalysisProcessorMock.from(anySet())).thenReturn(result);

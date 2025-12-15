@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.service.lidar.model.geometry;
+package app.bpartners.geojobs.model.lidar;
 
 import static app.bpartners.geojobs.service.lidar.model.LidarClass.fromValue;
 import static java.util.stream.Collectors.toSet;

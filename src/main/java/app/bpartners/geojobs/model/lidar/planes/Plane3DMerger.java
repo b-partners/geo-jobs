@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.service.lidar.model.geometry.planes;
+package app.bpartners.geojobs.model.lidar.planes;
 
 import java.util.*;
 import java.util.function.UnaryOperator;
@@ -46,14 +46,14 @@ public class Plane3DMerger implements UnaryOperator<List<Plane3D>> {
   }
 
   private boolean shouldMerge(Plane3D p1, Plane3D p2) {
-    double area1 = p1.get2DArea();
-    double area2 = p2.get2DArea();
-    boolean small = area1 < smallArea || area2 < smallArea;
-
     double dist = Math.abs(p1.getD() - p2.getD());
     if (dist > epsilonDistance) {
       return false;
     }
+
+    double area1 = p1.get2DArea();
+    double area2 = p2.get2DArea();
+    boolean small = area1 < smallArea || area2 < smallArea;
 
     if (small) {
       return true;

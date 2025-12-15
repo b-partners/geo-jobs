@@ -4,12 +4,12 @@ import static app.bpartners.geojobs.service.lidar.utils.LasPointUtilities.getHig
 import static app.bpartners.geojobs.service.lidar.utils.LasPointUtilities.sortedByZ;
 import static app.bpartners.geojobs.service.lidar.utils.MathUtilities.ceil2;
 
-import app.bpartners.geojobs.service.lidar.model.geometry.LasPointGeometry;
+import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import java.util.Collection;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class RoofHeightInMeters {
+public class BuildingHeightInMeters {
   private final Collection<LasPointGeometry> cleanedRoofPoints;
   private final Collection<LasPointGeometry> cleanedGroundPoints;
   private static final double ROOF_HIGHEST_Z_RATIO = 0.2;

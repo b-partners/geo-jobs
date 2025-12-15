@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.service.lidar.model.geometry;
+package app.bpartners.geojobs.model.lidar;
 
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
