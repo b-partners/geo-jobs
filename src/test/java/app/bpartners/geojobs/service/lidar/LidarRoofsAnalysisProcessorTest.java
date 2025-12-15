@@ -8,7 +8,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import app.bpartners.geojobs.service.lidar.api.LidarApi;
+import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
 import app.bpartners.geojobs.utils.lidar.LidarRoofsAnalysisProcessorCreator;
 import java.util.Map;
 import java.util.Set;
@@ -58,7 +58,7 @@ class LidarRoofsAnalysisProcessorTest {
   @Test
   void status_should_be_extraction_error_when_unchecked_exception_happens() {
     var geometry1 = roofGeometry1();
-    var lidarApiMock = mock(LidarApi.class);
+    var lidarApiMock = mock(LidarApiFacade.class);
 
     when(lidarApiMock.getUniqueLidarFilesUrls(any())).thenThrow();
 
@@ -76,7 +76,7 @@ class LidarRoofsAnalysisProcessorTest {
   @Test
   void status_should_be_unavailable_when_no_lidar_was_found() {
     var geometry1 = roofGeometry1();
-    var lidarApiMock = mock(LidarApi.class);
+    var lidarApiMock = mock(LidarApiFacade.class);
 
     when(lidarApiMock.getUniqueLidarFilesUrls(any())).thenReturn(Map.of());
 
