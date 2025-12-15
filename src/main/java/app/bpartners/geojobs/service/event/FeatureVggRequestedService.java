@@ -28,10 +28,7 @@ import app.bpartners.geojobs.service.tiling.TileFinder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
-import java.util.Comparator;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -246,6 +243,11 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
                   .map(
                       detectedTile -> {
                         var tileCoordinates = detectedTile.getTile().getCoordinates();
+                        var multiPolygonFromTile =
+                            geometryConverter.getMultiPolygonFromTile(
+                                tileCoordinates.getX(),
+                                tileCoordinates.getY(),
+                                tileCoordinates.getZ());
                         var providedZoneInsideTileGeometry =
                             tileCoordinatesPolygonIntersection.intersection(
                                 providedLatLonPolygonGeometry, tileCoordinates);
@@ -299,6 +301,25 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
                                               .intersection(
                                                   providedZoneAndRoofInsideTilePixelGeometry)
                                               .buffer(0);
+                                      if (Arrays.stream(
+                                              intersectionBetweenDetectedObjectAndProvidedZone
+                                                  .getCoordinates())
+                                          .anyMatch(
+                                              coordinate ->
+                                                  coordinate.getX() < 0 || coordinate.getY() < 0)) {
+                                        log.info(
+                                            "Debug negative coordinates for detectableType={}"
+                                                + " geojsonZone={} inside tile multiPolygon geojson"
+                                                + " zone {} \n"
+                                                + " Pixel converted {}",
+                                            detectedObject.getDetectableObjectType(),
+                                            geometryConverter.writeGeometryAsString(
+                                                providedZoneAndRoofInsideTileGeometry),
+                                            geometryConverter.writeGeometryAsString(
+                                                multiPolygonFromTile),
+                                            geometryConverter.writeGeometryAsString(
+                                                intersectionBetweenDetectedObjectAndProvidedZone));
+                                      }
                                       if (intersectionBetweenDetectedObjectAndProvidedZone
                                           instanceof Polygon polygon) {
                                         return new PolygonObjectType(
