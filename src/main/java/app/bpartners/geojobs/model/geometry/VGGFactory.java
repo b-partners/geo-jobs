@@ -2,6 +2,7 @@ package app.bpartners.geojobs.model.geometry;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.model.geometry.area.AreaRateComputerFacade.*;
+import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.HOUSES_0;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightRequestedService.*;
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.*;
@@ -229,7 +230,10 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
     var vggMap = new HashMap<Feature, VGG>();
     int minTileXGlobal = envelop.getFirst().getX();
     int minTileYGlobal = envelop.getFirst().getY();
-
+    var minMultiPolygon =
+        geometryConverter.getMultiPolygonFromTile(
+            minTileXGlobal, minTileYGlobal, HOUSES_0.getZoomLevel());
+    log.info("Minimum polygon tile coordinates {}", minMultiPolygon);
     var tiledPixelPolygonGroup =
         groupPixelPolygonByFeatureAndDetectableTypeAndTileCoordinates(tiledPixelPolygons);
 
