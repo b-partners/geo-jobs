@@ -261,29 +261,26 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
                                       var geometryProcessed =
                                           getMultiPolygonZoneProcessed(
                                               roofFeature, isParcelDetection, detectableType);
-                                      var providedZoneAndRoofInsideTileGeometry =
-                                          isParcelDetection
-                                              ? providedZoneInsideTileGeometry
-                                              : providedZoneInsideTileGeometry.intersection(
-                                                  geometryProcessed);
-                                      var providedZoneAndRoofInsideTilePolygonCoordinates =
-                                          isParcelDetection
-                                              ? geometryPixelProjector.toPixels(
-                                                  providedZoneAndRoofInsideTileGeometry,
-                                                  tileCoordinates.getX(),
-                                                  tileCoordinates.getY(),
-                                                  tileCoordinates.getZ(),
-                                                  HOUSES_0.getZoomLevel())
-                                              : tileCoordinatesPolygonIntersection.intersects(
-                                                  providedZoneAndRoofInsideTileGeometry,
+                                      log.info(
+                                          "Considered geometry for detectableType {} : {}",
+                                          detectableType,
+                                          geometryConverter.writeGeometryAsString(
+                                              geometryProcessed));
+                                      var providedZoneAndGeometryProcessedInsideTileGeometry =
+                                          providedZoneInsideTileGeometry.intersection(
+                                              geometryProcessed);
+                                      var
+                                          providedZoneAndGeometryProcessedInsideTilePolygonCoordinates =
+                                              tileCoordinatesPolygonIntersection.intersects(
+                                                  providedZoneAndGeometryProcessedInsideTileGeometry,
                                                   tileCoordinates);
-                                      if (providedZoneAndRoofInsideTilePolygonCoordinates
+                                      if (providedZoneAndGeometryProcessedInsideTilePolygonCoordinates
                                           .isEmpty()) {
                                         return null;
                                       }
-                                      var providedZoneAndRoofInsideTilePixelGeometry =
+                                      var providedZoneAndGeometryProcessedInsideTilePixelGeometry =
                                           geometryConverter.convertToPolygon(
-                                              providedZoneAndRoofInsideTilePolygonCoordinates);
+                                              providedZoneAndGeometryProcessedInsideTilePolygonCoordinates);
                                       var polygonCoordinates =
                                           detectedObject
                                               .getFeature()
@@ -298,13 +295,13 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
                                           geometryConverter
                                               .toPolygon(List.of(List.of(closedPolygon)))
                                               .buffer(0);
-                                      var intersectionBetweenDetectedObjectAndProvidedZone =
+                                      var intersectionBetweenDetectedObjectAndConsideredZone =
                                           detectedObjectPolygonPixel
                                               .intersection(
-                                                  providedZoneAndRoofInsideTilePixelGeometry)
+                                                  providedZoneAndGeometryProcessedInsideTilePixelGeometry)
                                               .buffer(0);
                                       if (Arrays.stream(
-                                              intersectionBetweenDetectedObjectAndProvidedZone
+                                              intersectionBetweenDetectedObjectAndConsideredZone
                                                   .getCoordinates())
                                           .anyMatch(
                                               coordinate ->
@@ -321,16 +318,22 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
                                                 + " Pixel converted {}",
                                             detectedObject.getDetectableObjectType(),
                                             geometryConverter.writeGeometryAsString(
-                                                providedZoneAndRoofInsideTileGeometry),
+                                                providedZoneAndGeometryProcessedInsideTileGeometry),
                                             geometryConverter.writeGeometryAsString(
                                                 multiPolygonFromTile),
                                             geometryConverter.writeGeometryAsString(
-                                                intersectionBetweenDetectedObjectAndProvidedZone));
+                                                intersectionBetweenDetectedObjectAndConsideredZone));
                                       }
-                                      if (intersectionBetweenDetectedObjectAndProvidedZone
+                                      if (intersectionBetweenDetectedObjectAndConsideredZone
                                           instanceof Polygon polygon) {
                                         return new PolygonObjectType(
                                             polygon, detectedObject.getDetectableObjectType());
+                                      } else {
+                                        log.info(
+                                            "Intersection between detected object and considered"
+                                                + " zone not polygon, but was {}",
+                                            geometryConverter.writeGeometryAsString(
+                                                intersectionBetweenDetectedObjectAndConsideredZone));
                                       }
                                       return null;
                                     })
