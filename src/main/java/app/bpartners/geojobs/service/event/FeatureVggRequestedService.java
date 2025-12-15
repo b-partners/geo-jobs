@@ -64,7 +64,6 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
       log.error("Only BP_TOITURE model is supported to generated VGG from now");
       return;
     }
-    boolean isParcelDetection = detection.hasParcelDelimitationType();
     var machineDetectedTiles = detectedTileRepository.findAllByZdjJobId(detection.getZdjId());
     var featureWithDelimitationList = detection.getFeatureWithDelimitations();
     var actualDelimitation =
@@ -101,11 +100,11 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
             latLonRoofFeatures,
             detectableTypes,
             machineDetectedTiles,
-            isParcelDetection);
+            detection.hasParcelDelimitationType());
     var featureTileCoordinates =
         retrieveFeatureTileCoordinates(feature, detection.getGeoJsonDelimitationType());
 
-    var vggMap = vggFactory.from(tiledPixelPolygons, featureTileCoordinates, isParcelDetection);
+    var vggMap = vggFactory.from(tiledPixelPolygons, featureTileCoordinates);
 
     var newDetection = detectionVGGUpdate.apply(vggMap.values(), detection, event.getFeatureNb());
 
@@ -238,39 +237,16 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
     return latLonRoofFeatures.stream()
         .map(
             roofFeature -> {
-              var geometryProcessed = getMultiPolygonZoneProcessed(roofFeature, isParcelDetection);
               return detectedTileList.stream()
                   .map(
                       detectedTile -> {
                         var tileCoordinates = detectedTile.getTile().getCoordinates();
-                        var multiPolygonFromTile =
-                            geometryConverter.getMultiPolygonFromTile(
-                                tileCoordinates.getX(),
-                                tileCoordinates.getY(),
-                                tileCoordinates.getZ());
                         var providedZoneInsideTileGeometry =
                             tileCoordinatesPolygonIntersection.intersection(
                                 providedLatLonPolygonGeometry, tileCoordinates);
-                        var providedZoneAndRoofInsideTileGeometry =
-                            isParcelDetection
-                                ? providedZoneInsideTileGeometry
-                                : providedZoneInsideTileGeometry.intersection(geometryProcessed);
-                        var providedZoneAndRoofInsideTilePolygonCoordinates =
-                            isParcelDetection
-                                ? geometryPixelProjector.toPixels(
-                                    providedZoneAndRoofInsideTileGeometry,
-                                    tileCoordinates.getX(),
-                                    tileCoordinates.getY(),
-                                    tileCoordinates.getZ(),
-                                    HOUSES_0.getZoomLevel())
-                                : tileCoordinatesPolygonIntersection.intersects(
-                                    providedZoneAndRoofInsideTileGeometry, tileCoordinates);
-                        if (providedZoneAndRoofInsideTilePolygonCoordinates.isEmpty()) {
+                        if (providedZoneInsideTileGeometry.isEmpty()) {
                           return null;
                         }
-                        var providedZoneAndRoofInsideTilePixelGeometry =
-                            geometryConverter.convertToPolygon(
-                                providedZoneAndRoofInsideTilePolygonCoordinates);
                         var polygonObjectTypes =
                             detectedTile.getDetectedObjects().stream()
                                 .map(
@@ -282,6 +258,32 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
                                       if (!detectableTypes.contains(detectableType)) {
                                         return null;
                                       }
+                                      var geometryProcessed =
+                                          getMultiPolygonZoneProcessed(
+                                              roofFeature, isParcelDetection, detectableType);
+                                      var providedZoneAndRoofInsideTileGeometry =
+                                          isParcelDetection
+                                              ? providedZoneInsideTileGeometry
+                                              : providedZoneInsideTileGeometry.intersection(
+                                                  geometryProcessed);
+                                      var providedZoneAndRoofInsideTilePolygonCoordinates =
+                                          isParcelDetection
+                                              ? geometryPixelProjector.toPixels(
+                                                  providedZoneAndRoofInsideTileGeometry,
+                                                  tileCoordinates.getX(),
+                                                  tileCoordinates.getY(),
+                                                  tileCoordinates.getZ(),
+                                                  HOUSES_0.getZoomLevel())
+                                              : tileCoordinatesPolygonIntersection.intersects(
+                                                  providedZoneAndRoofInsideTileGeometry,
+                                                  tileCoordinates);
+                                      if (providedZoneAndRoofInsideTilePolygonCoordinates
+                                          .isEmpty()) {
+                                        return null;
+                                      }
+                                      var providedZoneAndRoofInsideTilePixelGeometry =
+                                          geometryConverter.convertToPolygon(
+                                              providedZoneAndRoofInsideTilePolygonCoordinates);
                                       var polygonCoordinates =
                                           detectedObject
                                               .getFeature()
@@ -307,6 +309,11 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
                                           .anyMatch(
                                               coordinate ->
                                                   coordinate.getX() < 0 || coordinate.getY() < 0)) {
+                                        var multiPolygonFromTile =
+                                            geometryConverter.getMultiPolygonFromTile(
+                                                tileCoordinates.getX(),
+                                                tileCoordinates.getY(),
+                                                tileCoordinates.getZ());
                                         log.info(
                                             "Debug negative coordinates for detectableType={}"
                                                 + " geojsonZone={} inside tile multiPolygon geojson"

@@ -5,6 +5,7 @@ import static app.bpartners.geojobs.endpoint.rest.model.Feature.TypeEnum.FEATURE
 import static app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.MULTI_POLYGON;
 import static app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.POINT;
 import static app.bpartners.geojobs.endpoint.rest.model.Polygon.TypeEnum.POLYGON;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.Detection;
@@ -12,6 +13,7 @@ import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.model.geometry.RoofDetails;
 import app.bpartners.geojobs.repository.model.Feature;
+import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.service.PolygonInsideCircleDistanceComputer;
 import app.bpartners.geojobs.service.gouv.fr.rnb.BuildingApi;
 import app.bpartners.geojobs.service.gouv.fr.rnb.component.Building;
@@ -491,7 +493,9 @@ public class GeometryConverter {
 
   // Could be ROOF or PARCEL multiPolygon
   public static MultiPolygon getMultiPolygonZoneProcessed(
-      app.bpartners.geojobs.endpoint.rest.model.Feature roofFeature, boolean isParcelDetection) {
+      app.bpartners.geojobs.endpoint.rest.model.Feature roofFeature,
+      boolean isParcelDetection,
+      DetectableType detectableType) {
     GeometryConverter geometryConverter = new GeometryConverter(null, null);
     var geometryInstance = roofFeature.getGeometry().getActualInstance();
     MultiPolygon roofMultiPolygon;
@@ -504,7 +508,24 @@ public class GeometryConverter {
           throw new IllegalStateException(
               "Unsupported geometry type for roof: " + geometryInstance);
     }
-    if (isParcelDetection) {
+    if (!List.of(
+                TOITURE_REVETEMENT,
+                PANNEAU_PHOTOVOLTAIQUE,
+                MOISISSURE_NOIRCIE,
+                MOISISSURE_CLAIR,
+                MOISISSURE_COULEUR,
+                MOISISSURE,
+                USURE_IMPORTANTE,
+                USURE_LEGER,
+                USURE,
+                OBSTACLE,
+                CHEMINEE,
+                HUMIDITE_INTENSE,
+                HUMIDITE_CLAIR,
+                HUMIDITE,
+                VELUX)
+            .contains(detectableType)
+        && isParcelDetection) {
       var parcelFetcher = new IgnCadastreFeatureFetcher(new RestTemplate());
       var internalConverter = new GeometryConverter(null, parcelFetcher);
       log.info(
@@ -521,6 +542,23 @@ public class GeometryConverter {
       return parcelMultiPolygon;
     }
     return roofMultiPolygon;
+  }
+
+  public static MultiPolygon getRoofMultiPolygonZoneProcessed(
+      app.bpartners.geojobs.endpoint.rest.model.Feature roofFeature) {
+    GeometryConverter geometryConverter = new GeometryConverter(null, null);
+    var geometryInstance = roofFeature.getGeometry().getActualInstance();
+    switch (geometryInstance) {
+      case app.bpartners.geojobs.endpoint.rest.model.Polygon restPolygon -> {
+        return geometryConverter.apply(List.of(restPolygon.getCoordinates()));
+      }
+      case app.bpartners.geojobs.endpoint.rest.model.MultiPolygon restMultiPolygon -> {
+        return geometryConverter.apply(restMultiPolygon.getCoordinates());
+      }
+      default ->
+          throw new IllegalStateException(
+              "Unsupported geometry type for roof: " + geometryInstance);
+    }
   }
 
   @SneakyThrows

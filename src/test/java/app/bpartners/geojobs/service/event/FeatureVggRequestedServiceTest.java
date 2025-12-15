@@ -158,7 +158,7 @@ class FeatureVggRequestedServiceTest {
         .thenReturn(somePolygon());
     when(geometryConverterMock.toPolygon(any())).thenReturn(somePolygon());
     when(geometryConverterMock.apply(any())).thenReturn(someMultiPolygon());
-    when(vggFactoryMock.from(anyList(), anyList(), anyBoolean())).thenReturn(vggMapMock);
+    when(vggFactoryMock.from(anyList(), anyList())).thenReturn(vggMapMock);
     when(detectionVGGUpdateMock.apply(vggCollectionMock, detectionMock)).thenReturn(detectionMock);
     when(detectionRepositoryMock.save(detectionMock)).thenReturn(detectionMock);
 

@@ -4,8 +4,7 @@ import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFacto
 import static app.bpartners.geojobs.model.geometry.area.AreaRateComputerFacade.*;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightRequestedService.*;
-import static app.bpartners.geojobs.service.geojson.GeometryConverter.getMultiPolygonZoneProcessed;
-import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
+import static app.bpartners.geojobs.service.geojson.GeometryConverter.*;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.flatMapping;
 import static java.util.stream.Collectors.toList;
@@ -226,9 +225,7 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
   }
 
   public Map<Feature, VGG> from(
-      List<TiledPixelPolygon> tiledPixelPolygons,
-      List<TileCoordinates> envelop,
-      boolean isParcelDetection) {
+      List<TiledPixelPolygon> tiledPixelPolygons, List<TileCoordinates> envelop) {
     var vggMap = new HashMap<Feature, VGG>();
     int minTileXGlobal = envelop.getFirst().getX();
     int minTileYGlobal = envelop.getFirst().getY();
@@ -241,7 +238,7 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
         .forEach(
             (feature, tiledPixelPolygonGroupByFeature) -> {
               var vgg = new VGG();
-              var roofMultiPolygon = getMultiPolygonZoneProcessed(feature, isParcelDetection);
+              var roofMultiPolygon = getRoofMultiPolygonZoneProcessed(feature);
               Map<String, VGG.Annotation.Region> regions = new HashMap<>();
               List<PolygonGroup> projectedPolygonGroups =
                   tiledPixelPolygonGroupByFeature.stream()
