@@ -228,8 +228,8 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
   public Map<Feature, VGG> from(
       List<TiledPixelPolygon> tiledPixelPolygons, List<TileCoordinates> envelop) {
     var vggMap = new HashMap<Feature, VGG>();
-    int minTileXGlobal = envelop.getFirst().getX();
-    int minTileYGlobal = envelop.getFirst().getY();
+    int minTileXGlobal = envelop.stream().mapToInt(TileCoordinates::getX).min().orElseThrow();
+    int minTileYGlobal = envelop.stream().mapToInt(TileCoordinates::getY).min().orElseThrow();
     var minMultiPolygon =
         geometryConverter.getMultiPolygonFromTile(
             minTileXGlobal, minTileYGlobal, HOUSES_0.getZoomLevel());
