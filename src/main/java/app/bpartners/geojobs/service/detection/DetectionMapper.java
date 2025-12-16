@@ -83,6 +83,7 @@ public class DetectionMapper {
   public static final String TREE_STRING_VALUE = "TREE";
   public static final String PATHWAY_STRING_VALUE = "PATHWAY";
   public static final String POOL_STRING_VALUE = "POOL";
+  public static final String BATI_STRING_VALUE = "BATI";
 
   private final TileValidator tileValidator;
 
@@ -154,6 +155,7 @@ public class DetectionMapper {
       case TREE_STRING_VALUE, ARBRE_STRING_VALUE -> DetectableType.ARBRE;
       case PATHWAY_STRING_VALUE, PASSAGE_PIETON_STRING_VALUE -> DetectableType.PASSAGE_PIETON;
       case POOL_STRING_VALUE, PISCINE_STRING_VALUE -> DetectableType.PISCINE;
+      case BATI_STRING_VALUE -> DetectableType.BATI;
       case BATI_TUILES_STRING_VALUE, ROOF_TUILES_STRING_VALUE -> DetectableType.BATI_TUILES;
       case BATI_BETON_STRING_VALUE -> DetectableType.BATI_BETON;
       case BATI_ARDOISE_STRING_VALUE, ROOF_ARDOISE_STRING_VALUE -> DetectableType.BATI_ARDOISE;
