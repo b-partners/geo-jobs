@@ -54,6 +54,7 @@ public class DetectionMapper {
   public static final String TROTTOIR_STRING_VALUE = "TROTTOIR";
   public static final String PARKING_STRING_VALUE = "PARKING";
   public static final String ESPACE_VERT_STRING_VALUE = "ESPACE_VERT";
+  public static final String GREEN_SPACE_STRING_VALUE = "GREEN_SPACE";
   public static final String OBSTACLE_STRING_VALUE = "OBSTACLE";
   public static final String CHEMINEE_STRING_VALUE = "CHEMINEE";
   public static final String VELUX_STRING_VALUE = "VELUX";
@@ -160,7 +161,7 @@ public class DetectionMapper {
       case LINE_STRING_VALUE -> DetectableType.LINE;
       case TROTTOIR_STRING_VALUE -> DetectableType.TROTTOIR;
       case PARKING_STRING_VALUE -> DetectableType.PARKING;
-      case ESPACE_VERT_STRING_VALUE -> DetectableType.ESPACE_VERT;
+      case ESPACE_VERT_STRING_VALUE, GREEN_SPACE_STRING_VALUE -> DetectableType.ESPACE_VERT;
       case OBSTACLE_STRING_VALUE -> DetectableType.OBSTACLE;
       case CHEMINEE_STRING_VALUE -> DetectableType.CHEMINEE;
       case VELUX_STRING_VALUE -> DetectableType.VELUX;
