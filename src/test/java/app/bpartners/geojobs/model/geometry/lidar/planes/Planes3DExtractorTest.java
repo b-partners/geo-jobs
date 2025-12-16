@@ -3,6 +3,7 @@ package app.bpartners.geojobs.model.geometry.lidar.planes;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import app.bpartners.geojobs.model.lidar.planes.Plane3DExtractorConf;
 import app.bpartners.geojobs.model.lidar.planes.Planes3DExtractor;
 import app.bpartners.geojobs.service.lidar.model.geometry.roof.Building3DProperties;
 import app.bpartners.geojobs.utils.lidar.LidarRoofsAnalysisProcessorCreator;
@@ -13,7 +14,14 @@ import org.locationtech.jts.geom.Geometry;
 
 class Planes3DExtractorTest {
   private static final Planes3DExtractor subject =
-      new Planes3DExtractor(200, 200, 0.25, 0.5, 0.2, 1, 10, 0.2, 0.6);
+      new Planes3DExtractor(
+          Plane3DExtractorConf.getDefault().toBuilder()
+              .planeConf(
+                  Plane3DExtractorConf.PlaneConf.builder()
+                      .min2DArea(50)
+                      .minPointsCount(200)
+                      .build())
+              .build());
 
   private static final LidarRoofsAnalysisProcessorCreator processorCreator =
       new LidarRoofsAnalysisProcessorCreator();

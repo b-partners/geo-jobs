@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service.lidar.model.geometry.roof;
 import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.*;
 
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
+import app.bpartners.geojobs.model.lidar.planes.Plane3DExtractorConf;
 import app.bpartners.geojobs.model.lidar.planes.Planes3DExtractor;
 import app.bpartners.geojobs.service.lidar.preprocessing.ground.GroundPointsCleaner;
 import app.bpartners.geojobs.service.lidar.preprocessing.roof.RoofPointsCleaner;
@@ -18,11 +19,11 @@ import org.locationtech.jts.geom.Polygon;
 @RequiredArgsConstructor
 public class Building3DProperties {
   @Getter private final LidarRoofData data;
-  @Getter private final Building3DPropertiesConf conf;
+  @Getter private final Plane3DExtractorConf conf;
 
   public Building3DProperties(LidarRoofData data) {
     this.data = data;
-    this.conf = Building3DPropertiesConf.getDefault();
+    this.conf = Plane3DExtractorConf.getDefault();
   }
 
   // properties
@@ -57,18 +58,7 @@ public class Building3DProperties {
       return roofPlanes;
     }
 
-    var extractor =
-        new Planes3DExtractor(
-            conf.planeExtractionConf().iteration(),
-            conf.planeConf().minPointsCount(),
-            conf.planeExtractionConf().pointThreshold(),
-            conf.planeExtractionConf().pointContinuationThreshold(),
-            conf.planeMergerConf().max2DArea(),
-            conf.planeMergerConf().distanceEpsilon(),
-            conf.planeMergerConf().slopeEpsilon(),
-            conf.planeDelimitationConf().concaveRatio(),
-            conf.planeDelimitationConf().simplificationEpsilon());
-
+    var extractor = new Planes3DExtractor(conf);
     var rawPlanes = extractor.apply(data.roof().points());
     roofPlanes =
         rawPlanes.stream()

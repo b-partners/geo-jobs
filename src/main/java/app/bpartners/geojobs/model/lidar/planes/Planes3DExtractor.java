@@ -7,30 +7,28 @@ import java.util.List;
 import java.util.function.Function;
 
 public class Planes3DExtractor implements Function<Collection<LasPointGeometry>, List<Plane3D>> {
-  private final int minimumPointsCount;
+  private final Plane3DExtractorConf conf;
   private final OnePlane3DExtractor onePlane3DExtractor;
   private final Plane3DContinuationCluster plane3DContinuationCluster;
   private final Plane3DMerger plane3DMerger;
 
-  public Planes3DExtractor(
-      int iteration,
-      int minimumPointsCount,
-      double pointThreshold,
-      double pointContinuationThreshold,
-      double maxPlane2DAreaToMerge,
-      double planeDistanceEpsilonToMerge,
-      double planeSlopeEpsilonToMerge,
-      double delimitationConcaveRatio,
-      double delimitationSimplificationEpsilon) {
-    this.minimumPointsCount = minimumPointsCount;
+  public Planes3DExtractor(Plane3DExtractorConf conf) {
+    this.conf = conf;
     this.onePlane3DExtractor =
         new OnePlane3DExtractor(
-            iteration, pointThreshold, delimitationConcaveRatio, delimitationSimplificationEpsilon);
+            conf.planeExtractionConf().iteration(),
+            conf.planeExtractionConf().pointThreshold(),
+            conf.planeDelimitationConf().concaveRatio(),
+            conf.planeDelimitationConf().simplificationEpsilon());
     this.plane3DContinuationCluster =
-        new Plane3DContinuationCluster(pointContinuationThreshold, minimumPointsCount);
+        new Plane3DContinuationCluster(
+            conf.planeExtractionConf().pointContinuationThreshold(),
+            conf.planeConf().minPointsCount());
     this.plane3DMerger =
         new Plane3DMerger(
-            planeSlopeEpsilonToMerge, planeDistanceEpsilonToMerge, maxPlane2DAreaToMerge);
+            conf.planeMergerConf().slopeEpsilon(),
+            conf.planeMergerConf().distanceEpsilon(),
+            conf.planeMergerConf().max2DArea());
   }
 
   @Override
@@ -38,17 +36,18 @@ public class Planes3DExtractor implements Function<Collection<LasPointGeometry>,
     List<Plane3D> planes = new ArrayList<>();
     List<LasPointGeometry> pointsToProcess = new ArrayList<>(points);
 
-    while (pointsToProcess.size() > minimumPointsCount) {
+    var minPointsCount = conf.planeConf().minPointsCount();
+    while (pointsToProcess.size() > minPointsCount) {
       var result = onePlane3DExtractor.apply(pointsToProcess);
       var newPlane = result.plane();
 
-      if (newPlane.getPoints().size() < minimumPointsCount) {
+      if (newPlane.getPoints().size() < minPointsCount) {
         break;
       }
 
       var clusterResult = plane3DContinuationCluster.apply(newPlane);
       var continuedPlane = clusterResult.plane();
-      if (continuedPlane.getPoints().size() < minimumPointsCount) {
+      if (continuedPlane.getPoints().size() < minPointsCount) {
         break;
       }
 

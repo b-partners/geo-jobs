@@ -1,9 +1,9 @@
-package app.bpartners.geojobs.service.lidar.model.geometry.roof;
+package app.bpartners.geojobs.model.lidar.planes;
 
 import lombok.Builder;
 
 @Builder(toBuilder = true)
-public record Building3DPropertiesConf(
+public record Plane3DExtractorConf(
     PlaneConf planeConf,
     PlaneMergerConf planeMergerConf,
     PlaneExtractionConf planeExtractionConf,
@@ -22,8 +22,8 @@ public record Building3DPropertiesConf(
   @Builder(toBuilder = true)
   public record PlaneMergerConf(double slopeEpsilon, double distanceEpsilon, double max2DArea) {}
 
-  public static Building3DPropertiesConf getDefault() {
-    return Building3DPropertiesConf.builder()
+  public static Plane3DExtractorConf getDefault() {
+    return Plane3DExtractorConf.builder()
         .planeConf(PlaneConf.builder().min2DArea(0.25).minPointsCount(10).build())
         .planeDelimitationConf(
             PlaneDelimitationConf.builder().concaveRatio(0.2).simplificationEpsilon(0.6).build())
