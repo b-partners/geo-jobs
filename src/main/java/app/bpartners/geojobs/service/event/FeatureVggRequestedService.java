@@ -101,10 +101,13 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
             detectableTypes,
             machineDetectedTiles,
             detection.hasParcelDelimitationType());
-    var featureTileCoordinates =
-        retrieveFeatureTileCoordinates(feature, detection.getGeoJsonDelimitationType());
 
-    var vggMap = vggFactory.from(tiledPixelPolygons, featureTileCoordinates);
+    var tileCoordinatesRetrievedFromFeature =
+        retrieveFeatureTileCoordinates(feature, detection.getGeoJsonDelimitationType());
+    var completedQuadrilateralCoordinates =
+        completeToFullQuadrilateral(tileCoordinatesRetrievedFromFeature);
+
+    var vggMap = vggFactory.from(tiledPixelPolygons, completedQuadrilateralCoordinates);
 
     var newDetection = detectionVGGUpdate.apply(vggMap.values(), detection, event.getFeatureNb());
 
@@ -210,6 +213,32 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
                 .thenComparing(TileCoordinates::getY)
                 .thenComparing(TileCoordinates::getX))
         .toList();
+  }
+
+  // TODO: handle inside specific class and method ?
+  private List<TileCoordinates> completeToFullQuadrilateral(List<TileCoordinates> tiles) {
+    if (tiles == null || tiles.size() <= 2) {
+      return tiles;
+    }
+    int zoom = tiles.getFirst().getZ();
+    int minX = tiles.stream().mapToInt(TileCoordinates::getX).min().orElseThrow();
+    int maxX = tiles.stream().mapToInt(TileCoordinates::getX).max().orElseThrow();
+    int minY = tiles.stream().mapToInt(TileCoordinates::getY).min().orElseThrow();
+    int maxY = tiles.stream().mapToInt(TileCoordinates::getY).max().orElseThrow();
+
+    int cols = (maxX - minX) + 1;
+    int rows = (maxY - minY) + 1;
+    int expectedTileCount = cols * rows;
+    if (tiles.size() == expectedTileCount) {
+      return tiles;
+    }
+    Set<TileCoordinates> completed = new HashSet<>(tiles);
+    for (int x = minX; x <= maxX; x++) {
+      for (int y = minY; y <= maxY; y++) {
+        completed.add(new TileCoordinates().x(x).y(y).z(zoom));
+      }
+    }
+    return new ArrayList<>(completed);
   }
 
   private List<List<List<List<BigDecimal>>>> getRestMultipolygonData(
