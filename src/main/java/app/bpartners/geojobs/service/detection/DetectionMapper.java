@@ -84,6 +84,7 @@ public class DetectionMapper {
   public static final String PATHWAY_STRING_VALUE = "PATHWAY";
   public static final String POOL_STRING_VALUE = "POOL";
   public static final String BATI_STRING_VALUE = "BATI";
+  public static final String SIDEWALK_STRING_VALUE = "SIDEWALK";
 
   private final TileValidator tileValidator;
 
@@ -161,7 +162,7 @@ public class DetectionMapper {
       case BATI_ARDOISE_STRING_VALUE, ROOF_ARDOISE_STRING_VALUE -> DetectableType.BATI_ARDOISE;
       case BATI_AUTRES_STRING_VALUE, ROOF_AUTRES_STRING_VALUE -> DetectableType.BATI_AUTRES;
       case LINE_STRING_VALUE -> DetectableType.LINE;
-      case TROTTOIR_STRING_VALUE -> DetectableType.TROTTOIR;
+      case TROTTOIR_STRING_VALUE, SIDEWALK_STRING_VALUE -> DetectableType.TROTTOIR;
       case PARKING_STRING_VALUE -> DetectableType.PARKING;
       case ESPACE_VERT_STRING_VALUE, GREEN_SPACE_STRING_VALUE -> DetectableType.ESPACE_VERT;
       case OBSTACLE_STRING_VALUE -> DetectableType.OBSTACLE;
