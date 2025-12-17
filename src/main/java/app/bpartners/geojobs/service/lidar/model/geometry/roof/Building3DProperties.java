@@ -5,6 +5,7 @@ import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.*;
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.planes.Plane3DExtractorConf;
 import app.bpartners.geojobs.model.lidar.planes.Planes3DExtractor;
+import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepExporter;
 import app.bpartners.geojobs.service.lidar.preprocessing.ground.GroundPointsCleaner;
 import app.bpartners.geojobs.service.lidar.preprocessing.roof.RoofPointsCleaner;
 import java.util.*;
@@ -20,10 +21,14 @@ import org.locationtech.jts.geom.Polygon;
 public class Building3DProperties {
   @Getter private final LidarRoofData data;
   @Getter private final Plane3DExtractorConf conf;
+  @Getter private final Plane3DExtractionStepExporter exporter;
 
   public Building3DProperties(LidarRoofData data) {
-    this.data = data;
-    this.conf = Plane3DExtractorConf.getDefault();
+    this(data, Plane3DExtractorConf.getDefault(), null);
+  }
+
+  public Building3DProperties(LidarRoofData data, Plane3DExtractorConf conf) {
+    this(data, conf, null);
   }
 
   // properties
@@ -58,7 +63,7 @@ public class Building3DProperties {
       return roofPlanes;
     }
 
-    var extractor = new Planes3DExtractor(conf);
+    var extractor = new Planes3DExtractor(conf, exporter);
     var rawPlanes = extractor.apply(data.roof().points());
     roofPlanes =
         rawPlanes.stream()

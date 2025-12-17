@@ -1,32 +1,33 @@
-package app.bpartners.geojobs.service.cityjson.exporter;
-
+package app.bpartners.geojobs.model.lidar.planes.exporter;
 
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import lombok.extern.slf4j.Slf4j;
-
 import java.io.File;
 import java.util.Collection;
+import lombok.Builder;
+import lombok.extern.slf4j.Slf4j;
+import org.locationtech.jts.geom.Polygon;
 
-import static java.util.UUID.randomUUID;
-
+@Builder(toBuilder = true)
 @Slf4j
-public class CityJSONStepExporter {
-  private final String crs;
-  private final File directory;
+public class Plane3DExtractionStepExporter {
   private final ObjectMapper objectMapper;
+  private final File directory;
+  private final String crs;
+  private final String suffix;
   private static final String GEO_JSON_FILE_EXTENSION = "geojson";
 
-  public CityJSONStepExporter(File directory, String crs, ObjectMapper objectMapper) {
+  public Plane3DExtractionStepExporter(
+      ObjectMapper objectMapper, File directory, String crs, String suffix) {
     this.crs = crs;
+    this.suffix = suffix;
     this.directory = directory;
     this.objectMapper = objectMapper;
   }
 
-
-  public void export(CityJSONStep step, Collection<LasPointGeometry> points) {
+  public void export(Plane3DExtractionStep step, Collection<LasPointGeometry> points) {
     var features = objectMapper.createArrayNode();
 
     for (var p : points) {
@@ -37,24 +38,22 @@ public class CityJSONStepExporter {
       features.add(feature);
     }
 
-    write(step, randomUUID().toString(), featureCollection(features));
+    write(step, featureCollection(features));
   }
 
-  private File toFile(CityJSONStep step, String suffix) {
+  private File toFile(Plane3DExtractionStep step) {
     return directory
         .toPath()
-        .resolve(String.format("%s_%s.%s", step.toString(), suffix, GEO_JSON_FILE_EXTENSION))
+        .resolve(String.format("%s_%s.%s", step.toFilePrefix(), suffix, GEO_JSON_FILE_EXTENSION))
         .toFile();
   }
 
-  private void write(CityJSONStep step, String suffix, ObjectNode featureCollection) {
+  private void write(Plane3DExtractionStep step, ObjectNode featureCollection) {
     try {
-      var file =  toFile(step, suffix);
+      var file = toFile(step);
       log.info("Exporting CityJSON step '{}' to file: {}", step, file.getAbsolutePath());
 
-      objectMapper
-          .writerWithDefaultPrettyPrinter()
-          .writeValue(toFile(step, suffix), featureCollection);
+      objectMapper.writerWithDefaultPrettyPrinter().writeValue(toFile(step), featureCollection);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -100,6 +99,22 @@ public class CityJSONStepExporter {
     return geometry;
   }
 
+  private ArrayNode coordinates(Polygon polygon) {
+    var linearRing = objectMapper.createArrayNode();
+
+    for (var coordinate : polygon.getCoordinates()) {
+      var point = objectMapper.createArrayNode();
+      point.add(coordinate.getX());
+      point.add(coordinate.getY());
+      point.add(coordinate.getZ());
+      linearRing.add(point);
+    }
+
+    var coordinates = objectMapper.createArrayNode();
+    coordinates.add(linearRing);
+    return coordinates;
+  }
+
   private ArrayNode coordinates(Double x, Double y, Double z) {
     var coordinates = objectMapper.createArrayNode();
 
@@ -110,5 +125,27 @@ public class CityJSONStepExporter {
     }
 
     return coordinates;
+  }
+
+  private ObjectNode polygonGeometry(ArrayNode coordinates) {
+    var geometry = objectMapper.createObjectNode();
+    geometry.put("type", "Polygon");
+    geometry.set("coordinates", coordinates);
+    return geometry;
+  }
+
+  public void export(Plane3DExtractionStep step, Polygon polygon) {
+    var features = objectMapper.createArrayNode();
+    var coordinates = coordinates(polygon);
+    var polygonGeometry = polygonGeometry(coordinates);
+    var feature = feature(polygonGeometry);
+    features.add(feature);
+
+    write(step, featureCollection(features));
+  }
+
+  public Plane3DExtractionStepExporter subSuffix(String suffix) {
+    var newSuffix = String.format("%s_%s", this.suffix, suffix);
+    return this.toBuilder().suffix(newSuffix).build();
   }
 }

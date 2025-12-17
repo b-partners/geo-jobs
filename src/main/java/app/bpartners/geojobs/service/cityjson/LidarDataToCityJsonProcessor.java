@@ -1,14 +1,13 @@
 package app.bpartners.geojobs.service.cityjson;
 
-import static app.bpartners.geojobs.service.cityjson.exporter.CityJSONStep.POINT_EXTRACTION;
 import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.AVAILABLE;
 import static app.bpartners.geojobs.service.lidar.utils.MathUtilities.round2;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.planes.Plane3DExtractorConf;
+import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepExporter;
 import app.bpartners.geojobs.service.cityjson.exception.CityJsonException;
-import app.bpartners.geojobs.service.cityjson.exporter.CityJSONStepExporter;
 import app.bpartners.geojobs.service.cityjson.factory.BuildingGroundPolygonFactory;
 import app.bpartners.geojobs.service.cityjson.factory.BuildingWallPolygonFactory;
 import app.bpartners.geojobs.service.cityjson.factory.CityJsonFactory;
@@ -32,9 +31,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class LidarDataToCityJsonProcessor
     implements BiFunction<String, LidarRoofsAnalysisProcessor.RoofsAnalysisResult, File> {
-
   private final CityJsonFactory cityJsonFactory;
-  private final CityJSONStepExporter exporter;
+  private final Plane3DExtractionStepExporter exporter;
 
   private static final String ID_KEY = "id";
   private static final String AREA_KEY = "area_in_square_meters";
@@ -71,13 +69,8 @@ public class LidarDataToCityJsonProcessor
     }
   }
 
-  private BuildingData toBuildingData(
-      LidarRoofData lidarRoofData, Plane3DExtractorConf conf) {
-     if(exporter != null){
-        exporter.export(POINT_EXTRACTION, lidarRoofData.roof().points());
-     }
-
-    var roofProperty = new Building3DProperties(lidarRoofData, conf);
+  private BuildingData toBuildingData(LidarRoofData lidarRoofData, Plane3DExtractorConf conf) {
+    var roofProperty = new Building3DProperties(lidarRoofData, conf, exporter);
     var planes = roofProperty.getRoofPlanes();
     var area2DScale = getArea2DScale(lidarRoofData, planes);
     var distance2DScale = Math.sqrt(area2DScale);
