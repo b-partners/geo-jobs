@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service;
 
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.ESPACE_VERT;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
@@ -94,11 +95,14 @@ class VggPolygonDrawer {
               }
 
               String label = region.has("label") ? region.get("label").asText() : "unknown";
-              var color = getColorFromDetectedType(DetectableType.valueOf(label.toUpperCase()));
+              var detectableType = DetectableType.valueOf(label.toUpperCase());
+              var color = getColorFromDetectedType(detectableType);
 
               Polygon polygon = new Polygon(xPoints, yPoints, numPoints);
               g2d.setColor(color != null ? Color.decode(color) : Color.RED);
-              g2d.drawPolygon(polygon);
+              if (detectableType != ESPACE_VERT) {
+                g2d.drawPolygon(polygon);
+              }
 
               // Retenir la première position pour l’adresse
               if (firstPolygonX == -1 && firstPolygonY == -1) {
