@@ -32,11 +32,21 @@ public class Plane3DExtractionStepExporter {
 
     for (var p : points) {
       var coordinates = coordinates(p.getX(), p.getY(), p.getZ());
-      var pointGeometry = pointGeometry(coordinates);
+      var pointGeometry = geometry("Point", coordinates);
       var feature = feature(pointGeometry);
 
       features.add(feature);
     }
+
+    write(step, featureCollection(features));
+  }
+
+  public void export(Plane3DExtractionStep step, Polygon polygon) {
+    var features = objectMapper.createArrayNode();
+    var coordinates = coordinates(polygon);
+    var polygonGeometry = geometry("Polygon", coordinates);
+    var feature = feature(polygonGeometry);
+    features.add(feature);
 
     write(step, featureCollection(features));
   }
@@ -90,12 +100,10 @@ public class Plane3DExtractionStepExporter {
     return feature;
   }
 
-  private ObjectNode pointGeometry(ArrayNode coordinates) {
+  private ObjectNode geometry(String type, ArrayNode coordinates) {
     var geometry = objectMapper.createObjectNode();
-
-    geometry.put("type", "Point");
+    geometry.put("type", type);
     geometry.set("coordinates", coordinates);
-
     return geometry;
   }
 
@@ -125,23 +133,6 @@ public class Plane3DExtractionStepExporter {
     }
 
     return coordinates;
-  }
-
-  private ObjectNode polygonGeometry(ArrayNode coordinates) {
-    var geometry = objectMapper.createObjectNode();
-    geometry.put("type", "Polygon");
-    geometry.set("coordinates", coordinates);
-    return geometry;
-  }
-
-  public void export(Plane3DExtractionStep step, Polygon polygon) {
-    var features = objectMapper.createArrayNode();
-    var coordinates = coordinates(polygon);
-    var polygonGeometry = polygonGeometry(coordinates);
-    var feature = feature(polygonGeometry);
-    features.add(feature);
-
-    write(step, featureCollection(features));
   }
 
   public Plane3DExtractionStepExporter subSuffix(String suffix) {

@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -39,6 +40,7 @@ public class LidarDataToCityJsonProcessor
   private static final String PLANE_SLOPE_KEY = "slope_in_degrees";
   private static final String DISTANCE_2D_SCALE = "distance_2d_scale";
 
+  @Autowired
   public LidarDataToCityJsonProcessor(CityJsonFactory cityJsonFactory) {
     this.exporter = null;
     this.cityJsonFactory = cityJsonFactory;
