@@ -1,29 +1,34 @@
-package app.bpartners.geojobs.service.lidar.model.geometry.planes;
+package app.bpartners.geojobs.model.lidar.planes;
 
-import app.bpartners.geojobs.service.lidar.model.geometry.LasPointGeometry;
+import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
 public class Planes3DExtractor implements Function<Collection<LasPointGeometry>, List<Plane3D>> {
-  private final int minimumPointCount;
+  private final Plane3DExtractorConf conf;
   private final OnePlane3DExtractor onePlane3DExtractor;
   private final Plane3DContinuationCluster plane3DContinuationCluster;
   private final Plane3DMerger plane3DMerger;
 
-  private static final int PLANE_EXTRACTION_ITERATION = 200;
-  private static final double MERGER_EPSILON_SLOPE = 10;
-  private static final double MERGER_EPSILON_DISTANCE = 0.5;
-  private static final double MERGER_SMALL_AREA = 0.2;
-
-  public Planes3DExtractor(double threshold, double continuationThreshold, int minimumPointCount) {
-    this.minimumPointCount = minimumPointCount;
-    this.onePlane3DExtractor = new OnePlane3DExtractor(PLANE_EXTRACTION_ITERATION, threshold);
+  public Planes3DExtractor(Plane3DExtractorConf conf) {
+    this.conf = conf;
+    this.onePlane3DExtractor =
+        new OnePlane3DExtractor(
+            conf.planeExtractionConf().iteration(),
+            conf.planeExtractionConf().pointThreshold(),
+            conf.planeDelimitationConf().concaveRatio(),
+            conf.planeDelimitationConf().simplificationEpsilon());
     this.plane3DContinuationCluster =
-        new Plane3DContinuationCluster(continuationThreshold, minimumPointCount);
+        new Plane3DContinuationCluster(
+            conf.planeExtractionConf().pointContinuationThreshold(),
+            conf.planeConf().minPointsCount());
     this.plane3DMerger =
-        new Plane3DMerger(MERGER_EPSILON_SLOPE, MERGER_EPSILON_DISTANCE, MERGER_SMALL_AREA);
+        new Plane3DMerger(
+            conf.planeMergerConf().slopeEpsilon(),
+            conf.planeMergerConf().distanceEpsilon(),
+            conf.planeMergerConf().max2DArea());
   }
 
   @Override
@@ -31,17 +36,18 @@ public class Planes3DExtractor implements Function<Collection<LasPointGeometry>,
     List<Plane3D> planes = new ArrayList<>();
     List<LasPointGeometry> pointsToProcess = new ArrayList<>(points);
 
-    while (pointsToProcess.size() > minimumPointCount) {
+    var minPointsCount = conf.planeConf().minPointsCount();
+    while (pointsToProcess.size() > minPointsCount) {
       var result = onePlane3DExtractor.apply(pointsToProcess);
       var newPlane = result.plane();
 
-      if (newPlane.getPoints().size() < minimumPointCount) {
+      if (newPlane.getPoints().size() < minPointsCount) {
         break;
       }
 
       var clusterResult = plane3DContinuationCluster.apply(newPlane);
       var continuedPlane = clusterResult.plane();
-      if (continuedPlane.getPoints().size() < minimumPointCount) {
+      if (continuedPlane.getPoints().size() < minPointsCount) {
         break;
       }
 

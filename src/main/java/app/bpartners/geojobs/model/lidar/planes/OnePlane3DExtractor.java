@@ -1,6 +1,6 @@
-package app.bpartners.geojobs.service.lidar.model.geometry.planes;
+package app.bpartners.geojobs.model.lidar.planes;
 
-import app.bpartners.geojobs.service.lidar.model.geometry.LasPointGeometry;
+import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.function.Function;
@@ -11,6 +11,8 @@ public class OnePlane3DExtractor
     implements Function<List<LasPointGeometry>, OnePlane3DExtractor.Result> {
   private final int iterations;
   private final double threshold;
+  private final double delimitationConcaveRatio;
+  private final double delimitationSimplificationEpsilon;
 
   @Override
   public Result apply(List<LasPointGeometry> points) {
@@ -34,7 +36,8 @@ public class OnePlane3DExtractor
       }
 
       // --- 2. Fit plane
-      var plane = Plane3D.fit(p1, p2, p3);
+      var plane =
+          Plane3D.fit(p1, p2, p3, delimitationConcaveRatio, delimitationSimplificationEpsilon);
 
       // --- 3. Compute distances
       var inliers = points.stream().filter(p -> plane.distance(p) < threshold).toList();
@@ -47,7 +50,7 @@ public class OnePlane3DExtractor
     }
 
     if (bestInliers.isEmpty()) {
-      return new Result(new Plane3D(0, 0, 0, 0, new HashSet<>()), points);
+      return new Result(Plane3D.empty(), points);
     }
 
     // --- 5. Compute outliers

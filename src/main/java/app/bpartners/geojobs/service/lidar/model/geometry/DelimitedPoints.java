@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.lidar.model.geometry;
 
+import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.Builder;

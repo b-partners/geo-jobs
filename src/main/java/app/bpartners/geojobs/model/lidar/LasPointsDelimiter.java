@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.service.lidar.model.geometry;
+package app.bpartners.geojobs.model.lidar;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 
@@ -15,13 +15,6 @@ public class LasPointsDelimiter {
   private final double concaveRatio;
   private final Collection<LasPointGeometry> points;
   private final PolylineSimplifier polylineSimplifier;
-
-  public static final double DEFAULT_CONCAVE_RATIO = 0.2;
-  public static final double DEFAULT_POLYLINE_SIMPLIFIER_EPSILON = 0.6;
-
-  public LasPointsDelimiter(Collection<LasPointGeometry> points) {
-    this(points, DEFAULT_CONCAVE_RATIO, DEFAULT_POLYLINE_SIMPLIFIER_EPSILON);
-  }
 
   public LasPointsDelimiter(
       Collection<LasPointGeometry> points, double concaveRatio, double polylineSimplifierEpsilon) {

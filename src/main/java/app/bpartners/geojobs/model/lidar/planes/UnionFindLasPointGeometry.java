@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.service.lidar.model.geometry.planes;
+package app.bpartners.geojobs.model.lidar.planes;
 
 import lombok.Getter;
 

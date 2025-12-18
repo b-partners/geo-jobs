@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.service.lidar.preprocessing.ground;
 
-import app.bpartners.geojobs.service.lidar.model.geometry.LasPointGeometry;
+import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.service.lidar.preprocessing.DuplicateXYPointsCleaner;
 import app.bpartners.geojobs.service.lidar.preprocessing.PointsZContinuationClusterExtractor;
 import java.util.Comparator;

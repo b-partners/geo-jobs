@@ -50,7 +50,7 @@ class LidarRoofsAnalysisProcessorTest {
       assertEquals(expected.groundPts(), actual.getData().ground().points().size());
       assertEquals(expected.height(), actual.getHeightInMeters().getValue(), 0.3);
 
-      var firstPlane = actual.getPlanes().getFirst();
+      var firstPlane = actual.getRoofPlanes().getFirst();
       assertEquals(expected.slope(), firstPlane.getSlopeInDegrees().getValue(), 10);
     }
   }
@@ -70,7 +70,7 @@ class LidarRoofsAnalysisProcessorTest {
 
     assertEquals(EXTRACTION_ERROR, property.getData().status());
     assertEquals(0, property.getHeightInMeters().getValue());
-    assertTrue(property.getPlanes().isEmpty());
+    assertTrue(property.getRoofPlanes().isEmpty());
   }
 
   @Test
@@ -88,7 +88,7 @@ class LidarRoofsAnalysisProcessorTest {
 
     assertEquals(UNAVAILABLE, property.getData().status());
     assertEquals(0, property.getHeightInMeters().getValue());
-    assertTrue(property.getPlanes().isEmpty());
+    assertTrue(property.getRoofPlanes().isEmpty());
   }
 
   private static Geometry roofGeometry1() {

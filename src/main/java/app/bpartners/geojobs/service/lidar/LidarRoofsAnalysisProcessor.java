@@ -5,13 +5,13 @@ import static app.bpartners.geojobs.service.GeometrySquareMeterArea.WGS84;
 import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.*;
 import static java.util.stream.Collectors.toSet;
 
+import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
 import app.bpartners.geojobs.service.lidar.model.*;
 import app.bpartners.geojobs.service.lidar.model.geometry.GeometryWithProperties;
-import app.bpartners.geojobs.service.lidar.model.geometry.LasPointGeometry;
+import app.bpartners.geojobs.service.lidar.model.geometry.roof.Building3DProperties;
 import app.bpartners.geojobs.service.lidar.model.geometry.roof.LidarRoofData;
-import app.bpartners.geojobs.service.lidar.model.geometry.roof.RoofProperties;
 import com.github.mreutegg.laszip4j.LASReader;
 import java.io.File;
 import java.io.IOException;
@@ -226,8 +226,8 @@ public class LidarRoofsAnalysisProcessor {
   }
 
   public record RoofsAnalysisResult(Map<String, LidarRoofData> roofsData) {
-    public RoofProperties getProperties(Geometry roofEPSG4326) {
-      return new RoofProperties(getData(roofEPSG4326));
+    public Building3DProperties getProperties(Geometry roofEPSG4326) {
+      return new Building3DProperties(getData(roofEPSG4326));
     }
 
     public LidarRoofData getData(Geometry roofEPSG4326) {

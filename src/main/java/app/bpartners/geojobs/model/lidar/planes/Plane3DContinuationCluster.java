@@ -1,6 +1,6 @@
-package app.bpartners.geojobs.service.lidar.model.geometry.planes;
+package app.bpartners.geojobs.model.lidar.planes;
 
-import app.bpartners.geojobs.service.lidar.model.geometry.LasPointGeometry;
+import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import java.util.*;
 import java.util.function.Function;
 
@@ -15,7 +15,7 @@ public class Plane3DContinuationCluster
   private final int minClusterSize;
 
   /**
-   * @param radius maximum distance to consider points connected
+   * @param radius maximum distance to consider points connected U
    * @param minClusterSize minimum number of points to consider a valid cluster
    */
   public Plane3DContinuationCluster(double radius, int minClusterSize) {

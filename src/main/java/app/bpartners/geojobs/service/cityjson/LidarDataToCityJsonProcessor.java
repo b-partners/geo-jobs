@@ -4,6 +4,8 @@ import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.AVAILABL
 import static app.bpartners.geojobs.service.lidar.utils.MathUtilities.round2;
 import static java.util.UUID.randomUUID;
 
+import app.bpartners.geojobs.model.lidar.LasPointGeometry;
+import app.bpartners.geojobs.model.lidar.planes.Plane3DExtractorConf;
 import app.bpartners.geojobs.service.cityjson.exception.CityJsonException;
 import app.bpartners.geojobs.service.cityjson.factory.BuildingGroundPolygonFactory;
 import app.bpartners.geojobs.service.cityjson.factory.BuildingWallPolygonFactory;
@@ -11,10 +13,9 @@ import app.bpartners.geojobs.service.cityjson.factory.CityJsonFactory;
 import app.bpartners.geojobs.service.cityjson.model.BuildingData;
 import app.bpartners.geojobs.service.lidar.LidarRoofsAnalysisProcessor;
 import app.bpartners.geojobs.service.lidar.model.geometry.GeometryWithProperties;
-import app.bpartners.geojobs.service.lidar.model.geometry.LasPointGeometry;
+import app.bpartners.geojobs.service.lidar.model.geometry.roof.Building3DProperties;
 import app.bpartners.geojobs.service.lidar.model.geometry.roof.LidarRoofData;
 import app.bpartners.geojobs.service.lidar.model.geometry.roof.RoofPlane3D;
-import app.bpartners.geojobs.service.lidar.model.geometry.roof.RoofProperties;
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
@@ -39,10 +40,17 @@ public class LidarDataToCityJsonProcessor
   @Override
   public File apply(
       String id, LidarRoofsAnalysisProcessor.RoofsAnalysisResult roofsAnalysisResults) {
+    return apply(id, roofsAnalysisResults, Plane3DExtractorConf.getDefault());
+  }
+
+  public File apply(
+      String id,
+      LidarRoofsAnalysisProcessor.RoofsAnalysisResult roofsAnalysisResults,
+      Plane3DExtractorConf conf) {
     var buildingsData =
         roofsAnalysisResults.roofsData().values().stream()
             .filter(data -> AVAILABLE.equals(data.status()))
-            .map(LidarDataToCityJsonProcessor::toBuildingData)
+            .map(plane -> toBuildingData(plane, conf))
             .toList();
 
     try {
@@ -54,9 +62,10 @@ public class LidarDataToCityJsonProcessor
     }
   }
 
-  private static BuildingData toBuildingData(LidarRoofData lidarRoofData) {
-    var roofProperty = new RoofProperties(lidarRoofData);
-    var planes = roofProperty.getPlanes();
+  private static BuildingData toBuildingData(
+      LidarRoofData lidarRoofData, Plane3DExtractorConf conf) {
+    var roofProperty = new Building3DProperties(lidarRoofData, conf);
+    var planes = roofProperty.getRoofPlanes();
     var area2DScale = getArea2DScale(lidarRoofData, planes);
     var distance2DScale = Math.sqrt(area2DScale);
 

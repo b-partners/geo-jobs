@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.service.lidar.model.geometry;
+package app.bpartners.geojobs.model.lidar;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.service.lidar.model.LidarClass.fromValue;
