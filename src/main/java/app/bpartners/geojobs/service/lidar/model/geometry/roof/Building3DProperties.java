@@ -27,10 +27,6 @@ public class Building3DProperties {
     this(data, Plane3DExtractorConf.getDefault(), null);
   }
 
-  public Building3DProperties(LidarRoofData data, Plane3DExtractorConf conf) {
-    this(data, conf, null);
-  }
-
   // properties
   private List<RoofPlane3D> roofPlanes;
   private BuildingHeightInMeters buildingHeightInMeters;
@@ -38,8 +34,6 @@ public class Building3DProperties {
   // cleaned data
   private Set<LasPointGeometry> cleanedRoofPoints;
   private Set<LasPointGeometry> cleanedGroundPoints;
-
-  private static final int MIN_VALID_POLYGON_POINTS_COUNT = 3;
 
   public BuildingHeightInMeters getHeightInMeters() {
     if (hasInvalidData()) {
@@ -74,11 +68,6 @@ public class Building3DProperties {
                         plane,
                         conf.planeDelimitationConf().concaveRatio(),
                         conf.planeDelimitationConf().simplificationEpsilon()))
-            .filter(
-                plane ->
-                    plane.getDelimitation().getCoordinates().length
-                            >= MIN_VALID_POLYGON_POINTS_COUNT
-                        && plane.get2DArea() > conf.planeConf().min2DArea())
             .toList();
     return roofPlanes;
   }
