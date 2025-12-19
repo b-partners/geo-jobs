@@ -5,6 +5,7 @@ import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.*;
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.planes.Plane3DExtractorConf;
 import app.bpartners.geojobs.model.lidar.planes.Planes3DExtractor;
+import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepExporter;
 import app.bpartners.geojobs.service.lidar.preprocessing.ground.GroundPointsCleaner;
 import app.bpartners.geojobs.service.lidar.preprocessing.roof.RoofPointsCleaner;
 import java.util.*;
@@ -20,10 +21,10 @@ import org.locationtech.jts.geom.Polygon;
 public class Building3DProperties {
   @Getter private final LidarRoofData data;
   @Getter private final Plane3DExtractorConf conf;
+  @Getter private final Plane3DExtractionStepExporter exporter;
 
   public Building3DProperties(LidarRoofData data) {
-    this.data = data;
-    this.conf = Plane3DExtractorConf.getDefault();
+    this(data, Plane3DExtractorConf.getDefault(), null);
   }
 
   // properties
@@ -33,8 +34,6 @@ public class Building3DProperties {
   // cleaned data
   private Set<LasPointGeometry> cleanedRoofPoints;
   private Set<LasPointGeometry> cleanedGroundPoints;
-
-  private static final int MIN_VALID_POLYGON_POINTS_COUNT = 3;
 
   public BuildingHeightInMeters getHeightInMeters() {
     if (hasInvalidData()) {
@@ -58,7 +57,7 @@ public class Building3DProperties {
       return roofPlanes;
     }
 
-    var extractor = new Planes3DExtractor(conf);
+    var extractor = new Planes3DExtractor(conf, exporter);
     var rawPlanes = extractor.apply(data.roof().points());
     roofPlanes =
         rawPlanes.stream()
@@ -69,11 +68,6 @@ public class Building3DProperties {
                         plane,
                         conf.planeDelimitationConf().concaveRatio(),
                         conf.planeDelimitationConf().simplificationEpsilon()))
-            .filter(
-                plane ->
-                    plane.getDelimitation().getCoordinates().length
-                            >= MIN_VALID_POLYGON_POINTS_COUNT
-                        && plane.get2DArea() > conf.planeConf().min2DArea())
             .toList();
     return roofPlanes;
   }

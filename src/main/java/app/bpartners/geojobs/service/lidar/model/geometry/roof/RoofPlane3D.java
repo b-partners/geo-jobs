@@ -20,7 +20,8 @@ public class RoofPlane3D extends Plane3D {
         plane.getD(),
         plane.getPoints(),
         concaveRatio,
-        delimitationSimplificationEpsilon);
+        delimitationSimplificationEpsilon,
+        plane.getExporter());
     this.roofPolygon = roofPolygon;
   }
 }

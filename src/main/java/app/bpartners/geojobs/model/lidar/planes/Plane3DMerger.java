@@ -2,20 +2,16 @@ package app.bpartners.geojobs.model.lidar.planes;
 
 import java.util.*;
 import java.util.function.UnaryOperator;
+import lombok.RequiredArgsConstructor;
 
-public class Plane3DMerger implements UnaryOperator<List<Plane3D>> {
+@RequiredArgsConstructor
+public class Plane3DMerger implements UnaryOperator<Collection<Plane3D>> {
+  private final double smallArea;
   private final double epsilonSlope;
   private final double epsilonDistance;
-  private final double smallArea;
-
-  public Plane3DMerger(double epsilonSlope, double epsilonDistance, double smallArea) {
-    this.epsilonSlope = epsilonSlope;
-    this.epsilonDistance = epsilonDistance;
-    this.smallArea = smallArea;
-  }
 
   @Override
-  public List<Plane3D> apply(List<Plane3D> planes) {
+  public List<Plane3D> apply(Collection<Plane3D> planes) {
     List<Plane3D> merged = new ArrayList<>();
     Set<Plane3D> visited = new HashSet<>();
 

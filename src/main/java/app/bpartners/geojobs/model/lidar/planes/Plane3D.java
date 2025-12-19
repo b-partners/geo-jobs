@@ -5,15 +5,16 @@ import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFacto
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.LasPointsDelimiter;
 import app.bpartners.geojobs.model.lidar.Polygon3DArea;
+import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepExporter;
 import java.util.Set;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Polygon;
 
 @Getter
+@Builder(toBuilder = true)
 @RequiredArgsConstructor
+@AllArgsConstructor
 public class Plane3D {
   protected final double a;
   protected final double b;
@@ -23,6 +24,7 @@ public class Plane3D {
 
   protected final double delimitationConcaveRatio;
   protected final double delimitationSimplificationEpsilon;
+  protected final Plane3DExtractionStepExporter exporter;
 
   private Polygon3DArea area;
   private Polygon delimitation;
@@ -34,20 +36,23 @@ public class Plane3D {
       LasPointGeometry p2,
       LasPointGeometry p3,
       double delimitationConcaveRatio,
-      double delimitationSimplificationEpsilon) {
+      double delimitationSimplificationEpsilon,
+      Plane3DExtractionStepExporter exporter) {
     var v1 = p2.subtract(p1);
     var v2 = p3.subtract(p1);
     var normal = v1.cross(v2).normalized();
     var d = -normal.dot(p1);
 
-    return new Plane3D(
-        normal.getX(),
-        normal.getY(),
-        normal.getZ(),
-        d,
-        Set.of(p1, p2, p3),
-        delimitationConcaveRatio,
-        delimitationSimplificationEpsilon);
+    return Plane3D.builder()
+        .a(normal.getX())
+        .b(normal.getY())
+        .c(normal.getZ())
+        .d(d)
+        .points(Set.of(p1, p2, p3))
+        .delimitationConcaveRatio(delimitationConcaveRatio)
+        .delimitationSimplificationEpsilon(delimitationSimplificationEpsilon)
+        .exporter(exporter)
+        .build();
   }
 
   public double distance(LasPointGeometry p) {
@@ -56,8 +61,7 @@ public class Plane3D {
   }
 
   public Plane3D with(Set<LasPointGeometry> points) {
-    return new Plane3D(
-        a, b, c, d, points, delimitationConcaveRatio, delimitationSimplificationEpsilon);
+    return this.toBuilder().points(points).build();
   }
 
   @Override
@@ -67,7 +71,16 @@ public class Plane3D {
   }
 
   public static Plane3D empty() {
-    return new Plane3D(0, 0, 0, 0, Set.of(), 0, 0);
+    return Plane3D.builder()
+        .a(0)
+        .b(0)
+        .c(0)
+        .d(0)
+        .points(Set.of())
+        .delimitationConcaveRatio(0)
+        .delimitationSimplificationEpsilon(0)
+        .exporter(null)
+        .build();
   }
 
   public Plane3DSlopeInDegrees getSlopeInDegrees() {
@@ -82,7 +95,7 @@ public class Plane3D {
     if (delimitation == null) {
       var delimiter =
           new LasPointsDelimiter(
-              points, delimitationConcaveRatio, delimitationSimplificationEpsilon);
+              points, delimitationConcaveRatio, delimitationSimplificationEpsilon, exporter);
       delimitation = delimiter.getPolygon();
       delimitation = makePlane(delimitation);
     }
