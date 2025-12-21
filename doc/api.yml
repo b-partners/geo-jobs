@@ -10,6 +10,19 @@ info:
     Get your **API key** by emailing **contact@birdia.fr**.
     All of your requests must embed your API key in the header named: **x-api-key**.
     
+    # Glossary
+    - *Detection* : process that involves analyzing images of a geographic area using an AI model. 
+      Detection can be performed using a textual address, a GPS point, or a geographic zone.
+      Its output may include detected objects in GeoJSON format, annotated images with detected object coordinates, or both.
+    
+    - *Zone* : geographical area provided by consumer, in which is processed and delimited detection.
+    
+    - *Parcel* : geographical area representing cadastral parcel of a land property, retrieved by API from provided textual address, GPS point or zone.
+    
+    - *GeoJSON format* : standard JSON-based format for encoding geographic data structures, such as FeatureCollections, Features, and geometries (Point, Polygon, MultiPolygon), where coordinates are expressed as longitude–latitude pairs.
+    
+    - *Pre-signed URL* : link allowing consumers to download file resources, such as detection result. _Link expires one hour_ after its generation.
+    
     # Usage
     
     Submit your detection request through `POST /detections/{id}`
@@ -1137,7 +1150,7 @@ paths:
             type: string
       summary: Get CityJSON Request files URL by id
       security:
-        - ApiKeyAuth: []
+        - ApiKeyAuth: [ ]
       responses:
         200:
           description: CityJSON files urls
