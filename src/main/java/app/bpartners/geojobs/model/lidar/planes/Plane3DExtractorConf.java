@@ -10,7 +10,11 @@ public record Plane3DExtractorConf(
     PlaneDelimitationConf planeDelimitationConf) {
 
   @Builder(toBuilder = true)
-  public record PlaneConf(int minPointsCount, double min2DArea) {}
+  public record PlaneConf(
+      double min2DArea,
+      int minPointsCount,
+      double minEdgeLength,
+      double parallelDirectionEpsilon) {}
 
   @Builder(toBuilder = true)
   public record PlaneDelimitationConf(double concaveRatio, double simplificationEpsilon) {}
@@ -24,7 +28,13 @@ public record Plane3DExtractorConf(
 
   public static Plane3DExtractorConf getDefault() {
     return Plane3DExtractorConf.builder()
-        .planeConf(PlaneConf.builder().min2DArea(0.25).minPointsCount(10).build())
+        .planeConf(
+            PlaneConf.builder()
+                .min2DArea(0.25)
+                .minEdgeLength(0.75)
+                .parallelDirectionEpsilon(15)
+                .minPointsCount(10)
+                .build())
         .planeDelimitationConf(
             PlaneDelimitationConf.builder().concaveRatio(0.2).simplificationEpsilon(0.6).build())
         .planeMergerConf(
