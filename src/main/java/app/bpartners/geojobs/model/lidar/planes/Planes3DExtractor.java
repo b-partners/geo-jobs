@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import org.locationtech.jts.math.Vector2D;
 
 public class Planes3DExtractor implements Function<Collection<LasPointGeometry>, List<Plane3D>> {
   private final Plane3DExtractorConf conf;
@@ -104,9 +105,60 @@ public class Planes3DExtractor implements Function<Collection<LasPointGeometry>,
   private List<Plane3D> filterInvalidPlanes(Collection<Plane3D> planes) {
     return planes.stream()
         .filter(
-            plane ->
-                plane.getDelimitation().getCoordinates().length >= MIN_VALID_POLYGON_POINTS_COUNT
-                    && plane.get2DArea() > conf.planeConf().min2DArea())
+            plane -> {
+              var coordinates = plane.getDelimitation().getCoordinates();
+
+              if (coordinates.length < MIN_VALID_POLYGON_POINTS_COUNT) {
+                return false;
+              }
+
+              if (plane.get2DArea() <= conf.planeConf().min2DArea()) {
+                return false;
+              }
+
+              var directions = toDirections(plane);
+              return hasTwoNonParallelDirections(directions);
+            })
         .toList();
+  }
+
+  private List<Vector2D> toDirections(Plane3D plane) {
+    List<Vector2D> directions = new ArrayList<>();
+    var coordinates = plane.getDelimitation().getCoordinates();
+
+    for (int i = 0; i < coordinates.length - 1; i++) {
+      var a = coordinates[i];
+      var b = coordinates[i + 1];
+
+      var edge = Vector2D.create(a, b);
+      double len = edge.length();
+
+      if (len > conf.planeConf().minEdgeLength()) {
+        directions.add(edge.normalize());
+      }
+    }
+    return directions;
+  }
+
+  private boolean hasTwoNonParallelDirections(List<Vector2D> directions) {
+    int n = directions.size();
+    if (n < 2) {
+      return false;
+    }
+
+    for (int i = 0; i < n; i++) {
+      for (int j = i + 1; j < n; j++) {
+        double dot = Math.abs(directions.get(i).dot(directions.get(j)));
+
+        if (dot < 1.0 - getEpsilonParallel(conf.planeConf().parallelDirectionEpsilon())) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private static double getEpsilonParallel(double angle) {
+    return 1.0 - Math.cos(Math.toRadians(angle));
   }
 }
