@@ -2,8 +2,10 @@ package app.bpartners.geojobs.service.lidar.model.geometry.roof;
 
 import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.*;
 
-import app.bpartners.geojobs.service.lidar.model.geometry.LasPointGeometry;
-import app.bpartners.geojobs.service.lidar.model.geometry.planes.Planes3DExtractor;
+import app.bpartners.geojobs.model.lidar.LasPointGeometry;
+import app.bpartners.geojobs.model.lidar.planes.Plane3DExtractorConf;
+import app.bpartners.geojobs.model.lidar.planes.Planes3DExtractor;
+import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepExporter;
 import app.bpartners.geojobs.service.lidar.preprocessing.ground.GroundPointsCleaner;
 import app.bpartners.geojobs.service.lidar.preprocessing.roof.RoofPointsCleaner;
 import java.util.*;
@@ -16,59 +18,58 @@ import org.locationtech.jts.geom.Polygon;
 
 @Slf4j
 @RequiredArgsConstructor
-public class RoofProperties {
+public class Building3DProperties {
   @Getter private final LidarRoofData data;
+  @Getter private final Plane3DExtractorConf conf;
+  @Getter private final Plane3DExtractionStepExporter exporter;
+
+  public Building3DProperties(LidarRoofData data) {
+    this(data, Plane3DExtractorConf.getDefault(), null);
+  }
 
   // properties
-  private List<RoofPlane3D> planes;
-  private RoofHeightInMeters roofHeightInMeters;
+  private List<RoofPlane3D> roofPlanes;
+  private BuildingHeightInMeters buildingHeightInMeters;
 
   // cleaned data
   private Set<LasPointGeometry> cleanedRoofPoints;
   private Set<LasPointGeometry> cleanedGroundPoints;
 
-  private static final double POINTS_THRESHOLD = 0.2;
-  private static final double POINTS_CONTINUATION_THRESHOLD = 1;
-  private static final double MINIMUM_PLANE_2D_AREA = 0.25;
-
-  private static final int MINIMUM_PLANE_POINTS_COUNT = 10;
-
-  private static final short MINIMUM_ROOF_POINTS_COUNT = 5;
-  private static final short MINIMUM_GROUND_POINTS_COUNT = 5;
-
-  public RoofHeightInMeters getHeightInMeters() {
+  public BuildingHeightInMeters getHeightInMeters() {
     if (hasInvalidData()) {
-      return new RoofHeightInMeters(List.of(), List.of());
+      return new BuildingHeightInMeters(List.of(), List.of());
     }
 
-    if (roofHeightInMeters == null) {
-      roofHeightInMeters = new RoofHeightInMeters(getCleanedRoofPoints(), getCleanedGroundPoints());
+    if (buildingHeightInMeters == null) {
+      buildingHeightInMeters =
+          new BuildingHeightInMeters(getCleanedRoofPoints(), getCleanedGroundPoints());
     }
 
-    return roofHeightInMeters;
+    return buildingHeightInMeters;
   }
 
-  public List<RoofPlane3D> getPlanes() {
+  public List<RoofPlane3D> getRoofPlanes() {
     if (hasInvalidData()) {
       return List.of();
     }
 
-    if (planes == null) {
-      var extractor =
-          new Planes3DExtractor(
-              POINTS_THRESHOLD, POINTS_CONTINUATION_THRESHOLD, MINIMUM_PLANE_POINTS_COUNT);
-      var rawPlanes = extractor.apply(data.roof().points());
-      planes =
-          rawPlanes.stream()
-              .map(plane -> new RoofPlane3D(toPolygon(data.roof().boundaryLambert93()), plane))
-              .filter(
-                  plane ->
-                      plane.getDelimitation().getCoordinates().length > 2
-                          && plane.get2DArea() > MINIMUM_PLANE_2D_AREA)
-              .toList();
+    if (roofPlanes != null) {
+      return roofPlanes;
     }
 
-    return planes;
+    var extractor = new Planes3DExtractor(conf, exporter);
+    var rawPlanes = extractor.apply(data.roof().points());
+    roofPlanes =
+        rawPlanes.stream()
+            .map(
+                plane ->
+                    new RoofPlane3D(
+                        toPolygon(data.roof().boundaryLambert93()),
+                        plane,
+                        conf.planeDelimitationConf().concaveRatio(),
+                        conf.planeDelimitationConf().simplificationEpsilon()))
+            .toList();
+    return roofPlanes;
   }
 
   public boolean hasInvalidData() {
@@ -76,11 +77,11 @@ public class RoofProperties {
       return true;
     }
 
-    if (data.roof().points().size() < MINIMUM_ROOF_POINTS_COUNT) {
+    if (data.roof().points().size() < conf.planeConf().minPointsCount()) {
       return true;
     }
 
-    return data.ground().points().size() < MINIMUM_GROUND_POINTS_COUNT;
+    return data.ground().points().size() < conf.planeConf().minPointsCount();
   }
 
   public Set<LasPointGeometry> getCleanedRoofPoints() {

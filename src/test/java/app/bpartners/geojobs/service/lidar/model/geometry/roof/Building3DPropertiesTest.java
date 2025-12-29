@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.*;
 
-class RoofPropertiesTest {
+class Building3DPropertiesTest {
   private Polygon createPolygon(double x, double y) {
     var coordinates =
         new Coordinate[] {
@@ -48,7 +48,7 @@ class RoofPropertiesTest {
   }
 
   private Polygon invokeToPolygon(Geometry geometry) throws Exception {
-    var method = RoofProperties.class.getDeclaredMethod("toPolygon", Geometry.class);
+    var method = Building3DProperties.class.getDeclaredMethod("toPolygon", Geometry.class);
     method.setAccessible(true);
     return (Polygon) method.invoke(null, geometry);
   }

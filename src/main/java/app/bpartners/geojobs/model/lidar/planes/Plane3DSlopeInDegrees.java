@@ -1,10 +1,10 @@
-package app.bpartners.geojobs.service.lidar.model.geometry.planes;
+package app.bpartners.geojobs.model.lidar.planes;
 
 import static app.bpartners.geojobs.service.lidar.utils.LasPointUtilities.*;
 import static app.bpartners.geojobs.service.lidar.utils.LasPointUtilities.centroidXY;
 import static app.bpartners.geojobs.service.lidar.utils.MathUtilities.ceil2;
 
-import app.bpartners.geojobs.service.lidar.model.geometry.LasPointGeometry;
+import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import java.util.Collection;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

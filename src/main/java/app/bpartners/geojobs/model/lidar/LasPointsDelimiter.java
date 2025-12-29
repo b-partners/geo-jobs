@@ -1,8 +1,11 @@
-package app.bpartners.geojobs.service.lidar.model.geometry;
+package app.bpartners.geojobs.model.lidar;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
+import static app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStep.DELIMITATION_SIMPLIFICATION;
+import static app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStep.RAW_DELIMITATION_EXTRACTION;
 
 import app.bpartners.geojobs.model.geometry.PolylineSimplifier;
+import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepExporter;
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.algorithm.hull.ConcaveHull;
@@ -15,24 +18,33 @@ public class LasPointsDelimiter {
   private final double concaveRatio;
   private final Collection<LasPointGeometry> points;
   private final PolylineSimplifier polylineSimplifier;
-
-  public static final double DEFAULT_CONCAVE_RATIO = 0.2;
-  public static final double DEFAULT_POLYLINE_SIMPLIFIER_EPSILON = 0.6;
-
-  public LasPointsDelimiter(Collection<LasPointGeometry> points) {
-    this(points, DEFAULT_CONCAVE_RATIO, DEFAULT_POLYLINE_SIMPLIFIER_EPSILON);
-  }
+  private final Plane3DExtractionStepExporter exporter;
 
   public LasPointsDelimiter(
-      Collection<LasPointGeometry> points, double concaveRatio, double polylineSimplifierEpsilon) {
+      Collection<LasPointGeometry> points,
+      double concaveRatio,
+      double polylineSimplifierEpsilon,
+      Plane3DExtractionStepExporter exporter) {
     this.points = points;
+    this.exporter = exporter;
     this.concaveRatio = concaveRatio;
     this.polylineSimplifier = new PolylineSimplifier(polylineSimplifierEpsilon);
   }
 
+  public LasPointsDelimiter(
+      Collection<LasPointGeometry> points, double concaveRatio, double polylineSimplifierEpsilon) {
+    this(points, concaveRatio, polylineSimplifierEpsilon, null);
+  }
+
   public Polygon getPolygon() {
     if (polygon == null) {
-      polygon = polylineSimplifier.simplifyPolygon(getPolygon(points));
+      var rawDelimitation = getPolygon(points);
+      polygon = polylineSimplifier.simplifyPolygon(rawDelimitation);
+
+      if (exporter != null) {
+        exporter.export(RAW_DELIMITATION_EXTRACTION, rawDelimitation);
+        exporter.export(DELIMITATION_SIMPLIFICATION, polygon);
+      }
     }
 
     return polygon;

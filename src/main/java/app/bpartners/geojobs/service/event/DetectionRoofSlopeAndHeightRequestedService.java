@@ -6,12 +6,12 @@ import static java.util.stream.Collectors.toSet;
 import app.bpartners.geojobs.endpoint.event.model.DetectionRoofSlopeAndHeightRequested;
 import app.bpartners.geojobs.endpoint.event.model.FeatureVggRequested;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
+import app.bpartners.geojobs.model.lidar.planes.Plane3D;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
 import app.bpartners.geojobs.service.lidar.LidarRoofsAnalysisProcessor;
 import app.bpartners.geojobs.service.lidar.LidarRoofsAnalysisProcessor.RoofsAnalysisResult;
-import app.bpartners.geojobs.service.lidar.model.geometry.planes.Plane3D;
 import jakarta.persistence.EntityManager;
 import java.util.HashMap;
 import java.util.List;
@@ -108,7 +108,7 @@ public class DetectionRoofSlopeAndHeightRequestedService
         var roofProperties =
             roofsAnalysisResult.getProperties(featureMapper.domainToGeometry(delimitation));
 
-        var planes = roofProperties.getPlanes();
+        var planes = roofProperties.getRoofPlanes();
         var firstPlane = planes.isEmpty() ? Plane3D.empty() : planes.getFirst();
         properties.put(ROOF_SLOPE_PROPERTY_NAME, firstPlane.getSlopeInDegrees().getValue());
         properties.put(ROOF_HEIGHT_PROPERTY_NAME, roofProperties.getHeightInMeters().getValue());

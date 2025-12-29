@@ -1,27 +1,20 @@
-package app.bpartners.geojobs.service.lidar.model.geometry.planes;
+package app.bpartners.geojobs.model.lidar.planes;
 
-import app.bpartners.geojobs.service.lidar.model.geometry.LasPointGeometry;
+import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import java.util.*;
 import java.util.function.Function;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Performs 3D clustering of points in a Plane3D based on a maximum distance. Points within the
  * given radius are connected. The largest connected cluster is returned as the main cluster, while
  * other points are considered outliers.
  */
+@RequiredArgsConstructor
 public class Plane3DContinuationCluster
     implements Function<Plane3D, Plane3DContinuationCluster.Result> {
   private final double radius;
   private final int minClusterSize;
-
-  /**
-   * @param radius maximum distance to consider points connected
-   * @param minClusterSize minimum number of points to consider a valid cluster
-   */
-  public Plane3DContinuationCluster(double radius, int minClusterSize) {
-    this.radius = radius;
-    this.minClusterSize = minClusterSize;
-  }
 
   @Override
   public Result apply(Plane3D plane) {
