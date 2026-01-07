@@ -33,18 +33,31 @@ class DetectionModelUnsupportedServiceTest {
 
   @Test
   void apply_ok() throws AddressException {
+    Detection detection = mock(Detection.class);
+
+    when(detection.getCommunityOwnerId()).thenReturn("communityOwnerId");
+    when(detection.getEndToEndId()).thenReturn("endToEndId");
+    when(detection.getProvidedGeoJsonZone()).thenReturn(List.of());
+    when(detection.getDetectableObjectModel()).thenReturn(detectableObjectModelList().getFirst());
+    when(detection.getDetectableObjectModelList()).thenReturn(detectableObjectModelList());
+    when(detection.isOutputZipped()).thenReturn(true);
+    when(detection.needsImageOutput()).thenReturn(true);
 
     var detectionIdentifier = "detectionIdentifier";
-    DetectionModelUnsupported modelUnsupported =
-        new DetectionModelUnsupported()
-            .toBuilder().detectionIdentifier(detectionIdentifier).build();
-    when(detectionRepository.findById(detectionIdentifier)).thenReturn(Optional.of(detection()));
-    when(communityAuthorizationRepository.findById(detection().getCommunityOwnerId()))
+    DetectionModelUnsupported modelUnsupported = mock(DetectionModelUnsupported.class);
+    when(modelUnsupported.getDetectionIdentifier()).thenReturn(detectionIdentifier);
+    when(detectionRepository.findById(detectionIdentifier)).thenReturn(Optional.of(detection));
+    when(communityAuthorizationRepository.findById(detection.getCommunityOwnerId()))
         .thenReturn(Optional.of(communityAuthorization()));
     doNothing().when(mailer).accept(any(Email.class));
     when(htmlTemplateParser.apply(any(), any())).thenReturn("</HTML>");
 
     subject.accept(modelUnsupported);
+
+    verify(detection, times(3)).getDetectableObjectModelList();
+    verify(detection, times(1)).isOutputZipped();
+    verify(detection, times(1)).needsImageOutput();
+    verify(detection, times(2)).getEndToEndId();
 
     ArgumentCaptor<Email> emailCaptor = ArgumentCaptor.forClass(Email.class);
     ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
@@ -61,24 +74,13 @@ class DetectionModelUnsupportedServiceTest {
     assertEquals(
         String.format(
             "Détection (e2Id=%s) lancée par %s sur les modèles %s",
-            detection().getEndToEndId(),
+            detection.getEndToEndId(),
             communityAuthorization().getName(),
-            detection().getDetectableObjectModelList().stream()
+            detection.getDetectableObjectModelList().stream()
                 .map(objectModel -> objectModel.getModelName().toString())
                 .toList()),
         email.subject());
     assertEquals(new InternetAddress("bpartners.artisans@gmail.com"), email.to());
-  }
-
-  private Detection detection() {
-    return new Detection()
-        .toBuilder()
-            .communityOwnerId("communityOwnerId")
-            .endToEndId("endToEndId")
-            .providedGeoJsonZone(List.of())
-            .detectableObjectModel(detectableObjectModelList().getFirst())
-            .detectableObjectModelList(detectableObjectModelList())
-            .build();
   }
 
   private CommunityAuthorization communityAuthorization() {
