@@ -1,0 +1,144 @@
+package app.bpartners.geojobs.service.event;
+
+import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
+import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightRequestedService.*;
+import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightRequestedService.LIDAR_DATA_STATUS_PROPERTY_NAME;
+import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.AVAILABLE;
+import static java.util.UUID.randomUUID;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+
+import app.bpartners.geojobs.endpoint.event.model.FeatureRoofSlopeAndHeightRequested;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
+import app.bpartners.geojobs.model.lidar.planes.Plane3DSlopeInDegrees;
+import app.bpartners.geojobs.repository.DetectionRepository;
+import app.bpartners.geojobs.repository.model.Feature;
+import app.bpartners.geojobs.repository.model.detection.Detection;
+import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
+import app.bpartners.geojobs.service.lidar.LidarRoofsAnalysisProcessor;
+import app.bpartners.geojobs.service.lidar.model.geometry.roof.Building3DProperties;
+import app.bpartners.geojobs.service.lidar.model.geometry.roof.BuildingHeightInMeters;
+import app.bpartners.geojobs.service.lidar.model.geometry.roof.LidarRoofData;
+import app.bpartners.geojobs.service.lidar.model.geometry.roof.RoofPlane3D;
+import jakarta.persistence.EntityManager;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.Polygon;
+
+class FeatureRoofSlopeAndHeightRequestedServiceTest {
+
+  DetectionRepository detectionRepositoryMock = mock();
+  LidarRoofsAnalysisProcessor lidarRoofsAnalysisProcessorMock = mock();
+  FeatureMapper featureMapperMock = mock();
+  EntityManager entityManagerMock = mock();
+  FeatureVggRequestedService zoneVggRequestedServiceMock = mock();
+  FeatureRoofSlopeAndHeightRequestedService subject =
+      new FeatureRoofSlopeAndHeightRequestedService(
+          detectionRepositoryMock,
+          lidarRoofsAnalysisProcessorMock,
+          featureMapperMock,
+          entityManagerMock,
+          zoneVggRequestedServiceMock);
+
+  @BeforeEach
+  void setUp() {
+    doNothing().when(entityManagerMock).clear();
+    doNothing().when(zoneVggRequestedServiceMock).accept(any());
+  }
+
+  @Test
+  void save_slope_and_height_ok() {
+    var expectedRoofSlope = 42.0;
+    var expectedRoofHeight = 3.5;
+
+    var detection = detection();
+    var requested =
+        FeatureRoofSlopeAndHeightRequested.builder()
+            .detectionIdentifier(detection.getId())
+            .feature(toRestFeature(Feature.builder().properties(new HashMap<>()).build()))
+            .featureNb(0)
+            .build();
+    when(detectionRepositoryMock.findById(detection.getId())).thenReturn(Optional.of(detection));
+    when(featureMapperMock.domainToGeometry(any())).thenReturn(mock(Polygon.class));
+
+    var data = mock(LidarRoofData.class);
+    var result = mock(LidarRoofsAnalysisProcessor.RoofsAnalysisResult.class);
+    var properties = mock(Building3DProperties.class);
+
+    when(data.status()).thenReturn(AVAILABLE);
+    when(properties.getData()).thenReturn(data);
+    when(result.getProperties(any())).thenReturn(properties);
+
+    var plane = mock(RoofPlane3D.class);
+    var slope = mock(Plane3DSlopeInDegrees.class);
+    when(plane.getSlopeInDegrees()).thenReturn(slope);
+    when(slope.getValue()).thenReturn(expectedRoofSlope);
+    when(properties.getRoofPlanes()).thenReturn(List.of(plane));
+
+    var height = mock(BuildingHeightInMeters.class);
+    when(height.getValue()).thenReturn(expectedRoofHeight);
+    when(properties.getHeightInMeters()).thenReturn(height);
+    when(lidarRoofsAnalysisProcessorMock.from(anySet())).thenReturn(result);
+
+    subject.accept(requested);
+
+    var firstDelimitation =
+        detection.getFeatureWithDelimitations().getFirst().delimitations().getFirst();
+    var actualRoofSlope = firstDelimitation.getProperties().get(ROOF_SLOPE_PROPERTY_NAME);
+    var actualRoofHeight = firstDelimitation.getProperties().get(ROOF_HEIGHT_PROPERTY_NAME);
+    var actualRoofDataStatus =
+        firstDelimitation.getProperties().get(LIDAR_DATA_STATUS_PROPERTY_NAME);
+
+    assertEquals(expectedRoofSlope, actualRoofSlope);
+    assertEquals(expectedRoofHeight, actualRoofHeight);
+    assertEquals(AVAILABLE, actualRoofDataStatus);
+    verify(detectionRepositoryMock, times(1)).save(detection);
+  }
+
+  @Test
+  void already_processed_detection_should_not_be_processed() {
+    var detectionId = "detection-already-processed-id";
+    var detectionAlreadyProcessed = detectionAlreadyProcessed();
+    var restFeature =
+        detectionAlreadyProcessed.getFeatureWithDelimitations().getFirst().getRestFeature();
+
+    when(detectionRepositoryMock.findById(any()))
+        .thenReturn(Optional.of(detectionAlreadyProcessed));
+
+    assertDoesNotThrow(
+        () -> subject.accept(new FeatureRoofSlopeAndHeightRequested(detectionId, restFeature, 0)));
+
+    verify(lidarRoofsAnalysisProcessorMock, never()).from(anySet());
+    verify(entityManagerMock, never()).clear();
+    verify(detectionRepositoryMock, never()).save(any());
+    verify(zoneVggRequestedServiceMock, never()).accept(any());
+  }
+
+  private static Detection detection() {
+    var feature = Feature.builder().properties(new HashMap<>()).build();
+    var featureWithDelimitations = List.of(new FeatureWithDelimitation(feature, List.of(feature)));
+    return Detection.builder()
+        .id(randomUUID().toString())
+        .featureWithDelimitations(featureWithDelimitations)
+        .build();
+  }
+
+  private static Detection detectionAlreadyProcessed() {
+    var feature =
+        Feature.builder()
+            .properties(new HashMap<>(Map.of(LIDAR_DATA_STATUS_PROPERTY_NAME, AVAILABLE)))
+            .build();
+    var featureWithDelimitations = List.of(new FeatureWithDelimitation(feature, List.of(feature)));
+    return Detection.builder()
+        .id(randomUUID().toString())
+        .featureWithDelimitations(featureWithDelimitations)
+        .build();
+  }
+}
