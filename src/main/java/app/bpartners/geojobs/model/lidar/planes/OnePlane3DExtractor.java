@@ -39,19 +39,26 @@ public class OnePlane3DExtractor
       }
 
       // --- 2. Fit plane
-      var plane =
-          Plane3D.fit(
-              p1, p2, p3, delimitationConcaveRatio, delimitationSimplificationEpsilon, exporter);
+      var box =
+          new Box(
+              p1,
+              p2,
+              p3,
+              threshold,
+              delimitationConcaveRatio,
+              delimitationSimplificationEpsilon,
+              exporter);
 
       // --- 3. Compute distances
-      var inliers = points.stream().filter(p -> plane.distance(p) < threshold).toList();
+      box.add(points);
+      var inliers = box.getPoints();
 
       // --- 4. Keep best
       if (inliers.size() < bestInliers.size()) {
         continue;
       }
 
-      var afterCluster = continuationCluster.apply(plane.with(inliers));
+      var afterCluster = continuationCluster.apply(box.getPlane().with(inliers));
       var clusterPlane = afterCluster.plane();
       if (clusterPlane.getPoints().size() > bestInliers.size()) {
         bestModel = clusterPlane;
