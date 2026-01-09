@@ -3,10 +3,7 @@ package app.bpartners.geojobs.service.lidar.preprocessing.ground;
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.service.lidar.preprocessing.DuplicateXYPointsCleaner;
 import app.bpartners.geojobs.service.lidar.preprocessing.PointsZContinuationClusterExtractor;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public record GroundPointsCleaner(
     DuplicateXYPointsCleaner duplicateXYPointsCleaner,
@@ -21,12 +18,12 @@ public record GroundPointsCleaner(
         new PointsZContinuationClusterExtractor(Z_DISCONTINUITY_THRESHOLD));
   }
 
-  public Set<LasPointGeometry> apply(Set<LasPointGeometry> solPoints) {
+  public List<LasPointGeometry> apply(Collection<LasPointGeometry> solPoints) {
     var withoutDuplicateOnXY = duplicateXYPointsCleaner.compute(solPoints);
     var clusters = pointsZContinuationClusterExtractor.compute(withoutDuplicateOnXY);
 
     var mainCluster = clusters.stream().max(Comparator.comparingInt(List::size)).orElse(List.of());
 
-    return new HashSet<>(mainCluster);
+    return new ArrayList<>(mainCluster);
   }
 }

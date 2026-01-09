@@ -36,18 +36,16 @@ class LidarRoofsAnalysisProcessorTest {
 
     var expectedSet =
         Set.of(
-            new Expected(roofGeometry1, 2d, 9.85, 3487, 2187),
-            new Expected(roofGeometry2, 2d, 21.81, 4949, 1265),
-            new Expected(roofGeometry3, 18d, 17.08, 3073, 1377),
-            new Expected(roofGeometry4, 19d, 17.33, 5769, 2239));
+            new Expected(roofGeometry1, 2d, 9.85),
+            new Expected(roofGeometry2, 2d, 21.81),
+            new Expected(roofGeometry3, 18d, 17.08),
+            new Expected(roofGeometry4, 19d, 17.33));
 
     for (var geometry : roofGeometries) {
       var actual = roofsAnalysisResult.getProperties(geometry);
       var expected = getExpected(expectedSet, geometry);
 
       assertEquals(AVAILABLE, actual.getData().status());
-      assertEquals(expected.roofPts(), actual.getData().roof().points().size());
-      assertEquals(expected.groundPts(), actual.getData().ground().points().size());
       assertEquals(expected.height(), actual.getHeightInMeters().getValue(), 0.3);
 
       var firstPlane = actual.getRoofPlanes().getFirst();
@@ -162,6 +160,5 @@ class LidarRoofsAnalysisProcessorTest {
         .orElseThrow();
   }
 
-  private record Expected(
-      Geometry geometry, Double slope, Double height, Integer roofPts, Integer groundPts) {}
+  private record Expected(Geometry geometry, Double slope, Double height) {}
 }

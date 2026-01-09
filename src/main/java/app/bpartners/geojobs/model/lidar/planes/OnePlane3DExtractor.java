@@ -15,6 +15,7 @@ public class OnePlane3DExtractor
   private final double delimitationConcaveRatio;
   private final double delimitationSimplificationEpsilon;
   private final Plane3DExtractionStepExporter exporter;
+  private final Plane3DContinuationCluster continuationCluster;
 
   @Override
   public Result apply(List<LasPointGeometry> points) {
@@ -33,7 +34,7 @@ public class OnePlane3DExtractor
       var p3 = points.get(random.nextInt(points.size()));
 
       // Ensure distinct points
-      if (p1.equals(p2) || p2.equals(p3) || p1.equals(p3)) {
+      if (p1 == p2 || p2 == p3 || p1 == p3) {
         continue;
       }
 
@@ -46,9 +47,15 @@ public class OnePlane3DExtractor
       var inliers = points.stream().filter(p -> plane.distance(p) < threshold).toList();
 
       // --- 4. Keep best
-      if (inliers.size() > bestInliers.size()) {
-        bestInliers = inliers;
-        bestModel = plane;
+      if (inliers.size() < bestInliers.size()) {
+        continue;
+      }
+
+      var afterCluster = continuationCluster.apply(plane.with(inliers));
+      var clusterPlane = afterCluster.plane();
+      if (clusterPlane.getPoints().size() > bestInliers.size()) {
+        bestModel = clusterPlane;
+        bestInliers = clusterPlane.getPoints();
       }
     }
 
@@ -59,7 +66,7 @@ public class OnePlane3DExtractor
     // --- 5. Compute outliers
     var inlierSet = new HashSet<>(bestInliers);
     var outliers = points.stream().filter(p -> !inlierSet.contains(p)).toList();
-    return new Result(bestModel.with(inlierSet), outliers);
+    return new Result(bestModel.with(bestInliers), outliers);
   }
 
   public record Result(Plane3D plane, List<LasPointGeometry> outliers) {}

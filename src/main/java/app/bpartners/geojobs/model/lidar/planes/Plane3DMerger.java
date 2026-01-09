@@ -20,8 +20,7 @@ public class Plane3DMerger implements UnaryOperator<Collection<Plane3D>> {
         continue;
       }
 
-      var mergedPoints = new HashSet<>(p1.getPoints());
-
+      var mergedPoints = p1.getPoints();
       for (var p2 : planes) {
         if (p1 == p2 || visited.contains(p2)) {
           continue;
@@ -49,7 +48,7 @@ public class Plane3DMerger implements UnaryOperator<Collection<Plane3D>> {
 
     double area1 = p1.get2DArea();
     double area2 = p2.get2DArea();
-    boolean small = area1 < smallArea || area2 < smallArea;
+    boolean small = area1 < smallArea && area2 < smallArea;
 
     if (small) {
       return true;

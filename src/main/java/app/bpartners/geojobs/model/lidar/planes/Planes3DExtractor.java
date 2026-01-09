@@ -16,8 +16,7 @@ public class Planes3DExtractor implements Function<Collection<LasPointGeometry>,
   private final Plane3DMerger plane3DMerger;
   private final Plane3DExtractionStepExporter exporter;
   private final OnePlane3DExtractor onePlane3DExtractor;
-  private final Plane3DContinuationCluster plane3DContinuationCluster;
-  private static final int MIN_VALID_POLYGON_POINTS_COUNT = 3;
+  private static final int MIN_VALID_POLYGON_POINTS_COUNT = 4;
 
   public Planes3DExtractor(Plane3DExtractorConf conf) {
     this(conf, null);
@@ -26,22 +25,25 @@ public class Planes3DExtractor implements Function<Collection<LasPointGeometry>,
   public Planes3DExtractor(Plane3DExtractorConf conf, Plane3DExtractionStepExporter exporter) {
     this.conf = conf;
     this.exporter = exporter;
+
+    this.plane3DMerger =
+        new Plane3DMerger(
+            conf.planeMergerConf().max2DArea(),
+            conf.planeMergerConf().slopeEpsilon(),
+            conf.planeMergerConf().distanceEpsilon());
+
+    var plane3DContinuationCluster =
+        new Plane3DContinuationCluster(
+            conf.planeExtractionConf().pointContinuationThreshold(),
+            conf.planeConf().minPointsCount());
     this.onePlane3DExtractor =
         new OnePlane3DExtractor(
             conf.planeExtractionConf().iteration(),
             conf.planeExtractionConf().pointThreshold(),
             conf.planeDelimitationConf().concaveRatio(),
             conf.planeDelimitationConf().simplificationEpsilon(),
-            exporter);
-    this.plane3DContinuationCluster =
-        new Plane3DContinuationCluster(
-            conf.planeExtractionConf().pointContinuationThreshold(),
-            conf.planeConf().minPointsCount());
-    this.plane3DMerger =
-        new Plane3DMerger(
-            conf.planeMergerConf().max2DArea(),
-            conf.planeMergerConf().slopeEpsilon(),
-            conf.planeMergerConf().distanceEpsilon());
+            exporter,
+            plane3DContinuationCluster);
   }
 
   @Override
@@ -64,20 +66,12 @@ public class Planes3DExtractor implements Function<Collection<LasPointGeometry>,
         break;
       }
 
-      var clusterResult = plane3DContinuationCluster.apply(newPlane);
-      var continuedPlane = clusterResult.plane();
-      if (continuedPlane.getPoints().size() < minPointsCount) {
-        break;
-      }
-
-      planes.add(continuedPlane);
+      planes.add(newPlane);
       pointsToProcess = new ArrayList<>(result.outliers());
-      pointsToProcess.addAll(clusterResult.outliers());
 
       if (doExport) {
         var subExporter = exporter.subSuffix(String.valueOf(++i));
         subExporter.export(RAW_PLANE_EXTRACTION, result.plane().getPoints());
-        subExporter.export(PLANE_CONTINUITY_EXTRACTION, clusterResult.plane().getPoints());
       }
     }
 

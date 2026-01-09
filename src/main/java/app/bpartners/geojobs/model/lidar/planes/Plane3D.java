@@ -6,7 +6,7 @@ import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.LasPointsDelimiter;
 import app.bpartners.geojobs.model.lidar.Polygon3DArea;
 import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepExporter;
-import java.util.Set;
+import java.util.List;
 import lombok.*;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Polygon;
@@ -20,7 +20,7 @@ public class Plane3D {
   protected final double b;
   protected final double c;
   protected final double d;
-  protected final Set<LasPointGeometry> points;
+  protected final List<LasPointGeometry> points;
 
   protected final double delimitationConcaveRatio;
   protected final double delimitationSimplificationEpsilon;
@@ -28,8 +28,8 @@ public class Plane3D {
 
   private Polygon3DArea area;
   private Polygon delimitation;
-
   private Plane3DSlopeInDegrees slopeInDegrees;
+  private List<LasPointGeometry> delimitationPoints;
 
   public static Plane3D fit(
       LasPointGeometry p1,
@@ -48,7 +48,7 @@ public class Plane3D {
         .b(normal.getY())
         .c(normal.getZ())
         .d(d)
-        .points(Set.of(p1, p2, p3))
+        .points(List.of(p1, p2, p3))
         .delimitationConcaveRatio(delimitationConcaveRatio)
         .delimitationSimplificationEpsilon(delimitationSimplificationEpsilon)
         .exporter(exporter)
@@ -60,7 +60,7 @@ public class Plane3D {
         / Math.sqrt(a * a + b * b + c * c);
   }
 
-  public Plane3D with(Set<LasPointGeometry> points) {
+  public Plane3D with(List<LasPointGeometry> points) {
     return this.toBuilder().points(points).build();
   }
 
@@ -76,7 +76,7 @@ public class Plane3D {
         .b(0)
         .c(0)
         .d(0)
-        .points(Set.of())
+        .points(List.of())
         .delimitationConcaveRatio(0)
         .delimitationSimplificationEpsilon(0)
         .exporter(null)

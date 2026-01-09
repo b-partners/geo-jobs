@@ -42,7 +42,7 @@ public record Plane3DExtractorConf(
         .planeExtractionConf(
             PlaneExtractionConf.builder()
                 .iteration(200)
-                .pointThreshold(0.2)
+                .pointThreshold(0.25)
                 .pointContinuationThreshold(1)
                 .build())
         .build();

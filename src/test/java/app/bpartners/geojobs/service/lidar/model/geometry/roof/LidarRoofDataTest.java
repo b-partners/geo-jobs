@@ -4,15 +4,15 @@ import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import app.bpartners.geojobs.service.lidar.model.geometry.DelimitedPoints;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 class LidarRoofDataTest {
   @Test
   void merge_with_available_ok() {
-    var delimitedPoints = DelimitedPoints.builder().points(new HashSet<>()).build();
+    var delimitedPoints = DelimitedPoints.builder().points(new ArrayList<>()).build();
 
     var data1 =
         LidarRoofData.builder()
@@ -45,7 +45,7 @@ class LidarRoofDataTest {
 
   @Test
   void merge_with_unavailable() {
-    var delimitedPoints = DelimitedPoints.builder().points(new HashSet<>()).build();
+    var delimitedPoints = DelimitedPoints.builder().points(new ArrayList<>()).build();
 
     var data1 =
         LidarRoofData.builder()
@@ -79,7 +79,7 @@ class LidarRoofDataTest {
 
   @Test
   void merge_with_extraction_error() {
-    var delimitedPoints = DelimitedPoints.builder().points(new HashSet<>()).build();
+    var delimitedPoints = DelimitedPoints.builder().points(new ArrayList<>()).build();
 
     var data1 =
         LidarRoofData.builder()

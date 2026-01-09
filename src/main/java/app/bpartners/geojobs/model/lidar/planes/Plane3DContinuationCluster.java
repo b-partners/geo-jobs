@@ -49,7 +49,7 @@ public class Plane3DContinuationCluster
     }
 
     // Separate points into the main cluster and outliers
-    Set<LasPointGeometry> in = new HashSet<>();
+    List<LasPointGeometry> in = new ArrayList<>();
     List<LasPointGeometry> out = new ArrayList<>();
 
     for (int i = 0; i < n; i++) {
