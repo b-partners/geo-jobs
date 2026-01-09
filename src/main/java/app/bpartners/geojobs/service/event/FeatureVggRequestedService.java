@@ -19,7 +19,6 @@ import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.detection.*;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.service.DetectionVGGUpdate;
-import app.bpartners.geojobs.service.GeometryPixelProjector;
 import app.bpartners.geojobs.service.PolygonCoordinatesCloser;
 import app.bpartners.geojobs.service.TileCoordinatesPolygonIntersection;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
@@ -52,7 +51,6 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
   private final TileFinder tileFinder;
   private final EntityManager entityManager;
   private final IgnCadastreFeatureFetcher ignCadastreFeatureFetcher;
-  private final GeometryPixelProjector geometryPixelProjector;
 
   @Override
   public void accept(FeatureVggRequested event) {
