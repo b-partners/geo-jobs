@@ -6,6 +6,7 @@ import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.LasPointsDelimiter;
 import app.bpartners.geojobs.model.lidar.Polygon3DArea;
 import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepExporter;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.*;
 import org.locationtech.jts.geom.Coordinate;
@@ -29,7 +30,6 @@ public class Plane3D {
   private Polygon3DArea area;
   private Polygon delimitation;
   private Plane3DSlopeInDegrees slopeInDegrees;
-  private List<LasPointGeometry> delimitationPoints;
 
   public static Plane3D fit(
       LasPointGeometry p1,
@@ -135,5 +135,21 @@ public class Plane3D {
     }
 
     return geometryFactory.createPolygon(projected);
+  }
+
+  public Plane3D merge(Plane3D other) {
+    if (other.getPoints().size() > this.getPoints().size()) {
+      return other.merge(this);
+    }
+
+    var mergedPoints = new ArrayList<>(this.points);
+    mergedPoints.addAll(other.getPoints());
+
+    return this.toBuilder()
+        .area(null)
+        .delimitation(null)
+        .slopeInDegrees(null)
+        .points(mergedPoints)
+        .build();
   }
 }

@@ -24,7 +24,7 @@ public record Plane3DExtractorConf(
       int iteration, double pointThreshold, double pointContinuationThreshold) {}
 
   @Builder(toBuilder = true)
-  public record PlaneMergerConf(double slopeEpsilon, double distanceEpsilon, double max2DArea) {}
+  public record PlaneMergerConf(double slopeEpsilon, double distanceEpsilon) {}
 
   public static Plane3DExtractorConf getDefault() {
     return Plane3DExtractorConf.builder()
@@ -37,8 +37,7 @@ public record Plane3DExtractorConf(
                 .build())
         .planeDelimitationConf(
             PlaneDelimitationConf.builder().concaveRatio(0.2).simplificationEpsilon(0.6).build())
-        .planeMergerConf(
-            PlaneMergerConf.builder().max2DArea(0.2).slopeEpsilon(10).distanceEpsilon(0.5).build())
+        .planeMergerConf(PlaneMergerConf.builder().slopeEpsilon(10).distanceEpsilon(0.1).build())
         .planeExtractionConf(
             PlaneExtractionConf.builder()
                 .iteration(200)

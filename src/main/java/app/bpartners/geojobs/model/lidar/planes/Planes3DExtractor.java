@@ -28,9 +28,7 @@ public class Planes3DExtractor implements Function<Collection<LasPointGeometry>,
 
     this.plane3DMerger =
         new Plane3DMerger(
-            conf.planeMergerConf().max2DArea(),
-            conf.planeMergerConf().slopeEpsilon(),
-            conf.planeMergerConf().distanceEpsilon());
+            conf.planeMergerConf().slopeEpsilon(), conf.planeMergerConf().distanceEpsilon());
 
     var plane3DContinuationCluster =
         new Plane3DContinuationCluster(

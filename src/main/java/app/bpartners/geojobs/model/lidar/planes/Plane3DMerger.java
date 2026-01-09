@@ -3,16 +3,16 @@ package app.bpartners.geojobs.model.lidar.planes;
 import java.util.*;
 import java.util.function.UnaryOperator;
 import lombok.RequiredArgsConstructor;
+import org.locationtech.jts.geom.Coordinate;
 
 @RequiredArgsConstructor
 public class Plane3DMerger implements UnaryOperator<Collection<Plane3D>> {
-  private final double smallArea;
   private final double epsilonSlope;
   private final double epsilonDistance;
 
   @Override
   public List<Plane3D> apply(Collection<Plane3D> planes) {
-    List<Plane3D> merged = new ArrayList<>();
+    List<Plane3D> result = new ArrayList<>();
     Set<Plane3D> visited = new HashSet<>();
 
     for (var p1 : planes) {
@@ -20,55 +20,77 @@ public class Plane3DMerger implements UnaryOperator<Collection<Plane3D>> {
         continue;
       }
 
-      var mergedPoints = p1.getPoints();
+      var merged = p1;
       for (var p2 : planes) {
         if (p1 == p2 || visited.contains(p2)) {
           continue;
         }
 
         if (shouldMerge(p1, p2)) {
-          mergedPoints.addAll(p2.getPoints());
+          merged = merged.merge(p2);
           visited.add(p2);
         }
       }
 
-      var mergedPlane = p1.with(mergedPoints);
-      merged.add(mergedPlane);
+      result.add(merged);
       visited.add(p1);
     }
 
-    return merged;
+    return result;
   }
 
   private boolean shouldMerge(Plane3D p1, Plane3D p2) {
-    double dist = Math.abs(p1.getD() - p2.getD());
-    if (dist > epsilonDistance) {
+    if (!isXYClose(p1, p2)) {
       return false;
     }
 
-    double area1 = p1.get2DArea();
-    double area2 = p2.get2DArea();
-    boolean small = area1 < smallArea && area2 < smallArea;
-
-    if (small) {
-      return true;
+    if (!isAngleClose(p1, p2)) {
+      return false;
     }
 
-    return areSimilar(p1, p2);
+    return isHeightClose(p1, p2);
   }
 
-  private boolean areSimilar(Plane3D p1, Plane3D p2) {
+  private boolean isAngleClose(Plane3D p1, Plane3D p2) {
     double dot = p1.getA() * p2.getA() + p1.getB() * p2.getB() + p1.getC() * p2.getC();
     double mag1 = Math.sqrt(p1.getA() * p1.getA() + p1.getB() * p1.getB() + p1.getC() * p1.getC());
     double mag2 = Math.sqrt(p2.getA() * p2.getA() + p2.getB() * p2.getB() + p2.getC() * p2.getC());
     double cosTheta = dot / (mag1 * mag2);
-    double angleDeg = Math.toDegrees(Math.acos(Math.clamp(cosTheta, -1.0, 1.0)));
+    double angleDeg = Math.toDegrees(Math.acos(Math.min(Math.abs(cosTheta), 1.0)));
 
-    if (angleDeg > epsilonSlope) {
-      return false;
-    }
+    return angleDeg <= epsilonSlope;
+  }
 
-    double dist = Math.abs(p1.getD() - p2.getD());
-    return dist <= epsilonDistance;
+  private boolean isXYClose(Plane3D p1, Plane3D p2) {
+    var bufferXY = p1.getDelimitation().buffer(epsilonDistance);
+    return bufferXY.intersects(p2.getDelimitation());
+  }
+
+  private boolean isHeightClose(Plane3D p1, Plane3D p2) {
+    double zMin1 =
+        Arrays.stream(p1.getDelimitation().getCoordinates())
+            .mapToDouble(Coordinate::getZ)
+            .min()
+            .orElse(0);
+
+    double zMax1 =
+        Arrays.stream(p1.getDelimitation().getCoordinates())
+            .mapToDouble(Coordinate::getZ)
+            .max()
+            .orElse(0);
+
+    double zMin2 =
+        Arrays.stream(p2.getDelimitation().getCoordinates())
+            .mapToDouble(Coordinate::getZ)
+            .min()
+            .orElse(0);
+
+    double zMax2 =
+        Arrays.stream(p2.getDelimitation().getCoordinates())
+            .mapToDouble(Coordinate::getZ)
+            .max()
+            .orElse(0);
+
+    return !(zMax1 + epsilonDistance < zMin2 || zMax2 + epsilonDistance < zMin1);
   }
 }
