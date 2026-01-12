@@ -37,7 +37,7 @@ public record Plane3DExtractorConf(
                 .build())
         .planeDelimitationConf(
             PlaneDelimitationConf.builder().concaveRatio(0.2).simplificationEpsilon(0.6).build())
-        .planeMergerConf(PlaneMergerConf.builder().slopeEpsilon(10).distanceEpsilon(0.1).build())
+        .planeMergerConf(PlaneMergerConf.builder().slopeEpsilon(10).distanceEpsilon(0.7).build())
         .planeExtractionConf(
             PlaneExtractionConf.builder()
                 .iteration(200)
