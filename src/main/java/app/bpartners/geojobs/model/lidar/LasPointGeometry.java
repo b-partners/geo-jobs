@@ -42,7 +42,7 @@ public class LasPointGeometry extends Point {
     return new LasPointGeometry(
         this.getX() - other.getX(),
         this.getY() - other.getY(),
-        this.getCoordinate().getZ() - other.getCoordinate().getZ(),
+        this.getZ() - other.getZ(),
         this.classification);
   }
 

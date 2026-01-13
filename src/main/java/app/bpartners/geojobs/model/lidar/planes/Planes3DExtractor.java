@@ -13,6 +13,7 @@ import org.locationtech.jts.math.Vector2D;
 
 public class Planes3DExtractor implements Function<Collection<LasPointGeometry>, List<Plane3D>> {
   private final Plane3DExtractorConf conf;
+  // TODO: Improve optional Plane3DMerger
   private final Plane3DMerger plane3DMerger;
   private final Plane3DExtractionStepExporter exporter;
   private final OnePlane3DExtractor onePlane3DExtractor;
@@ -34,14 +35,8 @@ public class Planes3DExtractor implements Function<Collection<LasPointGeometry>,
         new Plane3DContinuationCluster(
             conf.planeExtractionConf().pointContinuationThreshold(),
             conf.planeConf().minPointsCount());
-    this.onePlane3DExtractor =
-        new OnePlane3DExtractor(
-            conf.planeExtractionConf().iteration(),
-            conf.planeExtractionConf().pointThreshold(),
-            conf.planeDelimitationConf().concaveRatio(),
-            conf.planeDelimitationConf().simplificationEpsilon(),
-            exporter,
-            plane3DContinuationCluster);
+
+    this.onePlane3DExtractor = new OnePlane3DExtractor(conf, exporter, plane3DContinuationCluster);
   }
 
   @Override
@@ -77,7 +72,8 @@ public class Planes3DExtractor implements Function<Collection<LasPointGeometry>,
   }
 
   public List<Plane3D> mergeClosedPlaneAndFilterSmallOnes(Collection<Plane3D> planes) {
-    var mergedPlanes = filterInvalidPlanes(plane3DMerger.apply(planes));
+    // var mergedPlanes = filterInvalidPlanes(plane3DMerger.apply(planes));
+    var mergedPlanes = filterInvalidPlanes(planes);
 
     if (exporter == null) {
       return mergedPlanes;

@@ -11,28 +11,26 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public class Box {
+  private final Kernel kernel;
   private final Plane3D plane;
   private final double threshold;
   private final List<LasPointGeometry> points;
 
   public Box(
-      LasPointGeometry p1,
-      LasPointGeometry p2,
-      LasPointGeometry p3,
+      Kernel kernel,
       double threshold,
       double planeDelimitationConcaveRatio,
       double planeDelimitationSimplificationEpsilon,
       Plane3DExtractionStepExporter exporter) {
+    this.kernel = kernel;
+    this.threshold = threshold;
+    this.points = new ArrayList<>(kernel.getPoints());
     this.plane =
         Plane3D.fit(
-            p1,
-            p2,
-            p3,
+            kernel,
             planeDelimitationConcaveRatio,
             planeDelimitationSimplificationEpsilon,
             exporter);
-    this.threshold = threshold;
-    this.points = new ArrayList<>(List.of(p1, p2, p3));
   }
 
   public boolean contains(LasPointGeometry point) {

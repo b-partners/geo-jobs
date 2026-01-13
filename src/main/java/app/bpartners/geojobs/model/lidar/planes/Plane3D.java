@@ -32,12 +32,26 @@ public class Plane3D {
   private Plane3DSlopeInDegrees slopeInDegrees;
 
   public static Plane3D fit(
-      LasPointGeometry p1,
-      LasPointGeometry p2,
-      LasPointGeometry p3,
+      Kernel kernel,
       double delimitationConcaveRatio,
       double delimitationSimplificationEpsilon,
       Plane3DExtractionStepExporter exporter) {
+    var kernelPoints = kernel.getPoints();
+
+    if (kernelPoints.size() == 3) {
+      var plane = fromTriplet(kernelPoints.getFirst(), kernelPoints.get(1), kernelPoints.getLast());
+      return plane.toBuilder()
+          .exporter(exporter)
+          .delimitationConcaveRatio(delimitationConcaveRatio)
+          .delimitationSimplificationEpsilon(delimitationSimplificationEpsilon)
+          .build();
+    }
+
+    throw new IllegalArgumentException("Fitting with kernel is not supported");
+  }
+
+  private static Plane3D fromTriplet(
+      LasPointGeometry p1, LasPointGeometry p2, LasPointGeometry p3) {
     var v1 = p2.subtract(p1);
     var v2 = p3.subtract(p1);
     var normal = v1.cross(v2).normalized();
@@ -49,9 +63,6 @@ public class Plane3D {
         .c(normal.getZ())
         .d(d)
         .points(List.of(p1, p2, p3))
-        .delimitationConcaveRatio(delimitationConcaveRatio)
-        .delimitationSimplificationEpsilon(delimitationSimplificationEpsilon)
-        .exporter(exporter)
         .build();
   }
 
