@@ -4,9 +4,7 @@ import static app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractio
 
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepExporter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import org.locationtech.jts.math.Vector2D;
@@ -31,28 +29,30 @@ public class Planes3DExtractor implements Function<Collection<LasPointGeometry>,
         new Plane3DMerger(
             conf.planeMergerConf().slopeEpsilon(), conf.planeMergerConf().distanceEpsilon());
 
-    var plane3DContinuationCluster =
-        new Plane3DContinuationCluster(
+    var continuationCluster =
+        new LasPointContinuationCluster(
             conf.planeExtractionConf().pointContinuationThreshold(),
             conf.planeConf().minPointsCount());
 
-    this.onePlane3DExtractor = new OnePlane3DExtractor(conf, exporter, plane3DContinuationCluster);
+    this.onePlane3DExtractor = new OnePlane3DExtractor(conf, exporter, continuationCluster);
   }
 
   @Override
   public List<Plane3D> apply(Collection<LasPointGeometry> points) {
     List<Plane3D> planes = new ArrayList<>();
-    List<LasPointGeometry> pointsToProcess = new ArrayList<>(points);
+    Set<LasPointGeometry> toUsedAsKernel = new HashSet<>(points);
+    Set<LasPointGeometry> pointsToProcess = new HashSet<>(points);
+    Set<LasPointGeometry> delimitations = new HashSet<>();
 
     var doExport = exporter != null;
     if (doExport) {
-      exporter.export(INIT_POINTS, pointsToProcess);
+      exporter.export(INIT_POINTS, points);
     }
 
     int i = 0;
     var minPointsCount = conf.planeConf().minPointsCount();
-    while (pointsToProcess.size() > minPointsCount) {
-      var result = onePlane3DExtractor.apply(pointsToProcess);
+    while (toUsedAsKernel.size() > minPointsCount) {
+      var result = onePlane3DExtractor.apply(pointsToProcess, toUsedAsKernel);
       var newPlane = result.plane();
 
       if (newPlane.getPoints().size() < minPointsCount) {
@@ -60,11 +60,16 @@ public class Planes3DExtractor implements Function<Collection<LasPointGeometry>,
       }
 
       planes.add(newPlane);
-      pointsToProcess = new ArrayList<>(result.outliers());
+      toUsedAsKernel = result.outliers();
+
+      pointsToProcess = new HashSet<>(result.outliers());
+      delimitations.addAll(newPlane.getDelimitationPoints());
+      pointsToProcess.addAll(delimitations);
 
       if (doExport) {
         var subExporter = exporter.subSuffix(String.valueOf(++i));
         subExporter.export(RAW_PLANE_EXTRACTION, result.plane().getPoints());
+        subExporter.export(ITERATION_POINTS_EVOLUTION, pointsToProcess);
       }
     }
 

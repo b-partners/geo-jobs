@@ -74,10 +74,6 @@ public class LasPointGeometry extends Point {
         getX() / n, getY() / n, getCoordinate().getZ() / n, this.classification);
   }
 
-  public boolean isNear(LasPointGeometry other, Axis axis, double epsilon) {
-    return Math.abs(getCoordinate(axis) - other.getCoordinate(axis)) < epsilon;
-  }
-
   public double getCoordinate(Axis axis) {
     return switch (axis) {
       case X -> getX();

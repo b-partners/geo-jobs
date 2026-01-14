@@ -1,13 +1,13 @@
 package app.bpartners.geojobs.model.lidar.planes;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
+import static app.bpartners.geojobs.service.lidar.model.LidarClass.BATIMENT;
 
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.LasPointsDelimiter;
 import app.bpartners.geojobs.model.lidar.Polygon3DArea;
 import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepExporter;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import lombok.*;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Polygon;
@@ -21,7 +21,7 @@ public class Plane3D {
   protected final double b;
   protected final double c;
   protected final double d;
-  protected final List<LasPointGeometry> points;
+  protected final Set<LasPointGeometry> points;
 
   protected final double delimitationConcaveRatio;
   protected final double delimitationSimplificationEpsilon;
@@ -37,7 +37,6 @@ public class Plane3D {
       double delimitationSimplificationEpsilon,
       Plane3DExtractionStepExporter exporter) {
     var kernelPoints = kernel.getPoints();
-
     if (kernelPoints.size() == 3) {
       var plane = fromTriplet(kernelPoints.getFirst(), kernelPoints.get(1), kernelPoints.getLast());
       return plane.toBuilder()
@@ -62,7 +61,7 @@ public class Plane3D {
         .b(normal.getY())
         .c(normal.getZ())
         .d(d)
-        .points(List.of(p1, p2, p3))
+        .points(Set.of(p1, p2, p3))
         .build();
   }
 
@@ -71,7 +70,7 @@ public class Plane3D {
         / Math.sqrt(a * a + b * b + c * c);
   }
 
-  public Plane3D with(List<LasPointGeometry> points) {
+  public Plane3D with(Set<LasPointGeometry> points) {
     return this.toBuilder().points(points).build();
   }
 
@@ -87,7 +86,7 @@ public class Plane3D {
         .b(0)
         .c(0)
         .d(0)
-        .points(List.of())
+        .points(Set.of())
         .delimitationConcaveRatio(0)
         .delimitationSimplificationEpsilon(0)
         .exporter(null)
@@ -153,7 +152,7 @@ public class Plane3D {
       return other.merge(this);
     }
 
-    var mergedPoints = new ArrayList<>(this.points);
+    var mergedPoints = new HashSet<>(this.points);
     mergedPoints.addAll(other.getPoints());
 
     return this.toBuilder()
@@ -162,5 +161,14 @@ public class Plane3D {
         .slopeInDegrees(null)
         .points(mergedPoints)
         .build();
+  }
+
+  public List<LasPointGeometry> getDelimitationPoints() {
+    return Arrays.stream(getDelimitation().getCoordinates())
+        .map(
+            coordinate ->
+                new LasPointGeometry(
+                    coordinate.getX(), coordinate.getY(), coordinate.getZ(), BATIMENT))
+        .toList();
   }
 }

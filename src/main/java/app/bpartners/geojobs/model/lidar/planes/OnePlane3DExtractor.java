@@ -1,22 +1,26 @@
 package app.bpartners.geojobs.model.lidar.planes;
 
+import static java.util.function.Predicate.not;
+import static java.util.stream.Collectors.toSet;
+
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepExporter;
 import java.security.SecureRandom;
 import java.util.*;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class OnePlane3DExtractor
-    implements Function<List<LasPointGeometry>, OnePlane3DExtractor.Result> {
+    implements BiFunction<
+        Set<LasPointGeometry>, Set<LasPointGeometry>, OnePlane3DExtractor.Result> {
   private final Plane3DExtractorConf conf;
   private final Plane3DExtractionStepExporter exporter;
-  private final Plane3DContinuationCluster continuationCluster;
+  private final LasPointContinuationCluster continuationCluster;
 
   @Override
-  public Result apply(List<LasPointGeometry> points) {
-    if (points.size() < 3) {
+  public Result apply(Set<LasPointGeometry> points, Set<LasPointGeometry> toUsedAsKernel) {
+    if (toUsedAsKernel.size() < 3) {
       throw new IllegalArgumentException("At least 3 points are required.");
     }
 
@@ -33,9 +37,10 @@ public class OnePlane3DExtractor
     for (int i = 0; i < planeExtractionConf.iteration(); i++) {
       var kernel =
           Kernel.from(
-              points,
+              toUsedAsKernel,
               random,
               kernelConf.attempts(),
+              kernelConf.maxNeighborsCount(),
               kernelConf.threshold(),
               kernelConf.minVectorNorm(),
               kernelConf.orthogonalDegEpsilon());
@@ -59,11 +64,10 @@ public class OnePlane3DExtractor
         continue;
       }
 
-      var afterCluster = continuationCluster.apply(box.getPlane().with(inliers));
-      var clusterPlane = afterCluster.plane();
-      if (clusterPlane.getPoints().size() > bestInliers.size()) {
-        bestModel = clusterPlane;
-        bestInliers = clusterPlane.getPoints();
+      var clusterResult = continuationCluster.apply(inliers);
+      if (clusterResult.inliers().size() > bestInliers.size()) {
+        bestModel = box.getPlane();
+        bestInliers = new ArrayList<>(clusterResult.inliers());
       }
     }
 
@@ -73,9 +77,9 @@ public class OnePlane3DExtractor
 
     // --- 5. Compute outliers
     var inlierSet = new HashSet<>(bestInliers);
-    var outliers = points.stream().filter(p -> !inlierSet.contains(p)).toList();
-    return new Result(bestModel.with(bestInliers), outliers);
+    var outliers = toUsedAsKernel.stream().filter(not(inlierSet::contains)).collect(toSet());
+    return new Result(bestModel.with(inlierSet), outliers);
   }
 
-  public record Result(Plane3D plane, List<LasPointGeometry> outliers) {}
+  public record Result(Plane3D plane, Set<LasPointGeometry> outliers) {}
 }

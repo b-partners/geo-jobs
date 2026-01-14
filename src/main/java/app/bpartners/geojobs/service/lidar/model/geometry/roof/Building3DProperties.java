@@ -32,8 +32,8 @@ public class Building3DProperties {
   private BuildingHeightInMeters buildingHeightInMeters;
 
   // cleaned data
-  private List<LasPointGeometry> cleanedRoofPoints;
-  private List<LasPointGeometry> cleanedGroundPoints;
+  private Set<LasPointGeometry> cleanedRoofPoints;
+  private Set<LasPointGeometry> cleanedGroundPoints;
 
   public BuildingHeightInMeters getHeightInMeters() {
     if (hasInvalidData()) {
@@ -84,7 +84,7 @@ public class Building3DProperties {
     return data.ground().points().size() < conf.planeConf().minPointsCount();
   }
 
-  public List<LasPointGeometry> getCleanedRoofPoints() {
+  public Set<LasPointGeometry> getCleanedRoofPoints() {
     if (cleanedRoofPoints == null) {
       var cleaner = new RoofPointsCleaner();
       cleanedRoofPoints = cleaner.apply(data.roof().points());
@@ -92,7 +92,7 @@ public class Building3DProperties {
     return cleanedRoofPoints;
   }
 
-  public List<LasPointGeometry> getCleanedGroundPoints() {
+  public Set<LasPointGeometry> getCleanedGroundPoints() {
     if (cleanedGroundPoints == null) {
       var cleaner = new GroundPointsCleaner();
       cleanedGroundPoints = cleaner.apply(data.ground().points());

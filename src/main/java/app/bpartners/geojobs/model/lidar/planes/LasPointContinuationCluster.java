@@ -11,17 +11,17 @@ import lombok.RequiredArgsConstructor;
  * other points are considered outliers.
  */
 @RequiredArgsConstructor
-public class Plane3DContinuationCluster
-    implements Function<Plane3D, Plane3DContinuationCluster.Result> {
+public class LasPointContinuationCluster
+    implements Function<Collection<LasPointGeometry>, LasPointContinuationCluster.Result> {
   private final double radius;
   private final int minClusterSize;
 
   @Override
-  public Result apply(Plane3D plane) {
-    var points = new ArrayList<>(plane.getPoints());
+  public Result apply(Collection<LasPointGeometry> planePoints) {
+    var points = new ArrayList<>(planePoints);
     int n = points.size();
     if (n == 0) {
-      return new Result(Plane3D.empty(), List.of());
+      return new Result(Set.of(), Set.of());
     }
 
     // Create a 3D spatial grid for faster neighbor search
@@ -45,7 +45,7 @@ public class Plane3DContinuationCluster
 
     // If no cluster is large enough, return empty
     if (bestSize < minClusterSize) {
-      return new Result(Plane3D.empty(), List.of());
+      return new Result(Set.of(), Set.of());
     }
 
     // Separate points into the main cluster and outliers
@@ -58,7 +58,7 @@ public class Plane3DContinuationCluster
       } else out.add(points.get(i));
     }
 
-    return new Result(plane.with(in), out);
+    return new Result(in, out);
   }
 
   /** Count the size of each cluster */
@@ -125,5 +125,6 @@ public class Plane3DContinuationCluster
 
   private record CellIndex(int x, int y, int z) {}
 
-  public record Result(Plane3D plane, List<LasPointGeometry> outliers) {}
+  public record Result(
+      Collection<LasPointGeometry> inliers, Collection<LasPointGeometry> outliers) {}
 }

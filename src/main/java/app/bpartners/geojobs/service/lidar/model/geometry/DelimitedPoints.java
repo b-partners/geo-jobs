@@ -1,8 +1,8 @@
 package app.bpartners.geojobs.service.lidar.model.geometry;
 
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import lombok.Builder;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
@@ -13,9 +13,9 @@ public record DelimitedPoints(
     Geometry boundaryLambert93,
     Envelope boundaryEPSG4326Envelope,
     Envelope boundaryLambert93Envelope,
-    List<LasPointGeometry> points) {
+    Set<LasPointGeometry> points) {
   public DelimitedPoints(
-      Geometry boundaryEPSG4326, Geometry boundaryLambert93, List<LasPointGeometry> points) {
+      Geometry boundaryEPSG4326, Geometry boundaryLambert93, Set<LasPointGeometry> points) {
     this(
         boundaryEPSG4326,
         boundaryLambert93,
@@ -25,6 +25,6 @@ public record DelimitedPoints(
   }
 
   public static DelimitedPoints empty(Geometry boundaryEPSG4326, Geometry boundaryLambert93) {
-    return new DelimitedPoints(boundaryEPSG4326, boundaryLambert93, new ArrayList<>());
+    return new DelimitedPoints(boundaryEPSG4326, boundaryLambert93, new HashSet<>());
   }
 }

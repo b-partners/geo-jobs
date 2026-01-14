@@ -18,7 +18,7 @@ public record RoofPointsCleaner(
         new PointsZContinuationClusterExtractor(Z_DISCONTINUITY_THRESHOLD));
   }
 
-  public List<LasPointGeometry> apply(Collection<LasPointGeometry> roofPoints) {
+  public Set<LasPointGeometry> apply(Collection<LasPointGeometry> roofPoints) {
     return duplicateXYPointsCleaner.compute(roofPoints);
   }
 }

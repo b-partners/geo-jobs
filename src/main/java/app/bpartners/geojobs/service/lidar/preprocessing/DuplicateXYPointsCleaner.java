@@ -6,7 +6,7 @@ import java.util.*;
 public record DuplicateXYPointsCleaner(
     double xyToleranceMeters, DuplicateXYPointToKeep pointToKeep) {
 
-  public List<LasPointGeometry> compute(Collection<LasPointGeometry> points) {
+  public Set<LasPointGeometry> compute(Collection<LasPointGeometry> points) {
     Map<String, LasPointGeometry> map = new HashMap<>();
 
     for (var p : points) {
@@ -34,7 +34,7 @@ public record DuplicateXYPointsCleaner(
       }
     }
 
-    return new ArrayList<>(map.values());
+    return new HashSet<>(map.values());
   }
 
   public enum DuplicateXYPointToKeep {

@@ -18,12 +18,12 @@ public record GroundPointsCleaner(
         new PointsZContinuationClusterExtractor(Z_DISCONTINUITY_THRESHOLD));
   }
 
-  public List<LasPointGeometry> apply(Collection<LasPointGeometry> solPoints) {
+  public Set<LasPointGeometry> apply(Collection<LasPointGeometry> solPoints) {
     var withoutDuplicateOnXY = duplicateXYPointsCleaner.compute(solPoints);
     var clusters = pointsZContinuationClusterExtractor.compute(withoutDuplicateOnXY);
 
     var mainCluster = clusters.stream().max(Comparator.comparingInt(List::size)).orElse(List.of());
 
-    return new ArrayList<>(mainCluster);
+    return new HashSet<>(mainCluster);
   }
 }
