@@ -47,18 +47,14 @@ public class LasPointGeometry extends Point {
   }
 
   public LasPointGeometry cross(LasPointGeometry other) {
-    double cx =
-        this.getY() * other.getCoordinate().getZ() - this.getCoordinate().getZ() * other.getY();
-    double cy =
-        this.getCoordinate().getZ() * other.getX() - this.getX() * other.getCoordinate().getZ();
+    double cx = this.getY() * other.getZ() - this.getZ() * other.getY();
+    double cy = this.getZ() * other.getX() - this.getX() * other.getZ();
     double cz = this.getX() * other.getY() - this.getY() * other.getX();
     return new LasPointGeometry(cx, cy, cz, this.classification);
   }
 
   public double dot(LasPointGeometry other) {
-    return this.getX() * other.getX()
-        + this.getY() * other.getY()
-        + this.getCoordinate().getZ() * other.getCoordinate().getZ();
+    return this.getX() * other.getX() + this.getY() * other.getY() + this.getZ() * other.getZ();
   }
 
   public double normValue() {
@@ -72,14 +68,6 @@ public class LasPointGeometry extends Point {
     double n = normValue();
     return new LasPointGeometry(
         getX() / n, getY() / n, getCoordinate().getZ() / n, this.classification);
-  }
-
-  public double getCoordinate(Axis axis) {
-    return switch (axis) {
-      case X -> getX();
-      case Y -> getY();
-      case Z -> getZ();
-    };
   }
 
   public double distance(LasPointGeometry other) {

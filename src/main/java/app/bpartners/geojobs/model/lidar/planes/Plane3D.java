@@ -1,7 +1,6 @@
 package app.bpartners.geojobs.model.lidar.planes;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
-import static app.bpartners.geojobs.service.lidar.model.LidarClass.BATIMENT;
 
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.LasPointsDelimiter;
@@ -161,14 +160,5 @@ public class Plane3D {
         .slopeInDegrees(null)
         .points(mergedPoints)
         .build();
-  }
-
-  public List<LasPointGeometry> getDelimitationPoints() {
-    return Arrays.stream(getDelimitation().getCoordinates())
-        .map(
-            coordinate ->
-                new LasPointGeometry(
-                    coordinate.getX(), coordinate.getY(), coordinate.getZ(), BATIMENT))
-        .toList();
   }
 }

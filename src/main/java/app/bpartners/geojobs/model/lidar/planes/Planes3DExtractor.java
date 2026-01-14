@@ -40,9 +40,7 @@ public class Planes3DExtractor implements Function<Collection<LasPointGeometry>,
   @Override
   public List<Plane3D> apply(Collection<LasPointGeometry> points) {
     List<Plane3D> planes = new ArrayList<>();
-    Set<LasPointGeometry> toUsedAsKernel = new HashSet<>(points);
     Set<LasPointGeometry> pointsToProcess = new HashSet<>(points);
-    Set<LasPointGeometry> delimitations = new HashSet<>();
 
     var doExport = exporter != null;
     if (doExport) {
@@ -51,8 +49,8 @@ public class Planes3DExtractor implements Function<Collection<LasPointGeometry>,
 
     int i = 0;
     var minPointsCount = conf.planeConf().minPointsCount();
-    while (toUsedAsKernel.size() > minPointsCount) {
-      var result = onePlane3DExtractor.apply(pointsToProcess, toUsedAsKernel);
+    while (pointsToProcess.size() > minPointsCount) {
+      var result = onePlane3DExtractor.apply(pointsToProcess);
       var newPlane = result.plane();
 
       if (newPlane.getPoints().size() < minPointsCount) {
@@ -60,11 +58,7 @@ public class Planes3DExtractor implements Function<Collection<LasPointGeometry>,
       }
 
       planes.add(newPlane);
-      toUsedAsKernel = result.outliers();
-
-      pointsToProcess = new HashSet<>(result.outliers());
-      delimitations.addAll(newPlane.getDelimitationPoints());
-      pointsToProcess.addAll(delimitations);
+      pointsToProcess = result.outliers();
 
       if (doExport) {
         var subExporter = exporter.subSuffix(String.valueOf(++i));

@@ -37,15 +37,6 @@ public class Box {
     return plane.distance(point) <= threshold;
   }
 
-  public boolean add(LasPointGeometry point) {
-    if (!contains(point)) {
-      return false;
-    }
-
-    this.points.add(point);
-    return true;
-  }
-
   public List<LasPointGeometry> add(Collection<LasPointGeometry> points) {
     var insideBox = points.stream().filter(this::contains).toList();
 

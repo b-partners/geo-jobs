@@ -9,6 +9,7 @@ public record Plane3DExtractorConf(
     KernelConf kernelConf,
     PlaneMergerConf planeMergerConf,
     PlaneExtractionConf planeExtractionConf,
+    RoofPointsCleanerConf roofPointsCleanerConf,
     PlaneDelimitationConf planeDelimitationConf) {
 
   @Builder(toBuilder = true)
@@ -31,6 +32,9 @@ public record Plane3DExtractorConf(
   public record BoxConf(double threshold) {}
 
   @Builder(toBuilder = true)
+  public record RoofPointsCleanerConf(double duplicateXYTolerance) {}
+
+  @Builder(toBuilder = true)
   public record KernelConf(
       int attempts,
       int maxNeighborsCount,
@@ -40,6 +44,7 @@ public record Plane3DExtractorConf(
 
   public static Plane3DExtractorConf getDefault() {
     return Plane3DExtractorConf.builder()
+        .roofPointsCleanerConf(RoofPointsCleanerConf.builder().duplicateXYTolerance(0.3).build())
         .planeConf(
             PlaneConf.builder()
                 .min2DArea(0.25)

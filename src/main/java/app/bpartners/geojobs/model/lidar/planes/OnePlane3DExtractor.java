@@ -7,20 +7,19 @@ import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepExporter;
 import java.security.SecureRandom;
 import java.util.*;
-import java.util.function.BiFunction;
+import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class OnePlane3DExtractor
-    implements BiFunction<
-        Set<LasPointGeometry>, Set<LasPointGeometry>, OnePlane3DExtractor.Result> {
+    implements Function<Set<LasPointGeometry>, OnePlane3DExtractor.Result> {
   private final Plane3DExtractorConf conf;
   private final Plane3DExtractionStepExporter exporter;
   private final LasPointContinuationCluster continuationCluster;
 
   @Override
-  public Result apply(Set<LasPointGeometry> points, Set<LasPointGeometry> toUsedAsKernel) {
-    if (toUsedAsKernel.size() < 3) {
+  public Result apply(Set<LasPointGeometry> points) {
+    if (points.size() < 3) {
       throw new IllegalArgumentException("At least 3 points are required.");
     }
 
@@ -29,7 +28,7 @@ public class OnePlane3DExtractor
 
     var random = new SecureRandom();
 
-    var boxConf = conf.kernelConf();
+    var boxConf = conf.boxConf();
     var kernelConf = conf.kernelConf();
     var planeExtractionConf = conf.planeExtractionConf();
     var planeDelimitationConf = conf.planeDelimitationConf();
@@ -37,7 +36,7 @@ public class OnePlane3DExtractor
     for (int i = 0; i < planeExtractionConf.iteration(); i++) {
       var kernel =
           Kernel.from(
-              toUsedAsKernel,
+              points,
               random,
               kernelConf.attempts(),
               kernelConf.maxNeighborsCount(),
@@ -77,7 +76,7 @@ public class OnePlane3DExtractor
 
     // --- 5. Compute outliers
     var inlierSet = new HashSet<>(bestInliers);
-    var outliers = toUsedAsKernel.stream().filter(not(inlierSet::contains)).collect(toSet());
+    var outliers = points.stream().filter(not(inlierSet::contains)).collect(toSet());
     return new Result(bestModel.with(inlierSet), outliers);
   }
 
