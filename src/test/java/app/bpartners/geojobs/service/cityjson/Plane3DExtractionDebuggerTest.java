@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.cityjson;
 
+import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 
 import app.bpartners.geojobs.model.lidar.planes.Plane3DExtractorConf;
@@ -9,30 +10,31 @@ import app.bpartners.geojobs.utils.lidar.LidarRoofsAnalysisProcessorCreator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.util.Set;
-import org.junit.jupiter.api.Disabled;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 
+@Slf4j
 class Plane3DExtractionDebuggerTest {
   private static final String LAMBERT_93 = "EPSG:2143";
-  private static final String EXPORT_OUTPUT_FOLDER = "/home/ricka/export_city_jsons_output";
+  private static final File EXPORT_OUTPUT_FOLDER = createTempDirectory();
+
   private static final Plane3DExtractionStepExporter exporter =
-      new Plane3DExtractionStepExporter(
-          new ObjectMapper(), new File(EXPORT_OUTPUT_FOLDER), LAMBERT_93, "1");
+      new Plane3DExtractionStepExporter(new ObjectMapper(), EXPORT_OUTPUT_FOLDER, LAMBERT_93, "1");
 
   private static final Plane3DExtractorConf conf =
       Plane3DExtractorConf.getDefault().toBuilder().build();
 
   private static final LidarDataToCityJsonProcessor cityJsonProcessor =
-      new LidarDataToCityJsonProcessor(new CityJsonFactory(), exporter);
+      new LidarDataToCityJsonProcessor(new CityJsonFactory(EXPORT_OUTPUT_FOLDER), exporter);
 
   private static final LidarRoofsAnalysisProcessorCreator processorCreator =
       new LidarRoofsAnalysisProcessorCreator();
 
-  @Disabled("Only used for debug locally")
   @Test
   void export() {
+    log.info("Output Folder = {}", EXPORT_OUTPUT_FOLDER);
     var roofsGeometries = Set.of(roofGeometry1());
     var processor = processorCreator.create(roofsGeometries);
 

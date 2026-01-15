@@ -1,7 +1,9 @@
 package app.bpartners.geojobs.utils.lidar;
 
+import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
 import static app.bpartners.geojobs.service.GeometrySquareMeterArea.LAMBERT_93;
 import static app.bpartners.geojobs.service.GeometrySquareMeterArea.WGS84;
+import static java.nio.file.Files.readAllBytes;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toSet;
 import static org.mockito.ArgumentMatchers.any;
@@ -15,7 +17,6 @@ import app.bpartners.geojobs.service.lidar.LidarRoofsAnalysisProcessor;
 import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
-import java.nio.file.Files;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -46,8 +47,8 @@ public class LidarRoofsAnalysisProcessorCreator {
     var lasFileFromResource =
         new File(requireNonNull(getClass().getClassLoader().getResource(path)).getFile());
     return fileWriter.write(
-        Files.readAllBytes(lasFileFromResource.toPath()),
-        FileWriter.createTempDirectory(),
+        readAllBytes(lasFileFromResource.toPath()),
+        createTempDirectory(),
         lasFileFromResource.getName());
   }
 

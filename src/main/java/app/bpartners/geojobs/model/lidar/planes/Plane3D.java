@@ -6,7 +6,7 @@ import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.LasPointsDelimiter;
 import app.bpartners.geojobs.model.lidar.Polygon3DArea;
 import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepExporter;
-import java.util.Set;
+import java.util.*;
 import lombok.*;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Polygon;
@@ -28,16 +28,28 @@ public class Plane3D {
 
   private Polygon3DArea area;
   private Polygon delimitation;
-
   private Plane3DSlopeInDegrees slopeInDegrees;
 
   public static Plane3D fit(
-      LasPointGeometry p1,
-      LasPointGeometry p2,
-      LasPointGeometry p3,
+      Kernel kernel,
       double delimitationConcaveRatio,
       double delimitationSimplificationEpsilon,
       Plane3DExtractionStepExporter exporter) {
+    var kernelPoints = kernel.getPoints();
+    if (kernelPoints.size() == 3) {
+      var plane = fromTriplet(kernelPoints.getFirst(), kernelPoints.get(1), kernelPoints.getLast());
+      return plane.toBuilder()
+          .exporter(exporter)
+          .delimitationConcaveRatio(delimitationConcaveRatio)
+          .delimitationSimplificationEpsilon(delimitationSimplificationEpsilon)
+          .build();
+    }
+
+    throw new IllegalArgumentException("Fitting with kernel is not supported");
+  }
+
+  private static Plane3D fromTriplet(
+      LasPointGeometry p1, LasPointGeometry p2, LasPointGeometry p3) {
     var v1 = p2.subtract(p1);
     var v2 = p3.subtract(p1);
     var normal = v1.cross(v2).normalized();
@@ -49,9 +61,6 @@ public class Plane3D {
         .c(normal.getZ())
         .d(d)
         .points(Set.of(p1, p2, p3))
-        .delimitationConcaveRatio(delimitationConcaveRatio)
-        .delimitationSimplificationEpsilon(delimitationSimplificationEpsilon)
-        .exporter(exporter)
         .build();
   }
 
@@ -135,5 +144,21 @@ public class Plane3D {
     }
 
     return geometryFactory.createPolygon(projected);
+  }
+
+  public Plane3D merge(Plane3D other) {
+    if (other.getPoints().size() > this.getPoints().size()) {
+      return other.merge(this);
+    }
+
+    var mergedPoints = new HashSet<>(this.points);
+    mergedPoints.addAll(other.getPoints());
+
+    return this.toBuilder()
+        .area(null)
+        .delimitation(null)
+        .slopeInDegrees(null)
+        .points(mergedPoints)
+        .build();
   }
 }
