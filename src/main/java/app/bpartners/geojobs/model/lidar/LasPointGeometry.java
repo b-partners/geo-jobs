@@ -71,9 +71,13 @@ public class LasPointGeometry extends Point {
   }
 
   public double distance(LasPointGeometry other) {
+    return Math.sqrt(squaredDistance(other));
+  }
+
+  public double squaredDistance(LasPointGeometry other) {
     double dx = this.getX() - other.getX();
     double dy = this.getY() - other.getY();
     double dz = this.getZ() - other.getZ();
-    return Math.sqrt(dx * dx + dy * dy + dz * dz);
+    return dx * dx + dy * dy + dz * dz;
   }
 }
