@@ -26,6 +26,7 @@ public class Plane3D {
   protected final double delimitationSimplificationEpsilon;
   protected final Plane3DExtractionStepExporter exporter;
 
+  private Double sqrtOfABC;
   private Polygon3DArea area;
   private Polygon delimitation;
   private Plane3DSlopeInDegrees slopeInDegrees;
@@ -54,19 +55,22 @@ public class Plane3D {
     var v2 = p3.subtract(p1);
     var normal = v1.cross(v2).normalized();
     var d = -normal.dot(p1);
+    var a = normal.getX();
+    var b = normal.getY();
+    var c = normal.getZ();
 
     return Plane3D.builder()
         .a(normal.getX())
         .b(normal.getY())
         .c(normal.getZ())
         .d(d)
+        .sqrtOfABC(Math.sqrt(a * a + b * b + c * c))
         .points(Set.of(p1, p2, p3))
         .build();
   }
 
   public double distance(LasPointGeometry p) {
-    return Math.abs(a * p.getX() + b * p.getY() + c * p.getZ() + d)
-        / Math.sqrt(a * a + b * b + c * c);
+    return Math.abs(a * p.getX() + b * p.getY() + c * p.getZ() + d) / getSqrtOfABC();
   }
 
   public Plane3D with(Set<LasPointGeometry> points) {
@@ -85,6 +89,7 @@ public class Plane3D {
         .b(0)
         .c(0)
         .d(0)
+        .sqrtOfABC(1d)
         .points(Set.of())
         .delimitationConcaveRatio(0)
         .delimitationSimplificationEpsilon(0)
@@ -114,6 +119,13 @@ public class Plane3D {
 
   public double get2DArea() {
     return getDelimitation().getArea();
+  }
+
+  private double getSqrtOfABC() {
+    if (sqrtOfABC == null) {
+      sqrtOfABC = Math.sqrt(a * a + b * b + c * c);
+    }
+    return sqrtOfABC;
   }
 
   public double getArea() {

@@ -63,10 +63,11 @@ public class Kernel {
       double minVectorNorm,
       double orthogonalAngleDegEpsilon) {
 
+    var squaredThreshold = threshold * threshold;
     var maxAbsCosine = getMaxAbsCosine(orthogonalAngleDegEpsilon);
     for (int i = 0; i < attempts; i++) {
       var p1 = points.get(random.nextInt(points.size()));
-      var candidates = getNeighborsCandidates(points, p1, threshold, minVectorNorm);
+      var candidates = getNeighborsCandidates(points, p1, squaredThreshold, minVectorNorm);
 
       if (candidates.size() < 3) {
         continue;
@@ -88,9 +89,12 @@ public class Kernel {
   }
 
   private static List<Candidate> getNeighborsCandidates(
-      List<LasPointGeometry> points, LasPointGeometry p1, double threshold, double minVectorNorm) {
+      List<LasPointGeometry> points,
+      LasPointGeometry p1,
+      double squaredThreshold,
+      double minVectorNorm) {
     return points.stream()
-        .filter(point -> point != p1 && p1.distance(point) < threshold)
+        .filter(point -> point != p1 && p1.squaredDistance(point) < squaredThreshold)
         .map(point -> Candidate.from(p1, point))
         .filter(candidate -> candidate.norm() > minVectorNorm)
         .toList();

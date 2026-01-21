@@ -3,18 +3,23 @@ package app.bpartners.geojobs.model.lidar.planes;
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import java.util.*;
 import java.util.function.Function;
-import lombok.RequiredArgsConstructor;
 
 /**
  * Performs 3D clustering of points in a Plane3D based on a maximum distance. Points within the
  * given radius are connected. The largest connected cluster is returned as the main cluster, while
  * other points are considered outliers.
  */
-@RequiredArgsConstructor
 public class LasPointContinuationCluster
     implements Function<Collection<LasPointGeometry>, LasPointContinuationCluster.Result> {
   private final double radius;
   private final int minClusterSize;
+  private final double squaredRadius;
+
+  public LasPointContinuationCluster(double radius, int minClusterSize) {
+    this.radius = radius;
+    this.minClusterSize = minClusterSize;
+    this.squaredRadius = radius * radius;
+  }
 
   @Override
   public Result apply(Collection<LasPointGeometry> planePoints) {
@@ -79,8 +84,7 @@ public class LasPointContinuationCluster
       var p = points.get(i);
       int ix = (int) Math.floor(p.getX() / radius);
       int iy = (int) Math.floor(p.getY() / radius);
-      int iz = (int) Math.floor(p.getZ() / radius);
-      grid.computeIfAbsent(new CellIndex(ix, iy, iz), k -> new ArrayList<>()).add(i);
+      grid.computeIfAbsent(new CellIndex(ix, iy), k -> new ArrayList<>()).add(i);
     }
     return grid;
   }
@@ -94,26 +98,23 @@ public class LasPointContinuationCluster
       var p = points.get(i);
       int ix = (int) Math.floor(p.getX() / radius);
       int iy = (int) Math.floor(p.getY() / radius);
-      int iz = (int) Math.floor(p.getZ() / radius);
 
       for (int dx = -1; dx <= 1; dx++) {
         for (int dy = -1; dy <= 1; dy++) {
-          for (int dz = -1; dz <= 1; dz++) {
-            var cell = new CellIndex(ix + dx, iy + dy, iz + dz);
-            var neigh = grid.get(cell);
-            if (neigh == null) {
+          var cell = new CellIndex(ix + dx, iy + dy);
+          var neigh = grid.get(cell);
+          if (neigh == null) {
+            continue;
+          }
+
+          var left = points.get(i);
+          for (int j : neigh) {
+            if (j <= i) {
               continue;
             }
 
-            var left = points.get(i);
-            for (int j : neigh) {
-              if (j <= i) {
-                continue;
-              }
-
-              if (left.distance(points.get(j)) <= radius) {
-                unionFind.union(i, j);
-              }
+            if (left.squaredDistance(points.get(j)) <= squaredRadius) {
+              unionFind.union(i, j);
             }
           }
         }
@@ -123,7 +124,7 @@ public class LasPointContinuationCluster
     return unionFind;
   }
 
-  private record CellIndex(int x, int y, int z) {}
+  private record CellIndex(int x, int y) {}
 
   public record Result(
       Collection<LasPointGeometry> inliers, Collection<LasPointGeometry> outliers) {}
