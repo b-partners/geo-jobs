@@ -84,7 +84,8 @@ public class LasPointContinuationCluster
       var p = points.get(i);
       int ix = (int) Math.floor(p.getX() / radius);
       int iy = (int) Math.floor(p.getY() / radius);
-      grid.computeIfAbsent(new CellIndex(ix, iy), k -> new ArrayList<>()).add(i);
+      int iz = (int) Math.floor(p.getZ() / radius);
+      grid.computeIfAbsent(new CellIndex(ix, iy, iz), k -> new ArrayList<>()).add(i);
     }
     return grid;
   }
@@ -98,23 +99,26 @@ public class LasPointContinuationCluster
       var p = points.get(i);
       int ix = (int) Math.floor(p.getX() / radius);
       int iy = (int) Math.floor(p.getY() / radius);
+      int iz = (int) Math.floor(p.getZ() / radius);
 
       for (int dx = -1; dx <= 1; dx++) {
         for (int dy = -1; dy <= 1; dy++) {
-          var cell = new CellIndex(ix + dx, iy + dy);
-          var neigh = grid.get(cell);
-          if (neigh == null) {
-            continue;
-          }
-
-          var left = points.get(i);
-          for (int j : neigh) {
-            if (j <= i) {
+          for (int dz = -1; dz <= 1; dz++) {
+            var cell = new CellIndex(ix + dx, iy + dy, iz + dz);
+            var neigh = grid.get(cell);
+            if (neigh == null) {
               continue;
             }
 
-            if (left.squaredDistance(points.get(j)) <= squaredRadius) {
-              unionFind.union(i, j);
+            var left = points.get(i);
+            for (int j : neigh) {
+              if (j <= i) {
+                continue;
+              }
+
+              if (left.squaredDistance(points.get(j)) <= squaredRadius) {
+                unionFind.union(i, j);
+              }
             }
           }
         }
@@ -124,7 +128,7 @@ public class LasPointContinuationCluster
     return unionFind;
   }
 
-  private record CellIndex(int x, int y) {}
+  private record CellIndex(int x, int y, int z) {}
 
   public record Result(
       Collection<LasPointGeometry> inliers, Collection<LasPointGeometry> outliers) {}

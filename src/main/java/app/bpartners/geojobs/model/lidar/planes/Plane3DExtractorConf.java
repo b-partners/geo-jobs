@@ -65,7 +65,7 @@ public record Plane3DExtractorConf(
             PlaneDelimitationConf.builder().concaveRatio(0.2).simplificationEpsilon(0.6).build())
         .planeMergerConf(PlaneMergerConf.builder().slopeEpsilon(10).distanceEpsilon(0.7).build())
         .planeExtractionConf(
-            PlaneExtractionConf.builder().iteration(200).pointContinuationThreshold(1).build())
+            PlaneExtractionConf.builder().iteration(200).pointContinuationThreshold(0.5).build())
         .build();
   }
 }
