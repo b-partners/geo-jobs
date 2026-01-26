@@ -7,6 +7,7 @@ import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
+import static jakarta.persistence.CascadeType.ALL;
 import static jakarta.persistence.EnumType.STRING;
 import static jakarta.persistence.FetchType.EAGER;
 import static java.time.Instant.now;
@@ -19,6 +20,7 @@ import app.bpartners.geojobs.endpoint.rest.model.Detection.GeoJsonDelimitationTy
 import app.bpartners.geojobs.endpoint.rest.validator.FeatureTypeChecker;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.model.Feature;
+import app.bpartners.geojobs.repository.model.feature.FeatureDelimitationComputing;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.*;
@@ -26,10 +28,9 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -116,7 +117,11 @@ public class Detection implements Serializable {
   @Getter(AccessLevel.NONE)
   private HashMap<String, Feature> pointDelimitation;
 
+  @OneToMany(cascade = ALL, fetch = EAGER, orphanRemoval = true, mappedBy = "detectionIdentifier")
+  private List<FeatureDelimitationComputing> featureDelimitationComputingList;
+
   @JdbcTypeCode(JSON)
+  @Getter(AccessLevel.NONE)
   private List<FeatureWithDelimitation> featureWithDelimitations;
 
   @JdbcTypeCode(JSON)
@@ -132,7 +137,7 @@ public class Detection implements Serializable {
   @JdbcTypeCode(NAMED_ENUM)
   private GeoJsonDelimitationTypeEnum geoJsonDelimitationType;
 
-  @OneToMany(fetch = EAGER, cascade = CascadeType.ALL)
+  @OneToMany(fetch = EAGER, cascade = ALL)
   @JoinColumn(name = "detection_id")
   private List<DetectionStep> detectionSteps = new ArrayList<>();
 
@@ -142,6 +147,33 @@ public class Detection implements Serializable {
   @JdbcTypeCode(JSON)
   @Getter(AccessLevel.NONE)
   private DetectableObjectModel detectableObjectModel;
+
+  public List<FeatureWithDelimitation> getFeatureWithDelimitations() {
+    if (featureDelimitationComputingList == null || featureDelimitationComputingList.isEmpty()) {
+      return featureWithDelimitations;
+    }
+    Map<String, FeatureDelimitationComputing> latestComputingByFeature =
+        featureDelimitationComputingList.stream()
+            .collect(
+                Collectors.toMap(
+                    FeatureDelimitationComputing::getFeaturePropertiesIdentifier,
+                    Function.identity(),
+                    BinaryOperator.maxBy(
+                        Comparator.comparing(FeatureDelimitationComputing::getCreationDatetime))));
+    return featureWithDelimitations.stream()
+        .map(
+            original -> {
+              String featureId =
+                  original.getRestFeature().getProperties().get("feature_id").toString();
+              FeatureDelimitationComputing computing = latestComputingByFeature.get(featureId);
+              if (computing == null) {
+                return original;
+              }
+              return new FeatureWithDelimitation(
+                  original.feature(), computing.getFeatureWithDelimitation().delimitations());
+            })
+        .toList();
+  }
 
   public boolean hasParcelDelimitationType() {
     return getGeoJsonDelimitationType() != null && PARCEL.equals(getGeoJsonDelimitationType());
