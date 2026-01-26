@@ -21,7 +21,12 @@ import app.bpartners.geojobs.service.dashboard.component.AreaPictureMapLayer;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.geoserver.GeoServerConfiguration;
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -119,7 +124,27 @@ public class DetectionCreationMapper {
     if (restProvidedGeoJson == null) {
       return List.of();
     }
-    return restProvidedGeoJson.stream().map(FeatureMapper::toDomainFeature).toList();
+    return restProvidedGeoJson.stream()
+        .peek(
+            getOrSetFeatureIdentifier(
+                app.bpartners.geojobs.endpoint.rest.model.Feature::getProperties,
+                app.bpartners.geojobs.endpoint.rest.model.Feature::setProperties))
+        .map(FeatureMapper::toDomainFeature)
+        .toList();
+  }
+
+  public static <T> Consumer<T> getOrSetFeatureIdentifier(
+      Function<T, Map<String, Object>> getter, BiConsumer<T, Map<String, Object>> setter) {
+    return feature -> {
+      Map<String, Object> props = getter.apply(feature);
+
+      if (props == null) {
+        props = new HashMap<>();
+        setter.accept(feature, props);
+      }
+
+      props.computeIfAbsent("feature_id", k -> randomUUID().toString());
+    };
   }
 
   private GeoServerProperties extractGeoServerProperties(
