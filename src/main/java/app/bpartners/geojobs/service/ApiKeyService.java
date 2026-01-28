@@ -39,10 +39,10 @@ public class ApiKeyService {
 
     communityAuthorizations.forEach(
         authorization -> {
-          var dashboardUserApiKey =
+          var dashboardUserApiKeyList =
               userAccountsApi.getOrGenerateApiKey(
                   authorization.getEmail(), authorization.getApiKey(), adminApiKey);
-          authorization.setDashboardApiKey(dashboardUserApiKey.key());
+          authorization.setDashboardApiKey(dashboardUserApiKeyList.key());
         });
 
     return communityAuthorizationRepository.saveAll(authorizations).stream()
