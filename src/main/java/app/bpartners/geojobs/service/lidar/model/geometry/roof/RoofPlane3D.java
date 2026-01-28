@@ -23,5 +23,6 @@ public class RoofPlane3D extends Plane3D {
         delimitationSimplificationEpsilon,
         plane.getExporter());
     this.roofPolygon = roofPolygon;
+    this.delimitation = plane.getDelimitation();
   }
 }

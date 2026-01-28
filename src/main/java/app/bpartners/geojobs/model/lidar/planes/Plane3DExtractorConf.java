@@ -7,6 +7,7 @@ public record Plane3DExtractorConf(
     BoxConf boxConf,
     PlaneConf planeConf,
     KernelConf kernelConf,
+    ChimneyFixerConf chimneyFixerConf,
     PlaneMergerConf planeMergerConf,
     PlaneExtractionConf planeExtractionConf,
     RoofPointsCleanerConf roofPointsCleanerConf,
@@ -42,9 +43,13 @@ public record Plane3DExtractorConf(
       double minVectorNorm,
       double orthogonalDegEpsilon) {}
 
+  @Builder(toBuilder = true)
+  public record ChimneyFixerConf(double maxChimneyArea) {}
+
   public static Plane3DExtractorConf getDefault() {
     return Plane3DExtractorConf.builder()
         .roofPointsCleanerConf(RoofPointsCleanerConf.builder().duplicateXYTolerance(0.3).build())
+        .chimneyFixerConf(ChimneyFixerConf.builder().maxChimneyArea(2).build())
         .planeConf(
             PlaneConf.builder()
                 .min2DArea(0.25)

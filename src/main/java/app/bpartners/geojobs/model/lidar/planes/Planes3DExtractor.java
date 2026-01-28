@@ -4,6 +4,7 @@ import static app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractio
 
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepExporter;
+import app.bpartners.geojobs.model.lidar.planes.postprocessing.ChimneyFixer;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -15,6 +16,7 @@ public class Planes3DExtractor implements Function<Collection<LasPointGeometry>,
   private final Plane3DMerger plane3DMerger;
   private final Plane3DExtractionStepExporter exporter;
   private final OnePlane3DExtractor onePlane3DExtractor;
+  private final ChimneyFixer chimneyFixer;
   private static final int MIN_VALID_POLYGON_POINTS_COUNT = 4;
 
   public Planes3DExtractor(Plane3DExtractorConf conf) {
@@ -33,6 +35,8 @@ public class Planes3DExtractor implements Function<Collection<LasPointGeometry>,
         new LasPointContinuationCluster(
             conf.planeExtractionConf().pointContinuationThreshold(),
             conf.planeConf().minPointsCount());
+
+    this.chimneyFixer = new ChimneyFixer(conf.chimneyFixerConf().maxChimneyArea(), exporter);
 
     this.onePlane3DExtractor = new OnePlane3DExtractor(conf, exporter, continuationCluster);
   }
@@ -67,7 +71,8 @@ public class Planes3DExtractor implements Function<Collection<LasPointGeometry>,
       }
     }
 
-    return mergeClosedPlaneAndFilterSmallOnes(planes);
+    var filtered = mergeClosedPlaneAndFilterSmallOnes(planes);
+    return this.chimneyFixer.apply(filtered);
   }
 
   public List<Plane3D> mergeClosedPlaneAndFilterSmallOnes(Collection<Plane3D> planes) {

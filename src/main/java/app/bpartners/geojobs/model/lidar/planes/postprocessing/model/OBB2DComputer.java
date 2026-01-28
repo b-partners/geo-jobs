@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.model.lidar.planes.postprocessing.model;
 
-import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.service.lidar.model.LidarClass.BATIMENT;
 import static java.lang.Double.NEGATIVE_INFINITY;
 import static java.lang.Double.POSITIVE_INFINITY;
@@ -8,8 +7,6 @@ import static java.lang.Double.POSITIVE_INFINITY;
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.planes.Plane3D;
 import java.util.function.Function;
-import org.locationtech.jts.algorithm.ConvexHull;
-import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Polygon;
 
 public class OBB2DComputer implements Function<Polygon, OBB2D> {
@@ -69,24 +66,10 @@ public class OBB2DComputer implements Function<Polygon, OBB2D> {
               .center(new LasPointGeometry(rcx, rcy, 0, BATIMENT))
               .build();
     }
-
     return best;
   }
 
   public OBB2D apply(Plane3D plane) {
-    var convexDelimitation = getConvexDelimitation(plane);
-    return apply(convexDelimitation);
-  }
-
-  private static Polygon getConvexDelimitation(Plane3D plane) {
-    var coordinates =
-        plane.getPoints().stream().map(LasPointGeometry::getCoordinate).toArray(Coordinate[]::new);
-    var hull = new ConvexHull(coordinates, geometryFactory).getConvexHull();
-
-    if (hull instanceof Polygon polygon) {
-      return polygon;
-    }
-
-    throw new IllegalArgumentException("Invalid polygon retrieved from plane");
+    return apply(plane.getConvexDelimitation());
   }
 }
