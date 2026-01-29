@@ -8,6 +8,7 @@ import app.bpartners.geojobs.model.lidar.Polygon3DArea;
 import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepExporter;
 import java.util.*;
 import lombok.*;
+import org.locationtech.jts.algorithm.ConvexHull;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Polygon;
 
@@ -26,10 +27,11 @@ public class Plane3D {
   protected final double delimitationSimplificationEpsilon;
   protected final Plane3DExtractionStepExporter exporter;
 
-  private Double sqrtOfABC;
+  private Double norm;
   private Polygon3DArea area;
-  private Polygon delimitation;
+  protected Polygon delimitation;
   private Plane3DSlopeInDegrees slopeInDegrees;
+  private Polygon convexDelimitation;
 
   public static Plane3D fit(
       Kernel kernel,
@@ -64,23 +66,17 @@ public class Plane3D {
         .b(normal.getY())
         .c(normal.getZ())
         .d(d)
-        .sqrtOfABC(Math.sqrt(a * a + b * b + c * c))
+        .norm(Math.sqrt(a * a + b * b + c * c))
         .points(Set.of(p1, p2, p3))
         .build();
   }
 
   public double distance(LasPointGeometry p) {
-    return Math.abs(a * p.getX() + b * p.getY() + c * p.getZ() + d) / getSqrtOfABC();
+    return Math.abs(a * p.getX() + b * p.getY() + c * p.getZ() + d) / getNorm();
   }
 
   public Plane3D with(Set<LasPointGeometry> points) {
     return this.toBuilder().points(points).build();
-  }
-
-  @Override
-  public @NonNull String toString() {
-    return "Plane3D[a=%.3f, b=%.3f, c=%.3f, d=%.3f, points=%d]"
-        .formatted(a, b, c, d, points.size());
   }
 
   public static Plane3D empty() {
@@ -89,7 +85,7 @@ public class Plane3D {
         .b(0)
         .c(0)
         .d(0)
-        .sqrtOfABC(1d)
+        .norm(1d)
         .points(Set.of())
         .delimitationConcaveRatio(0)
         .delimitationSimplificationEpsilon(0)
@@ -121,11 +117,11 @@ public class Plane3D {
     return getDelimitation().getArea();
   }
 
-  private double getSqrtOfABC() {
-    if (sqrtOfABC == null) {
-      sqrtOfABC = Math.sqrt(a * a + b * b + c * c);
+  public double getNorm() {
+    if (norm == null) {
+      norm = Math.sqrt(a * a + b * b + c * c);
     }
-    return sqrtOfABC;
+    return norm;
   }
 
   public double getArea() {
@@ -172,5 +168,24 @@ public class Plane3D {
         .slopeInDegrees(null)
         .points(mergedPoints)
         .build();
+  }
+
+  public Polygon getConvexDelimitation() {
+    if (convexDelimitation == null) {
+      convexDelimitation = getConvexDelimitation(this);
+    }
+    return convexDelimitation;
+  }
+
+  private static Polygon getConvexDelimitation(Plane3D plane) {
+    var coordinates =
+        plane.getPoints().stream().map(LasPointGeometry::getCoordinate).toArray(Coordinate[]::new);
+    var hull = new ConvexHull(coordinates, geometryFactory).getConvexHull();
+
+    if (hull instanceof Polygon polygon) {
+      return polygon;
+    }
+
+    throw new IllegalArgumentException("Invalid polygon retrieved from plane");
   }
 }
