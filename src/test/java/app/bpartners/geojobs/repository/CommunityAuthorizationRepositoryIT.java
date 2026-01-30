@@ -12,7 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class CommunityAuthorizationRepositoryTest extends FacadeIT {
+class CommunityAuthorizationRepositoryIT extends FacadeIT {
 
   @Autowired CommunityAuthorizationRepository subject;
 
