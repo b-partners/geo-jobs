@@ -121,13 +121,12 @@ class FeatureRoofSlopeAndHeightRequestedServiceTest {
     var actualRoofDataStatus =
         firstDelimitation.getProperties().get(LIDAR_DATA_STATUS_PROPERTY_NAME);
 
-    var expectedUpdatedProperties =
-        new HashMap<String, Object>(
-            Map.of(
-                "feature_id", featureIdentifier,
-                "roof_slope_in_degrees", expectedRoofSlope,
-                "roof_height_in_meters", expectedRoofHeight,
-                "lidar_data_status", "AVAILABLE"));
+    var expectedUpdatedProperties = new LinkedHashMap<String, Object>();
+    expectedUpdatedProperties.put("feature_id", featureIdentifier);
+    expectedUpdatedProperties.put("roof_slope_in_degrees", expectedRoofSlope);
+    expectedUpdatedProperties.put("roof_height_in_meters", expectedRoofHeight);
+    expectedUpdatedProperties.put("lidar_data_status", AVAILABLE);
+
     var featureDelimitationComputingCaptor =
         ArgumentCaptor.forClass(FeatureDelimitationComputing.class);
     verify(featureDelimitationComputingRepositoryMock, times(1))
