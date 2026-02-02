@@ -58,7 +58,7 @@ public class Building3DProperties {
     }
 
     var extractor = new Planes3DExtractor(conf, exporter);
-    var rawPlanes = extractor.apply(data.roof().points());
+    var rawPlanes = extractor.apply(getCleanedRoofPoints());
     roofPlanes =
         rawPlanes.stream()
             .map(
@@ -86,7 +86,7 @@ public class Building3DProperties {
 
   public Set<LasPointGeometry> getCleanedRoofPoints() {
     if (cleanedRoofPoints == null) {
-      var cleaner = new RoofPointsCleaner();
+      var cleaner = new RoofPointsCleaner(conf.roofPointsCleanerConf().duplicateXYTolerance());
       cleanedRoofPoints = cleaner.apply(data.roof().points());
     }
     return cleanedRoofPoints;

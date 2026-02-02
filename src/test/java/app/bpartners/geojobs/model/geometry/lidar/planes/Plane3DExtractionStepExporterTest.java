@@ -3,7 +3,7 @@ package app.bpartners.geojobs.model.geometry.lidar.planes;
 import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStep.INIT_POINTS;
-import static app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStep.PLANE_CONTINUITY_EXTRACTION;
+import static app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStep.RAW_PLANE_EXTRACTION;
 import static app.bpartners.geojobs.service.lidar.model.LidarClass.BATIMENT;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -33,10 +33,10 @@ class Plane3DExtractionStepExporterTest {
 
   @Test
   void export_polygon_points() {
-    var expectedFileName = PLANE_CONTINUITY_EXTRACTION.toFilePrefix() + "_original.geojson";
+    var expectedFileName = RAW_PLANE_EXTRACTION.toFilePrefix() + "_original.geojson";
     var path = directory.toPath().resolve(expectedFileName);
 
-    subject.export(PLANE_CONTINUITY_EXTRACTION, polygon());
+    subject.export(RAW_PLANE_EXTRACTION, polygon());
 
     assertTrue(path.toFile().exists());
   }
@@ -44,11 +44,10 @@ class Plane3DExtractionStepExporterTest {
   @Test
   void export_with_sub_suffix() {
     var exporter = subject.subSuffix("sub_suffix");
-    var expectedFileName =
-        PLANE_CONTINUITY_EXTRACTION.toFilePrefix() + "_original_sub_suffix.geojson";
+    var expectedFileName = RAW_PLANE_EXTRACTION.toFilePrefix() + "_original_sub_suffix.geojson";
     var path = directory.toPath().resolve(expectedFileName);
 
-    exporter.export(PLANE_CONTINUITY_EXTRACTION, points());
+    exporter.export(RAW_PLANE_EXTRACTION, points());
 
     assertTrue(path.toFile().exists());
   }

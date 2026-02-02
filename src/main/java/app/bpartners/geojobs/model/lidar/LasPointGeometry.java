@@ -42,23 +42,19 @@ public class LasPointGeometry extends Point {
     return new LasPointGeometry(
         this.getX() - other.getX(),
         this.getY() - other.getY(),
-        this.getCoordinate().getZ() - other.getCoordinate().getZ(),
+        this.getZ() - other.getZ(),
         this.classification);
   }
 
   public LasPointGeometry cross(LasPointGeometry other) {
-    double cx =
-        this.getY() * other.getCoordinate().getZ() - this.getCoordinate().getZ() * other.getY();
-    double cy =
-        this.getCoordinate().getZ() * other.getX() - this.getX() * other.getCoordinate().getZ();
+    double cx = this.getY() * other.getZ() - this.getZ() * other.getY();
+    double cy = this.getZ() * other.getX() - this.getX() * other.getZ();
     double cz = this.getX() * other.getY() - this.getY() * other.getX();
     return new LasPointGeometry(cx, cy, cz, this.classification);
   }
 
   public double dot(LasPointGeometry other) {
-    return this.getX() * other.getX()
-        + this.getY() * other.getY()
-        + this.getCoordinate().getZ() * other.getCoordinate().getZ();
+    return this.getX() * other.getX() + this.getY() * other.getY() + this.getZ() * other.getZ();
   }
 
   public double normValue() {
@@ -74,22 +70,14 @@ public class LasPointGeometry extends Point {
         getX() / n, getY() / n, getCoordinate().getZ() / n, this.classification);
   }
 
-  public boolean isNear(LasPointGeometry other, Axis axis, double epsilon) {
-    return Math.abs(getCoordinate(axis) - other.getCoordinate(axis)) < epsilon;
-  }
-
-  public double getCoordinate(Axis axis) {
-    return switch (axis) {
-      case X -> getX();
-      case Y -> getY();
-      case Z -> getZ();
-    };
-  }
-
   public double distance(LasPointGeometry other) {
+    return Math.sqrt(squaredDistance(other));
+  }
+
+  public double squaredDistance(LasPointGeometry other) {
     double dx = this.getX() - other.getX();
     double dy = this.getY() - other.getY();
     double dz = this.getZ() - other.getZ();
-    return Math.sqrt(dx * dx + dy * dy + dz * dz);
+    return dx * dx + dy * dy + dz * dz;
   }
 }

@@ -3,25 +3,30 @@ package app.bpartners.geojobs.model.lidar.planes;
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import java.util.*;
 import java.util.function.Function;
-import lombok.RequiredArgsConstructor;
 
 /**
  * Performs 3D clustering of points in a Plane3D based on a maximum distance. Points within the
  * given radius are connected. The largest connected cluster is returned as the main cluster, while
  * other points are considered outliers.
  */
-@RequiredArgsConstructor
-public class Plane3DContinuationCluster
-    implements Function<Plane3D, Plane3DContinuationCluster.Result> {
+public class LasPointContinuationCluster
+    implements Function<Collection<LasPointGeometry>, LasPointContinuationCluster.Result> {
   private final double radius;
   private final int minClusterSize;
+  private final double squaredRadius;
+
+  public LasPointContinuationCluster(double radius, int minClusterSize) {
+    this.radius = radius;
+    this.minClusterSize = minClusterSize;
+    this.squaredRadius = radius * radius;
+  }
 
   @Override
-  public Result apply(Plane3D plane) {
-    var points = new ArrayList<>(plane.getPoints());
+  public Result apply(Collection<LasPointGeometry> planePoints) {
+    var points = new ArrayList<>(planePoints);
     int n = points.size();
     if (n == 0) {
-      return new Result(Plane3D.empty(), List.of());
+      return new Result(Set.of(), Set.of());
     }
 
     // Create a 3D spatial grid for faster neighbor search
@@ -45,11 +50,11 @@ public class Plane3DContinuationCluster
 
     // If no cluster is large enough, return empty
     if (bestSize < minClusterSize) {
-      return new Result(Plane3D.empty(), List.of());
+      return new Result(Set.of(), Set.of());
     }
 
     // Separate points into the main cluster and outliers
-    Set<LasPointGeometry> in = new HashSet<>();
+    List<LasPointGeometry> in = new ArrayList<>();
     List<LasPointGeometry> out = new ArrayList<>();
 
     for (int i = 0; i < n; i++) {
@@ -58,7 +63,7 @@ public class Plane3DContinuationCluster
       } else out.add(points.get(i));
     }
 
-    return new Result(plane.with(in), out);
+    return new Result(in, out);
   }
 
   /** Count the size of each cluster */
@@ -111,7 +116,7 @@ public class Plane3DContinuationCluster
                 continue;
               }
 
-              if (left.distance(points.get(j)) <= radius) {
+              if (left.squaredDistance(points.get(j)) <= squaredRadius) {
                 unionFind.union(i, j);
               }
             }
@@ -125,5 +130,6 @@ public class Plane3DContinuationCluster
 
   private record CellIndex(int x, int y, int z) {}
 
-  public record Result(Plane3D plane, List<LasPointGeometry> outliers) {}
+  public record Result(
+      Collection<LasPointGeometry> inliers, Collection<LasPointGeometry> outliers) {}
 }

@@ -6,8 +6,9 @@ import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.LasPointsDelimiter;
 import app.bpartners.geojobs.model.lidar.Polygon3DArea;
 import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepExporter;
-import java.util.Set;
+import java.util.*;
 import lombok.*;
+import org.locationtech.jts.algorithm.ConvexHull;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Polygon;
 
@@ -26,48 +27,56 @@ public class Plane3D {
   protected final double delimitationSimplificationEpsilon;
   protected final Plane3DExtractionStepExporter exporter;
 
+  private Double norm;
   private Polygon3DArea area;
-  private Polygon delimitation;
-
+  protected Polygon delimitation;
   private Plane3DSlopeInDegrees slopeInDegrees;
+  private Polygon convexDelimitation;
 
   public static Plane3D fit(
-      LasPointGeometry p1,
-      LasPointGeometry p2,
-      LasPointGeometry p3,
+      Kernel kernel,
       double delimitationConcaveRatio,
       double delimitationSimplificationEpsilon,
       Plane3DExtractionStepExporter exporter) {
+    var kernelPoints = kernel.getPoints();
+    if (kernelPoints.size() == 3) {
+      var plane = fromTriplet(kernelPoints.getFirst(), kernelPoints.get(1), kernelPoints.getLast());
+      return plane.toBuilder()
+          .exporter(exporter)
+          .delimitationConcaveRatio(delimitationConcaveRatio)
+          .delimitationSimplificationEpsilon(delimitationSimplificationEpsilon)
+          .build();
+    }
+
+    throw new IllegalArgumentException("Fitting with kernel is not supported");
+  }
+
+  private static Plane3D fromTriplet(
+      LasPointGeometry p1, LasPointGeometry p2, LasPointGeometry p3) {
     var v1 = p2.subtract(p1);
     var v2 = p3.subtract(p1);
     var normal = v1.cross(v2).normalized();
     var d = -normal.dot(p1);
+    var a = normal.getX();
+    var b = normal.getY();
+    var c = normal.getZ();
 
     return Plane3D.builder()
         .a(normal.getX())
         .b(normal.getY())
         .c(normal.getZ())
         .d(d)
+        .norm(Math.sqrt(a * a + b * b + c * c))
         .points(Set.of(p1, p2, p3))
-        .delimitationConcaveRatio(delimitationConcaveRatio)
-        .delimitationSimplificationEpsilon(delimitationSimplificationEpsilon)
-        .exporter(exporter)
         .build();
   }
 
   public double distance(LasPointGeometry p) {
-    return Math.abs(a * p.getX() + b * p.getY() + c * p.getZ() + d)
-        / Math.sqrt(a * a + b * b + c * c);
+    return Math.abs(a * p.getX() + b * p.getY() + c * p.getZ() + d) / getNorm();
   }
 
   public Plane3D with(Set<LasPointGeometry> points) {
     return this.toBuilder().points(points).build();
-  }
-
-  @Override
-  public @NonNull String toString() {
-    return "Plane3D[a=%.3f, b=%.3f, c=%.3f, d=%.3f, points=%d]"
-        .formatted(a, b, c, d, points.size());
   }
 
   public static Plane3D empty() {
@@ -76,6 +85,7 @@ public class Plane3D {
         .b(0)
         .c(0)
         .d(0)
+        .norm(1d)
         .points(Set.of())
         .delimitationConcaveRatio(0)
         .delimitationSimplificationEpsilon(0)
@@ -107,6 +117,13 @@ public class Plane3D {
     return getDelimitation().getArea();
   }
 
+  public double getNorm() {
+    if (norm == null) {
+      norm = Math.sqrt(a * a + b * b + c * c);
+    }
+    return norm;
+  }
+
   public double getArea() {
     if (area == null) {
       area = new Polygon3DArea(getDelimitation());
@@ -135,5 +152,40 @@ public class Plane3D {
     }
 
     return geometryFactory.createPolygon(projected);
+  }
+
+  public Plane3D merge(Plane3D other) {
+    if (other.getPoints().size() > this.getPoints().size()) {
+      return other.merge(this);
+    }
+
+    var mergedPoints = new HashSet<>(this.points);
+    mergedPoints.addAll(other.getPoints());
+
+    return this.toBuilder()
+        .area(null)
+        .delimitation(null)
+        .slopeInDegrees(null)
+        .points(mergedPoints)
+        .build();
+  }
+
+  public Polygon getConvexDelimitation() {
+    if (convexDelimitation == null) {
+      convexDelimitation = getConvexDelimitation(this);
+    }
+    return convexDelimitation;
+  }
+
+  private static Polygon getConvexDelimitation(Plane3D plane) {
+    var coordinates =
+        plane.getPoints().stream().map(LasPointGeometry::getCoordinate).toArray(Coordinate[]::new);
+    var hull = new ConvexHull(coordinates, geometryFactory).getConvexHull();
+
+    if (hull instanceof Polygon polygon) {
+      return polygon;
+    }
+
+    throw new IllegalArgumentException("Invalid polygon retrieved from plane");
   }
 }
