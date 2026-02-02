@@ -93,7 +93,9 @@ public class UserAccountsApi {
               + "Please choose which of following users do you want to generate new api key : "
               + usersByEmail.stream().map(User::email).toList());
     }
-    var actualApiKeyList = getUserApiKey(usersByEmail.getFirst().id(), adminApiKey);
+    var dashboardUserIdentifier = usersByEmail.getFirst().id();
+
+    var actualApiKeyList = getUserApiKey(dashboardUserIdentifier, adminApiKey);
     UserApiKey actualApiKey =
         actualApiKeyList.stream()
             .filter(apiKey -> DASHBOARD.equals(apiKey.type()))
@@ -107,23 +109,21 @@ public class UserAccountsApi {
       return actualApiKey;
     }
 
+    return updateUserDashboardApiKey(newUserApiKey, adminApiKey, dashboardUserIdentifier);
+  }
+
+  private UserApiKey updateUserDashboardApiKey(
+      String newUserApiKey, String adminApiKey, String dashboardUserIdentifier) {
     var endpoint =
         String.format(
-            "%s/users/%s/keys",
-            apiConfiguration.getDashboardApiUrl(), usersByEmail.getFirst().id());
-
+            "%s/users/%s/keys", apiConfiguration.getDashboardApiUrl(), dashboardUserIdentifier);
     var headers = new HttpHeaders();
     headers.add(API_KEY_HEADER, adminApiKey);
     var requestEntity = new HttpEntity<>(new UserApiKey(newUserApiKey, DASHBOARD), headers);
-
     return Objects.requireNonNull(
-            restTemplate
-                .exchange(
-                    endpoint,
-                    POST,
-                    requestEntity,
-                    new ParameterizedTypeReference<List<UserApiKey>>() {})
-                .getBody())
-        .getFirst();
+        restTemplate
+            .exchange(
+                endpoint, POST, requestEntity, new ParameterizedTypeReference<UserApiKey>() {})
+            .getBody());
   }
 }
