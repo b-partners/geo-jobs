@@ -11,15 +11,17 @@ import org.springframework.stereotype.Repository;
 public interface CommunityAuthorizationRepository
     extends JpaRepository<CommunityAuthorization, String> {
 
-  @Query(value = """
-    SELECT DISTINCT c.* FROM community_authorization c
-    LEFT JOIN community_authorization_api_key k ON k.id_community_authorization_owner = c.id
-    WHERE c.api_key = :key 
-       OR c.dashboard_api_key = :key 
-       OR k.key_value = :key
-    LIMIT 1
-    """,
-          nativeQuery = true)
+  @Query(
+      value =
+          """
+          SELECT DISTINCT c.* FROM community_authorization c
+          LEFT JOIN community_authorization_api_key k ON k.id_community_authorization_owner = c.id
+          WHERE c.api_key = :key
+             OR c.dashboard_api_key = :key
+             OR k.key_value = :key
+          LIMIT 1
+          """,
+      nativeQuery = true)
   Optional<CommunityAuthorization> findByApiKey(@Param("key") String apiKey);
 
   Optional<CommunityAuthorization> findByEmail(String email);
