@@ -10,6 +10,19 @@ info:
     Get your **API key** by emailing **contact@birdia.fr**.
     All of your requests must embed your API key in the header named: **x-api-key**.
     
+    # Glossary
+    - *Detection* : process that involves analyzing images of a geographic area using an AI model. 
+      Detection can be performed using a textual address, a GPS point, or a geographic zone.
+      Its output may include detected objects in GeoJSON format, annotated images with detected object coordinates, or both.
+    
+    - *Zone* : geographical area provided by consumer, in which is processed and delimited detection.
+    
+    - *Parcel* : geographical area representing cadastral parcel of a land property, retrieved by API from provided textual address, GPS point or zone.
+    
+    - *GeoJSON format* : standard JSON-based format for encoding geographic data structures, such as FeatureCollections, Features, and geometries (Point, Polygon, MultiPolygon), where coordinates are expressed as longitude–latitude pairs.
+    
+    - *Pre-signed URL* : link allowing consumers to download file resources, such as detection result. _Link expires one hour_ after its generation.
+    
     # Usage
     
     Submit your detection request through `POST /detections/{id}`
@@ -24,7 +37,8 @@ info:
     ### Detection on roof objects providing geojson multiPolygon
     1. Submit detection request through `POST /detections/{id}` where `{id}` is yours to be created
     using the example request body accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/geojson/detection_toiture_payload_example.json).
-    Note that `detectableObjectModel` property must be set to `BP_TOITURE` and `geoServerProperties` property to `null`
+    Note that `detectableObjectModel` property must be set to `BP_TOITURE` and `geoServerProperties` property to `null`.
+    To handle models through one detection, use `detectableObjectModelList` instead of detectableObjectModel.
     2. Track the progress of your detection through `GET /detections/{id}`. 
     Detection is finished when `geoJsonUrl` property containing your detection result is not null.
     Expected geojson example result is accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/toiture_analysis_result_example.geojson)
@@ -33,12 +47,26 @@ info:
     1. Submit detection request through `POST /detections/{id}` where `{id}` is yours to be created
     using the example request body accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/detection_creation_using_toiture_model_example.json). 
     Note that `detectableObjectModel` property must be set to `BP_TOITURE` and `geoServerProperties` property to `null`.
+    To handle models through one detection, use `detectableObjectModelList` instead of detectableObjectModel.
     2. Submit list of addresses contained inside an **Excel file** in a second call `POST /detections/{id}/excel`. 
     Example can be found [here](https://github.com/b-partners/geo-jobs/raw/refs/heads/preprod/examples/detection/excel/excel_addresses_example.xlsx)
     3. Track the progress of your detection through `GET /detections/{id}`. 
     Detection is finished when `geoJsonUrl` property containing your detection result is not null.
     4. Processing time is variable due to address conversion, 
     expected geojson example result is accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/toiture_analysis_result_example.geojson). 
+
+    ### Detection on parcels including roof objects and trees providing excel file containing textual addresses
+    1. Submit detection request through `POST /detections/{id}` where `{id}` is yours to be created
+    using the example request body accessible [here](https://github.com/b-partners/geo-jobs/raw/refs/heads/preprod/examples/detection/detection_parcel_payload_example.json). 
+    Especially, note that both `BP_TOITURE` and `BP_VEGETATION` must be specified during creation through `detectableObjectModelList` property.
+    Also, `geoJsonDelimitationType` property must be set as `PARCEL` to consider the address's parcel.
+    In case you need to get images and its detections result for each address detected, set `needsImageOutput` property to `true`.
+    2. Submit list of addresses contained inside an **Excel file** in a second call `POST /detections/{id}/excel`. 
+    Example can be found [here](https://github.com/b-partners/geo-jobs/raw/refs/heads/preprod/examples/detection/excel/excel_addresses_example.xlsx)
+    3. Track the progress of your detection through `GET /detections/{id}`. 
+    Once detection is on step POST_PROCESSING with status progression FINISHED and status health SUCCEEDED : 
+    - Images result, if needed, can be obtained through each feature corresponding to each detected address inside `geoJsonZone` where `original_image_url` allow to retrieve address's image and `vgg_url` detection results to be displayed on obtained image.
+    - GeoJson result can be obtained through `geoJsonUrl` and can be displayed on a map as QGIS.
 
   version: 'latest'
 
@@ -697,6 +725,8 @@ paths:
             examples:
               detectionForRoof:
                 $ref: '#/components/examples/DetectionUsingToitureModel'
+              detectionForRoofAndVegetation:
+                $ref: '#/components/examples/DetectionUsingToitureAndVegetationModel'
       responses:
         200:
           description: Detection created or launched
@@ -1120,7 +1150,7 @@ paths:
             type: string
       summary: Get CityJSON Request files URL by id
       security:
-        - ApiKeyAuth: []
+        - ApiKeyAuth: [ ]
       responses:
         200:
           description: CityJSON files urls
@@ -1179,6 +1209,24 @@ components:
         geoServerProperties: null
         detectableObjectModel:
           modelName: "BP_TOITURE"
+        detectableObjectModelList:
+          - modelName: "BP_TOITURE"
+        geoJsonZone:
+          - type: "Feature"
+            geometry:
+              type: "MultiPolygon"
+              coordinates:
+                - [ [ [ [ -0.24908199906349182, 46.651815670805505 ], [ -0.24908166378736496, 46.65181521051821 ], [ -0.24908166378736496, 46.65181452008728 ], [ -0.24908099323511124, 46.651813829656334 ], [ -0.24908099323511124, 46.65180807606479 ], [ -0.249084010720253, 46.65180807606479 ], [ -0.24908434599637985, 46.65180853635213 ], [ -0.2490846812725067, 46.651808996639474 ], [ -0.24908501654863358, 46.651809687070475 ], [ -0.24908535182476044, 46.65181037750147 ], [ -0.24908535182476044, 46.65181152821978 ], [ -0.2490856871008873, 46.651811988507106 ], [ -0.2490873634815216, 46.65181313922538 ], [ -0.2490873634815216, 46.65181521051821 ], [ -0.24908669292926788, 46.65181544066185 ], [ -0.2490856871008873, 46.651815670805505 ], [ -0.24908535182476044, 46.65181590094914 ], [ -0.24908199906349182, 46.651815670805505 ] ] ] ]
+    DetectionUsingToitureAndVegetationModel:
+      summary: Detection using BP_TOITURE and BP_VEGETATION model
+      value:
+        emailReceiver: "<your-email-address>"
+        zoneName: "<your-zone-name>"
+        geoServerProperties: null
+        detectableObjectModel: null
+        detectableObjectModelList:
+          - modelName: "BP_TOITURE"
+          - modelName: "BP_VEGETATION"
         geoJsonZone:
           - type: "Feature"
             geometry:
@@ -1904,6 +1952,13 @@ components:
           description: Optional Configuration properties for the GeoServer.
         detectableObjectModel:
           $ref: '#/components/schemas/DetectableObjectModel'
+        detectableObjectModelList:
+          type: array
+          items:
+            $ref: '#/components/schemas/DetectableObjectModel'
+          description: |
+            List of model to be processed for the detection. 
+            If empty or null, detection model will be retrieved from detectableObjectModel attribute.
         geoJsonZone:
           type: array
           items:
