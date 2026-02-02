@@ -17,9 +17,7 @@ import app.bpartners.geojobs.service.lidar.LidarRoofsAnalysisProcessor;
 import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import lombok.SneakyThrows;
 import org.locationtech.jts.geom.Geometry;
 
@@ -40,6 +38,25 @@ public class LidarRoofsAnalysisProcessorCreator {
 
   public LidarRoofsAnalysisProcessor create(LidarApiFacade lidarApi) {
     return new LidarRoofsAnalysisProcessor(lidarApi, projector);
+  }
+
+  public LidarRoofsAnalysisProcessor create(Geometry delimitation, List<String> files) {
+    var projected = projector.project(delimitation, WGS84, LAMBERT_93);
+    var filesData = files.stream().map(this::createTempFileFromResources).toList();
+    var lidarApiMock = mock(LidarApiFacade.class);
+
+    Map<String, Set<Geometry>> data = new HashMap<>();
+    files.forEach(file -> data.put(file, Set.of(projected)));
+
+    when(lidarApiMock.getUniqueLidarFilesUrls(any())).thenReturn(data);
+    when(lidarApiMock.download(any()))
+        .thenAnswer(
+            invocation -> {
+              var filename = invocation.getArguments()[0].toString();
+              return Optional.of(filesData.get(files.indexOf(filename)));
+            });
+
+    return new LidarRoofsAnalysisProcessor(lidarApiMock, projector);
   }
 
   @SneakyThrows
