@@ -21,6 +21,7 @@ public class Plane3D {
   protected final double b;
   protected final double c;
   protected final double d;
+  protected final Kernel kernel;
   protected final Set<LasPointGeometry> points;
 
   protected final double delimitationConcaveRatio;
@@ -38,17 +39,19 @@ public class Plane3D {
       double delimitationConcaveRatio,
       double delimitationSimplificationEpsilon,
       Plane3DExtractionStepExporter exporter) {
-    var kernelPoints = kernel.getPoints();
-    if (kernelPoints.size() == 3) {
-      var plane = fromTriplet(kernelPoints.getFirst(), kernelPoints.get(1), kernelPoints.getLast());
-      return plane.toBuilder()
-          .exporter(exporter)
-          .delimitationConcaveRatio(delimitationConcaveRatio)
-          .delimitationSimplificationEpsilon(delimitationSimplificationEpsilon)
-          .build();
-    }
+    var chains = kernel.getChains();
+    var triplet = chains.getOrthogonalTriplet();
+    var p1 = triplet.getFirst();
+    var p2 = triplet.get(1);
+    var p3 = triplet.getLast();
+    var plane = fromTriplet(p1, p2, p3);
 
-    throw new IllegalArgumentException("Fitting with kernel is not supported");
+    return plane.toBuilder()
+        .kernel(kernel)
+        .exporter(exporter)
+        .delimitationConcaveRatio(delimitationConcaveRatio)
+        .delimitationSimplificationEpsilon(delimitationSimplificationEpsilon)
+        .build();
   }
 
   private static Plane3D fromTriplet(

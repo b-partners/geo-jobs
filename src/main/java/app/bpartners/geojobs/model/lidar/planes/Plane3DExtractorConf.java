@@ -37,11 +37,7 @@ public record Plane3DExtractorConf(
 
   @Builder(toBuilder = true)
   public record KernelConf(
-      int attempts,
-      int maxNeighborsCount,
-      double threshold,
-      double minVectorNorm,
-      double orthogonalDegEpsilon) {}
+      int attempts, int maxLength, double threshold, double minVectorNorm, double degEpsilon) {}
 
   @Builder(toBuilder = true)
   public record ChimneyFixerConf(double maxChimneyArea) {}
@@ -63,8 +59,8 @@ public record Plane3DExtractorConf(
                 .attempts(20)
                 .threshold(0.75)
                 .minVectorNorm(1e-6)
-                .maxNeighborsCount(20)
-                .orthogonalDegEpsilon(4)
+                .maxLength(5)
+                .degEpsilon(4)
                 .build())
         .planeDelimitationConf(
             PlaneDelimitationConf.builder().concaveRatio(0.2).simplificationEpsilon(0.6).build())

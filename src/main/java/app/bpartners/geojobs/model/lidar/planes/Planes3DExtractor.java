@@ -66,6 +66,7 @@ public class Planes3DExtractor implements Function<Collection<LasPointGeometry>,
 
       if (doExport) {
         var subExporter = exporter.subSuffix(String.valueOf(++i));
+        subExporter.export(RAW_PLANE_KERNEL, result.plane().getKernel().getChains().getPoints());
         subExporter.export(RAW_PLANE_EXTRACTION, result.plane().getPoints());
         subExporter.export(ITERATION_POINTS_EVOLUTION, pointsToProcess);
       }

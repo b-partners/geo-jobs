@@ -32,23 +32,26 @@ public class OnePlane3DExtractor
     var kernelConf = conf.kernelConf();
     var planeExtractionConf = conf.planeExtractionConf();
     var planeDelimitationConf = conf.planeDelimitationConf();
+    var kernelValueConf =
+        Kernel.Conf.builder()
+            .attempts(kernelConf.attempts())
+            .maxLength(kernelConf.maxLength())
+            .squaredThreshold(kernelConf.threshold() * kernelConf.threshold())
+            .degEpsilon(kernelConf.degEpsilon())
+            .minVectorNorm(kernelConf.minVectorNorm())
+            .build();
 
     for (int i = 0; i < planeExtractionConf.iteration(); i++) {
-      var kernel =
-          Kernel.from(
-              points,
-              random,
-              kernelConf.attempts(),
-              kernelConf.maxNeighborsCount(),
-              kernelConf.threshold(),
-              kernelConf.minVectorNorm(),
-              kernelConf.orthogonalDegEpsilon());
-      if (kernel.isEmpty()) continue;
+      var optionalKernel = Kernel.from(points, kernelValueConf, random);
+      if (optionalKernel.isEmpty()) continue;
+
+      var kernel = optionalKernel.get();
+      if (bestModel != null && kernel.size() < 2) continue;
 
       // --- 2. Fit plane
       var box =
           new Box(
-              kernel.get(),
+              kernel,
               boxConf.threshold(),
               planeDelimitationConf.concaveRatio(),
               planeDelimitationConf.simplificationEpsilon(),
