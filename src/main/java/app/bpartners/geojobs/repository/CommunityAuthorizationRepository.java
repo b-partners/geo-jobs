@@ -13,7 +13,7 @@ public interface CommunityAuthorizationRepository
 
   @Query(
       """
-      SELECT c FROM community_authorization c
+      SELECT DISTINCT c FROM community_authorization c
       LEFT JOIN c.apiKeys k
       WHERE c.apiKey = :key OR c.dashboardApiKey = :key OR k.keyValue = :key
       """)
@@ -23,7 +23,7 @@ public interface CommunityAuthorizationRepository
 
   @Query(
       """
-      SELECT c FROM community_authorization c
+      SELECT DISTINCT c FROM community_authorization c
       LEFT JOIN c.apiKeys k
       WHERE c.apiKey = :key OR c.dashboardApiKey = :key OR k.keyValue = :key
       """)
