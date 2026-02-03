@@ -169,8 +169,8 @@ public class Kernel {
 
     public Vector3D getDirection() {
       if (direction == null) {
-        var furthestPoints = this.getFurthestPoints();
-        direction = Vector3D.from(furthestPoints.getFirst(), furthestPoints.getLast());
+        var furthestPointsValue = this.getFurthestPoints();
+        direction = Vector3D.from(furthestPointsValue.getFirst(), furthestPointsValue.getLast());
       }
 
       return direction;
