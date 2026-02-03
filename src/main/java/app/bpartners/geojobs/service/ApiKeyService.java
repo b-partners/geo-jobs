@@ -8,6 +8,7 @@ import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorizationApiKey;
 import app.bpartners.geojobs.service.dashboard.UserAccountsApi;
+import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -57,7 +58,10 @@ public class ApiKeyService {
             .communityOwnerId(authorization.getId())
             .build();
 
-    authorization.getApiKeys().add(newApiKey);
+    List<CommunityAuthorizationApiKey> newApiKeys = new ArrayList<>(authorization.getApiKeys());
+    newApiKeys.add(newApiKey);
+
+    authorization.setApiKeys(newApiKeys);
   }
 
   private List<CommunityAuthorization> handleExistingCommunities(
