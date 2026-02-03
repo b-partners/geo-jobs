@@ -9,7 +9,7 @@ import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorizationApiKey;
 import app.bpartners.geojobs.service.dashboard.UserAccountsApi;
 import java.util.List;
-import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -29,18 +29,6 @@ public class ApiKeyService {
   }
 
   public List<ApiKey> generateApiKeys(List<CommunityAuthorization> authorizations) {
-    for (CommunityAuthorization auth : authorizations) {
-      Optional<CommunityAuthorization> optionalCommunityAuthorization =
-          communityAuthorizationRepository.findByEmail(auth.getEmail());
-      if (optionalCommunityAuthorization.isPresent()) {
-        var communityAuthorization = optionalCommunityAuthorization.get();
-        return List.of(
-            new ApiKey(
-                communityAuthorization.getMostRecentApiKey().getKeyValue(),
-                communityAuthorization.getMostRecentApiKey().getCreationDatetime()));
-      }
-    }
-
     var communityAuthorizations = handleExistingCommunities(authorizations);
 
     communityAuthorizations.forEach(
@@ -49,6 +37,7 @@ public class ApiKeyService {
               userAccountsApi.getOrGenerateApiKey(
                   authorization.getEmail(), authorization.getApiKey(), adminApiKey);
           authorization.setDashboardApiKey(dashboardUserApiKeyList.key());
+          generateApiKey(authorization);
         });
 
     return communityAuthorizationRepository.saveAll(authorizations).stream()
@@ -58,6 +47,18 @@ public class ApiKeyService {
                     communityAuthorization.getMostRecentApiKey().getKeyValue(),
                     communityAuthorization.getMostRecentApiKey().getCreationDatetime()))
         .toList();
+  }
+
+  private void generateApiKey(CommunityAuthorization authorization) {
+    CommunityAuthorizationApiKey newApiKey =
+        CommunityAuthorizationApiKey.builder()
+            .id(randomUUID().toString())
+            .keyValue(randomUUID().toString())
+            .creationDatetime(now())
+            .communityOwnerId(authorization.getId())
+            .build();
+
+    authorization.getApiKeys().add(newApiKey);
   }
 
   private List<CommunityAuthorization> handleExistingCommunities(
