@@ -9,7 +9,6 @@ import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorizationApiKey;
 import app.bpartners.geojobs.service.dashboard.UserAccountsApi;
 import java.util.List;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -40,7 +39,7 @@ public class ApiKeyService {
           generateApiKey(authorization);
         });
 
-    return communityAuthorizationRepository.saveAll(authorizations).stream()
+    return communityAuthorizationRepository.saveAll(communityAuthorizations).stream()
         .map(
             communityAuthorization ->
                 new ApiKey(
