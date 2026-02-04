@@ -16,7 +16,6 @@ import app.bpartners.geojobs.service.dashboard.UserAccountsApi;
 import app.bpartners.geojobs.service.dashboard.component.UserApiKey;
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -28,17 +27,14 @@ class ApiKeyServiceIT extends FacadeIT {
   @Autowired CommunityAuthorizationRepository communityAuthorizationRepository;
   ApiKeyService subject;
 
-  @BeforeEach
-  void setUp() {
+  @Test
+  void new_api_key_created_when_new_community_used_on_generate_keys() {
     when(userAccountsApiMock.getOrGenerateApiKey(any(), any(), any()))
         .thenReturn(new UserApiKey(randomUUID().toString(), DASHBOARD));
 
     subject =
         new ApiKeyService(communityAuthorizationRepository, userAccountsApiMock, ADMIN_API_KEY);
-  }
 
-  @Test
-  void new_api_key_created_when_new_community_used_on_generate_keys() {
     CommunityAuthorization newCommunityAuthorization =
         CommunityAuthorization.builder()
             .id(randomUUID().toString())
@@ -66,6 +62,12 @@ class ApiKeyServiceIT extends FacadeIT {
 
   @Test
   void new_api_key_created_when_existing_community_used_on_generate_keys() {
+    when(userAccountsApiMock.getOrGenerateApiKey(any(), any(), any()))
+        .thenReturn(new UserApiKey(randomUUID().toString(), DASHBOARD));
+
+    subject =
+        new ApiKeyService(communityAuthorizationRepository, userAccountsApiMock, ADMIN_API_KEY);
+
     String existingCommunityAuthorizationId = randomUUID().toString();
     CommunityAuthorization existingCommunityAuthorization =
         CommunityAuthorization.builder()

@@ -53,7 +53,7 @@ class SecurityControllerIT extends FacadeIT {
             .role(ROLE_INSURANCE)
             .maxSurfaceUnit(SQUARE_METER)
             .authorizedZones(List.of())
-            .dashboardApiKey(actualKey)
+            .dashboardApiKey(actualCommunity.getDashboardApiKey())
             .build(),
         actualCommunity);
     assertTrue(actualCommunity.getAuthorizedZones().isEmpty());
