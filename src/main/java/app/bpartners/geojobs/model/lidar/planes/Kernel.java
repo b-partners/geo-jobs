@@ -1,7 +1,5 @@
 package app.bpartners.geojobs.model.lidar.planes;
 
-import static java.util.Comparator.comparingDouble;
-
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import java.security.SecureRandom;
 import java.util.*;
@@ -12,144 +10,251 @@ import lombok.RequiredArgsConstructor;
 @Builder
 @RequiredArgsConstructor
 public class Kernel {
-  private final int attempts;
-  private final int maxNeighborsCount;
-  private final double threshold;
-  private final double minVectorNorm;
-  private final double orthogonalDegEpsilon;
-
-  @Getter private final List<LasPointGeometry> points;
-  private static final double ORTHOGONAL_ANGLE = 90.0;
+  private final Conf conf;
+  @Getter private final KernelChains chains;
 
   public static Optional<Kernel> from(
-      Collection<LasPointGeometry> points,
-      SecureRandom random,
-      int attempts,
-      int maxNeighborsCount,
-      double threshold,
-      double minVectorNorm,
-      double orthogonalDegEpsilon) {
-    var kernelPoints =
-        getOrthogonalTriplet(
-            new ArrayList<>(points),
-            random,
-            attempts,
-            maxNeighborsCount,
-            threshold,
-            minVectorNorm,
-            orthogonalDegEpsilon);
-
-    if (kernelPoints.isEmpty()) {
-      return Optional.empty();
-    }
-
-    return Optional.of(
-        Kernel.builder()
-            .points(kernelPoints)
-            .attempts(attempts)
-            .threshold(threshold)
-            .minVectorNorm(minVectorNorm)
-            .maxNeighborsCount(maxNeighborsCount)
-            .orthogonalDegEpsilon(orthogonalDegEpsilon)
-            .build());
+      Collection<LasPointGeometry> points, Conf conf, SecureRandom random) {
+    var optionalChains = getKernelChains(new ArrayList<>(points), conf, random);
+    return optionalChains.map(chains -> Kernel.builder().conf(conf).chains(chains).build());
   }
 
-  private static List<LasPointGeometry> getOrthogonalTriplet(
-      List<LasPointGeometry> points,
-      SecureRandom random,
-      int attempts,
-      int maxNeighborsCount,
-      double threshold,
-      double minVectorNorm,
-      double orthogonalAngleDegEpsilon) {
+  public int size() {
+    return this.chains.size();
+  }
 
-    var squaredThreshold = threshold * threshold;
-    var maxAbsCosine = getMaxAbsCosine(orthogonalAngleDegEpsilon);
-    for (int i = 0; i < attempts; i++) {
+  private static Optional<KernelChains> getKernelChains(
+      List<LasPointGeometry> points, Conf conf, SecureRandom random) {
+    for (int i = 0; i < conf.attempts(); i++) {
       var p1 = points.get(random.nextInt(points.size()));
-      var candidates = getNeighborsCandidates(points, p1, squaredThreshold, minVectorNorm);
+      var candidates = getNeighborsCandidates(p1, points, conf);
+      if (candidates.isEmpty()) continue;
 
-      if (candidates.size() < 3) {
-        continue;
-      }
-
-      var p2Candidates = getP2Candidates(candidates, random, attempts, maxNeighborsCount);
+      var p2Candidates = getP2Candidates(candidates, conf, random);
       for (var p2Candidate : p2Candidates) {
-        var p3Candidate = getP3Candidate(candidates, p2Candidate);
-        if (p3Candidate.absCos() < maxAbsCosine) {
-          return List.of(p1, p2Candidate.point(), p3Candidate.point());
+        var main = getMainKernelChain(p2Candidate, points, conf, random);
+        var optionalPerpendicular = getPerpendicularKernelChain(main, points, conf, random);
+        if (optionalPerpendicular.isPresent()) {
+          return Optional.of(
+              new KernelChains(conf.degEpsilon(), main, optionalPerpendicular.get()));
         }
       }
     }
-    return List.of();
-  }
-
-  private static double getMaxAbsCosine(double orthogonalAngleDegEpsilon) {
-    return Math.cos(Math.toRadians(ORTHOGONAL_ANGLE - orthogonalAngleDegEpsilon));
+    return Optional.empty();
   }
 
   private static List<Candidate> getNeighborsCandidates(
-      List<LasPointGeometry> points,
-      LasPointGeometry p1,
-      double squaredThreshold,
-      double minVectorNorm) {
+      LasPointGeometry p1, List<LasPointGeometry> points, Conf conf) {
     return points.stream()
-        .filter(point -> point != p1 && p1.squaredDistance(point) < squaredThreshold)
+        .filter(point -> point != p1 && p1.squaredDistance(point) < conf.squaredThreshold())
         .map(point -> Candidate.from(p1, point))
-        .filter(candidate -> candidate.norm() > minVectorNorm)
+        .filter(candidate -> candidate.norm() > conf.minVectorNorm())
         .toList();
   }
 
   private static List<Candidate> getP2Candidates(
-      List<Candidate> neighbors, SecureRandom random, int attempts, int maxNeighborsCount) {
-    if (neighbors.size() <= maxNeighborsCount) {
+      List<Candidate> neighbors, Conf conf, SecureRandom random) {
+    if (neighbors.size() <= conf.attempts()) {
       return neighbors;
     }
-    return sampleRandomP2Candidates(neighbors, random, attempts);
-  }
 
-  private static List<Candidate> sampleRandomP2Candidates(
-      List<Candidate> neighbors, SecureRandom random, int attempts) {
     Set<Candidate> selected = new HashSet<>();
-    for (int i = 0; i < attempts; i++) {
+    for (int i = 0; i < conf.attempts(); i++) {
       selected.add(neighbors.get(random.nextInt(neighbors.size())));
     }
     return new ArrayList<>(selected);
   }
 
-  private static P3Candidate getP3Candidate(List<Candidate> candidates, Candidate p2Candidate) {
-    return candidates.stream()
-        .map(
-            p3Candidate -> {
-              if (p3Candidate == p2Candidate) return null;
-              return P3Candidate.from(p2Candidate, p3Candidate);
-            })
-        .filter(Objects::nonNull)
-        .min(comparingDouble(P3Candidate::absCos))
-        .orElseThrow();
+  private static KernelChain getMainKernelChain(
+      Candidate p2Candidate, List<LasPointGeometry> points, Conf conf, SecureRandom random) {
+    var chain = new KernelChain(p2Candidate.a(), p2Candidate.b());
+    var direction = p2Candidate.vector();
+
+    while (chain.size() < conf.maxLength()) {
+      var last = chain.getFurthestPoints().getLast();
+      var candidates = getDirectedCandidates(points, chain.getPoints(), last, direction, conf);
+
+      if (candidates.isEmpty()) break;
+
+      var next = candidates.get(random.nextInt(candidates.size()));
+      chain.add(next);
+    }
+
+    return chain;
   }
 
-  private record Candidate(LasPointGeometry point, Vector3D vector, double norm) {
+  private static List<LasPointGeometry> getDirectedCandidates(
+      List<LasPointGeometry> points,
+      Set<LasPointGeometry> used,
+      LasPointGeometry last,
+      Vector3D direction,
+      Conf conf) {
+    List<LasPointGeometry> candidates = new ArrayList<>();
+    for (var p : points) {
+      if (used.contains(p)) continue;
+      if (last.squaredDistance(p) >= conf.squaredThreshold()) continue;
+
+      // 0° or 180°
+      var vector = Vector3D.from(last, p);
+      if (!vector.isSameDirection(direction, conf.degEpsilon())) continue;
+
+      candidates.add(p);
+    }
+
+    return candidates;
+  }
+
+  private static Optional<KernelChain> getPerpendicularKernelChain(
+      KernelChain main, List<LasPointGeometry> points, Conf conf, SecureRandom random) {
+    var optionalChain = getStartPerpendicularChain(main, points, conf);
+    if (optionalChain.isEmpty()) return Optional.empty();
+
+    var chain = optionalChain.get();
+
+    var direction = chain.getDirection();
+    while (chain.size() < conf.maxLength()) {
+      var last = chain.getFurthestPoints().getLast();
+      var candidates = getDirectedCandidates(points, chain.getPoints(), last, direction, conf);
+
+      if (candidates.isEmpty()) break;
+
+      var next = candidates.get(random.nextInt(candidates.size()));
+      chain.add(next);
+    }
+
+    return Optional.of(chain);
+  }
+
+  private static Optional<KernelChain> getStartPerpendicularChain(
+      KernelChain main, List<LasPointGeometry> points, Conf conf) {
+    var set = new HashSet<>(points);
+    var mainPointsCandidates = main.getFurthestPoints();
+    for (var p3 : set) {
+      if (main.getPoints().contains(p3)) continue;
+      var optionalP3Pair =
+          mainPointsCandidates.stream()
+              .filter(
+                  mainPoint -> {
+                    if (mainPoint.squaredDistance(p3) > conf.squaredThreshold()) return false;
+                    var p3Direction = Vector3D.from(mainPoint, p3);
+                    if (p3Direction.norm() < conf.minVectorNorm()) return false;
+                    return p3Direction.isPerpendicular(main.getDirection(), conf.degEpsilon());
+                  })
+              .findFirst();
+
+      if (optionalP3Pair.isPresent()) {
+        return Optional.of(new KernelChain(optionalP3Pair.get(), p3));
+      }
+    }
+    return Optional.empty();
+  }
+
+  private record Candidate(LasPointGeometry a, LasPointGeometry b, Vector3D vector, double norm) {
     static Candidate from(LasPointGeometry p1, LasPointGeometry point) {
       var v1 = Vector3D.from(p1, point);
       var norm = v1.norm();
-      return new Candidate(point, v1, norm);
+      return new Candidate(p1, point, v1, norm);
     }
   }
 
-  private record P3Candidate(Candidate candidate, double absCos) {
-    LasPointGeometry point() {
-      return this.candidate().point();
+  @RequiredArgsConstructor
+  public static class KernelChain {
+    private Vector3D direction;
+    @Getter private final Set<LasPointGeometry> points;
+    private List<LasPointGeometry> furthestPoints;
+
+    public KernelChain(LasPointGeometry p1, LasPointGeometry p2) {
+      this(new HashSet<>(Set.of(p1, p2)));
     }
 
-    static P3Candidate from(Candidate p2Candidate, Candidate p3Candidate) {
-      var v1 = p2Candidate.vector();
-      var v2 = p3Candidate.vector();
-      var n1 = p2Candidate.norm();
-      var n2 = p3Candidate.norm();
-      var absCos = Math.abs(v1.dot(v2) / (n1 * n2));
+    public Vector3D getDirection() {
+      if (direction == null) {
+        var furthestPointsValue = this.getFurthestPoints();
+        direction = Vector3D.from(furthestPointsValue.getFirst(), furthestPointsValue.getLast());
+      }
 
-      return new P3Candidate(p3Candidate, absCos);
+      return direction;
+    }
+
+    public int size() {
+      return points.size();
+    }
+
+    void add(LasPointGeometry point) {
+      this.points.add(point);
+      this.direction = null;
+      this.furthestPoints = null;
+    }
+
+    public List<LasPointGeometry> getFurthestPoints() {
+      if (furthestPoints == null) {
+        furthestPoints = computeFurthestPoints(this.points);
+      }
+      return furthestPoints;
+    }
+
+    public static List<LasPointGeometry> computeFurthestPoints(Set<LasPointGeometry> points) {
+      var list = new ArrayList<>(points);
+      if (points.size() < 3) return list;
+
+      double maxDist2 = -1;
+      LasPointGeometry p1 = null;
+      LasPointGeometry p2 = null;
+
+      for (int i = 0; i < points.size(); i++) {
+        var p1Candidate = list.get(i);
+        for (int j = i + 1; j < points.size(); j++) {
+          var p2Candidate = list.get(j);
+          double dist2 = p1Candidate.squaredDistance(p2Candidate);
+
+          if (dist2 > maxDist2) {
+            maxDist2 = dist2;
+            p1 = p1Candidate;
+            p2 = p2Candidate;
+          }
+        }
+      }
+
+      assert p2 != null;
+      return List.of(p1, p2);
     }
   }
+
+  public record KernelChains(double degEpsilon, KernelChain main, KernelChain perpendicular) {
+    public int size() {
+      return Math.min(main.size(), perpendicular.size());
+    }
+
+    public List<LasPointGeometry> getOrthogonalTriplet() {
+      var mainFurthestPoints = main.getFurthestPoints();
+      var p1 = mainFurthestPoints.getFirst();
+      var p2 = mainFurthestPoints.getLast();
+
+      assert p1 != p2;
+
+      var p3Candidates = perpendicular.getFurthestPoints();
+      var p3 = p3Candidates.getFirst();
+
+      if (p1 == p3 || p2 == p3) {
+        p3 = p3Candidates.getLast();
+      }
+
+      assert p3 != p1 && p3 != p2;
+      return List.of(p1, p2, p3);
+    }
+
+    public List<LasPointGeometry> getPoints() {
+      var points = new ArrayList<>(main.getPoints());
+      points.addAll(perpendicular.getPoints());
+      return points;
+    }
+  }
+
+  @Builder
+  public record Conf(
+      int attempts,
+      int maxLength,
+      double degEpsilon,
+      double minVectorNorm,
+      double squaredThreshold) {}
 }

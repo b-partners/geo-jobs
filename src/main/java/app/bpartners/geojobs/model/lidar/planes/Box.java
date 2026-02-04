@@ -24,7 +24,7 @@ public class Box {
       Plane3DExtractionStepExporter exporter) {
     this.kernel = kernel;
     this.threshold = threshold;
-    this.points = new ArrayList<>(kernel.getPoints());
+    this.points = new ArrayList<>(kernel.getChains().getPoints());
     this.plane =
         Plane3D.fit(
             kernel,

@@ -18,6 +18,7 @@ public class RoofPlane3D extends Plane3D {
         plane.getB(),
         plane.getC(),
         plane.getD(),
+        plane.getKernel(),
         plane.getPoints(),
         concaveRatio,
         delimitationSimplificationEpsilon,
