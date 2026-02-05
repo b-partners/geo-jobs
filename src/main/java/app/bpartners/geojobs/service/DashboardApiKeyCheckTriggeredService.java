@@ -29,15 +29,8 @@ public class DashboardApiKeyCheckTriggeredService
 
   @Override
   public void accept(DashboardApiKeyCheckTriggered event) {
-    try {
-      CommunityAuthorization authorization = event.getCommunityAuthorization();
-      checkDashboardApiKeyValidity(authorization);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
+    CommunityAuthorization authorization = event.getCommunityAuthorization();
 
-  private void checkDashboardApiKeyValidity(CommunityAuthorization authorization) {
     List<User> retrievedUsers =
         userAccountsApi.getUsersByCriteria(authorization.getEmail(), null, null, adminApiKey);
 
