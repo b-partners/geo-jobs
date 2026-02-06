@@ -3,7 +3,6 @@ package app.bpartners.geojobs.service.detection;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;

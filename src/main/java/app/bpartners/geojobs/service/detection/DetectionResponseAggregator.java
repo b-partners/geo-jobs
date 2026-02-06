@@ -32,10 +32,18 @@ public class DetectionResponseAggregator
         DetectionResponse.ImageData imgData = entry.getValue();
 
         var imgKey = entry.getKey() + "_" + randomUUID();
-        regionCounter = aggregateResponse(aggregatedRstRaw, imgKey, imgData, actualUrl, regionCounter);
+        regionCounter =
+            aggregateResponse(aggregatedRstRaw, imgKey, imgData, actualUrl, regionCounter);
       }
-      if (response.getVegetationData() != null && !response.getVegetationData().getRegions().isEmpty()) {
-      regionCounter = aggregateResponse(aggregatedRstRaw, "vegetation_data_" + randomUUID(), response.getVegetationData(), actualUrl, regionCounter);
+      if (response.getVegetationData() != null
+          && !response.getVegetationData().getRegions().isEmpty()) {
+        regionCounter =
+            aggregateResponse(
+                aggregatedRstRaw,
+                "vegetation_data_" + randomUUID(),
+                response.getVegetationData(),
+                actualUrl,
+                regionCounter);
       }
     }
 
@@ -47,8 +55,14 @@ public class DetectionResponseAggregator
     return aggregated;
   }
 
-  private int aggregateResponse(Map<String, DetectionResponse.ImageData> aggregatedRstRaw, String imgKey, DetectionResponse.ImageData imgData, String actualUrl, int regionCounter) {
-    DetectionResponse.ImageData aggregatedImgData = aggregateImageData(aggregatedRstRaw, imgKey, imgData);
+  private int aggregateResponse(
+      Map<String, DetectionResponse.ImageData> aggregatedRstRaw,
+      String imgKey,
+      DetectionResponse.ImageData imgData,
+      String actualUrl,
+      int regionCounter) {
+    DetectionResponse.ImageData aggregatedImgData =
+        aggregateImageData(aggregatedRstRaw, imgKey, imgData);
 
     if (imgData.getRegions() != null) {
       for (DetectionResponse.ImageData.Region region : imgData.getRegions().values()) {
@@ -59,21 +73,24 @@ public class DetectionResponseAggregator
     return regionCounter;
   }
 
-  private DetectionResponse.ImageData aggregateImageData(Map<String, DetectionResponse.ImageData> aggregatedRstRaw, String imgKey, DetectionResponse.ImageData imgData) {
-      return aggregatedRstRaw.computeIfAbsent(
-              imgKey,
-          k ->
-              DetectionResponse.ImageData.builder()
-                  .fileref(imgData.getFileref())
-                  .size(imgData.getSize())
-                  .filename(imgData.getFilename())
-                  .base64ImgData(imgData.getBase64ImgData())
-                  .fileAttributes(
-                      imgData.getFileAttributes() != null
-                          ? new HashMap<>(imgData.getFileAttributes())
-                          : new HashMap<>())
-                  .regions(new HashMap<>())
-                  .build());
+  private DetectionResponse.ImageData aggregateImageData(
+      Map<String, DetectionResponse.ImageData> aggregatedRstRaw,
+      String imgKey,
+      DetectionResponse.ImageData imgData) {
+    return aggregatedRstRaw.computeIfAbsent(
+        imgKey,
+        k ->
+            DetectionResponse.ImageData.builder()
+                .fileref(imgData.getFileref())
+                .size(imgData.getSize())
+                .filename(imgData.getFilename())
+                .base64ImgData(imgData.getBase64ImgData())
+                .fileAttributes(
+                    imgData.getFileAttributes() != null
+                        ? new HashMap<>(imgData.getFileAttributes())
+                        : new HashMap<>())
+                .regions(new HashMap<>())
+                .build());
   }
 
   public record DetectionResponseUrl(DetectionResponse detectionResponse, String apiUrl) {}

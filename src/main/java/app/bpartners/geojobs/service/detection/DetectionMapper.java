@@ -98,14 +98,18 @@ public class DetectionMapper {
     var tileCoordinates = tile.getCoordinates();
     tileValidator.accept(tile);
 
-    var fileData = detectionResponse.getRstRaw().values().stream().toList().getFirst();
+    var fileDataList = detectionResponse.getRstRaw().values().stream().toList();
 
-    List<DetectionResponse.ImageData.Region> regions =
-        fileData.getRegions().values().stream().toList();
-    List<DetectedObject> machineDetectedObjects =
-        regions.stream()
-            .map(region -> toDetectedObject(region, detectedTileId, tileCoordinates.getZ()))
-            .toList();
+    List<DetectedObject> machineDetectedObjects = new ArrayList<>();
+    fileDataList.forEach(
+        fileData -> {
+          List<DetectionResponse.ImageData.Region> regions =
+              fileData.getRegions().values().stream().toList();
+          machineDetectedObjects.addAll(
+              regions.stream()
+                  .map(region -> toDetectedObject(region, detectedTileId, tileCoordinates.getZ()))
+                  .toList());
+        });
 
     return MachineDetectedTile.builder()
         .id(detectedTileId)
