@@ -18,7 +18,7 @@ import lombok.ToString;
   DetectionResponse.JSON_PROPERTY_RST_IMAGE_URL,
   DetectionResponse.JSON_PROPERTY_RST_RAW
 })
-@JsonIgnoreProperties
+@JsonIgnoreProperties(ignoreUnknown = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
