@@ -226,7 +226,7 @@ public class DetectableObjectTypeMapper {
     return List.of(MARQUAGES_VOIRIES);
   }
 
-  private List<DetectableObjectType> detectableObjectTypeForVegetationModel() {
+  public static List<DetectableObjectType> detectableObjectTypeForVegetationModel() {
     List<DetectableObjectType> objectTypes = new ArrayList<>();
     // TODO: uncomment when handled by detection API
     objectTypes.add(ESPACE_VERT);

@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service.detection;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -31,9 +32,11 @@ public class DetectionResponse {
   public static final String JSON_PROPERTY_SRC_IMAGE_URL = "src_image_url";
   public static final String JSON_PROPERTY_RST_IMAGE_URL = "rst_image_url";
   public static final String JSON_PROPERTY_RST_RAW = "Rst_raw";
+  public static final String JSON_PROPERTY_VEGETATION_DATA = "vegetation_data";
   private String srcImageUrl;
   private String rstImageUrl;
   private Map<String, ImageData> rstRaw;
+  private ImageData vegetationData;
 
   @JsonProperty(JSON_PROPERTY_SRC_IMAGE_URL)
   public String getSrcImageUrl() {
@@ -48,6 +51,11 @@ public class DetectionResponse {
   @JsonProperty(JSON_PROPERTY_RST_RAW)
   public Map<String, ImageData> getRstRaw() {
     return rstRaw;
+  }
+
+  @JsonProperty(JSON_PROPERTY_VEGETATION_DATA)
+  public ImageData getVegetationData() {
+    return vegetationData;
   }
 
   @ToString
