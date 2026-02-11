@@ -3,6 +3,7 @@ package app.bpartners.geojobs.model.geometry.area;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import app.bpartners.geojobs.model.DetectedTile;
 import app.bpartners.geojobs.model.geometry.PolygonObjectType;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -216,5 +217,34 @@ class AreaRateComputerFacadeTest extends AreaRateComputerTest {
     assertEquals(1.23, AreaRateComputerFacade.format(1.2345));
     assertEquals(1.24, AreaRateComputerFacade.format(1.2355));
     assertEquals(1.0, AreaRateComputerFacade.format(1.001));
+  }
+
+  @Test
+  void constructor_with_detected_tile_should_initialize_computers_correctly() {
+    var roof = createSquare(10); // Area = 100
+
+    var usureLeger = createSquare(1); // Area = 1
+    var mNoircie = createSquare(2); // Area = 4
+    var hClair = createSquare(3); // Area = 9
+
+    var detectedObjects =
+        List.of(
+            createDetectedObject(usureLeger, USURE_LEGER),
+            createDetectedObject(mNoircie, MOISISSURE_NOIRCIE),
+            createDetectedObject(hClair, HUMIDITE_CLAIR));
+
+    DetectedTile detectedTile = DetectedTile.builder().detectedObjects(detectedObjects).build();
+
+    var subject = new AreaRateComputerFacade(roof, detectedTile);
+
+    // Usure: (1 * 1) / 100 * 100 = 1.0
+    // Moisissure: (1 * 4) / 100 * 100 = 4.0
+    // Humidite: (1 * 9) / 100 * 100 = 9.0
+    // Global: (1.0 * 0.4) + (4.0 * 0.8) + (9.0 * 1.0) = 0.4 + 3.2 + 9.0 = 12.6
+
+    assertEquals(1.0, subject.getUsureAreaRate());
+    assertEquals(4.0, subject.getMoisissureAreaRate());
+    assertEquals(9.0, subject.getHumidityAreaRate());
+    assertEquals(12.6, subject.getGlobalRate());
   }
 }
