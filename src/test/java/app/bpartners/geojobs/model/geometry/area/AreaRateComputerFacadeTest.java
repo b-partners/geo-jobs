@@ -7,23 +7,8 @@ import app.bpartners.geojobs.model.geometry.PolygonObjectType;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.Polygon;
 
-class AreaRateComputerFacadeTest {
-  private final GeometryFactory geometryFactory = new GeometryFactory();
-
-  private Polygon createSquare(double size) {
-    return geometryFactory.createPolygon(
-        new Coordinate[] {
-          new Coordinate(0, 0),
-          new Coordinate(size, 0),
-          new Coordinate(size, size),
-          new Coordinate(0, size),
-          new Coordinate(0, 0)
-        });
-  }
-
+class AreaRateComputerFacadeTest extends AreaRateComputerTest {
   @Test
   void get_usure_area_rate_returns_expected_value() {
     var roof = createSquare(10); // Area = 100
