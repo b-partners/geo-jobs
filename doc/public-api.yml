@@ -10,6 +10,22 @@ info:
     Get your **API key** by emailing **contact@birdia.fr**.
     All of your requests must embed your API key in the header named: **x-api-key**.
     
+    # Glossary
+    - *Detection* : process that involves analyzing images of a geographic area using an AI model. 
+      Detection can be performed using a textual address, a GPS point, or a geographic zone.
+      Its output may include detected objects in GeoJSON format, annotated images with detected object coordinates, or both.
+    
+    - *Zone* : geographical area provided by consumer, in which is processed and delimited detection.
+    
+    - *Parcel* : geographical area representing cadastral parcel of a land property, retrieved by API from provided textual address, GPS point or zone.
+    
+    - *GeoJSON format* : standard JSON-based format for encoding geographic data structures, such as FeatureCollections, Features, and geometries (Point, Polygon, MultiPolygon), where coordinates are expressed as longitude–latitude pairs.
+    
+    - *Pre-signed URL* : link allowing consumers to download file resources, such as detection result. _Link expires one hour_ after its generation.
+    
+    - *CityJSON* : an open, JSON-based encoding for storing, exchanging, and processing 3D city models. It is commonly used to enable applications and end users to visualize buildings and urban environments in 3D.
+    
+    
     # Usage
     
     Submit your detection request through `POST /detections/{id}`
@@ -41,6 +57,15 @@ info:
     Detection is finished when `geoJsonUrl` property containing your detection result is not null.
     4. Processing time is variable due to address conversion, 
     expected geojson example result is accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/toiture_analysis_result_example.geojson). 
+    
+    ### Request 3D city models on provided roofs
+    1. Submit a city JSON request through `PUT /city-jsons/{id}/process` where `{id}` is yours to be created
+    using the example request body accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/cityjson/city_json_request_example.json).
+    Note that only `Polygon` geometries, describing identified roof through geojson format, is supported for now.
+    2. Track the progress of your city JSON 3D models request through `GET /city-jsons/{id}`.
+    When its status is `FINISHED`, its attribute `cityJsons` contains pre-signed URL to allow downloading cityJSON files.
+    3. You can preview downloaded CityJSON file result through [https://ninja.cityjson.org](https://ninja.cityjson.org/).
+    Expected city JSON example result is accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/cityjson/city_json_response_example.json).
 
   version: 'latest'
 
@@ -300,6 +325,56 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Detection'
+  '/city-jsons/{id}':
+    get:
+      tags:
+        - CityJSON
+      operationId: getRequestedCityJSONById
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: CityJSONRequest unique id
+          schema:
+            type: string
+      summary: Get CityJSON Request files URL by id
+      security:
+        - ApiKeyAuth: [ ]
+      responses:
+        200:
+          description: CityJSON files urls
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CityJSONRequest'
+  '/city-jsons/{id}/process':
+    put:
+      tags:
+        - CityJSON
+      operationId: requestCityJSON
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: CityJSONRequest unique id
+          schema:
+            type: string
+      summary: Request CityJSON files for provided roof features
+      security:
+        - ApiKeyAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCityJSONRequest'
+      responses:
+        200:
+          description: CityJSON files urls
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CityJSONRequest'
   '/keys':
     delete:
       tags:
@@ -745,3 +820,43 @@ components:
           type: integer
         z:
           type: integer
+    CreateCityJSONRequest:
+      type: object
+      properties:
+        id:
+          type: string
+        delimitations:
+          description: Refers to a list of roofs to be previewed in 3D city models. Only `Polygon` geometry are supported for now.
+          type: array
+          items:
+            $ref: "#/components/schemas/Feature"
+    CityJSONRequestStatus:
+      type: string
+      x-enum-varnames:
+        - FINISHED
+        - FAILED
+        - PROCESSING
+        - UNAVAILABLE
+      enum:
+        - FINISHED
+        - FAILED
+        - PROCESSING
+        - UNAVAILABLE
+    CityJSONRequest:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/CreateCityJSONRequest'
+      properties:
+        status:
+          $ref: '#/components/schemas/CityJSONRequestStatus'
+        cityJsons:
+          type: array
+          items:
+            $ref: '#/components/schemas/CityJSON'
+    CityJSON:
+      type: object
+      properties:
+        id:
+          type: string
+        url:
+          type: string
