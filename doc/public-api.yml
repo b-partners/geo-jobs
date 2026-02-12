@@ -337,7 +337,8 @@ paths:
           description: CityJSONRequest unique id
           schema:
             type: string
-      summary: Get CityJSON Request files URL by id
+      summary: Retrieve 3D city models request with its status
+      description: Obtained 3D models file are cityJSON format.
       security:
         - ApiKeyAuth: [ ]
       responses:
@@ -359,7 +360,7 @@ paths:
           description: CityJSONRequest unique id
           schema:
             type: string
-      summary: Request CityJSON files for provided roof features
+      summary: Request 3D city models on provided roofs
       security:
         - ApiKeyAuth: [ ]
       requestBody:
