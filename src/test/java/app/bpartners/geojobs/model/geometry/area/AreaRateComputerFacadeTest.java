@@ -7,7 +7,6 @@ import app.bpartners.geojobs.model.DetectedTile;
 import app.bpartners.geojobs.model.geometry.PolygonObjectType;
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import org.locationtech.jts.geom.Coordinate;
 
 class AreaRateComputerFacadeTest extends AreaRateComputerTest {
   @Test
@@ -138,16 +137,7 @@ class AreaRateComputerFacadeTest extends AreaRateComputerTest {
         new AreaRateComputerFacade(
                 roof,
                 List.of(
-                    new PolygonObjectType(
-                        geometryFactory.createPolygon(
-                            new Coordinate[] {
-                              new Coordinate(0, 0),
-                              new Coordinate(2.236, 0),
-                              new Coordinate(2.236, 2.236),
-                              new Coordinate(0, 2.236),
-                              new Coordinate(0, 0)
-                            }),
-                        HUMIDITE_CLAIR) // Area ~ 5
+                    new PolygonObjectType(createSquare(2.236), HUMIDITE_CLAIR) // Area ~ 5
                     ))
             .getRate());
 
@@ -158,16 +148,7 @@ class AreaRateComputerFacadeTest extends AreaRateComputerTest {
         new AreaRateComputerFacade(
                 roof,
                 List.of(
-                    new PolygonObjectType(
-                        geometryFactory.createPolygon(
-                            new Coordinate[] {
-                              new Coordinate(0, 0),
-                              new Coordinate(3.873, 0),
-                              new Coordinate(3.873, 3.873),
-                              new Coordinate(0, 3.873),
-                              new Coordinate(0, 0)
-                            }),
-                        HUMIDITE_CLAIR) // Area ~ 15
+                    new PolygonObjectType(createSquare(3.873), HUMIDITE_CLAIR) // Area ~ 15
                     ))
             .getRate());
 
@@ -178,16 +159,7 @@ class AreaRateComputerFacadeTest extends AreaRateComputerTest {
         new AreaRateComputerFacade(
                 roof,
                 List.of(
-                    new PolygonObjectType(
-                        geometryFactory.createPolygon(
-                            new Coordinate[] {
-                              new Coordinate(0, 0),
-                              new Coordinate(5.477, 0),
-                              new Coordinate(5.477, 5.477),
-                              new Coordinate(0, 5.477),
-                              new Coordinate(0, 0)
-                            }),
-                        HUMIDITE_CLAIR) // Area ~ 30
+                    new PolygonObjectType(createSquare(5.477), HUMIDITE_CLAIR) // Area ~ 30
                     ))
             .getRate());
 
@@ -198,16 +170,7 @@ class AreaRateComputerFacadeTest extends AreaRateComputerTest {
         new AreaRateComputerFacade(
                 roof,
                 List.of(
-                    new PolygonObjectType(
-                        geometryFactory.createPolygon(
-                            new Coordinate[] {
-                              new Coordinate(0, 0),
-                              new Coordinate(7.071, 0),
-                              new Coordinate(7.071, 7.071),
-                              new Coordinate(0, 7.071),
-                              new Coordinate(0, 0)
-                            }),
-                        HUMIDITE_CLAIR) // Area ~ 50
+                    new PolygonObjectType(createSquare(7.071), HUMIDITE_CLAIR) // Area ~ 50
                     ))
             .getRate());
   }
