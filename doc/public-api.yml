@@ -5,6 +5,13 @@ info:
   description: |
     Detect and qualify geo-referenced objects.
     
+    # Versioning
+    This API uses semantic versioning (MAJOR.MINOR.PATCH). Available versions are : 
+    - [v1.3.0 (2026-02-16)](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/b-partners/geo-jobs/preprod/doc/version/v1-3-api.yml)
+    - [v1.2.0 (2025-12-10)](https://docs.birdia.fr) *(current)* 
+    - [v1.1.0 (2025-05-13)](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/b-partners/geo-jobs/preprod/doc/version/v1-1-api.yml)
+    - [v1.0.0 (2024-10-25)](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/b-partners/geo-jobs/preprod/doc/version/v1-0-api.yml) (deprecated, will be removed on 2026-03-01)
+    
     # Security
     
     Get your **API key** by emailing **contact@birdia.fr**.
@@ -67,7 +74,7 @@ info:
     3. You can preview downloaded CityJSON file result through [https://ninja.cityjson.org](https://ninja.cityjson.org/).
     Expected city JSON example result is accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/cityjson/city_json_response_example.json).
 
-  version: 'latest'
+  version: '1.2'
 
 servers:
   - url: 'https://api.birdia.fr'
