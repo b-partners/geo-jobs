@@ -1,11 +1,15 @@
 package app.bpartners.geojobs.model.lidar.planes;
 
+import static app.bpartners.geojobs.model.lidar.planes.algorithm.Vector3DUtils.hasPerpendicularDirection;
+import static app.bpartners.geojobs.model.lidar.planes.algorithm.Vector3DUtils.hasSameDirectionIgnoringOrientation;
+
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import java.security.SecureRandom;
 import java.util.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.locationtech.jts.math.Vector3D;
 
 @Builder
 @RequiredArgsConstructor
@@ -95,8 +99,10 @@ public class Kernel {
       if (last.squaredDistance(p) >= conf.squaredThreshold()) continue;
 
       // 0° or 180°
-      var vector = Vector3D.from(last, p);
-      if (!vector.isSameDirection(direction, conf.degEpsilon())) continue;
+      var vector = new Vector3D(last.getCoordinate(), p.getCoordinate());
+      if (!hasSameDirectionIgnoringOrientation(direction, vector, conf.degEpsilon())) {
+        continue;
+      }
 
       candidates.add(p);
     }
@@ -136,9 +142,10 @@ public class Kernel {
               .filter(
                   mainPoint -> {
                     if (mainPoint.squaredDistance(p3) > conf.squaredThreshold()) return false;
-                    var p3Direction = Vector3D.from(mainPoint, p3);
-                    if (p3Direction.norm() < conf.minVectorNorm()) return false;
-                    return p3Direction.isPerpendicular(main.getDirection(), conf.degEpsilon());
+                    var p3Direction = new Vector3D(mainPoint.getCoordinate(), p3.getCoordinate());
+                    if (p3Direction.length() < conf.minVectorNorm()) return false;
+                    return hasPerpendicularDirection(
+                        p3Direction, main.getDirection(), conf.degEpsilon());
                   })
               .findFirst();
 
@@ -151,8 +158,8 @@ public class Kernel {
 
   private record Candidate(LasPointGeometry a, LasPointGeometry b, Vector3D vector, double norm) {
     static Candidate from(LasPointGeometry p1, LasPointGeometry point) {
-      var v1 = Vector3D.from(p1, point);
-      var norm = v1.norm();
+      var v1 = new Vector3D(p1.getCoordinate(), point.getCoordinate());
+      var norm = v1.length();
       return new Candidate(p1, point, v1, norm);
     }
   }
@@ -170,7 +177,10 @@ public class Kernel {
     public Vector3D getDirection() {
       if (direction == null) {
         var furthestPointsValue = this.getFurthestPoints();
-        direction = Vector3D.from(furthestPointsValue.getFirst(), furthestPointsValue.getLast());
+        direction =
+            new Vector3D(
+                furthestPointsValue.getFirst().getCoordinate(),
+                furthestPointsValue.getLast().getCoordinate());
       }
 
       return direction;
