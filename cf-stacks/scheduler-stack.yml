@@ -21,13 +21,13 @@ Resources:
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/AdministratorAccess'
 
-  RefreshInvoiceSummaryScheduler:
+  DashboardApiKeyVerificationScheduler:
     Type: AWS::Scheduler::Schedule
     Properties:
       Description: Scheduler that trigger the dashboard api keys verification
       FlexibleTimeWindow:
         Mode: "OFF"
-      Name: !Join ['', [!Ref Env, -RefreshInvoiceSummary]]
+      Name: !Join ['', [!Ref Env, -DashboardApiKeyVerification]]
       ScheduleExpression: "cron(0 0 * * ? *)"
       Target:
         Arn: !Sub '{{resolve:ssm:/geo-jobs/${Env}/eventbridge/bus-arn}}'
@@ -35,5 +35,5 @@ Resources:
         DeadLetterConfig:
           Arn: !Sub '{{resolve:ssm:/geo-jobs/${Env}/1/sqs/dead-letter-queue-arn}}'
         EventBridgeParameters:
-          DetailType: 'app.bpartners.geojobs.service.AllDashboardApiKeyCheckTriggeredService'
+          DetailType: 'app.bpartners.geojobs.endpoint.event.model.AllDashboardApiKeyCheckTriggered'
           Source: 'app.bpartners.geojobs.event1'
