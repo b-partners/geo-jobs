@@ -78,7 +78,12 @@ info:
 
 servers:
   - url: 'https://api.birdia.fr'
-
+tags:
+  - name: Usage
+  - name: Image
+  - name: Detection
+  - name: ThreeD
+    description: Refers to 3D resources
 paths:
   '/usage':
     get:
@@ -334,8 +339,9 @@ paths:
                 $ref: '#/components/schemas/Detection'
   '/city-jsons/{id}':
     get:
+      deprecated: true
       tags:
-        - 3D
+        - ThreeD
       operationId: getRequestedCityJSONById
       parameters:
         - in: path
@@ -357,8 +363,9 @@ paths:
                 $ref: '#/components/schemas/CityJSONRequest'
   '/city-jsons/{id}/process':
     put:
+      deprecated: true
       tags:
-        - 3D
+        - ThreeD
       operationId: requestCityJSON
       parameters:
         - in: path
@@ -383,6 +390,62 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CityJSONRequest'
+  '/3d/{id}':
+    get:
+      tags:
+        - ThreeD
+      operationId: getRequested3DFileById
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: 3D requested identifier
+          schema:
+            type: string
+      summary: Retrieve 3D models request with its status
+      description: Obtained 3D models file are cityJSON format.
+      security:
+        - ApiKeyAuth: [ ]
+      responses:
+        200:
+          description: Retrieved 3D response with actual request status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThreeDResponseStatus'
+    post:
+      tags:
+        - ThreeD
+      operationId: request3DFileOnDelimitations
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: 3D request identifier
+          schema:
+            type: string
+      summary: Request 3D models on provided delimitation
+      security:
+        - ApiKeyAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ThreeDRequest'
+            examples:
+              3DRequestUsingPolygon:
+                $ref: '#/components/examples/ThreeDRequestUsingPolygonExample'
+      responses:
+        200:
+          description: 3D response with actual request status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThreeDResponseStatus'
+              examples:
+                3DResponseWithStatusSucceeded:
+                  $ref: '#/components/examples/ThreeDResponseWithSucceededStatusExample'
   '/keys':
     delete:
       tags:
@@ -437,6 +500,32 @@ components:
               type: "MultiPolygon"
               coordinates:
                 - [ [ [ [ -0.24908199906349182, 46.651815670805505 ], [ -0.24908166378736496, 46.65181521051821 ], [ -0.24908166378736496, 46.65181452008728 ], [ -0.24908099323511124, 46.651813829656334 ], [ -0.24908099323511124, 46.65180807606479 ], [ -0.249084010720253, 46.65180807606479 ], [ -0.24908434599637985, 46.65180853635213 ], [ -0.2490846812725067, 46.651808996639474 ], [ -0.24908501654863358, 46.651809687070475 ], [ -0.24908535182476044, 46.65181037750147 ], [ -0.24908535182476044, 46.65181152821978 ], [ -0.2490856871008873, 46.651811988507106 ], [ -0.2490873634815216, 46.65181313922538 ], [ -0.2490873634815216, 46.65181521051821 ], [ -0.24908669292926788, 46.65181544066185 ], [ -0.2490856871008873, 46.651815670805505 ], [ -0.24908535182476044, 46.65181590094914 ], [ -0.24908199906349182, 46.651815670805505 ] ] ] ]
+    ThreeDRequestUsingPolygonExample:
+      summary: 3D request payload template using Polygon delimitation geometry
+      value:
+        delimitations:
+          - type: "Feature"
+            geometry:
+              type: "Polygon"
+              coordinates:
+                - [ [ [ -0.24944153697435922,46.65202795355856 ],[ -0.24949102208131535,46.65191413879569 ],[ -0.2494768834801846,46.651893405073054 ],[ -0.2494357530011655,46.651885905639375 ],[ -0.24939847850427554,46.651878406204645 ],[ -0.24930786291974982,46.65187664163176 ],[ -0.24924166855538488,46.6518647307621 ],[ -0.24923202860003357,46.651893846216154 ],[ -0.24930143628137102,46.65190708050787 ],[ -0.2492738017412819,46.651939283938276 ],[ -0.24926544711334486,46.65198825076146 ],[ -0.24944153697435922,46.65202795355856 ] ] ]
+    ThreeDResponseWithSucceededStatusExample:
+      summary: 3D response template with SUCCEEDED status
+      value:
+        id: "<your-id>"
+        status:
+          progression: "FINISHED"
+          health: "SUCCEEDED"
+          creationDatetime: "2026-01-21T10:12:54Z"
+        delimitations:
+          - type: "Feature"
+            geometry:
+              type: "Polygon"
+              coordinates:
+                - [ [ [ -0.24944153697435922,46.65202795355856 ],[ -0.24949102208131535,46.65191413879569 ],[ -0.2494768834801846,46.651893405073054 ],[ -0.2494357530011655,46.651885905639375 ],[ -0.24939847850427554,46.651878406204645 ],[ -0.24930786291974982,46.65187664163176 ],[ -0.24924166855538488,46.6518647307621 ],[ -0.24923202860003357,46.651893846216154 ],[ -0.24930143628137102,46.65190708050787 ],[ -0.2492738017412819,46.651939283938276 ],[ -0.24926544711334486,46.65198825076146 ],[ -0.24944153697435922,46.65202795355856 ] ] ]
+        cityJsonFileUrls:
+          - id: "<random-id>"
+            url: "https://prod-bucket-geo-jobs-bucket.s3.eu-west-3.amazonaws.com/city_jsons/5ecb363a-b1f5-4b47-b767-ec746ddfcf9a"
   parameters:
     IdentifierParameter:
       in: path
@@ -831,17 +920,24 @@ components:
           type: integer
         z:
           type: integer
-    CreateCityJSONRequest:
+    ThreeDRequest:
       type: object
       properties:
-        id:
-          type: string
         delimitations:
-          description: Refers to a list of roofs to be previewed in 3D city models. Only `Polygon` geometry are supported for now.
+          description: Refers to a list of roofs to be previewed in 3D models. Only `Polygon` geometry are supported for now.
           type: array
           items:
             $ref: "#/components/schemas/Feature"
+
+    CreateCityJSONRequest:
+      deprecated: true
+      allOf:
+        - $ref: '#/components/schemas/ThreeDRequest'
+      properties:
+        id:
+          type: string
     CityJSONRequestStatus:
+      deprecated: true
       type: string
       x-enum-varnames:
         - FINISHED
@@ -853,7 +949,18 @@ components:
         - FAILED
         - PROCESSING
         - UNAVAILABLE
+    ThreeDResponseStatus:
+      allOf:
+        - $ref: '#/components/schemas/ThreeDRequest'
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        cityJsonFileUrls:
+          type: array
+          items:
+            $ref: '#/components/schemas/CityJsonFileUrl'
     CityJSONRequest:
+      deprecated: true
       type: object
       allOf:
         - $ref: '#/components/schemas/CreateCityJSONRequest'
@@ -864,10 +971,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CityJSON'
-    CityJSON:
+    CityJsonFileUrl:
       type: object
       properties:
         id:
           type: string
         url:
           type: string
+    CityJSON:
+      deprecated: true
+      allOf:
+        - $ref: '#/components/schemas/CityJsonFileUrl'
