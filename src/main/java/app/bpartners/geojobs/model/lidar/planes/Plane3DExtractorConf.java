@@ -51,7 +51,7 @@ public record Plane3DExtractorConf(
   public static Plane3DExtractorConf getDefault() {
     return Plane3DExtractorConf.builder()
         .roofPointsCleanerConf(RoofPointsCleanerConf.builder().duplicateXYTolerance(0.3).build())
-        .chimneyFixerConf(ChimneyFixerConf.builder().maxChimneyArea(4).build())
+        .chimneyFixerConf(ChimneyFixerConf.builder().maxChimneyArea(2).build())
         .planeConf(
             PlaneConf.builder()
                 .min2DArea(0.25)

@@ -9,11 +9,10 @@ import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.planes.Plane3D;
-import java.util.Set;
-
 import app.bpartners.geojobs.model.lidar.planes.algorithm.OBB2DComputer;
 import app.bpartners.geojobs.model.lidar.planes.algorithm.OBB3DComputer;
 import app.bpartners.geojobs.model.lidar.planes.algorithm.model.OBB2D;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Polygon;
