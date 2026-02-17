@@ -66,11 +66,11 @@ info:
     expected geojson example result is accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/toiture_analysis_result_example.geojson). 
     
     ### Request 3D city models on provided roofs
-    1. Submit a city JSON request through `PUT /city-jsons/{id}/process` where `{id}` is yours to be created
+    1. Submit a 3D request through `POST /3d/{id}` where `{id}` is yours to be created
     using the example request body accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/cityjson/city_json_request_example.json).
     Note that only `Polygon` geometries, describing identified roof through geojson format, is supported for now.
-    2. Track the progress of your city JSON 3D models request through `GET /city-jsons/{id}`.
-    When its status is `FINISHED`, its attribute `cityJsons` contains pre-signed URL to allow downloading cityJSON files.
+    2. Track the progress of your 3D request through `GET /3d/{id}`.
+    When its status progression is `FINISHED` and status health `SUCCEEDED`, its attribute `cityJsonFileUrls` contains pre-signed URL to allow downloading cityJSON files.
     3. You can preview downloaded CityJSON file result through [https://ninja.cityjson.org](https://ninja.cityjson.org/).
     Expected city JSON example result is accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/cityjson/city_json_response_example.json).
 
@@ -83,7 +83,7 @@ tags:
   - name: Image
   - name: Detection
   - name: ThreeD
-    description: Refers to 3D resources
+    description: Refers to 3D resources such as roof/building 3D model
 paths:
   '/usage':
     get:
@@ -413,6 +413,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ThreeDResponseStatus'
+              examples:
+                3DResponseWithStatusSucceeded:
+                  $ref: '#/components/examples/ThreeDResponseWithSucceededStatusExample'
     post:
       tags:
         - ThreeD
