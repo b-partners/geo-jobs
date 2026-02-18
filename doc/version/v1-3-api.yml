@@ -488,7 +488,7 @@ paths:
             example:
               delimitationType: "PARCEL_FREE_DELIMITATION"
               addresses:
-                - address: "1 Rue de la Vau Saint-Jacques, 79200 Parthenay, France"
+                - fullText: "1 Rue de la Vau Saint-Jacques, 79200 Parthenay, France"
 
       responses:
         200:
@@ -939,9 +939,16 @@ components:
           type: string
           format: date-time
     Address:
+      deprecated: true
+      description: Only AddressFullText must be used to migrate actual Address to its new specification
       type: object
       properties:
         address:
+          type: string
+    AddressFullText:
+      type: object
+      properties:
+        fullText:
           type: string
     ImageOfAddress:
       type: object
@@ -1028,7 +1035,7 @@ components:
         addresses:
           type: array
           items:
-            $ref: '#/components/schemas/Address'
+            $ref: '#/components/schemas/AddressFullText'
     ThreeDResponseStatus:
       allOf:
         - $ref: '#/components/schemas/ThreeDRequest'
