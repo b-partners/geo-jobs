@@ -1033,6 +1033,8 @@ components:
       allOf:
         - $ref: '#/components/schemas/ThreeDRequest'
       properties:
+        id:
+          type: string
         status:
           $ref: '#/components/schemas/Status'
         cityJsonFileUrls:
