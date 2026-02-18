@@ -1,16 +1,20 @@
 package app.bpartners.geojobs.endpoint.rest.controller;
 
+import static app.bpartners.geojobs.endpoint.rest.model.DelimitationType.PARCEL_FREE_DELIMITATION;
+import static app.bpartners.geojobs.model.DelimitationObjectType.BUILDING;
+
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.cityjson.CityJSONRequestMapper;
-import app.bpartners.geojobs.endpoint.rest.model.CityJSONRequest;
-import app.bpartners.geojobs.endpoint.rest.model.CreateCityJSONRequest;
-import app.bpartners.geojobs.endpoint.rest.model.ThreeDRequest;
-import app.bpartners.geojobs.endpoint.rest.model.ThreeDResponseStatus;
+import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.authorizer.CityJSONRequestOwnerAuthorizer;
 import app.bpartners.geojobs.endpoint.rest.validator.CreateCityJSONRequestValidator;
+import app.bpartners.geojobs.endpoint.rest.validator.ThreeDAddressesRequestValidator;
+import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.service.CityJSONRequestService;
+import app.bpartners.geojobs.service.FeatureAddressConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,6 +27,8 @@ public class CityJSONController {
   private final CityJSONRequestService cityJSONRequestService;
   private final CityJSONRequestOwnerAuthorizer cityJSONRequestOwnerAuthorizer;
   private final CreateCityJSONRequestValidator createCityJSONRequestValidator;
+  private final ThreeDAddressesRequestValidator threeDAddressesRequestValidator;
+  private final FeatureAddressConverter featureAddressConverter;
 
   @GetMapping("/3d/{id}")
   public ThreeDResponseStatus getRequested3DFileById(@PathVariable(name = "id") String requestId) {
@@ -43,6 +49,29 @@ public class CityJSONController {
     var communityOwnerId = getCommunityAuthorizationId();
     var toProcess =
         cityJSONRequestMapper.createToDomain(requestIdentifier, threeDRequest, communityOwnerId);
+    cityJSONRequestOwnerAuthorizer.accept(
+        toProcess.getId(), communityOwnerId, authProvider.getPrincipal());
+
+    return cityJSONRequestMapper.toRestThreeDResponseStatus(
+        cityJSONRequestService.process(toProcess));
+  }
+
+  @PostMapping("/3d/{id}/addresses")
+  public ThreeDResponseStatus request3DFileOnAddresses(
+      @RequestBody ThreeDAddressesRequest threeDRequest,
+      @PathVariable(name = "id") String requestIdentifier) {
+    threeDAddressesRequestValidator.accept(threeDRequest);
+    var convertedAddressesToDelimitations =
+        threeDRequest.getAddresses().stream()
+            .map(Address::getAddress)
+            .map(addressValue -> featureAddressConverter.apply(addressValue, BUILDING))
+            .map(FeatureMapper::toRestFeature)
+            .toList();
+
+    var request = new ThreeDRequest().delimitations(convertedAddressesToDelimitations);
+    var communityOwnerId = getCommunityAuthorizationId();
+    var toProcess =
+        cityJSONRequestMapper.createToDomain(requestIdentifier, request, communityOwnerId);
     cityJSONRequestOwnerAuthorizer.accept(
         toProcess.getId(), communityOwnerId, authProvider.getPrincipal());
 
