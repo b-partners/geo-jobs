@@ -1,6 +1,11 @@
 package app.bpartners.geojobs.service.cityjson.factory;
 
+import static app.bpartners.geojobs.service.cityjson.LidarDataToCityJsonProcessor.LOD_KEY;
+import static app.bpartners.geojobs.service.cityjson.model.Lod.LOD_2;
+import static app.bpartners.geojobs.service.cityjson.model.Lod.LOD_3;
+
 import app.bpartners.geojobs.service.cityjson.model.ConstructionSurfaceType;
+import app.bpartners.geojobs.service.cityjson.model.Lod;
 import app.bpartners.geojobs.service.lidar.model.geometry.GeometryWithProperties;
 import java.util.Arrays;
 import java.util.List;
@@ -18,6 +23,10 @@ public class ConstructionSurfaceFactory {
 
   private ConstructionSurfaceFactory() {}
 
+  private static Lod getLodType(GeometryWithProperties geometry) {
+    return (Lod) geometry.properties().getOrDefault(LOD_KEY, LOD_2);
+  }
+
   public static AbstractConstructionSurface make(
       ConstructionSurfaceType type, GeometryWithProperties geometryWithProperties) {
     var surface = getSurface(type);
@@ -28,7 +37,12 @@ public class ConstructionSurfaceFactory {
 
     var multiSurface = new MultiSurface();
     multiSurface.setSurfaceMember(List.of(new SurfaceProperty(polygon)));
-    surface.setLod2MultiSurface(new MultiSurfaceProperty(multiSurface));
+
+    if (LOD_3.equals(getLodType(geometryWithProperties))) {
+      surface.setLod3MultiSurface(new MultiSurfaceProperty(multiSurface));
+    } else {
+      surface.setLod2MultiSurface(new MultiSurfaceProperty(multiSurface));
+    }
 
     var properties = GenericAttributeFactory.make(geometryWithProperties.properties());
     surface.setGenericAttributes(properties);

@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service.lidar.model.geometry.roof;
 import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.*;
 
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
+import app.bpartners.geojobs.model.lidar.planes.Plane3D;
 import app.bpartners.geojobs.model.lidar.planes.Plane3DExtractorConf;
 import app.bpartners.geojobs.model.lidar.planes.Planes3DExtractor;
 import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepExporter;
@@ -28,6 +29,7 @@ public class Building3DProperties {
   }
 
   // properties
+  private List<Plane3D> rawPlanes;
   private List<RoofPlane3D> roofPlanes;
   private BuildingHeightInMeters buildingHeightInMeters;
 
@@ -48,6 +50,13 @@ public class Building3DProperties {
     return buildingHeightInMeters;
   }
 
+  public List<Plane3D> getRawPlanes() {
+    if (getRoofPlanes().isEmpty()) {
+      return List.of();
+    }
+    return rawPlanes;
+  }
+
   public List<RoofPlane3D> getRoofPlanes() {
     if (hasInvalidData()) {
       return List.of();
@@ -58,9 +67,9 @@ public class Building3DProperties {
     }
 
     var extractor = new Planes3DExtractor(conf, exporter);
-    var rawPlanes = extractor.apply(getCleanedRoofPoints());
+    this.rawPlanes = extractor.apply(getCleanedRoofPoints());
     roofPlanes =
-        rawPlanes.stream()
+        this.rawPlanes.stream()
             .map(
                 plane ->
                     new RoofPlane3D(

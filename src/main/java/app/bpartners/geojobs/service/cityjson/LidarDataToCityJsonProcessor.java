@@ -5,6 +5,7 @@ import static app.bpartners.geojobs.service.lidar.utils.MathUtilities.round2;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
+import app.bpartners.geojobs.model.lidar.planes.Plane3D;
 import app.bpartners.geojobs.model.lidar.planes.Plane3DExtractorConf;
 import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepExporter;
 import app.bpartners.geojobs.service.cityjson.exception.CityJsonException;
@@ -12,11 +13,11 @@ import app.bpartners.geojobs.service.cityjson.factory.BuildingGroundPolygonFacto
 import app.bpartners.geojobs.service.cityjson.factory.BuildingWallPolygonFactory;
 import app.bpartners.geojobs.service.cityjson.factory.CityJsonFactory;
 import app.bpartners.geojobs.service.cityjson.model.BuildingData;
+import app.bpartners.geojobs.service.cityjson.model.Lod;
 import app.bpartners.geojobs.service.lidar.LidarRoofsAnalysisProcessor;
 import app.bpartners.geojobs.service.lidar.model.geometry.GeometryWithProperties;
 import app.bpartners.geojobs.service.lidar.model.geometry.roof.Building3DProperties;
 import app.bpartners.geojobs.service.lidar.model.geometry.roof.LidarRoofData;
-import app.bpartners.geojobs.service.lidar.model.geometry.roof.RoofPlane3D;
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
@@ -39,6 +40,7 @@ public class LidarDataToCityJsonProcessor
   private static final String AREA_KEY = "area_in_square_meters";
   private static final String PLANE_SLOPE_KEY = "slope_in_degrees";
   private static final String DISTANCE_2D_SCALE = "distance_2d_scale";
+  public static final String LOD_KEY = "lod";
 
   @Autowired
   public LidarDataToCityJsonProcessor(CityJsonFactory cityJsonFactory) {
@@ -73,7 +75,7 @@ public class LidarDataToCityJsonProcessor
 
   private BuildingData toBuildingData(LidarRoofData lidarRoofData, Plane3DExtractorConf conf) {
     var roofProperty = new Building3DProperties(lidarRoofData, conf, exporter);
-    var planes = roofProperty.getRoofPlanes();
+    var planes = roofProperty.getRawPlanes();
     var area2DScale = getArea2DScale(lidarRoofData, planes);
     var distance2DScale = Math.sqrt(area2DScale);
 
@@ -112,7 +114,7 @@ public class LidarDataToCityJsonProcessor
   }
 
   private static GeometryWithProperties toPolygonWithProperties(
-      RoofPlane3D plane, double area2DScale, double distance2DScale) {
+      Plane3D plane, double area2DScale, double distance2DScale) {
     var slope = plane.getSlopeInDegrees().getValue();
     var area2D = plane.get2DArea() * area2DScale;
     var area3D = Math.abs(round2(area2D / Math.cos(Math.toRadians(slope))));
@@ -121,26 +123,27 @@ public class LidarDataToCityJsonProcessor
         .geometry(plane.getDelimitation())
         .properties(
             Map.of(
+                LOD_KEY, Lod.from(plane),
                 PLANE_SLOPE_KEY, slope,
                 AREA_KEY, area3D,
                 DISTANCE_2D_SCALE, distance2DScale))
         .build();
   }
 
-  private static List<GeometryWithProperties> createWalls(RoofPlane3D plane, double groundZ) {
+  private static List<GeometryWithProperties> createWalls(Plane3D plane, double groundZ) {
     var roofPolygon = plane.getDelimitation();
     return BuildingWallPolygonFactory.make(roofPolygon, groundZ);
   }
 
-  private static GeometryWithProperties createGround(RoofPlane3D plane, double groundZ) {
+  private static GeometryWithProperties createGround(Plane3D plane, double groundZ) {
     var roofPolygon = plane.getDelimitation();
     var groundPolygon = BuildingGroundPolygonFactory.make(roofPolygon, groundZ);
     return new GeometryWithProperties(groundPolygon, Map.of());
   }
 
-  private static double getArea2DScale(LidarRoofData lidarRoofData, List<RoofPlane3D> planes) {
+  private static double getArea2DScale(LidarRoofData lidarRoofData, List<Plane3D> planes) {
     var delimitation2DArea = lidarRoofData.roof().boundaryLambert93().getArea();
-    var planes2DArea = planes.stream().mapToDouble(RoofPlane3D::get2DArea).sum();
+    var planes2DArea = planes.stream().mapToDouble(Plane3D::get2DArea).sum();
     return delimitation2DArea / planes2DArea;
   }
 }

@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.cityjson.factory;
 
+import app.bpartners.geojobs.service.cityjson.model.Lod;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -27,6 +28,7 @@ public class GenericAttributeFactory {
       case Double doubleValue -> new DoubleAttribute(key, doubleValue);
       case Integer intValue -> new IntAttribute(key, intValue);
       case String stringValue -> new StringAttribute(key, stringValue);
+      case Lod lodType -> new StringAttribute(key, lodType.getValue());
       default -> {
         log.error("Unsupported attribute type: {}", value.getClass());
         yield new StringAttribute(key, String.valueOf(value));

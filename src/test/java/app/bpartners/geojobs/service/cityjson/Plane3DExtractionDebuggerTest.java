@@ -35,7 +35,7 @@ class Plane3DExtractionDebuggerTest {
   @Test
   void export() {
     log.info("Output Folder = {}", EXPORT_OUTPUT_FOLDER);
-    var roofsGeometries = Set.of(roofGeometry1());
+    var roofsGeometries = Set.of(roofGeometry2());
     var processor = processorCreator.create(roofsGeometries);
 
     var result = processor.from(roofsGeometries);
@@ -43,19 +43,17 @@ class Plane3DExtractionDebuggerTest {
     cityJsonProcessor.apply("debug_city_jsons", result, conf);
   }
 
-  private static Geometry roofGeometry1() {
-    var roof1Coordinates =
+  private static Geometry roofGeometry2() {
+    var roof2Coordinates =
         new Coordinate[] {
-          new Coordinate(2.243891733457616, 48.82448842864014),
-          new Coordinate(2.243947393505863, 48.82437718542337),
-          new Coordinate(2.244038835011281, 48.82440597780899),
-          new Coordinate(2.2440209442821413, 48.82445309258651),
-          new Coordinate(2.244197863717403, 48.8244975898354),
-          new Coordinate(2.24422768160008, 48.82447010624497),
-          new Coordinate(2.24432906240051, 48.824487119898066),
-          new Coordinate(2.244263463059525, 48.82456695311532),
-          new Coordinate(2.243891733457616, 48.82448842864014)
+          new Coordinate(2.2431823989819577, 48.82457400501346),
+          new Coordinate(2.243242034747283, 48.82446145324346),
+          new Coordinate(2.24349250495996, 48.824520346643),
+          new Coordinate(2.243502444253778, 48.8244941718074),
+          new Coordinate(2.243595873618915, 48.824520346643),
+          new Coordinate(2.2435342499950366, 48.82464598566398),
+          new Coordinate(2.2431823989819577, 48.82457400501346)
         };
-    return geometryFactory.createPolygon(roof1Coordinates);
+    return geometryFactory.createPolygon(roof2Coordinates);
   }
 }
