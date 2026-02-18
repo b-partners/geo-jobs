@@ -40,12 +40,12 @@ public class Planes3DExtractor implements Function<Collection<LasPointGeometry>,
             conf.planeMergerConf().epsilonSlope(),
             conf.planeMergerConf().epsilonZDistance(),
             conf.planeMergerConf().epsilonXYDistance());
-    this.delimitationFixer = new Plane3DDelimitationFixer(
-       conf.planeDelimitationFixerConf().maxEmptyCell(),
-       conf.planeDelimitationFixerConf().minCellPointsSize(),
-       conf.planeDelimitationFixerConf().gridSize(),
-       conf.planeDelimitationFixerConf().simplificationEpsilon()
-    );
+    this.delimitationFixer =
+        new Plane3DDelimitationFixer(
+            conf.planeDelimitationFixerConf().maxEmptyCell(),
+            conf.planeDelimitationFixerConf().minCellPointsSize(),
+            conf.planeDelimitationFixerConf().gridSize(),
+            conf.planeDelimitationFixerConf().simplificationEpsilon());
   }
 
   @Override
@@ -81,7 +81,7 @@ public class Planes3DExtractor implements Function<Collection<LasPointGeometry>,
 
     var filtered = mergeClosedPlaneAndFilterSmallOnes(planes);
     var fixedDelimitations = this.delimitationFixer.apply(filtered, points);
-    return this.chimneyFixer.apply(filtered);
+    return this.chimneyFixer.apply(fixedDelimitations);
   }
 
   public List<Plane3D> mergeClosedPlaneAndFilterSmallOnes(Collection<Plane3D> planes) {
