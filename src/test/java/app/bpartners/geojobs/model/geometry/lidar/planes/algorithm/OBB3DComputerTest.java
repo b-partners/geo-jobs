@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.model.geometry.lidar.planes.postprocessing.model;
+package app.bpartners.geojobs.model.geometry.lidar.planes.algorithm;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.service.lidar.model.LidarClass.BATIMENT;
@@ -9,9 +9,9 @@ import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.planes.Plane3D;
-import app.bpartners.geojobs.model.lidar.planes.postprocessing.model.OBB2D;
-import app.bpartners.geojobs.model.lidar.planes.postprocessing.model.OBB2DComputer;
-import app.bpartners.geojobs.model.lidar.planes.postprocessing.model.OBB3DComputer;
+import app.bpartners.geojobs.model.lidar.planes.algorithm.OBB2DComputer;
+import app.bpartners.geojobs.model.lidar.planes.algorithm.OBB3DComputer;
+import app.bpartners.geojobs.model.lidar.planes.algorithm.model.OBB2D;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
@@ -28,7 +28,7 @@ class OBB3DComputerTest {
 
     when(obb2DComputerMock.apply(any(Plane3D.class))).thenReturn(data.getSecond());
 
-    var plane = new Plane3D(0, 0, 1, -0, Set.of(), 0, 0, null); // z = 0 plane horizontal
+    var plane = new Plane3D(0, 0, 1, -0, null, Set.of(), 0, 0, null); // z = 0 plane horizontal
 
     var actualPolygon = subject.apply(plane);
 

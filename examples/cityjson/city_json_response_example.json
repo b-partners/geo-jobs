@@ -4,7 +4,7 @@
   "cityJsons": [
     {
       "id": "5ecb363a-b1f5-4b47-b767-ec746ddfcf9a",
-      "url": "https://prod-bucket-geo-jobs-bucket.s3.eu-west-3.amazonaws.com/city_jsons/5ecb363a-b1f5-4b47-b767-ec746ddfcf9a"
+      "url": "https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/cityjson/city_json_file_example.json"
     }
   ],
   "delimitations": [

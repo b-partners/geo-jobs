@@ -15,13 +15,17 @@ info:
       Detection can be performed using a textual address, a GPS point, or a geographic zone.
       Its output may include detected objects in GeoJSON format, annotated images with detected object coordinates, or both.
     
-    - *Zone* : geographical area provided by consumer, in which is processed and delimited detection.
+    - *Parcel free delimitation* a.k.a. *Zone* : geographical area provided by consumer, in which is processed and delimited detection.
     
-    - *Parcel* : geographical area representing cadastral parcel of a land property, retrieved by API from provided textual address, GPS point or zone.
+    - *Parcel constrained delimitation* a.k.a. *Parcel* : geographical area representing cadastral parcel of a land property, retrieved by API from provided textual address, GPS point or zone.
     
     - *GeoJSON format* : standard JSON-based format for encoding geographic data structures, such as FeatureCollections, Features, and geometries (Point, Polygon, MultiPolygon), where coordinates are expressed as longitude–latitude pairs.
     
     - *Pre-signed URL* : link allowing consumers to download file resources, such as detection result. _Link expires one hour_ after its generation.
+    
+    - *CityJSON* : an open, JSON-based encoding for storing, exchanging, and processing 3D city models. It is commonly used to enable applications and end users to visualize buildings and urban environments in 3D.
+    
+    - *Delimitation* : a geographic representation of an object (such as a building roof or a land parcel) expressed using GeoJSON coordinates. It is modeled generically as a Feature to describe any area or surface of interest.
     
     # Usage
     
@@ -54,6 +58,24 @@ info:
     Detection is finished when `geoJsonUrl` property containing your detection result is not null.
     4. Processing time is variable due to address conversion, 
     expected geojson example result is accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/toiture_analysis_result_example.geojson). 
+    
+    ### Request 3D city models from textual, human-readable, addresses
+    1. Submit a 3D request through `POST /3d/{id}/addresses` where `{id}` is yours to be created
+    using the example request body accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/cityjson/city_json_addresses_request_example.json).
+    Note that only `Polygon` geometries, describing identified roof through geojson format, is supported for now.
+    2. Track the progress of your 3D request through `GET /3d/{id}`.
+    When its status progression is `FINISHED` and status health `SUCCEEDED`, its attribute `cityJsonFileUrls` contains pre-signed URL to allow downloading cityJSON files.
+    3. You can preview downloaded CityJSON file result through [https://ninja.cityjson.org](https://ninja.cityjson.org/).
+    Expected city JSON example result is accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/cityjson/city_json_response_example.json).
+    
+    ### Request 3D city models on provided delimitation roofs
+    1. Submit a 3D request through `POST /3d/{id}` where `{id}` is yours to be created
+    using the example request body accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/cityjson/city_json_delimitation_request_example.json).
+    Note that only `Polygon` geometries, describing identified roof through geojson format, is supported for now.
+    2. Track the progress of your 3D request through `GET /3d/{id}`.
+    When its status progression is `FINISHED` and status health `SUCCEEDED`, its attribute `cityJsonFileUrls` contains pre-signed URL to allow downloading cityJSON files.
+    3. You can preview downloaded CityJSON file result through [https://ninja.cityjson.org](https://ninja.cityjson.org/).
+    Expected city JSON example result is accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/cityjson/city_json_response_example.json).
 
     ### Detection on parcels including roof objects and trees providing excel file containing textual addresses
     1. Submit detection request through `POST /detections/{id}` where `{id}` is yours to be created
@@ -1138,8 +1160,9 @@ paths:
                 $ref: '#/components/schemas/RevokeApiKeyResponse'
   '/city-jsons/{id}':
     get:
+      deprecated: true
       tags:
-        - CityJSON
+        - ThreeD
       operationId: getRequestedCityJSONById
       parameters:
         - in: path
@@ -1148,7 +1171,8 @@ paths:
           description: CityJSONRequest unique id
           schema:
             type: string
-      summary: Get CityJSON Request files URL by id
+      summary: Retrieve 3D city models request with its status
+      description: Obtained 3D models file are cityJSON format.
       security:
         - ApiKeyAuth: [ ]
       responses:
@@ -1160,8 +1184,9 @@ paths:
                 $ref: '#/components/schemas/CityJSONRequest'
   '/city-jsons/{id}/process':
     put:
+      deprecated: true
       tags:
-        - CityJSON
+        - ThreeD
       operationId: requestCityJSON
       parameters:
         - in: path
@@ -1170,7 +1195,7 @@ paths:
           description: CityJSONRequest unique id
           schema:
             type: string
-      summary: Request CityJSON files for provided roof delimitations
+      summary: Request 3D city models on provided roofs
       security:
         - ApiKeyAuth: [ ]
       requestBody:
@@ -1186,6 +1211,106 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CityJSONRequest'
+  '/3d/{id}':
+    get:
+      tags:
+        - ThreeD
+      operationId: getRequested3DFileById
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: 3D requested identifier
+          schema:
+            type: string
+      summary: Retrieve 3D models request with its status
+      description: Obtained 3D models file are cityJSON format.
+      security:
+        - ApiKeyAuth: [ ]
+      responses:
+        200:
+          description: Retrieved 3D response with actual request status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThreeDResponseStatus'
+              examples:
+                3DResponseWithStatusSucceeded:
+                  $ref: '#/components/examples/ThreeDResponseWithSucceededStatusExample'
+    post:
+      tags:
+        - ThreeD
+      operationId: request3DFileOnDelimitations
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: 3D request identifier
+          schema:
+            type: string
+      summary: Request 3D models on provided delimitation
+      security:
+        - ApiKeyAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ThreeDRequest'
+            examples:
+              3DRequestUsingPolygon:
+                $ref: '#/components/examples/ThreeDRequestUsingPolygonExample'
+      responses:
+        200:
+          description: 3D response with actual request status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThreeDResponseStatus'
+              examples:
+                3DResponseWithStatusSucceeded:
+                  $ref: '#/components/examples/ThreeDResponseWithSucceededStatusExample'
+  '/3d/{id}/addresses':
+    post:
+      tags:
+        - ThreeD
+      operationId: request3DFileOnAddresses
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: 3D request identifier
+          schema:
+            type: string
+      summary: Request 3D models from a textual, human-readable, address
+      description: |
+        Delimitation type is optional. Default value is PARCEL_FREE_DELIMITATION,
+        that returns 3D model corresponding to retrieved delimitation, such as roof/building, on each provided textual address.
+      security:
+        - ApiKeyAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/ThreeDAddressesRequest'
+            example:
+              delimitationType: "PARCEL_FREE_DELIMITATION"
+              addresses:
+                - fullText: "1 Rue de la Vau Saint-Jacques, 79200 Parthenay, France"
+
+      responses:
+        200:
+          description: 3D response with actual request status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThreeDResponseStatus'
+              examples:
+                3DResponseWithStatusSucceeded:
+                  $ref: '#/components/examples/ThreeDResponseWithProcessingStatusExample'
 components:
   securitySchemes:
     ReadmeAuth:
@@ -1233,7 +1358,47 @@ components:
               type: "MultiPolygon"
               coordinates:
                 - [ [ [ [ -0.24908199906349182, 46.651815670805505 ], [ -0.24908166378736496, 46.65181521051821 ], [ -0.24908166378736496, 46.65181452008728 ], [ -0.24908099323511124, 46.651813829656334 ], [ -0.24908099323511124, 46.65180807606479 ], [ -0.249084010720253, 46.65180807606479 ], [ -0.24908434599637985, 46.65180853635213 ], [ -0.2490846812725067, 46.651808996639474 ], [ -0.24908501654863358, 46.651809687070475 ], [ -0.24908535182476044, 46.65181037750147 ], [ -0.24908535182476044, 46.65181152821978 ], [ -0.2490856871008873, 46.651811988507106 ], [ -0.2490873634815216, 46.65181313922538 ], [ -0.2490873634815216, 46.65181521051821 ], [ -0.24908669292926788, 46.65181544066185 ], [ -0.2490856871008873, 46.651815670805505 ], [ -0.24908535182476044, 46.65181590094914 ], [ -0.24908199906349182, 46.651815670805505 ] ] ] ]
-
+    ThreeDRequestUsingPolygonExample:
+      summary: 3D request payload template using Polygon delimitation geometry
+      value:
+        delimitations:
+          - type: "Feature"
+            geometry:
+              type: "Polygon"
+              coordinates:
+                - [ [ [ -0.24944153697435922,46.65202795355856 ],[ -0.24949102208131535,46.65191413879569 ],[ -0.2494768834801846,46.651893405073054 ],[ -0.2494357530011655,46.651885905639375 ],[ -0.24939847850427554,46.651878406204645 ],[ -0.24930786291974982,46.65187664163176 ],[ -0.24924166855538488,46.6518647307621 ],[ -0.24923202860003357,46.651893846216154 ],[ -0.24930143628137102,46.65190708050787 ],[ -0.2492738017412819,46.651939283938276 ],[ -0.24926544711334486,46.65198825076146 ],[ -0.24944153697435922,46.65202795355856 ] ] ]
+    ThreeDResponseWithSucceededStatusExample:
+      summary: 3D response template with SUCCEEDED status
+      value:
+        id: "<your-id>"
+        status:
+          progression: "FINISHED"
+          health: "SUCCEEDED"
+          creationDatetime: "2026-01-21T10:12:54Z"
+        delimitations:
+          - type: "Feature"
+            geometry:
+              type: "Polygon"
+              coordinates:
+                - [ [ [ -0.24944153697435922,46.65202795355856 ],[ -0.24949102208131535,46.65191413879569 ],[ -0.2494768834801846,46.651893405073054 ],[ -0.2494357530011655,46.651885905639375 ],[ -0.24939847850427554,46.651878406204645 ],[ -0.24930786291974982,46.65187664163176 ],[ -0.24924166855538488,46.6518647307621 ],[ -0.24923202860003357,46.651893846216154 ],[ -0.24930143628137102,46.65190708050787 ],[ -0.2492738017412819,46.651939283938276 ],[ -0.24926544711334486,46.65198825076146 ],[ -0.24944153697435922,46.65202795355856 ] ] ]
+        cityJsonFileUrls:
+          - id: "<random-id>"
+            url: "https://prod-bucket-geo-jobs-bucket.s3.eu-west-3.amazonaws.com/city_jsons/5ecb363a-b1f5-4b47-b767-ec746ddfcf9a"
+    ThreeDResponseWithProcessingStatusExample:
+      summary: 3D response template with PROCESSING status
+      value:
+        id: "<your-id>"
+        status:
+          progression: "PROCESSING"
+          health: "UNKNOWN"
+          creationDatetime: "2026-02-12T10:12:54Z"
+        delimitations:
+          - type: "Feature"
+            geometry:
+              type: "Polygon"
+              coordinates:
+                - [ [ [ -0.24944153697435922,46.65202795355856 ],[ -0.24949102208131535,46.65191413879569 ],[ -0.2494768834801846,46.651893405073054 ],[ -0.2494357530011655,46.651885905639375 ],[ -0.24939847850427554,46.651878406204645 ],[ -0.24930786291974982,46.65187664163176 ],[ -0.24924166855538488,46.6518647307621 ],[ -0.24923202860003357,46.651893846216154 ],[ -0.24930143628137102,46.65190708050787 ],[ -0.2492738017412819,46.651939283938276 ],[ -0.24926544711334486,46.65198825076146 ],[ -0.24944153697435922,46.65202795355856 ] ] ]
+        cityJsonFileUrls: null
   responses:
     400:
       description: Bad request
@@ -2048,9 +2213,16 @@ components:
         address:
           type: string
     Address:
+      deprecated: true
+      description: Only AddressFullText must be used to migrate actual Address to its new specification
       type: object
       properties:
         address:
+          type: string
+    AddressFullText:
+      type: object
+      properties:
+        fullText:
           type: string
     ImageDetails:
       allOf:
@@ -2088,16 +2260,24 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Point2D'
-    CreateCityJSONRequest:
+    ThreeDRequest:
       type: object
       properties:
-        id:
-          type: string
         delimitations:
+          description: Refers to a list of delimitations, such as roofs, to be previewed in 3D models. Only `Polygon` geometry are supported for now.
           type: array
           items:
             $ref: "#/components/schemas/Feature"
+
+    CreateCityJSONRequest:
+      deprecated: true
+      allOf:
+        - $ref: '#/components/schemas/ThreeDRequest'
+      properties:
+        id:
+          type: string
     CityJSONRequestStatus:
+      deprecated: true
       type: string
       x-enum-varnames:
         - FINISHED
@@ -2109,7 +2289,29 @@ components:
         - FAILED
         - PROCESSING
         - UNAVAILABLE
+    ThreeDAddressesRequest:
+      type: object
+      properties:
+        delimitationType:
+          $ref: '#/components/schemas/DelimitationType'
+        addresses:
+          type: array
+          items:
+            $ref: '#/components/schemas/AddressFullText'
+    ThreeDResponseStatus:
+      allOf:
+        - $ref: '#/components/schemas/ThreeDRequest'
+      properties:
+        id:
+          type: string
+        status:
+          $ref: '#/components/schemas/Status'
+        cityJsonFileUrls:
+          type: array
+          items:
+            $ref: '#/components/schemas/CityJsonFileUrl'
     CityJSONRequest:
+      deprecated: true
       type: object
       allOf:
         - $ref: '#/components/schemas/CreateCityJSONRequest'
@@ -2120,13 +2322,31 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CityJSON'
-    CityJSON:
+    CityJsonFileUrl:
       type: object
       properties:
         id:
           type: string
         url:
           type: string
+    CityJSON:
+      deprecated: true
+      allOf:
+        - $ref: '#/components/schemas/CityJsonFileUrl'
+    DelimitationType:
+      type: string
+      description: |
+        By default delimitation type is PARCEL_FREE_DELIMITATION, earlier known as *ZONE* delimitation type.
+        PARCEL_FREE_DELIMITATION, earlier known as *ZONE* delimitation, supported any BP models, permits consumer to provide either point/polygon/multi-polygon geometry
+        USER_DEFINED_DELIMITATION, earlier known as *ROOF* delimitation, only supported with BP_TOITURE model for now, allows consumer to provide define delimitation (eg. roof for BP_TOITURE model), so API does not have to search for its inside provided zone;
+        PARCEL_CONSTRAINED_DELIMITATION, earlier known as *PARCEL* delimitation, only supported with BP_TOITURE and BP_VEGETATION models for now, allows consumer to exclude parcels for each zone provided.
+      enum:
+        - USER_DEFINED_DELIMITATION
+        - PARCEL_FREE_DELIMITATION
+        - PARCEL_CONSTRAINED_DELIMITATION
+        - ROOF
+        - ZONE
+        - PARCEL
     GeoJsonOutput:
       type: string
       description: |

@@ -1,13 +1,13 @@
-package app.bpartners.geojobs.model.lidar.planes;
+package app.bpartners.geojobs.model.lidar.planes.algorithm.model;
 
 import lombok.Getter;
 
 @Getter
-class UnionFindLasPointGeometry {
+public class UnionFind {
   private final int[] parent;
   private final int[] size;
 
-  UnionFindLasPointGeometry(int n) {
+  public UnionFind(int n) {
     parent = new int[n];
     size = new int[n];
     for (int i = 0; i < n; i++) {
@@ -16,14 +16,14 @@ class UnionFindLasPointGeometry {
     }
   }
 
-  int find(int x) {
+  public int find(int x) {
     if (parent[x] != x) {
       parent[x] = find(parent[x]);
     }
     return parent[x];
   }
 
-  void union(int a, int b) {
+  public void union(int a, int b) {
     a = find(a);
     b = find(b);
 

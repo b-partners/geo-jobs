@@ -14,7 +14,8 @@ public enum Plane3DExtractionStep {
   ITERATION_POINTS_EVOLUTION(5),
   CHIMNEY_POLYGON(6),
   CHIMNEY_CONVEXE_POLYGON(7),
-  CHIMNEY_FIXED_POLYGON(8);
+  CHIMNEY_FIXED_POLYGON(8),
+  RAW_PLANE_KERNEL(9);
 
   private final int stepIndex;
 

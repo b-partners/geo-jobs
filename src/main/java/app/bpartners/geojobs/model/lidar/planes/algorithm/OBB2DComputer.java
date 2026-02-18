@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.model.lidar.planes.postprocessing.model;
+package app.bpartners.geojobs.model.lidar.planes.algorithm;
 
 import static app.bpartners.geojobs.service.lidar.model.LidarClass.BATIMENT;
 import static java.lang.Double.NEGATIVE_INFINITY;
@@ -6,6 +6,7 @@ import static java.lang.Double.POSITIVE_INFINITY;
 
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.planes.Plane3D;
+import app.bpartners.geojobs.model.lidar.planes.algorithm.model.OBB2D;
 import java.util.function.Function;
 import org.locationtech.jts.geom.Polygon;
 

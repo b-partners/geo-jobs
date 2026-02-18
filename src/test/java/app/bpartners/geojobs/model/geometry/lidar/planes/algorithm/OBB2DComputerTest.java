@@ -1,11 +1,11 @@
-package app.bpartners.geojobs.model.geometry.lidar.planes.postprocessing.model;
+package app.bpartners.geojobs.model.geometry.lidar.planes.algorithm;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.service.lidar.model.LidarClass.BATIMENT;
 
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
-import app.bpartners.geojobs.model.lidar.planes.postprocessing.model.OBB2D;
-import app.bpartners.geojobs.model.lidar.planes.postprocessing.model.OBB2DComputer;
+import app.bpartners.geojobs.model.lidar.planes.algorithm.OBB2DComputer;
+import app.bpartners.geojobs.model.lidar.planes.algorithm.model.OBB2D;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Assertions;

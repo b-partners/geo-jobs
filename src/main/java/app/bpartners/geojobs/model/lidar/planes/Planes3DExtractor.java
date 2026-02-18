@@ -5,6 +5,8 @@ import static app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractio
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepExporter;
 import app.bpartners.geojobs.model.lidar.planes.postprocessing.ChimneyFixer;
+import app.bpartners.geojobs.model.lidar.planes.postprocessing.Plane3DDelimitationFixer;
+import app.bpartners.geojobs.model.lidar.planes.postprocessing.Plane3DMerger;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -12,11 +14,14 @@ import org.locationtech.jts.math.Vector2D;
 
 public class Planes3DExtractor implements Function<Collection<LasPointGeometry>, List<Plane3D>> {
   private final Plane3DExtractorConf conf;
-  // TODO: Improve optional Plane3DMerger
+  // TODO: validate and active
   private final Plane3DMerger plane3DMerger;
   private final Plane3DExtractionStepExporter exporter;
   private final OnePlane3DExtractor onePlane3DExtractor;
+
   private final ChimneyFixer chimneyFixer;
+  private final Plane3DDelimitationFixer delimitationFixer;
+
   private static final int MIN_VALID_POLYGON_POINTS_COUNT = 4;
 
   public Planes3DExtractor(Plane3DExtractorConf conf) {
@@ -26,19 +31,21 @@ public class Planes3DExtractor implements Function<Collection<LasPointGeometry>,
   public Planes3DExtractor(Plane3DExtractorConf conf, Plane3DExtractionStepExporter exporter) {
     this.conf = conf;
     this.exporter = exporter;
+    this.onePlane3DExtractor = new OnePlane3DExtractor(conf, exporter);
+    this.chimneyFixer = new ChimneyFixer(conf.chimneyFixerConf().maxChimneyArea(), exporter);
 
     this.plane3DMerger =
         new Plane3DMerger(
-            conf.planeMergerConf().slopeEpsilon(), conf.planeMergerConf().distanceEpsilon());
-
-    var continuationCluster =
-        new LasPointContinuationCluster(
-            conf.planeExtractionConf().pointContinuationThreshold(),
-            conf.planeConf().minPointsCount());
-
-    this.chimneyFixer = new ChimneyFixer(conf.chimneyFixerConf().maxChimneyArea(), exporter);
-
-    this.onePlane3DExtractor = new OnePlane3DExtractor(conf, exporter, continuationCluster);
+            conf.planeDelimitationConf().concaveRatio(),
+            conf.planeMergerConf().epsilonSlope(),
+            conf.planeMergerConf().epsilonZDistance(),
+            conf.planeMergerConf().epsilonXYDistance());
+    this.delimitationFixer =
+        new Plane3DDelimitationFixer(
+            conf.planeDelimitationFixerConf().maxEmptyCell(),
+            conf.planeDelimitationFixerConf().minCellPointsSize(),
+            conf.planeDelimitationFixerConf().gridSize(),
+            conf.planeDelimitationFixerConf().simplificationEpsilon());
   }
 
   @Override
@@ -66,13 +73,15 @@ public class Planes3DExtractor implements Function<Collection<LasPointGeometry>,
 
       if (doExport) {
         var subExporter = exporter.subSuffix(String.valueOf(++i));
+        subExporter.export(RAW_PLANE_KERNEL, result.plane().getKernel().getChains().getPoints());
         subExporter.export(RAW_PLANE_EXTRACTION, result.plane().getPoints());
         subExporter.export(ITERATION_POINTS_EVOLUTION, pointsToProcess);
       }
     }
 
     var filtered = mergeClosedPlaneAndFilterSmallOnes(planes);
-    return this.chimneyFixer.apply(filtered);
+    var fixedDelimitations = this.delimitationFixer.apply(filtered, points);
+    return this.chimneyFixer.apply(fixedDelimitations);
   }
 
   public List<Plane3D> mergeClosedPlaneAndFilterSmallOnes(Collection<Plane3D> planes) {
