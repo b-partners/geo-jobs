@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.endpoint.rest.controller;
 
-import static app.bpartners.geojobs.endpoint.rest.model.DelimitationType.PARCEL_FREE_DELIMITATION;
 import static app.bpartners.geojobs.model.DelimitationObjectType.BUILDING;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
@@ -10,7 +9,6 @@ import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.authorizer.CityJSONRequestOwnerAuthorizer;
 import app.bpartners.geojobs.endpoint.rest.validator.CreateCityJSONRequestValidator;
 import app.bpartners.geojobs.endpoint.rest.validator.ThreeDAddressesRequestValidator;
-import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.service.CityJSONRequestService;
