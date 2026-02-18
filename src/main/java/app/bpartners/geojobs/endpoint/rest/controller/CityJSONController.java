@@ -3,6 +3,8 @@ package app.bpartners.geojobs.endpoint.rest.controller;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.cityjson.CityJSONRequestMapper;
 import app.bpartners.geojobs.endpoint.rest.model.CityJSONRequest;
 import app.bpartners.geojobs.endpoint.rest.model.CreateCityJSONRequest;
+import app.bpartners.geojobs.endpoint.rest.model.ThreeDRequest;
+import app.bpartners.geojobs.endpoint.rest.model.ThreeDResponseStatus;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.authorizer.CityJSONRequestOwnerAuthorizer;
 import app.bpartners.geojobs.endpoint.rest.validator.CreateCityJSONRequestValidator;
@@ -22,14 +24,42 @@ public class CityJSONController {
   private final CityJSONRequestOwnerAuthorizer cityJSONRequestOwnerAuthorizer;
   private final CreateCityJSONRequestValidator createCityJSONRequestValidator;
 
+  @GetMapping("/3d/{id}")
+  public ThreeDResponseStatus getRequested3DFileById(@PathVariable(name = "id") String requestId) {
+    var communityOwnerId = getCommunityAuthorizationId();
+
+    cityJSONRequestOwnerAuthorizer.accept(requestId, communityOwnerId, authProvider.getPrincipal());
+
+    return cityJSONRequestMapper.toRestThreeDResponseStatus(
+        cityJSONRequestService.getById(requestId));
+  }
+
+  @PostMapping("/3d/{id}")
+  public ThreeDResponseStatus request3DFileOnDelimitations(
+      @RequestBody ThreeDRequest threeDRequest,
+      @PathVariable(name = "id") String requestIdentifier) {
+    createCityJSONRequestValidator.accept(threeDRequest);
+
+    var communityOwnerId = getCommunityAuthorizationId();
+    var toProcess =
+        cityJSONRequestMapper.createToDomain(requestIdentifier, threeDRequest, communityOwnerId);
+    cityJSONRequestOwnerAuthorizer.accept(
+        toProcess.getId(), communityOwnerId, authProvider.getPrincipal());
+
+    return cityJSONRequestMapper.toRestThreeDResponseStatus(
+        cityJSONRequestService.process(toProcess));
+  }
+
   @PutMapping("/city-jsons/{id}/process")
   public CityJSONRequest processCityJSONRequest(
       @RequestBody CreateCityJSONRequest createCityJSONRequest,
-      @PathVariable(name = "id") String ignored) {
+      @PathVariable(name = "id") String requestIdentifier) {
     createCityJSONRequestValidator.accept(createCityJSONRequest);
 
     var communityOwnerId = getCommunityAuthorizationId();
-    var toProcess = cityJSONRequestMapper.createToDomain(createCityJSONRequest, communityOwnerId);
+    var toProcess =
+        cityJSONRequestMapper.createToDomain(
+            requestIdentifier, createCityJSONRequest, communityOwnerId);
     cityJSONRequestOwnerAuthorizer.accept(
         toProcess.getId(), communityOwnerId, authProvider.getPrincipal());
 
