@@ -5,6 +5,7 @@ import static app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractio
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepExporter;
 import app.bpartners.geojobs.model.lidar.planes.postprocessing.ChimneyFixer;
+import app.bpartners.geojobs.model.lidar.planes.postprocessing.Plane3DDelimitationFixer;
 import app.bpartners.geojobs.model.lidar.planes.postprocessing.Plane3DMerger;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -17,7 +18,10 @@ public class Planes3DExtractor implements Function<Collection<LasPointGeometry>,
   private final Plane3DMerger plane3DMerger;
   private final Plane3DExtractionStepExporter exporter;
   private final OnePlane3DExtractor onePlane3DExtractor;
+
   private final ChimneyFixer chimneyFixer;
+  private final Plane3DDelimitationFixer delimitationFixer;
+
   private static final int MIN_VALID_POLYGON_POINTS_COUNT = 4;
 
   public Planes3DExtractor(Plane3DExtractorConf conf) {
@@ -36,6 +40,12 @@ public class Planes3DExtractor implements Function<Collection<LasPointGeometry>,
             conf.planeMergerConf().epsilonSlope(),
             conf.planeMergerConf().epsilonZDistance(),
             conf.planeMergerConf().epsilonXYDistance());
+    this.delimitationFixer = new Plane3DDelimitationFixer(
+       conf.planeDelimitationFixerConf().maxEmptyCell(),
+       conf.planeDelimitationFixerConf().minCellPointsSize(),
+       conf.planeDelimitationFixerConf().gridSize(),
+       conf.planeDelimitationFixerConf().simplificationEpsilon()
+    );
   }
 
   @Override
@@ -70,6 +80,7 @@ public class Planes3DExtractor implements Function<Collection<LasPointGeometry>,
     }
 
     var filtered = mergeClosedPlaneAndFilterSmallOnes(planes);
+    var fixedDelimitations = this.delimitationFixer.apply(filtered, points);
     return this.chimneyFixer.apply(filtered);
   }
 
