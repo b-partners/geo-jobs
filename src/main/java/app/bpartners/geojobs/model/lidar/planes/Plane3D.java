@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.model.lidar.planes;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
+import static app.bpartners.geojobs.model.lidar.planes.algorithm.PointsDelimitationComputer.getConvex;
 
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.LasPointsDelimiter;
@@ -8,31 +9,33 @@ import app.bpartners.geojobs.model.lidar.Polygon3DArea;
 import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepExporter;
 import java.util.*;
 import lombok.*;
-import org.locationtech.jts.algorithm.ConvexHull;
+import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Polygon;
 
+@Slf4j
 @Getter
 @Builder(toBuilder = true)
 @RequiredArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode
 public class Plane3D {
-  protected final double a;
-  protected final double b;
-  protected final double c;
-  protected final double d;
-  protected final Kernel kernel;
-  protected final Set<LasPointGeometry> points;
+  @EqualsAndHashCode.Include protected final double a;
+  @EqualsAndHashCode.Include protected final double b;
+  @EqualsAndHashCode.Include protected final double c;
+  @EqualsAndHashCode.Include protected final double d;
+  @EqualsAndHashCode.Exclude protected final Kernel kernel;
+  @EqualsAndHashCode.Exclude protected final Set<LasPointGeometry> points;
 
-  protected final double delimitationConcaveRatio;
-  protected final double delimitationSimplificationEpsilon;
-  protected final Plane3DExtractionStepExporter exporter;
+  @EqualsAndHashCode.Exclude protected final double delimitationConcaveRatio;
+  @EqualsAndHashCode.Exclude protected final double delimitationSimplificationEpsilon;
+  @EqualsAndHashCode.Exclude protected final Plane3DExtractionStepExporter exporter;
 
-  private Double norm;
-  private Polygon3DArea area;
-  protected Polygon delimitation;
-  private Plane3DSlopeInDegrees slopeInDegrees;
-  private Polygon convexDelimitation;
+  @EqualsAndHashCode.Include private Double norm;
+  @EqualsAndHashCode.Exclude private Polygon3DArea area;
+  @EqualsAndHashCode.Exclude protected Polygon delimitation;
+  @EqualsAndHashCode.Exclude protected Polygon convexDelimitation;
+  @EqualsAndHashCode.Exclude private Plane3DSlopeInDegrees slopeInDegrees;
 
   public static Plane3D fit(
       Kernel kernel,
@@ -59,6 +62,11 @@ public class Plane3D {
     var v1 = p2.subtract(p1);
     var v2 = p3.subtract(p1);
     var normal = v1.cross(v2).normalized();
+
+    if (normal.getZ() > 0) {
+      normal = normal.negate();
+    }
+
     var d = -normal.dot(p1);
     var a = normal.getX();
     var b = normal.getY();
@@ -79,7 +87,7 @@ public class Plane3D {
   }
 
   public Plane3D with(Set<LasPointGeometry> points) {
-    return this.toBuilder().points(points).build();
+    return this.toBuilder().points(new HashSet<>(points)).build();
   }
 
   public static Plane3D empty() {
@@ -110,7 +118,7 @@ public class Plane3D {
           new LasPointsDelimiter(
               points, delimitationConcaveRatio, delimitationSimplificationEpsilon, exporter);
       delimitation = delimiter.getPolygon();
-      delimitation = makePlane(delimitation);
+      delimitation = projectPolygonToPlane(delimitation);
     }
 
     return delimitation;
@@ -136,59 +144,35 @@ public class Plane3D {
   }
 
   /* Or simply with average */
-  private Polygon makePlane(Polygon polygon) {
-    var coordinates = polygon.getCoordinates();
-    var projected = new Coordinate[coordinates.length];
-
-    for (int i = 0; i < coordinates.length; i++) {
-      double x = coordinates[i].getX();
-      double y = coordinates[i].getY();
-      double z = coordinates[i].getZ();
-
-      double t = (a * x + b * y + c * z + d) / (a * a + b * b + c * c);
-
-      double xProj = x - a * t;
-      double yProj = y - b * t;
-      double zProj = z - c * t;
-
-      projected[i] = new Coordinate(xProj, yProj, zProj);
-    }
-
-    return geometryFactory.createPolygon(projected);
-  }
-
-  public Plane3D merge(Plane3D other) {
-    if (other.getPoints().size() > this.getPoints().size()) {
-      return other.merge(this);
-    }
-
-    var mergedPoints = new HashSet<>(this.points);
-    mergedPoints.addAll(other.getPoints());
-
-    return this.toBuilder()
-        .area(null)
-        .delimitation(null)
-        .slopeInDegrees(null)
-        .points(mergedPoints)
-        .build();
+  private Polygon projectPolygonToPlane(Polygon polygon) {
+    var coordinates =
+        Arrays.stream(polygon.getCoordinates())
+            .map(
+                coordinate ->
+                    new Coordinate(
+                        coordinate.getX(),
+                        coordinate.getY(),
+                        zAt(coordinate.getX(), coordinate.getY())))
+            .toArray(Coordinate[]::new);
+    return geometryFactory.createPolygon(coordinates);
   }
 
   public Polygon getConvexDelimitation() {
     if (convexDelimitation == null) {
-      convexDelimitation = getConvexDelimitation(this);
+      var convex = getConvex(points);
+      convexDelimitation = projectPolygonToPlane(convex);
     }
     return convexDelimitation;
   }
 
-  private static Polygon getConvexDelimitation(Plane3D plane) {
-    var coordinates =
-        plane.getPoints().stream().map(LasPointGeometry::getCoordinate).toArray(Coordinate[]::new);
-    var hull = new ConvexHull(coordinates, geometryFactory).getConvexHull();
+  public boolean isVertical() {
+    return Math.abs(c) < 1e-12;
+  }
 
-    if (hull instanceof Polygon polygon) {
-      return polygon;
+  public double zAt(double x, double y) {
+    if (isVertical()) {
+      throw new IllegalStateException("Plane is vertical: z cannot be computed for given x,y");
     }
-
-    throw new IllegalArgumentException("Invalid polygon retrieved from plane");
+    return -(a * x + b * y + d) / c;
   }
 }

@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.model.lidar;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
+import static app.bpartners.geojobs.service.lidar.model.LidarClass.BATIMENT;
 import static app.bpartners.geojobs.service.lidar.model.LidarClass.fromValue;
 
 import app.bpartners.geojobs.service.lidar.model.LidarClass;
@@ -27,6 +28,10 @@ public class LasPointGeometry extends Point {
     double z = point.getZ() * header.getZScaleFactor() + header.getZOffset();
 
     return new CoordinateArraySequence(new Coordinate[] {new Coordinate(x, y, z)});
+  }
+
+  public LasPointGeometry(double x, double y, double z) {
+    this(x, y, z, BATIMENT);
   }
 
   public LasPointGeometry(double x, double y, double z, LidarClass classification) {
@@ -72,6 +77,10 @@ public class LasPointGeometry extends Point {
 
   public double distance(LasPointGeometry other) {
     return Math.sqrt(squaredDistance(other));
+  }
+
+  public LasPointGeometry negate() {
+    return new LasPointGeometry(-this.getX(), -this.getY(), -this.getZ(), this.classification);
   }
 
   public double squaredDistance(LasPointGeometry other) {

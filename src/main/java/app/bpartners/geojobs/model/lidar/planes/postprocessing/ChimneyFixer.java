@@ -1,11 +1,13 @@
 package app.bpartners.geojobs.model.lidar.planes.postprocessing;
 
+import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStep.*;
 import static java.util.function.Predicate.not;
 
 import app.bpartners.geojobs.model.lidar.planes.Plane3D;
+import app.bpartners.geojobs.model.lidar.planes.algorithm.OBB3DComputer;
 import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepExporter;
-import app.bpartners.geojobs.model.lidar.planes.postprocessing.model.OBB3DComputer;
+import app.bpartners.geojobs.model.lidar.planes.postprocessing.model.ChimneyPlane3D;
 import java.util.*;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
@@ -30,23 +32,36 @@ public class ChimneyFixer implements Function<Collection<Plane3D>, List<Plane3D>
     var separated = separate(planes);
     List<Plane3D> result = new ArrayList<>(separated.others());
 
+    log.info("chimmeys={}", separated.chimneys());
     var doExport = exporter != null;
     int i = 1;
     for (var chimney : separated.chimneys()) {
-      var obb3D = obb3DComputer.apply(chimney);
-      var fixed = chimney.toBuilder().delimitation(obb3D).area(null).build();
-
-      result.add(fixed);
+      var fixed = fix(chimney);
+      result.add(new ChimneyPlane3D(fixed));
 
       if (doExport) {
         var subExporter = exporter.subSuffix(String.valueOf(i++));
-        subExporter.export(CHIMNEY_FIXED_POLYGON, obb3D);
         subExporter.export(CHIMNEY_POLYGON, chimney.getDelimitation());
+        subExporter.export(CHIMNEY_FIXED_POLYGON, fixed.getDelimitation());
         subExporter.export(CHIMNEY_CONVEXE_POLYGON, chimney.getConvexDelimitation());
       }
     }
 
     return result;
+  }
+
+  public Plane3D fix(Plane3D chimney) {
+    var obb3D = obb3DComputer.apply(chimney);
+    var coordinates = obb3D.getCoordinates();
+    var maxZ = Arrays.stream(coordinates).mapToDouble(Coordinate::getZ).max().orElseThrow();
+
+    var newCoordinates =
+        Arrays.stream(coordinates)
+            .map(coordinate -> new Coordinate(coordinate.getX(), coordinate.getY(), maxZ))
+            .toArray(Coordinate[]::new);
+
+    var delimitation = geometryFactory.createPolygon(newCoordinates);
+    return chimney.toBuilder().delimitation(delimitation).area(null).build();
   }
 
   private SeparatorResult separate(Collection<Plane3D> planes) {
@@ -64,10 +79,10 @@ public class ChimneyFixer implements Function<Collection<Plane3D>, List<Plane3D>
     return result;
   }
 
-  private static List<Plane3D> getPlanesWithBigAreasSortedByArea(
-      Collection<Plane3D> planes, double maxArea) {
+  static List<Plane3D> getPlanesWithBigAreasSortedByArea(
+      Collection<Plane3D> planes, double minArea) {
     return planes.stream()
-        .filter(plane -> plane.getArea() > maxArea)
+        .filter(plane -> plane.getArea() > minArea)
         .sorted(Comparator.comparingDouble(Plane3D::get2DArea).reversed())
         .toList();
   }
@@ -87,7 +102,7 @@ public class ChimneyFixer implements Function<Collection<Plane3D>, List<Plane3D>
             });
   }
 
-  private static List<Plane3D> getPlanesWithSmallAreas(Collection<Plane3D> planes, double maxArea) {
+  static List<Plane3D> getPlanesWithSmallAreas(Collection<Plane3D> planes, double maxArea) {
     return planes.stream().filter(not(plane -> plane.getArea() > maxArea)).toList();
   }
 

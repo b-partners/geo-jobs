@@ -4,6 +4,7 @@ import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
+import app.bpartners.geojobs.model.lidar.planes.algorithm.XYZPointsCluster;
 import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepExporter;
 import java.security.SecureRandom;
 import java.util.*;
@@ -14,8 +15,15 @@ import lombok.RequiredArgsConstructor;
 public class OnePlane3DExtractor
     implements Function<Set<LasPointGeometry>, OnePlane3DExtractor.Result> {
   private final Plane3DExtractorConf conf;
+  private final XYZPointsCluster xyzPointsCluster;
   private final Plane3DExtractionStepExporter exporter;
-  private final LasPointContinuationCluster continuationCluster;
+
+  public OnePlane3DExtractor(Plane3DExtractorConf conf, Plane3DExtractionStepExporter exporter) {
+    this(
+        conf,
+        new XYZPointsCluster(conf.planeExtractionConf().pointContinuationThreshold()),
+        exporter);
+  }
 
   @Override
   public Result apply(Set<LasPointGeometry> points) {
@@ -66,10 +74,10 @@ public class OnePlane3DExtractor
         continue;
       }
 
-      var clusterResult = continuationCluster.apply(inliers);
-      if (clusterResult.inliers().size() > bestInliers.size()) {
+      var clusterResult = getBestXYZCluster(inliers);
+      if (clusterResult.size() > bestInliers.size()) {
         bestModel = box.getPlane();
-        bestInliers = new ArrayList<>(clusterResult.inliers());
+        bestInliers = new ArrayList<>(clusterResult);
       }
     }
 
@@ -81,6 +89,11 @@ public class OnePlane3DExtractor
     var inlierSet = new HashSet<>(bestInliers);
     var outliers = points.stream().filter(not(inlierSet::contains)).collect(toSet());
     return new Result(bestModel.with(inlierSet), outliers);
+  }
+
+  private List<LasPointGeometry> getBestXYZCluster(Collection<LasPointGeometry> points) {
+    var clusters = xyzPointsCluster.apply(points);
+    return clusters.stream().max(Comparator.comparingInt(List::size)).orElseThrow();
   }
 
   public record Result(Plane3D plane, Set<LasPointGeometry> outliers) {}

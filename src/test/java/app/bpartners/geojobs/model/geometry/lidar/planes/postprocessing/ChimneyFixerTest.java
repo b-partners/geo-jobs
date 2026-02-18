@@ -8,8 +8,8 @@ import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.model.lidar.Polygon3DArea;
 import app.bpartners.geojobs.model.lidar.planes.Plane3D;
+import app.bpartners.geojobs.model.lidar.planes.algorithm.OBB3DComputer;
 import app.bpartners.geojobs.model.lidar.planes.postprocessing.ChimneyFixer;
-import app.bpartners.geojobs.model.lidar.planes.postprocessing.model.OBB3DComputer;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
