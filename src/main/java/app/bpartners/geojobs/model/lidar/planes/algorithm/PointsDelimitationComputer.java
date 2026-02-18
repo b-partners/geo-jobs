@@ -14,6 +14,8 @@ import org.locationtech.jts.geom.Polygon;
 
 @Slf4j
 public class PointsDelimitationComputer {
+  private PointsDelimitationComputer() {}
+
   public static Polygon getConcave(Collection<LasPointGeometry> points, double ratio) {
     var multiPoint = geometryFactory.createMultiPointFromCoords(getCoordinates(points));
 

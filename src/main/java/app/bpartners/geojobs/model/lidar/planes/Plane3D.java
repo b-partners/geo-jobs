@@ -20,22 +20,22 @@ import org.locationtech.jts.geom.Polygon;
 @AllArgsConstructor
 @EqualsAndHashCode
 public class Plane3D {
-  protected @EqualsAndHashCode.Include final double a;
-  protected @EqualsAndHashCode.Include final double b;
-  protected @EqualsAndHashCode.Include final double c;
-  protected @EqualsAndHashCode.Include final double d;
-  protected @EqualsAndHashCode.Exclude final Kernel kernel;
-  protected @EqualsAndHashCode.Exclude final Set<LasPointGeometry> points;
+  @EqualsAndHashCode.Include protected final double a;
+  @EqualsAndHashCode.Include protected final double b;
+  @EqualsAndHashCode.Include protected final double c;
+  @EqualsAndHashCode.Include protected final double d;
+  @EqualsAndHashCode.Exclude protected final Kernel kernel;
+  @EqualsAndHashCode.Exclude protected final Set<LasPointGeometry> points;
 
-  protected @EqualsAndHashCode.Exclude final double delimitationConcaveRatio;
-  protected @EqualsAndHashCode.Exclude final double delimitationSimplificationEpsilon;
-  protected @EqualsAndHashCode.Exclude final Plane3DExtractionStepExporter exporter;
+  @EqualsAndHashCode.Exclude protected final double delimitationConcaveRatio;
+  @EqualsAndHashCode.Exclude protected final double delimitationSimplificationEpsilon;
+  @EqualsAndHashCode.Exclude protected final Plane3DExtractionStepExporter exporter;
 
-  private @EqualsAndHashCode.Include Double norm;
-  private @EqualsAndHashCode.Exclude Polygon3DArea area;
-  protected @EqualsAndHashCode.Exclude Polygon delimitation;
-  protected @EqualsAndHashCode.Exclude Polygon convexDelimitation;
-  private @EqualsAndHashCode.Exclude Plane3DSlopeInDegrees slopeInDegrees;
+  @EqualsAndHashCode.Include private Double norm;
+  @EqualsAndHashCode.Exclude private Polygon3DArea area;
+  @EqualsAndHashCode.Exclude protected Polygon delimitation;
+  @EqualsAndHashCode.Exclude protected Polygon convexDelimitation;
+  @EqualsAndHashCode.Exclude private Plane3DSlopeInDegrees slopeInDegrees;
 
   public static Plane3D fit(
       Kernel kernel,

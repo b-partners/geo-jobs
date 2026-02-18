@@ -9,7 +9,7 @@ public class Vector3DUtils {
   public static double getAngleInDegrees(Vector3D v1, Vector3D v2) {
     var n1 = v1.normalize();
     var n2 = v2.normalize();
-    var dot = Math.max(-1.0, Math.min(1.0, n1.dot(n2)));
+    var dot = Math.clamp(n1.dot(n2), -1.0, 1.0);
     var angleRad = Math.acos(dot);
     return Math.toDegrees(angleRad);
   }

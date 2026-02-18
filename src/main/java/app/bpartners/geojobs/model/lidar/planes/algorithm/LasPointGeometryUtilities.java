@@ -6,6 +6,8 @@ import java.util.Collection;
 import java.util.List;
 
 public class LasPointGeometryUtilities {
+  private LasPointGeometryUtilities() {}
+
   public static List<LasPointGeometry> project(Collection<LasPointGeometry> points, Plane3D plane) {
     return points.stream()
         .map(
