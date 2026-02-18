@@ -1,12 +1,5 @@
 {
-  "id": "b3f7be98-7842-405f-88ab-ff27d6bc96fb",
-  "status": "FINISHED",
-  "cityJsons": [
-    {
-      "id": "5ecb363a-b1f5-4b47-b767-ec746ddfcf9a",
-      "url": "https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/cityjson/city_json_file_example.json"
-    }
-  ],
+  "id": "d12bee63-fbc1-4d1e-90f7-5de6b3b5e0dc",
   "delimitations": [
     {
       "type": "Feature",
