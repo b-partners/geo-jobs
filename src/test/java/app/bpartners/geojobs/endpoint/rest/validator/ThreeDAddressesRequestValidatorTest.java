@@ -5,7 +5,7 @@ import static app.bpartners.geojobs.endpoint.rest.model.DelimitationType.PARCEL_
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
 
-import app.bpartners.geojobs.endpoint.rest.model.Address;
+import app.bpartners.geojobs.endpoint.rest.model.AddressFullText;
 import app.bpartners.geojobs.endpoint.rest.model.ThreeDAddressesRequest;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
@@ -32,13 +32,15 @@ class ThreeDAddressesRequestValidatorTest {
             BadRequestException.class,
             () ->
                 subject.accept(
-                    new ThreeDAddressesRequest().addresses(List.of(new Address().address(null)))));
+                    new ThreeDAddressesRequest()
+                        .addresses(List.of(new AddressFullText().fullText(null)))));
     var actualExceptionFromEmptyStringAddressValue =
         assertThrows(
             BadRequestException.class,
             () ->
                 subject.accept(
-                    new ThreeDAddressesRequest().addresses(List.of(new Address().address("")))));
+                    new ThreeDAddressesRequest()
+                        .addresses(List.of(new AddressFullText().fullText("")))));
 
     assertEquals("Addresses can not be null or empty", actualExceptionFromNull.getMessage());
     assertEquals(
@@ -60,7 +62,7 @@ class ThreeDAddressesRequestValidatorTest {
             () ->
                 subject.accept(
                     new ThreeDAddressesRequest()
-                        .addresses(List.of(new Address().address(randomUUID().toString())))
+                        .addresses(List.of(new AddressFullText().fullText(randomUUID().toString())))
                         .delimitationType(PARCEL_CONSTRAINED_DELIMITATION)));
 
     assertEquals(
@@ -76,14 +78,14 @@ class ThreeDAddressesRequestValidatorTest {
         () ->
             subject.accept(
                 new ThreeDAddressesRequest()
-                    .addresses(List.of(new Address().address(randomUUID().toString())))
+                    .addresses(List.of(new AddressFullText().fullText(randomUUID().toString())))
                     .delimitationType(PARCEL_FREE_DELIMITATION)));
 
     assertDoesNotThrow(
         () ->
             subject.accept(
                 new ThreeDAddressesRequest()
-                    .addresses(List.of(new Address().address(randomUUID().toString())))
+                    .addresses(List.of(new AddressFullText().fullText(randomUUID().toString())))
                     .delimitationType(null)));
   }
 }

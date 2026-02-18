@@ -61,7 +61,7 @@ public class CityJSONController {
     threeDAddressesRequestValidator.accept(threeDRequest);
     var convertedAddressesToDelimitations =
         threeDRequest.getAddresses().stream()
-            .map(Address::getAddress)
+            .map(AddressFullText::getFullText)
             .map(addressValue -> featureAddressConverter.apply(addressValue, BUILDING))
             .map(FeatureMapper::toRestFeature)
             .toList();

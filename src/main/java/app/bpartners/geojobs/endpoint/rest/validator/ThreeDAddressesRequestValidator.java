@@ -18,7 +18,7 @@ public class ThreeDAddressesRequestValidator implements Consumer<ThreeDAddresses
         || threeDRequest.getAddresses().stream()
             .anyMatch(
                 address ->
-                    address.getAddress() == null || address.getAddress().equalsIgnoreCase(""))) {
+                    address.getFullText() == null || address.getFullText().equalsIgnoreCase(""))) {
       throw new BadRequestException("Addresses can not be null or empty");
     }
     if (threeDRequest.getDelimitationType() != null
