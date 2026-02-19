@@ -41,18 +41,24 @@ public class CityJSONRequestMapper {
   public ThreeDResponseStatus toRestThreeDResponseStatus(
       app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest cityJSONRequest) {
     var restDelimitations =
-        cityJSONRequest.getDelimitations().stream().map(FeatureMapper::toRestFeature).toList();
+        cityJSONRequest.getDelimitations() == null
+            ? null
+            : cityJSONRequest.getDelimitations().stream()
+                .map(FeatureMapper::toRestFeature)
+                .toList();
 
     List<CityJSON> cityJsons =
-        cityJSONRequest.getCityJsons() == null ? List.of() : cityJSONRequest.getCityJsons();
+        cityJSONRequest.getCityJsons() == null ? null : cityJSONRequest.getCityJsons();
     var restCityJsons =
-        cityJsons.parallelStream()
-            .map(
-                cityJson -> {
-                  var fileUrl = bucketComponent.presign(cityJson.getS3FileKey());
-                  return CityJSONMapper.toRestCityJsonFileUrl(cityJson, fileUrl);
-                })
-            .toList();
+        cityJsons == null
+            ? null
+            : cityJsons.parallelStream()
+                .map(
+                    cityJson -> {
+                      var fileUrl = bucketComponent.presign(cityJson.getS3FileKey());
+                      return CityJSONMapper.toRestCityJsonFileUrl(cityJson, fileUrl);
+                    })
+                .toList();
 
     return new ThreeDResponseStatus()
         .id(cityJSONRequest.getId())
