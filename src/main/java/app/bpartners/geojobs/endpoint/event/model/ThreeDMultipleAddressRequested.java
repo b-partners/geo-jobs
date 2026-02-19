@@ -13,7 +13,6 @@ import lombok.*;
 public class ThreeDMultipleAddressRequested extends PojaEvent {
   private String requestIdentifier;
   private List<String> addresses;
-  private String communityOwnerId;
 
   @Override
   public Duration maxConsumerDuration() {

@@ -1,12 +1,8 @@
 package app.bpartners.geojobs.endpoint.rest.controller;
 
-import static app.bpartners.geojobs.endpoint.rest.model.Status.HealthEnum.UNKNOWN;
-import static app.bpartners.geojobs.endpoint.rest.model.Status.ProgressionEnum.PROCESSING;
 import static app.bpartners.geojobs.model.DelimitationObjectType.BUILDING;
-import static java.time.Instant.now;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.ThreeDMultipleAddressRequested;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.cityjson.CityJSONRequestMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
@@ -18,7 +14,6 @@ import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.service.CityJSONRequestService;
 import app.bpartners.geojobs.service.FeatureAddressConverter;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -82,18 +77,13 @@ public class CityJSONController {
       return cityJSONRequestMapper.toRestThreeDResponseStatus(
           cityJSONRequestService.process(toProcess));
     }
-    eventProducer.accept(
-        List.of(
-            new ThreeDMultipleAddressRequested(
-                requestIdentifier,
-                threeDRequest.getAddresses().stream().map(AddressFullText::getFullText).toList(),
-                communityOwnerId)));
-    // TODO: persist before returning response and include it directly inside service
-    return new ThreeDResponseStatus()
-        .id(requestIdentifier)
-        .delimitations(List.of())
-        .cityJsonFileUrls(null)
-        .status(new Status().progression(PROCESSING).health(UNKNOWN).creationDatetime(now()));
+    var savedRequest =
+        cityJSONRequestService.processAddressRequest(
+            requestIdentifier,
+            threeDRequest.getAddresses().stream().map(AddressFullText::getFullText).toList(),
+            communityOwnerId);
+
+    return cityJSONRequestMapper.toRestThreeDResponseStatus(savedRequest);
   }
 
   @PutMapping("/city-jsons/{id}/process")
