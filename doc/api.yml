@@ -93,7 +93,7 @@ info:
     
     ### Request 3D city models on provided point
     1. Submit a 3D request through `POST /3d/{id}` where `{id}` is yours to be created
-    using the example request body accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/cityjson/city_json_point_delimitation_request_v1-3-1_example.json).
+    using the example request body accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/cityjson/city_json_point_delimitation_request_v1_3_1_example.json).
     2. Track the progress of your 3D request through `GET /3d/{id}`.
     When its status progression is `FINISHED` and status health `SUCCEEDED`, its attribute `cityJsonFileUrls` contains pre-signed URL to allow downloading cityJSON files. 
     API response with result example can be found [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/cityjson/city_json_response_status_example.json).
