@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.validator;
 
+import static app.bpartners.geojobs.endpoint.rest.model.DelimitationObjectType.BUILDING_ROOF;
 import static app.bpartners.geojobs.endpoint.rest.model.DelimitationType.PARCEL_FREE_DELIMITATION;
 
 import app.bpartners.geojobs.endpoint.rest.model.ThreeDAddressesRequest;
@@ -27,6 +28,13 @@ public class ThreeDAddressesRequestValidator implements Consumer<ThreeDAddresses
           "Only PARCEL_FREE_DELIMITATION is supported to request 3D model on addresses for now but"
               + " actual is "
               + threeDRequest.getDelimitationType());
+    }
+    if (threeDRequest.getDelimitationObjectType() != null
+        && !BUILDING_ROOF.equals(threeDRequest.getDelimitationObjectType())) {
+      throw new NotImplementedException(
+          "Only BUILDING_ROOF is supported to request 3D model on addresses for now but"
+              + " actual is "
+              + threeDRequest.getDelimitationObjectType());
     }
   }
 }
