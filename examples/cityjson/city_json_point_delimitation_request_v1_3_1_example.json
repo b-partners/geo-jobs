@@ -1,0 +1,17 @@
+{
+  "delimitationObjectType": "BUILDING_ROOF",
+  "delimitationType": "PARCEL_FREE_DELIMITATION",
+  "delimitations": [
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          0.2492928974906442,
+          46.65193378162583
+        ]
+      }
+    }
+  ]
+}
