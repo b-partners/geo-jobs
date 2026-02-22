@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.endpoint.event.model;
 
+import app.bpartners.geojobs.endpoint.rest.model.Point;
 import java.time.Duration;
 import java.util.List;
 import lombok.*;
@@ -12,7 +13,9 @@ import lombok.*;
 @ToString
 public class ThreeDMultipleAddressRequested extends PojaEvent {
   private String requestIdentifier;
+  private String communityOwnerId;
   private List<String> addresses;
+  private List<Point> points;
 
   @Override
   public Duration maxConsumerDuration() {

@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 
+// TODO: rename to make both address and point generic
 @Component
 public class FeatureAddressConverter
     implements BiFunction<String, DelimitationObjectType, Feature> {
@@ -59,17 +60,24 @@ public class FeatureAddressConverter
       if (longitude == null) {
         throwsExceptionOnAddress(address);
       }
-      var nearestRoofMultiPolygon =
-          geometryConverter.retrieveNearestRoofMultiPolygon(
-              List.of(BigDecimal.valueOf(longitude), BigDecimal.valueOf(latitude)));
-      var properties = new HashMap<String, Object>();
-      properties.put("address", address);
-      return geometryConverter.toFeature(
-          null, HOUSES_0.getZoomLevel(), properties, nearestRoofMultiPolygon);
+      return apply(address, longitude, latitude);
     }
     throw new NotImplementedException(
         "Unable to convert address to Feature for delimitationObjectType "
             + delimitationObjectType);
+  }
+
+  // TODO: include delimitationObjectType when generalized
+  public Feature apply(String address, Double longitude, Double latitude) {
+    var nearestRoofMultiPolygon =
+        geometryConverter.retrieveNearestRoofMultiPolygon(
+            List.of(BigDecimal.valueOf(longitude), BigDecimal.valueOf(latitude)));
+    var properties = new HashMap<String, Object>();
+    if (address != null) {
+      properties.put("address", address);
+    }
+    return geometryConverter.toFeature(
+        null, HOUSES_0.getZoomLevel(), properties, nearestRoofMultiPolygon);
   }
 
   private void throwsExceptionOnAddress(String address) {

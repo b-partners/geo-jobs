@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.controller.mapper.cityjson;
 
+import static app.bpartners.geojobs.endpoint.rest.model.DelimitationObjectType.BUILDING_ROOF;
 import static java.time.Instant.now;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
@@ -98,6 +99,10 @@ public class CityJSONRequestMapper {
         .creationDatetime(now())
         .communityOwnerId(communityOwnerId)
         .delimitations(domainDelimitations)
+        .delimitationObjectType(
+            createCityJSONRequest.getDelimitationObjectType() == null
+                ? BUILDING_ROOF
+                : createCityJSONRequest.getDelimitationObjectType())
         .build();
   }
 }

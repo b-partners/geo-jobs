@@ -3,8 +3,7 @@ package app.bpartners.geojobs.endpoint.rest.validator;
 import static app.bpartners.geojobs.endpoint.rest.model.DelimitationObjectType.BUILDING_ROOF;
 import static app.bpartners.geojobs.endpoint.rest.model.DelimitationType.PARCEL_FREE_DELIMITATION;
 
-import app.bpartners.geojobs.endpoint.rest.model.CreateCityJSONRequest;
-import app.bpartners.geojobs.endpoint.rest.model.ThreeDRequest;
+import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import java.util.function.Consumer;
@@ -52,6 +51,27 @@ public class CreateCityJSONRequestValidator implements Consumer<CreateCityJSONRe
       throw new NotImplementedException(
           "Only BUILDING_ROOF delimitationObjectType supported for now, otherwise actual is "
               + request.getDelimitationObjectType());
+    }
+
+    if (request.getDelimitations().size() > 1
+        && (!request.getDelimitations().stream()
+                .allMatch(
+                    feature ->
+                        feature.getGeometry() != null
+                            && feature.getGeometry().getActualInstance() instanceof Point)
+            || !request.getDelimitations().stream()
+                .allMatch(
+                    feature ->
+                        feature.getGeometry() != null
+                            && feature.getGeometry().getActualInstance() instanceof Polygon)
+            || !request.getDelimitations().stream()
+                .allMatch(
+                    feature ->
+                        feature.getGeometry() != null
+                            && feature.getGeometry().getActualInstance()
+                                instanceof MultiPolygon))) {
+      throw new NotImplementedException(
+          "Provided delimitations must be either all Points or all Polygons or all MultiPolygons.");
     }
   }
 }
