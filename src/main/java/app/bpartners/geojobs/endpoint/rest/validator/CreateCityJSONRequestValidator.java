@@ -54,17 +54,17 @@ public class CreateCityJSONRequestValidator implements Consumer<CreateCityJSONRe
     }
 
     if (request.getDelimitations().size() > 1
-        && (!request.getDelimitations().stream()
+        && !(request.getDelimitations().stream()
                 .allMatch(
                     feature ->
                         feature.getGeometry() != null
                             && feature.getGeometry().getActualInstance() instanceof Point)
-            || !request.getDelimitations().stream()
+            || request.getDelimitations().stream()
                 .allMatch(
                     feature ->
                         feature.getGeometry() != null
                             && feature.getGeometry().getActualInstance() instanceof Polygon)
-            || !request.getDelimitations().stream()
+            || request.getDelimitations().stream()
                 .allMatch(
                     feature ->
                         feature.getGeometry() != null
