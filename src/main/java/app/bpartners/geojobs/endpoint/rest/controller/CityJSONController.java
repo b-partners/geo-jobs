@@ -93,8 +93,6 @@ public class CityJSONController {
         cityJSONRequestMapper.createToDomain(
             requestIdentifier, createCityJSONRequest, communityOwnerId);
 
-    cityJSONRequestValidator.accept(toProcess.getId(), communityOwnerId);
-
     return cityJSONRequestMapper.toRest(cityJSONRequestService.oldProcess(toProcess));
   }
 
