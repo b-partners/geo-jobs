@@ -124,6 +124,75 @@ public class CityJSONRequestService {
     return saved;
   }
 
+  public CityJSONRequest oldProcess(CityJSONRequest cityJSONRequest) {
+    var requestIdentifier = cityJSONRequest.getId();
+    var optionalRequest =
+        cityJSONRequestRepository.findByIdAndCommunityOwnerId(
+            requestIdentifier, cityJSONRequest.getCommunityOwnerId());
+
+    if (optionalRequest.isPresent()) {
+      return optionalRequest.get();
+    }
+
+    var cityJSONRequestBuilder = cityJSONRequest.toBuilder();
+    var pointFeatureList =
+        cityJSONRequest.getRestFeatureDelimitations().stream()
+            .filter(
+                feature ->
+                    feature.getGeometry() != null
+                        && feature.getGeometry().getActualInstance() instanceof Point)
+            .toList();
+    if (pointFeatureList.size() == 1
+        && (cityJSONRequest.getDelimitationObjectType() == null
+            || BUILDING_ROOF.equals(cityJSONRequest.getDelimitationObjectType()))) {
+      try {
+        var featureWithDelimitations =
+            pointFeatureList.stream()
+                .map(
+                    feature -> {
+                      var point = feature.getGeometry().getPoint();
+                      var longitude = point.getCoordinates().getFirst();
+                      var latitude = point.getCoordinates().getLast();
+                      return new FeatureWithDelimitation(
+                          toDomainFeature(feature),
+                          List.of(
+                              featureAddressConverter.apply(
+                                  null, longitude.doubleValue(), latitude.doubleValue())));
+                    })
+                .toList();
+        cityJSONRequestBuilder.featuresWithDelimitation(featureWithDelimitations);
+      } catch (ApiException e) {
+        log.error(
+            "Conversion of addresses to features failed with API exception from dashboard {}",
+            e.getMessage());
+        return cityJSONRequestRepository.save(cityJSONRequest.toBuilder().status(FAILED).build());
+      }
+    }
+
+    var saved = cityJSONRequestRepository.save(cityJSONRequestBuilder.status(PROCESSING).build());
+
+    if (pointFeatureList.size() > 1) {
+      var pointCorrespondingToAddresses =
+          pointFeatureList.stream().map(feature -> feature.getGeometry().getPoint()).toList();
+      eventProducer.accept(
+          List.of(
+              new ThreeDMultipleAddressRequested(
+                  requestIdentifier,
+                  cityJSONRequest.getCommunityOwnerId(),
+                  null,
+                  pointCorrespondingToAddresses)));
+    } else {
+      eventProducer.accept(
+          List.of(
+              CityJSONRequestCreated.builder()
+                  .requestId(saved.getId())
+                  .communityOwnerId(cityJSONRequest.getCommunityOwnerId())
+                  .build()));
+    }
+
+    return saved;
+  }
+
   public CityJSONRequest getByIdAndCommunityOwnerId(String requestId, String communityOwnerId) {
     var optionalRequest =
         cityJSONRequestRepository.findByIdAndCommunityOwnerId(requestId, communityOwnerId);
