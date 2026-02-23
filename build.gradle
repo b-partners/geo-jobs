@@ -10,7 +10,7 @@ plugins {
 
     id 'jacoco'
 
-    id "org.sonarqube" version "4.4.1.3373" 
+    id "org.sonarqube" version "4.4.1.3373"
 }
 
 jacoco {
@@ -22,7 +22,7 @@ sonarqube {
         property "sonar.java.source", "21"
         property "sonar.java.target", "21"
     }
-} 
+}
 
 repositories {
 mavenLocal()
@@ -215,6 +215,7 @@ dependencies {
     testImplementation 'org.testcontainers:testcontainers-junit-jupiter:2.0.2'
     testImplementation 'org.junit-pioneer:junit-pioneer:2.2.0'
 
+    implementation 'com.google.maps:google-maps-services:2.2.0'
 
     implementation 'io.sentry:sentry-logback:7.6.0'
     implementation 'io.sentry:sentry-spring-boot-starter-jakarta:7.4.0'
