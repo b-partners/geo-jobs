@@ -159,8 +159,9 @@ public class CityJSONRequestService {
                       return new FeatureWithDelimitation(
                           toDomainFeature(feature),
                           List.of(
-                              featureAddressConverter.apply(
-                                  null, longitude.doubleValue(), latitude.doubleValue())));
+                              featurePointConverter.apply(
+                                  new Point().coordinates(List.of(longitude, latitude)),
+                                  BUILDING)));
                     })
                 .toList();
         cityJSONRequestBuilder.featuresWithDelimitation(featureWithDelimitations);
