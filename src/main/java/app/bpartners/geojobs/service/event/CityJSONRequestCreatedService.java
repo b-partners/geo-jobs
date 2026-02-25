@@ -68,6 +68,7 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
     } catch (Exception e) {
       log.error(e.getMessage());
       updateStatus(request, FAILED);
+      throw e;
     }
   }
 
