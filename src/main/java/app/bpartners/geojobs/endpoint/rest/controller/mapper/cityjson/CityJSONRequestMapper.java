@@ -74,17 +74,26 @@ public class CityJSONRequestMapper {
 
   private ThreeDRequestStep toRestStep(
       app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest cityJSONRequest) {
-    ThreeDRequestStep step;
+    if (cityJSONRequest.getStep() == null) {
+      return null;
+    }
     switch (cityJSONRequest.getStep()) {
-      case REQUEST_ACCEPTED -> step = ThreeDRequestStep.REQUEST_ACCEPTED;
-      case POINTS_CLOUD_PRE_PROCESSING -> step = ThreeDRequestStep.POINTS_CLOUD_PRE_PROCESSING;
-      case GEOMETRY_CONSTRUCTION -> step = ThreeDRequestStep.GEOMETRY_CONSTRUCTION;
-      case POST_PROCESSING -> step = ThreeDRequestStep.POST_PROCESSING;
+      case REQUEST_ACCEPTED -> {
+        return ThreeDRequestStep.REQUEST_ACCEPTED;
+      }
+      case POINTS_CLOUD_PRE_PROCESSING -> {
+        return ThreeDRequestStep.POINTS_CLOUD_PRE_PROCESSING;
+      }
+      case GEOMETRY_CONSTRUCTION -> {
+        return ThreeDRequestStep.GEOMETRY_CONSTRUCTION;
+      }
+      case POST_PROCESSING -> {
+        return ThreeDRequestStep.POST_PROCESSING;
+      }
       default ->
           throw new IllegalStateException(
               "Unexpected 3d request step value: " + cityJSONRequest.getStep());
     }
-    return step;
   }
 
   public app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest createToDomain(
