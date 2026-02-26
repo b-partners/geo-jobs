@@ -4,6 +4,7 @@ import static app.bpartners.geojobs.endpoint.rest.postprocessing.BoundaryMerger.
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.BATI_BETON;
 import static java.util.stream.Collectors.toSet;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon;
@@ -32,6 +33,7 @@ class BoundaryMergerTest {
 
     Set<LatLonPolygon> unified = boundaryMerger.apply(tiledPolygons, BATI_BETON);
 
+    assertTrue(tiledPolygons.size() > unified.size());
     assertEquals(1, unified.size());
   }
 
