@@ -8,6 +8,7 @@ import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.DetectionBoundaryMerger;
+import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.hash.FileHash;
@@ -35,6 +36,63 @@ class DetectionVGGUpdateTest {
     reset(geometryConverterMock);
     reset(bucketComponentMock);
     reset(fileWriterMock);
+  }
+
+  @Test
+  void apply_with_vgg_set() {
+    Collection<VGG> vggSet = mock();
+    Set<TiledPolygon> polygons = mock();
+    Detection detection =
+        Detection.builder().zoneName("dummy zoneName").zdjId(randomUUID().toString()).build();
+    TiledPolygon tiledPolygon = mock();
+    org.locationtech.jts.geom.Polygon polygon = mock();
+    VGG vgg = mock();
+    byte[] vggAsBytes = new byte[0];
+    File vggAsFile = mock();
+
+    when(mergerMock.applyVggSet(vggSet)).thenReturn(polygons);
+    when(tiledPolygon.polygon()).thenReturn(polygon);
+    when(vggFactoryMock.convert(any())).thenReturn(vgg);
+    when(fileWriterMock.write(eq(vggAsBytes), any(), any())).thenReturn(vggAsFile);
+    when(bucketComponentMock.upload(any(), any())).thenReturn(mock(FileHash.class));
+
+    String fileKey = "vgg/" + detection.getZdjId() + "/" + detection.getZoneName() + ".json";
+    var subject =
+        new DetectionVGGUpdate(
+            fileWriterMock, bucketComponentMock, geometryConverterMock, vggFactoryMock, mergerMock);
+
+    var actual = subject.apply(vggSet, detection);
+
+    assertEquals(detection.toBuilder().vggFileKey(fileKey).build(), actual);
+  }
+
+  @Test
+  void apply_with_vgg_set_and_feature_number() {
+    Collection<VGG> vggSet = mock();
+    Set<TiledPolygon> polygons = mock();
+    Detection detection = mock();
+    TiledPolygon tiledPolygon = mock();
+    org.locationtech.jts.geom.Polygon polygon = mock();
+    VGG vgg = mock();
+    byte[] vggAsBytes = new byte[0];
+    File vggAsFile = mock();
+    int featureNb = 2;
+
+    when(mergerMock.applyVggSet(vggSet)).thenReturn(polygons);
+    when(tiledPolygon.polygon()).thenReturn(polygon);
+    when(vggFactoryMock.convert(any())).thenReturn(vgg);
+    when(detection.getZoneName()).thenReturn("dummy zoneName");
+    when(detection.getZdjId()).thenReturn("dummy zdjId");
+    when(fileWriterMock.write(eq(vggAsBytes), any(), any())).thenReturn(vggAsFile);
+    when(bucketComponentMock.upload(any(), any())).thenReturn(mock(FileHash.class));
+
+    var subject =
+        new DetectionVGGUpdate(
+            fileWriterMock, bucketComponentMock, geometryConverterMock, vggFactoryMock, mergerMock);
+
+    var actual = subject.apply(vggSet, detection, featureNb);
+
+    assertEquals(detection, actual);
   }
 
   @Test
