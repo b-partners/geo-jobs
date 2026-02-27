@@ -7,8 +7,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.rest.model.*;
-import app.bpartners.geojobs.endpoint.rest.postprocessing.DetectionBoundaryMerger;
-import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon;
+import app.bpartners.geojobs.endpoint.rest.postprocessing.BoundaryMerger;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.hash.FileHash;
@@ -20,7 +19,9 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.util.*;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedConstruction;
 
 class DetectionVGGUpdateTest {
 
@@ -28,10 +29,16 @@ class DetectionVGGUpdateTest {
   BucketComponent bucketComponentMock = mock();
   GeometryConverter geometryConverterMock = mock();
   VGGFactory vggFactoryMock = mock();
-  DetectionBoundaryMerger mergerMock = mock();
+  MockedConstruction<BoundaryMerger> mergerMockedConstruction;
+
+  @BeforeEach
+  void setUp() {
+    mergerMockedConstruction = mockConstruction(BoundaryMerger.class);
+  }
 
   @AfterEach
   void tearDown() {
+    mergerMockedConstruction.close();
     reset(vggFactoryMock);
     reset(geometryConverterMock);
     reset(bucketComponentMock);
@@ -39,67 +46,10 @@ class DetectionVGGUpdateTest {
   }
 
   @Test
-  void apply_with_vgg_set() {
-    Collection<VGG> vggSet = mock();
-    Set<TiledPolygon> polygons = mock();
-    Detection detection =
-        Detection.builder().zoneName("dummy zoneName").zdjId(randomUUID().toString()).build();
-    TiledPolygon tiledPolygon = mock();
-    org.locationtech.jts.geom.Polygon polygon = mock();
-    VGG vgg = mock();
-    byte[] vggAsBytes = new byte[0];
-    File vggAsFile = mock();
-
-    when(mergerMock.applyVggSet(vggSet)).thenReturn(polygons);
-    when(tiledPolygon.polygon()).thenReturn(polygon);
-    when(vggFactoryMock.convert(any())).thenReturn(vgg);
-    when(fileWriterMock.write(eq(vggAsBytes), any(), any())).thenReturn(vggAsFile);
-    when(bucketComponentMock.upload(any(), any())).thenReturn(mock(FileHash.class));
-
-    String fileKey = "vgg/" + detection.getZdjId() + "/" + detection.getZoneName() + ".json";
-    var subject =
-        new DetectionVGGUpdate(
-            fileWriterMock, bucketComponentMock, geometryConverterMock, vggFactoryMock, mergerMock);
-
-    var actual = subject.apply(vggSet, detection);
-
-    assertEquals(detection.toBuilder().vggFileKey(fileKey).build(), actual);
-  }
-
-  @Test
-  void apply_with_vgg_set_and_feature_number() {
-    Collection<VGG> vggSet = mock();
-    Set<TiledPolygon> polygons = mock();
-    Detection detection = mock();
-    TiledPolygon tiledPolygon = mock();
-    org.locationtech.jts.geom.Polygon polygon = mock();
-    VGG vgg = mock();
-    byte[] vggAsBytes = new byte[0];
-    File vggAsFile = mock();
-    int featureNb = 2;
-
-    when(mergerMock.applyVggSet(vggSet)).thenReturn(polygons);
-    when(tiledPolygon.polygon()).thenReturn(polygon);
-    when(vggFactoryMock.convert(any())).thenReturn(vgg);
-    when(detection.getZoneName()).thenReturn("dummy zoneName");
-    when(detection.getZdjId()).thenReturn("dummy zdjId");
-    when(fileWriterMock.write(eq(vggAsBytes), any(), any())).thenReturn(vggAsFile);
-    when(bucketComponentMock.upload(any(), any())).thenReturn(mock(FileHash.class));
-
-    var subject =
-        new DetectionVGGUpdate(
-            fileWriterMock, bucketComponentMock, geometryConverterMock, vggFactoryMock, mergerMock);
-
-    var actual = subject.apply(vggSet, detection, featureNb);
-
-    assertEquals(detection, actual);
-  }
-
-  @Test
   void write_vgg_file_and_update_detection_vgg_file_key() {
     var subject =
         new DetectionVGGUpdate(
-            fileWriterMock, bucketComponentMock, geometryConverterMock, vggFactoryMock, mergerMock);
+            fileWriterMock, bucketComponentMock, geometryConverterMock, vggFactoryMock);
     var vggMock = mock(VGG.class);
     var zoneDetectionJobId = randomUUID().toString();
     var zoneName = "dummy zoneName";
@@ -107,11 +57,7 @@ class DetectionVGGUpdateTest {
     var vggAsBytesMock = new byte[0];
     var vggAsFileMock = mock(File.class);
 
-    var unifiedVggMock = mock(VGG.class);
-    when(mergerMock.applyVgg(vggMock)).thenReturn(Set.of());
-    when(vggFactoryMock.convert(anySet())).thenReturn(unifiedVggMock);
-    when(unifiedVggMock.getBytes()).thenReturn(vggAsBytesMock);
-
+    when(vggMock.getBytes()).thenReturn(vggAsBytesMock);
     when(fileWriterMock.write(eq(vggAsBytesMock), any(), eq(zoneName + ".geojson")))
         .thenReturn(vggAsFileMock);
     when(bucketComponentMock.upload(eq(vggAsFileMock), any())).thenReturn(mock(FileHash.class));

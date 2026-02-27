@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.endpoint.rest.model.TileInfoSize;
-import app.bpartners.geojobs.endpoint.rest.postprocessing.DetectionBoundaryMerger;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon;
 import app.bpartners.geojobs.model.DetectedTile;
 import app.bpartners.geojobs.repository.model.Feature;
@@ -29,8 +28,7 @@ import org.junit.jupiter.api.Test;
 @Disabled("TODO: flaky test on CI")
 class GeoJsonConverterTest {
   private final GeoJsonMapper mapper = new GeoJsonMapper(new GeoJsonMultiPolygonCorrector());
-  private final DetectionBoundaryMerger merger = new DetectionBoundaryMerger();
-  private final GeoJsonConverter subject = new GeoJsonConverter(mapper, merger);
+  private final GeoJsonConverter subject = new GeoJsonConverter(mapper);
 
   @Test
   void convert_detected_tile_to_geojson_without_feature_collections()
