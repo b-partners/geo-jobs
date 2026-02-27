@@ -181,14 +181,15 @@ public class BoundaryMerger
       // --- Build connected component ---
       var component = new HashSet<TiledPolygon>();
       var stack = new Stack<TiledPolygon>();
+
+      component.add(tp);
       stack.push(tp);
 
       while (!stack.isEmpty()) {
         var current = stack.pop();
-        if (!component.add(current)) continue;
 
         for (var other : tiledPolygonsWithOffset) {
-          if (!component.contains(other) && shouldBeMerged(current, other)) {
+          if (shouldBeMerged(current, other) && component.add(other)) {
             stack.push(other);
           }
         }

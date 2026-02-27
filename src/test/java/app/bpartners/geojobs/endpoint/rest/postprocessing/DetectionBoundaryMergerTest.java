@@ -80,6 +80,8 @@ class DetectionBoundaryMergerTest {
 
     Set<LatLonPolygon> unified = merger.apply(toTiledPolygon(inverted));
 
+    new Geojson(unified).saveAsFile("bati_4_polygones_unified.geojson");
+
     assertTrue(polygons.size() > unified.size());
     assertEquals(1, unified.size());
   }
