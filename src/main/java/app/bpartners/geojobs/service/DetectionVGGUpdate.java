@@ -2,9 +2,8 @@ package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
 import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.GEO_JSON_EXTENSION;
-import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.NEIGHBOUR_SIZE;
 
-import app.bpartners.geojobs.endpoint.rest.postprocessing.BoundaryMerger;
+import app.bpartners.geojobs.endpoint.rest.postprocessing.DetectionBoundaryMerger;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.geometry.VGG;
@@ -15,6 +14,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.*;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -26,23 +26,30 @@ public class DetectionVGGUpdate implements BiFunction<VGG, Detection, Detection>
   private final BucketComponent bucketComponent;
   private final GeometryConverter geometryConverter;
   private final VGGFactory vggFactory;
-  private final BoundaryMerger merger;
+  private final DetectionBoundaryMerger merger;
 
   public DetectionVGGUpdate(
       FileWriter fileWriter,
       BucketComponent bucketComponent,
       GeometryConverter geometryConverter,
-      VGGFactory vggFactory) {
+      VGGFactory vggFactory,
+      DetectionBoundaryMerger merger) {
     this.fileWriter = fileWriter;
     this.bucketComponent = bucketComponent;
     this.geometryConverter = geometryConverter;
     this.vggFactory = vggFactory;
-    merger = new BoundaryMerger(0, NEIGHBOUR_SIZE, false);
+    this.merger = merger;
   }
 
   @Override
   public Detection apply(VGG vgg, Detection detection) {
-    var vggAsByte = vgg.getBytes();
+    var mergedTiledPolygons = merger.applyVgg(vgg);
+    var mergedPolygons =
+        mergedTiledPolygons.stream()
+            .map(app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon::polygon)
+            .collect(Collectors.toSet());
+    var unifiedVgg = vggFactory.convert(mergedPolygons);
+    var vggAsByte = unifiedVgg.getBytes();
     return apply(detection, vggAsByte);
   }
 
@@ -70,11 +77,23 @@ public class DetectionVGGUpdate implements BiFunction<VGG, Detection, Detection>
   }
 
   public Detection apply(Collection<VGG> vggSet, Detection detection, int featureNb) {
-    return apply(detection, getVggCollection(vggSet), featureNb);
+    var mergedTiledPolygons = merger.applyVggSet(vggSet);
+    var mergedPolygons =
+        mergedTiledPolygons.stream()
+            .map(app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon::polygon)
+            .collect(Collectors.toSet());
+    var unifiedVgg = vggFactory.convert(mergedPolygons);
+    return apply(detection, unifiedVgg.getBytes(), featureNb);
   }
 
   public Detection apply(Collection<VGG> vggSet, Detection detection) {
-    return apply(detection, getVggCollection(vggSet));
+    var mergedTiledPolygons = merger.applyVggSet(vggSet);
+    var mergedPolygons =
+        mergedTiledPolygons.stream()
+            .map(app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon::polygon)
+            .collect(Collectors.toSet());
+    var unifiedVgg = vggFactory.convert(mergedPolygons);
+    return apply(detection, unifiedVgg.getBytes());
   }
 
   private byte[] getVggCollection(Collection<VGG> vggSet) {
