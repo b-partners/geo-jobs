@@ -2,12 +2,8 @@ package app.bpartners.geojobs.service.geojson;
 
 import static app.bpartners.geojobs.service.geojson.GeoJson.fromFeatures;
 
-import app.bpartners.geojobs.endpoint.rest.postprocessing.DetectionBoundaryMerger;
-import app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon;
-import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.model.DetectedTile;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Service;
@@ -17,7 +13,6 @@ import org.springframework.stereotype.Service;
 public class GeoJsonConverter implements Converter<List<DetectedTile>, GeoJson> {
   private static final int DEFAULT_IMAGE_SIZE = 1024;
   private final GeoJsonMapper mapper;
-  private final DetectionBoundaryMerger merger;
 
   @Override
   public GeoJson convert(List<DetectedTile> detectedTiles) {
@@ -34,14 +29,6 @@ public class GeoJsonConverter implements Converter<List<DetectedTile>, GeoJson> 
                 })
             .flatMap(List::stream)
             .toList();
-
-    var toUnify =
-        geoFeatures.stream()
-            .map(f -> LatLonPolygon.latLon(f).tiledPolygon(TilingConf.getDefaultInstance()))
-            .collect(Collectors.toSet());
-
-    var unified = merger.apply(toUnify).stream().map(LatLonPolygon::toGeoFeature).toList();
-
-    return fromFeatures(unified);
+    return fromFeatures(geoFeatures);
   }
 }
