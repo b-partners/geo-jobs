@@ -74,12 +74,13 @@ info:
     Also, `geoJsonDelimitationType` property must be set as `PARCEL` to consider the address's parcel.
     In case you need to get images and its detections result for each address detected, set `needsImageOutput` property to `true`.
     2. Submit list of addresses contained inside an **Excel file** in a second call `POST /detections/{id}/excel`. 
-    Example can be found [here](https://github.com/b-partners/geo-jobs/raw/refs/heads/preprod/examples/detection/excel/excel_addresses_example.xlsx)
+    Example can be found [here](https://github.com/b-partners/geo-jobs/raw/refs/heads/prod/examples/detection/excel/excel_addresses_example.xlsx)
     3. Track the progress of your detection through `GET /detections/{id}`. 
     Once detection is on step POST_PROCESSING with status progression FINISHED and status health SUCCEEDED : 
-    - Images result, if needed, can be obtained through each feature corresponding to each detected address inside `geoJsonZone` where `original_image_url` allow to retrieve address's image and `vgg_url` detection results to be displayed on obtained image.
+    - Images result, if needed, can be obtained through each feature corresponding to each detected address inside `geoJsonZone` where `original_image_url` allow to retrieve address's image and `vgg_url` detection results to be displayed on obtained image. 
+      Expected result can be found [here](https://github.com/b-partners/geo-jobs/raw/refs/heads/prod/examples/detection/toiture_and_vegetation_example_response.json).
     - GeoJson result can be obtained through `geoJsonUrl` and can be displayed on a map as QGIS.
-    Expected result can be found [here].(https://github.com/b-partners/geo-jobs/raw/refs/heads/prod/examples/detection/toiture_and_vegetation_example_response.json)
+    
     # 3D request examples
     
     ### Request 3D city models from textual, human-readable, addresses
