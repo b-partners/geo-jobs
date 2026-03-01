@@ -34,6 +34,7 @@ import org.springframework.stereotype.Component;
 @Component
 @AllArgsConstructor
 public class VGGFactory implements Converter<Set<Polygon>, VGG> {
+  private static final String VGG_ANNOTATION_FILETYPE = "png";
   private static final int DEFAULT_IMG_SIZE = 1024;
   private final TileCoordinatesPolygonIntersection tilePolygonIntersection;
   private final GeometryConverter geometryConverter;
@@ -195,7 +196,13 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
                       detectedRoofCovering,
                       addresses,
                       polygonObjectTypesFromProjectedPolygonGroup);
-              var key = randomUUID().toString();
+
+              int zoom = tiledPixelPolygonGroupByFeature.getFirst().zoom();
+
+              var key =
+                  String.format(
+                      "%s_%s_%s_%s.%s",
+                      randomUUID(), zoom, minTileXGlobal, minTileYGlobal, VGG_ANNOTATION_FILETYPE);
               var annotation =
                   VGG.Annotation.builder()
                       .filename(key)
