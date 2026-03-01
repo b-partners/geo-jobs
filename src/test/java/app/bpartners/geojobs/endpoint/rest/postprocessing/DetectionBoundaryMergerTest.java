@@ -25,6 +25,7 @@ import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.Polygon;
 
 @Slf4j
 class DetectionBoundaryMergerTest {
@@ -42,33 +43,46 @@ class DetectionBoundaryMergerTest {
           tilePolygonIntersection, geometryConverter, geometrySquareMeterArea, objectMapper);
 
   @Test
+  void apply_from_vgg_set() {
+    var polygons = polygons();
+    var vgg = vggFactory.convert(polygons);
+
+    Set<TiledPolygon> unified = merger.applyVggSet(Set.of(vgg));
+
+    assertTrue(polygons.size() > unified.size());
+    assertEquals(1, unified.size());
+  }
+
+  @Test
   void apply_from_vgg() {
-    var geojsonFile =
-        new File(getClass().getResource("/geometry/geojson/bati_4_polygones.geojson").getFile());
-    var latLonPolygons = geoJsonLoader.apply(geojsonFile);
-    var invertedLatLonPolygons = invert(latLonPolygons);
-    var polygons =
-        invertedLatLonPolygons.stream()
-            .map(
-                latLon -> {
-                  var polygon = latLon.polygon();
-
-                  var metadata = new HashMap<String, Object>();
-                  metadata.put("filename", "filename_1_2_3" + ".json");
-                  metadata.put("label", "background");
-                  metadata.put("confidence", 0.9);
-                  polygon.setUserData(metadata);
-
-                  return polygon;
-                })
-            .collect(toSet());
-
+    var polygons = polygons();
     var vgg = vggFactory.convert(polygons);
 
     Set<TiledPolygon> unified = merger.applyVgg(vgg);
 
     assertTrue(polygons.size() > unified.size());
     assertEquals(1, unified.size());
+  }
+
+  private Set<Polygon> polygons() {
+    var geojsonFile =
+        new File(getClass().getResource("/geometry/geojson/bati_4_polygones.geojson").getFile());
+    var latLonPolygons = geoJsonLoader.apply(geojsonFile);
+    var invertedLatLonPolygons = invert(latLonPolygons);
+    return invertedLatLonPolygons.stream()
+        .map(
+            latLon -> {
+              var polygon = latLon.polygon();
+
+              var metadata = new HashMap<String, Object>();
+              metadata.put("filename", "filename_1_2_3" + ".json");
+              metadata.put("label", "background");
+              metadata.put("confidence", 0.9);
+              polygon.setUserData(metadata);
+
+              return polygon;
+            })
+        .collect(toSet());
   }
 
   @Test
