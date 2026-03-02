@@ -45,7 +45,7 @@ public class VGGFactory implements Converter<Set<Polygon>, VGG> {
   public VGG convert(Set<Polygon> polygons) {
     var vgg = new VGG();
     for (Polygon p : polygons) {
-      var metadata = (HashMap) p.getUserData();
+      var metadata = (Map<String, Object>) p.getUserData();
       var key = metadata.get("filename").toString();
       var label = metadata.get("label").toString();
       var confidence = metadata.get("confidence");
