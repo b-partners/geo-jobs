@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.service;
 
-import static app.bpartners.geojobs.model.DelimitationObjectType.BUILDING;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStatus.FAILED;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStatus.PROCESSING;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStep.POINTS_CLOUD_PRE_PROCESSING;
@@ -35,11 +34,11 @@ import org.mockito.ArgumentCaptor;
 class CityJSONRequestServiceTest {
   CityJSONRequestRepository cityJSONRequestRepositoryMock = mock();
   EventProducer eventProducerMock = mock();
-  FeaturePointConverter featurePointConverterMock = mock();
+  FeatureAddressConverter featureAddressConverterMock = mock();
 
   CityJSONRequestService subject =
       new CityJSONRequestService(
-          cityJSONRequestRepositoryMock, eventProducerMock, featurePointConverterMock);
+          cityJSONRequestRepositoryMock, eventProducerMock, featureAddressConverterMock);
 
   @SneakyThrows
   @Test
@@ -53,10 +52,7 @@ class CityJSONRequestServiceTest {
     Feature featureDelimitationConvertedMock = mock();
     when(cityJSONRequestRepositoryMock.findByIdAndCommunityOwnerId(requestId, communityOwnerId))
         .thenReturn(Optional.empty());
-    when(featurePointConverterMock.apply(
-            new Point()
-                .coordinates(List.of(BigDecimal.valueOf(longitude), BigDecimal.valueOf(latitude))),
-            BUILDING))
+    when(featureAddressConverterMock.apply(null, longitude, latitude))
         .thenReturn(featureDelimitationConvertedMock);
     when(cityJSONRequestRepositoryMock.save(any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
@@ -101,10 +97,7 @@ class CityJSONRequestServiceTest {
     var pointFeature = somePointFeature(longitude, latitude);
     when(cityJSONRequestRepositoryMock.findByIdAndCommunityOwnerId(requestId, communityOwnerId))
         .thenReturn(Optional.empty());
-    when(featurePointConverterMock.apply(
-            new Point()
-                .coordinates(List.of(BigDecimal.valueOf(longitude), BigDecimal.valueOf(latitude))),
-            BUILDING))
+    when(featureAddressConverterMock.apply(null, longitude, latitude))
         .thenThrow(ApiException.class);
     when(cityJSONRequestRepositoryMock.save(any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
@@ -144,17 +137,9 @@ class CityJSONRequestServiceTest {
     Feature featureDelimitationConvertedMockTwo = mock();
     when(cityJSONRequestRepositoryMock.findByIdAndCommunityOwnerId(requestId, communityOwnerId))
         .thenReturn(Optional.empty());
-    when(featurePointConverterMock.apply(
-            new Point()
-                .coordinates(
-                    List.of(BigDecimal.valueOf(longitudeOne), BigDecimal.valueOf(latitudeOne))),
-            BUILDING))
+    when(featureAddressConverterMock.apply(null, longitudeOne, latitudeOne))
         .thenReturn(featureDelimitationConvertedMockOne);
-    when(featurePointConverterMock.apply(
-            new Point()
-                .coordinates(
-                    List.of(BigDecimal.valueOf(longitudeTwo), BigDecimal.valueOf(latitudeTwo))),
-            BUILDING))
+    when(featureAddressConverterMock.apply(null, longitudeTwo, latitudeTwo))
         .thenReturn(featureDelimitationConvertedMockTwo);
     when(cityJSONRequestRepositoryMock.save(any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));

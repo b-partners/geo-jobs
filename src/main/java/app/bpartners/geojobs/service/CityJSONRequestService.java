@@ -2,7 +2,6 @@ package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toDomainFeature;
 import static app.bpartners.geojobs.endpoint.rest.model.DelimitationObjectType.BUILDING_ROOF;
-import static app.bpartners.geojobs.model.DelimitationObjectType.BUILDING;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStatus.FAILED;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStatus.PROCESSING;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStep.POINTS_CLOUD_PRE_PROCESSING;
@@ -29,7 +28,7 @@ import org.springframework.stereotype.Service;
 public class CityJSONRequestService {
   private final CityJSONRequestRepository cityJSONRequestRepository;
   private final EventProducer eventProducer;
-  private final FeaturePointConverter featurePointConverter;
+  private final FeatureAddressConverter featureAddressConverter;
 
   public CityJSONRequest processAddressRequest(
       String requestIdentifier, List<String> addresses, String communityOwnerId) {
@@ -85,9 +84,13 @@ public class CityJSONRequestService {
                 .map(
                     feature -> {
                       var point = feature.getGeometry().getPoint();
+                      var longitude = point.getCoordinates().getFirst();
+                      var latitude = point.getCoordinates().getLast();
                       return new FeatureWithDelimitation(
                           toDomainFeature(feature),
-                          List.of(featurePointConverter.apply(point, BUILDING)));
+                          List.of(
+                              featureAddressConverter.apply(
+                                  null, longitude.doubleValue(), latitude.doubleValue())));
                     })
                 .toList();
         cityJSONRequestBuilder.featuresWithDelimitation(featureWithDelimitations);

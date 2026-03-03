@@ -17,10 +17,8 @@ import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
 import app.bpartners.geojobs.service.FeatureAddressConverter;
-import app.bpartners.geojobs.service.FeaturePointConverter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
@@ -34,7 +32,6 @@ import org.springframework.stereotype.Service;
 public class ThreeDMultipleAddressRequestedService
     implements Consumer<ThreeDMultipleAddressRequested> {
   private final FeatureAddressConverter featureAddressConverter;
-  private final FeaturePointConverter featurePointConverter;
   private final CityJSONRequestRepository cityJSONRequestRepository;
   private final EventProducer eventProducer;
 
@@ -112,14 +109,7 @@ public class ThreeDMultipleAddressRequestedService
                       throw new RuntimeException(e);
                     }
                     var retrievedObjectTypeDelimitations =
-                        List.of(
-                            featurePointConverter.apply(
-                                new Point()
-                                    .coordinates(
-                                        List.of(
-                                            BigDecimal.valueOf(longitude),
-                                            BigDecimal.valueOf(latitude))),
-                                BUILDING));
+                        List.of(featureAddressConverter.apply(null, longitude, latitude));
                     return new FeatureWithDelimitation(
                         pointFeature, retrievedObjectTypeDelimitations);
                   })
