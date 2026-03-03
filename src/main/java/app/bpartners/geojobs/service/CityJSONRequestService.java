@@ -5,6 +5,8 @@ import static app.bpartners.geojobs.endpoint.rest.model.DelimitationObjectType.B
 import static app.bpartners.geojobs.model.DelimitationObjectType.BUILDING;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStatus.FAILED;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStatus.PROCESSING;
+import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStep.POINTS_CLOUD_PRE_PROCESSING;
+import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStep.REQUEST_ACCEPTED;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.CityJSONRequestCreated;
@@ -93,15 +95,15 @@ public class CityJSONRequestService {
         log.error(
             "Conversion of addresses to features failed with API exception from dashboard {}",
             e.getMessage());
-        return cityJSONRequestRepository.save(cityJSONRequest.toBuilder().status(FAILED).build());
+        return cityJSONRequestRepository.save(
+            cityJSONRequest.toBuilder().status(FAILED).step(REQUEST_ACCEPTED).build());
       }
     }
-
-    var saved = cityJSONRequestRepository.save(cityJSONRequestBuilder.status(PROCESSING).build());
 
     if (pointFeatureList.size() > 1) {
       var pointCorrespondingToAddresses =
           pointFeatureList.stream().map(feature -> feature.getGeometry().getPoint()).toList();
+      cityJSONRequestBuilder.step(REQUEST_ACCEPTED);
       eventProducer.accept(
           List.of(
               new ThreeDMultipleAddressRequested(
@@ -110,15 +112,16 @@ public class CityJSONRequestService {
                   null,
                   pointCorrespondingToAddresses)));
     } else {
+      cityJSONRequestBuilder.step(POINTS_CLOUD_PRE_PROCESSING);
       eventProducer.accept(
           List.of(
               CityJSONRequestCreated.builder()
-                  .requestId(saved.getId())
+                  .requestId(requestIdentifier)
                   .communityOwnerId(cityJSONRequest.getCommunityOwnerId())
                   .build()));
     }
 
-    return saved;
+    return cityJSONRequestRepository.save(cityJSONRequestBuilder.status(PROCESSING).build());
   }
 
   public CityJSONRequest oldProcess(CityJSONRequest cityJSONRequest) {
