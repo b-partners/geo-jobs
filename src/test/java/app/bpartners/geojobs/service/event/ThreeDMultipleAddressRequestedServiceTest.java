@@ -22,6 +22,7 @@ import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
 import app.bpartners.geojobs.service.FeatureAddressConverter;
+import app.bpartners.geojobs.service.FeaturePointConverter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -35,10 +36,14 @@ import org.mockito.ArgumentCaptor;
 class ThreeDMultipleAddressRequestedServiceTest {
   FeatureAddressConverter featureAddressConverterMock = mock();
   CityJSONRequestRepository cityJSONRequestRepositoryMock = mock();
+  FeaturePointConverter featurePointConverterMock = mock();
   EventProducer eventProducerMock = mock();
   ThreeDMultipleAddressRequestedService subject =
       new ThreeDMultipleAddressRequestedService(
-          featureAddressConverterMock, cityJSONRequestRepositoryMock, eventProducerMock);
+          featureAddressConverterMock,
+          featurePointConverterMock,
+          cityJSONRequestRepositoryMock,
+          eventProducerMock);
 
   @Test
   void do_not_produces_event_computing_when_address_conversion_fails() {
@@ -64,8 +69,7 @@ class ThreeDMultipleAddressRequestedServiceTest {
                     .build()));
     var savedFailedRequestCaptor = ArgumentCaptor.forClass(CityJSONRequest.class);
     verify(cityJSONRequestRepositoryMock, times(1)).save(savedFailedRequestCaptor.capture());
-    verify(featureAddressConverterMock, never())
-        .apply(any(), any(), any()); // refers to Point conversion
+    verify(featurePointConverterMock, never()).apply(any(), any());
     verify(eventProducerMock, never()).accept(any());
     assertEquals(
         CityJSONRequest.builder().status(FAILED).step(REQUEST_ACCEPTED).build(),
@@ -92,8 +96,7 @@ class ThreeDMultipleAddressRequestedServiceTest {
                         .build()));
 
     assertEquals("No value present", actual.getMessage());
-    verify(featureAddressConverterMock, never())
-        .apply(any(), any(), any()); // refers to Point conversion
+    verify(featurePointConverterMock, never()).apply(any(), any());
   }
 
   @Test
@@ -133,8 +136,7 @@ class ThreeDMultipleAddressRequestedServiceTest {
     assertEquals(expectedCityJSONRequestSaved, savedRequestWithDelimitation.getValue());
 
     var listCaptor = ArgumentCaptor.forClass(List.class);
-    verify(featureAddressConverterMock, never())
-        .apply(any(), any(), any()); // refers to Point conversion
+    verify(featurePointConverterMock, never()).apply(any(), any());
     verify(eventProducerMock, times(1)).accept(listCaptor.capture());
     var actualRequestCreatedEvent = (CityJSONRequestCreated) listCaptor.getValue().getFirst();
     assertEquals(
@@ -179,7 +181,7 @@ class ThreeDMultipleAddressRequestedServiceTest {
     when(cityJSONRequestRepositoryMock.findByIdAndCommunityOwnerId(
             requestIdentifier, communityOwnerId))
         .thenReturn(Optional.of(request));
-    when(featureAddressConverterMock.apply(null, longitude, latitude))
+    when(featurePointConverterMock.apply(providedPointGeometry, BUILDING))
         .thenReturn(convertedFeatureFromPoints);
     when(cityJSONRequestRepositoryMock.save(any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
@@ -222,7 +224,7 @@ class ThreeDMultipleAddressRequestedServiceTest {
     when(cityJSONRequestRepositoryMock.findByIdAndCommunityOwnerId(
             requestIdentifier, communityOwnerId))
         .thenReturn(Optional.of(request));
-    when(featureAddressConverterMock.apply(null, longitude, latitude))
+    when(featurePointConverterMock.apply(providedPointGeometry, BUILDING))
         .thenThrow(new ApiException(SERVER_EXCEPTION, "Unable to convert address to feature"));
     when(cityJSONRequestRepositoryMock.save(any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));

@@ -12,27 +12,24 @@ import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.service.FeatureAddressConverter;
-import app.bpartners.geojobs.service.dashboard.AreaPictureApi;
-import app.bpartners.geojobs.service.dashboard.component.AreaPictureDetails;
-import app.bpartners.geojobs.service.dashboard.component.CrupdateAreaPictureDetails;
-import app.bpartners.geojobs.service.dashboard.component.GeoPosition;
-import app.bpartners.geojobs.service.dashboard.mapper.AreaPictureDetailsMapper;
+import app.bpartners.geojobs.service.FeaturePointConverter;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import app.bpartners.geojobs.service.google.maps.GeoCodeApi;
+import app.bpartners.geojobs.service.google.maps.GeoPosition;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.MultiPolygon;
-import org.springframework.web.client.HttpClientErrorException;
 
 class FeatureAddressConverterTest {
-  AreaPictureApi areaPictureApiMock = mock();
-  AreaPictureDetailsMapper areaPictureDetailsMapperMock = mock();
-  String adminApiKey = randomUUID().toString();
+  GeoCodeApi geoCodeApiMock = mock();
   GeometryConverter geometryConverterMock = mock();
+  FeaturePointConverter featurePointConverterMock =
+      new FeaturePointConverter(geometryConverterMock);
   FeatureAddressConverter subject =
-      new FeatureAddressConverter(
-          areaPictureApiMock, areaPictureDetailsMapperMock, adminApiKey, geometryConverterMock);
+      new FeatureAddressConverter(geoCodeApiMock, featurePointConverterMock);
 
   @Test
   void throws_exception_when_delimitation_object_type_not_building() {
@@ -45,47 +42,30 @@ class FeatureAddressConverterTest {
         actual.getMessage());
   }
 
+  @SneakyThrows
   @Test
   void
       throws_exception_on_address_when_http_error_occurs_on_converting_address_to_point_geometry() {
     var randomAddress = "address " + randomUUID();
-    CrupdateAreaPictureDetails crupdateAreaPictureDetailsMock = mock();
-    when(areaPictureApiMock.crupdateAreaPictureDetails(
-            anyString(), eq(crupdateAreaPictureDetailsMock), eq(adminApiKey)))
-        .thenThrow(
-            new HttpClientErrorException(org.springframework.http.HttpStatusCode.valueOf(403)))
-        .thenThrow(
-            new HttpClientErrorException(org.springframework.http.HttpStatusCode.valueOf(500)));
-    when(areaPictureDetailsMapperMock.toCrupdateAreaPictureDetails(randomAddress))
-        .thenReturn(crupdateAreaPictureDetailsMock);
+    when(geoCodeApiMock.searchGeoPositionFromAddress(randomAddress))
+        .thenThrow(com.google.maps.errors.ApiException.class);
 
-    var actualOccurredByClientHttpException =
-        assertThrows(ApiException.class, () -> subject.apply(randomAddress, BUILDING));
-    var actualOccurredByHttpServerException =
+    var actualException =
         assertThrows(ApiException.class, () -> subject.apply(randomAddress, BUILDING));
 
     assertEquals(
         "Unable to convert address to GPS coordinate (longitude, latitude) : " + randomAddress,
-        actualOccurredByClientHttpException.getMessage());
-    assertEquals(
-        "Unable to convert address to GPS coordinate (longitude, latitude) : " + randomAddress,
-        actualOccurredByHttpServerException.getMessage());
+        actualException.getMessage());
   }
 
+  @SneakyThrows
   @Test
   void
       throws_exception_on_address_when_any_http_errors_occurs_on_converting_address_to_point_geometry_but_longitude_is_null() {
     var randomAddress = "address " + randomUUID();
-    CrupdateAreaPictureDetails crupdateAreaPictureDetailsMock = mock();
-    AreaPictureDetails areaPictureDetailsMock = mock();
-    GeoPosition geoPositionMock = mock();
+    app.bpartners.geojobs.service.google.maps.GeoPosition geoPositionMock = mock();
     when(geoPositionMock.longitude()).thenReturn(null);
-    when(areaPictureDetailsMock.currentGeoPosition()).thenReturn(geoPositionMock);
-    when(areaPictureApiMock.crupdateAreaPictureDetails(
-            anyString(), eq(crupdateAreaPictureDetailsMock), eq(adminApiKey)))
-        .thenReturn(areaPictureDetailsMock);
-    when(areaPictureDetailsMapperMock.toCrupdateAreaPictureDetails(randomAddress))
-        .thenReturn(crupdateAreaPictureDetailsMock);
+    when(geoCodeApiMock.searchGeoPositionFromAddress(randomAddress)).thenReturn(geoPositionMock);
 
     var actual = assertThrows(ApiException.class, () -> subject.apply(randomAddress, BUILDING));
 
@@ -94,6 +74,7 @@ class FeatureAddressConverterTest {
         actual.getMessage());
   }
 
+  @SneakyThrows
   @Test
   void return_converted_feature_when_address_is_converted_to_point_geometry() {
     var randomAddress = "address " + randomUUID();
@@ -101,17 +82,10 @@ class FeatureAddressConverterTest {
     var latitudeDoubleValue = 2.0;
     Feature convertedFeatureMock = mock();
     MultiPolygon nearestRoofMultiPolygonMock = mock();
-    CrupdateAreaPictureDetails crupdateAreaPictureDetailsMock = mock();
-    AreaPictureDetails areaPictureDetailsMock = mock();
     GeoPosition geoPositionMock = mock();
     when(geoPositionMock.longitude()).thenReturn(longitudeDoubleValue);
     when(geoPositionMock.latitude()).thenReturn(latitudeDoubleValue);
-    when(areaPictureDetailsMock.currentGeoPosition()).thenReturn(geoPositionMock);
-    when(areaPictureApiMock.crupdateAreaPictureDetails(
-            anyString(), eq(crupdateAreaPictureDetailsMock), eq(adminApiKey)))
-        .thenReturn(areaPictureDetailsMock);
-    when(areaPictureDetailsMapperMock.toCrupdateAreaPictureDetails(randomAddress))
-        .thenReturn(crupdateAreaPictureDetailsMock);
+    when(geoCodeApiMock.searchGeoPositionFromAddress(randomAddress)).thenReturn(geoPositionMock);
     when(geometryConverterMock.retrieveNearestRoofMultiPolygon(
             List.of(
                 BigDecimal.valueOf(longitudeDoubleValue), BigDecimal.valueOf(latitudeDoubleValue))))
@@ -123,7 +97,6 @@ class FeatureAddressConverterTest {
     assertDoesNotThrow(() -> subject.apply(randomAddress, BUILDING));
 
     HashMap<String, Object> expectedConvertedFeatureProperties = new HashMap<>();
-    expectedConvertedFeatureProperties.put("address", randomAddress);
     verify(geometryConverterMock, times(1))
         .toFeature(
             eq(null),
