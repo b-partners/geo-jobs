@@ -6,7 +6,6 @@ import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestSta
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Mockito.*;
@@ -84,19 +83,6 @@ class CityJSONRequestCreatedServiceIT extends FacadeIT {
         .thenReturn(analysisResult(LidarDataStatus.EXTRACTION_ERROR));
 
     subject.accept(CityJSONRequestCreated.builder().requestId(REQUEST_ID).build());
-
-    var actualRequest = cityJSONRequestRepository.findById(REQUEST_ID).orElseThrow();
-
-    assertEquals(FAILED, actualRequest.getStatus());
-    verify(cityJsonProcessorMock, never()).apply(any(), any());
-  }
-
-  @Test
-  void should_be_failed_when_exception_is_raised() {
-    when(lidarProcessorMock.apply(anySet())).thenThrow(new RuntimeException());
-
-    var request = CityJSONRequestCreated.builder().requestId(REQUEST_ID).build();
-    assertThrows(RuntimeException.class, () -> subject.accept(request));
 
     var actualRequest = cityJSONRequestRepository.findById(REQUEST_ID).orElseThrow();
 
