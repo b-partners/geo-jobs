@@ -51,5 +51,6 @@ class VGGFactoryTest {
     assertEquals(
         expectedAnnotation.getRegions().values().toString(),
         actualAnnotation.getRegions().values().toString());
+    assertEquals(expectedAnnotation.getProperties(), actualAnnotation.getProperties());
   }
 }
