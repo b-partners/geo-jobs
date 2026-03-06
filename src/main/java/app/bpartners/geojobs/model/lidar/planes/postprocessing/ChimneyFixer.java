@@ -21,7 +21,7 @@ public class ChimneyFixer implements Function<Collection<Plane3D>, List<Plane3D>
   private final double maxChimneyArea;
   private final OBB3DComputer obb3DComputer;
   private final Plane3DExtractionStepExporter exporter;
-  private static final double ROOF_BUFFER_IN_METERS = 1;
+  private static final double ROOF_BUFFER_IN_METERS = 0.1;
 
   public ChimneyFixer(double maxChimneyArea, Plane3DExtractionStepExporter exporter) {
     this(maxChimneyArea, new OBB3DComputer(), exporter);
@@ -106,7 +106,7 @@ public class ChimneyFixer implements Function<Collection<Plane3D>, List<Plane3D>
     return planes.stream().filter(not(plane -> plane.getArea() > maxArea)).toList();
   }
 
-  private static double getMinZ(Polygon polygon) {
+  static double getMinZ(Polygon polygon) {
     return Arrays.stream(polygon.getCoordinates())
         .mapToDouble(Coordinate::getZ)
         .min()
