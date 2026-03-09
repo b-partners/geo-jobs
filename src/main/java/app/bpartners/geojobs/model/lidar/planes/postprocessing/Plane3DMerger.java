@@ -29,6 +29,7 @@ public class Plane3DMerger implements UnaryOperator<Collection<Plane3D>> {
     for (var p1 : sorted) {
       if (p1 instanceof ChimneyPlane3D) {
         result.add(p1);
+        visited.add(p1);
         continue;
       }
 

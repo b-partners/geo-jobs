@@ -1,13 +1,13 @@
 package app.bpartners.geojobs.model.geometry.lidar.planes.algorithm;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
-import static app.bpartners.geojobs.model.lidar.planes.algorithm.PolygonUtilities.isCompact;
+import static app.bpartners.geojobs.model.lidar.planes.algorithm.GeometryUtilities.isCompact;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.*;
 
-class PolygonUtilitiesTest {
+class GeometryUtilitiesTest {
   private Polygon polygon(double[][] coords) {
     var coordinates = new Coordinate[coords.length + 1];
     for (int i = 0; i < coords.length; i++) {

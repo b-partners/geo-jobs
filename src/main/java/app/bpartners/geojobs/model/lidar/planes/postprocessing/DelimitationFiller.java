@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.model.lidar.planes.postprocessing;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
+import static app.bpartners.geojobs.model.lidar.planes.algorithm.GeometryUtilities.intersection;
 import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.geojobs.model.geometry.PolylineSimplifier;
@@ -12,7 +13,6 @@ import java.util.function.BiFunction;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 
@@ -74,20 +74,16 @@ public class DelimitationFiller
   }
 
   private boolean containsAnotherPlane(Plane3D plane, Collection<Plane3D> planes) {
-    Geometry delimitation = plane.getDelimitation();
-    if (!delimitation.isValid()) delimitation = delimitation.buffer(0);
+    var delimitation = plane.getDelimitation();
     for (var other : planes) {
       if (other == plane) continue;
       if (other instanceof ChimneyPlane3D) continue;
 
-      Geometry otherDelimitation = other.getDelimitation();
-      if (!otherDelimitation.isValid()) otherDelimitation = otherDelimitation.buffer(0);
+      var otherDelimitation = other.getDelimitation();
       if (otherDelimitation.getArea() < PLANE_MIN_AREA) continue;
 
-      if (!otherDelimitation.intersects(delimitation)) continue;
-      var intersection = delimitation.intersection(otherDelimitation);
-      if (intersection.isEmpty()) continue;
-      if (intersection instanceof Point) continue;
+      var intersection = intersection(delimitation, otherDelimitation);
+      if (intersection.isEmpty() || intersection instanceof Point) continue;
       if (intersection.getArea() < MAX_INTERSECTION_AREA) continue;
 
       var point = otherDelimitation.getCoordinates()[0];

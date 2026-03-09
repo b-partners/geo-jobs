@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.model.lidar.planes.postprocessing;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
+import static app.bpartners.geojobs.model.lidar.planes.algorithm.GeometryUtilities.intersection;
 import static app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStep.*;
 import static java.util.function.Predicate.not;
 
@@ -13,6 +14,7 @@ import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 
 @Slf4j
@@ -98,6 +100,11 @@ public class ChimneyFixer implements Function<Collection<Plane3D>, List<Plane3D>
               if (!smallDelimitation.intersects(bigDelimitationWithBuffer)) {
                 return false;
               }
+              var intersection = intersection(smallDelimitation, bigDelimitationWithBuffer);
+              if (intersection.isEmpty() || intersection instanceof Point) {
+                return false;
+              }
+
               return getMinZ(bigDelimitation) < getMinZ(smallDelimitation);
             });
   }

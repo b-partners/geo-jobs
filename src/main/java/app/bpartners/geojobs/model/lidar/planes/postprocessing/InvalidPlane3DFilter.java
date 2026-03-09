@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.model.lidar.planes.postprocessing;
 
-import static app.bpartners.geojobs.model.lidar.planes.algorithm.PolygonUtilities.isCompact;
+import static app.bpartners.geojobs.model.lidar.planes.algorithm.GeometryUtilities.isCompact;
 
 import app.bpartners.geojobs.model.lidar.planes.Plane3D;
 import java.util.Collection;
