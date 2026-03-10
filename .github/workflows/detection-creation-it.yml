@@ -22,6 +22,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: prod
 
       - name: Generate detection_e2_id and store inside file
         run: |
