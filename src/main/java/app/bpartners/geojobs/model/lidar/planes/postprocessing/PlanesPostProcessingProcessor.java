@@ -13,8 +13,8 @@ public class PlanesPostProcessingProcessor implements Function<Collection<Plane3
   private final List<LasPointGeometry> points;
 
   private final ChimneyFixer chimneyFixer;
-  private final DelimitationFiller delimitationFiller;
   private final Plane3DMerger closedPlane3DMerger;
+  private final DelimitationFiller delimitationFiller;
   private final InvalidPlane3DFilter invalidPlane3DFilter;
 
   public PlanesPostProcessingProcessor(
@@ -34,8 +34,7 @@ public class PlanesPostProcessingProcessor implements Function<Collection<Plane3
         new DelimitationFiller(
             conf.delimitationFillerConf().maxEmptyCell(),
             conf.delimitationFillerConf().minCellPointsSize(),
-            conf.delimitationFillerConf().gridSize(),
-            conf.delimitationFillerConf().lowPointMaxDistance());
+            conf.delimitationFillerConf().gridSize());
     this.invalidPlane3DFilter =
         new InvalidPlane3DFilter(conf.planeConf().min2DArea(), conf.planeConf().compactness());
   }

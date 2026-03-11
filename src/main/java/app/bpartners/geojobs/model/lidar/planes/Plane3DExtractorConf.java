@@ -15,8 +15,7 @@ public record Plane3DExtractorConf(
     DelimitationFillerConf delimitationFillerConf) {
 
   @Builder(toBuilder = true)
-  public record DelimitationFillerConf(
-      int maxEmptyCell, int minCellPointsSize, double gridSize, double lowPointMaxDistance) {}
+  public record DelimitationFillerConf(int maxEmptyCell, int minCellPointsSize, double gridSize) {}
 
   @Builder(toBuilder = true)
   public record PlaneConf(double min2DArea, double compactness, int minPointsCount) {}
@@ -55,7 +54,6 @@ public record Plane3DExtractorConf(
                 .gridSize(1)
                 .maxEmptyCell(2)
                 .minCellPointsSize(3)
-                .lowPointMaxDistance(0.5)
                 .build())
         .kernelConf(
             KernelConf.builder()

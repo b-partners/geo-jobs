@@ -2,7 +2,7 @@ package app.bpartners.geojobs.model.lidar.planes.postprocessing;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.model.lidar.planes.algorithm.GeometryUtilities.intersection;
-import static java.util.stream.Collectors.toSet;
+import static app.bpartners.geojobs.model.lidar.planes.postprocessing.ChimneyFixer.getMaxZ;
 
 import app.bpartners.geojobs.model.geometry.PolylineSimplifier;
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
@@ -20,20 +20,16 @@ import org.locationtech.jts.geom.Polygon;
 public class DelimitationFiller
     implements BiFunction<Collection<Plane3D>, Collection<LasPointGeometry>, List<Plane3D>> {
   private final int maxEmptyCell;
-  private final int minCellPointsSize;
   private final double gridRadius;
-  private final double lowPointsMaxDistance;
+  private final int minCellPointsSize;
 
-  private static final int MIN_POINTS_COUNT = 5;
   private static final double PLANE_MIN_AREA = 3;
   private static final double MAX_INTERSECTION_AREA = 0.3;
 
-  public DelimitationFiller(
-      int maxEmptyCell, int minCellPointsSize, double gridRadius, double lowPointsMaxDistance) {
+  public DelimitationFiller(int maxEmptyCell, int minCellPointsSize, double gridRadius) {
+    this.gridRadius = gridRadius;
     this.maxEmptyCell = maxEmptyCell;
     this.minCellPointsSize = minCellPointsSize;
-    this.gridRadius = gridRadius;
-    this.lowPointsMaxDistance = lowPointsMaxDistance;
   }
 
   @Override
@@ -45,7 +41,7 @@ public class DelimitationFiller
               if (plane instanceof ChimneyPlane3D) {
                 return plane;
               }
-              return compute(plane, points, grid, planes);
+              return compute(plane, grid, planes);
             })
         .toList();
   }
@@ -54,27 +50,8 @@ public class DelimitationFiller
     return apply(List.of(planes), points).getFirst();
   }
 
-  private Set<LasPointGeometry> getPoints(Plane3D plane, Collection<LasPointGeometry> points) {
-    var convexDelimitation = plane.getConvexDelimitation();
-    var envelope = convexDelimitation.getEnvelopeInternal();
-    return points.stream()
-        .filter(
-            point -> {
-              if (!envelope.contains(point.getCoordinate())) return false;
-              if (!convexDelimitation.contains(point)) return false;
-
-              var z = point.getZ();
-              var zPlane = plane.zAt(point.getX(), point.getY());
-              if (z < zPlane) {
-                return zPlane - z <= lowPointsMaxDistance;
-              }
-              return true;
-            })
-        .collect(toSet());
-  }
-
   private boolean containsAnotherPlane(Plane3D plane, Collection<Plane3D> planes) {
-    var delimitation = plane.getDelimitation();
+    var delimitation = plane.getConvexDelimitation();
     for (var other : planes) {
       if (other == plane) continue;
       if (other instanceof ChimneyPlane3D) continue;
@@ -86,7 +63,7 @@ public class DelimitationFiller
       if (intersection.isEmpty() || intersection instanceof Point) continue;
       if (intersection.getArea() < MAX_INTERSECTION_AREA) continue;
 
-      var point = otherDelimitation.getCoordinates()[0];
+      var point = getMaxZ(otherDelimitation);
       var otherZ = point.getZ();
       var planeZ = plane.zAt(point.getX(), point.getY());
       if (otherZ > planeZ) continue;
@@ -96,33 +73,19 @@ public class DelimitationFiller
     return false;
   }
 
-  private Plane3D compute(
-      Plane3D plane,
-      Collection<LasPointGeometry> points,
-      Map<Cell, Cell> grid,
-      Collection<Plane3D> planes) {
+  private Plane3D compute(Plane3D plane, Map<Cell, Cell> grid, Collection<Plane3D> planes) {
     if (!isFullOfPoints(plane, grid)) {
       return plane;
     }
 
-    if (!containsAnotherPlane(plane, planes)) {
-      var newDelimitation =
-          new PolylineSimplifier(plane.getDelimitationSimplificationEpsilon())
-              .simplifyPolygon(plane.getConvexDelimitation());
-      return plane.toBuilder().area(null).delimitation(newDelimitation).build();
+    if (containsAnotherPlane(plane, planes)) {
+      return plane;
     }
 
-    var newPoints = getPoints(plane, points);
-    if (newPoints.size() < MIN_POINTS_COUNT) {
-      return plane.toBuilder().build();
-    }
-
-    return plane.toBuilder()
-        .points(newPoints)
-        .area(null)
-        .delimitation(null)
-        .convexDelimitation(null)
-        .build();
+    var newDelimitation =
+        new PolylineSimplifier(plane.getDelimitationSimplificationEpsilon())
+            .simplifyPolygon(plane.getConvexDelimitation());
+    return plane.toBuilder().area(null).delimitation(newDelimitation).build();
   }
 
   private boolean isFullOfPoints(Plane3D plane, Map<Cell, Cell> grid) {

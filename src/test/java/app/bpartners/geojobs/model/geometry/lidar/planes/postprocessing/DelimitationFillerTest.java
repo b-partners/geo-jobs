@@ -38,7 +38,7 @@ class DelimitationFillerTest {
 
     var plane = Plane3D.builder().a(0).b(0).c(1).d(0).points(points).build();
 
-    var fixer = new DelimitationFiller(1, 0, 1, 1);
+    var fixer = new DelimitationFiller(1, 0, 1);
 
     var result = fixer.apply(plane, points);
 
@@ -54,7 +54,7 @@ class DelimitationFillerTest {
             new LasPointGeometry(6, 0, 0, BATIMENT));
     var plane = Plane3D.builder().a(0).b(0).c(1).d(0).points(points).build();
 
-    var fixer = new DelimitationFiller(0, 0, 1, 1);
+    var fixer = new DelimitationFiller(0, 0, 1);
 
     var result = fixer.apply(plane, points);
 
