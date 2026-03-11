@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.controller;
 
+import static app.bpartners.geojobs.endpoint.rest.model.ImageZoomLevel.*;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static app.bpartners.geojobs.service.dashboard.component.FileType.AREA_PICTURE;
 import static java.util.UUID.randomUUID;
@@ -36,8 +37,10 @@ public class ImageController {
   @GetMapping("/image")
   public ImageDetails getImage(
       @RequestParam String address,
+      @RequestParam(required = false, name = "zoom") ImageZoomLevel zoom,
       @RequestParam(required = false) Boolean isExtended,
       @RequestParam(required = false, name = "shiftNb") Integer providedShiftNb) {
+    var requestedZoom = getZoomLevelEnum(zoom);
     var areaPictureId = randomUUID().toString();
     var fileId = randomUUID().toString();
     try {
@@ -48,11 +51,11 @@ public class ImageController {
               new CrupdateAreaPictureDetails(
                   address,
                   shiftNb,
-                  isExtended,
+                  isExtended == null || isExtended,
                   fileId,
                   address + randomUUID(),
                   null,
-                  ZoneTilingJob.ZoomLevelEnum.HOUSES_0),
+                  requestedZoom),
               adminApiKey);
       byte[] imageAsBytes = fileApi.downloadOrUploadFile(fileId, AREA_PICTURE, adminApiKey);
       return new ImageDetails()
@@ -78,5 +81,16 @@ public class ImageController {
       log.error(e.getMessage(), e);
       throw new ApiException(SERVER_EXCEPTION, "Unable to retrieve image of address : " + address);
     }
+  }
+
+  private ZoneTilingJob.ZoomLevelEnum getZoomLevelEnum(ImageZoomLevel zoom) {
+    if (zoom == null) {
+      return ZoneTilingJob.ZoomLevelEnum.HOUSES_0;
+    }
+    return switch (zoom) {
+      case BUILDING -> ZoneTilingJob.ZoomLevelEnum.HOUSES_0;
+      case NEIGHBORHOOD -> ZoneTilingJob.ZoomLevelEnum.BUILDING;
+      case DISTRICT -> ZoneTilingJob.ZoomLevelEnum.BUILDINGS;
+    };
   }
 }

@@ -40,7 +40,7 @@ class ImageControllerTest {
   void get_images_ok() {
     var address = "some address";
 
-    var actual = subject.getImage(address, null, null);
+    var actual = subject.getImage(address, null, null, null);
 
     var stringCaptor = ArgumentCaptor.forClass(String.class);
     verify(fileApiMock, only())
@@ -57,7 +57,7 @@ class ImageControllerTest {
     var isExtended = true;
     int providedShiftNb = 1;
 
-    assertDoesNotThrow(() -> subject.getImage(address, isExtended, providedShiftNb));
+    assertDoesNotThrow(() -> subject.getImage(address, null, isExtended, providedShiftNb));
 
     var crupdateAreaPictureDetailsCaptor =
         ArgumentCaptor.forClass(CrupdateAreaPictureDetails.class);
@@ -96,7 +96,7 @@ class ImageControllerTest {
     var expectedMessageException = "Unable to retrieve image of address : " + notFoundAddress;
 
     var actual =
-        assertThrows(ApiException.class, () -> subject.getImage(notFoundAddress, null, null));
+        assertThrows(ApiException.class, () -> subject.getImage(notFoundAddress, null, null, null));
 
     assertEquals(expectedMessageException, actual.getMessage());
   }
