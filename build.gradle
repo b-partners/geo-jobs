@@ -200,6 +200,8 @@ dependencies {
     implementation 'org.apache.tika:tika-core:2.9.1'
     implementation 'org.apache.poi:poi-ooxml:5.4.1'
 
+    implementation 'org.apache.httpcomponents.client5:httpclient5'
+
 
     implementation 'org.reflections:reflections:0.10.2'
 
