@@ -17,9 +17,11 @@ import java.io.IOException;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GeoCodingJobCreatedService implements Consumer<GeoCodingJobCreated> {
@@ -54,6 +56,10 @@ public class GeoCodingJobCreatedService implements Consumer<GeoCodingJobCreated>
       repository.save(
           geoCodingJob.toBuilder().geoJsonKey(geoJsonFileKey).status(SUCCEEDED).build());
     } catch (Exception e) {
+      log.error(
+          "Exception on processing GeoCodingJob(id={}) : {} ",
+          geoCodingJobIdentifier,
+          e.getMessage());
       repository.save(geoCodingJob.toBuilder().status(FAILED).build());
     }
   }
