@@ -1374,6 +1374,55 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Feature'
+  '/geoCodingJobs/{id}':
+    get:
+      tags:
+        - Geocode
+      operationId: retrieveGeoCodingJobById
+      summary: Retrieve a geo-coding job resolving list of addresses to GeoJSON features
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: GeoCodingJob with its status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeoCodingJob'
+  '/geoCodingJobs/{id}/excel':
+    post:
+      tags:
+        - Geocode
+      operationId: geocodeAddressesThroughExcelAddresses
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+      summary: Resolve addresses contain inside provided excel file to GeoJSON Features
+      description: |
+        Converts list textual addresses inside provided excel file into a geographic location and returns the result as list of GeoJSON features.
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        200:
+          description: Created GeoCodingJob
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeoCodingJob'
 components:
   securitySchemes:
     ReadmeAuth:
@@ -1916,6 +1965,15 @@ components:
         updatedAt:
           type: string
           format: date-time
+    GeoCodingJob:
+      type: object
+      properties:
+        id:
+          type: string
+        status:
+          $ref: '#/components/schemas/Status'
+        geoJsonUrl:
+          type: string
     TaskStatusStatistic:
       allOf:
         - $ref: '#/components/schemas/StatusStatistic'
