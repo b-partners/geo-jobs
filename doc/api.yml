@@ -671,11 +671,18 @@ paths:
             type: string
           required: true
         - in: query
+          name: zoom
+          schema:
+            $ref: '#/components/schemas/ImageZoomLevel'
+          required: false
+          description: Default value is BUILDING.
+        - in: query
           name: isExtended
           schema:
             type: boolean
-            default: false
+            default: true
           required: false
+          deprecated: true
         - in: query
           name: shiftNb
           schema:
@@ -1721,6 +1728,12 @@ components:
             - HOUSES_1
             - HOUSES_2
             - HOUSE_PROPERTY
+    ImageZoomLevel:
+      type: string
+      enum:
+        - BUILDING
+        - NEIGHBORHOOD
+        - DISTRICT
     RevokeApiKeyResponse:
       type: object
       properties:
