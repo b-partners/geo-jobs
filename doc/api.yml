@@ -1351,6 +1351,29 @@ paths:
               examples:
                 3DResponseWithStatusSucceeded:
                   $ref: '#/components/examples/ThreeDResponseWithProcessingStatusExample'
+  '/geocode':
+    get:
+      tags:
+        - Geocode
+      operationId: geocodeAddress
+      summary: Resolve an address into a GeoJSON Feature
+      description: |
+        Converts a textual address into a geographic location and returns the result as a GeoJSON Feature.
+        The service performs forward geocoding by querying external geocoding providers and transforms the response into a standardized GeoJSON Feature object.
+      parameters:
+        - in: query
+          name: address
+          required: true
+          description: Address to geocode
+          schema:
+            type: string
+      responses:
+        200:
+          description: GeoJSON Feature corresponding to address
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Feature'
 components:
   securitySchemes:
     ReadmeAuth:
