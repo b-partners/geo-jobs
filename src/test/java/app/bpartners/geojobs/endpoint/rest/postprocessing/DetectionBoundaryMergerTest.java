@@ -30,6 +30,129 @@ class DetectionBoundaryMergerTest {
   private final DetectionBoundaryMerger subject = new DetectionBoundaryMerger();
 
   @Test
+  @SneakyThrows
+  void merge_2_objects_across_4_tiles_vgg() {
+    var vgg = getSingleVGGFromFile("/geometry/vgg/2_objects_across_4_tiles-vgg.json");
+    var originalSize = vgg.values().iterator().next().getRegions().size();
+
+    Set<TiledPolygon> actual = subject.applyVgg(vgg);
+
+    assertEquals(5, originalSize);
+    assertEquals(2, actual.size());
+  }
+
+  @Test
+  @SneakyThrows
+  void merge_2_objects_across_4_tiles_geojson() {
+    var latLonPolygons =
+        getLatLonPolygonSetFromGeoJsonFile("/geometry/geojson/2_objects_across_4_tiles.geojson");
+
+    Set<LatLonPolygon> unified = subject.apply(toTiledPolygon((latLonPolygons)), GEO_JSON);
+
+    assertEquals(5, latLonPolygons.size());
+    assertEquals(2, unified.size());
+  }
+
+  @Test
+  @SneakyThrows
+  void merge_1_object_across_3_tiles_vgg() {
+    var vgg = getSingleVGGFromFile("/geometry/vgg/1_object_across_3_tiles-vgg.json");
+    var originalSize = vgg.values().iterator().next().getRegions().size();
+
+    Set<TiledPolygon> actual = subject.applyVgg(vgg);
+
+    assertEquals(3, originalSize);
+    assertEquals(1, actual.size());
+  }
+
+  @Test
+  @SneakyThrows
+  void merge_1_object_across_3_tiles_geojson() {
+    var latLonPolygons =
+        getLatLonPolygonSetFromGeoJsonFile("/geometry/geojson/1_object_across_3_tiles.geojson");
+
+    Set<LatLonPolygon> unified = subject.apply(toTiledPolygon((latLonPolygons)), GEO_JSON);
+
+    assertEquals(3, latLonPolygons.size());
+    assertEquals(1, unified.size());
+  }
+
+  @Test
+  @SneakyThrows
+  void merge_3_objects_across_6_tiles_vgg() {
+    var vgg = getSingleVGGFromFile("/geometry/vgg/3_objects_across_6_tiles-vgg.json");
+    var originalSize = vgg.values().iterator().next().getRegions().size();
+
+    Set<TiledPolygon> actual = subject.applyVgg(vgg);
+
+    assertEquals(7, originalSize);
+    assertEquals(3, actual.size());
+  }
+
+  @Test
+  void merge_3_objects_across_6_tiles_geojson() throws IOException {
+    var latLonPolygons =
+        getLatLonPolygonSetFromGeoJsonFile("/geometry/geojson/3_objects_across_6_tiles.geojson");
+
+    Set<LatLonPolygon> actual = subject.apply(toTiledPolygon((latLonPolygons)), GEO_JSON);
+
+    assertEquals(7, latLonPolygons.size());
+    assertEquals(3, actual.size());
+  }
+
+  private Set<LatLonPolygon> toLatLonPolygonSet(Set<TiledPolygon> tiledPolygons) {
+    return tiledPolygons.stream().map(TiledPolygon::latLonPolygon).collect(toSet());
+  }
+
+  @Test
+  @SneakyThrows
+  void merge_different_type_adjacent_tiles_vgg() {
+    var vgg = getSingleVGGFromFile("/geometry/vgg/different_type_adjacent_tiles-vgg.json");
+    var originalSize = vgg.values().iterator().next().getRegions().size();
+
+    Set<TiledPolygon> actual = subject.applyVgg(vgg);
+
+    assertEquals(2, originalSize);
+    assertEquals(2, actual.size());
+  }
+
+  @Test
+  @SneakyThrows
+  void merge_same_type_adjacent_tiles_geojson() {
+    var latLonPolygons =
+        getLatLonPolygonSetFromGeoJsonFile("/geometry/geojson/same_type_adjacent_tiles.geojson");
+
+    Set<LatLonPolygon> unified = subject.apply(toTiledPolygon((latLonPolygons)), GEO_JSON);
+
+    assertEquals(2, (latLonPolygons).size());
+    assertEquals(1, unified.size());
+  }
+
+  @Test
+  @SneakyThrows
+  void merge_same_type_adjacent_tiles_vgg() {
+    var vgg = getSingleVGGFromFile("/geometry/vgg/same_type_adjacent_tiles-vgg.json");
+    var originalSize = vgg.values().iterator().next().getRegions().size();
+
+    Set<TiledPolygon> actual = subject.applyVgg(vgg);
+
+    assertEquals(2, originalSize);
+    assertEquals(1, actual.size());
+  }
+
+  private Set<LatLonPolygon> getLatLonPolygonSetFromGeoJsonFile(String geoJsonFilePath)
+      throws IOException {
+    var geojsonFile = new ClassPathResource(geoJsonFilePath).getFile();
+    return geoJsonLoader.apply(geojsonFile);
+  }
+
+  private VGG getSingleVGGFromFile(String vggFilePath) throws IOException {
+    var vggFile = new ClassPathResource(vggFilePath).getFile();
+    var vggSet = objectMapper.readValue(vggFile, new TypeReference<Set<VGG>>() {});
+    return vggSet.iterator().next();
+  }
+
+  @Test
   void apply_from_vgg_file() throws IOException {
     /*
      * Configuration for the vgg projection

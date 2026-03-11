@@ -232,7 +232,7 @@ public class BoundaryMerger
       var refBoundary = basePolygon.getBoundary().buffer(50);
       var otherBoundary = otherPolygon.getBoundary().buffer(50);
       var intersection = refBoundary.intersection(otherBoundary);
-      return base.type().equals(other.type()) && intersection.getLength() > 200;
+      return base.type().equals(other.type()) && intersection.getLength() > 150;
     } catch (Exception e) {
       return false;
     }
