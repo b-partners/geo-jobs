@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
+import static app.bpartners.geojobs.endpoint.rest.model.CreateZoneTilingJob.ZoomLevelEnum.HOUSES_0;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.*;
 import static app.bpartners.geojobs.endpoint.rest.model.GeoJsonOutput.GEO_JSON;
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
@@ -882,7 +883,7 @@ class ZoneServiceTest {
     when(authProviderMock.getPrincipal())
         .thenReturn(new Principal("mockApiKey", Set.of(new Authority(authorityRole))));
     when(tilingJobMapperMock.from(any()))
-        .thenReturn(new CreateZoneTilingJob().geoServerUrl("http://localhost"));
+        .thenReturn(new CreateZoneTilingJob().geoServerUrl("http://localhost").zoomLevel(HOUSES_0));
     when(tilingJobMapperMock.toDomain(any(), any())).thenReturn(new ZoneTilingJob());
     when(tilingJobServiceMock.create(any(), any())).thenReturn(new ZoneTilingJob());
     when(detectionRepositoryMock.save(any()))
