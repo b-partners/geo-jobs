@@ -8,22 +8,17 @@ public record Plane3DExtractorConf(
     PlaneConf planeConf,
     KernelConf kernelConf,
     ChimneyFixerConf chimneyFixerConf,
-    PlaneDelimitationFixerConf planeDelimitationFixerConf,
-    PlaneMergerConf planeMergerConf,
+    ClosedPlaneMergerConf closedPlaneMergerConf,
     PlaneExtractionConf planeExtractionConf,
     RoofPointsCleanerConf roofPointsCleanerConf,
-    PlaneDelimitationConf planeDelimitationConf) {
+    PlaneDelimitationConf planeDelimitationConf,
+    DelimitationFillerConf delimitationFillerConf) {
 
   @Builder(toBuilder = true)
-  public record PlaneDelimitationFixerConf(
-      int maxEmptyCell, int minCellPointsSize, double gridSize, double simplificationEpsilon) {}
+  public record DelimitationFillerConf(int maxEmptyCell, int minCellPointsSize, double gridSize) {}
 
   @Builder(toBuilder = true)
-  public record PlaneConf(
-      double min2DArea,
-      int minPointsCount,
-      double minEdgeLength,
-      double parallelDirectionEpsilon) {}
+  public record PlaneConf(double min2DArea, double compactness, int minPointsCount) {}
 
   @Builder(toBuilder = true)
   public record PlaneDelimitationConf(double concaveRatio, double simplificationEpsilon) {}
@@ -32,7 +27,7 @@ public record Plane3DExtractorConf(
   public record PlaneExtractionConf(int iteration, double pointContinuationThreshold) {}
 
   @Builder(toBuilder = true)
-  public record PlaneMergerConf(
+  public record ClosedPlaneMergerConf(
       double epsilonSlope, double epsilonZDistance, double epsilonXYDistance) {}
 
   @Builder(toBuilder = true)
@@ -52,18 +47,11 @@ public record Plane3DExtractorConf(
     return Plane3DExtractorConf.builder()
         .roofPointsCleanerConf(RoofPointsCleanerConf.builder().duplicateXYTolerance(0.3).build())
         .chimneyFixerConf(ChimneyFixerConf.builder().maxChimneyArea(2).build())
-        .planeConf(
-            PlaneConf.builder()
-                .min2DArea(0.25)
-                .minEdgeLength(0.75)
-                .parallelDirectionEpsilon(15)
-                .minPointsCount(10)
-                .build())
+        .planeConf(PlaneConf.builder().min2DArea(0.25).compactness(0.1).minPointsCount(10).build())
         .boxConf(BoxConf.builder().threshold(0.25).build())
-        .planeDelimitationFixerConf(
-            PlaneDelimitationFixerConf.builder()
+        .delimitationFillerConf(
+            DelimitationFillerConf.builder()
                 .gridSize(1)
-                .simplificationEpsilon(0.2)
                 .maxEmptyCell(2)
                 .minCellPointsSize(3)
                 .build())
@@ -77,8 +65,8 @@ public record Plane3DExtractorConf(
                 .build())
         .planeDelimitationConf(
             PlaneDelimitationConf.builder().concaveRatio(0.2).simplificationEpsilon(0.6).build())
-        .planeMergerConf(
-            PlaneMergerConf.builder()
+        .closedPlaneMergerConf(
+            ClosedPlaneMergerConf.builder()
                 .epsilonSlope(10)
                 .epsilonZDistance(0.3)
                 .epsilonXYDistance(3)
