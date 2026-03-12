@@ -7,7 +7,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RequiredArgsConstructor
 public class InvalidPlane3DFilter implements Function<Collection<Plane3D>, List<Plane3D>> {
   private final double min2DArea;
