@@ -5,18 +5,24 @@ import static app.bpartners.geojobs.repository.model.detection.DetectableType.HU
 
 import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.FeatureMapper;
 import app.bpartners.geojobs.model.DetectedTile;
-import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.model.geometry.MultiPolygonObjectType;
 import app.bpartners.geojobs.model.geometry.PolygonObjectType;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
+<<<<<<< HEAD
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.service.PolygonObjectTypeConverter;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.util.Collection;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
+=======
+import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import java.util.Collection;
+import lombok.Getter;
+>>>>>>> 32cfa975 (chore: add risque vegetation to VGG properties)
 
+@Getter
 public class HumiditeAreaRateComputer extends AreaRateComputer {
   static final double WEIGHT = 1.0;
   private final FeatureMapper featureMapper = new FeatureMapper(new GeometryConverter(), null);
@@ -38,6 +44,7 @@ public class HumiditeAreaRateComputer extends AreaRateComputer {
   }
 
   @Override
+<<<<<<< HEAD
   public double compute(DetectableType detectableType) {
     if (roofArea <= 0) {
       throw new BadRequestException(
@@ -66,6 +73,9 @@ public class HumiditeAreaRateComputer extends AreaRateComputer {
   }
 
   private int getMalus(DetectableType detectableType) {
+=======
+  protected int getMalus(DetectableType detectableType) {
+>>>>>>> 32cfa975 (chore: add risque vegetation to VGG properties)
     return switch (detectableType) {
       case HUMIDITE_CLAIR -> 1;
       case HUMIDITE_INTENSE -> 2;

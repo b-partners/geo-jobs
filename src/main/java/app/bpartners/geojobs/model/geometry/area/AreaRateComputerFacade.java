@@ -9,12 +9,18 @@ public class AreaRateComputerFacade {
   private final HumiditeAreaRateComputer humiditeRateComputer;
   private final UsureAreaRateComputer usureRateComputer;
   private final MoisissureAreaRateComputer moisissureRateComputer;
+<<<<<<< HEAD
   private final RoofScoreComputer roofScoreComputer = new RoofScoreComputer();
+=======
+  private final RisqueVegetationAreaRateComputer risqueVegetationAreaRateComputer;
+>>>>>>> 32cfa975 (chore: add risque vegetation to VGG properties)
 
   public AreaRateComputerFacade(Geometry roofGeometry, DetectedTile tile) {
     this.humiditeRateComputer = new HumiditeAreaRateComputer(roofGeometry.getArea(), tile);
     this.usureRateComputer = new UsureAreaRateComputer(roofGeometry.getArea(), tile);
     this.moisissureRateComputer = new MoisissureAreaRateComputer(roofGeometry.getArea(), tile);
+    this.risqueVegetationAreaRateComputer =
+        new RisqueVegetationAreaRateComputer(roofGeometry, tile);
   }
 
   public AreaRateComputerFacade(
@@ -24,6 +30,8 @@ public class AreaRateComputerFacade {
     this.usureRateComputer = new UsureAreaRateComputer(roofGeometry.getArea(), polygonObjectTypes);
     this.moisissureRateComputer =
         new MoisissureAreaRateComputer(roofGeometry.getArea(), polygonObjectTypes);
+    this.risqueVegetationAreaRateComputer =
+        new RisqueVegetationAreaRateComputer(roofGeometry, polygonObjectTypes);
   }
 
   public double getUsureAreaRate() {
@@ -42,8 +50,8 @@ public class AreaRateComputerFacade {
     throw new UnsupportedOperationException("Not implemented yet");
   }
 
-  public RisqueVegetation getRisqueVegetationFeuAreaRate() {
-    throw new UnsupportedOperationException("Not implemented yet");
+  public IndiceVegetation getRisqueVegetationFeuAreaRate() {
+    return risqueVegetationAreaRateComputer.getIndiceVegetation();
   }
 
   public double getGlobalRate() {
