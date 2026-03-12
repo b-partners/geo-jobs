@@ -1,8 +1,8 @@
 package app.bpartners.geojobs.model.lidar.planes;
 
-import lombok.Builder;
 import app.bpartners.geojobs.model.lidar.planes.Box.BoxConf;
 import app.bpartners.geojobs.model.lidar.planes.Kernel.KernelConf;
+import lombok.Builder;
 
 @Builder(toBuilder = true)
 public record Plane3DExtractorConf(

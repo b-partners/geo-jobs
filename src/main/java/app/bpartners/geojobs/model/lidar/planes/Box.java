@@ -3,7 +3,6 @@ package app.bpartners.geojobs.model.lidar.planes;
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.planes.algorithm.PlaneFitter;
 import java.util.*;
-
 import lombok.Builder;
 import lombok.Getter;
 import org.locationtech.jts.math.Vector2D;

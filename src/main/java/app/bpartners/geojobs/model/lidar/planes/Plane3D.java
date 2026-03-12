@@ -136,19 +136,21 @@ public class Plane3D {
   }
 
   private Vector3D normal;
-  private Vector3D getNormal(){
-    if(normal == null){
+
+  private Vector3D getNormal() {
+    if (normal == null) {
       normal = new Vector3D(a, b, c).normalize();
     }
     return normal;
   }
 
   private Vector3D axisU;
-  private Vector3D getAxisU(){
-    if(axisU == null){
-      axisU = Vector3DUtils.cross(getNormal(), new Vector3D(0,0,1));
+
+  private Vector3D getAxisU() {
+    if (axisU == null) {
+      axisU = Vector3DUtils.cross(getNormal(), new Vector3D(0, 0, 1));
       if (axisU.length() < 1e-6) {
-        axisU = Vector3DUtils.cross(getNormal(), new Vector3D(0,1,0));
+        axisU = Vector3DUtils.cross(getNormal(), new Vector3D(0, 1, 0));
       }
       axisU = axisU.normalize();
     }
@@ -157,8 +159,9 @@ public class Plane3D {
   }
 
   private Vector3D axisV;
-  private Vector3D getAxisV(){
-    if(axisV == null){
+
+  private Vector3D getAxisV() {
+    if (axisV == null) {
       axisV = Vector3DUtils.cross(getNormal(), getAxisU()).normalize();
     }
     return axisV;
