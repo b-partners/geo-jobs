@@ -11,11 +11,17 @@ import java.util.Set;
 import org.locationtech.jts.math.Vector3D;
 
 public class PlaneFitter {
+  private PlaneFitter() {}
+
   public static Plane3D fit(Collection<LasPointGeometry> points) {
     var centroid = centroid(points);
 
-    double xx = 0, xy = 0, xz = 0;
-    double yy = 0, yz = 0, zz = 0;
+    double xx = 0;
+    double xy = 0;
+    double xz = 0;
+    double yy = 0;
+    double yz = 0;
+    double zz = 0;
     for (var p : points) {
       double dx = p.getX() - centroid.getX();
       double dy = p.getY() - centroid.getY();

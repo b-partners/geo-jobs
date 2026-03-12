@@ -23,7 +23,9 @@ public class GeometryUtilities {
   }
 
   public static LasPointGeometry centroid(Collection<LasPointGeometry> points) {
-    double sx = 0, sy = 0, sz = 0;
+    double sx = 0;
+    double sy = 0;
+    double sz = 0;
     for (var point : points) {
       sx += point.getX();
       sy += point.getY();

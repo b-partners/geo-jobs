@@ -168,10 +168,10 @@ public class Plane3D {
   }
 
   public Vector2D projectToLocal(LasPointGeometry p) {
-    var c = this.getCentroid();
-    var dx = p.getX() - c.getX();
-    var dy = p.getY() - c.getY();
-    var dz = p.getZ() - c.getZ();
+    var cen = this.getCentroid();
+    var dx = p.getX() - cen.getX();
+    var dy = p.getY() - cen.getY();
+    var dz = p.getZ() - cen.getZ();
     var local = new Vector3D(dx, dy, dz);
 
     double u = local.dot(getAxisU());

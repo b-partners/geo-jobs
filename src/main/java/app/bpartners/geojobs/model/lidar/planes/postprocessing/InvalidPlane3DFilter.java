@@ -22,10 +22,6 @@ public class InvalidPlane3DFilter implements Function<Collection<Plane3D>, List<
   }
 
   private boolean isValid(Plane3D plane) {
-    if (!plane.getDelimitation().isValid()) {
-      return false;
-    }
-
     var coordinates = plane.getDelimitation().getCoordinates();
     if (coordinates.length < MIN_VALID_POLYGON_POINTS_COUNT) {
       return false;

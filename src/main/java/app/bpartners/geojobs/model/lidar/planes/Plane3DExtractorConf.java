@@ -59,7 +59,7 @@ public record Plane3DExtractorConf(
                 .squaredThreshold(0.75 * 0.75)
                 .build())
         .planeDelimitationConf(
-            PlaneDelimitationConf.builder().concaveRatio(0.2).simplificationEpsilon(0.45).build())
+            PlaneDelimitationConf.builder().concaveRatio(0.2).simplificationEpsilon(0.55).build())
         .closedPlaneMergerConf(
             ClosedPlaneMergerConf.builder()
                 .epsilonSlope(10)
