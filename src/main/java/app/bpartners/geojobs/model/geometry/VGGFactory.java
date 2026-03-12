@@ -252,6 +252,59 @@ public class VGGFactory {
         .toList();
   }
 
+  private HashMap<String, Object> computeProperties(
+      Feature feature,
+      Geometry lonLatRoofPolygon,
+      Geometry roofPixelPolygon,
+      DetectionRoofPropertiesRequestedService.DetectedRoofCovering detectedRoofCovering,
+      List<String> addresses,
+      Collection<PolygonObjectType> polygonObjectTypes) {
+    var rateComputer = new AreaRateComputerFacade(roofPixelPolygon, polygonObjectTypes);
+    var usureRate = rateComputer.getUsureAreaRate();
+    var humiditeRate = rateComputer.getHumidityAreaRate();
+    var moisissureRate = rateComputer.getMoisissureAreaRate();
+    var globalRateValue = rateComputer.getGlobalRate();
+    var globalRateType = rateComputer.getRate();
+    var mutation = rateComputer.getMutation();
+    var vegetationRisk = rateComputer.getRisqueVegetationFeuAreaRate();
+
+    var featureProperties =
+        feature.getProperties() == null ? new HashMap<String, Object>() : feature.getProperties();
+    var properties = new HashMap<String, Object>();
+
+    properties.put("roof_area_in_m2", geometrySquareMeterArea.apply(lonLatRoofPolygon));
+    properties.put("usure_rate", usureRate);
+    properties.put("humidite_rate", humiditeRate);
+    properties.put("moisissure_rate", moisissureRate);
+    properties.put("global_rate_value", globalRateValue);
+    properties.put("global_rate_type", globalRateType);
+    properties.put("addresses", addresses);
+    properties.put("mutation", mutation);
+    properties.put("vegetation_risk", vegetationRisk);
+
+    // Lidar properties
+    if (featureProperties.containsKey(LIDAR_DATA_STATUS_PROPERTY_NAME)) {
+      properties.put("roof_slope_in_degrees", featureProperties.get(ROOF_SLOPE_PROPERTY_NAME));
+      properties.put("roof_height_in_meters", featureProperties.get(ROOF_HEIGHT_PROPERTY_NAME));
+      properties.put(
+          "roof_slope_data_status", featureProperties.get(LIDAR_DATA_STATUS_PROPERTY_NAME));
+      properties.put(
+          "roof_height_data_status", featureProperties.get(LIDAR_DATA_STATUS_PROPERTY_NAME));
+    }
+
+    if (detectedRoofCovering != null) {
+      properties.put(
+          "revetement_1",
+          detectedRoofCovering.primary() == null ? null : detectedRoofCovering.primary().name());
+      properties.put(
+          "revetement_2",
+          detectedRoofCovering.secondary() == null
+              ? null
+              : detectedRoofCovering.secondary().name());
+    }
+    return properties;
+  }
+
   private Polygon projectPolygonsToCompositeImage(
       Integer tileX,
       Integer tileY,

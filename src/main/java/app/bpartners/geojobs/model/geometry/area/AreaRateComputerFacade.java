@@ -38,6 +38,14 @@ public class AreaRateComputerFacade {
     return format(humiditeRateComputer.getHumidityAreaRate());
   }
 
+  public Mutation getMutation() {
+    throw new UnsupportedOperationException("Not implemented yet");
+  }
+
+  public RisqueVegetation getRisqueVegetationFeuAreaRate() {
+    throw new UnsupportedOperationException("Not implemented yet");
+  }
+
   public double getGlobalRate() {
     return format(
         humiditeRateComputer.getGlobalRate()
