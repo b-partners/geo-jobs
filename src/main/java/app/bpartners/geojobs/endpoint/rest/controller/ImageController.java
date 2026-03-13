@@ -78,7 +78,17 @@ public class ImageController {
           .currentGeoPosition(
               areaPictureDetails.currentGeoPosition() == null
                   ? null
-                  : new GeoPosition().latitude(latitude).longitude(longitude))
+                  : new GeoPosition()
+                      .latitude(
+                          latitude != null
+                              ? latitude
+                              : BigDecimal.valueOf(
+                                  areaPictureDetails.currentGeoPosition().latitude()))
+                      .longitude(
+                          longitude != null
+                              ? longitude
+                              : BigDecimal.valueOf(
+                                  areaPictureDetails.currentGeoPosition().longitude())))
           .address((longitude != null || latitude != null) ? null : address)
           .zoomLevel(zoom)
           .imageBase64(
