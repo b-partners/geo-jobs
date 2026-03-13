@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.model.lidar.planes;
 
+import app.bpartners.geojobs.model.lidar.planes.Box.BoxConf;
+import app.bpartners.geojobs.model.lidar.planes.Kernel.KernelConf;
 import lombok.Builder;
 
 @Builder(toBuilder = true)
@@ -31,14 +33,7 @@ public record Plane3DExtractorConf(
       double epsilonSlope, double epsilonZDistance, double epsilonXYDistance) {}
 
   @Builder(toBuilder = true)
-  public record BoxConf(double threshold) {}
-
-  @Builder(toBuilder = true)
   public record RoofPointsCleanerConf(double duplicateXYTolerance) {}
-
-  @Builder(toBuilder = true)
-  public record KernelConf(
-      int attempts, int maxLength, double threshold, double minVectorNorm, double degEpsilon) {}
 
   @Builder(toBuilder = true)
   public record ChimneyFixerConf(double maxChimneyArea) {}
@@ -48,7 +43,7 @@ public record Plane3DExtractorConf(
         .roofPointsCleanerConf(RoofPointsCleanerConf.builder().duplicateXYTolerance(0.3).build())
         .chimneyFixerConf(ChimneyFixerConf.builder().maxChimneyArea(2).build())
         .planeConf(PlaneConf.builder().min2DArea(0.25).compactness(0.1).minPointsCount(10).build())
-        .boxConf(BoxConf.builder().threshold(0.25).build())
+        .boxConf(BoxConf.builder().height(0.15).expansionSize(0.25).maxRefitPoints(100).build())
         .delimitationFillerConf(
             DelimitationFillerConf.builder()
                 .gridSize(1)
@@ -58,13 +53,13 @@ public record Plane3DExtractorConf(
         .kernelConf(
             KernelConf.builder()
                 .attempts(20)
-                .threshold(0.75)
-                .minVectorNorm(1e-6)
                 .maxLength(5)
                 .degEpsilon(4)
+                .minVectorNorm(1e-6)
+                .squaredThreshold(0.75 * 0.75)
                 .build())
         .planeDelimitationConf(
-            PlaneDelimitationConf.builder().concaveRatio(0.2).simplificationEpsilon(0.6).build())
+            PlaneDelimitationConf.builder().concaveRatio(0.2).simplificationEpsilon(0.55).build())
         .closedPlaneMergerConf(
             ClosedPlaneMergerConf.builder()
                 .epsilonSlope(10)
@@ -72,7 +67,7 @@ public record Plane3DExtractorConf(
                 .epsilonXYDistance(3)
                 .build())
         .planeExtractionConf(
-            PlaneExtractionConf.builder().iteration(200).pointContinuationThreshold(0.5).build())
+            PlaneExtractionConf.builder().iteration(100).pointContinuationThreshold(0.5).build())
         .build();
   }
 }

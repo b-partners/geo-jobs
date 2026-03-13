@@ -20,7 +20,7 @@ public class Planes3DExtractor implements Function<Collection<LasPointGeometry>,
   public Planes3DExtractor(Plane3DExtractorConf conf, Plane3DExtractionStepExporter exporter) {
     this.conf = conf;
     this.exporter = exporter;
-    this.onePlane3DExtractor = new OnePlane3DExtractor(conf, exporter);
+    this.onePlane3DExtractor = new OnePlane3DExtractor(conf);
   }
 
   @Override

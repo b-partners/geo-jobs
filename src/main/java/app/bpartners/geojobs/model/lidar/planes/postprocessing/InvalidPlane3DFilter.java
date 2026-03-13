@@ -7,7 +7,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RequiredArgsConstructor
 public class InvalidPlane3DFilter implements Function<Collection<Plane3D>, List<Plane3D>> {
   private final double min2DArea;
@@ -20,10 +22,6 @@ public class InvalidPlane3DFilter implements Function<Collection<Plane3D>, List<
   }
 
   private boolean isValid(Plane3D plane) {
-    if (!plane.getDelimitation().isValid()) {
-      return false;
-    }
-
     var coordinates = plane.getDelimitation().getCoordinates();
     if (coordinates.length < MIN_VALID_POLYGON_POINTS_COUNT) {
       return false;
