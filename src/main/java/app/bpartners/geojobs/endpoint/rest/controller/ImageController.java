@@ -75,6 +75,7 @@ public class ImageController {
                       .longitude(
                           BigDecimal.valueOf(areaPictureDetails.currentGeoPosition().longitude())))
           .address(address)
+          .zoomLevel(zoom)
           .imageBase64(
               "data:image/jpeg;base64," + Base64.getEncoder().encodeToString(imageAsBytes));
     } catch (RuntimeException e) {

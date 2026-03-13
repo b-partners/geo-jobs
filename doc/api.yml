@@ -2392,6 +2392,8 @@ components:
           $ref: '#/components/schemas/TileCoordinates'
         currentGeoPosition:
           $ref: '#/components/schemas/GeoPosition'
+        zoomLevel:
+          $ref: '#/components/schemas/ImageZoomLevel'
     GeoPosition:
       type: object
       properties:
