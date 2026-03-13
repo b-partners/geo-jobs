@@ -9,11 +9,13 @@ import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.rest.model.ImageDetails;
 import app.bpartners.geojobs.model.exception.ApiException;
+import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.service.dashboard.AreaPictureApi;
 import app.bpartners.geojobs.service.dashboard.FileApi;
 import app.bpartners.geojobs.service.dashboard.component.AreaPictureDetails;
 import app.bpartners.geojobs.service.dashboard.component.CrupdateAreaPictureDetails;
 import app.bpartners.geojobs.service.dashboard.component.FileType;
+import java.math.BigDecimal;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,10 +39,45 @@ class ImageControllerTest {
   }
 
   @Test
+  void throw_exception_when_both_address_and_lon_lat_provided() {
+    var actualOne =
+        assertThrows(
+            BadRequestException.class,
+            () ->
+                subject.getImage(randomUUID().toString(), null, null, null, BigDecimal.ZERO, null));
+    var actualTwo =
+        assertThrows(
+            BadRequestException.class,
+            () ->
+                subject.getImage(randomUUID().toString(), null, null, null, null, BigDecimal.ZERO));
+    var actualThree =
+        assertThrows(
+            BadRequestException.class,
+            () ->
+                subject.getImage(
+                    randomUUID().toString(), null, null, null, BigDecimal.ZERO, BigDecimal.ZERO));
+
+    var expectedExceptionMessage = "Provide either an address or coordinates, not both";
+    assertEquals(expectedExceptionMessage, actualOne.getMessage());
+    assertEquals(expectedExceptionMessage, actualTwo.getMessage());
+    assertEquals(expectedExceptionMessage, actualThree.getMessage());
+  }
+
+  @Test
+  void throw_exception_when_either_address_or_lon_lat_not_provided() {
+    var actual =
+        assertThrows(
+            BadRequestException.class, () -> subject.getImage(null, null, null, null, null, null));
+
+    assertEquals(
+        "Either address or both longitude and latitude must be provided", actual.getMessage());
+  }
+
+  @Test
   void get_images_ok() {
     var address = "some address";
 
-    var actual = subject.getImage(address, null, null, null);
+    var actual = subject.getImage(address, null, null, null, null, null);
 
     var stringCaptor = ArgumentCaptor.forClass(String.class);
     verify(fileApiMock, only())
@@ -57,7 +94,8 @@ class ImageControllerTest {
     var isExtended = true;
     int providedShiftNb = 1;
 
-    assertDoesNotThrow(() -> subject.getImage(address, null, isExtended, providedShiftNb));
+    assertDoesNotThrow(
+        () -> subject.getImage(address, null, isExtended, providedShiftNb, null, null));
 
     var crupdateAreaPictureDetailsCaptor =
         ArgumentCaptor.forClass(CrupdateAreaPictureDetails.class);
@@ -96,7 +134,9 @@ class ImageControllerTest {
     var expectedMessageException = "Unable to retrieve image of address : " + notFoundAddress;
 
     var actual =
-        assertThrows(ApiException.class, () -> subject.getImage(notFoundAddress, null, null, null));
+        assertThrows(
+            ApiException.class,
+            () -> subject.getImage(notFoundAddress, null, null, null, null, null));
 
     assertEquals(expectedMessageException, actual.getMessage());
   }

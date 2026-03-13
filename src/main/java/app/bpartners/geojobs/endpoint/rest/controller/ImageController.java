@@ -7,6 +7,7 @@ import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.model.exception.ApiException;
+import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.service.dashboard.AreaPictureApi;
 import app.bpartners.geojobs.service.dashboard.FileApi;
 import app.bpartners.geojobs.service.dashboard.component.CrupdateAreaPictureDetails;
@@ -36,10 +37,18 @@ public class ImageController {
 
   @GetMapping("/image")
   public ImageDetails getImage(
-      @RequestParam String address,
+      @RequestParam(required = false) String address,
       @RequestParam(required = false, name = "zoom") ImageZoomLevel zoom,
       @RequestParam(required = false) Boolean isExtended,
-      @RequestParam(required = false, name = "shiftNb") Integer providedShiftNb) {
+      @RequestParam(required = false, name = "shiftNb") Integer providedShiftNb,
+      @RequestParam(required = false, name = "longitude") BigDecimal longitude,
+      @RequestParam(required = false, name = "latitude") BigDecimal latitude) {
+    boolean hasAddress = checkAddressAndPointCoordinates(address, longitude, latitude);
+
+    if (!hasAddress) {
+      address = latitude.doubleValue() + "," + longitude.doubleValue();
+    }
+
     var requestedZoom = getZoomLevelEnum(zoom);
     var areaPictureId = randomUUID().toString();
     var fileId = randomUUID().toString();
@@ -69,12 +78,8 @@ public class ImageController {
           .currentGeoPosition(
               areaPictureDetails.currentGeoPosition() == null
                   ? null
-                  : new GeoPosition()
-                      .latitude(
-                          BigDecimal.valueOf(areaPictureDetails.currentGeoPosition().latitude()))
-                      .longitude(
-                          BigDecimal.valueOf(areaPictureDetails.currentGeoPosition().longitude())))
-          .address(address)
+                  : new GeoPosition().latitude(latitude).longitude(longitude))
+          .address((longitude != null || latitude != null) ? null : address)
           .zoomLevel(zoom)
           .imageBase64(
               "data:image/jpeg;base64," + Base64.getEncoder().encodeToString(imageAsBytes));
@@ -82,6 +87,23 @@ public class ImageController {
       log.error(e.getMessage(), e);
       throw new ApiException(SERVER_EXCEPTION, "Unable to retrieve image of address : " + address);
     }
+  }
+
+  private boolean checkAddressAndPointCoordinates(
+      String address, BigDecimal longitude, BigDecimal latitude) {
+    boolean hasAddress = address != null;
+    boolean hasCoordinates = longitude != null && latitude != null;
+    boolean hasPartialCoordinates = longitude != null || latitude != null;
+
+    if (hasAddress && hasPartialCoordinates) {
+      throw new BadRequestException("Provide either an address or coordinates, not both");
+    }
+
+    if (!hasAddress && !hasCoordinates) {
+      throw new BadRequestException(
+          "Either address or both longitude and latitude must be provided");
+    }
+    return hasAddress;
   }
 
   private ZoneTilingJob.ZoomLevelEnum getZoomLevelEnum(ImageZoomLevel zoom) {

@@ -174,7 +174,10 @@ paths:
     get:
       tags:
         - Image
-      summary: Retrieve aerial image from a textual, human-readable, address
+      summary: Retrieve an aerial image from a human-readable address or geographic coordinates.
+      description: |
+        Retrieve an aerial image by providing either a human-readable address
+        or a pair of geographic coordinates (longitude and latitude).
       operationId: getImage
       security:
         - ApiKeyAuth: [ ]
@@ -183,7 +186,17 @@ paths:
           name: address
           schema:
             type: string
-          required: true
+          required: false
+        - in: query
+          name: longitude
+          schema:
+            type: number
+          required: false
+        - in: query
+          name: latitude
+          schema:
+            type: number
+          required: false
         - in: query
           name: zoom
           schema:
