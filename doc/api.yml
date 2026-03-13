@@ -663,11 +663,18 @@ paths:
       summary: Retrieve an aerial image from a human-readable address or geographic coordinates.
       description: |
         Retrieve an aerial image by providing either a human-readable address
-        or a pair of geographic coordinates (longitude and latitude).
+        or a pair of geographic coordinates (longitude and latitude). 
+        
+        When `ROOF_DAMAGE_DETECTION` is provided, only images with 5cm precision is returned.
       operationId: getImage
       security:
         - ApiKeyAuth: [ ]
       parameters:
+        - in: query
+          name: usage
+          schema:
+            $ref: '#/components/schemas/ImageUsage'
+          required: false
         - in: query
           name: address
           schema:
@@ -2548,3 +2555,8 @@ components:
       enum:
         - GEO_JSON
         - ZIP
+    ImageUsage:
+      type: string
+      enum:
+        - ROOF_DAMAGE_DETECTION
+        - UNKNOWN

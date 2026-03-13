@@ -280,7 +280,7 @@ class ZoneServiceTest {
                 new CommunityAuthorization().builder().dashboardApiKey("apiKey").build()));
     when(areaPictureApiMock.getAreaPictureMapLayers(anyDouble(), anyDouble(), anyString()))
         .thenReturn(
-            List.of(new AreaPictureMapLayer("id", LATEST_DEFAULT_LAYER, new Zoom("level", 24))));
+            List.of(new AreaPictureMapLayer("id", LATEST_DEFAULT_LAYER, new Zoom("level", 24), 5)));
 
     var actual = subject.processDetection(detectionIdentifier, createDetection, communityOwnerId);
 
