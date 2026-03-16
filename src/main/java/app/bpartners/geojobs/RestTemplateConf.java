@@ -12,9 +12,6 @@ public class RestTemplateConf {
 
   @Bean
   public RestTemplate restTemplate(RestTemplateBuilder builder) {
-    var factory = new HttpComponentsClientHttpRequestFactory();
-    factory.setConnectTimeout(Duration.ofSeconds(10L));
-    factory.setConnectionRequestTimeout(Duration.ofSeconds(120L));
-    return builder.requestFactory(() -> factory).build();
+    return builder.build();
   }
 }
