@@ -42,7 +42,7 @@ public class ApiKeyAuthenticator implements UsernamePasswordAuthenticator {
             .findByApiKey(candidateApiKey)
             .filter(authorization -> !authorization.isApiKeyRevoked())
             .orElseThrow(() -> new BadCredentialsException("Bad credentials"));
-    communityUserSubscriptionAuthorizer.accept(authenticatedCommunity);
+    // communityUserSubscriptionAuthorizer.accept(authenticatedCommunity); TODO: uncomment
     authorities.add(new Authority(authenticatedCommunity.getRole()));
     return authorities;
   }
