@@ -45,20 +45,7 @@ public class AreaRateComputerFacade {
   }
 
   public Rate getRate() {
-    var globalRate = getGlobalRate();
-    if (globalRate < 4) {
-      return Rate.A;
-    }
-    if (globalRate >= 4 && globalRate < 11) {
-      return Rate.B;
-    }
-    if (globalRate >= 11 && globalRate < 21) {
-      return Rate.C;
-    }
-    if (globalRate >= 21 && globalRate < 41) {
-      return Rate.D;
-    }
-    return Rate.E;
+    return RateComputer.getRate(getGlobalRate());
   }
 
   public static double format(double value) {
