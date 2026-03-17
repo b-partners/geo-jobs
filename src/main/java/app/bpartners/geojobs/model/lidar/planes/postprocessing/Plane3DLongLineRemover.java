@@ -2,6 +2,8 @@ package app.bpartners.geojobs.model.lidar.planes.postprocessing;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.model.lidar.planes.algorithm.GeometryUtilities.project;
+import static app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStep.AFTER_LONG_LINE;
+import static app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStep.BEFORE_LONG_LINE;
 
 import app.bpartners.geojobs.model.lidar.planes.Plane3D;
 import java.util.*;
@@ -29,6 +31,12 @@ public class Plane3DLongLineRemover implements Function<Polygon, Polygon> {
                 return plane;
               }
 
+              var exporter = plane.getExporter();
+              if (exporter != null) {
+                exporter.export(BEFORE_LONG_LINE, delimitation);
+                exporter.export(AFTER_LONG_LINE, newDelimitation);
+              }
+
               newDelimitation = project(plane, newDelimitation);
               return plane.toBuilder()
                   .area(null)
@@ -53,7 +61,7 @@ public class Plane3DLongLineRemover implements Function<Polygon, Polygon> {
 
   private GridClassification getExtendedGridClassification(GridClassification base) {
     var extended = base.toBuilder().build();
-    for (var toDelete : extended.toDelete()) {
+    for (var toDelete : new HashSet<>(extended.toDelete())) {
       for (int dx = -1; dx <= 1; dx++) {
         for (int dy = -1; dy <= 1; dy++) {
           if (dx == 0 && dy == 0) continue;
@@ -135,8 +143,79 @@ public class Plane3DLongLineRemover implements Function<Polygon, Polygon> {
       }
     }
 
-    var baseGridClassification = new GridClassification(toKeep, toDelete, invalidGrid);
-    return getExtendedGridClassification(baseGridClassification);
+    var baseGridClassification = new GridClassification(toKeep, invalidGrid, toDelete);
+    var extended = getExtendedGridClassification(baseGridClassification);
+    return getFixedClassification(extended, grid);
+  }
+
+  private GridClassification getFixedClassification(GridClassification classified, Grid grid) {
+    var toDelete = new HashSet<CellIndex>();
+    var toKeep = new HashSet<>(classified.toKeep());
+    var groups = getConnected(classified.toDelete());
+
+    for (var group : groups) {
+      var geometry = getGeometry(group, grid);
+      double length = getMaxDistance(geometry);
+
+      if (length >= conf.longLineLength()) {
+        toDelete.addAll(group);
+      } else {
+        toKeep.addAll(group);
+      }
+    }
+
+    return new GridClassification(toKeep, classified.invalidGrid(), toDelete);
+  }
+
+  private List<Set<CellIndex>> getConnected(Set<CellIndex> cells) {
+    List<Set<CellIndex>> groups = new ArrayList<>();
+    Set<CellIndex> visited = new HashSet<>();
+
+    for (var cell : cells) {
+      if (visited.contains(cell)) continue;
+
+      Set<CellIndex> group = new HashSet<>();
+      Deque<CellIndex> stack = new ArrayDeque<>();
+      stack.push(cell);
+
+      while (!stack.isEmpty()) {
+        var current = stack.pop();
+        if (!visited.add(current)) continue;
+
+        group.add(current);
+
+        for (int dx = -1; dx <= 1; dx++) {
+          for (int dy = -1; dy <= 1; dy++) {
+            if (dx == 0 && dy == 0) continue;
+
+            var neighbor = new CellIndex(current.x() + dx, current.y() + dy);
+            if (cells.contains(neighbor) && !visited.contains(neighbor)) {
+              stack.push(neighbor);
+            }
+          }
+        }
+      }
+
+      groups.add(group);
+    }
+
+    return groups;
+  }
+
+  private double getMaxDistance(Geometry geometry) {
+    var coordinates = geometry.getCoordinates();
+    double maxDist = 0;
+
+    for (int i = 0; i < coordinates.length; i++) {
+      for (int j = i + 1; j < coordinates.length; j++) {
+        double dist = coordinates[i].distance(coordinates[j]);
+        if (dist > maxDist) {
+          maxDist = dist;
+        }
+      }
+    }
+
+    return maxDist;
   }
 
   private static Polygon getGeometry(Collection<CellIndex> idx, Grid grid) {
@@ -201,6 +280,6 @@ public class Plane3DLongLineRemover implements Function<Polygon, Polygon> {
       double gridSize,
       double cellMin2DArea,
       double minAreaToCheck,
-      double longlineLength,
+      double longLineLength,
       int cellMinNeighborsCount) {}
 }
