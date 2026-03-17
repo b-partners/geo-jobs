@@ -2,6 +2,7 @@ package app.bpartners.geojobs.model.lidar.planes;
 
 import app.bpartners.geojobs.model.lidar.planes.Box.BoxConf;
 import app.bpartners.geojobs.model.lidar.planes.Kernel.KernelConf;
+import app.bpartners.geojobs.model.lidar.planes.postprocessing.Plane3DLongLineRemover.Plane3DLongLineRemoverConf;
 import lombok.Builder;
 
 @Builder(toBuilder = true)
@@ -14,7 +15,8 @@ public record Plane3DExtractorConf(
     PlaneExtractionConf planeExtractionConf,
     RoofPointsCleanerConf roofPointsCleanerConf,
     PlaneDelimitationConf planeDelimitationConf,
-    DelimitationFillerConf delimitationFillerConf) {
+    DelimitationFillerConf delimitationFillerConf,
+    Plane3DLongLineRemoverConf plane3DLongLineRemoverConf) {
 
   @Builder(toBuilder = true)
   public record DelimitationFillerConf(int maxEmptyCell, int minCellPointsSize, double gridSize) {}
@@ -68,6 +70,13 @@ public record Plane3DExtractorConf(
                 .build())
         .planeExtractionConf(
             PlaneExtractionConf.builder().iteration(100).pointContinuationThreshold(0.5).build())
+        .plane3DLongLineRemoverConf(
+            Plane3DLongLineRemoverConf.builder()
+                .gridSize(1)
+                .minAreaToCheck(4)
+                .cellMin2DArea(0.85)
+                .cellMinNeighborsCount(1)
+                .build())
         .build();
   }
 }
