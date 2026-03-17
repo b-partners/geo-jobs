@@ -1450,6 +1450,36 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GeoCodingJob'
+
+  /area/rate:
+    get:
+      tags:
+        - Area
+      operationId: getAreaRate
+      summary: Get area rate from humidite, usure and moisissure rate
+      parameters:
+        - in: query
+          name: humiditeRate
+          required: true
+          schema:
+            type: number
+        - in: query
+          name: usureRate
+          required: true
+          schema:
+            type: number
+        - in: query
+          name: moisissureRate
+          required: true
+          schema:
+            type: number
+      responses:
+        200:
+          description: Computed Rate
+          content:
+            applicatin/json:
+              schema:
+                $ref: '#/components/schemas/AreaRate'
 components:
   securitySchemes:
     ReadmeAuth:
@@ -1596,6 +1626,23 @@ components:
           schema:
             $ref: '#/components/schemas/InternalServerException'
   schemas:
+    AreaRate:
+      type: object
+      properties:
+        globalRate:
+          type: number
+        rateClass:
+          type: AreaRateClass
+
+    AreaRateClass:
+      type: string
+      enum:
+        - "A"
+        - "B"
+        - "C"
+        - "D"
+        - "E"
+
     CreateApiKey:
       type: object
       properties:
