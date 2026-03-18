@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.model.lidar.planes.postprocessing;
 
-import static app.bpartners.geojobs.model.lidar.planes.algorithm.LasPointGeometryUtilities.project;
+import static app.bpartners.geojobs.model.lidar.planes.algorithm.GeometryUtilities.project;
 import static app.bpartners.geojobs.model.lidar.planes.algorithm.PointsDelimitationComputer.getConcave;
 import static java.lang.Double.POSITIVE_INFINITY;
 import static java.util.Comparator.comparingDouble;
@@ -106,8 +106,9 @@ public class Plane3DMerger implements UnaryOperator<Collection<Plane3D>> {
     }
 
     var points = new ArrayList<>(p1.getPoints());
-    points.addAll(project(p2.getPoints(), p1));
+    points.addAll(p2.getPoints());
     var delimitation3D = getConcave(points, concaveRatio);
+    delimitation3D = project(p1, delimitation3D);
 
     return p1.toBuilder()
         .points(new HashSet<>(points))

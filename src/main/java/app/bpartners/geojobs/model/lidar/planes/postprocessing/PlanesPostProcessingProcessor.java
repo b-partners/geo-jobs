@@ -16,6 +16,7 @@ public class PlanesPostProcessingProcessor implements Function<Collection<Plane3
   private final Plane3DMerger closedPlane3DMerger;
   private final DelimitationFiller delimitationFiller;
   private final InvalidPlane3DFilter invalidPlane3DFilter;
+  private final Plane3DLongLineRemover longLineRemover;
 
   public PlanesPostProcessingProcessor(
       Plane3DExtractorConf conf,
@@ -37,18 +38,17 @@ public class PlanesPostProcessingProcessor implements Function<Collection<Plane3
             conf.delimitationFillerConf().gridSize());
     this.invalidPlane3DFilter =
         new InvalidPlane3DFilter(conf.planeConf().min2DArea(), conf.planeConf().compactness());
+    this.longLineRemover = new Plane3DLongLineRemover(conf.plane3DLongLineRemoverConf());
   }
 
   @Override
   public List<Plane3D> apply(Collection<Plane3D> planes) {
-    var withoutInvalidPlane = this.invalidPlane3DFilter.apply(planes);
-
-    var withDelimitationFilled = this.delimitationFiller.apply(withoutInvalidPlane, points);
-
-    var withChimneyFixed = this.chimneyFixer.apply(withDelimitationFilled);
-
-    var withClosedPlaneMerged =
-        this.delimitationFiller.apply(this.closedPlane3DMerger.apply(withChimneyFixed), points);
-    return this.invalidPlane3DFilter.apply(withClosedPlaneMerged);
+    var postProcessed = this.invalidPlane3DFilter.apply(planes);
+    postProcessed = this.longLineRemover.apply(postProcessed);
+    postProcessed = this.delimitationFiller.apply(postProcessed, points);
+    postProcessed = this.chimneyFixer.apply(postProcessed);
+    postProcessed =
+        this.delimitationFiller.apply(this.closedPlane3DMerger.apply(postProcessed), points);
+    return this.invalidPlane3DFilter.apply(postProcessed);
   }
 }

@@ -15,7 +15,9 @@ public enum Plane3DExtractionStep {
   CHIMNEY_POLYGON(6),
   CHIMNEY_CONVEXE_POLYGON(7),
   CHIMNEY_FIXED_POLYGON(8),
-  RAW_PLANE_KERNEL(9);
+  RAW_PLANE_KERNEL(9),
+  BEFORE_LONG_LINE(10),
+  AFTER_LONG_LINE(12);
 
   private final int stepIndex;
 
