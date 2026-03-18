@@ -9,6 +9,7 @@ public class AreaRateComputerFacade {
   private final HumiditeAreaRateComputer humiditeRateComputer;
   private final UsureAreaRateComputer usureRateComputer;
   private final MoisissureAreaRateComputer moisissureRateComputer;
+  private final RoofScoreComputer roofScoreComputer = new RoofScoreComputer();
 
   public AreaRateComputerFacade(Geometry roofGeometry, DetectedTile tile) {
     this.humiditeRateComputer = new HumiditeAreaRateComputer(roofGeometry.getArea(), tile);
@@ -45,7 +46,7 @@ public class AreaRateComputerFacade {
   }
 
   public Rate getRate() {
-    return RateComputer.getRate(getGlobalRate());
+    return roofScoreComputer.getRate(getGlobalRate());
   }
 
   public static double format(double value) {

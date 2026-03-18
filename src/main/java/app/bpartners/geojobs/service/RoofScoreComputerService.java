@@ -1,22 +1,22 @@
 package app.bpartners.geojobs.service;
 
-import app.bpartners.geojobs.endpoint.rest.model.AreaRate;
-import app.bpartners.geojobs.endpoint.rest.model.AreaRateClass;
 import app.bpartners.geojobs.model.exception.BadRequestException;
-import app.bpartners.geojobs.model.geometry.area.RateComputer;
-import java.math.BigDecimal;
+import app.bpartners.geojobs.model.geometry.area.RoofScore;
+import app.bpartners.geojobs.model.geometry.area.RoofScoreComputer;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
-public class RateComputerService {
+@RequiredArgsConstructor
+public class RoofScoreComputerService {
+  private final RoofScoreComputer computer;
 
-  public AreaRate computeRate(double humiditeRate, double usureRate, double moisissureRate) {
+  public RoofScore computeScore(double humiditeRate, double usureRate, double moisissureRate) {
     validateRates(humiditeRate, usureRate, moisissureRate);
-    var computer = new RateComputer(humiditeRate, usureRate, moisissureRate);
-    var globalRate = BigDecimal.valueOf(computer.getGlobalRate());
-    var rateClass = AreaRateClass.fromValue(computer.getRate().toString());
+    var score = computer.getGlobalRate(humiditeRate, usureRate, moisissureRate);
+    var roofScoreCategory = computer.getRate(humiditeRate, usureRate, moisissureRate);
 
-    return new AreaRate().globalRate(globalRate).rateClass(rateClass);
+    return new RoofScore(score, roofScoreCategory);
   }
 
   private void validateRates(double humiditeRate, double usureRate, double moisissureRate) {

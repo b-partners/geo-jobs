@@ -1,24 +1,22 @@
 package app.bpartners.geojobs.model.geometry.area;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
+@Component
 @RequiredArgsConstructor
-public class RateComputer {
-  private final double humiditeRate;
-  private final double usureRate;
-  private final double moisissureRate;
-
-  public double getGlobalRate() {
+public class RoofScoreComputer {
+  public double getGlobalRate(double humiditeRate, double usureRate, double moisissureRate) {
     return humiditeRate * HumiditeAreaRateComputer.WEIGHT
         + usureRate * UsureAreaRateComputer.WEIGHT
         + moisissureRate * MoisissureAreaRateComputer.WEIGHT;
   }
 
-  public Rate getRate() {
-    return getRate(getGlobalRate());
+  public Rate getRate(double humiditeRate, double usureRate, double moisissureRate) {
+    return getRate(getGlobalRate(humiditeRate, usureRate, moisissureRate));
   }
 
-  public static Rate getRate(double globalRate) {
+  public Rate getRate(double globalRate) {
     if (globalRate < 4) {
       return Rate.A;
     }

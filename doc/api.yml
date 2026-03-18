@@ -1482,7 +1482,7 @@ paths:
           content:
             applicatin/json:
               schema:
-                $ref: '#/components/schemas/AreaRate'
+                $ref: '#/components/schemas/RoofScore'
 components:
   securitySchemes:
     ReadmeAuth:
@@ -1629,15 +1629,15 @@ components:
           schema:
             $ref: '#/components/schemas/InternalServerException'
   schemas:
-    AreaRate:
+    RoofScore:
       type: object
       properties:
-        globalRate:
+        score:
           type: number
-        rateClass:
-          type: AreaRateClass
+        category:
+            $ref: "#/components/schemas/RoofScoreCategory"
 
-    AreaRateClass:
+    RoofScoreCategory:
       type: string
       enum:
         - "A"
