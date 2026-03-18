@@ -5,18 +5,18 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.RoofScoreMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.cityjson.RoofScoreCategoryMapper;
+import app.bpartners.geojobs.endpoint.rest.validator.RoofConditionValidator;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.geometry.area.RoofScoreComputer;
-import app.bpartners.geojobs.service.RoofScoreComputerService;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
 
 class RoofScoreComputerControllerTest {
-  RoofScoreComputer computer = new RoofScoreComputer();
-  RoofScoreComputerService service = new RoofScoreComputerService(computer);
+  RoofScoreComputer scoreComputer = new RoofScoreComputer();
+  RoofConditionValidator conditionValidator = new RoofConditionValidator();
   RoofScoreCategoryMapper categoryMapper = new RoofScoreCategoryMapper();
-  RoofScoreMapper mapper = new RoofScoreMapper(categoryMapper);
-  RoofScoreComputerController subject = new RoofScoreComputerController(service, mapper);
+  RoofScoreMapper mapper = new RoofScoreMapper(categoryMapper, scoreComputer, conditionValidator);
+  RoofScoreComputerController subject = new RoofScoreComputerController(mapper);
 
   @Test
   void rate_compute_ok() {

@@ -2,6 +2,10 @@ package app.bpartners.geojobs.endpoint.rest.controller.mapper;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.cityjson.RoofScoreCategoryMapper;
 import app.bpartners.geojobs.endpoint.rest.model.RoofScore;
+import app.bpartners.geojobs.endpoint.rest.validator.RoofConditionValidator;
+import app.bpartners.geojobs.model.geometry.area.Rate;
+import app.bpartners.geojobs.model.geometry.area.RoofCondition;
+import app.bpartners.geojobs.model.geometry.area.RoofScoreComputer;
 import java.math.BigDecimal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -10,10 +14,17 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RoofScoreMapper {
   private final RoofScoreCategoryMapper categoryMapper;
+  private final RoofScoreComputer computer;
+  private final RoofConditionValidator validator;
 
-  public RoofScore toRest(app.bpartners.geojobs.model.geometry.area.RoofScore domain) {
+  public RoofScore from(RoofCondition roofCondition) {
+    validator.accept(roofCondition);
+
+    double score = computer.getGlobalRate(roofCondition);
+    Rate category = computer.getRate(score);
+
     return new RoofScore()
-        .score(BigDecimal.valueOf(domain.score()))
-        .category(categoryMapper.toRest(domain.category()));
+        .score(BigDecimal.valueOf(score))
+        .category(categoryMapper.toRest(category));
   }
 }

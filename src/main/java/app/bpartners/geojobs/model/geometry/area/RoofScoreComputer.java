@@ -6,14 +6,10 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class RoofScoreComputer {
-  public double getGlobalRate(double humiditeRate, double usureRate, double moisissureRate) {
-    return humiditeRate * HumiditeAreaRateComputer.WEIGHT
-        + usureRate * UsureAreaRateComputer.WEIGHT
-        + moisissureRate * MoisissureAreaRateComputer.WEIGHT;
-  }
-
-  public Rate getRate(double humiditeRate, double usureRate, double moisissureRate) {
-    return getRate(getGlobalRate(humiditeRate, usureRate, moisissureRate));
+  public double getGlobalRate(RoofCondition roofCondition) {
+    return roofCondition.humiditeRate() * HumiditeAreaRateComputer.WEIGHT
+        + roofCondition.usureRate() * UsureAreaRateComputer.WEIGHT
+        + roofCondition.moisissureRate() * MoisissureAreaRateComputer.WEIGHT;
   }
 
   public Rate getRate(double globalRate) {
