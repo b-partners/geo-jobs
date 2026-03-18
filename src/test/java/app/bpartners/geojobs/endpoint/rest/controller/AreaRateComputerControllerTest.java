@@ -14,7 +14,7 @@ class AreaRateComputerControllerTest {
 
   @Test
   void rate_compute_ok() {
-    var actual = subject.getAreaRate(10, 20, 30);
+    var actual = subject.computeRoofOverallScore(10, 20, 30);
 
     assertEquals(BigDecimal.valueOf(42.0), actual.getGlobalRate());
     assertEquals(E, actual.getRateClass());
@@ -22,14 +22,16 @@ class AreaRateComputerControllerTest {
 
   @Test
   void negative_rate_ko() {
-    var actual = assertThrows(BadRequestException.class, () -> subject.getAreaRate(-1, 20, 30));
+    var actual =
+        assertThrows(BadRequestException.class, () -> subject.computeRoofOverallScore(-1, 20, 30));
 
     assertEquals("Rates must be positive", actual.getMessage());
   }
 
   @Test
   void sum_rate_ko() {
-    var actual = assertThrows(BadRequestException.class, () -> subject.getAreaRate(100, 20, 40));
+    var actual =
+        assertThrows(BadRequestException.class, () -> subject.computeRoofOverallScore(100, 20, 40));
 
     assertEquals("Sum of rates must not exceed 100, actual : " + 160.0, actual.getMessage());
   }

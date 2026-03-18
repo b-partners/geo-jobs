@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class AreaRateComputerController {
   private final RateComputerService service;
 
-  @GetMapping("/area/rate")
-  public AreaRate getAreaRate(
+  @GetMapping("/roof/overall-score")
+  public AreaRate computeRoofOverallScore(
       @RequestParam double humiditeRate,
       @RequestParam double usureRate,
       @RequestParam double moisissureRate) {

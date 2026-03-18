@@ -1451,12 +1451,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/GeoCodingJob'
 
-  /area/rate:
+  /roof/overall-score:
     get:
       tags:
-        - Area
-      operationId: getAreaRate
-      summary: Get area rate from humidite, usure and moisissure rate
+        - Roof
+      operationId: computeRoofOverallScore
+      summary: Compute overall roof score and category
+      description: |
+        Computes the overall score and corresponding category (A, B, C, D, E)
+        of a roof based on humidite, usure, and moisissure rates.
       parameters:
         - in: query
           name: humiditeRate
