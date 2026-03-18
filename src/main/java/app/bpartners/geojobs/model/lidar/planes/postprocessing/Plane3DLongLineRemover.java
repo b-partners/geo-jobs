@@ -56,7 +56,13 @@ public class Plane3DLongLineRemover implements Function<Polygon, Polygon> {
     var grid = createGrid(polygon);
     var gridClassification = classify(grid);
 
-    return getGeometry(gridClassification.toKeep(), grid);
+    if (gridClassification.toDelete().isEmpty()) {
+      return polygon;
+    }
+
+    var toDelete = getGeometry(gridClassification.toDelete(), grid);
+    var fixedPolygon = polygon.difference(toDelete);
+    return getLargestPolygon(fixedPolygon);
   }
 
   private GridClassification getExtendedGridClassification(GridClassification base) {
@@ -218,11 +224,10 @@ public class Plane3DLongLineRemover implements Function<Polygon, Polygon> {
     return maxDist;
   }
 
-  private static Polygon getGeometry(Collection<CellIndex> idx, Grid grid) {
+  private static Geometry getGeometry(Collection<CellIndex> idx, Grid grid) {
     var geometries = idx.stream().map(grid::get).toList();
     var merged = GeometryCombiner.combine(geometries);
-    var cleaned = merged.buffer(0);
-    return getLargestPolygon(cleaned);
+    return merged.buffer(0);
   }
 
   private static Polygon getLargestPolygon(Geometry geometry) {
