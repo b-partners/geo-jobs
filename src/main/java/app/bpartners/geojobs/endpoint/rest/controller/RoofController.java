@@ -2,7 +2,7 @@ package app.bpartners.geojobs.endpoint.rest.controller;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.RoofScoreMapper;
 import app.bpartners.geojobs.endpoint.rest.model.RoofScore;
-import app.bpartners.geojobs.endpoint.rest.validator.RoofConditionValidator;
+import app.bpartners.geojobs.endpoint.rest.validator.RoofDamageRateValidator;
 import app.bpartners.geojobs.model.geometry.area.RoofDamageRates;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,16 +13,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class RoofController {
   private final RoofScoreMapper mapper;
-  private final RoofConditionValidator roofConditionValidator;
+  private final RoofDamageRateValidator roofDamageRateValidator;
 
-  @GetMapping("/roof/overall-score")
+  @GetMapping("/roof/overallScore")
   public RoofScore computeRoofOverallScore(
-      @RequestParam double humiditeRate,
-      @RequestParam double usureRate,
-      @RequestParam double moisissureRate) {
+      @RequestParam(required = false) Double humiditeRate,
+      @RequestParam(required = false) Double usureRate,
+      @RequestParam(required = false) Double moisissureRate) {
     RoofDamageRates roofDamageRates = new RoofDamageRates(humiditeRate, usureRate, moisissureRate);
-    roofConditionValidator.accept(roofDamageRates);
+    roofDamageRateValidator.accept(roofDamageRates);
 
-    return mapper.from(roofDamageRates);
+    return mapper.toDomain(roofDamageRates);
   }
 }

@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.model.geometry.area;
 
+import static app.bpartners.geojobs.model.geometry.area.Rate.*;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -14,17 +16,17 @@ public class RoofScoreComputer {
 
   public Rate getRate(double globalRate) {
     if (globalRate < 4) {
-      return Rate.A;
+      return A;
     }
     if (globalRate >= 4 && globalRate < 11) {
-      return Rate.B;
+      return B;
     }
     if (globalRate >= 11 && globalRate < 21) {
-      return Rate.C;
+      return C;
     }
     if (globalRate >= 21 && globalRate < 41) {
-      return Rate.D;
+      return D;
     }
-    return Rate.E;
+    return E;
   }
 }

@@ -15,7 +15,7 @@ public class RoofScoreMapper {
   private final RoofScoreCategoryMapper categoryMapper;
   private final RoofScoreComputer computer;
 
-  public RoofScore from(RoofDamageRates roofDamageRates) {
+  public RoofScore toDomain(RoofDamageRates roofDamageRates) {
     double score = computer.getGlobalRate(roofDamageRates);
     Rate category = computer.getRate(score);
 

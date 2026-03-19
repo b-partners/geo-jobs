@@ -6,13 +6,17 @@ import java.util.function.Consumer;
 import org.springframework.stereotype.Component;
 
 @Component
-public class RoofConditionValidator implements Consumer<RoofDamageRates> {
+public class RoofDamageRateValidator implements Consumer<RoofDamageRates> {
 
   @Override
   public void accept(RoofDamageRates roofDamageRates) {
-    double humiditeRate = roofDamageRates.humiditeRate();
-    double usureRate = roofDamageRates.usureRate();
-    double moisissureRate = roofDamageRates.moisissureRate();
+    var humiditeRate = roofDamageRates.humiditeRate();
+    var usureRate = roofDamageRates.usureRate();
+    var moisissureRate = roofDamageRates.moisissureRate();
+
+    if (humiditeRate == null || usureRate == null || moisissureRate == null) {
+      throw new BadRequestException("humiditeRate, usureRate and moisissureRate are mandatory.");
+    }
 
     if (humiditeRate < 0 || usureRate < 0 || moisissureRate < 0) {
       throw new BadRequestException("Rates must be positive");

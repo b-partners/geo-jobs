@@ -13,7 +13,6 @@ public class RoofScoreCategoryMapper {
       case C -> RoofScoreCategory.C;
       case D -> RoofScoreCategory.D;
       case E -> RoofScoreCategory.E;
-      default -> throw new IllegalArgumentException("Unknown rate " + domain);
     };
   }
 }
