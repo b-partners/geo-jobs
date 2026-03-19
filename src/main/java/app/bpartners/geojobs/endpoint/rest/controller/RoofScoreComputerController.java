@@ -3,7 +3,7 @@ package app.bpartners.geojobs.endpoint.rest.controller;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.RoofScoreMapper;
 import app.bpartners.geojobs.endpoint.rest.model.RoofScore;
 import app.bpartners.geojobs.endpoint.rest.validator.RoofConditionValidator;
-import app.bpartners.geojobs.model.geometry.area.RoofCondition;
+import app.bpartners.geojobs.model.geometry.area.RoofDamageRates;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -20,9 +20,9 @@ public class RoofScoreComputerController {
       @RequestParam double humiditeRate,
       @RequestParam double usureRate,
       @RequestParam double moisissureRate) {
-    RoofCondition roofCondition = new RoofCondition(humiditeRate, usureRate, moisissureRate);
-    roofConditionValidator.accept(roofCondition);
+    RoofDamageRates roofDamageRates = new RoofDamageRates(humiditeRate, usureRate, moisissureRate);
+    roofConditionValidator.accept(roofDamageRates);
 
-    return mapper.from(roofCondition);
+    return mapper.from(roofDamageRates);
   }
 }
