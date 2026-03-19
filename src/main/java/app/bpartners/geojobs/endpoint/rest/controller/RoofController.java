@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-public class RoofScoreComputerController {
+public class RoofController {
   private final RoofScoreMapper mapper;
   private final RoofConditionValidator roofConditionValidator;
 

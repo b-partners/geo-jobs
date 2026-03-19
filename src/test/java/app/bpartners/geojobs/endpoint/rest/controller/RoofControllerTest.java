@@ -11,12 +11,12 @@ import app.bpartners.geojobs.model.geometry.area.RoofScoreComputer;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
 
-class RoofScoreComputerControllerTest {
+class RoofControllerTest {
   RoofScoreComputer scoreComputer = new RoofScoreComputer();
   RoofConditionValidator conditionValidator = new RoofConditionValidator();
   RoofScoreCategoryMapper categoryMapper = new RoofScoreCategoryMapper();
   RoofScoreMapper mapper = new RoofScoreMapper(categoryMapper, scoreComputer);
-  RoofScoreComputerController subject = new RoofScoreComputerController(mapper, conditionValidator);
+  RoofController subject = new RoofController(mapper, conditionValidator);
 
   @Test
   void rate_compute_ok() {
