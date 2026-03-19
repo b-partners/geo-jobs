@@ -15,8 +15,8 @@ class RoofScoreComputerControllerTest {
   RoofScoreComputer scoreComputer = new RoofScoreComputer();
   RoofConditionValidator conditionValidator = new RoofConditionValidator();
   RoofScoreCategoryMapper categoryMapper = new RoofScoreCategoryMapper();
-  RoofScoreMapper mapper = new RoofScoreMapper(categoryMapper, scoreComputer, conditionValidator);
-  RoofScoreComputerController subject = new RoofScoreComputerController(mapper);
+  RoofScoreMapper mapper = new RoofScoreMapper(categoryMapper, scoreComputer);
+  RoofScoreComputerController subject = new RoofScoreComputerController(mapper, conditionValidator);
 
   @Test
   void rate_compute_ok() {

@@ -2,7 +2,6 @@ package app.bpartners.geojobs.endpoint.rest.controller.mapper;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.cityjson.RoofScoreCategoryMapper;
 import app.bpartners.geojobs.endpoint.rest.model.RoofScore;
-import app.bpartners.geojobs.endpoint.rest.validator.RoofConditionValidator;
 import app.bpartners.geojobs.model.geometry.area.Rate;
 import app.bpartners.geojobs.model.geometry.area.RoofCondition;
 import app.bpartners.geojobs.model.geometry.area.RoofScoreComputer;
@@ -15,11 +14,8 @@ import org.springframework.stereotype.Component;
 public class RoofScoreMapper {
   private final RoofScoreCategoryMapper categoryMapper;
   private final RoofScoreComputer computer;
-  private final RoofConditionValidator validator;
 
   public RoofScore from(RoofCondition roofCondition) {
-    validator.accept(roofCondition);
-
     double score = computer.getGlobalRate(roofCondition);
     Rate category = computer.getRate(score);
 
