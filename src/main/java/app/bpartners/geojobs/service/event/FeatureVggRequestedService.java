@@ -288,11 +288,6 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
                                       var geometryProcessed =
                                           getMultiPolygonZoneProcessed(
                                               roofFeature, isParcelDetection, detectableType);
-                                      log.info(
-                                          "Considered geometry for detectableType {} : {}",
-                                          detectableType,
-                                          geometryConverter.writeGeometryAsString(
-                                              geometryProcessed));
                                       var providedZoneAndGeometryProcessedInsideTileGeometry =
                                           providedZoneInsideTileGeometry.intersection(
                                               geometryProcessed);
@@ -338,18 +333,6 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
                                                 tileCoordinates.getX(),
                                                 tileCoordinates.getY(),
                                                 tileCoordinates.getZ());
-                                        log.info(
-                                            "Debug negative coordinates for detectableType={}"
-                                                + " geojsonZone={} inside tile multiPolygon geojson"
-                                                + " zone {} \n"
-                                                + " Pixel converted {}",
-                                            detectedObject.getDetectableObjectType(),
-                                            geometryConverter.writeGeometryAsString(
-                                                providedZoneAndGeometryProcessedInsideTileGeometry),
-                                            geometryConverter.writeGeometryAsString(
-                                                multiPolygonFromTile),
-                                            geometryConverter.writeGeometryAsString(
-                                                intersectionBetweenDetectedObjectAndConsideredZone));
                                       }
                                       if (intersectionBetweenDetectedObjectAndConsideredZone
                                           instanceof Polygon polygon) {
