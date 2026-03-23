@@ -3,8 +3,8 @@ package app.bpartners.geojobs.model.geometry.lidar.planes;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import app.bpartners.geojobs.model.lidar.planes.Plane3DExtractorConf;
 import app.bpartners.geojobs.model.lidar.planes.Planes3DExtractor;
+import app.bpartners.geojobs.model.lidar.planes.conf.Plane3DExtractorConf;
 import app.bpartners.geojobs.service.lidar.model.geometry.roof.Building3DProperties;
 import app.bpartners.geojobs.utils.lidar.LidarRoofsAnalysisProcessorCreator;
 import java.util.Set;

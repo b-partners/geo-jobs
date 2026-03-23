@@ -4,8 +4,8 @@ import static app.bpartners.geojobs.model.lidar.planes.algorithm.GeometryUtiliti
 import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.*;
 
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
-import app.bpartners.geojobs.model.lidar.planes.Plane3DExtractorConf;
 import app.bpartners.geojobs.model.lidar.planes.Planes3DExtractor;
+import app.bpartners.geojobs.model.lidar.planes.conf.Plane3DExtractorConf;
 import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepExporter;
 import app.bpartners.geojobs.service.lidar.preprocessing.ground.GroundPointsCleaner;
 import app.bpartners.geojobs.service.lidar.preprocessing.roof.RoofPointsCleaner;

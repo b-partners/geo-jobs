@@ -1,8 +1,10 @@
-package app.bpartners.geojobs.model.lidar.planes;
+package app.bpartners.geojobs.model.lidar.planes.conf;
 
 import app.bpartners.geojobs.model.lidar.planes.Box.BoxConf;
 import app.bpartners.geojobs.model.lidar.planes.Kernel.KernelConf;
-import app.bpartners.geojobs.model.lidar.planes.postprocessing.Plane3DLongLineRemover.Plane3DLongLineRemoverConf;
+import app.bpartners.geojobs.model.lidar.planes.PlaneDelimitation.PlaneDelimitationConf;
+import app.bpartners.geojobs.model.lidar.planes.conf.RangedConf.IntegerRangedConf;
+import app.bpartners.geojobs.model.lidar.planes.postprocessing.PolygonSkinnyArmRemover.PolygonSkinnyArmRemoverConf;
 import lombok.Builder;
 
 @Builder(toBuilder = true)
@@ -16,16 +18,13 @@ public record Plane3DExtractorConf(
     RoofPointsCleanerConf roofPointsCleanerConf,
     PlaneDelimitationConf planeDelimitationConf,
     DelimitationFillerConf delimitationFillerConf,
-    Plane3DLongLineRemoverConf plane3DLongLineRemoverConf) {
+    PolygonSkinnyArmRemoverConf polygonSkinnyArmRemoverConf) {
 
   @Builder(toBuilder = true)
   public record DelimitationFillerConf(int maxEmptyCell, int minCellPointsSize, double gridSize) {}
 
   @Builder(toBuilder = true)
   public record PlaneConf(double min2DArea, double compactness, int minPointsCount) {}
-
-  @Builder(toBuilder = true)
-  public record PlaneDelimitationConf(double concaveRatio, double simplificationEpsilon) {}
 
   @Builder(toBuilder = true)
   public record PlaneExtractionConf(int iteration, double pointContinuationThreshold) {}
@@ -39,6 +38,16 @@ public record Plane3DExtractorConf(
 
   @Builder(toBuilder = true)
   public record ChimneyFixerConf(double maxChimneyArea) {}
+
+  private static PlaneDelimitationConf defaultPlaneDelimitationConf() {
+    return PlaneDelimitationConf.builder()
+        .concaveRatio(
+            RangedConf.from(
+                new IntegerRangedConf<>(Integer.MIN_VALUE, 100, 0.2),
+                new IntegerRangedConf<>(101, Integer.MAX_VALUE, 0.12)))
+        .simplificationEpsilon(0.55)
+        .build();
+  }
 
   public static Plane3DExtractorConf getDefault() {
     return Plane3DExtractorConf.builder()
@@ -60,8 +69,7 @@ public record Plane3DExtractorConf(
                 .minVectorNorm(1e-6)
                 .squaredThreshold(0.75 * 0.75)
                 .build())
-        .planeDelimitationConf(
-            PlaneDelimitationConf.builder().concaveRatio(0.2).simplificationEpsilon(0.55).build())
+        .planeDelimitationConf(defaultPlaneDelimitationConf())
         .closedPlaneMergerConf(
             ClosedPlaneMergerConf.builder()
                 .epsilonSlope(10)
@@ -70,13 +78,14 @@ public record Plane3DExtractorConf(
                 .build())
         .planeExtractionConf(
             PlaneExtractionConf.builder().iteration(100).pointContinuationThreshold(0.5).build())
-        .plane3DLongLineRemoverConf(
-            Plane3DLongLineRemoverConf.builder()
+        .polygonSkinnyArmRemoverConf(
+            PolygonSkinnyArmRemoverConf.builder()
                 .gridSize(1)
                 .minAreaToCheck(10)
-                .longLineLength(3)
                 .cellMin2DArea(0.9)
                 .cellMinNeighborsCount(1)
+                .maxWidth(1.4)
+                .minHeight(3)
                 .build())
         .build();
   }

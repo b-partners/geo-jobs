@@ -2,17 +2,16 @@ package app.bpartners.geojobs.model.geometry.lidar.planes.postprocessing;
 
 import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
-import static app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStep.AFTER_LONG_LINE;
-import static app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStep.BEFORE_LONG_LINE;
+import static app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStep.AFTER_REMOVING_SKINNY_ARM;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import app.bpartners.geojobs.model.lidar.planes.Plane3DExtractorConf;
+import app.bpartners.geojobs.model.lidar.planes.conf.Plane3DExtractorConf;
 import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepExporter;
-import app.bpartners.geojobs.model.lidar.planes.postprocessing.Plane3DLongLineRemover;
-import app.bpartners.geojobs.model.lidar.planes.postprocessing.Plane3DLongLineRemover.Plane3DLongLineRemoverConf;
+import app.bpartners.geojobs.model.lidar.planes.postprocessing.PolygonSkinnyArmRemover;
+import app.bpartners.geojobs.model.lidar.planes.postprocessing.PolygonSkinnyArmRemover.PolygonSkinnyArmRemoverConf;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
@@ -22,14 +21,14 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Polygon;
 
 @Slf4j
-class Plane3DLongLineRemoverTest {
-  private static final Plane3DLongLineRemoverConf conf =
-      Plane3DExtractorConf.getDefault().plane3DLongLineRemoverConf();
-  private static final Plane3DLongLineRemover subject = new Plane3DLongLineRemover(conf);
+class PolygonSkinnyArmsRemoverTest {
+  private static final PolygonSkinnyArmRemoverConf conf =
+      Plane3DExtractorConf.getDefault().polygonSkinnyArmRemoverConf();
   private static final File OUTPUT_DIRECTORY = createTempDirectory();
-
   private static final Plane3DExtractionStepExporter exporter =
       new Plane3DExtractionStepExporter(new ObjectMapper(), OUTPUT_DIRECTORY, "EPSG:2154", "");
+  private static final PolygonSkinnyArmRemover subject =
+      new PolygonSkinnyArmRemover(conf, exporter);
 
   @BeforeAll
   static void setup() {
@@ -49,44 +48,53 @@ class Plane3DLongLineRemoverTest {
 
   @Test
   void should_remove_long_line_as_much_as_possible() {
-    var polygon = polygonWithLongLine();
-    var expected = polygonWithoutLongLine();
+    var polygon = polygonWithSkinnyArm();
+    var expected = polygonWithoutSkinnyArm();
 
     var actual = subject.apply(polygon);
     var subExporter = exporter.subSuffix("CASE_1");
-    subExporter.export(BEFORE_LONG_LINE, polygon);
-    subExporter.export(AFTER_LONG_LINE, actual);
+    subExporter.export(AFTER_REMOVING_SKINNY_ARM, actual);
 
     assertTrue(expected.equalsExact(actual, 0.2));
   }
 
   @Test
   void should_remove_long_line_as_much_as_possible_2() {
-    var polygon = polygonWithLongLine2();
-    var expected = polygonWithoutLongLine2();
+    var polygon = polygonWithSkinnyArm2();
+    var expected = polygonWithoutSkinnyArm2();
 
     var actual = subject.apply(polygon);
     var subExporter = exporter.subSuffix("CASE_2");
-    subExporter.export(BEFORE_LONG_LINE, polygon);
-    subExporter.export(AFTER_LONG_LINE, actual);
+    subExporter.export(AFTER_REMOVING_SKINNY_ARM, actual);
 
     assertTrue(expected.equalsExact(actual, 0.2));
   }
 
   @Test
   void should_remove_long_line_as_much_as_possible_3() {
-    var polygon = polygonWithLongLine3();
-    var expected = polygonWithoutLongLine3();
+    var polygon = polygonWithSkinnyArm3();
+    var expected = polygonWithoutSkinnyArm3();
 
     var actual = subject.apply(polygon);
     var subExporter = exporter.subSuffix("CASE_3");
-    subExporter.export(BEFORE_LONG_LINE, polygon);
-    subExporter.export(AFTER_LONG_LINE, actual);
+    subExporter.export(AFTER_REMOVING_SKINNY_ARM, actual);
 
     assertTrue(expected.equalsExact(actual, 0.2));
   }
 
-  private static Polygon polygonWithLongLine() {
+  @Test
+  void should_remove_anything() {
+    var polygon = withoutSkinnyArm4();
+    var expected = withoutSkinnyArm4();
+
+    var actual = subject.apply(polygon);
+    var subExporter = exporter.subSuffix("CASE_4");
+    subExporter.export(AFTER_REMOVING_SKINNY_ARM, actual);
+
+    assertTrue(expected.equalsExact(actual, 0.2));
+  }
+
+  private static Polygon polygonWithSkinnyArm() {
     var coordinates =
         new Coordinate[] {
           new Coordinate(379909.27, 6646657.86),
@@ -106,7 +114,7 @@ class Plane3DLongLineRemoverTest {
     return geometryFactory.createPolygon(coordinates);
   }
 
-  private static Polygon polygonWithoutLongLine() {
+  private static Polygon polygonWithoutSkinnyArm() {
     var coordinates =
         new Coordinate[] {
           new Coordinate(379909.27, 6646657.86),
@@ -128,7 +136,7 @@ class Plane3DLongLineRemoverTest {
     return geometryFactory.createPolygon(coordinates);
   }
 
-  private static Polygon polygonWithLongLine2() {
+  private static Polygon polygonWithSkinnyArm2() {
     var coordinates =
         new Coordinate[] {
           new Coordinate(566604.7000000001, 6273022.0),
@@ -193,7 +201,7 @@ class Plane3DLongLineRemoverTest {
     return geometryFactory.createPolygon(coordinates);
   }
 
-  private static Polygon polygonWithoutLongLine2() {
+  private static Polygon polygonWithoutSkinnyArm2() {
     var coordinates =
         new Coordinate[] {
           new Coordinate(566604.7000000001, 6273022.0),
@@ -246,7 +254,7 @@ class Plane3DLongLineRemoverTest {
     return geometryFactory.createPolygon(coordinates);
   }
 
-  private static Polygon polygonWithLongLine3() {
+  private static Polygon polygonWithSkinnyArm3() {
     var coordinates =
         new Coordinate[] {
           new Coordinate(566604.7000000001, 6273022.0),
@@ -310,7 +318,7 @@ class Plane3DLongLineRemoverTest {
     return geometryFactory.createPolygon(coordinates);
   }
 
-  private static Polygon polygonWithoutLongLine3() {
+  private static Polygon polygonWithoutSkinnyArm3() {
     var coordinates =
         new Coordinate[] {
           new Coordinate(566604.7000000001, 6273022.0),
@@ -358,6 +366,22 @@ class Plane3DLongLineRemoverTest {
           new Coordinate(566605.08, 6273020.93),
           new Coordinate(566604.7000000001, 6273022.0) // fermeture du polygone
         };
+    return geometryFactory.createPolygon(coordinates);
+  }
+
+  private static Polygon withoutSkinnyArm4() {
+    var coordinates =
+        new Coordinate[] {
+          new Coordinate(379905.07, 6646645.91),
+          new Coordinate(379904.53, 6646646.28),
+          new Coordinate(379911.01, 6646650.63),
+          new Coordinate(379913.03, 6646650.41),
+          new Coordinate(379914.76, 6646648.61),
+          new Coordinate(379907.21, 6646642.94),
+          new Coordinate(379905.2, 6646645.4),
+          new Coordinate(379905.07, 6646645.91) // fermeture
+        };
+
     return geometryFactory.createPolygon(coordinates);
   }
 }
