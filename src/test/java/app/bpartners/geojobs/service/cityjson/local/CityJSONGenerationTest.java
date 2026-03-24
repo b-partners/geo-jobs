@@ -9,8 +9,10 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 @Slf4j
+@EnabledIfEnvironmentVariable(named = "RUN_LIDAR_LOCAL_TESTS", matches = "true")
 class CityJSONGenerationTest {
   private static final File BASE_OUTPUT_FOLDER = createTempDirectory();
 

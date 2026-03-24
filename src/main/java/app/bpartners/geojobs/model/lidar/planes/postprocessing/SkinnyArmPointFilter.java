@@ -6,31 +6,29 @@ import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.planes.PlaneDelimitation;
 import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepExporter;
 import app.bpartners.geojobs.model.lidar.planes.postprocessing.PolygonSkinnyArmRemover.PolygonSkinnyArmRemoverConf;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.function.BiFunction;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class SkinnyArmPointFilter
     implements BiFunction<
-        Collection<LasPointGeometry>, Plane3DExtractionStepExporter, Set<LasPointGeometry>> {
+        Collection<LasPointGeometry>, Plane3DExtractionStepExporter, List<LasPointGeometry>> {
   private final PolygonSkinnyArmRemoverConf polygonSkinnyArmRemoverConf;
   private final PlaneDelimitation.PlaneDelimitationConf delimitationConf;
 
   @Override
-  public Set<LasPointGeometry> apply(
+  public List<LasPointGeometry> apply(
       Collection<LasPointGeometry> points, Plane3DExtractionStepExporter exporter) {
     var concave = getConcave(points, delimitationConf.concaveRatio().getValue(points.size()));
     var skinnyArmRemover = new PolygonSkinnyArmRemover(polygonSkinnyArmRemoverConf, exporter);
     var withoutSkinnyArm = skinnyArmRemover.apply(concave);
 
     if (concave == withoutSkinnyArm) {
-      return new HashSet<>(points);
+      return new ArrayList<>(points);
     }
 
-    Set<LasPointGeometry> inliers = new HashSet<>();
+    List<LasPointGeometry> inliers = new ArrayList<>();
     for (var point : points) {
       if (withoutSkinnyArm.intersects(point) || withoutSkinnyArm.contains(point)) {
         inliers.add(point);

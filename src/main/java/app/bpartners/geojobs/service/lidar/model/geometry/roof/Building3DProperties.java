@@ -59,15 +59,7 @@ public class Building3DProperties {
     var extractor = new Planes3DExtractor(getRoofDelimitation(), conf, exporter);
     var rawPlanes = extractor.apply(getCleanedRoofPoints());
     roofPlanes =
-        rawPlanes.stream()
-            .map(
-                plane ->
-                    new RoofPlane3D(
-                        getRoofDelimitation(),
-                        plane,
-                        conf.planeDelimitationConf().concaveRatio(),
-                        conf.planeDelimitationConf().simplificationEpsilon()))
-            .toList();
+        rawPlanes.stream().map(plane -> new RoofPlane3D(getRoofDelimitation(), plane)).toList();
     return roofPlanes;
   }
 

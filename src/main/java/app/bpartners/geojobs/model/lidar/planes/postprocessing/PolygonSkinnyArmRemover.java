@@ -10,11 +10,13 @@ import java.util.*;
 import java.util.function.Function;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
+import org.locationtech.jts.algorithm.construct.MaximumInscribedCircle;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.geom.util.GeometryCombiner;
+import org.locationtech.jts.simplify.TopologyPreservingSimplifier;
 
 @RequiredArgsConstructor
 public class PolygonSkinnyArmRemover implements Function<Polygon, Polygon> {
@@ -39,7 +41,7 @@ public class PolygonSkinnyArmRemover implements Function<Polygon, Polygon> {
     }
 
     var toDelete = getGeometry(gridClassification.toDelete(), grid);
-    var fixedPolygon = polygon.difference(toDelete);
+    var fixedPolygon = polygon.difference(toDelete).buffer(0.1).buffer(-0.1);
     var finalPolygon = getLargestPolygon(fixedPolygon);
 
     if (exporter != null) {
@@ -47,7 +49,8 @@ public class PolygonSkinnyArmRemover implements Function<Polygon, Polygon> {
       exporter.export(AFTER_REMOVING_SKINNY_ARM, finalPolygon);
     }
 
-    return finalPolygon;
+    finalPolygon = getLargestPolygon(finalPolygon.buffer(0.1).buffer(-0.1));
+    return (Polygon) TopologyPreservingSimplifier.simplify(finalPolygon, 0.05);
   }
 
   private Grid createGrid(Polygon polygon) {
@@ -96,11 +99,10 @@ public class PolygonSkinnyArmRemover implements Function<Polygon, Polygon> {
 
   private GridClassification classify(Grid grid) {
     var baseClassification = getBaseClassification(grid);
-    var withoutStandaloneToKeepCells = addStandaloneToKeepCellToDelete(baseClassification, grid);
-    var notSkinnyExcludedFromToDelete =
-        excludeNotSkinnyArmFromToDelete(withoutStandaloneToKeepCells, grid);
-
-    return notSkinnyExcludedFromToDelete;
+    var smallWidthIsExcludeFromToDelete = excludeIfNotWidthIsTooBig(baseClassification, grid);
+    var extendedToDelete = extendToDeleteCells(smallWidthIsExcludeFromToDelete);
+    var withoutStandaloneToKeepCells = addStandaloneToKeepCellToDelete(extendedToDelete, grid);
+    return excludeIfNotHeightIsTooSmall(withoutStandaloneToKeepCells, grid);
   }
 
   private GridClassification getBaseClassification(Grid grid) {
@@ -149,8 +151,7 @@ public class PolygonSkinnyArmRemover implements Function<Polygon, Polygon> {
     return result.toBuilder().toKeep(finalToKeep).build();
   }
 
-  private GridClassification excludeNotSkinnyArmFromToDelete(
-      GridClassification classified, Grid grid) {
+  private GridClassification excludeIfNotWidthIsTooBig(GridClassification classified, Grid grid) {
     var toDelete = new HashSet<CellIndex>();
     var toKeep = new HashSet<>(classified.toKeep());
     var groups = getConnected(classified.toDelete());
@@ -165,7 +166,26 @@ public class PolygonSkinnyArmRemover implements Function<Polygon, Polygon> {
       }
     }
 
-    return new GridClassification(toKeep, classified.invalidGrid(), toDelete);
+    return classified.toBuilder().toKeep(toKeep).toDelete(toDelete).build();
+  }
+
+  private GridClassification excludeIfNotHeightIsTooSmall(
+      GridClassification classified, Grid grid) {
+    var toDelete = new HashSet<CellIndex>();
+    var toKeep = new HashSet<>(classified.toKeep());
+    var groups = getConnected(classified.toDelete());
+
+    for (var group : groups) {
+      var geometry = getGeometry(group, grid);
+
+      if (isSkinnyArm(geometry)) {
+        toDelete.addAll(group);
+      } else {
+        toKeep.addAll(group);
+      }
+    }
+
+    return classified.toBuilder().toKeep(toKeep).toDelete(toDelete).build();
   }
 
   private static GridClassification extendToDeleteCells(GridClassification base) {
@@ -243,14 +263,25 @@ public class PolygonSkinnyArmRemover implements Function<Polygon, Polygon> {
     return groups;
   }
 
+  private double getActualMaxWidth(Polygon polygon) {
+    if (polygon == null || polygon.isEmpty()) return 0.0;
+    var mic = new MaximumInscribedCircle(polygon, 0.1);
+    return mic.getRadiusLine().getLength() * 2.0;
+  }
+
   private boolean isSkinny(Geometry geometry) {
+    if (!(geometry instanceof Polygon polygon)) return false;
+    double width = getActualMaxWidth(polygon);
+    return width <= conf.maxWidthWithoutExtended();
+  }
+
+  private boolean isSkinnyArm(Geometry geometry) {
     if (!(geometry instanceof Polygon polygon)) return false;
 
     var obb = new OBB2DComputer().apply(polygon);
-    double width = Math.min(obb.width(), obb.height());
     double height = Math.max(obb.width(), obb.height());
-
-    return width <= conf.maxWidth() && height >= conf.minHeight();
+    double width = getActualMaxWidth(polygon);
+    return height >= conf.minHeight() && width <= conf.maxWidth();
   }
 
   private static Geometry getGeometry(Collection<CellIndex> idx, Grid grid) {
@@ -316,6 +347,7 @@ public class PolygonSkinnyArmRemover implements Function<Polygon, Polygon> {
 
   @Builder(toBuilder = true)
   public record PolygonSkinnyArmRemoverConf(
+      double maxWidthWithoutExtended,
       double maxWidth,
       double minHeight,
       double gridSize,

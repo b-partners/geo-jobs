@@ -43,9 +43,9 @@ public record Plane3DExtractorConf(
     return PlaneDelimitationConf.builder()
         .concaveRatio(
             RangedConf.from(
-                new IntegerRangedConf<>(Integer.MIN_VALUE, 100, 0.2),
-                new IntegerRangedConf<>(101, Integer.MAX_VALUE, 0.1)))
-        .simplificationEpsilon(0.3)
+                new IntegerRangedConf<>(Integer.MIN_VALUE, 200, 0.2),
+                new IntegerRangedConf<>(201, Integer.MAX_VALUE, 0.2)))
+        .simplificationEpsilon(0.5)
         .build();
   }
 
@@ -81,11 +81,12 @@ public record Plane3DExtractorConf(
         .polygonSkinnyArmRemoverConf(
             PolygonSkinnyArmRemoverConf.builder()
                 .gridSize(1)
+                .maxWidthWithoutExtended(0.9)
                 .minAreaToCheck(10)
                 .cellMin2DArea(0.9)
                 .cellMinNeighborsCount(1)
-                .maxWidth(1.3)
-                .minHeight(2)
+                .maxWidth(2)
+                .minHeight(3)
                 .build())
         .build();
   }

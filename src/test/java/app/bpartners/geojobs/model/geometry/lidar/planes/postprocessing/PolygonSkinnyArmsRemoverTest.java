@@ -59,9 +59,9 @@ class PolygonSkinnyArmsRemoverTest {
   }
 
   @Test
-  void should_remove_long_line_as_much_as_possible_2() {
-    var polygon = polygonWithSkinnyArm2();
-    var expected = polygonWithoutSkinnyArm2();
+  void should_not_remove_anything_when_polygon_is_too_big() {
+    var polygon = polygonWithBigArm();
+    var expected = polygonWithBigArm();
 
     var actual = subject.apply(polygon);
     var subExporter = exporter.subSuffix("CASE_2");
@@ -115,28 +115,26 @@ class PolygonSkinnyArmsRemoverTest {
   }
 
   private static Polygon polygonWithoutSkinnyArm() {
-    var coordinates =
+    Coordinate[] coordinates =
         new Coordinate[] {
-          new Coordinate(379909.27, 6646657.86),
-          new Coordinate(379908.62, 6646658.27),
-          new Coordinate(379911.21, 6646664.11),
-          new Coordinate(379916.34, 6646662.05),
-          new Coordinate(379916.67, 6646661.05),
-          new Coordinate(379912.71, 6646651.56),
-          new Coordinate(379912.23096385575, 6646651.0),
-          new Coordinate(379912.0, 6646651.0),
-          new Coordinate(379911.0, 6646651.0),
-          new Coordinate(379910.86, 6646651.0),
-          new Coordinate(379910.86, 6646651.75),
-          new Coordinate(379908.28, 6646653.53),
-          new Coordinate(379909.63, 6646655.34),
-          new Coordinate(379909.27, 6646657.86)
+          new Coordinate(379908.2837965712, 6646653.527565985),
+          new Coordinate(379909.6235376133, 6646655.351727224),
+          new Coordinate(379909.2739123359, 6646657.824507624),
+          new Coordinate(379908.6219782263, 6646658.274068358),
+          new Coordinate(379911.2104274265, 6646664.108947498),
+          new Coordinate(379916.3391038192, 6646662.049158659),
+          new Coordinate(379916.6674207362, 6646661.043818885),
+          new Coordinate(379912.712255985, 6646651.565406388),
+          new Coordinate(379912.2362278953, 6646651.006153736),
+          new Coordinate(379910.8608499796, 6646651.00084998),
+          new Coordinate(379910.82402244775, 6646651.773711834),
+          new Coordinate(379908.2837965712, 6646653.527565985)
         };
 
     return geometryFactory.createPolygon(coordinates);
   }
 
-  private static Polygon polygonWithSkinnyArm2() {
+  private static Polygon polygonWithBigArm() {
     var coordinates =
         new Coordinate[] {
           new Coordinate(566604.7000000001, 6273022.0),
@@ -198,59 +196,6 @@ class PolygonSkinnyArmsRemoverTest {
           new Coordinate(566604.7000000001, 6273022.0)
         };
 
-    return geometryFactory.createPolygon(coordinates);
-  }
-
-  private static Polygon polygonWithoutSkinnyArm2() {
-    var coordinates =
-        new Coordinate[] {
-          new Coordinate(566604.7000000001, 6273022.0),
-          new Coordinate(566604.87, 6273023.86),
-          new Coordinate(566605.4500000001, 6273024.51),
-          new Coordinate(566606.39, 6273025.72),
-          new Coordinate(566607.33, 6273026.66),
-          new Coordinate(566608.3, 6273028.350000001),
-          new Coordinate(566608.0991124258, 6273028.0),
-          new Coordinate(566609.0, 6273028.0),
-          new Coordinate(566609.0, 6273027.0),
-          new Coordinate(566609.8597468354, 6273027.0),
-          new Coordinate(566609.99, 6273026.51),
-          new Coordinate(566610.36, 6273026.22),
-          new Coordinate(566610.79, 6273025.78),
-          new Coordinate(566612.0, 6273024.69),
-          new Coordinate(566612.66, 6273024.390000001),
-          new Coordinate(566613.6900000001, 6273023.84),
-          new Coordinate(566613.79, 6273023.79),
-          new Coordinate(566614.54, 6273023.23),
-          new Coordinate(566614.97, 6273022.66),
-          new Coordinate(566615.0, 6273022.37),
-          new Coordinate(566614.83, 6273021.99),
-          new Coordinate(566614.41, 6273021.43),
-          new Coordinate(566613.52, 6273020.21),
-          new Coordinate(566612.5, 6273019.04),
-          new Coordinate(566611.27, 6273017.68),
-          new Coordinate(566611.18, 6273017.51),
-          new Coordinate(566610.65, 6273016.5),
-          new Coordinate(566610.26, 6273016.12),
-          new Coordinate(566609.28, 6273015.12),
-          new Coordinate(566608.68, 6273014.32),
-          new Coordinate(566607.58, 6273012.95),
-          new Coordinate(566606.7000000001, 6273011.84),
-          new Coordinate(566606.28, 6273011.74),
-          new Coordinate(566606.14, 6273011.890000001),
-          new Coordinate(566605.6900000001, 6273012.4),
-          new Coordinate(566605.58, 6273013.01),
-          new Coordinate(566605.5, 6273014.49),
-          new Coordinate(566605.49, 6273014.97),
-          new Coordinate(566605.6, 6273015.7700000005),
-          new Coordinate(566605.55, 6273016.9),
-          new Coordinate(566605.26, 6273018.0),
-          new Coordinate(566605.28, 6273019.0200000005),
-          new Coordinate(566605.28, 6273019.21),
-          new Coordinate(566605.27, 6273019.5200000005),
-          new Coordinate(566605.08, 6273020.93),
-          new Coordinate(566604.7000000001, 6273022.0) // fermeture du polygone
-        };
     return geometryFactory.createPolygon(coordinates);
   }
 
@@ -319,53 +264,37 @@ class PolygonSkinnyArmsRemoverTest {
   }
 
   private static Polygon polygonWithoutSkinnyArm3() {
-    var coordinates =
+    Coordinate[] coordinates =
         new Coordinate[] {
-          new Coordinate(566604.7000000001, 6273022.0),
-          new Coordinate(566604.65, 6273023.47),
-          new Coordinate(566604.87, 6273023.86),
-          new Coordinate(566605.17, 6273024.26),
-          new Coordinate(566605.9400000001, 6273025.17),
-          new Coordinate(566606.65, 6273026.11),
-          new Coordinate(566607.71, 6273027.4),
-          new Coordinate(566608.0603999998, 6273028.0),
-          new Coordinate(566609.0, 6273028.0),
-          new Coordinate(566609.4864028776, 6273028.0),
-          new Coordinate(566609.29, 6273027.09),
-          new Coordinate(566609.99, 6273026.51),
-          new Coordinate(566610.36, 6273026.22),
-          new Coordinate(566610.79, 6273025.78),
-          new Coordinate(566612.0, 6273024.69),
-          new Coordinate(566612.66, 6273024.390000001),
-          new Coordinate(566613.6900000001, 6273023.84),
-          new Coordinate(566614.54, 6273023.23),
-          new Coordinate(566614.97, 6273022.66),
-          new Coordinate(566615.05, 6273022.19),
-          new Coordinate(566614.41, 6273021.43),
-          new Coordinate(566613.52, 6273020.21),
-          new Coordinate(566612.5, 6273019.04),
-          new Coordinate(566611.27, 6273017.68),
-          new Coordinate(566611.18, 6273017.51),
-          new Coordinate(566610.65, 6273016.5),
-          new Coordinate(566610.26, 6273016.12),
-          new Coordinate(566609.28, 6273015.12),
-          new Coordinate(566608.68, 6273014.32),
-          new Coordinate(566607.58, 6273012.95),
-          new Coordinate(566606.7000000001, 6273011.84),
-          new Coordinate(566606.28, 6273011.74),
-          new Coordinate(566606.14, 6273011.890000001),
-          new Coordinate(566605.71, 6273012.65),
-          new Coordinate(566605.74, 6273013.59),
-          new Coordinate(566605.59, 6273014.7),
-          new Coordinate(566605.5700000001, 6273015.36),
-          new Coordinate(566605.55, 6273016.9),
-          new Coordinate(566605.3, 6273018.7),
-          new Coordinate(566605.28, 6273019.0200000005),
-          new Coordinate(566605.28, 6273019.21),
-          new Coordinate(566605.27, 6273019.5200000005),
-          new Coordinate(566605.08, 6273020.93),
-          new Coordinate(566604.7000000001, 6273022.0) // fermeture du polygone
+          new Coordinate(566604.6502696889, 6273023.466120433),
+          new Coordinate(566605.1695647957, 6273024.259379033),
+          new Coordinate(566607.7072102068, 6273027.397106073),
+          new Coordinate(566608.1467796701, 6273028.147611664),
+          new Coordinate(566608.2298358208, 6273028.00045708),
+          new Coordinate(566609.4105210275, 6273028.00047205),
+          new Coordinate(566609.5026149139, 6273028.0758307),
+          new Coordinate(566609.3304777769, 6273027.057508081),
+          new Coordinate(566610.3586271286, 6273026.220940333),
+          new Coordinate(566611.9945431771, 6273024.695697238),
+          new Coordinate(566613.6856262241, 6273023.842341623),
+          new Coordinate(566614.537285235, 6273023.231838069),
+          new Coordinate(566614.9667375549, 6273022.663942163),
+          new Coordinate(566615.048631865, 6273022.198051375),
+          new Coordinate(566613.5178696407, 6273020.2075566435),
+          new Coordinate(566611.274800423, 6273017.684163117),
+          new Coordinate(566610.6475883904, 6273016.497797514),
+          new Coordinate(566609.2781947026, 6273015.117228797),
+          new Coordinate(566606.702809897, 6273011.843860015),
+          new Coordinate(566606.2844313378, 6273011.741232533),
+          new Coordinate(566605.7102602079, 6273012.653900454),
+          new Coordinate(566605.7395173089, 6273013.585821234),
+          new Coordinate(566605.5900286376, 6273014.701291297),
+          new Coordinate(566605.5493759448, 6273016.903072475),
+          new Coordinate(566605.082082711, 6273020.914549312),
+          new Coordinate(566604.6999857709, 6273022.003258547),
+          new Coordinate(566604.6502696889, 6273023.466120433)
         };
+
     return geometryFactory.createPolygon(coordinates);
   }
 

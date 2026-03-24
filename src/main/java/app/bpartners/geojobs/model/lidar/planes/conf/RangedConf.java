@@ -8,7 +8,7 @@ public record RangedConf<T, V>(List<Value<T, V>> values) {
   public V getValue(T input) {
     for (var value : values) {
       if (value.matches(input)) {
-        return value.getValue();
+        return value.getRaw();
       }
     }
     throw new IllegalArgumentException("No matching range for input: " + input);
@@ -24,7 +24,7 @@ public record RangedConf<T, V>(List<Value<T, V>> values) {
   public abstract static class Value<T, V> {
     private final T min;
     private final T max;
-    private final V value;
+    private final V raw;
 
     abstract boolean matches(T input);
   }
