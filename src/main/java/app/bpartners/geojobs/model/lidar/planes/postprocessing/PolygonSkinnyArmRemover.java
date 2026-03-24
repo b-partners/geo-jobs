@@ -40,7 +40,14 @@ public class PolygonSkinnyArmRemover implements Function<Polygon, Polygon> {
 
     var toDelete = getGeometry(gridClassification.toDelete(), grid);
     var fixedPolygon = polygon.difference(toDelete);
-    return getLargestPolygon(fixedPolygon);
+    var finalPolygon = getLargestPolygon(fixedPolygon);
+
+    if (exporter != null) {
+      exporter.export(BEFORE_REMOVING_SKINNY_ARM, polygon);
+      exporter.export(AFTER_REMOVING_SKINNY_ARM, finalPolygon);
+    }
+
+    return finalPolygon;
   }
 
   private Grid createGrid(Polygon polygon) {
@@ -93,7 +100,6 @@ public class PolygonSkinnyArmRemover implements Function<Polygon, Polygon> {
     var notSkinnyExcludedFromToDelete =
         excludeNotSkinnyArmFromToDelete(withoutStandaloneToKeepCells, grid);
 
-    // var extendedToDelete = extendToDeleteCells(notSkinnyExcludedFromToDelete);
     return notSkinnyExcludedFromToDelete;
   }
 
@@ -120,7 +126,7 @@ public class PolygonSkinnyArmRemover implements Function<Polygon, Polygon> {
       }
     }
 
-    return new GridClassification(toKeep, toDelete, invalidGrid);
+    return new GridClassification(toKeep, invalidGrid, toDelete);
   }
 
   private GridClassification addStandaloneToKeepCellToDelete(
@@ -131,15 +137,16 @@ public class PolygonSkinnyArmRemover implements Function<Polygon, Polygon> {
     var finalToKeep =
         connectedGroups.stream()
             .max(comparingDouble(group -> getGeometry(group, grid).getArea()))
-            .orElseThrow();
+            .orElse(new HashSet<>());
 
     for (Set<CellIndex> group : connectedGroups) {
       if (group != finalToKeep) {
         result.toDelete().addAll(group);
+        result.invalidGrid().addAll(group);
       }
     }
 
-    return result;
+    return result.toBuilder().toKeep(finalToKeep).build();
   }
 
   private GridClassification excludeNotSkinnyArmFromToDelete(
@@ -162,7 +169,7 @@ public class PolygonSkinnyArmRemover implements Function<Polygon, Polygon> {
   }
 
   private static GridClassification extendToDeleteCells(GridClassification base) {
-    var extended = base.toBuilder().build();
+    var extended = base.copy();
     for (var toDelete : new HashSet<>(extended.toDelete())) {
       for (int dx = -1; dx <= 1; dx++) {
         for (int dy = -1; dy <= 1; dy++) {
@@ -179,21 +186,23 @@ public class PolygonSkinnyArmRemover implements Function<Polygon, Polygon> {
   }
 
   private void export(GridClassification classified, Grid grid) {
+    int i = 0;
     for (var entry : grid.data().entrySet()) {
       var idx = entry.getKey();
       var geometry = entry.getValue();
+      var subExporter = exporter.subSuffix(String.valueOf(++i));
 
       if (geometry instanceof Polygon polygon) {
         if (classified.toKeep().contains(idx)) {
-          exporter.export(SKINNY_ARM_TO_KEEP_CELL_POLYGON, polygon);
+          subExporter.export(SKINNY_ARM_TO_KEEP_CELL_POLYGON, polygon);
         } else {
-          exporter.export(SKINNY_ARM_TO_DELETE_CELL_POLYGON, polygon);
+          subExporter.export(SKINNY_ARM_TO_DELETE_CELL_POLYGON, polygon);
         }
 
         if (classified.invalidGrid().contains(idx)) {
-          exporter.export(SKINNY_ARM_INVALID_CELL_POLYGON, polygon);
+          subExporter.export(SKINNY_ARM_INVALID_CELL_POLYGON, polygon);
         } else {
-          exporter.export(SKINNY_ARM_VALID_CELL_POLYGON, polygon);
+          subExporter.export(SKINNY_ARM_VALID_CELL_POLYGON, polygon);
         }
       }
     }

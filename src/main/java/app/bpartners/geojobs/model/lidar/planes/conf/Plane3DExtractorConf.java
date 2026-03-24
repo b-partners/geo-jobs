@@ -44,8 +44,8 @@ public record Plane3DExtractorConf(
         .concaveRatio(
             RangedConf.from(
                 new IntegerRangedConf<>(Integer.MIN_VALUE, 100, 0.2),
-                new IntegerRangedConf<>(101, Integer.MAX_VALUE, 0.12)))
-        .simplificationEpsilon(0.55)
+                new IntegerRangedConf<>(101, Integer.MAX_VALUE, 0.1)))
+        .simplificationEpsilon(0.3)
         .build();
   }
 
@@ -53,8 +53,8 @@ public record Plane3DExtractorConf(
     return Plane3DExtractorConf.builder()
         .roofPointsCleanerConf(RoofPointsCleanerConf.builder().duplicateXYTolerance(0.3).build())
         .chimneyFixerConf(ChimneyFixerConf.builder().maxChimneyArea(2).build())
-        .planeConf(PlaneConf.builder().min2DArea(0.25).compactness(0.1).minPointsCount(10).build())
         .boxConf(BoxConf.builder().height(0.12).expansionSize(0.25).maxRefitPoints(100).build())
+        .planeConf(PlaneConf.builder().min2DArea(0.25).compactness(0.1).minPointsCount(10).build())
         .delimitationFillerConf(
             DelimitationFillerConf.builder()
                 .gridSize(1)
@@ -84,8 +84,8 @@ public record Plane3DExtractorConf(
                 .minAreaToCheck(10)
                 .cellMin2DArea(0.9)
                 .cellMinNeighborsCount(1)
-                .maxWidth(1.4)
-                .minHeight(3)
+                .maxWidth(1.3)
+                .minHeight(2)
                 .build())
         .build();
   }

@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.model.lidar.planes;
 
-import static app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStep.AFTER_REMOVING_SKINNY_ARM;
+import static app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStep.*;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toSet;
 
@@ -77,15 +77,16 @@ public class OnePlane3DExtractor
     }
 
     // --- 5. Compute outliers
+    assert bestModel != null;
+
     var finalInliers = this.skinnyArmPointFilter.apply(bestInliers, exporter);
     if (exporter != null) {
-      exporter.export(AFTER_REMOVING_SKINNY_ARM, finalInliers);
+      exporter.export(RAW_PLANE_EXTRACTION, bestInliers);
+      exporter.export(RAW_PLANE_KERNEL, bestModel.getKernel().getChains().getPoints());
     }
 
     var inlierSet = new HashSet<>(finalInliers);
     var outliers = points.stream().filter(not(inlierSet::contains)).collect(toSet());
-
-    assert bestModel != null;
     var plane = bestModel.toBuilder().points(inlierSet).delimitationConf(delimitationConf).build();
     return new Result(plane, outliers);
   }
