@@ -322,18 +322,6 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
                                               .intersection(
                                                   providedZoneAndGeometryProcessedInsideTilePixelGeometry)
                                               .buffer(0);
-                                      if (Arrays.stream(
-                                              intersectionBetweenDetectedObjectAndConsideredZone
-                                                  .getCoordinates())
-                                          .anyMatch(
-                                              coordinate ->
-                                                  coordinate.getX() < 0 || coordinate.getY() < 0)) {
-                                        var multiPolygonFromTile =
-                                            geometryConverter.getMultiPolygonFromTile(
-                                                tileCoordinates.getX(),
-                                                tileCoordinates.getY(),
-                                                tileCoordinates.getZ());
-                                      }
                                       if (intersectionBetweenDetectedObjectAndConsideredZone
                                           instanceof Polygon polygon) {
                                         return new PolygonObjectType(
@@ -342,8 +330,8 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
                                         log.info(
                                             "Intersection between detected object and considered"
                                                 + " zone not polygon, but was {}",
-                                            geometryConverter.writeGeometryAsString(
-                                                intersectionBetweenDetectedObjectAndConsideredZone));
+                                            intersectionBetweenDetectedObjectAndConsideredZone
+                                                .getGeometryType());
                                       }
                                       return null;
                                     })
