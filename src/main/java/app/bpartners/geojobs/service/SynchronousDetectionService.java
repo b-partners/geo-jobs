@@ -11,6 +11,7 @@ import app.bpartners.geojobs.endpoint.event.model.FeatureImageRequested;
 import app.bpartners.geojobs.endpoint.event.model.FeatureVggRequested;
 import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
+import app.bpartners.geojobs.model.exception.ImageSourcesTimeoutException;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.service.detection.*;
@@ -66,11 +67,24 @@ public class SynchronousDetectionService
     var zoneTilingJobId = detectionWithCreatedZTJ.getZtjId();
     var tilingTasks = zoneTilingJobService.consumeTasks(zoneTilingJobId);
     var finishedZoneTilingJob = zoneTilingJobService.findById(zoneTilingJobId);
+    var tilingJobProcessingDuration = Duration.between(tilingJobStart, now()).toSeconds();
     log.info(
         "Tiling job finished in {} seconds for detection(e2Id={}, tilingTasks.size={})",
-        Duration.between(tilingJobStart, now()).toSeconds(),
+        tilingJobProcessingDuration,
         detection.getEndToEndId(),
         tilingTasks.size());
+    if (tilingJobProcessingDuration > 30L) {
+      throw new ImageSourcesTimeoutException(
+          String.format(
+              "Image sources%s are experiencing performance issues, which are preventing images"
+                  + " from loading.",
+                  detection.getGeoServerProperties() == null
+                          || detection.getGeoServerProperties().getGeoServerParameter() == null
+                          || detection.getGeoServerProperties().getGeoServerParameter().getLayers() == null
+                  ? ""
+                  : " from "
+                      + detection.getGeoServerProperties().getGeoServerParameter().getLayers()));
+    }
 
     // Machine detection job creation
     var parallelMachineDetectionAndImageRequestStart = now();
