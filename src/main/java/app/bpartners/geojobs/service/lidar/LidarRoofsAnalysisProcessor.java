@@ -2,6 +2,7 @@ package app.bpartners.geojobs.service.lidar;
 
 import static app.bpartners.geojobs.service.GeometrySquareMeterArea.LAMBERT_93;
 import static app.bpartners.geojobs.service.GeometrySquareMeterArea.WGS84;
+import static app.bpartners.geojobs.service.lidar.model.LidarClass.BATIMENT;
 import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.*;
 import static java.util.stream.Collectors.toSet;
 
@@ -35,6 +36,7 @@ public class LidarRoofsAnalysisProcessor {
   private static final short GROUND_LIDAR_CLASS_VALUE = 2;
   private static final short NOT_CLASSIFIED_LIDAR_CLASS_VALUE = 1;
   private static final short DIVERS_BATI_LIDAR_CLASS_VALUE = 67;
+  private static final short MIN_BATIMENT_POINTS_COUNT = 20;
 
   public RoofsAnalysisResult from(Set<Geometry> roofsEPSG4326) {
     var polygonWithProperties =
@@ -65,7 +67,19 @@ public class LidarRoofsAnalysisProcessor {
                           entry.getKey(), getRoofsDataToProcess(allRoofsData, entry.getValue())))
               .toList();
 
-      return new RoofsAnalysisResult(mergeSameRoofBoundary(roofsDataPerFiles));
+      var merged = mergeSameRoofBoundary(roofsDataPerFiles);
+      merged
+          .values()
+          .forEach(
+              data -> {
+                var batimentPointsCount = data.roof().classifications().getOrDefault(BATIMENT, 0);
+                if (batimentPointsCount < MIN_BATIMENT_POINTS_COUNT) {
+                  throw new IllegalStateException(
+                      "Roof found but no BATIMENT points detected for one of the buildings. "
+                          + "Lidar data exists but roof analysis failed for this roof.");
+                }
+              });
+      return new RoofsAnalysisResult(merged);
     } catch (Exception e) {
       log.error("Failed to retrieve lidar data", e);
       throw e;
@@ -97,7 +111,7 @@ public class LidarRoofsAnalysisProcessor {
         .collect(toSet());
   }
 
-  private Set<LidarRoofData> getRoofsDataFromFileUrl(String fileUrl, Set<LidarRoofData> roofsData) {
+  public Set<LidarRoofData> getRoofsDataFromFileUrl(String fileUrl, Set<LidarRoofData> roofsData) {
     File file;
     try {
       var optionalFile = lidarApi.download(fileUrl);
@@ -167,6 +181,7 @@ public class LidarRoofsAnalysisProcessor {
       var roofLambert93Geometry = roofData.roof().boundaryLambert93();
       if (roofLambert93Geometry.contains(roofPoint)) {
         roofData.roof().points().add(roofPoint);
+        roofData.roof().incrementClassificationCount(roofPoint.getClassification());
         break;
       }
     }
