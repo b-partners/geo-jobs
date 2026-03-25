@@ -24,7 +24,8 @@ public class LidarApiFacade {
   private final IgnLidarApi ignLidarApi;
   private final OpenSourceLidarApi openSourceLidarApi;
   private final FallbackLidarApi fallbackLidarApi;
-
+  private final SwissBoundaryChecker swissBoundaryChecker;
+  private final SwissLidarApi swissLidarApi;
   private final RestTemplate restTemplate;
   private final GeometrySquareMeterArea projector;
 
@@ -32,28 +33,49 @@ public class LidarApiFacade {
   private static final String UPDATED_DATA_PREFIX = "https://data.geopf.fr/";
   private static final Set<String> ALLOWED_URL_PREFIXES =
       Set.of(
-          "https://storage.sbg.cloud.ovh.net/", "https://lidar.data.gouv.fr/", UPDATED_DATA_PREFIX);
+          "https://storage.sbg.cloud.ovh.net/",
+          "https://lidar.data.gouv.fr/",
+          "https://data.geo.admin.ch/",
+          UPDATED_DATA_PREFIX);
 
   public Map<String, Set<Geometry>> getUniqueLidarFilesUrls(Collection<Geometry> wgs84Geometries) {
     Set<ProjectedGeometry> geometries = getProjectedGeometries(wgs84Geometries);
     Map<String, Set<Geometry>> filesUrls = new HashMap<>();
+    boolean isGeometryInSwiss =
+        geometries.stream()
+            .findFirst()
+            .map(geom -> swissBoundaryChecker.isGeometryInSwiss(geom.wgs84()))
+            .orElse(false);
+    log.info("Is coordinates in suisse = {}", isGeometryInSwiss);
 
     for (var geometry : geometries) {
-      var urls = getLidarFilesUrls(geometry.wgs84().getEnvelopeInternal(), openSourceLidarApi);
+      Set<String> urls =
+          isGeometryInSwiss
+              ? getLidarFilesUrls(geometry.wgs84().getEnvelopeInternal(), swissLidarApi)
+              : resolveOpenSourceUrls(geometry);
 
-      if (urls.isEmpty()) {
-        log.info("No LidarFiles found from the OpenSourceLidarAPI, using IGN as fallback");
-        urls = getLidarFilesUrls(geometry.lambert93().getEnvelopeInternal(), ignLidarApi);
-        urls = handleDeprecatedData(geometry.lambert93().getEnvelopeInternal(), urls);
-      }
+      Geometry targetGeometry = isGeometryInSwiss ? geometry.wgs84() : geometry.lambert93();
 
       for (var url : urls) {
         log.info("LAZ File to download: {}", url);
-        filesUrls.computeIfAbsent(url, key -> new HashSet<>()).add(geometry.lambert93());
+        filesUrls.computeIfAbsent(url, key -> new HashSet<>()).add(targetGeometry);
       }
     }
 
     return filesUrls;
+  }
+
+  private Set<String> resolveOpenSourceUrls(ProjectedGeometry geometry) {
+    Set<String> urls =
+        getLidarFilesUrls(geometry.wgs84().getEnvelopeInternal(), openSourceLidarApi);
+
+    if (urls.isEmpty()) {
+      log.info("No LidarFiles found from the OpenSourceLidarAPI, using IGN as fallback");
+      urls = getLidarFilesUrls(geometry.lambert93().getEnvelopeInternal(), ignLidarApi);
+      urls = handleDeprecatedData(geometry.lambert93().getEnvelopeInternal(), urls);
+    }
+
+    return urls;
   }
 
   public Optional<File> download(String fileUrl) {
