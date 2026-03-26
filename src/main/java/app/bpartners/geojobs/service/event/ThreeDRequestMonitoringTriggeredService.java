@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service.event;
 
 import app.bpartners.geojobs.endpoint.event.model.ThreeDRequestMonitoringTriggered;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.mail.Email;
 import app.bpartners.geojobs.mail.Mailer;
@@ -43,10 +44,15 @@ public class ThreeDRequestMonitoringTriggeredService
         cityJSONRequestRepository
             .findByIdAndCommunityOwnerId(requestId, communityOwnerId)
             .orElseThrow();
+    var featuresWithDelimitation = cityJSONRequest.getFeaturesWithDelimitation();
+    var delimitations =
+        cityJSONRequest.getDelimitations().stream().map(FeatureMapper::toRestFeature).toList();
     var featuresProcessed =
-        cityJSONRequest.getFeaturesWithDelimitation().stream()
-            .map(FeatureWithDelimitation::getRestFeature)
-            .toList();
+        featuresWithDelimitation == null
+            ? delimitations
+            : featuresWithDelimitation.stream()
+                .map(FeatureWithDelimitation::getRestFeature)
+                .toList();
 
     mailer.accept(
         new Email(
