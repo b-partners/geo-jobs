@@ -1,7 +1,8 @@
 package app.bpartners.geojobs.service.model;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import app.bpartners.geojobs.service.lidar.api.SwissBoundaryChecker;
 import org.junit.jupiter.api.Test;
@@ -44,12 +45,14 @@ public class SwissBoundaryCheckerTest {
   @Test
   void coordinates_in_switzerland_ok() {
     var actual = subject.isGeometryInSwiss(switzerland_coords());
-    assertEquals(true, actual);
+
+    assertTrue(actual);
   }
 
   @Test
   void coordinates_not_in_switzerland_ok() {
     var actual = subject.isGeometryInSwiss(random_coords_outside_switzerland());
-    assertEquals(false, actual);
+
+    assertFalse(actual);
   }
 }

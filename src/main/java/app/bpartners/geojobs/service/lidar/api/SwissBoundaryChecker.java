@@ -18,7 +18,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class SwissBoundaryChecker {
   private final Geometry swissBoundary;
-  private final String coordinates = "coordinates";
 
   public SwissBoundaryChecker() {
     try {
@@ -37,7 +36,7 @@ public class SwissBoundaryChecker {
   private Geometry parseGeoJsonPolygon(String geoJson) throws JsonProcessingException {
     ObjectMapper mapper = new ObjectMapper();
     JsonNode root = mapper.readTree(geoJson);
-
+    String coordinates = "coordinates";
     String type = root.get("type").asText();
     GeometryFactory factory = new GeometryFactory(new PrecisionModel(), 4326);
 

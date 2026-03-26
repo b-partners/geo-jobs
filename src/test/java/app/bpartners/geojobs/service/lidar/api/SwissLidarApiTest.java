@@ -13,6 +13,7 @@ class SwissLidarApiTest {
   @Test
   void retrieve_swiss_lidars_urls() {
     var res = swissLidarApi.apply(switzerland_coords().getEnvelopeInternal());
+
     assertTrue(
         res.contains(
             "https://data.geo.admin.ch/ch.swisstopo.swisssurface3d/swisssurface3d_2025_2499-1115/swisssurface3d_2025_2499-1115_2056_5728.copc.laz"));
