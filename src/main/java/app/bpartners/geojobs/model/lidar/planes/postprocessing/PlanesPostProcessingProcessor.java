@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
+import org.locationtech.jts.geom.Polygon;
 
 public class PlanesPostProcessingProcessor implements Function<Collection<Plane3D>, List<Plane3D>> {
   private final List<LasPointGeometry> points;
@@ -17,8 +18,10 @@ public class PlanesPostProcessingProcessor implements Function<Collection<Plane3
   private final DelimitationFiller delimitationFiller;
   private final InvalidPlane3DFilter invalidPlane3DFilter;
   private final Plane3DLongLineRemover longLineRemover;
+  private final RoofBoundaryClipper roofBoundaryClipper;
 
   public PlanesPostProcessingProcessor(
+      Polygon roofDelimitation,
       Plane3DExtractorConf conf,
       Collection<LasPointGeometry> points,
       Plane3DExtractionStepExporter exporter) {
@@ -39,6 +42,7 @@ public class PlanesPostProcessingProcessor implements Function<Collection<Plane3
     this.invalidPlane3DFilter =
         new InvalidPlane3DFilter(conf.planeConf().min2DArea(), conf.planeConf().compactness());
     this.longLineRemover = new Plane3DLongLineRemover(conf.plane3DLongLineRemoverConf());
+    this.roofBoundaryClipper = new RoofBoundaryClipper(roofDelimitation);
   }
 
   @Override
@@ -49,6 +53,7 @@ public class PlanesPostProcessingProcessor implements Function<Collection<Plane3
     postProcessed = this.chimneyFixer.apply(postProcessed);
     postProcessed =
         this.delimitationFiller.apply(this.closedPlane3DMerger.apply(postProcessed), points);
-    return this.invalidPlane3DFilter.apply(postProcessed);
+    postProcessed = this.invalidPlane3DFilter.apply(postProcessed);
+    return this.roofBoundaryClipper.apply(postProcessed);
   }
 }
