@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.lidar.api;
 
+import static app.bpartners.geojobs.service.GeometrySquareMeterArea.EPSG_2056;
 import static app.bpartners.geojobs.service.GeometrySquareMeterArea.LAMBERT_93;
 import static app.bpartners.geojobs.service.GeometrySquareMeterArea.WGS84;
 import static java.util.stream.Collectors.toSet;
@@ -53,7 +54,7 @@ public class LidarApiFacade {
               ? getLidarFilesUrls(geometry.wgs84().getEnvelopeInternal(), swissLidarApi)
               : resolveOpenSourceUrls(geometry);
 
-      Geometry targetGeometry = isGeometryInSwiss ? geometry.wgs84() : geometry.lambert93();
+      Geometry targetGeometry = isGeometryInSwiss ? geometry.epsg2056() : geometry.lambert93();
 
       for (var url : urls) {
         log.info("LAZ File to download: {}", url);
@@ -141,7 +142,8 @@ public class LidarApiFacade {
         .map(
             wgs84Geometry -> {
               var lambert93 = projector.project(wgs84Geometry, WGS84, LAMBERT_93);
-              return new ProjectedGeometry(lambert93, wgs84Geometry);
+              var epsg2056 = projector.project(wgs84Geometry, WGS84, EPSG_2056);
+              return new ProjectedGeometry(lambert93, wgs84Geometry, epsg2056);
             })
         .collect(toSet());
   }
@@ -156,5 +158,5 @@ public class LidarApiFacade {
   }
 
   @Builder
-  private record ProjectedGeometry(Geometry lambert93, Geometry wgs84) {}
+  private record ProjectedGeometry(Geometry lambert93, Geometry wgs84, Geometry epsg2056) {}
 }
