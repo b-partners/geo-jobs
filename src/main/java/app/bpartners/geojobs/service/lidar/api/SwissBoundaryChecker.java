@@ -30,7 +30,8 @@ public class SwissBoundaryChecker {
   }
 
   public boolean isGeometryInSwiss(Geometry geometry) {
-    return swissBoundary.contains(geometry) || swissBoundary.intersects(geometry);
+    return swissBoundary.getEnvelopeInternal().contains(geometry.getEnvelopeInternal())
+        || swissBoundary.getEnvelopeInternal().intersects(geometry.getEnvelopeInternal());
   }
 
   private Geometry parseGeoJsonPolygon(String geoJson) throws JsonProcessingException {

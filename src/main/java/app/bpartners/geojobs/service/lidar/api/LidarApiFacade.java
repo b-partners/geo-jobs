@@ -46,7 +46,6 @@ public class LidarApiFacade {
             .findFirst()
             .map(geom -> swissBoundaryChecker.isGeometryInSwiss(geom.wgs84()))
             .orElse(false);
-    log.info("Is coordinates in suisse = {}", isGeometryInSwiss);
 
     for (var geometry : geometries) {
       Set<String> urls =

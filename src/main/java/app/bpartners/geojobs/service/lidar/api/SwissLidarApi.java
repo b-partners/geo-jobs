@@ -5,7 +5,6 @@ import java.net.URI;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Envelope;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -13,7 +12,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
 @AllArgsConstructor
-@Slf4j
 public class SwissLidarApi implements LidarApi {
   private static final String STAC_URL = "https://data.geo.admin.ch/api/stac/v1/search";
   private static final String COLLECTION = "ch.swisstopo.swisssurface3d";
