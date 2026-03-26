@@ -133,7 +133,11 @@ class CityJSONRequestCreatedServiceIT extends FacadeIT {
     when(lidarProcessorMock.apply(anySet()))
         .thenReturn(analysisResult(LidarDataStatus.EXTRACTION_ERROR));
 
-    var request = CityJSONRequestCreated.builder().requestId(REQUEST_ID).build();
+    var request =
+        CityJSONRequestCreated.builder()
+            .requestId(REQUEST_ID)
+            .communityOwnerId(COMMUNITY_OWNER_ID)
+            .build();
     assertThrows(
         CityJSONRequestCreatedService.LidarAllDataFailedException.class,
         () -> subject.accept(request));
