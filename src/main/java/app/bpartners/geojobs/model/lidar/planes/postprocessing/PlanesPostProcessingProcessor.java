@@ -2,7 +2,7 @@ package app.bpartners.geojobs.model.lidar.planes.postprocessing;
 
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.planes.Plane3D;
-import app.bpartners.geojobs.model.lidar.planes.Plane3DExtractorConf;
+import app.bpartners.geojobs.model.lidar.planes.conf.Plane3DExtractorConf;
 import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepExporter;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,7 +17,6 @@ public class PlanesPostProcessingProcessor implements Function<Collection<Plane3
   private final Plane3DMerger closedPlane3DMerger;
   private final DelimitationFiller delimitationFiller;
   private final InvalidPlane3DFilter invalidPlane3DFilter;
-  private final Plane3DLongLineRemover longLineRemover;
   private final RoofBoundaryClipper roofBoundaryClipper;
 
   public PlanesPostProcessingProcessor(
@@ -30,7 +29,6 @@ public class PlanesPostProcessingProcessor implements Function<Collection<Plane3
 
     this.closedPlane3DMerger =
         new Plane3DMerger(
-            conf.planeDelimitationConf().concaveRatio(),
             conf.closedPlaneMergerConf().epsilonSlope(),
             conf.closedPlaneMergerConf().epsilonZDistance(),
             conf.closedPlaneMergerConf().epsilonXYDistance());
@@ -41,14 +39,12 @@ public class PlanesPostProcessingProcessor implements Function<Collection<Plane3
             conf.delimitationFillerConf().gridSize());
     this.invalidPlane3DFilter =
         new InvalidPlane3DFilter(conf.planeConf().min2DArea(), conf.planeConf().compactness());
-    this.longLineRemover = new Plane3DLongLineRemover(conf.plane3DLongLineRemoverConf());
     this.roofBoundaryClipper = new RoofBoundaryClipper(roofDelimitation);
   }
 
   @Override
   public List<Plane3D> apply(Collection<Plane3D> planes) {
     var postProcessed = this.invalidPlane3DFilter.apply(planes);
-    postProcessed = this.longLineRemover.apply(postProcessed);
     postProcessed = this.delimitationFiller.apply(postProcessed, points);
     postProcessed = this.chimneyFixer.apply(postProcessed);
     postProcessed =

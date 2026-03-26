@@ -1,51 +1,27 @@
 package app.bpartners.geojobs.model.lidar.planes.postprocessing;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
-import static app.bpartners.geojobs.model.lidar.planes.algorithm.GeometryUtilities.project;
-import static app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStep.AFTER_LONG_LINE;
-import static app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStep.BEFORE_LONG_LINE;
+import static app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStep.*;
+import static java.util.Comparator.comparingDouble;
 
-import app.bpartners.geojobs.model.lidar.planes.Plane3D;
+import app.bpartners.geojobs.model.lidar.planes.algorithm.OBB2DComputer;
+import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepExporter;
 import java.util.*;
 import java.util.function.Function;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
+import org.locationtech.jts.algorithm.construct.MaximumInscribedCircle;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.geom.util.GeometryCombiner;
+import org.locationtech.jts.simplify.TopologyPreservingSimplifier;
 
 @RequiredArgsConstructor
-public class Plane3DLongLineRemover implements Function<Polygon, Polygon> {
-  private final Plane3DLongLineRemoverConf conf;
-
-  public List<Plane3D> apply(Collection<Plane3D> planes) {
-    return planes.stream()
-        .map(
-            plane -> {
-              var delimitation = plane.getDelimitation();
-              var newDelimitation = this.apply(delimitation);
-
-              if (delimitation == newDelimitation) {
-                return plane;
-              }
-
-              var exporter = plane.getExporter();
-              if (exporter != null) {
-                exporter.export(BEFORE_LONG_LINE, delimitation);
-                exporter.export(AFTER_LONG_LINE, newDelimitation);
-              }
-
-              newDelimitation = project(plane, newDelimitation);
-              return plane.toBuilder()
-                  .area(null)
-                  .convexDelimitation(null)
-                  .delimitation(newDelimitation)
-                  .build();
-            })
-        .toList();
-  }
+public class PolygonSkinnyArmRemover implements Function<Polygon, Polygon> {
+  private final PolygonSkinnyArmRemoverConf conf;
+  private final Plane3DExtractionStepExporter exporter;
 
   @Override
   public Polygon apply(Polygon polygon) {
@@ -56,30 +32,25 @@ public class Plane3DLongLineRemover implements Function<Polygon, Polygon> {
     var grid = createGrid(polygon);
     var gridClassification = classify(grid);
 
+    if (exporter != null) {
+      export(gridClassification, grid);
+    }
+
     if (gridClassification.toDelete().isEmpty()) {
       return polygon;
     }
 
     var toDelete = getGeometry(gridClassification.toDelete(), grid);
-    var fixedPolygon = polygon.difference(toDelete);
-    return getLargestPolygon(fixedPolygon);
-  }
+    var fixedPolygon = polygon.difference(toDelete).buffer(0.1).buffer(-0.1);
+    var finalPolygon = getLargestPolygon(fixedPolygon);
 
-  private GridClassification getExtendedGridClassification(GridClassification base) {
-    var extended = base.toBuilder().build();
-    for (var toDelete : new HashSet<>(extended.toDelete())) {
-      for (int dx = -1; dx <= 1; dx++) {
-        for (int dy = -1; dy <= 1; dy++) {
-          if (dx == 0 && dy == 0) continue;
-          var neighbor = new CellIndex(toDelete.x() + dx, toDelete.y() + dy);
-          if (extended.invalidGrid().contains(neighbor)) {
-            extended.toKeep().remove(neighbor);
-            extended.toDelete().add(neighbor);
-          }
-        }
-      }
+    if (exporter != null) {
+      exporter.export(BEFORE_REMOVING_SKINNY_ARM, polygon);
+      exporter.export(AFTER_REMOVING_SKINNY_ARM, finalPolygon);
     }
-    return extended;
+
+    finalPolygon = getLargestPolygon(finalPolygon.buffer(0.1).buffer(-0.1));
+    return (Polygon) TopologyPreservingSimplifier.simplify(finalPolygon, 0.05);
   }
 
   private Grid createGrid(Polygon polygon) {
@@ -127,6 +98,14 @@ public class Plane3DLongLineRemover implements Function<Polygon, Polygon> {
   }
 
   private GridClassification classify(Grid grid) {
+    var baseClassification = getBaseClassification(grid);
+    var smallWidthIsExcludeFromToDelete = excludeIfNotWidthIsTooBig(baseClassification, grid);
+    var extendedToDelete = extendToDeleteCells(smallWidthIsExcludeFromToDelete);
+    var withoutStandaloneToKeepCells = addStandaloneToKeepCellToDelete(extendedToDelete, grid);
+    return excludeIfNotHeightIsTooSmall(withoutStandaloneToKeepCells, grid);
+  }
+
+  private GridClassification getBaseClassification(Grid grid) {
     Set<CellIndex> toKeep = new HashSet<>();
     Set<CellIndex> toDelete = new HashSet<>();
     Set<CellIndex> invalidGrid = new HashSet<>();
@@ -149,28 +128,104 @@ public class Plane3DLongLineRemover implements Function<Polygon, Polygon> {
       }
     }
 
-    var baseGridClassification = new GridClassification(toKeep, invalidGrid, toDelete);
-    var extended = getExtendedGridClassification(baseGridClassification);
-    return getFixedClassification(extended, grid);
+    return new GridClassification(toKeep, invalidGrid, toDelete);
   }
 
-  private GridClassification getFixedClassification(GridClassification classified, Grid grid) {
+  private GridClassification addStandaloneToKeepCellToDelete(
+      GridClassification classified, Grid grid) {
+    var result = classified.copy();
+
+    List<Set<CellIndex>> connectedGroups = getConnected(classified.toKeep());
+    var finalToKeep =
+        connectedGroups.stream()
+            .max(comparingDouble(group -> getGeometry(group, grid).getArea()))
+            .orElse(new HashSet<>());
+
+    for (Set<CellIndex> group : connectedGroups) {
+      if (group != finalToKeep) {
+        result.toDelete().addAll(group);
+        result.invalidGrid().addAll(group);
+      }
+    }
+
+    return result.toBuilder().toKeep(finalToKeep).build();
+  }
+
+  private GridClassification excludeIfNotWidthIsTooBig(GridClassification classified, Grid grid) {
     var toDelete = new HashSet<CellIndex>();
     var toKeep = new HashSet<>(classified.toKeep());
     var groups = getConnected(classified.toDelete());
 
     for (var group : groups) {
       var geometry = getGeometry(group, grid);
-      double length = getMaxDistance(geometry);
 
-      if (length >= conf.longLineLength()) {
+      if (isSkinny(geometry)) {
         toDelete.addAll(group);
       } else {
         toKeep.addAll(group);
       }
     }
 
-    return new GridClassification(toKeep, classified.invalidGrid(), toDelete);
+    return classified.toBuilder().toKeep(toKeep).toDelete(toDelete).build();
+  }
+
+  private GridClassification excludeIfNotHeightIsTooSmall(
+      GridClassification classified, Grid grid) {
+    var toDelete = new HashSet<CellIndex>();
+    var toKeep = new HashSet<>(classified.toKeep());
+    var groups = getConnected(classified.toDelete());
+
+    for (var group : groups) {
+      var geometry = getGeometry(group, grid);
+
+      if (isSkinnyArm(geometry)) {
+        toDelete.addAll(group);
+      } else {
+        toKeep.addAll(group);
+      }
+    }
+
+    return classified.toBuilder().toKeep(toKeep).toDelete(toDelete).build();
+  }
+
+  private static GridClassification extendToDeleteCells(GridClassification base) {
+    var extended = base.copy();
+    for (var toDelete : new HashSet<>(extended.toDelete())) {
+      for (int dx = -1; dx <= 1; dx++) {
+        for (int dy = -1; dy <= 1; dy++) {
+          if (dx == 0 && dy == 0) continue;
+          var neighbor = new CellIndex(toDelete.x() + dx, toDelete.y() + dy);
+          if (extended.invalidGrid().contains(neighbor)) {
+            extended.toKeep().remove(neighbor);
+            extended.toDelete().add(neighbor);
+          }
+        }
+      }
+    }
+    return extended;
+  }
+
+  private void export(GridClassification classified, Grid grid) {
+    int i = 0;
+    for (var entry : grid.data().entrySet()) {
+      var idx = entry.getKey();
+      var geometry = entry.getValue();
+      var subExporter = exporter.subSuffix(String.valueOf(++i));
+
+      if (geometry instanceof Polygon polygon) {
+        if (classified.toKeep().contains(idx)) {
+          subExporter.export(SKINNY_ARM_TO_KEEP_CELL_POLYGON, polygon);
+        } else {
+          subExporter.export(SKINNY_ARM_TO_DELETE_CELL_POLYGON, polygon);
+        }
+
+        if (classified.invalidGrid().contains(idx)) {
+          subExporter.export(SKINNY_ARM_INVALID_CELL_POLYGON, polygon);
+        } else {
+          subExporter.export(SKINNY_ARM_VALID_CELL_POLYGON, polygon);
+        }
+      }
+    }
   }
 
   private List<Set<CellIndex>> getConnected(Set<CellIndex> cells) {
@@ -208,20 +263,25 @@ public class Plane3DLongLineRemover implements Function<Polygon, Polygon> {
     return groups;
   }
 
-  private double getMaxDistance(Geometry geometry) {
-    var coordinates = geometry.getCoordinates();
-    double maxDist = 0;
+  private double getActualMaxWidth(Polygon polygon) {
+    if (polygon == null || polygon.isEmpty()) return 0.0;
+    var mic = new MaximumInscribedCircle(polygon, 0.1);
+    return mic.getRadiusLine().getLength() * 2.0;
+  }
 
-    for (int i = 0; i < coordinates.length; i++) {
-      for (int j = i + 1; j < coordinates.length; j++) {
-        double dist = coordinates[i].distance(coordinates[j]);
-        if (dist > maxDist) {
-          maxDist = dist;
-        }
-      }
-    }
+  private boolean isSkinny(Geometry geometry) {
+    if (!(geometry instanceof Polygon polygon)) return false;
+    double width = getActualMaxWidth(polygon);
+    return width <= conf.maxWidthWithoutExtended();
+  }
 
-    return maxDist;
+  private boolean isSkinnyArm(Geometry geometry) {
+    if (!(geometry instanceof Polygon polygon)) return false;
+
+    var obb = new OBB2DComputer().apply(polygon);
+    double height = Math.max(obb.width(), obb.height());
+    double width = getActualMaxWidth(polygon);
+    return height >= conf.minHeight() && width <= conf.maxWidth();
   }
 
   private static Geometry getGeometry(Collection<CellIndex> idx, Grid grid) {
@@ -268,7 +328,12 @@ public class Plane3DLongLineRemover implements Function<Polygon, Polygon> {
 
   @Builder(toBuilder = true)
   private record GridClassification(
-      Set<CellIndex> toKeep, Set<CellIndex> invalidGrid, Set<CellIndex> toDelete) {}
+      Set<CellIndex> toKeep, Set<CellIndex> invalidGrid, Set<CellIndex> toDelete) {
+
+    public GridClassification copy() {
+      return this.toBuilder().build();
+    }
+  }
 
   private record Grid(Map<CellIndex, Geometry> data) {
     Geometry get(CellIndex idx) {
@@ -281,10 +346,12 @@ public class Plane3DLongLineRemover implements Function<Polygon, Polygon> {
   }
 
   @Builder(toBuilder = true)
-  public record Plane3DLongLineRemoverConf(
+  public record PolygonSkinnyArmRemoverConf(
+      double maxWidthWithoutExtended,
+      double maxWidth,
+      double minHeight,
       double gridSize,
       double cellMin2DArea,
       double minAreaToCheck,
-      double longLineLength,
       int cellMinNeighborsCount) {}
 }
