@@ -7,19 +7,27 @@ import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepEx
 import app.bpartners.geojobs.model.lidar.planes.postprocessing.PlanesPostProcessingProcessor;
 import java.util.*;
 import java.util.function.Function;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import org.locationtech.jts.geom.Polygon;
 
+@Builder(toBuilder = true)
+@AllArgsConstructor
 public class Planes3DExtractor implements Function<Collection<LasPointGeometry>, List<Plane3D>> {
+  private final Polygon roofDelimitation;
   private final Plane3DExtractorConf conf;
   private final Plane3DExtractionStepExporter exporter;
   private final OnePlane3DExtractor onePlane3DExtractor;
 
-  public Planes3DExtractor(Plane3DExtractorConf conf) {
-    this(conf, null);
+  public Planes3DExtractor(Polygon roofDelimitation, Plane3DExtractorConf conf) {
+    this(roofDelimitation, conf, null);
   }
 
-  public Planes3DExtractor(Plane3DExtractorConf conf, Plane3DExtractionStepExporter exporter) {
+  public Planes3DExtractor(
+      Polygon roofDelimitation, Plane3DExtractorConf conf, Plane3DExtractionStepExporter exporter) {
     this.conf = conf;
     this.exporter = exporter;
+    this.roofDelimitation = roofDelimitation;
     this.onePlane3DExtractor = new OnePlane3DExtractor(conf);
   }
 
@@ -55,6 +63,7 @@ public class Planes3DExtractor implements Function<Collection<LasPointGeometry>,
       pointsToProcess = result.outliers();
     }
 
-    return new PlanesPostProcessingProcessor(conf, points, exporter).apply(planes);
+    return new PlanesPostProcessingProcessor(roofDelimitation, conf, points, exporter)
+        .apply(planes);
   }
 }

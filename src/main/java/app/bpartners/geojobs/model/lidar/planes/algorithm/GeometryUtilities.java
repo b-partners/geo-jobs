@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.function.Function;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
 
 public class GeometryUtilities {
@@ -64,4 +65,28 @@ public class GeometryUtilities {
   }
 
   public interface ZSetterCallback extends Function<Coordinate, Double> {}
+
+  public static Polygon getLargestPolygon(Geometry geometry) {
+    if (geometry instanceof Polygon polygon) {
+      return polygon;
+    }
+
+    if (geometry instanceof MultiPolygon multiPolygon) {
+      Polygon largest = null;
+      double maxArea = -1.0;
+
+      for (int i = 0; i < multiPolygon.getNumGeometries(); i++) {
+        var current = (Polygon) multiPolygon.getGeometryN(i);
+        double currentArea = current.getArea();
+
+        if (currentArea > maxArea) {
+          maxArea = currentArea;
+          largest = current;
+        }
+      }
+      return largest;
+    }
+
+    throw new IllegalArgumentException("Unsupported geometry type: " + geometry.getGeometryType());
+  }
 }

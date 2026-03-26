@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.lidar.model.geometry.roof;
 
+import static app.bpartners.geojobs.model.lidar.planes.algorithm.GeometryUtilities.getLargestPolygon;
 import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.*;
 
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
@@ -12,8 +13,6 @@ import java.util.*;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
 
 @Slf4j
@@ -57,14 +56,14 @@ public class Building3DProperties {
       return roofPlanes;
     }
 
-    var extractor = new Planes3DExtractor(conf, exporter);
+    var extractor = new Planes3DExtractor(getRoofDelimitation(), conf, exporter);
     var rawPlanes = extractor.apply(getCleanedRoofPoints());
     roofPlanes =
         rawPlanes.stream()
             .map(
                 plane ->
                     new RoofPlane3D(
-                        toPolygon(data.roof().boundaryLambert93()),
+                        getRoofDelimitation(),
                         plane,
                         conf.planeDelimitationConf().concaveRatio(),
                         conf.planeDelimitationConf().simplificationEpsilon()))
@@ -100,16 +99,7 @@ public class Building3DProperties {
     return cleanedGroundPoints;
   }
 
-  private static Polygon toPolygon(Geometry geometry) {
-    return switch (geometry) {
-      case Polygon polygon -> polygon;
-      case MultiPolygon multiPolygon -> {
-        if (1 != multiPolygon.getNumGeometries()) {
-          log.warn("Unsupported polygon type");
-        }
-        yield (Polygon) multiPolygon.getGeometryN(0);
-      }
-      default -> throw new IllegalArgumentException("Unexpected type retrieved");
-    };
+  private Polygon getRoofDelimitation() {
+    return getLargestPolygon(data.roof().boundaryLambert93());
   }
 }
