@@ -8,8 +8,7 @@ import app.bpartners.geojobs.model.lidar.planes.Plane3D;
 import app.bpartners.geojobs.model.lidar.planes.topology.model.Line3D;
 import app.bpartners.geojobs.model.lidar.planes.topology.model.Rupture;
 import java.util.*;
-import java.util.function.Function;
-import lombok.Builder;
+import java.util.function.BiFunction;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.densify.Densifier;
 import org.locationtech.jts.geom.Coordinate;
@@ -17,20 +16,19 @@ import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.linearref.LengthIndexedLine;
 
 @Slf4j
-public class RuptureComputer
-    implements Function<RuptureComputer.RuptureComputerInput, Optional<Rupture>> {
+public class RuptureComputer implements BiFunction<Plane3D, Plane3D, Optional<Rupture>> {
   private static final double DENSIFIED_DISTANCE = 0.3;
   private static final double MIN_INTERSECTION_DISTANCE = 0.7;
 
   @Override
-  public Optional<Rupture> apply(RuptureComputerInput input) {
-    var optionalLine3D = intersects(input.a(), input.b());
+  public Optional<Rupture> apply(Plane3D a, Plane3D b) {
+    var optionalLine3D = intersects(a, b);
     if (optionalLine3D.isEmpty()) {
       return Optional.empty();
     }
 
     var line3D = optionalLine3D.get();
-    var optionalRuptureLine = getRuptureLine(line3D, input.a(), input.b());
+    var optionalRuptureLine = getRuptureLine(line3D, a, b);
     if (optionalRuptureLine.isEmpty()) {
       return Optional.empty();
     }
@@ -100,7 +98,4 @@ public class RuptureComputer
     var b = indexed.extractPoint(maxIndex);
     return geometryFactory.createLineString(new Coordinate[] {a, b});
   }
-
-  @Builder
-  public record RuptureComputerInput(Plane3D a, Plane3D b) {}
 }
