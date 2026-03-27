@@ -7,10 +7,7 @@ import app.bpartners.geojobs.model.lidar.planes.Plane3D;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.Function;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.MultiPolygon;
-import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.*;
 
 public class GeometryUtilities {
   private GeometryUtilities() {}
@@ -64,6 +61,10 @@ public class GeometryUtilities {
     return zSetter(polygon, coordinate -> plane.zAt(coordinate.getX(), coordinate.getY()));
   }
 
+  public static Coordinate[] project(Plane3D plane, Coordinate[] coordinates) {
+    return zSetter(coordinates, coordinate -> plane.zAt(coordinate.getX(), coordinate.getY()));
+  }
+
   public interface ZSetterCallback extends Function<Coordinate, Double> {}
 
   public static Polygon getLargestPolygon(Geometry geometry) {
@@ -88,5 +89,25 @@ public class GeometryUtilities {
     }
 
     throw new IllegalArgumentException("Unsupported geometry type: " + geometry.getGeometryType());
+  }
+
+  public static LineString extend(LineString line, double delta) {
+    var coordinates = line.getCoordinates();
+    var start = coordinates[0];
+    var end = coordinates[coordinates.length - 1];
+
+    double dx = end.getX() - start.getX();
+    double dy = end.getY() - start.getY();
+    double length = Math.hypot(dx, dy);
+
+    double ux = dx / length;
+    double uy = dy / length;
+
+    var newStart =
+        new Coordinate(start.getX() - ux * delta, start.getY() - uy * delta, start.getZ());
+
+    var newEnd = new Coordinate(end.getX() + ux * delta, end.getY() + uy * delta, end.getZ());
+
+    return geometryFactory.createLineString(new Coordinate[] {newStart, newEnd});
   }
 }
