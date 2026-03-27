@@ -64,7 +64,7 @@ public class ZipGeoJsonAssembler implements Consumer<GeoJsonConversionJob> {
     var conversionTasks = geoJsonConversionTaskRepository.findAllByJobId(conversionJobId);
     var zoneDetectionJob =
         zoneDetectionJobService.findById(geoJsonConversionJob.getZoneDetectionJobId());
-    var outputFileName = zoneDetectionJob.getZoneName() + "-final.zip";
+    var outputFileName = zoneDetectionJob.getZoneName().replace(" ", "_") + ".zip";
     var combinedFileKey = GEO_JSON_BUCKET_FOLDER + zoneDetectionJob.getId() + "/" + outputFileName;
     var detection = detectionService.getByZoneDetectionJob(zoneDetectionJob);
     var unifiedProvidedZone = detectionProvidedZoneUnifier.apply(detection);

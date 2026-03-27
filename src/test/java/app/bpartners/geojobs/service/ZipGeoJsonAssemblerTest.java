@@ -145,10 +145,10 @@ class ZipGeoJsonAssemblerTest {
       File featureMoisissureFile, File featureUsuerLegerFile) throws IOException {
     HashMap<String, String> expectedFileSize = new HashMap<>();
     expectedFileSize.put(
-        "dummy zone name-final_MOISISSURE_NOIRCIE.geojson",
+        "dummy_zone_name_MOISISSURE_NOIRCIE.geojson",
         new GeoJson(geoFeatureConverter.apply(featureMoisissureFile)).getStringValue());
     expectedFileSize.put(
-        "dummy zone name-final_USURE_LEGER.geojson",
+        "dummy_zone_name_USURE_LEGER.geojson",
         new GeoJson(geoFeatureConverter.apply(featureUsuerLegerFile)).getStringValue());
     return expectedFileSize;
   }
