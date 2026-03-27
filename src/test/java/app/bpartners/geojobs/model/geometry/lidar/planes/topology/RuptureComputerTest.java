@@ -85,7 +85,7 @@ class RuptureComputerTest {
     }
   }
 
-  private static Plane3D createPlane(Collection<LasPointGeometry> points) {
+  static Plane3D createPlane(Collection<LasPointGeometry> points) {
     return PlaneFitter.fit(points).toBuilder().delimitationConf(delimitationConf).build();
   }
 }
