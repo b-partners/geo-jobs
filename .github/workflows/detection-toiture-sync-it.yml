@@ -64,7 +64,7 @@ jobs:
             if [ "$http_code" -eq 504 ]; then
               echo "Gateway Timeout detected (504)"
               if grep -q "Image sources" "$response_file"; then
-                if [[ -n "image_performance_incident_lines" ]]; then
+                if [[ -n "$image_performance_incident_lines" ]]; then
                   while IFS='|' read -r id incident_name incident_status; do
                   echo "Incident : $incident_name ($incident_status)"
                     if [[ -z "$image_performance_incident_lines" ]]; then
