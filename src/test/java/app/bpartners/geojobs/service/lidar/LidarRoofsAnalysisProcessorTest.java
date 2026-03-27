@@ -10,6 +10,7 @@ import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
+import app.bpartners.geojobs.service.lidar.api.SwissBoundaryChecker;
 import app.bpartners.geojobs.service.lidar.model.geometry.roof.LidarRoofData;
 import app.bpartners.geojobs.utils.lidar.LidarRoofsAnalysisProcessorCreator;
 import java.util.Map;
@@ -24,10 +25,19 @@ class LidarRoofsAnalysisProcessorTest {
   private static final LidarRoofsAnalysisProcessorCreator processorCreator =
       new LidarRoofsAnalysisProcessorCreator();
 
+  private static SwissBoundaryChecker swissBoundaryCheckerMock() {
+    var swissBoundaryChecker = mock(SwissBoundaryChecker.class);
+    when(swissBoundaryChecker.isGeometryInSwiss(any())).thenReturn(false);
+    return swissBoundaryChecker;
+  }
+
   @Test
   void should_failed_if_batiment_points_count_is_less_than_twenty() {
     var apiMock = mock(LidarApiFacade.class);
-    var processor = spy(new LidarRoofsAnalysisProcessor(apiMock, new GeometrySquareMeterArea()));
+    var processor =
+        spy(
+            new LidarRoofsAnalysisProcessor(
+                apiMock, new GeometrySquareMeterArea(), swissBoundaryCheckerMock()));
 
     var roofGeometry1 = roofGeometry1();
     when(apiMock.getUniqueLidarFilesUrls(any()))
