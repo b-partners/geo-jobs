@@ -3,6 +3,7 @@ package app.bpartners.geojobs.model.lidar.planes.topology;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.model.lidar.planes.algorithm.GeometryUtilities.*;
 import static app.bpartners.geojobs.model.lidar.planes.topology.algorithm.Plane3DIntersection.intersects;
+import static app.bpartners.geojobs.model.lidar.planes.topology.algorithm.PolygonSmartUnion.union;
 
 import app.bpartners.geojobs.model.lidar.planes.Plane3D;
 import app.bpartners.geojobs.model.lidar.planes.topology.model.Line3D;
@@ -11,14 +12,14 @@ import java.util.*;
 import java.util.function.BiFunction;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.densify.Densifier;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.*;
 import org.locationtech.jts.linearref.LengthIndexedLine;
 
 @Slf4j
 public class RuptureComputer implements BiFunction<Plane3D, Plane3D, Optional<Rupture>> {
+  private static final double MAX_DISTANCE = 1;
   private static final double DENSIFIED_DISTANCE = 0.3;
-  private static final double MIN_INTERSECTION_DISTANCE = 0.7;
+  private static final double MIN_INTERSECTION_DISTANCE = 1;
 
   @Override
   public Optional<Rupture> apply(Plane3D a, Plane3D b) {
@@ -53,7 +54,14 @@ public class RuptureComputer implements BiFunction<Plane3D, Plane3D, Optional<Ru
 
   private static Optional<LineString> getRuptureLine(Line3D line, Plane3D a, Plane3D b) {
     var reallyLongLine = getLongLine(line);
-    var union = a.getDelimitation().union(b.getDelimitation()).buffer(0);
+    var optionalUnion =
+        union(a.getDelimitation(), b.getDelimitation(), MAX_DISTANCE, MIN_INTERSECTION_DISTANCE);
+
+    if (optionalUnion.isEmpty()) {
+      return Optional.empty();
+    }
+
+    var union = optionalUnion.get();
     var intersection = union.intersection(reallyLongLine);
     if (intersection.isEmpty() || intersection.getCoordinates().length < 2) {
       return Optional.empty();
