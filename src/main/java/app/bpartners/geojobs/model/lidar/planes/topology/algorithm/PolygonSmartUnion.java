@@ -30,8 +30,8 @@ public class PolygonSmartUnion {
       return Optional.empty();
     }
 
-    var union = a.union(intersection);
-    union = union.union(b);
+    var bufferPart = intersection.difference(a.union(b).buffer(0)).buffer(0.3);
+    var union = a.union(bufferPart).buffer(0).union(b).buffer(0);
     if (isNotAPolygon(union)) {
       return Optional.empty();
     }

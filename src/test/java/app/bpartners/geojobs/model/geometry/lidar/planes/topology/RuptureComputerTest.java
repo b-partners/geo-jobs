@@ -60,6 +60,31 @@ class RuptureComputerTest {
     }
   }
 
+  @Test
+  void case_2() {
+    var points1 = readPointsFromResources("cityjson/topology/rupture_line/case_2/pan_1.geojson");
+    var points2 = readPointsFromResources("cityjson/topology/rupture_line/case_2/pan_2.geojson");
+    var points3 = readPointsFromResources("cityjson/topology/rupture_line/case_2/pan_3.geojson");
+
+    for (int i = 0; i < TEST_COUNT; i++) {
+      var plane1 = createPlane(points1);
+      var plane2 = createPlane(points2);
+      var plane3 = createPlane(points3);
+
+      // 1-2 & 2-1
+      assertTrue(subject.apply(plane1, plane2).isPresent());
+      assertTrue(subject.apply(plane2, plane1).isPresent());
+
+      // 1-3 & 3-1
+      assertTrue(subject.apply(plane1, plane3).isPresent());
+      assertTrue(subject.apply(plane3, plane1).isPresent());
+
+      // 2-3 & 3-2
+      assertTrue(subject.apply(plane2, plane3).isEmpty());
+      assertTrue(subject.apply(plane3, plane2).isEmpty());
+    }
+  }
+
   private static Plane3D createPlane(Collection<LasPointGeometry> points) {
     return PlaneFitter.fit(points).toBuilder().delimitationConf(delimitationConf).build();
   }
