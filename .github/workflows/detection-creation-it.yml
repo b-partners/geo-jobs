@@ -13,7 +13,8 @@ env:
   IN_STATUS_500_TMPL_ID: ${{ secrets.INSTATUS_500_TMPL_ID }}
   IN_STATUS_RESOLVE_500_TMPL_ID: ${{ secrets.INSTATUS_RESOLVE_500_TMPL_ID }}
   IN_STATUS_VGG_EXCEPTION_TMPL_ID: ${{ secrets.IN_STATUS_VGG_EXCEPTION_TMPL_ID }}
-  IN_STATUS_RESOLVE_VGG_TMPL_ID: ${{ secrets.IN_STATUS_RESOLVE_VGG_TMPL_ID }}
+  IN_STATUS_IMAGE_SOURCES_DEGRADED_TMPL_ID: ${{ secrets.IN_STATUS_IMAGE_SOURCES_DEGRADED_TMPL_ID }}
+  IN_STATUS_IMAGE_SOURCES_RESTORED_TMPL_ID: ${{ secrets.IN_STATUS_IMAGE_SOURCES_RESTORED_TMPL_ID }}
 
 jobs:
   detection-creation:
@@ -85,20 +86,49 @@ jobs:
           echo "Response Body:"
               cat $response_file
           
+          incident_list=$(curl -s -X GET "https://api.instatus.com/v1/$IN_STATUS_PAGE_ID/incidents" \
+          -H "Authorization: Bearer $IN_STATUS_API_KEY")
+          
+          500_incident_lines=$(echo "$incident_list" | jq -r '
+          .[]
+          | select(.status != "RESOLVED" and
+          (.name == "Internal server error"))
+          | "\(.id)|\(.name)|\(.status)"')
+          
+          image_performance_incident_lines=$(echo "$incident_list" | jq -r '
+          .[]
+          | select(.status != "RESOLVED" and
+          (.name == "Image sources performance degradation"))
+          | "\(.id)|\(.name)|\(.status)"')
+          
           if [ "${http_code:-0}" -ne 200 ]; then
             echo "Response Body:"
               cat $response_file
-            incident_list=$(curl -s -X GET "https://api.instatus.com/v1/$IN_STATUS_PAGE_ID/incidents" \
-            -H "Authorization: Bearer $IN_STATUS_API_KEY")
-            incident_lines=$(echo "$incident_list" | jq -r '
-            .[]
-            | select(.status != "RESOLVED" and
-            (.name == "Internal server error"))
-            | "\(.id)|\(.name)|\(.status)"')
-            if [[ -n "$incident_lines" ]]; then
+          
+            if [ "$http_code" -eq 504 ]; then
+              echo "Gateway Timeout detected (504)"
+              if grep -q "Image sources" "$response_file"; then
+                if [[ -n "image_performance_incident_lines" ]]; then
+                  while IFS='|' read -r id incident_name incident_status; do
+                  echo "Incident : $incident_name ($incident_status)"
+                    if [[ -z "$image_performance_incident_lines" ]]; then
+                      echo "Creating Instatus incident ..."
+                      in_status_response=$(curl -s -o in-status-response.json -w "%{http_code}" \
+                      -X POST https://api.instatus.com/v1/$IN_STATUS_PAGE_ID/incidents/$IN_STATUS_IMAGE_SOURCES_DEGRADED_TMPL_ID \
+                      -H "Authorization: Bearer $IN_STATUS_API_KEY")
+                      incident_id=$(jq -r '.id' in-status-response.json)
+                      echo "InStatus incident identifier: '$incident_id'"
+                    fi
+                  done <<< "$image_performance_incident_lines"
+                fi
+                exit 1
+              fi
+            fi
+          
+            if [[ -n "$500_incident_lines" ]]; then
               while IFS='|' read -r id incident_name incident_status; do
                 echo "Incident : $incident_name ($incident_status)"
-                if [[ -z "$incident_lines" ]]; then
+                if [[ -z "$500_incident_lines" ]]; then
                   echo "Creating Instatus incident ..."
                   in_status_response=$(curl -s -o in-status-response.json -w "%{http_code}" \
                   -X POST https://api.instatus.com/v1/$IN_STATUS_PAGE_ID/incidents/$IN_STATUS_500_TMPL_ID \
@@ -106,7 +136,7 @@ jobs:
                   incident_id=$(jq -r '.id' in-status-response.json)
                   echo "InStatus incident identifier: '$incident_id'"
                 fi
-              done <<< "$incident_lines"
+              done <<< "$500_incident_lines"
             fi
             exit 1
           fi
@@ -135,18 +165,10 @@ jobs:
             errors+=" original_image_url is actually null or empty"$'\n'
           fi
           
-          incident_list=$(curl -s -X GET "https://api.instatus.com/v1/$IN_STATUS_PAGE_ID/incidents" \
-            -H "Authorization: Bearer $IN_STATUS_API_KEY")
-            incident_lines=$(echo "$incident_list" | jq -r '
-            .[]
-            | select(.status != "RESOLVED" and
-            (.name == "Internal server error"))
-            | "\(.id)|\(.name)|\(.status)"')
-          
           if [[ -n "$errors" ]]; then
             echo "Response contains unexpected values :"
             echo "$errors"
-            if [[ -z "$incident_lines" ]]; then
+            if [[ -z "$500_incident_lines" ]]; then
               echo "No active 'Internal server error' incident. Creating one..."
               in_status_response=$(curl -s -o in-status-response.json -w "%{http_code}" \
               -X POST https://api.instatus.com/v1/$IN_STATUS_PAGE_ID/incidents/$IN_STATUS_500_TMPL_ID \
@@ -159,7 +181,7 @@ jobs:
             fi
             exit 1
           else
-            if [[ -n "$incident_lines" ]]; then
+            if [[ -n "$500_incident_lines" ]]; then
               while IFS='|' read -r id incident_name incident_status; do
                 if [[ "$incident_name" == *"Internal server error"* ]]; then
                   echo "Resolving internal server error incident: $id"
@@ -167,7 +189,17 @@ jobs:
                   https://api.instatus.com/v2/$IN_STATUS_PAGE_ID/incidents/"$id"/incident-updates/$IN_STATUS_RESOLVE_500_TMPL_ID \
                   -H "Authorization: Bearer $IN_STATUS_API_KEY"
                 fi
-              done <<< "$incident_lines"
+              done <<< "$500_incident_lines"
+            fi
+            if [[ -n "$image_performance_incident_lines" ]]; then
+              while IFS='|' read -r id incident_name incident_status; do
+                if [[ "$incident_name" == *"Image sources performance degradation"* ]]; then
+                  echo "Resolving Image sources performance degradation: $id"
+                  curl -s -o /dev/null -X POST \
+                  https://api.instatus.com/v2/$IN_STATUS_PAGE_ID/incidents/"$id"/incident-updates/$IN_STATUS_IMAGE_SOURCES_RESTORED_TMPL_ID \
+                  -H "Authorization: Bearer $IN_STATUS_API_KEY"
+                fi
+              done <<< "$image_performance_incident_lines"
             fi
           fi
       - name: Send POST /detections/*/sync for both VEGETATION and TOITURE models
