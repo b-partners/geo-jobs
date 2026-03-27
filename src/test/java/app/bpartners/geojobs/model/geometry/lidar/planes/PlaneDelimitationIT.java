@@ -39,7 +39,7 @@ class PlaneDelimitationIT {
 
   @Test
   void fromConcavePoints() {
-    var points = readPointsFromResources("cityjson/points/concave_points.geojson");
+    var points = readPointsFromResources("cityjson/points/concave_points_1.geojson");
 
     var subExporter = exporter.subSuffix("CASE_1");
     var delimitation = new PlaneDelimitation(conf, points, subExporter);
