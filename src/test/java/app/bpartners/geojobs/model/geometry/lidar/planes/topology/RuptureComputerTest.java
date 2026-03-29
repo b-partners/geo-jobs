@@ -19,10 +19,10 @@ class RuptureComputerTest {
 
   @Test
   void case_1() {
-    var points1 = readPointsFromResources("cityjson/topology/rupture_line/case_1/pan_1.geojson");
-    var points2 = readPointsFromResources("cityjson/topology/rupture_line/case_1/pan_2.geojson");
-    var points3 = readPointsFromResources("cityjson/topology/rupture_line/case_1/pan_3.geojson");
-    var points4 = readPointsFromResources("cityjson/topology/rupture_line/case_1/pan_4.geojson");
+    var points1 = readPointsFromResources("cityjson/roofs/roof_6/pan_3.geojson");
+    var points2 = readPointsFromResources("cityjson/roofs/roof_6/pan_4.geojson");
+    var points3 = readPointsFromResources("cityjson/roofs/roof_6/pan_5.geojson");
+    var points4 = readPointsFromResources("cityjson/roofs/roof_6/pan_6.geojson");
 
     for (int i = 0; i < TEST_COUNT; i++) {
       var plane1 = createPlane(points1);
@@ -54,9 +54,9 @@ class RuptureComputerTest {
 
   @Test
   void case_2() {
-    var points1 = readPointsFromResources("cityjson/topology/rupture_line/case_2/pan_1.geojson");
-    var points2 = readPointsFromResources("cityjson/topology/rupture_line/case_2/pan_2.geojson");
-    var points3 = readPointsFromResources("cityjson/topology/rupture_line/case_2/pan_3.geojson");
+    var points1 = readPointsFromResources("cityjson/roofs/roof_7/pan_1.geojson");
+    var points2 = readPointsFromResources("cityjson/roofs/roof_7/pan_2.geojson");
+    var points3 = readPointsFromResources("cityjson/roofs/roof_7/pan_3.geojson");
 
     for (int i = 0; i < TEST_COUNT; i++) {
       var plane1 = createPlane(points1);

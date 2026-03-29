@@ -8,6 +8,7 @@ import app.bpartners.geojobs.model.lidar.planes.topology.RoofRelationClassifier.
 import app.bpartners.geojobs.model.lidar.planes.topology.model.RoofRelationType;
 import app.bpartners.geojobs.model.lidar.planes.topology.model.RoofTopology;
 import app.bpartners.geojobs.model.lidar.planes.topology.model.Rupture;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import lombok.extern.slf4j.Slf4j;
@@ -58,8 +59,14 @@ public class RoofTopologyBuilder implements Function<List<Plane3D>, RoofTopology
         adjacency[j][i] = true;
         relations[i][j] = relation;
         relations[j][i] = relation;
-        ruptures[i][j] = optionalRupture.get().toBuilder().build();
-        ruptures[j][i] = optionalRupture.get().toBuilder().build();
+
+        var rupture = optionalRupture.get();
+        ruptures[i][j] = rupture.toBuilder().build();
+        ruptures[j][i] =
+            rupture.toBuilder()
+                .endIntersection(new ArrayList<>())
+                .startIntersection(new ArrayList<>())
+                .build();
       }
     }
 

@@ -16,35 +16,38 @@ import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.linearref.LengthIndexedLine;
 
 public class RupturePointsComputer implements BiConsumer<List<Plane3D>, RoofTopology> {
+  private static final double EXTENSION = 20;
+
   @Override
   public void accept(List<Plane3D> planes, RoofTopology topology) {
-    int n = planes.size();
-
-    computeIntersectionRupturePoints(n, topology);
+    computeIntersectionRupturePoints(planes, topology);
   }
 
-  private static void computeIntersectionRupturePoints(int n, RoofTopology topology) {
+  private static void computeIntersectionRupturePoints(
+      List<Plane3D> planes, RoofTopology topology) {
+    int n = planes.size();
     for (int i = 0; i < n; i++) {
       for (int j = i + 1; j < n; j++) {
         var relation = topology.getRelations()[i][j];
         if (!S.equals(relation)) continue;
 
-        computeSAndOIntersection(i, j, n, topology);
-        computeSAndOIntersection(j, i, n, topology);
+        computeSAndOIntersection(i, j, planes, topology);
+        computeSAndOIntersection(j, i, planes, topology);
       }
     }
   }
 
-  private static void computeSAndOIntersection(int i, int j, int n, RoofTopology topology) {
-    var oRuptures = getORuptures(i, n, topology);
+  private static void computeSAndOIntersection(
+      int i, int j, List<Plane3D> planes, RoofTopology topology) {
+    var oRuptures = getORuptures(i, planes.size(), topology);
     if (oRuptures.isEmpty()) return;
 
     var sRupture = topology.getRuptures()[i][j];
-    var extendedSLine = extend(sRupture.getLine(), 0.5);
-    var indexedSLine = new LengthIndexedLine(sRupture.getLine());
+    var extendedSLine = extend(sRupture.getLine(), EXTENSION);
+    var indexedSLine = new LengthIndexedLine(extendedSLine);
 
     for (var o : oRuptures) {
-      var extendedOLine = extend(o.getLine(), 0.5);
+      var extendedOLine = extend(o.getLine(), EXTENSION);
       if (!extendedSLine.intersects(extendedOLine)) continue;
 
       var intersection = extendedSLine.intersection(extendedOLine);
@@ -55,16 +58,41 @@ public class RupturePointsComputer implements BiConsumer<List<Plane3D>, RoofTopo
       var bCoordinate = getBCoordinate(sRupture.getLine(), o.getLine());
       var bPrimeLength = indexedSLine.project(bCoordinate);
 
+      var intersectionWithZ = compute3DIntersection(intersectionCoordinate, planes.get(i));
       var aRupture = topology.getRuptures()[i][j];
       var bRupture = topology.getRuptures()[j][i];
-      if (shouldAddInStart(bPrimeLength, intersectionLength)) {
-        aRupture.getStartIntersection().add(intersectionCoordinate);
-        bRupture.getStartIntersection().add(intersectionCoordinate);
-      } else {
-        aRupture.getEndIntersection().add(intersectionCoordinate);
-        bRupture.getEndIntersection().add(intersectionCoordinate);
-      }
+
+      var isStartIntersection = shouldAddInStart(bPrimeLength, intersectionLength);
+      addIntersectionToRupture(aRupture, bRupture, intersectionWithZ, isStartIntersection);
+      addBCoordinateToORupture(bCoordinate, o, planes.get(i));
     }
+  }
+
+  private static void addIntersectionToRupture(
+      Rupture a, Rupture b, Coordinate intersection, boolean isStart) {
+    if (isStart) {
+      a.getStartIntersection().add(intersection);
+      b.getStartIntersection().add(intersection);
+    } else {
+      a.getEndIntersection().add(intersection);
+      b.getEndIntersection().add(intersection);
+    }
+  }
+
+  private static void addBCoordinateToORupture(
+      Coordinate bCoordinate, Rupture rupture, Plane3D plane) {
+    var x = bCoordinate.getX();
+    var y = bCoordinate.getY();
+    var z = plane.zAt(x, y);
+    var bWithZ = new Coordinate(x, y, z);
+    rupture.getEndIntersection().add(bWithZ);
+  }
+
+  private static Coordinate compute3DIntersection(Coordinate intersection, Plane3D plane) {
+    var x = intersection.getX();
+    var y = intersection.getY();
+    var z = plane.zAt(x, y);
+    return new Coordinate(x, y, z);
   }
 
   private static boolean shouldAddInStart(double bPrimeLength, double intersectionLength) {
@@ -98,7 +126,7 @@ public class RupturePointsComputer implements BiConsumer<List<Plane3D>, RoofTopo
         .orElseThrow();
   }
 
-  private static List<Rupture> getORuptures(int i, int n, RoofTopology topology) {
+  static List<Rupture> getORuptures(int i, int n, RoofTopology topology) {
     List<Rupture> ruptures = new ArrayList<>();
     for (int j = i + 1; j < n; j++) {
       var relation = topology.getRelations()[i][j];

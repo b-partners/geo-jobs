@@ -1,5 +1,8 @@
 package app.bpartners.geojobs.model.lidar.planes.topology.model;
 
+import static app.bpartners.geojobs.model.lidar.planes.algorithm.GeometryUtilities.centroid;
+
+import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
@@ -11,8 +14,41 @@ import org.locationtech.jts.geom.LineString;
 @Builder(toBuilder = true)
 @RequiredArgsConstructor
 public class Rupture {
+  private Coordinate end;
+  private Coordinate start;
+
   private final LineString line;
   private final List<Coordinate> points;
   private final List<Coordinate> endIntersection;
   private final List<Coordinate> startIntersection;
+
+  public Coordinate getStart() {
+    if (start != null) {
+      return start;
+    }
+
+    if (this.startIntersection.isEmpty()) {
+      start = points.getFirst();
+    } else {
+      start = centroid(toPoints(startIntersection)).getCoordinate();
+    }
+    return start;
+  }
+
+  public Coordinate getEnd() {
+    if (end != null) {
+      return end;
+    }
+
+    if (this.endIntersection.isEmpty()) {
+      end = points.getLast();
+    } else {
+      end = centroid(toPoints(endIntersection)).getCoordinate();
+    }
+    return end;
+  }
+
+  private static List<LasPointGeometry> toPoints(List<Coordinate> coordinates) {
+    return coordinates.stream().map(LasPointGeometry::new).toList();
+  }
 }
