@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.model.geometry.lidar.planes.topology;
 
+import static app.bpartners.geojobs.utils.lidar.Plane3DExtractorConfCreator.planeDelimitationConf;
 import static app.bpartners.geojobs.utils.lidar.LasPointGeometryLoaderUtils.readPointsFromResources;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -7,22 +8,13 @@ import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.planes.Plane3D;
 import app.bpartners.geojobs.model.lidar.planes.PlaneDelimitation.PlaneDelimitationConf;
 import app.bpartners.geojobs.model.lidar.planes.algorithm.PlaneFitter;
-import app.bpartners.geojobs.model.lidar.planes.conf.RangedConf;
 import app.bpartners.geojobs.model.lidar.planes.topology.RuptureComputer;
 import java.util.Collection;
 import org.junit.jupiter.api.Test;
 
 class RuptureComputerTest {
   private static final RuptureComputer subject = new RuptureComputer();
-  private static final PlaneDelimitationConf delimitationConf =
-      PlaneDelimitationConf.builder()
-          .concaveRatio(
-              RangedConf.from(
-                  new RangedConf.IntegerRangedConf<>(Integer.MIN_VALUE, 200, 0.2),
-                  new RangedConf.IntegerRangedConf<>(201, Integer.MAX_VALUE, 0.2)))
-          .simplificationEpsilon(0.5)
-          .build();
-
+  private static final PlaneDelimitationConf delimitationConf = planeDelimitationConf();
   private static final int TEST_COUNT = 10;
 
   @Test

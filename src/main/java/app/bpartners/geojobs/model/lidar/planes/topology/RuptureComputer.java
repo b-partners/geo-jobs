@@ -39,7 +39,6 @@ public class RuptureComputer implements BiFunction<Plane3D, Plane3D, Optional<Ru
   }
 
   private static final double LONG_LINE_LENGTH = 100_000_000;
-
   private static LineString getLongLine(Line3D line) {
     var start =
         new Coordinate(
@@ -74,9 +73,8 @@ public class RuptureComputer implements BiFunction<Plane3D, Plane3D, Optional<Ru
     var coordinatesWithZ = project(a, intersection.getCoordinates());
 
     var splitter = geometryFactory.createLineString(coordinatesWithZ);
-    var extendedLine = extend(splitter, 0.5);
-    var maxLineProjectedByA = maxLineProjected(extendedLine, a);
-    var maxLineProjectedByB = maxLineProjected(extendedLine, b);
+    var maxLineProjectedByA = maxLineProjected(splitter, a);
+    var maxLineProjectedByB = maxLineProjected(splitter, b);
     var expectedLine =
         maxLineProjectedByA.getLength() < maxLineProjectedByB.getLength()
             ? maxLineProjectedByA
