@@ -35,10 +35,18 @@ public class RuptureComputer implements BiFunction<Plane3D, Plane3D, Optional<Ru
     }
 
     var ruptureLine = optionalRuptureLine.get();
-    return Optional.of(Rupture.builder().line(ruptureLine).build());
+    var baseRupturePoints = List.of(ruptureLine.getCoordinates());
+    return Optional.of(
+        Rupture.builder()
+            .line(ruptureLine)
+            .points(baseRupturePoints)
+            .endIntersection(new ArrayList<>())
+            .startIntersection(new ArrayList<>())
+            .build());
   }
 
   private static final double LONG_LINE_LENGTH = 100_000_000;
+
   private static LineString getLongLine(Line3D line) {
     var start =
         new Coordinate(

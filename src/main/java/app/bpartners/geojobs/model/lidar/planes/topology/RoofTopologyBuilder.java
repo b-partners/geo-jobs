@@ -58,8 +58,8 @@ public class RoofTopologyBuilder implements Function<List<Plane3D>, RoofTopology
         adjacency[j][i] = true;
         relations[i][j] = relation;
         relations[j][i] = relation;
-        ruptures[i][j] = optionalRupture.get();
-        ruptures[j][i] = optionalRupture.get();
+        ruptures[i][j] = optionalRupture.get().toBuilder().build();
+        ruptures[j][i] = optionalRupture.get().toBuilder().build();
       }
     }
 

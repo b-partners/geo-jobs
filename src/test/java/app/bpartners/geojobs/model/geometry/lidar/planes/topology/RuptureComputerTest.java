@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.model.geometry.lidar.planes.topology;
 
-import static app.bpartners.geojobs.utils.lidar.Plane3DExtractorConfCreator.planeDelimitationConf;
 import static app.bpartners.geojobs.utils.lidar.LasPointGeometryLoaderUtils.readPointsFromResources;
+import static app.bpartners.geojobs.utils.lidar.Plane3DExtractorConfCreator.planeDelimitationConf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
