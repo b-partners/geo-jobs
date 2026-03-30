@@ -41,8 +41,8 @@ public class RuptureComputer implements BiFunction<Plane3D, Plane3D, Optional<Ru
         Rupture.builder()
             .line(ruptureLine)
             .points(baseRupturePoints)
-            .endIntersection(new ArrayList<>())
-            .startIntersection(new ArrayList<>())
+            .endIntersection(new HashSet<>())
+            .startIntersection(new HashSet<>())
             .build());
   }
 

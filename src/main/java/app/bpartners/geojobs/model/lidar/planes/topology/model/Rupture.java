@@ -4,23 +4,26 @@ import static app.bpartners.geojobs.model.lidar.planes.algorithm.GeometryUtiliti
 
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import java.util.List;
+import java.util.Set;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LineString;
 
 @Getter
 @Builder(toBuilder = true)
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class Rupture {
   private Coordinate end;
   private Coordinate start;
 
+  private final int planeAIndex;
+  private final int planeBIndex;
   private final LineString line;
   private final List<Coordinate> points;
-  private final List<Coordinate> endIntersection;
-  private final List<Coordinate> startIntersection;
+  private final Set<Coordinate> endIntersection;
+  private final Set<Coordinate> startIntersection;
 
   public Coordinate getStart() {
     if (start != null) {
@@ -48,7 +51,7 @@ public class Rupture {
     return end;
   }
 
-  private static List<LasPointGeometry> toPoints(List<Coordinate> coordinates) {
+  private static List<LasPointGeometry> toPoints(Set<Coordinate> coordinates) {
     return coordinates.stream().map(LasPointGeometry::new).toList();
   }
 }

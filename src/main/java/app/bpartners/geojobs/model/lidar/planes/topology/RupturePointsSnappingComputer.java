@@ -20,19 +20,22 @@ public class RupturePointsSnappingComputer implements BiConsumer<List<Plane3D>, 
         var relation = topology.getRelations()[i][j];
         if (!S.equals(relation)) continue;
 
-        updateORuptureStart(i, j, topology);
-        updateORuptureStart(j, i, topology);
+        updateORuptureStart(i, j, n, topology);
+        updateORuptureStart(j, i, n, topology);
       }
     }
   }
 
-  void updateORuptureStart(int i, int j, RoofTopology topology) {
+  void updateORuptureStart(int i, int j, int n, RoofTopology topology) {
     var sRupture = topology.getRuptures()[i][j];
-    var oRuptures = getORuptures(i, j, topology);
+    var oRuptures = getORuptures(i, n, topology);
 
     for (var o : oRuptures) {
+      var x = o.getPlaneAIndex();
+      var y = o.getPlaneBIndex();
       var toAdd = getStartCoordinate(sRupture.getStart(), sRupture.getEnd(), o);
-      o.getStartIntersection().add(toAdd);
+      topology.getRuptures()[x][y].getStartIntersection().add(toAdd);
+      topology.getRuptures()[y][x].getStartIntersection().add(toAdd);
     }
   }
 

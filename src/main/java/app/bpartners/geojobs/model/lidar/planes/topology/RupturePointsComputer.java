@@ -64,7 +64,7 @@ public class RupturePointsComputer implements BiConsumer<List<Plane3D>, RoofTopo
 
       var isStartIntersection = shouldAddInStart(bPrimeLength, intersectionLength);
       addIntersectionToRupture(aRupture, bRupture, intersectionWithZ, isStartIntersection);
-      addBCoordinateToORupture(bCoordinate, o, planes.get(i));
+      addBCoordinateToORupture(bCoordinate, o, topology, planes.get(i));
     }
   }
 
@@ -80,12 +80,16 @@ public class RupturePointsComputer implements BiConsumer<List<Plane3D>, RoofTopo
   }
 
   private static void addBCoordinateToORupture(
-      Coordinate bCoordinate, Rupture rupture, Plane3D plane) {
+      Coordinate bCoordinate, Rupture rupture, RoofTopology topology, Plane3D plane) {
     var x = bCoordinate.getX();
     var y = bCoordinate.getY();
     var z = plane.zAt(x, y);
     var bWithZ = new Coordinate(x, y, z);
-    rupture.getEndIntersection().add(bWithZ);
+
+    var i = rupture.getPlaneAIndex();
+    var j = rupture.getPlaneBIndex();
+    topology.getRuptures()[i][j].getEndIntersection().add(bWithZ);
+    topology.getRuptures()[j][i].getEndIntersection().add(bWithZ);
   }
 
   private static Coordinate compute3DIntersection(Coordinate intersection, Plane3D plane) {
@@ -111,7 +115,7 @@ public class RupturePointsComputer implements BiConsumer<List<Plane3D>, RoofTopo
      *
      *               b
      *              /|
-     *   (O_LINE)  / |
+     *   (O_Line)  / |
      *            /  |
      *    x------a---b'-------x'  : S_Line
      *           ^
@@ -128,7 +132,8 @@ public class RupturePointsComputer implements BiConsumer<List<Plane3D>, RoofTopo
 
   static List<Rupture> getORuptures(int i, int n, RoofTopology topology) {
     List<Rupture> ruptures = new ArrayList<>();
-    for (int j = i + 1; j < n; j++) {
+    for (int j = 0; j < n; j++) {
+      if (i == j) continue;
       var relation = topology.getRelations()[i][j];
       if (!O_PLUS.equals(relation) && !O_MINUS.equals(relation)) continue;
       ruptures.add(topology.getRuptures()[i][j]);
