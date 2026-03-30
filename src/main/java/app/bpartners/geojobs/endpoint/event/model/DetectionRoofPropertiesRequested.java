@@ -1,7 +1,6 @@
 package app.bpartners.geojobs.endpoint.event.model;
 
 import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
-import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_4;
 
 import app.bpartners.geojobs.endpoint.event.EventStack;
 import java.time.Duration;
