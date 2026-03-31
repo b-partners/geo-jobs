@@ -784,6 +784,8 @@ components:
           type: string
         layers:
           type: string
+        precisionLevelInCm:
+          type: integer
         styles:
           type: string
         format:

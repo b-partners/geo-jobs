@@ -285,7 +285,7 @@ class ZoneServiceTest {
     var actual = subject.processDetection(detectionIdentifier, createDetection, communityOwnerId);
 
     var expectedGeoServerProperties =
-        geoServerConfiguration.defaultGeoServerProperties(LATEST_DEFAULT_LAYER);
+        geoServerConfiguration.defaultGeoServerProperties(LATEST_DEFAULT_LAYER, 5);
     var listCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducerMock, times(2)).accept(listCaptor.capture());
     var actualEvent = (DetectionTilingRequested) listCaptor.getAllValues().getLast().getFirst();
