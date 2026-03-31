@@ -25,7 +25,7 @@ public class GeoServerConfiguration {
                 .service("WMS")
                 .request("GetMap")
                 .layers(overrideLayer)
-                .precisionLevelInCm(precisionLevelInCm)
+                .precisionLevelInCm(precisionLevelInCm != null ? precisionLevelInCm : 5)
                 .styles("")
                 .format("image/jpeg")
                 .transparent(true)
