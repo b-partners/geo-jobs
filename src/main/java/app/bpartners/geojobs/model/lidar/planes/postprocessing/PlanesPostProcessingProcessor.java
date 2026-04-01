@@ -46,7 +46,7 @@ public class PlanesPostProcessingProcessor implements Function<Collection<Plane3
     this.roofReconstructor =
         new RoofReconstructor(
             RoofRelationClassifier.RoofRelationClassifierConf.builder()
-                .angleThresholdDeg(5)
+                .angleThresholdDeg(8)
                 .build());
   }
 

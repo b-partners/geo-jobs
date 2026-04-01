@@ -18,9 +18,9 @@ import org.locationtech.jts.linearref.LengthIndexedLine;
 @Slf4j
 public class RuptureComputer implements BiFunction<Plane3D, Plane3D, Optional<Rupture>> {
   private static final double EXTENSION = 20;
-  private static final double MAX_DISTANCE = 1;
+  private static final double MAX_DISTANCE = 2;
   private static final double DENSIFIED_DISTANCE = 0.3;
-  private static final double MIN_INTERSECTION_DISTANCE = 3;
+  private static final double MIN_INTERSECTION_DISTANCE = 2;
 
   @Override
   public Optional<Rupture> apply(Plane3D a, Plane3D b) {
