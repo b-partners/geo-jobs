@@ -20,7 +20,7 @@ public class RuptureComputer implements BiFunction<Plane3D, Plane3D, Optional<Ru
   private static final double EXTENSION = 20;
   private static final double MAX_DISTANCE = 1;
   private static final double DENSIFIED_DISTANCE = 0.3;
-  private static final double MIN_INTERSECTION_DISTANCE = 1;
+  private static final double MIN_INTERSECTION_DISTANCE = 3;
 
   @Override
   public Optional<Rupture> apply(Plane3D a, Plane3D b) {
@@ -36,6 +36,12 @@ public class RuptureComputer implements BiFunction<Plane3D, Plane3D, Optional<Ru
     }
 
     var ruptureLine = optionalRuptureLine.get();
+    if (ruptureLine.distance(a.getDelimitation()) > MAX_DISTANCE) {
+      return Optional.empty();
+    } else if (ruptureLine.distance(b.getDelimitation()) > MAX_DISTANCE) {
+      return Optional.empty();
+    }
+
     var baseRupturePoints = List.of(ruptureLine.getCoordinates());
     return Optional.of(
         Rupture.builder()
@@ -46,6 +52,7 @@ public class RuptureComputer implements BiFunction<Plane3D, Plane3D, Optional<Ru
             .build());
   }
 
+  // TODO: find a better way
   private static final double LONG_LINE_LENGTH = 100_000_000;
 
   private static LineString getLongLine(Line3D line) {
