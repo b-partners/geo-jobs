@@ -4,6 +4,7 @@ import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMappe
 import static app.bpartners.geojobs.endpoint.rest.model.Feature.TypeEnum.FEATURE;
 import static app.bpartners.geojobs.endpoint.rest.model.GeoJsonOutput.ZIP;
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
+import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
@@ -11,13 +12,13 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.GeoJsonDelimitationTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.validator.FeatureTypeChecker;
+import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.service.dashboard.AreaPictureApi;
-import app.bpartners.geojobs.service.dashboard.component.AreaPictureMapLayer;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.geoserver.GeoServerConfiguration;
 import java.math.BigDecimal;
@@ -159,10 +160,22 @@ public class DetectionCreationMapper {
             || geoServerProperties.getGeoServerParameter() == null
             || geoServerProperties.getGeoServerParameter().getLayers() == null)) {
       var firstPoint = retrieveFirstPoint(geoJsonZone);
-      List<String> layers = retrieveLayers(firstPoint, communityOwnerId);
+      List<HashMap<String, String>> layers = retrieveLayers(firstPoint, communityOwnerId);
+      String layer = layers.getFirst().get("name");
+      int precisionLevelInCm = Integer.parseInt(layers.getFirst().get("precisionLevelInCm"));
+
+      if (precisionLevelInCm != 5) {
+        throw new ApiException(
+            SERVER_EXCEPTION,
+            String.format(
+                "Cannot process detection : image resolution must be 5 cm. Current layer = %s"
+                    + " (precisionLevelInCm = %d)",
+                layer, precisionLevelInCm));
+      }
+
       // TODO: save other layers to be used in failure case
       finalGeoServerProperties =
-          geoServerConfiguration.defaultGeoServerProperties(layers.getFirst());
+          geoServerConfiguration.defaultGeoServerProperties(layer, precisionLevelInCm);
     }
     return finalGeoServerProperties;
   }
@@ -260,15 +273,27 @@ public class DetectionCreationMapper {
     throw new IllegalArgumentException("Unknown feature type: " + firstFeature);
   }
 
-  private List<String> retrieveLayers(List<BigDecimal> firstPoint, String communityOwnerId) {
+  private List<HashMap<String, String>> retrieveLayers(
+      List<BigDecimal> firstPoint, String communityOwnerId) {
     var longitude = firstPoint.get(0).doubleValue();
     var latitude = firstPoint.get(1).doubleValue();
+
     var e2ApiKey =
         communityAuthRepository
             .findById(communityOwnerId)
             .map(CommunityAuthorization::getDashboardApiKey)
             .orElseThrow();
+
     var areaMapLayers = areaPictureApi.getAreaPictureMapLayers(longitude, latitude, e2ApiKey);
-    return areaMapLayers.stream().map(AreaPictureMapLayer::name).toList();
+
+    return areaMapLayers.stream()
+        .map(
+            layer -> {
+              HashMap<String, String> map = new HashMap<>();
+              map.put("name", layer.name());
+              map.put("precisionLevelInCm", String.valueOf(layer.precisionLevelInCm()));
+              return map;
+            })
+        .toList();
   }
 }

@@ -138,7 +138,7 @@ public class DetectionAddressConversionJobStatusChangedService
                                 Feature::getProperties, Feature::setProperties))
                         .toList())
                 .multiPolygonGeoJsonZone(convertedFeatures)
-                .geoServerProperties(geoServerConfiguration.defaultGeoServerProperties(null))
+                .geoServerProperties(geoServerConfiguration.defaultGeoServerProperties(null, null))
                 .build());
 
     eventProducer.accept(
