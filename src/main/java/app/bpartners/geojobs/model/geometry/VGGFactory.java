@@ -90,11 +90,7 @@ public class VGGFactory {
     var vggMap = new HashMap<Feature, VGG>();
     int minTileXGlobal = envelop.stream().mapToInt(TileCoordinates::getX).min().orElseThrow();
     int minTileYGlobal = envelop.stream().mapToInt(TileCoordinates::getY).min().orElseThrow();
-    var minMultiPolygon =
-        geometryConverter.getMultiPolygonFromTile(
-            minTileXGlobal, minTileYGlobal, HOUSES_0.getZoomLevel());
-    log.info("Minimum polygon tile coordinates {}", minMultiPolygon);
-    var tiledPixelPolygonGroup =
+      var tiledPixelPolygonGroup =
         groupPixelPolygonByFeatureAndDetectableTypeAndTileCoordinates(tiledPixelPolygons);
 
     tiledPixelPolygonGroup.stream()
