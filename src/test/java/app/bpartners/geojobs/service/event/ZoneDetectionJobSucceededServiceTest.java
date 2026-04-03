@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.DetectionRoofPropertiesRequested;
 import app.bpartners.geojobs.endpoint.event.model.FeatureVggRequested;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryJobRequested;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobSucceeded;
@@ -254,9 +255,13 @@ class ZoneDetectionJobSucceededServiceTest {
         .getOrComputeGeoJsonConversionJob(zoneDetectionJobMock);
     verify(configurationRepositoryMock, never()).findLatestConfiguration();
     var listCaptor = ArgumentCaptor.forClass(List.class);
-    verify(eventProducerMock, times(1)).accept(listCaptor.capture());
+    verify(eventProducerMock, times(2)).accept(listCaptor.capture());
+    var detectionRoofPropertiesRequested =
+        (DetectionRoofPropertiesRequested) listCaptor.getAllValues().getFirst().getFirst();
     var actualFeatureVggRequested =
         (FeatureVggRequested) listCaptor.getAllValues().getLast().getFirst();
+    assertEquals(
+        new DetectionRoofPropertiesRequested(detectionId), detectionRoofPropertiesRequested);
     assertEquals(new FeatureVggRequested(detectionId, new Feature(), 0), actualFeatureVggRequested);
     assertEquals(EVENT_STACK_4, actualFeatureVggRequested.getEventStack());
     assertEquals(Duration.ofSeconds(30L), actualFeatureVggRequested.maxConsumerDuration());

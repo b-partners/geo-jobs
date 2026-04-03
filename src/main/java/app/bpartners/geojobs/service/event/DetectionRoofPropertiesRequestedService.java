@@ -36,11 +36,15 @@ public class DetectionRoofPropertiesRequestedService
   @Override
   public void accept(DetectionRoofPropertiesRequested event) {
     var detectionIdentifier = event.getDetectionIdentifier();
+    apply(detectionIdentifier);
+  }
+
+  public Detection apply(String detectionIdentifier) {
     var detection = detectionRepository.findById(detectionIdentifier).orElseThrow();
     var machineDetectedTiles =
         machineDetectedTileRepository.findAllByZdjJobId(detection.getZdjId());
     var detectionWithRoofProperties = apply(detection, machineDetectedTiles);
-    detectionRepository.save(detectionWithRoofProperties);
+    return detectionRepository.save(detectionWithRoofProperties);
   }
 
   public Detection apply(Detection detection, List<MachineDetectedTile> machineDetectedTiles) {

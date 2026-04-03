@@ -15,6 +15,7 @@ import app.bpartners.geojobs.model.exception.ImageSourcesTimeoutException;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.service.detection.*;
+import app.bpartners.geojobs.service.event.DetectionRoofPropertiesRequestedService;
 import app.bpartners.geojobs.service.event.FeatureImageRequestedService;
 import app.bpartners.geojobs.service.event.FeatureVggRequestedService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
@@ -49,6 +50,7 @@ public class SynchronousDetectionService
   private final DetectableObjectConfigurationRepository detectableObjectConfigurationRepository;
   private final FeatureImageRequestedService featureImageRequestedService;
   private final EntityManager entityManager;
+  private final DetectionRoofPropertiesRequestedService detectionRoofPropertiesRequestedService;
 
   @SneakyThrows
   @Override
@@ -130,13 +132,18 @@ public class SynchronousDetectionService
         detection.getEndToEndId(),
         tilingTasks.size());
 
+    var detectionWithComputedRoofProperties =
+        detectionRoofPropertiesRequestedService.apply(detectionWithCreatedZDJ.getId());
+
     var vggRequestAndGeoJsonEventTriggerStart = now();
     Callable<Void> featureVggRequestedCallableVoid =
         () -> {
           // VGG result computing step
           zoneVggRequestedService.accept(
               new FeatureVggRequested(
-                  detection.getId(), detection.getProvidedGeoJsonZone().getFirst(), 0));
+                  detectionWithComputedRoofProperties.getId(),
+                  detection.getProvidedGeoJsonZone().getFirst(),
+                  0));
           return null;
         };
     Callable<Void> geoJsonRequestedCallableVoid =
@@ -157,7 +164,7 @@ public class SynchronousDetectionService
         Duration.between(vggRequestAndGeoJsonEventTriggerStart, now()).toSeconds(),
         detection.getEndToEndId());
 
-    return attemptVggFileKeyRetrieve(detection);
+    return attemptVggFileKeyRetrieve(detectionWithComputedRoofProperties);
   }
 
   @SneakyThrows
