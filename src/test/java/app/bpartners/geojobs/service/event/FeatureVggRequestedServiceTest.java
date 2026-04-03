@@ -26,13 +26,11 @@ import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.detection.*;
 import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
-import app.bpartners.geojobs.service.DetectionVGGUpdate;
-import app.bpartners.geojobs.service.PolygonCoordinatesCloser;
-import app.bpartners.geojobs.service.TileCoordinatesPolygonIntersection;
-import app.bpartners.geojobs.service.TileCoordinatesService;
+import app.bpartners.geojobs.service.*;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.ign.IgnCadastreFeatureFetcher;
 import app.bpartners.geojobs.service.tiling.TileFinder;
+import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -53,22 +51,24 @@ class FeatureVggRequestedServiceTest {
   DetectionRoofPropertiesRequestedService detectionRoofPropertiesRequestedServiceMock = mock();
   TileFinder tileFinderMock = mock();
   IgnCadastreFeatureFetcher ignCadastreFeatureFetcherMock = mock();
-  TileCoordinatesService tileCoordinatesService = new TileCoordinatesService();
+  TiledPixelPolygonComputer tiledPixelPolygonComputerMock =
+      new TiledPixelPolygonComputer(
+          geometryConverterMock, tileCoordinatesPolygonIntersectionMock, polygonCoordinatesCloser);
+  TileCoordinatesService tileCoordinatesServiceMock =
+      new TileCoordinatesService(geometryConverterMock, tileFinderMock);
+  FeaturePolygonRetriever featurePolygonRetrieverMock =
+      new FeaturePolygonRetriever(geometryConverterMock, ignCadastreFeatureFetcherMock);
 
   FeatureVggRequestedService subject =
       new FeatureVggRequestedService(
+          mock(EntityManager.class),
           detectionRepositoryMock,
           detectedTileRepositoryMock,
           vggFactoryMock,
-          geometryConverterMock,
           detectionVGGUpdateMock,
-          polygonCoordinatesCloser,
-          tileCoordinatesPolygonIntersectionMock,
-          detectionRoofPropertiesRequestedServiceMock,
-          tileFinderMock,
-          mock(),
-          ignCadastreFeatureFetcherMock,
-          tileCoordinatesService);
+          tileCoordinatesServiceMock,
+          tiledPixelPolygonComputerMock,
+          featurePolygonRetrieverMock);
 
   @Test
   void compute_vgg_for_zone_and_update_detection_vgg() {
