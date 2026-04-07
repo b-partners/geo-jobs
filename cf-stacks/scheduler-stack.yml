@@ -35,7 +35,7 @@ Resources:
         RoleArn: !GetAtt ScheduledEventExecutionRole.Arn
         DeadLetterConfig:
           Arn: !Sub '{{resolve:ssm:/geo-jobs/${Env}/1/sqs/dead-letter-queue-arn}}'
-        Input: '{"attemptNb":1}'
         EventBridgeParameters:
           DetailType: 'app.bpartners.geojobs.endpoint.event.model.AllDashboardApiKeyCheckTriggered'
+          Detail: '{}'
           Source: 'app.bpartners.geojobs.event1'
