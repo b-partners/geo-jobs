@@ -1,9 +1,7 @@
-package app.bpartners.geojobs.model.geometry;
+package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
-import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.HOUSES_0;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
-import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightRequestedService.*;
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.*;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.*;
@@ -12,15 +10,11 @@ import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.DetectionBoundaryMerger;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon;
-import app.bpartners.geojobs.model.geometry.area.AreaRateComputerFacade;
+import app.bpartners.geojobs.model.geometry.PolygonObjectType;
+import app.bpartners.geojobs.model.geometry.TiledPixelPolygon;
+import app.bpartners.geojobs.model.geometry.VGG;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
-import app.bpartners.geojobs.service.GeometrySquareMeterArea;
-import app.bpartners.geojobs.service.TileCoordinatesPolygonIntersection;
-import app.bpartners.geojobs.service.event.DetectionRoofPropertiesRequestedService;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.*;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
@@ -37,8 +31,6 @@ public class VGGFactory {
   private static final int DEFAULT_IMG_SIZE = 1024;
   private final TileCoordinatesPolygonIntersection tilePolygonIntersection;
   private final GeometryConverter geometryConverter;
-  private final GeometrySquareMeterArea geometrySquareMeterArea;
-  private final ObjectMapper objectMapper;
   private final DetectionBoundaryMerger merger;
 
   public VGG convert(VGG originalVgg, Set<Polygon> polygons) {
@@ -90,7 +82,7 @@ public class VGGFactory {
     var vggMap = new HashMap<Feature, VGG>();
     int minTileXGlobal = envelop.stream().mapToInt(TileCoordinates::getX).min().orElseThrow();
     int minTileYGlobal = envelop.stream().mapToInt(TileCoordinates::getY).min().orElseThrow();
-      var tiledPixelPolygonGroup =
+    var tiledPixelPolygonGroup =
         groupPixelPolygonByFeatureAndDetectableTypeAndTileCoordinates(tiledPixelPolygons);
 
     tiledPixelPolygonGroup.stream()
@@ -193,26 +185,6 @@ public class VGGFactory {
                     polygonObjectTypesFromProjectedPolygonGroup.addAll(polygonObjectTypes);
                   });
 
-              var detectedRoofCovering = retrieveCoveringProperties(feature);
-              var addresses = retrieveAddressesProperty(feature);
-              var roofPixelPolygonGroup =
-                  projectedPolygonGroups.stream()
-                      .filter(polygonGroup -> TOITURE_REVETEMENT.equals(polygonGroup.objectType()))
-                      .findFirst()
-                      .orElseThrow(
-                          () ->
-                              new UnsupportedOperationException(
-                                  "No roof converted in pixel for feature " + feature));
-              var roofPixelPolygonGeometry = roofPixelPolygonGroup.geometryUnified();
-              var properties =
-                  computeProperties(
-                      feature,
-                      roofMultiPolygon,
-                      roofPixelPolygonGeometry,
-                      detectedRoofCovering,
-                      addresses,
-                      polygonObjectTypesFromProjectedPolygonGroup);
-
               int zoom = tiledPixelPolygonGroupByFeature.getFirst().zoom();
 
               var key =
@@ -222,7 +194,7 @@ public class VGGFactory {
               var annotation =
                   VGG.Annotation.builder()
                       .filename(key)
-                      .properties(properties)
+                      .properties(feature.getProperties())
                       .regions(regions)
                       .build();
 
@@ -231,35 +203,6 @@ public class VGGFactory {
               vggMap.put(feature, vgg);
             });
     return vggMap;
-  }
-
-  private DetectionRoofPropertiesRequestedService.DetectedRoofCovering retrieveCoveringProperties(
-      Feature feature) {
-    if (feature.getProperties() == null
-        || (feature.getProperties().isEmpty() || feature.getProperties().get("covering") == null)) {
-      return null;
-    }
-    try {
-      return objectMapper.readValue(
-          feature.getProperties().get("covering").toString(),
-          DetectionRoofPropertiesRequestedService.DetectedRoofCovering.class);
-    } catch (JsonProcessingException e) {
-      return null;
-    }
-  }
-
-  private List<String> retrieveAddressesProperty(Feature feature) {
-    if (feature.getProperties() == null
-        || (feature.getProperties().isEmpty()
-            || feature.getProperties().get("addresses") == null)) {
-      return null;
-    }
-    try {
-      return objectMapper.readValue(
-          feature.getProperties().get("addresses").toString(), new TypeReference<>() {});
-    } catch (JsonProcessingException e) {
-      return null;
-    }
   }
 
   List<TiledPixelPolygonGrouped> groupPixelPolygonByFeatureAndDetectableTypeAndTileCoordinates(
@@ -291,55 +234,6 @@ public class VGGFactory {
                   key.feature(), key.tileX(), key.tileY(), key.zoom(), groups);
             })
         .toList();
-  }
-
-  private HashMap<String, Object> computeProperties(
-      Feature feature,
-      Geometry lonLatRoofPolygon,
-      Geometry roofPixelPolygon,
-      DetectionRoofPropertiesRequestedService.DetectedRoofCovering detectedRoofCovering,
-      List<String> addresses,
-      Collection<PolygonObjectType> polygonObjectTypes) {
-    var rateComputer = new AreaRateComputerFacade(roofPixelPolygon, polygonObjectTypes);
-    var usureRate = rateComputer.getUsureAreaRate();
-    var humiditeRate = rateComputer.getHumidityAreaRate();
-    var moisissureRate = rateComputer.getMoisissureAreaRate();
-    var globalRateValue = rateComputer.getGlobalRate();
-    var globalRateType = rateComputer.getRate();
-
-    var featureProperties =
-        feature.getProperties() == null ? new HashMap<String, Object>() : feature.getProperties();
-    var properties = new HashMap<String, Object>();
-
-    properties.put("roof_area_in_m2", geometrySquareMeterArea.apply(lonLatRoofPolygon));
-    properties.put("usure_rate", usureRate);
-    properties.put("humidite_rate", humiditeRate);
-    properties.put("moisissure_rate", moisissureRate);
-    properties.put("global_rate_value", globalRateValue);
-    properties.put("global_rate_type", globalRateType);
-    properties.put("addresses", addresses);
-
-    // Lidar properties
-    if (featureProperties.containsKey(LIDAR_DATA_STATUS_PROPERTY_NAME)) {
-      properties.put("roof_slope_in_degrees", featureProperties.get(ROOF_SLOPE_PROPERTY_NAME));
-      properties.put("roof_height_in_meters", featureProperties.get(ROOF_HEIGHT_PROPERTY_NAME));
-      properties.put(
-          "roof_slope_data_status", featureProperties.get(LIDAR_DATA_STATUS_PROPERTY_NAME));
-      properties.put(
-          "roof_height_data_status", featureProperties.get(LIDAR_DATA_STATUS_PROPERTY_NAME));
-    }
-
-    if (detectedRoofCovering != null) {
-      properties.put(
-          "revetement_1",
-          detectedRoofCovering.primary() == null ? null : detectedRoofCovering.primary().name());
-      properties.put(
-          "revetement_2",
-          detectedRoofCovering.secondary() == null
-              ? null
-              : detectedRoofCovering.secondary().name());
-    }
-    return properties;
   }
 
   private Polygon projectPolygonsToCompositeImage(

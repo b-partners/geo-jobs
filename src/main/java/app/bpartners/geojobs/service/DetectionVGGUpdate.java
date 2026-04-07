@@ -6,7 +6,6 @@ import static app.bpartners.geojobs.service.event.GeoJsonConversionTaskConsumer.
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.geometry.VGG;
-import app.bpartners.geojobs.model.geometry.VGGFactory;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
