@@ -278,7 +278,7 @@ class DetectionControllerIT extends FacadeIT {
     var statistic = taskStatisticCreator.createProcessingTask(zoneDetectionJob.getId(), DETECTION);
     when(zoneDetectionJobService.getTaskStatistic(any(String.class))).thenReturn(statistic);
 
-    var actual = subject.getDetections(new PageFromOne(1), new BoundedPageSize(10), null, null);
+    var actual = subject.getDetections(new PageFromOne(1), new BoundedPageSize(10), null, null, null);
 
     var expected =
         new app.bpartners.geojobs.endpoint.rest.model.Detection()
@@ -299,13 +299,52 @@ class DetectionControllerIT extends FacadeIT {
   }
 
   @Test
+  void get_filtered_detections_by_zone_name_with_owner() {
+    var zoneTilingJob = zoneTilingJobRepository.save(zoneTilingJob(randomUUID().toString()));
+    var zoneDetectionJob =
+        zoneDetectionJobRepository.save(
+            zoneDetectionJob(randomUUID().toString(), zoneTilingJob.getId()));
+    var zoneTilingJob2 = zoneTilingJobRepository.save(zoneTilingJob(randomUUID().toString()));
+    var zoneDetectionJob2 =
+        zoneDetectionJobRepository.save(
+            zoneDetectionJob(randomUUID().toString(), zoneTilingJob.getId()));
+    var zoneName = "Random address";
+        detectionRepository.save(
+            detectionCreator
+                .createFromZTJAndZDJ(zoneTilingJob.getId(), zoneDetectionJob.getId())
+                .toBuilder()
+                .isOutputZipped(true)
+                    .zoneName(zoneName)
+                .build());
+        detectionRepository.save(
+            detectionCreator
+                .createFromZTJAndZDJ(zoneTilingJob2.getId(), zoneDetectionJob2.getId())
+                .toBuilder()
+                .isOutputZipped(true)
+                .zoneName(randomUUID().toString())
+                .build());
+    var statistic = taskStatisticCreator.createProcessingTask(zoneDetectionJob.getId(), DETECTION);
+    when(zoneDetectionJobService.getTaskStatistic(any(String.class))).thenReturn(statistic);
+
+    var actualFiltered = subject.getDetections(new PageFromOne(1), new BoundedPageSize(10), null, null, "Addre");
+    var actual = subject.getDetections(new PageFromOne(1), new BoundedPageSize(10), null, null,  null);
+
+    assertTrue(actualFiltered.size() < actual.size());
+    assertTrue(actual.containsAll(actualFiltered));
+    assertTrue(actualFiltered.stream().allMatch(d -> {
+        assertNotNull(d.getZoneName());
+        return d.getZoneName().equals(zoneName);
+    }));
+  }
+
+  @Test
   void get_detections_without_owner_and_without_zdj() {
     var zoneTilingJob = zoneTilingJobRepository.save(zoneTilingJob(randomUUID().toString()));
     var detection =
         detectionRepository.save(
             detectionWithoutZdj(zoneTilingJob.getId(), featureCreator.defaultFeatures()));
 
-    var actual = subject.getDetections(new PageFromOne(1), new BoundedPageSize(10), null, null);
+    var actual = subject.getDetections(new PageFromOne(1), new BoundedPageSize(10), null, null, null);
 
     var expected =
         new app.bpartners.geojobs.endpoint.rest.model.Detection()
@@ -346,7 +385,7 @@ class DetectionControllerIT extends FacadeIT {
                     .endToEndId(randomUUID().toString())
                     .build());
 
-    var actualList = subject.getDetections(new PageFromOne(1), new BoundedPageSize(1), null, null);
+    var actualList = subject.getDetections(new PageFromOne(1), new BoundedPageSize(1), null, null, null);
 
     assertEquals(detection.getEndToEndId(), actualList.getFirst().getId());
   }

@@ -742,6 +742,12 @@ paths:
             type: string
             format: date-time
           required: false
+        - in: query
+          name: zoneName
+          description: Filters detections by its zone name containing provided value ignoring case
+          schema:
+            type: string
+          required: false
       responses:
         200:
           description: List of detections
@@ -2110,6 +2116,13 @@ components:
           type: integer
         z:
           type: integer
+    ImageProperties:
+      type: object
+      properties:
+        width:
+          type: integer
+        height:
+          type: integer
     TileInfo:
       properties:
         size:
@@ -2424,6 +2437,8 @@ components:
           type: string
         imageUrl:
           type: string
+        imageProperties:
+         $ref: '#/components/schemas/ImageProperties'
         imageTileInfoOrigin:
           $ref: '#/components/schemas/TileInfo'
         pdfUrl:
