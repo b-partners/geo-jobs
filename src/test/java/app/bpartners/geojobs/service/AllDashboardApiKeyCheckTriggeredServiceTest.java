@@ -9,6 +9,10 @@ import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 class AllDashboardApiKeyCheckTriggeredServiceTest {
   CommunityAuthorizationRepository communityAuthorizationRepositoryMock =
@@ -22,8 +26,14 @@ class AllDashboardApiKeyCheckTriggeredServiceTest {
     List<CommunityAuthorization> communityAuthorizations =
         multipleCommunityAuthorization(mock(CommunityAuthorization.class));
     List<DashboardApiKeyCheckTriggered> childEvents = toChildEvents(communityAuthorizations);
+    Page<CommunityAuthorization> communityAuthorizationPage =
+        new PageImpl<>(
+            communityAuthorizations,
+            PageRequest.of(0, communityAuthorizations.size()),
+            communityAuthorizations.size());
 
-    when(communityAuthorizationRepositoryMock.findAll()).thenReturn(communityAuthorizations);
+    when(communityAuthorizationRepositoryMock.findAll(any(Pageable.class)))
+        .thenReturn(communityAuthorizationPage);
     doNothing().when(eventProducerMock).accept(eq(childEvents));
     subject =
         new AllDashboardApiKeyCheckTriggeredService(
@@ -31,7 +41,7 @@ class AllDashboardApiKeyCheckTriggeredServiceTest {
 
     subject.accept(new AllDashboardApiKeyCheckTriggered());
 
-    verify(communityAuthorizationRepositoryMock, times(1)).findAll();
+    verify(communityAuthorizationRepositoryMock, times(1)).findAll(any(Pageable.class));
     verify(eventProducerMock, times(1)).accept(eq(childEvents));
   }
 

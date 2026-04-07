@@ -11,7 +11,7 @@ import lombok.*;
 public class AllDashboardApiKeyCheckTriggered extends PojaEvent {
   @Override
   public Duration maxConsumerDuration() {
-    return Duration.ofMinutes(3L);
+    return Duration.ofMinutes(10L);
   }
 
   @Override

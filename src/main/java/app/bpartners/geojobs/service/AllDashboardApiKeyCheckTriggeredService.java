@@ -5,9 +5,10 @@ import app.bpartners.geojobs.endpoint.event.model.AllDashboardApiKeyCheckTrigger
 import app.bpartners.geojobs.endpoint.event.model.DashboardApiKeyCheckTriggered;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
-import java.util.List;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -19,10 +20,14 @@ public class AllDashboardApiKeyCheckTriggeredService
 
   @Override
   public void accept(AllDashboardApiKeyCheckTriggered event) {
-    List<CommunityAuthorization> allCommunityAuthorizations =
-        communityAuthorizationRepository.findAll();
+    PageRequest pageRequest = PageRequest.of(0, 100);
 
-    eventProducer.accept(allCommunityAuthorizations.stream().map(this::toTypedEvent).toList());
+    Page<CommunityAuthorization> page;
+    do {
+      page = communityAuthorizationRepository.findAll(pageRequest);
+      eventProducer.accept(page.stream().map(this::toTypedEvent).toList());
+      pageRequest = pageRequest.next();
+    } while (page.hasNext());
   }
 
   private DashboardApiKeyCheckTriggered toTypedEvent(CommunityAuthorization authorization) {
