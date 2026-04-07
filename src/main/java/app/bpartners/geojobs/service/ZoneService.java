@@ -69,7 +69,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 public class ZoneService {
   private static final int DEFAULT_ZOOM = 20;
-  private static final Instant BEGINNING_OF_2024 = parse("2024-01-01T00:00:00Z");
+  private static final Instant BEGINNING_OF_2026 = parse("2026-01-01T00:00:00Z");
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final ZoneTilingJobService zoneTilingJobService;
   private final EventProducer eventProducer;
@@ -441,21 +441,25 @@ public class ZoneService {
       PageFromOne page,
       BoundedPageSize pageSize,
       Instant fromParameter,
-      Instant toParameter) {
-    final Instant from = fromParameter == null ? BEGINNING_OF_2024 : fromParameter;
+      Instant toParameter,
+      Optional<String> optionalZoneName) {
+    final Instant from = fromParameter == null ? BEGINNING_OF_2026 : fromParameter;
     final Instant to = toParameter == null ? now() : toParameter;
     var pageable = PageRequest.of(page.getValue() - 1, pageSize.getValue());
     var detections =
         communityId
             .map(
-                ownerId ->
+                ownerId -> optionalZoneName.map(zoneName ->
                     detectionRepository
-                        .findByCommunityOwnerIdAndCreationDatetimeBetweenOrderByCreationDatetimeDesc(
-                            ownerId, from, to, pageable))
+                        .findByCommunityOwnerIdAndCreationDatetimeBetweenAndZoneNameIsContainingIgnoreCaseOrderByCreationDatetimeDesc(
+                            ownerId, from, to, zoneName, pageable)).orElseGet(() ->
+                        detectionRepository
+                                .findByCommunityOwnerIdAndCreationDatetimeBetweenOrderByCreationDatetimeDesc(
+                                        ownerId, from, to, pageable)))
             .orElseGet(
-                () ->
-                    detectionRepository.findAllByCreationDatetimeBetweenOrderByCreationDatetimeDesc(
-                        from, to, pageable));
+                () -> optionalZoneName.map(zoneName -> detectionRepository.findAllByCreationDatetimeBetweenAndZoneNameIsContainingIgnoreCaseOrderByCreationDatetimeDesc(from, to, zoneName, pageable))
+                        .orElseGet(() -> detectionRepository.findAllByCreationDatetimeBetweenOrderByCreationDatetimeDesc(
+                        from, to, pageable)));
 
     return detections.stream()
         .map(
