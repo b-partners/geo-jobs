@@ -8,6 +8,7 @@ import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.hash.FileHash;
 import app.bpartners.geojobs.model.geometry.VGG;
+import app.bpartners.geojobs.model.geometry.VGGFactory;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import java.io.File;
 import java.util.*;

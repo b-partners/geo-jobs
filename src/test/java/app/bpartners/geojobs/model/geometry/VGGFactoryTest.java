@@ -6,7 +6,6 @@ import app.bpartners.geojobs.endpoint.rest.postprocessing.DetectionBoundaryMerge
 import app.bpartners.geojobs.service.GeometryPixelProjector;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.TileCoordinatesPolygonIntersection;
-import app.bpartners.geojobs.service.VGGFactory;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;

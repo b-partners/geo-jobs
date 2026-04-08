@@ -108,7 +108,6 @@ class DetectionControllerIT extends FacadeIT {
     when(principalMock.isAdmin()).thenReturn(false);
     when(authProviderMock.getPrincipal()).thenReturn(principalMock);
     doNothing().when(detectionAuthorizer).accept(any(), any(), any());
-    detectionRepository.deleteAll();
   }
 
   private Detection detectionWithoutZdj(String tilingJobId) {
@@ -231,6 +230,7 @@ class DetectionControllerIT extends FacadeIT {
     subject.processDetection(detection.getId(), createDetection());
 
     verify(zoneDetectionJobService, times(1)).processZDJ(any(), any());
+    detectionRepository.delete(detection);
   }
 
   private Status defaultSucceededStatus() {
@@ -297,6 +297,7 @@ class DetectionControllerIT extends FacadeIT {
 
     assertNotNull(detection.getCreationDatetime());
     assertEquals(List.of(expected), actual);
+    detectionRepository.delete(detection);
   }
 
   @Test
@@ -310,20 +311,22 @@ class DetectionControllerIT extends FacadeIT {
         zoneDetectionJobRepository.save(
             zoneDetectionJob(randomUUID().toString(), zoneTilingJob.getId()));
     var zoneName = "Random address";
-    detectionRepository.save(
-        detectionCreator
-            .createFromZTJAndZDJ(zoneTilingJob.getId(), zoneDetectionJob.getId())
-            .toBuilder()
-            .isOutputZipped(true)
-            .zoneName(zoneName)
-            .build());
-    detectionRepository.save(
-        detectionCreator
-            .createFromZTJAndZDJ(zoneTilingJob2.getId(), zoneDetectionJob2.getId())
-            .toBuilder()
-            .isOutputZipped(true)
-            .zoneName(randomUUID().toString())
-            .build());
+    var detectionOne =
+        detectionRepository.save(
+            detectionCreator
+                .createFromZTJAndZDJ(zoneTilingJob.getId(), zoneDetectionJob.getId())
+                .toBuilder()
+                .isOutputZipped(true)
+                .zoneName(zoneName)
+                .build());
+    var detectionTwo =
+        detectionRepository.save(
+            detectionCreator
+                .createFromZTJAndZDJ(zoneTilingJob2.getId(), zoneDetectionJob2.getId())
+                .toBuilder()
+                .isOutputZipped(true)
+                .zoneName(randomUUID().toString())
+                .build());
     var statistic = taskStatisticCreator.createProcessingTask(zoneDetectionJob.getId(), DETECTION);
     when(zoneDetectionJobService.getTaskStatistic(any(String.class))).thenReturn(statistic);
 
@@ -341,6 +344,7 @@ class DetectionControllerIT extends FacadeIT {
                   assertNotNull(d.getZoneName());
                   return d.getZoneName().equals(zoneName);
                 }));
+    detectionRepository.deleteAll(List.of(detectionOne, detectionTwo));
   }
 
   @Test
@@ -367,6 +371,7 @@ class DetectionControllerIT extends FacadeIT {
 
     assertNotNull(detection.getCreationDatetime());
     assertEquals(List.of(expected), actual);
+    detectionRepository.delete(detection);
   }
 
   private static app.bpartners.geojobs.endpoint.rest.model.Detection orderGeoJsonProperties(
@@ -396,6 +401,7 @@ class DetectionControllerIT extends FacadeIT {
         subject.getDetections(new PageFromOne(1), new BoundedPageSize(1), null, null, null);
 
     assertEquals(detection.getEndToEndId(), actualList.getFirst().getId());
+    detectionRepository.delete(detection);
   }
 
   @SneakyThrows

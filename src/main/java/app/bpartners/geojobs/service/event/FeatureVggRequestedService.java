@@ -4,12 +4,12 @@ import static java.time.Instant.now;
 
 import app.bpartners.geojobs.endpoint.event.model.FeatureVggRequested;
 import app.bpartners.geojobs.endpoint.rest.model.*;
+import app.bpartners.geojobs.model.geometry.VGGFactory;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.detection.*;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.service.*;
-import app.bpartners.geojobs.service.VGGFactory;
 import jakarta.persistence.EntityManager;
 import java.time.Duration;
 import java.util.*;

@@ -1,7 +1,9 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toDomainFeature;
 import static app.bpartners.geojobs.endpoint.rest.model.Detection.GeoJsonDelimitationTypeEnum.ROOF;
 import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.MULTI_POLYGON;
+import static app.bpartners.geojobs.repository.model.detection.DetectionFeatureType.PROVIDED_FEATURE;
 import static app.bpartners.geojobs.service.geojson.GeoJsonMapper.convertPixelToGeographicalCoordinates;
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
 
@@ -45,7 +47,6 @@ public class FeatureWithDetectionPropertiesRequestedService
     entityManager.clear();
     var detectionIdentifier = event.getDetectionIdentifier();
     var feature = event.getFeature();
-    var featureNb = event.getFeatureNb();
     var detection = detectionRepository.findById(detectionIdentifier).orElseThrow();
     if (!detection.hasToitureModelName()) {
       log.error("Only BP_TOITURE model is supported to generated VGG from now");
@@ -71,8 +72,14 @@ public class FeatureWithDetectionPropertiesRequestedService
     }
     actualProperties.putAll(computedProperties);
 
-    // TODO: must be persisted inside custom table corresponding to each detection feature
-    detection.getProvidedGeoJsonZone().get(featureNb).setProperties(actualProperties);
+    detection.addFeatures(
+        List.of(
+            toDomainFeature(
+                new Feature()
+                    .type(feature.getType())
+                    .properties(actualProperties)
+                    .geometry(feature.getGeometry()))),
+        PROVIDED_FEATURE);
 
     detectionRepository.save(detection);
   }

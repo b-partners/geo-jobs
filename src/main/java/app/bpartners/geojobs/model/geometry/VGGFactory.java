@@ -1,8 +1,8 @@
-package app.bpartners.geojobs.service;
+package app.bpartners.geojobs.model.geometry;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
-import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
-import static app.bpartners.geojobs.service.geojson.GeometryConverter.*;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.TOITURE_REVETEMENT;
+import static app.bpartners.geojobs.service.geojson.GeometryConverter.getRoofMultiPolygonZoneProcessed;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.*;
 
@@ -10,16 +10,17 @@ import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.DetectionBoundaryMerger;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TiledPolygon;
-import app.bpartners.geojobs.model.geometry.PolygonObjectType;
-import app.bpartners.geojobs.model.geometry.TiledPixelPolygon;
-import app.bpartners.geojobs.model.geometry.VGG;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
+import app.bpartners.geojobs.service.TileCoordinatesPolygonIntersection;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.util.*;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.locationtech.jts.geom.*;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryCollection;
+import org.locationtech.jts.geom.MultiPolygon;
+import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.geom.util.AffineTransformation;
 import org.springframework.stereotype.Component;
 

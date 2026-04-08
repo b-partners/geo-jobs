@@ -11,6 +11,7 @@ import static jakarta.persistence.CascadeType.ALL;
 import static jakarta.persistence.EnumType.STRING;
 import static jakarta.persistence.FetchType.EAGER;
 import static java.time.Instant.now;
+import static java.util.UUID.randomUUID;
 import static org.hibernate.type.SqlTypes.JSON;
 import static org.hibernate.type.SqlTypes.NAMED_ENUM;
 
@@ -151,8 +152,7 @@ public class Detection implements Serializable {
   @Getter(AccessLevel.NONE)
   private DetectableObjectModel detectableObjectModel;
 
-  @OneToMany(fetch = EAGER, cascade = ALL)
-  @JoinColumn(name = "id_detection")
+  @OneToMany(mappedBy = "detection", fetch = EAGER, cascade = ALL, orphanRemoval = true)
   private List<DetectionFeature> detectionFeatures;
 
   public List<FeatureWithDelimitation> getFeatureWithDelimitations() {
@@ -256,7 +256,7 @@ public class Detection implements Serializable {
   }
 
   public List<app.bpartners.geojobs.endpoint.rest.model.Feature> getProvidedGeoJsonZone() {
-    if (detectionFeatures != null) {
+    if (detectionFeatures != null && !detectionFeatures.isEmpty()) {
       return getDomainProvidedFeaturesThroughDetectionFeature().stream()
           .map(FeatureMapper::toRestFeature)
           .toList();
@@ -363,5 +363,26 @@ public class Detection implements Serializable {
 
   public boolean isHumanDetectionStepProcessing(ZoneDetectionJob zoneDetectionJob) {
     return isMachineDetectionFinished(zoneDetectionJob) && geojsonS3FileKey == null;
+  }
+
+  public List<DetectionFeature> addFeatures(
+      List<Feature> features, DetectionFeatureType detectionFeatureType) {
+    if (detectionFeatures == null) {
+      detectionFeatures = new ArrayList<>();
+    }
+    detectionFeatures.addAll(
+        features.stream()
+            .map(
+                feature ->
+                    DetectionFeature.builder()
+                        .id(randomUUID().toString())
+                        .detection(this)
+                        .idFeature(feature.getId())
+                        .detectionFeatureType(detectionFeatureType)
+                        .feature(feature)
+                        .build())
+            .toList());
+
+    return detectionFeatures;
   }
 }
