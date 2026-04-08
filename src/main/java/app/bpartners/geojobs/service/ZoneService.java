@@ -449,17 +449,31 @@ public class ZoneService {
     var detections =
         communityId
             .map(
-                ownerId -> optionalZoneName.map(zoneName ->
-                    detectionRepository
-                        .findByCommunityOwnerIdAndCreationDatetimeBetweenAndZoneNameIsContainingIgnoreCaseOrderByCreationDatetimeDesc(
-                            ownerId, from, to, zoneName, pageable)).orElseGet(() ->
-                        detectionRepository
-                                .findByCommunityOwnerIdAndCreationDatetimeBetweenOrderByCreationDatetimeDesc(
+                ownerId ->
+                    optionalZoneName
+                        .map(
+                            zoneName ->
+                                detectionRepository
+                                    .findByCommunityOwnerIdAndCreationDatetimeBetweenAndZoneNameIsContainingIgnoreCaseOrderByCreationDatetimeDesc(
+                                        ownerId, from, to, zoneName, pageable))
+                        .orElseGet(
+                            () ->
+                                detectionRepository
+                                    .findByCommunityOwnerIdAndCreationDatetimeBetweenOrderByCreationDatetimeDesc(
                                         ownerId, from, to, pageable)))
             .orElseGet(
-                () -> optionalZoneName.map(zoneName -> detectionRepository.findAllByCreationDatetimeBetweenAndZoneNameIsContainingIgnoreCaseOrderByCreationDatetimeDesc(from, to, zoneName, pageable))
-                        .orElseGet(() -> detectionRepository.findAllByCreationDatetimeBetweenOrderByCreationDatetimeDesc(
-                        from, to, pageable)));
+                () ->
+                    optionalZoneName
+                        .map(
+                            zoneName ->
+                                detectionRepository
+                                    .findAllByCreationDatetimeBetweenAndZoneNameIsContainingIgnoreCaseOrderByCreationDatetimeDesc(
+                                        from, to, zoneName, pageable))
+                        .orElseGet(
+                            () ->
+                                detectionRepository
+                                    .findAllByCreationDatetimeBetweenOrderByCreationDatetimeDesc(
+                                        from, to, pageable)));
 
     return detections.stream()
         .map(
