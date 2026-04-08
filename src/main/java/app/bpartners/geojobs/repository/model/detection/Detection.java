@@ -151,6 +151,10 @@ public class Detection implements Serializable {
   @Getter(AccessLevel.NONE)
   private DetectableObjectModel detectableObjectModel;
 
+  @OneToMany(fetch = EAGER, cascade = ALL)
+  @JoinColumn(name = "id_detection")
+  private List<DetectionFeature> detectionFeatures;
+
   public List<FeatureWithDelimitation> getFeatureWithDelimitations() {
     if (featureDelimitationComputingList == null || featureDelimitationComputingList.isEmpty()) {
       return featureWithDelimitations;
@@ -252,13 +256,34 @@ public class Detection implements Serializable {
   }
 
   public List<app.bpartners.geojobs.endpoint.rest.model.Feature> getProvidedGeoJsonZone() {
+    if (detectionFeatures != null) {
+      return getDomainProvidedFeaturesThroughDetectionFeature().stream()
+          .map(FeatureMapper::toRestFeature)
+          .toList();
+    }
     return providedGeoJsonZone == null
         ? null
         : providedGeoJsonZone.stream().map(FeatureMapper::toRestFeature).toList();
   }
 
   public List<Feature> getDomainProvidedGeoJsonZone() {
+    if (detectionFeatures != null) {
+      return getDomainProvidedFeaturesThroughDetectionFeature();
+    }
     return providedGeoJsonZone == null ? List.of() : providedGeoJsonZone;
+  }
+
+  private List<Feature> getDomainProvidedFeaturesThroughDetectionFeature() {
+    return detectionFeatures.stream()
+        .collect(
+            Collectors.toMap(
+                DetectionFeature::getIdFeature,
+                Function.identity(),
+                (a1, a2) -> a1.getCreationDatetime().isAfter(a2.getCreationDatetime()) ? a1 : a2))
+        .values()
+        .stream()
+        .map(DetectionFeature::getFeature)
+        .toList();
   }
 
   public List<app.bpartners.geojobs.endpoint.rest.model.Feature> getMultiPolygonGeoJsonZone() {
