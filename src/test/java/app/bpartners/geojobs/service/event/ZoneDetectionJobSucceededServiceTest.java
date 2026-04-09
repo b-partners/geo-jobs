@@ -262,7 +262,7 @@ class ZoneDetectionJobSucceededServiceTest {
         (FeatureVggRequested) listCaptor.getAllValues().getLast().getFirst();
     assertEquals(
         new DetectionRoofPropertiesRequested(detectionId), detectionRoofPropertiesRequested);
-    assertEquals(new FeatureVggRequested(detectionId, new Feature(), 0), actualFeatureVggRequested);
+    assertEquals(new FeatureVggRequested(detectionId, new Feature()), actualFeatureVggRequested);
     assertEquals(EVENT_STACK_4, actualFeatureVggRequested.getEventStack());
     assertEquals(Duration.ofSeconds(30L), actualFeatureVggRequested.maxConsumerDuration());
     assertEquals(

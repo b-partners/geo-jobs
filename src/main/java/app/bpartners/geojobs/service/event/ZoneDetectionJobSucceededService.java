@@ -93,7 +93,7 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
           var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
           for (int i = 0; i < providedGeoJsonZone.size(); i++) {
             eventProducer.accept(
-                List.of(new FeatureVggRequested(detection.getId(), providedGeoJsonZone.get(i), i)));
+                List.of(new FeatureVggRequested(detection.getId(), providedGeoJsonZone.get(i))));
           }
         }
       }

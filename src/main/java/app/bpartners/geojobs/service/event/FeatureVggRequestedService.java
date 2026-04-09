@@ -72,7 +72,9 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
 
     var vggMap = vggFactory.from(tiledPixelPolygons, completedQuadrilateralTileCoordinates);
 
-    var newDetection = detectionVGGUpdate.apply(vggMap.values(), detection, event.getFeatureNb());
+    var newDetection =
+        detectionVGGUpdate.apply(
+            vggMap.values(), detection, feature.getProperties().get("id").toString());
 
     var tilesColNumbers = tileCoordinatesService.colNumbers(completedQuadrilateralTileCoordinates);
     var tileRowNumbers = tileCoordinatesService.rowNumbers(completedQuadrilateralTileCoordinates);

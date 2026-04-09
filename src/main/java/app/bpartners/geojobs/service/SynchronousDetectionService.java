@@ -109,7 +109,7 @@ public class SynchronousDetectionService
         () -> {
           featureImageRequestedService.accept(
               new FeatureImageRequested(
-                  detection.getId(), detection.getProvidedGeoJsonZone().getFirst(), 0));
+                  detection.getId(), detection.getProvidedGeoJsonZone().getFirst()));
           return null;
         };
     Callable<Void> machineDetectionProcessCallableVoidList =
@@ -142,8 +142,7 @@ public class SynchronousDetectionService
           zoneVggRequestedService.accept(
               new FeatureVggRequested(
                   detectionWithComputedRoofProperties.getId(),
-                  detection.getProvidedGeoJsonZone().getFirst(),
-                  0));
+                  detection.getProvidedGeoJsonZone().getFirst()));
           return null;
         };
     Callable<Void> geoJsonRequestedCallableVoid =

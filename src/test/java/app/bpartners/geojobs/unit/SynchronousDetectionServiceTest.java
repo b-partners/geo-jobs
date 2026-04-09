@@ -112,7 +112,7 @@ class SynchronousDetectionServiceTest {
         .processMachineDetection(detectionWithCreatedZDJMock, createdZoneDetectionJob, tilingTasks);
     doNothing()
         .when(featureVggRequestedServiceMock)
-        .accept(new FeatureVggRequested(detectionId, null, 0));
+        .accept(new FeatureVggRequested(detectionId, null));
     when(detectionRepositoryMock.findById(detectionId))
         .thenReturn(Optional.of(detectionWithVGGAndImagesFinished));
     doNothing().when(entityManagerMock).clear();

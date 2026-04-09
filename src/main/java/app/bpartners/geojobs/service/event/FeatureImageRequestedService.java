@@ -92,7 +92,8 @@ public class FeatureImageRequestedService implements Consumer<FeatureImageReques
           "Address " + detection.getZoneName() + " not supported for now");
     }
 
-    if (event.getFeatureNb() == 0) {
+    if (detection.getProvidedGeoJsonZone() != null
+        && detection.getProvidedGeoJsonZone().size() == 1) {
       bucketComponent.upload(assembleImageFile, "zone_images/" + detection.getId() + ".jpg");
     }
     bucketComponent.upload(
@@ -100,7 +101,7 @@ public class FeatureImageRequestedService implements Consumer<FeatureImageReques
         "zone_images/"
             + detection.getId()
             + "/"
-            + event.getFeatureNb()
+            + feature.getProperties().get("id")
             + "/"
             + detection.getZoneName()
             + ".jpg");

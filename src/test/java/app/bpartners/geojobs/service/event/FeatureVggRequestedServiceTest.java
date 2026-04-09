@@ -32,6 +32,7 @@ import app.bpartners.geojobs.service.ign.IgnCadastreFeatureFetcher;
 import app.bpartners.geojobs.service.tiling.TileFinder;
 import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -75,6 +76,7 @@ class FeatureVggRequestedServiceTest {
     var detectionIdentifier = randomUUID().toString();
     var zoneTilingJobIdentifier = randomUUID().toString();
     var zoneDetectionJobIdentifier = randomUUID().toString();
+    var featureId = randomUUID().toString();
     var detectionMock = mock(Detection.class);
     int z = 20;
     int x = 10;
@@ -86,8 +88,8 @@ class FeatureVggRequestedServiceTest {
                 new Feature.FeatureGeometry(
                     POLYGON,
                     "{\"type\":\"Polygon\",\"coordinates\":[[[0.0,5],[5,5],[5,0.0],[0.0,0.0]]]}"))
+            .properties(new HashMap<>(Map.of("id", featureId)))
             .build();
-    int featureNb = 0;
     var featureWithDelimitation = getFeatureWithDelimitation(polygonGeoJsonZoneFeature);
     var detectionBuilder = mock(Detection.DetectionBuilder.class);
     Map<app.bpartners.geojobs.endpoint.rest.model.Feature, VGG> vggMapMock = mock();
@@ -164,16 +166,16 @@ class FeatureVggRequestedServiceTest {
     when(geometryConverterMock.apply(any())).thenReturn(someMultiPolygon());
     when(vggFactoryMock.from(anyList(), anyList())).thenReturn(vggMapMock);
     when(detectionRepositoryMock.save(detectionMock)).thenReturn(detectionMock);
-    when(detectionVGGUpdateMock.apply(vggCollectionMock, detectionMock, featureNb))
+    when(detectionVGGUpdateMock.apply(vggCollectionMock, detectionMock, featureId))
         .thenReturn(detectionMock);
 
     assertDoesNotThrow(
         () ->
             subject.accept(
                 new FeatureVggRequested(
-                    detectionIdentifier, toRestFeature(polygonGeoJsonZoneFeature), featureNb)));
+                    detectionIdentifier, toRestFeature(polygonGeoJsonZoneFeature))));
 
-    verify(detectionVGGUpdateMock, times(1)).apply(vggCollectionMock, detectionMock, featureNb);
+    verify(detectionVGGUpdateMock, times(1)).apply(vggCollectionMock, detectionMock, featureId);
   }
 
   private static @NotNull FeatureWithDelimitation getFeatureWithDelimitation(
