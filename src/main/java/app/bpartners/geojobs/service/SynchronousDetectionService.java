@@ -135,12 +135,22 @@ public class SynchronousDetectionService
         detection.getEndToEndId(),
         tilingTasks.size());
 
+    var rooPropertiesComputingStart = now();
     var detectionWithComputedRoofProperties =
         detectionRoofPropertiesRequestedService.apply(detectionWithCreatedZDJ.getId());
+    log.info(
+        "Detection roof properties computing finished in {} seconds for detection(e2Id={})",
+        Duration.between(rooPropertiesComputingStart, now()).toSeconds(),
+        detection.getEndToEndId());
 
+    var detectionResultPropertiesComputingStart = now();
     var detectionWithResultProperties =
         featureWithDetectionPropertiesRequestedService.apply(
             detectionWithComputedRoofProperties, feature);
+    log.info(
+        "Detection result properties computing finished in {} seconds for detection(e2Id={})",
+        Duration.between(detectionResultPropertiesComputingStart, now()).toSeconds(),
+        detection.getEndToEndId());
 
     var vggRequestAndGeoJsonEventTriggerStart = now();
     Callable<Void> featureVggRequestedCallableVoid =
