@@ -74,8 +74,7 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
     var vggMap = vggFactory.from(tiledPixelPolygons, completedQuadrilateralTileCoordinates);
 
     var newDetection =
-        detectionVGGUpdate.apply(
-            vggMap.values(), detection, feature.getProperties().get("id").toString());
+        detectionVGGUpdate.apply(vggMap.values(), detection, retrieveId(feature).toString());
 
     var tilesColNumbers = tileCoordinatesService.colNumbers(completedQuadrilateralTileCoordinates);
     var tileRowNumbers = tileCoordinatesService.rowNumbers(completedQuadrilateralTileCoordinates);
@@ -90,5 +89,15 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
         Duration.between(featureVggComputationStart, now()).toSeconds(),
         detection.getEndToEndId(),
         feature.getGeometry());
+  }
+
+  private String retrieveId(Feature feature) {
+    var featureId =
+        feature.getProperties().get("feature_id") == null
+            ? null
+            : feature.getProperties().get("feature_id").toString();
+    return feature.getProperties().get("id") == null
+        ? featureId
+        : feature.getProperties().get("id").toString();
   }
 }
