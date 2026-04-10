@@ -59,6 +59,7 @@ class FeatureVggRequestedServiceTest {
       new TileCoordinatesService(geometryConverterMock, tileFinderMock);
   FeaturePolygonRetriever featurePolygonRetrieverMock =
       new FeaturePolygonRetriever(geometryConverterMock, ignCadastreFeatureFetcherMock);
+  FeatureDelimitationRetriever featureDelimitationRetriever = new FeatureDelimitationRetriever();
 
   FeatureVggRequestedService subject =
       new FeatureVggRequestedService(
@@ -69,7 +70,8 @@ class FeatureVggRequestedServiceTest {
           detectionVGGUpdateMock,
           tileCoordinatesServiceMock,
           tiledPixelPolygonComputerMock,
-          featurePolygonRetrieverMock);
+          featurePolygonRetrieverMock,
+          featureDelimitationRetriever);
 
   @Test
   void compute_vgg_for_zone_and_update_detection_vgg() {

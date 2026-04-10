@@ -16,7 +16,7 @@ import app.bpartners.geojobs.model.DetectedTile;
 import app.bpartners.geojobs.model.geometry.PolygonObjectType;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
-import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
+import app.bpartners.geojobs.service.FeatureDelimitationRetriever;
 import app.bpartners.geojobs.service.FeatureRoofResultPropertiesComputer;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import jakarta.persistence.EntityManager;
@@ -41,6 +41,7 @@ public class FeatureWithDetectionPropertiesRequestedService
   private final FeatureRoofResultPropertiesComputer featureRoofResultPropertiesComputer;
   private final GeometryConverter geometryConverter;
   private final MachineDetectedTileRepository machineDetectedTileRepository;
+  private final FeatureDelimitationRetriever featureDelimitationRetriever;
 
   @Override
   public void accept(FeatureWithDetectionPropertiesRequested event) {
@@ -162,7 +163,7 @@ public class FeatureWithDetectionPropertiesRequestedService
     } else {
       var featureWithDelimitationList = detection.getFeatureWithDelimitations();
       var actualDelimitation =
-          filterDetectionDelimitationWithActualFeature(featureWithDelimitationList, feature);
+          featureDelimitationRetriever.apply(featureWithDelimitationList, feature);
       if (actualDelimitation == null) {
         throw new NoSuchElementException("No delimitation found for " + feature.getGeometry());
       }
@@ -203,22 +204,5 @@ public class FeatureWithDetectionPropertiesRequestedService
       throw new IllegalArgumentException(
           "Unsupported geometry type " + geometryInstance.getClass());
     }
-  }
-
-  private FeatureWithDelimitation filterDetectionDelimitationWithActualFeature(
-      List<FeatureWithDelimitation> featureWithDelimitationList, Feature feature) {
-    return featureWithDelimitationList.stream()
-        .filter(
-            f ->
-                f.getRestFeature() != null
-                    && f.getRestFeature().getGeometry() != null
-                    && f.getRestFeature().getGeometry().equals(feature.getGeometry()))
-        .findFirst()
-        .orElse(
-            featureWithDelimitationList.size() == 1
-                    && featureWithDelimitationList.getFirst().getRestDelimitations() != null
-                    && featureWithDelimitationList.getFirst().getRestDelimitations().size() == 1
-                ? featureWithDelimitationList.getFirst()
-                : null);
   }
 }

@@ -34,48 +34,8 @@ public class VGGFactory {
   private final GeometryConverter geometryConverter;
   private final DetectionBoundaryMerger merger;
 
-  public VGG convert(VGG originalVgg, Set<Polygon> polygons) {
-    var vgg = new VGG();
-    originalVgg.forEach(
-        (key, originalAnnotation) -> {
-          Map<String, Object> properties = originalAnnotation.getProperties();
-          for (Polygon p : polygons) {
-            var metadata = (Map<String, Object>) p.getUserData();
-            var label = metadata.get("label").toString();
-            var confidence = metadata.get("confidence");
-            var confidenceAsDouble =
-                confidence == null ? null : Double.parseDouble(confidence.toString());
-            Map<String, VGG.Annotation.Region> newRegions = new HashMap<>();
-            newRegions.put(
-                randomUUID().toString(), toVGGRegion(label, confidenceAsDouble, null, p));
-            if (vgg.containsKey(key)) {
-              var annotation = vgg.get(key);
-              newRegions.putAll(annotation.getRegions());
-              annotation.setRegions(newRegions);
-              annotation.setProperties(properties);
-              vgg.put(key, annotation);
-            }
-            var annotation =
-                VGG.Annotation.builder()
-                    .filename(key)
-                    .properties(properties)
-                    .regions(newRegions)
-                    .build();
-            vgg.putIfAbsent(key, annotation);
-          }
-        });
-
-    return vgg;
-  }
-
   public Set<VGG> unifyVggSet(Collection<VGG> vggCollection) {
     return vggCollection.stream().map(this::unifyVgg).collect(toSet());
-  }
-
-  public VGG unifyVgg(VGG vgg) {
-    var mergedTiledPolygons = merger.applyVgg(vgg);
-    var mergedPolygons = mergedTiledPolygons.stream().map(TiledPolygon::polygon).collect(toSet());
-    return convert(vgg, mergedPolygons);
   }
 
   public Map<Feature, VGG> from(
@@ -206,8 +166,48 @@ public class VGGFactory {
     return vggMap;
   }
 
-  List<TiledPixelPolygonGrouped> groupPixelPolygonByFeatureAndDetectableTypeAndTileCoordinates(
-      List<TiledPixelPolygon> input) {
+  private VGG unifyVgg(VGG vgg) {
+    var mergedTiledPolygons = merger.applyVgg(vgg);
+    var mergedPolygons = mergedTiledPolygons.stream().map(TiledPolygon::polygon).collect(toSet());
+    return convert(vgg, mergedPolygons);
+  }
+
+  private VGG convert(VGG originalVgg, Set<Polygon> polygons) {
+    var vgg = new VGG();
+    originalVgg.forEach(
+        (key, originalAnnotation) -> {
+          Map<String, Object> properties = originalAnnotation.getProperties();
+          for (Polygon p : polygons) {
+            var metadata = (Map<String, Object>) p.getUserData();
+            var label = metadata.get("label").toString();
+            var confidence = metadata.get("confidence");
+            var confidenceAsDouble =
+                confidence == null ? null : Double.parseDouble(confidence.toString());
+            Map<String, VGG.Annotation.Region> newRegions = new HashMap<>();
+            newRegions.put(
+                randomUUID().toString(), toVGGRegion(label, confidenceAsDouble, null, p));
+            if (vgg.containsKey(key)) {
+              var annotation = vgg.get(key);
+              newRegions.putAll(annotation.getRegions());
+              annotation.setRegions(newRegions);
+              annotation.setProperties(properties);
+              vgg.put(key, annotation);
+            }
+            var annotation =
+                VGG.Annotation.builder()
+                    .filename(key)
+                    .properties(properties)
+                    .regions(newRegions)
+                    .build();
+            vgg.putIfAbsent(key, annotation);
+          }
+        });
+
+    return vgg;
+  }
+
+  private List<TiledPixelPolygonGrouped>
+      groupPixelPolygonByFeatureAndDetectableTypeAndTileCoordinates(List<TiledPixelPolygon> input) {
     return input.stream()
         // 1. Grouper par feature + tileX + tileY + zoom
         .collect(
@@ -288,8 +288,8 @@ public class VGGFactory {
     return Arrays.stream(polygon.getCoordinates()).map(coor -> coor.x).toList();
   }
 
-  record PolygonGroup(DetectableType objectType, List<Polygon> polygons) {
-    public Geometry geometryUnified() {
+  private record PolygonGroup(DetectableType objectType, List<Polygon> polygons) {
+    Geometry geometryUnified() {
       if (polygons == null || polygons.isEmpty()) return null;
       GeometryCollection geometryCollection =
           new GeometryCollection(polygons().toArray(new Polygon[0]), geometryFactory);
@@ -297,7 +297,7 @@ public class VGGFactory {
     }
   }
 
-  record TiledPixelPolygonGrouped(
+  private record TiledPixelPolygonGrouped(
       Feature feature, int tileX, int tileY, int zoom, List<PolygonGroup> groups) {}
 
   record GroupKey(Feature feature, int tileX, int tileY, int zoom) {}

@@ -31,6 +31,7 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
   private final TileCoordinatesService tileCoordinatesService;
   private final TiledPixelPolygonComputer tiledPixelPolygonComputer;
   private final FeaturePolygonRetriever featurePolygonRetriever;
+  private final FeatureDelimitationRetriever featureDelimitationRetriever;
 
   @Override
   public void accept(FeatureVggRequested event) {
@@ -45,7 +46,7 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
     }
     var featureWithDelimitationList = detection.getFeatureWithDelimitations();
     var actualDelimitation =
-        filterDetectionDelimitationWithActualFeature(featureWithDelimitationList, feature);
+        featureDelimitationRetriever.apply(featureWithDelimitationList, feature);
     if (actualDelimitation == null) {
       throw new NoSuchElementException("No delimitation found for " + feature.getGeometry());
     }
@@ -89,22 +90,5 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
         Duration.between(featureVggComputationStart, now()).toSeconds(),
         detection.getEndToEndId(),
         feature.getGeometry());
-  }
-
-  private FeatureWithDelimitation filterDetectionDelimitationWithActualFeature(
-      List<FeatureWithDelimitation> featureWithDelimitationList, Feature feature) {
-    return featureWithDelimitationList.stream()
-        .filter(
-            f ->
-                f.getRestFeature() != null
-                    && f.getRestFeature().getGeometry() != null
-                    && f.getRestFeature().getGeometry().equals(feature.getGeometry()))
-        .findFirst()
-        .orElse(
-            featureWithDelimitationList.size() == 1
-                    && featureWithDelimitationList.getFirst().getRestDelimitations() != null
-                    && featureWithDelimitationList.getFirst().getRestDelimitations().size() == 1
-                ? featureWithDelimitationList.getFirst()
-                : null);
   }
 }
