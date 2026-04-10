@@ -43,7 +43,6 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -317,6 +316,7 @@ public class ZoneDetectionController {
         communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
     var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId);
     Optional<String> optionalZoneName = zoneName == null ? Optional.empty() : Optional.of(zoneName);
-    return zoneService.getDetectionsByCriteria(communityOwnerId, page, pageSize, from, to, optionalZoneName);
+    return zoneService.getDetectionsByCriteria(
+        communityOwnerId, page, pageSize, from, to, optionalZoneName);
   }
 }

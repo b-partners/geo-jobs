@@ -5,6 +5,7 @@ import static app.bpartners.geojobs.endpoint.rest.model.Feature.TypeEnum.FEATURE
 import static app.bpartners.geojobs.endpoint.rest.model.GeoJsonOutput.ZIP;
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
+import static app.bpartners.geojobs.repository.model.detection.DetectionFeatureType.PROVIDED_FEATURE;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
@@ -71,30 +72,35 @@ public class DetectionCreationMapper {
             communityOwnerId,
             providedGeoJson,
             domainProvidedGeoJsonZone);
-    return Detection.builder()
-        .id(detectionId)
-        .endToEndId(detectionE2Id)
-        .emailReceiver(createDetection.getEmailReceiver())
-        .zoneName(createDetection.getZoneName())
-        .isSynchronous(isSynchronous)
-        .communityOwnerId(communityOwnerId)
-        .detectableObjectConfigurations(detectableObjectConfigurations)
-        .geoServerProperties(finalGeoServerProperties)
-        .providedGeoJsonZone(domainProvidedGeoJsonZone)
-        .multiPolygonGeoJsonZone(domainProvidedGeoJsonZone)
-        .polygonGeoJsonZone(polygonGeoJsonZoneToBeProcessed)
-        .detectableObjectModel(detectableObjectModel)
-        .detectableObjectModelList(detectableObjectModelList)
-        .toNotify(Boolean.TRUE.equals(createDetection.getToNotify()))
-        .isOutputZipped(
-            createDetection.getGeoJsonOutput() == null
-                || (createDetection.getGeoJsonOutput() != null
-                    && ZIP.equals(createDetection.getGeoJsonOutput())))
-        .needsImageOutput(
-            createDetection.getNeedsImageOutput() != null && createDetection.getNeedsImageOutput())
-        .geoJsonDelimitationType(
-            geoJsonDelimitationTypeMapper.toDomain(createDetection.getGeoJsonDelimitationType()))
-        .build();
+    var detection =
+        Detection.builder()
+            .id(detectionId)
+            .endToEndId(detectionE2Id)
+            .emailReceiver(createDetection.getEmailReceiver())
+            .zoneName(createDetection.getZoneName())
+            .isSynchronous(isSynchronous)
+            .communityOwnerId(communityOwnerId)
+            .detectableObjectConfigurations(detectableObjectConfigurations)
+            .geoServerProperties(finalGeoServerProperties)
+            .providedGeoJsonZone(domainProvidedGeoJsonZone)
+            .multiPolygonGeoJsonZone(domainProvidedGeoJsonZone)
+            .polygonGeoJsonZone(polygonGeoJsonZoneToBeProcessed)
+            .detectableObjectModel(detectableObjectModel)
+            .detectableObjectModelList(detectableObjectModelList)
+            .toNotify(Boolean.TRUE.equals(createDetection.getToNotify()))
+            .isOutputZipped(
+                createDetection.getGeoJsonOutput() == null
+                    || (createDetection.getGeoJsonOutput() != null
+                        && ZIP.equals(createDetection.getGeoJsonOutput())))
+            .needsImageOutput(
+                createDetection.getNeedsImageOutput() != null
+                    && createDetection.getNeedsImageOutput())
+            .geoJsonDelimitationType(
+                geoJsonDelimitationTypeMapper.toDomain(
+                    createDetection.getGeoJsonDelimitationType()))
+            .build();
+    detection.addFeatures(domainProvidedGeoJsonZone, PROVIDED_FEATURE);
+    return detection;
   }
 
   private List<DetectableObjectConfiguration> getDetectableObjectConfigurations(

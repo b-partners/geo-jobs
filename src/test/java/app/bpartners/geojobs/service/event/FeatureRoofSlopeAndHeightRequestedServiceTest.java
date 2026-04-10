@@ -72,7 +72,11 @@ class FeatureRoofSlopeAndHeightRequestedServiceTest {
         new HashMap<String, Object>(Map.of("feature_id", featureIdentifier));
 
     var domainFeature =
-        Feature.builder().properties(domainFeatureProperties).geometry(somePolygon()).build();
+        Feature.builder()
+            .id(featureIdentifier)
+            .properties(domainFeatureProperties)
+            .geometry(somePolygon())
+            .build();
     var domainFeatureDelimitation =
         Feature.builder().properties(delimitationFeatureProperties).geometry(somePolygon()).build();
 

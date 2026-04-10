@@ -28,6 +28,7 @@ import app.bpartners.geojobs.service.SynchronousDetectionService;
 import app.bpartners.geojobs.service.detection.DetectionMachineDetectionCreation;
 import app.bpartners.geojobs.service.detection.DetectionTilingCreation;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
+import app.bpartners.geojobs.service.event.DetectionRoofPropertiesRequestedService;
 import app.bpartners.geojobs.service.event.FeatureImageRequestedService;
 import app.bpartners.geojobs.service.event.FeatureVggRequestedService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
@@ -52,6 +53,7 @@ class SynchronousDetectionServiceTest {
   DetectableObjectConfigurationRepository objectConfigurationRepositoryMock = mock();
   FeatureImageRequestedService featureImageRequestedServiceMock = mock();
   EntityManager entityManagerMock = mock();
+  DetectionRoofPropertiesRequestedService detectionRoofPropertiesRequestedServiceMock = mock();
   SynchronousDetectionService subject =
       new SynchronousDetectionService(
           detectionRepositoryMock,
@@ -66,7 +68,8 @@ class SynchronousDetectionServiceTest {
           workers,
           objectConfigurationRepositoryMock,
           featureImageRequestedServiceMock,
-          entityManagerMock);
+          entityManagerMock,
+          detectionRoofPropertiesRequestedServiceMock);
 
   @Test
   void return_succeeded_detection_and_trigger_geo_json_generation() {
@@ -91,6 +94,8 @@ class SynchronousDetectionServiceTest {
     when(detectionWithVGGAndImagesFinished.getVggFileKey())
         .thenReturn(null)
         .thenReturn("vggFileKey");
+    when(detectionWithCreatedZDJMock.getId()).thenReturn(detectionId);
+    when(detectionWithVGGAndImagesFinished.getId()).thenReturn(detectionId);
     when(detectionWithCreatedZTJMock.getZtjId()).thenReturn(zoneTilingJobId);
     when(detectionWithCreatedZTJMock.toBuilder()).thenReturn(new Detection().toBuilder());
     when(createdZoneDetectionJob.getId()).thenReturn(zoneDetectionJobId);
@@ -107,10 +112,12 @@ class SynchronousDetectionServiceTest {
         .processMachineDetection(detectionWithCreatedZDJMock, createdZoneDetectionJob, tilingTasks);
     doNothing()
         .when(featureVggRequestedServiceMock)
-        .accept(new FeatureVggRequested(detectionId, null, 0));
+        .accept(new FeatureVggRequested(detectionId, null));
     when(detectionRepositoryMock.findById(detectionId))
         .thenReturn(Optional.of(detectionWithVGGAndImagesFinished));
     doNothing().when(entityManagerMock).clear();
+    when(detectionRoofPropertiesRequestedServiceMock.apply(detectionId))
+        .thenReturn(detectionWithVGGAndImagesFinished);
 
     when(restDetectionResult.getStep())
         .thenReturn(
