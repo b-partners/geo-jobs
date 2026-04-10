@@ -21,6 +21,7 @@ import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.service.FeatureDelimitationRetriever;
 import app.bpartners.geojobs.service.FeatureRoofResultPropertiesComputer;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import app.bpartners.geojobs.service.geojson.GeometryCorrector;
 import jakarta.persistence.EntityManager;
 import java.util.HashMap;
 import java.util.List;
@@ -45,6 +46,7 @@ public class FeatureWithDetectionPropertiesRequestedService
   private final MachineDetectedTileRepository machineDetectedTileRepository;
   private final FeatureDelimitationRetriever featureDelimitationRetriever;
   private final EventProducer eventProducer;
+  private final GeometryCorrector geometryCorrector;
 
   @Override
   public void accept(FeatureWithDetectionPropertiesRequested event) {
@@ -131,9 +133,13 @@ public class FeatureWithDetectionPropertiesRequestedService
                         var detectableObjectType = detectedObject.getDetectableObjectType();
                         var latLonMultiPolygonDetectedObject =
                             geometryConverter.apply(latLonCoordinates);
+
+                        var correctedLatLonDetectedObjectGeometry =
+                            geometryCorrector.apply(latLonMultiPolygonDetectedObject);
+
                         var intersectionBetweenDetectedObjectAndDelimitationObjectType =
                             latLonDelimitationObjectType.intersection(
-                                latLonMultiPolygonDetectedObject);
+                                correctedLatLonDetectedObjectGeometry);
                         if (intersectionBetweenDetectedObjectAndDelimitationObjectType.isEmpty()) {
                           return null;
                         }

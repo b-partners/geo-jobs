@@ -23,6 +23,7 @@ import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.FeatureDelimitationRetriever;
 import app.bpartners.geojobs.service.FeatureRoofResultPropertiesComputer;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import app.bpartners.geojobs.service.geojson.GeometryCorrector;
 import jakarta.persistence.EntityManager;
 import java.util.*;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,7 @@ class FeatureWithDetectionPropertiesRequestedServiceTest {
   MachineDetectedTileRepository machineDetectedTileRepositoryMock = mock();
   FeatureDelimitationRetriever featureDelimitationRetrieverMock = mock();
   EventProducer eventProducerMock = mock();
+  GeometryCorrector geometryCorrectorMock = mock();
   FeatureWithDetectionPropertiesRequestedService subject =
       new FeatureWithDetectionPropertiesRequestedService(
           entityManagerMock,
@@ -44,7 +46,8 @@ class FeatureWithDetectionPropertiesRequestedServiceTest {
           geometryConverterMock,
           machineDetectedTileRepositoryMock,
           featureDelimitationRetrieverMock,
-          eventProducerMock);
+          eventProducerMock,
+          geometryCorrectorMock);
 
   @Test
   void compute_feature_with_detection_properties_requested_and_produces_vgg() {
@@ -89,6 +92,7 @@ class FeatureWithDetectionPropertiesRequestedServiceTest {
     when(detectionRepositoryMock.findById(detectionIdentifier))
         .thenReturn(Optional.of(detectionMock));
     when(geometryConverterMock.apply(any())).thenReturn(latLonRoofGeometryMock);
+    when(geometryCorrectorMock.apply(any())).thenReturn(latLonRoofGeometryMock);
     when(machineDetectedTileRepositoryMock.findAllByZdjJobId(zoneDetectionJobIdentifier))
         .thenReturn(List.of(machineDetectedTileMock));
     when(featureRoofResultPropertiesComputerMock.apply(
