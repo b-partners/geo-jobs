@@ -7,6 +7,8 @@ import static app.bpartners.geojobs.repository.model.detection.DetectionFeatureT
 import static app.bpartners.geojobs.service.geojson.GeoJsonMapper.convertPixelToGeographicalCoordinates;
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
 
+import app.bpartners.geojobs.endpoint.event.EventProducer;
+import app.bpartners.geojobs.endpoint.event.model.FeatureVggRequested;
 import app.bpartners.geojobs.endpoint.event.model.FeatureWithDetectionPropertiesRequested;
 import app.bpartners.geojobs.endpoint.rest.model.Detection;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
@@ -42,16 +44,25 @@ public class FeatureWithDetectionPropertiesRequestedService
   private final GeometryConverter geometryConverter;
   private final MachineDetectedTileRepository machineDetectedTileRepository;
   private final FeatureDelimitationRetriever featureDelimitationRetriever;
+  private final EventProducer eventProducer;
 
   @Override
   public void accept(FeatureWithDetectionPropertiesRequested event) {
-    entityManager.clear();
     var detectionIdentifier = event.getDetectionIdentifier();
     var feature = event.getFeature();
+    entityManager.clear();
     var detection = detectionRepository.findById(detectionIdentifier).orElseThrow();
+    var savedDetection = apply(detection, feature);
+    if (savedDetection != null) {
+      eventProducer.accept(List.of(new FeatureVggRequested(detectionIdentifier, feature)));
+    }
+  }
+
+  public app.bpartners.geojobs.repository.model.detection.Detection apply(
+      app.bpartners.geojobs.repository.model.detection.Detection detection, Feature feature) {
     if (!detection.hasToitureModelName()) {
       log.error("Only BP_TOITURE model is supported to generated VGG from now");
-      return;
+      return null;
     }
     var geoJsonDelimitationType = detection.getGeoJsonDelimitationType();
     var latLonRoofGeometry =
@@ -82,7 +93,7 @@ public class FeatureWithDetectionPropertiesRequestedService
                     .geometry(feature.getGeometry()))),
         PROVIDED_FEATURE);
 
-    detectionRepository.save(detection);
+    return detectionRepository.save(detection);
   }
 
   private List<PolygonObjectType> getDetectedObjectPolygonGeometriesUsedForRateComputing(

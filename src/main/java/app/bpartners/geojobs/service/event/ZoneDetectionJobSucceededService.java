@@ -4,7 +4,7 @@ import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionRoofPropertiesRequested;
-import app.bpartners.geojobs.endpoint.event.model.FeatureVggRequested;
+import app.bpartners.geojobs.endpoint.event.model.FeatureWithDetectionPropertiesRequested;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationDeliveryJobRequested;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobSucceeded;
 import app.bpartners.geojobs.repository.AnnotationDeliveryConfigurationRepository;
@@ -93,7 +93,9 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
           var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
           for (int i = 0; i < providedGeoJsonZone.size(); i++) {
             eventProducer.accept(
-                List.of(new FeatureVggRequested(detection.getId(), providedGeoJsonZone.get(i))));
+                List.of(
+                    new FeatureWithDetectionPropertiesRequested(
+                        detection.getId(), providedGeoJsonZone.get(i))));
           }
         }
       }

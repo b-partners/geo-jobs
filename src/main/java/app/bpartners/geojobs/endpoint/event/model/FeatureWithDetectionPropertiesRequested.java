@@ -15,18 +15,15 @@ import lombok.*;
 public class FeatureWithDetectionPropertiesRequested extends PojaEvent {
   private String detectionIdentifier;
   private Feature feature;
-  private int featureNb = 0;
 
-  public FeatureWithDetectionPropertiesRequested(
-      String detectionIdentifier, Feature feature, int featureNb) {
+  public FeatureWithDetectionPropertiesRequested(String detectionIdentifier, Feature feature) {
     this.detectionIdentifier = detectionIdentifier;
     this.feature = feature;
-    this.featureNb = featureNb;
   }
 
   @Override
   public Duration maxConsumerDuration() {
-    return Duration.ofSeconds(30L);
+    return Duration.ofSeconds(60L);
   }
 
   @Override

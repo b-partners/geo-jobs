@@ -31,6 +31,7 @@ import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.event.DetectionRoofPropertiesRequestedService;
 import app.bpartners.geojobs.service.event.FeatureImageRequestedService;
 import app.bpartners.geojobs.service.event.FeatureVggRequestedService;
+import app.bpartners.geojobs.service.event.FeatureWithDetectionPropertiesRequestedService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import jakarta.persistence.EntityManager;
@@ -54,6 +55,8 @@ class SynchronousDetectionServiceTest {
   FeatureImageRequestedService featureImageRequestedServiceMock = mock();
   EntityManager entityManagerMock = mock();
   DetectionRoofPropertiesRequestedService detectionRoofPropertiesRequestedServiceMock = mock();
+  FeatureWithDetectionPropertiesRequestedService
+      featureWithDetectionPropertiesRequestedServiceMock = mock();
   SynchronousDetectionService subject =
       new SynchronousDetectionService(
           detectionRepositoryMock,
@@ -69,7 +72,8 @@ class SynchronousDetectionServiceTest {
           objectConfigurationRepositoryMock,
           featureImageRequestedServiceMock,
           entityManagerMock,
-          detectionRoofPropertiesRequestedServiceMock);
+          detectionRoofPropertiesRequestedServiceMock,
+          featureWithDetectionPropertiesRequestedServiceMock);
 
   @Test
   void return_succeeded_detection_and_trigger_geo_json_generation() {
@@ -85,12 +89,13 @@ class SynchronousDetectionServiceTest {
     var zoneTilingJobId = randomUUID().toString();
     var zoneDetectionJobId = randomUUID().toString();
     var detectionId = randomUUID().toString();
+    var feature = new Feature();
 
     when(detectionMock.getId()).thenReturn(detectionId);
     when(detectionMock.needsImageOutput()).thenReturn(true);
     when(detectionMock.getDetectableObjectConfigurations())
         .thenReturn(List.of(new DetectableObjectConfiguration()));
-    when(detectionMock.getProvidedGeoJsonZone()).thenReturn(List.of(new Feature()));
+    when(detectionMock.getProvidedGeoJsonZone()).thenReturn(List.of(feature));
     when(detectionWithVGGAndImagesFinished.getVggFileKey())
         .thenReturn(null)
         .thenReturn("vggFileKey");
@@ -117,6 +122,9 @@ class SynchronousDetectionServiceTest {
         .thenReturn(Optional.of(detectionWithVGGAndImagesFinished));
     doNothing().when(entityManagerMock).clear();
     when(detectionRoofPropertiesRequestedServiceMock.apply(detectionId))
+        .thenReturn(detectionWithVGGAndImagesFinished);
+    when(featureWithDetectionPropertiesRequestedServiceMock.apply(
+            detectionWithVGGAndImagesFinished, feature))
         .thenReturn(detectionWithVGGAndImagesFinished);
 
     when(restDetectionResult.getStep())

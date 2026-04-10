@@ -18,6 +18,7 @@ import app.bpartners.geojobs.service.detection.*;
 import app.bpartners.geojobs.service.event.DetectionRoofPropertiesRequestedService;
 import app.bpartners.geojobs.service.event.FeatureImageRequestedService;
 import app.bpartners.geojobs.service.event.FeatureVggRequestedService;
+import app.bpartners.geojobs.service.event.FeatureWithDetectionPropertiesRequestedService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import jakarta.persistence.EntityManager;
@@ -51,6 +52,8 @@ public class SynchronousDetectionService
   private final FeatureImageRequestedService featureImageRequestedService;
   private final EntityManager entityManager;
   private final DetectionRoofPropertiesRequestedService detectionRoofPropertiesRequestedService;
+  private final FeatureWithDetectionPropertiesRequestedService
+      featureWithDetectionPropertiesRequestedService;
 
   @SneakyThrows
   @Override
@@ -105,11 +108,11 @@ public class SynchronousDetectionService
         detectionRepository.save(
             detectionWithCreatedZTJ.toBuilder().zdjId(createdZoneDetectionJob.getId()).build());
 
+    var feature = detection.getProvidedGeoJsonZone().getFirst();
     Callable<Void> imageRequestCallableVoidList =
         () -> {
           featureImageRequestedService.accept(
-              new FeatureImageRequested(
-                  detection.getId(), detection.getProvidedGeoJsonZone().getFirst()));
+              new FeatureImageRequested(detection.getId(), feature));
           return null;
         };
     Callable<Void> machineDetectionProcessCallableVoidList =
@@ -135,14 +138,16 @@ public class SynchronousDetectionService
     var detectionWithComputedRoofProperties =
         detectionRoofPropertiesRequestedService.apply(detectionWithCreatedZDJ.getId());
 
+    var detectionWithResultProperties =
+        featureWithDetectionPropertiesRequestedService.apply(
+            detectionWithComputedRoofProperties, feature);
+
     var vggRequestAndGeoJsonEventTriggerStart = now();
     Callable<Void> featureVggRequestedCallableVoid =
         () -> {
           // VGG result computing step
           zoneVggRequestedService.accept(
-              new FeatureVggRequested(
-                  detectionWithComputedRoofProperties.getId(),
-                  detection.getProvidedGeoJsonZone().getFirst()));
+              new FeatureVggRequested(detectionWithResultProperties.getId(), feature));
           return null;
         };
     Callable<Void> geoJsonRequestedCallableVoid =
@@ -163,7 +168,7 @@ public class SynchronousDetectionService
         Duration.between(vggRequestAndGeoJsonEventTriggerStart, now()).toSeconds(),
         detection.getEndToEndId());
 
-    return attemptVggFileKeyRetrieve(detectionWithComputedRoofProperties);
+    return attemptVggFileKeyRetrieve(detectionWithResultProperties);
   }
 
   @SneakyThrows
