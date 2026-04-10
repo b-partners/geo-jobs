@@ -88,8 +88,7 @@ public class FeatureRoofSlopeAndHeightRequestedService
             .creationDatetime(now())
             .build());
 
-    zoneVggRequestedService.accept(
-        new FeatureVggRequested(detectionIdentifier, feature, featureNb));
+    zoneVggRequestedService.accept(new FeatureVggRequested(detectionIdentifier, feature));
   }
 
   private boolean isAlreadyProcessedAsSuccess(FeatureWithDelimitation featureWithDelimitation) {

@@ -12,13 +12,16 @@ import lombok.*;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @ToString
-public class FeatureImageRequested extends PojaEvent {
+public class FeatureWithDetectionPropertiesRequested extends PojaEvent {
   private String detectionIdentifier;
   private Feature feature;
+  private int featureNb = 0;
 
-  public FeatureImageRequested(String detectionIdentifier, Feature feature) {
+  public FeatureWithDetectionPropertiesRequested(
+      String detectionIdentifier, Feature feature, int featureNb) {
     this.detectionIdentifier = detectionIdentifier;
     this.feature = feature;
+    this.featureNb = featureNb;
   }
 
   @Override
