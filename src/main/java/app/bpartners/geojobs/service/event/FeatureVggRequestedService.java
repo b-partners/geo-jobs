@@ -7,7 +7,6 @@ import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.model.geometry.VGGFactory;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
-import app.bpartners.geojobs.repository.model.detection.*;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.service.*;
 import jakarta.persistence.EntityManager;
@@ -71,10 +70,11 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
         tileCoordinatesService.computeFeatureTileCoordinatesWithCompleteQuadrilateral(
             feature, geoJsonDelimitationType);
 
-    var vggMap = vggFactory.from(tiledPixelPolygons, completedQuadrilateralTileCoordinates);
+    var vggMap =
+        vggFactory.from(
+            tiledPixelPolygons, completedQuadrilateralTileCoordinates, feature.getProperties());
 
-    var newDetection =
-        detectionVGGUpdate.apply(vggMap.values(), detection, retrieveId(feature).toString());
+    var newDetection = detectionVGGUpdate.apply(vggMap.values(), detection, retrieveId(feature));
 
     var tilesColNumbers = tileCoordinatesService.colNumbers(completedQuadrilateralTileCoordinates);
     var tileRowNumbers = tileCoordinatesService.rowNumbers(completedQuadrilateralTileCoordinates);
