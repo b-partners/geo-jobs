@@ -23,10 +23,7 @@ import app.bpartners.geojobs.service.FeatureRoofResultPropertiesComputer;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.geojson.GeometryCorrector;
 import jakarta.persistence.EntityManager;
-import java.util.HashMap;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -56,8 +53,37 @@ public class FeatureWithDetectionPropertiesRequestedService
     var detection = detectionRepository.findById(detectionIdentifier).orElseThrow();
     var savedDetection = apply(detection, feature);
     if (savedDetection != null) {
-      eventProducer.accept(List.of(new FeatureVggRequested(detectionIdentifier, feature)));
+      var optionalProvidedUpdatedFeature =
+          savedDetection.getProvidedGeoJsonZone().stream()
+              .filter(
+                  providedGeoJsonZone -> {
+                    var idKey = "id";
+                    var featureIdKey = "feature_id";
+                    return isPropertyEquals(idKey, providedGeoJsonZone, feature)
+                        || isPropertyEquals(featureIdKey, providedGeoJsonZone, feature);
+                  })
+              .findFirst();
+      if (optionalProvidedUpdatedFeature.isPresent()) {
+        eventProducer.accept(
+            List.of(
+                new FeatureVggRequested(
+                    detectionIdentifier, optionalProvidedUpdatedFeature.get())));
+      } else {
+        eventProducer.accept(List.of(new FeatureVggRequested(detectionIdentifier, feature)));
+      }
     }
+  }
+
+  private boolean isPropertyEquals(
+      String featureProperty, Feature providedFeature, Feature actualFeature) {
+    return providedFeature.getProperties() != null
+        && actualFeature.getProperties() != null
+        && providedFeature.getProperties().get(featureProperty) != null
+        && actualFeature.getProperties().get(featureProperty) != null
+        && providedFeature
+            .getProperties()
+            .get(featureProperty)
+            .equals(actualFeature.getProperties().get(featureProperty));
   }
 
   public app.bpartners.geojobs.repository.model.detection.Detection apply(
