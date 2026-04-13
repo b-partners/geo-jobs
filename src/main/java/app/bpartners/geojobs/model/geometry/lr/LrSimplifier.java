@@ -3,6 +3,7 @@ package app.bpartners.geojobs.model.geometry.lr;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
@@ -19,70 +20,36 @@ public class LrSimplifier implements Function<Polygon, Polygon> {
     int n = coordinates.size();
     if (n <= 3) return polygon;
 
-    var consumed = new boolean[n];
-    var initial = stretchFrom(0, 1, coordinates, consumed, true);
-    List<Coordinate> simplified = new ArrayList<>(initial);
+    List<Coordinate> simplified = new ArrayList<>();
+    int i = 0;
+    while (i < n) {
+      var start = coordinates.get(i);
+      simplified.add(start);
 
-    for (int i = 0; i < n; i++) {
-      if (consumed[i]) continue;
-      int nextIdx = (i + 1) % n;
-
-      if (consumed[nextIdx]) {
-        simplified.add(coordinates.get(i));
-        consumed[i] = true;
-      } else {
-        simplified.addAll(stretchFrom(i, nextIdx, coordinates, consumed, false));
+      if (i >= n - 1) {
+        break;
       }
+
+      var next = coordinates.get(i + 1);
+      var constraint = new LinearStretchConstraint(start, next, angleThreshold);
+      i = getNextStretchPointIndex(coordinates, constraint, i + 2);
     }
 
     return toPolygon(simplified);
   }
 
-  private List<Coordinate> stretchFrom(
-      int i, int j, List<Coordinate> coordinates, boolean[] consumed, boolean bidirectional) {
-    var stretchPoint = coordinates.get(i);
-    var baseNeighbor = coordinates.get(j);
-    var constraint = new LinearStretchConstraint(stretchPoint, baseNeighbor, angleThreshold);
-    consumed[i] = true;
-    consumed[j] = true;
-
-    stretchForward(constraint, coordinates, consumed, j);
-    if (bidirectional) {
-      stretchBackward(constraint, coordinates, consumed, i);
-    }
-
-    return List.of(constraint.getStart(), constraint.getEnd());
-  }
-
-  private void stretchForward(
-      LinearStretchConstraint constraint,
-      List<Coordinate> coordinates,
-      boolean[] consumed,
-      int fromIdx) {
+  private int getNextStretchPointIndex(List<Coordinate> coordinates, LinearStretchConstraint constraint, int start) {
+    int j = start;
     int n = coordinates.size();
-    int next = (fromIdx + 1) % n;
-    while (!consumed[next] && constraint.addToEnd(coordinates.get(next))) {
-      consumed[next] = true;
-      next = (next + 1) % n;
+    while (j < n && constraint.isAligned(coordinates.get(j))) {
+      j++;
     }
-  }
-
-  private void stretchBackward(
-      LinearStretchConstraint constraint,
-      List<Coordinate> coordinates,
-      boolean[] consumed,
-      int fromIdx) {
-    int n = coordinates.size();
-    int prev = (fromIdx - 1 + n) % n;
-    while (!consumed[prev] && constraint.addToStart(coordinates.get(prev))) {
-      consumed[prev] = true;
-      prev = (prev - 1 + n) % n;
-    }
+    return j;
   }
 
   private static List<Coordinate> getNotClosedCoordinates(Polygon polygon) {
     var coordinates = polygon.getCoordinates();
-    return List.of(coordinates).subList(0, coordinates.length - 1);
+    return Arrays.asList(Arrays.copyOf(coordinates, coordinates.length - 1));
   }
 
   private static Polygon toPolygon(List<Coordinate> coordinates) {
