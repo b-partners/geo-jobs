@@ -17,6 +17,7 @@ import app.bpartners.geojobs.repository.GeoJsonConversionJobRepository;
 import app.bpartners.geojobs.repository.GeoJsonConversionTaskRepository;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
+import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionJob;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionTask;
@@ -37,6 +38,7 @@ import java.util.zip.ZipOutputStream;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -70,11 +72,13 @@ public class ZipGeoJsonAssembler implements Consumer<GeoJsonConversionJob> {
     org.locationtech.jts.geom.MultiPolygon providedZoneWithoutRoofMultiPolygon = null;
 
     if (detection.hasToitureModelName()) {
-      roofFeatures.addAll(
-          detection.getFeatureWithDelimitations().stream()
+      var featureWithDelimitationList = updateDelimitationsWithProvidedFeatureProperties(detection);
+      var delimitationFeatures =
+          featureWithDelimitationList.stream()
               .map(FeatureWithDelimitation::delimitations)
               .flatMap(List::stream)
-              .toList());
+              .toList();
+      roofFeatures.addAll(delimitationFeatures);
       providedZoneWithoutRoofMultiPolygon = detectionBackgroundRetriever.apply(detection);
     }
 
@@ -102,6 +106,44 @@ public class ZipGeoJsonAssembler implements Consumer<GeoJsonConversionJob> {
                   .geoJsonConversionJob(savedConversionJob)
                   .build()));
     }
+  }
+
+  @NotNull
+  private List<FeatureWithDelimitation> updateDelimitationsWithProvidedFeatureProperties(
+      Detection detection) {
+    var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
+    var featureWithDelimitationList = detection.getFeatureWithDelimitations();
+    featureWithDelimitationList.forEach(
+        featureWithDelimitation -> {
+          for (var providedFeature : providedGeoJsonZone) {
+            if (featureWithDelimitation
+                .getRestFeature()
+                .getGeometry()
+                .equals(providedFeature.getGeometry())) {
+              var delimitationsWithProvidedFeatureProperties =
+                  featureWithDelimitation.getDelimitations().stream()
+                      .map(
+                          domainDelimitation -> {
+                            var actualProperties = new HashMap<String, Object>();
+                            if (domainDelimitation.getProperties() != null) {
+                              actualProperties.putAll(domainDelimitation.getProperties());
+                            }
+                            if (providedFeature.getProperties() != null) {
+                              actualProperties.putAll(providedFeature.getProperties());
+                            }
+                            return Feature.builder()
+                                .id(domainDelimitation.getId())
+                                .geometry(domainDelimitation.getGeometry())
+                                .zoom(domainDelimitation.getZoom())
+                                .properties(actualProperties)
+                                .build();
+                          })
+                      .toList();
+              featureWithDelimitation.setDelimitations(delimitationsWithProvidedFeatureProperties);
+            }
+          }
+        });
+    return featureWithDelimitationList;
   }
 
   @SneakyThrows
