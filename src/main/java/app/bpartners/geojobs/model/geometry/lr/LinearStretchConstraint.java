@@ -26,7 +26,7 @@ public class LinearStretchConstraint {
 
     var candidateDirection = new Vector2D(stretchPoint, candidate).normalize();
     var dot = direction.dot(candidateDirection);
-    var securedDot = Math.max(-1.0, Math.min(1.0, dot));
+    var securedDot = Math.clamp(dot, -1.0, 1.0);
     var angle = Math.acos(securedDot);
     return angle <= radTolerance;
   }
