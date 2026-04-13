@@ -99,6 +99,7 @@ class SynchronousDetectionServiceTest {
     when(detectionWithVGGAndImagesFinished.getVggFileKey())
         .thenReturn(null)
         .thenReturn("vggFileKey");
+    when(detectionWithVGGAndImagesFinished.getProvidedGeoJsonZone()).thenReturn(List.of(feature));
     when(detectionWithCreatedZDJMock.getId()).thenReturn(detectionId);
     when(detectionWithVGGAndImagesFinished.getId()).thenReturn(detectionId);
     when(detectionWithCreatedZTJMock.getZtjId()).thenReturn(zoneTilingJobId);

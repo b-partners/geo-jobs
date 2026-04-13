@@ -146,7 +146,8 @@ public class SynchronousDetectionService
     var detectionResultPropertiesComputingStart = now();
     var detectionWithResultProperties =
         featureWithDetectionPropertiesRequestedService.apply(
-            detectionWithComputedRoofProperties, feature);
+            detectionWithComputedRoofProperties,
+            detectionWithComputedRoofProperties.getProvidedGeoJsonZone().getFirst());
     log.info(
         "Detection result properties computing finished in {} seconds for detection(e2Id={})",
         Duration.between(detectionResultPropertiesComputingStart, now()).toSeconds(),
@@ -157,7 +158,9 @@ public class SynchronousDetectionService
         () -> {
           // VGG result computing step
           zoneVggRequestedService.accept(
-              new FeatureVggRequested(detectionWithResultProperties.getId(), feature));
+              new FeatureVggRequested(
+                  detectionWithResultProperties.getId(),
+                  detectionWithResultProperties.getProvidedGeoJsonZone().getFirst()));
           return null;
         };
     Callable<Void> geoJsonRequestedCallableVoid =
