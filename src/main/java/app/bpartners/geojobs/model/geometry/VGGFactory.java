@@ -39,7 +39,9 @@ public class VGGFactory {
   }
 
   public Map<Feature, VGG> from(
-      List<TiledPixelPolygon> tiledPixelPolygons, List<TileCoordinates> envelop) {
+      List<TiledPixelPolygon> tiledPixelPolygons,
+      List<TileCoordinates> envelop,
+      Map<String, Object> featureProperties) {
     var vggMap = new HashMap<Feature, VGG>();
     int minTileXGlobal = envelop.stream().mapToInt(TileCoordinates::getX).min().orElseThrow();
     int minTileYGlobal = envelop.stream().mapToInt(TileCoordinates::getY).min().orElseThrow();
@@ -152,10 +154,16 @@ public class VGGFactory {
                   String.format(
                       "%s_%s_%s_%s.%s",
                       randomUUID(), zoom, minTileXGlobal, minTileYGlobal, VGG_ANNOTATION_FILETYPE);
+              Map<String, Object> actualProperties = new HashMap<>();
+              if (featureProperties != null) {
+                actualProperties.putAll(featureProperties);
+                actualProperties.remove("feature_id");
+                actualProperties.remove("id");
+              }
               var annotation =
                   VGG.Annotation.builder()
                       .filename(key)
-                      .properties(feature.getProperties())
+                      .properties(actualProperties)
                       .regions(regions)
                       .build();
 
