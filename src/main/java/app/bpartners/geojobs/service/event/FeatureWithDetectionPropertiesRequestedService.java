@@ -163,7 +163,8 @@ public class FeatureWithDetectionPropertiesRequestedService
                                     zoom,
                                     DEFAULT_IMAGE_SIZE,
                                     multiPolygonDetectedObjectCoordinates);
-                            DetectableType detectableObjectType = detectedObject.getDetectableObjectType();
+                            DetectableType detectableObjectType =
+                                detectedObject.getDetectableObjectType();
                             var latLonMultiPolygonDetectedObject =
                                 geometryConverter.apply(latLonCoordinates);
 
