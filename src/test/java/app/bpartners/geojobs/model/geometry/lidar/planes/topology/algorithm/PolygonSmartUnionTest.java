@@ -168,6 +168,7 @@ class PolygonSmartUnionTest {
               RangedConf.from(
                   new RangedConf.IntegerRangedConf<>(Integer.MIN_VALUE, 200, 0.2),
                   new RangedConf.IntegerRangedConf<>(201, Integer.MAX_VALUE, 0.2)))
-          .simplificationEpsilon(0.5)
+          .dpsEpsilon(0.5)
+          .lrDegEpsilon(5)
           .build();
 }
