@@ -63,11 +63,16 @@ public class DetectionMachineDetectionCreation
                         .filter(
                             tile -> {
                               var tileCoordinate = tile.getCoordinates();
+                              var x = tileCoordinate.getX();
+                              var y = tileCoordinate.getY();
+                              var z = tileCoordinate.getZ();
                               var lonLatMultiPolygonFromTile =
-                                  geometryConverter.getMultiPolygonFromTile(
-                                      tileCoordinate.getX(),
-                                      tileCoordinate.getY(),
-                                      tileCoordinate.getZ());
+                                  geometryConverter.getMultiPolygonFromTile(x, y, z);
+                              log.info(
+                                  "LonLatMultiPolygon from tile (x={}, y={}): {}",
+                                  x,
+                                  y,
+                                  lonLatMultiPolygonFromTile);
                               return providedLonLatJtsMultiPolygon.intersects(
                                   lonLatMultiPolygonFromTile);
                             })
@@ -84,6 +89,11 @@ public class DetectionMachineDetectionCreation
                         .toList())
             .flatMap(List::stream)
             .toList();
+    log.info(
+        "JTS provided zone geometry converted {}",
+        geometryConverter.writeGeometryAsString(providedLonLatJtsMultiPolygon));
+    log.info("tiling tasks used to convert to detection tasks: {}", tilingTasks.size());
+    log.info("detection tasks converted: {}", tileDetectionTasks.size());
 
     zoneDetectionJobService.consumeTasks(tileDetectionTasks);
 
