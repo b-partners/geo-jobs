@@ -25,8 +25,8 @@ import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.DetectionDelimitationRetriever;
 import app.bpartners.geojobs.service.SynchronousDetectionService;
-import app.bpartners.geojobs.service.detection.DetectionMachineDetectionCreation;
 import app.bpartners.geojobs.service.detection.DetectionTilingCreation;
+import app.bpartners.geojobs.service.detection.MachineDetectionCreation;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.event.DetectionRoofPropertiesRequestedService;
 import app.bpartners.geojobs.service.event.FeatureImageRequestedService;
@@ -45,7 +45,7 @@ class SynchronousDetectionServiceTest {
   DetectionFromStatisticRestMapper detectionFromStatisticRestMapperMock = mock();
   DetectionTilingCreation detectionTilingCreationMock = mock();
   ZoneTilingJobService zoneTilingJobServiceMock = mock();
-  DetectionMachineDetectionCreation detectionMachineDetectionCreationMock = mock();
+  MachineDetectionCreation machineDetectionCreationMock = mock();
   DetectionDelimitationRetriever detectionDelimitationRetrieverMock = mock();
   FeatureVggRequestedService featureVggRequestedServiceMock = mock();
   GeoJsonConversionJobService geoJsonConversionJobServiceMock = mock();
@@ -63,7 +63,7 @@ class SynchronousDetectionServiceTest {
           detectionFromStatisticRestMapperMock,
           detectionTilingCreationMock,
           zoneTilingJobServiceMock,
-          detectionMachineDetectionCreationMock,
+          machineDetectionCreationMock,
           detectionDelimitationRetrieverMock,
           featureVggRequestedServiceMock,
           geoJsonConversionJobServiceMock,
@@ -114,7 +114,7 @@ class SynchronousDetectionServiceTest {
     when(detectionRepositoryMock.save(any())).thenReturn(detectionWithCreatedZDJMock);
     doNothing().when(detectionDelimitationRetrieverMock).accept(detectionWithCreatedZTJMock);
     doNothing()
-        .when(detectionMachineDetectionCreationMock)
+        .when(machineDetectionCreationMock)
         .processMachineDetection(detectionWithCreatedZDJMock, createdZoneDetectionJob, tilingTasks);
     doNothing()
         .when(featureVggRequestedServiceMock)

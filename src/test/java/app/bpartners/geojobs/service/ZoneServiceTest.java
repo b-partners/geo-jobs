@@ -166,20 +166,16 @@ class ZoneServiceTest {
           detectionFromStatisticRestMapperMock, zoneDetectionJobServiceMock);
   DetectionAddressConsumer detectionAddressConsumerMock = mock();
   GeometryConverter geometryConverterMock = mock();
-  FeatureConverter featureConverterMock = mock();
   AreaPictureApi areaPictureApiMock = mock();
   SynchronousDetectionService synchronousDetectionServiceMock = mock();
   SynchronousDetectionValidator synchronousDetectionValidatorMock = mock();
   TileMultiPolygonFrame tileMultiPolygonFrameMock = mock();
-  DetectionZoneToProcessProvider detectionZoneToProcessProviderMock = mock();
   TileDuplicationRemover tileDuplicationRemoverMock = mock();
-  DetectionMachineDetectionCreation detectionMachineDetectionCreationMock =
-      new DetectionMachineDetectionCreation(
+  MachineDetectionCreation machineDetectionCreationMock =
+      new MachineDetectionCreation(
           zoneDetectionJobServiceMock,
           detectionJobValidatorMock,
           detectionMachineDetectionStatisticsComputerMock,
-          geometryConverterMock,
-          detectionZoneToProcessProviderMock,
           tileDuplicationRemoverMock);
   private final String geoServerDummyUrl = "http://dummy";
   private final String e2ApiKey = randomUUID().toString();
@@ -209,7 +205,7 @@ class ZoneServiceTest {
           detectionFromStatisticRestMapperMock,
           detectionTilingStatisticsComputerMock,
           detectionMachineDetectionStatisticsComputerMock,
-          detectionMachineDetectionCreationMock,
+          machineDetectionCreationMock,
           geoJsonConversionJobRepositoryMock,
           detectionAddressConsumerMock,
           synchronousDetectionServiceMock,
