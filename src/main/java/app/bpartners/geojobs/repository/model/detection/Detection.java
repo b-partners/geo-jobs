@@ -385,4 +385,31 @@ public class Detection implements Serializable {
 
     return detectionFeatures;
   }
+
+  public List<app.bpartners.geojobs.endpoint.rest.model.Feature> getTilingRestFeatures() {
+    if (getFeatureWithDelimitations() != null && !getFeatureWithDelimitations().isEmpty()) {
+      return getFeatureWithDelimitations().stream()
+          .map(
+              featureWithDelimitation -> {
+                var featureProperties = featureWithDelimitation.feature().getProperties();
+                return featureWithDelimitation.getRestDelimitations().stream()
+                    .map(
+                        delimitationFeature -> {
+                          var actualProperties = new HashMap<String, Object>();
+                          var delimitationProperties = delimitationFeature.getProperties();
+                          if (featureProperties != null) {
+                            actualProperties.putAll(featureProperties);
+                          }
+                          if (delimitationProperties != null) {
+                            actualProperties.putAll(delimitationProperties);
+                          }
+                          return delimitationFeature.properties(actualProperties);
+                        })
+                    .toList();
+              })
+          .flatMap(List::stream)
+          .toList();
+    }
+    return getProvidedGeoJsonZone();
+  }
 }
