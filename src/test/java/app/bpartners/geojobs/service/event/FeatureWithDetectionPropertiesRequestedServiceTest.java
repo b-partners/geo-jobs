@@ -20,7 +20,6 @@ import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.detection.*;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
-import app.bpartners.geojobs.service.FeatureDelimitationRetriever;
 import app.bpartners.geojobs.service.FeatureRoofResultPropertiesComputer;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.geojson.GeometryCorrector;
@@ -35,7 +34,6 @@ class FeatureWithDetectionPropertiesRequestedServiceTest {
   FeatureRoofResultPropertiesComputer featureRoofResultPropertiesComputerMock = mock();
   GeometryConverter geometryConverterMock = mock();
   MachineDetectedTileRepository machineDetectedTileRepositoryMock = mock();
-  FeatureDelimitationRetriever featureDelimitationRetrieverMock = mock();
   EventProducer eventProducerMock = mock();
   GeometryCorrector geometryCorrectorMock = mock();
   FeatureWithDetectionPropertiesRequestedService subject =
@@ -45,7 +43,6 @@ class FeatureWithDetectionPropertiesRequestedServiceTest {
           featureRoofResultPropertiesComputerMock,
           geometryConverterMock,
           machineDetectedTileRepositoryMock,
-          featureDelimitationRetrieverMock,
           eventProducerMock,
           geometryCorrectorMock);
 
@@ -160,7 +157,6 @@ class FeatureWithDetectionPropertiesRequestedServiceTest {
     verify(featureRoofResultPropertiesComputerMock, never()).apply(any(), any(), any(), any());
     verify(detectionRepositoryMock, never()).save(any());
     verify(machineDetectedTileRepositoryMock, never()).save(any());
-    verify(featureDelimitationRetrieverMock, never()).apply(any(), any());
     verify(eventProducerMock, never()).accept(any());
     verify(geometryConverterMock, never()).apply(any());
   }

@@ -5,20 +5,15 @@ import static app.bpartners.geojobs.endpoint.rest.model.Detection.GeoJsonDelimit
 import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.MULTI_POLYGON;
 import static app.bpartners.geojobs.repository.model.detection.DetectionFeatureType.PROVIDED_FEATURE;
 import static app.bpartners.geojobs.service.geojson.GeoJsonMapper.convertPixelToGeographicalCoordinates;
-import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.FeatureVggRequested;
 import app.bpartners.geojobs.endpoint.event.model.FeatureWithDetectionPropertiesRequested;
-import app.bpartners.geojobs.endpoint.rest.model.Detection;
-import app.bpartners.geojobs.endpoint.rest.model.Feature;
-import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
-import app.bpartners.geojobs.endpoint.rest.model.Polygon;
+import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.model.DetectedTile;
 import app.bpartners.geojobs.model.geometry.PolygonObjectType;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
-import app.bpartners.geojobs.service.FeatureDelimitationRetriever;
 import app.bpartners.geojobs.service.FeatureRoofResultPropertiesComputer;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.geojson.GeometryCorrector;
@@ -41,7 +36,6 @@ public class FeatureWithDetectionPropertiesRequestedService
   private final FeatureRoofResultPropertiesComputer featureRoofResultPropertiesComputer;
   private final GeometryConverter geometryConverter;
   private final MachineDetectedTileRepository machineDetectedTileRepository;
-  private final FeatureDelimitationRetriever featureDelimitationRetriever;
   private final EventProducer eventProducer;
   private final GeometryCorrector geometryCorrector;
 
@@ -89,32 +83,32 @@ public class FeatureWithDetectionPropertiesRequestedService
 
   public app.bpartners.geojobs.repository.model.detection.Detection apply(
       app.bpartners.geojobs.repository.model.detection.Detection detection,
-      Feature f,
-      List<Feature> delimitations) {
+      Feature currentFeature,
+      List<Feature> delimitationsFeature) {
     if (!detection.hasToitureModelName()) {
       log.error("Only BP_TOITURE model is supported to generated VGG from now");
       return null;
     }
     var geoJsonDelimitationType = detection.getGeoJsonDelimitationType();
     var featuresWithUpdatedProperties =
-        delimitations.stream()
+        delimitationsFeature.stream()
             .map(
-                feature -> {
+                delimitationFeature -> {
                   var latLonRoofGeometry =
                       getLonLatGeometryIntersectedWithCurrentFeature(
-                          geoJsonDelimitationType, feature, detection);
+                          geoJsonDelimitationType, delimitationFeature, currentFeature);
                   var detectedObjectPolygonGeometriesUsedForRateComputing =
                       getDetectedObjectPolygonGeometriesUsedForRateComputing(
                           detection.getZdjId(), latLonRoofGeometry);
                   var computedProperties =
                       featureRoofResultPropertiesComputer.apply(
-                          feature,
+                          delimitationFeature,
                           latLonRoofGeometry,
                           latLonRoofGeometry,
                           detectedObjectPolygonGeometriesUsedForRateComputing);
 
                   HashMap<String, Object> actualProperties = new HashMap<>();
-                  var featureProperties = feature.getProperties();
+                  var featureProperties = delimitationFeature.getProperties();
                   if (featureProperties != null) {
                     actualProperties.putAll(featureProperties);
                   }
@@ -122,9 +116,9 @@ public class FeatureWithDetectionPropertiesRequestedService
 
                   return toDomainFeature(
                       new Feature()
-                          .type(feature.getType())
+                          .type(delimitationFeature.getType())
                           .properties(actualProperties)
-                          .geometry(feature.getGeometry()));
+                          .geometry(delimitationFeature.getGeometry()));
                 })
             .toList();
 
@@ -135,11 +129,12 @@ public class FeatureWithDetectionPropertiesRequestedService
           List.of(
               toDomainFeature(
                   new Feature()
-                      .type(f.getType())
+                      .type(currentFeature.getType())
                       .properties(featuresWithUpdatedProperties.getFirst().getProperties())
-                      .geometry(f.getGeometry()))),
+                      .geometry(currentFeature.getGeometry()))),
           PROVIDED_FEATURE);
     }
+
     return detectionRepository.save(detection);
   }
 
@@ -188,7 +183,7 @@ public class FeatureWithDetectionPropertiesRequestedService
                         if (intersectionBetweenDetectedObjectAndDelimitationObjectType.isEmpty()) {
                           return null;
                         }
-                        List<PolygonObjectType> polygonObjectTypes = new java.util.ArrayList<>();
+                        List<PolygonObjectType> polygonObjectTypes = new ArrayList<>();
                         if (intersectionBetweenDetectedObjectAndDelimitationObjectType
                             instanceof org.locationtech.jts.geom.Polygon polygon) {
                           polygonObjectTypes.add(
@@ -215,46 +210,32 @@ public class FeatureWithDetectionPropertiesRequestedService
 
   private Geometry getLonLatGeometryIntersectedWithCurrentFeature(
       Detection.GeoJsonDelimitationTypeEnum geoJsonDelimitationType,
-      Feature feature,
-      app.bpartners.geojobs.repository.model.detection.Detection detection) {
-    Geometry latLonRoofGeometry;
-    if (ROOF.equals(geoJsonDelimitationType)) {
-      var geometryInstance = feature.getGeometry().getActualInstance();
-      var multiPolygon = getMultiPolygonFromRestFeatureGeometryInstance(geometryInstance);
-      latLonRoofGeometry = geometryConverter.apply(multiPolygon.getCoordinates());
-    } else {
-      var featureWithDelimitationList = detection.getFeatureWithDelimitations();
-      var actualDelimitation =
-          featureDelimitationRetriever.apply(featureWithDelimitationList, feature);
-      if (actualDelimitation == null) {
-        throw new NoSuchElementException("No delimitation found for " + feature.getGeometry());
-      }
-      var unifiedDelimitationMultiPolygon =
-          actualDelimitation.getRestDelimitations().stream()
-              .map(
-                  f ->
-                      getMultiPolygonFromRestFeatureGeometryInstance(
-                          f.getGeometry().getActualInstance()))
-              .map(m -> geometryConverter.apply(m.getCoordinates()))
-              .reduce(unifyMultiPolygon())
-              .orElseThrow(
-                  () ->
-                      new IllegalStateException(
-                          "Unable to compute delimitations multipolygon while computing feature"
-                              + " properties with detection result"));
-      var featureMultiPolygonGeometry =
-          geometryConverter.apply(
-              getMultiPolygonFromRestFeatureGeometryInstance(
-                      actualDelimitation.getRestFeature().getGeometry().getActualInstance())
-                  .getCoordinates());
-      var intersectionBetweenFeatureMultiPolygonAndDelimitationMultiPolygon =
-          unifiedDelimitationMultiPolygon.intersection(featureMultiPolygonGeometry);
-      if (intersectionBetweenFeatureMultiPolygonAndDelimitationMultiPolygon.isEmpty()) {
-        throw new IllegalStateException("No intersection between feature and delimitation");
-      }
-      latLonRoofGeometry = intersectionBetweenFeatureMultiPolygonAndDelimitationMultiPolygon;
+      Feature currentDelimitationFeature,
+      Feature currentFeature) {
+    var currentDelimitationFeatureRestMultiPolygon =
+        getMultiPolygonFromRestFeatureGeometryInstance(
+            currentDelimitationFeature.getGeometry().getActualInstance());
+    var currentDelimitationGeometry =
+        geometryConverter.apply(currentDelimitationFeatureRestMultiPolygon.getCoordinates());
+    if (currentFeature.getGeometry().getActualInstance() instanceof Point) {
+      return currentDelimitationGeometry;
     }
-    return latLonRoofGeometry;
+    if (ROOF.equals(geoJsonDelimitationType)) {
+      var geometryInstance = currentDelimitationFeature.getGeometry().getActualInstance();
+      var multiPolygon = getMultiPolygonFromRestFeatureGeometryInstance(geometryInstance);
+      return geometryConverter.apply(multiPolygon.getCoordinates());
+    }
+    var currentFeatureMultiPolygonGeometry =
+        geometryConverter.apply(
+            getMultiPolygonFromRestFeatureGeometryInstance(
+                    currentFeature.getGeometry().getActualInstance())
+                .getCoordinates());
+    var intersectionBetweenFeatureMultiPolygonAndDelimitationMultiPolygon =
+        currentDelimitationGeometry.intersection(currentFeatureMultiPolygonGeometry);
+    if (intersectionBetweenFeatureMultiPolygonAndDelimitationMultiPolygon.isEmpty()) {
+      throw new IllegalStateException("No intersection between feature and delimitation");
+    }
+    return intersectionBetweenFeatureMultiPolygonAndDelimitationMultiPolygon;
   }
 
   private MultiPolygon getMultiPolygonFromRestFeatureGeometryInstance(Object geometryInstance) {
