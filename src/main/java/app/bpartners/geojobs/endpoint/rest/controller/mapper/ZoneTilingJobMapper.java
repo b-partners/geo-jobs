@@ -100,7 +100,7 @@ public class ZoneTilingJobMapper {
   }
 
   public CreateZoneTilingJob from(Detection detection) {
-    var featureList = getTilingFeatures(detection);
+    var featureList = detection.getTilingRestFeatures();
     var zoom =
         featureList.isEmpty() || featureList.getFirst().getProperties() == null
             ? HOUSES_0.getZoomLevel()
@@ -115,33 +115,5 @@ public class ZoneTilingJobMapper {
         .geoServerUrl(overallConfiguration.getGeoServerUrl())
         .features(featureList)
         .zoomLevel(fromValue(ArcgisImageZoom.fromZoomLevel(zoom).name()));
-  }
-
-  private static List<Feature> getTilingFeatures(Detection detection) {
-    if (detection.getFeatureWithDelimitations() != null
-        && !detection.getFeatureWithDelimitations().isEmpty()) {
-      return detection.getFeatureWithDelimitations().stream()
-          .map(
-              featureWithDelimitation -> {
-                var featureProperties = featureWithDelimitation.feature().getProperties();
-                return featureWithDelimitation.getRestDelimitations().stream()
-                    .map(
-                        delimitationFeature -> {
-                          var actualProperties = new HashMap<String, Object>();
-                          var delimitationProperties = delimitationFeature.getProperties();
-                          if (featureProperties != null) {
-                            actualProperties.putAll(featureProperties);
-                          }
-                          if (delimitationProperties != null) {
-                            actualProperties.putAll(delimitationProperties);
-                          }
-                          return delimitationFeature.properties(actualProperties);
-                        })
-                    .toList();
-              })
-          .flatMap(List::stream)
-          .toList();
-    }
-    return detection.getProvidedGeoJsonZone();
   }
 }
