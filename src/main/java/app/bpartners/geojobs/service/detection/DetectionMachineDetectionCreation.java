@@ -70,11 +70,6 @@ public class DetectionMachineDetectionCreation
                   return tileDetectionTask;
                 })
             .toList();
-    log.info(
-        "JTS provided zone geometry converted {}",
-        geometryConverter.writeGeometryAsString(providedLonLatJtsMultiPolygon));
-    log.info("tiling tasks used to convert to detection tasks: {}", tilingTasks.size());
-    log.info("detection tasks converted: {}", tileDetectionTasks.size());
 
     zoneDetectionJobService.consumeTasks(tileDetectionTasks);
 
