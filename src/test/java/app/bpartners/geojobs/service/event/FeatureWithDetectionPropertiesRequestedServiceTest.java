@@ -77,6 +77,7 @@ class FeatureWithDetectionPropertiesRequestedServiceTest {
     when(detectionMock.hasToitureModelName()).thenReturn(true);
     when(detectionMock.getZdjId()).thenReturn(zoneDetectionJobIdentifier);
     when(detectionMock.getGeoJsonDelimitationType()).thenReturn(ROOF);
+    when(detectionMock.getDelimitationOf(featureMock)).thenReturn(List.of(featureMock));
 
     when(featureMock.getProperties()).thenReturn(featureProperties);
     when(featureMock.getGeometry()).thenReturn(providedFeatureGeometry);
