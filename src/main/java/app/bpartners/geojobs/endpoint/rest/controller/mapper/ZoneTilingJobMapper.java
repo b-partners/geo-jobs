@@ -100,22 +100,48 @@ public class ZoneTilingJobMapper {
   }
 
   public CreateZoneTilingJob from(Detection detection) {
-    var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
+    var featureList = getTilingFeatures(detection);
     var zoom =
-        (providedGeoJsonZone == null
-                || providedGeoJsonZone.isEmpty()
-                || providedGeoJsonZone.getFirst().getProperties() == null)
+        featureList.isEmpty() || featureList.getFirst().getProperties() == null
             ? HOUSES_0.getZoomLevel()
-            : providedGeoJsonZone.getFirst().getProperties().get("zoom") == null
+            : featureList.getFirst().getProperties().get("zoom") == null
                 ? HOUSES_0.getZoomLevel()
-                : (Integer) providedGeoJsonZone.getFirst().getProperties().get("zoom");
+                : (Integer) featureList.getFirst().getProperties().get("zoom");
     var overallConfiguration = detection.getGeoServerProperties();
     return new CreateZoneTilingJob()
         .emailReceiver(detection.getEmailReceiver())
         .zoneName(detection.getZoneName())
         .geoServerParameter(overallConfiguration.getGeoServerParameter())
         .geoServerUrl(overallConfiguration.getGeoServerUrl())
-        .features(detection.getProvidedGeoJsonZone())
+        .features(featureList)
         .zoomLevel(fromValue(ArcgisImageZoom.fromZoomLevel(zoom).name()));
+  }
+
+  private static List<Feature> getTilingFeatures(Detection detection) {
+    if (detection.getFeatureWithDelimitations() != null
+        && !detection.getFeatureWithDelimitations().isEmpty()) {
+      return detection.getFeatureWithDelimitations().stream()
+          .map(
+              featureWithDelimitation -> {
+                var featureProperties = featureWithDelimitation.feature().getProperties();
+                return featureWithDelimitation.getRestDelimitations().stream()
+                    .map(
+                        delimitationFeature -> {
+                          var actualProperties = new HashMap<String, Object>();
+                          var delimitationProperties = delimitationFeature.getProperties();
+                          if (featureProperties != null) {
+                            actualProperties.putAll(featureProperties);
+                          }
+                          if (delimitationProperties != null) {
+                            actualProperties.putAll(delimitationProperties);
+                          }
+                          return delimitationFeature.properties(actualProperties);
+                        })
+                    .toList();
+              })
+          .flatMap(List::stream)
+          .toList();
+    }
+    return detection.getProvidedGeoJsonZone();
   }
 }
