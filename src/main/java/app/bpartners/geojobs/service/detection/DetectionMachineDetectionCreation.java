@@ -7,23 +7,20 @@ import static app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob.
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
-import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.endpoint.rest.validator.ZoneDetectionJobValidator;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
-import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.DetectionZoneToProcessProvider;
+import app.bpartners.geojobs.service.TileDuplicationRemover;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.util.*;
 import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -38,6 +35,7 @@ public class DetectionMachineDetectionCreation
       detectionMachineDetectionStatisticsComputer;
   private final GeometryConverter geometryConverter;
   private final DetectionZoneToProcessProvider detectionZoneToProcessProvider;
+  private final TileDuplicationRemover tileDuplicationRemover;
 
   @Override
   public app.bpartners.geojobs.endpoint.rest.model.Detection apply(
@@ -57,7 +55,9 @@ public class DetectionMachineDetectionCreation
   public void processMachineDetection(
       Detection detection, ZoneDetectionJob zoneDetectionJob, List<ParcelTilingTask> tilingTasks) {
     var providedLonLatJtsMultiPolygon = detectionZoneToProcessProvider.apply(detection);
-    var tiles = retrieveUniqueTilesFrom(tilingTasks);
+    var tilesWithDuplicatedCoordinates =
+        tilingTasks.stream().map(ParcelTilingTask::getTiles).flatMap(List::stream).toList();
+    var tiles = tileDuplicationRemover.apply(tilesWithDuplicatedCoordinates);
     var tileDetectionTasks =
         tiles.stream()
             .map(
@@ -89,27 +89,5 @@ public class DetectionMachineDetectionCreation
             .creationDatetime(now())
             .build());
     zoneDetectionJobService.save(zoneDetectionJob.toBuilder().statusHistory(statusHistory).build());
-  }
-
-  @NotNull
-  private static Set<Tile> retrieveUniqueTilesFrom(List<ParcelTilingTask> tilingTasks) {
-    var tiles =
-        tilingTasks.stream()
-            .map(ParcelTilingTask::getTiles)
-            .flatMap(List::stream)
-            .collect(Collectors.toSet());
-    log.info("tiles collected through tiling tasks: {}", tiles.size());
-    Map<TileCoordinates, Tile> map = new HashMap<>();
-    for (Tile tile : tiles) {
-      TileCoordinates key = tile.getCoordinates();
-      Tile existing = map.get(key);
-
-      if (existing == null || tile.getCreationDatetime().isAfter(existing.getCreationDatetime())) {
-        map.put(key, tile);
-      }
-    }
-    var tilesWithoutDuplicatedCoordinates = new HashSet<Tile>(map.values());
-    log.info("tiles without duplicated coordinates: {}", tilesWithoutDuplicatedCoordinates.size());
-    return tilesWithoutDuplicatedCoordinates;
   }
 }

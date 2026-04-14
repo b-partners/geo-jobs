@@ -24,6 +24,7 @@ import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
+import app.bpartners.geojobs.service.TileDuplicationRemover;
 import app.bpartners.geojobs.service.TileImageBlur;
 import app.bpartners.geojobs.service.TileImagesAssembler;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
@@ -31,9 +32,7 @@ import app.bpartners.geojobs.service.tiling.TileFinder;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import javax.imageio.ImageIO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,6 +50,7 @@ class FeatureImageRequestedServiceTest {
   TileImageBlur tileImageBlurMock = mock();
   WhiteImageDetector whiteImageDetectorMock = mock();
   TileFinder tileFinderMock = mock();
+  TileDuplicationRemover tileDuplicationRemoverMock = mock();
   FeatureImageRequestedService subject =
       new FeatureImageRequestedService(
           detectionRepositoryMock,
@@ -62,7 +62,8 @@ class FeatureImageRequestedServiceTest {
           tileImageBlurMock,
           whiteImageDetectorMock,
           tileFinderMock,
-          mock());
+          mock(),
+          tileDuplicationRemoverMock);
 
   @BeforeEach
   void setUp() {
@@ -72,6 +73,8 @@ class FeatureImageRequestedServiceTest {
     List<TileCoordinates> tileCoordinatesMock = mock();
     when(tileCoordinatesMock.contains(any(TileCoordinates.class))).thenReturn(true);
     when(tileFinderMock.getFromGeoJsonPolygon(any(), anyInt())).thenReturn(tileCoordinatesMock);
+    when(tileDuplicationRemoverMock.apply(any()))
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
   }
 
   @Test
@@ -137,13 +140,13 @@ class FeatureImageRequestedServiceTest {
     when(detectionMock.getProvidedGeoJsonZone())
         .thenReturn(List.of(new Feature().properties(Map.of("zoom", 20, "id", featureId))));
 
-    var tilesWithImagesMock =
-        List.of(
-            Tile.builder()
-                .coordinates(new TileCoordinates())
-                .bucketPath(randomBucketPath)
-                .image(imageFileMock)
-                .build());
+    var tilesWithImagesMock = new ArrayList<Tile>();
+    tilesWithImagesMock.add(
+        Tile.builder()
+            .coordinates(new TileCoordinates())
+            .bucketPath(randomBucketPath)
+            .image(imageFileMock)
+            .build());
     when(tilingTaskRepositoryMock.findAllByJobId(tilingJobIdentifier))
         .thenReturn(
             List.of(

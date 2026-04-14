@@ -24,13 +24,15 @@ class DetectionMachineDetectionCreationTest {
   DetectionMachineDetectionStatisticsComputer detectionStatisticsComputerMock = mock();
   GeometryConverter geometryConverterMock = mock();
   DetectionZoneToProcessProvider detectionZoneToProcessProviderMock = mock();
+  TileDuplicationRemover tileDuplicationRemoverMock = mock();
   DetectionMachineDetectionCreation subject =
       new DetectionMachineDetectionCreation(
           zoneDetectionJobServiceMock,
           detectionJobValidatorMock,
           detectionStatisticsComputerMock,
           geometryConverterMock,
-          detectionZoneToProcessProviderMock);
+          detectionZoneToProcessProviderMock,
+          tileDuplicationRemoverMock);
 
   @Test
   void job_validate_and_processed() {
