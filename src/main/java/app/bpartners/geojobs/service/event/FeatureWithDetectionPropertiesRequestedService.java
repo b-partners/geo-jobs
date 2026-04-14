@@ -51,7 +51,8 @@ public class FeatureWithDetectionPropertiesRequestedService
     var feature = event.getFeature();
     entityManager.clear();
     var detection = detectionRepository.findById(detectionIdentifier).orElseThrow();
-    var savedDetection = apply(detection, feature);
+    var delimitations = detection.getDelimitationOf(feature);
+    var savedDetection = apply(detection, feature, delimitations);
     if (savedDetection != null) {
       var optionalProvidedUpdatedFeature =
           savedDetection.getProvidedGeoJsonZone().stream()
@@ -87,40 +88,58 @@ public class FeatureWithDetectionPropertiesRequestedService
   }
 
   public app.bpartners.geojobs.repository.model.detection.Detection apply(
-      app.bpartners.geojobs.repository.model.detection.Detection detection, Feature feature) {
+      app.bpartners.geojobs.repository.model.detection.Detection detection,
+      Feature f,
+      List<Feature> delimitations) {
     if (!detection.hasToitureModelName()) {
       log.error("Only BP_TOITURE model is supported to generated VGG from now");
       return null;
     }
     var geoJsonDelimitationType = detection.getGeoJsonDelimitationType();
-    var latLonRoofGeometry =
-        getLonLatGeometryIntersectedWithCurrentFeature(geoJsonDelimitationType, feature, detection);
-    var detectedObjectPolygonGeometriesUsedForRateComputing =
-        getDetectedObjectPolygonGeometriesUsedForRateComputing(
-            detection.getZdjId(), latLonRoofGeometry);
-    var computedProperties =
-        featureRoofResultPropertiesComputer.apply(
-            feature,
-            latLonRoofGeometry,
-            latLonRoofGeometry,
-            detectedObjectPolygonGeometriesUsedForRateComputing);
+    var featuresWithUpdatedProperties =
+        delimitations.stream()
+            .map(
+                feature -> {
+                  var latLonRoofGeometry =
+                      getLonLatGeometryIntersectedWithCurrentFeature(
+                          geoJsonDelimitationType, feature, detection);
+                  var detectedObjectPolygonGeometriesUsedForRateComputing =
+                      getDetectedObjectPolygonGeometriesUsedForRateComputing(
+                          detection.getZdjId(), latLonRoofGeometry);
+                  var computedProperties =
+                      featureRoofResultPropertiesComputer.apply(
+                          feature,
+                          latLonRoofGeometry,
+                          latLonRoofGeometry,
+                          detectedObjectPolygonGeometriesUsedForRateComputing);
 
-    HashMap<String, Object> actualProperties = new HashMap<>();
-    var featureProperties = feature.getProperties();
-    if (featureProperties != null) {
-      actualProperties.putAll(featureProperties);
+                  HashMap<String, Object> actualProperties = new HashMap<>();
+                  var featureProperties = feature.getProperties();
+                  if (featureProperties != null) {
+                    actualProperties.putAll(featureProperties);
+                  }
+                  actualProperties.putAll(computedProperties);
+
+                  return toDomainFeature(
+                      new Feature()
+                          .type(feature.getType())
+                          .properties(actualProperties)
+                          .geometry(feature.getGeometry()));
+                })
+            .toList();
+
+    // TODO: Very bad, must save inside feature delimitation only and retrieve updated properties
+    // through delimitation not provided
+    if (featuresWithUpdatedProperties.size() == 1) {
+      detection.addFeatures(
+          List.of(
+              toDomainFeature(
+                  new Feature()
+                      .type(f.getType())
+                      .properties(featuresWithUpdatedProperties.getFirst().getProperties())
+                      .geometry(f.getGeometry()))),
+          PROVIDED_FEATURE);
     }
-    actualProperties.putAll(computedProperties);
-
-    detection.addFeatures(
-        List.of(
-            toDomainFeature(
-                new Feature()
-                    .type(feature.getType())
-                    .properties(actualProperties)
-                    .geometry(feature.getGeometry()))),
-        PROVIDED_FEATURE);
-
     return detectionRepository.save(detection);
   }
 

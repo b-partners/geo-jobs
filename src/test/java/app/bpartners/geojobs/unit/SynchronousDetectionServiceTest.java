@@ -96,6 +96,7 @@ class SynchronousDetectionServiceTest {
     when(detectionMock.getDetectableObjectConfigurations())
         .thenReturn(List.of(new DetectableObjectConfiguration()));
     when(detectionMock.getProvidedGeoJsonZone()).thenReturn(List.of(feature));
+    when(detectionWithVGGAndImagesFinished.getDelimitationOf(feature)).thenReturn(List.of(feature));
     when(detectionWithVGGAndImagesFinished.getVggFileKey())
         .thenReturn(null)
         .thenReturn("vggFileKey");
@@ -125,7 +126,7 @@ class SynchronousDetectionServiceTest {
     when(detectionRoofPropertiesRequestedServiceMock.apply(detectionId))
         .thenReturn(detectionWithVGGAndImagesFinished);
     when(featureWithDetectionPropertiesRequestedServiceMock.apply(
-            detectionWithVGGAndImagesFinished, feature))
+            detectionWithVGGAndImagesFinished, feature, List.of(feature)))
         .thenReturn(detectionWithVGGAndImagesFinished);
 
     when(restDetectionResult.getStep())

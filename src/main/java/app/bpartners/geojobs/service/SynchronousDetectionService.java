@@ -147,7 +147,9 @@ public class SynchronousDetectionService
     var detectionWithResultProperties =
         featureWithDetectionPropertiesRequestedService.apply(
             detectionWithComputedRoofProperties,
-            detectionWithComputedRoofProperties.getProvidedGeoJsonZone().getFirst());
+            detectionWithComputedRoofProperties.getProvidedGeoJsonZone().getFirst(),
+            detectionWithComputedRoofProperties.getDelimitationOf(
+                detectionWithComputedRoofProperties.getProvidedGeoJsonZone().getFirst()));
     log.info(
         "Detection result properties computing finished in {} seconds for detection(e2Id={})",
         Duration.between(detectionResultPropertiesComputingStart, now()).toSeconds(),

@@ -395,15 +395,7 @@ public class Detection implements Serializable {
                 return featureWithDelimitation.getRestDelimitations().stream()
                     .map(
                         delimitationFeature -> {
-                          var actualProperties = new HashMap<String, Object>();
-                          var delimitationProperties = delimitationFeature.getProperties();
-                          if (featureProperties != null) {
-                            actualProperties.putAll(featureProperties);
-                          }
-                          if (delimitationProperties != null) {
-                            actualProperties.putAll(delimitationProperties);
-                          }
-                          return delimitationFeature.properties(actualProperties);
+                          return copyFeatureProperties(delimitationFeature, featureProperties);
                         })
                     .toList();
               })
@@ -411,5 +403,39 @@ public class Detection implements Serializable {
           .toList();
     }
     return getProvidedGeoJsonZone();
+  }
+
+  public List<app.bpartners.geojobs.endpoint.rest.model.Feature> getDelimitationOf(
+      app.bpartners.geojobs.endpoint.rest.model.Feature feature) {
+    return getFeatureWithDelimitations().stream()
+        .filter(
+            featureWithDelimitation ->
+                Objects.equals(
+                    featureWithDelimitation.getRestFeature().getGeometry(), feature.getGeometry()))
+        .map(
+            featureWithDelimitation -> {
+              var featureProperties = featureWithDelimitation.feature().getProperties();
+              return featureWithDelimitation.getRestDelimitations().stream()
+                  .map(
+                      delimitationFeature ->
+                          copyFeatureProperties(delimitationFeature, featureProperties))
+                  .toList();
+            })
+        .flatMap(List::stream)
+        .toList();
+  }
+
+  private app.bpartners.geojobs.endpoint.rest.model.Feature copyFeatureProperties(
+      app.bpartners.geojobs.endpoint.rest.model.Feature feature,
+      HashMap<String, Object> featureProperties) {
+    var actualProperties = new HashMap<String, Object>();
+    var delimitationProperties = feature.getProperties();
+    if (featureProperties != null) {
+      actualProperties.putAll(featureProperties);
+    }
+    if (delimitationProperties != null) {
+      actualProperties.putAll(delimitationProperties);
+    }
+    return feature.properties(actualProperties);
   }
 }
