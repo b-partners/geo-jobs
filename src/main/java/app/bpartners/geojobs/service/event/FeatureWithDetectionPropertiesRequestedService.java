@@ -18,14 +18,12 @@ import app.bpartners.geojobs.model.DetectedTile;
 import app.bpartners.geojobs.model.geometry.PolygonObjectType;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
-import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.service.FeatureDelimitationRetriever;
 import app.bpartners.geojobs.service.FeatureRoofResultPropertiesComputer;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.geojson.GeometryCorrector;
 import jakarta.persistence.EntityManager;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -130,90 +128,70 @@ public class FeatureWithDetectionPropertiesRequestedService
       String machineZDJIdentifier, Geometry latLonDelimitationObjectType) {
     var machineDetectedTiles =
         machineDetectedTileRepository.findAllByZdjJobId(machineZDJIdentifier);
-    log.info("detected tile size {}", machineDetectedTiles.size());
-    AtomicInteger usureCounter = new AtomicInteger(0);
-    AtomicInteger humiditeCounter = new AtomicInteger(0);
-    AtomicInteger moisissureCounter = new AtomicInteger(0);
-    var polygonObjectTypeList =
-        machineDetectedTiles.stream()
-            .map(
-                machineDetectedTile ->
-                    DetectedTile.builder()
-                        .tile(machineDetectedTile.getTile())
-                        .detectedObjects(machineDetectedTile.getDetectedObjects())
-                        .build())
-            .map(
-                detectedTile -> {
-                  var tile = detectedTile.getTile();
-                  var xTile = tile.getCoordinates().getX();
-                  var yTile = tile.getCoordinates().getY();
-                  var zoom = tile.getCoordinates().getZ();
-                  return detectedTile.getDetectedObjects().stream()
-                      .map(
-                          detectedObject -> {
-                            var multiPolygonDetectedObject =
-                                getMultiPolygonFromRestFeatureGeometryInstance(
-                                    detectedObject.getFeature().getGeometry().getActualInstance());
-                            var multiPolygonDetectedObjectCoordinates =
-                                multiPolygonDetectedObject.getCoordinates();
-                            var latLonCoordinates =
-                                convertPixelToGeographicalCoordinates(
-                                    xTile,
-                                    yTile,
-                                    zoom,
-                                    DEFAULT_IMAGE_SIZE,
-                                    multiPolygonDetectedObjectCoordinates);
-                            DetectableType detectableObjectType =
-                                detectedObject.getDetectableObjectType();
-                            var latLonMultiPolygonDetectedObject =
-                                geometryConverter.apply(latLonCoordinates);
+    return machineDetectedTiles.stream()
+        .map(
+            machineDetectedTile ->
+                DetectedTile.builder()
+                    .tile(machineDetectedTile.getTile())
+                    .detectedObjects(machineDetectedTile.getDetectedObjects())
+                    .build())
+        .map(
+            detectedTile -> {
+              var tile = detectedTile.getTile();
+              var xTile = tile.getCoordinates().getX();
+              var yTile = tile.getCoordinates().getY();
+              var zoom = tile.getCoordinates().getZ();
+              return detectedTile.getDetectedObjects().stream()
+                  .map(
+                      detectedObject -> {
+                        var multiPolygonDetectedObject =
+                            getMultiPolygonFromRestFeatureGeometryInstance(
+                                detectedObject.getFeature().getGeometry().getActualInstance());
+                        var multiPolygonDetectedObjectCoordinates =
+                            multiPolygonDetectedObject.getCoordinates();
+                        var latLonCoordinates =
+                            convertPixelToGeographicalCoordinates(
+                                xTile,
+                                yTile,
+                                zoom,
+                                DEFAULT_IMAGE_SIZE,
+                                multiPolygonDetectedObjectCoordinates);
+                        var detectableObjectType = detectedObject.getDetectableObjectType();
+                        var latLonMultiPolygonDetectedObject =
+                            geometryConverter.apply(latLonCoordinates);
 
-                            var correctedLatLonDetectedObjectGeometry =
-                                geometryCorrector.apply(latLonMultiPolygonDetectedObject);
+                        var correctedLatLonDetectedObjectGeometry =
+                            geometryCorrector.apply(latLonMultiPolygonDetectedObject);
 
-                            var intersectionBetweenDetectedObjectAndDelimitationObjectType =
-                                latLonDelimitationObjectType.intersection(
-                                    correctedLatLonDetectedObjectGeometry);
-                            if (intersectionBetweenDetectedObjectAndDelimitationObjectType
-                                .isEmpty()) {
-                              return null;
-                            }
-                            if (detectableObjectType.toString().contains("MOISISSURE")) {
-                              moisissureCounter.incrementAndGet();
-                            }
-                            if (detectableObjectType.toString().contains("HUMIDITE")) {
-                              humiditeCounter.incrementAndGet();
-                            }
-                            if (detectableObjectType.toString().contains("USURE")) {
-                              usureCounter.incrementAndGet();
-                            }
-                            List<PolygonObjectType> polygonObjectTypes = new ArrayList<>();
-                            if (intersectionBetweenDetectedObjectAndDelimitationObjectType
-                                instanceof org.locationtech.jts.geom.Polygon polygon) {
-                              polygonObjectTypes.add(
-                                  new PolygonObjectType(polygon, detectableObjectType));
-                            } else if (intersectionBetweenDetectedObjectAndDelimitationObjectType
-                                instanceof org.locationtech.jts.geom.MultiPolygon multiPolygon) {
-                              for (int i = 0; i < multiPolygon.getNumGeometries(); i++) {
-                                polygonObjectTypes.add(
-                                    new PolygonObjectType(
-                                        (org.locationtech.jts.geom.Polygon)
-                                            multiPolygon.getGeometryN(i),
-                                        detectableObjectType));
-                              }
-                            }
-                            return polygonObjectTypes;
-                          })
-                      .filter(Objects::nonNull)
-                      .flatMap(List::stream)
-                      .toList();
-                })
-            .flatMap(List::stream)
-            .toList();
-    log.info("moisissure count {}", moisissureCounter.get());
-    log.info("humidite count {}", humiditeCounter.get());
-    log.info("usure count {}", usureCounter.get());
-    return polygonObjectTypeList;
+                        var intersectionBetweenDetectedObjectAndDelimitationObjectType =
+                            latLonDelimitationObjectType.intersection(
+                                correctedLatLonDetectedObjectGeometry);
+                        if (intersectionBetweenDetectedObjectAndDelimitationObjectType.isEmpty()) {
+                          return null;
+                        }
+                        List<PolygonObjectType> polygonObjectTypes = new java.util.ArrayList<>();
+                        if (intersectionBetweenDetectedObjectAndDelimitationObjectType
+                            instanceof org.locationtech.jts.geom.Polygon polygon) {
+                          polygonObjectTypes.add(
+                              new PolygonObjectType(polygon, detectableObjectType));
+                        } else if (intersectionBetweenDetectedObjectAndDelimitationObjectType
+                            instanceof org.locationtech.jts.geom.MultiPolygon multiPolygon) {
+                          for (int i = 0; i < multiPolygon.getNumGeometries(); i++) {
+                            polygonObjectTypes.add(
+                                new PolygonObjectType(
+                                    (org.locationtech.jts.geom.Polygon)
+                                        multiPolygon.getGeometryN(i),
+                                    detectableObjectType));
+                          }
+                        }
+                        return polygonObjectTypes;
+                      })
+                  .filter(Objects::nonNull)
+                  .flatMap(List::stream)
+                  .toList();
+            })
+        .flatMap(List::stream)
+        .toList();
   }
 
   private Geometry getLonLatGeometryIntersectedWithCurrentFeature(
