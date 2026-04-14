@@ -215,6 +215,7 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
                           return null;
                         })
             .toList();
+    log.info("Callables to consume: " + callables.size() + " tile detection tasks");
 
     workers.invokeAll(callables);
   }
