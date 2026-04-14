@@ -42,7 +42,7 @@ public class SynchronousDetectionService
   private final DetectionFromStatisticRestMapper detectionFromStatisticRestMapper;
   private final DetectionTilingCreation detectionTilingCreation;
   private final ZoneTilingJobService zoneTilingJobService;
-  private final DetectionMachineDetectionCreation detectionMachineDetectionCreation;
+  private final MachineDetectionCreation machineDetectionCreation;
   private final DetectionDelimitationRetriever detectionDelimitationRetriever;
   private final FeatureVggRequestedService zoneVggRequestedService;
   private final GeoJsonConversionJobService geoJsonConversionJobService;
@@ -118,7 +118,7 @@ public class SynchronousDetectionService
     Callable<Void> machineDetectionProcessCallableVoidList =
         () -> {
           // Machine detection step
-          detectionMachineDetectionCreation.processMachineDetection(
+          machineDetectionCreation.processMachineDetection(
               detectionWithCreatedZDJ, createdZoneDetectionJob, tilingTasks);
           return null;
         };

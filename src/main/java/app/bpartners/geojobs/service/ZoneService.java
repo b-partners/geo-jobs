@@ -87,7 +87,7 @@ public class ZoneService {
   private final DetectionTilingStatisticsComputer detectionTilingStatisticsComputer;
   private final DetectionMachineDetectionStatisticsComputer
       detectionMachineDetectionStatisticsComputer;
-  private final DetectionMachineDetectionCreation detectionMachineDetectionCreation;
+  private final MachineDetectionCreation machineDetectionCreation;
   private final GeoJsonConversionJobRepository geoJsonConversionJobRepository;
   private final DetectionAddressConsumer detectionAddressConsumer;
   private final SynchronousDetectionService synchronousDetectionService;
@@ -381,7 +381,7 @@ public class ZoneService {
     var machineZoneDetectionJob = zoneDetectionJobService.findById(detectionJobId);
 
     if (machineZoneDetectionJob.isPending() && zoneTilingJob.isFinished()) {
-      detectionMachineDetectionCreation.apply(detection, zoneTilingJob);
+      machineDetectionCreation.apply(detection, zoneTilingJob);
     }
     if (machineZoneDetectionJob.isFinished()) {
       if (zoneDetectionJobService.countInDoubtDetectedTileToDeliveryById(detectionJobId) == 0L) {

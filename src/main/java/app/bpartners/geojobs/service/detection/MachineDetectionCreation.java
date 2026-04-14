@@ -14,9 +14,7 @@ import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
-import app.bpartners.geojobs.service.DetectionZoneToProcessProvider;
 import app.bpartners.geojobs.service.TileDuplicationRemover;
-import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.util.*;
 import java.util.function.BiFunction;
 import lombok.RequiredArgsConstructor;
@@ -26,15 +24,13 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class DetectionMachineDetectionCreation
+public class MachineDetectionCreation
     implements BiFunction<
         Detection, ZoneTilingJob, app.bpartners.geojobs.endpoint.rest.model.Detection> {
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final ZoneDetectionJobValidator detectionJobValidator;
   private final DetectionMachineDetectionStatisticsComputer
       detectionMachineDetectionStatisticsComputer;
-  private final GeometryConverter geometryConverter;
-  private final DetectionZoneToProcessProvider detectionZoneToProcessProvider;
   private final TileDuplicationRemover tileDuplicationRemover;
 
   @Override
@@ -54,7 +50,6 @@ public class DetectionMachineDetectionCreation
 
   public void processMachineDetection(
       Detection detection, ZoneDetectionJob zoneDetectionJob, List<ParcelTilingTask> tilingTasks) {
-    var providedLonLatJtsMultiPolygon = detectionZoneToProcessProvider.apply(detection);
     var tilesWithDuplicatedCoordinates =
         tilingTasks.stream().map(ParcelTilingTask::getTiles).flatMap(List::stream).toList();
     var tiles = tileDuplicationRemover.apply(tilesWithDuplicatedCoordinates);
