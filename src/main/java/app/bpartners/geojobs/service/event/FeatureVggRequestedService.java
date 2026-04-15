@@ -11,7 +11,6 @@ import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfigur
 import app.bpartners.geojobs.service.*;
 import jakarta.persistence.EntityManager;
 import java.time.Duration;
-import java.util.*;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,51 +29,44 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
   private final TileCoordinatesService tileCoordinatesService;
   private final TiledPixelPolygonComputer tiledPixelPolygonComputer;
   private final FeaturePolygonRetriever featurePolygonRetriever;
-  private final FeatureDelimitationRetriever featureDelimitationRetriever;
 
   @Override
   public void accept(FeatureVggRequested event) {
     var featureVggComputationStart = now();
     entityManager.clear();
     var detectionIdentifier = event.getDetectionIdentifier();
-    var feature = event.getFeature();
+    var currentFeature = event.getFeature();
     var detection = detectionRepository.findById(detectionIdentifier).orElseThrow();
     if (!detection.hasToitureModelName()) {
       log.error("Only BP_TOITURE model is supported to generated VGG from now");
       return;
     }
-    var featureWithDelimitationList = detection.getFeatureWithDelimitations();
-    var actualDelimitation =
-        featureDelimitationRetriever.apply(featureWithDelimitationList, feature);
-    if (actualDelimitation == null) {
-      throw new NoSuchElementException("No delimitation found for " + feature.getGeometry());
-    }
     var geoJsonDelimitationType = detection.getGeoJsonDelimitationType();
-    var polygonGeoJson = featurePolygonRetriever.apply(feature, geoJsonDelimitationType);
-    if (polygonGeoJson == null) return;
+    var currentFeaturePolygonGeoJson =
+        featurePolygonRetriever.apply(currentFeature, geoJsonDelimitationType);
+    if (currentFeaturePolygonGeoJson == null) return;
     var detectableTypes =
         detection.getDetectableObjectConfigurations().stream()
             .map(DetectableObjectConfiguration::getObjectType)
             .toList();
-    var latLonRoofFeatures = actualDelimitation.getRestDelimitations();
     var machineDetectedTiles = detectedTileRepository.findAllByZdjJobId(detection.getZdjId());
+    var delimitationsFeatures = detection.getDelimitationOf(currentFeature);
     var tiledPixelPolygons =
-        tiledPixelPolygonComputer.getTiledPixelPolygon(
-            polygonGeoJson,
-            latLonRoofFeatures,
+        tiledPixelPolygonComputer.apply(
+            currentFeaturePolygonGeoJson,
+            delimitationsFeatures,
             detectableTypes,
             machineDetectedTiles,
             detection.hasParcelDelimitationType());
 
     var completedQuadrilateralTileCoordinates =
         tileCoordinatesService.computeFeatureTileCoordinatesWithCompleteQuadrilateral(
-            feature, geoJsonDelimitationType);
+            currentFeature, geoJsonDelimitationType);
 
-    var vggMap =
-        vggFactory.from(
-            tiledPixelPolygons, completedQuadrilateralTileCoordinates, feature.getProperties());
+    var vggMap = vggFactory.from(tiledPixelPolygons, completedQuadrilateralTileCoordinates);
 
-    var newDetection = detectionVGGUpdate.apply(vggMap.values(), detection, retrieveId(feature));
+    var newDetection =
+        detectionVGGUpdate.apply(vggMap.values(), detection, retrieveId(currentFeature));
 
     var tilesColNumbers = tileCoordinatesService.colNumbers(completedQuadrilateralTileCoordinates);
     var tileRowNumbers = tileCoordinatesService.rowNumbers(completedQuadrilateralTileCoordinates);
@@ -88,7 +80,7 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
         "VGG computation finished in {} seconds for detection(e2Id={}) and feature(geometry={})",
         Duration.between(featureVggComputationStart, now()).toSeconds(),
         detection.getEndToEndId(),
-        feature.getGeometry());
+        currentFeature.getGeometry());
   }
 
   private String retrieveId(Feature feature) {

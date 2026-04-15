@@ -121,7 +121,7 @@ public class Detection implements Serializable {
   @Getter(AccessLevel.NONE)
   private HashMap<String, Feature> pointDelimitation;
 
-  @OneToMany(cascade = ALL, fetch = EAGER, orphanRemoval = true, mappedBy = "detectionIdentifier")
+  @OneToMany(cascade = ALL, fetch = EAGER, orphanRemoval = true, mappedBy = "detection")
   private List<FeatureDelimitationComputing> featureDelimitationComputingList;
 
   @JdbcTypeCode(JSON)
@@ -384,6 +384,24 @@ public class Detection implements Serializable {
             .toList());
 
     return detectionFeatures;
+  }
+
+  public List<FeatureDelimitationComputing> addFeatureDelimitations(
+      Feature currentFeature, List<Feature> delimitations) {
+    if (featureDelimitationComputingList == null) {
+      featureDelimitationComputingList = new ArrayList<>();
+    }
+
+    featureDelimitationComputingList.add(
+        FeatureDelimitationComputing.builder()
+            .id(randomUUID().toString())
+            .detection(this)
+            .featurePropertiesIdentifier(currentFeature.getId())
+            .featureWithDelimitation(new FeatureWithDelimitation(currentFeature, delimitations))
+            .creationDatetime(now())
+            .build());
+
+    return featureDelimitationComputingList;
   }
 
   public List<app.bpartners.geojobs.endpoint.rest.model.Feature> getTilingRestFeatures() {
