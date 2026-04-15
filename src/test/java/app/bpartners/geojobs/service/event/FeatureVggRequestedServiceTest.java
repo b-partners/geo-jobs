@@ -59,7 +59,6 @@ class FeatureVggRequestedServiceTest {
       new TileCoordinatesService(geometryConverterMock, tileFinderMock);
   FeaturePolygonRetriever featurePolygonRetrieverMock =
       new FeaturePolygonRetriever(geometryConverterMock, ignCadastreFeatureFetcherMock);
-  FeatureDelimitationRetriever featureDelimitationRetriever = new FeatureDelimitationRetriever();
 
   FeatureVggRequestedService subject =
       new FeatureVggRequestedService(
@@ -70,8 +69,7 @@ class FeatureVggRequestedServiceTest {
           detectionVGGUpdateMock,
           tileCoordinatesServiceMock,
           tiledPixelPolygonComputerMock,
-          featurePolygonRetrieverMock,
-          featureDelimitationRetriever);
+          featurePolygonRetrieverMock);
 
   @Test
   void compute_vgg_for_zone_and_update_detection_vgg() {
@@ -166,7 +164,7 @@ class FeatureVggRequestedServiceTest {
         .thenReturn(somePolygon());
     when(geometryConverterMock.toPolygon(any())).thenReturn(somePolygon());
     when(geometryConverterMock.apply(any())).thenReturn(someMultiPolygon());
-    when(vggFactoryMock.from(anyList(), anyList(), anyMap())).thenReturn(vggMapMock);
+    when(vggFactoryMock.from(anyList(), anyList())).thenReturn(vggMapMock);
     when(detectionRepositoryMock.save(detectionMock)).thenReturn(detectionMock);
     when(detectionVGGUpdateMock.apply(vggCollectionMock, detectionMock, featureId))
         .thenReturn(detectionMock);

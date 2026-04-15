@@ -1,10 +1,7 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toDomainFeature;
 import static app.bpartners.geojobs.endpoint.rest.model.Detection.GeoJsonDelimitationTypeEnum.ROOF;
-import static app.bpartners.geojobs.endpoint.rest.model.Feature.TypeEnum.FEATURE;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.MOISISSURE_CLAIR;
-import static app.bpartners.geojobs.repository.model.detection.DetectionFeatureType.PROVIDED_FEATURE;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -107,15 +104,7 @@ class FeatureWithDetectionPropertiesRequestedServiceTest {
             subject.accept(
                 new FeatureWithDetectionPropertiesRequested(detectionIdentifier, featureMock)));
 
-    verify(detectionMock)
-        .addFeatures(
-            List.of(
-                toDomainFeature(
-                    new Feature()
-                        .type(FEATURE)
-                        .properties(expectedFeatureProperties)
-                        .geometry(providedFeatureGeometry))),
-            PROVIDED_FEATURE);
+    verify(detectionMock).addFeatureDelimitations(any(), any());
 
     verify(detectionRepositoryMock).save(detectionMock);
   }

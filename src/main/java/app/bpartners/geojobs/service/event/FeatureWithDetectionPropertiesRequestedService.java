@@ -3,7 +3,6 @@ package app.bpartners.geojobs.service.event;
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toDomainFeature;
 import static app.bpartners.geojobs.endpoint.rest.model.Detection.GeoJsonDelimitationTypeEnum.ROOF;
 import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.MULTI_POLYGON;
-import static app.bpartners.geojobs.repository.model.detection.DetectionFeatureType.PROVIDED_FEATURE;
 import static app.bpartners.geojobs.service.geojson.GeoJsonMapper.convertPixelToGeographicalCoordinates;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
@@ -90,7 +89,7 @@ public class FeatureWithDetectionPropertiesRequestedService
       return null;
     }
     var geoJsonDelimitationType = detection.getGeoJsonDelimitationType();
-    var featuresWithUpdatedProperties =
+    var delimitationFeatureWithResultProperties =
         delimitationsFeature.stream()
             .map(
                 delimitationFeature -> {
@@ -122,18 +121,8 @@ public class FeatureWithDetectionPropertiesRequestedService
                 })
             .toList();
 
-    // TODO: Very bad, must save inside feature delimitation only and retrieve updated properties
-    // through delimitation not provided
-    if (featuresWithUpdatedProperties.size() == 1) {
-      detection.addFeatures(
-          List.of(
-              toDomainFeature(
-                  new Feature()
-                      .type(currentFeature.getType())
-                      .properties(featuresWithUpdatedProperties.getFirst().getProperties())
-                      .geometry(currentFeature.getGeometry()))),
-          PROVIDED_FEATURE);
-    }
+    detection.addFeatureDelimitations(
+        toDomainFeature(currentFeature), delimitationFeatureWithResultProperties);
 
     return detectionRepository.save(detection);
   }

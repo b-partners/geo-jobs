@@ -83,7 +83,7 @@ public class FeatureRoofSlopeAndHeightRequestedService
         FeatureDelimitationComputing.builder()
             .id(randomUUID().toString())
             .featurePropertiesIdentifier(featureId)
-            .detectionIdentifier(detectionIdentifier)
+            .detection(detection)
             .featureWithDelimitation(featureDelimitationWithComputedProperties)
             .creationDatetime(now())
             .build());

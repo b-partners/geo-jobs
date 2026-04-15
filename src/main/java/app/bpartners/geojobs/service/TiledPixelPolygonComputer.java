@@ -23,9 +23,9 @@ public class TiledPixelPolygonComputer {
   private final TileCoordinatesPolygonIntersection tileCoordinatesPolygonIntersection;
   private final PolygonCoordinatesCloser polygonCoordinatesCloser;
 
-  public List<TiledPixelPolygon> getTiledPixelPolygon(
+  public List<TiledPixelPolygon> apply(
       Feature polygonGeoJsonZone,
-      List<Feature> latLonRoofFeatures,
+      List<Feature> delimitationFeatures,
       List<DetectableType> detectableTypes,
       List<MachineDetectedTile> detectedTileList,
       boolean isParcelDetection) {
@@ -33,91 +33,93 @@ public class TiledPixelPolygonComputer {
         geometryConverter.apply(
             List.of(polygonGeoJsonZone.getGeometry().getPolygon().getCoordinates()));
 
-    return latLonRoofFeatures.stream()
+    return delimitationFeatures.stream()
         .map(
-            roofFeature -> {
-              return detectedTileList.stream()
-                  .map(
-                      detectedTile -> {
-                        var tileCoordinates = detectedTile.getTile().getCoordinates();
-                        var providedZoneInsideTileGeometry =
-                            tileCoordinatesPolygonIntersection.intersection(
-                                providedLatLonPolygonGeometry, tileCoordinates);
-                        if (providedZoneInsideTileGeometry.isEmpty()) {
-                          return null;
-                        }
-                        var polygonObjectTypes =
-                            detectedTile.getDetectedObjects().stream()
-                                .map(
-                                    detectedObject -> {
-                                      var detectableType =
-                                          detectedObject
-                                              .getDetectedObjectType()
-                                              .getDetectableType();
-                                      if (!detectableTypes.contains(detectableType)) {
+            delimitationFeature ->
+                detectedTileList.stream()
+                    .map(
+                        detectedTile -> {
+                          var tileCoordinates = detectedTile.getTile().getCoordinates();
+                          var providedZoneInsideTileGeometry =
+                              tileCoordinatesPolygonIntersection.intersection(
+                                  providedLatLonPolygonGeometry, tileCoordinates);
+                          if (providedZoneInsideTileGeometry.isEmpty()) {
+                            return null;
+                          }
+                          var detectedPolygonObjectTypes =
+                              detectedTile.getDetectedObjects().stream()
+                                  .map(
+                                      detectedObject -> {
+                                        var detectableType =
+                                            detectedObject
+                                                .getDetectedObjectType()
+                                                .getDetectableType();
+                                        if (!detectableTypes.contains(detectableType)) {
+                                          return null;
+                                        }
+                                        var geometryProcessed =
+                                            getMultiPolygonZoneProcessed(
+                                                delimitationFeature,
+                                                isParcelDetection,
+                                                detectableType);
+                                        var providedZoneAndGeometryProcessedInsideTileGeometry =
+                                            providedZoneInsideTileGeometry.intersection(
+                                                geometryProcessed);
+                                        var
+                                            providedZoneAndGeometryProcessedInsideTilePolygonCoordinates =
+                                                tileCoordinatesPolygonIntersection.intersects(
+                                                    providedZoneAndGeometryProcessedInsideTileGeometry,
+                                                    tileCoordinates);
+                                        if (providedZoneAndGeometryProcessedInsideTilePolygonCoordinates
+                                            .isEmpty()) {
+                                          return null;
+                                        }
+                                        var
+                                            providedZoneAndGeometryProcessedInsideTilePixelGeometry =
+                                                geometryConverter.convertToPolygon(
+                                                    providedZoneAndGeometryProcessedInsideTilePolygonCoordinates);
+                                        var polygonCoordinates =
+                                            detectedObject
+                                                .getFeature()
+                                                .getGeometry()
+                                                .getMultiPolygon()
+                                                .getCoordinates()
+                                                .getFirst()
+                                                .getFirst();
+                                        var closedPolygon =
+                                            polygonCoordinatesCloser.apply(polygonCoordinates);
+                                        var detectedObjectPolygonPixel =
+                                            geometryConverter
+                                                .toPolygon(List.of(List.of(closedPolygon)))
+                                                .buffer(0);
+                                        var intersectionBetweenDetectedObjectAndConsideredZone =
+                                            detectedObjectPolygonPixel
+                                                .intersection(
+                                                    providedZoneAndGeometryProcessedInsideTilePixelGeometry)
+                                                .buffer(0);
+                                        if (intersectionBetweenDetectedObjectAndConsideredZone
+                                            instanceof Polygon polygon) {
+                                          return new PolygonObjectType(
+                                              polygon, detectedObject.getDetectableObjectType());
+                                        } else {
+                                          log.info(
+                                              "Intersection between detected object and considered"
+                                                  + " zone not polygon, but was {}",
+                                              intersectionBetweenDetectedObjectAndConsideredZone
+                                                  .getGeometryType());
+                                        }
                                         return null;
-                                      }
-                                      var geometryProcessed =
-                                          getMultiPolygonZoneProcessed(
-                                              roofFeature, isParcelDetection, detectableType);
-                                      var providedZoneAndGeometryProcessedInsideTileGeometry =
-                                          providedZoneInsideTileGeometry.intersection(
-                                              geometryProcessed);
-                                      var
-                                          providedZoneAndGeometryProcessedInsideTilePolygonCoordinates =
-                                              tileCoordinatesPolygonIntersection.intersects(
-                                                  providedZoneAndGeometryProcessedInsideTileGeometry,
-                                                  tileCoordinates);
-                                      if (providedZoneAndGeometryProcessedInsideTilePolygonCoordinates
-                                          .isEmpty()) {
-                                        return null;
-                                      }
-                                      var providedZoneAndGeometryProcessedInsideTilePixelGeometry =
-                                          geometryConverter.convertToPolygon(
-                                              providedZoneAndGeometryProcessedInsideTilePolygonCoordinates);
-                                      var polygonCoordinates =
-                                          detectedObject
-                                              .getFeature()
-                                              .getGeometry()
-                                              .getMultiPolygon()
-                                              .getCoordinates()
-                                              .getFirst()
-                                              .getFirst();
-                                      var closedPolygon =
-                                          polygonCoordinatesCloser.apply(polygonCoordinates);
-                                      var detectedObjectPolygonPixel =
-                                          geometryConverter
-                                              .toPolygon(List.of(List.of(closedPolygon)))
-                                              .buffer(0);
-                                      var intersectionBetweenDetectedObjectAndConsideredZone =
-                                          detectedObjectPolygonPixel
-                                              .intersection(
-                                                  providedZoneAndGeometryProcessedInsideTilePixelGeometry)
-                                              .buffer(0);
-                                      if (intersectionBetweenDetectedObjectAndConsideredZone
-                                          instanceof Polygon polygon) {
-                                        return new PolygonObjectType(
-                                            polygon, detectedObject.getDetectableObjectType());
-                                      } else {
-                                        log.info(
-                                            "Intersection between detected object and considered"
-                                                + " zone not polygon, but was {}",
-                                            intersectionBetweenDetectedObjectAndConsideredZone
-                                                .getGeometryType());
-                                      }
-                                      return null;
-                                    })
-                                .filter(Objects::nonNull)
-                                .toList();
-                        return new TiledPixelPolygon(
-                            roofFeature,
-                            polygonObjectTypes,
-                            tileCoordinates.getX(),
-                            tileCoordinates.getY(),
-                            tileCoordinates.getZ());
-                      })
-                  .toList();
-            })
+                                      })
+                                  .filter(Objects::nonNull)
+                                  .toList();
+                          return new TiledPixelPolygon(
+                              delimitationFeature,
+                              detectedPolygonObjectTypes,
+                              tileCoordinates.getX(),
+                              tileCoordinates.getY(),
+                              tileCoordinates.getZ());
+                        })
+                    .toList())
         .flatMap(List::stream)
         .filter(Objects::nonNull)
         .toList();
