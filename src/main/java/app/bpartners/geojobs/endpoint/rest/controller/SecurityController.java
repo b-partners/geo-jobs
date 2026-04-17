@@ -43,11 +43,11 @@ public class SecurityController {
 
   @DeleteMapping("/api/keys")
   public RevokeApiKeyResponse revokeApiKeys(@RequestBody RevokeApiKey revokeApiKey) {
-
     CommunityAuthorization communityAuthorization =
         communityAuthRepository
             .findByApiKey(authProvider.getPrincipal().getPassword())
             .orElseThrow(ForbiddenException::new);
+
     return service.revokeCommunityApiKey(communityAuthorization, revokeApiKey.getKeyValue());
   }
 
