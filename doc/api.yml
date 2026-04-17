@@ -1196,6 +1196,23 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ApiKey'
+    delete:
+      tags:
+        - Security
+      operationId: revokeApiKeys
+      summary: Revoke an API key for a community authorization
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevokeApiKey'
+      responses:
+        200:
+          description: ApiKey revoked successfully message
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevokeApiKeyResponse'
   '/keys':
     delete:
       tags:
@@ -1206,7 +1223,7 @@ paths:
         - ApiKeyAuth: [ ]
       responses:
         200:
-          description: Statistics of detection usage
+          description: ApiKey revoked successfully message
           content:
             application/json:
               schema:
@@ -1659,6 +1676,13 @@ components:
         - "C"
         - "D"
         - "E"
+
+    RevokeApiKey:
+      type: object
+      properties:
+        keyValue:
+          type: string
+          example: "xxxxxxxx-xxxx-Mxxx-Nxxx-xxxxxxxxxxxx"
 
     CreateApiKey:
       type: object
