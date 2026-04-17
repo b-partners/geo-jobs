@@ -102,7 +102,7 @@ class SecurityControllerIT extends FacadeIT {
     var revokedApiKey =
         revokedApiKeyRepository.findByRevokedApiKeyValue(apiKeyToRevoke).orElseThrow();
     assertEquals(community.getId(), revokedApiKey.getCommunityOwnerId());
-    assertEquals(authentificationApiKey, revokedApiKey.getRevokedApiKeyValue());
+    assertEquals(apiKeyToRevoke, revokedApiKey.getRevokedApiKeyValue());
   }
 
   private static CommunityAuthorizationApiKey apiKeyToRevoke(
