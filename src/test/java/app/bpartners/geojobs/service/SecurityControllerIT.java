@@ -14,11 +14,20 @@ import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.rest.controller.SecurityController;
 import app.bpartners.geojobs.endpoint.rest.model.CreateApiKey;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel;
+import app.bpartners.geojobs.endpoint.rest.model.RevokeApiKey;
+import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
+import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
+import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
+import app.bpartners.geojobs.repository.CommunityAuthorizationApiKeyRepository;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
+import app.bpartners.geojobs.repository.RevokedApiKeyRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
+import app.bpartners.geojobs.repository.model.community.CommunityAuthorizationApiKey;
 import app.bpartners.geojobs.service.dashboard.UserAccountsApi;
 import app.bpartners.geojobs.service.dashboard.component.UserApiKey;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -27,7 +36,10 @@ import org.springframework.transaction.annotation.Transactional;
 class SecurityControllerIT extends FacadeIT {
   @Autowired SecurityController subject;
   @Autowired CommunityAuthorizationRepository authorizationRepository;
+  @Autowired CommunityAuthorizationApiKeyRepository apiKeyRepository;
+  @Autowired RevokedApiKeyRepository revokedApiKeyRepository;
   @MockBean UserAccountsApi userAccountsApiMock;
+  @MockBean AuthProvider authProviderMock;
 
   @Transactional
   @Test
@@ -69,6 +81,50 @@ class SecurityControllerIT extends FacadeIT {
     var actual = subject.generateApiKeys(List.of(someCreateApiKey(consumerEmail)));
 
     System.out.println(actual);
+  }
+
+  @Transactional
+  @Test
+  void revoke_api_keys_ok() {
+    var authentificationApiKey = "apiKey-" + randomUUID();
+    var community = authorizationRepository.save(communityAuthorization(authentificationApiKey));
+    var apiKeyToRevoke = "secondary-apiKey-" + randomUUID();
+    var apiKeyToRevokeEntity = apiKeyRepository.save(apiKeyToRevoke(apiKeyToRevoke, community));
+    community.setApiKeys(new ArrayList<>(List.of(apiKeyToRevokeEntity)));
+    authorizationRepository.save(community);
+    when(authProviderMock.getPrincipal())
+        .thenReturn(new Principal(authentificationApiKey, Set.of(new Authority(ROLE_INSURANCE))));
+
+    var response = subject.revokeApiKeys(new RevokeApiKey().keyValue(apiKeyToRevoke));
+
+    assertEquals(
+        "The API key " + apiKeyToRevoke + " has been successfully revoked", response.getMessage());
+    var revokedApiKey =
+        revokedApiKeyRepository.findByRevokedApiKeyValue(apiKeyToRevoke).orElseThrow();
+    assertEquals(community.getId(), revokedApiKey.getCommunityOwnerId());
+    assertEquals(authentificationApiKey, revokedApiKey.getRevokedApiKeyValue());
+  }
+
+  private static CommunityAuthorizationApiKey apiKeyToRevoke(
+      String apiKeyToRevoke, CommunityAuthorization community) {
+    return CommunityAuthorizationApiKey.builder()
+        .id("secondary-id")
+        .keyValue(apiKeyToRevoke)
+        .communityOwnerId(community.getId())
+        .build();
+  }
+
+  private static CommunityAuthorization communityAuthorization(String apiKey) {
+    return CommunityAuthorization.builder()
+        .id("community-id")
+        .name("community-name")
+        .email("email@gmail.com")
+        .apiKey(apiKey)
+        .dashboardApiKey("dashboard-" + apiKey)
+        .role(ROLE_INSURANCE)
+        .isApiKeyRevoked(false)
+        .maxSurfaceUnit(SQUARE_METER)
+        .build();
   }
 
   private static CreateApiKey someCreateApiKey(String consumerEmail) {

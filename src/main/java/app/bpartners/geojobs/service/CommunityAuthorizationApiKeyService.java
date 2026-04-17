@@ -31,7 +31,6 @@ public class CommunityAuthorizationApiKeyService {
         RevokedApiKey.builder()
             .id(randomUUID().toString())
             .revokedApiKeyValue(communityAuthorizationApiKey.getKeyValue())
-            .apiKeyId(communityAuthorizationApiKey.getId())
             .communityOwnerId(communityAuthorizationApiKey.getCommunityOwnerId())
             .revokedAt(now())
             .build();
