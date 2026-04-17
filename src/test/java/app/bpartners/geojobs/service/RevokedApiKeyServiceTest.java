@@ -86,7 +86,8 @@ class RevokedApiKeyServiceTest {
     var communityAuthorization = communityAuthorization(true);
     var error =
         assertThrows(
-            BadRequestException.class, () -> subject.revokeCommunityApiKey(communityAuthorization));
+            BadRequestException.class,
+            () -> subject.revokeCommunityLatestApiKey(communityAuthorization));
     assertEquals("Cannot revoke apikey as it is already revoked", error.getMessage());
   }
 
@@ -97,7 +98,7 @@ class RevokedApiKeyServiceTest {
     when(communityAuthRepositoryMock.save(any(CommunityAuthorization.class))).thenReturn(mock());
     when(revokedApiKeyRepositoryMock.save(any(RevokedApiKey.class))).thenReturn(mock());
 
-    var actual = subject.revokeCommunityApiKey(communityAuthorization);
+    var actual = subject.revokeCommunityLatestApiKey(communityAuthorization);
 
     assertEquals(expected, actual);
     verify(revokedApiKeyRepositoryMock, times(1)).save(any(RevokedApiKey.class));

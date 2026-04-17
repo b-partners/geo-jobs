@@ -27,7 +27,8 @@ public class RevokedApiKeyService {
   private final CommunityAuthorizationApiKeyService communityAuthorizationApiKeyService;
 
   @Transactional
-  public RevokeApiKeyResponse revokeCommunityApiKey(CommunityAuthorization communityAuthorization) {
+  public RevokeApiKeyResponse revokeCommunityLatestApiKey(
+      CommunityAuthorization communityAuthorization) {
     if (communityAuthorization.isApiKeyRevoked()) {
       throw new BadRequestException("Cannot revoke apikey as it is already revoked");
     }
@@ -37,6 +38,7 @@ public class RevokedApiKeyService {
     return new RevokeApiKeyResponse().message("Your API key has been successfully revoked");
   }
 
+  @Transactional
   public RevokeApiKeyResponse revokeCommunityApiKey(
       CommunityAuthorization authenticatedAuthorization, String apiKeyValue) {
     Optional<CommunityAuthorization> optionalTargetAuthorization =
@@ -69,12 +71,10 @@ public class RevokedApiKeyService {
       CommunityAuthorization communityAuthorization, String apiKeyValue) {
     List<CommunityAuthorizationApiKey> apiKeys = communityAuthorization.getApiKeys();
 
-    List<RevokedApiKey> revokedApiKeys =
-        apiKeys.stream()
-            .filter(key -> apiKeyValue.equals(key.getKeyValue()))
-            .map(communityAuthorizationApiKeyService::revokeApiKey)
-            .toList();
-    return revokedApiKeys;
+    return apiKeys.stream()
+        .filter(key -> apiKeyValue.equals(key.getKeyValue()))
+        .map(communityAuthorizationApiKeyService::revokeApiKey)
+        .toList();
   }
 
   @Deprecated

@@ -52,11 +52,11 @@ public class SecurityController {
   }
 
   @DeleteMapping("/keys")
-  public RevokeApiKeyResponse revokeApikey() {
+  public RevokeApiKeyResponse revokeLatestApikey() {
     var communityAuthorization =
         communityAuthRepository
             .findByApiKey(authProvider.getPrincipal().getPassword())
             .orElseThrow(ForbiddenException::new);
-    return service.revokeCommunityApiKey(communityAuthorization);
+    return service.revokeCommunityLatestApiKey(communityAuthorization);
   }
 }
