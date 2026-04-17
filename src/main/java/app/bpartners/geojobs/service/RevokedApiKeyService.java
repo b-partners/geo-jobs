@@ -1,10 +1,12 @@
 package app.bpartners.geojobs.service;
 
+import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_ADMIN;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.model.RevokeApiKeyResponse;
 import app.bpartners.geojobs.model.exception.BadRequestException;
+import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.RevokedApiKeyRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
@@ -14,6 +16,7 @@ import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -35,6 +38,34 @@ public class RevokedApiKeyService {
   }
 
   public RevokeApiKeyResponse revokeCommunityApiKey(
+      CommunityAuthorization authenticatedAuthorization, String apiKeyValue) {
+    Optional<CommunityAuthorization> optionalTargetAuthorization =
+        communityAuthRepository.findByApiKey(apiKeyValue);
+
+    if (optionalTargetAuthorization.isPresent()) {
+      CommunityAuthorization targetAuthorization = optionalTargetAuthorization.get();
+
+      if (!targetAuthorization.getId().equals(authenticatedAuthorization.getId())
+          && ROLE_ADMIN.equals(authenticatedAuthorization.getRole())) {
+        throw new BadRequestException("Operation not permitted");
+      }
+      List<RevokedApiKey> revokedApiKeys =
+          revokeDomainCommunityApiKey(targetAuthorization, apiKeyValue);
+
+      if (revokedApiKeys.isEmpty()) {
+        revokeRawApiKey(targetAuthorization);
+      }
+
+      return new RevokeApiKeyResponse()
+          .message(String.format("The API key %s has been successfully revoked", apiKeyValue));
+    }
+
+    throw new NotFoundException(
+        "The API key " + apiKeyValue + " is not linked to any authorization.");
+  }
+
+  @NotNull
+  private List<RevokedApiKey> revokeDomainCommunityApiKey(
       CommunityAuthorization communityAuthorization, String apiKeyValue) {
     List<CommunityAuthorizationApiKey> apiKeys = communityAuthorization.getApiKeys();
 
@@ -43,24 +74,7 @@ public class RevokedApiKeyService {
             .filter(key -> apiKeyValue.equals(key.getKeyValue()))
             .map(communityAuthorizationApiKeyService::revokeApiKey)
             .toList();
-
-    if (revokedApiKeys.isEmpty()) {
-      Optional<CommunityAuthorization> optionalCommunityAuthorization =
-          communityAuthRepository.findByApiKey(apiKeyValue);
-
-      if (optionalCommunityAuthorization.isEmpty()) {
-        throw new BadRequestException(
-            "The user "
-                + communityAuthorization.getEmail()
-                + " does not have an API key with the value "
-                + apiKeyValue);
-      }
-
-      revokeRawApiKey(optionalCommunityAuthorization.get());
-    }
-
-    return new RevokeApiKeyResponse()
-        .message(String.format("Your API %s key has been successfully revoked", apiKeyValue));
+    return revokedApiKeys;
   }
 
   @Deprecated

@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.endpoint.rest.model.RevokeApiKeyResponse;
 import app.bpartners.geojobs.model.exception.BadRequestException;
+import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.RevokedApiKeyRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
@@ -38,9 +39,10 @@ class RevokedApiKeyServiceTest {
     var revokedApiKey = revokedApiKey(keyToRevoke);
     var expected =
         new RevokeApiKeyResponse()
-            .message(
-                "Your API key " + keyToRevoke.getKeyValue() + " has been successfully revoked");
+            .message("The API key " + keyToRevoke.getKeyValue() + " has been successfully revoked");
     when(communityAuthorizationApiKeyService.revokeApiKey(keyToRevoke)).thenReturn(revokedApiKey);
+    when(communityAuthRepositoryMock.findByApiKey(keyToRevoke.getKeyValue()))
+        .thenReturn(Optional.of(communityAuthorization));
 
     var actual = subject.revokeCommunityApiKey(communityAuthorization, keyToRevoke.getKeyValue());
 
@@ -53,7 +55,7 @@ class RevokedApiKeyServiceTest {
     var keyToRevoke = communityAuthorization.getApiKey();
     var expected =
         new RevokeApiKeyResponse()
-            .message("Your API key " + keyToRevoke + " has been successfully revoked");
+            .message("The API key " + keyToRevoke + " has been successfully revoked");
     when(revokedApiKeyRepositoryMock.save(any(RevokedApiKey.class))).thenReturn(mock());
     when(communityAuthRepositoryMock.save(communityAuthorization)).thenReturn(mock());
     when(communityAuthRepositoryMock.findByApiKey(keyToRevoke))
@@ -65,22 +67,18 @@ class RevokedApiKeyServiceTest {
   }
 
   @Test
-  void bad_request_when_api_key_not_found() {
+  void api_key_not_found() {
     var communityAuthorization = communityAuthorization(false);
     var keyToRevoke = communityAuthorization.getApiKey();
     when(communityAuthRepositoryMock.findByApiKey(keyToRevoke)).thenReturn(Optional.empty());
 
     var actual =
         assertThrows(
-            BadRequestException.class,
+            NotFoundException.class,
             () -> subject.revokeCommunityApiKey(communityAuthorization, keyToRevoke));
 
     assertEquals(
-        "The user "
-            + communityAuthorization.getEmail()
-            + " does not have an API key with the value "
-            + keyToRevoke,
-        actual.getMessage());
+        "The API key " + keyToRevoke + " is not linked to any authorization.", actual.getMessage());
   }
 
   @Test

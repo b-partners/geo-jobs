@@ -3,10 +3,12 @@ package app.bpartners.geojobs.endpoint.rest.controller;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ApiKeyMapper;
 import app.bpartners.geojobs.endpoint.rest.model.ApiKey;
 import app.bpartners.geojobs.endpoint.rest.model.CreateApiKey;
+import app.bpartners.geojobs.endpoint.rest.model.RevokeApiKey;
 import app.bpartners.geojobs.endpoint.rest.model.RevokeApiKeyResponse;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
+import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.service.ApiKeyService;
 import app.bpartners.geojobs.service.RevokedApiKeyService;
 import java.util.List;
@@ -37,6 +39,16 @@ public class SecurityController {
                     .key(authorization.apiKey())
                     .creationDatetime(authorization.creationDatetime()))
         .toList();
+  }
+
+  @DeleteMapping("/api/keys")
+  public RevokeApiKeyResponse revokeApiKeys(@RequestBody RevokeApiKey revokeApiKey) {
+
+    CommunityAuthorization communityAuthorization =
+        communityAuthRepository
+            .findByApiKey(authProvider.getPrincipal().getPassword())
+            .orElseThrow(ForbiddenException::new);
+    return service.revokeCommunityApiKey(communityAuthorization, revokeApiKey.getKeyValue());
   }
 
   @DeleteMapping("/keys")
