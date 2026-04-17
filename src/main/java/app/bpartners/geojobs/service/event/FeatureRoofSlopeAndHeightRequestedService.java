@@ -13,6 +13,7 @@ import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.model.lidar.planes.Plane3D;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.service.lidar.LidarRoofsAnalysisProcessor;
+import jakarta.persistence.EntityManager;
 import java.util.*;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
@@ -29,11 +30,13 @@ public class FeatureRoofSlopeAndHeightRequestedService
   private final LidarRoofsAnalysisProcessor lidarRoofsAnalysisProcessor;
   private final FeatureMapper featureMapper;
   private final EventProducer eventProducer;
+  private final EntityManager entityManager;
 
   @Override
   public void accept(FeatureRoofSlopeAndHeightRequested featureRoofSlopeAndHeightRequested) {
     var detectionIdentifier = featureRoofSlopeAndHeightRequested.getDetectionIdentifier();
     var currentFeature = featureRoofSlopeAndHeightRequested.getFeature();
+    entityManager.clear();
 
     var detection = detectionRepository.findById(detectionIdentifier).orElseThrow();
 
@@ -54,13 +57,13 @@ public class FeatureRoofSlopeAndHeightRequestedService
     var delimitationFeaturesWithHeightAndSlopeProperties =
         computeHeightAndSlopeProperties(delimitationFeatures, roofsAnalysesResult);
 
-    var domainDelimitationFeaturesWithHightAndSlopeProperties =
+    var domainDelimitationFeaturesWithHeightAndSlopeProperties =
         delimitationFeaturesWithHeightAndSlopeProperties.stream()
             .map(FeatureMapper::toDomainFeature)
             .toList();
 
     detection.addFeatureDelimitations(
-        toDomainFeature(currentFeature), domainDelimitationFeaturesWithHightAndSlopeProperties);
+        toDomainFeature(currentFeature), domainDelimitationFeaturesWithHeightAndSlopeProperties);
 
     detectionRepository.save(detection);
 
@@ -87,22 +90,31 @@ public class FeatureRoofSlopeAndHeightRequestedService
   private List<Feature> computeHeightAndSlopeProperties(
       List<Feature> delimitationFeatures,
       LidarRoofsAnalysisProcessor.RoofsAnalysisResult roofsAnalysisResult) {
-    for (var delimitation : delimitationFeatures) {
-      if (delimitation.getProperties() == null) {
-        delimitation.setProperties(new HashMap<>());
-      }
+    return delimitationFeatures.stream()
+        .map(
+            delimitation -> {
+              var actualProperties = new HashMap<String, Object>();
+              if (delimitation.getProperties() != null) {
+                actualProperties.putAll(delimitation.getProperties());
+              }
+              var roofProperties =
+                  roofsAnalysisResult.getProperties(
+                      featureMapper.domainToGeometry(toDomainFeature(delimitation)));
 
-      var properties = delimitation.getProperties();
-      var roofProperties =
-          roofsAnalysisResult.getProperties(
-              featureMapper.domainToGeometry(toDomainFeature(delimitation)));
+              var planes = roofProperties.getRoofPlanes();
+              var firstPlane = planes.isEmpty() ? Plane3D.empty() : planes.getFirst();
+              var slopeValue = firstPlane.getSlopeInDegrees().getValue();
+              var heightValue = roofProperties.getHeightInMeters().getValue();
+              var lidarDataStatus = roofProperties.getData().status();
+              actualProperties.put(ROOF_SLOPE_PROPERTY_NAME, slopeValue);
+              actualProperties.put(ROOF_HEIGHT_PROPERTY_NAME, heightValue);
+              actualProperties.put(LIDAR_DATA_STATUS_PROPERTY_NAME, lidarDataStatus);
 
-      var planes = roofProperties.getRoofPlanes();
-      var firstPlane = planes.isEmpty() ? Plane3D.empty() : planes.getFirst();
-      properties.put(ROOF_SLOPE_PROPERTY_NAME, firstPlane.getSlopeInDegrees().getValue());
-      properties.put(ROOF_HEIGHT_PROPERTY_NAME, roofProperties.getHeightInMeters().getValue());
-      properties.put(LIDAR_DATA_STATUS_PROPERTY_NAME, roofProperties.getData().status());
-    }
-    return delimitationFeatures;
+              return new Feature()
+                  .type(delimitation.getType())
+                  .geometry(delimitation.getGeometry())
+                  .properties(actualProperties);
+            })
+        .toList();
   }
 }

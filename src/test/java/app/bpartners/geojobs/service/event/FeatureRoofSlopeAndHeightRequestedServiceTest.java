@@ -48,7 +48,8 @@ class FeatureRoofSlopeAndHeightRequestedServiceTest {
           detectionRepositoryMock,
           lidarRoofsAnalysisProcessorMock,
           featureMapperMock,
-          eventProducerMock);
+          eventProducerMock,
+          entityManagerMock);
 
   @BeforeEach
   void setUp() {
@@ -174,7 +175,6 @@ class FeatureRoofSlopeAndHeightRequestedServiceTest {
                 new FeatureRoofSlopeAndHeightRequested(detectionIdentifier, restFeature)));
 
     verify(lidarRoofsAnalysisProcessorMock, never()).from(anySet());
-    verify(entityManagerMock, never()).clear();
     verify(detectionRepositoryMock, never()).save(any());
     verify(eventProducerMock, never()).accept(any());
   }
