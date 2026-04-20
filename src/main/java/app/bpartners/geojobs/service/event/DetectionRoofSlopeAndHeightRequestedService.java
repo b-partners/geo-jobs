@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.service.event;
 
+import static java.time.Instant.now;
+
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionRoofSlopeAndHeightRequested;
 import app.bpartners.geojobs.endpoint.event.model.FeatureRoofSlopeAndHeightRequested;
@@ -30,12 +32,17 @@ public class DetectionRoofSlopeAndHeightRequestedService
             .orElseThrow(
                 () -> new RuntimeException("Detection={" + detectionIdentifier + "} not found"));
 
-    var featureWithDelimitations = detection.getFeatureWithDelimitations();
+    var detectionSaved =
+        detectionRepository.save(
+            detection.toBuilder().roofPropertiesComputationCreationDatetime(now()).build());
+
+    var featureWithDelimitations = detectionSaved.getFeatureWithDelimitations();
     if (featureWithDelimitations == null) {
       throw new IllegalArgumentException(
           "FeatureWithDelimitation is null for detection={" + detectionIdentifier + "}");
     }
-    var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
+
+    var providedGeoJsonZone = detectionSaved.getProvidedGeoJsonZone();
     providedGeoJsonZone.forEach(
         feature ->
             eventProducer.accept(

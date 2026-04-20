@@ -1,7 +1,6 @@
 package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightRequestedService.*;
-import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightRequestedService.LIDAR_DATA_STATUS_PROPERTY_NAME;
 
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.model.geometry.PolygonObjectType;
@@ -29,14 +28,17 @@ public class FeatureRoofResultPropertiesComputer {
       Geometry roofGeometryUsedForRateComputing,
       Collection<PolygonObjectType> detectedObjectPolygonGeometriesUsedForRateComputing) {
 
-    var featureProperties =
-        feature.getProperties() == null ? new HashMap<String, Object>() : feature.getProperties();
-    var properties = new HashMap<String, Object>();
+    var actualProperties = new HashMap<String, Object>();
 
-    properties.put("roof_area_in_m2", geometrySquareMeterArea.apply(geometryUsedForAreaComputing));
+    if (feature.getProperties() != null) {
+      actualProperties.putAll(feature.getProperties());
+    }
+
+    actualProperties.put(
+        "roof_area_in_m2", geometrySquareMeterArea.apply(geometryUsedForAreaComputing));
 
     var addresses = retrieveAddressesProperty(feature);
-    properties.put("addresses", addresses);
+    actualProperties.put("addresses", addresses);
 
     var rateComputer =
         new AreaRateComputerFacade(
@@ -47,35 +49,25 @@ public class FeatureRoofResultPropertiesComputer {
     var globalRateValue = rateComputer.getGlobalRate();
     var globalRateType = rateComputer.getRate();
 
-    properties.put("usure_rate", usureRate);
-    properties.put("humidite_rate", humiditeRate);
-    properties.put("moisissure_rate", moisissureRate);
-    properties.put("global_rate_value", globalRateValue);
-    properties.put("global_rate_type", globalRateType);
-
-    // Lidar properties
-    if (featureProperties.containsKey(LIDAR_DATA_STATUS_PROPERTY_NAME)) {
-      properties.put("roof_slope_in_degrees", featureProperties.get(ROOF_SLOPE_PROPERTY_NAME));
-      properties.put("roof_height_in_meters", featureProperties.get(ROOF_HEIGHT_PROPERTY_NAME));
-      properties.put(
-          "roof_slope_data_status", featureProperties.get(LIDAR_DATA_STATUS_PROPERTY_NAME));
-      properties.put(
-          "roof_height_data_status", featureProperties.get(LIDAR_DATA_STATUS_PROPERTY_NAME));
-    }
+    actualProperties.put("usure_rate", usureRate);
+    actualProperties.put("humidite_rate", humiditeRate);
+    actualProperties.put("moisissure_rate", moisissureRate);
+    actualProperties.put("global_rate_value", globalRateValue);
+    actualProperties.put("global_rate_type", globalRateType);
 
     var detectedRoofCovering = retrieveCoveringProperties(feature);
     if (detectedRoofCovering != null) {
-      properties.put(
+      actualProperties.put(
           "revetement_1",
           detectedRoofCovering.primary() == null ? null : detectedRoofCovering.primary().name());
-      properties.put(
+      actualProperties.put(
           "revetement_2",
           detectedRoofCovering.secondary() == null
               ? null
               : detectedRoofCovering.secondary().name());
     }
 
-    return properties;
+    return actualProperties;
   }
 
   private DetectionRoofPropertiesRequestedService.DetectedRoofCovering retrieveCoveringProperties(

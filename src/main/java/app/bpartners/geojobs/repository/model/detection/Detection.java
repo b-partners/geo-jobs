@@ -155,6 +155,9 @@ public class Detection implements Serializable {
   @OneToMany(mappedBy = "detection", fetch = EAGER, cascade = ALL, orphanRemoval = true)
   private List<DetectionFeature> detectionFeatures;
 
+  @Column(name = "roof_properties_computation_creation_datetime")
+  private Instant roofPropertiesComputationCreationDatetime;
+
   public List<FeatureWithDelimitation> getFeatureWithDelimitations() {
     if (featureDelimitationComputingList == null || featureDelimitationComputingList.isEmpty()) {
       return featureWithDelimitations;
