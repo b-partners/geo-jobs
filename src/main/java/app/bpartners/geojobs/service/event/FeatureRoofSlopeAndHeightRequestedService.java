@@ -26,6 +26,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class FeatureRoofSlopeAndHeightRequestedService
     implements Consumer<FeatureRoofSlopeAndHeightRequested> {
+  private static final String ROOF_SLOPE_DATA_STATUS_PROPERTY_NAME = "roof_slope_data_status";
+  private static final String ROOF_HEIGHT_DATA_STATUS_PROPERTY_NAME = "roof_height_data_status";
   private final DetectionRepository detectionRepository;
   private final LidarRoofsAnalysisProcessor lidarRoofsAnalysisProcessor;
   private final FeatureMapper featureMapper;
@@ -109,6 +111,8 @@ public class FeatureRoofSlopeAndHeightRequestedService
               actualProperties.put(ROOF_SLOPE_PROPERTY_NAME, slopeValue);
               actualProperties.put(ROOF_HEIGHT_PROPERTY_NAME, heightValue);
               actualProperties.put(LIDAR_DATA_STATUS_PROPERTY_NAME, lidarDataStatus);
+              actualProperties.put(ROOF_SLOPE_DATA_STATUS_PROPERTY_NAME, lidarDataStatus);
+              actualProperties.put(ROOF_HEIGHT_DATA_STATUS_PROPERTY_NAME, lidarDataStatus);
 
               return new Feature()
                   .type(delimitation.getType())
