@@ -78,6 +78,10 @@ public class RevokedApiKeyService {
   }
 
   @Deprecated
+  /**
+   * @deprecated Uses the API key stored in the community authorization table, which is part of a
+   *     deprecated API key system and should no longer be used.
+   */
   private void revokeRawApiKey(CommunityAuthorization communityAuthorization) {
     var revokedApiKey =
         RevokedApiKey.builder()
