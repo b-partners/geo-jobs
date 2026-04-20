@@ -343,6 +343,17 @@ public class ZoneService {
     if (createDetection.getGeoJsonZone() == null) {
       createDetection.setGeoJsonZone(new ArrayList<>());
     }
+    if (createDetection.getGeoJsonZone() != null) {
+      createDetection
+          .getGeoJsonZone()
+          .forEach(
+              feature -> {
+                var properties = feature.getProperties();
+                if (properties != null) {
+                  properties.remove("id");
+                }
+              });
+    }
     if (createDetection.getZoneName() != null && createDetection.getZoneName().contains(".")) {
       createDetection.setZoneName(createDetection.getZoneName().replaceAll("\\.", "_"));
     }
