@@ -5,6 +5,7 @@ import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.ROLE_INSURANCE;
 import static app.bpartners.geojobs.repository.model.SurfaceUnit.SQUARE_METER;
 import static app.bpartners.geojobs.service.dashboard.component.UserApiKeyType.DASHBOARD;
+import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -119,8 +120,9 @@ class SecurityControllerIT extends FacadeIT {
         .id("community-id")
         .name("community-name")
         .email("email@gmail.com")
-        .apiKey(apiKey)
         .dashboardApiKey("dashboard-" + apiKey)
+        .apiKeys(
+            List.of(new CommunityAuthorizationApiKey("api-key-id", "community-id", apiKey, now())))
         .role(ROLE_INSURANCE)
         .isApiKeyRevoked(false)
         .maxSurfaceUnit(SQUARE_METER)

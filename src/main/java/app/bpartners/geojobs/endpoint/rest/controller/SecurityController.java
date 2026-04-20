@@ -51,6 +51,11 @@ public class SecurityController {
     return service.revokeCommunityApiKey(communityAuthorization, revokeApiKey.getKeyValue());
   }
 
+  /**
+   * @deprecated Uses the API key stored in the community authorization table, which is part of a
+   *     deprecated API key system and should no longer be used.
+   */
+  @Deprecated
   @DeleteMapping("/keys")
   public RevokeApiKeyResponse revokeLatestApikey() {
     var communityAuthorization =

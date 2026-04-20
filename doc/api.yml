@@ -1215,6 +1215,7 @@ paths:
                 $ref: '#/components/schemas/RevokeApiKeyResponse'
   '/keys':
     delete:
+      deprecated: true
       tags:
         - Security
       operationId: revokeApiKey
