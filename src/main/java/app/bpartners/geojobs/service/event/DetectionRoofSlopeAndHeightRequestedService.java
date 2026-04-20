@@ -36,11 +36,9 @@ public class DetectionRoofSlopeAndHeightRequestedService
           "FeatureWithDelimitation is null for detection={" + detectionIdentifier + "}");
     }
     var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
-    for (int i = 0; i < providedGeoJsonZone.size(); i++) {
-      eventProducer.accept(
-          List.of(
-              new FeatureRoofSlopeAndHeightRequested(
-                  detectionIdentifier, providedGeoJsonZone.get(i), i)));
-    }
+    providedGeoJsonZone.forEach(
+        feature ->
+            eventProducer.accept(
+                List.of(new FeatureRoofSlopeAndHeightRequested(detectionIdentifier, feature))));
   }
 }

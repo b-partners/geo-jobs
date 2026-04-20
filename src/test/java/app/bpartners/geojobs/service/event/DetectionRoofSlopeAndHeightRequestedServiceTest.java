@@ -50,10 +50,10 @@ class DetectionRoofSlopeAndHeightRequestedServiceTest {
     var featureTwoRoofPropertiesEvent =
         (FeatureRoofSlopeAndHeightRequested) eventListCaptor.getAllValues().getLast().getFirst();
     assertEquals(
-        new FeatureRoofSlopeAndHeightRequested(detectionIdentifier, providedFeatureOneMock, 0),
+        new FeatureRoofSlopeAndHeightRequested(detectionIdentifier, providedFeatureOneMock),
         featureOneRoofPropertiesEvent);
     assertEquals(
-        new FeatureRoofSlopeAndHeightRequested(detectionIdentifier, providedFeatureTwoMock, 1),
+        new FeatureRoofSlopeAndHeightRequested(detectionIdentifier, providedFeatureTwoMock),
         featureTwoRoofPropertiesEvent);
     assertEquals(EVENT_STACK_4, featureOneRoofPropertiesEvent.getEventStack());
     assertEquals(EVENT_STACK_4, featureTwoRoofPropertiesEvent.getEventStack());
