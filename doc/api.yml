@@ -2531,8 +2531,16 @@ components:
           $ref: '#/components/schemas/DelimitationType'
     DelimitationObjectType:
       type: string
+      description: |
+        By default delimitationObjectType is BUILDING_ROOF.
+        BUILDING_ROOF represents a building-level delimitation using a global geometry (point/polygon/multi-polygon).
+        BUILDING_ROOF_SEGMENT_FACE represents segments of a roof divided into multiple parts, each corresponding to a distinct sloping roof surface. Only polygon/multipolygon are supported.
       enum:
         - BUILDING_ROOF
+        - BUILDING_ROOF_SEGMENT_FACE
+      x-enum-varnames:
+        - BUILDING_ROOF
+        - BUILDING_ROOF_SEGMENT_FACE
     CreateCityJSONRequest:
       deprecated: true
       allOf:
@@ -2615,12 +2623,10 @@ components:
         PARCEL_FREE_DELIMITATION, earlier known as *ZONE* delimitation, supported any BP models, permits consumer to provide either point/polygon/multi-polygon geometry
         USER_DEFINED_DELIMITATION, earlier known as *ROOF* delimitation, only supported with BP_TOITURE model for now, allows consumer to provide define delimitation (eg. roof for BP_TOITURE model), so API does not have to search for its inside provided zone;
         PARCEL_CONSTRAINED_DELIMITATION, earlier known as *PARCEL* delimitation, only supported with BP_TOITURE and BP_VEGETATION models for now, allows consumer to exclude parcels for each zone provided.
-        ROOF_FACES_DELIMITATION permits consumer to provide roof faces (roof segments) geometries for 3D modelization precision. Only polygon/multipolygon geometries are supported.
       enum:
         - USER_DEFINED_DELIMITATION
         - PARCEL_FREE_DELIMITATION
         - PARCEL_CONSTRAINED_DELIMITATION
-        - ROOF_FACES_DELIMITATION
         - ROOF
         - ZONE
         - PARCEL
