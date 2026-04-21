@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -57,7 +58,7 @@ public class RevokedApiKeyService {
 
     if (!targetAuthorization.getId().equals(authenticatedAuthorization.getId())
         && ROLE_ADMIN.equals(authenticatedAuthorization.getRole())) {
-      throw new BadRequestException("Operation not permitted");
+      throw new AccessDeniedException("Operation not permitted");
     }
     List<RevokedApiKey> revokedApiKeys =
         revokeDomainCommunityApiKey(targetAuthorization, apiKeyValue);
