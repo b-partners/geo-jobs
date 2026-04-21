@@ -1207,12 +1207,12 @@ paths:
             schema:
               $ref: '#/components/schemas/RevokeApiKey'
       responses:
-        200:
-          description: ApiKey revoked successfully message
+        204:
+          description: Revoked api key
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RevokeApiKeyResponse'
+                $ref: '#/components/schemas/RevokedApiKey'
   '/keys':
     delete:
       deprecated: true
@@ -1677,6 +1677,14 @@ components:
         - "C"
         - "D"
         - "E"
+
+    RevokedApiKey:
+      allOf:
+        - $ref: "#/components/schemas/ApiKey"
+      properties:
+        revokedAt:
+          type: string
+          format: date-time
 
     RevokeApiKey:
       type: object
