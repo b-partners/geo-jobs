@@ -33,19 +33,17 @@ public class RevokedApiKeyService {
    */
   @Deprecated
   @Transactional
-  public RevokeApiKeyResponse revokeCommunityLatestApiKey(
+  public RevokedApiKey revokeCommunityLatestApiKey(
       CommunityAuthorization communityAuthorization) {
     if (communityAuthorization.isApiKeyRevoked()) {
       throw new BadRequestException("Cannot revoke apikey as it is already revoked");
     }
 
-    revokeRawApiKey(communityAuthorization);
-
-    return new RevokeApiKeyResponse().message("Your API key has been successfully revoked");
+    return revokeRawApiKey(communityAuthorization);
   }
 
   @Transactional
-  public RevokeApiKeyResponse revokeCommunityApiKey(
+  public RevokedApiKey revokeCommunityApiKey(
       CommunityAuthorization authenticatedAuthorization, String apiKeyValue) {
     Optional<CommunityAuthorization> optionalTargetAuthorization =
         communityAuthRepository.findByApiKey(apiKeyValue);
@@ -60,26 +58,21 @@ public class RevokedApiKeyService {
         && !ROLE_ADMIN.equals(authenticatedAuthorization.getRole())) {
       throw new AccessDeniedException("Users can only revoke their own API keys.");
     }
-    List<RevokedApiKey> revokedApiKeys =
+
+    Optional<RevokedApiKey> optionalRevokedApiKey =
         revokeDomainCommunityApiKey(targetAuthorization, apiKeyValue);
 
-    if (revokedApiKeys.isEmpty()) {
-      revokeRawApiKey(targetAuthorization);
-    }
-
-    return new RevokeApiKeyResponse()
-        .message(String.format("The API key %s has been successfully revoked", hide(apiKeyValue)));
+    return optionalRevokedApiKey.orElseGet(() -> revokeRawApiKey(targetAuthorization));
   }
 
-  @NotNull
-  private List<RevokedApiKey> revokeDomainCommunityApiKey(
+  private Optional<RevokedApiKey> revokeDomainCommunityApiKey(
       CommunityAuthorization communityAuthorization, String apiKeyValue) {
     List<CommunityAuthorizationApiKey> apiKeys = communityAuthorization.getApiKeys();
 
     return apiKeys.stream()
         .filter(key -> apiKeyValue.equals(key.getKeyValue()))
         .map(communityAuthorizationApiKeyService::revokeApiKey)
-        .toList();
+        .findFirst();
   }
 
   /**
@@ -87,7 +80,7 @@ public class RevokedApiKeyService {
    *     deprecated API key system and should no longer be used.
    */
   @Deprecated
-  private void revokeRawApiKey(CommunityAuthorization communityAuthorization) {
+  private RevokedApiKey revokeRawApiKey(CommunityAuthorization communityAuthorization) {
     var revokedApiKey =
         RevokedApiKey.builder()
             .id(randomUUID().toString())
@@ -99,6 +92,8 @@ public class RevokedApiKeyService {
     communityAuthorization.setApiKeyRevoked(true);
     repository.save(revokedApiKey);
     communityAuthRepository.save(communityAuthorization);
+
+    return revokedApiKey;
   }
 
   static String hide(String apiKey) {

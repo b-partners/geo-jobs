@@ -1,10 +1,8 @@
 package app.bpartners.geojobs.endpoint.rest.controller;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.ApiKeyMapper;
-import app.bpartners.geojobs.endpoint.rest.model.ApiKey;
-import app.bpartners.geojobs.endpoint.rest.model.CreateApiKey;
-import app.bpartners.geojobs.endpoint.rest.model.RevokeApiKey;
-import app.bpartners.geojobs.endpoint.rest.model.RevokeApiKeyResponse;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.RevokedApiKeyMapper;
+import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
@@ -26,6 +24,7 @@ public class SecurityController {
   private final CommunityAuthorizationRepository communityAuthRepository;
   private final ApiKeyMapper apiKeyMapper;
   private final ApiKeyService apiKeyService;
+  private final RevokedApiKeyMapper revokedApiKeyMapper;
 
   @PostMapping("/api/keys")
   public List<ApiKey> generateApiKeys(@RequestBody List<CreateApiKey> createApiKeys) {
@@ -42,14 +41,15 @@ public class SecurityController {
   }
 
   @DeleteMapping("/api/keys")
-  public RevokeApiKeyResponse revokeSpecificApiKey(@RequestBody RevokeApiKey revokeApiKey) {
+  public RevokedApiKey revokeSpecificApiKey(@RequestBody RevokeApiKey revokeApiKey) {
     CommunityAuthorization communityAuthorization =
         communityAuthRepository
             .findByApiKey(authProvider.getPrincipal().getPassword())
             .orElseThrow(ForbiddenException::new);
     String keyValue = String.valueOf(revokeApiKey.getKeyValue());
 
-    return service.revokeCommunityApiKey(communityAuthorization, keyValue);
+    return revokedApiKeyMapper.toRest(
+        service.revokeCommunityApiKey(communityAuthorization, keyValue));
   }
 
   /**
@@ -63,6 +63,7 @@ public class SecurityController {
         communityAuthRepository
             .findByApiKey(authProvider.getPrincipal().getPassword())
             .orElseThrow(ForbiddenException::new);
-    return service.revokeCommunityLatestApiKey(communityAuthorization);
+    service.revokeCommunityLatestApiKey(communityAuthorization);
+    return new RevokeApiKeyResponse().message("Your API key has been successfully revoked");
   }
 }

@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.rest.controller.SecurityController;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.RevokedApiKeyMapper;
 import app.bpartners.geojobs.endpoint.rest.model.CreateApiKey;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel;
 import app.bpartners.geojobs.endpoint.rest.model.RevokeApiKey;
@@ -40,6 +41,7 @@ class SecurityControllerIT extends FacadeIT {
   @Autowired CommunityAuthorizationRepository authorizationRepository;
   @Autowired CommunityAuthorizationApiKeyRepository apiKeyRepository;
   @Autowired RevokedApiKeyRepository revokedApiKeyRepository;
+  @Autowired RevokedApiKeyMapper revokedApiKeyMapper;
   @MockBean UserAccountsApi userAccountsApiMock;
   @MockBean AuthProvider authProviderMock;
 
@@ -97,13 +99,12 @@ class SecurityControllerIT extends FacadeIT {
     when(authProviderMock.getPrincipal())
         .thenReturn(new Principal(authentificationApiKey, Set.of(new Authority(ROLE_INSURANCE))));
 
-    var response =
+    var actual =
         subject.revokeSpecificApiKey(new RevokeApiKey().keyValue(UUID.fromString(apiKeyToRevoke)));
 
-    assertEquals(
-        "The API key " + apiKeyToRevoke + " has been successfully revoked", response.getMessage());
     var revokedApiKey =
         revokedApiKeyRepository.findByRevokedApiKeyValue(apiKeyToRevoke).orElseThrow();
+    assertEquals(revokedApiKeyMapper.toRest(revokedApiKey), actual);
     assertEquals(community.getId(), revokedApiKey.getCommunityOwnerId());
     assertEquals(apiKeyToRevoke, revokedApiKey.getRevokedApiKeyValue());
   }

@@ -1683,7 +1683,7 @@ components:
 
     RevokedApiKey:
       allOf:
-        - $ref: "#/components/schemas/ApiKey"
+        - $ref: "#/components/schemas/RevokeApiKey"
       properties:
         revokedAt:
           type: string

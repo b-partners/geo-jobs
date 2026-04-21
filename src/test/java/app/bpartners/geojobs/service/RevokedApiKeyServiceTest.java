@@ -11,7 +11,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import app.bpartners.geojobs.endpoint.rest.model.RevokeApiKeyResponse;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
@@ -38,28 +37,19 @@ class RevokedApiKeyServiceTest {
     var communityAuthorization = communityAuthorizationWithApiKeys();
     var keyToRevoke = communityAuthorization.getApiKeys().getFirst();
     var revokedApiKey = revokedApiKey(keyToRevoke);
-    var expected =
-        new RevokeApiKeyResponse()
-            .message(
-                "The API key "
-                    + hide(keyToRevoke.getKeyValue())
-                    + " has been successfully revoked");
     when(communityAuthorizationApiKeyService.revokeApiKey(keyToRevoke)).thenReturn(revokedApiKey);
     when(communityAuthRepositoryMock.findByApiKey(keyToRevoke.getKeyValue()))
         .thenReturn(Optional.of(communityAuthorization));
 
     var actual = subject.revokeCommunityApiKey(communityAuthorization, keyToRevoke.getKeyValue());
 
-    assertEquals(expected, actual);
+    assertEquals(revokedApiKey, actual);
   }
 
   @Test
   void revoke_community_raw_api_key_ok() {
     var communityAuthorization = communityAuthorization(false);
     var keyToRevoke = communityAuthorization.getApiKey();
-    var expected =
-        new RevokeApiKeyResponse()
-            .message("The API key " + hide(keyToRevoke) + " has been successfully revoked");
     when(revokedApiKeyRepositoryMock.save(any(RevokedApiKey.class))).thenReturn(mock());
     when(communityAuthRepositoryMock.save(communityAuthorization)).thenReturn(mock());
     when(communityAuthRepositoryMock.findByApiKey(keyToRevoke))
@@ -67,7 +57,7 @@ class RevokedApiKeyServiceTest {
 
     var actual = subject.revokeCommunityApiKey(communityAuthorization, keyToRevoke);
 
-    assertEquals(expected, actual);
+    assertEquals(keyToRevoke, actual.getRevokedApiKeyValue());
   }
 
   @Test
@@ -97,13 +87,12 @@ class RevokedApiKeyServiceTest {
   @Test
   void can_revoke_api_key_ok() {
     var communityAuthorization = communityAuthorization(false);
-    var expected = new RevokeApiKeyResponse().message("Your API key has been successfully revoked");
     when(communityAuthRepositoryMock.save(any(CommunityAuthorization.class))).thenReturn(mock());
     when(revokedApiKeyRepositoryMock.save(any(RevokedApiKey.class))).thenReturn(mock());
 
     var actual = subject.revokeCommunityLatestApiKey(communityAuthorization);
 
-    assertEquals(expected, actual);
+    assertEquals(communityAuthorization.getApiKey(), actual.getRevokedApiKeyValue());
     verify(revokedApiKeyRepositoryMock, times(1)).save(any(RevokedApiKey.class));
     verify(communityAuthRepositoryMock, times(1)).save(communityAuthorization(true));
   }
