@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service;
 
+import static app.bpartners.geojobs.service.RevokedApiKeyService.hide;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -39,7 +40,10 @@ class RevokedApiKeyServiceTest {
     var revokedApiKey = revokedApiKey(keyToRevoke);
     var expected =
         new RevokeApiKeyResponse()
-            .message("The API key " + keyToRevoke.getKeyValue() + " has been successfully revoked");
+            .message(
+                "The API key "
+                    + hide(keyToRevoke.getKeyValue())
+                    + " has been successfully revoked");
     when(communityAuthorizationApiKeyService.revokeApiKey(keyToRevoke)).thenReturn(revokedApiKey);
     when(communityAuthRepositoryMock.findByApiKey(keyToRevoke.getKeyValue()))
         .thenReturn(Optional.of(communityAuthorization));
@@ -55,7 +59,7 @@ class RevokedApiKeyServiceTest {
     var keyToRevoke = communityAuthorization.getApiKey();
     var expected =
         new RevokeApiKeyResponse()
-            .message("The API key " + keyToRevoke + " has been successfully revoked");
+            .message("The API key " + hide(keyToRevoke) + " has been successfully revoked");
     when(revokedApiKeyRepositoryMock.save(any(RevokedApiKey.class))).thenReturn(mock());
     when(communityAuthRepositoryMock.save(communityAuthorization)).thenReturn(mock());
     when(communityAuthRepositoryMock.findByApiKey(keyToRevoke))
@@ -77,8 +81,7 @@ class RevokedApiKeyServiceTest {
             NotFoundException.class,
             () -> subject.revokeCommunityApiKey(communityAuthorization, keyToRevoke));
 
-    assertEquals(
-        "The API key " + keyToRevoke + " is not linked to any authorization.", actual.getMessage());
+    assertEquals("The API key " + hide(keyToRevoke) + " was not found.", actual.getMessage());
   }
 
   @Test
