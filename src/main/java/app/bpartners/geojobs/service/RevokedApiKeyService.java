@@ -49,26 +49,26 @@ public class RevokedApiKeyService {
     Optional<CommunityAuthorization> optionalTargetAuthorization =
         communityAuthRepository.findByApiKey(apiKeyValue);
 
-    if (optionalTargetAuthorization.isPresent()) {
-      CommunityAuthorization targetAuthorization = optionalTargetAuthorization.get();
-
-      if (!targetAuthorization.getId().equals(authenticatedAuthorization.getId())
-          && ROLE_ADMIN.equals(authenticatedAuthorization.getRole())) {
-        throw new BadRequestException("Operation not permitted");
-      }
-      List<RevokedApiKey> revokedApiKeys =
-          revokeDomainCommunityApiKey(targetAuthorization, apiKeyValue);
-
-      if (revokedApiKeys.isEmpty()) {
-        revokeRawApiKey(targetAuthorization);
-      }
-
-      return new RevokeApiKeyResponse()
-          .message(String.format("The API key %s has been successfully revoked", apiKeyValue));
+    if (optionalTargetAuthorization.isEmpty()) {
+      throw new NotFoundException(
+          "The API key " + apiKeyValue + " is not linked to any authorization.");
     }
 
-    throw new NotFoundException(
-        "The API key " + apiKeyValue + " is not linked to any authorization.");
+    CommunityAuthorization targetAuthorization = optionalTargetAuthorization.get();
+
+    if (!targetAuthorization.getId().equals(authenticatedAuthorization.getId())
+        && ROLE_ADMIN.equals(authenticatedAuthorization.getRole())) {
+      throw new BadRequestException("Operation not permitted");
+    }
+    List<RevokedApiKey> revokedApiKeys =
+        revokeDomainCommunityApiKey(targetAuthorization, apiKeyValue);
+
+    if (revokedApiKeys.isEmpty()) {
+      revokeRawApiKey(targetAuthorization);
+    }
+
+    return new RevokeApiKeyResponse()
+        .message(String.format("The API key %s has been successfully revoked", apiKeyValue));
   }
 
   @NotNull
