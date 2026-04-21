@@ -57,7 +57,7 @@ public class RevokedApiKeyService {
     CommunityAuthorization targetAuthorization = optionalTargetAuthorization.get();
 
     if (!targetAuthorization.getId().equals(authenticatedAuthorization.getId())
-        && ROLE_ADMIN.equals(authenticatedAuthorization.getRole())) {
+        && !ROLE_ADMIN.equals(authenticatedAuthorization.getRole())) {
       throw new AccessDeniedException("Users can only revoke their own API keys.");
     }
     List<RevokedApiKey> revokedApiKeys =
