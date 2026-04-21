@@ -96,7 +96,7 @@ class SecurityControllerIT extends FacadeIT {
     when(authProviderMock.getPrincipal())
         .thenReturn(new Principal(authentificationApiKey, Set.of(new Authority(ROLE_INSURANCE))));
 
-    var response = subject.revokeApiKeys(new RevokeApiKey().keyValue(apiKeyToRevoke));
+    var response = subject.revokeSpecificApiKey(new RevokeApiKey().keyValue(apiKeyToRevoke));
 
     assertEquals(
         "The API key " + apiKeyToRevoke + " has been successfully revoked", response.getMessage());

@@ -1199,7 +1199,7 @@ paths:
     delete:
       tags:
         - Security
-      operationId: revokeApiKeys
+      operationId: revokeSpecificApiKey
       summary: Revoke an API key for a community authorization
       requestBody:
         content:

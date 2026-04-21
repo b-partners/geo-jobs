@@ -42,7 +42,7 @@ public class SecurityController {
   }
 
   @DeleteMapping("/api/keys")
-  public RevokeApiKeyResponse revokeApiKeys(@RequestBody RevokeApiKey revokeApiKey) {
+  public RevokeApiKeyResponse revokeSpecificApiKey(@RequestBody RevokeApiKey revokeApiKey) {
     CommunityAuthorization communityAuthorization =
         communityAuthRepository
             .findByApiKey(authProvider.getPrincipal().getPassword())
@@ -57,7 +57,7 @@ public class SecurityController {
    */
   @Deprecated
   @DeleteMapping("/keys")
-  public RevokeApiKeyResponse revokeLatestApikey() {
+  public RevokeApiKeyResponse revokeApikey() {
     var communityAuthorization =
         communityAuthRepository
             .findByApiKey(authProvider.getPrincipal().getPassword())
