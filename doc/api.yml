@@ -1213,6 +1213,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RevokedApiKey'
+        403:
+          description: Operation not permitted
+          $ref: "#/components/responses/403"
   '/keys':
     delete:
       deprecated: true

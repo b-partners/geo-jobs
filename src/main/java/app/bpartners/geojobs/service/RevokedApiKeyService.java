@@ -58,7 +58,7 @@ public class RevokedApiKeyService {
 
     if (!targetAuthorization.getId().equals(authenticatedAuthorization.getId())
         && ROLE_ADMIN.equals(authenticatedAuthorization.getRole())) {
-      throw new AccessDeniedException("Operation not permitted");
+      throw new AccessDeniedException("Users can only revoke their own API keys.");
     }
     List<RevokedApiKey> revokedApiKeys =
         revokeDomainCommunityApiKey(targetAuthorization, apiKeyValue);
@@ -101,9 +101,9 @@ public class RevokedApiKeyService {
     communityAuthRepository.save(communityAuthorization);
   }
 
-  private static String hide(String apiKey) {
+  static String hide(String apiKey) {
     int keyLength = apiKey.length();
-    int hideRange = keyLength / 5;
+    int hideRange = keyLength / (keyLength / 6);
     String shownPart = apiKey.substring(hideRange, (keyLength - hideRange));
     String hider = "*".repeat(hideRange);
 
