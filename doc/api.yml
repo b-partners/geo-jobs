@@ -1691,7 +1691,8 @@ components:
       properties:
         keyValue:
           type: string
-          example: "xxxxxxxx-xxxx-Mxxx-Nxxx-xxxxxxxxxxxx"
+          format: UUID
+          example: "32507271-5ebf-467d-beb2-1a243efdb0e5"
 
     CreateApiKey:
       type: object
