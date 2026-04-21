@@ -50,8 +50,7 @@ public class RevokedApiKeyService {
         communityAuthRepository.findByApiKey(apiKeyValue);
 
     if (optionalTargetAuthorization.isEmpty()) {
-      throw new NotFoundException(
-          "The API key " + apiKeyValue + " is not linked to any authorization.");
+      throw new NotFoundException("The API key " + hide(apiKeyValue) + " was not found.");
     }
 
     CommunityAuthorization targetAuthorization = optionalTargetAuthorization.get();
@@ -68,7 +67,7 @@ public class RevokedApiKeyService {
     }
 
     return new RevokeApiKeyResponse()
-        .message(String.format("The API key %s has been successfully revoked", apiKeyValue));
+        .message(String.format("The API key %s has been successfully revoked", hide(apiKeyValue)));
   }
 
   @NotNull
@@ -99,5 +98,14 @@ public class RevokedApiKeyService {
     communityAuthorization.setApiKeyRevoked(true);
     repository.save(revokedApiKey);
     communityAuthRepository.save(communityAuthorization);
+  }
+
+  private static String hide(String apiKey) {
+    int keyLength = apiKey.length();
+    int hideRange = keyLength / 5;
+    String shownPart = apiKey.substring(hideRange, (keyLength - hideRange));
+    String hider = "*".repeat(hideRange);
+
+    return hider + shownPart + hider;
   }
 }
