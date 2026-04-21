@@ -29,6 +29,7 @@ import app.bpartners.geojobs.service.dashboard.component.UserApiKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -87,16 +88,17 @@ class SecurityControllerIT extends FacadeIT {
   @Transactional
   @Test
   void revoke_api_keys_ok() {
-    var authentificationApiKey = "apiKey-" + randomUUID();
+    var authentificationApiKey = randomUUID().toString();
     var community = authorizationRepository.save(communityAuthorization(authentificationApiKey));
-    var apiKeyToRevoke = "secondary-apiKey-" + randomUUID();
+    var apiKeyToRevoke = randomUUID().toString();
     var apiKeyToRevokeEntity = apiKeyRepository.save(apiKeyToRevoke(apiKeyToRevoke, community));
     community.setApiKeys(new ArrayList<>(List.of(apiKeyToRevokeEntity)));
     authorizationRepository.save(community);
     when(authProviderMock.getPrincipal())
         .thenReturn(new Principal(authentificationApiKey, Set.of(new Authority(ROLE_INSURANCE))));
 
-    var response = subject.revokeSpecificApiKey(new RevokeApiKey().keyValue(apiKeyToRevoke));
+    var response =
+        subject.revokeSpecificApiKey(new RevokeApiKey().keyValue(UUID.fromString(apiKeyToRevoke)));
 
     assertEquals(
         "The API key " + apiKeyToRevoke + " has been successfully revoked", response.getMessage());

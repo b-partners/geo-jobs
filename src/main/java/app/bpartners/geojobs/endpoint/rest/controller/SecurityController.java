@@ -47,8 +47,9 @@ public class SecurityController {
         communityAuthRepository
             .findByApiKey(authProvider.getPrincipal().getPassword())
             .orElseThrow(ForbiddenException::new);
+    String keyValue = String.valueOf(revokeApiKey.getKeyValue());
 
-    return service.revokeCommunityApiKey(communityAuthorization, revokeApiKey.getKeyValue());
+    return service.revokeCommunityApiKey(communityAuthorization, keyValue);
   }
 
   /**
