@@ -1207,7 +1207,7 @@ paths:
             schema:
               $ref: '#/components/schemas/RevokeApiKey'
       responses:
-        204:
+        200:
           description: Revoked api key
           content:
             application/json:
