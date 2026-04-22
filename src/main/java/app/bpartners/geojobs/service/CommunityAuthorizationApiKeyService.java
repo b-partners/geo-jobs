@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
+import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationApiKeyRepository;
 import app.bpartners.geojobs.repository.RevokedApiKeyRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorizationApiKey;
@@ -24,7 +25,7 @@ public class CommunityAuthorizationApiKeyService {
             communityAuthorizationApiKey.getKeyValue());
 
     if (optionalRevokedApiKey.isPresent()) {
-      throw new IllegalStateException("ApiKey already revoked");
+      throw new BadRequestException("ApiKey already revoked");
     }
 
     RevokedApiKey revokedApiKey =
