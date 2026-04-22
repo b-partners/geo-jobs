@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import app.bpartners.geojobs.repository.CommunityAuthorizationApiKeyRepository;
 import app.bpartners.geojobs.repository.RevokedApiKeyRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorizationApiKey;
 import app.bpartners.geojobs.repository.model.community.RevokedApiKey;
@@ -16,12 +15,9 @@ import org.junit.jupiter.api.Test;
 class CommunityAuthorizationApiKeyServiceTest {
   private static final String KEY_VALUE = randomUUID().toString();
   private final RevokedApiKeyRepository revokedApiKeyRepository = mock();
-  private final CommunityAuthorizationApiKeyRepository communityAuthorizationApiKeyRepository =
-      mock();
 
   CommunityAuthorizationApiKeyService subject =
-      new CommunityAuthorizationApiKeyService(
-          revokedApiKeyRepository, communityAuthorizationApiKeyRepository);
+      new CommunityAuthorizationApiKeyService(revokedApiKeyRepository);
 
   @Test
   void revoking_already_revoked_key_is_illegal() {

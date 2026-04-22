@@ -4,7 +4,6 @@ import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.model.exception.BadRequestException;
-import app.bpartners.geojobs.repository.CommunityAuthorizationApiKeyRepository;
 import app.bpartners.geojobs.repository.RevokedApiKeyRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorizationApiKey;
 import app.bpartners.geojobs.repository.model.community.RevokedApiKey;
@@ -16,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CommunityAuthorizationApiKeyService {
   private final RevokedApiKeyRepository revokedApiKeyRepository;
-  private final CommunityAuthorizationApiKeyRepository communityAuthorizationApiKeyRepository;
 
   @Transactional
   public RevokedApiKey revokeApiKey(CommunityAuthorizationApiKey communityAuthorizationApiKey) {
@@ -37,7 +35,6 @@ public class CommunityAuthorizationApiKeyService {
             .build();
 
     revokedApiKeyRepository.save(revokedApiKey);
-    communityAuthorizationApiKeyRepository.deleteById(communityAuthorizationApiKey.getId());
 
     return revokedApiKey;
   }
