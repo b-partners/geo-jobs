@@ -1,9 +1,10 @@
 package app.bpartners.geojobs.service.lidar.model.geometry.roof;
 
 import static app.bpartners.geojobs.model.lidar.planes.algorithm.GeometryUtilities.getLargestPolygon;
-import static app.bpartners.geojobs.model.lidar.planes.model.LasRoofDelimitationType.ROOF_SEGMENT_FACE_DELIMITATION;
 
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
+import app.bpartners.geojobs.model.lidar.planes.Plane3D;
+import app.bpartners.geojobs.model.lidar.planes.Plane3DGeneratorWithoutSegmentations;
 import app.bpartners.geojobs.model.lidar.planes.Planes3DExtractor;
 import app.bpartners.geojobs.model.lidar.planes.conf.Plane3DExtractorConf;
 import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepExporter;
@@ -55,12 +56,7 @@ public class Building3DProperties {
       return roofPlanes;
     }
 
-    if (ROOF_SEGMENT_FACE_DELIMITATION.equals(delimitedPoints.getType())) {
-      throw new IllegalArgumentException("ROOF_SEGMENT_FACE_DELIMITATION is not supported yet");
-    }
-
-    var extractor = new Planes3DExtractor(getRoofDelimitation(), conf, exporter);
-    var rawPlanes = extractor.apply(getCleanedRoofPoints());
+    var rawPlanes = getRawPlanes();
     roofPlanes =
         rawPlanes.stream().map(plane -> new RoofPlane3D(getRoofDelimitation(), plane)).toList();
     return roofPlanes;
@@ -85,5 +81,18 @@ public class Building3DProperties {
   @Deprecated
   private Polygon getRoofDelimitation() {
     return getLargestPolygon(delimitedPoints);
+  }
+
+  private List<Plane3D> getRawPlanes(){
+    return switch (delimitedPoints.getType()) {
+      case ENTIRE_ROOF_DELIMITATION ->{
+        var extractor = new Planes3DExtractor(getRoofDelimitation(), conf, exporter);
+        yield extractor.apply(delimitedPoints.getPoints());
+      }
+      case ROOF_SEGMENT_FACE_DELIMITATION -> {
+        var extractor = new Plane3DGeneratorWithoutSegmentations(conf, exporter);
+        yield extractor.apply(delimitedPoints);
+      }
+    };
   }
 }
