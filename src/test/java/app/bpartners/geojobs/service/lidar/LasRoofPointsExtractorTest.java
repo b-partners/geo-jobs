@@ -2,6 +2,7 @@ package app.bpartners.geojobs.service.lidar;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.model.lidar.planes.model.LasRoofDelimitationType.ENTIRE_ROOF_DELIMITATION;
+import static app.bpartners.geojobs.model.lidar.planes.model.LasRoofDelimitationType.ROOF_SEGMENT_FACE_DELIMITATION;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -10,7 +11,6 @@ import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
 import app.bpartners.geojobs.service.lidar.api.SwissBoundaryChecker;
 import app.bpartners.geojobs.utils.lidar.LasRoofsPointsExtractorCreator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
@@ -46,10 +46,23 @@ class LasRoofPointsExtractorTest {
   }
 
   @Test
+  void status_should_be_extraction_error_when_unchecked_exception_happens() {
+    var geometry1 = roofGeometry1();
+    var lidarApiMock = mock(LidarApiFacade.class);
+
+    when(lidarApiMock.getUniqueLidarFilesUrls(any())).thenThrow(new RuntimeException());
+
+    var subject = LasRoofsPointsExtractorCreator.create(lidarApiMock);
+
+    var geometries = Set.of(geometry1);
+    assertThrows(RuntimeException.class, () -> subject.apply(ENTIRE_ROOF_DELIMITATION, geometries));
+  }
+
+  @Test
   void should_work_correctly_with_one_polygon_as_delimitation() {
     var roof1 = roofGeometry1();
     var pointsExtractor =
-        LasRoofsPointsExtractorCreator.create(roof1, List.of(LARGE_LIDAR_FILE_PATH));
+        LasRoofsPointsExtractorCreator.create(LARGE_LIDAR_FILE_PATH, Set.of(roof1));
 
     var result = pointsExtractor.apply(ENTIRE_ROOF_DELIMITATION, Set.of(roof1));
 
@@ -64,7 +77,7 @@ class LasRoofPointsExtractorTest {
     var roof1 = (Polygon) roofGeometry1();
     var multipolygon = geometryFactory.createMultiPolygon(new Polygon[] {roof1});
     var pointsExtractor =
-        LasRoofsPointsExtractorCreator.create(multipolygon, List.of(LARGE_LIDAR_FILE_PATH));
+        LasRoofsPointsExtractorCreator.create(LARGE_LIDAR_FILE_PATH, Set.of(multipolygon));
 
     var result = pointsExtractor.apply(ENTIRE_ROOF_DELIMITATION, Set.of(multipolygon));
 
@@ -72,6 +85,28 @@ class LasRoofPointsExtractorTest {
 
     assertEquals(3487, roof1Points.getItems()[0].getPoints().size());
     assertEquals(101, roof1Points.getGroundPoints().size());
+  }
+
+  @Test
+  void should_work_correctly_with_delimitation_face_type() {
+    var roof1 = roofGeometry1();
+    var roof2ByRoofFace = roofGeometry2ByRoofFace();
+    var geometries = Set.of(roof1, roof2ByRoofFace);
+
+    var pointsExtractor = LasRoofsPointsExtractorCreator.create(LARGE_LIDAR_FILE_PATH, geometries);
+    var result = pointsExtractor.apply(ROOF_SEGMENT_FACE_DELIMITATION, geometries);
+
+    var roof1Points = result.extract(roof1);
+    assertEquals(4506, roof1Points.getItems()[0].getPoints().size());
+    assertEquals(101, roof1Points.getGroundPoints().size());
+
+    var roof2Points = result.extract(roof2ByRoofFace);
+    var roof2RoofFace1 = roof2Points.getItems()[0];
+    var roof2RoofFace2 = roof2Points.getItems()[1];
+
+    assertEquals(2702, roof2RoofFace1.getPoints().size());
+    assertEquals(3568, roof2RoofFace2.getPoints().size());
+    assertEquals(101, roof2Points.getGroundPoints().size());
   }
 
   private static SwissBoundaryChecker swissBoundaryCheckerMock() {
@@ -106,5 +141,29 @@ class LasRoofPointsExtractorTest {
           new Coordinate(2.243891733457616, 48.82448842864014)
         };
     return geometryFactory.createPolygon(roof1Coordinates);
+  }
+
+  private static Geometry roofGeometry2ByRoofFace() {
+    var coordinates1 =
+        new Coordinate[] {
+          new Coordinate(2.244049962663752, 48.82475245702125),
+          new Coordinate(2.2437574895172077, 48.824694806122125),
+          new Coordinate(2.243769748871017, 48.82464522629601),
+          new Coordinate(2.244069665196804, 48.82471094838061),
+          new Coordinate(2.244049962663752, 48.82475245702125)
+        };
+    var polygon1 = geometryFactory.createPolygon(coordinates1);
+
+    var coordinates2 =
+        new Coordinate[] {
+          new Coordinate(2.2440937460699786, 48.824662521589886),
+          new Coordinate(2.244072730034617, 48.82471037187128),
+          new Coordinate(2.243771500207828, 48.824645514550895),
+          new Coordinate(2.2438087161013414, 48.824601411525094),
+          new Coordinate(2.2440937460699786, 48.824662521589886)
+        };
+    var polygon2 = geometryFactory.createPolygon(coordinates2);
+
+    return geometryFactory.createMultiPolygon(new Polygon[] {polygon1, polygon2});
   }
 }

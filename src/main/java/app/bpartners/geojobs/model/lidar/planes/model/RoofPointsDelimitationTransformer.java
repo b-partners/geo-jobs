@@ -14,7 +14,7 @@ public class RoofPointsDelimitationTransformer
   @Override
   public Polygon apply(LasRoofDelimitationType type, Polygon polygon) {
     return switch (type) {
-      case ROOF_FACE_DELIMITATION -> getLargestPolygon(polygon.buffer(roofFacesBuffer));
+      case ROOF_SEGMENT_FACE_DELIMITATION -> getLargestPolygon(polygon.buffer(roofFacesBuffer));
       default -> polygon;
     };
   }

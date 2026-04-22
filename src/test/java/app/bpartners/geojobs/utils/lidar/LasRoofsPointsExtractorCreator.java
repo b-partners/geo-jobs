@@ -5,6 +5,7 @@ import static app.bpartners.geojobs.service.GeometrySquareMeterArea.LAMBERT_93;
 import static app.bpartners.geojobs.service.GeometrySquareMeterArea.WGS84;
 import static java.nio.file.Files.readAllBytes;
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.toSet;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -33,21 +34,46 @@ public class LasRoofsPointsExtractorCreator {
     return checker;
   }
 
-  public static LasRoofsPointsExtractor create(Geometry delimitation, List<String> files) {
-    var projected = projector.project(delimitation, WGS84, LAMBERT_93);
+  public static LasRoofsPointsExtractor create(LidarApiFacade lidarApi) {
+    return new LasRoofsPointsExtractor(lidarApi, projector, swissBoundaryCheckerMock());
+  }
+
+  public static LasRoofsPointsExtractor create(String url, Set<Geometry> geometries) {
+    return create(Map.of(url, geometries));
+  }
+
+  public static LasRoofsPointsExtractor create(Set<String> urls, Set<Geometry> geometries) {
+    Map<String, Set<Geometry>> result = new HashMap<>();
+    for (var url : urls) {
+      result.putIfAbsent(url, geometries);
+    }
+    return create(result);
+  }
+
+  public static LasRoofsPointsExtractor create(Map<String, Set<Geometry>> geometries) {
+    var projected = new HashMap<String, Set<Geometry>>();
+
+    geometries.forEach(
+        (key, value) -> {
+          var projectedGeometries =
+              value.stream()
+                  .map(geometry -> projector.project(geometry, WGS84, LAMBERT_93))
+                  .collect(toSet());
+          projected.put(key, projectedGeometries);
+        });
+
+    var filesUrl = new ArrayList<>(geometries.keySet());
     var filesData =
-        files.stream().map(LasRoofsPointsExtractorCreator::createTempFileFromResources).toList();
+        filesUrl.stream().map(LasRoofsPointsExtractorCreator::createTempFileFromResources).toList();
+
     var lidarApiMock = mock(LidarApiFacade.class);
+    when(lidarApiMock.getUniqueLidarFilesUrls(any())).thenReturn(projected);
 
-    Map<String, Set<Geometry>> data = new HashMap<>();
-    files.forEach(file -> data.put(file, Set.of(projected)));
-
-    when(lidarApiMock.getUniqueLidarFilesUrls(any())).thenReturn(data);
     when(lidarApiMock.download(any()))
         .thenAnswer(
             invocation -> {
               var filename = invocation.getArguments()[0].toString();
-              return Optional.of(filesData.get(files.indexOf(filename)));
+              return Optional.of(filesData.get(filesUrl.indexOf(filename)));
             });
 
     return new LasRoofsPointsExtractor(lidarApiMock, projector, swissBoundaryCheckerMock());

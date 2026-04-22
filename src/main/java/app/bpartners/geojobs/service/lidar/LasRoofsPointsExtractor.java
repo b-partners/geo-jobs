@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -27,6 +28,7 @@ public class LasRoofsPointsExtractor
   private final SwissBoundaryChecker swissBoundaryChecker;
   private final LasRoofPointsExtractorFromOneUrl pointsExtractorFromOneUrl;
 
+  @Autowired
   public LasRoofsPointsExtractor(
       LidarApiFacade lidarApi,
       GeometrySquareMeterArea projector,
