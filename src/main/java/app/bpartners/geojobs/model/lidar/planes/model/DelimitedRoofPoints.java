@@ -9,7 +9,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 import lombok.*;
 import org.locationtech.jts.geom.*;
 
@@ -20,37 +19,48 @@ public class DelimitedRoofPoints extends MultiPolygon {
   @EqualsAndHashCode.Include private final Envelope globalEnvelope;
   @EqualsAndHashCode.Include private final Envelope groundEnvelope;
   @EqualsAndHashCode.Include private final LasRoofDelimitationType type;
+  @EqualsAndHashCode.Exclude private final Geometry originalInEPSG4336;
   @EqualsAndHashCode.Exclude private final DelimitedRoofPointsItem[] items;
   @EqualsAndHashCode.Exclude private final Set<LasPointGeometry> groundPoints;
 
   private static final double GROUND_BUFFER = 3;
   private static final double MAX_GROUND_POINTS_COUNT = 100;
 
-  public DelimitedRoofPoints(Envelope globalEnvelope, Envelope groundEnvelope, LasRoofDelimitationType type, DelimitedRoofPointsItem[] items, Set<LasPointGeometry> groundPoints) {
+  public DelimitedRoofPoints(
+      Envelope globalEnvelope,
+      Envelope groundEnvelope,
+      LasRoofDelimitationType type,
+      Geometry originalInEPSG4336,
+      DelimitedRoofPointsItem[] items,
+      Set<LasPointGeometry> groundPoints) {
     super(toPolygons(items), geometryFactory);
 
     this.type = type;
     this.items = items;
+    this.originalInEPSG4336 = originalInEPSG4336;
     this.groundPoints = groundPoints;
     this.globalEnvelope = globalEnvelope;
     this.groundEnvelope = groundEnvelope;
   }
 
-    public DelimitedRoofPoints(
+  public DelimitedRoofPoints(
       LasRoofDelimitationType type,
+      Geometry originalInEPSG4336,
       Geometry delimitation,
       RoofPointsDelimitationTransformer transformer) {
-    this(type, getPolygons(delimitation), transformer);
+    this(type, originalInEPSG4336, getPolygons(delimitation), transformer);
   }
 
   public DelimitedRoofPoints(
       LasRoofDelimitationType type,
+      Geometry originalInEPSG4336,
       Polygon[] polygons,
       RoofPointsDelimitationTransformer transformer) {
     super(polygons, geometryFactory);
 
     this.type = type;
     this.groundPoints = new HashSet<>();
+    this.originalInEPSG4336 = originalInEPSG4336;
     this.items = toItems(type, polygons, transformer);
     this.globalEnvelope = super.getEnvelopeInternal();
     this.groundEnvelope = toBufferedEnvelope(globalEnvelope);
@@ -152,7 +162,10 @@ public class DelimitedRoofPoints extends MultiPolygon {
 
   public static DelimitedRoofPoints empty(Geometry delimitation) {
     return new DelimitedRoofPoints(
-        ENTIRE_ROOF_DELIMITATION, delimitation, new RoofPointsDelimitationTransformer(0));
+        ENTIRE_ROOF_DELIMITATION,
+        delimitation,
+        delimitation,
+        new RoofPointsDelimitationTransformer(0));
   }
 
   public List<LasPointGeometry> getPoints() {
@@ -162,7 +175,7 @@ public class DelimitedRoofPoints extends MultiPolygon {
         .toList();
   }
 
-  private static Polygon[] toPolygons(DelimitedRoofPointsItem[] items){
+  private static Polygon[] toPolygons(DelimitedRoofPointsItem[] items) {
     return Arrays.stream(items).map(DelimitedRoofPointsItem::getPolygon).toArray(Polygon[]::new);
   }
 }

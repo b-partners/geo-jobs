@@ -27,25 +27,28 @@ public class LasRoofsPointsExtractor
   private final SwissBoundaryChecker swissBoundaryChecker;
   private final LasRoofPointsExtractorFromOneUrl pointsExtractorFromOneUrl;
 
-  public LasRoofsPointsExtractor(LidarApiFacade lidarApi, GeometrySquareMeterArea projector, SwissBoundaryChecker swissBoundaryChecker) {
+  public LasRoofsPointsExtractor(
+      LidarApiFacade lidarApi,
+      GeometrySquareMeterArea projector,
+      SwissBoundaryChecker swissBoundaryChecker) {
     this.lidarApi = lidarApi;
     this.projector = projector;
     this.swissBoundaryChecker = swissBoundaryChecker;
     this.pointsExtractorFromOneUrl = new LasRoofPointsExtractorFromOneUrl(lidarApi);
   }
 
-    private static final double ROOF_FACES_BUFFER = 3;
+  private static final double ROOF_FACES_BUFFER = 3;
   private static final int MIN_BATIMENT_POINTS_COUNT = 10;
 
   @Override
   public PointsExtractionResult apply(LasRoofDelimitationType type, Set<Geometry> roofsEPSG4326) {
     try {
-      var delimitations = emptyDelimitedPoints(type, roofsEPSG4326);
-      var lidarFilesUrl = lidarApi.getUniqueLidarFilesUrls(new HashSet<>(delimitations.values()));
+      var lidarFilesUrl = lidarApi.getUniqueLidarFilesUrls(roofsEPSG4326);
       if (lidarFilesUrl.isEmpty()) {
         return new PointsExtractionResult(new HashMap<>());
       }
 
+      var delimitations = emptyDelimitedPoints(type, roofsEPSG4326);
       var pointsPerFiles = getPointsFromFiles(lidarFilesUrl, delimitations);
       var all = new HashSet<>(pointsPerFiles);
       all.add(new HashSet<>(delimitations.values()));
@@ -77,7 +80,7 @@ public class LasRoofsPointsExtractor
     Map<Envelope, DelimitedRoofPoints> merged = new HashMap<>();
     for (var roofDataFromOneFile : roofsDataFromFiles) {
       for (var delimitation : roofDataFromOneFile) {
-        var key = delimitation.getGlobalEnvelope();
+        var key = delimitation.getOriginalInEPSG4336().getEnvelopeInternal();
         merged.merge(key, delimitation, DelimitedRoofPoints::merge);
       }
     }
@@ -121,9 +124,10 @@ public class LasRoofsPointsExtractor
     var transformer = new RoofPointsDelimitationTransformer(ROOF_FACES_BUFFER);
 
     for (var roofEPSG4326 : roofsEPSG4326) {
+      var envelope = roofEPSG4326.getEnvelopeInternal();
       var roofInLocalCRS = projectToLocalCRS(roofEPSG4326);
-      var envelope = roofInLocalCRS.getEnvelopeInternal();
-      var delimitedRoofPoints = new DelimitedRoofPoints(type, roofInLocalCRS, transformer);
+      var delimitedRoofPoints =
+          new DelimitedRoofPoints(type, roofEPSG4326, roofInLocalCRS, transformer);
 
       delimitations.put(envelope, delimitedRoofPoints);
     }
