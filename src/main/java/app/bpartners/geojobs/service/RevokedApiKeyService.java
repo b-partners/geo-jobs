@@ -4,7 +4,6 @@ import static app.bpartners.geojobs.endpoint.rest.security.model.Authority.Role.
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
-import app.bpartners.geojobs.endpoint.rest.model.RevokeApiKeyResponse;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
@@ -16,7 +15,6 @@ import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
@@ -33,8 +31,7 @@ public class RevokedApiKeyService {
    */
   @Deprecated
   @Transactional
-  public RevokedApiKey revokeCommunityLatestApiKey(
-      CommunityAuthorization communityAuthorization) {
+  public RevokedApiKey revokeCommunityLatestApiKey(CommunityAuthorization communityAuthorization) {
     if (communityAuthorization.isApiKeyRevoked()) {
       throw new BadRequestException("Cannot revoke apikey as it is already revoked");
     }
