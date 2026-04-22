@@ -6,10 +6,9 @@ import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.planes.Plane3D;
+import app.bpartners.geojobs.model.lidar.planes.algorithm.PlaneFitter;
 import java.util.*;
 import java.util.function.Function;
-
-import app.bpartners.geojobs.model.lidar.planes.algorithm.PlaneFitter;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
 
@@ -70,18 +69,18 @@ public class Snapping3DComputer implements Function<List<Plane3D>, List<Plane3D>
       var polygon = geometryFactory.createPolygon(snapped);
       var newPlane = PlaneFitter.fit(toPoints(snapped));
       var newDelimitation = project(newPlane, polygon);
-      result.add(newPlane
-          .toBuilder()
-            .points(plane.getPoints())
-            .delimitation(newDelimitation)
-            .slopeInDegrees(plane.getSlopeInDegrees())
-          .build());
+      result.add(
+          newPlane.toBuilder()
+              .points(plane.getPoints())
+              .delimitation(newDelimitation)
+              .slopeInDegrees(plane.getSlopeInDegrees())
+              .build());
     }
 
     return result;
   }
 
-  private static Set<LasPointGeometry> toPoints(Coordinate[] coordinates){
+  private static Set<LasPointGeometry> toPoints(Coordinate[] coordinates) {
     return Arrays.stream(coordinates).map(LasPointGeometry::new).collect(toSet());
   }
 

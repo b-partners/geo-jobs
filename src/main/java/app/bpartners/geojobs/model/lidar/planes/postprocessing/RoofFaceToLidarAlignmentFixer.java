@@ -9,17 +9,17 @@ import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.planes.OnePlane3DExtractor;
 import app.bpartners.geojobs.model.lidar.planes.Plane3D;
 import app.bpartners.geojobs.model.lidar.planes.conf.Plane3DExtractorConf;
+import app.bpartners.geojobs.model.lidar.planes.model.DelimitedRoofPoints;
 import java.util.*;
 import java.util.function.BiFunction;
-
-import app.bpartners.geojobs.model.lidar.planes.model.DelimitedRoofPoints;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.math.Vector2D;
 
 @Slf4j
-public class RoofFaceToLidarAlignmentFixer implements BiFunction<DelimitedRoofPoints, List<Plane3D>, List<Plane3D>> {
+public class RoofFaceToLidarAlignmentFixer
+    implements BiFunction<DelimitedRoofPoints, List<Plane3D>, List<Plane3D>> {
   private final RoofFaceToLidarAlignmentFixerConf conf;
   private final OnePlane3DExtractor onePlane3DExtractor;
 

@@ -83,9 +83,9 @@ public class Building3DProperties {
     return getLargestPolygon(delimitedPoints);
   }
 
-  private List<Plane3D> getRawPlanes(){
+  private List<Plane3D> getRawPlanes() {
     return switch (delimitedPoints.getType()) {
-      case ENTIRE_ROOF_DELIMITATION ->{
+      case ENTIRE_ROOF_DELIMITATION -> {
         var extractor = new Planes3DExtractor(getRoofDelimitation(), conf, exporter);
         yield extractor.apply(delimitedPoints.getPoints());
       }

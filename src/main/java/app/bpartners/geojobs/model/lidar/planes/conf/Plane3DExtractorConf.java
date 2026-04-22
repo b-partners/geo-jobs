@@ -94,15 +94,13 @@ public record Plane3DExtractorConf(
                 .minHeight(3)
                 .build())
         .roofFaceToLidarAlignmentFixerConf(
-            RoofFaceToLidarAlignmentFixerConf
-                .builder()
-                    .minScore(1)
-                    .stepAngle(2)
-                    .maxStepCount(7)
-                    .stepLength(0.4)
-                    .addedPointsFactor(2)
-                .build()
-        )
+            RoofFaceToLidarAlignmentFixerConf.builder()
+                .minScore(1)
+                .stepAngle(2)
+                .maxStepCount(7)
+                .stepLength(0.4)
+                .addedPointsFactor(2)
+                .build())
         .build();
   }
 }

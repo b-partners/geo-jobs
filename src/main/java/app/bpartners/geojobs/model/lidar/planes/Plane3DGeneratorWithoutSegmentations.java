@@ -7,24 +7,25 @@ import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepEx
 import app.bpartners.geojobs.model.lidar.planes.model.DelimitedRoofPoints;
 import app.bpartners.geojobs.model.lidar.planes.model.DelimitedRoofPointsItem;
 import app.bpartners.geojobs.model.lidar.planes.postprocessing.RoofFaceToLidarAlignmentFixer;
-import java.util.*;
-import java.util.function.Function;
-
 import app.bpartners.geojobs.model.lidar.planes.postprocessing.Snapping2DComputer;
 import app.bpartners.geojobs.model.lidar.planes.postprocessing.Snapping3DComputer;
+import java.util.*;
+import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class Plane3DGeneratorWithoutSegmentations implements Function<DelimitedRoofPoints, List<Plane3D>> {
+public class Plane3DGeneratorWithoutSegmentations
+    implements Function<DelimitedRoofPoints, List<Plane3D>> {
   private final Plane3DExtractionStepExporter exporter;
   private final RoofFaceToLidarAlignmentFixer alignmentFixer;
   private final Snapping2DComputer snapping2DComputer;
-   private final Snapping3DComputer snapping3DComputer;
+  private final Snapping3DComputer snapping3DComputer;
 
-  public Plane3DGeneratorWithoutSegmentations(Plane3DExtractorConf conf, Plane3DExtractionStepExporter exporter) {
+  public Plane3DGeneratorWithoutSegmentations(
+      Plane3DExtractorConf conf, Plane3DExtractionStepExporter exporter) {
     this.exporter = exporter;
     this.alignmentFixer = new RoofFaceToLidarAlignmentFixer(conf);
-    //TODO: move to conf
+    // TODO: move to conf
     this.snapping2DComputer = new Snapping2DComputer(1);
     this.snapping3DComputer = new Snapping3DComputer(1.5);
   }
@@ -41,7 +42,8 @@ public class Plane3DGeneratorWithoutSegmentations implements Function<DelimitedR
     return postProcess(delimitedPoints, rawPlanes);
   }
 
-  private List<Plane3D> postProcess(DelimitedRoofPoints delimitedRoofPoints, List<Plane3D> rawPlanes){
+  private List<Plane3D> postProcess(
+      DelimitedRoofPoints delimitedRoofPoints, List<Plane3D> rawPlanes) {
     var postProcessed = this.alignmentFixer.apply(delimitedRoofPoints, rawPlanes);
     postProcessed = this.snapping2DComputer.apply(postProcessed);
     return this.snapping3DComputer.apply(postProcessed);
