@@ -1200,7 +1200,7 @@ paths:
       tags:
         - Security
       operationId: revokeSpecificApiKey
-      summary: Revoke an API key for a community authorization
+      summary: Revoke an API key
       requestBody:
         content:
           application/json:
