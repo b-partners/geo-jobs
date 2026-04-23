@@ -27,7 +27,7 @@ class CityJSONGenerationWithoutSegmentationTest {
             process(
                 "roof1",
                 List.of("cityjson/geojson/pans/roof1/pan1.geojson"),
-                Set.of("cityjson/las/1_2_13.copc.laz"),
+                Set.of("las/LHD_FXX_0644_6859_PTS_O_LAMB93_IGN69.copc.laz"),
                 BASE_OUTPUT_FOLDER));
   }
 
@@ -40,7 +40,7 @@ class CityJSONGenerationWithoutSegmentationTest {
                 List.of(
                     "cityjson/geojson/pans/roof2/pan1.geojson",
                     "cityjson/geojson/pans/roof2/pan2.geojson"),
-                Set.of("cityjson/las/1_2_13.copc.laz"),
+                Set.of("las/LHD_FXX_0644_6859_PTS_O_LAMB93_IGN69.copc.laz"),
                 BASE_OUTPUT_FOLDER));
   }
 }

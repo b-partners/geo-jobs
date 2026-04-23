@@ -5,12 +5,12 @@ import static app.bpartners.geojobs.model.lidar.planes.algorithm.GeometryUtiliti
 
 import app.bpartners.geojobs.model.lidar.planes.Plane3D;
 import java.util.*;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
 
 @RequiredArgsConstructor
-public class Snapping2DComputer implements Function<List<Plane3D>, List<Plane3D>> {
+public class Snapping2DComputer implements UnaryOperator<List<Plane3D>> {
   private final double threshold;
 
   @Override
@@ -22,7 +22,7 @@ public class Snapping2DComputer implements Function<List<Plane3D>, List<Plane3D>
     return rebuildPlanes(planes, centroids);
   }
 
-  private List<Coordinate> extractAllPoints(List<Plane3D> planes) {
+  static List<Coordinate> extractAllPoints(List<Plane3D> planes) {
     List<Coordinate> allPoints = new ArrayList<>();
     for (var p : planes) {
       allPoints.addAll(Arrays.asList(p.getDelimitation().getCoordinates()));

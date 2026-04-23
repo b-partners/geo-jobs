@@ -8,6 +8,7 @@ import static java.util.stream.Collectors.toSet;
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.planes.OnePlane3DExtractor;
 import app.bpartners.geojobs.model.lidar.planes.Plane3D;
+import app.bpartners.geojobs.model.lidar.planes.algorithm.OBB2DComputer;
 import app.bpartners.geojobs.model.lidar.planes.conf.Plane3DExtractorConf;
 import app.bpartners.geojobs.model.lidar.planes.model.DelimitedRoofPoints;
 import java.util.*;
@@ -15,6 +16,7 @@ import java.util.function.BiFunction;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.math.Vector2D;
 
 @Slf4j
@@ -22,12 +24,16 @@ public class RoofFaceToLidarAlignmentFixer
     implements BiFunction<DelimitedRoofPoints, List<Plane3D>, List<Plane3D>> {
   private final RoofFaceToLidarAlignmentFixerConf conf;
   private final OnePlane3DExtractor onePlane3DExtractor;
+  private List<Vector2D> vectors;
 
   public RoofFaceToLidarAlignmentFixer(Plane3DExtractorConf roofFaceExtractorConf) {
     this.conf = roofFaceExtractorConf.roofFaceToLidarAlignmentFixerConf();
     this.onePlane3DExtractor =
         new OnePlane3DExtractor(
-            roofFaceExtractorConf.toBuilder().doSkinnyArmRemover(false).build());
+            roofFaceExtractorConf.toBuilder()
+                .doXYZClustering(false)
+                .doSkinnyArmRemover(false)
+                .build());
   }
 
   @Override
@@ -36,27 +42,40 @@ public class RoofFaceToLidarAlignmentFixer
     var roofFaceWithMaxAreaIndex = getRoofFaceWithMaxAreaIndex(planes);
     var refItem = delimitedRoofPoints.getItems()[roofFaceWithMaxAreaIndex];
     var refPoints = refItem.getPoints();
+    var refEnvelope = new OBB2DComputer().apply(refItem.getPolygon()).toEnvelope();
 
     for (int j = 0; j < conf.maxStepCount(); j++) {
       var refPlane = current.get(roofFaceWithMaxAreaIndex);
-      var t = getBestTranslation(refPlane, refPoints);
+      var t = getBestTranslation(refPlane, refEnvelope, refPoints);
       if (t.isEmpty()) {
         break;
       }
       log.info("STEP_INDEX={}", j);
+      refEnvelope = translate(refEnvelope, t.get());
       current = current.stream().map(p -> translate(p, t.get())).toList();
     }
 
     return current;
   }
 
+  private static Envelope translate(Envelope envelope, Vector2D translation) {
+    var tx = translation.getX();
+    var ty = translation.getY();
+
+    return new Envelope(
+        envelope.getMinX() + tx,
+        envelope.getMaxX() + tx,
+        envelope.getMinY() + ty,
+        envelope.getMaxY() + ty);
+  }
+
   private Optional<Vector2D> getBestTranslation(
-      Plane3D plane, Collection<LasPointGeometry> points) {
-    var vectors = getVectors(conf.stepAngle(), conf.stepLength());
+      Plane3D plane, Envelope refEnvelope, Collection<LasPointGeometry> points) {
+    var candidateVectors = getVectors(conf.stepAngle(), conf.stepLength());
 
     Map<Vector2D, Integer> count = new HashMap<>();
-    for (var vector : vectors) {
-      count.put(vector, getBestCount(vector, plane, points));
+    for (var vector : candidateVectors) {
+      count.put(vector, getBestCount(vector, plane, refEnvelope, points));
     }
 
     var best = count.entrySet().stream().max(comparingDouble(Map.Entry::getValue)).orElseThrow();
@@ -83,10 +102,14 @@ public class RoofFaceToLidarAlignmentFixer
     return plane.toBuilder().convexDelimitation(null).delimitation(translated3DPolygon).build();
   }
 
-  private int getBestCount(Vector2D vector, Plane3D plane, Collection<LasPointGeometry> points) {
-    var translated = translate(plane, vector);
-    var inliers = points.stream().filter(translated.getDelimitation()::contains).collect(toSet());
-    var newPlane = onePlane3DExtractor.apply(inliers, null).plane();
+  private int getBestCount(
+      Vector2D vector, Plane3D plane, Envelope refEnvelope, Collection<LasPointGeometry> points) {
+    var translatedEnvelope = translate(refEnvelope, vector);
+    var inliers =
+        points.stream()
+            .filter(point -> translatedEnvelope.contains(point.getCoordinate()))
+            .collect(toSet());
+    var newPlane = onePlane3DExtractor.apply(plane.getKernel(), inliers, null).plane();
 
     var added = new HashSet<>(newPlane.getPoints());
     added.removeAll(plane.getPoints());
@@ -97,15 +120,19 @@ public class RoofFaceToLidarAlignmentFixer
     return added.size() * conf.addedPointsFactor() - removed.size();
   }
 
-  public static List<Vector2D> getVectors(int angleStep, double distance) {
-    List<Vector2D> vectors = new ArrayList<>();
+  private List<Vector2D> getVectors(int angleStep, double distance) {
+    if (this.vectors != null) return this.vectors;
+
+    List<Vector2D> result = new ArrayList<>();
     for (int angle = 0; angle < 360; angle += angleStep) {
       var rad = Math.toRadians(angle);
       var dx = distance * Math.cos(rad);
       var dy = distance * Math.sin(rad);
-      vectors.add(new Vector2D(dx, dy));
+      result.add(new Vector2D(dx, dy));
     }
-    return vectors;
+
+    this.vectors = result;
+    return this.vectors;
   }
 
   private static int getRoofFaceWithMaxAreaIndex(List<Plane3D> planes) {

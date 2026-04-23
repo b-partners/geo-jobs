@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.model.lidar.planes.model.LasRoofDelimitationType.ENTIRE_ROOF_DELIMITATION;
 import static app.bpartners.geojobs.model.lidar.planes.model.LasRoofDelimitationType.ROOF_SEGMENT_FACE_DELIMITATION;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStatus.*;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStep.*;
@@ -117,7 +116,9 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
   }
 
   private Set<Geometry> toGeometries(List<Feature> delimitations) {
-    return delimitations.stream().map(featureMapper::domainToGeometry).collect(toSet());
+    return delimitations.stream()
+        .map(featureMapper::domainToGeometryWithMultipolygonHandler)
+        .collect(toSet());
   }
 
   private void updateStatus(
@@ -130,7 +131,7 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
   private LasRoofDelimitationType getType(CityJSONRequest request) {
     return switch (request.getDelimitationObjectType()) {
       case BUILDING_ROOF -> ROOF_SEGMENT_FACE_DELIMITATION;
-      default -> ENTIRE_ROOF_DELIMITATION;
+      case null, default -> LasRoofDelimitationType.ENTIRE_ROOF_DELIMITATION;
     };
   }
 }

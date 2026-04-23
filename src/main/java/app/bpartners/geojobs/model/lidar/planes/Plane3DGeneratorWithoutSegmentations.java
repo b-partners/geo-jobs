@@ -3,7 +3,6 @@ package app.bpartners.geojobs.model.lidar.planes;
 import static app.bpartners.geojobs.model.lidar.planes.algorithm.GeometryUtilities.project;
 
 import app.bpartners.geojobs.model.lidar.planes.conf.Plane3DExtractorConf;
-import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepExporter;
 import app.bpartners.geojobs.model.lidar.planes.model.DelimitedRoofPoints;
 import app.bpartners.geojobs.model.lidar.planes.model.DelimitedRoofPointsItem;
 import app.bpartners.geojobs.model.lidar.planes.postprocessing.RoofFaceToLidarAlignmentFixer;
@@ -16,16 +15,12 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class Plane3DGeneratorWithoutSegmentations
     implements Function<DelimitedRoofPoints, List<Plane3D>> {
-  private final Plane3DExtractionStepExporter exporter;
   private final RoofFaceToLidarAlignmentFixer alignmentFixer;
   private final Snapping2DComputer snapping2DComputer;
   private final Snapping3DComputer snapping3DComputer;
 
-  public Plane3DGeneratorWithoutSegmentations(
-      Plane3DExtractorConf conf, Plane3DExtractionStepExporter exporter) {
-    this.exporter = exporter;
+  public Plane3DGeneratorWithoutSegmentations(Plane3DExtractorConf conf) {
     this.alignmentFixer = new RoofFaceToLidarAlignmentFixer(conf);
-    // TODO: move to conf
     this.snapping2DComputer = new Snapping2DComputer(1);
     this.snapping3DComputer = new Snapping3DComputer(1.5);
   }

@@ -90,7 +90,7 @@ public class Building3DProperties {
         yield extractor.apply(delimitedPoints.getPoints());
       }
       case ROOF_SEGMENT_FACE_DELIMITATION -> {
-        var extractor = new Plane3DGeneratorWithoutSegmentations(conf, exporter);
+        var extractor = new Plane3DGeneratorWithoutSegmentations(conf);
         yield extractor.apply(delimitedPoints);
       }
     };

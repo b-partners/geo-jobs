@@ -2,38 +2,31 @@ package app.bpartners.geojobs.model.lidar.planes.postprocessing;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.model.lidar.planes.algorithm.GeometryUtilities.project;
+import static app.bpartners.geojobs.model.lidar.planes.postprocessing.Snapping2DComputer.extractAllPoints;
 import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.planes.Plane3D;
 import app.bpartners.geojobs.model.lidar.planes.algorithm.PlaneFitter;
 import java.util.*;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
 
 @RequiredArgsConstructor
-public class Snapping3DComputer implements Function<List<Plane3D>, List<Plane3D>> {
+public class Snapping3DComputer implements UnaryOperator<List<Plane3D>> {
   private final double threshold;
 
   @Override
   public List<Plane3D> apply(List<Plane3D> planes) {
-    List<Coordinate> allPoints = extractAllPoints(planes);
-    Map<Long, Cluster3D> clusters = buildClusters(allPoints);
-    Map<Long, Coordinate> centroids = computeCentroids(clusters);
+    var allPoints = extractAllPoints(planes);
+    var clusters = buildClusters3D(allPoints);
+    var centroids = computeCentroids3D(clusters);
 
     return rebuildPlanes(planes, centroids);
   }
 
-  private List<Coordinate> extractAllPoints(List<Plane3D> planes) {
-    List<Coordinate> all = new ArrayList<>();
-    for (var p : planes) {
-      all.addAll(Arrays.asList(p.getDelimitation().getCoordinates()));
-    }
-    return all;
-  }
-
-  private Map<Long, Cluster3D> buildClusters(List<Coordinate> points) {
+  private Map<Long, Cluster3D> buildClusters3D(List<Coordinate> points) {
     Map<Long, Cluster3D> clusters = new HashMap<>();
 
     for (var c : points) {
@@ -44,7 +37,7 @@ public class Snapping3DComputer implements Function<List<Plane3D>, List<Plane3D>
     return clusters;
   }
 
-  private Map<Long, Coordinate> computeCentroids(Map<Long, Cluster3D> clusters) {
+  private Map<Long, Coordinate> computeCentroids3D(Map<Long, Cluster3D> clusters) {
     Map<Long, Coordinate> centroids = new HashMap<>();
 
     for (var e : clusters.entrySet()) {

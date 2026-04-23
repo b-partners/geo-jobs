@@ -28,6 +28,32 @@ public class OnePlane3DExtractor
         new SkinnyArmPointFilter(conf.polygonSkinnyArmRemoverConf(), conf.planeDelimitationConf());
   }
 
+  public Result apply(
+      Kernel kernel, Set<LasPointGeometry> points, Plane3DExtractionStepExporter exporter) {
+    if (points.isEmpty()) {
+      return new Result(Plane3D.empty(), points);
+    }
+
+    var box = new Box(conf.boxConf(), kernel, false);
+    box.grow(points);
+
+    var inliers = box.getPoints();
+
+    var clusterResult = getBestXYZCluster(inliers);
+    var finalInliers = this.skinnyArmPointFilter.apply(clusterResult, exporter);
+
+    var inlierSet = new HashSet<>(finalInliers);
+    var outliers = points.stream().filter(not(inlierSet::contains)).collect(toSet());
+
+    var plane =
+        box.getPlane().toBuilder()
+            .points(inlierSet)
+            .delimitationConf(conf.planeDelimitationConf())
+            .build();
+
+    return new Result(plane, outliers);
+  }
+
   @Override
   public Result apply(Set<LasPointGeometry> points, Plane3DExtractionStepExporter exporter) {
     if (points.size() < 3) {
@@ -62,6 +88,14 @@ public class OnePlane3DExtractor
       if (!box.isDidInfiniteGrow()) {
         bestModel = box.getPlane();
         bestInliers = new ArrayList<>(inliers);
+        continue;
+      }
+
+      if (!conf.doXYZClustering()) {
+        if (inliers.size() > bestInliers.size()) {
+          bestModel = box.getPlane();
+          bestInliers = inliers;
+        }
         continue;
       }
 

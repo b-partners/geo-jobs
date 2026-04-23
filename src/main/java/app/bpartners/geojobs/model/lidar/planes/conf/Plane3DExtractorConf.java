@@ -10,6 +10,7 @@ import lombok.Builder;
 
 @Builder(toBuilder = true)
 public record Plane3DExtractorConf(
+    boolean doXYZClustering,
     boolean doSkinnyArmRemover,
     BoxConf boxConf,
     PlaneConf planeConf,
@@ -82,6 +83,7 @@ public record Plane3DExtractorConf(
                 .build())
         .planeExtractionConf(
             PlaneExtractionConf.builder().iteration(100).pointContinuationThreshold(0.5).build())
+        .doXYZClustering(true)
         .doSkinnyArmRemover(true)
         .polygonSkinnyArmRemoverConf(
             PolygonSkinnyArmRemoverConf.builder()
