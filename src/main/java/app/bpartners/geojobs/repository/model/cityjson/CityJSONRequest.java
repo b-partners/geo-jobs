@@ -7,7 +7,6 @@ import static org.hibernate.type.SqlTypes.JSON;
 import static org.hibernate.type.SqlTypes.NAMED_ENUM;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
-import app.bpartners.geojobs.endpoint.rest.model.DelimitationObjectType;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
 import jakarta.persistence.*;
@@ -53,8 +52,9 @@ public class CityJSONRequest implements Serializable {
   @OneToMany(mappedBy = "request", cascade = CascadeType.ALL, fetch = EAGER)
   private List<CityJSON> cityJsons = new ArrayList<>();
 
-  // TODO: persist
-  @Transient private DelimitationObjectType delimitationObjectType;
+  @Enumerated(STRING)
+  @JdbcTypeCode(NAMED_ENUM)
+  private CityJSONDelimitationObjectType delimitationObjectType;
 
   @PrePersist
   protected void onCreate() {

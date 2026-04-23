@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.endpoint.rest.controller.mapper.cityjson;
 
-import static app.bpartners.geojobs.endpoint.rest.model.DelimitationObjectType.BUILDING_ROOF;
 import static app.bpartners.geojobs.endpoint.rest.model.DelimitationType.PARCEL_FREE_DELIMITATION;
 import static java.time.Instant.now;
 
@@ -67,7 +66,9 @@ public class CityJSONRequestMapper {
         .delimitations(restDelimitations)
         .step(step)
         .status(CityJSONRequestStatusMapper.toGenericStatusRest(cityJSONRequest.getStatus()))
-        .delimitationObjectType(BUILDING_ROOF)
+        .delimitationObjectType(
+            CityJSONDelimitationObjectTypeMapper.toRestDelimitationObjectType(
+                cityJSONRequest.getDelimitationObjectType()))
         .delimitationType(PARCEL_FREE_DELIMITATION)
         .cityJsonFileUrls(restCityJsons);
   }
@@ -111,6 +112,9 @@ public class CityJSONRequestMapper {
         .creationDatetime(now())
         .communityOwnerId(communityOwnerId)
         .delimitations(domainDelimitations)
+        .delimitationObjectType(
+            CityJSONDelimitationObjectTypeMapper.fromRestDelimitationObjectType(
+                createCityJSONRequest.getDelimitationObjectType()))
         .build();
   }
 
@@ -128,9 +132,8 @@ public class CityJSONRequestMapper {
         .communityOwnerId(communityOwnerId)
         .delimitations(domainDelimitations)
         .delimitationObjectType(
-            createCityJSONRequest.getDelimitationObjectType() == null
-                ? BUILDING_ROOF
-                : createCityJSONRequest.getDelimitationObjectType())
+            CityJSONDelimitationObjectTypeMapper.fromRestDelimitationObjectType(
+                createCityJSONRequest.getDelimitationObjectType()))
         .build();
   }
 }
