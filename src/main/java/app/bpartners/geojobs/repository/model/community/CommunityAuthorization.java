@@ -18,6 +18,7 @@ import jakarta.persistence.*;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -81,15 +82,24 @@ public class CommunityAuthorization implements Serializable {
   private Authority.Role role;
 
   public CommunityAuthorizationApiKey getMostRecentApiKey() {
+    var revokedValues =
+        revokedApiKeys == null
+            ? Set.<String>of()
+            : revokedApiKeys.stream()
+                .map(RevokedApiKey::getRevokedApiKeyValue)
+                .collect(java.util.stream.Collectors.toSet());
+
     return apiKeys != null && !apiKeys.isEmpty()
         ? apiKeys.stream()
+            .filter(key -> !revokedValues.contains(key.getKeyValue()))
             .max(comparing(CommunityAuthorizationApiKey::getCreationDatetime, naturalOrder()))
             .orElse(null)
         : null;
   }
 
   public String getApiKey() {
-    return getMostRecentApiKey() == null ? apiKey : getMostRecentApiKey().getKeyValue();
+    var mostRecentApiKey = getMostRecentApiKey();
+    return mostRecentApiKey == null ? apiKey : mostRecentApiKey.getKeyValue();
   }
 
   public List<CommunityDetectableObjectType> getDetectableObjectTypes() {
