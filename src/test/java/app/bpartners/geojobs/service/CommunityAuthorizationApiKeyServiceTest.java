@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.repository.RevokedApiKeyRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorizationApiKey;
 import app.bpartners.geojobs.repository.model.community.RevokedApiKey;
@@ -25,7 +26,7 @@ class CommunityAuthorizationApiKeyServiceTest {
     when(revokedApiKeyRepository.findByRevokedApiKeyValue(apiKey.getKeyValue()))
         .thenReturn(Optional.of(revokedApiKey()));
 
-    var actual = assertThrows(IllegalStateException.class, () -> subject.revokeApiKey(apiKey));
+    var actual = assertThrows(BadRequestException.class, () -> subject.revokeApiKey(apiKey));
 
     assertEquals("ApiKey already revoked", actual.getMessage());
   }
