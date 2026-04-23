@@ -39,7 +39,7 @@ class ZoneDetectionJobFailedServiceTest {
     when(zoneDetectionJobServiceMock.findById(jobId)).thenReturn(zoneDetectionJobMock);
     when(detectionRepositoryMock.findByZdjId(jobId)).thenReturn(Optional.of(detectionMock));
 
-    assertDoesNotThrow(() -> subject.accept(new ZoneDetectionJobFailed(jobId)));
+    assertDoesNotThrow(() -> subject.accept(new ZoneDetectionJobFailed(jobId, true)));
 
     var stringCaptor = ArgumentCaptor.forClass(String.class);
     verify(mailerMock, only())
@@ -63,7 +63,7 @@ class ZoneDetectionJobFailedServiceTest {
     when(zoneDetectionJobServiceMock.findById(jobId)).thenReturn(zoneDetectionJobMock);
     when(detectionRepositoryMock.findByZdjId(jobId)).thenReturn(Optional.empty());
 
-    assertDoesNotThrow(() -> subject.accept(new ZoneDetectionJobFailed(jobId)));
+    assertDoesNotThrow(() -> subject.accept(new ZoneDetectionJobFailed(jobId, true)));
 
     var stringCaptor = ArgumentCaptor.forClass(String.class);
     var emailSubject = "Erreur lors du traitement de la détection machine (ZDJ.id=" + jobId + ")";

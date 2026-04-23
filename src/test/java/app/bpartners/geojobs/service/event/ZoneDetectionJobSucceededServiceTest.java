@@ -108,7 +108,7 @@ class ZoneDetectionJobSucceededServiceTest {
         .thenReturn(succeededZoneDetectionJobMock);
     when(detectionRepositoryMock.findByZdjId(succeededJobId)).thenReturn(Optional.empty());
 
-    assertDoesNotThrow(() -> subject.accept(new ZoneDetectionJobSucceeded(succeededJobId)));
+    assertDoesNotThrow(() -> subject.accept(new ZoneDetectionJobSucceeded(succeededJobId, true)));
 
     var emailBodyCaptor = ArgumentCaptor.forClass(String.class);
     verify(detectionFinishedMailerMock, only())
@@ -159,7 +159,7 @@ class ZoneDetectionJobSucceededServiceTest {
     when(detectionRepositoryMock.findByZdjId(succeededJobId))
         .thenReturn(Optional.of(detectionMock));
 
-    assertDoesNotThrow(() -> subject.accept(new ZoneDetectionJobSucceeded(succeededJobId)));
+    assertDoesNotThrow(() -> subject.accept(new ZoneDetectionJobSucceeded(succeededJobId, true)));
 
     var emailBodyCaptor = ArgumentCaptor.forClass(String.class);
     verify(detectionFinishedMailerMock, only())
@@ -249,7 +249,10 @@ class ZoneDetectionJobSucceededServiceTest {
     assertDoesNotThrow(
         () ->
             subject.accept(
-                ZoneDetectionJobSucceeded.builder().succeededJobId(succeededJobId).build()));
+                ZoneDetectionJobSucceeded.builder()
+                    .isIntegrationTest(true)
+                    .succeededJobId(succeededJobId)
+                    .build()));
 
     verify(geoJsonConversionJobServiceMock, times(1))
         .getOrComputeGeoJsonConversionJob(zoneDetectionJobMock);
@@ -261,7 +264,7 @@ class ZoneDetectionJobSucceededServiceTest {
     var featureWithDetectionPropertiesRequested =
         (FeatureWithDetectionPropertiesRequested) listCaptor.getAllValues().getLast().getFirst();
     assertEquals(
-        new DetectionRoofPropertiesRequested(detectionId), detectionRoofPropertiesRequested);
+        new DetectionRoofPropertiesRequested(detectionId, false), detectionRoofPropertiesRequested);
     assertEquals(
         new FeatureWithDetectionPropertiesRequested(detectionId, new Feature()),
         featureWithDetectionPropertiesRequested);

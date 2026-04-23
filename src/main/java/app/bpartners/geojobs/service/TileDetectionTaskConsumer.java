@@ -149,7 +149,7 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
       }
       machineDetectedTileRepository.save(machineDetectedTile);
     } finally {
-      long elapsedTime = startTime - System.currentTimeMillis();
+      long elapsedTime = System.currentTimeMillis() - startTime;
       log.info(
           "{ \"operation\": \"TileDetectionTaskConsumer\", \"zoneDetectionJobId\": \"{}\","
               + " \"durationInMs\": \"{}\", \"isIntegrationTest\": \"{}\" }",

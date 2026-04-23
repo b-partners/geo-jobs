@@ -128,7 +128,7 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
                   .annotationJobWithoutObjectsId(annotationJobWithoutObjectsId)
                   .build()));
     } finally {
-      long elapsedTime = startTime - System.currentTimeMillis();
+      long elapsedTime = System.currentTimeMillis() - startTime;
       log.info(
           "{ \"operation\": \"ZoneDetectionJobSucceeded\",\"jobId\":"
               + " \"{}\", \"durationInMs\": \"{}\", \"isIntegrationTest\": \"{}\" }",

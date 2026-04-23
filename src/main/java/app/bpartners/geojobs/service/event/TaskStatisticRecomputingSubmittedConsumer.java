@@ -45,7 +45,7 @@ public class TaskStatisticRecomputingSubmittedConsumer<T extends Task, J extends
       var savedStatistic = taskStatisticRepository.save(taskStatistic);
       log.info("[DEBUG] TaskStatistic saved {}", savedStatistic);
     } finally {
-      long elapsedTime = startTime - System.currentTimeMillis();
+      long elapsedTime = System.currentTimeMillis() - startTime;
       log.info(
           "{ \"operation\": \"TaskStatisticRecomputingSubmitted\", \"jobId\": \"{}\","
               + " \"durationInMs\": \"{}\", \"isIntegrationTest\": \"{}\" }",

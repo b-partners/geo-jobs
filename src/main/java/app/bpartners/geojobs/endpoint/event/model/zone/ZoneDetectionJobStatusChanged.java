@@ -31,6 +31,11 @@ public class ZoneDetectionJobStatusChanged extends PojaEvent {
 
   private boolean isIntegrationTest;
 
+  public ZoneDetectionJobStatusChanged(ZoneDetectionJob oldJob, ZoneDetectionJob newJob) {
+    this.oldJob = oldJob;
+    this.newJob = newJob;
+  }
+
   @Override
   public Duration maxConsumerDuration() {
     return Duration.ofMinutes(1);

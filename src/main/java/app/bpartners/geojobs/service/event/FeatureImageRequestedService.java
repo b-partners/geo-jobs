@@ -113,7 +113,7 @@ public class FeatureImageRequestedService implements Consumer<FeatureImageReques
               + detection.getZoneName()
               + ".jpg");
     } finally {
-      long elapsedTime = startTime - System.currentTimeMillis();
+      long elapsedTime = System.currentTimeMillis() - startTime;
       log.info(
           "{ \"operation\": \"FeatureImageRequested\", \"jobId\": \"{}\", \"durationInMs\":"
               + " \"{}\", \"isIntegrationTest\": \"{}\" }",

@@ -100,7 +100,8 @@ class ZoneDetectionJobServiceTest {
     List<List> allValues = listCaptor.getAllValues();
     var taskStatisticComputingEvent =
         ((List<AutoTaskStatisticRecomputingSubmitted>) allValues.getLast()).getFirst();
-    assertEquals(new AutoTaskStatisticRecomputingSubmitted(jobId), taskStatisticComputingEvent);
+    assertEquals(
+        new AutoTaskStatisticRecomputingSubmitted(jobId, false), taskStatisticComputingEvent);
   }
 
   @Test

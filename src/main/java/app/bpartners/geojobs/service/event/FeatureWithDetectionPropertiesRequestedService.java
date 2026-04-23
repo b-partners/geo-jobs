@@ -74,7 +74,7 @@ public class FeatureWithDetectionPropertiesRequestedService
         }
       }
     } finally {
-      long elapsedTime = startTime - System.currentTimeMillis();
+      long elapsedTime = System.currentTimeMillis() - startTime;
       log.info(
           "{ \"operation\": \"FeatureWithDetectionPropertiesRequested\",\"detectionId\":"
               + " \"{}\", \"durationInMs\": \"{}\", \"isIntegrationTest\": \"{}\" }",

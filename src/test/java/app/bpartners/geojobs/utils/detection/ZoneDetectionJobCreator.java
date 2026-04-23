@@ -35,6 +35,7 @@ public class ZoneDetectionJobCreator {
         .statusHistory(statuses)
         .zoneTilingJob(ztj)
         .submissionInstant(now())
+        .isIntegrationTest(true)
         .build();
   }
 }

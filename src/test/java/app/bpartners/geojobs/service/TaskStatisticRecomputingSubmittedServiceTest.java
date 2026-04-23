@@ -79,7 +79,7 @@ public class TaskStatisticRecomputingSubmittedServiceTest {
 
   @Test
   void accept_detection_job_id_ok() {
-    subject.accept(new TaskStatisticRecomputingSubmitted(DETECTION_JOB_ID));
+    subject.accept(new TaskStatisticRecomputingSubmitted(DETECTION_JOB_ID, true));
 
     var taskStatisticCapture = ArgumentCaptor.forClass(TaskStatistic.class);
     verify(taskStatisticRepositoryMock, times(1)).save(taskStatisticCapture.capture());
@@ -92,7 +92,7 @@ public class TaskStatisticRecomputingSubmittedServiceTest {
 
   @Test
   void accept_tiling_job_id_ok() {
-    subject.accept(new TaskStatisticRecomputingSubmitted(TILING_JOB_ID));
+    subject.accept(new TaskStatisticRecomputingSubmitted(TILING_JOB_ID, true));
 
     var taskStatisticCapture = ArgumentCaptor.forClass(TaskStatistic.class);
     verify(taskStatisticRepositoryMock, times(1)).save(taskStatisticCapture.capture());

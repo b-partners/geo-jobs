@@ -38,7 +38,7 @@ public class TilingTaskConsumer implements TaskConsumer<ParcelTilingTask> {
     var parcel = parcelTilingTask.getParcelContent();
     long tilesDownloaderStartTime = System.currentTimeMillis();
     File downloadedTiles = tilesDownloader.apply(parcel);
-    long tilesDownloaderEndTime = tilesDownloaderStartTime - System.currentTimeMillis();
+    long tilesDownloaderEndTime = System.currentTimeMillis() - tilesDownloaderStartTime;
     log.info(
         "{ \"operation\": \"TilesDownloader\",  \"parcelId\": \"{}\",  \"durationInMs\":"
             + " \"{}\", \"isIntegrationTest\": \"{}\" }",

@@ -30,7 +30,7 @@ public class ZoneDetectionJobCreatedService implements Consumer<ZoneDetectionJob
         default -> throw new RuntimeException("Unknown ZDJ detection type : " + detectionType);
       }
     } finally {
-      long elapsedTime = startTime - System.currentTimeMillis();
+      long elapsedTime = System.currentTimeMillis() - startTime;
       log.info(
           "{ \"operation\": \"ZoneDetectionJobCreated\", \"zoneDetectionJobId\": \"{}\","
               + " \"durationInMs\": \"{}\", \"isIntegrationTest\": \"{}\" }",

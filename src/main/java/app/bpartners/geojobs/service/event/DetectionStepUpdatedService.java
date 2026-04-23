@@ -57,7 +57,7 @@ public class DetectionStepUpdatedService implements Consumer<DetectionStepUpdate
         throw new RuntimeException(e);
       }
     } finally {
-      long elapsedTime = startTime - System.currentTimeMillis();
+      long elapsedTime = System.currentTimeMillis() - startTime;
       log.info(
           "{ \"operation\": \"DetectionStepUpdated\", \"jobId\": \"{}\", \"durationInMs\":"
               + " \"{}\", \"isIntegrationTest\": \"{}\" }",

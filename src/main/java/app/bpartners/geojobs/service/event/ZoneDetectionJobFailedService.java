@@ -50,7 +50,7 @@ public class ZoneDetectionJobFailedService implements Consumer<ZoneDetectionJobF
           subjectBuilder.toString(),
           getBody(optionalDetection, zoneDetectionJob));
     } finally {
-      long elapsedTime = startTime - System.currentTimeMillis();
+      long elapsedTime = System.currentTimeMillis() - startTime;
       log.info(
           "{ \"operation\": \"ZoneDetectionJobFailed\",\"jobId\":"
               + " \"{}\", \"durationInMs\": \"{}\", \"isIntegrationTest\": \"{}\" }",

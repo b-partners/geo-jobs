@@ -11,6 +11,7 @@ import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
+import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.repository.model.detection.RoofCoveringType;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
@@ -35,7 +36,10 @@ class TileParcelDetectionTaskConsumerWithMockedObjectsDetectorTest {
     DetectionMaskFromTileRetriever maskRetrieverMock = mock();
     RoofCoveringDetector roofCoveringDetectorMock = mock();
 
-    when(roofCoveringDetectorMock.apply(any(Tile.class), any(File.class)))
+    when(roofCoveringDetectorMock.apply(
+            any(Tile.class),
+            any(File.class),
+            Detection.builder().id(any(String.class)).integrationTest(true).build()))
         .thenReturn(
             new RoofCoveringDetector.RoofCoveringDetectionResponse(
                 new RoofCovering(RoofCoveringType.ROOF_ARDOISE, 1100L),

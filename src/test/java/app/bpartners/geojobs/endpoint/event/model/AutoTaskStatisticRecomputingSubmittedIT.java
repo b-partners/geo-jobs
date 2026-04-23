@@ -15,7 +15,7 @@ class AutoTaskStatisticRecomputingSubmittedIT extends FacadeIT {
 
   @Test
   void serialize_then_deserialize() throws JsonProcessingException {
-    var statisticRecomputingSubmitted = new AutoTaskStatisticRecomputingSubmitted("jobId");
+    var statisticRecomputingSubmitted = new AutoTaskStatisticRecomputingSubmitted("jobId", true);
 
     var serialized = om.writeValueAsString(statisticRecomputingSubmitted);
     var deserialized = om.readValue(serialized, AutoTaskStatisticRecomputingSubmitted.class);

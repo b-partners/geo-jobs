@@ -26,7 +26,6 @@ import app.bpartners.geojobs.job.repository.TaskRepository;
 import app.bpartners.geojobs.job.service.JobService;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.repository.TaskStatisticRepository;
-import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.ArcgisImageZoom;
 import app.bpartners.geojobs.repository.model.FilteredTilingJob;
 import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
@@ -76,8 +75,7 @@ public class ZoneTilingJobService extends JobService<ParcelTilingTask, ZoneTilin
       TilingTaskMapper tilingTaskMapper,
       TaskStatisticRepository taskStatisticRepository,
       TilingTaskConsumer tilingTaskConsumer,
-      Workers workers,
-      ZoneDetectionJobRepository zoneDetectionJobRepository) {
+      Workers workers) {
     super(
         repository,
         jobStatusRepository,

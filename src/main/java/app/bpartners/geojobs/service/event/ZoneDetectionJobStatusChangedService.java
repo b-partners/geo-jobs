@@ -36,7 +36,7 @@ public class ZoneDetectionJobStatusChangedService
           new OnSucceededHandler(mailer, eventProducer, newJob),
           new OnFailedHandler(mailer, eventProducer, newJob));
     } finally {
-      long elapsedTime = startTime - System.currentTimeMillis();
+      long elapsedTime = System.currentTimeMillis() - startTime;
       log.info(
           "{ \"operation\": \"ZoneDetectionJobStatusChanged\", \"newJobId\":"
               + " \"{}\",\"oldJobId\":\"{}\", \"newStatus\":\"{}\", \"oldStatus\":\"{}\","

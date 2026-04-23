@@ -59,7 +59,7 @@ public class ParcelDetectionJobCreatedService implements Consumer<ParcelDetectio
                           address,
                           point))));
     } finally {
-      long elapsedTime = startTime - System.currentTimeMillis();
+      long elapsedTime = System.currentTimeMillis() - startTime;
       log.info(
           "{ \"operation\": \"ParcelDetectionJobCreated\", \"parcelDetectionJobId\": \"{}\","
               + " \"durationInMs\": \"{}\", \"isIntegrationTest\": \"{}\" }",

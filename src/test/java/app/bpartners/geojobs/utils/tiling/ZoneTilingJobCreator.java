@@ -19,6 +19,7 @@ public class ZoneTilingJobCreator {
         .id(jobId)
         .zoneName(zoneName)
         .emailReceiver(emailReceiver)
+        .isIntegrationTest(true)
         .statusHistory(
             List.of(
                 JobStatus.builder()

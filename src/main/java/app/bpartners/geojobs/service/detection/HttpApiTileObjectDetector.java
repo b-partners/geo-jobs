@@ -131,7 +131,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
 
       return detectionResponseAggregator.apply(detectionResponses);
     } finally {
-      long elapsedTime = startTime - System.currentTimeMillis();
+      long elapsedTime = System.currentTimeMillis() - startTime;
       log.info(
           "{ \"operation\": \"HttpApiTileObjectDetector\", \"zoneDetectionJobId\": \"{}\","
               + " \"durationInMs\": \"{}\", \"isIntegrationTest\": \"{}\" }",

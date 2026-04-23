@@ -85,7 +85,7 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
           detection.getEndToEndId(),
           currentFeature.getGeometry());
     } finally {
-      long elapsedTime = startTime - System.currentTimeMillis();
+      long elapsedTime = System.currentTimeMillis() - startTime;
       log.info(
           "{ \"operation\": \"FeatureVggRequested\",\"detectionId\":"
               + " \"{}\", \"durationInMs\": \"{}\", \"isIntegrationTest\": \"{}\" }",

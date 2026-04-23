@@ -57,7 +57,7 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
       statusChangedHandler.handle(
           event, newJob.getStatus(), oldJob.getStatus(), onSucceededHandler, onFailedHandler);
     } finally {
-      long elapsedTime = startTime - System.currentTimeMillis();
+      long elapsedTime = System.currentTimeMillis() - startTime;
       log.info(
           "{ \"operation\": \"ZoneTilingJobStatusChanged\", \"newJobId\":"
               + " \"{}\",\"oldJobId\":\"{}\", \"newStatus\":\"{}\", \"oldStatus\":\"{}\","

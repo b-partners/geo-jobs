@@ -31,6 +31,11 @@ public class ZoneTilingJobStatusChanged extends PojaEvent {
 
   private boolean isIntegrationTest;
 
+  public ZoneTilingJobStatusChanged(ZoneTilingJob oldJob, ZoneTilingJob newJob) {
+    this.oldJob = oldJob;
+    this.newJob = newJob;
+  }
+
   @Override
   public Duration maxConsumerDuration() {
     return Duration.ofMinutes(1);

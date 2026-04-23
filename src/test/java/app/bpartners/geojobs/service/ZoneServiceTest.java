@@ -882,7 +882,7 @@ class ZoneServiceTest {
         .thenReturn(new Principal("mockApiKey", Set.of(new Authority(authorityRole))));
     when(tilingJobMapperMock.from(any()))
         .thenReturn(new CreateZoneTilingJob().geoServerUrl("http://localhost").zoomLevel(HOUSES_0));
-    when(tilingJobMapperMock.toDomain(any(), any())).thenReturn(new ZoneTilingJob());
+    when(tilingJobMapperMock.toDomain(any(), any(), true)).thenReturn(new ZoneTilingJob());
     when(tilingJobServiceMock.create(any(), any())).thenReturn(new ZoneTilingJob());
     when(detectionRepositoryMock.save(any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));

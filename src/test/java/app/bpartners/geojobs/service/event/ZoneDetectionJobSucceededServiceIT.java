@@ -76,7 +76,7 @@ class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
         .thenReturn(
             List.of(DetectableObjectConfiguration.builder().objectType(USURE_IMPORTANTE).build()));
 
-    assertDoesNotThrow(() -> subject.accept(new ZoneDetectionJobSucceeded(succeededJobId)));
+    assertDoesNotThrow(() -> subject.accept(new ZoneDetectionJobSucceeded(succeededJobId, true)));
 
     var eventCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducer, times(1)).accept(eventCaptor.capture());
@@ -95,7 +95,7 @@ class ZoneDetectionJobSucceededServiceIT extends FacadeIT {
             List.of(DetectableObjectConfiguration.builder().objectType(USURE_IMPORTANTE).build()));
     when(zoneDetectionJobService.findById(any())).thenReturn(new ZoneDetectionJob());
 
-    assertDoesNotThrow(() -> subject.accept(new ZoneDetectionJobSucceeded(succeededJobId)));
+    assertDoesNotThrow(() -> subject.accept(new ZoneDetectionJobSucceeded(succeededJobId, true)));
 
     var eventCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducer, times(1)).accept(eventCaptor.capture());

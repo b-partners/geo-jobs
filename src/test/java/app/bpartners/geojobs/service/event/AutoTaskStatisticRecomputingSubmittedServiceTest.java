@@ -87,7 +87,7 @@ public class AutoTaskStatisticRecomputingSubmittedServiceTest {
   void accept_tiling_ok() {
     when(tilingJobRepositoryMock.findById(TILING_JOB_ID))
         .thenReturn(Optional.of(aZTJ(TILING_JOB_ID, PROCESSING, UNKNOWN)));
-    var statComputeEvent = new AutoTaskStatisticRecomputingSubmitted(TILING_JOB_ID);
+    var statComputeEvent = new AutoTaskStatisticRecomputingSubmitted(TILING_JOB_ID, true);
 
     assertThrows(ApiException.class, () -> subject.accept(statComputeEvent));
     verify(tilingJobRepositoryMock, times(2)).findById(TILING_JOB_ID);
@@ -98,7 +98,7 @@ public class AutoTaskStatisticRecomputingSubmittedServiceTest {
   void accept_detection_ok() {
     when(zoneDetectionRepositoryMock.findById(DETECTION_JOB_ID))
         .thenReturn(Optional.of(aZDJ(DETECTION_JOB_ID, PROCESSING, UNKNOWN)));
-    var statComputeEvent = new AutoTaskStatisticRecomputingSubmitted(DETECTION_JOB_ID);
+    var statComputeEvent = new AutoTaskStatisticRecomputingSubmitted(DETECTION_JOB_ID, true);
 
     assertThrows(ApiException.class, () -> subject.accept(statComputeEvent));
     verify(zoneDetectionRepositoryMock, times(2)).findById(DETECTION_JOB_ID);
@@ -112,7 +112,7 @@ public class AutoTaskStatisticRecomputingSubmittedServiceTest {
 
     assertThrows(
         NotFoundException.class,
-        () -> subject.accept(new AutoTaskStatisticRecomputingSubmitted(NOT_FOUND_JOB)));
+        () -> subject.accept(new AutoTaskStatisticRecomputingSubmitted(NOT_FOUND_JOB, true)));
   }
 
   @Test
@@ -123,14 +123,14 @@ public class AutoTaskStatisticRecomputingSubmittedServiceTest {
         .thenReturn(Optional.of(aZTJ(TILING_JOB_ID, FINISHED, SUCCEEDED)));
     when(zoneDetectionRepositoryMock.findById(DETECTION_JOB_ID))
         .thenReturn(Optional.of(aZDJ(DETECTION_JOB_ID, FINISHED, FAILED)));
-    var notFinishedJob = new AutoTaskStatisticRecomputingSubmitted(NOT_FINISHED_JOB);
+    var notFinishedJob = new AutoTaskStatisticRecomputingSubmitted(NOT_FINISHED_JOB, true);
     notFinishedJob.setAttemptNb(7);
 
     assertDoesNotThrow(() -> subject.accept(notFinishedJob));
     assertDoesNotThrow(
-        () -> subject.accept(new AutoTaskStatisticRecomputingSubmitted(TILING_JOB_ID)));
+        () -> subject.accept(new AutoTaskStatisticRecomputingSubmitted(TILING_JOB_ID, true)));
     assertDoesNotThrow(
-        () -> subject.accept(new AutoTaskStatisticRecomputingSubmitted(DETECTION_JOB_ID)));
+        () -> subject.accept(new AutoTaskStatisticRecomputingSubmitted(DETECTION_JOB_ID, true)));
     verify(taskStatisticRepositoryMock, times(0)).save(any());
   }
 }

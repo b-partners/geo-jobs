@@ -269,7 +269,7 @@ class ZoneDetectionJobControllerIT extends FacadeIT {
     assertEquals(new ParcelDetectionTaskCreated(configuredTasks.getFirst()), capturedEvent1);
     assertEquals(new ParcelDetectionTaskCreated(configuredTasks.get(1)), capturedEvent2);
     assertEquals(new ZDJStatusRecomputingSubmitted(job1.getId()), capturedEvent3);
-    assertEquals(new AutoTaskStatisticRecomputingSubmitted(job1.getId()), capturedEvent4);
+    assertEquals(new AutoTaskStatisticRecomputingSubmitted(job1.getId(), true), capturedEvent4);
   }
 
   @Test

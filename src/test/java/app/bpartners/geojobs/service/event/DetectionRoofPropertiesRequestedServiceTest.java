@@ -110,7 +110,7 @@ class DetectionRoofPropertiesRequestedServiceTest {
     doNothing().when(entityManagerMock).clear();
 
     assertDoesNotThrow(
-        () -> subject.accept(new DetectionRoofPropertiesRequested(detectionIdentifier)));
+        () -> subject.accept(new DetectionRoofPropertiesRequested(detectionIdentifier, true)));
 
     var detectionCaptor = ArgumentCaptor.forClass(Detection.class);
     verify(detectionRepositoryMock).save(detectionCaptor.capture());

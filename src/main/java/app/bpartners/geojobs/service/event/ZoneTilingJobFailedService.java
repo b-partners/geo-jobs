@@ -45,7 +45,7 @@ public class ZoneTilingJobFailedService implements Consumer<ZoneTilingJobFailed>
           subjectBuilder.toString(),
           getBody(optionalDetection, failedJob));
     } finally {
-      long elapsedTime = startTime - System.currentTimeMillis();
+      long elapsedTime = System.currentTimeMillis() - startTime;
       log.info(
           "{ \"operation\": \"ZoneTilingJobFailed\", \"jobId\": \"{}\", \"durationInMs\":"
               + " \"{}\", \"isIntegrationTest\": \"{}\" }",

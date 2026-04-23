@@ -67,7 +67,7 @@ public class RoofCoveringDetector {
                   ? coveringDetectionProjectName
                   : tile.getDetectionE2Id()));
     } finally {
-      long elapsedTime = startTime - System.currentTimeMillis();
+      long elapsedTime = System.currentTimeMillis() - startTime;
       log.info(
           "{ \"operation\": \"RoofCoveringDetector\",\"detectionId\": \"{}\", \"detectionE2Id\":"
               + " \"{}\", \"durationInMs\": \"{}\", \"isIntegrationTest\": \"{}\" }",

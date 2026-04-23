@@ -29,7 +29,7 @@ public class ParcelDetectionTaskCreatedService
     var task = parcelDetectionTaskCreated.getTask();
     taskStatusService.process(task);
     parcelDetectionTaskConsumer.accept(task);
-    long elapsedTime = startTime - System.currentTimeMillis();
+    long elapsedTime = System.currentTimeMillis() - startTime;
     log.info(
         "{ \"operation\": \"ParcelDetectionTaskCreated\", \"parcelDetectionTaskId\": \"{}\","
             + " \"durationInMs\": \"{}\", \"isIntegrationTest\": \"{}\" }",

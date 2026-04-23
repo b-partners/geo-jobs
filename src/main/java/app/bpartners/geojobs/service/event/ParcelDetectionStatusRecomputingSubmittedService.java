@@ -33,7 +33,7 @@ public class ParcelDetectionStatusRecomputingSubmittedService
     try {
       service.accept(event);
     } finally {
-      long elapsedTime = startTime - System.currentTimeMillis();
+      long elapsedTime = System.currentTimeMillis() - startTime;
       log.info(
           "{ \"operation\": \"ParcelDetectionStatusRecomputingSubmitted\", \"jobId\": \"{}\","
               + " \"durationInMs\": \"{}\", \"isIntegrationTest\": \"{}\" }",

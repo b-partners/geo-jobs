@@ -11,6 +11,7 @@ import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.file.bucket.BucketConf;
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
+import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
@@ -56,7 +57,11 @@ class RoofCoveringDetectorTest {
             any(String.class), any(), eq(RoofCoveringDetector.RoofCoveringDetectionResponse.class)))
         .thenReturn(new ResponseEntity<>(expected, HttpStatus.OK));
 
-    var actual = subject.apply(tileMock, maskFile);
+    var actual =
+        subject.apply(
+            tileMock,
+            maskFile,
+            Detection.builder().id(any(String.class)).integrationTest(true).build());
 
     var requestCaptor = ArgumentCaptor.forClass(HttpEntity.class);
     verify(restTemplateMock)

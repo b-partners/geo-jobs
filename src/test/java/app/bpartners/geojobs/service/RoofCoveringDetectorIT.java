@@ -4,12 +4,14 @@ import static app.bpartners.geojobs.repository.model.detection.RoofCoveringType.
 import static app.bpartners.geojobs.repository.model.detection.RoofCoveringType.ROOF_TUILES;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.file.bucket.BucketConf;
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
+import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.detection.RoofCovering;
 import app.bpartners.geojobs.service.detection.RoofCoveringDetector;
@@ -43,7 +45,8 @@ class RoofCoveringDetectorIT extends FacadeIT {
                 .bucketPath(TILE_BUCKET_PATH)
                 .coordinates(new TileCoordinates().x(544680).y(383095).z(20))
                 .build(),
-            maskFile);
+            maskFile,
+            Detection.builder().id(any(String.class)).integrationTest(true).build());
 
     assertEquals(expectedCovering(), actual);
   }
