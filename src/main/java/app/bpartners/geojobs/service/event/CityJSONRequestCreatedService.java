@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.model.lidar.planes.model.LasRoofDelimitationType.ENTIRE_ROOF_DELIMITATION;
+import static app.bpartners.geojobs.model.lidar.planes.model.LasRoofDelimitationType.ROOF_SEGMENT_FACE_DELIMITATION;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStatus.*;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStep.*;
 import static java.util.stream.Collectors.toSet;
@@ -10,6 +10,7 @@ import app.bpartners.geojobs.endpoint.event.model.CityJSONRequestCreated;
 import app.bpartners.geojobs.endpoint.event.model.ThreeDRequestMonitoringTriggered;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.model.lidar.planes.model.LasRoofDelimitationType;
 import app.bpartners.geojobs.repository.CityJSONRequestRepository;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.Feature;
@@ -62,8 +63,7 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
     try {
       var requestDelimitations = getRequestDelimitations(request);
       var pointsExtractionResult =
-          lasRoofsPointsExtractor.apply(
-              ENTIRE_ROOF_DELIMITATION, toGeometries(requestDelimitations));
+          lasRoofsPointsExtractor.apply(getType(request), toGeometries(requestDelimitations));
 
       if (isUnavailable(pointsExtractionResult)) {
         updateStatus(request, UNAVAILABLE, POINTS_CLOUD_PRE_PROCESSING);
@@ -116,7 +116,9 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
   }
 
   private Set<Geometry> toGeometries(List<Feature> delimitations) {
-    return delimitations.stream().map(featureMapper::domainToGeometry).collect(toSet());
+    return delimitations.stream()
+        .map(featureMapper::domainToGeometryWithMultipolygonHandler)
+        .collect(toSet());
   }
 
   private void updateStatus(
@@ -124,5 +126,12 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
     var updatedStatus = request.toBuilder().status(status).step(step).build();
     entityManager.clear();
     cityJSONRequestRepository.save(updatedStatus);
+  }
+
+  private LasRoofDelimitationType getType(CityJSONRequest request) {
+    return switch (request.getDelimitationObjectType()) {
+      case BUILDING_ROOF -> ROOF_SEGMENT_FACE_DELIMITATION;
+      case null, default -> LasRoofDelimitationType.ENTIRE_ROOF_DELIMITATION;
+    };
   }
 }

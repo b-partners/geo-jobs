@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.cityjson;
 
+import static app.bpartners.geojobs.model.lidar.planes.model.LasRoofDelimitationType.ROOF_SEGMENT_FACE_DELIMITATION;
 import static app.bpartners.geojobs.service.lidar.utils.MathUtilities.round2;
 import static java.util.UUID.randomUUID;
 
@@ -131,6 +132,10 @@ public class LidarDataToCityJsonProcessor
   }
 
   private static double getArea2DScale(DelimitedRoofPoints roof, List<RoofPlane3D> planes) {
+    if (ROOF_SEGMENT_FACE_DELIMITATION.equals(roof.getType())) {
+      return 1;
+    }
+
     var delimitation2DArea = roof.getArea();
     var planes2DArea = planes.stream().mapToDouble(RoofPlane3D::get2DArea).sum();
     return delimitation2DArea / planes2DArea;
