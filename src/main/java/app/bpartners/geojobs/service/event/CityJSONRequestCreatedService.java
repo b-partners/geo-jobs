@@ -130,7 +130,7 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
 
   private LasRoofDelimitationType getType(CityJSONRequest request) {
     return switch (request.getDelimitationObjectType()) {
-      case BUILDING_ROOF -> ROOF_SEGMENT_FACE_DELIMITATION;
+      case BUILDING_ROOF_SEGMENT_FACE -> ROOF_SEGMENT_FACE_DELIMITATION;
       case null, default -> LasRoofDelimitationType.ENTIRE_ROOF_DELIMITATION;
     };
   }
