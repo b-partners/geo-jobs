@@ -216,7 +216,7 @@ public class ParcelParcelParcelTilingTaskCreatedServiceIT extends FacadeIT {
                         .build()))
             .build();
     ParcelTilingTask created = tilingTaskRepository.save(toCreate);
-    ParcelTilingTaskCreated createdEventPayload = new ParcelTilingTaskCreated(created);
+    ParcelTilingTaskCreated createdEventPayload = new ParcelTilingTaskCreated(created, true);
     subject.accept(createdEventPayload);
     int numberOfDirectoryToUpload = 1;
     verify(bucketComponent, times(numberOfDirectoryToUpload)).upload(any(), any(String.class));
@@ -231,7 +231,7 @@ public class ParcelParcelParcelTilingTaskCreatedServiceIT extends FacadeIT {
     ParcelTilingTask toCreate = aZTT(jobId, taskId, parcelId);
     ParcelTilingTask task = tilingTaskRepository.save(toCreate);
 
-    assertDoesNotThrow(() -> subject.accept(new ParcelTilingTaskCreated(task)));
+    assertDoesNotThrow(() -> subject.accept(new ParcelTilingTaskCreated(task, true)));
 
     tilingTaskRepository
         .findById(task.getId())
@@ -302,7 +302,7 @@ public class ParcelParcelParcelTilingTaskCreatedServiceIT extends FacadeIT {
     String parcelId = randomUUID().toString();
     ParcelTilingTask toCreate = aZTT(jobId, taskId, parcelId);
     ParcelTilingTask created = tilingTaskRepository.save(toCreate);
-    ParcelTilingTaskCreated ztjCreated = new ParcelTilingTaskCreated(created);
+    ParcelTilingTaskCreated ztjCreated = new ParcelTilingTaskCreated(created, true);
 
     assertDoesNotThrow(() -> subject.accept(ztjCreated));
 

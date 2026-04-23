@@ -185,7 +185,7 @@ class ZoneTilingJobControllerIT extends FacadeIT {
 
   @Test
   void create_tiling_job_ok() throws IOException {
-    var created = controller.tileZone(creatableJob());
+    var created = controller.tileZone(creatableJob(), "true");
 
     var actualJobs = controller.getTilingJobs(new PageFromOne(1), new BoundedPageSize(30));
     assertNotNull(created.getId());
@@ -195,7 +195,7 @@ class ZoneTilingJobControllerIT extends FacadeIT {
 
   @Test
   void read_parcels_right_after_job_creation() throws JsonProcessingException {
-    var createdJob = controller.tileZone(creatableJob());
+    var createdJob = controller.tileZone(creatableJob(), "true");
     var parcels = controller.getZTJParcels(createdJob.getId());
     var parcel = parcels.getFirst();
     assertEquals(ZoomLevelEnum.TOWN, createdJob.getZoomLevel());

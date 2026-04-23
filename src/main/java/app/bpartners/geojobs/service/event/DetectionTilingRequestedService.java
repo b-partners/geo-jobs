@@ -37,11 +37,20 @@ public class DetectionTilingRequestedService implements Consumer<DetectionTiling
 
   @Override
   public void accept(DetectionTilingRequested detectionTilingRequested) {
+    long startTime = System.currentTimeMillis();
     var detectionIdentifier = detectionTilingRequested.getDetectionIdentifier();
     var detection = detectionRepository.findById(detectionIdentifier).orElseThrow();
+
     if (hasUnsupportedArea(detection)) return;
     if (hasUnsupportedModel(detection)) return;
     detectionTilingCreation.apply(detection);
+    long elapsedTime = System.currentTimeMillis() - startTime;
+    log.info(
+        "{ \"operation\": \"DetectionTilingRequested\",  \"detectionId\": \"{}\", "
+            + " \"durationInMs\": \"{}\", \"isIntegrationTest\": \"{}\" }",
+        detectionIdentifier,
+        elapsedTime,
+        detection.isIntegrationTest());
   }
 
   private boolean hasUnsupportedModel(Detection detection) {

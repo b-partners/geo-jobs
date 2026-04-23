@@ -16,11 +16,13 @@ import java.util.List;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DetectionModelUnsupportedService implements Consumer<DetectionModelUnsupported> {
   private static final String DETECTION_MODEL_UNSUPPORTED_TEMPLATE = "detection_model_unsupported";
   private final DetectionRepository detectionRepository;
@@ -31,7 +33,13 @@ public class DetectionModelUnsupportedService implements Consumer<DetectionModel
   @SneakyThrows
   @Override
   public void accept(DetectionModelUnsupported event) {
+    long startTime = System.currentTimeMillis();
     var detection = detectionRepository.findById(event.getDetectionIdentifier()).orElseThrow();
+    boolean isIntegrationTest =
+        communityAuthorizationRepository
+            .findById(detection.getCommunityOwnerId())
+            .orElseThrow()
+            .isIntegrationTestUsage();
     var communityOwner =
         communityAuthorizationRepository.findById(detection.getCommunityOwnerId()).orElseThrow();
     String emailSubject;
@@ -67,6 +75,13 @@ public class DetectionModelUnsupportedService implements Consumer<DetectionModel
             emailSubject,
             htmlBody,
             attachments));
+    long elapsedTime = System.currentTimeMillis() - startTime;
+    log.info(
+        "{ \"operation\": \"DetectionAreaUnsupportedService\", \"detectionId\":"
+            + " \"{}\",\"durationInMs\": \"{}\", \"isIntegrationTest\": \"{}\" }",
+        detection.getId(),
+        elapsedTime,
+        isIntegrationTest);
   }
 
   private String emailBody(Detection detection, CommunityAuthorization communityOwner) {

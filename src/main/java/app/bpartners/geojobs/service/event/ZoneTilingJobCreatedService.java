@@ -9,21 +9,37 @@ import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class ZoneTilingJobCreatedService implements Consumer<ZoneTilingJobCreated> {
   private final ZoneTilingJobService zoneTilingJobService;
   private final EventProducer eventProducer;
 
   @Override
   public void accept(ZoneTilingJobCreated zoneTilingJobCreated) {
+    long startTime = System.currentTimeMillis();
     ZoneTilingJob ztj = zoneTilingJobCreated.getZoneTilingJob();
 
-    zoneTilingJobService.fireTasks(ztj);
+    zoneTilingJobService.fireTasks(ztj, zoneTilingJobCreated.isTestIntegration());
 
-    eventProducer.accept(List.of(new ZTJStatusRecomputingSubmitted(ztj.getId())));
-    eventProducer.accept(List.of(new AutoTaskStatisticRecomputingSubmitted(ztj.getId())));
+    eventProducer.accept(
+        List.of(
+            new ZTJStatusRecomputingSubmitted(
+                ztj.getId(), zoneTilingJobCreated.isTestIntegration())));
+    eventProducer.accept(
+        List.of(
+            new AutoTaskStatisticRecomputingSubmitted(
+                ztj.getId(), zoneTilingJobCreated.isTestIntegration())));
+    long elapsedTime = System.currentTimeMillis() - startTime;
+    log.info(
+        "{ \"operation\": \"ZoneTilingJobCreated\", \"zoneTilingJobId\": \"{}\", \"durationInMs\":"
+            + " \"{}\", \"isIntegrationTest\": \"{}\" }",
+        zoneTilingJobCreated.getZoneTilingJob().getId(),
+        elapsedTime,
+        zoneTilingJobCreated.isTestIntegration());
   }
 }

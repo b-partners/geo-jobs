@@ -24,11 +24,13 @@ import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class DetectionSavedService implements Consumer<DetectionSaved> {
   public static final String DETECTION_SAVED_TEMPLATE = "detection_saved";
   private final Mailer mailer;
@@ -40,6 +42,7 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
   @SneakyThrows
   @Override
   public void accept(DetectionSaved detectionSaved) {
+    long startTime = System.currentTimeMillis();
     var detectionIdentifier = detectionSaved.getDetectionIdentifier();
     var detection = detectionRepository.findById(detectionIdentifier).orElseThrow();
     List<InternetAddress> cc = List.of();
@@ -62,6 +65,12 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
     List<File> attachments = List.of();
     mailer.accept(
         new Email(new InternetAddress("tech@birdia.fr"), cc, bcc, subject, htmlBody, attachments));
+    long elapsedTime = System.currentTimeMillis() - startTime;
+    log.info(
+        "{ \"operation\": \"DetectionSaved\", \"detectionId\": \"{}\", \"durationInMs\": \"{}\","
+            + " \"isIntegrationTest\": \"false\" }",
+        detectionIdentifier,
+        elapsedTime);
   }
 
   @NonNull

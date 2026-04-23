@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -76,11 +77,15 @@ public class ZoneTilingController {
   }
 
   @GetMapping("/tilingJobs/{id}/recomputedStatus")
-  public Status getZTJRecomputedStatus(@PathVariable String id) {
+  public Status getZTJRecomputedStatus(
+      @PathVariable String id,
+      @RequestHeader(value = "x-test-request", required = false, defaultValue = "false")
+          String isIntegrationTest) {
     var tilingJob = service.findById(id);
     JobStatus jobStatus = tilingJob.getStatus();
     if (!jobStatus.getProgression().equals(FINISHED)) {
-      eventProducer.accept(List.of(new ZTJStatusRecomputingSubmitted(id)));
+      eventProducer.accept(
+          List.of(new ZTJStatusRecomputingSubmitted(id, Boolean.parseBoolean(isIntegrationTest))));
     }
     return jobStatusMapper.toRest(jobStatus);
   }
@@ -91,10 +96,14 @@ public class ZoneTilingController {
   }
 
   @PostMapping("/tilingJobs")
-  public ZoneTilingJob tileZone(@RequestBody CreateZoneTilingJob createJob) {
+  public ZoneTilingJob tileZone(
+      @RequestBody CreateZoneTilingJob createJob,
+      @RequestHeader(value = "x-test-request", required = false, defaultValue = "false")
+          String isIntegrationTest) {
     var job = mapper.toDomain(createJob, false);
     var tilingTasks = getTilingTasks(createJob, job.getId());
-    return mapper.toRest(service.create(job, tilingTasks), tilingTasks);
+    return mapper.toRest(
+        service.create(job, tilingTasks, Boolean.parseBoolean(isIntegrationTest)), tilingTasks);
   }
 
   @PostMapping("/tilingJobs/{id}/taskFiltering")
@@ -116,8 +125,13 @@ public class ZoneTilingController {
   }
 
   @PutMapping("/tilingJobs/{id}/retry")
-  public ZoneTilingJob processFailedTilingJob(@PathVariable String id) {
-    return mapper.toRest(service.retryFailedTask(id), tilingTaskRepository.findAllByJobId(id));
+  public ZoneTilingJob processFailedTilingJob(
+      @PathVariable String id,
+      @RequestHeader(value = "x-test-request", required = false, defaultValue = "false")
+          String isIntegrationTest) {
+    return mapper.toRest(
+        service.retryFailedTask(id, Boolean.parseBoolean(isIntegrationTest)),
+        tilingTaskRepository.findAllByJobId(id));
   }
 
   @GetMapping("/tilingJobs")

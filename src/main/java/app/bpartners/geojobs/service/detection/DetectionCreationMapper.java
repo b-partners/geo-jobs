@@ -31,10 +31,12 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 @Component
 @AllArgsConstructor
+@Slf4j
 public class DetectionCreationMapper {
   private final DetectableObjectTypeMapper detectableObjectTypeMapper;
   private final FeatureTypeChecker featureTypeChecker;
@@ -283,14 +285,24 @@ public class DetectionCreationMapper {
       List<BigDecimal> firstPoint, String communityOwnerId) {
     var longitude = firstPoint.get(0).doubleValue();
     var latitude = firstPoint.get(1).doubleValue();
-
+    boolean isIntegrationTest =
+        communityAuthRepository.findById(communityOwnerId).orElseThrow().isIntegrationTestUsage();
     var e2ApiKey =
         communityAuthRepository
             .findById(communityOwnerId)
             .map(CommunityAuthorization::getDashboardApiKey)
             .orElseThrow();
 
+    long startTime = System.currentTimeMillis();
     var areaMapLayers = areaPictureApi.getAreaPictureMapLayers(longitude, latitude, e2ApiKey);
+    long endTime = System.currentTimeMillis();
+    long elapsedTime = endTime - startTime;
+
+    log.info(
+        "{ \"operation\": \"getAreaPictureMapLayers\", \"durationInMs\": \"{}\","
+            + " \"isIntegrationTest\": \"{}\" }",
+        elapsedTime,
+        isIntegrationTest);
 
     return areaMapLayers.stream()
         .map(

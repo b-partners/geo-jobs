@@ -54,7 +54,7 @@ class ZTJStatusRecomputingSubmittedServiceTest {
                 aTilingTask(FINISHED, SUCCEEDED)));
     when(zoneTilingJobRepository.findById(processingJob)).thenReturn(Optional.of(zoneTilingJob));
 
-    var event = new ZTJStatusRecomputingSubmitted(processingJob, 180L);
+    var event = new ZTJStatusRecomputingSubmitted(processingJob, 180L, true);
     event.setAttemptNb(9);
     subject.accept(event);
 

@@ -66,7 +66,7 @@ public class AdminAuthenticatedAccessIT extends FacadeIT {
   @Test
   void admin_can_tile() throws ApiException {
     var expected = new ZoneTilingJob();
-    when(tilingController.tileZone(any())).thenReturn(expected);
+    when(tilingController.tileZone(any(), "true")).thenReturn(expected);
 
     var actual = tilingApi.tileZone(mock(CreateZoneTilingJob.class));
 

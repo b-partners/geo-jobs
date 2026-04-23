@@ -308,7 +308,7 @@ public class ZoneTilingJobServiceTest {
   void retry_failed_tasks_not_found_ko() {
     when(jobRepositoryMock.findById(JOB_ID)).thenReturn(Optional.empty());
 
-    assertThrows(NotFoundException.class, () -> subject.retryFailedTask(JOB_ID));
+    assertThrows(NotFoundException.class, () -> subject.retryFailedTask(JOB_ID, true));
   }
 
   @Test
@@ -324,8 +324,8 @@ public class ZoneTilingJobServiceTest {
         .thenReturn(
             List.of(taskWithStatus(FINISHED, SUCCEEDED), taskWithStatus(FINISHED, SUCCEEDED)));
 
-    assertThrows(BadRequestException.class, () -> subject.retryFailedTask(JOB_ID));
-    assertThrows(BadRequestException.class, () -> subject.retryFailedTask(JOB2_ID));
+    assertThrows(BadRequestException.class, () -> subject.retryFailedTask(JOB_ID, true));
+    assertThrows(BadRequestException.class, () -> subject.retryFailedTask(JOB2_ID, true));
   }
 
   static ParcelTilingTask taskWithStatus(
@@ -411,7 +411,7 @@ public class ZoneTilingJobServiceTest {
                                 .build()))
                     .build()));
 
-    ZoneTilingJob actual = subject.retryFailedTask(JOB_ID);
+    ZoneTilingJob actual = subject.retryFailedTask(JOB_ID, true);
 
     assertEquals(PROCESSING, actual.getStatus().getProgression());
     assertEquals(RETRYING, actual.getStatus().getHealth());

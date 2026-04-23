@@ -12,8 +12,11 @@ import lombok.*;
 @NoArgsConstructor
 @ToString
 public class ParcelTilingTaskCreated extends TaskCreated<ParcelTilingTask> {
-  public ParcelTilingTaskCreated(ParcelTilingTask task) {
+  public boolean isIntegrationTest;
+
+  public ParcelTilingTaskCreated(ParcelTilingTask task, boolean integrationTest) {
     super(task);
+    this.isIntegrationTest = integrationTest;
   }
 
   @Override

@@ -101,13 +101,13 @@ class ZoneTilingControllerTest {
                 app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING,
                 app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN));
 
-    var actual = subject.getZTJRecomputedStatus(jobId);
+    var actual = subject.getZTJRecomputedStatus(jobId, "true");
 
     var listCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducerMock, times(1)).accept(listCaptor.capture());
     var ztjStatusComputingEvent =
         ((List<ZTJStatusRecomputingSubmitted>) listCaptor.getValue()).getFirst();
-    assertEquals(new ZTJStatusRecomputingSubmitted(jobId), ztjStatusComputingEvent);
+    assertEquals(new ZTJStatusRecomputingSubmitted(jobId, true), ztjStatusComputingEvent);
     assertEquals(
         new Status()
             .progression(PENDING)
@@ -153,10 +153,10 @@ class ZoneTilingControllerTest {
             jobId,
             app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED,
             app.bpartners.geojobs.job.model.Status.HealthStatus.FAILED);
-    when(tilingJobServiceMock.retryFailedTask(jobId)).thenReturn(zoneTilingJob);
+    when(tilingJobServiceMock.retryFailedTask(jobId, true)).thenReturn(zoneTilingJob);
     var expected = tilingJobMapper.toRest(zoneTilingJob, List.of());
 
-    var actual = subject.processFailedTilingJob(jobId);
+    var actual = subject.processFailedTilingJob(jobId, "true");
 
     assertEquals(expected, actual);
   }

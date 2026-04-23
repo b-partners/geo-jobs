@@ -10,17 +10,20 @@ import lombok.ToString;
 @ToString
 public class ZTJStatusRecomputingSubmitted extends JobStatusRecomputingSubmitted {
   private static final long INITIAL_BACKOFF_IN_SECONDS = Duration.ofSeconds(30).toSeconds();
+  public boolean isIntegrationTest;
 
-  public ZTJStatusRecomputingSubmitted(String jobId) {
+  public ZTJStatusRecomputingSubmitted(String jobId, boolean isIntegrationTest) {
     super(jobId, INITIAL_BACKOFF_IN_SECONDS);
+    this.isIntegrationTest = isIntegrationTest;
   }
 
   public ZTJStatusRecomputingSubmitted(
-      String jobId, Long maxConsumerBackoffBetweenRetriesDurationValue) {
+      String jobId, Long maxConsumerBackoffBetweenRetriesDurationValue, boolean isIntegrationTest) {
     super(
         jobId,
         maxConsumerBackoffBetweenRetriesDurationValue == null
             ? INITIAL_BACKOFF_IN_SECONDS
             : maxConsumerBackoffBetweenRetriesDurationValue);
+    this.isIntegrationTest = isIntegrationTest;
   }
 }

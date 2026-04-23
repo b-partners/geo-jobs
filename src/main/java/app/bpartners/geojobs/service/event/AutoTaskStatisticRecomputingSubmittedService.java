@@ -13,9 +13,11 @@ import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import java.util.function.Consumer;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 public class AutoTaskStatisticRecomputingSubmittedService
     implements Consumer<AutoTaskStatisticRecomputingSubmitted> {
   private static final int ATTEMPT_FOR_256_MINUTES_DURATION = 6;
@@ -44,21 +46,37 @@ public class AutoTaskStatisticRecomputingSubmittedService
 
   @Override
   public void accept(AutoTaskStatisticRecomputingSubmitted event) {
-    var jobId = event.getJobId();
-    var attemptNb = event.getAttemptNb();
-    if (attemptNb > ATTEMPT_FOR_256_MINUTES_DURATION) {
-      return;
-    }
-    var optionalTiling = tilingJobRepository.findById(jobId);
-    if (optionalTiling.isEmpty()) {
-      var zoneDetectionJob =
-          zoneDetectionJobRepository
-              .findById(jobId)
-              .orElseThrow(() -> new NotFoundException("Job.id=" + jobId + " not found"));
-      processJob(zoneDetectionJob, jobId);
-    } else {
-      var tilingJob = optionalTiling.get();
-      processJob(tilingJob, jobId);
+    long startTime = System.currentTimeMillis();
+    try {
+      var jobId = event.getJobId();
+      var attemptNb = event.getAttemptNb();
+
+      if (attemptNb > ATTEMPT_FOR_256_MINUTES_DURATION) {
+        return;
+      }
+
+      var optionalTiling = tilingJobRepository.findById(jobId);
+
+      if (optionalTiling.isEmpty()) {
+        var zoneDetectionJob =
+            zoneDetectionJobRepository
+                .findById(jobId)
+                .orElseThrow(() -> new NotFoundException("Job.id=" + jobId + " not found"));
+
+        processJob(zoneDetectionJob, jobId);
+      } else {
+        var tilingJob = optionalTiling.get();
+        processJob(tilingJob, jobId);
+      }
+    } finally {
+      long elapsedTime = System.currentTimeMillis() - startTime;
+
+      log.info(
+          "{ \"operation\": \"AutoTaskStatisticRecomputingSubmitted\", \"jobId\": \"{}\","
+              + " \"durationInMs\": \"{}\", \"isIntegrationTest\": \"{}\" }",
+          event.getJobId(),
+          elapsedTime,
+          event.isIntegrationTest());
     }
   }
 

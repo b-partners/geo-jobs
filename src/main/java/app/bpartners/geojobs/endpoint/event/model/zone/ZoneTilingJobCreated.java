@@ -26,6 +26,8 @@ public class ZoneTilingJobCreated extends PojaEvent {
   @JsonProperty("zoneTilingJob")
   private ZoneTilingJob zoneTilingJob;
 
+  private boolean isTestIntegration;
+
   @Override
   public Duration maxConsumerDuration() {
     return Duration.ofMinutes(3);

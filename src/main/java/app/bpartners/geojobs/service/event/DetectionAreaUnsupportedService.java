@@ -22,11 +22,13 @@ import java.util.List;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class DetectionAreaUnsupportedService implements Consumer<DetectionAreaUnsupported> {
   private static final String DETECTION_AREA_UNSUPPORTED_TEMPLATE = "detection_area_unsupported";
   private final DetectionRepository detectionRepository;
@@ -37,10 +39,16 @@ public class DetectionAreaUnsupportedService implements Consumer<DetectionAreaUn
   @SneakyThrows
   @Override
   public void accept(DetectionAreaUnsupported detectionAreaUnsupported) {
+    long startTime = System.currentTimeMillis();
     var detection =
         detectionRepository
             .findById(detectionAreaUnsupported.getDetectionIdentifier())
             .orElseThrow();
+    boolean isIntegrationTest =
+        communityAuthorizationRepository
+            .findById(detection.getCommunityOwnerId())
+            .orElseThrow()
+            .isIntegrationTestUsage();
     var communityOwner =
         communityAuthorizationRepository.findById(detection.getCommunityOwnerId()).orElseThrow();
     var emailSubject =
@@ -62,6 +70,13 @@ public class DetectionAreaUnsupportedService implements Consumer<DetectionAreaUn
             emailSubject,
             htmlBody,
             attachments));
+    long elapsedTime = System.currentTimeMillis() - startTime;
+    log.info(
+        "{ \"operation\": \"DetectionAreaUnsupportedService\", \"detectionId\":"
+            + " \"{}\",\"durationInMs\": \"{}\", \"isIntegrationTest\": \"{}\" }",
+        detection.getId(),
+        elapsedTime,
+        isIntegrationTest);
   }
 
   private String emailBody(

@@ -23,7 +23,8 @@ class ParcelTilingTaskCreatedIT extends FacadeIT {
             .parcels(List.of())
             .statusHistory(List.of())
             .submissionInstant(now())
-            .build());
+            .build(),
+        true);
   }
 
   @Test

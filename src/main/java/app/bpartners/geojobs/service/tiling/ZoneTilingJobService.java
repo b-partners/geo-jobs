@@ -26,6 +26,7 @@ import app.bpartners.geojobs.job.repository.TaskRepository;
 import app.bpartners.geojobs.job.service.JobService;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.repository.TaskStatisticRepository;
+import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
 import app.bpartners.geojobs.repository.model.ArcgisImageZoom;
 import app.bpartners.geojobs.repository.model.FilteredTilingJob;
 import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
@@ -75,7 +76,8 @@ public class ZoneTilingJobService extends JobService<ParcelTilingTask, ZoneTilin
       TilingTaskMapper tilingTaskMapper,
       TaskStatisticRepository taskStatisticRepository,
       TilingTaskConsumer tilingTaskConsumer,
-      Workers workers) {
+      Workers workers,
+      ZoneDetectionJobRepository zoneDetectionJobRepository) {
     super(
         repository,
         jobStatusRepository,
@@ -165,7 +167,7 @@ public class ZoneTilingJobService extends JobService<ParcelTilingTask, ZoneTilin
   }
 
   @Transactional
-  public ZoneTilingJob retryFailedTask(String jobId) {
+  public ZoneTilingJob retryFailedTask(String jobId, boolean isIntegrationTest) {
     ZoneTilingJob job = findById(jobId);
     List<ParcelTilingTask> parcelTilingTasks = taskRepository.findAllByJobId(jobId);
     if (!parcelTilingTasks.stream()
@@ -183,7 +185,8 @@ public class ZoneTilingJobService extends JobService<ParcelTilingTask, ZoneTilin
     List<ParcelTilingTask> savedFailedTasks =
         taskRepository.saveAll(failedTasks.stream().map(notFinishedTaskRetriever).toList());
     savedFailedTasks.forEach(
-        task -> eventProducer.accept(List.of(new ParcelTilingTaskCreated(task))));
+        task ->
+            eventProducer.accept(List.of(new ParcelTilingTaskCreated(task, isIntegrationTest))));
     // /!\ Force job status to status PROCESSING again
     job.hasNewStatus(
         JobStatus.builder()
@@ -197,6 +200,19 @@ public class ZoneTilingJobService extends JobService<ParcelTilingTask, ZoneTilin
     return repository.save(job);
   }
 
+  public ZoneTilingJob create(
+      ZoneTilingJob job, List<ParcelTilingTask> tasks, boolean isTestIntegration) {
+    if (job.isRooferMade()) {
+      return super.create(job, tasks);
+    }
+
+    var saved = super.create(job, tasks);
+    eventProducer.accept(List.of(new ZoneTilingJobCreated(saved, isTestIntegration)));
+    eventProducer.accept(
+        List.of(new ZTJStatusRecomputingSubmitted(saved.getId(), isTestIntegration)));
+    return saved;
+  }
+
   @Transactional
   @Override
   public ZoneTilingJob create(ZoneTilingJob job, List<ParcelTilingTask> tasks) {
@@ -205,14 +221,18 @@ public class ZoneTilingJobService extends JobService<ParcelTilingTask, ZoneTilin
     }
 
     var saved = super.create(job, tasks);
-    eventProducer.accept(List.of(new ZoneTilingJobCreated(saved)));
-    eventProducer.accept(List.of(new ZTJStatusRecomputingSubmitted(saved.getId())));
+    eventProducer.accept(List.of(new ZoneTilingJobCreated(saved, false)));
+    eventProducer.accept(List.of(new ZTJStatusRecomputingSubmitted(saved.getId(), false)));
     return saved;
   }
 
   @Transactional
-  public void fireTasks(ZoneTilingJob job) {
-    getTasks(job).forEach(task -> eventProducer.accept(List.of(new ParcelTilingTaskCreated(task))));
+  public void fireTasks(ZoneTilingJob job, boolean isIntegrationTest) {
+    getTasks(job)
+        .forEach(
+            task ->
+                eventProducer.accept(
+                    List.of(new ParcelTilingTaskCreated(task, isIntegrationTest))));
   }
 
   public List<ParcelTilingTask> consumeTasks(String jobId) {

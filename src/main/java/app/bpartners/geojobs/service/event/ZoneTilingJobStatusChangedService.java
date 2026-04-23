@@ -36,24 +36,35 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
 
   @Override
   public void accept(ZoneTilingJobStatusChanged event) {
-    var oldJob = event.getOldJob();
-    var newJob = event.getNewJob();
+    long startTime = System.currentTimeMillis();
+    try {
+      var oldJob = event.getOldJob();
+      var newJob = event.getNewJob();
 
-    var onSucceededHandler =
-        new onSucceededJobHandler(
-            eventProducer,
-            tilingFinishedMailer,
-            zoneDetectionJobService,
-            newJob,
-            detectionRepository,
-            objectConfigurationRepository,
-            detectionDelimitationRetriever,
-            tilingTaskRepository);
+      var onSucceededHandler =
+          new onSucceededJobHandler(
+              eventProducer,
+              tilingFinishedMailer,
+              zoneDetectionJobService,
+              newJob,
+              detectionRepository,
+              objectConfigurationRepository,
+              detectionDelimitationRetriever,
+              tilingTaskRepository);
 
-    var onFailedHandler = new onFailedJobHandler(eventProducer, newJob);
+      var onFailedHandler = new onFailedJobHandler(eventProducer, newJob);
 
-    statusChangedHandler.handle(
-        event, newJob.getStatus(), oldJob.getStatus(), onSucceededHandler, onFailedHandler);
+      statusChangedHandler.handle(
+          event, newJob.getStatus(), oldJob.getStatus(), onSucceededHandler, onFailedHandler);
+    } finally {
+      long elapsedTime = startTime - System.currentTimeMillis();
+      log.info(
+          "{ \"operation\": \"ZTJStatusRecomputingSubmitted\", \"jobId\": \"{}\", \"durationInMs\":"
+              + " \"{}\", \"isIntegrationTest\": \"{}\" }",
+          event.getNewJob().getId(),
+          elapsedTime,
+          event.isIntegrationTest());
+    }
   }
 
   private record onSucceededJobHandler(

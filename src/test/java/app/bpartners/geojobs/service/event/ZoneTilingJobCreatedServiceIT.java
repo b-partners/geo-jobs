@@ -107,7 +107,7 @@ class ZoneTilingJobCreatedServiceIT extends FacadeIT {
         ((List<AutoTaskStatisticRecomputingSubmitted>) allValues.getLast()).getFirst();
     assertEquals(UNKNOWN, actualAfterAccept.getStatus().getHealth());
     assertEquals(PENDING, actualAfterAccept.getStatus().getProgression());
-    assertEquals(new ZTJStatusRecomputingSubmitted(created.getId()), ztjStatusComputeEvent);
+    assertEquals(new ZTJStatusRecomputingSubmitted(created.getId(), true), ztjStatusComputeEvent);
     assertEquals(new AutoTaskStatisticRecomputingSubmitted(jobId), taskStatisticComputingEvent);
   }
 }

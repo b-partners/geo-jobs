@@ -21,6 +21,7 @@ public class AutoTaskStatisticRecomputingSubmitted extends PojaEvent {
   private static final long MAX_CONSUMER_DURATION_VALUE = 30L;
   private static final long DEFAULT_BACK_OFF_VALUE = 60L;
   protected String jobId;
+  private boolean isIntegrationTest;
 
   @Override
   public Duration eventHandlerInitMaxDuration() {
