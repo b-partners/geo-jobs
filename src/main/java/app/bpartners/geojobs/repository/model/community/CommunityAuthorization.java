@@ -67,7 +67,7 @@ public class CommunityAuthorization implements Serializable {
   @OneToMany(mappedBy = "communityOwnerId", fetch = LAZY)
   private List<Detection> detections;
 
-  @OneToMany(mappedBy = "communityOwnerId", fetch = LAZY)
+  @OneToMany(mappedBy = "communityOwnerId", fetch = EAGER)
   private List<RevokedApiKey> revokedApiKeys;
 
   @OneToMany(mappedBy = "communityOwnerId", fetch = EAGER, cascade = ALL)
