@@ -227,6 +227,7 @@ public class DetectionMapper {
             .zoneName(tilingJob.getZoneName())
             .emailReceiver(tilingJob.getEmailReceiver())
             .submissionInstant(now())
+            .isIntegrationTest(tilingJob.isIntegrationTest())
             .build();
     detectionJob.hasNewStatus(
         JobStatus.builder()

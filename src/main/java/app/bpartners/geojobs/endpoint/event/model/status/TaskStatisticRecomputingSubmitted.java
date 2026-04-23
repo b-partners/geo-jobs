@@ -15,6 +15,7 @@ import lombok.*;
 @ToString
 public class TaskStatisticRecomputingSubmitted extends PojaEvent {
   private String jobId;
+  private boolean isIntegrationTest;
 
   @Override
   public Duration maxConsumerDuration() {

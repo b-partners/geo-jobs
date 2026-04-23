@@ -24,15 +24,30 @@ public class ZoneDetectionJobStatusChangedService
 
   @Override
   public void accept(ZoneDetectionJobStatusChanged event) {
-    var oldJob = event.getOldJob();
-    var newJob = event.getNewJob();
+    long startTime = System.currentTimeMillis();
+    try {
+      var oldJob = event.getOldJob();
+      var newJob = event.getNewJob();
 
-    statusChangedHandler.handle(
-        event,
-        newJob.getStatus(),
-        oldJob.getStatus(),
-        new OnSucceededHandler(mailer, eventProducer, newJob),
-        new OnFailedHandler(mailer, eventProducer, newJob));
+      statusChangedHandler.handle(
+          event,
+          newJob.getStatus(),
+          oldJob.getStatus(),
+          new OnSucceededHandler(mailer, eventProducer, newJob),
+          new OnFailedHandler(mailer, eventProducer, newJob));
+    } finally {
+      long elapsedTime = startTime - System.currentTimeMillis();
+      log.info(
+          "{ \"operation\": \"ZoneDetectionJobStatusChanged\", \"newJobId\":"
+              + " \"{}\",\"oldJobId\":\"{}\", \"newStatus\":\"{}\", \"oldStatus\":\"{}\","
+              + " \"durationInMs\": \"{}\", \"isIntegrationTest\": \"{}\" }",
+          event.getNewJob().getId(),
+          event.getOldJob().getId(),
+          event.getNewJob().getStatus(),
+          event.getOldJob().getStatus(),
+          elapsedTime,
+          event.isIntegrationTest());
+    }
   }
 
   private record OnSucceededHandler(
@@ -43,7 +58,11 @@ public class ZoneDetectionJobStatusChangedService
     public void run() {
       mailer.accept(zdj);
       eventProducer.accept(
-          List.of(ZoneDetectionJobSucceeded.builder().succeededJobId(zdj.getId()).build()));
+          List.of(
+              ZoneDetectionJobSucceeded.builder()
+                  .succeededJobId(zdj.getId())
+                  .isIntegrationTest(zdj.isIntegrationTest())
+                  .build()));
       log.info("Finished, mail sent, ztj=" + zdj);
     }
   }

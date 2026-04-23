@@ -223,12 +223,22 @@ public class ZoneDetectionController {
   @PostMapping("/detections/{id}")
   public Detection processDetection(
       @PathVariable(name = "id") String detectionId, @RequestBody CreateDetection createDetection) {
+    long startTime = System.currentTimeMillis();
     createDetectionValidator.accept(createDetection);
     detectionAuthorizer.accept(detectionId, createDetection, authProvider.getPrincipal());
     var communityAuthorization =
         communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
     var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId).orElse(null);
-    return zoneService.processDetection(detectionId, createDetection, communityOwnerId);
+    var communityOwner = communityAuthRepository.findById(communityOwnerId).orElseThrow();
+    Detection detection =
+        zoneService.processDetection(detectionId, createDetection, communityOwnerId);
+    log.info(
+        "{ \"operation\": \"processDetectionController\", \"detectionE2EId\": \"{}\","
+            + " \"durationInMs\": \"{}\", \"isIntegrationTest\": \"{}\" }",
+        detectionId,
+        System.currentTimeMillis() - startTime,
+        communityOwner.isIntegrationTestUsage());
+    return detection;
   }
 
   @PutMapping("/detections/{id}/step")

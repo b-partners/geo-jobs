@@ -23,23 +23,20 @@ public class ZoneTilingJobCreatedService implements Consumer<ZoneTilingJobCreate
   public void accept(ZoneTilingJobCreated zoneTilingJobCreated) {
     long startTime = System.currentTimeMillis();
     ZoneTilingJob ztj = zoneTilingJobCreated.getZoneTilingJob();
+    var isIntegrationTest = zoneTilingJobCreated.getZoneTilingJob().isIntegrationTest();
 
-    zoneTilingJobService.fireTasks(ztj, zoneTilingJobCreated.isTestIntegration());
+    zoneTilingJobService.fireTasks(ztj);
 
     eventProducer.accept(
-        List.of(
-            new ZTJStatusRecomputingSubmitted(
-                ztj.getId(), zoneTilingJobCreated.isTestIntegration())));
+        List.of(new ZTJStatusRecomputingSubmitted(ztj.getId(), isIntegrationTest)));
     eventProducer.accept(
-        List.of(
-            new AutoTaskStatisticRecomputingSubmitted(
-                ztj.getId(), zoneTilingJobCreated.isTestIntegration())));
+        List.of(new AutoTaskStatisticRecomputingSubmitted(ztj.getId(), isIntegrationTest)));
     long elapsedTime = System.currentTimeMillis() - startTime;
     log.info(
         "{ \"operation\": \"ZoneTilingJobCreated\", \"zoneTilingJobId\": \"{}\", \"durationInMs\":"
             + " \"{}\", \"isIntegrationTest\": \"{}\" }",
         zoneTilingJobCreated.getZoneTilingJob().getId(),
         elapsedTime,
-        zoneTilingJobCreated.isTestIntegration());
+        isIntegrationTest);
   }
 }

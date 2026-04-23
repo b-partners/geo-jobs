@@ -207,7 +207,7 @@ public class ZoneTilingJobService extends JobService<ParcelTilingTask, ZoneTilin
     }
 
     var saved = super.create(job, tasks);
-    eventProducer.accept(List.of(new ZoneTilingJobCreated(saved, isTestIntegration)));
+    eventProducer.accept(List.of(new ZoneTilingJobCreated(saved)));
     eventProducer.accept(
         List.of(new ZTJStatusRecomputingSubmitted(saved.getId(), isTestIntegration)));
     return saved;
@@ -221,18 +221,18 @@ public class ZoneTilingJobService extends JobService<ParcelTilingTask, ZoneTilin
     }
 
     var saved = super.create(job, tasks);
-    eventProducer.accept(List.of(new ZoneTilingJobCreated(saved, false)));
+    eventProducer.accept(List.of(new ZoneTilingJobCreated(saved)));
     eventProducer.accept(List.of(new ZTJStatusRecomputingSubmitted(saved.getId(), false)));
     return saved;
   }
 
   @Transactional
-  public void fireTasks(ZoneTilingJob job, boolean isIntegrationTest) {
+  public void fireTasks(ZoneTilingJob job) {
     getTasks(job)
         .forEach(
             task ->
                 eventProducer.accept(
-                    List.of(new ParcelTilingTaskCreated(task, isIntegrationTest))));
+                    List.of(new ParcelTilingTaskCreated(task, task.isIntegrationTest()))));
   }
 
   public List<ParcelTilingTask> consumeTasks(String jobId) {
@@ -258,7 +258,12 @@ public class ZoneTilingJobService extends JobService<ParcelTilingTask, ZoneTilin
   @Override
   protected void onStatusChanged(ZoneTilingJob oldJob, ZoneTilingJob newJob) {
     eventProducer.accept(
-        List.of(ZoneTilingJobStatusChanged.builder().oldJob(oldJob).newJob(newJob).build()));
+        List.of(
+            ZoneTilingJobStatusChanged.builder()
+                .isIntegrationTest(oldJob.isIntegrationTest())
+                .oldJob(oldJob)
+                .newJob(newJob)
+                .build()));
   }
 
   @Transactional
@@ -315,7 +320,8 @@ public class ZoneTilingJobService extends JobService<ParcelTilingTask, ZoneTilin
   }
 
   @SneakyThrows
-  public static List<ParcelTilingTask> getTilingTasks(CreateZoneTilingJob job, String jobId) {
+  public static List<ParcelTilingTask> getTilingTasks(
+      CreateZoneTilingJob job, String jobId, boolean isIntegrationTest) {
     var serverUrl = new URI(Objects.requireNonNull(job.getGeoServerUrl())).toURL();
     var providedFeatures = Objects.requireNonNull(job.getFeatures());
     var geometryConverter = new GeometryConverter(null, null);
@@ -334,7 +340,8 @@ public class ZoneTilingJobService extends JobService<ParcelTilingTask, ZoneTilin
                       zoomMapper
                           .toDomain(Objects.requireNonNull(job.getZoomLevel()))
                           .getZoomLevel());
-              return tilingTaskMapper.from(feature, serverUrl, job.getGeoServerParameter(), jobId);
+              return tilingTaskMapper.from(
+                  feature, serverUrl, job.getGeoServerParameter(), jobId, isIntegrationTest);
             })
         .collect(toList());
   }

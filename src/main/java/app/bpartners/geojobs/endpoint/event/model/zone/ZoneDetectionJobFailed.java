@@ -12,6 +12,7 @@ import lombok.*;
 @ToString
 public class ZoneDetectionJobFailed extends PojaEvent {
   private String failedJobId;
+  private boolean isIntegrationTest;
 
   @Override
   public Duration maxConsumerDuration() {

@@ -59,9 +59,13 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
     } finally {
       long elapsedTime = startTime - System.currentTimeMillis();
       log.info(
-          "{ \"operation\": \"ZTJStatusRecomputingSubmitted\", \"jobId\": \"{}\", \"durationInMs\":"
-              + " \"{}\", \"isIntegrationTest\": \"{}\" }",
+          "{ \"operation\": \"ZoneTilingJobStatusChanged\", \"newJobId\":"
+              + " \"{}\",\"oldJobId\":\"{}\", \"newStatus\":\"{}\", \"oldStatus\":\"{}\","
+              + " \"durationInMs\": \"{}\", \"isIntegrationTest\": \"{}\" }",
           event.getNewJob().getId(),
+          event.getOldJob().getId(),
+          event.getNewJob().getStatus(),
+          event.getOldJob().getStatus(),
           elapsedTime,
           event.isIntegrationTest());
     }
@@ -112,7 +116,8 @@ public class ZoneTilingJobStatusChangedService implements Consumer<ZoneTilingJob
           for (int i = 0; i < providedGeoJsonZone.size(); i++) {
             eventProducer.accept(
                 List.of(
-                    new FeatureImageRequested(detectionIdentifier, providedGeoJsonZone.get(i))));
+                    new FeatureImageRequested(
+                        detectionIdentifier, providedGeoJsonZone.get(i), zdj.isIntegrationTest())));
           }
         }
       }

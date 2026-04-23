@@ -32,55 +32,67 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
 
   @Override
   public void accept(FeatureVggRequested event) {
-    var featureVggComputationStart = now();
-    entityManager.clear();
-    var detectionIdentifier = event.getDetectionIdentifier();
-    var currentFeature = event.getFeature();
-    var detection = detectionRepository.findById(detectionIdentifier).orElseThrow();
-    if (!detection.hasToitureModelName()) {
-      log.error("Only BP_TOITURE model is supported to generated VGG from now");
-      return;
+    long startTime = System.currentTimeMillis();
+    try {
+      var featureVggComputationStart = now();
+      entityManager.clear();
+      var detectionIdentifier = event.getDetectionIdentifier();
+      var currentFeature = event.getFeature();
+      var detection = detectionRepository.findById(detectionIdentifier).orElseThrow();
+      if (!detection.hasToitureModelName()) {
+        log.error("Only BP_TOITURE model is supported to generated VGG from now");
+        return;
+      }
+      var geoJsonDelimitationType = detection.getGeoJsonDelimitationType();
+      var currentFeaturePolygonGeoJson =
+          featurePolygonRetriever.apply(currentFeature, geoJsonDelimitationType);
+      if (currentFeaturePolygonGeoJson == null) return;
+      var detectableTypes =
+          detection.getDetectableObjectConfigurations().stream()
+              .map(DetectableObjectConfiguration::getObjectType)
+              .toList();
+      var machineDetectedTiles = detectedTileRepository.findAllByZdjJobId(detection.getZdjId());
+      var delimitationsFeatures = detection.getDelimitationOf(currentFeature);
+      var tiledPixelPolygons =
+          tiledPixelPolygonComputer.apply(
+              currentFeaturePolygonGeoJson,
+              delimitationsFeatures,
+              detectableTypes,
+              machineDetectedTiles,
+              detection.hasParcelDelimitationType());
+
+      var completedQuadrilateralTileCoordinates =
+          tileCoordinatesService.computeFeatureTileCoordinatesWithCompleteQuadrilateral(
+              currentFeature, geoJsonDelimitationType);
+
+      var vggMap = vggFactory.from(tiledPixelPolygons, completedQuadrilateralTileCoordinates);
+
+      var newDetection =
+          detectionVGGUpdate.apply(vggMap.values(), detection, retrieveId(currentFeature));
+
+      var tilesColNumbers =
+          tileCoordinatesService.colNumbers(completedQuadrilateralTileCoordinates);
+      var tileRowNumbers = tileCoordinatesService.rowNumbers(completedQuadrilateralTileCoordinates);
+      var imageWidth = tilesColNumbers * DEFAULT_TILE_SIZE;
+      var imageHeight = tileRowNumbers * DEFAULT_TILE_SIZE;
+
+      detectionRepository.save(
+          newDetection.toBuilder().imageWidth(imageWidth).imageHeight(imageHeight).build());
+
+      log.info(
+          "VGG computation finished in {} seconds for detection(e2Id={}) and feature(geometry={})",
+          Duration.between(featureVggComputationStart, now()).toSeconds(),
+          detection.getEndToEndId(),
+          currentFeature.getGeometry());
+    } finally {
+      long elapsedTime = startTime - System.currentTimeMillis();
+      log.info(
+          "{ \"operation\": \"FeatureVggRequested\",\"detectionId\":"
+              + " \"{}\", \"durationInMs\": \"{}\", \"isIntegrationTest\": \"{}\" }",
+          event.getDetectionIdentifier(),
+          elapsedTime,
+          event.isIntegrationTest());
     }
-    var geoJsonDelimitationType = detection.getGeoJsonDelimitationType();
-    var currentFeaturePolygonGeoJson =
-        featurePolygonRetriever.apply(currentFeature, geoJsonDelimitationType);
-    if (currentFeaturePolygonGeoJson == null) return;
-    var detectableTypes =
-        detection.getDetectableObjectConfigurations().stream()
-            .map(DetectableObjectConfiguration::getObjectType)
-            .toList();
-    var machineDetectedTiles = detectedTileRepository.findAllByZdjJobId(detection.getZdjId());
-    var delimitationsFeatures = detection.getDelimitationOf(currentFeature);
-    var tiledPixelPolygons =
-        tiledPixelPolygonComputer.apply(
-            currentFeaturePolygonGeoJson,
-            delimitationsFeatures,
-            detectableTypes,
-            machineDetectedTiles,
-            detection.hasParcelDelimitationType());
-
-    var completedQuadrilateralTileCoordinates =
-        tileCoordinatesService.computeFeatureTileCoordinatesWithCompleteQuadrilateral(
-            currentFeature, geoJsonDelimitationType);
-
-    var vggMap = vggFactory.from(tiledPixelPolygons, completedQuadrilateralTileCoordinates);
-
-    var newDetection =
-        detectionVGGUpdate.apply(vggMap.values(), detection, retrieveId(currentFeature));
-
-    var tilesColNumbers = tileCoordinatesService.colNumbers(completedQuadrilateralTileCoordinates);
-    var tileRowNumbers = tileCoordinatesService.rowNumbers(completedQuadrilateralTileCoordinates);
-    var imageWidth = tilesColNumbers * DEFAULT_TILE_SIZE;
-    var imageHeight = tileRowNumbers * DEFAULT_TILE_SIZE;
-
-    detectionRepository.save(
-        newDetection.toBuilder().imageWidth(imageWidth).imageHeight(imageHeight).build());
-
-    log.info(
-        "VGG computation finished in {} seconds for detection(e2Id={}) and feature(geometry={})",
-        Duration.between(featureVggComputationStart, now()).toSeconds(),
-        detection.getEndToEndId(),
-        currentFeature.getGeometry());
   }
 
   private String retrieveId(Feature feature) {

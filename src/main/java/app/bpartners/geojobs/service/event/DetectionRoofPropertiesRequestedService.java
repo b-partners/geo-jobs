@@ -21,11 +21,13 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class DetectionRoofPropertiesRequestedService
     implements Consumer<DetectionRoofPropertiesRequested> {
   private final DetectionRepository detectionRepository;
@@ -35,8 +37,16 @@ public class DetectionRoofPropertiesRequestedService
 
   @Override
   public void accept(DetectionRoofPropertiesRequested event) {
+    long startTime = System.currentTimeMillis();
     var detectionIdentifier = event.getDetectionIdentifier();
     apply(detectionIdentifier);
+    long elapsedTime = System.currentTimeMillis() - startTime;
+    log.info(
+        "{ \"operation\": \"DetectionRoofPropertiesRequested\",\"detectionJobId\":"
+            + " \"{}\", \"durationInMs\": \"{}\", \"isIntegrationTest\": \"{}\" }",
+        event.getDetectionIdentifier(),
+        elapsedTime,
+        event.isIntegrationTest());
   }
 
   public Detection apply(String detectionIdentifier) {

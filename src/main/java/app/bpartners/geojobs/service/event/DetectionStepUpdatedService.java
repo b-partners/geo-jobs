@@ -15,11 +15,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class DetectionStepUpdatedService implements Consumer<DetectionStepUpdated> {
   public final Mailer mailer;
   private static final String ADMIN_EMAIL = "tech@birdia.fr";
@@ -27,30 +29,41 @@ public class DetectionStepUpdatedService implements Consumer<DetectionStepUpdate
 
   @Override
   public void accept(DetectionStepUpdated detectionStepUpdated) {
-    var detection = detectionStepUpdated.getDetection();
-    List<InternetAddress> bcc = List.of();
-    var env = System.getenv("ENV");
-    String subject =
-        String.format(
-            "[%s] Mise à jour de la detection(e2Id=%s, communityOwnerId=%s) le %s",
-            env == null ? "" : env.toLowerCase(),
-            detection.getEndToEndId(),
-            detection.getCommunityOwnerId(),
-            DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")
-                .format(now().atZone(ZoneId.of("Europe/Paris"))));
-    String htmlBody = computeStaticDetectionStepUpdateEmailBody(detection);
-    List<File> attachments = List.of();
+    long startTime = System.currentTimeMillis();
     try {
-      mailer.accept(
-          new Email(
-              new InternetAddress(detection.getEmailReceiver()),
-              List.of(new InternetAddress(ADMIN_EMAIL)),
-              bcc,
-              subject,
-              htmlBody,
-              attachments));
-    } catch (AddressException e) {
-      throw new RuntimeException(e);
+      var detection = detectionStepUpdated.getDetection();
+      List<InternetAddress> bcc = List.of();
+      var env = System.getenv("ENV");
+      String subject =
+          String.format(
+              "[%s] Mise à jour de la detection(e2Id=%s, communityOwnerId=%s) le %s",
+              env == null ? "" : env.toLowerCase(),
+              detection.getEndToEndId(),
+              detection.getCommunityOwnerId(),
+              DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")
+                  .format(now().atZone(ZoneId.of("Europe/Paris"))));
+      String htmlBody = computeStaticDetectionStepUpdateEmailBody(detection);
+      List<File> attachments = List.of();
+      try {
+        mailer.accept(
+            new Email(
+                new InternetAddress(detection.getEmailReceiver()),
+                List.of(new InternetAddress(ADMIN_EMAIL)),
+                bcc,
+                subject,
+                htmlBody,
+                attachments));
+      } catch (AddressException e) {
+        throw new RuntimeException(e);
+      }
+    } finally {
+      long elapsedTime = startTime - System.currentTimeMillis();
+      log.info(
+          "{ \"operation\": \"DetectionStepUpdated\", \"jobId\": \"{}\", \"durationInMs\":"
+              + " \"{}\", \"isIntegrationTest\": \"{}\" }",
+          detectionStepUpdated.getDetection().getId(),
+          elapsedTime,
+          detectionStepUpdated.getDetection().isIntegrationTest());
     }
   }
 

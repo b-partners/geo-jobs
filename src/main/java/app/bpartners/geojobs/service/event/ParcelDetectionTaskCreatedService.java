@@ -4,9 +4,11 @@ import app.bpartners.geojobs.endpoint.event.model.parcel.ParcelDetectionTaskCrea
 import app.bpartners.geojobs.job.repository.TaskRepository;
 import app.bpartners.geojobs.job.service.TaskStatusService;
 import app.bpartners.geojobs.repository.model.detection.ParcelDetectionTask;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 public class ParcelDetectionTaskCreatedService
     extends TaskCreatedService<ParcelDetectionTask, ParcelDetectionTaskCreated> {
   private final TaskStatusService<ParcelDetectionTask> taskStatusService;
@@ -23,9 +25,16 @@ public class ParcelDetectionTaskCreatedService
 
   @Override
   public void accept(ParcelDetectionTaskCreated parcelDetectionTaskCreated) {
+    long startTime = System.currentTimeMillis();
     var task = parcelDetectionTaskCreated.getTask();
     taskStatusService.process(task);
-
     parcelDetectionTaskConsumer.accept(task);
+    long elapsedTime = startTime - System.currentTimeMillis();
+    log.info(
+        "{ \"operation\": \"ParcelDetectionTaskCreated\", \"parcelDetectionTaskId\": \"{}\","
+            + " \"durationInMs\": \"{}\", \"isIntegrationTest\": \"{}\" }",
+        parcelDetectionTaskCreated.getTask().getId(),
+        elapsedTime,
+        parcelDetectionTaskCreated.getTask().isIntegrationTest());
   }
 }

@@ -16,6 +16,17 @@ public class ZDJStatusRecomputingSubmittedService
 
   @Override
   public void accept(ZDJStatusRecomputingSubmitted event) {
-    service.accept(event);
+    long startTime = System.currentTimeMillis();
+    try {
+      service.accept(event);
+    } finally {
+      long elapsedTime = System.currentTimeMillis() - startTime;
+      log.info(
+          "{ \"operation\": \"ZDJStatusRecomputingSubmitted\", \"jobId\": \"{}\", \"durationInMs\":"
+              + " \"{}\", \"isIntegrationTest\": \"{}\" }",
+          event.getJobId(),
+          elapsedTime,
+          event.isIntegrationTest());
+    }
   }
 }

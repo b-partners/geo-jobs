@@ -4,6 +4,7 @@ import static java.util.UUID.randomUUID;
 import static org.apache.commons.io.FileUtils.readFileToByteArray;
 
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
+import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,26 +42,40 @@ public class RoofCoveringDetector {
   }
 
   @SneakyThrows
-  public RoofCoveringDetectionResponse apply(Tile tile, File maskFile) {
-    var tileImageFile =
-        bucketComponent.download(
-            bucketComponent.getBucketConf().getBucketName(), tile.getBucketPath());
-    var imageBase64 = Base64.getEncoder().encodeToString(readFileToByteArray(tileImageFile));
-    var maskBase64 =
-        maskFile == null ? null : Base64.getEncoder().encodeToString(readFileToByteArray(maskFile));
-    var coveringDetectionProjectName = randomUUID().toString();
-    if (tile.getDetectionE2Id() == null) {
+  public RoofCoveringDetectionResponse apply(Tile tile, File maskFile, Detection detection) {
+    long startTime = System.currentTimeMillis();
+    try {
+      var tileImageFile =
+          bucketComponent.download(
+              bucketComponent.getBucketConf().getBucketName(), tile.getBucketPath());
+      var imageBase64 = Base64.getEncoder().encodeToString(readFileToByteArray(tileImageFile));
+      var maskBase64 =
+          maskFile == null
+              ? null
+              : Base64.getEncoder().encodeToString(readFileToByteArray(maskFile));
+      var coveringDetectionProjectName = randomUUID().toString();
+      if (tile.getDetectionE2Id() == null) {
+        log.info(
+            "Actual project name for roof covering detection is {}", coveringDetectionProjectName);
+      }
+      return apply(
+          new RoofCoveringDetectionPayload(
+              imageBase64,
+              maskBase64,
+              tile.getBucketPath(),
+              tile.getDetectionE2Id() == null
+                  ? coveringDetectionProjectName
+                  : tile.getDetectionE2Id()));
+    } finally {
+      long elapsedTime = startTime - System.currentTimeMillis();
       log.info(
-          "Actual project name for roof covering detection is {}", coveringDetectionProjectName);
+          "{ \"operation\": \"RoofCoveringDetector\",\"detectionId\": \"{}\", \"detectionE2Id\":"
+              + " \"{}\", \"durationInMs\": \"{}\", \"isIntegrationTest\": \"{}\" }",
+          detection.getId(),
+          tile.getDetectionE2Id(),
+          elapsedTime,
+          detection.isIntegrationTest());
     }
-    return apply(
-        new RoofCoveringDetectionPayload(
-            imageBase64,
-            maskBase64,
-            tile.getBucketPath(),
-            tile.getDetectionE2Id() == null
-                ? coveringDetectionProjectName
-                : tile.getDetectionE2Id()));
   }
 
   @SneakyThrows

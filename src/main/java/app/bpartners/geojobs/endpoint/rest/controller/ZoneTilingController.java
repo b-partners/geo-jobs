@@ -51,7 +51,7 @@ public class ZoneTilingController {
   @PostMapping("/tilingJobs/import")
   public ZoneTilingJob importZTJ(@RequestBody ImportZoneTilingJob importZoneTilingJob) {
     zoneTilingJobValidator.accept(importZoneTilingJob);
-    var job = mapper.toDomain(importZoneTilingJob.getCreateZoneTilingJob(), false);
+    var job = mapper.toDomain(importZoneTilingJob.getCreateZoneTilingJob(), false, true);
     var bucketName = importZoneTilingJob.getBucketName();
     var bucketPathPrefix = importZoneTilingJob.getBucketPathPrefix();
     var geoServerParameter = importZoneTilingJob.getCreateZoneTilingJob().getGeoServerParameter();
@@ -100,8 +100,9 @@ public class ZoneTilingController {
       @RequestBody CreateZoneTilingJob createJob,
       @RequestHeader(value = "x-test-request", required = false, defaultValue = "false")
           String isIntegrationTest) {
-    var job = mapper.toDomain(createJob, false);
-    var tilingTasks = getTilingTasks(createJob, job.getId());
+    var job = mapper.toDomain(createJob, false, Boolean.parseBoolean(isIntegrationTest));
+    var tilingTasks =
+        getTilingTasks(createJob, job.getId(), Boolean.parseBoolean(isIntegrationTest));
     return mapper.toRest(
         service.create(job, tilingTasks, Boolean.parseBoolean(isIntegrationTest)), tilingTasks);
   }

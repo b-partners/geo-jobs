@@ -29,6 +29,17 @@ public class ParcelDetectionStatusRecomputingSubmittedService
 
   @Override
   public void accept(ParcelDetectionStatusRecomputingSubmitted event) {
-    service.accept(event);
+    long startTime = System.currentTimeMillis();
+    try {
+      service.accept(event);
+    } finally {
+      long elapsedTime = startTime - System.currentTimeMillis();
+      log.info(
+          "{ \"operation\": \"ParcelDetectionStatusRecomputingSubmitted\", \"jobId\": \"{}\","
+              + " \"durationInMs\": \"{}\", \"isIntegrationTest\": \"{}\" }",
+          event.getJobId(),
+          elapsedTime,
+          event.isIntegrationTest());
+    }
   }
 }

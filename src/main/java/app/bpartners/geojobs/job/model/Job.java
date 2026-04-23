@@ -30,6 +30,7 @@ public abstract class Job implements Serializable, Statusable<JobStatus> {
   protected String zoneName;
   protected String emailReceiver;
   @CreationTimestamp protected Instant submissionInstant;
+  protected boolean isIntegrationTest;
 
   protected abstract JobType getType();
 

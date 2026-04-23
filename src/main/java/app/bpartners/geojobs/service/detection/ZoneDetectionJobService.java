@@ -159,8 +159,10 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
     var job = findById(jobId);
     getTasks(job)
         .forEach(task -> eventProducer.accept(List.of(new ParcelDetectionTaskCreated(task))));
-    eventProducer.accept(List.of(new ZDJStatusRecomputingSubmitted(job.getId())));
-    eventProducer.accept(List.of(new AutoTaskStatisticRecomputingSubmitted(job.getId(), false)));
+    eventProducer.accept(
+        List.of(new ZDJStatusRecomputingSubmitted(job.getId(), job.isIntegrationTest())));
+    eventProducer.accept(
+        List.of(new AutoTaskStatisticRecomputingSubmitted(job.getId(), job.isIntegrationTest())));
     return job;
   }
 

@@ -34,10 +34,39 @@ public abstract class Task implements Serializable, Statusable<TaskStatus> {
   private String jobId;
   @Nullable String asJobId;
   @Getter @CreationTimestamp private Instant submissionInstant;
+  private boolean isIntegrationTest;
 
   @OneToMany(cascade = ALL, mappedBy = "taskId", fetch = EAGER)
   @Builder.Default
   private List<TaskStatus> statusHistory = new ArrayList<>();
+
+  public Task(
+      String id,
+      String jobId,
+      @org.jetbrains.annotations.Nullable String asJobId,
+      Instant now,
+      List<TaskStatus> statusHistory) {
+    this.id = id;
+    this.jobId = jobId;
+    this.asJobId = asJobId;
+    this.submissionInstant = now;
+    this.statusHistory = statusHistory;
+  }
+
+  public Task(
+      String id,
+      String jobId,
+      @org.jetbrains.annotations.Nullable String asJobId,
+      Instant now,
+      List<TaskStatus> statusHistory,
+      boolean integrationTest) {
+    this.id = id;
+    this.jobId = jobId;
+    this.asJobId = asJobId;
+    this.submissionInstant = now;
+    this.statusHistory = statusHistory;
+    this.isIntegrationTest = integrationTest;
+  }
 
   public abstract JobType getJobType();
 

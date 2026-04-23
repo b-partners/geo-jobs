@@ -25,6 +25,8 @@ public class ZoneDetectionJobSucceeded extends PojaEvent {
   @JsonProperty("succeededJobId")
   private String succeededJobId;
 
+  private boolean isIntegrationTest;
+
   @Override
   public Duration maxConsumerDuration() {
     return Duration.ofMinutes(1);

@@ -22,10 +22,21 @@ public class TileDetectionTaskCreatedService
 
   @Override
   public void accept(TileDetectionTaskCreated event) {
-    event.getTask().setDetectableObjectConfigurations(event.getDetectableObjectConfigurations());
-    event.getTask().setZoneDetectionJobId(event.getZoneDetectionJobId());
-    event.getTask().setAddress(event.getAddress());
-    event.getTask().setPoint(event.getPoint());
-    super.accept(event);
+    long startTime = System.currentTimeMillis();
+    try {
+      event.getTask().setDetectableObjectConfigurations(event.getDetectableObjectConfigurations());
+      event.getTask().setZoneDetectionJobId(event.getZoneDetectionJobId());
+      event.getTask().setAddress(event.getAddress());
+      event.getTask().setPoint(event.getPoint());
+      super.accept(event);
+    } finally {
+      long elapsedTime = System.currentTimeMillis() - startTime;
+      log.info(
+          "{ \"operation\": \"TileDetectionTaskCreated\", \"zoneDetectionJobId\": \"{}\","
+              + " \"durationInMs\": \"{}\", \"isIntegrationTest\": \"{}\" }",
+          event.getZoneDetectionJobId(),
+          elapsedTime,
+          event.getTask().isIntegrationTest());
+    }
   }
 }

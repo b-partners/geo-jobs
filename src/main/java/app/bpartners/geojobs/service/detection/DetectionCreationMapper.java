@@ -16,7 +16,6 @@ import app.bpartners.geojobs.endpoint.rest.validator.FeatureTypeChecker;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.Feature;
-import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.service.dashboard.AreaPictureApi;
@@ -285,33 +284,28 @@ public class DetectionCreationMapper {
       List<BigDecimal> firstPoint, String communityOwnerId) {
     var longitude = firstPoint.get(0).doubleValue();
     var latitude = firstPoint.get(1).doubleValue();
-    boolean isIntegrationTest =
-        communityAuthRepository.findById(communityOwnerId).orElseThrow().isIntegrationTestUsage();
-    var e2ApiKey =
-        communityAuthRepository
-            .findById(communityOwnerId)
-            .map(CommunityAuthorization::getDashboardApiKey)
-            .orElseThrow();
-
+    var communityAuth = communityAuthRepository.findById(communityOwnerId).orElseThrow();
+    boolean isIntegrationTest = communityAuth.isIntegrationTestUsage();
+    var e2ApiKey = communityAuth.getDashboardApiKey();
     long startTime = System.currentTimeMillis();
-    var areaMapLayers = areaPictureApi.getAreaPictureMapLayers(longitude, latitude, e2ApiKey);
-    long endTime = System.currentTimeMillis();
-    long elapsedTime = endTime - startTime;
 
-    log.info(
-        "{ \"operation\": \"getAreaPictureMapLayers\", \"durationInMs\": \"{}\","
-            + " \"isIntegrationTest\": \"{}\" }",
-        elapsedTime,
-        isIntegrationTest);
-
-    return areaMapLayers.stream()
-        .map(
-            layer -> {
-              HashMap<String, String> map = new HashMap<>();
-              map.put("name", layer.name());
-              map.put("precisionLevelInCm", String.valueOf(layer.precisionLevelInCm()));
-              return map;
-            })
-        .toList();
+    try {
+      var areaMapLayers = areaPictureApi.getAreaPictureMapLayers(longitude, latitude, e2ApiKey);
+      return areaMapLayers.stream()
+          .map(
+              layer -> {
+                HashMap<String, String> map = new HashMap<>();
+                map.put("name", layer.name());
+                map.put("precisionLevelInCm", String.valueOf(layer.precisionLevelInCm()));
+                return map;
+              })
+          .toList();
+    } finally {
+      log.info(
+          "{ \"operation\": \"getAreaPictureMapLayers\", \"durationInMs\": \"{}\","
+              + " \"isIntegrationTest\": \"{}\" }",
+          System.currentTimeMillis() - startTime,
+          isIntegrationTest);
+    }
   }
 }

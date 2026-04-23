@@ -44,69 +44,82 @@ public class FeatureImageRequestedService implements Consumer<FeatureImageReques
   @SneakyThrows
   @Override
   public void accept(FeatureImageRequested event) {
-    entityManager.clear();
-    var feature = event.getFeature();
-    var detectionIdentifier = event.getDetectionIdentifier();
-    var detection = detectionRepository.findById(detectionIdentifier).orElseThrow();
-    var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
-    var zoom =
-        providedGeoJsonZone.getFirst().getProperties().get("zoom") == null
-            ? HOUSES_0.getZoomLevel()
-            : (Integer) providedGeoJsonZone.getFirst().getProperties().get("zoom");
+    long startTime = System.currentTimeMillis();
+    try {
+      entityManager.clear();
+      var feature = event.getFeature();
+      var detectionIdentifier = event.getDetectionIdentifier();
+      var detection = detectionRepository.findById(detectionIdentifier).orElseThrow();
+      var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
+      var zoom =
+          providedGeoJsonZone.getFirst().getProperties().get("zoom") == null
+              ? HOUSES_0.getZoomLevel()
+              : (Integer) providedGeoJsonZone.getFirst().getProperties().get("zoom");
 
-    var zonePolygonGeometryProcessed =
-        geometryConverter.retrieveZonePolygonGeometryProcessed(
-            feature, detection.getGeoJsonDelimitationType());
-    if (zonePolygonGeometryProcessed == null) return;
-    var actualArea = geometrySquareMeterArea.apply(zonePolygonGeometryProcessed);
-    if (actualArea > ONE_KILOMETRE_SQUARE_AREA) {
-      log.warn(
-          "Feature image requested not implemented for zone over 1km^2, otherwise actual provided"
-              + " polygon is {} for detection.id={} and feature {}",
-          actualArea,
-          detectionIdentifier,
-          feature);
-      return;
+      var zonePolygonGeometryProcessed =
+          geometryConverter.retrieveZonePolygonGeometryProcessed(
+              feature, detection.getGeoJsonDelimitationType());
+      if (zonePolygonGeometryProcessed == null) return;
+      var actualArea = geometrySquareMeterArea.apply(zonePolygonGeometryProcessed);
+      if (actualArea > ONE_KILOMETRE_SQUARE_AREA) {
+        log.warn(
+            "Feature image requested not implemented for zone over 1km^2, otherwise actual provided"
+                + " polygon is {} for detection.id={} and feature {}",
+            actualArea,
+            detectionIdentifier,
+            feature);
+        return;
+      }
+      // TODO : paginate finding tilingTasks to optimize performance
+      var tilingJobIdentifier = detection.getZtjId();
+      var tilingTasks = tilingTaskRepository.findAllByJobId(tilingJobIdentifier);
+      var tileCoordinatesEnvelopingPolygon =
+          tileFinder.getFromGeoJsonPolygon(zonePolygonGeometryProcessed, zoom);
+
+      var tiles =
+          tilingTasks.stream()
+              .map(ParcelTilingTask::getTiles)
+              .flatMap(List::stream)
+              .filter(tile -> tileCoordinatesEnvelopingPolygon.contains(tile.getCoordinates()))
+              .toList();
+      var deDuplicatedTiles = tileDuplicationRemover.apply(tiles);
+      var tilesWithImages =
+          deDuplicatedTiles.stream()
+              .map(
+                  tile ->
+                      tile.toBuilder()
+                          .image(bucketComponent.download(tile.getBucketPath()))
+                          .build())
+              .toList();
+      var tilesWithBlur = tileImageBlur.apply(zonePolygonGeometryProcessed, tilesWithImages);
+      var assembleImageFile = tileImagesAssembler.apply(tilesWithBlur);
+
+      if (whiteImageDetector.apply(read(assembleImageFile))) {
+        throw new NotImplementedException(
+            "Address " + detection.getZoneName() + " not supported for now");
+      }
+
+      if (detection.getProvidedGeoJsonZone() != null
+          && detection.getProvidedGeoJsonZone().size() == 1) {
+        bucketComponent.upload(assembleImageFile, "zone_images/" + detection.getId() + ".jpg");
+      }
+      bucketComponent.upload(
+          assembleImageFile,
+          "zone_images/"
+              + detection.getId()
+              + "/"
+              + feature.getProperties().get("id")
+              + "/"
+              + detection.getZoneName()
+              + ".jpg");
+    } finally {
+      long elapsedTime = startTime - System.currentTimeMillis();
+      log.info(
+          "{ \"operation\": \"FeatureImageRequested\", \"jobId\": \"{}\", \"durationInMs\":"
+              + " \"{}\", \"isIntegrationTest\": \"{}\" }",
+          event.getDetectionIdentifier(),
+          elapsedTime,
+          event.isIntegrationTest());
     }
-    // TODO : paginate finding tilingTasks to optimize performance
-    var tilingJobIdentifier = detection.getZtjId();
-    var tilingTasks = tilingTaskRepository.findAllByJobId(tilingJobIdentifier);
-    var tileCoordinatesEnvelopingPolygon =
-        tileFinder.getFromGeoJsonPolygon(zonePolygonGeometryProcessed, zoom);
-
-    var tiles =
-        tilingTasks.stream()
-            .map(ParcelTilingTask::getTiles)
-            .flatMap(List::stream)
-            .filter(tile -> tileCoordinatesEnvelopingPolygon.contains(tile.getCoordinates()))
-            .toList();
-    var deDuplicatedTiles = tileDuplicationRemover.apply(tiles);
-    var tilesWithImages =
-        deDuplicatedTiles.stream()
-            .map(
-                tile ->
-                    tile.toBuilder().image(bucketComponent.download(tile.getBucketPath())).build())
-            .toList();
-    var tilesWithBlur = tileImageBlur.apply(zonePolygonGeometryProcessed, tilesWithImages);
-    var assembleImageFile = tileImagesAssembler.apply(tilesWithBlur);
-
-    if (whiteImageDetector.apply(read(assembleImageFile))) {
-      throw new NotImplementedException(
-          "Address " + detection.getZoneName() + " not supported for now");
-    }
-
-    if (detection.getProvidedGeoJsonZone() != null
-        && detection.getProvidedGeoJsonZone().size() == 1) {
-      bucketComponent.upload(assembleImageFile, "zone_images/" + detection.getId() + ".jpg");
-    }
-    bucketComponent.upload(
-        assembleImageFile,
-        "zone_images/"
-            + detection.getId()
-            + "/"
-            + feature.getProperties().get("id")
-            + "/"
-            + detection.getZoneName()
-            + ".jpg");
   }
 }

@@ -15,10 +15,19 @@ import lombok.*;
 public class FeatureWithDetectionPropertiesRequested extends PojaEvent {
   private String detectionIdentifier;
   private Feature feature;
+  private boolean isIntegrationTest;
 
   public FeatureWithDetectionPropertiesRequested(String detectionIdentifier, Feature feature) {
     this.detectionIdentifier = detectionIdentifier;
     this.feature = feature;
+    this.isIntegrationTest = false;
+  }
+
+  public FeatureWithDetectionPropertiesRequested(
+      String detectionIdentifier, Feature feature, boolean isIntegrationTest) {
+    this.detectionIdentifier = detectionIdentifier;
+    this.feature = feature;
+    this.isIntegrationTest = isIntegrationTest;
   }
 
   @Override

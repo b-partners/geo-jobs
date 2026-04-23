@@ -40,31 +40,47 @@ public class FeatureWithDetectionPropertiesRequestedService
 
   @Override
   public void accept(FeatureWithDetectionPropertiesRequested event) {
-    var detectionIdentifier = event.getDetectionIdentifier();
-    var feature = event.getFeature();
-    entityManager.clear();
-    var detection = detectionRepository.findById(detectionIdentifier).orElseThrow();
-    var delimitations = detection.getDelimitationOf(feature);
-    var savedDetection = apply(detection, feature, delimitations);
-    if (savedDetection != null) {
-      var optionalProvidedUpdatedFeature =
-          savedDetection.getProvidedGeoJsonZone().stream()
-              .filter(
-                  providedGeoJsonZone -> {
-                    var idKey = "id";
-                    var featureIdKey = "feature_id";
-                    return isPropertyEquals(idKey, providedGeoJsonZone, feature)
-                        || isPropertyEquals(featureIdKey, providedGeoJsonZone, feature);
-                  })
-              .findFirst();
-      if (optionalProvidedUpdatedFeature.isPresent()) {
-        eventProducer.accept(
-            List.of(
-                new FeatureVggRequested(
-                    detectionIdentifier, optionalProvidedUpdatedFeature.get())));
-      } else {
-        eventProducer.accept(List.of(new FeatureVggRequested(detectionIdentifier, feature)));
+    long startTime = System.currentTimeMillis();
+    try {
+      var detectionIdentifier = event.getDetectionIdentifier();
+      var feature = event.getFeature();
+      entityManager.clear();
+      var detection = detectionRepository.findById(detectionIdentifier).orElseThrow();
+      var delimitations = detection.getDelimitationOf(feature);
+      var savedDetection = apply(detection, feature, delimitations);
+      if (savedDetection != null) {
+        var optionalProvidedUpdatedFeature =
+            savedDetection.getProvidedGeoJsonZone().stream()
+                .filter(
+                    providedGeoJsonZone -> {
+                      var idKey = "id";
+                      var featureIdKey = "feature_id";
+                      return isPropertyEquals(idKey, providedGeoJsonZone, feature)
+                          || isPropertyEquals(featureIdKey, providedGeoJsonZone, feature);
+                    })
+                .findFirst();
+        if (optionalProvidedUpdatedFeature.isPresent()) {
+          eventProducer.accept(
+              List.of(
+                  new FeatureVggRequested(
+                      detectionIdentifier,
+                      optionalProvidedUpdatedFeature.get(),
+                      detection.isIntegrationTest())));
+        } else {
+          eventProducer.accept(
+              List.of(
+                  new FeatureVggRequested(
+                      detectionIdentifier, feature, detection.isIntegrationTest())));
+        }
       }
+    } finally {
+      long elapsedTime = startTime - System.currentTimeMillis();
+      log.info(
+          "{ \"operation\": \"FeatureWithDetectionPropertiesRequested\",\"detectionId\":"
+              + " \"{}\", \"durationInMs\": \"{}\", \"isIntegrationTest\": \"{}\" }",
+          event.getDetectionIdentifier(),
+          elapsedTime,
+          event.isIntegrationTest());
     }
   }
 

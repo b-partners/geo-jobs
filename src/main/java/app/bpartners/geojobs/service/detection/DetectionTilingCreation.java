@@ -29,9 +29,10 @@ public class DetectionTilingCreation
 
   public Detection processTiling(Detection detection) {
     var createJob = zoneTilingJobMapper.from(detection);
-    var job = zoneTilingJobMapper.toDomain(createJob, detection.isSynchronous());
-    var tilingTasks = getTilingTasks(createJob, job.getId());
-    var ztj = zoneTilingJobService.create(job, tilingTasks, detection.isIntegrationTest());
+    var isIntegrationTest = detection.isIntegrationTest();
+    var job = zoneTilingJobMapper.toDomain(createJob, detection.isSynchronous(), isIntegrationTest);
+    var tilingTasks = getTilingTasks(createJob, job.getId(), isIntegrationTest);
+    var ztj = zoneTilingJobService.create(job, tilingTasks, isIntegrationTest);
     // /!\ From ZTJMapper.from detection.splitPolygonGeoJsonZone may be updated
 
     return detectionRepository.save(detection.toBuilder().ztjId(ztj.getId()).build());

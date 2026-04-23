@@ -14,6 +14,7 @@ import lombok.*;
 @ToString
 public class DetectionRoofPropertiesRequested extends PojaEvent {
   private String detectionIdentifier;
+  private boolean isIntegrationTest;
 
   @Override
   public Duration maxConsumerDuration() {

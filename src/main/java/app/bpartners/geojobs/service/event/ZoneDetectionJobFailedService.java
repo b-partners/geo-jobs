@@ -28,25 +28,36 @@ public class ZoneDetectionJobFailedService implements Consumer<ZoneDetectionJobF
 
   @Override
   public void accept(ZoneDetectionJobFailed event) {
-    var jobId = event.getFailedJobId();
-    var zoneDetectionJob = zoneDetectionJobService.findById(jobId);
-    var optionalDetection = detectionRepository.findByZdjId(zoneDetectionJob.getId());
-    StringBuilder subjectBuilder = new StringBuilder();
-    if (optionalDetection.isPresent()) {
-      subjectBuilder
-          .append("Erreur lors du traitement de la détection portant l'ID ")
-          .append(optionalDetection.get().getEndToEndId());
-    } else {
-      subjectBuilder
-          .append("Erreur lors du traitement de la détection machine (ZDJ.id=")
-          .append(zoneDetectionJob.getId())
-          .append(")");
-    }
+    long startTime = System.currentTimeMillis();
+    try {
+      var jobId = event.getFailedJobId();
+      var zoneDetectionJob = zoneDetectionJobService.findById(jobId);
+      var optionalDetection = detectionRepository.findByZdjId(zoneDetectionJob.getId());
+      StringBuilder subjectBuilder = new StringBuilder();
+      if (optionalDetection.isPresent()) {
+        subjectBuilder
+            .append("Erreur lors du traitement de la détection portant l'ID ")
+            .append(optionalDetection.get().getEndToEndId());
+      } else {
+        subjectBuilder
+            .append("Erreur lors du traitement de la détection machine (ZDJ.id=")
+            .append(zoneDetectionJob.getId())
+            .append(")");
+      }
 
-    mailer.accept(
-        optionalDetection.isPresent() ? zoneDetectionJob.getEmailReceiver() : ADMIN_EMAIL,
-        subjectBuilder.toString(),
-        getBody(optionalDetection, zoneDetectionJob));
+      mailer.accept(
+          optionalDetection.isPresent() ? zoneDetectionJob.getEmailReceiver() : ADMIN_EMAIL,
+          subjectBuilder.toString(),
+          getBody(optionalDetection, zoneDetectionJob));
+    } finally {
+      long elapsedTime = startTime - System.currentTimeMillis();
+      log.info(
+          "{ \"operation\": \"ZoneDetectionJobFailed\",\"jobId\":"
+              + " \"{}\", \"durationInMs\": \"{}\", \"isIntegrationTest\": \"{}\" }",
+          event.getFailedJobId(),
+          elapsedTime,
+          event.isIntegrationTest());
+    }
   }
 
   private String getBody(Optional<Detection> optionalDetection, ZoneDetectionJob failedJob) {

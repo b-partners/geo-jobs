@@ -29,7 +29,8 @@ public class ZoneTilingJobMapper {
   private final StatusMapper<JobStatus> statusMapper;
   private final ZoomMapper zoomMapper;
 
-  public ZoneTilingJob toDomain(CreateZoneTilingJob rest, Boolean isSynchronous) {
+  public ZoneTilingJob toDomain(
+      CreateZoneTilingJob rest, Boolean isSynchronous, boolean isIntegrationTest) {
     var generatedId = randomUUID();
     var job =
         ZoneTilingJob.builder()
@@ -37,6 +38,7 @@ public class ZoneTilingJobMapper {
             .zoneName(rest.getZoneName())
             .emailReceiver(rest.getEmailReceiver())
             .isRooferMade(isSynchronous != null && isSynchronous)
+            .isIntegrationTest(isIntegrationTest)
             .submissionInstant(now())
             .build();
     job.hasNewStatus(

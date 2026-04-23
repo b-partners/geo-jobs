@@ -9,11 +9,13 @@ import app.bpartners.geojobs.template.HTMLTemplateParser;
 import java.util.Optional;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ZoneTilingJobFailedService implements Consumer<ZoneTilingJobFailed> {
   private static final String ZONE_TILING_JOB_FAILED_TEMPLATE = "zone_tiling_job_failed_template";
   private final DetectionFinishedMailer mailer;
@@ -22,24 +24,35 @@ public class ZoneTilingJobFailedService implements Consumer<ZoneTilingJobFailed>
 
   @Override
   public void accept(ZoneTilingJobFailed event) {
-    var failedJob = event.getFailedJob();
+    long startTime = System.currentTimeMillis();
+    try {
+      var failedJob = event.getFailedJob();
 
-    var optionalDetection = detectionRepository.findByZtjId(failedJob.getId());
-    StringBuilder subjectBuilder = new StringBuilder();
-    if (optionalDetection.isPresent()) {
-      subjectBuilder
-          .append("Erreur survenue lors du traitement de la détection portant l'ID ")
-          .append(optionalDetection.get().getEndToEndId());
-    } else {
-      subjectBuilder
-          .append("Erreur survenue lors du traitement du pavage (ZTJ.id=")
-          .append(failedJob.getId())
-          .append(")");
+      var optionalDetection = detectionRepository.findByZtjId(failedJob.getId());
+      StringBuilder subjectBuilder = new StringBuilder();
+      if (optionalDetection.isPresent()) {
+        subjectBuilder
+            .append("Erreur survenue lors du traitement de la détection portant l'ID ")
+            .append(optionalDetection.get().getEndToEndId());
+      } else {
+        subjectBuilder
+            .append("Erreur survenue lors du traitement du pavage (ZTJ.id=")
+            .append(failedJob.getId())
+            .append(")");
+      }
+      mailer.accept(
+          failedJob.getEmailReceiver(),
+          subjectBuilder.toString(),
+          getBody(optionalDetection, failedJob));
+    } finally {
+      long elapsedTime = startTime - System.currentTimeMillis();
+      log.info(
+          "{ \"operation\": \"ZoneTilingJobFailed\", \"jobId\": \"{}\", \"durationInMs\":"
+              + " \"{}\", \"isIntegrationTest\": \"{}\" }",
+          event.getFailedJob().getId(),
+          elapsedTime,
+          event.getFailedJob().isIntegrationTest());
     }
-    mailer.accept(
-        failedJob.getEmailReceiver(),
-        subjectBuilder.toString(),
-        getBody(optionalDetection, failedJob));
   }
 
   private String getBody(Optional<Detection> optionalDetection, ZoneTilingJob failedJob) {

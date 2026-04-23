@@ -48,78 +48,94 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
   @Override
   @Transactional
   public void accept(ZoneDetectionJobSucceeded event) {
-    var succeededJobId = event.getSucceededJobId();
-    var succeededZoneDetectionJob = zoneDetectionJobService.findById(succeededJobId);
-    var detection = detectionRepository.findByZdjId(succeededJobId).orElse(null);
-    var detectableObjectConfigurations =
-        detectableObjectConfigurationRepository.findAllByDetectionJobId(succeededJobId);
-    boolean machineDetectionFoundAnyDetectedTileFromDetectableConfiguration =
-        detectableObjectConfigurations.stream()
-            .anyMatch(
-                detectableConfiguration -> {
-                  var detectableType = detectableConfiguration.getObjectType().name();
-                  var detectedTileCount =
-                      machineDetectedTileRepository.countByZdjJobIdAndDetectableType(
-                          succeededJobId, detectableType);
-                  log.info(
-                      "Detected tile count {} for detectableType {}",
-                      detectedTileCount,
-                      detectableType);
-                  return detectedTileCount > 0;
-                });
-    if (!machineDetectionFoundAnyDetectedTileFromDetectableConfiguration) {
-      var succeededDatetime = succeededZoneDetectionJob.getStatus().getCreationDatetime();
-      var zoneName = succeededZoneDetectionJob.getZoneName();
-      var formattedCreationDatetime =
-          DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")
-              .format(succeededDatetime.atZone(ZoneId.of("Europe/Paris")));
+    long startTime = System.currentTimeMillis();
+    try {
+      var succeededJobId = event.getSucceededJobId();
+      var succeededZoneDetectionJob = zoneDetectionJobService.findById(succeededJobId);
+      var detection = detectionRepository.findByZdjId(succeededJobId).orElse(null);
+      var detectableObjectConfigurations =
+          detectableObjectConfigurationRepository.findAllByDetectionJobId(succeededJobId);
+      boolean machineDetectionFoundAnyDetectedTileFromDetectableConfiguration =
+          detectableObjectConfigurations.stream()
+              .anyMatch(
+                  detectableConfiguration -> {
+                    var detectableType = detectableConfiguration.getObjectType().name();
+                    var detectedTileCount =
+                        machineDetectedTileRepository.countByZdjJobIdAndDetectableType(
+                            succeededJobId, detectableType);
+                    log.info(
+                        "Detected tile count {} for detectableType {}",
+                        detectedTileCount,
+                        detectableType);
+                    return detectedTileCount > 0;
+                  });
+      if (!machineDetectionFoundAnyDetectedTileFromDetectableConfiguration) {
+        var succeededDatetime = succeededZoneDetectionJob.getStatus().getCreationDatetime();
+        var zoneName = succeededZoneDetectionJob.getZoneName();
+        var formattedCreationDatetime =
+            DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")
+                .format(succeededDatetime.atZone(ZoneId.of("Europe/Paris")));
 
-      var emailSubject =
-          String.format(
-              "Analyse sur la zone %s terminée le %s sans objets détectés",
-              zoneName, formattedCreationDatetime);
-      var emailBody =
-          detectionWithoutResultBody(
-              detection, succeededZoneDetectionJob, detectableObjectConfigurations);
-      detectionFinishedMailer.accept(
-          succeededZoneDetectionJob.getEmailReceiver(), emailSubject, emailBody);
-      return;
-    }
+        var emailSubject =
+            String.format(
+                "Analyse sur la zone %s terminée le %s sans objets détectés",
+                zoneName, formattedCreationDatetime);
+        var emailBody =
+            detectionWithoutResultBody(
+                detection, succeededZoneDetectionJob, detectableObjectConfigurations);
+        detectionFinishedMailer.accept(
+            succeededZoneDetectionJob.getEmailReceiver(), emailSubject, emailBody);
+        return;
+      }
 
-    if (zoneDetectionJobService.countInDoubtDetectedTileToDeliveryById(succeededJobId) == 0L) {
-      if (detection != null) {
-        eventProducer.accept(List.of(new DetectionRoofPropertiesRequested(detection.getId())));
-        if (detection.needsImageOutput()) {
-          var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
-          for (int i = 0; i < providedGeoJsonZone.size(); i++) {
-            eventProducer.accept(
-                List.of(
-                    new FeatureWithDetectionPropertiesRequested(
-                        detection.getId(), providedGeoJsonZone.get(i))));
+      if (zoneDetectionJobService.countInDoubtDetectedTileToDeliveryById(succeededJobId) == 0L) {
+        if (detection != null) {
+          eventProducer.accept(
+              List.of(
+                  new DetectionRoofPropertiesRequested(
+                      detection.getId(), detection.isIntegrationTest())));
+          if (detection.needsImageOutput()) {
+            var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
+            for (int i = 0; i < providedGeoJsonZone.size(); i++) {
+              eventProducer.accept(
+                  List.of(
+                      new FeatureWithDetectionPropertiesRequested(
+                          detection.getId(),
+                          providedGeoJsonZone.get(i),
+                          detection.isIntegrationTest())));
+            }
           }
         }
+        geoJsonConversionJobService.getOrComputeGeoJsonConversionJob(succeededZoneDetectionJob);
+        return;
       }
-      geoJsonConversionJobService.getOrComputeGeoJsonConversionJob(succeededZoneDetectionJob);
-      return;
+      var minimumConfidenceForDelivery =
+          annotationDeliveryConfigurationRepository
+              .findLatestConfiguration()
+              .orElseThrow(
+                  () -> new IllegalStateException("No annotation delivery configuration found"))
+              .getMinimumConfidenceForDelivery();
+      var annotationJobWithObjectsIdTruePositive = randomUUID().toString();
+      var annotationJobWithObjectsIdFalsePositive = randomUUID().toString();
+      var annotationJobWithoutObjectsId = randomUUID().toString();
+      eventProducer.accept(
+          List.of(
+              AnnotationDeliveryJobRequested.builder()
+                  .jobId(succeededJobId)
+                  .minimumConfidenceForDelivery(minimumConfidenceForDelivery)
+                  .annotationJobWithObjectsIdTruePositive(annotationJobWithObjectsIdTruePositive)
+                  .annotationJobWithObjectsIdFalsePositive(annotationJobWithObjectsIdFalsePositive)
+                  .annotationJobWithoutObjectsId(annotationJobWithoutObjectsId)
+                  .build()));
+    } finally {
+      long elapsedTime = startTime - System.currentTimeMillis();
+      log.info(
+          "{ \"operation\": \"ZoneDetectionJobSucceeded\",\"jobId\":"
+              + " \"{}\", \"durationInMs\": \"{}\", \"isIntegrationTest\": \"{}\" }",
+          event.getSucceededJobId(),
+          elapsedTime,
+          event.isIntegrationTest());
     }
-    var minimumConfidenceForDelivery =
-        annotationDeliveryConfigurationRepository
-            .findLatestConfiguration()
-            .orElseThrow(
-                () -> new IllegalStateException("No annotation delivery configuration found"))
-            .getMinimumConfidenceForDelivery();
-    var annotationJobWithObjectsIdTruePositive = randomUUID().toString();
-    var annotationJobWithObjectsIdFalsePositive = randomUUID().toString();
-    var annotationJobWithoutObjectsId = randomUUID().toString();
-    eventProducer.accept(
-        List.of(
-            AnnotationDeliveryJobRequested.builder()
-                .jobId(succeededJobId)
-                .minimumConfidenceForDelivery(minimumConfidenceForDelivery)
-                .annotationJobWithObjectsIdTruePositive(annotationJobWithObjectsIdTruePositive)
-                .annotationJobWithObjectsIdFalsePositive(annotationJobWithObjectsIdFalsePositive)
-                .annotationJobWithoutObjectsId(annotationJobWithoutObjectsId)
-                .build()));
   }
 
   private String detectionWithoutResultBody(

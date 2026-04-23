@@ -25,33 +25,47 @@ public class ParcelDetectionJobCreatedService implements Consumer<ParcelDetectio
 
   @Override
   public void accept(ParcelDetectionJobCreated parcelDetectionJobCreated) {
-    var parcelDetectionJob = parcelDetectionJobCreated.getParcelDetectionJob();
-    var zdjId = parcelDetectionJobCreated.getZdjId();
-    var jobId = parcelDetectionJob.getId();
-    var tileDetectionTasks = tileDetectionTaskRepository.findAllByJobId(jobId);
-    var persistedObjectConfigurations =
-        objectConfigurationRepository.findAllByDetectionJobId(zdjId);
-    var optionalDetection = detectionRepository.findByZdjId(zdjId);
-    var detectableObjectConfigurations =
-        persistedObjectConfigurations.isEmpty()
-            ? (optionalDetection
-                .map(Detection::getDetectableObjectConfigurations)
-                .orElseGet(List::of))
-            : persistedObjectConfigurations;
-    var address = parcelDetectionJob.getAddress();
-    var point = parcelDetectionJob.getPoint();
+    long startTime = System.currentTimeMillis();
+    try {
+      var parcelDetectionJob = parcelDetectionJobCreated.getParcelDetectionJob();
+      var zdjId = parcelDetectionJobCreated.getZdjId();
+      var jobId = parcelDetectionJob.getId();
+      var tileDetectionTasks = tileDetectionTaskRepository.findAllByJobId(jobId);
+      var persistedObjectConfigurations =
+          objectConfigurationRepository.findAllByDetectionJobId(zdjId);
+      var optionalDetection = detectionRepository.findByZdjId(zdjId);
+      var detectableObjectConfigurations =
+          persistedObjectConfigurations.isEmpty()
+              ? (optionalDetection
+                  .map(Detection::getDetectableObjectConfigurations)
+                  .orElseGet(List::of))
+              : persistedObjectConfigurations;
+      var address = parcelDetectionJob.getAddress();
+      var point = parcelDetectionJob.getPoint();
 
-    eventProducer.accept(
-        List.of(new ParcelDetectionStatusRecomputingSubmitted(parcelDetectionJob.getId())));
-    tileDetectionTasks.forEach(
-        tileDetectionTask ->
-            eventProducer.accept(
-                List.of(
-                    new TileDetectionTaskCreated(
-                        zdjId,
-                        tileDetectionTask,
-                        detectableObjectConfigurations,
-                        address,
-                        point))));
+      eventProducer.accept(
+          List.of(
+              new ParcelDetectionStatusRecomputingSubmitted(
+                  parcelDetectionJob.getId(), optionalDetection.get().isIntegrationTest())));
+
+      tileDetectionTasks.forEach(
+          tileDetectionTask ->
+              eventProducer.accept(
+                  List.of(
+                      new TileDetectionTaskCreated(
+                          zdjId,
+                          tileDetectionTask,
+                          detectableObjectConfigurations,
+                          address,
+                          point))));
+    } finally {
+      long elapsedTime = startTime - System.currentTimeMillis();
+      log.info(
+          "{ \"operation\": \"ParcelDetectionJobCreated\", \"parcelDetectionJobId\": \"{}\","
+              + " \"durationInMs\": \"{}\", \"isIntegrationTest\": \"{}\" }",
+          parcelDetectionJobCreated.getParcelDetectionJob().getId(),
+          elapsedTime,
+          parcelDetectionJobCreated.getParcelDetectionJob().isIntegrationTest());
+    }
   }
 }

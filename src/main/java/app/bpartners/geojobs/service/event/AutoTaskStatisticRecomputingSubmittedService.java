@@ -84,7 +84,8 @@ public class AutoTaskStatisticRecomputingSubmittedService
     if (job.isFinished()) {
       return;
     }
-    var taskStatisticRecomputingSubmitted = new TaskStatisticRecomputingSubmitted(jobId);
+    var taskStatisticRecomputingSubmitted =
+        new TaskStatisticRecomputingSubmitted(jobId, job.isIntegrationTest());
     if (job instanceof ZoneDetectionJob) {
       zoneDetectionStatisticConsumer.accept(taskStatisticRecomputingSubmitted);
     } else if (job instanceof ZoneTilingJob) {

@@ -432,9 +432,7 @@ public class ZoneService {
     var detectionToSaveBuilder = detectionToSave.toBuilder();
     if (communityOwnerId != null) {
       var communityOwner = communityAuthRepository.findById(communityOwnerId).orElseThrow();
-      if (communityOwner.isIntegrationTestUsage()) {
-        detectionToSaveBuilder.integrationTest(true);
-      }
+      detectionToSaveBuilder.integrationTest(communityOwner.isIntegrationTestUsage());
     }
     var savedDetection =
         communityUsedSurfaceService.persistDetectionWithSurfaceUsage(

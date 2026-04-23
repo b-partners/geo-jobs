@@ -40,7 +40,6 @@ public class DetectionTilingRequestedService implements Consumer<DetectionTiling
     long startTime = System.currentTimeMillis();
     var detectionIdentifier = detectionTilingRequested.getDetectionIdentifier();
     var detection = detectionRepository.findById(detectionIdentifier).orElseThrow();
-
     if (hasUnsupportedArea(detection)) return;
     if (hasUnsupportedModel(detection)) return;
     detectionTilingCreation.apply(detection);

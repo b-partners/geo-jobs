@@ -25,7 +25,8 @@ public class TilingTaskMapper {
       Feature createFeature,
       URL geoServerUrl,
       GeoServerParameter geoServerParameter,
-      String jobId) {
+      String jobId,
+      boolean isIntegrationTest) {
     String generatedTaskId = randomUUID().toString();
     String generatedParcelId = randomUUID().toString();
     return ParcelTilingTask.builder()
@@ -40,6 +41,7 @@ public class TilingTaskMapper {
                     .taskId(generatedTaskId)
                     .build()))
         .submissionInstant(now())
+        .isIntegrationTest(isIntegrationTest)
         .parcels(
             List.of(
                 featureMapper.toDomainPolygon(

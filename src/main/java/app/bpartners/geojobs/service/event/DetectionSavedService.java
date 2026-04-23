@@ -67,9 +67,10 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
         new Email(new InternetAddress("tech@birdia.fr"), cc, bcc, subject, htmlBody, attachments));
     long elapsedTime = System.currentTimeMillis() - startTime;
     log.info(
-        "{ \"operation\": \"DetectionSaved\", \"detectionId\": \"{}\", \"durationInMs\": \"{}\","
-            + " \"isIntegrationTest\": \"false\" }",
+        "{ \"operation\": \"DetectionSaved\", \"detectionId\": \"{}\", \"detectionE2EId\": \"{}\", "
+            + " \"durationInMs\": \"{}\", \"isIntegrationTest\": \"false\" }",
         detectionIdentifier,
+        detection.getEndToEndId(),
         elapsedTime);
   }
 

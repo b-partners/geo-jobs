@@ -32,15 +32,26 @@ public class TaskStatisticRecomputingSubmittedConsumer<T extends Task, J extends
   @Override
   @Transactional
   public void accept(TaskStatisticRecomputingSubmitted taskStatisticRecomputingSubmitted) {
-    String jobId = taskStatisticRecomputingSubmitted.getJobId();
-    log.info("[DEBUG] TaskStatisticRecomputingSubmitted computing jobId={}", jobId);
-    var job =
-        jobRepository
-            .findById(jobId)
-            .orElseThrow(() -> new NotFoundException("job.id=" + jobId + " not found"));
-    var taskStatistic = taskStatisticFunction.apply(job);
-    log.info("[DEBUG] TaskStatistic to save {}", taskStatistic);
-    var savedStatistic = taskStatisticRepository.save(taskStatistic);
-    log.info("[DEBUG] TaskStatistic saved {}", savedStatistic);
+    long startTime = System.currentTimeMillis();
+    try {
+      String jobId = taskStatisticRecomputingSubmitted.getJobId();
+      log.info("[DEBUG] TaskStatisticRecomputingSubmitted computing jobId={}", jobId);
+      var job =
+          jobRepository
+              .findById(jobId)
+              .orElseThrow(() -> new NotFoundException("job.id=" + jobId + " not found"));
+      var taskStatistic = taskStatisticFunction.apply(job);
+      log.info("[DEBUG] TaskStatistic to save {}", taskStatistic);
+      var savedStatistic = taskStatisticRepository.save(taskStatistic);
+      log.info("[DEBUG] TaskStatistic saved {}", savedStatistic);
+    } finally {
+      long elapsedTime = startTime - System.currentTimeMillis();
+      log.info(
+          "{ \"operation\": \"TaskStatisticRecomputingSubmitted\", \"jobId\": \"{}\","
+              + " \"durationInMs\": \"{}\", \"isIntegrationTest\": \"{}\" }",
+          taskStatisticRecomputingSubmitted.getJobId(),
+          elapsedTime,
+          taskStatisticRecomputingSubmitted.isIntegrationTest());
+    }
   }
 }

@@ -56,78 +56,89 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
       TileDetectionTask tileDetectionTask,
       File mask,
       List<DetectableObjectConfiguration> detectableObjectConfigurations) {
-    Tile tile = tileDetectionTask.getTile();
-    if (tile == null) {
-      return null;
-    }
-    RestTemplate restTemplate = new RestTemplate();
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(APPLICATION_JSON);
+    long startTime = System.currentTimeMillis();
+    try {
+      Tile tile = tileDetectionTask.getTile();
+      if (tile == null) {
+        return null;
+      }
+      RestTemplate restTemplate = new RestTemplate();
+      HttpHeaders headers = new HttpHeaders();
+      headers.setContentType(APPLICATION_JSON);
 
-    File file =
-        bucketComponent.download(
-            bucketComponent.getBucketConf().getBucketName(), tile.getBucketPath());
-    String base64ImgData = Base64.getEncoder().encodeToString(readFileToByteArray(file));
-    String base64MaskData =
-        mask == null ? null : Base64.getEncoder().encodeToString(readFileToByteArray(mask));
+      File file =
+          bucketComponent.download(
+              bucketComponent.getBucketConf().getBucketName(), tile.getBucketPath());
+      String base64ImgData = Base64.getEncoder().encodeToString(readFileToByteArray(file));
+      String base64MaskData =
+          mask == null ? null : Base64.getEncoder().encodeToString(readFileToByteArray(mask));
 
-    var detectionPayloadBuilder =
-        DetectionPayload.builder()
-            .projectName(tileDetectionTask.getJobId())
-            .fileName(file.getName())
-            .base64ImgData(base64ImgData)
-            .base64MaskData(base64MaskData);
+      var detectionPayloadBuilder =
+          DetectionPayload.builder()
+              .projectName(tileDetectionTask.getJobId())
+              .fileName(file.getName())
+              .base64ImgData(base64ImgData)
+              .base64MaskData(base64MaskData);
 
-    if (detectableObjectConfigurations.stream()
-        .anyMatch(
-            detectableObjectConfiguration ->
-                detectableObjectTypeForVegetationModel().stream()
-                    .map(detectableObjectType -> detectableObjectConfiguration.getObjectType())
-                    .toList()
-                    .contains(detectableObjectConfiguration.getObjectType()))) {
-      detectionPayloadBuilder.vegetation(true);
-    }
+      if (detectableObjectConfigurations.stream()
+          .anyMatch(
+              detectableObjectConfiguration ->
+                  detectableObjectTypeForVegetationModel().stream()
+                      .map(detectableObjectType -> detectableObjectConfiguration.getObjectType())
+                      .toList()
+                      .contains(detectableObjectConfiguration.getObjectType()))) {
+        detectionPayloadBuilder.vegetation(true);
+      }
 
-    var payload = detectionPayloadBuilder.build();
-    String requestBody = om.writeValueAsString(payload);
+      var payload = detectionPayloadBuilder.build();
+      String requestBody = om.writeValueAsString(payload);
 
-    HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
+      HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
 
-    var detectionApiUrls = getApiUrls(detectableObjectConfigurations);
-    var detectionResponses =
-        detectionApiUrls.stream()
-            .map(
-                apiUrl -> {
-                  UriComponentsBuilder uriBuilder;
-                  try {
-                    uriBuilder = UriComponentsBuilder.fromUri(new URI(apiUrl));
-                  } catch (URISyntaxException e) {
-                    throw new RuntimeException(e);
-                  }
-                  log.info("Attempting to call API for detection {} ", apiUrl);
-                  ResponseEntity<DetectionResponse> responseEntity;
-                  try {
-                    responseEntity =
-                        restTemplate.postForEntity(
-                            uriBuilder.toUriString(), request, DetectionResponse.class);
-                  } catch (HttpStatusCodeException e) {
-                    log.error(
-                        "Error while calling API for detection {} with exception {}",
-                        apiUrl,
-                        e.getMessage());
+      var detectionApiUrls = getApiUrls(detectableObjectConfigurations);
+      var detectionResponses =
+          detectionApiUrls.stream()
+              .map(
+                  apiUrl -> {
+                    UriComponentsBuilder uriBuilder;
+                    try {
+                      uriBuilder = UriComponentsBuilder.fromUri(new URI(apiUrl));
+                    } catch (URISyntaxException e) {
+                      throw new RuntimeException(e);
+                    }
+                    log.info("Attempting to call API for detection {} ", apiUrl);
+                    ResponseEntity<DetectionResponse> responseEntity;
+                    try {
+                      responseEntity =
+                          restTemplate.postForEntity(
+                              uriBuilder.toUriString(), request, DetectionResponse.class);
+                    } catch (HttpStatusCodeException e) {
+                      log.error(
+                          "Error while calling API for detection {} with exception {}",
+                          apiUrl,
+                          e.getMessage());
+                      return null;
+                    }
+                    if (responseEntity.getStatusCode().value() == 200) {
+                      return new DetectionResponseAggregator.DetectionResponseUrl(
+                          responseEntity.getBody(), apiUrl);
+                    }
+                    log.error("Error while calling API for detection {} ", apiUrl);
                     return null;
-                  }
-                  if (responseEntity.getStatusCode().value() == 200) {
-                    return new DetectionResponseAggregator.DetectionResponseUrl(
-                        responseEntity.getBody(), apiUrl);
-                  }
-                  log.error("Error while calling API for detection {} ", apiUrl);
-                  return null;
-                })
-            .filter(Objects::nonNull)
-            .toList();
+                  })
+              .filter(Objects::nonNull)
+              .toList();
 
-    return detectionResponseAggregator.apply(detectionResponses);
+      return detectionResponseAggregator.apply(detectionResponses);
+    } finally {
+      long elapsedTime = startTime - System.currentTimeMillis();
+      log.info(
+          "{ \"operation\": \"HttpApiTileObjectDetector\", \"zoneDetectionJobId\": \"{}\","
+              + " \"durationInMs\": \"{}\", \"isIntegrationTest\": \"{}\" }",
+          tileDetectionTask.getZoneDetectionJobId(),
+          elapsedTime,
+          tileDetectionTask.isIntegrationTest());
+    }
   }
 
   @SneakyThrows

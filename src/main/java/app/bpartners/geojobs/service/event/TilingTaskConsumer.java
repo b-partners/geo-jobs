@@ -36,8 +36,16 @@ public class TilingTaskConsumer implements TaskConsumer<ParcelTilingTask> {
   public void accept(ParcelTilingTask parcelTilingTask) {
     var tilingTaskStart = now();
     var parcel = parcelTilingTask.getParcelContent();
-
+    long tilesDownloaderStartTime = System.currentTimeMillis();
     File downloadedTiles = tilesDownloader.apply(parcel);
+    long tilesDownloaderEndTime = tilesDownloaderStartTime - System.currentTimeMillis();
+    log.info(
+        "{ \"operation\": \"TilesDownloader\",  \"parcelId\": \"{}\",  \"durationInMs\":"
+            + " \"{}\", \"isIntegrationTest\": \"{}\" }",
+        parcelTilingTask.getParcelId(),
+        tilesDownloaderEndTime,
+        parcelTilingTask.isIntegrationTest());
+
     String bucketKey = downloadedTiles.getName();
 
     bucketComponent.upload(downloadedTiles, bucketKey);
