@@ -1196,8 +1196,35 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ApiKey'
+    delete:
+      tags:
+        - Security
+      operationId: revokeSpecificApiKey
+      summary: Revoke an API key
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevokeApiKey'
+      responses:
+        200:
+          description: Revoked api key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevokedApiKey'
+        400:
+          description: Invalid request (API key already revoked or keyValue is missing)
+          $ref: "#/components/responses/400"
+        403:
+          description: Operation Forbidden (Bad credentials or Users can only revoke their own API keys)
+          $ref: "#/components/responses/403"
+        404:
+          description: Requested api key not found
+          $ref: "#/components/responses/404"
   '/keys':
     delete:
+      deprecated: true
       tags:
         - Security
       operationId: revokeApiKey
@@ -1206,7 +1233,7 @@ paths:
         - ApiKeyAuth: [ ]
       responses:
         200:
-          description: Statistics of detection usage
+          description: ApiKey revoked successfully message
           content:
             application/json:
               schema:
@@ -1659,6 +1686,22 @@ components:
         - "C"
         - "D"
         - "E"
+
+    RevokedApiKey:
+      allOf:
+        - $ref: "#/components/schemas/RevokeApiKey"
+      properties:
+        revokedAt:
+          type: string
+          format: date-time
+
+    RevokeApiKey:
+      type: object
+      properties:
+        keyValue:
+          type: string
+          format: uuid
+          example: "32507271-5ebf-467d-beb2-1a243efdb0e5"
 
     CreateApiKey:
       type: object
