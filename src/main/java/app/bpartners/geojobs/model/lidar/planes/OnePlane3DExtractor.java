@@ -113,7 +113,11 @@ public class OnePlane3DExtractor
     // --- 5. Compute outliers
     assert bestModel != null;
 
-    var finalInliers = this.skinnyArmPointFilter.apply(bestInliers, exporter);
+    var finalInliers = bestInliers;
+    if (conf.doSkinnyArmRemover()) {
+      finalInliers = this.skinnyArmPointFilter.apply(bestInliers, exporter);
+    }
+
     if (exporter != null) {
       exporter.export(RAW_PLANE_EXTRACTION, bestInliers);
       exporter.export(RAW_PLANE_KERNEL, bestModel.getKernel().getChains().getPoints());
