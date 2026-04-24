@@ -1,13 +1,9 @@
 package app.bpartners.geojobs.model.lidar.planes.postprocessing;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
-import static app.bpartners.geojobs.model.lidar.planes.algorithm.GeometryUtilities.project;
 import static app.bpartners.geojobs.model.lidar.planes.postprocessing.Snapping2DComputer.extractAllPoints;
-import static java.util.stream.Collectors.toSet;
 
-import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.planes.Plane3D;
-import app.bpartners.geojobs.model.lidar.planes.algorithm.PlaneFitter;
 import java.util.*;
 import java.util.function.UnaryOperator;
 import lombok.RequiredArgsConstructor;
@@ -60,21 +56,15 @@ public class Snapping3DComputer implements UnaryOperator<List<Plane3D>> {
       }
 
       var polygon = geometryFactory.createPolygon(snapped);
-      var newPlane = PlaneFitter.fit(toPoints(snapped));
-      var newDelimitation = project(newPlane, polygon);
       result.add(
-          newPlane.toBuilder()
+          plane.toBuilder()
               .points(plane.getPoints())
-              .delimitation(newDelimitation)
+              .delimitation(polygon)
               .slopeInDegrees(plane.getSlopeInDegrees())
               .build());
     }
 
     return result;
-  }
-
-  private static Set<LasPointGeometry> toPoints(Coordinate[] coordinates) {
-    return Arrays.stream(coordinates).map(LasPointGeometry::new).collect(toSet());
   }
 
   private long createKey(Coordinate c) {

@@ -104,10 +104,15 @@ public class RoofFaceToLidarAlignmentFixer
 
   private int getBestCount(
       Vector2D vector, Plane3D plane, Envelope refEnvelope, Collection<LasPointGeometry> points) {
+    var translated = translate(plane, vector);
+    var translatedDelimitation = translated.getDelimitation();
     var translatedEnvelope = translate(refEnvelope, vector);
     var inliers =
         points.stream()
-            .filter(point -> translatedEnvelope.contains(point.getCoordinate()))
+            .filter(
+                point ->
+                    translatedEnvelope.contains(point.getCoordinate())
+                        && translatedDelimitation.contains(point))
             .collect(toSet());
     var newPlane = onePlane3DExtractor.apply(plane.getKernel(), inliers, null).plane();
 
