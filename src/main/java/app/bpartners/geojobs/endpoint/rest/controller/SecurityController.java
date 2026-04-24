@@ -4,6 +4,7 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.ApiKeyMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.RevokedApiKeyMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
+import app.bpartners.geojobs.endpoint.rest.validator.RevokeApiKeyValidator;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
@@ -11,11 +12,13 @@ import app.bpartners.geojobs.service.ApiKeyService;
 import app.bpartners.geojobs.service.RevokedApiKeyService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 public class SecurityController {
@@ -25,6 +28,7 @@ public class SecurityController {
   private final ApiKeyMapper apiKeyMapper;
   private final ApiKeyService apiKeyService;
   private final RevokedApiKeyMapper revokedApiKeyMapper;
+  private final RevokeApiKeyValidator revokeApiKeyValidator;
 
   @PostMapping("/api/keys")
   public List<ApiKey> generateApiKeys(@RequestBody List<CreateApiKey> createApiKeys) {
@@ -42,11 +46,12 @@ public class SecurityController {
 
   @DeleteMapping("/api/keys")
   public RevokedApiKey revokeSpecificApiKey(@RequestBody RevokeApiKey revokeApiKey) {
+    revokeApiKeyValidator.accept(revokeApiKey);
     CommunityAuthorization communityAuthorization =
         communityAuthRepository
             .findByApiKey(authProvider.getPrincipal().getPassword())
             .orElseThrow(ForbiddenException::new);
-    String keyValue = String.valueOf(revokeApiKey.getKeyValue());
+    String keyValue = revokeApiKey.getKeyValue().toString();
 
     return revokedApiKeyMapper.toRest(
         service.revokeCommunityApiKey(communityAuthorization, keyValue));
@@ -64,6 +69,9 @@ public class SecurityController {
             .findByApiKey(authProvider.getPrincipal().getPassword())
             .orElseThrow(ForbiddenException::new);
     service.revokeCommunityLatestApiKey(communityAuthorization);
+    log.warn(
+        "This endpoint is deprecated and should no longer be used, and will be removed in a future"
+            + " version.");
     return new RevokeApiKeyResponse().message("Your API key has been successfully revoked");
   }
 }
