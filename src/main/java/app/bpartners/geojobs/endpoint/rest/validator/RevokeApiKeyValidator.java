@@ -9,6 +9,10 @@ import org.springframework.stereotype.Component;
 public class RevokeApiKeyValidator implements Consumer<RevokeApiKey> {
   @Override
   public void accept(RevokeApiKey revokeApiKey) {
+    if (revokeApiKey == null) {
+      throw new BadRequestException("RevokeApiKey is mandatory.");
+    }
+
     var key = revokeApiKey.getKeyValue();
 
     if (key == null || key.toString().isBlank()) {
