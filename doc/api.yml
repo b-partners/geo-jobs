@@ -1217,7 +1217,7 @@ paths:
           description: Invalid request (API key already revoked or keyValue is missing)
           $ref: "#/components/responses/400"
         403:
-          description: Users can only revoke their own API keys.
+          description: Operation Forbidden (Bad credentials or Users can only revoke their own API keys)
           $ref: "#/components/responses/403"
         404:
           description: Requested api key not found
