@@ -35,6 +35,9 @@ public class CityJSONRequestMapper {
     return new CityJSONRequest()
         .id(cityJSONRequest.getId())
         .delimitations(restDelimitations)
+        .delimitationObjectType(
+            CityJSONDelimitationObjectTypeMapper.toRestDelimitationObjectType(
+                cityJSONRequest.getDelimitationObjectType()))
         .status(CityJSONRequestStatusMapper.toRest(cityJSONRequest.getStatus()))
         .cityJsons(restCityJsons);
   }
