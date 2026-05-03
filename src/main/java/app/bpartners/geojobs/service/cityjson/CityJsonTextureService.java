@@ -1,6 +1,10 @@
 package app.bpartners.geojobs.service.cityjson;
 
 import app.bpartners.geojobs.model.lidar.planes.algorithm.Vector3DUtils;
+import app.bpartners.geojobs.service.cityjson.model.BuildingData;
+import app.bpartners.geojobs.service.cityjson.model.TexturedBuildingData;
+import app.bpartners.geojobs.service.cityjson.model.TexturedGeometry;
+import app.bpartners.geojobs.service.lidar.model.geometry.GeometryWithProperties;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -12,6 +16,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -19,11 +24,54 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import javax.imageio.ImageIO;
+import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.math.Vector3D;
+import org.springframework.stereotype.Service;
 
+@Service
 public class CityJsonTextureService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    public TexturedBuildingData texture(BuildingData buildingData, Path tifPath) throws IOException {
+        RasterInfo rasterInfo = readRasterInfo(tifPath);
+        String textureDataUri = imageToDataUri(tifPath);
+
+        return TexturedBuildingData.builder()
+                .id(buildingData.id())
+                .roofs(textureGeometries(buildingData.roofs(), rasterInfo))
+                .walls(textureGeometries(buildingData.walls(), rasterInfo))
+                .grounds(textureGeometries(buildingData.grounds(), rasterInfo))
+                .properties(buildingData.properties())
+                .textureDataUri(textureDataUri)
+                .build();
+    }
+
+    private List<TexturedGeometry> textureGeometries(List<GeometryWithProperties> geometries, RasterInfo rasterInfo) {
+        return geometries.stream()
+                .map(g -> textureGeometry(g, rasterInfo))
+                .toList();
+    }
+
+    private TexturedGeometry textureGeometry(GeometryWithProperties geometryWithProperties, RasterInfo rasterInfo) {
+        var polygon = geometryWithProperties.asPolygon();
+        var coordinates = polygon.getExteriorRing().getCoordinates();
+
+        List<Vector3D> vertices = Arrays.stream(coordinates)
+                .map(c -> new Vector3D(c.getX(), c.getY(), c.getZ()))
+                .toList();
+
+        List<UV> uvs = computeUv(vertices, rasterInfo);
+        List<TexturedGeometry.UV> texturedUvs = uvs.stream()
+                .map(uv -> new TexturedGeometry.UV(uv.u(), uv.v()))
+                .toList();
+
+        return new TexturedGeometry(
+                geometryWithProperties.geometry(),
+                geometryWithProperties.properties(),
+                texturedUvs
+        );
+    }
 
     public void textureCityJson(
             Path cityJsonPath,

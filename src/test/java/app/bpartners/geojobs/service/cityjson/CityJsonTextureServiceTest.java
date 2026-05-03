@@ -1,14 +1,20 @@
 package app.bpartners.geojobs.service.cityjson;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.core.io.ClassPathResource;
+import static org.junit.jupiter.api.Assertions.*;
 
+import app.bpartners.geojobs.service.cityjson.model.BuildingData;
+import app.bpartners.geojobs.service.cityjson.model.TexturedBuildingData;
+import app.bpartners.geojobs.service.lidar.model.geometry.GeometryWithProperties;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Polygon;
+import org.springframework.core.io.ClassPathResource;
 
 class CityJsonTextureServiceTest {
 
@@ -73,5 +79,47 @@ class CityJsonTextureServiceTest {
     // v = 1.0 - (0.25 / 100) = 0.9975
     assertEquals(0.0025, uvSubPixel.get(0).u(), 1e-6, "Sub-pixel U should be 0.0025");
     assertEquals(0.9975, uvSubPixel.get(0).v(), 1e-6, "Sub-pixel V should be 0.9975");
+  }
+
+  @Test
+  void testTextureBuildingData() throws IOException {
+    Path tifPath =
+        new ClassPathResource("cityjson/texture/inputs/roof4/roof4.tif").getFile().toPath();
+
+    GeometryFactory gf = new GeometryFactory();
+    Polygon polygon =
+        gf.createPolygon(
+            new Coordinate[] {
+              new Coordinate(100.0, 200.0, 10.0),
+              new Coordinate(150.0, 200.0, 10.0),
+              new Coordinate(150.0, 150.0, 10.0),
+              new Coordinate(100.0, 150.0, 10.0),
+              new Coordinate(100.0, 200.0, 10.0)
+            });
+
+    BuildingData buildingData =
+        BuildingData.builder()
+            .id("test-building")
+            .roofs(
+                List.of(
+                    GeometryWithProperties.builder()
+                        .geometry(polygon)
+                        .properties(Collections.emptyMap())
+                        .build()))
+            .walls(Collections.emptyList())
+            .grounds(Collections.emptyList())
+            .properties(Collections.emptyMap())
+            .build();
+
+    TexturedBuildingData textured = subject.texture(buildingData, tifPath);
+
+    assertNotNull(textured);
+    assertEquals("test-building", textured.id());
+    assertEquals(1, textured.roofs().size());
+    assertNotNull(textured.textureDataUri());
+    assertTrue(textured.textureDataUri().startsWith("data:image/png;base64,"));
+
+    var texturedRoof = textured.roofs().get(0);
+    assertEquals(5, texturedRoof.uvs().size());
   }
 }
