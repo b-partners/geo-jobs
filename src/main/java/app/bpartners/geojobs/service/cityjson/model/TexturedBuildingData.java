@@ -11,5 +11,4 @@ public record TexturedBuildingData(
     List<TexturedGeometry> walls,
     List<TexturedGeometry> grounds,
     Map<String, Object> properties,
-    String textureDataUri
-) {}
+    String textureDataUri) {}
