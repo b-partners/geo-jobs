@@ -1,21 +1,25 @@
 package app.bpartners.geojobs.service.cityjson;
 
+import app.bpartners.geojobs.model.lidar.planes.algorithm.Vector3DUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import javax.imageio.ImageIO;
+import org.locationtech.jts.math.Vector3D;
 
 public class CityJsonTextureService {
 
@@ -29,16 +33,15 @@ public class CityJsonTextureService {
     ) throws IOException {
         Files.createDirectories(outputDirectory);
 
-        String texturePath = saveTexture(tifPath, outputDirectory);
-
         Path outputPath = outputDirectory.resolve("roof" + roofNumber + ".json");
 
         buildTexturedCityJson(
                 cityJsonPath,
                 tifPath,
-                texturePath,
                 outputPath
         );
+
+        saveTexture(tifPath, outputDirectory);
     }
 
     public LoadedCityJson loadCityJson(Path path) throws IOException {
@@ -69,14 +72,14 @@ public class CityJsonTextureService {
             translateZ = translate.get(2).asDouble();
         }
 
-        List<Vec3> vertices = new ArrayList<>();
+        List<Vector3D> vertices = new ArrayList<>();
 
         for (JsonNode rawVertex : rawVertices) {
             double x = rawVertex.get(0).asDouble() * scaleX + translateX;
             double y = rawVertex.get(1).asDouble() * scaleY + translateY;
             double z = rawVertex.get(2).asDouble() * scaleZ + translateZ;
 
-            vertices.add(new Vec3(x, y, z));
+            vertices.add(new Vector3D(x, y, z));
         }
 
         return new LoadedCityJson(cityJson, vertices);
@@ -85,19 +88,19 @@ public class CityJsonTextureService {
     public void buildTexturedCityJson(
             Path cityJsonPath,
             Path tifPath,
-            String texturePath,
             Path outputPath
     ) throws IOException {
         LoadedCityJson loadedCityJson = loadCityJson(cityJsonPath);
 
         ObjectNode cityJson = loadedCityJson.json();
-        List<Vec3> vertices = loadedCityJson.vertices();
+        List<Vector3D> vertices = loadedCityJson.vertices();
 
         RasterInfo rasterInfo = readRasterInfo(tifPath);
 
-        ObjectNode appearance = initAppearance(texturePath);
+        String textureDataUri = imageToDataUri(tifPath);
+        ObjectNode appearance = initAppearance(textureDataUri);
 
-        List<Vec2> vertexTexture = new ArrayList<>();
+        List<UV> vertexTexture = new ArrayList<>();
         Map<String, Integer> vertexTextureMap = new HashMap<>();
 
         ObjectNode cityObjects = (ObjectNode) cityJson.get("CityObjects");
@@ -142,7 +145,7 @@ public class CityJsonTextureService {
 
         ArrayNode verticesTextureNode = objectMapper.createArrayNode();
 
-        for (Vec2 uv : vertexTexture) {
+        for (UV uv : vertexTexture) {
             ArrayNode uvNode = objectMapper.createArrayNode();
             uvNode.add(uv.u());
             uvNode.add(uv.v());
@@ -176,10 +179,10 @@ public class CityJsonTextureService {
         return faces;
     }
 
-    public List<Vec3> getFaceCoords(JsonNode face, List<Vec3> vertices) {
+    public List<Vector3D> getFaceCoords(JsonNode face, List<Vector3D> vertices) {
         JsonNode outerRing = face.get(0);
 
-        List<Vec3> coords = new ArrayList<>();
+        List<Vector3D> coords = new ArrayList<>();
 
         for (JsonNode vertexIndexNode : outerRing) {
             int vertexIndex = vertexIndexNode.asInt();
@@ -189,26 +192,20 @@ public class CityJsonTextureService {
         return coords;
     }
 
-    public boolean isRoof(List<Vec3> coords) {
+    public boolean isRoof(List<Vector3D> coords) {
         if (coords.size() < 3) {
             return false;
         }
 
-        Vec3 p0 = coords.get(0);
-        Vec3 p1 = coords.get(1);
-        Vec3 p2 = coords.get(2);
+        Vector3D p0 = coords.get(0);
+        Vector3D p1 = coords.get(1);
+        Vector3D p2 = coords.get(2);
 
-        Vec3 v1 = subtract(p1, p0);
-        Vec3 v2 = subtract(p2, p0);
-        Vec3 normal = cross(v1, v2);
+        Vector3D v1 = new Vector3D(p1.getX() - p0.getX(), p1.getY() - p0.getY(), p1.getZ() - p0.getZ());
+        Vector3D v2 = new Vector3D(p2.getX() - p0.getX(), p2.getY() - p0.getY(), p2.getZ() - p0.getZ());
+        Vector3D normal = Vector3DUtils.cross(v1, v2);
 
-        double norm = Math.sqrt(
-                normal.x() * normal.x()
-                        + normal.y() * normal.y()
-                        + normal.z() * normal.z()
-        );
-
-        double unitZ = normal.z() / (norm + 1e-12);
+        double unitZ = normal.getZ() / (normal.length() + 1e-12);
 
         return Math.abs(unitZ) > 0.7;
     }
@@ -217,29 +214,29 @@ public class CityJsonTextureService {
         return faceType != null && faceType.toLowerCase(Locale.ROOT).contains("roof");
     }
 
-    public List<Vec2> computeUv(List<Vec3> coords, RasterInfo rasterInfo) {
-        List<Vec2> result = new ArrayList<>();
+    public List<UV> computeUv(List<Vector3D> coords, RasterInfo rasterInfo) {
+        List<UV> result = new ArrayList<>();
 
-        for (Vec3 coord : coords) {
-            RowCol rowCol = rowColAffine(rasterInfo, coord.x(), coord.y());
+        for (Vector3D coord : coords) {
+            RowCol rowCol = rowColAffine(rasterInfo, coord.getX(), coord.getY());
 
-            double u = (double) rowCol.col() / rasterInfo.width();
-            double v = 1.0 - ((double) rowCol.row() / rasterInfo.height());
+            double u = rowCol.col() / rasterInfo.width();
+            double v = 1.0 - (rowCol.row() / rasterInfo.height());
 
-            result.add(new Vec2(u, v));
+            result.add(new UV(u, v));
         }
 
         return result;
     }
 
     public List<Integer> deduplicateUvs(
-            List<Vec2> uv,
-            List<Vec2> vertexTexture,
+            List<UV> uv,
+            List<UV> vertexTexture,
             Map<String, Integer> vertexTextureMap
     ) {
         List<Integer> vtIndices = new ArrayList<>();
 
-        for (Vec2 coordinate : uv) {
+        for (UV coordinate : uv) {
             String key = "%.6f,%.6f".formatted(coordinate.u(), coordinate.v());
 
             Integer existingIndex = vertexTextureMap.get(key);
@@ -257,13 +254,13 @@ public class CityJsonTextureService {
         return vtIndices;
     }
 
-    public ObjectNode initAppearance(String texturePath) {
+    public ObjectNode initAppearance(String textureDataUri) {
         ObjectNode appearance = objectMapper.createObjectNode();
 
         ArrayNode textures = objectMapper.createArrayNode();
         ObjectNode texture = objectMapper.createObjectNode();
         texture.put("type", "PNG");
-        texture.put("image", texturePath);
+        texture.put("image", textureDataUri);
         textures.add(texture);
 
         ArrayNode materials = objectMapper.createArrayNode();
@@ -314,19 +311,19 @@ public class CityJsonTextureService {
             JsonNode face,
             String faceType,
             boolean hasSemantics,
-            List<Vec3> vertices,
+            List<Vector3D> vertices,
             RasterInfo rasterInfo,
-            List<Vec2> vertexTexture,
+            List<UV> vertexTexture,
             Map<String, Integer> vertexTextureMap,
             ObjectNode geometryAppearance
     ) {
-        List<Vec3> coords = getFaceCoords(face, vertices);
+        List<Vector3D> coords = getFaceCoords(face, vertices);
 
         if (coords.size() < 3) {
             return;
         }
 
-        List<Vec2> uv = computeUv(coords, rasterInfo);
+        List<UV> uv = computeUv(coords, rasterInfo);
 
         List<Integer> vtIndices = deduplicateUvs(
                 uv,
@@ -369,7 +366,17 @@ public class CityJsonTextureService {
         }
     }
 
-    public String saveTexture(Path tifPath, Path outputDirectory) throws IOException {
+    private String imageToDataUri(Path tifPath) throws IOException {
+        BufferedImage image = ImageIO.read(tifPath.toFile());
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            ImageIO.write(image, "png", baos);
+            byte[] imageBytes = baos.toByteArray();
+            String base64Image = Base64.getEncoder().encodeToString(imageBytes);
+            return "data:image/png;base64," + base64Image;
+        }
+    }
+
+    private String saveTexture(Path tifPath, Path outputDirectory) throws IOException {
         Files.createDirectories(outputDirectory);
 
         BufferedImage image = ImageIO.read(tifPath.toFile());
@@ -447,9 +454,10 @@ public class CityJsonTextureService {
 
         try {
             Process process = new ProcessBuilder("gdalinfo", "-json", tifPath.toString()).start();
-            JsonNode gdalJson = objectMapper.readTree(process.getInputStream());
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            com.fasterxml.jackson.databind.JsonNode gdalJson = mapper.readTree(process.getInputStream());
             if (gdalJson.has("geoTransform")) {
-                JsonNode gt = gdalJson.get("geoTransform");
+                com.fasterxml.jackson.databind.JsonNode gt = gdalJson.get("geoTransform");
                 originX = gt.get(0).asDouble();
                 pixelWidth = gt.get(1).asDouble();
                 originY = gt.get(3).asDouble();
@@ -495,27 +503,9 @@ public class CityJsonTextureService {
         return new RowCol(row, col);
     }
 
-    private Vec3 subtract(Vec3 a, Vec3 b) {
-        return new Vec3(
-                a.x() - b.x(),
-                a.y() - b.y(),
-                a.z() - b.z()
-        );
-    }
+    public record LoadedCityJson(ObjectNode json, List<Vector3D> vertices) {}
 
-    private Vec3 cross(Vec3 a, Vec3 b) {
-        return new Vec3(
-                a.y() * b.z() - a.z() * b.y(),
-                a.z() * b.x() - a.x() * b.z(),
-                a.x() * b.y() - a.y() * b.x()
-        );
-    }
-
-    public record LoadedCityJson(ObjectNode json, List<Vec3> vertices) {}
-
-    public record Vec3(double x, double y, double z) {}
-
-    public record Vec2(double u, double v) {}
+    public record UV(double u, double v) {}
 
     public record RowCol(double row, double col) {}
 
