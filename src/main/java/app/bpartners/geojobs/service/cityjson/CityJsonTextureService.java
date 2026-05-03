@@ -153,8 +153,6 @@ public class CityJsonTextureService {
         cityJson.set("appearance", appearance);
 
         objectMapper.writerWithDefaultPrettyPrinter().writeValue(outputPath.toFile(), cityJson);
-        System.out.println("[DEBUG_LOG] Wrote file to: " + outputPath.toAbsolutePath());
-        System.out.println("[DEBUG_LOG] File exists: " + Files.exists(outputPath));
     }
 
     public List<JsonNode> extractFaces(ObjectNode geometry) {
@@ -442,24 +440,32 @@ public class CityJsonTextureService {
             throw new IOException("Could not read raster dimensions: " + tifPath);
         }
 
-        /*
-         * Replace these placeholder values with GeoTIFF affine transform values
-         * read via GeoTools, GDAL, or Apache SIS.
-         */
         double originX = 0.0;
         double originY = 0.0;
         double pixelWidth = 1.0;
         double pixelHeight = -1.0;
-        double shearX = 0.0;
-        double shearY = 0.0;
+
+        try {
+            Process process = new ProcessBuilder("gdalinfo", "-json", tifPath.toString()).start();
+            JsonNode gdalJson = objectMapper.readTree(process.getInputStream());
+            if (gdalJson.has("geoTransform")) {
+                JsonNode gt = gdalJson.get("geoTransform");
+                originX = gt.get(0).asDouble();
+                pixelWidth = gt.get(1).asDouble();
+                originY = gt.get(3).asDouble();
+                pixelHeight = gt.get(5).asDouble();
+            }
+        } catch (Exception e) {
+            System.err.println("Warning: Could not read GeoTIFF transform using gdalinfo: " + e.getMessage());
+        }
 
         return new RasterInfo(
                 originX,
                 originY,
                 pixelWidth,
                 pixelHeight,
-                shearX,
-                shearY,
+                0.0,
+                0.0,
                 image.getWidth(),
                 image.getHeight()
         );
@@ -486,10 +492,7 @@ public class CityJsonTextureService {
         double col = (e * dx - b * dy) / determinant;
         double row = (-d * dx + a * dy) / determinant;
 
-        return new RowCol(
-                (int) Math.floor(row),
-                (int) Math.floor(col)
-        );
+        return new RowCol(row, col);
     }
 
     private Vec3 subtract(Vec3 a, Vec3 b) {
@@ -514,7 +517,7 @@ public class CityJsonTextureService {
 
     public record Vec2(double u, double v) {}
 
-    public record RowCol(int row, int col) {}
+    public record RowCol(double row, double col) {}
 
     public record RasterInfo(
             double originX,
