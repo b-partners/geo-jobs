@@ -40,16 +40,4 @@ public class CityJsonTextureService {
     cityJsonIOService.save(texturedCityJson, outputPath);
     cityJsonIOService.saveTexture(tifPath, outputDirectory);
   }
-
-  public void buildTexturedCityJson(Path cityJsonPath, Path tifPath, Path outputPath)
-      throws IOException {
-    ObjectNode json = cityJsonIOService.loadCityJson(cityJsonPath);
-    CityJsonFile cityJsonFile = cityJsonTextureDomainService.toCityJsonFile(json);
-    TextureFile textureFile = cityJsonIOService.loadTexture(tifPath);
-
-    TexturedCityJson texturedCityJson =
-        cityJsonTextureDomainService.texture(cityJsonFile, textureFile);
-
-    cityJsonIOService.save(texturedCityJson, outputPath);
-  }
 }
