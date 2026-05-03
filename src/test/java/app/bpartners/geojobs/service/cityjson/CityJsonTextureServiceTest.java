@@ -20,7 +20,10 @@ import org.springframework.core.io.ClassPathResource;
 
 class CityJsonTextureServiceTest {
 
-  CityJsonTextureService subject = new CityJsonTextureService();
+  CityJsonIOService cityJsonIOService = new CityJsonIOService();
+  CityJsonTextureDomainService cityJsonTextureDomainService = new CityJsonTextureDomainService();
+  CityJsonTextureService subject =
+      new CityJsonTextureService(cityJsonIOService, cityJsonTextureDomainService);
 
   @Test
   void texturize() throws IOException {
@@ -67,7 +70,7 @@ class CityJsonTextureServiceTest {
     // Top-left corner (origin)
     List<org.locationtech.jts.math.Vector3D> topLeft =
         List.of(new org.locationtech.jts.math.Vector3D(100.0, 200.0, 0));
-    List<UV> uvTopLeft = subject.computeUv(topLeft, rasterInfo);
+    List<UV> uvTopLeft = cityJsonTextureDomainService.computeUv(topLeft, rasterInfo);
     assertEquals(0.0, uvTopLeft.get(0).u(), 1e-6, "Top-left U should be 0");
     assertEquals(1.0, uvTopLeft.get(0).v(), 1e-6, "Top-left V should be 1");
 
@@ -76,7 +79,7 @@ class CityJsonTextureServiceTest {
     // y = 200 + 100 * -0.5 = 150
     List<org.locationtech.jts.math.Vector3D> bottomRight =
         List.of(new org.locationtech.jts.math.Vector3D(150.0, 150.0, 0));
-    List<UV> uvBottomRight = subject.computeUv(bottomRight, rasterInfo);
+    List<UV> uvBottomRight = cityJsonTextureDomainService.computeUv(bottomRight, rasterInfo);
     assertEquals(1.0, uvBottomRight.get(0).u(), 1e-6, "Bottom-right U should be 1");
     assertEquals(0.0, uvBottomRight.get(0).v(), 1e-6, "Bottom-right V should be 0");
 
@@ -84,7 +87,7 @@ class CityJsonTextureServiceTest {
     // x = 125, y = 175
     List<org.locationtech.jts.math.Vector3D> middle =
         List.of(new org.locationtech.jts.math.Vector3D(125.0, 175.0, 0));
-    List<UV> uvMiddle = subject.computeUv(middle, rasterInfo);
+    List<UV> uvMiddle = cityJsonTextureDomainService.computeUv(middle, rasterInfo);
     assertEquals(0.5, uvMiddle.get(0).u(), 1e-6, "Middle U should be 0.5");
     assertEquals(0.5, uvMiddle.get(0).v(), 1e-6, "Middle V should be 0.5");
 
@@ -93,7 +96,7 @@ class CityJsonTextureServiceTest {
     // y = 200 + 0.5 * -0.5 = 199.75
     List<org.locationtech.jts.math.Vector3D> subPixel =
         List.of(new org.locationtech.jts.math.Vector3D(100.125, 199.875, 0));
-    List<UV> uvSubPixel = subject.computeUv(subPixel, rasterInfo);
+    List<UV> uvSubPixel = cityJsonTextureDomainService.computeUv(subPixel, rasterInfo);
     // col = (100.125 - 100) / 0.5 = 0.25
     // row = (199.875 - 200) / -0.5 = 0.25
     // u = 0.25 / 100 = 0.0025
