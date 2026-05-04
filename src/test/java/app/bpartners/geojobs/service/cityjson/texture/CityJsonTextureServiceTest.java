@@ -2,17 +2,21 @@ package app.bpartners.geojobs.service.cityjson.texture;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import app.bpartners.geojobs.service.cityjson.exception.CityJsonException;
+import app.bpartners.geojobs.service.cityjson.factory.CityJsonFactory;
 import app.bpartners.geojobs.service.cityjson.texture.model.BuildingData;
 import app.bpartners.geojobs.service.cityjson.texture.model.RasterInfo;
 import app.bpartners.geojobs.service.cityjson.texture.model.TexturedBuildingData;
 import app.bpartners.geojobs.service.cityjson.texture.model.UV;
 import app.bpartners.geojobs.service.lidar.model.geometry.GeometryWithProperties;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Polygon;
@@ -145,5 +149,47 @@ class CityJsonTextureServiceTest {
 
     var texturedRoof = textured.roofs().get(0);
     assertEquals(5, texturedRoof.uvs().size());
+  }
+
+  @Test
+  void texture_should_output_file(@TempDir Path tempDir) throws IOException, CityJsonException {
+    Path tifPath =
+        new ClassPathResource("cityjson/texture/inputs/roof4/roof4.tif").getFile().toPath();
+
+    GeometryFactory gf = new GeometryFactory();
+    Polygon polygon =
+        gf.createPolygon(
+            new Coordinate[] {
+              new Coordinate(100.0, 200.0, 10.0),
+              new Coordinate(150.0, 200.0, 10.0),
+              new Coordinate(150.0, 150.0, 10.0),
+              new Coordinate(100.0, 150.0, 10.0),
+              new Coordinate(100.0, 200.0, 10.0)
+            });
+
+    BuildingData buildingData =
+        BuildingData.builder()
+            .id("test-building")
+            .roofs(
+                List.of(
+                    GeometryWithProperties.builder()
+                        .geometry(polygon)
+                        .properties(Collections.emptyMap())
+                        .build()))
+            .walls(Collections.emptyList())
+            .grounds(Collections.emptyList())
+            .properties(Collections.emptyMap())
+            .build();
+
+    TexturedBuildingData textured = subject.texture(buildingData, tifPath);
+
+    // Save as CityJSON using CityJsonFactory
+    CityJsonFactory cityJsonFactory = new CityJsonFactory(tempDir.toFile());
+    File cityJsonFile =
+        cityJsonFactory.makeFromTextured("test-output", "Test Output", List.of(textured));
+
+    assertTrue(cityJsonFile.exists());
+    assertTrue(cityJsonFile.length() > 0);
+    assertEquals("test-output.json", cityJsonFile.getName());
   }
 }
