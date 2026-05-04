@@ -17,6 +17,7 @@ import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.math.Vector2D;
 
 @Slf4j
@@ -38,24 +39,33 @@ public class RoofFaceToLidarAlignmentFixer
 
   @Override
   public List<Plane3D> apply(DelimitedRoofPoints delimitedRoofPoints, List<Plane3D> planes) {
-    var current = planes;
     var roofFaceWithMaxAreaIndex = getRoofFaceWithMaxAreaIndex(planes);
     var refItem = delimitedRoofPoints.getItems()[roofFaceWithMaxAreaIndex];
     var refPoints = refItem.getPoints();
     var refEnvelope = new OBB2DComputer().apply(refItem.getPolygon()).toEnvelope();
+    var refPlane = planes.get(roofFaceWithMaxAreaIndex);
 
+    var finalTranslation = new Vector2D(0, 0);
     for (int j = 0; j < conf.maxStepCount(); j++) {
-      var refPlane = current.get(roofFaceWithMaxAreaIndex);
       var t = getBestTranslation(refPlane, refEnvelope, refPoints);
       if (t.isEmpty()) {
         break;
       }
       log.info("STEP_INDEX={}", j);
       refEnvelope = translate(refEnvelope, t.get());
-      current = current.stream().map(p -> translate(p, t.get())).toList();
+      refPlane = translate(refPlane, t.get());
+      finalTranslation = finalTranslation.add(t.get());
     }
 
-    return current;
+    var items = delimitedRoofPoints.getItems();
+    var result = new ArrayList<Plane3D>();
+    for (int i = 0; i < items.length; i++) {
+      var item = items[i];
+      var plane = planes.get(i);
+      var translated = translateAndRefit(plane, item.getPoints(), finalTranslation);
+      result.add(translated);
+    }
+    return result;
   }
 
   private static Envelope translate(Envelope envelope, Vector2D translation) {
@@ -87,6 +97,12 @@ public class RoofFaceToLidarAlignmentFixer
 
   private static Plane3D translate(Plane3D plane, Vector2D translation) {
     var delimitation = plane.getDelimitation();
+    var translated2DPolygon = translate(delimitation, translation);
+    var translated3DPolygon = project(plane, translated2DPolygon);
+    return plane.toBuilder().convexDelimitation(null).delimitation(translated3DPolygon).build();
+  }
+
+  private static Polygon translate(Polygon delimitation, Vector2D translation) {
     var coordinates = delimitation.getCoordinates();
     var translated = new Coordinate[coordinates.length];
     var tx = translation.getX();
@@ -96,10 +112,27 @@ public class RoofFaceToLidarAlignmentFixer
       var initial = coordinates[i];
       translated[i] = new Coordinate(initial.getX() + tx, initial.getY() + ty);
     }
+    return geometryFactory.createPolygon(translated);
+  }
 
-    var translated2DPolygon = geometryFactory.createPolygon(translated);
-    var translated3DPolygon = project(plane, translated2DPolygon);
-    return plane.toBuilder().convexDelimitation(null).delimitation(translated3DPolygon).build();
+  private Plane3D translateAndRefit(
+      Plane3D plane, Set<LasPointGeometry> points, Vector2D translation) {
+    var translated = translate(plane.getDelimitation(), translation);
+    var translatedEnvelope = translated.getEnvelopeInternal();
+    var inliers = getFilteredPoints(translated, translatedEnvelope, points);
+    var newPlane = onePlane3DExtractor.apply(inliers, null).plane();
+    var projectedDelimitation = project(newPlane, translated);
+    return newPlane.toBuilder()
+        .convexDelimitation(null)
+        .delimitation(projectedDelimitation)
+        .build();
+  }
+
+  private static Set<LasPointGeometry> getFilteredPoints(
+      Polygon delimitation, Envelope envelope, Collection<LasPointGeometry> points) {
+    return points.stream()
+        .filter(point -> envelope.contains(point.getCoordinate()) && delimitation.contains(point))
+        .collect(toSet());
   }
 
   private int getBestCount(
@@ -107,13 +140,7 @@ public class RoofFaceToLidarAlignmentFixer
     var translated = translate(plane, vector);
     var translatedDelimitation = translated.getDelimitation();
     var translatedEnvelope = translate(refEnvelope, vector);
-    var inliers =
-        points.stream()
-            .filter(
-                point ->
-                    translatedEnvelope.contains(point.getCoordinate())
-                        && translatedDelimitation.contains(point))
-            .collect(toSet());
+    var inliers = getFilteredPoints(translatedDelimitation, translatedEnvelope, points);
     var newPlane = onePlane3DExtractor.apply(plane.getKernel(), inliers, null).plane();
 
     var added = new HashSet<>(newPlane.getPoints());
