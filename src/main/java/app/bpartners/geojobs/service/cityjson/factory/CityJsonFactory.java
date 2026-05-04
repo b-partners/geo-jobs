@@ -4,8 +4,8 @@ import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
 
 import app.bpartners.geojobs.service.cityjson.exception.CityJsonException;
 import app.bpartners.geojobs.service.cityjson.io.CityJsonWriter;
-import app.bpartners.geojobs.service.cityjson.model.BuildingData;
-import app.bpartners.geojobs.service.cityjson.model.TexturedBuildingData;
+import app.bpartners.geojobs.service.cityjson.texture.model.BuildingData;
+import app.bpartners.geojobs.service.cityjson.texture.model.TexturedBuildingData;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.List;

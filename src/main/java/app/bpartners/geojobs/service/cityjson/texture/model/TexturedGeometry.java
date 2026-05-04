@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.service.cityjson.model;
+package app.bpartners.geojobs.service.cityjson.texture.model;
 
 import java.util.List;
 

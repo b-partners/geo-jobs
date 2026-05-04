@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.service.cityjson.factory;
 
-import app.bpartners.geojobs.service.cityjson.model.ConstructionSurfaceType;
-import app.bpartners.geojobs.service.cityjson.model.TexturedGeometry;
+import app.bpartners.geojobs.service.cityjson.texture.model.ConstructionSurfaceType;
+import app.bpartners.geojobs.service.cityjson.texture.model.TexturedGeometry;
 import app.bpartners.geojobs.service.lidar.model.geometry.GeometryWithProperties;
 import java.util.Arrays;
 import java.util.List;

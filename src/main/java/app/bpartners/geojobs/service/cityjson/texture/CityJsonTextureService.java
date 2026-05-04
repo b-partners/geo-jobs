@@ -1,11 +1,11 @@
-package app.bpartners.geojobs.service.cityjson;
+package app.bpartners.geojobs.service.cityjson.texture;
 
-import app.bpartners.geojobs.service.cityjson.model.BuildingData;
-import app.bpartners.geojobs.service.cityjson.model.CityJsonFile;
-import app.bpartners.geojobs.service.cityjson.model.RasterInfo;
-import app.bpartners.geojobs.service.cityjson.model.TextureFile;
-import app.bpartners.geojobs.service.cityjson.model.TexturedBuildingData;
-import app.bpartners.geojobs.service.cityjson.model.TexturedCityJson;
+import app.bpartners.geojobs.service.cityjson.texture.model.BuildingData;
+import app.bpartners.geojobs.service.cityjson.texture.model.CityJsonFile;
+import app.bpartners.geojobs.service.cityjson.texture.model.RasterInfo;
+import app.bpartners.geojobs.service.cityjson.texture.model.TextureFile;
+import app.bpartners.geojobs.service.cityjson.texture.model.TexturedBuildingData;
+import app.bpartners.geojobs.service.cityjson.texture.model.TexturedCityJson;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.nio.file.Path;

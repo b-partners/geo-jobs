@@ -1,15 +1,15 @@
-package app.bpartners.geojobs.service.cityjson;
+package app.bpartners.geojobs.service.cityjson.texture;
 
 import app.bpartners.geojobs.model.lidar.planes.algorithm.Vector3DUtils;
-import app.bpartners.geojobs.service.cityjson.model.BuildingData;
-import app.bpartners.geojobs.service.cityjson.model.CityJsonFile;
-import app.bpartners.geojobs.service.cityjson.model.RasterInfo;
-import app.bpartners.geojobs.service.cityjson.model.RowCol;
-import app.bpartners.geojobs.service.cityjson.model.TextureFile;
-import app.bpartners.geojobs.service.cityjson.model.TexturedBuildingData;
-import app.bpartners.geojobs.service.cityjson.model.TexturedCityJson;
-import app.bpartners.geojobs.service.cityjson.model.TexturedGeometry;
-import app.bpartners.geojobs.service.cityjson.model.UV;
+import app.bpartners.geojobs.service.cityjson.texture.model.BuildingData;
+import app.bpartners.geojobs.service.cityjson.texture.model.CityJsonFile;
+import app.bpartners.geojobs.service.cityjson.texture.model.RasterInfo;
+import app.bpartners.geojobs.service.cityjson.texture.model.RowCol;
+import app.bpartners.geojobs.service.cityjson.texture.model.TextureFile;
+import app.bpartners.geojobs.service.cityjson.texture.model.TexturedBuildingData;
+import app.bpartners.geojobs.service.cityjson.texture.model.TexturedCityJson;
+import app.bpartners.geojobs.service.cityjson.texture.model.TexturedGeometry;
+import app.bpartners.geojobs.service.cityjson.texture.model.UV;
 import app.bpartners.geojobs.service.lidar.model.geometry.GeometryWithProperties;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
