@@ -30,45 +30,6 @@ public class CityJsonTextureDomainService {
 
   private final ObjectMapper objectMapper = new ObjectMapper();
 
-  public CityJsonFile toCityJsonFile(ObjectNode json) {
-    ArrayNode rawVertices = (ArrayNode) json.get("vertices");
-
-    double scaleX = 1.0;
-    double scaleY = 1.0;
-    double scaleZ = 1.0;
-
-    double translateX = 0.0;
-    double translateY = 0.0;
-    double translateZ = 0.0;
-
-    if (json.has("transform")) {
-      JsonNode transform = json.get("transform");
-
-      JsonNode scale = transform.get("scale");
-      JsonNode translate = transform.get("translate");
-
-      scaleX = scale.get(0).asDouble();
-      scaleY = scale.get(1).asDouble();
-      scaleZ = scale.get(2).asDouble();
-
-      translateX = translate.get(0).asDouble();
-      translateY = translate.get(1).asDouble();
-      translateZ = translate.get(2).asDouble();
-    }
-
-    List<Vector3D> vertices = new ArrayList<>();
-
-    for (JsonNode rawVertex : rawVertices) {
-      double x = rawVertex.get(0).asDouble() * scaleX + translateX;
-      double y = rawVertex.get(1).asDouble() * scaleY + translateY;
-      double z = rawVertex.get(2).asDouble() * scaleZ + translateZ;
-
-      vertices.add(new Vector3D(x, y, z));
-    }
-
-    return new CityJsonFile(json, vertices);
-  }
-
   public TexturedBuildingData texture(
       BuildingData buildingData, RasterInfo rasterInfo, String textureDataUri) {
     return TexturedBuildingData.builder()
@@ -145,6 +106,45 @@ public class CityJsonTextureDomainService {
     cityJson.set("appearance", appearance);
 
     return new TexturedCityJson(cityJson);
+  }
+
+  public CityJsonFile toCityJsonFile(ObjectNode json) {
+    ArrayNode rawVertices = (ArrayNode) json.get("vertices");
+
+    double scaleX = 1.0;
+    double scaleY = 1.0;
+    double scaleZ = 1.0;
+
+    double translateX = 0.0;
+    double translateY = 0.0;
+    double translateZ = 0.0;
+
+    if (json.has("transform")) {
+      JsonNode transform = json.get("transform");
+
+      JsonNode scale = transform.get("scale");
+      JsonNode translate = transform.get("translate");
+
+      scaleX = scale.get(0).asDouble();
+      scaleY = scale.get(1).asDouble();
+      scaleZ = scale.get(2).asDouble();
+
+      translateX = translate.get(0).asDouble();
+      translateY = translate.get(1).asDouble();
+      translateZ = translate.get(2).asDouble();
+    }
+
+    List<Vector3D> vertices = new ArrayList<>();
+
+    for (JsonNode rawVertex : rawVertices) {
+      double x = rawVertex.get(0).asDouble() * scaleX + translateX;
+      double y = rawVertex.get(1).asDouble() * scaleY + translateY;
+      double z = rawVertex.get(2).asDouble() * scaleZ + translateZ;
+
+      vertices.add(new Vector3D(x, y, z));
+    }
+
+    return new CityJsonFile(json, vertices);
   }
 
   public List<TexturedGeometry> textureGeometries(
@@ -395,25 +395,23 @@ public class CityJsonTextureDomainService {
   }
 
   public RowCol rowColAffine(RasterInfo t, double x, double y) {
-    double a = t.pixelWidth();
-    double b = t.shearX();
-    double c = t.originX();
+    double pixelWidth = t.pixelWidth();
+    double originX = t.originX();
 
-    double d = t.shearY();
-    double e = t.pixelHeight();
-    double f = t.originY();
+    double pixelHeight = t.pixelHeight();
+    double originY = t.originY();
 
-    double determinant = a * e - b * d;
+    double determinant = pixelWidth * pixelHeight;
 
     if (Math.abs(determinant) < 1e-12) {
       throw new IllegalArgumentException("Raster transform is not invertible");
     }
 
-    double dx = x - c;
-    double dy = y - f;
+    double dx = x - originX;
+    double dy = y - originY;
 
-    double col = (e * dx - b * dy) / determinant;
-    double row = (-d * dx + a * dy) / determinant;
+    double col = dx / pixelWidth;
+    double row = dy / pixelHeight;
 
     return new RowCol(row, col);
   }

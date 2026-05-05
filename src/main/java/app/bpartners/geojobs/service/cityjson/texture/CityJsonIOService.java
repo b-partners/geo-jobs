@@ -101,6 +101,6 @@ public class CityJsonIOService {
     }
 
     return new RasterInfo(
-        originX, originY, pixelWidth, pixelHeight, 0.0, 0.0, image.getWidth(), image.getHeight());
+        originX, originY, pixelWidth, pixelHeight, image.getWidth(), image.getHeight());
   }
 }
