@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.service.cityjson.texture.model;
+package app.bpartners.geojobs.service.cityjson.model;
 
 import app.bpartners.geojobs.service.lidar.model.geometry.GeometryWithProperties;
 import java.util.List;

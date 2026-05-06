@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 
-class LidarDataToCityJsonProcessorTest {
+class LidarDataToCityJsonWithVerticesProcessorTest {
   private static final LidarDataToCityJsonProcessor subject =
       new LidarDataToCityJsonProcessor(new CityJsonFactory());
 

@@ -1,15 +1,8 @@
 package app.bpartners.geojobs.service.cityjson.texture;
 
 import app.bpartners.geojobs.model.lidar.planes.algorithm.Vector3DUtils;
-import app.bpartners.geojobs.service.cityjson.texture.model.BuildingData;
-import app.bpartners.geojobs.service.cityjson.texture.model.CityJsonFile;
-import app.bpartners.geojobs.service.cityjson.texture.model.RasterInfo;
-import app.bpartners.geojobs.service.cityjson.texture.model.RowCol;
-import app.bpartners.geojobs.service.cityjson.texture.model.TextureFile;
-import app.bpartners.geojobs.service.cityjson.texture.model.TexturedBuildingData;
-import app.bpartners.geojobs.service.cityjson.texture.model.TexturedCityJson;
-import app.bpartners.geojobs.service.cityjson.texture.model.TexturedGeometry;
-import app.bpartners.geojobs.service.cityjson.texture.model.UV;
+import app.bpartners.geojobs.service.cityjson.model.BuildingData;
+import app.bpartners.geojobs.service.cityjson.texture.model.*;
 import app.bpartners.geojobs.service.lidar.model.geometry.GeometryWithProperties;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,6 +15,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
+import org.jetbrains.annotations.NotNull;
 import org.locationtech.jts.math.Vector3D;
 import org.springframework.stereotype.Service;
 
@@ -29,8 +24,13 @@ import org.springframework.stereotype.Service;
 public class CityJsonTextureDomainService {
 
   private final ObjectMapper objectMapper = new ObjectMapper();
+  private final CityJsonIOService cityJsonIOService;
 
-  public CityJsonFile toCityJsonFile(ObjectNode json) {
+  public CityJsonTextureDomainService(CityJsonIOService cityJsonIOService) {
+    this.cityJsonIOService = cityJsonIOService;
+  }
+
+  public CityJsonWithVertices toCityJsonFile(ObjectNode json) {
     ArrayNode rawVertices = (ArrayNode) json.get("vertices");
 
     double scaleX = 1.0;
@@ -66,7 +66,7 @@ public class CityJsonTextureDomainService {
       vertices.add(new Vector3D(x, y, z));
     }
 
-    return new CityJsonFile(json, vertices);
+    return new CityJsonWithVertices(json, vertices);
   }
 
   public TexturedBuildingData texture(
@@ -81,13 +81,24 @@ public class CityJsonTextureDomainService {
         .build();
   }
 
-  public TexturedCityJson texture(CityJsonFile cityJsonFile, TextureFile textureFile) {
-    ObjectNode cityJson = cityJsonFile.json().deepCopy();
-    List<Vector3D> vertices = cityJsonFile.vertices();
+  public TexturedCityJson texture(CityJsonWithVertices cityJsonWithVertices, Texture texture) {
+    RasterInfo rasterInfo = texture.rasterInfo();
+    String textureDataUri = cityJsonIOService.imageToDataUri(texture.textureFile());
 
+    return texture(cityJsonWithVertices, textureDataUri, rasterInfo);
+  }
+
+  public TexturedCityJson texture(CityJsonWithVertices cityJsonWithVerticesFile, TextureFile textureFile) {
     RasterInfo rasterInfo = textureFile.rasterInfo();
     String textureDataUri = textureFile.dataUri();
 
+    return texture(cityJsonWithVerticesFile, textureDataUri, rasterInfo);
+  }
+
+  @NotNull
+  private TexturedCityJson texture(CityJsonWithVertices cityJsonWithVertices, String textureDataUri, RasterInfo rasterInfo) {
+    ObjectNode cityJson = cityJsonWithVertices.json().deepCopy();
+    List<Vector3D> vertices = cityJsonWithVertices.vertices();
     ObjectNode appearance = initAppearance(textureDataUri);
 
     List<UV> vertexTexture = new ArrayList<>();
@@ -400,7 +411,7 @@ public class CityJsonTextureDomainService {
     double c = t.originX();
 
     double d = t.shearY();
-    double e = t.pixelHeight();
+    double e = - t.pixelHeight();
     double f = t.originY();
 
     double determinant = a * e - b * d;
