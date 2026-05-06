@@ -5,19 +5,18 @@ import static org.junit.jupiter.api.Assertions.*;
 import app.bpartners.geojobs.service.cityjson.texture.model.RasterInfo;
 import app.bpartners.geojobs.service.cityjson.texture.model.Texture;
 import app.bpartners.geojobs.service.cityjson.texture.model.UV;
-
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import javax.imageio.ImageIO;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
 
-import javax.imageio.ImageIO;
-
 class CityJsonWithVerticesTextureServiceTest {
   CityJsonIOService cityJsonIOService = new CityJsonIOService();
-  CityJsonTextureDomainService cityJsonTextureDomainService = new CityJsonTextureDomainService(cityJsonIOService);
+  CityJsonTextureDomainService cityJsonTextureDomainService =
+      new CityJsonTextureDomainService(cityJsonIOService);
   CityJsonTextureService subject =
       new CityJsonTextureService(cityJsonIOService, cityJsonTextureDomainService);
 
@@ -40,7 +39,8 @@ class CityJsonWithVerticesTextureServiceTest {
     try {
       File tifFile =
           new ClassPathResource(
-              String.format("cityjson/texture/inputs/roof%s/roof%s.tif", roofNumber, roofNumber))
+                  String.format(
+                      "cityjson/texture/inputs/roof%s/roof%s.tif", roofNumber, roofNumber))
               .getFile();
       BufferedImage image = ImageIO.read(tifFile);
       double originX = 704696.108;
@@ -50,7 +50,8 @@ class CityJsonWithVerticesTextureServiceTest {
       int width = image.getWidth();
       int height = image.getHeight();
 
-      RasterInfo rasterInfo = new RasterInfo(originX, originY, pixelWidth, pixelHeight, 0, 0, width, height);
+      RasterInfo rasterInfo =
+          new RasterInfo(originX, originY, pixelWidth, pixelHeight, 0, 0, width, height);
       return new Texture(tifFile, rasterInfo);
     } catch (IOException e) {
       throw new IllegalStateException("Could not read image", e);
