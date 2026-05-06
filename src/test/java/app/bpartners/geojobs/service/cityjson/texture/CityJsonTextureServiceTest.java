@@ -65,6 +65,8 @@ class CityJsonTextureServiceTest {
             200.0, // origin
             0.5,
             -0.5, // pixel size
+            0.0,
+            0.0, // shear
             100,
             100 // width, height (so 50x50 area)
             );

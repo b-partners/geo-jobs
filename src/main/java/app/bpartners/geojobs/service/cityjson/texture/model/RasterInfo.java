@@ -5,5 +5,7 @@ public record RasterInfo(
     double originY,
     double pixelWidth,
     double pixelHeight,
+    double shearX,
+    double shearY,
     int width,
     int height) {}
