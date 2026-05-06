@@ -59,6 +59,7 @@ public class RoofFaceToLidarAlignmentFixer
 
     var items = delimitedRoofPoints.getItems();
     var result = new ArrayList<Plane3D>();
+    log.info("Translation={}",  finalTranslation);
     for (int i = 0; i < items.length; i++) {
       var item = items[i];
       var plane = planes.get(i);
