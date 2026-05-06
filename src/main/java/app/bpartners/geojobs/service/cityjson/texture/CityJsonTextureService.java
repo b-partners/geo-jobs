@@ -1,9 +1,12 @@
 package app.bpartners.geojobs.service.cityjson.texture;
 
-import app.bpartners.geojobs.service.cityjson.texture.model.*;
+import app.bpartners.geojobs.service.cityjson.texture.model.BuildingData;
+import app.bpartners.geojobs.service.cityjson.texture.model.CityJsonFile;
+import app.bpartners.geojobs.service.cityjson.texture.model.RasterInfo;
+import app.bpartners.geojobs.service.cityjson.texture.model.TextureFile;
+import app.bpartners.geojobs.service.cityjson.texture.model.TexturedBuildingData;
+import app.bpartners.geojobs.service.cityjson.texture.model.TexturedCityJson;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import lombok.AllArgsConstructor;
@@ -16,13 +19,25 @@ public class CityJsonTextureService {
   private final CityJsonIOService cityJsonIOService;
   private final CityJsonTextureDomainService cityJsonTextureDomainService;
 
-  public File textureCityJson(File cityJsonFile, Texture texture) {
-    ObjectNode json = cityJsonIOService.loadCityJsonFile(cityJsonFile);
-    CityJsonWithVertices cityJsonWithVertices = cityJsonTextureDomainService.toCityJsonFile(json);
+  public TexturedBuildingData texture(BuildingData buildingData, Path tifPath) throws IOException {
+    RasterInfo rasterInfo = cityJsonIOService.readRasterInfo(tifPath);
+    String textureDataUri = cityJsonIOService.imageToDataUri(tifPath);
+
+    return cityJsonTextureDomainService.texture(buildingData, rasterInfo, textureDataUri);
+  }
+
+  public void textureCityJson(Path cityJsonPath, Path tifPath, Path outputDirectory, int roofNumber)
+      throws IOException {
+    Path outputPath = outputDirectory.resolve("roof" + roofNumber + ".json");
+
+    ObjectNode json = cityJsonIOService.loadCityJson(cityJsonPath);
+    CityJsonFile cityJsonFile = cityJsonTextureDomainService.toCityJsonFile(json);
+    TextureFile textureFile = cityJsonIOService.loadTexture(tifPath);
 
     TexturedCityJson texturedCityJson =
-        cityJsonTextureDomainService.texture(cityJsonWithVertices, texture);
+        cityJsonTextureDomainService.texture(cityJsonFile, textureFile);
 
-    return cityJsonIOService.toFile(texturedCityJson);
+    cityJsonIOService.save(texturedCityJson, outputPath);
+    cityJsonIOService.saveTexture(tifPath, outputDirectory);
   }
 }
