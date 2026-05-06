@@ -9,8 +9,6 @@ import app.bpartners.geojobs.service.cityjson.texture.model.UV;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
@@ -19,7 +17,7 @@ import javax.imageio.ImageIO;
 
 class CityJsonWithVerticesTextureServiceTest {
   CityJsonIOService cityJsonIOService = new CityJsonIOService();
-  CityJsonTextureDomainService cityJsonTextureDomainService = new CityJsonTextureDomainService();
+  CityJsonTextureDomainService cityJsonTextureDomainService = new CityJsonTextureDomainService(cityJsonIOService);
   CityJsonTextureService subject =
       new CityJsonTextureService(cityJsonIOService, cityJsonTextureDomainService);
 
@@ -47,8 +45,12 @@ class CityJsonWithVerticesTextureServiceTest {
       BufferedImage image = ImageIO.read(tifFile);
       double originX = 704696.108;
       double originY = 6535581.773;
-      RasterInfo rasterInfo = RasterInfo.of(originX, originY, image.getWidth(), image.getHeight());
+      double pixelWidth = 0.1500220125787833;
+      double pixelHeight = -0.1503625498023404;
+      int width = image.getWidth();
+      int height = image.getHeight();
 
+      RasterInfo rasterInfo = new RasterInfo(originX, originY, pixelWidth, pixelHeight, 0, 0, width, height);
       return new Texture(tifFile, rasterInfo);
     } catch (IOException e) {
       throw new IllegalStateException("Could not read image", e);
@@ -56,7 +58,7 @@ class CityJsonWithVerticesTextureServiceTest {
   }
 
   @Test
-  void verifyEdgeMapping() {
+  void uv_computer() {
     RasterInfo rasterInfo =
         new RasterInfo(
             100.0,
