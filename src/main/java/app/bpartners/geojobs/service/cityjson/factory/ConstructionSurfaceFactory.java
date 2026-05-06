@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.service.cityjson.factory;
 
 import app.bpartners.geojobs.service.cityjson.model.ConstructionSurfaceType;
-import app.bpartners.geojobs.service.lidar.model.geometry.GeometryWithProperties;
+import app.bpartners.geojobs.service.cityjson.model.PolygonWithProperties;
 import java.util.Arrays;
 import java.util.List;
 import org.citygml4j.cityjson.model.geometry.Vertex;
@@ -19,9 +19,9 @@ public class ConstructionSurfaceFactory {
   private ConstructionSurfaceFactory() {}
 
   public static AbstractConstructionSurface make(
-      ConstructionSurfaceType type, GeometryWithProperties geometryWithProperties) {
+      ConstructionSurfaceType type, PolygonWithProperties polygonWithProperties) {
     var surface = getSurface(type);
-    var vertices = toVertices(geometryWithProperties.asPolygon());
+    var vertices = toVertices(polygonWithProperties.polygon());
 
     var ring = new LinearRing(toDirectionPositionList(vertices));
     var polygon = new Polygon(ring);
@@ -30,7 +30,7 @@ public class ConstructionSurfaceFactory {
     multiSurface.setSurfaceMember(List.of(new SurfaceProperty(polygon)));
     surface.setLod2MultiSurface(new MultiSurfaceProperty(multiSurface));
 
-    var properties = GenericAttributeFactory.make(geometryWithProperties.properties());
+    var properties = GenericAttributeFactory.make(polygonWithProperties.properties());
     surface.setGenericAttributes(properties);
 
     return surface;

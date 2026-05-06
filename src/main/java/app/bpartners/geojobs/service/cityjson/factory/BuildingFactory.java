@@ -4,6 +4,7 @@ import static app.bpartners.geojobs.service.cityjson.model.ConstructionSurfaceTy
 
 import app.bpartners.geojobs.service.cityjson.model.BuildingData;
 import app.bpartners.geojobs.service.cityjson.model.ConstructionSurfaceType;
+import app.bpartners.geojobs.service.cityjson.texture.model.TexturedGeometry;
 import app.bpartners.geojobs.service.lidar.model.geometry.GeometryWithProperties;
 import java.util.List;
 import org.citygml4j.core.model.building.Building;
@@ -31,10 +32,37 @@ public class BuildingFactory {
     return building;
   }
 
+  public static Building make(TexturedBuildingData buildingData) {
+    var building = new Building();
+    building.setId(buildingData.id());
+
+    var roofBoundaries = toTexturedAbstractSpaceBoundaryProperty(ROOF, buildingData.roofs());
+    roofBoundaries.forEach(building::addBoundary);
+
+    var wallBoundaries = toTexturedAbstractSpaceBoundaryProperty(WALL, buildingData.walls());
+    wallBoundaries.forEach(building::addBoundary);
+
+    var groundBoundaries = toTexturedAbstractSpaceBoundaryProperty(GROUND, buildingData.grounds());
+    groundBoundaries.forEach(building::addBoundary);
+
+    var properties = GenericAttributeFactory.make(buildingData.properties());
+    building.setGenericAttributes(properties);
+
+    return building;
+  }
+
   public static List<AbstractSpaceBoundaryProperty> toAbstractSpaceBoundaryProperty(
       ConstructionSurfaceType type, List<GeometryWithProperties> polygonsWithProperties) {
     return polygonsWithProperties.stream()
         .map(polygonWithProperties -> ConstructionSurfaceFactory.make(type, polygonWithProperties))
+        .map(AbstractSpaceBoundaryProperty::new)
+        .toList();
+  }
+
+  public static List<AbstractSpaceBoundaryProperty> toTexturedAbstractSpaceBoundaryProperty(
+      ConstructionSurfaceType type, List<TexturedGeometry> texturedGeometries) {
+    return texturedGeometries.stream()
+        .map(texturedGeometry -> ConstructionSurfaceFactory.make(type, texturedGeometry))
         .map(AbstractSpaceBoundaryProperty::new)
         .toList();
   }
