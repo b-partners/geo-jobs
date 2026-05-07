@@ -1292,40 +1292,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/CityJSONRequest'
 
-  '/3d/texture':
-    post:
-      tags:
-        - ThreeD
-      operationId: textureCityJSON
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              required:
-                - cityJson
-                - image
-                - rasterInfo
-              properties:
-                cityJson:
-                  type: string
-                  format: binary
-
-                image:
-                  type: string
-                  format: binary
-
-                rasterInfo:
-                  $ref: '#/components/schemas/RasterInfo'
-      responses:
-        '200':
-          description: Textured city json
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TexturedCityJson'
-
   '/3d/{id}':
     get:
       tags:
@@ -1702,24 +1668,6 @@ components:
           schema:
             $ref: '#/components/schemas/InternalServerException'
   schemas:
-    TexturedCityJson:
-      type: string
-      format: binary
-
-    RasterInfo:
-      type: object
-      description: Describe an image's properties
-      properties:
-        topLeftLat:
-          type: number
-          description: The latitude of the image's top left corner
-        topLeftLon:
-          type: number
-          description: The longitude of the image's top left corner
-        onePixelInCentimeters:
-          type: number
-          description: The size of a pixel in centimeters
-
     RoofScore:
       type: object
       description: Represents the overall damage rate score of a roof based on multiple degradation factors.
