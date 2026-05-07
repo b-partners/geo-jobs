@@ -38,7 +38,6 @@ class CityJsonTextureServiceTest {
 
     var actual = subject.textureCityJson(cityJsonFile, tifFile);
     assertNotNull(actual);
-    System.out.println(actual.getAbsolutePath());
   }
 
   @Test
@@ -68,7 +67,6 @@ class CityJsonTextureServiceTest {
     File computedGeoTiffFile = geoTiffWriter.toGeoTiffFile(image, originX, originY, pixelSize);
 
     var actual = subject.textureCityJson(cityJsonFile, computedGeoTiffFile);
-    System.out.println(actual.getAbsolutePath());
     assertNotNull(actual);
   }
 
