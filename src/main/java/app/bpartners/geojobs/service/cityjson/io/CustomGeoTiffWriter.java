@@ -14,6 +14,18 @@ public class CustomGeoTiffWriter {
 
   public File toGeoTiffFile(
       BufferedImage image, double originX, double originY, double pixelSizeMeters) {
+    if (image.getWidth() <= 0 || image.getHeight() <= 0) {
+      throw new IllegalArgumentException(
+          "Image must have positive dimensions, got: "
+              + image.getWidth()
+              + "x"
+              + image.getHeight());
+    }
+    if (pixelSizeMeters <= 0) {
+      throw new IllegalArgumentException(
+          "pixelSizeMeters must be positive, got: " + pixelSizeMeters);
+    }
+
     try {
       double maxX = originX + image.getWidth() * pixelSizeMeters;
       double minY = originY - image.getHeight() * pixelSizeMeters;

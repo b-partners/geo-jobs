@@ -51,7 +51,7 @@ class CityJsonTextureServiceTest {
     TextureFile textureFile = cityJsonIOService.loadTexture(tifFile);
     double pixelWidth = textureFile.rasterInfo().pixelWidth();
     double pixelHeight = textureFile.rasterInfo().pixelHeight();
-    int pixelSize = Double.valueOf(((abs(pixelWidth) + abs(pixelHeight)) / 2) * 100).intValue();
+    double pixelSize = ((abs(pixelWidth) + abs(pixelHeight)) / 2);
     double originX = textureFile.rasterInfo().originX();
     double originY = textureFile.rasterInfo().originY();
 
