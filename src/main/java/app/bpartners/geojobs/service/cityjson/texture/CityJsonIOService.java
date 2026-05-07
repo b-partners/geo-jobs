@@ -5,7 +5,6 @@ import static java.util.UUID.randomUUID;
 import app.bpartners.geojobs.service.cityjson.texture.model.RasterInfo;
 import app.bpartners.geojobs.service.cityjson.texture.model.TextureFile;
 import app.bpartners.geojobs.service.cityjson.texture.model.TexturedCityJson;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.awt.Graphics2D;
@@ -19,12 +18,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
 import javax.imageio.ImageIO;
+
+import lombok.extern.slf4j.Slf4j;
+import org.gdal.gdal.Dataset;
+import org.gdal.gdal.gdal;
 import org.geotools.api.referencing.datum.PixelInCell;
 import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.gce.geotiff.GeoTiffReader;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 public class CityJsonIOService {
 
@@ -143,18 +147,26 @@ public class CityJsonIOService {
 
     if (originX == 0.0 && originY == 0.0 && pixelWidth == 1.0) {
       try {
-        Process process = new ProcessBuilder("gdalinfo", "-json", tifFile.toString()).start();
-        JsonNode gdalJson = objectMapper.readTree(process.getInputStream());
-        if (gdalJson.has("geoTransform")) {
-          JsonNode gt = gdalJson.get("geoTransform");
-          originX = gt.get(0).asDouble();
-          pixelWidth = gt.get(1).asDouble();
-          originY = gt.get(3).asDouble();
-          pixelHeight = gt.get(5).asDouble();
+        gdal.AllRegister();
+
+        Dataset dataset = gdal.Open(tifFile.toString());
+
+        if (dataset != null) {
+          double[] geoTransform = dataset.GetGeoTransform();
+
+          if (geoTransform != null && geoTransform.length >= 6) {
+            originX = geoTransform[0];
+            pixelWidth = geoTransform[1];
+            originY = geoTransform[3];
+            pixelHeight = geoTransform[5];
+          }
+
+          dataset.delete();
         }
-      } catch (Exception ex) {
-        System.err.println(
-            "Warning: Could not read GeoTIFF transform using gdalinfo: " + ex.getMessage());
+
+      } catch (Exception e) {
+        log.error("Warning: Could not read GeoTIFF transform using GDAL Java bindings: "
+            + e.getMessage());
       }
     }
 

@@ -36,7 +36,8 @@ class CityJsonTextureServiceTest {
                 String.format("cityjson/texture/inputs/roof%s/roof%s.tif", roofNumber, roofNumber))
             .getFile();
 
-    subject.textureCityJson(cityJsonFile, tifFile);
+    var actual = subject.textureCityJson(cityJsonFile, tifFile);
+    assertNotNull(actual);
   }
 
   @Test
@@ -65,7 +66,8 @@ class CityJsonTextureServiceTest {
     BufferedImage image = ImageIO.read(imageFile);
     File computedGeoTiffFile = geoTiffWriter.toGeoTiffFile(image, originX, originY, pixelSize);
 
-    subject.textureCityJson(cityJsonFile, computedGeoTiffFile);
+    var actual = subject.textureCityJson(cityJsonFile, computedGeoTiffFile);
+    assertNotNull(actual);
   }
 
   @Test

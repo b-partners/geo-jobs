@@ -6,13 +6,12 @@ import app.bpartners.geojobs.service.cityjson.texture.CityJsonIOService;
 import app.bpartners.geojobs.service.cityjson.texture.model.RasterInfo;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
 import org.junit.jupiter.api.Test;
 
 class CustomGeoTiffWriterTest {
 
   @Test
-  void toGeoTiffFile_producesNonEmptyFile() throws IOException {
+  void toGeoTiffFile_producesNonEmptyFile() {
     CustomGeoTiffWriter writer = new CustomGeoTiffWriter();
     BufferedImage image = new BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB);
     File result = writer.toGeoTiffFile(image, 0, 0, 0.1);
