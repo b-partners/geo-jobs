@@ -48,7 +48,7 @@ class ThreeDRequestIT {
         List.of(
             "1 Bd du Riou - 06400 Cannes",
             "44.857200907657514, 4.829979795217078", // "D86 Ldit Les Cotes - 07800
-                                                     // Saint-Georges-les-Bains",
+            // Saint-Georges-les-Bains",
             "19 Rue du Four Saint-Jacques - Compiègne",
             "2 Av. Jean Jaurès - 03350 Cérilly",
             "1 Rue de la Loire - 35470 Bain-de-Bretagne",
