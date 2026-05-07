@@ -12,7 +12,7 @@ import app.bpartners.geojobs.service.cityjson.exception.CityJsonException;
 import app.bpartners.geojobs.service.cityjson.factory.BuildingGroundPolygonFactory;
 import app.bpartners.geojobs.service.cityjson.factory.BuildingWallPolygonFactory;
 import app.bpartners.geojobs.service.cityjson.factory.CityJsonFactory;
-import app.bpartners.geojobs.service.cityjson.texture.model.BuildingData;
+import app.bpartners.geojobs.service.cityjson.model.BuildingData;
 import app.bpartners.geojobs.service.lidar.LidarRoofsAnalysisProcessor;
 import app.bpartners.geojobs.service.lidar.PointsExtractionResult;
 import app.bpartners.geojobs.service.lidar.model.geometry.GeometryWithProperties;
