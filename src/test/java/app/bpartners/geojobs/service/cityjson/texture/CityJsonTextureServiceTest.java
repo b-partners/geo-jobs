@@ -1,60 +1,68 @@
 package app.bpartners.geojobs.service.cityjson.texture;
 
+import static java.lang.Math.abs;
 import static org.junit.jupiter.api.Assertions.*;
 
-import app.bpartners.geojobs.service.cityjson.exception.CityJsonException;
-import app.bpartners.geojobs.service.cityjson.factory.CityJsonFactory;
-import app.bpartners.geojobs.service.cityjson.texture.model.BuildingData;
-import app.bpartners.geojobs.service.cityjson.texture.model.RasterInfo;
-import app.bpartners.geojobs.service.cityjson.texture.model.TexturedBuildingData;
-import app.bpartners.geojobs.service.cityjson.texture.model.UV;
-import app.bpartners.geojobs.service.lidar.model.geometry.GeometryWithProperties;
+import app.bpartners.geojobs.service.cityjson.io.CustomGeoTiffWriter;
+import app.bpartners.geojobs.service.cityjson.texture.model.*;
+
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.Polygon;
 import org.springframework.core.io.ClassPathResource;
+
+import javax.imageio.ImageIO;
 
 class CityJsonTextureServiceTest {
 
   CityJsonIOService cityJsonIOService = new CityJsonIOService();
-  CityJsonTextureDomainService cityJsonTextureDomainService = new CityJsonTextureDomainService();
+  CityJsonTextureDomainService cityJsonTextureDomainService = new CityJsonTextureDomainService(cityJsonIOService);
   CityJsonTextureService subject =
       new CityJsonTextureService(cityJsonIOService, cityJsonTextureDomainService);
 
   @Test
   void texturize() throws IOException {
     int roofNumber = 4;
-    Path cityJsonPath =
+    File cityJsonFile =
         new ClassPathResource(
-                String.format("cityjson/texture/inputs/roof%s/roof%s.json", roofNumber, roofNumber))
-            .getFile()
-            .toPath();
-    Path tifPath =
+            String.format("cityjson/texture/inputs/roof%s/roof%s.json", roofNumber, roofNumber))
+            .getFile();
+    File tifFile =
         new ClassPathResource(
-                String.format("cityjson/texture/inputs/roof%s/roof%s.tif", roofNumber, roofNumber))
-            .getFile()
-            .toPath();
-    Path outputDirectory =
-        Files.createTempDirectory(String.format("cityjson-texture-roof%s-", roofNumber));
+            String.format("cityjson/texture/inputs/roof%s/roof%s.tif", roofNumber, roofNumber))
+            .getFile();
 
-    subject.textureCityJson(cityJsonPath, tifPath, outputDirectory, roofNumber);
+    subject.textureCityJson(cityJsonFile, tifFile);
+  }
 
-    Path expectedOutputFile = outputDirectory.resolve("roof" + roofNumber + ".json");
-    assertTrue(Files.exists(expectedOutputFile), "Output file should exist: " + expectedOutputFile);
-    assertTrue(Files.size(expectedOutputFile) > 0, "Output file should not be empty");
+  @Test
+  void texturize_from_geotiff_writer() throws IOException {
+    CustomGeoTiffWriter geoTiffWriter = new CustomGeoTiffWriter();
+    int roofNumber = 5;
+    File cityJsonFile =
+        new ClassPathResource(
+            String.format("cityjson/texture/inputs/roof%s/roof%s.json", roofNumber, roofNumber))
+            .getFile();
+    File tifFile =
+        new ClassPathResource(
+            String.format("cityjson/texture/inputs/roof%s/roof%s.tif", roofNumber, roofNumber))
+            .getFile();
+    TextureFile textureFile = cityJsonIOService.loadTexture(tifFile);
+    double pixelWidth = textureFile.rasterInfo().pixelWidth();
+    double pixelHeight = textureFile.rasterInfo().pixelHeight();
+    int pixelSize = Double.valueOf(((abs(pixelWidth) + abs(pixelHeight)) / 2) * 100).intValue();
+    double originX = textureFile.rasterInfo().originX();
+    double originY = textureFile.rasterInfo().originY();
 
-    Path expectedTextureFile = outputDirectory.resolve("texture.png");
-    assertTrue(
-        Files.exists(expectedTextureFile), "Texture file should exist: " + expectedTextureFile);
-    assertTrue(Files.size(expectedTextureFile) > 0, "Texture file should not be empty");
+    File imageFile = new ClassPathResource(
+        String.format("cityjson/texture/outputs/roof%s/texture.png", roofNumber))
+        .getFile();
+    BufferedImage image = ImageIO.read(imageFile);
+    File computedGeoTiffFile = geoTiffWriter.toGeoTiffFile(image, originX, originY, pixelSize);
+
+    subject.textureCityJson(cityJsonFile, computedGeoTiffFile);
   }
 
   @Test
@@ -107,89 +115,5 @@ class CityJsonTextureServiceTest {
     // v = 1.0 - (0.25 / 100) = 0.9975
     assertEquals(0.0025, uvSubPixel.get(0).u(), 1e-6, "Sub-pixel U should be 0.0025");
     assertEquals(0.9975, uvSubPixel.get(0).v(), 1e-6, "Sub-pixel V should be 0.9975");
-  }
-
-  @Test
-  void testTextureBuildingData() throws IOException {
-    Path tifPath =
-        new ClassPathResource("cityjson/texture/inputs/roof4/roof4.tif").getFile().toPath();
-
-    GeometryFactory gf = new GeometryFactory();
-    Polygon polygon =
-        gf.createPolygon(
-            new Coordinate[] {
-              new Coordinate(100.0, 200.0, 10.0),
-              new Coordinate(150.0, 200.0, 10.0),
-              new Coordinate(150.0, 150.0, 10.0),
-              new Coordinate(100.0, 150.0, 10.0),
-              new Coordinate(100.0, 200.0, 10.0)
-            });
-
-    BuildingData buildingData =
-        BuildingData.builder()
-            .id("test-building")
-            .roofs(
-                List.of(
-                    GeometryWithProperties.builder()
-                        .geometry(polygon)
-                        .properties(Collections.emptyMap())
-                        .build()))
-            .walls(Collections.emptyList())
-            .grounds(Collections.emptyList())
-            .properties(Collections.emptyMap())
-            .build();
-
-    TexturedBuildingData textured = subject.texture(buildingData, tifPath);
-
-    assertNotNull(textured);
-    assertEquals("test-building", textured.id());
-    assertEquals(1, textured.roofs().size());
-    assertNotNull(textured.textureDataUri());
-    assertTrue(textured.textureDataUri().startsWith("data:image/png;base64,"));
-
-    var texturedRoof = textured.roofs().get(0);
-    assertEquals(5, texturedRoof.uvs().size());
-  }
-
-  @Test
-  void texture_should_output_file(@TempDir Path tempDir) throws IOException, CityJsonException {
-    Path tifPath =
-        new ClassPathResource("cityjson/texture/inputs/roof4/roof4.tif").getFile().toPath();
-
-    GeometryFactory gf = new GeometryFactory();
-    Polygon polygon =
-        gf.createPolygon(
-            new Coordinate[] {
-              new Coordinate(100.0, 200.0, 10.0),
-              new Coordinate(150.0, 200.0, 10.0),
-              new Coordinate(150.0, 150.0, 10.0),
-              new Coordinate(100.0, 150.0, 10.0),
-              new Coordinate(100.0, 200.0, 10.0)
-            });
-
-    BuildingData buildingData =
-        BuildingData.builder()
-            .id("test-building")
-            .roofs(
-                List.of(
-                    GeometryWithProperties.builder()
-                        .geometry(polygon)
-                        .properties(Collections.emptyMap())
-                        .build()))
-            .walls(Collections.emptyList())
-            .grounds(Collections.emptyList())
-            .properties(Collections.emptyMap())
-            .build();
-
-    TexturedBuildingData textured = subject.texture(buildingData, tifPath);
-
-    // Save as CityJSON using CityJsonFactory
-    CityJsonFactory cityJsonFactory = new CityJsonFactory(tempDir.toFile());
-    File cityJsonFile =
-        cityJsonFactory.makeFromTextured("test-output", "Test Output", List.of(textured));
-
-    assertTrue(cityJsonFile.exists());
-    assertTrue(cityJsonFile.length() > 0);
-    assertEquals("test-output.json", cityJsonFile.getName());
   }
 }

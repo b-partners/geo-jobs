@@ -2,7 +2,7 @@ package app.bpartners.geojobs.service.cityjson.texture;
 
 import app.bpartners.geojobs.model.lidar.planes.algorithm.Vector3DUtils;
 import app.bpartners.geojobs.service.cityjson.texture.model.BuildingData;
-import app.bpartners.geojobs.service.cityjson.texture.model.CityJsonFile;
+import app.bpartners.geojobs.service.cityjson.texture.model.CityJsonWithVertices;
 import app.bpartners.geojobs.service.cityjson.texture.model.RasterInfo;
 import app.bpartners.geojobs.service.cityjson.texture.model.RowCol;
 import app.bpartners.geojobs.service.cityjson.texture.model.TextureFile;
@@ -15,6 +15,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -29,8 +31,13 @@ import org.springframework.stereotype.Service;
 public class CityJsonTextureDomainService {
 
   private final ObjectMapper objectMapper = new ObjectMapper();
+  private final CityJsonIOService cityJsonIOService;
 
-  public CityJsonFile toCityJsonFile(ObjectNode json) {
+  public CityJsonTextureDomainService(CityJsonIOService cityJsonIOService) {
+    this.cityJsonIOService = cityJsonIOService;
+  }
+
+  public CityJsonWithVertices toCityJsonFile(ObjectNode json) {
     ArrayNode rawVertices = (ArrayNode) json.get("vertices");
 
     double scaleX = 1.0;
@@ -66,7 +73,7 @@ public class CityJsonTextureDomainService {
       vertices.add(new Vector3D(x, y, z));
     }
 
-    return new CityJsonFile(json, vertices);
+    return new CityJsonWithVertices(json, vertices);
   }
 
   public TexturedBuildingData texture(
@@ -81,12 +88,12 @@ public class CityJsonTextureDomainService {
         .build();
   }
 
-  public TexturedCityJson texture(CityJsonFile cityJsonFile, TextureFile textureFile) {
-    ObjectNode cityJson = cityJsonFile.json().deepCopy();
-    List<Vector3D> vertices = cityJsonFile.vertices();
+  public TexturedCityJson texture(CityJsonWithVertices cityJsonWithVertices, TextureFile textureFile) {
+    ObjectNode cityJson = cityJsonWithVertices.json().deepCopy();
+    List<Vector3D> vertices = cityJsonWithVertices.vertices();
 
     RasterInfo rasterInfo = textureFile.rasterInfo();
-    String textureDataUri = textureFile.dataUri();
+    String textureDataUri = cityJsonIOService.saveTexture(textureFile.tifFile()); // TODO: remplace with S3 URL
 
     ObjectNode appearance = initAppearance(textureDataUri);
 

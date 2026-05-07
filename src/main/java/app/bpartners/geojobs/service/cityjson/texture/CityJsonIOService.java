@@ -9,6 +9,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,19 +18,40 @@ import java.util.Base64;
 import javax.imageio.ImageIO;
 import org.springframework.stereotype.Service;
 
+import static java.util.UUID.randomUUID;
+
 @Service
 public class CityJsonIOService {
 
   private final ObjectMapper objectMapper = new ObjectMapper();
 
-  public ObjectNode loadCityJson(Path path) throws IOException {
-    return (ObjectNode) objectMapper.readTree(path.toFile());
+  public ObjectNode loadCityJson(File file) {
+    try {
+      return (ObjectNode) objectMapper.readTree(file);
+    }catch (IOException e) {
+      throw new IllegalStateException("Failed to read CityJSON file", e);
+    }
   }
 
-  public TextureFile loadTexture(Path path) throws IOException {
-    RasterInfo rasterInfo = readRasterInfo(path);
-    String dataUri = imageToDataUri(path);
-    return new TextureFile(dataUri, rasterInfo);
+  public TextureFile loadTexture(File tifFile) {
+    RasterInfo rasterInfo = readRasterInfo(tifFile);
+    String dataUri = tifFile.getAbsolutePath(); // TODO: change into S3 URL
+    return new TextureFile(dataUri, rasterInfo, tifFile);
+  }
+
+  public File toFile(TexturedCityJson texturedCityJson) {
+    try {
+      File file = File.createTempFile("textured-cityjson-" + randomUUID(), ".json");
+
+      try (FileWriter writer = new FileWriter(file)) {
+        writer.write(texturedCityJson.json().toString());
+      }
+
+      return file;
+
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to write JSON to file", e);
+    }
   }
 
   public void save(TexturedCityJson texturedCityJson, Path outputPath) throws IOException {
@@ -40,44 +63,52 @@ public class CityJsonIOService {
         .writeValue(outputPath.toFile(), texturedCityJson.json());
   }
 
-  public String imageToDataUri(Path tifPath) throws IOException {
-    BufferedImage image = ImageIO.read(tifPath.toFile());
+  public String imageToDataUri(File tifFile){
     try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+      BufferedImage image = ImageIO.read(tifFile);
       ImageIO.write(image, "png", baos);
       byte[] imageBytes = baos.toByteArray();
       String base64Image = Base64.getEncoder().encodeToString(imageBytes);
       return "data:image/png;base64," + base64Image;
+    } catch (IOException e) {
+      throw new IllegalStateException("Failed to read GeoTIFF image", e);
     }
   }
 
-  public String saveTexture(Path tifPath, Path outputDirectory) throws IOException {
-    Files.createDirectories(outputDirectory);
+  public String saveTexture(File tifFile) {
+    try {
+      BufferedImage image = ImageIO.read(tifFile);
 
-    BufferedImage image = ImageIO.read(tifPath.toFile());
+      if (image == null) {
+        throw new IllegalStateException("Could not read GeoTIFF image: " + tifFile);
+      }
 
-    if (image == null) {
-      throw new IOException("Could not read GeoTIFF image: " + tifPath);
+      BufferedImage rgbImage =
+          new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_RGB);
+
+      Graphics2D graphics = rgbImage.createGraphics();
+      graphics.drawImage(image, 0, 0, null);
+      graphics.dispose();
+
+      File pngFile = Files.createTempFile("texture-", ".png").toFile();
+      ImageIO.write(rgbImage, "png", pngFile);
+
+      return pngFile.getAbsolutePath();
+    } catch (IOException e) {
+      throw new IllegalStateException("Failed to save GeoTIFF image as PNG image", e);
     }
-
-    BufferedImage rgbImage =
-        new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_RGB);
-
-    Graphics2D graphics = rgbImage.createGraphics();
-    graphics.drawImage(image, 0, 0, null);
-    graphics.dispose();
-
-    Path outputPath = outputDirectory.resolve("texture.png");
-
-    ImageIO.write(rgbImage, "png", outputPath.toFile());
-
-    return outputPath.toAbsolutePath().toString();
   }
 
-  public RasterInfo readRasterInfo(Path tifPath) throws IOException {
-    BufferedImage image = ImageIO.read(tifPath.toFile());
+  public RasterInfo readRasterInfo(File tifFile) {
+    BufferedImage image;
+    try {
+      image = ImageIO.read(tifFile);
+    } catch (IOException e) {
+      throw new IllegalStateException("Failed to read GeoTIFF image", e);
+    }
 
     if (image == null) {
-      throw new IOException("Could not read raster dimensions: " + tifPath);
+      throw new IllegalStateException("Could not read raster dimensions: " + tifFile.getAbsolutePath());
     }
 
     double originX = 0.0;
@@ -86,7 +117,7 @@ public class CityJsonIOService {
     double pixelHeight = -1.0;
 
     try {
-      Process process = new ProcessBuilder("gdalinfo", "-json", tifPath.toString()).start();
+      Process process = new ProcessBuilder("gdalinfo", "-json", tifFile.toString()).start();
       JsonNode gdalJson = objectMapper.readTree(process.getInputStream());
       if (gdalJson.has("geoTransform")) {
         JsonNode gt = gdalJson.get("geoTransform");
