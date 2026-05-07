@@ -1,7 +1,6 @@
 package app.bpartners.geojobs.service.cityjson.factory;
 
 import app.bpartners.geojobs.service.cityjson.model.BuildingData;
-
 import java.util.List;
 import org.citygml4j.core.model.core.AbstractCityObjectProperty;
 import org.citygml4j.core.model.core.CityModel;

@@ -80,7 +80,7 @@ public class CityJsonIOService {
     }
   }
 
-  public String saveTexture(File tifFile) {
+  public File saveTexture(File tifFile) {
     try {
       BufferedImage image = ImageIO.read(tifFile);
 
@@ -98,7 +98,7 @@ public class CityJsonIOService {
       File pngFile = Files.createTempFile("texture-", ".png").toFile();
       ImageIO.write(rgbImage, "png", pngFile);
 
-      return pngFile.getAbsolutePath();
+      return pngFile;
     } catch (IOException e) {
       throw new IllegalStateException("Failed to save GeoTIFF image as PNG image", e);
     }

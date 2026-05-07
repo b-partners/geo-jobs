@@ -2,7 +2,9 @@ package app.bpartners.geojobs.service.cityjson.texture;
 
 import static java.lang.Math.abs;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
 
+import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.service.cityjson.io.CustomGeoTiffWriter;
 import app.bpartners.geojobs.service.cityjson.texture.model.*;
 import java.awt.image.BufferedImage;
@@ -16,8 +18,9 @@ import org.springframework.core.io.ClassPathResource;
 class CityJsonTextureServiceTest {
 
   CityJsonIOService cityJsonIOService = new CityJsonIOService();
+  BucketComponent bucketComponent = mock(BucketComponent.class);
   CityJsonTextureDomainService cityJsonTextureDomainService =
-      new CityJsonTextureDomainService(cityJsonIOService);
+      new CityJsonTextureDomainService(cityJsonIOService, bucketComponent);
   CityJsonTextureService subject =
       new CityJsonTextureService(cityJsonIOService, cityJsonTextureDomainService);
 

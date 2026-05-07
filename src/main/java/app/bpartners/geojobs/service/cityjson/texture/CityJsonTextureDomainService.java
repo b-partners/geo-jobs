@@ -1,20 +1,18 @@
 package app.bpartners.geojobs.service.cityjson.texture;
 
+import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.lidar.planes.algorithm.Vector3DUtils;
-import app.bpartners.geojobs.service.cityjson.model.BuildingData;
 import app.bpartners.geojobs.service.cityjson.texture.model.CityJsonWithVertices;
 import app.bpartners.geojobs.service.cityjson.texture.model.RasterInfo;
 import app.bpartners.geojobs.service.cityjson.texture.model.RowCol;
 import app.bpartners.geojobs.service.cityjson.texture.model.TextureFile;
 import app.bpartners.geojobs.service.cityjson.texture.model.TexturedCityJson;
 import app.bpartners.geojobs.service.cityjson.texture.model.UV;
-import app.bpartners.geojobs.service.lidar.model.geometry.GeometryWithProperties;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -28,9 +26,12 @@ public class CityJsonTextureDomainService {
 
   private final ObjectMapper objectMapper = new ObjectMapper();
   private final CityJsonIOService cityJsonIOService;
+  private final BucketComponent bucketComponent;
 
-  public CityJsonTextureDomainService(CityJsonIOService cityJsonIOService) {
+  public CityJsonTextureDomainService(
+      CityJsonIOService cityJsonIOService, BucketComponent bucketComponent) {
     this.cityJsonIOService = cityJsonIOService;
+    this.bucketComponent = bucketComponent;
   }
 
   public CityJsonWithVertices toCityJsonFile(ObjectNode json) {
@@ -78,8 +79,17 @@ public class CityJsonTextureDomainService {
     List<Vector3D> vertices = cityJsonWithVertices.vertices();
 
     RasterInfo rasterInfo = textureFile.rasterInfo();
-    String textureDataUri =
-        cityJsonIOService.saveTexture(textureFile.tifFile()); // TODO: remplace with S3 URL
+    java.io.File textureFilePng = cityJsonIOService.saveTexture(textureFile.tifFile());
+    String textureDataUri;
+    try {
+      String bucketKey = "3d/textures/" + java.util.UUID.randomUUID() + ".png";
+      bucketComponent.upload(textureFilePng, bucketKey);
+      textureDataUri = bucketComponent.presign(bucketKey);
+    } finally {
+      if (textureFilePng != null) {
+        textureFilePng.delete();
+      }
+    }
 
     ObjectNode appearance = initAppearance(textureDataUri);
 
