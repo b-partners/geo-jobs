@@ -4,10 +4,7 @@ import app.bpartners.geojobs.service.cityjson.texture.model.CityJsonWithVertices
 import app.bpartners.geojobs.service.cityjson.texture.model.TextureFile;
 import app.bpartners.geojobs.service.cityjson.texture.model.TexturedCityJson;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 

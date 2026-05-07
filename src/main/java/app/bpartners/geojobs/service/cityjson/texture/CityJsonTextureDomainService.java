@@ -15,8 +15,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -88,12 +86,14 @@ public class CityJsonTextureDomainService {
         .build();
   }
 
-  public TexturedCityJson texture(CityJsonWithVertices cityJsonWithVertices, TextureFile textureFile) {
+  public TexturedCityJson texture(
+      CityJsonWithVertices cityJsonWithVertices, TextureFile textureFile) {
     ObjectNode cityJson = cityJsonWithVertices.json().deepCopy();
     List<Vector3D> vertices = cityJsonWithVertices.vertices();
 
     RasterInfo rasterInfo = textureFile.rasterInfo();
-    String textureDataUri = cityJsonIOService.saveTexture(textureFile.tifFile()); // TODO: remplace with S3 URL
+    String textureDataUri =
+        cityJsonIOService.saveTexture(textureFile.tifFile()); // TODO: remplace with S3 URL
 
     ObjectNode appearance = initAppearance(textureDataUri);
 

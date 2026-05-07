@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.service.cityjson.texture;
 
+import static java.util.UUID.randomUUID;
+
 import app.bpartners.geojobs.service.cityjson.texture.model.RasterInfo;
 import app.bpartners.geojobs.service.cityjson.texture.model.TextureFile;
 import app.bpartners.geojobs.service.cityjson.texture.model.TexturedCityJson;
@@ -7,6 +9,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.awt.Graphics2D;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -16,9 +19,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
 import javax.imageio.ImageIO;
+import org.geotools.api.referencing.datum.PixelInCell;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.coverage.grid.GridCoverage2D;
+import org.geotools.gce.geotiff.GeoTiffReader;
 import org.springframework.stereotype.Service;
-
-import static java.util.UUID.randomUUID;
 
 @Service
 public class CityJsonIOService {
@@ -28,7 +33,7 @@ public class CityJsonIOService {
   public ObjectNode loadCityJson(File file) {
     try {
       return (ObjectNode) objectMapper.readTree(file);
-    }catch (IOException e) {
+    } catch (IOException e) {
       throw new IllegalStateException("Failed to read CityJSON file", e);
     }
   }
@@ -63,7 +68,7 @@ public class CityJsonIOService {
         .writeValue(outputPath.toFile(), texturedCityJson.json());
   }
 
-  public String imageToDataUri(File tifFile){
+  public String imageToDataUri(File tifFile) {
     try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
       BufferedImage image = ImageIO.read(tifFile);
       ImageIO.write(image, "png", baos);
@@ -108,7 +113,8 @@ public class CityJsonIOService {
     }
 
     if (image == null) {
-      throw new IllegalStateException("Could not read raster dimensions: " + tifFile.getAbsolutePath());
+      throw new IllegalStateException(
+          "Could not read raster dimensions: " + tifFile.getAbsolutePath());
     }
 
     double originX = 0.0;
@@ -116,19 +122,40 @@ public class CityJsonIOService {
     double pixelWidth = 1.0;
     double pixelHeight = -1.0;
 
+    GeoTiffReader reader = null;
     try {
-      Process process = new ProcessBuilder("gdalinfo", "-json", tifFile.toString()).start();
-      JsonNode gdalJson = objectMapper.readTree(process.getInputStream());
-      if (gdalJson.has("geoTransform")) {
-        JsonNode gt = gdalJson.get("geoTransform");
-        originX = gt.get(0).asDouble();
-        pixelWidth = gt.get(1).asDouble();
-        originY = gt.get(3).asDouble();
-        pixelHeight = gt.get(5).asDouble();
+      reader = new GeoTiffReader(tifFile);
+      GridCoverage2D coverage = reader.read(null);
+      MathTransform transform = coverage.getGridGeometry().getGridToCRS(PixelInCell.CELL_CORNER);
+      if (transform instanceof AffineTransform affine) {
+        originX = affine.getTranslateX();
+        originY = affine.getTranslateY();
+        pixelWidth = affine.getScaleX();
+        pixelHeight = affine.getScaleY();
       }
     } catch (Exception e) {
-      System.err.println(
-          "Warning: Could not read GeoTIFF transform using gdalinfo: " + e.getMessage());
+      // Ignore and fallback to gdalinfo
+    } finally {
+      if (reader != null) {
+        reader.dispose();
+      }
+    }
+
+    if (originX == 0.0 && originY == 0.0 && pixelWidth == 1.0) {
+      try {
+        Process process = new ProcessBuilder("gdalinfo", "-json", tifFile.toString()).start();
+        JsonNode gdalJson = objectMapper.readTree(process.getInputStream());
+        if (gdalJson.has("geoTransform")) {
+          JsonNode gt = gdalJson.get("geoTransform");
+          originX = gt.get(0).asDouble();
+          pixelWidth = gt.get(1).asDouble();
+          originY = gt.get(3).asDouble();
+          pixelHeight = gt.get(5).asDouble();
+        }
+      } catch (Exception ex) {
+        System.err.println(
+            "Warning: Could not read GeoTIFF transform using gdalinfo: " + ex.getMessage());
+      }
     }
 
     return new RasterInfo(

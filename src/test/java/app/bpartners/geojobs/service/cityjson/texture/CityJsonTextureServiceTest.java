@@ -5,20 +5,19 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import app.bpartners.geojobs.service.cityjson.io.CustomGeoTiffWriter;
 import app.bpartners.geojobs.service.cityjson.texture.model.*;
-
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import javax.imageio.ImageIO;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
-
-import javax.imageio.ImageIO;
 
 class CityJsonTextureServiceTest {
 
   CityJsonIOService cityJsonIOService = new CityJsonIOService();
-  CityJsonTextureDomainService cityJsonTextureDomainService = new CityJsonTextureDomainService(cityJsonIOService);
+  CityJsonTextureDomainService cityJsonTextureDomainService =
+      new CityJsonTextureDomainService(cityJsonIOService);
   CityJsonTextureService subject =
       new CityJsonTextureService(cityJsonIOService, cityJsonTextureDomainService);
 
@@ -27,11 +26,11 @@ class CityJsonTextureServiceTest {
     int roofNumber = 4;
     File cityJsonFile =
         new ClassPathResource(
-            String.format("cityjson/texture/inputs/roof%s/roof%s.json", roofNumber, roofNumber))
+                String.format("cityjson/texture/inputs/roof%s/roof%s.json", roofNumber, roofNumber))
             .getFile();
     File tifFile =
         new ClassPathResource(
-            String.format("cityjson/texture/inputs/roof%s/roof%s.tif", roofNumber, roofNumber))
+                String.format("cityjson/texture/inputs/roof%s/roof%s.tif", roofNumber, roofNumber))
             .getFile();
 
     subject.textureCityJson(cityJsonFile, tifFile);
@@ -43,11 +42,11 @@ class CityJsonTextureServiceTest {
     int roofNumber = 5;
     File cityJsonFile =
         new ClassPathResource(
-            String.format("cityjson/texture/inputs/roof%s/roof%s.json", roofNumber, roofNumber))
+                String.format("cityjson/texture/inputs/roof%s/roof%s.json", roofNumber, roofNumber))
             .getFile();
     File tifFile =
         new ClassPathResource(
-            String.format("cityjson/texture/inputs/roof%s/roof%s.tif", roofNumber, roofNumber))
+                String.format("cityjson/texture/inputs/roof%s/roof%s.tif", roofNumber, roofNumber))
             .getFile();
     TextureFile textureFile = cityJsonIOService.loadTexture(tifFile);
     double pixelWidth = textureFile.rasterInfo().pixelWidth();
@@ -56,9 +55,10 @@ class CityJsonTextureServiceTest {
     double originX = textureFile.rasterInfo().originX();
     double originY = textureFile.rasterInfo().originY();
 
-    File imageFile = new ClassPathResource(
-        String.format("cityjson/texture/outputs/roof%s/texture.png", roofNumber))
-        .getFile();
+    File imageFile =
+        new ClassPathResource(
+                String.format("cityjson/texture/outputs/roof%s/texture.png", roofNumber))
+            .getFile();
     BufferedImage image = ImageIO.read(imageFile);
     File computedGeoTiffFile = geoTiffWriter.toGeoTiffFile(image, originX, originY, pixelSize);
 
