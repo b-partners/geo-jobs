@@ -24,7 +24,6 @@ public class CityJsonTextureService {
         cityJsonTextureDomainService.texture(cityJsonWithVertices, textureFile);
 
     File texturedCityJsonFile = cityJsonIOService.toFile(texturedCityJson);
-    System.out.println(textureFile.dataUri());
-    System.out.println(texturedCityJsonFile.getAbsolutePath());
+    // TODO: return CityJson and Texture
   }
 }

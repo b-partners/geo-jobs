@@ -1292,7 +1292,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/CityJSONRequest'
 
-  '/city-jsons/texture':
+  '/3d/texture':
     post:
       tags:
         - ThreeD
