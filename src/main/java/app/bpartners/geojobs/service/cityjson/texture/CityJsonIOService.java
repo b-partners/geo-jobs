@@ -81,7 +81,7 @@ public class CityJsonIOService {
       graphics.drawImage(image, 0, 0, null);
       graphics.dispose();
 
-      File pngFile = Files.createTempFile("texture-", ".png").toFile();
+      File pngFile = createTempFile("texture-", ".png");
       ImageIO.write(rgbImage, "png", pngFile);
 
       return pngFile;

@@ -343,7 +343,7 @@ public class CityJsonTextureDomainService {
     return coords;
   }
 
-  public boolean isRoof(List<Vector3D> coords) { // TODO: there is already a method doing this
+  public boolean isRoof(List<Vector3D> coords) {
     if (coords.size() < 3) {
       return false;
     }
