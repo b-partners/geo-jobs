@@ -8,6 +8,7 @@ import app.bpartners.geojobs.service.cityjson.model.BuildingData;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -15,6 +16,7 @@ public class CityJsonFactory {
   private final CityJsonWriter cityJsonWriter;
   private final File outputDirectory;
 
+  @Autowired
   public CityJsonFactory() {
     this.cityJsonWriter = new CityJsonWriter();
     this.outputDirectory = createTempDirectory();

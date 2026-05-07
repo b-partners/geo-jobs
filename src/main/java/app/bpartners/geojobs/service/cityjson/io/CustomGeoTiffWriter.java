@@ -1,9 +1,10 @@
 package app.bpartners.geojobs.service.cityjson.io;
 
+import static app.bpartners.geojobs.file.FileWriter.createTempFile;
+
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.gce.geotiff.GeoTiffWriter;
@@ -37,7 +38,7 @@ public class CustomGeoTiffWriter {
 
       GridCoverage2D coverage = new GridCoverageFactory().create("texture", image, env);
 
-      File out = tempFile();
+      File out = createTempFile("geotiff-", ".tif");
       GeoTiffWriter writer = new GeoTiffWriter(out);
       try {
         writer.write(coverage, null);
@@ -49,14 +50,6 @@ public class CustomGeoTiffWriter {
 
     } catch (IOException e) {
       throw new IllegalStateException("Fail to write GeoTiff file: " + e);
-    }
-  }
-
-  private File tempFile() {
-    try {
-      return Files.createTempFile("geotiff-", ".tif").toFile();
-    } catch (IOException e) {
-      throw new IllegalStateException("Fail to create temp file: " + e);
     }
   }
 }

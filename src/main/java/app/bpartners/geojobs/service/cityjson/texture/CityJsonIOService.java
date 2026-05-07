@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.service.cityjson.texture;
 
-import static java.util.UUID.randomUUID;
+import static app.bpartners.geojobs.file.FileWriter.createTempFile;
 
 import app.bpartners.geojobs.service.cityjson.texture.model.RasterInfo;
 import app.bpartners.geojobs.service.cityjson.texture.model.TextureInfo;
@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import javax.imageio.ImageIO;
-
 import lombok.extern.slf4j.Slf4j;
 import org.gdal.gdal.Dataset;
 import org.gdal.gdal.gdal;
@@ -45,7 +44,7 @@ public class CityJsonIOService {
 
   public File toFile(TexturedCityJson texturedCityJson) {
     try {
-      File file = File.createTempFile("textured-cityjson-" + randomUUID(), ".json");
+      File file = createTempFile("textured-cityjson-", ".json");
 
       try (FileWriter writer = new FileWriter(file)) {
         writer.write(texturedCityJson.json().toString());
@@ -54,7 +53,7 @@ public class CityJsonIOService {
       return file;
 
     } catch (IOException e) {
-      throw new RuntimeException("Failed to write JSON to file", e);
+      throw new IllegalStateException("Failed to write JSON to file", e);
     }
   }
 
@@ -148,8 +147,9 @@ public class CityJsonIOService {
         }
 
       } catch (Exception e) {
-        log.error("Warning: Could not read GeoTIFF transform using GDAL Java bindings: "
-            + e.getMessage());
+        log.error(
+            "Warning: Could not read GeoTIFF transform using GDAL Java bindings: "
+                + e.getMessage());
       }
     }
 

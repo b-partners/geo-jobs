@@ -12,21 +12,25 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.math.Vector3D;
 
 @RequiredArgsConstructor
 public class CityJsonTextureDomainService {
 
+  public static final String VALUES_ATTRIBUTE_NAME = "values";
+  public static final String DEFAULT_ATTRIBUTE_NAME = "default";
+  public static final String TEXTURE_ATTRIBUTE_NAME = "texture";
+  public static final String MATERIAL_ATTRIBUTE_NAME = "material";
   private final ObjectMapper objectMapper = new ObjectMapper();
   private final CityJsonIOService cityJsonIOService;
   private final BucketComponent bucketComponent;
@@ -152,10 +156,9 @@ public class CityJsonTextureDomainService {
       String bucketKey = "3d/textures/" + java.util.UUID.randomUUID() + ".png";
       bucketComponent.upload(textureFilePng, bucketKey);
       textureDataUri = bucketComponent.presign(bucketKey);
-    } finally {
-      if (textureFilePng != null) {
-        textureFilePng.delete();
-      }
+      Files.delete(textureFilePng.toPath());
+    } catch (IOException e) {
+      throw new IllegalStateException("Failed to upload texture to S3", e);
     }
     return textureDataUri;
   }
@@ -236,16 +239,16 @@ public class CityJsonTextureDomainService {
 
     ObjectNode texture = objectMapper.createObjectNode();
     ObjectNode textureDefault = objectMapper.createObjectNode();
-    textureDefault.set("values", objectMapper.createArrayNode());
-    texture.set("default", textureDefault);
+    textureDefault.set(VALUES_ATTRIBUTE_NAME, objectMapper.createArrayNode());
+    texture.set(DEFAULT_ATTRIBUTE_NAME, textureDefault);
 
     ObjectNode material = objectMapper.createObjectNode();
     ObjectNode materialDefault = objectMapper.createObjectNode();
-    materialDefault.set("values", objectMapper.createArrayNode());
-    material.set("default", materialDefault);
+    materialDefault.set(VALUES_ATTRIBUTE_NAME, objectMapper.createArrayNode());
+    material.set(DEFAULT_ATTRIBUTE_NAME, materialDefault);
 
-    geometryAppearance.set("texture", texture);
-    geometryAppearance.set("material", material);
+    geometryAppearance.set(TEXTURE_ATTRIBUTE_NAME, texture);
+    geometryAppearance.set(MATERIAL_ATTRIBUTE_NAME, material);
 
     return geometryAppearance;
   }
@@ -272,10 +275,18 @@ public class CityJsonTextureDomainService {
     boolean roof = hasSemantics ? isRoofSemantic(faceType) : isRoof(coords);
 
     ArrayNode textureValues =
-        (ArrayNode) geometryAppearance.get("texture").get("default").get("values");
+        (ArrayNode)
+            geometryAppearance
+                .get(TEXTURE_ATTRIBUTE_NAME)
+                .get(DEFAULT_ATTRIBUTE_NAME)
+                .get(VALUES_ATTRIBUTE_NAME);
 
     ArrayNode materialValues =
-        (ArrayNode) geometryAppearance.get("material").get("default").get("values");
+        (ArrayNode)
+            geometryAppearance
+                .get(MATERIAL_ATTRIBUTE_NAME)
+                .get(DEFAULT_ATTRIBUTE_NAME)
+                .get(VALUES_ATTRIBUTE_NAME);
 
     if (roof) {
       ArrayNode ringTextureIndices = objectMapper.createArrayNode();
