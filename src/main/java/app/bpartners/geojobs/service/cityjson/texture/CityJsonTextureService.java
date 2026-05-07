@@ -15,7 +15,7 @@ public class CityJsonTextureService {
   private final CityJsonIOService cityJsonIOService;
   private final CityJsonTextureDomainService cityJsonTextureDomainService;
 
-  public void textureCityJson(File cityJsonFile, File tifFile) {
+  public File textureCityJson(File cityJsonFile, File tifFile) {
     ObjectNode json = cityJsonIOService.loadCityJson(cityJsonFile);
     CityJsonWithVertices cityJsonWithVertices = cityJsonTextureDomainService.toCityJsonFile(json);
     TextureFile textureFile = cityJsonIOService.loadTexture(tifFile);
@@ -23,7 +23,6 @@ public class CityJsonTextureService {
     TexturedCityJson texturedCityJson =
         cityJsonTextureDomainService.texture(cityJsonWithVertices, textureFile);
 
-    File texturedCityJsonFile = cityJsonIOService.toFile(texturedCityJson);
-    // TODO: return CityJson and Texture
+    return cityJsonIOService.toFile(texturedCityJson);
   }
 }
