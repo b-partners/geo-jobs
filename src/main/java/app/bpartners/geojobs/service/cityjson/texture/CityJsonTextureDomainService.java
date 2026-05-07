@@ -72,18 +72,6 @@ public class CityJsonTextureDomainService {
     return new CityJsonWithVertices(json, vertices);
   }
 
-  public TexturedBuildingData texture(
-      BuildingData buildingData, RasterInfo rasterInfo, String textureDataUri) {
-    return TexturedBuildingData.builder()
-        .id(buildingData.id())
-        .roofs(textureGeometries(buildingData.roofs(), rasterInfo))
-        .walls(textureGeometries(buildingData.walls(), rasterInfo))
-        .grounds(textureGeometries(buildingData.grounds(), rasterInfo))
-        .properties(buildingData.properties())
-        .textureDataUri(textureDataUri)
-        .build();
-  }
-
   public TexturedCityJson texture(
       CityJsonWithVertices cityJsonWithVertices, TextureFile textureFile) {
     ObjectNode cityJson = cityJsonWithVertices.json().deepCopy();
@@ -150,27 +138,6 @@ public class CityJsonTextureDomainService {
     cityJson.set("appearance", appearance);
 
     return new TexturedCityJson(cityJson);
-  }
-
-  public List<TexturedGeometry> textureGeometries(
-      List<GeometryWithProperties> geometries, RasterInfo rasterInfo) {
-    return geometries.stream().map(g -> textureGeometry(g, rasterInfo)).toList();
-  }
-
-  public TexturedGeometry textureGeometry(
-      GeometryWithProperties geometryWithProperties, RasterInfo rasterInfo) {
-    var polygon = geometryWithProperties.asPolygon();
-    var coordinates = polygon.getExteriorRing().getCoordinates();
-
-    List<Vector3D> vertices =
-        Arrays.stream(coordinates).map(c -> new Vector3D(c.getX(), c.getY(), c.getZ())).toList();
-
-    List<UV> uvs = computeUv(vertices, rasterInfo);
-    List<TexturedGeometry.UV> texturedUvs =
-        uvs.stream().map(uv -> new TexturedGeometry.UV(uv.u(), uv.v())).toList();
-
-    return new TexturedGeometry(
-        geometryWithProperties.geometry(), geometryWithProperties.properties(), texturedUvs);
   }
 
   public List<UV> computeUv(List<Vector3D> coords, RasterInfo rasterInfo) {

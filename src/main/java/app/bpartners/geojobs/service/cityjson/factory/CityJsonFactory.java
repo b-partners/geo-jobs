@@ -37,18 +37,6 @@ public class CityJsonFactory {
     return path.toFile();
   }
 
-  public File makeFromTextured(String id, String title, List<TexturedBuildingData> data)
-      throws CityJsonException {
-    var filename = cityJsonFileName(id);
-    var path = Path.of(outputDirectory.toString(), filename);
-    var metadata = MetadataFactory.make(id, title);
-    var model = CityModelFactory.makeFromTextured(data);
-
-    cityJsonWriter.write(path, model, metadata);
-
-    return path.toFile();
-  }
-
   private static String cityJsonFileName(String id) {
     return String.format("%s.json", id);
   }
