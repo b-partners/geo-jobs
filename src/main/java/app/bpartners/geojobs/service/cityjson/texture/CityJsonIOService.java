@@ -3,20 +3,18 @@ package app.bpartners.geojobs.service.cityjson.texture;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.service.cityjson.texture.model.RasterInfo;
-import app.bpartners.geojobs.service.cityjson.texture.model.TextureFile;
+import app.bpartners.geojobs.service.cityjson.texture.model.TextureInfo;
 import app.bpartners.geojobs.service.cityjson.texture.model.TexturedCityJson;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Base64;
 import javax.imageio.ImageIO;
 
 import lombok.extern.slf4j.Slf4j;
@@ -26,10 +24,8 @@ import org.geotools.api.referencing.datum.PixelInCell;
 import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.gce.geotiff.GeoTiffReader;
-import org.springframework.stereotype.Service;
 
 @Slf4j
-@Service
 public class CityJsonIOService {
 
   private final ObjectMapper objectMapper = new ObjectMapper();
@@ -42,10 +38,9 @@ public class CityJsonIOService {
     }
   }
 
-  public TextureFile loadTexture(File tifFile) {
+  public TextureInfo loadTexture(File tifFile) {
     RasterInfo rasterInfo = readRasterInfo(tifFile);
-    String dataUri = tifFile.getAbsolutePath(); // TODO: change into S3 URL
-    return new TextureFile(dataUri, rasterInfo, tifFile);
+    return new TextureInfo(rasterInfo, tifFile);
   }
 
   public File toFile(TexturedCityJson texturedCityJson) {
@@ -70,18 +65,6 @@ public class CityJsonIOService {
     objectMapper
         .writerWithDefaultPrettyPrinter()
         .writeValue(outputPath.toFile(), texturedCityJson.json());
-  }
-
-  public String imageToDataUri(File tifFile) {
-    try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-      BufferedImage image = ImageIO.read(tifFile);
-      ImageIO.write(image, "png", baos);
-      byte[] imageBytes = baos.toByteArray();
-      String base64Image = Base64.getEncoder().encodeToString(imageBytes);
-      return "data:image/png;base64," + base64Image;
-    } catch (IOException e) {
-      throw new IllegalStateException("Failed to read GeoTIFF image", e);
-    }
   }
 
   public File saveTexture(File tifFile) {

@@ -15,14 +15,14 @@ import javax.imageio.ImageIO;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
 
-class CityJsonTextureServiceTest {
+class CityJsonTextureComputerTest {
 
   CityJsonIOService cityJsonIOService = new CityJsonIOService();
   BucketComponent bucketComponent = mock(BucketComponent.class);
   CityJsonTextureDomainService cityJsonTextureDomainService =
       new CityJsonTextureDomainService(cityJsonIOService, bucketComponent);
-  CityJsonTextureService subject =
-      new CityJsonTextureService(cityJsonIOService, cityJsonTextureDomainService);
+  CityJsonTextureComputer subject =
+      new CityJsonTextureComputer(cityJsonIOService, cityJsonTextureDomainService);
 
   @Test
   void texturize() throws IOException {
@@ -52,12 +52,12 @@ class CityJsonTextureServiceTest {
         new ClassPathResource(
                 String.format("cityjson/texture/inputs/roof%s/roof%s.tif", roofNumber, roofNumber))
             .getFile();
-    TextureFile textureFile = cityJsonIOService.loadTexture(tifFile);
-    double pixelWidth = textureFile.rasterInfo().pixelWidth();
-    double pixelHeight = textureFile.rasterInfo().pixelHeight();
+    TextureInfo textureInfo = cityJsonIOService.loadTexture(tifFile);
+    double pixelWidth = textureInfo.rasterInfo().pixelWidth();
+    double pixelHeight = textureInfo.rasterInfo().pixelHeight();
     double pixelSize = ((abs(pixelWidth) + abs(pixelHeight)) / 2);
-    double originX = textureFile.rasterInfo().originX();
-    double originY = textureFile.rasterInfo().originY();
+    double originX = textureInfo.rasterInfo().originX();
+    double originY = textureInfo.rasterInfo().originY();
 
     File imageFile =
         new ClassPathResource(

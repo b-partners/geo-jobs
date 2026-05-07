@@ -2,30 +2,38 @@ package app.bpartners.geojobs.service.cityjson.texture;
 
 import app.bpartners.geojobs.service.cityjson.texture.model.CityJsonWithVertices;
 import app.bpartners.geojobs.service.cityjson.texture.model.RasterInfo;
-import app.bpartners.geojobs.service.cityjson.texture.model.TextureFile;
+import app.bpartners.geojobs.service.cityjson.texture.model.TextureInfo;
 import app.bpartners.geojobs.service.cityjson.texture.model.TexturedCityJson;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
-import lombok.AllArgsConstructor;
-import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
 
-@Service
-@AllArgsConstructor
-public class CityJsonTextureService {
-
+@RequiredArgsConstructor
+public class CityJsonTextureComputer {
   private final CityJsonIOService cityJsonIOService;
   private final CityJsonTextureDomainService cityJsonTextureDomainService;
+
+  public File textureCityJson(File cityJsonFile, RasterInfo rasterInfo, String imageDtaUri) {
+    ObjectNode json = cityJsonIOService.loadCityJson(cityJsonFile);
+    CityJsonWithVertices cityJsonWithVertices = cityJsonTextureDomainService.toCityJsonFile(json);
+    TextureInfo textureInfo = new TextureInfo(rasterInfo, null, imageDtaUri);
+
+    TexturedCityJson texturedCityJson =
+        cityJsonTextureDomainService.texture(cityJsonWithVertices, textureInfo);
+
+    return cityJsonIOService.toFile(texturedCityJson);
+  }
 
   public File textureCityJson(File cityJsonFile, File tifFile) {
     ObjectNode json = cityJsonIOService.loadCityJson(cityJsonFile);
     CityJsonWithVertices cityJsonWithVertices = cityJsonTextureDomainService.toCityJsonFile(json);
-    TextureFile textureFile = cityJsonIOService.loadTexture(tifFile);
+    TextureInfo textureInfo = cityJsonIOService.loadTexture(tifFile);
 
     TexturedCityJson texturedCityJson =
-        cityJsonTextureDomainService.texture(cityJsonWithVertices, textureFile);
+        cityJsonTextureDomainService.texture(cityJsonWithVertices, textureInfo);
 
     return cityJsonIOService.toFile(texturedCityJson);
   }
@@ -57,10 +65,10 @@ public class CityJsonTextureService {
             image.getWidth(),
             image.getHeight());
 
-    TextureFile textureFile = new TextureFile(imageFile.getAbsolutePath(), rasterInfo, imageFile);
+    TextureInfo textureInfo = new TextureInfo(rasterInfo, imageFile);
 
     TexturedCityJson texturedCityJson =
-        cityJsonTextureDomainService.texture(cityJsonWithVertices, textureFile);
+        cityJsonTextureDomainService.texture(cityJsonWithVertices, textureInfo);
 
     return cityJsonIOService.toFile(texturedCityJson);
   }

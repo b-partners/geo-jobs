@@ -5,34 +5,31 @@ import app.bpartners.geojobs.model.lidar.planes.algorithm.Vector3DUtils;
 import app.bpartners.geojobs.service.cityjson.texture.model.CityJsonWithVertices;
 import app.bpartners.geojobs.service.cityjson.texture.model.RasterInfo;
 import app.bpartners.geojobs.service.cityjson.texture.model.RowCol;
-import app.bpartners.geojobs.service.cityjson.texture.model.TextureFile;
+import app.bpartners.geojobs.service.cityjson.texture.model.TextureInfo;
 import app.bpartners.geojobs.service.cityjson.texture.model.TexturedCityJson;
 import app.bpartners.geojobs.service.cityjson.texture.model.UV;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import org.locationtech.jts.math.Vector3D;
-import org.springframework.stereotype.Service;
 
-@Service
+import lombok.RequiredArgsConstructor;
+import org.locationtech.jts.math.Vector3D;
+
+@RequiredArgsConstructor
 public class CityJsonTextureDomainService {
 
   private final ObjectMapper objectMapper = new ObjectMapper();
   private final CityJsonIOService cityJsonIOService;
   private final BucketComponent bucketComponent;
-
-  public CityJsonTextureDomainService(
-      CityJsonIOService cityJsonIOService, BucketComponent bucketComponent) {
-    this.cityJsonIOService = cityJsonIOService;
-    this.bucketComponent = bucketComponent;
-  }
 
   public CityJsonWithVertices toCityJsonFile(ObjectNode json) {
     ArrayNode rawVertices = (ArrayNode) json.get("vertices");
@@ -74,21 +71,19 @@ public class CityJsonTextureDomainService {
   }
 
   public TexturedCityJson texture(
-      CityJsonWithVertices cityJsonWithVertices, TextureFile textureFile) {
+      CityJsonWithVertices cityJsonWithVertices, TextureInfo textureInfo) {
     ObjectNode cityJson = cityJsonWithVertices.json().deepCopy();
     List<Vector3D> vertices = cityJsonWithVertices.vertices();
 
-    RasterInfo rasterInfo = textureFile.rasterInfo();
-    java.io.File textureFilePng = cityJsonIOService.saveTexture(textureFile.tifFile());
-    String textureDataUri;
-    try {
-      String bucketKey = "3d/textures/" + java.util.UUID.randomUUID() + ".png";
-      bucketComponent.upload(textureFilePng, bucketKey);
-      textureDataUri = bucketComponent.presign(bucketKey);
-    } finally {
-      if (textureFilePng != null) {
-        textureFilePng.delete();
-      }
+    RasterInfo rasterInfo = textureInfo.rasterInfo();
+    String imageDataUri = textureInfo.dataUri();
+    File textureFileTiff = textureInfo.tifFile();
+
+    String textureDataUri = null;
+    if (imageDataUri != null) {
+      textureDataUri = imageDataUri;
+    } else if (textureFileTiff != null) {
+      textureDataUri = uploadToS3(textureFileTiff);
     }
 
     ObjectNode appearance = initAppearance(textureDataUri);
@@ -148,6 +143,21 @@ public class CityJsonTextureDomainService {
     cityJson.set("appearance", appearance);
 
     return new TexturedCityJson(cityJson);
+  }
+
+  private String uploadToS3(File textureFileTiff) {
+    String textureDataUri;
+    File textureFilePng = cityJsonIOService.saveTexture(textureFileTiff);
+    try {
+      String bucketKey = "3d/textures/" + java.util.UUID.randomUUID() + ".png";
+      bucketComponent.upload(textureFilePng, bucketKey);
+      textureDataUri = bucketComponent.presign(bucketKey);
+    } finally {
+      if (textureFilePng != null) {
+        textureFilePng.delete();
+      }
+    }
+    return textureDataUri;
   }
 
   public List<UV> computeUv(List<Vector3D> coords, RasterInfo rasterInfo) {
@@ -322,7 +332,7 @@ public class CityJsonTextureDomainService {
     return coords;
   }
 
-  public boolean isRoof(List<Vector3D> coords) {
+  public boolean isRoof(List<Vector3D> coords) { // TODO: there is already a method doing this
     if (coords.size() < 3) {
       return false;
     }
