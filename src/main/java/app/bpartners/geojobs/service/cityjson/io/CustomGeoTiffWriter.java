@@ -9,7 +9,9 @@ import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.gce.geotiff.GeoTiffWriter;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
+import org.springframework.stereotype.Component;
 
+@Component
 public class CustomGeoTiffWriter {
 
   public File toGeoTiffFile(
