@@ -12,6 +12,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -79,15 +81,16 @@ public class CityJsonTextureDomainService {
     List<Vector3D> vertices = cityJsonWithVertices.vertices();
 
     RasterInfo rasterInfo = textureFile.rasterInfo();
-    java.io.File textureFilePng = cityJsonIOService.saveTexture(textureFile.tifFile());
+    File textureFilePng = cityJsonIOService.saveTexture(textureFile.tifFile());
     String textureDataUri;
     try {
       String bucketKey = "3d/textures/" + java.util.UUID.randomUUID() + ".png";
       bucketComponent.upload(textureFilePng, bucketKey);
       textureDataUri = bucketComponent.presign(bucketKey);
+      textureDataUri = textureFilePng.getAbsolutePath();
     } finally {
       if (textureFilePng != null) {
-        textureFilePng.delete();
+        //textureFilePng.delete();
       }
     }
 
