@@ -1,11 +1,11 @@
 package app.bpartners.geojobs.endpoint.rest.controller.mapper.cityjson;
 
+import static java.util.UUID.randomUUID;
+
 import app.bpartners.geojobs.endpoint.rest.model.ThreeDTextureInfo;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONTexture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-
-import static java.util.UUID.randomUUID;
 
 @Component
 @RequiredArgsConstructor
