@@ -2638,9 +2638,16 @@ components:
         - FAILED
         - PROCESSING
         - UNAVAILABLE
+    LidarProcessorType:
+      type: string
+      enum:
+        - DEFAULT
+        - THREE_D_BAG_ROOFER
     ThreeDAddressesRequest:
       type: object
       properties:
+        lidarProcessorType:
+          $ref: '#/components/schemas/LidarProcessorType'
         delimitationType:
           $ref: '#/components/schemas/DelimitationType'
         delimitationObjectType:
