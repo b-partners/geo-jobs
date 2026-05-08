@@ -40,6 +40,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, List<CityJSON>> {
+  private static final String JSONL_EXTENSION = ".jsonl";
   private final BucketComponent bucketComponent;
   private final FeatureMapper featureMapper;
   private final LidarApiFacade lidarApiFacade;
@@ -66,12 +67,12 @@ public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, L
     return cityJsonGenerationResponses.stream()
         .map(
             cityJsonGenerationResponse -> {
-              String bucketFileKey = randomUUID().toString();
+              String bucketFileKey = randomUUID() + JSONL_EXTENSION;
               File rooferCityJsonFile;
               try {
                 URL rooferCityJsonURL;
                 rooferCityJsonURL = new URI(cityJsonGenerationResponse.getCityJsonUrl()).toURL();
-                rooferCityJsonFile = File.createTempFile(bucketFileKey, ".jsonl");
+                rooferCityJsonFile = File.createTempFile(bucketFileKey, JSONL_EXTENSION);
                 try (InputStream in = rooferCityJsonURL.openStream()) {
                   Files.copy(in, rooferCityJsonFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                 }
