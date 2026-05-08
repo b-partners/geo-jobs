@@ -1291,6 +1291,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CityJSONRequest'
+
   '/3d/{id}':
     get:
       tags:
