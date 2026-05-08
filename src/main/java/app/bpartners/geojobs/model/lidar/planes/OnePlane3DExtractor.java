@@ -40,7 +40,10 @@ public class OnePlane3DExtractor
     var inliers = box.getPoints();
 
     var clusterResult = getBestXYZCluster(inliers);
-    var finalInliers = this.skinnyArmPointFilter.apply(clusterResult, exporter);
+    var finalInliers = clusterResult;
+    if (conf.doSkinnyArmRemover()) {
+      finalInliers = this.skinnyArmPointFilter.apply(clusterResult, exporter);
+    }
 
     var inlierSet = new HashSet<>(finalInliers);
     var outliers = points.stream().filter(not(inlierSet::contains)).collect(toSet());
