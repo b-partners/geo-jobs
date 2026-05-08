@@ -5,10 +5,7 @@ import app.bpartners.geojobs.service.cityjson.texture.model.RasterInfo;
 import app.bpartners.geojobs.service.cityjson.texture.model.TextureInfo;
 import app.bpartners.geojobs.service.cityjson.texture.model.TexturedCityJson;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
-import javax.imageio.ImageIO;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
