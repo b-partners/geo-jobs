@@ -40,7 +40,7 @@ public class CityJSONRequestMapper {
             CityJSONDelimitationObjectTypeMapper.toRestDelimitationObjectType(
                 cityJSONRequest.getDelimitationObjectType()))
         .status(CityJSONRequestStatusMapper.toRest(cityJSONRequest.getStatus()))
-        .threeDTextureInfo(textureMapper.toRest(cityJSONRequest.getTextures().getFirst()))
+        .threeDTextureInfo(null)
         .cityJsons(restCityJsons);
   }
 
