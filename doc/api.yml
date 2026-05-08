@@ -2561,8 +2561,13 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Point2D'
+
     ThreeDRequest:
       type: object
+      required:
+        - delimitations
+        - delimitationObjectType
+        - delimitationType
       properties:
         delimitations:
           description: Refers to a list of features, such as point corresponding to a textual address or a polygon/multiPolygon corresponding to a roof delimitation, to be previewed in 3D models.
@@ -2573,6 +2578,32 @@ components:
           $ref: '#/components/schemas/DelimitationObjectType'
         delimitationType:
           $ref: '#/components/schemas/DelimitationType'
+
+    ThreeDTextureInfo:
+      type: object
+      required:
+        - topLeftLon
+        - topLeftLat
+        - pixelHeight
+        - pixelWidth
+      properties:
+        imageDataUri:
+          type: string
+        topLeftLon:
+          type: number
+          format: float
+        topLeftLat:
+          type: number
+          format: float
+        pixelWidth:
+          type: number
+          format: float
+          description: Width of a pixel in meters
+        pixelHeight:
+          type: number
+          format: float
+          description: Height of a pixel in meters
+
     DelimitationObjectType:
       type: string
       description: |
@@ -2592,6 +2623,8 @@ components:
       properties:
         id:
           type: string
+        threeDTextureInfo:
+          $ref: "#/components/schemas/ThreeDTextureInfo"
     CityJSONRequestStatus:
       deprecated: true
       type: string
