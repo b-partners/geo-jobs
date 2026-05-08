@@ -2578,8 +2578,6 @@ components:
           $ref: '#/components/schemas/DelimitationObjectType'
         delimitationType:
           $ref: '#/components/schemas/DelimitationType'
-        threeDTextureInfo:
-          $ref: '#/components/schemas/ThreeDTextureInfo'
 
     ThreeDTextureInfo:
       type: object
@@ -2625,6 +2623,8 @@ components:
       properties:
         id:
           type: string
+        threeDTextureInfo:
+          $ref: "#/components/schemas/ThreeDTextureInfo"
     CityJSONRequestStatus:
       deprecated: true
       type: string
