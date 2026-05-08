@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.model.lidar.LidarProcessorType.THREE_D_BAG_ROOFER;
 import static app.bpartners.geojobs.model.lidar.planes.model.LasRoofDelimitationType.ROOF_SEGMENT_FACE_DELIMITATION;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStatus.*;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStep.*;
@@ -16,7 +17,7 @@ import app.bpartners.geojobs.repository.CityJSONRequestRepository;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.cityjson.*;
-import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
+import app.bpartners.geojobs.service.CityJSON3DBagRooferProcessor;
 import app.bpartners.geojobs.service.cityjson.LidarDataToCityJsonProcessor;
 import app.bpartners.geojobs.service.cityjson.texture.CityJsonTextureComputer;
 import app.bpartners.geojobs.service.cityjson.texture.model.RasterInfo;
@@ -28,6 +29,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Geometry;
 import org.springframework.stereotype.Service;
@@ -44,7 +46,9 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
   private final BucketComponent bucketComponent;
   private final EventProducer eventProducer;
   private final CommunityAuthorizationRepository communityAuthorizationRepository;
+  private final CityJSON3DBagRooferProcessor cityJson3DBagRooferProcessor;
 
+  @SneakyThrows
   @Override
   public void accept(CityJSONRequestCreated created) {
     var communityAuthorization =
@@ -60,9 +64,21 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
         cityJSONRequestRepository
             .findByIdAndCommunityOwnerId(created.getRequestId(), created.getCommunityOwnerId())
             .orElseThrow();
+    var lidarProcessorType = created.getLidarProcessorType();
+    if (THREE_D_BAG_ROOFER.equals(lidarProcessorType)) {
+      try {
+        var cityJsonFrom3dBag = cityJson3DBagRooferProcessor.apply(request);
+        succeedCityJsonRequest(request, cityJsonFrom3dBag);
+      } catch (Exception e) {
+        log.error(
+            "Unable to process Lidar for request {}, error {}", request.getId(), e.getMessage());
+        updateStatus(request, FAILED, GEOMETRY_CONSTRUCTION);
+      }
+      return;
+    }
 
     try {
-      var requestDelimitations = getRequestDelimitations(request);
+      var requestDelimitations = request.getRequestDelimitations();
       var pointsExtractionResult =
           lasRoofsPointsExtractor.apply(getType(request), toGeometries(requestDelimitations));
 
@@ -73,14 +89,7 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
 
       var cityJson = toCityJSON(request, pointsExtractionResult);
 
-      var updated =
-          request.toBuilder()
-              .status(FINISHED)
-              .step(GEOMETRY_CONSTRUCTION)
-              .cityJsons(List.of(cityJson))
-              .build();
-      entityManager.clear();
-      cityJSONRequestRepository.save(updated);
+      succeedCityJsonRequest(request, List.of(cityJson));
     } catch (Exception e) {
       log.error(e.getMessage());
       updateStatus(request, FAILED, GEOMETRY_CONSTRUCTION);
@@ -88,15 +97,15 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
     }
   }
 
-  private List<Feature> getRequestDelimitations(CityJSONRequest request) {
-    if (request.getFeaturesWithDelimitation() != null
-        && !request.getFeaturesWithDelimitation().isEmpty()) {
-      return request.getFeaturesWithDelimitation().stream()
-          .map(FeatureWithDelimitation::delimitations)
-          .flatMap(List::stream)
-          .toList();
-    }
-    return request.getDelimitations();
+  private void succeedCityJsonRequest(CityJSONRequest request, List<CityJSON> cityJsonList) {
+    var updated =
+        request.toBuilder()
+            .status(FINISHED)
+            .step(GEOMETRY_CONSTRUCTION)
+            .cityJsons(cityJsonList)
+            .build();
+    entityManager.clear();
+    cityJSONRequestRepository.save(updated);
   }
 
   private static boolean isUnavailable(PointsExtractionResult result) {
