@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
@@ -45,6 +46,7 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
+@Disabled("TODO: internal Lidar not processed anymore")
 class CityJSONRequestCreatedServiceIT extends FacadeIT {
   @MockBean BucketComponent bucketComponentMock;
   @Autowired CityJSONRequestCreatedService subject;

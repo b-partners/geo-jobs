@@ -62,7 +62,9 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
         cityJSONRequestRepository
             .findByIdAndCommunityOwnerId(created.getRequestId(), created.getCommunityOwnerId())
             .orElseThrow();
-    var lidarProcessorType = created.getLidarProcessorType();
+
+    var lidarProcessorType = THREE_D_BAG_ROOFER;
+
     if (THREE_D_BAG_ROOFER.equals(lidarProcessorType)) {
       try {
         var cityJsonFrom3dBag = cityJson3DBagRooferProcessor.apply(request);
