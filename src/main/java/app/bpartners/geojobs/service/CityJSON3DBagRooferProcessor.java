@@ -16,6 +16,7 @@ import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSON;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
 import app.bpartners.geojobs.service.geojson.GeoJson;
+import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
 import app.bpartners.geojobs.service.roofer3dbag.Roofer3DBagApiClient;
 import app.bpartners.geojobs.service.roofer3dbag.model.CityJsonGenerationRequest;
@@ -49,6 +50,8 @@ public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, L
   private final LidarApiFacade lidarApiFacade;
   private final Roofer3DBagApiClient roofer3DBagApiClient;
   private final FileWriter fileWriter;
+  private final CoordinateTransformer coordinateTransformer;
+  private final GeometryConverter geometryConverter;
 
   @Override
   public List<CityJSON> apply(CityJSONRequest request) {
@@ -123,9 +126,9 @@ public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, L
   private URL getGeoJsonBuildingPresignedURL(Feature feature) throws IOException {
     var tmpGeoJsonBucketKey = randomUUID() + GEOJSON_EXTENSION;
     var multiPolygon = getMultiPolygon(feature);
-
+    var lambert93Coordinates = convertWgs84ToLambert93Coordinates(multiPolygon);
     var geoJson =
-        new GeoJson(List.of(new GeoJson.GeoFeature(feature.getProperties(), multiPolygon)));
+        new GeoJson(List.of(new GeoJson.GeoFeature(feature.getProperties(), lambert93Coordinates)));
 
     var tmpGeoJsonFile =
         fileWriter.write(
@@ -146,5 +149,16 @@ public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, L
     }
     throw new NotImplementedException(
         "Unsupported geometry type for validation: " + actualInstance);
+  }
+
+  private MultiPolygon convertWgs84ToLambert93Coordinates(MultiPolygon multiPolygon) {
+    var convertedCoordinates =
+        coordinateTransformer.apply(geometryConverter.apply(multiPolygon.getCoordinates()));
+    if (convertedCoordinates
+        instanceof org.locationtech.jts.geom.MultiPolygon multiPolygonConverted) {
+      return geometryConverter.restMultiPolygonFromJts(multiPolygonConverted);
+    }
+    throw new NotImplementedException(
+        "Unable to convert coordinates to Lambert93 for multiPolygon " + multiPolygon);
   }
 }
