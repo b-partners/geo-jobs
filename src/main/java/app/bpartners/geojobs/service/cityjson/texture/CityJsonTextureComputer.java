@@ -37,39 +37,4 @@ public class CityJsonTextureComputer {
 
     return cityJsonIOService.toFile(texturedCityJson);
   }
-
-  public File textureCityJson(
-      File cityJsonFile, File imageFile, double originX, double originY, double pixelSizeMeters) {
-    ObjectNode json = cityJsonIOService.loadCityJson(cityJsonFile);
-    CityJsonWithVertices cityJsonWithVertices = cityJsonTextureDomainService.toCityJsonFile(json);
-
-    BufferedImage image;
-    try {
-      image = ImageIO.read(imageFile);
-    } catch (IOException e) {
-      throw new IllegalStateException("Failed to read image", e);
-    }
-
-    if (image == null) {
-      throw new IllegalStateException("Could not read image: " + imageFile.getAbsolutePath());
-    }
-
-    RasterInfo rasterInfo =
-        new RasterInfo(
-            originX,
-            originY,
-            pixelSizeMeters,
-            -pixelSizeMeters,
-            0.0,
-            0.0,
-            image.getWidth(),
-            image.getHeight());
-
-    TextureInfo textureInfo = new TextureInfo(rasterInfo, imageFile);
-
-    TexturedCityJson texturedCityJson =
-        cityJsonTextureDomainService.texture(cityJsonWithVertices, textureInfo);
-
-    return cityJsonIOService.toFile(texturedCityJson);
-  }
 }
