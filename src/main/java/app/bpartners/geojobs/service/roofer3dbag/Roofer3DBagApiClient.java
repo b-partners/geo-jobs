@@ -28,8 +28,8 @@ import org.springframework.web.util.UriComponentsBuilder;
  *
  * <pre>{@code
  * CityJsonGenerationRequest req = CityJsonGenerationRequest.builder()
- *     .geoJsonBuildingBucketUri("s3://bucket/emprise.geojson")
- *     .lidarBucketUris(List.of("s3://bucket/lidar1.copc.laz"))
+ *     .geoJsonBuildingPresignedUrl("s3://bucket/emprise.geojson")
+ *     .lidarPresignedUrls(List.of("s3://bucket/lidar1.copc.laz"))
  *     .build();
  *
  * CityJsonGenerationResponse res = rooferClient.generateCityJson(req, 0.66f);
@@ -59,7 +59,8 @@ public class Roofer3DBagApiClient {
   /**
    * Génère un CityJSON 3D à partir d'un GeoJSON d'emprise et de fichiers LiDAR.
    *
-   * @param request corps de la requête (geoJsonBuildingBucketUri + lidarBucketUris obligatoires)
+   * @param request corps de la requête (geoJsonBuildingPresignedUrl + lidarPresignedUrls
+   *     obligatoires)
    * @param complexityFactor facteur de complexité optionnel (peut être null)
    * @return réponse contenant l'URL pré-signée et sa date d'expiration
    * @throws RooferApiException en cas d'erreur HTTP ou réseau
