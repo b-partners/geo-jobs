@@ -40,6 +40,7 @@ public class CityJSONRequestMapper {
             CityJSONDelimitationObjectTypeMapper.toRestDelimitationObjectType(
                 cityJSONRequest.getDelimitationObjectType()))
         .status(CityJSONRequestStatusMapper.toRest(cityJSONRequest.getStatus()))
+        .threeDTextureInfo(null)
         .cityJsons(restCityJsons);
   }
 
@@ -112,15 +113,19 @@ public class CityJSONRequestMapper {
     var domainDelimitations = delimitations.stream().map(FeatureMapper::toDomainFeature).toList();
     var texture = createCityJSONRequest.getThreeDTextureInfo();
 
-    return app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest.builder()
-        .id(requestIdentifier)
-        .creationDatetime(now())
-        .communityOwnerId(communityOwnerId)
-        .delimitations(domainDelimitations)
-        .delimitationObjectType(
-            CityJSONDelimitationObjectTypeMapper.fromRestDelimitationObjectType(
-                createCityJSONRequest.getDelimitationObjectType()))
-        .textures(texture == null ? List.of() : List.of(textureMapper.toDomain(texture)))
+    var domain =
+        app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest.builder()
+            .id(requestIdentifier)
+            .creationDatetime(now())
+            .communityOwnerId(communityOwnerId)
+            .delimitations(domainDelimitations)
+            .delimitationObjectType(
+                CityJSONDelimitationObjectTypeMapper.fromRestDelimitationObjectType(
+                    createCityJSONRequest.getDelimitationObjectType()))
+            .build();
+
+    return domain.toBuilder()
+        .textures(texture == null ? List.of() : List.of(textureMapper.toDomain(texture, domain)))
         .build();
   }
 
