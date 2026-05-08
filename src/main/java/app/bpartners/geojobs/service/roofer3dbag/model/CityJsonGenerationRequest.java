@@ -15,10 +15,10 @@ import lombok.NoArgsConstructor;
 public class CityJsonGenerationRequest {
 
   /** Polygone d'emprise du bâtiment en EPSG:2154. Exemple : s3://bucket/emprise.geojson */
-  @JsonProperty("geoJsonBuildingBucketUri")
-  private String geoJsonBuildingBucketUri;
+  @JsonProperty("geoJsonBuildingPresignedUrl")
+  private String geoJsonBuildingPresignedUrl;
 
   /** Liste des fichiers LiDAR (.copc.laz) sur S3. */
-  @JsonProperty("lidarBucketUris")
-  private List<String> lidarBucketUris;
+  @JsonProperty("lidarPresignedUrls")
+  private List<String> lidarPresignedUrls;
 }
