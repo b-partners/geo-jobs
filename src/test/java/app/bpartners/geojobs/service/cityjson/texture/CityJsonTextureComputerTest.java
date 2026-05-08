@@ -7,6 +7,7 @@ import static org.mockito.Mockito.mock;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.service.cityjson.io.CustomGeoTiffWriter;
 import app.bpartners.geojobs.service.cityjson.texture.model.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -17,7 +18,7 @@ import org.springframework.core.io.ClassPathResource;
 
 class CityJsonTextureComputerTest {
 
-  CityJsonIOService cityJsonIOService = new CityJsonIOService();
+  CityJsonIOService cityJsonIOService = new CityJsonIOService(new ObjectMapper());
   BucketComponent bucketComponent = mock(BucketComponent.class);
   CityJsonTextureDomainService cityJsonTextureDomainService =
       new CityJsonTextureDomainService(cityJsonIOService, bucketComponent);

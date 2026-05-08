@@ -21,6 +21,7 @@ import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
 import app.bpartners.geojobs.service.CityJSON3DBagRooferProcessor;
 import app.bpartners.geojobs.service.CoordinateTransformer;
 import app.bpartners.geojobs.service.cityjson.model.object.CityJsonIO;
+import app.bpartners.geojobs.service.cityjson.texture.CityJsonTextureComputer;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
 import app.bpartners.geojobs.service.roofer3dbag.Roofer3DBagApiClient;
@@ -49,6 +50,7 @@ class CityJSON3DBagRooferProcessorTest {
   FileWriter fileWriterMock = mock(FileWriter.class);
   CoordinateTransformer coordinateTransformer = new CoordinateTransformer();
   GeometryConverter geometryConverter = new GeometryConverter(null, null);
+  CityJsonTextureComputer textureComputerMock = mock(CityJsonTextureComputer.class);
 
   CityJSON3DBagRooferProcessor subject =
       new CityJSON3DBagRooferProcessor(
@@ -58,7 +60,8 @@ class CityJSON3DBagRooferProcessorTest {
           roofer3DBagApiClientMock,
           fileWriterMock,
           coordinateTransformer,
-          geometryConverter);
+          geometryConverter,
+          textureComputerMock);
 
   @SneakyThrows
   @Test
@@ -101,6 +104,8 @@ class CityJSON3DBagRooferProcessorTest {
             (mock, ctx) -> {
               Mockito.when(mock.toURL()).thenReturn(rooferCityJsonURLMock);
             });
+    when(textureComputerMock.applyTexture(any(), any()))
+        .thenAnswer(invocation -> invocation.getArgument(1));
 
     var cityJsonDocMock = mock(CityJsonIO.Doc.class);
     MockedStatic<CityJsonIO> cityJsonIOMockedStatic = mockStatic(CityJsonIO.class);

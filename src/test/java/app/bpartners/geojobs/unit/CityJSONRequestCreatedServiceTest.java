@@ -20,6 +20,7 @@ import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.service.CityJSON3DBagRooferProcessor;
 import app.bpartners.geojobs.service.cityjson.LidarDataToCityJsonProcessor;
+import app.bpartners.geojobs.service.cityjson.texture.CityJsonTextureComputer;
 import app.bpartners.geojobs.service.event.CityJSONRequestCreatedService;
 import app.bpartners.geojobs.service.lidar.LasRoofsPointsExtractor;
 import jakarta.persistence.EntityManager;
@@ -39,6 +40,7 @@ class CityJSONRequestCreatedServiceTest {
   EventProducer eventProducerMock = mock();
   CommunityAuthorizationRepository communityAuthorizationRepositoryMock = mock();
   CityJSON3DBagRooferProcessor cityJson3DBagRooferProcessorMock = mock();
+  CityJsonTextureComputer textureComputerMock = mock(CityJsonTextureComputer.class);
 
   CityJSONRequestCreatedService subject =
       new CityJSONRequestCreatedService(
@@ -50,7 +52,8 @@ class CityJSONRequestCreatedServiceTest {
           bucketComponentMock,
           eventProducerMock,
           communityAuthorizationRepositoryMock,
-          cityJson3DBagRooferProcessorMock);
+          cityJson3DBagRooferProcessorMock,
+          textureComputerMock);
 
   @BeforeEach
   void setUp() {
@@ -82,6 +85,8 @@ class CityJSONRequestCreatedServiceTest {
         .thenReturn(List.of(cityJSONMock));
     when(cityJSONRequestRepositoryMock.save(any()))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+    when(textureComputerMock.applyTexture(any(), any()))
+        .thenAnswer(invocation -> invocation.getArgument(1));
 
     assertDoesNotThrow(
         () ->

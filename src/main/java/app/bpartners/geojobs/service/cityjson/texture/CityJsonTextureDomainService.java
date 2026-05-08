@@ -23,7 +23,9 @@ import java.util.Locale;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.math.Vector3D;
+import org.springframework.stereotype.Component;
 
+@Component
 @RequiredArgsConstructor
 public class CityJsonTextureDomainService {
 

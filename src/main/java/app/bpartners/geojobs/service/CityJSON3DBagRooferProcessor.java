@@ -16,6 +16,7 @@ import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSON;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
 import app.bpartners.geojobs.service.cityjson.model.object.CityJsonIO;
+import app.bpartners.geojobs.service.cityjson.texture.CityJsonTextureComputer;
 import app.bpartners.geojobs.service.geojson.GeoJson;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
@@ -53,6 +54,7 @@ public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, L
   private final FileWriter fileWriter;
   private final CoordinateTransformer coordinateTransformer;
   private final GeometryConverter geometryConverter;
+  private final CityJsonTextureComputer textureComputer;
 
   @Override
   public List<CityJSON> apply(CityJSONRequest request) {
@@ -96,7 +98,10 @@ public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, L
                 throw new RuntimeException(e);
               }
 
-              bucketComponent.upload(cityJSONFileWithAdditionalProperties, bucketFileKey);
+              var texturedCityJSON =
+                  textureComputer.applyTexture(request, cityJSONFileWithAdditionalProperties);
+
+              bucketComponent.upload(texturedCityJSON, bucketFileKey);
 
               var cityJsonId = randomUUID().toString();
               return CityJSON.builder()
