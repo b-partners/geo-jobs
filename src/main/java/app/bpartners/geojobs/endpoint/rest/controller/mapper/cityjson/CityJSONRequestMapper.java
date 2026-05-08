@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CityJSONRequestMapper {
   private final BucketComponent bucketComponent;
+  private final CityJSONTextureMapper textureMapper;
 
   public CityJSONRequest toRest(
       app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest cityJSONRequest) {
@@ -109,6 +110,7 @@ public class CityJSONRequestMapper {
             ? List.of()
             : createCityJSONRequest.getDelimitations();
     var domainDelimitations = delimitations.stream().map(FeatureMapper::toDomainFeature).toList();
+    var texture = createCityJSONRequest.getThreeDTextureInfo();
 
     return app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest.builder()
         .id(requestIdentifier)
@@ -118,6 +120,7 @@ public class CityJSONRequestMapper {
         .delimitationObjectType(
             CityJSONDelimitationObjectTypeMapper.fromRestDelimitationObjectType(
                 createCityJSONRequest.getDelimitationObjectType()))
+        .textures(texture == null ? List.of() : List.of(textureMapper.toDomain(texture)))
         .build();
   }
 

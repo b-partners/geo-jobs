@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service.event;
 import static app.bpartners.geojobs.model.lidar.planes.model.LasRoofDelimitationType.ROOF_SEGMENT_FACE_DELIMITATION;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStatus.*;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStep.*;
+import static java.time.Instant.now;
 import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
@@ -14,15 +15,15 @@ import app.bpartners.geojobs.model.lidar.planes.model.LasRoofDelimitationType;
 import app.bpartners.geojobs.repository.CityJSONRequestRepository;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.Feature;
-import app.bpartners.geojobs.repository.model.cityjson.CityJSON;
-import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
-import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStatus;
-import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStep;
+import app.bpartners.geojobs.repository.model.cityjson.*;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
 import app.bpartners.geojobs.service.cityjson.LidarDataToCityJsonProcessor;
+import app.bpartners.geojobs.service.cityjson.texture.CityJsonTextureComputer;
+import app.bpartners.geojobs.service.cityjson.texture.model.RasterInfo;
 import app.bpartners.geojobs.service.lidar.LasRoofsPointsExtractor;
 import app.bpartners.geojobs.service.lidar.PointsExtractionResult;
 import jakarta.persistence.EntityManager;
+import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -110,6 +111,16 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
     var fileKey = String.format("city_jsons/%s", filename);
     var file = cityJsonProcessor.apply(filename, result);
 
+    if (request.getTextures() != null && !request.getTextures().isEmpty()) {
+      CityJSONTexture texture = request.getTextures().getFirst();
+
+      Instant cityJsonTexturationStart = now();
+      CityJsonTextureComputer textureComputer = new CityJsonTextureComputer(bucketComponent);
+      file = textureComputer.textureCityJson(file, RasterInfo.of(texture), texture.getImageUri());
+      log.info(
+          "CityJSON texturing took {} ms",
+          now().toEpochMilli() - cityJsonTexturationStart.toEpochMilli());
+    }
     bucketComponent.upload(file, fileKey);
 
     return CityJSON.builder().id(filename).request(request).s3FileKey(fileKey).build();
