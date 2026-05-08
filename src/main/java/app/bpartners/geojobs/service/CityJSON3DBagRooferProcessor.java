@@ -15,6 +15,7 @@ import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSON;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
+import app.bpartners.geojobs.service.cityjson.model.object.CityJsonIO;
 import app.bpartners.geojobs.service.geojson.GeoJson;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
@@ -74,19 +75,28 @@ public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, L
         .map(
             cityJsonGenerationResponse -> {
               String bucketFileKey = randomUUID() + JSONL_EXTENSION;
-              File rooferCityJsonFile;
+              File cityJSONFileWithAdditionalProperties;
               try {
                 URL rooferCityJsonURL;
                 rooferCityJsonURL = new URI(cityJsonGenerationResponse.getCityJsonUrl()).toURL();
-                rooferCityJsonFile = File.createTempFile(bucketFileKey, JSONL_EXTENSION);
+                File originalCityJSONFile =
+                    File.createTempFile(randomUUID().toString(), JSONL_EXTENSION);
                 try (InputStream in = rooferCityJsonURL.openStream()) {
-                  Files.copy(in, rooferCityJsonFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                  Files.copy(
+                      in, originalCityJSONFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                 }
+
+                cityJSONFileWithAdditionalProperties =
+                    File.createTempFile(bucketFileKey, JSONL_EXTENSION);
+
+                var computedCityJSON = CityJsonIO.computeAdditionalProperties(originalCityJSONFile);
+
+                CityJsonIO.write(computedCityJSON, cityJSONFileWithAdditionalProperties.toPath());
               } catch (URISyntaxException | IOException e) {
                 throw new RuntimeException(e);
               }
 
-              bucketComponent.upload(rooferCityJsonFile, bucketFileKey);
+              bucketComponent.upload(cityJSONFileWithAdditionalProperties, bucketFileKey);
 
               var cityJsonId = randomUUID().toString();
               return CityJSON.builder()

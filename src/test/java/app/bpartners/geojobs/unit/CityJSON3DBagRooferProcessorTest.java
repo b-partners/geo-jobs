@@ -2,11 +2,13 @@ package app.bpartners.geojobs.unit;
 
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toDomainFeature;
 import static app.bpartners.geojobs.endpoint.rest.model.Feature.TypeEnum.FEATURE;
+import static app.bpartners.geojobs.service.cityjson.model.object.CityJsonIO.computeAdditionalProperties;
+import static app.bpartners.geojobs.service.cityjson.model.object.CityJsonIO.write;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
@@ -18,6 +20,7 @@ import app.bpartners.geojobs.repository.model.cityjson.CityJSON;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
 import app.bpartners.geojobs.service.CityJSON3DBagRooferProcessor;
 import app.bpartners.geojobs.service.CoordinateTransformer;
+import app.bpartners.geojobs.service.cityjson.model.object.CityJsonIO;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
 import app.bpartners.geojobs.service.roofer3dbag.Roofer3DBagApiClient;
@@ -34,6 +37,7 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Geometry;
 import org.mockito.MockedConstruction;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.springframework.core.io.ClassPathResource;
 
@@ -98,6 +102,15 @@ class CityJSON3DBagRooferProcessorTest {
               Mockito.when(mock.toURL()).thenReturn(rooferCityJsonURLMock);
             });
 
+    var cityJsonDocMock = mock(CityJsonIO.Doc.class);
+    MockedStatic<CityJsonIO> cityJsonIOMockedStatic = mockStatic(CityJsonIO.class);
+    cityJsonIOMockedStatic
+        .when(() -> computeAdditionalProperties(any()))
+        .thenReturn(cityJsonDocMock);
+    cityJsonIOMockedStatic
+        .when(() -> write(eq(cityJsonDocMock), any()))
+        .thenAnswer(invocation -> null);
+
     var actual = subject.apply(cityJSONRequestMock);
 
     assertEquals(1, actual.size());
@@ -112,6 +125,7 @@ class CityJSON3DBagRooferProcessorTest {
                 .request(cityJSONRequestMock)
                 .build()));
     mockedUri.close();
+    cityJsonIOMockedStatic.close();
   }
 
   private List<List<List<List<BigDecimal>>>> multiPolygonCoordinates() {
