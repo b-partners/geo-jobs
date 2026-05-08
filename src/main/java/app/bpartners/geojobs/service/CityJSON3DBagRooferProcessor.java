@@ -35,12 +35,15 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, List<CityJSON>> {
   private static final String JSONL_EXTENSION = ".jsonl";
+  private static final String GEOJSON_EXTENSION = ".geojson";
   private final BucketComponent bucketComponent;
   private final FeatureMapper featureMapper;
   private final LidarApiFacade lidarApiFacade;
@@ -98,8 +101,11 @@ public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, L
             feature -> {
               try {
                 var presignURL = getGeoJsonBuildingPresignedURL(feature);
+                var presignURLString = presignURL.toString();
                 var uniqueLidarFilesUrls = getUniqueLidarFilesUrls(feature);
-                return Map.of(presignURL.toString(), uniqueLidarFilesUrls);
+                log.info("Presigned URL for building: " + presignURLString);
+                log.info("Lidar files URLs: " + uniqueLidarFilesUrls);
+                return Map.of(presignURLString, uniqueLidarFilesUrls);
               } catch (IOException e) {
                 throw new RuntimeException(e);
               }
@@ -115,7 +121,7 @@ public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, L
   }
 
   private URL getGeoJsonBuildingPresignedURL(Feature feature) throws IOException {
-    var tmpGeoJsonBucketKey = randomUUID().toString();
+    var tmpGeoJsonBucketKey = randomUUID() + GEOJSON_EXTENSION;
     var multiPolygon = getMultiPolygon(feature);
 
     var geoJson =
@@ -123,9 +129,7 @@ public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, L
 
     var tmpGeoJsonFile =
         fileWriter.write(
-            geoJson.getStringValue().getBytes(UTF_8),
-            createTempDirectory(),
-            randomUUID() + ".geojson");
+            geoJson.getStringValue().getBytes(UTF_8), createTempDirectory(), tmpGeoJsonBucketKey);
 
     bucketComponent.upload(tmpGeoJsonFile, tmpGeoJsonBucketKey);
 
