@@ -69,4 +69,14 @@ public class CityJSONRequest implements Serializable {
         ? null
         : delimitations.stream().map(FeatureMapper::toRestFeature).toList();
   }
+
+  public List<Feature> getRequestDelimitations() {
+    if (getFeaturesWithDelimitation() != null && !getFeaturesWithDelimitation().isEmpty()) {
+      return getFeaturesWithDelimitation().stream()
+          .map(FeatureWithDelimitation::delimitations)
+          .flatMap(List::stream)
+          .toList();
+    }
+    return getDelimitations();
+  }
 }
