@@ -23,7 +23,6 @@ import app.bpartners.geojobs.service.cityjson.texture.model.RasterInfo;
 import app.bpartners.geojobs.service.lidar.LasRoofsPointsExtractor;
 import app.bpartners.geojobs.service.lidar.PointsExtractionResult;
 import jakarta.persistence.EntityManager;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
@@ -118,7 +117,9 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
       Instant cityJsonTexturationStart = now();
       CityJsonTextureComputer textureComputer = new CityJsonTextureComputer(bucketComponent);
       file = textureComputer.textureCityJson(file, RasterInfo.of(texture), texture.getImageUri());
-      log.info("CityJSON texturing took {} ms", now().toEpochMilli() - cityJsonTexturationStart.toEpochMilli());
+      log.info(
+          "CityJSON texturing took {} ms",
+          now().toEpochMilli() - cityJsonTexturationStart.toEpochMilli());
     }
     bucketComponent.upload(file, fileKey);
 

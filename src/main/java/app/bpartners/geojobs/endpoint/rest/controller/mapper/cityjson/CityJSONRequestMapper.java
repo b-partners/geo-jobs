@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CityJSONRequestMapper {
   private final BucketComponent bucketComponent;
+  private final CityJSONTextureMapper textureMapper;
 
   public CityJSONRequest toRest(
       app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest cityJSONRequest) {
@@ -118,6 +119,7 @@ public class CityJSONRequestMapper {
         .delimitationObjectType(
             CityJSONDelimitationObjectTypeMapper.fromRestDelimitationObjectType(
                 createCityJSONRequest.getDelimitationObjectType()))
+        .textures(List.of(textureMapper.toDomain(createCityJSONRequest.getThreeDTextureInfo())))
         .build();
   }
 
