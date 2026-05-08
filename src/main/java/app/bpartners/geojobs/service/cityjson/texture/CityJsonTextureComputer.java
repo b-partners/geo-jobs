@@ -16,10 +16,10 @@ public class CityJsonTextureComputer {
   private final CityJsonIOService cityJsonIOService;
   private final CityJsonTextureDomainService cityJsonTextureDomainService;
 
-  public File textureCityJson(File cityJsonFile, RasterInfo rasterInfo, String imageDtaUri) {
+  public File textureCityJson(File cityJsonFile, RasterInfo rasterInfo, String imageDataUri) {
     ObjectNode json = cityJsonIOService.loadCityJson(cityJsonFile);
     CityJsonWithVertices cityJsonWithVertices = cityJsonTextureDomainService.toCityJsonFile(json);
-    TextureInfo textureInfo = new TextureInfo(rasterInfo, null, imageDtaUri);
+    TextureInfo textureInfo = new TextureInfo(rasterInfo, null, imageDataUri);
 
     TexturedCityJson texturedCityJson =
         cityJsonTextureDomainService.texture(cityJsonWithVertices, textureInfo);

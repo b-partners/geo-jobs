@@ -25,6 +25,25 @@ class CityJsonTextureComputerTest {
       new CityJsonTextureComputer(cityJsonIOService, cityJsonTextureDomainService);
 
   @Test
+  void texturize_from_raster_info() throws IOException {
+    int roofNumber = 4;
+    File cityJsonFile =
+        new ClassPathResource(
+                String.format("cityjson/texture/inputs/roof%s/roof%s.json", roofNumber, roofNumber))
+            .getFile();
+    File tifFile =
+        new ClassPathResource(
+                String.format("cityjson/texture/inputs/roof%s/roof%s.tif", roofNumber, roofNumber))
+            .getFile();
+    RasterInfo rasterInfo = cityJsonIOService.readRasterInfo(tifFile);
+    String imageDataUri = "mockImageDataUri";
+
+    var actual = subject.textureCityJson(cityJsonFile, rasterInfo, imageDataUri);
+
+    assertNotNull(actual);
+  }
+
+  @Test
   void texturize() throws IOException {
     int roofNumber = 4;
     File cityJsonFile =
