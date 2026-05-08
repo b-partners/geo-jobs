@@ -46,9 +46,6 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
   private final EventProducer eventProducer;
   private final CommunityAuthorizationRepository communityAuthorizationRepository;
 
-  private final CityJsonTextureComputer textureComputer =
-      new CityJsonTextureComputer(bucketComponent);
-
   @Override
   public void accept(CityJSONRequestCreated created) {
     var communityAuthorization =
@@ -119,6 +116,7 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
       CityJSONTexture texture = request.getTextures().getFirst();
 
       Instant cityJsonTexturationStart = now();
+      CityJsonTextureComputer textureComputer = new CityJsonTextureComputer(bucketComponent);
       file = textureComputer.textureCityJson(file, RasterInfo.of(texture), texture.getImageUri());
       log.info("CityJSON texturing took {} ms", now().toEpochMilli() - cityJsonTexturationStart.toEpochMilli());
     }
