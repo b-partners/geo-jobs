@@ -7,6 +7,7 @@ import static org.hibernate.type.SqlTypes.JSON;
 import static org.hibernate.type.SqlTypes.NAMED_ENUM;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
+import app.bpartners.geojobs.model.lidar.LidarProcessorType;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
 import jakarta.persistence.*;
@@ -69,6 +70,8 @@ public class CityJSONRequest implements Serializable {
         ? null
         : delimitations.stream().map(FeatureMapper::toRestFeature).toList();
   }
+
+  @Transient private LidarProcessorType lidarProcessorType;
 
   public List<Feature> getRequestDelimitations() {
     if (getFeaturesWithDelimitation() != null && !getFeaturesWithDelimitation().isEmpty()) {
