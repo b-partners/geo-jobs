@@ -1,9 +1,6 @@
 package app.bpartners.geojobs.repository.model.cityjson;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -45,6 +42,7 @@ public class CityJSONTexture {
   @Column(name = "image_height")
   private int imageHeight;
 
-  @Column(name = "city_json_request_id")
-  private String cityJsonRequestId;
+  @ManyToOne
+  @JoinColumn(name = "city_json_request_id")
+  private CityJSONRequest cityJsonRequest;
 }

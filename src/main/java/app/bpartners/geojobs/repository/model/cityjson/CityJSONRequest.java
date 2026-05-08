@@ -56,6 +56,9 @@ public class CityJSONRequest implements Serializable {
   @JdbcTypeCode(NAMED_ENUM)
   private CityJSONDelimitationObjectType delimitationObjectType;
 
+  @OneToMany(mappedBy = "cityJsonRequest", cascade = CascadeType.ALL, fetch = EAGER)
+  private List<CityJSONTexture> textures;
+
   @PrePersist
   protected void onCreate() {
     this.creationDatetime = now().truncatedTo(ChronoUnit.MICROS);
