@@ -16,7 +16,8 @@ public class CityJsonTextureComputer {
 
   public CityJsonTextureComputer(BucketComponent bucketComponent) {
     this.cityJsonIOService = new CityJsonIOService();
-    this.cityJsonTextureDomainService = new CityJsonTextureDomainService(this.cityJsonIOService, bucketComponent);
+    this.cityJsonTextureDomainService =
+        new CityJsonTextureDomainService(this.cityJsonIOService, bucketComponent);
   }
 
   public File textureCityJson(File cityJsonFile, RasterInfo rasterInfo, String imageDataUri) {

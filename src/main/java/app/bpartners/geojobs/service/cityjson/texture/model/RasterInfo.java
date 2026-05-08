@@ -12,9 +12,14 @@ public record RasterInfo(
     int width,
     int height) {
   public static RasterInfo of(CityJSONTexture texture) {
-    return new RasterInfo(texture.getTopLeftLongitude(), texture.getTopLeftLatitude(),
-        texture.getPixelWidth(), texture.getPixelHeight(),
-        texture.getShearX(), texture.getShearY(),
-        texture.getImageWidth(), texture.getImageHeight());
+    return new RasterInfo(
+        texture.getTopLeftLongitude(),
+        texture.getTopLeftLatitude(),
+        texture.getPixelWidth(),
+        texture.getPixelHeight(),
+        texture.getShearX(),
+        texture.getShearY(),
+        texture.getImageWidth(),
+        texture.getImageHeight());
   }
 }

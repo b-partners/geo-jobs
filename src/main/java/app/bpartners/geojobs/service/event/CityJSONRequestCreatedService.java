@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service.event;
 import static app.bpartners.geojobs.model.lidar.planes.model.LasRoofDelimitationType.ROOF_SEGMENT_FACE_DELIMITATION;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStatus.*;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStep.*;
+import static java.time.Instant.now;
 import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
@@ -22,6 +23,8 @@ import app.bpartners.geojobs.service.cityjson.texture.model.RasterInfo;
 import app.bpartners.geojobs.service.lidar.LasRoofsPointsExtractor;
 import app.bpartners.geojobs.service.lidar.PointsExtractionResult;
 import jakarta.persistence.EntityManager;
+
+import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -43,7 +46,8 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
   private final EventProducer eventProducer;
   private final CommunityAuthorizationRepository communityAuthorizationRepository;
 
-  private final CityJsonTextureComputer textureComputer = new CityJsonTextureComputer(bucketComponent);
+  private final CityJsonTextureComputer textureComputer =
+      new CityJsonTextureComputer(bucketComponent);
 
   @Override
   public void accept(CityJSONRequestCreated created) {
@@ -113,7 +117,10 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
 
     if (request.getTextures() != null && !request.getTextures().isEmpty()) {
       CityJSONTexture texture = request.getTextures().getFirst();
+
+      Instant cityJsonTexturationStart = now();
       file = textureComputer.textureCityJson(file, RasterInfo.of(texture), texture.getImageUri());
+      log.info("CityJSON texturing took {} ms", now().toEpochMilli() - cityJsonTexturationStart.toEpochMilli());
     }
     bucketComponent.upload(file, fileKey);
 
