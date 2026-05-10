@@ -156,8 +156,8 @@ public class CityJsonIOService {
         originX = origin.getX();
         originY = origin.getY();
 
-        pixelWidth = Math.abs(stepX.getX() - originX);
-        pixelHeight = Math.abs(stepY.getY() - originY);
+        pixelWidth = stepX.getX() - originX;
+        pixelHeight = stepY.getY() - originY;
       }
 
     } catch (Exception e) {

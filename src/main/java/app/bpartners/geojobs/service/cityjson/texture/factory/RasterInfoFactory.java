@@ -34,8 +34,8 @@ public class RasterInfoFactory {
             "EPSG:4326",
             "EPSG:2154");
 
-    double pixelWidthMeters = Math.abs(stepX.get(0).getX() - o.getX()) / 0.00001;
-    double pixelHeightMeters = Math.abs(stepY.get(0).getY() - o.getY()) / 0.00001;
+    double pixelWidthMeters = (stepX.get(0).getX() - o.getX()) / 0.00001;
+    double pixelHeightMeters = (stepY.get(0).getY() - o.getY()) / 0.00001;
 
     return new RasterInfo(
         o.getX(),
