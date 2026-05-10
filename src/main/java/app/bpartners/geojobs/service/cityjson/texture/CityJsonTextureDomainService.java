@@ -36,6 +36,7 @@ public class CityJsonTextureDomainService {
   private final ObjectMapper objectMapper = new ObjectMapper();
   private final CityJsonIOService cityJsonIOService;
   private final BucketComponent bucketComponent;
+  private final RasterInfoProjector rasterInfoProjector;
 
   public CityJsonWithVertices toCityJsonFile(ObjectNode json) {
     ArrayNode rawVertices = (ArrayNode) json.get("vertices");
@@ -63,6 +64,19 @@ public class CityJsonTextureDomainService {
       translateZ = translate.get(2).asDouble();
     }
 
+    String crs = "EPSG:2154";
+    if (json.has("metadata")) {
+      JsonNode metadata = json.get("metadata");
+      if (metadata.has("referenceSystem")) {
+        String rs = metadata.get("referenceSystem").asText();
+        if (rs.startsWith("http://www.opengis.net/def/crs/EPSG/0/")) {
+          crs = "EPSG:" + rs.substring("http://www.opengis.net/def/crs/EPSG/0/".length());
+        } else {
+          crs = rs;
+        }
+      }
+    }
+
     List<Vector3D> vertices = new ArrayList<>();
 
     for (JsonNode rawVertex : rawVertices) {
@@ -73,15 +87,18 @@ public class CityJsonTextureDomainService {
       vertices.add(new Vector3D(x, y, z));
     }
 
-    return new CityJsonWithVertices(json, vertices);
+    return new CityJsonWithVertices(json, vertices, crs);
   }
 
   public TexturedCityJson texture(
       CityJsonWithVertices cityJsonWithVertices, TextureInfo textureInfo) {
     ObjectNode cityJson = cityJsonWithVertices.json().deepCopy();
-    List<Vector3D> vertices = cityJsonWithVertices.vertices();
 
     RasterInfo rasterInfo = textureInfo.rasterInfo();
+
+    List<Vector3D> vertices =
+        rasterInfoProjector.project(
+            cityJsonWithVertices.vertices(), cityJsonWithVertices.crs(), rasterInfo.crs());
     String imageDataUri = textureInfo.dataUri();
     File textureFileTiff = textureInfo.tifFile();
 

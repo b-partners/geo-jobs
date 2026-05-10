@@ -110,11 +110,28 @@ public class CityJsonIOService {
     double originY = 0.0;
     double pixelWidth = 1.0;
     double pixelHeight = -1.0;
+    String crs = "EPSG:4326";
 
     GeoTiffReader reader = null;
     try {
       reader = new GeoTiffReader(tifFile);
       GridCoverage2D coverage = reader.read(null);
+
+      org.geotools.api.referencing.crs.CoordinateReferenceSystem coverageCRS =
+          coverage.getCoordinateReferenceSystem();
+      if (coverageCRS != null) {
+        try {
+          Integer epsg = org.geotools.referencing.CRS.lookupEpsgCode(coverageCRS, false);
+          if (epsg != null) {
+            crs = "EPSG:" + epsg;
+          } else {
+            crs = coverageCRS.getName().toString();
+          }
+        } catch (Exception e) {
+          crs = coverageCRS.getName().toString();
+        }
+      }
+
       MathTransform transform = coverage.getGridGeometry().getGridToCRS(PixelInCell.CELL_CORNER);
       if (transform instanceof AffineTransform affine) {
         originX = affine.getTranslateX();
@@ -157,6 +174,14 @@ public class CityJsonIOService {
     }
 
     return new RasterInfo(
-        originX, originY, pixelWidth, pixelHeight, 0.0, 0.0, image.getWidth(), image.getHeight());
+        originX,
+        originY,
+        pixelWidth,
+        pixelHeight,
+        0.0,
+        0.0,
+        image.getWidth(),
+        image.getHeight(),
+        crs);
   }
 }

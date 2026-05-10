@@ -4,4 +4,4 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.List;
 import org.locationtech.jts.math.Vector3D;
 
-public record CityJsonWithVertices(ObjectNode json, List<Vector3D> vertices) {}
+public record CityJsonWithVertices(ObjectNode json, List<Vector3D> vertices, String crs) {}

@@ -20,8 +20,9 @@ class CityJsonTextureComputerTest {
 
   CityJsonIOService cityJsonIOService = new CityJsonIOService(new ObjectMapper());
   BucketComponent bucketComponent = mock(BucketComponent.class);
+  RasterInfoProjector rasterInfoProjector = new RasterInfoProjector();
   CityJsonTextureDomainService cityJsonTextureDomainService =
-      new CityJsonTextureDomainService(cityJsonIOService, bucketComponent);
+      new CityJsonTextureDomainService(cityJsonIOService, bucketComponent, rasterInfoProjector);
   CityJsonTextureComputer subject =
       new CityJsonTextureComputer(cityJsonIOService, cityJsonTextureDomainService);
 
@@ -101,8 +102,8 @@ class CityJsonTextureComputerTest {
             0.0,
             0.0, // shear
             100,
-            100 // width, height (so 50x50 area)
-            );
+            100, // width, height (so 50x50 area)
+            "EPSG:4326");
 
     // Top-left corner (origin)
     List<org.locationtech.jts.math.Vector3D> topLeft =

@@ -10,7 +10,8 @@ public record RasterInfo(
     double shearX,
     double shearY,
     int width,
-    int height) {
+    int height,
+    String crs) {
   public static RasterInfo of(CityJSONTexture texture) {
     return new RasterInfo(
         texture.getTopLeftLongitude(),
@@ -20,6 +21,7 @@ public record RasterInfo(
         texture.getShearX(),
         texture.getShearY(),
         texture.getImageWidth(),
-        texture.getImageHeight());
+        texture.getImageHeight(),
+        "EPSG:4326");
   }
 }
