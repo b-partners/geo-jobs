@@ -42,6 +42,7 @@ public class CityJsonTextureComputer {
   }
 
   public File textureCityJson(File cityJsonFile, File tifFile) {
+    // TODO: remove as it is not used
     ObjectNode json = cityJsonIOService.loadCityJson(cityJsonFile);
     CityJsonWithVertices cityJsonWithVertices = cityJsonTextureDomainService.toCityJsonFile(json);
     TextureInfo textureInfo = cityJsonIOService.loadTexture(tifFile);

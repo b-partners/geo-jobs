@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service.cityjson.io;
 import static org.junit.jupiter.api.Assertions.*;
 
 import app.bpartners.geojobs.service.cityjson.texture.CityJsonIOService;
+import app.bpartners.geojobs.service.cityjson.texture.RasterInfoProjector;
 import app.bpartners.geojobs.service.cityjson.texture.model.RasterInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.awt.image.BufferedImage;
@@ -22,7 +23,7 @@ class CustomGeoTiffWriterTest {
     assertTrue(
         result.length() > 0, "File should not be empty, but was " + result.length() + " bytes");
 
-    CityJsonIOService ioService = new CityJsonIOService(new ObjectMapper());
+    CityJsonIOService ioService = new CityJsonIOService(new ObjectMapper(), new RasterInfoProjector());
     RasterInfo info = ioService.readRasterInfo(result);
 
     assertEquals(0.0, info.originX(), 1e-6);

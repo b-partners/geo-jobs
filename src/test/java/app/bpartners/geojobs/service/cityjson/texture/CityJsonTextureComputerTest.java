@@ -1,10 +1,13 @@
 package app.bpartners.geojobs.service.cityjson.texture;
 
 import static java.lang.Math.abs;
+import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
 import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
+import app.bpartners.geojobs.repository.model.cityjson.CityJSONTexture;
 import app.bpartners.geojobs.service.cityjson.io.CustomGeoTiffWriter;
 import app.bpartners.geojobs.service.cityjson.texture.model.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,7 +21,7 @@ import org.springframework.core.io.ClassPathResource;
 
 class CityJsonTextureComputerTest {
 
-  CityJsonIOService cityJsonIOService = new CityJsonIOService(new ObjectMapper());
+  CityJsonIOService cityJsonIOService = new CityJsonIOService(new ObjectMapper(), new RasterInfoProjector());
   BucketComponent bucketComponent = mock(BucketComponent.class);
   RasterInfoProjector rasterInfoProjector = new RasterInfoProjector();
   CityJsonTextureDomainService cityJsonTextureDomainService =
@@ -26,6 +29,52 @@ class CityJsonTextureComputerTest {
   CityJsonTextureComputer subject =
       new CityJsonTextureComputer(
           cityJsonIOService, cityJsonTextureDomainService, rasterInfoProjector);
+
+  @Test
+  void texturize_from_cityjson_request() throws IOException {
+    /**
+     * 1. obtain lon/lat, pixel{width/height} from tifFile
+     * 2. create texture from obtained mesures (by putting the absolute path of outputs/roof%s/texture.png as imageUri)
+     * 3. create a minimal requestCityJson and put the texture in it
+     * 4. feeding subject.applyTexture(cityJSONRequest, cityJsonFile)
+     * 5. test that the `apperance` field from the resulting cityjson contains all the texture related attribute (texture, vertex-textures, materials, etc... see cityJsonTextureDomainService for references)
+     * 6. (Bonus) add a commented code to save and print path of the result cityjson into a file ()
+     * */
+    int roofNumber = 5;
+    File cityJsonFile =
+        new ClassPathResource(
+            String.format("cityjson/texture/inputs/roof%s/roof%s.json", roofNumber, roofNumber))
+            .getFile();
+    File tifFile =
+        new ClassPathResource(
+            String.format("cityjson/texture/inputs/roof%s/roof%s.tif", roofNumber, roofNumber))
+            .getFile();
+    TextureInfo textureInfo = cityJsonIOService.loadTexture(tifFile);
+    double pixelWidth = textureInfo.rasterInfo().pixelWidth();
+    double pixelHeight = textureInfo.rasterInfo().pixelHeight();
+    double pixelSize = ((abs(pixelWidth) + abs(pixelHeight)) / 2);
+    double originX = textureInfo.rasterInfo().originX();
+    double originY = textureInfo.rasterInfo().originY();
+
+    CityJSONRequest cityJSONRequest = CityJSONRequest.builder()
+        .id(randomUUID().toString())
+        .build();
+    File imageFile =
+        new ClassPathResource(
+            String.format("cityjson/texture/outputs/roof%s/texture.png", roofNumber))
+            .getFile();
+    CityJSONTexture texture = CityJSONTexture.builder()
+        .id(randomUUID().toString())
+        .imageUri(imageFile.getAbsolutePath())
+        .cityJsonRequest(cityJSONRequest)
+        .build();
+    cityJSONRequest.setTextures(List.of(texture));
+
+
+    var actual = subject.applyTexture(cityJSONRequest, cityJsonFile);
+
+    assertNotNull(actual);
+  }
 
   @Test
   void texturize_from_raster_info() throws IOException {

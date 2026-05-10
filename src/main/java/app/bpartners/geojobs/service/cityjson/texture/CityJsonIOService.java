@@ -15,15 +15,17 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import javax.imageio.ImageIO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.gdal.gdal.Dataset;
-import org.gdal.gdal.gdal;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.api.referencing.datum.PixelInCell;
 import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.gce.geotiff.GeoTiffReader;
+import org.geotools.referencing.CRS;
+import org.locationtech.jts.math.Vector3D;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -31,6 +33,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CityJsonIOService {
   private final ObjectMapper objectMapper;
+  private final RasterInfoProjector rasterInfoProjector;
 
   public ObjectNode loadCityJson(File file) {
     try {
@@ -94,6 +97,7 @@ public class CityJsonIOService {
   }
 
   public RasterInfo readRasterInfo(File tifFile) {
+
     BufferedImage image;
     try {
       image = ImageIO.read(tifFile);
@@ -102,75 +106,66 @@ public class CityJsonIOService {
     }
 
     if (image == null) {
-      throw new IllegalStateException(
-          "Could not read raster dimensions: " + tifFile.getAbsolutePath());
+      throw new IllegalStateException("Could not read raster: " + tifFile.getAbsolutePath());
     }
 
-    double originX = 0.0;
-    double originY = 0.0;
-    double pixelWidth = 1.0;
-    double pixelHeight = -1.0;
-    String crs = "EPSG:4326";
+    String targetCrs = "EPSG:2154";
 
-    GeoTiffReader reader = null;
+    double originX = 0;
+    double originY = 0;
+    double pixelWidth = 1;
+    double pixelHeight = 1;
+
     try {
-      reader = new GeoTiffReader(tifFile);
+      GeoTiffReader reader = new GeoTiffReader(tifFile);
+
       GridCoverage2D coverage = reader.read(null);
 
-      org.geotools.api.referencing.crs.CoordinateReferenceSystem coverageCRS =
-          coverage.getCoordinateReferenceSystem();
-      if (coverageCRS != null) {
-        try {
-          Integer epsg = org.geotools.referencing.CRS.lookupEpsgCode(coverageCRS, false);
-          if (epsg != null) {
-            crs = "EPSG:" + epsg;
-          } else {
-            crs = coverageCRS.getName().toString();
-          }
-        } catch (Exception e) {
-          crs = coverageCRS.getName().toString();
-        }
+      CoordinateReferenceSystem sourceCRS = coverage.getCoordinateReferenceSystem();
+      if (sourceCRS == null) {
+        throw new IllegalStateException("Missing CRS in GeoTIFF");
       }
 
-      MathTransform transform = coverage.getGridGeometry().getGridToCRS(PixelInCell.CELL_CORNER);
+      String sourceCrsCode = CRS.toSRS(sourceCRS);
+
+      MathTransform transform =
+          coverage.getGridGeometry().getGridToCRS(PixelInCell.CELL_CORNER);
+
       if (transform instanceof AffineTransform affine) {
-        originX = affine.getTranslateX();
-        originY = affine.getTranslateY();
-        pixelWidth = affine.getScaleX();
-        pixelHeight = affine.getScaleY();
+
+        double gx = affine.getTranslateX();
+        double gy = affine.getTranslateY();
+
+        double sx = affine.getScaleX();
+        double sy = affine.getScaleY();
+
+        Vector3D origin = rasterInfoProjector.project(
+            List.of(new Vector3D(gx, gy, 0)),
+            sourceCrsCode,
+            targetCrs
+        ).get(0);
+
+        Vector3D stepX = rasterInfoProjector.project(
+            List.of(new Vector3D(gx + sx, gy, 0)),
+            sourceCrsCode,
+            targetCrs
+        ).get(0);
+
+        Vector3D stepY = rasterInfoProjector.project(
+            List.of(new Vector3D(gx, gy + sy, 0)),
+            sourceCrsCode,
+            targetCrs
+        ).get(0);
+
+        originX = origin.getX();
+        originY = origin.getY();
+
+        pixelWidth = Math.abs(stepX.getX() - originX);
+        pixelHeight = Math.abs(stepY.getY() - originY);
       }
+
     } catch (Exception e) {
-      // Ignore and fallback to gdalinfo
-    } finally {
-      if (reader != null) {
-        reader.dispose();
-      }
-    }
-
-    if (originX == 0.0 && originY == 0.0 && pixelWidth == 1.0) {
-      try {
-        gdal.AllRegister();
-
-        Dataset dataset = gdal.Open(tifFile.toString());
-
-        if (dataset != null) {
-          double[] geoTransform = dataset.GetGeoTransform();
-
-          if (geoTransform != null && geoTransform.length >= 6) {
-            originX = geoTransform[0];
-            pixelWidth = geoTransform[1];
-            originY = geoTransform[3];
-            pixelHeight = geoTransform[5];
-          }
-
-          dataset.delete();
-        }
-
-      } catch (Exception e) {
-        log.error(
-            "Warning: Could not read GeoTIFF transform using GDAL Java bindings: "
-                + e.getMessage());
-      }
+      throw new IllegalStateException("Failed to read GeoTIFF transform", e);
     }
 
     return new RasterInfo(
@@ -182,6 +177,7 @@ public class CityJsonIOService {
         0.0,
         image.getWidth(),
         image.getHeight(),
-        crs);
+        targetCrs
+    );
   }
 }
