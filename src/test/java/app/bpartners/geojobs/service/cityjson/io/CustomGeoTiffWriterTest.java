@@ -23,7 +23,8 @@ class CustomGeoTiffWriterTest {
     assertTrue(
         result.length() > 0, "File should not be empty, but was " + result.length() + " bytes");
 
-    CityJsonIOService ioService = new CityJsonIOService(new ObjectMapper(), new RasterInfoProjector());
+    CityJsonIOService ioService =
+        new CityJsonIOService(new ObjectMapper(), new RasterInfoProjector());
     RasterInfo info = ioService.readRasterInfo(result);
 
     assertEquals(0.0, info.originX(), 1e-6);

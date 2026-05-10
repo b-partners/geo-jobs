@@ -21,7 +21,8 @@ import org.springframework.core.io.ClassPathResource;
 
 class CityJsonTextureComputerTest {
 
-  CityJsonIOService cityJsonIOService = new CityJsonIOService(new ObjectMapper(), new RasterInfoProjector());
+  CityJsonIOService cityJsonIOService =
+      new CityJsonIOService(new ObjectMapper(), new RasterInfoProjector());
   BucketComponent bucketComponent = mock(BucketComponent.class);
   RasterInfoProjector rasterInfoProjector = new RasterInfoProjector();
   CityJsonTextureDomainService cityJsonTextureDomainService =
@@ -33,47 +34,93 @@ class CityJsonTextureComputerTest {
   @Test
   void texturize_from_cityjson_request() throws IOException {
     /**
-     * 1. obtain lon/lat, pixel{width/height} from tifFile
-     * 2. create texture from obtained mesures (by putting the absolute path of outputs/roof%s/texture.png as imageUri)
-     * 3. create a minimal requestCityJson and put the texture in it
-     * 4. feeding subject.applyTexture(cityJSONRequest, cityJsonFile)
-     * 5. test that the `apperance` field from the resulting cityjson contains all the texture related attribute (texture, vertex-textures, materials, etc... see cityJsonTextureDomainService for references)
-     * 6. (Bonus) add a commented code to save and print path of the result cityjson into a file ()
-     * */
+     * 1. obtain lon/lat, pixel{width/height} from tifFile 2. create texture from obtained mesures
+     * (by putting the absolute path of outputs/roof%s/texture.png as imageUri) 3. create a minimal
+     * requestCityJson and put the texture in it 4. feeding subject.applyTexture(cityJSONRequest,
+     * cityJsonFile) 5. test that the `apperance` field from the resulting cityjson contains all the
+     * texture related attribute (texture, vertex-textures, materials, etc... see
+     * cityJsonTextureDomainService for references) 6. (Bonus) add a commented code to save and
+     * print path of the result cityjson into a file ()
+     */
     int roofNumber = 5;
     File cityJsonFile =
         new ClassPathResource(
-            String.format("cityjson/texture/inputs/roof%s/roof%s.json", roofNumber, roofNumber))
+                String.format("cityjson/texture/inputs/roof%s/roof%s.json", roofNumber, roofNumber))
             .getFile();
     File tifFile =
         new ClassPathResource(
-            String.format("cityjson/texture/inputs/roof%s/roof%s.tif", roofNumber, roofNumber))
+                String.format("cityjson/texture/inputs/roof%s/roof%s.tif", roofNumber, roofNumber))
             .getFile();
     TextureInfo textureInfo = cityJsonIOService.loadTexture(tifFile);
     double pixelWidth = textureInfo.rasterInfo().pixelWidth();
     double pixelHeight = textureInfo.rasterInfo().pixelHeight();
-    double pixelSize = ((abs(pixelWidth) + abs(pixelHeight)) / 2);
     double originX = textureInfo.rasterInfo().originX();
     double originY = textureInfo.rasterInfo().originY();
 
-    CityJSONRequest cityJSONRequest = CityJSONRequest.builder()
-        .id(randomUUID().toString())
-        .build();
+    List<org.locationtech.jts.math.Vector3D> projectedOrigin =
+        rasterInfoProjector.project(
+            List.of(new org.locationtech.jts.math.Vector3D(originX, originY, 0)),
+            "EPSG:2154",
+            "EPSG:4326");
+    double lon = projectedOrigin.get(0).getX();
+    double lat = projectedOrigin.get(0).getY();
+
+    CityJSONRequest cityJSONRequest = CityJSONRequest.builder().id(randomUUID().toString()).build();
     File imageFile =
         new ClassPathResource(
-            String.format("cityjson/texture/outputs/roof%s/texture.png", roofNumber))
+                String.format("cityjson/texture/outputs/roof%s/texture.png", roofNumber))
             .getFile();
-    CityJSONTexture texture = CityJSONTexture.builder()
-        .id(randomUUID().toString())
-        .imageUri(imageFile.getAbsolutePath())
-        .cityJsonRequest(cityJSONRequest)
-        .build();
+    CityJSONTexture texture =
+        CityJSONTexture.builder()
+            .id(randomUUID().toString())
+            .imageUri(imageFile.getAbsolutePath())
+            .topLeftLongitude(lon)
+            .topLeftLatitude(lat)
+            .pixelWidth(pixelWidth)
+            .pixelHeight(pixelHeight)
+            .imageWidth(textureInfo.rasterInfo().width())
+            .imageHeight(textureInfo.rasterInfo().height())
+            .cityJsonRequest(cityJSONRequest)
+            .build();
     cityJSONRequest.setTextures(List.of(texture));
-
 
     var actual = subject.applyTexture(cityJSONRequest, cityJsonFile);
 
     assertNotNull(actual);
+
+    com.fasterxml.jackson.databind.node.ObjectNode resultJson =
+        cityJsonIOService.loadCityJson(actual);
+    assertNotNull(resultJson.get("appearance"));
+    com.fasterxml.jackson.databind.node.ObjectNode appearance =
+        (com.fasterxml.jackson.databind.node.ObjectNode) resultJson.get("appearance");
+    assertTrue(appearance.has("textures"));
+    assertTrue(appearance.has("materials"));
+    assertTrue(appearance.has("vertices-texture"));
+
+    assertEquals(
+        imageFile.getAbsolutePath(), appearance.get("textures").get(0).get("image").asText());
+
+    com.fasterxml.jackson.databind.node.ObjectNode cityObjects =
+        (com.fasterxml.jackson.databind.node.ObjectNode) resultJson.get("CityObjects");
+    cityObjects
+        .fields()
+        .forEachRemaining(
+            entry -> {
+              com.fasterxml.jackson.databind.JsonNode cityObject = entry.getValue();
+              if ("Building".equals(cityObject.get("type").asText())) {
+                com.fasterxml.jackson.databind.node.ArrayNode geometries =
+                    (com.fasterxml.jackson.databind.node.ArrayNode) cityObject.get("geometry");
+                for (com.fasterxml.jackson.databind.JsonNode geometry : geometries) {
+                  assertTrue(geometry.has("appearance"));
+                  com.fasterxml.jackson.databind.JsonNode geomAppearance =
+                      geometry.get("appearance");
+                  assertTrue(geomAppearance.has("texture"));
+                  assertTrue(geomAppearance.has("material"));
+                }
+              }
+            });
+
+    // System.out.println("Resulting CityJSON: " + actual.getAbsolutePath());
   }
 
   @Test

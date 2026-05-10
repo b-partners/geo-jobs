@@ -1,0 +1,418 @@
+#
+# There is insufficient memory for the Java Runtime Environment to continue.
+# Native memory allocation (mmap) failed to map 8589934592 bytes. Error detail: committing reserved memory.
+# Possible reasons:
+#   The system is out of physical RAM or swap space
+#   This process is running with CompressedOops enabled, and the Java Heap may be blocking the growth of the native heap
+# Possible solutions:
+#   Reduce memory load on the system
+#   Increase physical memory or swap space
+#   Check if swap backing store is full
+#   Decrease Java heap size (-Xmx/-Xms)
+#   Decrease number of Java threads
+#   Decrease Java thread stack sizes (-Xss)
+#   Set larger code cache with -XX:ReservedCodeCacheSize=
+#   JVM is running with Zero Based Compressed Oops mode in which the Java heap is
+#     placed in the first 32GB address space. The Java Heap base address is the
+#     maximum limit for the native heap growth. Please use -XX:HeapBaseMinAddress
+#     to set the Java Heap base and to place the Java Heap above 32GB virtual address.
+# This output file may be truncated or incomplete.
+#
+#  Out of Memory Error (os_linux.cpp:2829), pid=45413, tid=45416
+#
+# JRE version:  (21.0.10+7) (build )
+# Java VM: OpenJDK 64-Bit Server VM (21.0.10+7-Ubuntu-124.04, mixed mode, sharing, tiered, compressed oops, compressed class ptrs, g1 gc, linux-amd64)
+# No core dump will be written. Core dumps have been disabled. To enable core dumping, try "ulimit -c unlimited" before starting Java again
+#
+
+---------------  S U M M A R Y ------------
+
+Command Line: -Dorg.gradle.internal.worker.tmpdir=/app/build/tmp/test/work -Dorg.gradle.native=false -javaagent:/app/build/tmp/.cache/expanded/zip_cde35f471dab581134460fc9a50e2c59/jacocoagent.jar=destfile=build/jacoco/test.exec,append=true,inclnolocationclasses=false,dumponexit=true,output=file,jmx=false -Xms8g -Xmx10g -Dfile.encoding=UTF-8 -Duser.country -Duser.language=en -Duser.variant -ea worker.org.gradle.process.internal.worker.GradleWorkerMain 'Gradle Test Executor 2'
+
+Host: Intel(R) Xeon(R) Processor @ 2.30GHz, 4 cores, 7G, Ubuntu 24.04.4 LTS
+Time: Sun May 10 15:44:33 2026 UTC elapsed time: 0.009307 seconds (0d 0h 0m 0s)
+
+---------------  T H R E A D  ---------------
+
+Current thread (0x00007fe5b8028300):  JavaThread "Unknown thread" [_thread_in_vm, id=45416, stack(0x00007fe5bf05f000,0x00007fe5bf15f000) (1024K)]
+
+Stack: [0x00007fe5bf05f000,0x00007fe5bf15f000],  sp=0x00007fe5bf15d500,  free space=1017k
+Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+V  [libjvm.so+0x101ac9b]  VMError::report_and_die(int, char const*, char const*, __va_list_tag*, Thread*, unsigned char*, void*, void*, char const*, int, unsigned long)+0x27b  (os_linux.cpp:2829)
+V  [libjvm.so+0x101b701]
+V  [libjvm.so+0x6b4531]
+V  [libjvm.so+0xd032ed]  os::pd_commit_memory_or_exit(char*, unsigned long, unsigned long, bool, char const*)+0xdd
+V  [libjvm.so+0xcfcb0f]  os::commit_memory_or_exit(char*, unsigned long, unsigned long, bool, char const*)+0x1f
+V  [libjvm.so+0x815abb]  G1PageBasedVirtualSpace::commit(unsigned long, unsigned long)+0x5b
+V  [libjvm.so+0x82c13b]  G1RegionsLargerThanCommitSizeMapper::commit_regions(unsigned int, unsigned long, WorkerThreads*)+0xab
+V  [libjvm.so+0x8bcefa]  HeapRegionManager::commit_regions(unsigned int, unsigned long, WorkerThreads*)+0x5a
+V  [libjvm.so+0x8beb9f]  HeapRegionManager::expand(unsigned int, unsigned int, WorkerThreads*)+0x2f
+V  [libjvm.so+0x8bedb5]  HeapRegionManager::expand_by(unsigned int, WorkerThreads*)+0x75
+V  [libjvm.so+0x7cb23c]  G1CollectedHeap::expand(unsigned long, WorkerThreads*, double*)+0xfc
+V  [libjvm.so+0x7cb7d3]  G1CollectedHeap::initialize()+0x543
+V  [libjvm.so+0xfbe729]  universe_init()+0xd9
+V  [libjvm.so+0x8dd0aa]  init_globals()+0x3a
+V  [libjvm.so+0xf9d6e8]  Threads::create_vm(JavaVMInitArgs*, bool*)+0x278
+V  [libjvm.so+0x9b6da3]  JNI_CreateJavaVM+0x53
+C  [libjli.so+0x4673]  JavaMain+0x93
+C  [libjli.so+0x846d]  ThreadJavaMain+0xd
+C  [libc.so.6+0x9caa4]
+
+---------------  P R O C E S S  ---------------
+
+Threads class SMR info:
+_java_thread_list=0x00007fe5c0a42120, length=0, elements={
+}
+
+Java Threads: ( => current thread )
+Total: 0
+
+Other Threads:
+  0x00007fe5b8074f60 WorkerThread "GC Thread#0"                     [id=45417, stack(0x00007fe5be8c4000,0x00007fe5be9c4000) (1024K)]
+  0x00007fe5b80804a0 ConcurrentGCThread "G1 Main Marker"            [id=45418, stack(0x00007fe5bd300000,0x00007fe5bd400000) (1024K)]
+  0x00007fe5b8081450 WorkerThread "G1 Conc#0"                       [id=45419, stack(0x00007fe5bd1ff000,0x00007fe5bd2ff000) (1024K)]
+
+[error occurred during error reporting (printing all threads), id 0xb, SIGSEGV (0xb) at pc=0x00007fe5bfcda604]
+VM state: not at safepoint (not fully initialized)
+
+VM Mutex/Monitor currently owned by a thread:  ([mutex/lock_event])
+[0x00007fe5c0a1bdb8] Heap_lock - owner thread: 0x00007fe5b8028300
+
+Heap address: 0x0000000580000000, size: 10240 MB, Compressed Oops mode: Zero based, Oop shift amount: 3
+
+CDS archive(s) mapped at: [0x0000000000000000-0x0000000000000000-0x0000000000000000), size 0, SharedBaseAddress: 0x0000000800000000, ArchiveRelocationMode: 1.
+Narrow klass base: 0x0000000000000000, Narrow klass shift: 0, Narrow klass range: 0x0
+
+GC Precious Log:
+ CardTable entry size: 512
+ Card Set container configuration: InlinePtr #cards 4 size 8 Array Of Cards #cards 64 size 144 Howl #buckets 8 coarsen threshold 14745 Howl Bitmap #cards 2048 size 272 coarsen threshold 1843 Card regions per heap region 1 cards per card region 16384
+
+Heap:
+ garbage-first heap   total 0K, used 0K [0x0000000580000000, 0x0000000800000000)
+  region size 8192K, 0 young (0K), 0 survivors (0K)
+
+[error occurred during error reporting (printing heap information), id 0xb, SIGSEGV (0xb) at pc=0x00007fe5c02a388e]
+GC Heap History (0 events):
+No events
+
+Dll operation events (1 events):
+Event: 0.002 Loaded shared library /usr/lib/jvm/java-21-openjdk-amd64/lib/libjava.so
+
+Deoptimization events (0 events):
+No events
+
+Classes loaded (0 events):
+No events
+
+Classes unloaded (0 events):
+No events
+
+Classes redefined (0 events):
+No events
+
+Internal exceptions (0 events):
+No events
+
+ZGC Phase Switch (0 events):
+No events
+
+VM Operations (0 events):
+No events
+
+Memory protections (1 events):
+Event: 0.002 Protecting memory [0x00007fe5bf05f000,0x00007fe5bf063000] with protection modes 0
+
+Nmethod flushes (0 events):
+No events
+
+Events (0 events):
+No events
+
+
+Dynamic libraries:
+780000000-800000000 ---p 00000000 00:00 0
+558389a41000-558389a42000 r--p 00000000 00:10 217974                     /usr/lib/jvm/java-21-openjdk-amd64/bin/java
+558389a42000-558389a43000 r-xp 00001000 00:10 217974                     /usr/lib/jvm/java-21-openjdk-amd64/bin/java
+558389a43000-558389a44000 r--p 00002000 00:10 217974                     /usr/lib/jvm/java-21-openjdk-amd64/bin/java
+558389a44000-558389a45000 r--p 00002000 00:10 217974                     /usr/lib/jvm/java-21-openjdk-amd64/bin/java
+558389a45000-558389a46000 rw-p 00003000 00:10 217974                     /usr/lib/jvm/java-21-openjdk-amd64/bin/java
+55838a732000-55838a77e000 rw-p 00000000 00:00 0                          [heap]
+7fe584000000-7fe584021000 rw-p 00000000 00:00 0
+7fe584021000-7fe588000000 ---p 00000000 00:00 0
+7fe588000000-7fe588021000 rw-p 00000000 00:00 0
+7fe588021000-7fe58c000000 ---p 00000000 00:00 0
+7fe58e000000-7fe590021000 rw-p 00000000 00:00 0
+7fe590021000-7fe594000000 ---p 00000000 00:00 0
+7fe595400000-7fe5a0800000 ---p 00000000 00:00 0
+7fe5a0800000-7fe5a0a70000 rwxp 00000000 00:00 0
+7fe5a0a70000-7fe5a7d37000 ---p 00000000 00:00 0
+7fe5a7d37000-7fe5a7fa7000 rwxp 00000000 00:00 0
+7fe5a7fa7000-7fe5a82c8000 ---p 00000000 00:00 0
+7fe5a82c8000-7fe5a8538000 rwxp 00000000 00:00 0
+7fe5a8538000-7fe5af800000 ---p 00000000 00:00 0
+7fe5af9c2000-7fe5b8000000 r--s 00000000 00:10 218324                     /usr/lib/jvm/java-21-openjdk-amd64/lib/modules
+7fe5b8000000-7fe5b80b9000 rw-p 00000000 00:00 0
+7fe5b80b9000-7fe5bc000000 ---p 00000000 00:00 0
+7fe5bc800000-7fe5bcae4000 rw-p 00000000 00:00 0
+7fe5bcc79000-7fe5bd1fe000 rw-p 00000000 00:00 0
+7fe5bd1fe000-7fe5bd1ff000 ---p 00000000 00:00 0
+7fe5bd1ff000-7fe5bd2ff000 rw-p 00000000 00:00 0
+7fe5bd2ff000-7fe5bd300000 ---p 00000000 00:00 0
+7fe5bd300000-7fe5bd400000 rw-p 00000000 00:00 0
+7fe5bd400000-7fe5be800000 ---p 00000000 00:00 0
+7fe5be8c3000-7fe5be8c4000 ---p 00000000 00:00 0
+7fe5be8c4000-7fe5be9c4000 rw-p 00000000 00:00 0
+7fe5be9c4000-7fe5bee49000 rw-p 00000000 00:00 0
+7fe5bee49000-7fe5bef2f000 ---p 00000000 00:00 0
+7fe5bef2f000-7fe5bef34000 rw-p 00000000 00:00 0
+7fe5bef34000-7fe5bf01a000 ---p 00000000 00:00 0
+7fe5bf01a000-7fe5bf01f000 rw-p 00000000 00:00 0
+7fe5bf01f000-7fe5bf026000 ---p 00000000 00:00 0
+7fe5bf026000-7fe5bf02e000 rw-s 00000000 00:10 4991155                    /tmp/hsperfdata_jules/45413
+7fe5bf02e000-7fe5bf03b000 r--p 00000000 00:10 218299                     /usr/lib/jvm/java-21-openjdk-amd64/lib/libjava.so
+7fe5bf03b000-7fe5bf04a000 r-xp 0000d000 00:10 218299                     /usr/lib/jvm/java-21-openjdk-amd64/lib/libjava.so
+7fe5bf04a000-7fe5bf04f000 r--p 0001c000 00:10 218299                     /usr/lib/jvm/java-21-openjdk-amd64/lib/libjava.so
+7fe5bf04f000-7fe5bf050000 r--p 00021000 00:10 218299                     /usr/lib/jvm/java-21-openjdk-amd64/lib/libjava.so
+7fe5bf050000-7fe5bf051000 rw-p 00022000 00:10 218299                     /usr/lib/jvm/java-21-openjdk-amd64/lib/libjava.so
+7fe5bf051000-7fe5bf052000 rw-p 00000000 00:00 0
+7fe5bf052000-7fe5bf054000 r--p 00000000 00:10 218294                     /usr/lib/jvm/java-21-openjdk-amd64/lib/libinstrument.so
+7fe5bf054000-7fe5bf05a000 r-xp 00002000 00:10 218294                     /usr/lib/jvm/java-21-openjdk-amd64/lib/libinstrument.so
+7fe5bf05a000-7fe5bf05d000 r--p 00008000 00:10 218294                     /usr/lib/jvm/java-21-openjdk-amd64/lib/libinstrument.so
+7fe5bf05d000-7fe5bf05e000 r--p 0000a000 00:10 218294                     /usr/lib/jvm/java-21-openjdk-amd64/lib/libinstrument.so
+7fe5bf05e000-7fe5bf05f000 rw-p 0000b000 00:10 218294                     /usr/lib/jvm/java-21-openjdk-amd64/lib/libinstrument.so
+7fe5bf05f000-7fe5bf063000 ---p 00000000 00:00 0
+7fe5bf063000-7fe5bf15f000 rw-p 00000000 00:00 0
+7fe5bf15f000-7fe5bf163000 r--p 00000000 00:10 228545                     /usr/lib/x86_64-linux-gnu/libgcc_s.so.1
+7fe5bf163000-7fe5bf187000 r-xp 00004000 00:10 228545                     /usr/lib/x86_64-linux-gnu/libgcc_s.so.1
+7fe5bf187000-7fe5bf18b000 r--p 00028000 00:10 228545                     /usr/lib/x86_64-linux-gnu/libgcc_s.so.1
+7fe5bf18b000-7fe5bf18c000 r--p 0002b000 00:10 228545                     /usr/lib/x86_64-linux-gnu/libgcc_s.so.1
+7fe5bf18c000-7fe5bf18d000 rw-p 0002c000 00:10 228545                     /usr/lib/x86_64-linux-gnu/libgcc_s.so.1
+7fe5bf18d000-7fe5bf19d000 r--p 00000000 00:10 228859                     /usr/lib/x86_64-linux-gnu/libm.so.6
+7fe5bf19d000-7fe5bf21c000 r-xp 00010000 00:10 228859                     /usr/lib/x86_64-linux-gnu/libm.so.6
+7fe5bf21c000-7fe5bf274000 r--p 0008f000 00:10 228859                     /usr/lib/x86_64-linux-gnu/libm.so.6
+7fe5bf274000-7fe5bf275000 r--p 000e7000 00:10 228859                     /usr/lib/x86_64-linux-gnu/libm.so.6
+7fe5bf275000-7fe5bf276000 rw-p 000e8000 00:10 228859                     /usr/lib/x86_64-linux-gnu/libm.so.6
+7fe5bf276000-7fe5bf313000 r--p 00000000 00:10 229185                     /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33
+7fe5bf313000-7fe5bf45b000 r-xp 0009d000 00:10 229185                     /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33
+7fe5bf45b000-7fe5bf4e2000 r--p 001e5000 00:10 229185                     /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33
+7fe5bf4e2000-7fe5bf4ed000 r--p 0026b000 00:10 229185                     /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33
+7fe5bf4ed000-7fe5bf4f0000 rw-p 00276000 00:10 229185                     /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33
+7fe5bf4f0000-7fe5bf4f4000 rw-p 00000000 00:00 0
+7fe5bf4f4000-7fe5bf796000 r--p 00000000 00:10 218276                     /usr/lib/jvm/java-21-openjdk-amd64/lib/server/libjvm.so
+7fe5bf796000-7fe5c060c000 r-xp 002a2000 00:10 218276                     /usr/lib/jvm/java-21-openjdk-amd64/lib/server/libjvm.so
+7fe5c060c000-7fe5c08e6000 r--p 01118000 00:10 218276                     /usr/lib/jvm/java-21-openjdk-amd64/lib/server/libjvm.so
+7fe5c08e6000-7fe5c09ba000 r--p 013f1000 00:10 218276                     /usr/lib/jvm/java-21-openjdk-amd64/lib/server/libjvm.so
+7fe5c09ba000-7fe5c09ea000 rw-p 014c5000 00:10 218276                     /usr/lib/jvm/java-21-openjdk-amd64/lib/server/libjvm.so
+7fe5c09ea000-7fe5c0a52000 rw-p 00000000 00:00 0
+7fe5c0a52000-7fe5c0a7a000 r--p 00000000 00:10 228318                     /usr/lib/x86_64-linux-gnu/libc.so.6
+7fe5c0a7a000-7fe5c0c02000 r-xp 00028000 00:10 228318                     /usr/lib/x86_64-linux-gnu/libc.so.6
+7fe5c0c02000-7fe5c0c51000 r--p 001b0000 00:10 228318                     /usr/lib/x86_64-linux-gnu/libc.so.6
+7fe5c0c51000-7fe5c0c55000 r--p 001fe000 00:10 228318                     /usr/lib/x86_64-linux-gnu/libc.so.6
+7fe5c0c55000-7fe5c0c57000 rw-p 00202000 00:10 228318                     /usr/lib/x86_64-linux-gnu/libc.so.6
+7fe5c0c57000-7fe5c0c64000 rw-p 00000000 00:00 0
+7fe5c0c64000-7fe5c0c66000 r--p 00000000 00:10 218304                     /usr/lib/jvm/java-21-openjdk-amd64/lib/libjli.so
+7fe5c0c66000-7fe5c0c70000 r-xp 00002000 00:10 218304                     /usr/lib/jvm/java-21-openjdk-amd64/lib/libjli.so
+7fe5c0c70000-7fe5c0c73000 r--p 0000c000 00:10 218304                     /usr/lib/jvm/java-21-openjdk-amd64/lib/libjli.so
+7fe5c0c73000-7fe5c0c74000 r--p 0000f000 00:10 218304                     /usr/lib/jvm/java-21-openjdk-amd64/lib/libjli.so
+7fe5c0c74000-7fe5c0c75000 rw-p 00010000 00:10 218304                     /usr/lib/jvm/java-21-openjdk-amd64/lib/libjli.so
+7fe5c0c75000-7fe5c0c77000 r--p 00000000 00:10 229390                     /usr/lib/x86_64-linux-gnu/libz.so.1.3
+7fe5c0c77000-7fe5c0c89000 r-xp 00002000 00:10 229390                     /usr/lib/x86_64-linux-gnu/libz.so.1.3
+7fe5c0c89000-7fe5c0c8f000 r--p 00014000 00:10 229390                     /usr/lib/x86_64-linux-gnu/libz.so.1.3
+7fe5c0c8f000-7fe5c0c90000 r--p 0001a000 00:10 229390                     /usr/lib/x86_64-linux-gnu/libz.so.1.3
+7fe5c0c90000-7fe5c0c91000 rw-p 0001b000 00:10 229390                     /usr/lib/x86_64-linux-gnu/libz.so.1.3
+7fe5c0c92000-7fe5c0c93000 ---p 00000000 00:00 0
+7fe5c0c93000-7fe5c0c94000 r--p 00000000 00:00 0
+7fe5c0c94000-7fe5c0c95000 ---p 00000000 00:00 0
+7fe5c0c95000-7fe5c0c97000 r--p 00000000 00:10 218303                     /usr/lib/jvm/java-21-openjdk-amd64/lib/libjimage.so
+7fe5c0c97000-7fe5c0c9a000 r-xp 00002000 00:10 218303                     /usr/lib/jvm/java-21-openjdk-amd64/lib/libjimage.so
+7fe5c0c9a000-7fe5c0c9b000 r--p 00005000 00:10 218303                     /usr/lib/jvm/java-21-openjdk-amd64/lib/libjimage.so
+7fe5c0c9b000-7fe5c0c9c000 r--p 00006000 00:10 218303                     /usr/lib/jvm/java-21-openjdk-amd64/lib/libjimage.so
+7fe5c0c9c000-7fe5c0c9d000 rw-p 00007000 00:10 218303                     /usr/lib/jvm/java-21-openjdk-amd64/lib/libjimage.so
+7fe5c0c9d000-7fe5c0c9f000 rw-p 00000000 00:00 0
+7fe5c0c9f000-7fe5c0ca0000 r--p 00000000 00:10 227961                     /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2
+7fe5c0ca0000-7fe5c0ccb000 r-xp 00001000 00:10 227961                     /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2
+7fe5c0ccb000-7fe5c0cd5000 r--p 0002c000 00:10 227961                     /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2
+7fe5c0cd5000-7fe5c0cd7000 r--p 00036000 00:10 227961                     /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2
+7fe5c0cd7000-7fe5c0cd9000 rw-p 00038000 00:10 227961                     /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2
+7ffc95f7f000-7ffc95fa0000 rw-p 00000000 00:00 0                          [stack]
+7ffc95fd3000-7ffc95fd7000 r--p 00000000 00:00 0                          [vvar]
+7ffc95fd7000-7ffc95fd9000 r-xp 00000000 00:00 0                          [vdso]
+ffffffffff600000-ffffffffff601000 --xp 00000000 00:00 0                  [vsyscall]
+Total number of mappings: 108
+
+JVMTI agents:
+/app/build/tmp/.cache/expanded/zip_cde35f471dab581134460fc9a50e2c59/jacocoagent.jar path:none, loaded, not initialized, instrumentlib options:destfile=build/jacoco/test.exec,append=true,inclnolocationclasses=false,dumponexit=true,output=file,jmx=false
+
+
+VM Arguments:
+jvm_args: -Dorg.gradle.internal.worker.tmpdir=/app/build/tmp/test/work -Dorg.gradle.native=false -javaagent:/app/build/tmp/.cache/expanded/zip_cde35f471dab581134460fc9a50e2c59/jacocoagent.jar=destfile=build/jacoco/test.exec,append=true,inclnolocationclasses=false,dumponexit=true,output=file,jmx=false -Xms8g -Xmx10g -Dfile.encoding=UTF-8 -Duser.country -Duser.language=en -Duser.variant -ea
+java_command: worker.org.gradle.process.internal.worker.GradleWorkerMain 'Gradle Test Executor 2'
+java_class_path (initial): /home/jules/.gradle/caches/8.5/workerMain/gradle-worker.jar:/app/build/classes/java/test:/app/build/resources/test:/app/build/classes/java/main:/app/build/resources/main:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-web/3.2.2/b89d213d9f49c3e6247b2503ac7d94b0ac8260f6/spring-boot-starter-web-3.2.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-data-jpa/3.2.2/65cf3aad09f0218b7dfab849c9b0350d0a9e0d81/spring-boot-starter-data-jpa-3.2.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.flywaydb/flyway-core/9.22.3/76519923a547892f0108b99d1e7b06dcb4727ecd/flyway-core-9.22.3.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.postgresql/postgresql/42.6.0/7614cfce466145b84972781ab0079b8dea49e363/postgresql-42.6.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.xerial/sqlite-jdbc/3.45.1.0/7cd66c2793e4d9511f6da8fc6c621575171c2da1/sqlite-jdbc-3.45.1.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.hibernate.orm/hibernate-community-dialects/6.4.3.Final/d192539c9f0f373bc866f6420b3a6783878361dd/hibernate-community-dialects-6.4.3.Final.jar:/home/jules/.m2/repository/app/bpartners/geo-jobs-gen/latest/geo-jobs-gen-latest.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-json/3.2.2/328f5ce9e10d5f90520e72a3ff8a2586b9e46b37/spring-boot-starter-json-3.2.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.dataformat/jackson-dataformat-toml/2.15.3/94d1222e3ee02f8d44a0ad6a5f7476d0833e654a/jackson-dataformat-toml-2.15.3.jar:/home/jules/.m2/repository/org/openapitools/jackson-databind-nullable/0.2.6/jackson-databind-nullable-0.2.6.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.citygml4j/citygml4j-cityjson/3.2.6/83e2601c5ee602b7e94d126c937d0a9c14def9aa/citygml4j-cityjson-3.2.6.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.amazonaws.serverless/aws-serverless-java-container-springboot3/2.1.0/d68ef412e0be6e41cd299eaba3fef941381b5199/aws-serverless-java-container-springboot3-2.1.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.amazonaws.serverless/aws-serverless-java-container-core/2.1.0/cec7916a6c5aa03f6818220ca8f1a864136f9c5b/aws-serverless-java-container-core-2.1.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.datatype/jackson-datatype-jdk8/2.15.3/80158cb020c7bd4e4ba94d8d752a65729dc943b2/jackson-datatype-jdk8-2.15.3.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.module/jackson-module-parameter-names/2.15.3/8d251b90c5358677e7d8161e0c2488e6f84f49da/jackson-module-parameter-names-2.15.3.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.module/jackson-module-afterburner/2.15.3/a34eaee30ed9c7c09f7fcd0c339dd8052347a43a/jackson-module-afterburner-2.15.3.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.core/jackson-databind/2.15.3/a734bc2c47a9453c4efa772461a3aeb273c010d9/jackson-databind-2.15.3.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.testcontainers/testcontainers-junit-jupiter/2.0.2/6d0c1a4a8d9713a9ba34c6e68be69af8041fbfdd/testcontainers-junit-jupiter-2.0.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.testcontainers/testcontainers-postgresql/2.0.2/93e01f5bf7732ffd89df5fda28476070461bb161/testcontainers-postgresql-2.0.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.testcontainers/testcontainers-jdbc/2.0.2/c402f7e94ff17504e62c2fc218028d670ee2087c/testcontainers-jdbc-2.0.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.testcontainers/testcontainers-database-commons/2.0.2/de223c428492121729957f9657df94a68a3bd146/testcontainers-database-commons-2.0.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.testcontainers/testcontainers/2.0.2/8b9f7ca7931621161b009a757ff8cd5ae0de4926/testcontainers-2.0.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.github.docker-java/docker-java-api/3.7.0/47d3e92a30fc1832197602cb1214b866024372cb/docker-java-api-3.7.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.core/jackson-annotations/2.15.3/79baf4e605eb3bbb60b1c475d44a7aecceea1d60/jackson-annotations-2.15.3.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.geotools/gt-geojson/31.2/a6a5d6a1443e55c05cc3b3d67158fa7f1c8db9e3/gt-geojson-31.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.geotools/gt-geotiff/31.2/809fcc3bbd87767ee471ad414d4824ef9dc34a9f/gt-geotiff-31.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.geotools/gt-coverage/31.2/c2c45d5adc3f6b9fcf0f6e7b9a59433cc1f67751/gt-coverage-31.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.geotools/gt-main/31.2/af6cd198dd7e102db92d55ec020891f7e7d1e967/gt-main-31.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.core/jackson-core/2.15.3/60d600567c1862840397bf9ff5a92398edc5797b/jackson-core-2.15.3.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.datatype/jackson-datatype-jsr310/2.16.1/36a418325c618e440e5ccb80b75c705d894f50bd/jackson-datatype-jsr310-2.16.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.awssdk/ses/2.21.40/8926ab124c387249b41c02e32b24e59ef7a00657/ses-2.21.40.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.awssdk/s3-transfer-manager/2.21.40/914e58391670ab194bcb60f08280c1da3dca2aac/s3-transfer-manager-2.21.40.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.awssdk/s3/2.21.40/59328598478d765bd34fcd4fc24ab932de8c5a05/s3-2.21.40.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.awssdk/aws-xml-protocol/2.21.40/b6e3e79b4619b3b2f34766a4059c42e78be3ebe5/aws-xml-protocol-2.21.40.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.awssdk/aws-query-protocol/2.20.26/62d01a32c684a863b2e7aa288f8faceadef6e5ee/aws-query-protocol-2.20.26.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.amazonaws/aws-lambda-java-core/1.2.3/4b2c5b56d06034778afb8def8a803614c6017e2/aws-lambda-java-core-1.2.3.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.amazonaws/aws-lambda-java-events/3.11.3/38d2a58dda4229339943dcf00a17dd56051619f8/aws-lambda-java-events-3.11.3.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.awssdk/sqs/2.21.40/1bb9c4ea8639da523548c315eb2da35d08baef07/sqs-2.21.40.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.awssdk/eventbridge/2.21.40/454dc0f186e7ad3a5072479dde74855217dee73c/eventbridge-2.21.40.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.awssdk.crt/aws-crt/0.28.12/caa10b2f21e884ffdd72789c66be802bcd0c82fe/aws-crt-0.28.12.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.awssdk/ssm/2.21.40/25b3a391e1b3dd62feddb0efa354a63fbc367a9d/ssm-2.21.40.jar:/home/jules/.gradle/caches/modules-2/files-2.1/jakarta.mail/jakarta.mail-api/2.1.2/e2f24836f1720a6b53d98240a78b4860597428c8/jakarta.mail-api-2.1.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-test/3.2.2/8785ad456a809e3eec319d7bbb36c3e971abd00f/spring-boot-starter-test-3.2.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.hibernate.orm/hibernate-core/6.4.1.Final/3dcefddf6609e6491d37208bcc0cab1273598cbd/hibernate-core-6.4.1.Final.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.imageio-ext/imageio-ext-cog-reader/1.4.12/7f381e54cc7c4f97e7a8cb37a7e70ee300ada4e2/imageio-ext-cog-reader-1.4.12.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.imageio-ext/imageio-ext-cog-streams/1.4.12/41129c6250bf53ee90275fb2a7275a4955692a30/imageio-ext-cog-streams-1.4.12.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.imageio-ext/imageio-ext-cog-commons/1.4.12/68f18bce66228f0e60b350b77690d255f3e95320/imageio-ext-cog-commons-1.4.12.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.imageio-ext/imageio-ext-tiff/1.4.12/d01315c05409ba33a41558c117e4d5ee6e74727b/imageio-ext-tiff-1.4.12.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.imageio-ext/imageio-ext-geocore/1.4.12/5ce5b14c8a65b278d0eb6abdfae75c5e4c763e5f/imageio-ext-geocore-1.4.12.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.ehcache/ehcache/3.10.8/f0d50ede46609db78413ca7f4250d348a597b101/ehcache-3.10.8.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.glassfish.jaxb/jaxb-runtime/4.0.4/7180c50ef8bd127bb1dd645458b906cffcf6c2b5/jaxb-runtime-4.0.4.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.glassfish.jaxb/jaxb-core/4.0.4/2d5aadd02af86f1e9d8c6f7e8501673f915d4e25/jaxb-core-4.0.4.jar:/home/jules/.gradle/caches/modules-2/files-2.1/jakarta.xml.bind/jakarta.xml.bind-api/4.0.1/ca2330866cbc624c7e5ce982e121db1125d23e15/jakarta.xml.bind-api-4.0.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.eclipse.angus/angus-activation/2.0.1/eaafaf4eb71b400e4136fc3a286f50e34a68ecb7/angus-activation-2.0.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/jakarta.activation/jakarta.activation-api/2.1.2/640c0d5aff45dbff1e1a1bc09673ff3a02b1ba12/jakarta.activation-api-2.1.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.sun.mail/jakarta.mail/2.0.1/96d3645f02a92bcc5e7ae1ff037151e44179f230/jakarta.mail-2.0.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.sun.activation/jakarta.activation/2.0.1/828b80e886a52bb09fe41ff410b10b342f533ce1/jakarta.activation-2.0.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.apache.tika/tika-core/2.9.1/bfd572826e7023dd6ceeefe1b4d0f6d3d8eef507/tika-core-2.9.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.apache.poi/poi-ooxml/5.4.1/508ed3e7fcc775738415870d0bc6d27196317fe3/poi-ooxml-5.4.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.apache.httpcomponents.client5/httpclient5/5.2.3/5d753a99d299756998a08c488f2efdf9cf26198e/httpclient5-5.2.3.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.reflections/reflections/0.10.2/b638d7ca0e0fe0146b60a0e7ba232ad852a73b31/reflections-0.10.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/io.swagger/swagger-annotations/1.6.12/47688c32bd236a8df0142c08d047760e1f53c991/swagger-annotations-1.6.12.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.google.maps/google-maps-services/2.2.0/ef8ee2ed8828761e05b6effb1e1ac2faca01c758/google-maps-services-2.2.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/io.sentry/sentry-logback/7.6.0/50c9e0f5c0a87a166d94e6994276ad1bfa4a92ce/sentry-logback-7.6.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/io.sentry/sentry-spring-boot-starter-jakarta/7.4.0/f690cab5e13263595f50b9300b2135c15173e1f7/sentry-spring-boot-starter-jakarta-7.4.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-security/3.2.2/79676d6fe68878890e26be10ecab126f472d7c0f/spring-boot-starter-security-3.2.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.thymeleaf/thymeleaf/3.1.1.RELEASE/374a129dfa5e7d7f1a46eacc4d49e594ca0cf26f/thymeleaf-3.1.1.RELEASE.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.geotools/gt-epsg-hsql/31.2/ed6a78a427247809567eb29f5a31b77f1b6dee72/gt-epsg-hsql-31.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.geotools/gt-referencing/31.2/24b99d522eb213fb01614b055ad8ee128e35874e/gt-referencing-31.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.geotools/gt-http/31.2/6a80a823c34dd3efdad34c31a3821de976187988/gt-http-31.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.geotools/gt-metadata/31.2/474886729f25b9792a855a5d0d652673cadccc8e/gt-metadata-31.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.geotools/gt-api/31.2/336c7e4812f841accd0ddf72266d6139f825deab/gt-api-31.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.github.mreutegg/laszip4j/0.20/b13c0a8d2b08d0d9b89f386b6bdc548bf3cc9843/laszip4j-0.20.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.jgrapht/jgrapht-core/1.5.2/bea9b92d4ff37111f8e3d58cd8cf0714e5c83774/jgrapht-core-1.5.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.gdal/gdal/3.8.0/c7b2bbd6515af3e04eb737ae3d8f27d7b24ce187/gdal-3.8.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.junit-pioneer/junit-pioneer/2.2.0/b29babc6cd0db6e0dd85e1d6d5dd79880dc809e9/junit-pioneer-2.2.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-aop/3.2.2/f01ecef0ce5f8d5631890a0c456a88a72323b569/spring-boot-starter-aop-3.2.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-jdbc/3.2.2/22ffda6938dca5f584c8b1b64e4e9096e8302c1e/spring-boot-starter-jdbc-3.2.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter/3.2.2/dc04714f9295297f92fa8099eb51edc54dbe67db/spring-boot-starter-3.2.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-tomcat/3.2.2/e22a0ba37910731b382f3fe47ad36aed20fad24d/spring-boot-starter-tomcat-3.2.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework.cloud/spring-cloud-function-serverless-web/4.1.4/621161d5604fbc2217e3e9322b81ebf415af134e/spring-cloud-function-serverless-web-4.1.4.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework/spring-webmvc/6.1.3/f4738a57787add6567e0679eebb1b499a11019cc/spring-webmvc-6.1.3.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework.security/spring-security-web/6.2.1/4b486977ab1bcdd5dcc6aa5d8a367f1c0814bf56/spring-security-web-6.2.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework/spring-web/6.1.3/cc3459b4abd436331608ddb6424886875f7086ab/spring-web-6.1.3.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework.data/spring-data-jpa/3.2.2/f91a3896c2a6139ac1da1fd8ff4350ca4b0e409e/spring-data-jpa-3.2.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework/spring-aspects/6.1.3/c8b5dde3568dc5df6109916d8ad4866efe4e61fd/spring-aspects-6.1.3.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.google.code.gson/gson/2.10.1/b3add478d4382b78ea20b1671390a858002feb6c/gson-2.10.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.jaiext.zonal/jt-zonal/1.1.25/6e44083aa492b832a186e35e6a5ab4cc68b5aee8/jt-zonal-1.1.25.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.jaiext.stats/jt-stats/1.1.25/d031e38e3ccc90423d5c483e7c3a12ff655c74ca/jt-stats-1.1.25.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.google.guava/guava/32.0.0-jre/25d6662e20fc04c7b38f8ca3ab5d2f4a19272f80/guava-32.0.0-jre.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.checkerframework/checker-qual/3.33.0/de2b60b62da487644fc11f734e73c8b0b431238f/checker-qual-3.33.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.awssdk/aws-json-protocol/2.21.40/f9d4f4da875f8e3b97c7d29eecf3735e8c2257c3/aws-json-protocol-2.21.40.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.awssdk/protocol-core/2.21.40/e87cdd212d8216572a0e6d009c04e941eae29e95/protocol-core-2.21.40.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.awssdk/aws-core/2.21.40/a16c8f6df9bd109bbad88e1305ad543c8e9068ff/aws-core-2.21.40.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.awssdk/auth/2.21.40/35dfb5a4ba81867728bb76ad361052c36ae7d6ac/auth-2.21.40.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.awssdk/regions/2.21.40/c3980558a2fac93ccf9a9e0012ed4f9ad9d0b73c/regions-2.21.40.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.awssdk/sdk-core/2.21.40/391ee3e8d735e65b2e673a4f2a95bb59f50b7f63/sdk-core-2.21.40.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.awssdk/http-auth-aws/2.21.40/2080bc865f9cf700c4678d9e92913ad7774abb84/http-auth-aws-2.21.40.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.awssdk/http-auth/2.21.40/37c68a83b46f1379f41f0fd46d88c9127a02c2b9/http-auth-2.21.40.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.awssdk/http-auth-spi/2.21.40/3763606e224e647ae59975d146f62e7fa8f8a004/http-auth-spi-2.21.40.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.awssdk/apache-client/2.21.40/c85db84bfacf67fe9278a4d1775774750cd4f55c/apache-client-2.21.40.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.awssdk/netty-nio-client/2.21.40/4412861c773c475da1553cd6030074f91a443757/netty-nio-client-2.21.40.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.awssdk/http-client-spi/2.21.40/aae2d1cef0f805efa36383e7a0f8c5fcf7ab7be8/http-client-spi-2.21.40.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.awssdk/identity-spi/2.21.40/c8009ff55bcd5482b4f1e89f8026db1ffd10cfdf/identity-spi-2.21.40.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.awssdk/metrics-spi/2.21.40/a43405adcc8a13018942afa8bcc578d1eedca9b6/metrics-spi-2.21.40.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.awssdk/json-utils/2.21.40/9f888c83764fa4179a69b71e4b29981aed794038/json-utils-2.21.40.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.awssdk/arns/2.21.40/a99634492b0eb6f824108c76dd31eeb80b223fd8/arns-2.21.40.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.awssdk/profiles/2.21.40/859228b1b098b835e61c7825a0ef7d28172ddb23/profiles-2.21.40.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.awssdk/crt-core/2.21.40/87ae688795ce7f9a83f6f2d9186571af93afb4e0/crt-core-2.21.40.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.awssdk/utils/2.21.40/966fe822556b6a7dc500eb0c1afe4625f3ec16b9/utils-2.21.40.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.github.docker-java/docker-java-transport-zerodep/3.7.0/55185d3af96befa953dcb0b89de3751f95999511/docker-java-transport-zerodep-3.7.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.jayway.jsonpath/json-path/2.8.0/b4ab3b7a9e425655a0ca65487bbbd6d7ddb75160/json-path-2.8.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.zaxxer/HikariCP/5.0.1/a74c7f0a37046846e88d54f7cb6ea6d565c65f9c/HikariCP-5.0.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework.data/spring-data-commons/3.2.2/9b0b0f5f5bc793463a81171d6889809abc14b19b/spring-data-commons-3.2.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-logging/3.2.2/3347c3b1cec6cf2d5fa186d1e49d2f378a6b7cae/spring-boot-starter-logging-3.2.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/ch.qos.logback/logback-classic/1.4.14/d98bc162275134cdf1518774da4a2a17ef6fb94d/logback-classic-1.4.14.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.apache.logging.log4j/log4j-to-slf4j/2.21.1/d77b2ba81711ed596cd797cc2b5b5bd7409d841c/log4j-to-slf4j-2.21.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.slf4j/jul-to-slf4j/2.0.11/279356f8e873b1a26badd8bbb3284b5c3b22c770/jul-to-slf4j-2.0.11.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.slf4j/slf4j-api/2.0.11/ad96c3f8cf895e696dd35c2bc8e8ebe710be9e6d/slf4j-api-2.0.11.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.jboss.logging/jboss-logging/3.5.3.Final/c88fc1d8a96d4c3491f55d4317458ccad53ca663/jboss-logging-3.5.3.Final.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.awssdk/endpoints-spi/2.21.40/293fa40e5e3267132b9d0e88581de952b590f5f0/endpoints-spi-2.21.40.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.awssdk/checksums/2.21.40/56cc2c329c775f97e647f57e0fa2e4dc464d0755/checksums-2.21.40.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.awssdk/checksums-spi/2.21.40/41b20606644967d5fd394b5f512f0be7d5325016/checksums-spi-2.21.40.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.awssdk/annotations/2.21.40/aad81823cc1bead88b7a0ba3b3b342f0ffdd7bdd/annotations-2.21.40.jar:/home/jules/.gradle/caches/modules-2/files-2.1/joda-time/joda-time/2.10.8/b0442d652c209a7ba7af0410ce219d997a447701/joda-time-2.10.8.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.apache.poi/poi/5.4.1/e4c74c59e13f62d8edd215756d14ce55566c6efe/poi-5.4.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.apache.commons/commons-compress/1.28.0/e482f2c7a88dac3c497e96aa420b6a769f59c8d7/commons-compress-1.28.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.apache.commons/commons-fileupload2-jakarta-servlet6/2.0.0-M2/de8ac10c2fcf051714db8c23754cce58eacdcdb6/commons-fileupload2-jakarta-servlet6-2.0.0-M2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.apache.commons/commons-fileupload2-core/2.0.0-M2/5b16aec91c2e0b0e6052bff9795045c2704f6ca7/commons-fileupload2-core-2.0.0-M2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/commons-io/commons-io/2.20.0/36f3474daec2849c149e877614e7f979b2082cd2/commons-io-2.20.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.apache.poi/poi-ooxml-lite/5.4.1/ed2246f88254ba40fc2e7999c8f8e4e9031208a/poi-ooxml-lite-5.4.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.apache.xmlbeans/xmlbeans/5.3.0/f93c3ba820d7240b7fec4ec5bc35e7223cc6fc1f/xmlbeans-5.3.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.github.virtuald/curvesapi/1.08/3d3d36568154059825089b289dcfca481fe44e2c/curvesapi-1.08.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.apache.logging.log4j/log4j-api/2.21.1/74c65e87b9ce1694a01524e192d7be989ba70486/log4j-api-2.21.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.apache.commons/commons-collections4/4.4/62ebe7544cb7164d87e0637a2a6a2bdc981395e8/commons-collections4-4.4.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.apache.httpcomponents.core5/httpcore5-h2/5.2.4/2872764df7b4857549e2880dd32a6f9009166289/httpcore5-h2-5.2.4.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.apache.httpcomponents.core5/httpcore5/5.2.4/34d8332b975f9e9a8298efe4c883ec43d45b7059/httpcore5-5.2.4.jar:/home/jules/.gradle/caches/modules-2/files-2.1/ognl/ognl/3.3.4/1904789bdd96f226ad252a02f230be1015f4462b/ognl-3.3.4.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.javassist/javassist/3.29.0-GA/d3959fa7e00bf04dbe519228a23213d2afb625d8/javassist-3.29.0-GA.jar:/home/jules/.m2/repository/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.squareup.okhttp3/okhttp/4.12.0/2f4525d4a200e97e1b87449c2cd9bd2e25b7e8cd/okhttp-4.12.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/io.opencensus/opencensus-api/0.31.0/6634f10ecd5eb3ac248f3ed5ee727c9a28c841bd/opencensus-api-0.31.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/io.sentry/sentry-spring-boot-jakarta/7.4.0/8160aa7174ffcd06e93ebe7641a3d378102b432b/sentry-spring-boot-jakarta-7.4.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/io.sentry/sentry-spring-jakarta/7.4.0/dcd0a62d6dad2ab6393b53e38b4c550a6bdccd82/sentry-spring-jakarta-7.4.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/io.sentry/sentry/7.6.0/b64d0f7e5a7683e31b10a0a37a5473c7c7d30ce/sentry-7.6.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework.security/spring-security-config/6.2.1/119953fd2980d50e1119b913a8596e5e6bdc1295/spring-security-config-6.2.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-test-autoconfigure/3.2.2/3413e663b2e3e005db07a60883ac6cd01b0dc0c/spring-boot-test-autoconfigure-3.2.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-test/3.2.2/9e76de9c9f520865c5d62588323f018a9d4e9077/spring-boot-test-3.2.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-autoconfigure/3.2.2/5c407409f8d260a4bc6e173d16fc3b36e6adec21/spring-boot-autoconfigure-3.2.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot/3.2.2/9f274d1bd822c4c57bb5b37ecae2380b980f567/spring-boot-3.2.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework.security/spring-security-core/6.2.1/b4014a04f217f0f48d15bc7d53906b6911ad855f/spring-security-core-6.2.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework/spring-context/6.1.3/c63f038933701058fd7578460c66dbe2d424915/spring-context-6.1.3.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework/spring-aop/6.1.3/4d9bd4bd9b8bedf9ef151b45c79766b336117b9a/spring-aop-6.1.3.jar:/home/jules/.m2/repository/org/apache/httpcomponents/httpmime/4.5.14/httpmime-4.5.14.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.attoparser/attoparser/2.0.6.RELEASE/8f603f22a18d4f7258f8860ccbb68b069f49904a/attoparser-2.0.6.RELEASE.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.unbescape/unbescape/1.1.6.RELEASE/7b90360afb2b860e09e8347112800d12c12b2a13/unbescape-1.1.6.RELEASE.jar:/home/jules/.gradle/caches/modules-2/files-2.1/commons-pool/commons-pool/1.6/4572d589699f09d866a226a14b7f4323c6d8f040/commons-pool-1.6.jar:/home/jules/.gradle/caches/modules-2/files-2.1/systems.uom/systems-common/2.1/a173cc6f1fedc8b32498d6cc9599251baa72de27/systems-common-2.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/tech.units/indriya/2.1.3/d3cc55737619a2f50382592d369726e49d4f69bf/indriya-2.1.3.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.jaitools/jt-zonalstats/1.6.0/68bf96642dc310a9793ed98384da6843b8241c08/jt-zonalstats-1.6.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.jaitools/jt-utils/1.6.0/8ce5a9a0840a1b17f1f39d44fe931b8197906b45/jt-utils-1.6.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.jaiext.affine/jt-affine/1.1.25/8ee0bfd1bbffc1838e4e6204029f09f1e6a9733c/jt-affine-1.1.25.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.jaiext.algebra/jt-algebra/1.1.25/7f7c828e71be328eae8d206ca3002e44d5ca1f19/jt-algebra-1.1.25.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.jaiext.bandmerge/jt-bandmerge/1.1.25/90d4818309fdf4886edae926b6953317a824be26/jt-bandmerge-1.1.25.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.jaiext.bandselect/jt-bandselect/1.1.25/f13a55a1a5a5a904a17b29a07c8729b86365f442/jt-bandselect-1.1.25.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.jaiext.bandcombine/jt-bandcombine/1.1.25/f03089c06c9ee4c1bc1edbc66b57383340910fab/jt-bandcombine-1.1.25.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.jaiext.warp/jt-warp/1.1.25/c0a48ec306ed781327230890ed4d38a2a06b347c/jt-warp-1.1.25.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.jaiext.format/jt-format/1.1.25/c34406a16648438aedd5aabac51c6d7ff11491f0/jt-format-1.1.25.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.jaiext.border/jt-border/1.1.25/c14e3ce034f6fa1abc702c2f36ccc6e70257e70b/jt-border-1.1.25.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.jaiext.buffer/jt-buffer/1.1.25/2c0abe2b300dd34bde1ef741bc18d94a1f2d5f6/jt-buffer-1.1.25.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.jaiext.crop/jt-crop/1.1.25/9539c93e68e86215fb82c033aacf7602c2e4e736/jt-crop-1.1.25.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.jaiext.mosaic/jt-mosaic/1.1.25/fac99ec54458f13b1f456f697960af2044c81670/jt-mosaic-1.1.25.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.jaiext.lookup/jt-lookup/1.1.25/505c7a1773836b5b2123a4ff94bcc77d6a549a2a/jt-lookup-1.1.25.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.jaiext.rescale/jt-rescale/1.1.25/abed45e6fbb10ac40c77842e44059ea55cd004e8/jt-rescale-1.1.25.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.jaiext.scale/jt-scale/1.1.25/36330ee77a7e89437b5613111f25137c5a5b374/jt-scale-1.1.25.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.jaiext.scale2/jt-scale2/1.1.25/d084a13a226f3357f1d08f635f249a2bf023c4c0/jt-scale2-1.1.25.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.jaiext.nullop/jt-nullop/1.1.25/19afa3dfc84070956cc42aaa8cb2c9afb5ca8ed1/jt-nullop-1.1.25.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.jaiext.translate/jt-translate/1.1.25/a9e72448cfe14ed5c8ffef03e0e9a315d69a3479/jt-translate-1.1.25.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.jaiext.binarize/jt-binarize/1.1.25/9cc712764db1c8387a7927bb89ef66b60416dd44/jt-binarize-1.1.25.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.jaiext.colorconvert/jt-colorconvert/1.1.25/b233520010779405b1e187243e9578acc43deabd/jt-colorconvert-1.1.25.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.jaiext.errordiffusion/jt-errordiffusion/1.1.25/e85171c1f64f1ba17ccfd763d53d72529b989456/jt-errordiffusion-1.1.25.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.jaiext.orderdither/jt-orderdither/1.1.25/4f3dbd98b55d3920f4a66981b671e46d1f7572c0/jt-orderdither-1.1.25.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.jaiext.colorindexer/jt-colorindexer/1.1.25/de3a969322dd6647b79958e2ca2789b09c87924a/jt-colorindexer-1.1.25.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.jaiext.imagefunction/jt-imagefunction/1.1.25/10607a704a643166a56485066d0f1146a400ecff/jt-imagefunction-1.1.25.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.jaiext.classifier/jt-classifier/1.1.25/8448fd58176a66486a61f65a97efec235482274b/jt-classifier-1.1.25.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.jaiext.piecewise/jt-piecewise/1.1.25/1630cc1b7dc5abf452cb7afbbfa920c80cffe85a/jt-piecewise-1.1.25.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.jaiext.rlookup/jt-rlookup/1.1.25/c4b461c2bbd65356d0b11d684c55fcb7dc3e297f/jt-rlookup-1.1.25.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.jaiext.vectorbin/jt-vectorbin/1.1.25/ad7c745f324e85caeceb6c3645038f92279e3514/jt-vectorbin-1.1.25.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.jaiext.shadedrelief/jt-shadedrelief/1.1.25/b7b086af18451fd3980521a8da0139b86c057623/jt-shadedrelief-1.1.25.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.jaiext.utilities/jt-utilities/1.1.25/42420b41e034d546a624d263f9a26c76140026af/jt-utilities-1.1.25.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.jaiext.iterators/jt-iterators/1.1.25/a5b56c7d6443e6729d19590d71d273b451bc4805/jt-iterators-1.1.25.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.locationtech.jts/jts-core/1.19.0/3ff3baa0074445384f9e0068df81fbd0a168395a/jts-core-1.19.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.geotools.ogc/net.opengis.ows/31.2/6a7234f9208c2f1f91d1a27230d43add2e597caf/net.opengis.ows-31.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.imageio-ext/imageio-ext-streams/1.4.12/5fc6f875adc66306c787b944f08a910f1678ff28/imageio-ext-streams-1.4.12.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.imageio-ext/imageio-ext-utilities/1.4.12/4b21b5f0e75ed4d4239700766c706e737f9dab35/imageio-ext-utilities-1.4.12.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.geotools.ogc/org.w3.xlink/31.2/15de97c87151bf1805a6fb3d4ffaadf4163784f5/org.w3.xlink-31.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/javax.media/jai_core/1.1.3/b179d2efb1174658483e8b41bf4ac9d2eb5de438/jai_core-1.1.3.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.googlecode.json-simple/json-simple/1.1.1/c9ad4a0850ab676c5c64461a05ca524cdfff59f1/json-simple-1.1.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.apache.commons/commons-text/1.12.0/66aa90dc099701c4d3b14bd256c328f592ccf0d6/commons-text-1.12.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.apache.commons/commons-lang3/3.13.0/b7263237aa89c1f99b327197c41d0669707a462e/commons-lang3-3.13.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.google.re2j/re2j/1.6/a13e879fd7971738d06020fefeb108cc14e14169/re2j-1.6.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.ejml/ejml-ddense/0.41/782c80d4c3c8a3432c4641f24c177f336a360f9c/ejml-ddense-0.41.jar:/home/jules/.gradle/caches/modules-2/files-2.1/it.geosolutions.jgridshift/jgridshift-core/1.3/314702a7b6e634e1c74589983a6762974b9c51c8/jgridshift-core-1.3.jar:/home/jules/.gradle/caches/modules-2/files-2.1/net.sf.geographiclib/GeographicLib-Java/1.49/7ff2164e69fa04e1ef2ca5079e1cee298a936ea1/GeographicLib-Java-1.49.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.hsqldb/hsqldb/2.7.2/d92d4d2aa515714da2165c9d640d584c2896c9df/hsqldb-2.7.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/javax.media/jai_imageio/1.1/27d867283f9043b05a8fb210773d0ef72b767a58/jai_imageio-1.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.jheaps/jheaps/0.14/2f97e59108979ba44e71ab1f8166722e62bc6d96/jheaps-0.14.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.apfloat/apfloat/1.10.1/a32c54f97317c72c9377bb4f2cdecd52fe6329a/apfloat-1.10.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.citygml4j/citygml4j-core/3.2.6/d958222be299c22fa7f8ef44e2ae679363fb3a5d/citygml4j-core-3.2.6.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.rnorth.duct-tape/duct-tape/1.0.8/92edc22a9ab2f3e17c9bf700aaee377d50e8b530/duct-tape-1.0.8.jar:/home/jules/.gradle/caches/modules-2/files-2.1/net.minidev/json-smart/2.5.0/57a64f421b472849c40e77d2e7cce3a141b41e99/json-smart-2.5.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.assertj/assertj-core/3.24.2/ebbf338e33f893139459ce5df023115971c2786f/assertj-core-3.24.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.awaitility/awaitility/4.2.0/2c39784846001a9cffd6c6b89c78de62c0d80fb8/awaitility-4.2.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.hamcrest/hamcrest/2.2/1820c0968dba3a11a1b30669bb1f01978a91dedc/hamcrest-2.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.mockito/mockito-junit-jupiter/5.7.0/ac2d6a3431747a7986b8f4abef465f72bf3a21ae/mockito-junit-jupiter-5.7.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.junit.jupiter/junit-jupiter-params/5.10.1/c8f15d4e99940c4564098af78c10809c00fdca06/junit-jupiter-params-5.10.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.junit.jupiter/junit-jupiter-engine/5.10.1/6c9ff773f9aa842b91d1f2fe4658973252ce2428/junit-jupiter-engine-5.10.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.junit.jupiter/junit-jupiter-api/5.10.1/eb90c7d8bfaae8fdc97b225733fcb595ddd72843/junit-jupiter-api-5.10.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.junit.platform/junit-platform-launcher/1.10.1/ce85bf5e38bee0989ded9bd468dd4ff78dc0cfa8/junit-platform-launcher-1.10.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.junit.platform/junit-platform-engine/1.10.1/f32ae4af74fde68414b8a3d2b7cf1fb43824a83a/junit-platform-engine-1.10.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.junit.platform/junit-platform-commons/1.10.1/2bfcd4a4e38b10c671b6916d7e543c20afe25579/junit-platform-commons-1.10.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.junit.jupiter/junit-jupiter/5.10.1/6e5c7dd668d6349cb99e52ab8321e73479a309bc/junit-jupiter-5.10.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.mockito/mockito-core/5.7.0/a1c258331ab91d66863c983aff7136357e9de056/mockito-core-5.7.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.skyscreamer/jsonassert/1.5.1/6d842d0faf4cf6725c509a5e5347d319ee0431c3/jsonassert-1.5.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework/spring-test/6.1.3/193a0c6c53a4eed98a1d7567e952647a92cf53aa/spring-test-6.1.3.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework/spring-orm/6.1.3/98572e26c6d011c9710545085358a4e35e27649/spring-orm-6.1.3.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework/spring-jdbc/6.1.3/be4b30cc956b26f13e04ccadc2b0575038c531bb/spring-jdbc-6.1.3.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework/spring-tx/6.1.3/7750337bf46a2ff248685915c7cc88d3bef2f666/spring-tx-6.1.3.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework/spring-beans/6.1.3/c2df4210e796d3a27efc1f22621aa4e2c6cd985f/spring-beans-6.1.3.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework/spring-expression/6.1.3/7c35fc3d7525a024fdde8a5d7597a6a8a4e59d7/spring-expression-6.1.3.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework/spring-core/6.1.3/a002e96e780954cc3ac4cd70fd3bb16accdc47ed/spring-core-6.1.3.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.xmlunit/xmlunit-core/2.9.1/e5833662d9a1279a37da3ef6f62a1da29fcd68c4/xmlunit-core-2.9.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/si.uom/si-units/2.1/7e812192ff1abbef6c79123249840c42b4e145d4/si-units-2.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/jakarta.annotation/jakarta.annotation-api/2.1.1/48b9bda22b091b1f48b13af03fe36db3be6e1ae3/jakarta.annotation-api-2.1.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.yaml/snakeyaml/2.2/3af797a25458550a16bf89acc8e4ab2b7f2bfce0/snakeyaml-2.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.apache.tomcat.embed/tomcat-embed-websocket/10.1.18/83a3bc6898f2ceed2357ba231a5e83dc2016d454/tomcat-embed-websocket-10.1.18.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.apache.tomcat.embed/tomcat-embed-core/10.1.18/bff6c34649d1dd7b509e819794d73ba795947dcf/tomcat-embed-core-10.1.18.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.apache.tomcat.embed/tomcat-embed-el/10.1.18/b2c4dc05abd363c63b245523bb071727aa2f1046/tomcat-embed-el-10.1.18.jar:/home/jules/.gradle/caches/modules-2/files-2.1/io.micrometer/micrometer-observation/1.12.2/e082b05a2527fc24ea6fbe4c4b7ae34653aace81/micrometer-observation-1.12.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.aspectj/aspectjweaver/1.9.21/beaabaea95c7f3330f415c72ee0ffe79b51d172f/aspectjweaver-1.9.21.jar:/home/jules/.gradle/caches/modules-2/files-2.1/jakarta.persistence/jakarta.persistence-api/3.1.0/66901fa1c373c6aff65c13791cc11da72060a8d6/jakarta.persistence-api-3.1.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/jakarta.transaction/jakarta.transaction-api/2.0.1/51a520e3fae406abb84e2e1148e6746ce3f80a1a/jakarta.transaction-api-2.0.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.hibernate.common/hibernate-commons-annotations/6.0.6.Final/77a5f94b56d49508e0ee334751db5b78e5ccd50c/hibernate-commons-annotations-6.0.6.Final.jar:/home/jules/.gradle/caches/modules-2/files-2.1/io.smallrye/jandex/3.1.2/a6c1c89925c7df06242b03dddb353116ceb9584c/jandex-3.1.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.fasterxml/classmate/1.6.0/91affab6f84a2182fce5dd72a8d01bc14346dddd/classmate-1.6.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy/1.14.11/725602eb7c8c56b51b9c21f273f9df5c909d9e7d/byte-buddy-1.14.11.jar:/home/jules/.gradle/caches/modules-2/files-2.1/jakarta.inject/jakarta.inject-api/2.0.1/4c28afe1991a941d7702fe1362c365f0a8641d1e/jakarta.inject-api-2.0.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.antlr/antlr4-runtime/4.13.0/5a02e48521624faaf5ff4d99afc88b01686af655/antlr4-runtime-4.13.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/jakarta.servlet/jakarta.servlet-api/6.0.0/abecc699286e65035ebba9844c03931357a6a963/jakarta.servlet-api-6.0.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/jakarta.ws.rs/jakarta.ws.rs-api/3.1.0/15ce10d249a38865b58fc39521f10f29ab0e3363/jakarta.ws.rs-api-3.1.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.reactivestreams/reactive-streams/1.0.4/3864a1320d97d7b045f729a326e1e077661f31b7/reactive-streams-1.0.4.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.eventstream/eventstream/1.0.1/6ff8649dffc5190366ada897ba8525a836297784/eventstream-1.0.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/software.amazon.awssdk/third-party-jackson-core/2.21.40/bdad1fb829627469d269a898f4d51df70f80c407/third-party-jackson-core-2.21.40.jar:/home/jules/.m2/repository/org/apache/httpcomponents/httpclient/4.5.14/httpclient-4.5.14.jar:/home/jules/.m2/repository/org/apache/httpcomponents/httpcore/4.4.16/httpcore-4.4.16.jar:/home/jules/.gradle/caches/modules-2/files-2.1/commons-codec/commons-codec/1.16.0/4e3eb3d79888d76b54e28b350915b5dc3919c9de/commons-codec-1.16.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/io.netty/netty-codec-http2/4.1.105.Final/7c558b1ea68a2385b250191ad5ecb0f4afb2d866/netty-codec-http2-4.1.105.Final.jar:/home/jules/.gradle/caches/modules-2/files-2.1/io.netty/netty-codec-http/4.1.105.Final/bc8bc7b5384fb3dcb467d2a44159282935328779/netty-codec-http-4.1.105.Final.jar:/home/jules/.gradle/caches/modules-2/files-2.1/io.netty/netty-handler/4.1.105.Final/7e997e63d0a445c4b352bcd38474d50f06f2eaf1/netty-handler-4.1.105.Final.jar:/home/jules/.gradle/caches/modules-2/files-2.1/io.netty/netty-codec/4.1.105.Final/4733830b4b2b9111e9bf8136691d07b20027cd51/netty-codec-4.1.105.Final.jar:/home/jules/.gradle/caches/modules-2/files-2.1/io.netty/netty-transport-classes-epoll/4.1.105.Final/e006d3b0cfd5b8133c9fcebfa05d9ae80a721e80/netty-transport-classes-epoll-4.1.105.Final.jar:/home/jules/.gradle/caches/modules-2/files-2.1/io.netty/netty-transport-native-unix-common/4.1.105.Final/8bb8ab3a8f1e730c6e7d1d1cf8fc24221eacc6cd/netty-transport-native-unix-common-4.1.105.Final.jar:/home/jules/.gradle/caches/modules-2/files-2.1/io.netty/netty-transport/4.1.105.Final/5184e1308ed7d853d7061b4e21e47e8de43a28df/netty-transport-4.1.105.Final.jar:/home/jules/.gradle/caches/modules-2/files-2.1/io.netty/netty-buffer/4.1.105.Final/c1c1b4d2c89d2f74c80a2701c124ecfde1ecf067/netty-buffer-4.1.105.Final.jar:/home/jules/.gradle/caches/modules-2/files-2.1/io.netty/netty-resolver/4.1.105.Final/e69687e013ded60f3f9054164e121c2702200711/netty-resolver-4.1.105.Final.jar:/home/jules/.gradle/caches/modules-2/files-2.1/io.netty/netty-common/4.1.105.Final/8438fc1de4c10301bb53ceb49ed8db74bd40cc2c/netty-common-4.1.105.Final.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.apache.commons/commons-math3/3.6.1/e4ba98f1d4b3c80ec46392f25e094a6a2e58fcbf/commons-math3-3.6.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.zaxxer/SparseBitSet/1.3/533eac055afe3d5f614ea95e333afd6c2bde8f26/SparseBitSet-1.3.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.squareup.okio/okio-jvm/3.6.0/5600569133b7bdefe1daf9ec7f4abeb6d13e1786/okio-jvm-3.6.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk7/1.9.22/c4b17283ad7939e778989663f8301d871987fa5e/kotlin-stdlib-jdk7-1.9.22.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/1.9.22/d6c44cd08d8f3f9bece8101216dbe6553365c6e3/kotlin-stdlib-1.9.22.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk8/1.9.22/dea0c11e2fa503ab891c8a090e3b54754472975d/kotlin-stdlib-jdk8-1.9.22.jar:/home/jules/.gradle/caches/modules-2/files-2.1/io.grpc/grpc-context/1.27.2/1789190601b7a5361e4fa52b6bc95ec2cd71e854/grpc-context-1.27.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/si.uom/si-quantity/2.1/5617d2cf30898ffcc760807009fe947483bd867b/si-quantity-2.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/tech.uom.lib/uom-lib-common/2.1/17d8a4458116466b004976f3c7834be185cffb86/uom-lib-common-2.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/javax.measure/unit-api/2.1.3/76e3c98cc101cdb8ebf437e4327e8de4ab92613/unit-api-2.1.3.jar:/home/jules/.m2/repository/javax/inject/javax.inject/1/javax.inject-1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.apiguardian/apiguardian-api/1.1.1/7ea550039f115fcc40990925490b8ebd4b93024a/apiguardian-api-1.1.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.ejml/ejml-core/0.41/92ac2bee332a5697c42e576b94d563ba8c25877c/ejml-core-0.41.jar:/home/jules/.gradle/caches/modules-2/files-2.1/io.airlift/aircompressor/0.27/5b3b5e7932a1d088ad1f13d109ffd688ab59ef9d/aircompressor-0.27.jar:/home/jules/.gradle/caches/modules-2/files-2.1/javax.media/jai_codec/1.1.3/34a67ba62097778e4695c951156bf189c2c8e016/jai_codec-1.1.3.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.huldra.math/bigint/0.7.1/beb4ba7ca91d7f3875ef77f69052ceb37f5b3db2/bigint-0.7.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.eclipse.emf/org.eclipse.emf.ecore.xmi/2.15.0/9aa1a584be1df1eb0ef8fae7123784af6e51f47a/org.eclipse.emf.ecore.xmi-2.15.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.eclipse.emf/org.eclipse.emf.ecore/2.15.0/ccfc09c8b6a0d4fadde09216d8a07678d38998de/org.eclipse.emf.ecore-2.15.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.eclipse.emf/org.eclipse.emf.common/2.15.0/e0f1608a9855651e899d609b106ae78f903a2f04/org.eclipse.emf.common-2.15.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.xmlobjects.gml/gml-objects/1.1.6/911c068a0ced7469f2c8ccd0fb2b15785aca17d/gml-objects-1.1.6.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.xmlobjects.xal/xal-objects/1.1.6/49d8160b07d06c8839640765d07469ca26acb797/xal-objects-1.1.6.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.xmlobjects/xml-objects/1.1.6/81d46dc83d4eaeea57847ca402db20e1d0c5a4a1/xml-objects-1.1.6.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.jetbrains/annotations/17.0.0/8ceead41f4e71821919dbdb7a9847608f1a938cb/annotations-17.0.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.github.docker-java/docker-java-transport/3.7.0/e68716970e65eb45c01c0207d15ff03bb32edf49/docker-java-transport-3.7.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/net.java.dev.jna/jna/5.18.1/b27ba04287cc4abe769642fe8318d39fc89bf937/jna-5.18.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/net.minidev/accessors-smart/2.5.0/aca011492dfe9c26f4e0659028a4fe0970829dd8/accessors-smart-2.5.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy-agent/1.14.11/f9cb566608fbac6bc7bf54901a7aa11543a989ee/byte-buddy-agent-1.14.11.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.objenesis/objenesis/3.3/1049c09f1de4331e8193e579448d0916d75b7631/objenesis-3.3.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.vaadin.external.google/android-json/0.0.20131108.vaadin1/fa26d351fe62a6a17f5cda1287c1c6110dec413f/android-json-0.0.20131108.vaadin1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework/spring-jcl/6.1.3/a715e091ee86243ee94534a03f3c26b4e48de31e/spring-jcl-6.1.3.jar:/home/jules/.m2/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/io.micrometer/micrometer-commons/1.12.2/b44127d8ec7b3ef11a01912d1e6474e1167f3929/micrometer-commons-1.12.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.springframework.security/spring-security-crypto/6.2.1/d7c4f4e8fe5ae84dd1da76094ee8a0a7e214923d/spring-security-crypto-6.2.1.jar:/home/jules/.m2/repository/commons-logging/commons-logging/1.2/commons-logging-1.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/javax.xml.bind/jaxb-api/2.4.0-b180830.0359/b54184b7dcab2031add3f525550c7f1b7e12209d/jaxb-api-2.4.0-b180830.0359.jar:/home/jules/.gradle/caches/modules-2/files-2.1/javax.activation/javax.activation-api/1.2.0/85262acf3ca9816f9537ca47d5adeabaead7cb16/javax.activation-api-1.2.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.google.guava/failureaccess/1.0.1/1dcf1de382a0bf95a3d8b0849546c88bac1292c9/failureaccess-1.0.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.google.guava/listenablefuture/9999.0-empty-to-avoid-conflict-with-guava/b421526c5f297295adef1c886e5246c39d4ac629/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.google.errorprone/error_prone_annotations/2.18.0/89b684257096f548fa39a7df9fdaa409d4d4df91/error_prone_annotations-2.18.0.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.google.j2objc/j2objc-annotations/2.8/c85270e307e7b822f1086b93689124b89768e273/j2objc-annotations-2.8.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.glassfish.jaxb/xsom/4.0.4/ac36a0eb703b3093f1dc200a40bd246dec6a7acd/xsom-4.0.4.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.xmlobjects/classindex/3.13.1/7454f016d136a093c155795ada286e53ede1c9a3/classindex-3.13.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.ow2.asm/asm/9.3/8e6300ef51c1d801a7ed62d07cd221aca3a90640/asm-9.3.jar:/home/jules/.gradle/caches/modules-2/files-2.1/ch.qos.logback/logback-core/1.4.14/4d3c2248219ac0effeb380ed4c5280a80bf395e8/logback-core-1.4.14.jar:/home/jules/.gradle/caches/modules-2/files-2.1/org.glassfish.jaxb/txw2/4.0.4/cfd2bcf08782673ac370694fdf2cf76dbaa607ef/txw2-4.0.4.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.sun.istack/istack-commons-runtime/4.1.2/18ec117c85f3ba0ac65409136afa8e42bc74e739/istack-commons-runtime-4.1.2.jar:/home/jules/.gradle/caches/modules-2/files-2.1/javax.cache/cache-api/1.1.1/c56fb980eb5208bfee29a9a5b9d951aba076bd91/cache-api-1.1.1.jar:/home/jules/.gradle/caches/modules-2/files-2.1/com.sun.xml.bind.external/relaxng-datatype/4.0.4/c2e28fae22d5dafae5854388bd6dc88cc01b6f06/relaxng-datatype-4.0.4.jar
+Launcher Type: SUN_STANDARD
+
+[Global flags]
+     intx CICompilerCount                          = 3                                         {product} {ergonomic}
+     uint ConcGCThreads                            = 1                                         {product} {ergonomic}
+     uint G1ConcRefinementThreads                  = 4                                         {product} {ergonomic}
+   size_t G1HeapRegionSize                         = 8388608                                   {product} {ergonomic}
+    uintx GCDrainStackTargetSize                   = 64                                        {product} {ergonomic}
+   size_t InitialHeapSize                          = 8589934592                                {product} {command line}
+   size_t MarkStackSize                            = 4194304                                   {product} {ergonomic}
+   size_t MaxHeapSize                              = 10737418240                               {product} {command line}
+   size_t MinHeapDeltaBytes                        = 8388608                                   {product} {ergonomic}
+   size_t MinHeapSize                              = 8589934592                                {product} {command line}
+    uintx NonNMethodCodeHeapSize                   = 5832780                                {pd product} {ergonomic}
+    uintx NonProfiledCodeHeapSize                  = 122912730                              {pd product} {ergonomic}
+    uintx ProfiledCodeHeapSize                     = 122912730                              {pd product} {ergonomic}
+    uintx ReservedCodeCacheSize                    = 251658240                              {pd product} {ergonomic}
+     bool SegmentedCodeCache                       = true                                      {product} {ergonomic}
+   size_t SoftMaxHeapSize                          = 10737418240                            {manageable} {ergonomic}
+     bool UseCompressedOops                        = true                           {product lp64_product} {ergonomic}
+     bool UseG1GC                                  = true                                      {product} {ergonomic}
+
+Logging:
+Log output configuration:
+ #0: stdout all=warning uptime,level,tags foldmultilines=false
+ #1: stderr all=off uptime,level,tags foldmultilines=false
+
+Release file:
+<release file has not been read>
+Environment Variables:
+JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+PATH=/home/jules/.nvm/versions/node/v22.22.1/bin:/home/jules/.pyenv/shims:/home/jules/.pyenv/bin:/home/jules/.local/bin:/opt/flutter/bin:/usr/lib/dotnet:/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools:/go/bin:/usr/local/go/bin:/usr/share/gradle/bin:/usr/share/maven/bin:/home/jules/.local/bin:/home/jules/.cargo/bin:/usr/local/bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:/home/jules/.dotnet/tools
+SHELL=/bin/bash
+LANG=C.UTF-8
+TERM=tmux-256color
+
+Active Locale:
+LC_ALL=C
+LC_COLLATE=C
+LC_CTYPE=C
+LC_MESSAGES=C
+LC_MONETARY=C
+LC_NUMERIC=C
+LC_TIME=C
+
+Signal Handlers:
+   SIGSEGV: crash_handler in libjvm.so, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO, unblocked
+    SIGBUS: crash_handler in libjvm.so, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO, unblocked
+    SIGFPE: crash_handler in libjvm.so, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO, unblocked
+   SIGPIPE: javaSignalHandler in libjvm.so, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO, blocked
+   SIGXFSZ: javaSignalHandler in libjvm.so, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO, blocked
+    SIGILL: crash_handler in libjvm.so, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO, unblocked
+   SIGUSR2: SR_handler in libjvm.so, mask=00000000000000000000000000000000, flags=SA_RESTART|SA_SIGINFO, blocked
+    SIGHUP: SIG_DFL, mask=00000000000000000000000000000000, flags=none, blocked
+    SIGINT: SIG_DFL, mask=00000000000000000000000000000000, flags=none, blocked
+   SIGTERM: SIG_DFL, mask=00000000000000000000000000000000, flags=none, blocked
+   SIGQUIT: UserHandler in libjvm.so, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO, blocked
+   SIGTRAP: crash_handler in libjvm.so, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO, unblocked
+
+
+Periodic native trim disabled
+
+---------------  S Y S T E M  ---------------
+
+OS:
+DISTRIB_ID=Ubuntu
+DISTRIB_RELEASE=24.04
+DISTRIB_CODENAME=noble
+DISTRIB_DESCRIPTION="Ubuntu 24.04.4 LTS"
+uname: Linux 6.8.0 #1 SMP PREEMPT_DYNAMIC Fri Feb 20 20:38:43 UTC 2026 x86_64
+OS uptime: 0 days 0:24 hours
+libc: glibc 2.39 NPTL 2.39
+rlimit (soft/hard): STACK 8192k/infinity , CORE 0k/0k , NPROC 31821/31821 , NOFILE 1048576/1048576 , AS infinity/infinity , CPU infinity/infinity , DATA infinity/infinity , FSIZE infinity/infinity , MEMLOCK 1018764k/1018764k
+load average: 1.02 0.92 0.63
+
+/proc/meminfo:
+MemTotal:        8150116 kB
+MemFree:         3036424 kB
+MemAvailable:    5177628 kB
+Buffers:           40948 kB
+Cached:          2262072 kB
+SwapCached:            0 kB
+Active:          1672388 kB
+Inactive:        3192096 kB
+Active(anon):        324 kB
+Inactive(anon):  2561588 kB
+Active(file):    1672064 kB
+Inactive(file):   630508 kB
+Unevictable:           4 kB
+Mlocked:               0 kB
+SwapTotal:             0 kB
+SwapFree:              0 kB
+Dirty:             19136 kB
+Writeback:             0 kB
+AnonPages:       2561280 kB
+Mapped:           175044 kB
+Shmem:               604 kB
+KReclaimable:     119332 kB
+Slab:             149124 kB
+SReclaimable:     119332 kB
+SUnreclaim:        29792 kB
+KernelStack:        4312 kB
+PageTables:         8880 kB
+SecPageTables:         0 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+CommitLimit:     4075056 kB
+Committed_AS:    3409188 kB
+VmallocTotal:   34359738367 kB
+VmallocUsed:        5724 kB
+VmallocChunk:          0 kB
+Percpu:             1248 kB
+AnonHugePages:         0 kB
+ShmemHugePages:        0 kB
+ShmemPmdMapped:        0 kB
+FileHugePages:         0 kB
+FilePmdMapped:         0 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+Hugetlb:               0 kB
+DirectMap4k:       28672 kB
+DirectMap2M:     2068480 kB
+DirectMap1G:     8388608 kB
+
+/sys/kernel/mm/transparent_hugepage/enabled: always [madvise] never
+/sys/kernel/mm/transparent_hugepage/hpage_pmd_size: 2097152
+/sys/kernel/mm/transparent_hugepage/defrag (defrag/compaction efforts parameter): always defer defer+madvise [madvise] never
+
+Process Memory:
+Virtual Size: 3028184K (peak: 11412292K)
+Resident Set Size: 22656K (peak: 22656K) (anon: 7168K, file: 15488K, shmem: 0K)
+Swapped out: 0K
+C-Heap outstanding allocations: 13989K, retained: 518K
+glibc malloc tunables: (default)
+
+/proc/sys/kernel/threads-max (system-wide limit on the number of threads): 63642
+/proc/sys/vm/max_map_count (maximum number of memory map areas a process may have): 1048576
+/proc/sys/vm/swappiness (control to define how aggressively the kernel swaps out anonymous memory): 60
+/proc/sys/kernel/pid_max (system-wide limit on number of process identifiers): 4194304
+
+container information not found.
+KVM virtualization detected
+Steal ticks since vm start: 0
+Steal ticks percentage since vm start:  0.000
+
+CPU: total 4 (initial active 4) (4 cores per cpu, 1 threads per core) family 6 model 63 stepping 0 microcode 0x1, cx8, cmov, fxsr, mmx, sse, sse2, sse3, ssse3, sse4.1, sse4.2, popcnt, lzcnt, tsc, tscinvbit, avx, avx2, aes, erms, clmul, bmi1, bmi2, fma, vzeroupper, clflush, hv, rdtscp, f16c
+CPU Model and flags from /proc/cpuinfo:
+model name	: Intel(R) Xeon(R) Processor @ 2.30GHz
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid tsc_known_freq pni pclmulqdq ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm cpuid_fault pti ssbd ibrs ibpb stibp fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid xsaveopt arat umip md_clear arch_capabilities
+
+Online cpus: 0-3
+Offline cpus:
+BIOS frequency limitation: <Not Available>
+Frequency switch latency (ns): <Not Available>
+Available cpu frequencies: <Not Available>
+Current governor: <Not Available>
+Core performance/turbo boost: <Not Available>
+
+Memory: 4k page, physical 8150116k(5177724k free), swap 0k(0k free)
+Page Sizes: 4k
+
+vm_info: OpenJDK 64-Bit Server VM (21.0.10+7-Ubuntu-124.04) for linux-amd64 JRE (21.0.10+7-Ubuntu-124.04), built on 2026-01-22T23:46:23Z by "buildd" with gcc 13.3.0
+
+END.

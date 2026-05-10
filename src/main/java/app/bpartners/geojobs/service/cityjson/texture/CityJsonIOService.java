@@ -128,8 +128,7 @@ public class CityJsonIOService {
 
       String sourceCrsCode = CRS.toSRS(sourceCRS);
 
-      MathTransform transform =
-          coverage.getGridGeometry().getGridToCRS(PixelInCell.CELL_CORNER);
+      MathTransform transform = coverage.getGridGeometry().getGridToCRS(PixelInCell.CELL_CORNER);
 
       if (transform instanceof AffineTransform affine) {
 
@@ -139,23 +138,20 @@ public class CityJsonIOService {
         double sx = affine.getScaleX();
         double sy = affine.getScaleY();
 
-        Vector3D origin = rasterInfoProjector.project(
-            List.of(new Vector3D(gx, gy, 0)),
-            sourceCrsCode,
-            targetCrs
-        ).get(0);
+        Vector3D origin =
+            rasterInfoProjector
+                .project(List.of(new Vector3D(gx, gy, 0)), sourceCrsCode, targetCrs)
+                .get(0);
 
-        Vector3D stepX = rasterInfoProjector.project(
-            List.of(new Vector3D(gx + sx, gy, 0)),
-            sourceCrsCode,
-            targetCrs
-        ).get(0);
+        Vector3D stepX =
+            rasterInfoProjector
+                .project(List.of(new Vector3D(gx + sx, gy, 0)), sourceCrsCode, targetCrs)
+                .get(0);
 
-        Vector3D stepY = rasterInfoProjector.project(
-            List.of(new Vector3D(gx, gy + sy, 0)),
-            sourceCrsCode,
-            targetCrs
-        ).get(0);
+        Vector3D stepY =
+            rasterInfoProjector
+                .project(List.of(new Vector3D(gx, gy + sy, 0)), sourceCrsCode, targetCrs)
+                .get(0);
 
         originX = origin.getX();
         originY = origin.getY();
@@ -177,7 +173,6 @@ public class CityJsonIOService {
         0.0,
         image.getWidth(),
         image.getHeight(),
-        targetCrs
-    );
+        targetCrs);
   }
 }
