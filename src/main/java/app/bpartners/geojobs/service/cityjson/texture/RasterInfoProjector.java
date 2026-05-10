@@ -2,6 +2,7 @@ package app.bpartners.geojobs.service.cityjson.texture;
 
 import java.util.ArrayList;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.api.referencing.operation.MathTransform;
@@ -12,6 +13,7 @@ import org.locationtech.jts.math.Vector3D;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class RasterInfoProjector {
 
   @SneakyThrows

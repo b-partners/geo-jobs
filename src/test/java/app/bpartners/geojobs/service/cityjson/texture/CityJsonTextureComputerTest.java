@@ -24,7 +24,8 @@ class CityJsonTextureComputerTest {
   CityJsonTextureDomainService cityJsonTextureDomainService =
       new CityJsonTextureDomainService(cityJsonIOService, bucketComponent, rasterInfoProjector);
   CityJsonTextureComputer subject =
-      new CityJsonTextureComputer(cityJsonIOService, cityJsonTextureDomainService);
+      new CityJsonTextureComputer(
+          cityJsonIOService, cityJsonTextureDomainService, rasterInfoProjector);
 
   @Test
   void texturize_from_raster_info() throws IOException {
