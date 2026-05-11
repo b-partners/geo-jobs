@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service.cityjson.texture;
 
 import static app.bpartners.geojobs.file.FileWriter.createTempFile;
+import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.service.GeometrySquareMeterArea.LAMBERT_93;
 
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
@@ -9,7 +10,6 @@ import app.bpartners.geojobs.service.cityjson.texture.model.TextureInfo;
 import app.bpartners.geojobs.service.cityjson.texture.model.TexturedCityJson;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -26,7 +26,6 @@ import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.gce.geotiff.GeoTiffReader;
 import org.jetbrains.annotations.NotNull;
 import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.math.Vector3D;
 import org.springframework.stereotype.Component;
@@ -37,7 +36,6 @@ import org.springframework.stereotype.Component;
 public class CityJsonIOService {
   private final ObjectMapper objectMapper;
   private final GeometrySquareMeterArea geometrySquareMeterArea;
-  private final GeometryFactory geometryFactory = new GeometryFactory();
 
   public ObjectNode loadCityJson(File file) {
     try {
@@ -64,30 +62,6 @@ public class CityJsonIOService {
 
     } catch (IOException e) {
       throw new IllegalStateException("Failed to write JSON to file", e);
-    }
-  }
-
-  public File saveTexture(File tifFile) {
-    try {
-      BufferedImage image = ImageIO.read(tifFile);
-
-      if (image == null) {
-        throw new IllegalStateException("Could not read GeoTIFF image: " + tifFile);
-      }
-
-      BufferedImage rgbImage =
-          new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_RGB);
-
-      Graphics2D graphics = rgbImage.createGraphics();
-      graphics.drawImage(image, 0, 0, null);
-      graphics.dispose();
-
-      File pngFile = createTempFile("texture-", ".png");
-      ImageIO.write(rgbImage, "png", pngFile);
-
-      return pngFile;
-    } catch (IOException e) {
-      throw new IllegalStateException("Failed to save GeoTIFF image as PNG image", e);
     }
   }
 

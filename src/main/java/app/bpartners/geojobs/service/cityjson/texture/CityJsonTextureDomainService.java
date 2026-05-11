@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.cityjson.texture;
 
+import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.service.GeometrySquareMeterArea.LAMBERT_93;
 
 import app.bpartners.geojobs.model.lidar.planes.algorithm.Vector3DUtils;
@@ -22,9 +23,7 @@ import java.util.Locale;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
-import org.jetbrains.annotations.NotNull;
 import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.math.Vector3D;
 import org.springframework.stereotype.Component;
@@ -37,10 +36,8 @@ public class CityJsonTextureDomainService {
   public static final String DEFAULT_ATTRIBUTE_NAME = "default";
   public static final String TEXTURE_ATTRIBUTE_NAME = "texture";
   public static final String MATERIAL_ATTRIBUTE_NAME = "material";
-  private final ObjectMapper objectMapper = new ObjectMapper();
+  private final ObjectMapper objectMapper;
   private final GeometrySquareMeterArea geometrySquareMeterArea;
-  private final GeometryFactory geometryFactory =
-      app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 
   public CityJsonWithVertices toCityJsonFile(ObjectNode json) {
     ArrayNode rawVertices = (ArrayNode) json.get("vertices");
@@ -68,7 +65,7 @@ public class CityJsonTextureDomainService {
       translateZ = translate.get(2).asDouble();
     }
 
-    CoordinateReferenceSystem crs = getCRS(json);
+    CoordinateReferenceSystem crs = LAMBERT_93;
 
     List<Vector3D> vertices = new ArrayList<>();
 
@@ -81,11 +78,6 @@ public class CityJsonTextureDomainService {
     }
 
     return new CityJsonWithVertices(json, vertices, crs);
-  }
-
-  @NotNull
-  private static CoordinateReferenceSystem getCRS(ObjectNode json) {
-    return LAMBERT_93; // TODO: to be compute dynamically
   }
 
   public List<Vector3D> project(
@@ -157,8 +149,7 @@ public class CityJsonTextureDomainService {
       textureDataUri = imageDataUri;
     }
 
-    ObjectNode appearance = initAppearance(textureDataUri);
-    return appearance;
+    return initAppearance(textureDataUri);
   }
 
   private void texturizeGeometry(

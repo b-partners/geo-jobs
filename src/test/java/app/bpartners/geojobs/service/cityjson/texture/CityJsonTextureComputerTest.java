@@ -20,10 +20,11 @@ import org.springframework.core.io.ClassPathResource;
 class CityJsonTextureComputerTest {
 
   GeometrySquareMeterArea geometrySquareMeterArea = new GeometrySquareMeterArea();
+  ObjectMapper objectMapper = new ObjectMapper();
   CityJsonIOService cityJsonIOService =
       new CityJsonIOService(new ObjectMapper(), geometrySquareMeterArea);
   CityJsonTextureDomainService cityJsonTextureDomainService =
-      new CityJsonTextureDomainService(geometrySquareMeterArea);
+      new CityJsonTextureDomainService(objectMapper, geometrySquareMeterArea);
   CityJsonTextureComputer subject =
       new CityJsonTextureComputer(
           cityJsonIOService, cityJsonTextureDomainService, geometrySquareMeterArea);

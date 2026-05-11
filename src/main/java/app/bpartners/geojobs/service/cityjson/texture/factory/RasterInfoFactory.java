@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.cityjson.texture.factory;
 
+import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.service.GeometrySquareMeterArea.LAMBERT_93;
 import static app.bpartners.geojobs.service.GeometrySquareMeterArea.WGS84;
 
@@ -8,7 +9,6 @@ import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.cityjson.texture.model.RasterInfo;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 
 public class RasterInfoFactory {
@@ -16,9 +16,6 @@ public class RasterInfoFactory {
 
   public static RasterInfo create(
       GeometrySquareMeterArea geometrySquareMeter, CityJSONTexture texture) {
-
-    GeometryFactory geometryFactory =
-        app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 
     Point originGeometry =
         geometryFactory.createPoint(
