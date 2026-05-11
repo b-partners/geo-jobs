@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.endpoint.rest.controller.mapper.cityjson;
 
-import static app.bpartners.geojobs.endpoint.rest.model.DelimitationType.PARCEL_FREE_DELIMITATION;
+import static app.bpartners.geojobs.endpoint.rest.model.DelimitationType.USER_DEFINED_DELIMITATION;
 import static java.time.Instant.now;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
@@ -40,6 +40,7 @@ public class CityJSONRequestMapper {
             CityJSONDelimitationObjectTypeMapper.toRestDelimitationObjectType(
                 cityJSONRequest.getDelimitationObjectType()))
         .status(CityJSONRequestStatusMapper.toRest(cityJSONRequest.getStatus()))
+        .delimitationType(cityJSONRequest.getDelimitationType())
         .threeDTextureInfo(null)
         .cityJsons(restCityJsons);
   }
@@ -74,7 +75,7 @@ public class CityJSONRequestMapper {
         .delimitationObjectType(
             CityJSONDelimitationObjectTypeMapper.toRestDelimitationObjectType(
                 cityJSONRequest.getDelimitationObjectType()))
-        .delimitationType(PARCEL_FREE_DELIMITATION)
+        .delimitationType(cityJSONRequest.getDelimitationType())
         .cityJsonFileUrls(restCityJsons);
   }
 
@@ -122,6 +123,7 @@ public class CityJSONRequestMapper {
             .delimitationObjectType(
                 CityJSONDelimitationObjectTypeMapper.fromRestDelimitationObjectType(
                     createCityJSONRequest.getDelimitationObjectType()))
+            .delimitationType(USER_DEFINED_DELIMITATION)
             .build();
 
     return domain.toBuilder()
@@ -145,6 +147,7 @@ public class CityJSONRequestMapper {
         .delimitationObjectType(
             CityJSONDelimitationObjectTypeMapper.fromRestDelimitationObjectType(
                 createCityJSONRequest.getDelimitationObjectType()))
+        .delimitationType(createCityJSONRequest.getDelimitationType())
         .build();
   }
 }
