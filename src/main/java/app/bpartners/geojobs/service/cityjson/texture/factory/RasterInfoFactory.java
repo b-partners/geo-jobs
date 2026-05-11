@@ -17,31 +17,11 @@ public class RasterInfoFactory {
 
     Vector3D o = origin.get(0);
 
-    // 2. Compute pixel size in meters by sampling one pixel shift
-    List<Vector3D> stepX =
-        projector.project(
-            List.of(
-                new Vector3D(
-                    texture.getTopLeftLongitude() + 0.00001, texture.getTopLeftLatitude(), 0)),
-            "EPSG:4326",
-            "EPSG:2154");
-
-    List<Vector3D> stepY =
-        projector.project(
-            List.of(
-                new Vector3D(
-                    texture.getTopLeftLongitude(), texture.getTopLeftLatitude() - 0.00001, 0)),
-            "EPSG:4326",
-            "EPSG:2154");
-
-    double pixelWidthMeters = (stepX.get(0).getX() - o.getX()) / 0.00001;
-    double pixelHeightMeters = (stepY.get(0).getY() - o.getY()) / 0.00001;
-
     return new RasterInfo(
         o.getX(),
         o.getY(),
-        pixelWidthMeters,
-        pixelHeightMeters,
+        texture.getPixelWidth(),
+        texture.getPixelHeight(),
         texture.getShearX(),
         texture.getShearY(),
         texture.getImageWidth(),

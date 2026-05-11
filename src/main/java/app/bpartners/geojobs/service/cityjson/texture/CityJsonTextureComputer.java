@@ -40,16 +40,4 @@ public class CityJsonTextureComputer {
 
     return cityJsonIOService.toFile(texturedCityJson);
   }
-
-  public File textureCityJson(File cityJsonFile, File tifFile) {
-    // TODO: remove as it is not used
-    ObjectNode json = cityJsonIOService.loadCityJson(cityJsonFile);
-    CityJsonWithVertices cityJsonWithVertices = cityJsonTextureDomainService.toCityJsonFile(json);
-    TextureInfo textureInfo = cityJsonIOService.loadTexture(tifFile);
-
-    TexturedCityJson texturedCityJson =
-        cityJsonTextureDomainService.texture(cityJsonWithVertices, textureInfo);
-
-    return cityJsonIOService.toFile(texturedCityJson);
-  }
 }

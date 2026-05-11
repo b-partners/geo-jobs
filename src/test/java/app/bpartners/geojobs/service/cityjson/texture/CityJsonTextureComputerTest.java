@@ -16,6 +16,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import javax.imageio.ImageIO;
+
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
 
@@ -33,16 +35,52 @@ class CityJsonTextureComputerTest {
 
   @Test
   void texturize_from_cityjson_request() throws IOException {
-    /**
-     * 1. obtain lon/lat, pixel{width/height} from tifFile 2. create texture from obtained mesures
-     * (by putting the absolute path of outputs/roof%s/texture.png as imageUri) 3. create a minimal
-     * requestCityJson and put the texture in it 4. feeding subject.applyTexture(cityJSONRequest,
-     * cityJsonFile) 5. test that the `apperance` field from the resulting cityjson contains all the
-     * texture related attribute (texture, vertex-textures, materials, etc... see
-     * cityJsonTextureDomainService for references) 6. (Bonus) add a commented code to save and
-     * print path of the result cityjson into a file ()
-     */
-    int roofNumber = 5;
+    testRoof(2);
+    testRoof(4);
+    testRoof(5);
+  }
+
+  private void testRoof(int roofNumber) throws IOException {
+    Payload payload = getPayload(roofNumber);
+
+    var actual = subject.applyTexture(payload.cityJSONRequest(), payload.cityJsonFile());
+
+    assertNotNull(actual);
+
+    com.fasterxml.jackson.databind.node.ObjectNode resultJson =
+        cityJsonIOService.loadCityJson(actual);
+    assertNotNull(resultJson.get("appearance"));
+    com.fasterxml.jackson.databind.node.ObjectNode appearance =
+        (com.fasterxml.jackson.databind.node.ObjectNode) resultJson.get("appearance");
+    assertTrue(appearance.has("textures"));
+    assertTrue(appearance.has("materials"));
+    assertTrue(appearance.has("vertices-texture"));
+
+    assertEquals(
+        payload.imageFile().getAbsolutePath(), appearance.get("textures").get(0).get("image").asText());
+
+    com.fasterxml.jackson.databind.node.ObjectNode cityObjects =
+        (com.fasterxml.jackson.databind.node.ObjectNode) resultJson.get("CityObjects");
+    cityObjects
+        .fields()
+        .forEachRemaining(
+            entry -> {
+              com.fasterxml.jackson.databind.JsonNode cityObject = entry.getValue();
+              if ("Building".equals(cityObject.get("type").asText())) {
+                com.fasterxml.jackson.databind.node.ArrayNode geometries =
+                    (com.fasterxml.jackson.databind.node.ArrayNode) cityObject.get("geometry");
+                for (com.fasterxml.jackson.databind.JsonNode geometry : geometries) {
+                  assertTrue(geometry.has("appearance"));
+                  com.fasterxml.jackson.databind.JsonNode geomAppearance =
+                      geometry.get("appearance");
+                  assertTrue(geomAppearance.has("texture"));
+                  assertTrue(geomAppearance.has("material"));
+                }
+              }
+            });
+  }
+
+  private @NotNull Payload getPayload(int roofNumber) throws IOException {
     File cityJsonFile =
         new ClassPathResource(
                 String.format("cityjson/texture/inputs/roof%s/roof%s.json", roofNumber, roofNumber))
@@ -83,45 +121,10 @@ class CityJsonTextureComputerTest {
             .cityJsonRequest(cityJSONRequest)
             .build();
     cityJSONRequest.setTextures(List.of(texture));
-
-    var actual = subject.applyTexture(cityJSONRequest, cityJsonFile);
-
-    assertNotNull(actual);
-
-    com.fasterxml.jackson.databind.node.ObjectNode resultJson =
-        cityJsonIOService.loadCityJson(actual);
-    assertNotNull(resultJson.get("appearance"));
-    com.fasterxml.jackson.databind.node.ObjectNode appearance =
-        (com.fasterxml.jackson.databind.node.ObjectNode) resultJson.get("appearance");
-    assertTrue(appearance.has("textures"));
-    assertTrue(appearance.has("materials"));
-    assertTrue(appearance.has("vertices-texture"));
-
-    assertEquals(
-        imageFile.getAbsolutePath(), appearance.get("textures").get(0).get("image").asText());
-
-    com.fasterxml.jackson.databind.node.ObjectNode cityObjects =
-        (com.fasterxml.jackson.databind.node.ObjectNode) resultJson.get("CityObjects");
-    cityObjects
-        .fields()
-        .forEachRemaining(
-            entry -> {
-              com.fasterxml.jackson.databind.JsonNode cityObject = entry.getValue();
-              if ("Building".equals(cityObject.get("type").asText())) {
-                com.fasterxml.jackson.databind.node.ArrayNode geometries =
-                    (com.fasterxml.jackson.databind.node.ArrayNode) cityObject.get("geometry");
-                for (com.fasterxml.jackson.databind.JsonNode geometry : geometries) {
-                  assertTrue(geometry.has("appearance"));
-                  com.fasterxml.jackson.databind.JsonNode geomAppearance =
-                      geometry.get("appearance");
-                  assertTrue(geomAppearance.has("texture"));
-                  assertTrue(geomAppearance.has("material"));
-                }
-              }
-            });
-
-    // System.out.println("Resulting CityJSON: " + actual.getAbsolutePath());
+    return new Payload(cityJsonFile, cityJSONRequest, imageFile);
   }
+
+  private record Payload(File cityJsonFile, CityJSONRequest cityJSONRequest, File imageFile) {}
 
   @Test
   void texturize_from_raster_info() throws IOException {
@@ -143,53 +146,7 @@ class CityJsonTextureComputerTest {
   }
 
   @Test
-  void texturize() throws IOException {
-    int roofNumber = 4;
-    File cityJsonFile =
-        new ClassPathResource(
-                String.format("cityjson/texture/inputs/roof%s/roof%s.json", roofNumber, roofNumber))
-            .getFile();
-    File tifFile =
-        new ClassPathResource(
-                String.format("cityjson/texture/inputs/roof%s/roof%s.tif", roofNumber, roofNumber))
-            .getFile();
-
-    var actual = subject.textureCityJson(cityJsonFile, tifFile);
-    assertNotNull(actual);
-  }
-
-  @Test
-  void texturize_from_geotiff_writer() throws IOException {
-    CustomGeoTiffWriter geoTiffWriter = new CustomGeoTiffWriter();
-    int roofNumber = 5;
-    File cityJsonFile =
-        new ClassPathResource(
-                String.format("cityjson/texture/inputs/roof%s/roof%s.json", roofNumber, roofNumber))
-            .getFile();
-    File tifFile =
-        new ClassPathResource(
-                String.format("cityjson/texture/inputs/roof%s/roof%s.tif", roofNumber, roofNumber))
-            .getFile();
-    TextureInfo textureInfo = cityJsonIOService.loadTexture(tifFile);
-    double pixelWidth = textureInfo.rasterInfo().pixelWidth();
-    double pixelHeight = textureInfo.rasterInfo().pixelHeight();
-    double pixelSize = ((abs(pixelWidth) + abs(pixelHeight)) / 2);
-    double originX = textureInfo.rasterInfo().originX();
-    double originY = textureInfo.rasterInfo().originY();
-
-    File imageFile =
-        new ClassPathResource(
-                String.format("cityjson/texture/outputs/roof%s/texture.png", roofNumber))
-            .getFile();
-    BufferedImage image = ImageIO.read(imageFile);
-    File computedGeoTiffFile = geoTiffWriter.toGeoTiffFile(image, originX, originY, pixelSize);
-
-    var actual = subject.textureCityJson(cityJsonFile, computedGeoTiffFile);
-    assertNotNull(actual);
-  }
-
-  @Test
-  void verifyEdgeMapping() {
+  void uv_edge_mapping() {
     RasterInfo rasterInfo =
         new RasterInfo(
             100.0,
