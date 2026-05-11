@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.service.cityjson.texture;
 
-import static java.lang.Math.abs;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
@@ -8,15 +7,11 @@ import static org.mockito.Mockito.mock;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONTexture;
-import app.bpartners.geojobs.service.cityjson.io.CustomGeoTiffWriter;
 import app.bpartners.geojobs.service.cityjson.texture.model.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import javax.imageio.ImageIO;
-
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
@@ -57,7 +52,8 @@ class CityJsonTextureComputerTest {
     assertTrue(appearance.has("vertices-texture"));
 
     assertEquals(
-        payload.imageFile().getAbsolutePath(), appearance.get("textures").get(0).get("image").asText());
+        payload.imageFile().getAbsolutePath(),
+        appearance.get("textures").get(0).get("image").asText());
 
     com.fasterxml.jackson.databind.node.ObjectNode cityObjects =
         (com.fasterxml.jackson.databind.node.ObjectNode) resultJson.get("CityObjects");

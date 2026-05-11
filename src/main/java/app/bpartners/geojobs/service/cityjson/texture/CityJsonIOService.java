@@ -13,8 +13,6 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import javax.imageio.ImageIO;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +23,7 @@ import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.gce.geotiff.GeoTiffReader;
 import org.geotools.referencing.CRS;
+import org.jetbrains.annotations.NotNull;
 import org.locationtech.jts.math.Vector3D;
 import org.springframework.stereotype.Component;
 
@@ -63,15 +62,6 @@ public class CityJsonIOService {
     }
   }
 
-  public void save(TexturedCityJson texturedCityJson, Path outputPath) throws IOException {
-    if (outputPath.getParent() != null) {
-      Files.createDirectories(outputPath.getParent());
-    }
-    objectMapper
-        .writerWithDefaultPrettyPrinter()
-        .writeValue(outputPath.toFile(), texturedCityJson.json());
-  }
-
   public File saveTexture(File tifFile) {
     try {
       BufferedImage image = ImageIO.read(tifFile);
@@ -98,16 +88,7 @@ public class CityJsonIOService {
 
   public RasterInfo readRasterInfo(File tifFile) {
 
-    BufferedImage image;
-    try {
-      image = ImageIO.read(tifFile);
-    } catch (IOException e) {
-      throw new IllegalStateException("Failed to read GeoTIFF image", e);
-    }
-
-    if (image == null) {
-      throw new IllegalStateException("Could not read raster: " + tifFile.getAbsolutePath());
-    }
+    BufferedImage image = readImage(tifFile);
 
     String targetCrs = "EPSG:2154";
 
@@ -174,5 +155,20 @@ public class CityJsonIOService {
         image.getWidth(),
         image.getHeight(),
         targetCrs);
+  }
+
+  @NotNull
+  private static BufferedImage readImage(File tifFile) {
+    BufferedImage image;
+    try {
+      image = ImageIO.read(tifFile);
+    } catch (IOException e) {
+      throw new IllegalStateException("Failed to read GeoTIFF image", e);
+    }
+
+    if (image == null) {
+      throw new IllegalStateException("Could not read raster: " + tifFile.getAbsolutePath());
+    }
+    return image;
   }
 }

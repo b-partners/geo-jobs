@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.locationtech.jts.math.Vector3D;
 import org.springframework.stereotype.Component;
 
@@ -64,18 +65,7 @@ public class CityJsonTextureDomainService {
       translateZ = translate.get(2).asDouble();
     }
 
-    String crs = "EPSG:2154";
-    if (json.has("metadata")) {
-      JsonNode metadata = json.get("metadata");
-      if (metadata.has("referenceSystem")) {
-        String rs = metadata.get("referenceSystem").asText();
-        if (rs.startsWith("http://www.opengis.net/def/crs/EPSG/0/")) {
-          crs = "EPSG:" + rs.substring("http://www.opengis.net/def/crs/EPSG/0/".length());
-        } else {
-          crs = rs;
-        }
-      }
-    }
+    String crs = getCRS(json);
 
     List<Vector3D> vertices = new ArrayList<>();
 
@@ -90,6 +80,23 @@ public class CityJsonTextureDomainService {
     return new CityJsonWithVertices(json, vertices, crs);
   }
 
+  @NotNull
+  private static String getCRS(ObjectNode json) {
+    String crs = "EPSG:2154";
+    if (json.has("metadata")) {
+      JsonNode metadata = json.get("metadata");
+      if (metadata.has("referenceSystem")) {
+        String rs = metadata.get("referenceSystem").asText();
+        if (rs.startsWith("http://www.opengis.net/def/crs/EPSG/0/")) {
+          crs = "EPSG:" + rs.substring("http://www.opengis.net/def/crs/EPSG/0/".length());
+        } else {
+          crs = rs;
+        }
+      }
+    }
+    return crs;
+  }
+
   public TexturedCityJson texture(
       CityJsonWithVertices cityJsonWithVertices, TextureInfo textureInfo) {
     ObjectNode cityJson = cityJsonWithVertices.json().deepCopy();
@@ -99,17 +106,7 @@ public class CityJsonTextureDomainService {
     List<Vector3D> vertices =
         rasterInfoProjector.project(
             cityJsonWithVertices.vertices(), cityJsonWithVertices.crs(), rasterInfo.crs());
-    String imageDataUri = textureInfo.dataUri();
-    File textureFileTiff = textureInfo.tifFile();
-
-    String textureDataUri = null;
-    if (imageDataUri != null) {
-      textureDataUri = imageDataUri;
-    } else if (textureFileTiff != null) {
-      textureDataUri = uploadToS3(textureFileTiff);
-    }
-
-    ObjectNode appearance = initAppearance(textureDataUri);
+    ObjectNode appearance = initAppearance(textureInfo);
 
     List<UV> vertexTexture = new ArrayList<>();
     Map<String, Integer> vertexTextureMap = new HashMap<>();
@@ -127,29 +124,8 @@ public class CityJsonTextureDomainService {
       ArrayNode geometries = (ArrayNode) cityObject.get("geometry");
 
       for (JsonNode geometryNode : geometries) {
-        ObjectNode geometry = (ObjectNode) geometryNode;
-
-        ObjectNode geometryAppearance = initGeometryAppearance();
-        geometry.set("appearance", geometryAppearance);
-
-        List<JsonNode> faces = extractFaces(geometry);
-
-        ArrayNode surfaces = getSemanticSurfaces(geometry);
-        boolean hasSemantics = surfaces != null && surfaces.size() == faces.size();
-
-        List<String> surfaceTypes = resolveSurfaceTypes(surfaces, faces.size(), hasSemantics);
-
-        for (int i = 0; i < faces.size(); i++) {
-          processFace(
-              faces.get(i),
-              surfaceTypes.get(i),
-              hasSemantics,
-              vertices,
-              rasterInfo,
-              vertexTexture,
-              vertexTextureMap,
-              geometryAppearance);
-        }
+        texturizeGeometry(
+            (ObjectNode) geometryNode, vertices, rasterInfo, vertexTexture, vertexTextureMap);
       }
     }
 
@@ -166,6 +142,52 @@ public class CityJsonTextureDomainService {
     cityJson.set("appearance", appearance);
 
     return new TexturedCityJson(cityJson);
+  }
+
+  private ObjectNode initAppearance(TextureInfo textureInfo) {
+    String imageDataUri = textureInfo.dataUri();
+    File textureFileTiff = textureInfo.tifFile();
+
+    String textureDataUri = null;
+    if (imageDataUri != null) {
+      textureDataUri = imageDataUri;
+    } else if (textureFileTiff != null) {
+      textureDataUri = uploadToS3(textureFileTiff);
+    }
+
+    ObjectNode appearance = initAppearance(textureDataUri);
+    return appearance;
+  }
+
+  private void texturizeGeometry(
+      ObjectNode geometryNode,
+      List<Vector3D> vertices,
+      RasterInfo rasterInfo,
+      List<UV> vertexTexture,
+      Map<String, Integer> vertexTextureMap) {
+    ObjectNode geometry = geometryNode;
+
+    ObjectNode geometryAppearance = initGeometryAppearance();
+    geometry.set("appearance", geometryAppearance);
+
+    List<JsonNode> faces = extractFaces(geometry);
+
+    ArrayNode surfaces = getSemanticSurfaces(geometry);
+    boolean hasSemantics = surfaces != null && surfaces.size() == faces.size();
+
+    List<String> surfaceTypes = resolveSurfaceTypes(surfaces, faces.size(), hasSemantics);
+
+    for (int i = 0; i < faces.size(); i++) {
+      processFace(
+          faces.get(i),
+          surfaceTypes.get(i),
+          hasSemantics,
+          vertices,
+          rasterInfo,
+          vertexTexture,
+          vertexTextureMap,
+          geometryAppearance);
+    }
   }
 
   private String uploadToS3(File textureFileTiff) {
