@@ -2,9 +2,14 @@ package app.bpartners.geojobs.service.cityjson.model.object;
 
 import app.bpartners.geojobs.service.cityjson.model.object.io.CityJsonVisitor;
 import app.bpartners.geojobs.service.cityjson.model.object.io.SurfaceAnnotators;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
 import java.util.function.Consumer;
@@ -56,5 +61,102 @@ public class CityJsonIO {
     CityJsonVisitor.forEachSurface(actual, pipeline);
 
     return actual;
+  }
+
+  @SneakyThrows
+  public static File convertCityJsonSeqToCityJson(Path inputPath, Path outputPath) {
+    ObjectNode cityJson = null;
+    ArrayNode globalVertices = MAPPER.createArrayNode();
+    ObjectNode globalCityObjects = MAPPER.createObjectNode();
+
+    try (BufferedReader reader = Files.newBufferedReader(inputPath)) {
+      String line;
+      boolean firstLine = true;
+
+      while ((line = reader.readLine()) != null) {
+        line = line.trim();
+        if (line.isEmpty()) continue;
+
+        JsonNode node = MAPPER.readTree(line);
+
+        if (firstLine) {
+          // Première ligne : en-tête CityJSON (type, version, transform, metadata...)
+          cityJson = (ObjectNode) node;
+
+          // On récupère les sommets initiaux s'il y en a (généralement vide)
+          if (cityJson.has("vertices") && cityJson.get("vertices").isArray()) {
+            globalVertices.addAll((ArrayNode) cityJson.get("vertices"));
+          }
+          if (cityJson.has("CityObjects") && cityJson.get("CityObjects").isObject()) {
+            globalCityObjects.setAll((ObjectNode) cityJson.get("CityObjects"));
+          }
+          firstLine = false;
+        } else {
+          // Lignes suivantes : CityJSONFeature
+          int offset = globalVertices.size();
+
+          // Récupérer les sommets de la feature et les ajouter au tableau global
+          JsonNode featVertices = node.get("vertices");
+          if (featVertices != null && featVertices.isArray()) {
+            globalVertices.addAll((ArrayNode) featVertices);
+          }
+
+          // Récupérer les CityObjects, décaler leurs indices, et les ajouter
+          JsonNode featCityObjects = node.get("CityObjects");
+          if (featCityObjects != null && featCityObjects.isObject()) {
+            Iterator<Map.Entry<String, JsonNode>> fields = featCityObjects.fields();
+            while (fields.hasNext()) {
+              Map.Entry<String, JsonNode> entry = fields.next();
+              ObjectNode cityObject = (ObjectNode) entry.getValue();
+
+              // Décaler les indices dans chaque géométrie
+              JsonNode geometries = cityObject.get("geometry");
+              if (geometries != null && geometries.isArray()) {
+                for (JsonNode geom : geometries) {
+                  JsonNode boundaries = geom.get("boundaries");
+                  if (boundaries != null) {
+                    JsonNode shifted = shiftIndices(boundaries, offset);
+                    ((ObjectNode) geom).set("boundaries", shifted);
+                  }
+                }
+              }
+
+              globalCityObjects.set(entry.getKey(), cityObject);
+            }
+          }
+        }
+      }
+    }
+
+    if (cityJson == null) {
+      throw new IOException("Unable to read provided cityJSON file");
+    }
+
+    // Reconstruire le document final
+    cityJson.set("CityObjects", globalCityObjects);
+    cityJson.set("vertices", globalVertices);
+
+    // Écrire le résultat
+    try (var writer = Files.newBufferedWriter(outputPath)) {
+      MAPPER.writeValue(writer, cityJson);
+    }
+    return outputPath.toFile();
+  }
+
+  /**
+   * Décale récursivement tous les indices d'un tableau de boundaries. Les boundaries CityJSON sont
+   * des structures imbriquées d'entiers.
+   */
+  private static JsonNode shiftIndices(JsonNode node, int offset) {
+    if (node.isInt()) {
+      return MAPPER.getNodeFactory().numberNode(node.asInt() + offset);
+    } else if (node.isArray()) {
+      ArrayNode shifted = MAPPER.createArrayNode();
+      for (JsonNode child : node) {
+        shifted.add(shiftIndices(child, offset));
+      }
+      return shifted;
+    }
+    return node;
   }
 }

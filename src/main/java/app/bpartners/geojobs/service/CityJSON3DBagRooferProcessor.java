@@ -47,6 +47,7 @@ import org.springframework.stereotype.Service;
 public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, List<CityJSON>> {
   private static final String JSONL_EXTENSION = ".jsonl";
   private static final String GEOJSON_EXTENSION = ".geojson";
+  private static final String JSON_EXTENSION = ".json";
   private final BucketComponent bucketComponent;
   private final FeatureMapper featureMapper;
   private final LidarApiFacade lidarApiFacade;
@@ -76,8 +77,8 @@ public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, L
     return cityJsonGenerationResponses.stream()
         .map(
             cityJsonGenerationResponse -> {
-              String bucketFileKey = randomUUID() + JSONL_EXTENSION;
-              File cityJSONFileWithAdditionalProperties;
+              var bucketFileKey = randomUUID() + JSON_EXTENSION;
+              File cityJSONConvertedInJsonExtension;
               try {
                 URL rooferCityJsonURL;
                 rooferCityJsonURL = new URI(cityJsonGenerationResponse.getCityJsonUrl()).toURL();
@@ -88,18 +89,25 @@ public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, L
                       in, originalCityJSONFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                 }
 
-                cityJSONFileWithAdditionalProperties =
+                var cityJSONFileWithAdditionalProperties =
                     File.createTempFile(bucketFileKey, JSONL_EXTENSION);
 
                 var computedCityJSON = CityJsonIO.computeAdditionalProperties(originalCityJSONFile);
 
                 CityJsonIO.write(computedCityJSON, cityJSONFileWithAdditionalProperties.toPath());
+
+                var tmpFile = File.createTempFile(bucketFileKey, JSON_EXTENSION);
+
+                cityJSONConvertedInJsonExtension =
+                    CityJsonIO.convertCityJsonSeqToCityJson(
+                        cityJSONFileWithAdditionalProperties.toPath(), tmpFile.toPath());
+
               } catch (URISyntaxException | IOException e) {
                 throw new RuntimeException(e);
               }
 
               var texturedCityJSON =
-                  textureComputer.applyTexture(request, cityJSONFileWithAdditionalProperties);
+                  textureComputer.applyTexture(request, cityJSONConvertedInJsonExtension);
 
               bucketComponent.upload(texturedCityJSON, bucketFileKey);
 
