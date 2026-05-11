@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.service.cityjson.texture;
 
+import static app.bpartners.geojobs.service.GeometrySquareMeterArea.LAMBERT_93;
+import static app.bpartners.geojobs.service.GeometrySquareMeterArea.WGS84;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
@@ -7,6 +9,7 @@ import static org.mockito.Mockito.mock;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONTexture;
+import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.cityjson.texture.model.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
@@ -18,15 +21,15 @@ import org.springframework.core.io.ClassPathResource;
 
 class CityJsonTextureComputerTest {
 
+  GeometrySquareMeterArea geometrySquareMeterArea = new GeometrySquareMeterArea();
   CityJsonIOService cityJsonIOService =
-      new CityJsonIOService(new ObjectMapper(), new RasterInfoProjector());
+      new CityJsonIOService(new ObjectMapper(), geometrySquareMeterArea);
   BucketComponent bucketComponent = mock(BucketComponent.class);
-  RasterInfoProjector rasterInfoProjector = new RasterInfoProjector();
   CityJsonTextureDomainService cityJsonTextureDomainService =
-      new CityJsonTextureDomainService(cityJsonIOService, bucketComponent, rasterInfoProjector);
+      new CityJsonTextureDomainService(cityJsonIOService, bucketComponent, geometrySquareMeterArea);
   CityJsonTextureComputer subject =
       new CityJsonTextureComputer(
-          cityJsonIOService, cityJsonTextureDomainService, rasterInfoProjector);
+          cityJsonIOService, cityJsonTextureDomainService, geometrySquareMeterArea);
 
   @Test
   void texturize_from_cityjson_request() throws IOException {
@@ -92,10 +95,10 @@ class CityJsonTextureComputerTest {
     double originY = textureInfo.rasterInfo().originY();
 
     List<org.locationtech.jts.math.Vector3D> projectedOrigin =
-        rasterInfoProjector.project(
+        cityJsonTextureDomainService.project(
             List.of(new org.locationtech.jts.math.Vector3D(originX, originY, 0)),
-            "EPSG:2154",
-            "EPSG:4326");
+            LAMBERT_93,
+            WGS84);
     double lon = projectedOrigin.get(0).getX();
     double lat = projectedOrigin.get(0).getY();
 

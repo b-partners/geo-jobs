@@ -1,21 +1,31 @@
 package app.bpartners.geojobs.service.cityjson.texture.factory;
 
+import static app.bpartners.geojobs.service.GeometrySquareMeterArea.LAMBERT_93;
+import static app.bpartners.geojobs.service.GeometrySquareMeterArea.WGS84;
+
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONTexture;
-import app.bpartners.geojobs.service.cityjson.texture.RasterInfoProjector;
+import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.cityjson.texture.model.RasterInfo;
-import java.util.List;
-import org.locationtech.jts.math.Vector3D;
+import lombok.RequiredArgsConstructor;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
 
+@RequiredArgsConstructor
 public class RasterInfoFactory {
-  public static RasterInfo create(RasterInfoProjector projector, CityJSONTexture texture) {
-    // 1. Reproject origin (lon/lat → Lambert-93 meters)
-    List<Vector3D> origin =
-        projector.project(
-            List.of(new Vector3D(texture.getTopLeftLongitude(), texture.getTopLeftLatitude(), 0)),
-            "EPSG:4326",
-            "EPSG:2154");
+  public static RasterInfo create(
+      GeometrySquareMeterArea geometrySquareMeter, CityJSONTexture texture) {
 
-    Vector3D o = origin.get(0);
+    GeometryFactory geometryFactory = new GeometryFactory();
+
+    Point originGeometry =
+        geometryFactory.createPoint(
+            new Coordinate(texture.getTopLeftLongitude(), texture.getTopLeftLatitude()));
+
+    Geometry projected = geometrySquareMeter.project(originGeometry, WGS84, LAMBERT_93);
+
+    Coordinate o = projected.getCoordinate();
 
     return new RasterInfo(
         o.getX(),
@@ -26,6 +36,6 @@ public class RasterInfoFactory {
         texture.getShearY(),
         texture.getImageWidth(),
         texture.getImageHeight(),
-        "EPSG:2154");
+        LAMBERT_93.getName().getCode());
   }
 }

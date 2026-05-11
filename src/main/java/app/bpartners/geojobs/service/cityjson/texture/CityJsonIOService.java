@@ -2,6 +2,7 @@ package app.bpartners.geojobs.service.cityjson.texture;
 
 import static app.bpartners.geojobs.file.FileWriter.createTempFile;
 
+import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.cityjson.texture.model.RasterInfo;
 import app.bpartners.geojobs.service.cityjson.texture.model.TextureInfo;
 import app.bpartners.geojobs.service.cityjson.texture.model.TexturedCityJson;
@@ -17,6 +18,7 @@ import java.util.List;
 import javax.imageio.ImageIO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.geotools.api.referencing.FactoryException;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.api.referencing.datum.PixelInCell;
 import org.geotools.api.referencing.operation.MathTransform;
@@ -24,6 +26,9 @@ import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.gce.geotiff.GeoTiffReader;
 import org.geotools.referencing.CRS;
 import org.jetbrains.annotations.NotNull;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.math.Vector3D;
 import org.springframework.stereotype.Component;
 
@@ -32,7 +37,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CityJsonIOService {
   private final ObjectMapper objectMapper;
-  private final RasterInfoProjector rasterInfoProjector;
+  private final GeometrySquareMeterArea geometrySquareMeterArea;
+  private final GeometryFactory geometryFactory = new GeometryFactory();
 
   public ObjectNode loadCityJson(File file) {
     try {
@@ -120,19 +126,13 @@ public class CityJsonIOService {
         double sy = affine.getScaleY();
 
         Vector3D origin =
-            rasterInfoProjector
-                .project(List.of(new Vector3D(gx, gy, 0)), sourceCrsCode, targetCrs)
-                .get(0);
+            project(List.of(new Vector3D(gx, gy, 0)), sourceCrsCode, targetCrs).get(0);
 
         Vector3D stepX =
-            rasterInfoProjector
-                .project(List.of(new Vector3D(gx + sx, gy, 0)), sourceCrsCode, targetCrs)
-                .get(0);
+            project(List.of(new Vector3D(gx + sx, gy, 0)), sourceCrsCode, targetCrs).get(0);
 
         Vector3D stepY =
-            rasterInfoProjector
-                .project(List.of(new Vector3D(gx, gy + sy, 0)), sourceCrsCode, targetCrs)
-                .get(0);
+            project(List.of(new Vector3D(gx, gy + sy, 0)), sourceCrsCode, targetCrs).get(0);
 
         originX = origin.getX();
         originY = origin.getY();
@@ -155,6 +155,27 @@ public class CityJsonIOService {
         image.getWidth(),
         image.getHeight(),
         targetCrs);
+  }
+
+  public List<Vector3D> project(
+      List<Vector3D> vectors, String sourceCrsCode, String targetCrsCode) {
+    return vectors.stream()
+        .map(
+            v -> {
+              Point origin = geometryFactory.createPoint(new Coordinate(v.getX(), v.getY()));
+              Point projected = null;
+              try {
+                projected =
+                    (Point)
+                        geometrySquareMeterArea.project(
+                            origin, CRS.decode(sourceCrsCode, true), CRS.decode(targetCrsCode));
+              } catch (FactoryException e) {
+                throw new IllegalStateException("Failed to read CRS: " + e);
+              }
+              return new Vector3D(
+                  projected.getCoordinate().x, projected.getCoordinate().y, v.getZ());
+            })
+        .toList();
   }
 
   @NotNull

@@ -2,6 +2,7 @@ package app.bpartners.geojobs.service.cityjson.texture;
 
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.lidar.planes.algorithm.Vector3DUtils;
+import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.cityjson.texture.model.CityJsonWithVertices;
 import app.bpartners.geojobs.service.cityjson.texture.model.RasterInfo;
 import app.bpartners.geojobs.service.cityjson.texture.model.RowCol;
@@ -22,7 +23,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.referencing.CRS;
 import org.jetbrains.annotations.NotNull;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.math.Vector3D;
 import org.springframework.stereotype.Component;
 
@@ -37,7 +44,8 @@ public class CityJsonTextureDomainService {
   private final ObjectMapper objectMapper = new ObjectMapper();
   private final CityJsonIOService cityJsonIOService;
   private final BucketComponent bucketComponent;
-  private final RasterInfoProjector rasterInfoProjector;
+  private final GeometrySquareMeterArea geometrySquareMeterArea;
+  private final GeometryFactory geometryFactory = new GeometryFactory();
 
   public CityJsonWithVertices toCityJsonFile(ObjectNode json) {
     ArrayNode rawVertices = (ArrayNode) json.get("vertices");
@@ -97,51 +105,73 @@ public class CityJsonTextureDomainService {
     return crs;
   }
 
+  public List<Vector3D> project(
+      List<Vector3D> vectors,
+      CoordinateReferenceSystem sourceCrs,
+      CoordinateReferenceSystem targetCrs) {
+    return vectors.stream()
+        .map(
+            v -> {
+              Point origin = geometryFactory.createPoint(new Coordinate(v.getX(), v.getY()));
+              Point projected =
+                  (Point) geometrySquareMeterArea.project(origin, sourceCrs, targetCrs);
+              return new Vector3D(
+                  projected.getCoordinate().x, projected.getCoordinate().y, v.getZ());
+            })
+        .toList();
+  }
+
   public TexturedCityJson texture(
       CityJsonWithVertices cityJsonWithVertices, TextureInfo textureInfo) {
-    ObjectNode cityJson = cityJsonWithVertices.json().deepCopy();
+    try {
+      ObjectNode cityJson = cityJsonWithVertices.json().deepCopy();
 
-    RasterInfo rasterInfo = textureInfo.rasterInfo();
+      RasterInfo rasterInfo = textureInfo.rasterInfo();
 
-    List<Vector3D> vertices =
-        rasterInfoProjector.project(
-            cityJsonWithVertices.vertices(), cityJsonWithVertices.crs(), rasterInfo.crs());
-    ObjectNode appearance = initAppearance(textureInfo);
+      List<Vector3D> vertices =
+          project(
+              cityJsonWithVertices.vertices(),
+              CRS.decode(cityJsonWithVertices.crs(), true),
+              CRS.decode(rasterInfo.crs(), true));
+      ObjectNode appearance = initAppearance(textureInfo);
 
-    List<UV> vertexTexture = new ArrayList<>();
-    Map<String, Integer> vertexTextureMap = new HashMap<>();
+      List<UV> vertexTexture = new ArrayList<>();
+      Map<String, Integer> vertexTextureMap = new HashMap<>();
 
-    ObjectNode cityObjects = (ObjectNode) cityJson.get("CityObjects");
-    Iterator<JsonNode> objects = cityObjects.elements();
+      ObjectNode cityObjects = (ObjectNode) cityJson.get("CityObjects");
+      Iterator<JsonNode> objects = cityObjects.elements();
 
-    while (objects.hasNext()) {
-      ObjectNode cityObject = (ObjectNode) objects.next();
+      while (objects.hasNext()) {
+        ObjectNode cityObject = (ObjectNode) objects.next();
 
-      if (!"Building".equals(cityObject.get("type").asText())) {
-        continue;
+        if (!"Building".equals(cityObject.get("type").asText())) {
+          continue;
+        }
+
+        ArrayNode geometries = (ArrayNode) cityObject.get("geometry");
+
+        for (JsonNode geometryNode : geometries) {
+          texturizeGeometry(
+              (ObjectNode) geometryNode, vertices, rasterInfo, vertexTexture, vertexTextureMap);
+        }
       }
 
-      ArrayNode geometries = (ArrayNode) cityObject.get("geometry");
+      ArrayNode verticesTextureNode = objectMapper.createArrayNode();
 
-      for (JsonNode geometryNode : geometries) {
-        texturizeGeometry(
-            (ObjectNode) geometryNode, vertices, rasterInfo, vertexTexture, vertexTextureMap);
+      for (UV uv : vertexTexture) {
+        ArrayNode uvNode = objectMapper.createArrayNode();
+        uvNode.add(uv.u());
+        uvNode.add(uv.v());
+        verticesTextureNode.add(uvNode);
       }
+
+      appearance.set("vertices-texture", verticesTextureNode);
+      cityJson.set("appearance", appearance);
+
+      return new TexturedCityJson(cityJson);
+    } catch (FactoryException e) {
+      throw new IllegalStateException("Failed to project vertices", e);
     }
-
-    ArrayNode verticesTextureNode = objectMapper.createArrayNode();
-
-    for (UV uv : vertexTexture) {
-      ArrayNode uvNode = objectMapper.createArrayNode();
-      uvNode.add(uv.u());
-      uvNode.add(uv.v());
-      verticesTextureNode.add(uvNode);
-    }
-
-    appearance.set("vertices-texture", verticesTextureNode);
-    cityJson.set("appearance", appearance);
-
-    return new TexturedCityJson(cityJson);
   }
 
   private ObjectNode initAppearance(TextureInfo textureInfo) {

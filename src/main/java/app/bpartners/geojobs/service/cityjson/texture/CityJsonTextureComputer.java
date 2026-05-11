@@ -2,6 +2,7 @@ package app.bpartners.geojobs.service.cityjson.texture;
 
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONTexture;
+import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.cityjson.texture.factory.RasterInfoFactory;
 import app.bpartners.geojobs.service.cityjson.texture.model.CityJsonWithVertices;
 import app.bpartners.geojobs.service.cityjson.texture.model.RasterInfo;
@@ -18,13 +19,13 @@ import org.springframework.stereotype.Component;
 public class CityJsonTextureComputer {
   private final CityJsonIOService cityJsonIOService;
   private final CityJsonTextureDomainService cityJsonTextureDomainService;
-  private final RasterInfoProjector rasterInfoProjector;
+  private final GeometrySquareMeterArea geometrySquareMeterArea;
 
   @SneakyThrows
   public File applyTexture(CityJSONRequest request, File file) {
     if (request.getTextures() != null && !request.getTextures().isEmpty()) {
       CityJSONTexture texture = request.getTextures().getFirst();
-      RasterInfo rasterInfo = RasterInfoFactory.create(rasterInfoProjector, texture);
+      RasterInfo rasterInfo = RasterInfoFactory.create(geometrySquareMeterArea, texture);
       return textureCityJson(file, rasterInfo, texture.getImageUri());
     }
     return file;
