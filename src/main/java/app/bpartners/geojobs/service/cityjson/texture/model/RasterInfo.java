@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.service.cityjson.texture.model;
 
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+
 public record RasterInfo(
     double originX,
     double originY,
@@ -9,4 +11,4 @@ public record RasterInfo(
     double shearY,
     int width,
     int height,
-    String crs) {}
+    CoordinateReferenceSystem crs) {}

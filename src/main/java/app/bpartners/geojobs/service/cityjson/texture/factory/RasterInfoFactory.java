@@ -17,7 +17,8 @@ public class RasterInfoFactory {
   public static RasterInfo create(
       GeometrySquareMeterArea geometrySquareMeter, CityJSONTexture texture) {
 
-    GeometryFactory geometryFactory = new GeometryFactory();
+    GeometryFactory geometryFactory =
+        app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 
     Point originGeometry =
         geometryFactory.createPoint(
@@ -36,6 +37,6 @@ public class RasterInfoFactory {
         texture.getShearY(),
         texture.getImageWidth(),
         texture.getImageHeight(),
-        LAMBERT_93.getName().getCode());
+        LAMBERT_93);
   }
 }

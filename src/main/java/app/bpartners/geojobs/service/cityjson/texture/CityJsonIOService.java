@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service.cityjson.texture;
 
 import static app.bpartners.geojobs.file.FileWriter.createTempFile;
+import static app.bpartners.geojobs.service.GeometrySquareMeterArea.LAMBERT_93;
 
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.cityjson.texture.model.RasterInfo;
@@ -14,17 +15,16 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
 import javax.imageio.ImageIO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.geotools.api.referencing.FactoryException;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.api.referencing.datum.PixelInCell;
 import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.gce.geotiff.GeoTiffReader;
-import org.geotools.referencing.CRS;
 import org.jetbrains.annotations.NotNull;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -96,7 +96,7 @@ public class CityJsonIOService {
 
     BufferedImage image = readImage(tifFile);
 
-    String targetCrs = "EPSG:2154";
+    CoordinateReferenceSystem targetCrs = LAMBERT_93;
 
     double originX = 0;
     double originY = 0;
@@ -113,8 +113,6 @@ public class CityJsonIOService {
         throw new IllegalStateException("Missing CRS in GeoTIFF");
       }
 
-      String sourceCrsCode = CRS.toSRS(sourceCRS);
-
       MathTransform transform = coverage.getGridGeometry().getGridToCRS(PixelInCell.CELL_CORNER);
 
       if (transform instanceof AffineTransform affine) {
@@ -125,14 +123,13 @@ public class CityJsonIOService {
         double sx = affine.getScaleX();
         double sy = affine.getScaleY();
 
-        Vector3D origin =
-            project(List.of(new Vector3D(gx, gy, 0)), sourceCrsCode, targetCrs).get(0);
+        Vector3D origin = project(List.of(new Vector3D(gx, gy, 0)), sourceCRS, targetCrs).get(0);
 
         Vector3D stepX =
-            project(List.of(new Vector3D(gx + sx, gy, 0)), sourceCrsCode, targetCrs).get(0);
+            project(List.of(new Vector3D(gx + sx, gy, 0)), sourceCRS, targetCrs).get(0);
 
         Vector3D stepY =
-            project(List.of(new Vector3D(gx, gy + sy, 0)), sourceCrsCode, targetCrs).get(0);
+            project(List.of(new Vector3D(gx, gy + sy, 0)), sourceCRS, targetCrs).get(0);
 
         originX = origin.getX();
         originY = origin.getY();
@@ -158,20 +155,16 @@ public class CityJsonIOService {
   }
 
   public List<Vector3D> project(
-      List<Vector3D> vectors, String sourceCrsCode, String targetCrsCode) {
+      List<Vector3D> vectors,
+      CoordinateReferenceSystem sourceCrsCode,
+      CoordinateReferenceSystem targetCrsCode) {
     return vectors.stream()
         .map(
             v -> {
               Point origin = geometryFactory.createPoint(new Coordinate(v.getX(), v.getY()));
-              Point projected = null;
-              try {
-                projected =
-                    (Point)
-                        geometrySquareMeterArea.project(
-                            origin, CRS.decode(sourceCrsCode, true), CRS.decode(targetCrsCode));
-              } catch (FactoryException e) {
-                throw new IllegalStateException("Failed to read CRS: " + e);
-              }
+              Point projected =
+                  (Point) geometrySquareMeterArea.project(origin, sourceCrsCode, targetCrsCode);
+
               return new Vector3D(
                   projected.getCoordinate().x, projected.getCoordinate().y, v.getZ());
             })

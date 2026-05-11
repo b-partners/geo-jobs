@@ -11,7 +11,6 @@ import app.bpartners.geojobs.service.cityjson.texture.model.TexturedCityJson;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.File;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -21,7 +20,6 @@ public class CityJsonTextureComputer {
   private final CityJsonTextureDomainService cityJsonTextureDomainService;
   private final GeometrySquareMeterArea geometrySquareMeterArea;
 
-  @SneakyThrows
   public File applyTexture(CityJSONRequest request, File file) {
     if (request.getTextures() != null && !request.getTextures().isEmpty()) {
       CityJSONTexture texture = request.getTextures().getFirst();

@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.service.cityjson.texture;
 
+import static app.bpartners.geojobs.service.GeometrySquareMeterArea.LAMBERT_93;
+
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.lidar.planes.algorithm.Vector3DUtils;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
@@ -23,9 +25,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
-import org.geotools.api.referencing.FactoryException;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
-import org.geotools.referencing.CRS;
 import org.jetbrains.annotations.NotNull;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -45,7 +45,8 @@ public class CityJsonTextureDomainService {
   private final CityJsonIOService cityJsonIOService;
   private final BucketComponent bucketComponent;
   private final GeometrySquareMeterArea geometrySquareMeterArea;
-  private final GeometryFactory geometryFactory = new GeometryFactory();
+  private final GeometryFactory geometryFactory =
+      app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 
   public CityJsonWithVertices toCityJsonFile(ObjectNode json) {
     ArrayNode rawVertices = (ArrayNode) json.get("vertices");
@@ -73,7 +74,7 @@ public class CityJsonTextureDomainService {
       translateZ = translate.get(2).asDouble();
     }
 
-    String crs = getCRS(json);
+    CoordinateReferenceSystem crs = getCRS(json);
 
     List<Vector3D> vertices = new ArrayList<>();
 
@@ -89,20 +90,8 @@ public class CityJsonTextureDomainService {
   }
 
   @NotNull
-  private static String getCRS(ObjectNode json) {
-    String crs = "EPSG:2154";
-    if (json.has("metadata")) {
-      JsonNode metadata = json.get("metadata");
-      if (metadata.has("referenceSystem")) {
-        String rs = metadata.get("referenceSystem").asText();
-        if (rs.startsWith("http://www.opengis.net/def/crs/EPSG/0/")) {
-          crs = "EPSG:" + rs.substring("http://www.opengis.net/def/crs/EPSG/0/".length());
-        } else {
-          crs = rs;
-        }
-      }
-    }
-    return crs;
+  private static CoordinateReferenceSystem getCRS(ObjectNode json) {
+    return LAMBERT_93; // TODO: to be compute dynamically
   }
 
   public List<Vector3D> project(
@@ -123,55 +112,47 @@ public class CityJsonTextureDomainService {
 
   public TexturedCityJson texture(
       CityJsonWithVertices cityJsonWithVertices, TextureInfo textureInfo) {
-    try {
-      ObjectNode cityJson = cityJsonWithVertices.json().deepCopy();
+    ObjectNode cityJson = cityJsonWithVertices.json().deepCopy();
 
-      RasterInfo rasterInfo = textureInfo.rasterInfo();
+    RasterInfo rasterInfo = textureInfo.rasterInfo();
 
-      List<Vector3D> vertices =
-          project(
-              cityJsonWithVertices.vertices(),
-              CRS.decode(cityJsonWithVertices.crs(), true),
-              CRS.decode(rasterInfo.crs(), true));
-      ObjectNode appearance = initAppearance(textureInfo);
+    List<Vector3D> vertices = cityJsonWithVertices.vertices();
+    ObjectNode appearance = initAppearance(textureInfo);
 
-      List<UV> vertexTexture = new ArrayList<>();
-      Map<String, Integer> vertexTextureMap = new HashMap<>();
+    List<UV> vertexTexture = new ArrayList<>();
+    Map<String, Integer> vertexTextureMap = new HashMap<>();
 
-      ObjectNode cityObjects = (ObjectNode) cityJson.get("CityObjects");
-      Iterator<JsonNode> objects = cityObjects.elements();
+    ObjectNode cityObjects = (ObjectNode) cityJson.get("CityObjects");
+    Iterator<JsonNode> objects = cityObjects.elements();
 
-      while (objects.hasNext()) {
-        ObjectNode cityObject = (ObjectNode) objects.next();
+    while (objects.hasNext()) {
+      ObjectNode cityObject = (ObjectNode) objects.next();
 
-        if (!"Building".equals(cityObject.get("type").asText())) {
-          continue;
-        }
-
-        ArrayNode geometries = (ArrayNode) cityObject.get("geometry");
-
-        for (JsonNode geometryNode : geometries) {
-          texturizeGeometry(
-              (ObjectNode) geometryNode, vertices, rasterInfo, vertexTexture, vertexTextureMap);
-        }
+      if (!"Building".equals(cityObject.get("type").asText())) {
+        continue;
       }
 
-      ArrayNode verticesTextureNode = objectMapper.createArrayNode();
+      ArrayNode geometries = (ArrayNode) cityObject.get("geometry");
 
-      for (UV uv : vertexTexture) {
-        ArrayNode uvNode = objectMapper.createArrayNode();
-        uvNode.add(uv.u());
-        uvNode.add(uv.v());
-        verticesTextureNode.add(uvNode);
+      for (JsonNode geometryNode : geometries) {
+        texturizeGeometry(
+            (ObjectNode) geometryNode, vertices, rasterInfo, vertexTexture, vertexTextureMap);
       }
-
-      appearance.set("vertices-texture", verticesTextureNode);
-      cityJson.set("appearance", appearance);
-
-      return new TexturedCityJson(cityJson);
-    } catch (FactoryException e) {
-      throw new IllegalStateException("Failed to project vertices", e);
     }
+
+    ArrayNode verticesTextureNode = objectMapper.createArrayNode();
+
+    for (UV uv : vertexTexture) {
+      ArrayNode uvNode = objectMapper.createArrayNode();
+      uvNode.add(uv.u());
+      uvNode.add(uv.v());
+      verticesTextureNode.add(uvNode);
+    }
+
+    appearance.set("vertices-texture", verticesTextureNode);
+    cityJson.set("appearance", appearance);
+
+    return new TexturedCityJson(cityJson);
   }
 
   private ObjectNode initAppearance(TextureInfo textureInfo) {

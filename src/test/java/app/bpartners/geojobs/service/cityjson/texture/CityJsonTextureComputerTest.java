@@ -148,15 +148,11 @@ class CityJsonTextureComputerTest {
   void uv_edge_mapping() {
     RasterInfo rasterInfo =
         new RasterInfo(
-            100.0,
-            200.0, // origin
-            0.5,
-            -0.5, // pixel size
-            0.0,
-            0.0, // shear
-            100,
-            100, // width, height (so 50x50 area)
-            "EPSG:4326");
+            100.0, 200.0, // origin
+            0.5, -0.5, // pixel size
+            0.0, 0.0, // shear
+            100, 100, // width, height (so 50x50 area)
+            WGS84);
 
     // Top-left corner (origin)
     List<org.locationtech.jts.math.Vector3D> topLeft =
