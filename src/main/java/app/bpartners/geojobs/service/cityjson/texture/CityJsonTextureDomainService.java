@@ -2,7 +2,6 @@ package app.bpartners.geojobs.service.cityjson.texture;
 
 import static app.bpartners.geojobs.service.GeometrySquareMeterArea.LAMBERT_93;
 
-import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.lidar.planes.algorithm.Vector3DUtils;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.cityjson.texture.model.CityJsonWithVertices;
@@ -15,9 +14,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -42,8 +38,6 @@ public class CityJsonTextureDomainService {
   public static final String TEXTURE_ATTRIBUTE_NAME = "texture";
   public static final String MATERIAL_ATTRIBUTE_NAME = "material";
   private final ObjectMapper objectMapper = new ObjectMapper();
-  private final CityJsonIOService cityJsonIOService;
-  private final BucketComponent bucketComponent;
   private final GeometrySquareMeterArea geometrySquareMeterArea;
   private final GeometryFactory geometryFactory =
       app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
@@ -157,13 +151,10 @@ public class CityJsonTextureDomainService {
 
   private ObjectNode initAppearance(TextureInfo textureInfo) {
     String imageDataUri = textureInfo.dataUri();
-    File textureFileTiff = textureInfo.tifFile();
 
     String textureDataUri = null;
     if (imageDataUri != null) {
       textureDataUri = imageDataUri;
-    } else if (textureFileTiff != null) {
-      textureDataUri = uploadToS3(textureFileTiff);
     }
 
     ObjectNode appearance = initAppearance(textureDataUri);
@@ -199,20 +190,6 @@ public class CityJsonTextureDomainService {
           vertexTextureMap,
           geometryAppearance);
     }
-  }
-
-  private String uploadToS3(File textureFileTiff) {
-    String textureDataUri;
-    File textureFilePng = cityJsonIOService.saveTexture(textureFileTiff);
-    try {
-      String bucketKey = "3d/textures/" + java.util.UUID.randomUUID() + ".png";
-      bucketComponent.upload(textureFilePng, bucketKey);
-      textureDataUri = bucketComponent.presign(bucketKey);
-      Files.delete(textureFilePng.toPath());
-    } catch (IOException e) {
-      throw new IllegalStateException("Failed to upload texture to S3", e);
-    }
-    return textureDataUri;
   }
 
   public List<UV> computeUv(List<Vector3D> coords, RasterInfo rasterInfo) {

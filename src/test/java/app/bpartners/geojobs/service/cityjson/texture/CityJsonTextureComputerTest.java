@@ -4,9 +4,7 @@ import static app.bpartners.geojobs.service.GeometrySquareMeterArea.LAMBERT_93;
 import static app.bpartners.geojobs.service.GeometrySquareMeterArea.WGS84;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
 
-import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONTexture;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
@@ -24,9 +22,8 @@ class CityJsonTextureComputerTest {
   GeometrySquareMeterArea geometrySquareMeterArea = new GeometrySquareMeterArea();
   CityJsonIOService cityJsonIOService =
       new CityJsonIOService(new ObjectMapper(), geometrySquareMeterArea);
-  BucketComponent bucketComponent = mock(BucketComponent.class);
   CityJsonTextureDomainService cityJsonTextureDomainService =
-      new CityJsonTextureDomainService(cityJsonIOService, bucketComponent, geometrySquareMeterArea);
+      new CityJsonTextureDomainService(geometrySquareMeterArea);
   CityJsonTextureComputer subject =
       new CityJsonTextureComputer(
           cityJsonIOService, cityJsonTextureDomainService, geometrySquareMeterArea);
