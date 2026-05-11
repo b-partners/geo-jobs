@@ -6,14 +6,14 @@ import static app.bpartners.geojobs.service.GeometrySquareMeterArea.WGS84;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONTexture;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.cityjson.texture.model.RasterInfo;
-import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 
-@RequiredArgsConstructor
 public class RasterInfoFactory {
+  private RasterInfoFactory() {}
+
   public static RasterInfo create(
       GeometrySquareMeterArea geometrySquareMeter, CityJSONTexture texture) {
 
