@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.model.lidar.LidarProcessorType.THREE_D_BAG_ROOFER;
 import static app.bpartners.geojobs.model.lidar.planes.model.LasRoofDelimitationType.ROOF_SEGMENT_FACE_DELIMITATION;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStatus.*;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStep.*;
@@ -63,38 +62,7 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
             .findByIdAndCommunityOwnerId(created.getRequestId(), created.getCommunityOwnerId())
             .orElseThrow();
 
-    var lidarProcessorType = THREE_D_BAG_ROOFER;
-
-    if (THREE_D_BAG_ROOFER.equals(lidarProcessorType)) {
-      try {
-        var cityJsonFrom3dBag = cityJson3DBagRooferProcessor.apply(request);
-        succeedCityJsonRequest(request, cityJsonFrom3dBag);
-      } catch (Exception e) {
-        log.error(
-            "Unable to process Lidar for request {}, error {}", request.getId(), e.getMessage());
-        updateStatus(request, FAILED, GEOMETRY_CONSTRUCTION);
-      }
-      return;
-    }
-
-    try {
-      var requestDelimitations = request.getRequestDelimitations();
-      var pointsExtractionResult =
-          lasRoofsPointsExtractor.apply(getType(request), toGeometries(requestDelimitations));
-
-      if (isUnavailable(pointsExtractionResult)) {
-        updateStatus(request, UNAVAILABLE, POINTS_CLOUD_PRE_PROCESSING);
-        return;
-      }
-
-      var cityJson = toCityJSON(request, pointsExtractionResult);
-
-      succeedCityJsonRequest(request, List.of(cityJson));
-    } catch (Exception e) {
-      log.error(e.getMessage());
-      updateStatus(request, FAILED, GEOMETRY_CONSTRUCTION);
-      throw e;
-    }
+    processCityJSONFacade(request);
   }
 
   private void succeedCityJsonRequest(CityJSONRequest request, List<CityJSON> cityJsonList) {
@@ -145,5 +113,53 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
       case BUILDING_ROOF_SEGMENT_FACE -> ROOF_SEGMENT_FACE_DELIMITATION;
       case null, default -> LasRoofDelimitationType.ENTIRE_ROOF_DELIMITATION;
     };
+  }
+
+  private void processCityJSONFacade(CityJSONRequest request) {
+    var generationType = getType(request);
+    if (ROOF_SEGMENT_FACE_DELIMITATION.equals(generationType)) {
+      processByInternalMethod(request);
+      return;
+    }
+    processFullAutomaticFacade(request);
+  }
+
+  private void processByInternalMethod(CityJSONRequest request) {
+    try {
+      var requestDelimitations = request.getRequestDelimitations();
+      var pointsExtractionResult =
+          lasRoofsPointsExtractor.apply(getType(request), toGeometries(requestDelimitations));
+
+      if (isUnavailable(pointsExtractionResult)) {
+        updateStatus(request, UNAVAILABLE, POINTS_CLOUD_PRE_PROCESSING);
+        return;
+      }
+
+      var cityJson = toCityJSON(request, pointsExtractionResult);
+      succeedCityJsonRequest(request, List.of(cityJson));
+    } catch (Exception e) {
+      log.error(e.getMessage());
+      updateStatus(request, FAILED, GEOMETRY_CONSTRUCTION);
+      throw e;
+    }
+  }
+
+  private void processFullAutomaticFacade(CityJSONRequest request) {
+    switch (request.getLidarProcessorType()) {
+      case null -> processFullAutomaticBy3DBag(request);
+      case THREE_D_BAG_ROOFER -> processFullAutomaticBy3DBag(request);
+      default -> processByInternalMethod(request);
+    }
+  }
+
+  private void processFullAutomaticBy3DBag(CityJSONRequest request) {
+    try {
+      var cityJsonFrom3dBag = cityJson3DBagRooferProcessor.apply(request);
+      succeedCityJsonRequest(request, cityJsonFrom3dBag);
+    } catch (Exception e) {
+      log.error(
+          "Unable to process Lidar for request {}, error {}", request.getId(), e.getMessage());
+      updateStatus(request, FAILED, GEOMETRY_CONSTRUCTION);
+    }
   }
 }
