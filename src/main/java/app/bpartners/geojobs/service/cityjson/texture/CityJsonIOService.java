@@ -1,29 +1,33 @@
 package app.bpartners.geojobs.service.cityjson.texture;
 
 import static app.bpartners.geojobs.file.FileWriter.createTempFile;
+import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
+import static app.bpartners.geojobs.service.GeometrySquareMeterArea.LAMBERT_93;
 
+import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.cityjson.texture.model.RasterInfo;
 import app.bpartners.geojobs.service.cityjson.texture.model.TextureInfo;
 import app.bpartners.geojobs.service.cityjson.texture.model.TexturedCityJson;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.util.List;
 import javax.imageio.ImageIO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.gdal.gdal.Dataset;
-import org.gdal.gdal.gdal;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.api.referencing.datum.PixelInCell;
 import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.gce.geotiff.GeoTiffReader;
+import org.jetbrains.annotations.NotNull;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.math.Vector3D;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -31,6 +35,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CityJsonIOService {
   private final ObjectMapper objectMapper;
+  private final GeometrySquareMeterArea geometrySquareMeterArea;
 
   public ObjectNode loadCityJson(File file) {
     try {
@@ -60,40 +65,87 @@ public class CityJsonIOService {
     }
   }
 
-  public void save(TexturedCityJson texturedCityJson, Path outputPath) throws IOException {
-    if (outputPath.getParent() != null) {
-      Files.createDirectories(outputPath.getParent());
-    }
-    objectMapper
-        .writerWithDefaultPrettyPrinter()
-        .writeValue(outputPath.toFile(), texturedCityJson.json());
-  }
+  public RasterInfo readRasterInfo(File tifFile) {
 
-  public File saveTexture(File tifFile) {
+    BufferedImage image = readImage(tifFile);
+
+    CoordinateReferenceSystem targetCrs = LAMBERT_93;
+
+    double originX = 0;
+    double originY = 0;
+    double pixelWidth = 1;
+    double pixelHeight = 1;
+
     try {
-      BufferedImage image = ImageIO.read(tifFile);
+      GeoTiffReader reader = new GeoTiffReader(tifFile);
 
-      if (image == null) {
-        throw new IllegalStateException("Could not read GeoTIFF image: " + tifFile);
+      GridCoverage2D coverage = reader.read(null);
+
+      CoordinateReferenceSystem sourceCRS = coverage.getCoordinateReferenceSystem();
+      if (sourceCRS == null) {
+        throw new IllegalStateException("Missing CRS in GeoTIFF");
       }
 
-      BufferedImage rgbImage =
-          new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_RGB);
+      MathTransform transform = coverage.getGridGeometry().getGridToCRS(PixelInCell.CELL_CORNER);
 
-      Graphics2D graphics = rgbImage.createGraphics();
-      graphics.drawImage(image, 0, 0, null);
-      graphics.dispose();
+      if (transform instanceof AffineTransform affine) {
 
-      File pngFile = createTempFile("texture-", ".png");
-      ImageIO.write(rgbImage, "png", pngFile);
+        double gx = affine.getTranslateX();
+        double gy = affine.getTranslateY();
 
-      return pngFile;
-    } catch (IOException e) {
-      throw new IllegalStateException("Failed to save GeoTIFF image as PNG image", e);
+        double sx = affine.getScaleX();
+        double sy = affine.getScaleY();
+
+        Vector3D origin = project(List.of(new Vector3D(gx, gy, 0)), sourceCRS, targetCrs).get(0);
+
+        Vector3D stepX =
+            project(List.of(new Vector3D(gx + sx, gy, 0)), sourceCRS, targetCrs).get(0);
+
+        Vector3D stepY =
+            project(List.of(new Vector3D(gx, gy + sy, 0)), sourceCRS, targetCrs).get(0);
+
+        originX = origin.getX();
+        originY = origin.getY();
+
+        pixelWidth = stepX.getX() - originX;
+        pixelHeight = stepY.getY() - originY;
+      }
+
+    } catch (Exception e) {
+      throw new IllegalStateException("Failed to read GeoTIFF transform", e);
     }
+
+    return new RasterInfo(
+        originX,
+        originY,
+        pixelWidth,
+        pixelHeight,
+        0.0,
+        0.0,
+        image.getWidth(),
+        image.getHeight(),
+        targetCrs);
   }
 
-  public RasterInfo readRasterInfo(File tifFile) {
+  public List<Vector3D> project(
+      List<Vector3D> vectors,
+      CoordinateReferenceSystem sourceCrsCode,
+      CoordinateReferenceSystem targetCrsCode) {
+    return vectors.stream()
+        .map(
+            v -> {
+              Point origin = geometryFactory.createPoint(new Coordinate(v.getX(), v.getY()));
+              Point projected =
+                  (Point) geometrySquareMeterArea.project(origin, sourceCrsCode, targetCrsCode);
+
+              return new Vector3D(
+                  projected.getCoordinate().x, projected.getCoordinate().y, v.getZ());
+            })
+        .toList();
+  }
+
+  @NotNull
+  private static BufferedImage readImage(File tifFile) {
     BufferedImage image;
     try {
       image = ImageIO.read(tifFile);
@@ -102,61 +154,8 @@ public class CityJsonIOService {
     }
 
     if (image == null) {
-      throw new IllegalStateException(
-          "Could not read raster dimensions: " + tifFile.getAbsolutePath());
+      throw new IllegalStateException("Could not read raster: " + tifFile.getAbsolutePath());
     }
-
-    double originX = 0.0;
-    double originY = 0.0;
-    double pixelWidth = 1.0;
-    double pixelHeight = -1.0;
-
-    GeoTiffReader reader = null;
-    try {
-      reader = new GeoTiffReader(tifFile);
-      GridCoverage2D coverage = reader.read(null);
-      MathTransform transform = coverage.getGridGeometry().getGridToCRS(PixelInCell.CELL_CORNER);
-      if (transform instanceof AffineTransform affine) {
-        originX = affine.getTranslateX();
-        originY = affine.getTranslateY();
-        pixelWidth = affine.getScaleX();
-        pixelHeight = affine.getScaleY();
-      }
-    } catch (Exception e) {
-      // Ignore and fallback to gdalinfo
-    } finally {
-      if (reader != null) {
-        reader.dispose();
-      }
-    }
-
-    if (originX == 0.0 && originY == 0.0 && pixelWidth == 1.0) {
-      try {
-        gdal.AllRegister();
-
-        Dataset dataset = gdal.Open(tifFile.toString());
-
-        if (dataset != null) {
-          double[] geoTransform = dataset.GetGeoTransform();
-
-          if (geoTransform != null && geoTransform.length >= 6) {
-            originX = geoTransform[0];
-            pixelWidth = geoTransform[1];
-            originY = geoTransform[3];
-            pixelHeight = geoTransform[5];
-          }
-
-          dataset.delete();
-        }
-
-      } catch (Exception e) {
-        log.error(
-            "Warning: Could not read GeoTIFF transform using GDAL Java bindings: "
-                + e.getMessage());
-      }
-    }
-
-    return new RasterInfo(
-        originX, originY, pixelWidth, pixelHeight, 0.0, 0.0, image.getWidth(), image.getHeight());
+    return image;
   }
 }

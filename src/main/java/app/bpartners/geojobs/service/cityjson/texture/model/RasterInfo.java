@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.service.cityjson.texture.model;
 
-import app.bpartners.geojobs.repository.model.cityjson.CityJSONTexture;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 
 public record RasterInfo(
     double originX,
@@ -10,16 +10,5 @@ public record RasterInfo(
     double shearX,
     double shearY,
     int width,
-    int height) {
-  public static RasterInfo of(CityJSONTexture texture) {
-    return new RasterInfo(
-        texture.getTopLeftLongitude(),
-        texture.getTopLeftLatitude(),
-        texture.getPixelWidth(),
-        texture.getPixelHeight(),
-        texture.getShearX(),
-        texture.getShearY(),
-        texture.getImageWidth(),
-        texture.getImageHeight());
-  }
-}
+    int height,
+    CoordinateReferenceSystem crs) {}

@@ -1,29 +1,127 @@
 package app.bpartners.geojobs.service.cityjson.texture;
 
-import static java.lang.Math.abs;
+import static app.bpartners.geojobs.service.GeometrySquareMeterArea.LAMBERT_93;
+import static app.bpartners.geojobs.service.GeometrySquareMeterArea.WGS84;
+import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
 
-import app.bpartners.geojobs.file.bucket.BucketComponent;
-import app.bpartners.geojobs.service.cityjson.io.CustomGeoTiffWriter;
+import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
+import app.bpartners.geojobs.repository.model.cityjson.CityJSONTexture;
+import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.cityjson.texture.model.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import javax.imageio.ImageIO;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
 
 class CityJsonTextureComputerTest {
 
-  CityJsonIOService cityJsonIOService = new CityJsonIOService(new ObjectMapper());
-  BucketComponent bucketComponent = mock(BucketComponent.class);
+  GeometrySquareMeterArea geometrySquareMeterArea = new GeometrySquareMeterArea();
+  ObjectMapper objectMapper = new ObjectMapper();
+  CityJsonIOService cityJsonIOService =
+      new CityJsonIOService(new ObjectMapper(), geometrySquareMeterArea);
   CityJsonTextureDomainService cityJsonTextureDomainService =
-      new CityJsonTextureDomainService(cityJsonIOService, bucketComponent);
+      new CityJsonTextureDomainService(objectMapper, geometrySquareMeterArea);
   CityJsonTextureComputer subject =
-      new CityJsonTextureComputer(cityJsonIOService, cityJsonTextureDomainService);
+      new CityJsonTextureComputer(
+          cityJsonIOService, cityJsonTextureDomainService, geometrySquareMeterArea);
+
+  @Test
+  void texturize_from_cityjson_request() throws IOException {
+    testRoof(2);
+    testRoof(4);
+    testRoof(5);
+  }
+
+  private void testRoof(int roofNumber) throws IOException {
+    Payload payload = getPayload(roofNumber);
+
+    var actual = subject.applyTexture(payload.cityJSONRequest(), payload.cityJsonFile());
+
+    assertNotNull(actual);
+
+    com.fasterxml.jackson.databind.node.ObjectNode resultJson =
+        cityJsonIOService.loadCityJson(actual);
+    assertNotNull(resultJson.get("appearance"));
+    com.fasterxml.jackson.databind.node.ObjectNode appearance =
+        (com.fasterxml.jackson.databind.node.ObjectNode) resultJson.get("appearance");
+    assertTrue(appearance.has("textures"));
+    assertTrue(appearance.has("materials"));
+    assertTrue(appearance.has("vertices-texture"));
+
+    assertEquals(
+        payload.imageFile().getAbsolutePath(),
+        appearance.get("textures").get(0).get("image").asText());
+
+    com.fasterxml.jackson.databind.node.ObjectNode cityObjects =
+        (com.fasterxml.jackson.databind.node.ObjectNode) resultJson.get("CityObjects");
+    cityObjects
+        .fields()
+        .forEachRemaining(
+            entry -> {
+              com.fasterxml.jackson.databind.JsonNode cityObject = entry.getValue();
+              if ("Building".equals(cityObject.get("type").asText())) {
+                com.fasterxml.jackson.databind.node.ArrayNode geometries =
+                    (com.fasterxml.jackson.databind.node.ArrayNode) cityObject.get("geometry");
+                for (com.fasterxml.jackson.databind.JsonNode geometry : geometries) {
+                  assertTrue(geometry.has("appearance"));
+                  com.fasterxml.jackson.databind.JsonNode geomAppearance =
+                      geometry.get("appearance");
+                  assertTrue(geomAppearance.has("texture"));
+                  assertTrue(geomAppearance.has("material"));
+                }
+              }
+            });
+  }
+
+  private @NotNull Payload getPayload(int roofNumber) throws IOException {
+    File cityJsonFile =
+        new ClassPathResource(
+                String.format("cityjson/texture/inputs/roof%s/roof%s.json", roofNumber, roofNumber))
+            .getFile();
+    File tifFile =
+        new ClassPathResource(
+                String.format("cityjson/texture/inputs/roof%s/roof%s.tif", roofNumber, roofNumber))
+            .getFile();
+    TextureInfo textureInfo = cityJsonIOService.loadTexture(tifFile);
+    double pixelWidth = textureInfo.rasterInfo().pixelWidth();
+    double pixelHeight = textureInfo.rasterInfo().pixelHeight();
+    double originX = textureInfo.rasterInfo().originX();
+    double originY = textureInfo.rasterInfo().originY();
+
+    List<org.locationtech.jts.math.Vector3D> projectedOrigin =
+        cityJsonTextureDomainService.project(
+            List.of(new org.locationtech.jts.math.Vector3D(originX, originY, 0)),
+            LAMBERT_93,
+            WGS84);
+    double lon = projectedOrigin.get(0).getX();
+    double lat = projectedOrigin.get(0).getY();
+
+    CityJSONRequest cityJSONRequest = CityJSONRequest.builder().id(randomUUID().toString()).build();
+    File imageFile =
+        new ClassPathResource(
+                String.format("cityjson/texture/outputs/roof%s/texture.png", roofNumber))
+            .getFile();
+    CityJSONTexture texture =
+        CityJSONTexture.builder()
+            .id(randomUUID().toString())
+            .imageUri(imageFile.getAbsolutePath())
+            .topLeftLongitude(lon)
+            .topLeftLatitude(lat)
+            .pixelWidth(pixelWidth)
+            .pixelHeight(pixelHeight)
+            .imageWidth(textureInfo.rasterInfo().width())
+            .imageHeight(textureInfo.rasterInfo().height())
+            .cityJsonRequest(cityJSONRequest)
+            .build();
+    cityJSONRequest.setTextures(List.of(texture));
+    return new Payload(cityJsonFile, cityJSONRequest, imageFile);
+  }
+
+  private record Payload(File cityJsonFile, CityJSONRequest cityJSONRequest, File imageFile) {}
 
   @Test
   void texturize_from_raster_info() throws IOException {
@@ -45,64 +143,14 @@ class CityJsonTextureComputerTest {
   }
 
   @Test
-  void texturize() throws IOException {
-    int roofNumber = 4;
-    File cityJsonFile =
-        new ClassPathResource(
-                String.format("cityjson/texture/inputs/roof%s/roof%s.json", roofNumber, roofNumber))
-            .getFile();
-    File tifFile =
-        new ClassPathResource(
-                String.format("cityjson/texture/inputs/roof%s/roof%s.tif", roofNumber, roofNumber))
-            .getFile();
-
-    var actual = subject.textureCityJson(cityJsonFile, tifFile);
-    assertNotNull(actual);
-  }
-
-  @Test
-  void texturize_from_geotiff_writer() throws IOException {
-    CustomGeoTiffWriter geoTiffWriter = new CustomGeoTiffWriter();
-    int roofNumber = 5;
-    File cityJsonFile =
-        new ClassPathResource(
-                String.format("cityjson/texture/inputs/roof%s/roof%s.json", roofNumber, roofNumber))
-            .getFile();
-    File tifFile =
-        new ClassPathResource(
-                String.format("cityjson/texture/inputs/roof%s/roof%s.tif", roofNumber, roofNumber))
-            .getFile();
-    TextureInfo textureInfo = cityJsonIOService.loadTexture(tifFile);
-    double pixelWidth = textureInfo.rasterInfo().pixelWidth();
-    double pixelHeight = textureInfo.rasterInfo().pixelHeight();
-    double pixelSize = ((abs(pixelWidth) + abs(pixelHeight)) / 2);
-    double originX = textureInfo.rasterInfo().originX();
-    double originY = textureInfo.rasterInfo().originY();
-
-    File imageFile =
-        new ClassPathResource(
-                String.format("cityjson/texture/outputs/roof%s/texture.png", roofNumber))
-            .getFile();
-    BufferedImage image = ImageIO.read(imageFile);
-    File computedGeoTiffFile = geoTiffWriter.toGeoTiffFile(image, originX, originY, pixelSize);
-
-    var actual = subject.textureCityJson(cityJsonFile, computedGeoTiffFile);
-    assertNotNull(actual);
-  }
-
-  @Test
-  void verifyEdgeMapping() {
+  void uv_edge_mapping() {
     RasterInfo rasterInfo =
         new RasterInfo(
-            100.0,
-            200.0, // origin
-            0.5,
-            -0.5, // pixel size
-            0.0,
-            0.0, // shear
-            100,
-            100 // width, height (so 50x50 area)
-            );
+            100.0, 200.0, // origin
+            0.5, -0.5, // pixel size
+            0.0, 0.0, // shear
+            100, 100, // width, height (so 50x50 area)
+            WGS84);
 
     // Top-left corner (origin)
     List<org.locationtech.jts.math.Vector3D> topLeft =
