@@ -85,6 +85,7 @@ class CityJSON3DBagRooferProcessorTest {
         .thenReturn(new ClassPathResource("/cityjson/dummy.jsonl").getInputStream());
     when(cityJSONRequestMock.getRequestDelimitations())
         .thenReturn(List.of(toDomainFeature(delimitationFeature)));
+    when(cityJSONRequestMock.getComplexityFactor()).thenReturn(null);
     when(geoJsonBuildingPresignedURLMock.toString()).thenReturn(geoJsonUrl);
     when(bucketComponentMock.upload(any(), any())).thenReturn(mock());
     when(bucketComponentMock.presign(any(), any())).thenReturn(geoJsonBuildingPresignedURLMock);
@@ -96,7 +97,8 @@ class CityJSON3DBagRooferProcessorTest {
             CityJsonGenerationRequest.builder()
                 .geoJsonBuildingPresignedUrl(geoJsonUrl)
                 .lidarPresignedUrls(List.of(lidarUrl))
-                .build()))
+                .build(),
+            null))
         .thenReturn(cityJsonGenerationResponseMock);
     MockedConstruction<URI> mockedUri =
         Mockito.mockConstruction(

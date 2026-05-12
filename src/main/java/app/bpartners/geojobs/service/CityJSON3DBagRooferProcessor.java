@@ -70,7 +70,8 @@ public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, L
                       CityJsonGenerationRequest.builder()
                           .geoJsonBuildingPresignedUrl(geoJsonBuildingPresignedUrl)
                           .lidarPresignedUrls(entry.getValue().stream().toList())
-                          .build());
+                          .build(),
+                      request.getComplexityFactor());
                 })
             .toList();
 

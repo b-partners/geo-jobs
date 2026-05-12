@@ -7,6 +7,7 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSON;
+import java.math.BigDecimal;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -76,6 +77,10 @@ public class CityJSONRequestMapper {
             CityJSONDelimitationObjectTypeMapper.toRestDelimitationObjectType(
                 cityJSONRequest.getDelimitationObjectType()))
         .delimitationType(cityJSONRequest.getDelimitationType())
+        .complexityFactor(
+            cityJSONRequest.getComplexityFactor() == null
+                ? null
+                : BigDecimal.valueOf(cityJSONRequest.getComplexityFactor()))
         .cityJsonFileUrls(restCityJsons);
   }
 
@@ -148,6 +153,10 @@ public class CityJSONRequestMapper {
             CityJSONDelimitationObjectTypeMapper.fromRestDelimitationObjectType(
                 createCityJSONRequest.getDelimitationObjectType()))
         .delimitationType(createCityJSONRequest.getDelimitationType())
+        .complexityFactor(
+            createCityJSONRequest.getComplexityFactor() == null
+                ? null
+                : createCityJSONRequest.getComplexityFactor().floatValue())
         .build();
   }
 }

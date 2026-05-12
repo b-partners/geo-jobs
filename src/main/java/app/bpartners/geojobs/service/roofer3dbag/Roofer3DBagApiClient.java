@@ -65,7 +65,7 @@ public class Roofer3DBagApiClient {
    * @return réponse contenant l'URL pré-signée et sa date d'expiration
    * @throws RooferApiException en cas d'erreur HTTP ou réseau
    */
-  private CityJsonGenerationResponse generateCityJson(
+  private CityJsonGenerationResponse generate(
       CityJsonGenerationRequest request, Float complexityFactor) {
     URI uri = buildGenerateUri(complexityFactor);
 
@@ -88,8 +88,10 @@ public class Roofer3DBagApiClient {
     }
   }
 
-  public CityJsonGenerationResponse generateCityJson(CityJsonGenerationRequest request) {
-    return generateCityJson(request, complexityFactor);
+  public CityJsonGenerationResponse generateCityJson(
+      CityJsonGenerationRequest request, Float customComplexityFactor) {
+    return generate(
+        request, customComplexityFactor == null ? complexityFactor : customComplexityFactor);
   }
 
   @SneakyThrows

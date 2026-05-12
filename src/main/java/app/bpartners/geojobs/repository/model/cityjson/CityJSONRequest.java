@@ -67,6 +67,8 @@ public class CityJSONRequest implements Serializable {
   @OneToMany(mappedBy = "cityJsonRequest", cascade = CascadeType.ALL, fetch = EAGER)
   private List<CityJSONTexture> textures;
 
+  private Float complexityFactor;
+
   @PrePersist
   protected void onCreate() {
     this.creationDatetime = now().truncatedTo(ChronoUnit.MICROS);
