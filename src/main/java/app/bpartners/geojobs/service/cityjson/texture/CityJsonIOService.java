@@ -15,6 +15,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
 import javax.imageio.ImageIO;
 import lombok.RequiredArgsConstructor;
@@ -52,7 +53,7 @@ public class CityJsonIOService {
 
   public File toFile(TexturedCityJson texturedCityJson) {
     try {
-      File file = createTempFile("textured-cityjson-", ".json");
+      File file = Files.createTempFile("textured-cityjson-", ".json").toFile();
 
       try (FileWriter writer = new FileWriter(file)) {
         writer.write(texturedCityJson.json().toString());

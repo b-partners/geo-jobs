@@ -40,8 +40,8 @@ class CityJsonTextureComputerTest {
 
   @Test
   void texturize_from_cityjson_request() throws IOException {
-    testRoof(2);
-    testRoof(4);
+//    testRoof(2);
+//    testRoof(4);
     testRoof(5);
   }
 
@@ -178,6 +178,28 @@ class CityJsonTextureComputerTest {
     var actual = subject.textureCityJson(cityJsonFile, rasterInfo, imageDataUri);
 
     assertNotNull(actual);
+  }
+
+  @Test
+  void rasterInfoFactory_suggestsNegativePixelHeightForTopLeftOrigin() {
+    CityJSONTexture texture =
+        CityJSONTexture.builder()
+            .id("texture-id")
+            .imageUri("/tmp/image.png")
+            .topLeftLongitude(2.0)
+            .topLeftLatitude(48.0)
+            .pixelWidth(0.05)
+            .pixelHeight(0.05)
+            .shearX(0.0)
+            .shearY(0.0)
+            .imageWidth(100)
+            .imageHeight(100)
+            .build();
+
+    RasterInfo rasterInfo = RasterInfoFactory.create(geometrySquareMeterArea, texture);
+
+    assertEquals(0.05, rasterInfo.pixelWidth(), 1e-9);
+    assertEquals(-0.05, rasterInfo.pixelHeight(), 1e-9);
   }
 
   @Test

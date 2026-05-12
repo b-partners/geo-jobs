@@ -25,11 +25,17 @@ public class RasterInfoFactory {
 
     Coordinate o = projected.getCoordinate();
 
+    double pixelHeight = texture.getPixelHeight();
+    if (pixelHeight > 0) {
+      // Top-left image origin uses a downward Y axis in raster space.
+      pixelHeight = -pixelHeight;
+    }
+
     return new RasterInfo(
         o.getX(),
         o.getY(),
         texture.getPixelWidth(),
-        texture.getPixelHeight(),
+        pixelHeight,
         texture.getShearX(),
         texture.getShearY(),
         texture.getImageWidth(),
