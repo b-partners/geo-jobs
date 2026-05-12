@@ -16,7 +16,7 @@ import app.bpartners.geojobs.model.geometry.RoofDetails;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.service.PolygonInsideCircleDistanceComputer;
-import app.bpartners.geojobs.service.gouv.fr.rnb.BuildingApi;
+import app.bpartners.geojobs.service.gouv.fr.rnb.RnbBuildingFinder;
 import app.bpartners.geojobs.service.gouv.fr.rnb.component.Building;
 import app.bpartners.geojobs.service.ign.IgnCadastreFeatureFetcher;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,12 +41,12 @@ public class GeometryConverter {
   private final GeometryFactory geometryFactory = new GeometryFactory();
   private final PolygonInsideCircleDistanceComputer circleDistanceComputer =
       new PolygonInsideCircleDistanceComputer();
-  private final BuildingApi buildingApi;
+  private final RnbBuildingFinder rnbBuildingFinder;
   private final IgnCadastreFeatureFetcher ignCadastreFeatureFetcher;
 
   public GeometryConverter(
-      BuildingApi buildingApi, IgnCadastreFeatureFetcher ignCadastreFeatureFetcher) {
-    this.buildingApi = buildingApi;
+      RnbBuildingFinder rnbBuildingFinder, IgnCadastreFeatureFetcher ignCadastreFeatureFetcher) {
+    this.rnbBuildingFinder = rnbBuildingFinder;
     this.ignCadastreFeatureFetcher = ignCadastreFeatureFetcher;
   }
 
@@ -109,7 +109,7 @@ public class GeometryConverter {
 
   public MultiPolygon retrieveNearestRoofMultiPolygon(
       app.bpartners.geojobs.endpoint.rest.model.Point point) {
-    if (buildingApi == null || point == null) {
+    if (rnbBuildingFinder == null || point == null) {
       return null;
     }
     return retrieveNearestRoofMultiPolygon(point.getCoordinates());
@@ -138,15 +138,15 @@ public class GeometryConverter {
 
   private List<RoofDetails> getBuildingsFromCentroid(
       double longitude, double latitude, int radius, MultiPolygon provided) {
-    var buildingClosest = buildingApi.getBuildingClosest(latitude, longitude, radius);
+    var buildingClosest = rnbBuildingFinder.getBuildingClosest(latitude, longitude, radius);
     var buildingIdentifiers =
         new ArrayList<>(buildingClosest.results().stream().map(Building::rnbId).toList());
     while (buildingClosest.nextUrl() != null) {
-      buildingClosest = buildingApi.getBuildingByNextUrl(buildingClosest.nextUrl());
+      buildingClosest = rnbBuildingFinder.getBuildingByNextUrl(buildingClosest.nextUrl());
       buildingIdentifiers.addAll(buildingClosest.results().stream().map(Building::rnbId).toList());
     }
     return buildingIdentifiers.stream()
-        .map(buildingApi::getBuildingByRnbId)
+        .map(rnbBuildingFinder::getBuildingByRnbId)
         .map(
             building -> {
               var buildingAddresses =
@@ -210,7 +210,7 @@ public class GeometryConverter {
     var longitude = coordinates.getFirst();
     var latitude = coordinates.getLast();
     var nearestBuilding =
-        buildingApi.getNearestBuildingAt(
+        rnbBuildingFinder.getNearestBuildingAt(
             longitude.doubleValue(), latitude.doubleValue(), DEFAULT_POLYGON_SIZE_IN_METERS);
     var multiPolygonCoordinates = nearestBuilding.shape().getMultiPolygonCoordinates();
     return apply(multiPolygonCoordinates);

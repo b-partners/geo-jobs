@@ -38,7 +38,7 @@ import app.bpartners.geojobs.service.event.ZipGeoJsonAssembler;
 import app.bpartners.geojobs.service.geojson.GeoJsonMapper;
 import app.bpartners.geojobs.service.geojson.GeoJsonMultiPolygonCorrector;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
-import app.bpartners.geojobs.service.gouv.fr.rnb.BuildingApi;
+import app.bpartners.geojobs.service.gouv.fr.rnb.RnbBuildingFinder;
 import app.bpartners.geojobs.service.ign.IgnCadastreFeatureFetcher;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -68,10 +68,10 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
   ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
   FileWriter fileWriter = new FileWriter(objectMapper, new ExtensionGuesser());
   GeoJsonMapper geoJsonMapper = new GeoJsonMapper(new GeoJsonMultiPolygonCorrector());
-  BuildingApi buildingApiMock = mock();
+  RnbBuildingFinder rnbBuildingFinderMock = mock();
   IgnCadastreFeatureFetcher ignCadastreFeatureFetcherMock = mock();
   GeometryConverter geometryConverter =
-      new GeometryConverter(buildingApiMock, ignCadastreFeatureFetcherMock);
+      new GeometryConverter(rnbBuildingFinderMock, ignCadastreFeatureFetcherMock);
   FeatureMapper featureMapper = new FeatureMapper(geometryConverter);
   ZoneService zoneServiceMock = mock();
   DetectionRoofSlopeValidator detectionRoofSlopeValidatorMock = mock();

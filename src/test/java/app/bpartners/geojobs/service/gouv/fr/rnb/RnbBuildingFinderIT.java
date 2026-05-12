@@ -12,8 +12,8 @@ import org.junit.jupiter.api.Test;
 
 @Disabled("TODO: UnknownHostException from https://rnb-api.beta.gouv.fr in GitHub CI")
 @Slf4j
-class BuildingApiIT {
-  BuildingApi subject = new BuildingApi();
+class RnbBuildingFinderIT {
+  RnbBuildingFinder subject = new RnbBuildingFinder();
 
   @Test
   void retrieve_closest_buildings() {

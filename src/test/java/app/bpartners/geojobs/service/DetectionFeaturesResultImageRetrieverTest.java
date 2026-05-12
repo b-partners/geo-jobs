@@ -14,7 +14,7 @@ import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
-import app.bpartners.geojobs.service.gouv.fr.rnb.BuildingApi;
+import app.bpartners.geojobs.service.gouv.fr.rnb.RnbBuildingFinder;
 import app.bpartners.geojobs.service.ign.IgnCadastreFeatureFetcher;
 import java.math.BigDecimal;
 import java.net.URI;
@@ -36,10 +36,10 @@ class DetectionFeaturesResultImageRetrieverTest {
   private static final String VGG_URL_FROM_RETRIEVER = "http://primary-vgg-url.com";
   BucketComponent bucketComponentMock = mock();
   CustomBucketComponent customBucketComponentMock = mock();
-  BuildingApi buildingApiMock = mock(BuildingApi.class);
+  RnbBuildingFinder rnbBuildingFinderMock = mock(RnbBuildingFinder.class);
   IgnCadastreFeatureFetcher ignCadastreFeatureFetcherMock = mock(IgnCadastreFeatureFetcher.class);
   GeometryConverter geometryConverter =
-      new GeometryConverter(buildingApiMock, ignCadastreFeatureFetcherMock);
+      new GeometryConverter(rnbBuildingFinderMock, ignCadastreFeatureFetcherMock);
   DetectionImageAttributeRetriever imageAttributeRetrieverMock = mock();
   DetectionVggAttributeRetriever vggAttributeRetrieverMock = mock();
   DetectionFeaturesResultImageRetriever subject =

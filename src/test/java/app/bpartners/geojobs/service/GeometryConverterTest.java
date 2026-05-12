@@ -5,7 +5,7 @@ import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
-import app.bpartners.geojobs.service.gouv.fr.rnb.BuildingApi;
+import app.bpartners.geojobs.service.gouv.fr.rnb.RnbBuildingFinder;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,7 +21,7 @@ import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
 @Slf4j
 class GeometryConverterTest {
-  GeometryConverter subject = new GeometryConverter(new BuildingApi(), null);
+  GeometryConverter subject = new GeometryConverter(new RnbBuildingFinder(), null);
 
   @Test
   void retrieve_geometry_from_tile_coordinates() {

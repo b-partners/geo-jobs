@@ -23,7 +23,7 @@ import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.event.ZipGeoJsonAssembler;
 import app.bpartners.geojobs.service.geojson.GeoJson;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
-import app.bpartners.geojobs.service.gouv.fr.rnb.BuildingApi;
+import app.bpartners.geojobs.service.gouv.fr.rnb.RnbBuildingFinder;
 import app.bpartners.geojobs.service.ign.IgnCadastreFeatureFetcher;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.*;
@@ -48,7 +48,7 @@ class ZipGeoJsonAssemblerTest {
   GeoFeatureConverter geoFeatureConverter = new GeoFeatureConverter(new ObjectMapper());
   DetectionZoneToProcessProvider detectionProvidedZoneUnifierMock = mock();
   GeometryConverter geometryConverter =
-      new GeometryConverter(mock(BuildingApi.class), mock(IgnCadastreFeatureFetcher.class));
+      new GeometryConverter(mock(RnbBuildingFinder.class), mock(IgnCadastreFeatureFetcher.class));
   DetectionBackgroundRetriever detectionBackgroundRetrieverMock = mock();
   GeometrySquareMeterArea geometrySquareMeterAreaMock = mock();
   ZipGeoJsonAssembler subject =

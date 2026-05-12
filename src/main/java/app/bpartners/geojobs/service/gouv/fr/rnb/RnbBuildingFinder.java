@@ -15,7 +15,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
-public class BuildingApi {
+public class RnbBuildingFinder {
   private final String rnbApiUrl = "https://rnb-api.beta.gouv.fr";
   private final RestTemplate restTemplate = new RestTemplate();
 
