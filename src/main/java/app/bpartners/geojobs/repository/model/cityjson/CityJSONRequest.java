@@ -67,6 +67,7 @@ public class CityJSONRequest implements Serializable {
   @OneToMany(mappedBy = "cityJsonRequest", cascade = CascadeType.ALL, fetch = EAGER)
   private List<CityJSONTexture> textures;
 
+  @Column(name = "complexity_factor")
   private Float complexityFactor;
 
   @PrePersist
