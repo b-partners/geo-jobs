@@ -19,7 +19,7 @@ import lombok.SneakyThrows;
 public class CityJsonIO {
 
   private static final ObjectMapper MAPPER =
-      new ObjectMapper().disable(SerializationFeature.INDENT_OUTPUT); // une ligne par objet
+      new ObjectMapper().disable(SerializationFeature.INDENT_OUTPUT);
 
   public static class Doc {
     public CityJSON header;
@@ -80,10 +80,8 @@ public class CityJsonIO {
         JsonNode node = MAPPER.readTree(line);
 
         if (firstLine) {
-          // Première ligne : en-tête CityJSON (type, version, transform, metadata...)
           cityJson = (ObjectNode) node;
 
-          // On récupère les sommets initiaux s'il y en a (généralement vide)
           if (cityJson.has("vertices") && cityJson.get("vertices").isArray()) {
             globalVertices.addAll((ArrayNode) cityJson.get("vertices"));
           }
@@ -92,16 +90,13 @@ public class CityJsonIO {
           }
           firstLine = false;
         } else {
-          // Lignes suivantes : CityJSONFeature
           int offset = globalVertices.size();
 
-          // Récupérer les sommets de la feature et les ajouter au tableau global
           JsonNode featVertices = node.get("vertices");
           if (featVertices != null && featVertices.isArray()) {
             globalVertices.addAll((ArrayNode) featVertices);
           }
 
-          // Récupérer les CityObjects, décaler leurs indices, et les ajouter
           JsonNode featCityObjects = node.get("CityObjects");
           if (featCityObjects != null && featCityObjects.isObject()) {
             Iterator<Map.Entry<String, JsonNode>> fields = featCityObjects.fields();
@@ -132,21 +127,15 @@ public class CityJsonIO {
       throw new IOException("Unable to read provided cityJSON file");
     }
 
-    // Reconstruire le document final
     cityJson.set("CityObjects", globalCityObjects);
     cityJson.set("vertices", globalVertices);
 
-    // Écrire le résultat
     try (var writer = Files.newBufferedWriter(outputPath)) {
       MAPPER.writeValue(writer, cityJson);
     }
     return outputPath.toFile();
   }
 
-  /**
-   * Décale récursivement tous les indices d'un tableau de boundaries. Les boundaries CityJSON sont
-   * des structures imbriquées d'entiers.
-   */
   private static JsonNode shiftIndices(JsonNode node, int offset) {
     if (node.isInt()) {
       return MAPPER.getNodeFactory().numberNode(node.asInt() + offset);
