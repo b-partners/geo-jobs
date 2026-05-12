@@ -30,6 +30,15 @@ class CityJsonTextureComputerTest {
           cityJsonIOService, cityJsonTextureDomainService, geometrySquareMeterArea);
 
   @Test
+  void case_0f030a0d() throws IOException {
+    Payload payload = getPayload(-0.2506256103515625, 46.65273554711876, 5, 5, 3072, 3072, "cityjson/texture/inputs/0f030a0d-cd81-4f4e-8a2f-637d85595839/0f030a0d-cd81-4f4e-8a2f-637d85595839.json", "cityjson/texture/inputs/0f030a0d-cd81-4f4e-8a2f-637d85595839/image.jpg");
+
+    var actual = subject.applyTexture(payload.cityJSONRequest(), payload.cityJsonFile());
+
+    System.out.println(actual.getAbsolutePath());
+  }
+
+  @Test
   void texturize_from_cityjson_request() throws IOException {
     testRoof(2);
     testRoof(4);
@@ -75,6 +84,35 @@ class CityJsonTextureComputerTest {
                 }
               }
             });
+  }
+
+  private Payload getPayload(double topLeftLon, double topLeftLat, double pixelWidth, double pixelHeight, int imageWidth, int imageHeight, String cityJsonFilePath, String texturePath) throws IOException {
+    File cityJsonFile =
+        new ClassPathResource(
+            String.format(cityJsonFilePath))
+            .getFile();
+
+    CityJSONRequest cityJSONRequest = CityJSONRequest.builder().id(randomUUID().toString()).build();
+    File imageFile =
+        new ClassPathResource(
+            String.format(texturePath))
+            .getFile();
+    CityJSONTexture texture =
+        CityJSONTexture.builder()
+            .id(randomUUID().toString())
+            .imageUri(imageFile.getAbsolutePath())
+            .topLeftLongitude(topLeftLon)
+            .topLeftLatitude(topLeftLat)
+            .pixelWidth(pixelWidth)
+            .pixelHeight(pixelHeight)
+            .imageWidth(imageWidth)
+            .imageHeight(imageHeight)
+            .shearY(0.0)
+            .shearX(0.0)
+            .cityJsonRequest(cityJSONRequest)
+            .build();
+    cityJSONRequest.setTextures(List.of(texture));
+    return new Payload(cityJsonFile, cityJSONRequest, imageFile);
   }
 
   private @NotNull Payload getPayload(int roofNumber) throws IOException {
