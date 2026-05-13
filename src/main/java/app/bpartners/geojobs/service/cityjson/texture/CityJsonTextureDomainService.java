@@ -27,7 +27,7 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.math.Vector3D;
 import org.springframework.stereotype.Component;
 
-//TODO: refactor
+// TODO: refactor
 @Component
 @RequiredArgsConstructor
 public class CityJsonTextureDomainService {
@@ -76,7 +76,8 @@ public class CityJsonTextureDomainService {
     return new CityJsonWithVertices(json, vertices, LAMBERT_93);
   }
 
-  public TexturedCityJson texture(CityJsonWithVertices cityJsonWithVertices, TextureInfo textureInfo) {
+  public TexturedCityJson texture(
+      CityJsonWithVertices cityJsonWithVertices, TextureInfo textureInfo) {
     ObjectNode cityJson = cityJsonWithVertices.json().deepCopy();
     RasterInfo rasterInfo = textureInfo.rasterInfo();
     List<Vector3D> vertices = cityJsonWithVertices.vertices();
@@ -391,6 +392,7 @@ public class CityJsonTextureDomainService {
     var coordinate = new Coordinate(vertex.getX(), vertex.getY(), vertex.getZ());
     var vertexAsPoint = geometryFactory.createPoint(coordinate);
     var latLon = projector.project(vertexAsPoint, LAMBERT_93, WGS84);
-    return lonLatToPixelInTile(latLon.getCoordinate(), info.tileX(), info.tileY(), info.zoom(), info.tileImageSizePx());
+    return lonLatToPixelInTile(
+        latLon.getCoordinate(), info.tileX(), info.tileY(), info.zoom(), info.tileImageSizePx());
   }
 }

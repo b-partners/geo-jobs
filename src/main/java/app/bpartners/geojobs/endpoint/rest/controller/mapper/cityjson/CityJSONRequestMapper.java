@@ -7,10 +7,9 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSON;
+import app.bpartners.geojobs.repository.model.cityjson.CityJSONTexture;
 import java.math.BigDecimal;
 import java.util.List;
-
-import app.bpartners.geojobs.repository.model.cityjson.CityJSONTexture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -110,11 +109,13 @@ public class CityJSONRequestMapper {
     }
   }
 
-  private List<CityJSONTexture> getDomainTexture(ThreeDTextureInfo texture, app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest request) {
-    if(texture == null) {
+  private List<CityJSONTexture> getDomainTexture(
+      ThreeDTextureInfo texture,
+      app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest request) {
+    if (texture == null) {
       return List.of();
     }
-    //TODO: handle multiple textures if possible
+    // TODO: handle multiple textures if possible
     return List.of(textureMapper.toDomain(texture, request));
   }
 
