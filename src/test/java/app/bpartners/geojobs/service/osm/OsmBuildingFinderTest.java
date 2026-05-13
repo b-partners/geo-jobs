@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 @Slf4j
 class OsmBuildingFinderTest {
   ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
-  GeometryConverter geometryConverter = new GeometryConverter(null, null);
+  GeometryConverter geometryConverter = new GeometryConverter();
   NominatimClient nominatimClient = new NominatimClient(objectMapper);
   OsmBuildingFinder subject =
       new OsmBuildingFinder(nominatimClient, geometryConverter, objectMapper);
