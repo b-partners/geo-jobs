@@ -3,15 +3,20 @@ package app.bpartners.geojobs.service.osm;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import app.bpartners.geojobs.model.geometry.RoofDetails;
+import app.bpartners.geojobs.service.BuildingFinder;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.osm.model.BuildingMatch;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.*;
+import java.math.BigDecimal;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.Nullable;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.operation.distance.DistanceOp;
 import org.springframework.stereotype.Component;
@@ -19,7 +24,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class OsmBuildingFinder {
+public class OsmBuildingFinder implements BuildingFinder {
   private static final int RADIUS_METERS = 30;
   private final NominatimClient nominatimClient;
   private final GeometryConverter geometryConverter;
@@ -121,17 +126,74 @@ public class OsmBuildingFinder {
   public Feature geocodeAddress(String address) {
     try {
       var buildingMatch = geocodeAndFindBuilding(address);
-      if (buildingMatch == null) {
-        return null;
-      } else {
-        var restFeature = geometryConverter.toRestFeature(buildingMatch.geometry());
-        buildingMatch.tags().forEach(restFeature::putPropertiesItem);
-        restFeature.putPropertiesItem("address", address);
-        return restFeature;
+      var feature = getFeature(buildingMatch);
+      if (feature != null) {
+        feature.putPropertiesItem("address", address);
       }
+      return feature;
     } catch (Exception e) {
       throw new RuntimeException(
           "Unable to geocode address " + address + ". Error : " + e.getMessage());
     }
+  }
+
+  @Nullable
+  private Feature getFeature(BuildingMatch buildingMatch) {
+    if (buildingMatch == null) {
+      return null;
+    } else {
+      var restFeature = geometryConverter.toRestFeature(buildingMatch.geometry());
+      buildingMatch.tags().forEach(restFeature::putPropertiesItem);
+      return restFeature;
+    }
+  }
+
+  @Override
+  public MultiPolygon getBuildingMultiPolygon(
+      app.bpartners.geojobs.endpoint.rest.model.Point point) {
+    return getBuildingMultiPolygon(point.getCoordinates());
+  }
+
+  @Override
+  public MultiPolygon getBuildingMultiPolygon(List<BigDecimal> coordinates) {
+    var longitude = coordinates.get(0).doubleValue();
+    var latitude = coordinates.get(1).doubleValue();
+    var nearestBuilding = findNearestBuilding(latitude, longitude);
+    var buildingFeature = getFeature(nearestBuilding);
+    if (buildingFeature == null) {
+      return null;
+    }
+    var geometryInstance = buildingFeature.getGeometry().getActualInstance();
+    if (geometryInstance instanceof app.bpartners.geojobs.endpoint.rest.model.Polygon polygon) {
+      geometryConverter.apply(List.of(polygon.getCoordinates()));
+    } else if (geometryInstance
+        instanceof app.bpartners.geojobs.endpoint.rest.model.MultiPolygon multiPolygon) {
+      return geometryConverter.apply(multiPolygon.getCoordinates());
+    }
+    throw new IllegalStateException(
+        "Unable to convert obtained feature into MultiPolygon : " + geometryInstance.getClass());
+  }
+
+  @Override
+  public MultiPolygon getBuildingMultiPolygon(String address) {
+    var buildingFeature = geocodeAddress(address);
+    if (buildingFeature == null) {
+      return null;
+    }
+    var geometryInstance = buildingFeature.getGeometry().getActualInstance();
+    if (geometryInstance instanceof app.bpartners.geojobs.endpoint.rest.model.Polygon polygon) {
+      return geometryConverter.apply(List.of(polygon.getCoordinates()));
+    } else if (geometryInstance
+        instanceof app.bpartners.geojobs.endpoint.rest.model.MultiPolygon multiPolygon) {
+      return geometryConverter.apply(multiPolygon.getCoordinates());
+    }
+    throw new IllegalStateException(
+        "Unable to convert obtained feature into MultiPolygon : " + geometryInstance.getClass());
+  }
+
+  @Override
+  public List<RoofDetails> retrieveRoofPolygonsFrom(
+      List<List<BigDecimal>> lonLatPolygonCoordinates) {
+    throw new UnsupportedOperationException("Not implemented yet");
   }
 }

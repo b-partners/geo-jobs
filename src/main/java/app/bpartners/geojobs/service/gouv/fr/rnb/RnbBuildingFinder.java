@@ -18,6 +18,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.MultiPolygon;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -27,6 +28,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 @Slf4j
 @Component
+@Primary
 @RequiredArgsConstructor
 public class RnbBuildingFinder implements BuildingFinder {
   private final String rnbApiUrl = "https://rnb-api.beta.gouv.fr";
