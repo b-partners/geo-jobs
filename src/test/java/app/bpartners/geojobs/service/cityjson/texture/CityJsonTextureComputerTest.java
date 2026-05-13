@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONTexture;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
+import app.bpartners.geojobs.service.cityjson.texture.factory.RasterInfoFactory;
 import app.bpartners.geojobs.service.cityjson.texture.model.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
@@ -49,8 +50,9 @@ class CityJsonTextureComputerTest {
     Payload payload = getPayload(roofNumber);
 
     var actual = subject.applyTexture(payload.cityJSONRequest(), payload.cityJsonFile());
+      System.out.println(actual);
 
-    assertNotNull(actual);
+      assertNotNull(actual);
 
     com.fasterxml.jackson.databind.node.ObjectNode resultJson =
         cityJsonIOService.loadCityJson(actual);

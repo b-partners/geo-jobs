@@ -2,6 +2,8 @@ package app.bpartners.geojobs.service.cityjson.texture;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.service.GeometrySquareMeterArea.LAMBERT_93;
+import static app.bpartners.geojobs.service.GeometrySquareMeterArea.WGS84;
+import static app.bpartners.geojobs.service.cityjson.texture.Converter.lonLatToPixelInTile;
 
 import app.bpartners.geojobs.model.lidar.planes.algorithm.Vector3DUtils;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
@@ -189,8 +191,8 @@ public class CityJsonTextureDomainService {
     for (Vector3D coord : coords) {
       RowCol rowCol = rowColAffine(rasterInfo, coord.getX(), coord.getY());
 
-      double u = rowCol.col() / rasterInfo.width();
-      double v = 1.0 - (rowCol.row() / rasterInfo.height());
+      double u = rowCol.row() / rasterInfo.width();
+      double v = 1.0 - (rowCol.col() / rasterInfo.height());
 
       result.add(new UV(u, v));
     }
@@ -417,27 +419,11 @@ public class CityJsonTextureDomainService {
     return surfaceTypes;
   }
 
+  private static final GeometrySquareMeterArea projector = new  GeometrySquareMeterArea();
   public RowCol rowColAffine(RasterInfo t, double x, double y) {
-    double a = t.pixelWidth();
-    double b = t.shearX();
-    double c = t.originX();
-
-    double d = t.shearY();
-    double e = t.pixelHeight();
-    double f = t.originY();
-
-    double determinant = a * e - b * d;
-
-    if (Math.abs(determinant) < 1e-12) {
-      throw new IllegalArgumentException("Raster transform is not invertible");
-    }
-
-    double dx = x - c;
-    double dy = y - f;
-
-    double col = (e * dx - b * dy) / determinant;
-    double row = (-d * dx + a * dy) / determinant;
-
-    return new RowCol(row, col);
+    var point = geometryFactory.createPoint(new Coordinate(x, y));
+    var latLon = projector.project(point, LAMBERT_93, WGS84);
+    var pixel = lonLatToPixelInTile(latLon.getCoordinate(), 261779, 185145, 19, 1024);
+    return new RowCol(pixel.getX(), pixel.getY());
   }
 }
