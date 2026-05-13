@@ -2,12 +2,13 @@ package app.bpartners.geojobs.service.cityjson.texture;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.service.GeometrySquareMeterArea.LAMBERT_93;
+import static app.bpartners.geojobs.service.GeometrySquareMeterArea.WGS84;
+import static app.bpartners.geojobs.service.cityjson.texture.Converter.lonLatToPixelInTile;
 
 import app.bpartners.geojobs.model.lidar.planes.algorithm.Vector3DUtils;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.cityjson.texture.model.CityJsonWithVertices;
 import app.bpartners.geojobs.service.cityjson.texture.model.RasterInfo;
-import app.bpartners.geojobs.service.cityjson.texture.model.RowCol;
 import app.bpartners.geojobs.service.cityjson.texture.model.TextureInfo;
 import app.bpartners.geojobs.service.cityjson.texture.model.TexturedCityJson;
 import app.bpartners.geojobs.service.cityjson.texture.model.UV;
@@ -22,22 +23,21 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
-import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.math.Vector3D;
 import org.springframework.stereotype.Component;
 
+// TODO: refactor
 @Component
 @RequiredArgsConstructor
 public class CityJsonTextureDomainService {
-
   public static final String VALUES_ATTRIBUTE_NAME = "values";
   public static final String DEFAULT_ATTRIBUTE_NAME = "default";
   public static final String TEXTURE_ATTRIBUTE_NAME = "texture";
   public static final String MATERIAL_ATTRIBUTE_NAME = "material";
+
   private final ObjectMapper objectMapper;
-  private final GeometrySquareMeterArea geometrySquareMeterArea;
+  private final GeometrySquareMeterArea projector;
 
   public CityJsonWithVertices toCityJsonFile(ObjectNode json) {
     ArrayNode rawVertices = (ArrayNode) json.get("vertices");
@@ -65,55 +65,30 @@ public class CityJsonTextureDomainService {
       translateZ = translate.get(2).asDouble();
     }
 
-    CoordinateReferenceSystem crs = LAMBERT_93;
-
     List<Vector3D> vertices = new ArrayList<>();
-
-    for (JsonNode rawVertex : rawVertices) {
+    for (var rawVertex : rawVertices) {
       double x = rawVertex.get(0).asDouble() * scaleX + translateX;
       double y = rawVertex.get(1).asDouble() * scaleY + translateY;
       double z = rawVertex.get(2).asDouble() * scaleZ + translateZ;
-
       vertices.add(new Vector3D(x, y, z));
     }
 
-    return new CityJsonWithVertices(json, vertices, crs);
-  }
-
-  public List<Vector3D> project(
-      List<Vector3D> vectors,
-      CoordinateReferenceSystem sourceCrs,
-      CoordinateReferenceSystem targetCrs) {
-    return vectors.stream()
-        .map(
-            v -> {
-              Point origin = geometryFactory.createPoint(new Coordinate(v.getX(), v.getY()));
-              Point projected =
-                  (Point) geometrySquareMeterArea.project(origin, sourceCrs, targetCrs);
-              return new Vector3D(
-                  projected.getCoordinate().x, projected.getCoordinate().y, v.getZ());
-            })
-        .toList();
+    return new CityJsonWithVertices(json, vertices, LAMBERT_93);
   }
 
   public TexturedCityJson texture(
       CityJsonWithVertices cityJsonWithVertices, TextureInfo textureInfo) {
     ObjectNode cityJson = cityJsonWithVertices.json().deepCopy();
-
     RasterInfo rasterInfo = textureInfo.rasterInfo();
-
     List<Vector3D> vertices = cityJsonWithVertices.vertices();
     ObjectNode appearance = initAppearance(textureInfo);
-
     List<UV> vertexTexture = new ArrayList<>();
     Map<String, Integer> vertexTextureMap = new HashMap<>();
-
     ObjectNode cityObjects = (ObjectNode) cityJson.get("CityObjects");
     Iterator<JsonNode> objects = cityObjects.elements();
 
     while (objects.hasNext()) {
       ObjectNode cityObject = (ObjectNode) objects.next();
-
       if (!"Building".equals(cityObject.get("type").asText())) {
         continue;
       }
@@ -183,15 +158,13 @@ public class CityJsonTextureDomainService {
     }
   }
 
-  public List<UV> computeUv(List<Vector3D> coords, RasterInfo rasterInfo) {
-    List<UV> result = new ArrayList<>();
+  public List<UV> getUV(List<Vector3D> vertices, RasterInfo info) {
+    var result = new ArrayList<UV>();
 
-    for (Vector3D coord : coords) {
-      RowCol rowCol = rowColAffine(rasterInfo, coord.getX(), coord.getY());
-
-      double u = rowCol.col() / rasterInfo.width();
-      double v = 1.0 - (rowCol.row() / rasterInfo.height());
-
+    for (var vertex : vertices) {
+      var pixelVertex = getPixelCoordinate(info, vertex);
+      double u = pixelVertex.getX() / info.width();
+      double v = 1.0 - (pixelVertex.getY() / info.height());
       result.add(new UV(u, v));
     }
 
@@ -288,11 +261,9 @@ public class CityJsonTextureDomainService {
       return;
     }
 
-    List<UV> uv = computeUv(coords, rasterInfo);
-
-    List<Integer> vtIndices = deduplicateUvs(uv, vertexTexture, vertexTextureMap);
-
-    boolean roof = hasSemantics ? isRoofSemantic(faceType) : isRoof(coords);
+    var uv = getUV(coords, rasterInfo);
+    var vtIndices = deduplicateUvs(uv, vertexTexture, vertexTextureMap);
+    var roof = hasSemantics ? isRoofSemantic(faceType) : isRoof(coords);
 
     ArrayNode textureValues =
         (ArrayNode)
@@ -417,27 +388,11 @@ public class CityJsonTextureDomainService {
     return surfaceTypes;
   }
 
-  public RowCol rowColAffine(RasterInfo t, double x, double y) {
-    double a = t.pixelWidth();
-    double b = t.shearX();
-    double c = t.originX();
-
-    double d = t.shearY();
-    double e = t.pixelHeight();
-    double f = t.originY();
-
-    double determinant = a * e - b * d;
-
-    if (Math.abs(determinant) < 1e-12) {
-      throw new IllegalArgumentException("Raster transform is not invertible");
-    }
-
-    double dx = x - c;
-    double dy = y - f;
-
-    double col = (e * dx - b * dy) / determinant;
-    double row = (-d * dx + a * dy) / determinant;
-
-    return new RowCol(row, col);
+  public Coordinate getPixelCoordinate(RasterInfo info, Vector3D vertex) {
+    var coordinate = new Coordinate(vertex.getX(), vertex.getY(), vertex.getZ());
+    var vertexAsPoint = geometryFactory.createPoint(coordinate);
+    var latLon = projector.project(vertexAsPoint, LAMBERT_93, WGS84);
+    return lonLatToPixelInTile(
+        latLon.getCoordinate(), info.tileX(), info.tileY(), info.zoom(), info.tileImageSizePx());
   }
 }
