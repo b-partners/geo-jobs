@@ -49,7 +49,7 @@ class CityJSON3DBagRooferProcessorTest {
   Roofer3DBagApiClient roofer3DBagApiClientMock = mock(Roofer3DBagApiClient.class);
   FileWriter fileWriterMock = mock(FileWriter.class);
   CoordinateTransformer coordinateTransformer = new CoordinateTransformer();
-  GeometryConverter geometryConverter = new GeometryConverter(null, null);
+  GeometryConverter geometryConverter = new GeometryConverter();
   CityJsonTextureComputer textureComputerMock = mock(CityJsonTextureComputer.class);
 
   CityJSON3DBagRooferProcessor subject =

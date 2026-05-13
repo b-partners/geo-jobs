@@ -3,6 +3,8 @@ package app.bpartners.geojobs.service.gouv.fr.rnb;
 import static app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.MULTI_POLYGON;
 import static org.junit.jupiter.api.Assertions.*;
 
+import app.bpartners.geojobs.service.PolygonInsideCircleDistanceComputer;
+import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.math.BigDecimal;
 import java.util.List;
 import lombok.SneakyThrows;
@@ -13,7 +15,8 @@ import org.junit.jupiter.api.Test;
 @Disabled("TODO: UnknownHostException from https://rnb-api.beta.gouv.fr in GitHub CI")
 @Slf4j
 class RnbBuildingFinderIT {
-  RnbBuildingFinder subject = new RnbBuildingFinder();
+  RnbBuildingFinder subject =
+      new RnbBuildingFinder(new GeometryConverter(), new PolygonInsideCircleDistanceComputer());
 
   @Test
   void retrieve_closest_buildings() {

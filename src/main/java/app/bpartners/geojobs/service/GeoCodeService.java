@@ -32,6 +32,7 @@ public class GeoCodeService {
   private final GeoCodingJobRepository repository;
   private final BucketComponent bucketComponent;
   private final EventProducer eventProducer;
+  private final BuildingFinder buildingFinder;
 
   public GeoCodingJob submitGeoCodingJobThroughExcel(
       String endToEndId, String communityOwnerId, File excelFile) {
@@ -81,7 +82,7 @@ public class GeoCodeService {
       var longitude = BigDecimal.valueOf(geoPosition.longitude());
       var latitude = BigDecimal.valueOf(geoPosition.latitude());
       var nearestRoofMultiPolygon =
-          geometryConverter.retrieveNearestRoofMultiPolygon(List.of(longitude, latitude));
+          buildingFinder.getBuildingMultiPolygon(List.of(longitude, latitude));
 
       var properties = new HashMap<String, Object>();
       properties.put("address", address);

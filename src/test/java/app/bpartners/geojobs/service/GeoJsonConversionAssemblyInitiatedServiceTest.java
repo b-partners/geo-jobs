@@ -39,7 +39,6 @@ import app.bpartners.geojobs.service.geojson.GeoJsonMapper;
 import app.bpartners.geojobs.service.geojson.GeoJsonMultiPolygonCorrector;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.gouv.fr.rnb.RnbBuildingFinder;
-import app.bpartners.geojobs.service.ign.IgnCadastreFeatureFetcher;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
@@ -69,10 +68,8 @@ class GeoJsonConversionAssemblyInitiatedServiceTest {
   FileWriter fileWriter = new FileWriter(objectMapper, new ExtensionGuesser());
   GeoJsonMapper geoJsonMapper = new GeoJsonMapper(new GeoJsonMultiPolygonCorrector());
   RnbBuildingFinder rnbBuildingFinderMock = mock();
-  IgnCadastreFeatureFetcher ignCadastreFeatureFetcherMock = mock();
-  GeometryConverter geometryConverter =
-      new GeometryConverter(rnbBuildingFinderMock, ignCadastreFeatureFetcherMock);
-  FeatureMapper featureMapper = new FeatureMapper(geometryConverter);
+  GeometryConverter geometryConverter = new GeometryConverter();
+  FeatureMapper featureMapper = new FeatureMapper(geometryConverter, rnbBuildingFinderMock);
   ZoneService zoneServiceMock = mock();
   DetectionRoofSlopeValidator detectionRoofSlopeValidatorMock = mock();
   DetectionService detectionServiceMock =
