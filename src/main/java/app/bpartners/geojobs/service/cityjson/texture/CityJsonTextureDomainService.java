@@ -9,7 +9,6 @@ import app.bpartners.geojobs.model.lidar.planes.algorithm.Vector3DUtils;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.cityjson.texture.model.CityJsonWithVertices;
 import app.bpartners.geojobs.service.cityjson.texture.model.RasterInfo;
-import app.bpartners.geojobs.service.cityjson.texture.model.RowCol;
 import app.bpartners.geojobs.service.cityjson.texture.model.TextureInfo;
 import app.bpartners.geojobs.service.cityjson.texture.model.TexturedCityJson;
 import app.bpartners.geojobs.service.cityjson.texture.model.UV;
@@ -24,22 +23,21 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
-import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.math.Vector3D;
 import org.springframework.stereotype.Component;
 
+//TODO: refactor
 @Component
 @RequiredArgsConstructor
 public class CityJsonTextureDomainService {
-
   public static final String VALUES_ATTRIBUTE_NAME = "values";
   public static final String DEFAULT_ATTRIBUTE_NAME = "default";
   public static final String TEXTURE_ATTRIBUTE_NAME = "texture";
   public static final String MATERIAL_ATTRIBUTE_NAME = "material";
+
   private final ObjectMapper objectMapper;
-  private final GeometrySquareMeterArea geometrySquareMeterArea;
+  private final GeometrySquareMeterArea projector;
 
   public CityJsonWithVertices toCityJsonFile(ObjectNode json) {
     ArrayNode rawVertices = (ArrayNode) json.get("vertices");
@@ -67,55 +65,29 @@ public class CityJsonTextureDomainService {
       translateZ = translate.get(2).asDouble();
     }
 
-    CoordinateReferenceSystem crs = LAMBERT_93;
-
     List<Vector3D> vertices = new ArrayList<>();
-
-    for (JsonNode rawVertex : rawVertices) {
+    for (var rawVertex : rawVertices) {
       double x = rawVertex.get(0).asDouble() * scaleX + translateX;
       double y = rawVertex.get(1).asDouble() * scaleY + translateY;
       double z = rawVertex.get(2).asDouble() * scaleZ + translateZ;
-
       vertices.add(new Vector3D(x, y, z));
     }
 
-    return new CityJsonWithVertices(json, vertices, crs);
+    return new CityJsonWithVertices(json, vertices, LAMBERT_93);
   }
 
-  public List<Vector3D> project(
-      List<Vector3D> vectors,
-      CoordinateReferenceSystem sourceCrs,
-      CoordinateReferenceSystem targetCrs) {
-    return vectors.stream()
-        .map(
-            v -> {
-              Point origin = geometryFactory.createPoint(new Coordinate(v.getX(), v.getY()));
-              Point projected =
-                  (Point) geometrySquareMeterArea.project(origin, sourceCrs, targetCrs);
-              return new Vector3D(
-                  projected.getCoordinate().x, projected.getCoordinate().y, v.getZ());
-            })
-        .toList();
-  }
-
-  public TexturedCityJson texture(
-      CityJsonWithVertices cityJsonWithVertices, TextureInfo textureInfo) {
+  public TexturedCityJson texture(CityJsonWithVertices cityJsonWithVertices, TextureInfo textureInfo) {
     ObjectNode cityJson = cityJsonWithVertices.json().deepCopy();
-
     RasterInfo rasterInfo = textureInfo.rasterInfo();
-
     List<Vector3D> vertices = cityJsonWithVertices.vertices();
     ObjectNode appearance = initAppearance(textureInfo);
-
     List<UV> vertexTexture = new ArrayList<>();
     Map<String, Integer> vertexTextureMap = new HashMap<>();
-
     ObjectNode cityObjects = (ObjectNode) cityJson.get("CityObjects");
     Iterator<JsonNode> objects = cityObjects.elements();
 
     while (objects.hasNext()) {
       ObjectNode cityObject = (ObjectNode) objects.next();
-
       if (!"Building".equals(cityObject.get("type").asText())) {
         continue;
       }
@@ -185,15 +157,13 @@ public class CityJsonTextureDomainService {
     }
   }
 
-  public List<UV> computeUv(List<Vector3D> coords, RasterInfo rasterInfo) {
-    List<UV> result = new ArrayList<>();
+  public List<UV> getUV(List<Vector3D> vertices, RasterInfo info) {
+    var result = new ArrayList<UV>();
 
-    for (Vector3D coord : coords) {
-      RowCol rowCol = rowColAffine(rasterInfo, coord.getX(), coord.getY());
-
-      double u = rowCol.row() / rasterInfo.width();
-      double v = 1.0 - (rowCol.col() / rasterInfo.height());
-
+    for (var vertex : vertices) {
+      var pixelVertex = getPixelCoordinate(info, vertex);
+      double u = pixelVertex.getX() / info.width();
+      double v = 1.0 - (pixelVertex.getY() / info.height());
       result.add(new UV(u, v));
     }
 
@@ -290,11 +260,9 @@ public class CityJsonTextureDomainService {
       return;
     }
 
-    List<UV> uv = computeUv(coords, rasterInfo);
-
-    List<Integer> vtIndices = deduplicateUvs(uv, vertexTexture, vertexTextureMap);
-
-    boolean roof = hasSemantics ? isRoofSemantic(faceType) : isRoof(coords);
+    var uv = getUV(coords, rasterInfo);
+    var vtIndices = deduplicateUvs(uv, vertexTexture, vertexTextureMap);
+    var roof = hasSemantics ? isRoofSemantic(faceType) : isRoof(coords);
 
     ArrayNode textureValues =
         (ArrayNode)
@@ -419,11 +387,10 @@ public class CityJsonTextureDomainService {
     return surfaceTypes;
   }
 
-  private static final GeometrySquareMeterArea projector = new  GeometrySquareMeterArea();
-  public RowCol rowColAffine(RasterInfo t, double x, double y) {
-    var point = geometryFactory.createPoint(new Coordinate(x, y));
-    var latLon = projector.project(point, LAMBERT_93, WGS84);
-    var pixel = lonLatToPixelInTile(latLon.getCoordinate(), 261779, 185145, 19, 1024);
-    return new RowCol(pixel.getX(), pixel.getY());
+  public Coordinate getPixelCoordinate(RasterInfo info, Vector3D vertex) {
+    var coordinate = new Coordinate(vertex.getX(), vertex.getY(), vertex.getZ());
+    var vertexAsPoint = geometryFactory.createPoint(coordinate);
+    var latLon = projector.project(vertexAsPoint, LAMBERT_93, WGS84);
+    return lonLatToPixelInTile(latLon.getCoordinate(), info.tileX(), info.tileY(), info.zoom(), info.tileImageSizePx());
   }
 }

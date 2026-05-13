@@ -9,6 +9,8 @@ import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSON;
 import java.math.BigDecimal;
 import java.util.List;
+
+import app.bpartners.geojobs.repository.model.cityjson.CityJSONTexture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -108,6 +110,14 @@ public class CityJSONRequestMapper {
     }
   }
 
+  private List<CityJSONTexture> getDomainTexture(ThreeDTextureInfo texture, app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest request) {
+    if(texture == null) {
+      return List.of();
+    }
+    //TODO: handle multiple textures if possible
+    return List.of(textureMapper.toDomain(texture, request));
+  }
+
   public app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest createToDomain(
       String requestIdentifier,
       CreateCityJSONRequest createCityJSONRequest,
@@ -117,8 +127,6 @@ public class CityJSONRequestMapper {
             ? List.of()
             : createCityJSONRequest.getDelimitations();
     var domainDelimitations = delimitations.stream().map(FeatureMapper::toDomainFeature).toList();
-    var texture = createCityJSONRequest.getThreeDTextureInfo();
-
     var domain =
         app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest.builder()
             .id(requestIdentifier)
@@ -130,10 +138,8 @@ public class CityJSONRequestMapper {
                     createCityJSONRequest.getDelimitationObjectType()))
             .delimitationType(USER_DEFINED_DELIMITATION)
             .build();
-
-    return domain.toBuilder()
-        .textures(texture == null ? List.of() : List.of(textureMapper.toDomain(texture, domain)))
-        .build();
+    var textures = getDomainTexture(createCityJSONRequest.getThreeDTextureInfo(), domain);
+    return domain.toBuilder().textures(textures).build();
   }
 
   public app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest createToDomain(

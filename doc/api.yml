@@ -2589,27 +2589,28 @@ components:
     ThreeDTextureInfo:
       type: object
       required:
-        - topLeftLon
-        - topLeftLat
-        - pixelHeight
-        - pixelWidth
+        - zoom
+        - imageUri
+        - imageWidth
+        - imageHeight
+        - tileX
+        - tileY
+        - tileImageSizePx
       properties:
-        imageDataUri:
+        tileX:
+          type: integer
+        tileY:
+          type: integer
+        tileImageSizePx:
+          type: integer
+        imageWidth:
+          type: integer
+        imageHeight:
+          type: integer
+        zoom:
+          type: integer
+        imageUri:
           type: string
-        topLeftLon:
-          type: number
-          format: float
-        topLeftLat:
-          type: number
-          format: float
-        pixelWidth:
-          type: number
-          format: float
-          description: Width of a pixel in meters
-        pixelHeight:
-          type: number
-          format: float
-          description: Height of a pixel in meters
 
     DelimitationObjectType:
       type: string

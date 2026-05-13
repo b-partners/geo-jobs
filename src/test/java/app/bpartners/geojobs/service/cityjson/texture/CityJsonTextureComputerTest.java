@@ -31,6 +31,15 @@ class CityJsonTextureComputerTest {
           cityJsonIOService, cityJsonTextureDomainService, geometrySquareMeterArea);
 
   @Test
+  void test2() throws IOException {
+    Payload payload = getPayload(-0.2506256103515625, 46.65273554711876, 5, 5, 3072, 3072, "cityjson/texture/inputs/test2/test2.json", "cityjson/texture/inputs/test2/test2.jpeg");
+
+    var actual = subject.applyTexture(payload.cityJSONRequest(), payload.cityJsonFile());
+
+    System.out.println(actual.getAbsolutePath());
+  }
+
+  @Test
   void case_0f030a0d() throws IOException {
     Payload payload = getPayload(-0.2506256103515625, 46.65273554711876, 5, 5, 3072, 3072, "cityjson/texture/inputs/0f030a0d-cd81-4f4e-8a2f-637d85595839/0f030a0d-cd81-4f4e-8a2f-637d85595839.json", "cityjson/texture/inputs/0f030a0d-cd81-4f4e-8a2f-637d85595839/image.jpg");
 
