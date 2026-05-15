@@ -28,7 +28,7 @@ public class LidarApiFacade {
   private final SwissBoundaryChecker swissBoundaryChecker;
   private final SwissLidarApi swissLidarApi;
   private final GeometrySquareMeterArea projector;
-  private final RestTemplate restTemplate = new RestTemplate();
+  private final RestTemplate restTemplate;
 
   private static final long UPDATED_VALID_DATA = 50_000_000;
   private static final String UPDATED_DATA_PREFIX = "https://data.geopf.fr/";
