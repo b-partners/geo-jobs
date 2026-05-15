@@ -47,6 +47,29 @@ class CityJsonTextureComputerTest {
     return CityJSONRequest.builder().textures(List.of(texture)).build();
   }
 
+  @Test
+  void roof7() {
+    var cityjson = getFile("cityjson/texture/inputs/roof7/roof7.json");
+    var actual = subject.applyTexture(roof7Request(), cityjson);
+
+    assertNotSame(actual, cityjson);
+    log.info("CityJSON with texture = {}", actual.getAbsolutePath());
+  }
+
+  private static CityJSONRequest roof7Request() {
+    var texture =
+        CityJSONTexture.builder()
+            .zoom(19)
+            .tileX(261779)
+            .tileY(185145)
+            .imageWidth(3072)
+            .imageHeight(3072)
+            .imageUri(getFile("cityjson/texture/inputs/roof7/roof7.jpg").getAbsolutePath())
+            .tileImageSizePx(1024)
+            .build();
+    return CityJSONRequest.builder().textures(List.of(texture)).build();
+  }
+
   private static File getFile(String resourcePath) {
     try {
       return new File(
