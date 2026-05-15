@@ -26,7 +26,7 @@ public class CityJsonTextureComputer {
 
   public File addTexture(File cityJsonFile, RasterInfo info, String imageDataUri) {
     var file = cityJsonIOService.loadCityJson(cityJsonFile);
-    var cityJsonWithVertices = cityJsonTextureDomainService.toCityJsonFile(file);
+    var cityJsonWithVertices = cityJsonTextureDomainService.toCityJsonWithVertices(file);
     var textureInfo = new TextureInfo(info, null, imageDataUri);
     var texturedCityJson = cityJsonTextureDomainService.texture(cityJsonWithVertices, textureInfo);
     return cityJsonIOService.toFile(texturedCityJson);
