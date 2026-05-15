@@ -56,6 +56,15 @@ class CityJsonTextureComputerTest {
     log.info("CityJSON with texture = {}", actual.getAbsolutePath());
   }
 
+  @Test
+  void roof7Roofer() {
+    var cityjson = getFile("cityjson/texture/inputs/roof7/roof7_roofer.json");
+    var actual = subject.applyTexture(roof7Request(), cityjson);
+
+    assertNotSame(actual, cityjson);
+    log.info("CityJSON with texture = {}", actual.getAbsolutePath());
+  }
+
   private static CityJSONRequest roof7Request() {
     var texture =
         CityJSONTexture.builder()
