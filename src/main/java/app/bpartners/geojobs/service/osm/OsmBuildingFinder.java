@@ -90,6 +90,7 @@ public class OsmBuildingFinder implements BuildingFinder {
 
   private BuildingMatch geocodeAndFindBuilding(String address) {
     String nominatimJson = nominatimClient.geocodeToGeoJson(address);
+    log.info("Parsing Nominatim response : {}", nominatimJson.replaceAll("\\s+", " "));
     try {
       JsonNode root = objectMapper.readTree(nominatimJson);
       JsonNode features = root.get("features");
