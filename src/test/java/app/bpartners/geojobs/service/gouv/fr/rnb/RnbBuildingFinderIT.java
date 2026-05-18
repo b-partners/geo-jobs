@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import app.bpartners.geojobs.service.PolygonInsideCircleDistanceComputer;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import app.bpartners.geojobs.service.google.maps.AddressValidator;
+import app.bpartners.geojobs.service.google.maps.GeoCodeApi;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -20,7 +22,7 @@ import org.junit.jupiter.api.Test;
 @Slf4j
 class RnbBuildingFinderIT {
   RnbBuildingFinder subject =
-      new RnbBuildingFinder(new GeometryConverter(), new PolygonInsideCircleDistanceComputer());
+      new RnbBuildingFinder(new GeometryConverter(), new PolygonInsideCircleDistanceComputer(), new GeoCodeApi(System.getenv("GOOGLE_API_KEY"), new AddressValidator()));
 
   @Test
   void retrieve_closest_buildings() {
