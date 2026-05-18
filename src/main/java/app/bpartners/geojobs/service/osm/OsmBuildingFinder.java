@@ -165,7 +165,7 @@ public class OsmBuildingFinder implements BuildingFinder {
     }
     var geometryInstance = buildingFeature.getGeometry().getActualInstance();
     if (geometryInstance instanceof app.bpartners.geojobs.endpoint.rest.model.Polygon polygon) {
-      geometryConverter.apply(List.of(polygon.getCoordinates()));
+      return geometryConverter.apply(List.of(polygon.getCoordinates()));
     } else if (geometryInstance
         instanceof app.bpartners.geojobs.endpoint.rest.model.MultiPolygon multiPolygon) {
       return geometryConverter.apply(multiPolygon.getCoordinates());
