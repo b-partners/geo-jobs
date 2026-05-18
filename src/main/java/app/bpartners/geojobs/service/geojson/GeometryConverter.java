@@ -380,18 +380,7 @@ public class GeometryConverter {
       app.bpartners.geojobs.endpoint.rest.model.Feature roofFeature,
       boolean isParcelDetection,
       DetectableType detectableType) {
-    GeometryConverter geometryConverter = new GeometryConverter();
-    var geometryInstance = roofFeature.getGeometry().getActualInstance();
-    MultiPolygon roofMultiPolygon;
-    switch (geometryInstance) {
-      case app.bpartners.geojobs.endpoint.rest.model.Polygon restPolygon ->
-          roofMultiPolygon = geometryConverter.apply(List.of(restPolygon.getCoordinates()));
-      case app.bpartners.geojobs.endpoint.rest.model.MultiPolygon restMultiPolygon ->
-          roofMultiPolygon = geometryConverter.apply(restMultiPolygon.getCoordinates());
-      default ->
-          throw new IllegalStateException(
-              "Unsupported geometry type for roof: " + geometryInstance);
-    }
+    var roofMultiPolygon = retrieveMultiPolygonFromFeature(roofFeature);
     if (!List.of(
                 TOITURE_REVETEMENT,
                 PANNEAU_PHOTOVOLTAIQUE,
@@ -420,6 +409,25 @@ public class GeometryConverter {
       return internalConverter.retrieveNearestParcelMultiPolygon(parcelFeaturesFromPoint);
     }
     return roofMultiPolygon;
+  }
+
+  public static MultiPolygon retrieveMultiPolygonFromFeature(
+      app.bpartners.geojobs.endpoint.rest.model.Feature feature) {
+    GeometryConverter geometryConverter = new GeometryConverter();
+    var geometry = feature.getGeometry();
+    if (geometry == null) {
+      return null;
+    }
+    var geometryInstance = geometry.getActualInstance();
+    MultiPolygon multiPolygon;
+    switch (geometryInstance) {
+      case app.bpartners.geojobs.endpoint.rest.model.Polygon restPolygon ->
+          multiPolygon = geometryConverter.apply(List.of(restPolygon.getCoordinates()));
+      case app.bpartners.geojobs.endpoint.rest.model.MultiPolygon restMultiPolygon ->
+          multiPolygon = geometryConverter.apply(restMultiPolygon.getCoordinates());
+      default -> multiPolygon = null;
+    }
+    return multiPolygon;
   }
 
   public static MultiPolygon getRoofMultiPolygonZoneProcessed(
