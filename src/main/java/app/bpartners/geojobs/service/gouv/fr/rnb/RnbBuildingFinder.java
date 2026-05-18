@@ -8,8 +8,12 @@ import app.bpartners.geojobs.model.geometry.RoofDetails;
 import app.bpartners.geojobs.service.BuildingFinder;
 import app.bpartners.geojobs.service.PolygonInsideCircleDistanceComputer;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import app.bpartners.geojobs.service.google.maps.GeoCodeApi;
+import app.bpartners.geojobs.service.google.maps.GeoPosition;
 import app.bpartners.geojobs.service.gouv.fr.rnb.component.Building;
 import app.bpartners.geojobs.service.gouv.fr.rnb.component.BuildingClosest;
+import com.google.maps.errors.ApiException;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URLDecoder;
 import java.util.ArrayList;
@@ -36,6 +40,7 @@ public class RnbBuildingFinder implements BuildingFinder {
   private static final int DEFAULT_POLYGON_SIZE_IN_METERS = 100;
   private final GeometryConverter geometryConverter;
   private final PolygonInsideCircleDistanceComputer circleDistanceComputer;
+  private final GeoCodeApi geoCodeApi;
 
   // @args `radius` must be between 0 and 1000 (meters)
   public BuildingClosest getBuildingClosest(Double latitude, Double longitude, Integer radius) {
@@ -218,6 +223,16 @@ public class RnbBuildingFinder implements BuildingFinder {
 
   @Override
   public MultiPolygon getBuildingMultiPolygon(String address) {
-    throw new UnsupportedOperationException("Not yet implemented");
+    GeoPosition geoPosition;
+    try {
+      geoPosition = geoCodeApi.searchGeoPositionFromAddress(address);
+    } catch (IOException | InterruptedException | ApiException e) {
+      throw new RuntimeException(
+          "Unable to geocode address " + address + " for RNB building finder", e);
+    }
+    var longitude = geoPosition.longitude();
+    var latitude = geoPosition.latitude();
+    return getBuildingMultiPolygon(
+        List.of(BigDecimal.valueOf(longitude), BigDecimal.valueOf(latitude)));
   }
 }
