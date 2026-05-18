@@ -22,7 +22,10 @@ import org.junit.jupiter.api.Test;
 @Slf4j
 class RnbBuildingFinderIT {
   RnbBuildingFinder subject =
-      new RnbBuildingFinder(new GeometryConverter(), new PolygonInsideCircleDistanceComputer(), new GeoCodeApi(System.getenv("GOOGLE_API_KEY"), new AddressValidator()));
+      new RnbBuildingFinder(
+          new GeometryConverter(),
+          new PolygonInsideCircleDistanceComputer(),
+          new GeoCodeApi(System.getenv("GOOGLE_API_KEY"), new AddressValidator()));
 
   @Test
   void retrieve_closest_buildings() {
