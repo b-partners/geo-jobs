@@ -68,16 +68,20 @@ public class GoogleBuildingFinder implements BuildingFinder {
   }
 
   private MultiPolygon getMultiPolygonFromGoogleGeocoding(
-      Optional<GeoJsonFeature> optionalGeoJsonFeature, String exceptionMessage)
-      throws JsonProcessingException {
+      Optional<GeoJsonFeature> optionalGeoJsonFeature, String exceptionMessage) {
     if (optionalGeoJsonFeature.isEmpty()) {
       log.info(
           "Unable to retrieve geojson feature from google geocoding for {} ", exceptionMessage);
       return null;
     }
-    var geometry =
-        objectMapper.readValue(optionalGeoJsonFeature.get().geometry().toString(), Geometry.class);
-    if (geometry instanceof MultiPolygon multiPolygon) {
+      Geometry geometry;
+      try {
+          geometry = objectMapper.readValue(objectMapper.writeValueAsString(optionalGeoJsonFeature.get().geometry()), Geometry.class);
+      } catch (JsonProcessingException e) {
+        log.info("Unable to retrieve building from google geocoding for {} with" + " unexpected geometry {}", exceptionMessage, optionalGeoJsonFeature.get().geometry(), e);
+          return null;
+      }
+      if (geometry instanceof MultiPolygon multiPolygon) {
       return multiPolygon;
     } else if (geometry instanceof Polygon polygon) {
       return geometryFactory.createMultiPolygon(new Polygon[] {polygon});
