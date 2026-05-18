@@ -1,11 +1,15 @@
 package app.bpartners.geojobs.service.gouv.fr.rnb;
 
+import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
 import static app.bpartners.geojobs.endpoint.rest.model.Geometry.TypeEnum.MULTI_POLYGON;
+import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 import app.bpartners.geojobs.service.PolygonInsideCircleDistanceComputer;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -52,5 +56,18 @@ class RnbBuildingFinderIT {
     assertEquals(
         List.of(BigDecimal.valueOf(-0.248858521003516), BigDecimal.valueOf(46.651871841665866)),
         multiPolygonCoordinates.getFirst().getFirst().getLast());
+  }
+
+  @SneakyThrows
+  @Test
+  void geocode_address() {
+    var multiPolygon =
+        subject.getBuildingMultiPolygon(
+            List.of(BigDecimal.valueOf(2.369347107300078), BigDecimal.valueOf(51.03112559258034)));
+
+    var feature =
+        new GeometryConverter()
+            .toFeature(randomUUID().toString(), 20, new HashMap<>(), multiPolygon);
+    log.info(new ObjectMapper().writeValueAsString(toRestFeature(feature)));
   }
 }
