@@ -1,11 +1,15 @@
 package app.bpartners.geojobs.service.osm;
 
+import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toRestFeature;
+import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 import app.bpartners.geojobs.endpoint.rest.model.Polygon;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.math.BigDecimal;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import lombok.SneakyThrows;
@@ -24,10 +28,15 @@ class OsmBuildingFinderTest {
   @SneakyThrows
   @Test
   void geocode_address() {
-    var actual = subject.geocodeAddress("1 Bd du Riou - 06400 Cannes");
+    var multiPolygon =
+        subject.getBuildingMultiPolygon(
+            List.of(BigDecimal.valueOf(2.369347107300078), BigDecimal.valueOf(51.03112559258034)));
 
-    assertNotNull(actual);
-    log.info(new ObjectMapper().writeValueAsString(actual));
+    assertNotNull(multiPolygon);
+    var feature =
+        new GeometryConverter()
+            .toFeature(randomUUID().toString(), 20, new HashMap<>(), multiPolygon);
+    log.info(new ObjectMapper().writeValueAsString(toRestFeature(feature)));
   }
 
   @Test
