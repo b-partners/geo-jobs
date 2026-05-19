@@ -20,6 +20,7 @@ import app.bpartners.geojobs.utils.BuildingComparisonCSVLogger;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -117,6 +118,7 @@ public class BuildingComparisonIT {
             } catch (IOException e) {
               throw new RuntimeException(e);
             }
+            Thread.sleep(Duration.ofSeconds(2L));
           } catch (Exception e) {
             log.info("Unable to handle address {}, error: {}", address, e.getMessage());
           }
@@ -134,11 +136,9 @@ public class BuildingComparisonIT {
     return getExpectedFeatures().stream()
         .filter(
             feature ->
-                feature.getProperties() != null && feature.getProperties().get("name") != null)
+                feature.getProperties() != null && feature.getProperties().get("address") != null)
         .collect(
-            Collectors.groupingBy(
-                feature ->
-                    feature.getProperties().get("name").toString() + " Vizille 38220 France"));
+            Collectors.groupingBy(feature -> feature.getProperties().get("address").toString()));
   }
 
   public record BuildingResultComparison(
