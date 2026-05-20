@@ -1,11 +1,13 @@
 package app.bpartners.geojobs.endpoint.rest.controller.mapper.cityjson;
 
 import static app.bpartners.geojobs.endpoint.rest.model.DelimitationType.USER_DEFINED_DELIMITATION;
+import static app.bpartners.geojobs.model.lidar.LidarProcessorType.THREE_D_BAG_ROOFER;
 import static java.time.Instant.now;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.model.lidar.LidarProcessorType;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSON;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONTexture;
 import java.math.BigDecimal;
@@ -119,10 +121,11 @@ public class CityJSONRequestMapper {
     return List.of(textureMapper.toDomain(texture, request));
   }
 
-  public app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest createToDomain(
-      String requestIdentifier,
-      CreateCityJSONRequest createCityJSONRequest,
-      String communityOwnerId) {
+  public app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest
+      createToDomainFromDeprecatedDTO(
+          String requestIdentifier,
+          CreateCityJSONRequest createCityJSONRequest,
+          String communityOwnerId) {
     List<Feature> delimitations =
         createCityJSONRequest.getDelimitations() == null
             ? List.of()
@@ -134,6 +137,7 @@ public class CityJSONRequestMapper {
             .creationDatetime(now())
             .communityOwnerId(communityOwnerId)
             .delimitations(domainDelimitations)
+            .lidarProcessorType(THREE_D_BAG_ROOFER)
             .delimitationObjectType(
                 CityJSONDelimitationObjectTypeMapper.fromRestDelimitationObjectType(
                     createCityJSONRequest.getDelimitationObjectType()))
@@ -160,6 +164,10 @@ public class CityJSONRequestMapper {
             CityJSONDelimitationObjectTypeMapper.fromRestDelimitationObjectType(
                 createCityJSONRequest.getDelimitationObjectType()))
         .delimitationType(createCityJSONRequest.getDelimitationType())
+        .lidarProcessorType(
+            createCityJSONRequest.getLidarProcessorType() == null
+                ? null
+                : LidarProcessorType.valueOf(createCityJSONRequest.getLidarProcessorType().name()))
         .complexityFactor(
             createCityJSONRequest.getComplexityFactor() == null
                 ? null

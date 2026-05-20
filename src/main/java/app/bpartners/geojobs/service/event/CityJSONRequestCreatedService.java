@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.event;
 
+import static app.bpartners.geojobs.model.lidar.LidarProcessorType.DEFAULT;
 import static app.bpartners.geojobs.model.lidar.planes.model.LasRoofDelimitationType.ROOF_SEGMENT_FACE_DELIMITATION;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStatus.*;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStep.*;
@@ -145,11 +146,11 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
   }
 
   private void processFullAutomaticFacade(CityJSONRequest request) {
-    switch (request.getLidarProcessorType()) {
-      case null -> processFullAutomaticBy3DBag(request);
-      case THREE_D_BAG_ROOFER -> processFullAutomaticBy3DBag(request);
-      default -> processByInternalMethod(request);
+    if (request.getLidarProcessorType() != null
+        && request.getLidarProcessorType().equals(DEFAULT)) {
+      processByInternalMethod(request);
     }
+    processFullAutomaticBy3DBag(request);
   }
 
   private void processFullAutomaticBy3DBag(CityJSONRequest request) {
