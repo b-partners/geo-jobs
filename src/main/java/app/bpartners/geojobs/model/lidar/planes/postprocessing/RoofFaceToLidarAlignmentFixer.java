@@ -39,7 +39,7 @@ public class RoofFaceToLidarAlignmentFixer
 
   @Override
   public List<Plane3D> apply(DelimitedRoofPoints delimitedRoofPoints, List<Plane3D> planes) {
-    if (true) {
+    if (!conf.active) {
       return planes;
     }
     var roofFaceWithMaxAreaIndex = getRoofFaceWithMaxAreaIndex(planes);
@@ -187,5 +187,10 @@ public class RoofFaceToLidarAlignmentFixer
 
   @Builder(toBuilder = true)
   public record RoofFaceToLidarAlignmentFixerConf(
-      int minScore, int stepAngle, int maxStepCount, int addedPointsFactor, double stepLength) {}
+      int minScore,
+      int stepAngle,
+      int maxStepCount,
+      int addedPointsFactor,
+      double stepLength,
+      boolean active) {}
 }

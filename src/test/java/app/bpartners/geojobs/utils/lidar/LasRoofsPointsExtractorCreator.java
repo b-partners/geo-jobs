@@ -73,7 +73,7 @@ public class LasRoofsPointsExtractorCreator {
 
   private static LasIndexDownloader lasIndexDownloaderMock() {
     var lasIndexDownloader = mock(LasIndexDownloader.class);
-    doNothing().when(lasIndexDownloader).download(any(), any(), any());
+    when(lasIndexDownloader.download(any(), any(), any())).thenReturn(Optional.empty());
     return lasIndexDownloader;
   }
 

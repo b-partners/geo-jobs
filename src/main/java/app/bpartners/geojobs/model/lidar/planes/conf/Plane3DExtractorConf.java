@@ -97,6 +97,7 @@ public record Plane3DExtractorConf(
                 .build())
         .roofFaceToLidarAlignmentFixerConf(
             RoofFaceToLidarAlignmentFixerConf.builder()
+                .active(false)
                 .minScore(1)
                 .stepAngle(2)
                 .maxStepCount(7)
