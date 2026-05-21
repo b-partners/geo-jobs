@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.lidar.api;
 
+import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
 import static app.bpartners.geojobs.service.GeometrySquareMeterArea.EPSG_2056;
 import static app.bpartners.geojobs.service.GeometrySquareMeterArea.LAMBERT_93;
 import static app.bpartners.geojobs.service.GeometrySquareMeterArea.WGS84;
@@ -79,6 +80,10 @@ public class LidarApiFacade {
   }
 
   public Optional<File> download(String fileUrl) {
+    return download(fileUrl, createTempDirectory());
+  }
+
+  public Optional<File> download(String fileUrl, File directory) {
     if (!isSafeUrl(fileUrl)) {
       log.warn("Unsafe URL blocked: {}", fileUrl);
       return Optional.empty();
@@ -91,7 +96,7 @@ public class LidarApiFacade {
         return Optional.empty();
       }
 
-      var tempFile = File.createTempFile("lidar-", ".laz");
+      var tempFile = File.createTempFile("lidar-", ".laz", directory);
       try (var outputStream = new FileOutputStream(tempFile)) {
         outputStream.write(data);
       }

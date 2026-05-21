@@ -39,6 +39,9 @@ public class RoofFaceToLidarAlignmentFixer
 
   @Override
   public List<Plane3D> apply(DelimitedRoofPoints delimitedRoofPoints, List<Plane3D> planes) {
+    if (true) {
+      return planes;
+    }
     var roofFaceWithMaxAreaIndex = getRoofFaceWithMaxAreaIndex(planes);
     var refItem = delimitedRoofPoints.getItems()[roofFaceWithMaxAreaIndex];
     var refPoints = refItem.getPoints();

@@ -39,7 +39,7 @@ public class LasRoofsPointsExtractor
     this.pointsExtractorFromOneUrl = new LasRoofPointsExtractorFromOneUrl(lidarApi);
   }
 
-  private static final double ROOF_FACES_BUFFER = 3;
+  private static final double ROOF_FACES_BUFFER = 0;
   private static final int MIN_BATIMENT_POINTS_COUNT = 10;
 
   @Override
