@@ -11,7 +11,7 @@ import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.lidar.LasFileCleaner;
 import app.bpartners.geojobs.service.lidar.LasRoofPointsExtractorFromOneUrl;
 import app.bpartners.geojobs.service.lidar.LasRoofsPointsExtractor;
-import app.bpartners.geojobs.service.lidar.api.LasIndexDownloader;
+import app.bpartners.geojobs.service.lidar.api.LasIndexApi;
 import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
 import app.bpartners.geojobs.service.lidar.api.SwissBoundaryChecker;
 import java.io.File;
@@ -22,7 +22,8 @@ public class LasRoofsPointsExtractorCreator {
   private static final GeometrySquareMeterArea projector = new GeometrySquareMeterArea();
 
   public static LasRoofsPointsExtractor create(LidarApiFacade lidarApi) {
-    return new LasRoofsPointsExtractor(lidarApi, projector, swissBoundaryCheckerMock());
+    return new LasRoofsPointsExtractor(
+        lasIndexApiMock(), lidarApi, projector, swissBoundaryCheckerMock());
   }
 
   public static LasRoofsPointsExtractor create(String url, Set<Geometry> geometries) {
@@ -67,14 +68,14 @@ public class LasRoofsPointsExtractorCreator {
 
   private static LasRoofPointsExtractorFromOneUrl fromOneUrl(LidarApiFacade lidarApi) {
     var lasFileCleaner = lasFileCleanerMock();
-    var lasIndexDownloader = lasIndexDownloaderMock();
-    return new LasRoofPointsExtractorFromOneUrl(lidarApi, lasFileCleaner, lasIndexDownloader);
+    var lasIndexApi = lasIndexApiMock();
+    return new LasRoofPointsExtractorFromOneUrl(lasIndexApi, lidarApi, lasFileCleaner);
   }
 
-  private static LasIndexDownloader lasIndexDownloaderMock() {
-    var lasIndexDownloader = mock(LasIndexDownloader.class);
-    when(lasIndexDownloader.download(any(), any(), any())).thenReturn(Optional.empty());
-    return lasIndexDownloader;
+  private static LasIndexApi lasIndexApiMock() {
+    var lasIndexApi = mock(LasIndexApi.class);
+    when(lasIndexApi.download(any(), any())).thenReturn(Optional.empty());
+    return lasIndexApi;
   }
 
   private static LasFileCleaner lasFileCleanerMock() {

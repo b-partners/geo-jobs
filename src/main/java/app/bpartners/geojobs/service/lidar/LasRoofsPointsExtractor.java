@@ -7,10 +7,12 @@ import app.bpartners.geojobs.model.lidar.planes.model.DelimitedRoofPoints;
 import app.bpartners.geojobs.model.lidar.planes.model.LasRoofDelimitationType;
 import app.bpartners.geojobs.model.lidar.planes.model.RoofPointsDelimitationTransformer;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
+import app.bpartners.geojobs.service.lidar.api.LasIndexApi;
 import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
 import app.bpartners.geojobs.service.lidar.api.SwissBoundaryChecker;
 import java.util.*;
 import java.util.function.BiFunction;
+import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Envelope;
@@ -19,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Slf4j
+@Builder
 @Component
 @RequiredArgsConstructor
 public class LasRoofsPointsExtractor
@@ -30,13 +33,14 @@ public class LasRoofsPointsExtractor
 
   @Autowired
   public LasRoofsPointsExtractor(
+      LasIndexApi lasIndexApi,
       LidarApiFacade lidarApi,
       GeometrySquareMeterArea projector,
       SwissBoundaryChecker swissBoundaryChecker) {
     this.lidarApi = lidarApi;
     this.projector = projector;
     this.swissBoundaryChecker = swissBoundaryChecker;
-    this.pointsExtractorFromOneUrl = new LasRoofPointsExtractorFromOneUrl(lidarApi);
+    this.pointsExtractorFromOneUrl = new LasRoofPointsExtractorFromOneUrl(lidarApi, lasIndexApi);
   }
 
   private static final double ROOF_FACES_BUFFER = 0;

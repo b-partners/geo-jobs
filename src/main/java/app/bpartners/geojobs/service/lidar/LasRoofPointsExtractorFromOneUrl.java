@@ -6,7 +6,7 @@ import static java.util.stream.Collectors.toSet;
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.planes.model.DelimitedRoofPoints;
 import app.bpartners.geojobs.model.lidar.planes.model.DelimitedRoofPointsItem;
-import app.bpartners.geojobs.service.lidar.api.LasIndexDownloader;
+import app.bpartners.geojobs.service.lidar.api.LasIndexApi;
 import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
 import com.github.mreutegg.laszip4j.LASReader;
 import java.io.File;
@@ -23,14 +23,14 @@ import org.locationtech.jts.geom.Geometry;
 @RequiredArgsConstructor
 public class LasRoofPointsExtractorFromOneUrl
     implements BiFunction<String, Set<DelimitedRoofPoints>, Set<DelimitedRoofPoints>> {
+  private final LasIndexApi lasIndexApi;
   private final LidarApiFacade lidarApi;
   private final LasFileCleaner lasFileCleaner;
-  private final LasIndexDownloader lasIndexDownloader;
 
-  public LasRoofPointsExtractorFromOneUrl(LidarApiFacade lidarApi) {
+  public LasRoofPointsExtractorFromOneUrl(LidarApiFacade lidarApi, LasIndexApi lasIndexApi) {
     this.lidarApi = lidarApi;
+    this.lasIndexApi = lasIndexApi;
     this.lasFileCleaner = new LasFileCleaner();
-    this.lasIndexDownloader = new LasIndexDownloader();
   }
 
   private static final short ROOF_LIDAR_CLASS_VALUE = 6;
@@ -101,8 +101,7 @@ public class LasRoofPointsExtractorFromOneUrl
   private Optional<File> downloadLasAndIndexFiles(String fileUrl, File directory) {
     try {
       var optionalFile = lidarApi.download(fileUrl, directory);
-      optionalFile.ifPresent(
-          lasFile -> this.lasIndexDownloader.download(lasFile, fileUrl, directory));
+      optionalFile.ifPresent(lasFile -> this.lasIndexApi.download(lasFile, fileUrl));
       return optionalFile;
     } catch (Exception e) {
       log.error("Failed to download lasFile or it's LasIndex fileUrl={}", fileUrl, e);
