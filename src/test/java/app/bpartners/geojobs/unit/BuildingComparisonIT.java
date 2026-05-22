@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
+import app.bpartners.geojobs.model.geometry.RoofDetails;
 import app.bpartners.geojobs.service.PolygonInsideCircleDistanceComputer;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.google.geocoding.GoogleBuildingFinder;
@@ -20,6 +21,7 @@ import app.bpartners.geojobs.utils.BuildingComparisonCSVLogger;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
@@ -59,9 +61,52 @@ public class BuildingComparisonIT {
       new OsmBuildingFinder(new NominatimClient(objectMapper), geometryConverter, objectMapper);
   GoogleBuildingFinder googleBuildingFinder =
       new GoogleBuildingFinder(
-          new GoogleGeocodingClientApi(restTemplate, GOOGLE_API_KEY), objectMapper);
+          new GoogleGeocodingClientApi(restTemplate, GOOGLE_API_KEY),
+          rnbBuildingFinder,
+          objectMapper);
   private final BuildingComparisonCSVLogger csvLogger =
       new BuildingComparisonCSVLogger(OUTPUT_PATH);
+
+  @Test
+  @SneakyThrows
+  void retrieve_building_from_polygon_using_polygon() {
+    List<List<BigDecimal>> polygonCoordinates = secondPolygonTest();
+    var buildingDetails = googleBuildingFinder.retrieveRoofPolygonsFrom(polygonCoordinates);
+
+    var actual = buildingDetails.stream().map(RoofDetails::feature).toList();
+
+    assertNotNull(actual);
+    log.info("actual: {}", objectMapper.writeValueAsString(actual));
+  }
+
+  private List<List<BigDecimal>> secondPolygonTest() {
+    return List.of(
+        List.of(new BigDecimal("2.254558097634046"), new BigDecimal("49.875820759711871")),
+        List.of(new BigDecimal("2.257632082633037"), new BigDecimal("49.875167223416859")),
+        List.of(new BigDecimal("2.258139131705036"), new BigDecimal("49.873002321264657")),
+        List.of(new BigDecimal("2.256174316551041"), new BigDecimal("49.871184545448159")),
+        List.of(new BigDecimal("2.251547493769054"), new BigDecimal("49.868529244331178")),
+        List.of(new BigDecimal("2.24951929748106"), new BigDecimal("49.869591382295397")),
+        List.of(new BigDecimal("2.248695342739063"), new BigDecimal("49.870408395605082")),
+        List.of(new BigDecimal("2.248600271038063"), new BigDecimal("49.87108242118142")),
+        List.of(new BigDecimal("2.24964605974906"), new BigDecimal("49.872552989788332")),
+        List.of(new BigDecimal("2.250660157893057"), new BigDecimal("49.873043169373389")),
+        List.of(new BigDecimal("2.251389040934055"), new BigDecimal("49.873431224683088")),
+        List.of(new BigDecimal("2.251769327738054"), new BigDecimal("49.873635463067323")),
+        List.of(new BigDecimal("2.254558097634046"), new BigDecimal("49.875820759711871")));
+  }
+
+  private List<List<BigDecimal>> firstPolygonCoordinated() {
+    return List.of(
+        List.of(new BigDecimal("2.572652738062408"), new BigDecimal("49.64909392396523")),
+        List.of(new BigDecimal("2.574871077752398"), new BigDecimal("49.64934014655136")),
+        List.of(new BigDecimal("2.575162630968797"), new BigDecimal("49.647961284027616")),
+        List.of(new BigDecimal("2.574845725298798"), new BigDecimal("49.64789562293323")),
+        List.of(new BigDecimal("2.574313323773201"), new BigDecimal("49.647821754096164")),
+        List.of(new BigDecimal("2.573552750165204"), new BigDecimal("49.647788923465946")),
+        List.of(new BigDecimal("2.572614709382007"), new BigDecimal("49.64789562293323")),
+        List.of(new BigDecimal("2.572652738062408"), new BigDecimal("49.64909392396523")));
+  }
 
   @SneakyThrows
   @Test
