@@ -18,9 +18,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 @Slf4j
+@Primary
 @Component
 @RequiredArgsConstructor
 public class GoogleBuildingFinder implements BuildingFinder {
