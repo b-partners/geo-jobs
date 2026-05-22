@@ -7,11 +7,11 @@ import app.bpartners.geojobs.model.geometry.RoofDetails;
 import app.bpartners.geojobs.service.BuildingFinder;
 import app.bpartners.geojobs.service.google.geocoding.api.GeoJsonFeature;
 import app.bpartners.geojobs.service.google.geocoding.api.GoogleGeocodingClientApi;
+import app.bpartners.geojobs.service.gouv.fr.rnb.RnbBuildingFinder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +25,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class GoogleBuildingFinder implements BuildingFinder {
   private final GoogleGeocodingClientApi geocodingClientApi;
+  private final RnbBuildingFinder rnbBuildingFinder;
   private final ObjectMapper objectMapper;
 
   @Override
@@ -44,10 +45,12 @@ public class GoogleBuildingFinder implements BuildingFinder {
     return getMultiPolygonFromAddress(address);
   }
 
+  @SneakyThrows
   @Override
   public List<RoofDetails> retrieveRoofPolygonsFrom(
       List<List<BigDecimal>> lonLatPolygonCoordinates) {
-    throw new UnsupportedOperationException("Not implemented yet");
+    // Use RNB for roof polygons retrieving for now
+    return rnbBuildingFinder.retrieveRoofPolygonsFrom(lonLatPolygonCoordinates);
   }
 
   @SneakyThrows
