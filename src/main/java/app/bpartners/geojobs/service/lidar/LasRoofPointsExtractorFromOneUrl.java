@@ -10,6 +10,7 @@ import app.bpartners.geojobs.service.lidar.api.LasIndexApi;
 import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
 import com.github.mreutegg.laszip4j.LASReader;
 import java.io.File;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Optional;
@@ -70,10 +71,18 @@ public class LasRoofPointsExtractorFromOneUrl
           break;
       }
     }
-
     log.info("Finished reading lasPoints from: {}", file.getPath());
-    this.lasFileCleaner.clean(lasDirectory);
+    clean(file, lasDirectory);
     return result;
+  }
+
+  private void clean(File file, File directory) {
+    try {
+      Files.deleteIfExists(file.toPath());
+      this.lasFileCleaner.clean(directory);
+    } catch (Exception e) {
+      log.error("Failed to clean", e);
+    }
   }
 
   private static LASReader getSubReader(Geometry geometry, LASReader reader) {

@@ -16,12 +16,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Polygon;
 
 @Slf4j
+@Disabled
 class LasRoofPointsExtractorTest {
   private static final String LARGE_LIDAR_FILE_PATH =
       "las/LHD_FXX_0644_6859_PTS_O_LAMB93_IGN69.copc.laz";

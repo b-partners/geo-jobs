@@ -104,7 +104,9 @@ public class LidarApiFacade {
       FileWriter.write(outputPath, data);
 
       log.info("Finished downloading {}", fileUrl);
-      return Optional.of(outputPath.toFile());
+      var file = outputPath.toFile();
+      file.deleteOnExit();
+      return Optional.of(file);
     } catch (HttpClientErrorException.NotFound e) {
       log.warn("File not found (404): {}", fileUrl);
       return Optional.empty();
