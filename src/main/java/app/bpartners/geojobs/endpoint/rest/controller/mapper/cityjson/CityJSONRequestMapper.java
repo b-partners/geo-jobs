@@ -81,6 +81,7 @@ public class CityJSONRequestMapper {
             cityJSONRequest.getComplexityFactor() == null
                 ? null
                 : BigDecimal.valueOf(cityJSONRequest.getComplexityFactor()))
+        .knn(cityJSONRequest.getKnn())
         .cityJsonFileUrls(restCityJsons);
   }
 
@@ -157,6 +158,7 @@ public class CityJSONRequestMapper {
             createCityJSONRequest.getComplexityFactor() == null
                 ? null
                 : createCityJSONRequest.getComplexityFactor().floatValue())
+        .knn(createCityJSONRequest.getKnn())
         .build();
   }
 }
