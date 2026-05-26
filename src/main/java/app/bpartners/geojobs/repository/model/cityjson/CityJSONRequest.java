@@ -70,6 +70,9 @@ public class CityJSONRequest implements Serializable {
   @Column(name = "complexity_factor")
   private Float complexityFactor;
 
+  @Column(name = "knn")
+  private Integer knn;
+
   @PrePersist
   protected void onCreate() {
     this.creationDatetime = now().truncatedTo(ChronoUnit.MICROS);
