@@ -24,6 +24,7 @@ import app.bpartners.geojobs.service.cityjson.model.object.CityJsonIO;
 import app.bpartners.geojobs.service.cityjson.texture.CityJsonTextureComputer;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
+import app.bpartners.geojobs.service.lidar.api.SwissBoundaryChecker;
 import app.bpartners.geojobs.service.roofer3dbag.Roofer3DBagApiClient;
 import app.bpartners.geojobs.service.roofer3dbag.model.CityJsonGenerationRequest;
 import app.bpartners.geojobs.service.roofer3dbag.model.CityJsonGenerationResponse;
@@ -51,7 +52,7 @@ class CityJSON3DBagRooferProcessorTest {
   CoordinateTransformer coordinateTransformer = new CoordinateTransformer();
   GeometryConverter geometryConverter = new GeometryConverter();
   CityJsonTextureComputer textureComputerMock = mock(CityJsonTextureComputer.class);
-
+  SwissBoundaryChecker swissBoundaryCheckerMock = mock(SwissBoundaryChecker.class);
   CityJSON3DBagRooferProcessor subject =
       new CityJSON3DBagRooferProcessor(
           bucketComponentMock,
@@ -61,7 +62,8 @@ class CityJSON3DBagRooferProcessorTest {
           fileWriterMock,
           coordinateTransformer,
           geometryConverter,
-          textureComputerMock);
+          textureComputerMock,
+          swissBoundaryCheckerMock);
 
   @SneakyThrows
   @Test
