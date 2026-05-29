@@ -71,7 +71,8 @@ public class UsureAreaRateComputer extends AreaRateComputer {
   }
 
   public double getUsureAreaRate() {
-    return (compute(USURE_LEGER) + compute(USURE_IMPORTANTE)) * 100;
+    var computedAreaRate = (compute(USURE_LEGER) + compute(USURE_IMPORTANTE)) * 100;
+    return Math.min(computedAreaRate, 100.0);
   }
 
   public double getGlobalRate() {

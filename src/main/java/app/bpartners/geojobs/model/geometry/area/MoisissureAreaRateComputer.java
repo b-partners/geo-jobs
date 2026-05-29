@@ -63,8 +63,10 @@ public class MoisissureAreaRateComputer extends AreaRateComputer {
   }
 
   public double getMoisissureAreaRate() {
-    return (compute(MOISISSURE_NOIRCIE) + compute(MOISISSURE_CLAIR) + compute(MOISISSURE_COULEUR))
-        * 100;
+    var computedAreaRate =
+        (compute(MOISISSURE_NOIRCIE) + compute(MOISISSURE_CLAIR) + compute(MOISISSURE_COULEUR))
+            * 100;
+    return Math.min(computedAreaRate, 100.0);
   }
 
   @Override
