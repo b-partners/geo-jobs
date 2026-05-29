@@ -76,7 +76,8 @@ public class HumiditeAreaRateComputer extends AreaRateComputer {
   }
 
   public double getHumidityAreaRate() {
-    return (compute(HUMIDITE_CLAIR) + compute(HUMIDITE_INTENSE)) * 100;
+    var computedAreaRate = (compute(HUMIDITE_CLAIR) + compute(HUMIDITE_INTENSE)) * 100;
+    return Math.min(computedAreaRate, 100.0);
   }
 
   @Override
