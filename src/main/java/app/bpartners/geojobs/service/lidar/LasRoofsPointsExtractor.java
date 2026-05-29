@@ -12,11 +12,13 @@ import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
 import app.bpartners.geojobs.service.lidar.api.SwissBoundaryChecker;
 import java.util.*;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.util.GeometryFixer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -49,12 +51,17 @@ public class LasRoofsPointsExtractor
   @Override
   public PointsExtractionResult apply(LasRoofDelimitationType type, Set<Geometry> roofsEPSG4326) {
     try {
-      var lidarFilesUrl = lidarApi.getUniqueLidarFilesUrls(roofsEPSG4326);
+      Set<Geometry> roofsEPSG4326Validated =
+          roofsEPSG4326.stream()
+              .map(geometry -> geometry.isValid() ? geometry : GeometryFixer.fix(geometry))
+              .collect(Collectors.toSet());
+      var lidarFilesUrl = lidarApi.getUniqueLidarFilesUrls(roofsEPSG4326Validated);
+
       if (lidarFilesUrl.isEmpty()) {
         return new PointsExtractionResult(new HashMap<>());
       }
 
-      var delimitations = emptyDelimitedPoints(type, roofsEPSG4326);
+      var delimitations = emptyDelimitedPoints(type, roofsEPSG4326Validated);
       var pointsPerFiles = getPointsFromFiles(lidarFilesUrl, delimitations);
       var all = new HashSet<>(pointsPerFiles);
       all.add(new HashSet<>(delimitations.values()));
