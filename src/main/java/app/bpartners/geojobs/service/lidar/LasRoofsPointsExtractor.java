@@ -12,11 +12,16 @@ import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
 import app.bpartners.geojobs.service.lidar.api.SwissBoundaryChecker;
 import java.util.*;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.MultiPolygon;
+import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.util.GeometryFixer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -49,12 +54,15 @@ public class LasRoofsPointsExtractor
   @Override
   public PointsExtractionResult apply(LasRoofDelimitationType type, Set<Geometry> roofsEPSG4326) {
     try {
-      var lidarFilesUrl = lidarApi.getUniqueLidarFilesUrls(roofsEPSG4326);
+      Set<Geometry> roofsEPSG4326Validated =
+          roofsEPSG4326.stream().map(this::validateAndFix).collect(Collectors.toSet());
+      var lidarFilesUrl = lidarApi.getUniqueLidarFilesUrls(roofsEPSG4326Validated);
+
       if (lidarFilesUrl.isEmpty()) {
         return new PointsExtractionResult(new HashMap<>());
       }
 
-      var delimitations = emptyDelimitedPoints(type, roofsEPSG4326);
+      var delimitations = emptyDelimitedPoints(type, roofsEPSG4326Validated);
       var pointsPerFiles = getPointsFromFiles(lidarFilesUrl, delimitations);
       var all = new HashSet<>(pointsPerFiles);
       all.add(new HashSet<>(delimitations.values()));
@@ -68,6 +76,24 @@ public class LasRoofsPointsExtractor
       log.error("Failed to retrieve lidar data", e);
       throw e;
     }
+  }
+
+  private Geometry validateAndFix(Geometry geometry) {
+    log.info("Check and validate geometry={}", geometry);
+    if (geometry instanceof MultiPolygon multiPolygon) {
+      Polygon[] polygons =
+          IntStream.range(0, multiPolygon.getNumGeometries())
+              .mapToObj(i -> (Polygon) multiPolygon.getGeometryN(i))
+              .map(p -> p.isValid() ? p : (Polygon) GeometryFixer.fix(p))
+              .toArray(Polygon[]::new);
+      return geometry.getFactory().createMultiPolygon(polygons);
+    }
+
+    if (geometry instanceof Polygon polygon) {
+      return polygon.isValid() ? polygon : GeometryFixer.fix(polygon);
+    }
+
+    return geometry;
   }
 
   private static void validateRoofPointsCount(Map<Envelope, DelimitedRoofPoints> delimitedPoints) {
