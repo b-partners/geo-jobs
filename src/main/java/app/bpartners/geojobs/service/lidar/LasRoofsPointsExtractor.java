@@ -49,7 +49,7 @@ public class LasRoofsPointsExtractor
   }
 
   private static final double ROOF_FACES_BUFFER = 0;
-  private static final int MIN_BATIMENT_POINTS_COUNT = 10;
+  private static final int MIN_BATIMENT_POINTS_COUNT = 3;
 
   @Override
   public PointsExtractionResult apply(LasRoofDelimitationType type, Set<Geometry> roofsEPSG4326) {
