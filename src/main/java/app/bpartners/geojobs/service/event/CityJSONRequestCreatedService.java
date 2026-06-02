@@ -87,6 +87,7 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
   private CityJSON toCityJSON(CityJSONRequest request, PointsExtractionResult result) {
     var filename = String.format("%s.json", request.getId());
     var fileKey = String.format("city_jsons/%s", filename);
+    log.info("PointsExtractionResult={}", result.data().values());
     var file = cityJsonProcessor.apply(filename, result);
 
     var texturedFile = textureComputer.applyTexture(request, file);

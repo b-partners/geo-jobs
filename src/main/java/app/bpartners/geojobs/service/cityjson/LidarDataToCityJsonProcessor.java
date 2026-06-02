@@ -59,14 +59,14 @@ public class LidarDataToCityJsonProcessor
   }
 
   public File apply(String id, PointsExtractionResult result, Plane3DExtractorConf conf) {
+    var buildingsData =
+        result.data().values().stream().map(roof -> toBuildingData(roof, conf)).toList();
+
     try {
-      var buildingsData =
-          result.data().values().stream().map(roof -> toBuildingData(roof, conf)).toList();
       var cityJsonFile = cityJsonFactory.make(id, id, buildingsData);
       log.info("CityJSON file saved at {}", cityJsonFile.getAbsolutePath());
       return cityJsonFile;
     } catch (CityJsonException e) {
-      log.info("Error occured on = {}, actual error={}", result.data().values(), e.getMessage());
       throw new RuntimeException(e);
     }
   }
