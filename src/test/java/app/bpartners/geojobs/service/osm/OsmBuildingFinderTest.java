@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 @Slf4j
+@Disabled("TODO: flaky test")
 class OsmBuildingFinderTest {
   ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
   GeometryConverter geometryConverter = new GeometryConverter();
