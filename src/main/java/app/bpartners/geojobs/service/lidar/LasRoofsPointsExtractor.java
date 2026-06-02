@@ -99,11 +99,12 @@ public class LasRoofsPointsExtractor
   private static void validateRoofPointsCount(Map<Envelope, DelimitedRoofPoints> delimitedPoints) {
     for (var delimitation : delimitedPoints.values()) {
       var roofPoints = delimitation.getPoints();
-      if (roofPoints.size() < MIN_BATIMENT_POINTS_COUNT) {
-        throw new IllegalStateException(
-            "Roof found but no BATIMENT points detected for one of the buildings. "
-                + "Lidar data exists but roof analysis failed for this roof.");
-      }
+      log.info("RoofPoints (delimitation){}", roofPoints);
+      //      if (roofPoints.size() < MIN_BATIMENT_POINTS_COUNT) {
+      //        throw new IllegalStateException(
+      //            "Roof found but no BATIMENT points detected for one of the buildings. "
+      //                + "Lidar data exists but roof analysis failed for this roof.");
+      //      }
     }
   }
 
