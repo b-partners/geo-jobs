@@ -4,7 +4,6 @@ import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFacto
 
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.model.geometry.RoofDetails;
-import app.bpartners.geojobs.service.BuildingFinder;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.osm.model.BuildingMatch;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -24,7 +23,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class OsmBuildingFinder implements BuildingFinder {
+public class OsmBuildingFinder {
   private static final int RADIUS_METERS = 30;
   private final NominatimClient nominatimClient;
   private final GeometryConverter geometryConverter;
@@ -149,13 +148,11 @@ public class OsmBuildingFinder implements BuildingFinder {
     }
   }
 
-  @Override
   public MultiPolygon getBuildingMultiPolygon(
       app.bpartners.geojobs.endpoint.rest.model.Point point) {
     return getBuildingMultiPolygon(point.getCoordinates());
   }
 
-  @Override
   public MultiPolygon getBuildingMultiPolygon(List<BigDecimal> coordinates) {
     var longitude = coordinates.get(0).doubleValue();
     var latitude = coordinates.get(1).doubleValue();
@@ -175,7 +172,6 @@ public class OsmBuildingFinder implements BuildingFinder {
         "Unable to convert obtained feature into MultiPolygon : " + geometryInstance.getClass());
   }
 
-  @Override
   public MultiPolygon getBuildingMultiPolygon(String address) {
     var buildingFeature = geocodeAddress(address);
     if (buildingFeature == null) {
@@ -192,7 +188,6 @@ public class OsmBuildingFinder implements BuildingFinder {
         "Unable to convert obtained feature into MultiPolygon : " + geometryInstance.getClass());
   }
 
-  @Override
   public List<RoofDetails> retrieveRoofPolygonsFrom(
       List<List<BigDecimal>> lonLatPolygonCoordinates) {
     throw new UnsupportedOperationException("Not implemented yet");

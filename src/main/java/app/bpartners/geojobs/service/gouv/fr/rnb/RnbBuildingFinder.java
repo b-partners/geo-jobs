@@ -5,7 +5,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import app.bpartners.geojobs.endpoint.rest.model.Point;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.model.geometry.RoofDetails;
-import app.bpartners.geojobs.service.BuildingFinder;
 import app.bpartners.geojobs.service.PolygonInsideCircleDistanceComputer;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.google.maps.GeoCodeApi;
@@ -32,7 +31,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class RnbBuildingFinder implements BuildingFinder {
+public class RnbBuildingFinder {
   private final String rnbApiUrl = "https://rnb-api.beta.gouv.fr";
   private final RestTemplate restTemplate = new RestTemplate();
   private static final int DEFAULT_POLYGON_SIZE_IN_METERS = 100;
@@ -107,7 +106,6 @@ public class RnbBuildingFinder implements BuildingFinder {
     return new HttpEntity<>(headers);
   }
 
-  @Override
   public List<RoofDetails> retrieveRoofPolygonsFrom(
       List<List<BigDecimal>> lonLatPolygonCoordinates) {
     var jtsMultiPolygon = geometryConverter.apply(List.of(List.of((lonLatPolygonCoordinates))));
@@ -200,7 +198,6 @@ public class RnbBuildingFinder implements BuildingFinder {
         .toList();
   }
 
-  @Override
   public MultiPolygon getBuildingMultiPolygon(Point point) {
     if (point == null) {
       return null;
@@ -208,7 +205,6 @@ public class RnbBuildingFinder implements BuildingFinder {
     return getBuildingMultiPolygon(point.getCoordinates());
   }
 
-  @Override
   public MultiPolygon getBuildingMultiPolygon(List<BigDecimal> coordinates) {
     var longitude = coordinates.getFirst();
     var latitude = coordinates.getLast();
@@ -219,7 +215,6 @@ public class RnbBuildingFinder implements BuildingFinder {
     return geometryConverter.apply(multiPolygonCoordinates);
   }
 
-  @Override
   public MultiPolygon getBuildingMultiPolygon(String address) {
     GeoPosition geoPosition;
     try {
