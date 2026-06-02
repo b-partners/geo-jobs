@@ -58,7 +58,36 @@ public class GeometryUtilities {
   }
 
   public static Polygon project(Plane3D plane, Polygon polygon) {
-    return zSetter(polygon, coordinate -> plane.zAt(coordinate.getX(), coordinate.getY()));
+    Polygon projected =
+        zSetter(polygon, coordinate -> plane.zAt(coordinate.getX(), coordinate.getY()));
+
+    return (Polygon) forceCloseRings(projected);
+  }
+
+  private static Geometry forceCloseRings(Polygon polygon) {
+    GeometryFactory gf = polygon.getFactory();
+
+    LinearRing shell = fixRing(polygon.getExteriorRing(), gf);
+
+    LinearRing[] holes = new LinearRing[polygon.getNumInteriorRing()];
+    for (int i = 0; i < holes.length; i++) {
+      holes[i] = fixRing(polygon.getInteriorRingN(i), gf);
+    }
+
+    return gf.createPolygon(shell, holes);
+  }
+
+  private static LinearRing fixRing(LineString ring, GeometryFactory gf) {
+    Coordinate[] coords = ring.getCoordinates();
+
+    if (!coords[0].equals2D(coords[coords.length - 1])) {
+      Coordinate[] closed = new Coordinate[coords.length + 1];
+      System.arraycopy(coords, 0, closed, 0, coords.length);
+      closed[coords.length] = coords[0];
+      coords = closed;
+    }
+
+    return gf.createLinearRing(coords);
   }
 
   public static Coordinate[] project(Plane3D plane, Coordinate[] coordinates) {
