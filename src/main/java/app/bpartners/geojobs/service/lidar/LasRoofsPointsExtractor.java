@@ -1,7 +1,6 @@
 package app.bpartners.geojobs.service.lidar;
 
 import static app.bpartners.geojobs.service.GeometrySquareMeterArea.*;
-import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.geojobs.model.lidar.planes.model.DelimitedRoofPoints;
 import app.bpartners.geojobs.model.lidar.planes.model.LasRoofDelimitationType;
@@ -66,7 +65,6 @@ public class LasRoofsPointsExtractor
       var pointsPerFiles = getPointsFromFiles(lidarFilesUrl, delimitations);
       var all = new ArrayList<>(pointsPerFiles);
       all.add(new HashSet<>(delimitations.values()));
-
       var merged = mergeSameRoofEnvelope(all);
 
       validateRoofPointsCount(merged);
@@ -99,12 +97,12 @@ public class LasRoofsPointsExtractor
   private static void validateRoofPointsCount(Map<Envelope, DelimitedRoofPoints> delimitedPoints) {
     for (var delimitation : delimitedPoints.values()) {
       var roofPoints = delimitation.getPoints();
-      log.info("RoofPoints (delimitation){}", roofPoints);
-      //      if (roofPoints.size() < MIN_BATIMENT_POINTS_COUNT) {
-      //        throw new IllegalStateException(
-      //            "Roof found but no BATIMENT points detected for one of the buildings. "
-      //                + "Lidar data exists but roof analysis failed for this roof.");
-      //      }
+      log.info("RoofPoints (delimitation) size = {}", roofPoints.size());
+      if (roofPoints.size() < MIN_BATIMENT_POINTS_COUNT) {
+        throw new IllegalStateException(
+            "Roof found but no BATIMENT points detected for one of the buildings. "
+                + "Lidar data exists but roof analysis failed for this roof.");
+      }
     }
   }
 
@@ -115,14 +113,13 @@ public class LasRoofsPointsExtractor
     for (var roofDataFromOneFile : roofsDataFromFiles) {
       for (var delimitation : roofDataFromOneFile) {
         var key = delimitation.getOriginalInEPSG4336().getEnvelopeInternal();
-        key = normalize(key);
         merged.merge(key, delimitation, DelimitedRoofPoints::merge);
       }
     }
     return merged;
   }
 
-  private Set<Set<DelimitedRoofPoints>> getPointsFromFiles(
+  private List<Set<DelimitedRoofPoints>> getPointsFromFiles(
       Map<String, Set<Geometry>> filesUrls, Map<Envelope, DelimitedRoofPoints> delimitations) {
     return filesUrls.entrySet().parallelStream()
         .map(
@@ -132,7 +129,7 @@ public class LasRoofsPointsExtractor
               var toProcess = getDelimitationsToProcess(delimitations, roofsInLocalCRS);
               return pointsExtractorFromOneUrl.apply(fileUrl, toProcess);
             })
-        .collect(toSet());
+        .collect(Collectors.toList());
   }
 
   private Set<DelimitedRoofPoints> getDelimitationsToProcess(
