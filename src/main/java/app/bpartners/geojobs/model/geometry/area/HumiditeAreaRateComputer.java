@@ -19,7 +19,7 @@ import org.locationtech.jts.geom.Polygon;
 
 public class HumiditeAreaRateComputer extends AreaRateComputer {
   static final double WEIGHT = 1.0;
-  private final FeatureMapper featureMapper = new FeatureMapper(new GeometryConverter(null, null));
+  private final FeatureMapper featureMapper = new FeatureMapper(new GeometryConverter(), null);
   private final double roofArea;
   private final DetectedTile tile;
   private final Collection<MultiPolygonObjectType> multiPolygonObjectTypes;

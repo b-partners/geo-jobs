@@ -11,6 +11,7 @@ import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
+import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.bucket.BucketConf;
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.DetectionRepository;
@@ -49,7 +50,7 @@ class TileDetectionTaskConsumerIT {
   CustomBucketComponent customBucketComponentMock = mock();
   RestTemplate restTemplateMock = mock();
 
-  GeometryConverter geometryConverter = new GeometryConverter(null, null);
+  GeometryConverter geometryConverter = new GeometryConverter();
   ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
   DetectionResponseAggregator detectionResponseAggregator = new DetectionResponseAggregator();
   TileValidator tileValidator = new TileValidator();
@@ -60,13 +61,15 @@ class TileDetectionTaskConsumerIT {
   DetectionMaskFromTileRetriever maskRetriever =
       new DetectionMaskFromTileRetriever(maskCreator, tilePolygonIntersection);
   DetectionMapper detectionMapper = new DetectionMapper(tileValidator);
+  BucketComponent bucketComponentMock = mock();
   HttpApiTileObjectDetector objectsDetector =
       new HttpApiTileObjectDetector(
           objectMapper,
           customBucketComponentMock,
           "dummyApiUrl",
           tileObjectDetectorConfMock,
-          detectionResponseAggregator);
+          detectionResponseAggregator,
+          bucketComponentMock);
   RoofCoveringDetector roofCoveringDetector =
       new RoofCoveringDetector(
           objectMapper, restTemplateMock, "dummyUrl", customBucketComponentMock);
