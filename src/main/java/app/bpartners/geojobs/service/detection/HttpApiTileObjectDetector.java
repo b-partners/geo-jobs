@@ -57,7 +57,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
 
   @SneakyThrows
   @Override
-  public DetectionResponse apply(
+  public DetectionResponseV2 apply(
       TileDetectionTask tileDetectionTask,
       File mask,
       List<DetectableObjectConfiguration> detectableObjectConfigurations) {
@@ -101,8 +101,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
         mask == null ? null : Base64.getEncoder().encodeToString(readFileToByteArray(mask));
 
     var detectionPayloadBuilder =
-        DetectionPayload.builder()
-            .projectName(tileDetectionTask.getJobId())
+        DetectionPayloadV2.builder()
             .fileName(tileImageFile.getName())
             .base64ImgData(base64ImgData)
             .base64MaskData(base64MaskData);
@@ -134,11 +133,11 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
                     throw new RuntimeException(e);
                   }
                   log.info("Attempting to call API for detection {} ", apiUrl);
-                  ResponseEntity<DetectionResponse> responseEntity;
+                  ResponseEntity<DetectionResponseV2> responseEntity;
                   try {
                     responseEntity =
                         restTemplate.postForEntity(
-                            uriBuilder.toUriString(), request, DetectionResponse.class);
+                            uriBuilder.toUriString(), request, DetectionResponseV2.class);
                   } catch (HttpStatusCodeException e) {
                     log.error(
                         "Error while calling API for detection {} with exception {}",
