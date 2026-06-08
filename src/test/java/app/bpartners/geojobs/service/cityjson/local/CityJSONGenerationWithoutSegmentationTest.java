@@ -12,7 +12,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-@Disabled
 @Slf4j
 class CityJSONGenerationWithoutSegmentationTest {
   private static final File BASE_OUTPUT_FOLDER = createTempDirectory();

@@ -12,7 +12,9 @@ import app.bpartners.geojobs.model.lidar.planes.postprocessing.SkinnyArmPointFil
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.function.BiFunction;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class OnePlane3DExtractor
     implements BiFunction<
         Set<LasPointGeometry>, Plane3DExtractionStepExporter, OnePlane3DExtractor.Result> {
@@ -141,6 +143,11 @@ public class OnePlane3DExtractor
   }
 
   private boolean isNotValid(Plane3D plane) {
+    var maxSlope = conf.planeConf().maxSlope();
+    if (maxSlope <= 0) {
+      log.warn("Plane3DExtractorConf.PlaneConf.maxSlope is not set");
+      return false;
+    }
     return plane.getSlopeInDegrees().getValue() > conf.planeConf().maxSlope();
   }
 

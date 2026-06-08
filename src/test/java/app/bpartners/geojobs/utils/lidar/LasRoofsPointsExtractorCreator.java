@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.utils.lidar;
 
+import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
 import static app.bpartners.geojobs.service.GeometrySquareMeterArea.LAMBERT_93;
 import static app.bpartners.geojobs.service.GeometrySquareMeterArea.WGS84;
 import static java.util.Objects.requireNonNull;
@@ -15,6 +16,9 @@ import app.bpartners.geojobs.service.lidar.api.LasIndexApi;
 import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
 import app.bpartners.geojobs.service.lidar.api.SwissBoundaryChecker;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import org.locationtech.jts.geom.Geometry;
 
@@ -51,7 +55,8 @@ public class LasRoofsPointsExtractorCreator {
         });
 
     var filesUrl = new ArrayList<>(geometries.keySet());
-    var filesData = filesUrl.stream().map(LasRoofsPointsExtractorCreator::getResourceFile).toList();
+    var filesData =
+        filesUrl.stream().map(LasRoofsPointsExtractorCreator::getDuplicatedResourceFile).toList();
 
     var lidarApiMock = mock(LidarApiFacade.class);
     when(lidarApiMock.getUniqueLidarFilesUrls(any())).thenReturn(projected);
@@ -88,6 +93,20 @@ public class LasRoofsPointsExtractorCreator {
     var checker = mock(SwissBoundaryChecker.class);
     when(checker.isGeometryInSwiss(any())).thenReturn(false);
     return checker;
+  }
+
+  public static File getDuplicatedResourceFile(String path) {
+    try {
+      File source = getResourceFile(path);
+
+      File copy = new File(createTempDirectory(), source.getName());
+
+      Files.copy(source.toPath(), copy.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+      return copy;
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public static File getResourceFile(String path) {
