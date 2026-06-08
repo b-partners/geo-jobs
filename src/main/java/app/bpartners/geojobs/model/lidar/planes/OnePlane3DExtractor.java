@@ -88,6 +88,9 @@ public class OnePlane3DExtractor
         continue;
       }
 
+      var plane = box.getPlane();
+      if (isNotValid(plane)) continue;
+
       if (!box.isDidInfiniteGrow()) {
         bestModel = box.getPlane();
         bestInliers = new ArrayList<>(inliers);
@@ -135,6 +138,10 @@ public class OnePlane3DExtractor
   private List<LasPointGeometry> getBestXYZCluster(Collection<LasPointGeometry> points) {
     var clusters = xyzPointsCluster.apply(points);
     return clusters.stream().max(Comparator.comparingInt(List::size)).orElseThrow();
+  }
+
+  private boolean isNotValid(Plane3D plane) {
+    return plane.getSlopeInDegrees().getValue() > conf.planeConf().maxSlope();
   }
 
   public record Result(Plane3D plane, Set<LasPointGeometry> outliers) {}
