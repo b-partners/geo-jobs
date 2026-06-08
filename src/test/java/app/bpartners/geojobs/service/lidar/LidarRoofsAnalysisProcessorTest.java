@@ -21,7 +21,6 @@ import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 
-@Disabled("TODO: flaky test")
 @Slf4j
 class LidarRoofsAnalysisProcessorTest {
   private static final LidarRoofsAnalysisProcessorCreator processorCreator =
@@ -33,6 +32,7 @@ class LidarRoofsAnalysisProcessorTest {
     return swissBoundaryChecker;
   }
 
+  @Disabled()
   @Test
   void should_failed_if_batiment_points_count_is_less_than_twenty() {
     var apiMock = mock(LidarApiFacade.class);
