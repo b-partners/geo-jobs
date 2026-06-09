@@ -20,7 +20,6 @@ import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.locationtech.jts.geom.Coordinate;
 import org.springframework.stereotype.Component;
 
-// TODO: refactor
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -29,6 +28,8 @@ public class CityJsonTextureDomainService {
   private static final String DEFAULT_ATTRIBUTE_NAME = "default";
   private static final String TEXTURE_ATTRIBUTE_NAME = "texture";
   private static final String MATERIAL_ATTRIBUTE_NAME = "material";
+  public static final String METADATA_ATTRIBUTE_NAME = "metadata";
+  public static final String REFERENCE_SYSTEM_ATTRIBUTE_NAME = "referenceSystem";
 
   private final ObjectMapper objectMapper;
   private final GeometrySquareMeterArea projector;
@@ -73,8 +74,10 @@ public class CityJsonTextureDomainService {
 
   private static CoordinateReferenceSystem getCoordinateReferenceSystem(ObjectNode json) {
     var crs = LAMBERT_93;
-    if (json.has("metadata") && json.get("metadata").has("referenceSystem")) {
-      var referenceSystem = json.get("metadata").get("referenceSystem").asText();
+    if (json.has(METADATA_ATTRIBUTE_NAME)
+        && json.get(METADATA_ATTRIBUTE_NAME).has(REFERENCE_SYSTEM_ATTRIBUTE_NAME)) {
+      var referenceSystem =
+          json.get(METADATA_ATTRIBUTE_NAME).get(REFERENCE_SYSTEM_ATTRIBUTE_NAME).asText();
       if (referenceSystem.contains("2056")) {
         crs = EPSG_2056;
       } else if (referenceSystem.contains("4326")) {

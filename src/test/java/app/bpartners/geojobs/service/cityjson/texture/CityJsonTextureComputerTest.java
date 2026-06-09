@@ -67,7 +67,9 @@ class CityJsonTextureComputerTest {
 
   @Test
   void switzerland() {
-    var cityjson = getFile("cityjson/texture/inputs/switzerland/Chem. de Conches 44, 1321 Conches, Suisse.json");
+    var cityjson =
+        getFile(
+            "cityjson/texture/inputs/switzerland/Chem. de Conches 44, 1321 Conches, Suisse.json");
     var actual = subject.applyTexture(switzerlandRequest(), cityjson);
 
     assertNotSame(actual, cityjson);
@@ -82,7 +84,11 @@ class CityJsonTextureComputerTest {
             .tileY(186147)
             .imageWidth(3072)
             .imageHeight(3072)
-            .imageUri(getFile("cityjson/texture/inputs/switzerland/Chem. de Conches 44, 1321 Conches, Suisse.jpg").getAbsolutePath())
+            .imageUri(
+                getFile(
+                        "cityjson/texture/inputs/switzerland/Chem. de Conches 44, 1321 Conches,"
+                            + " Suisse.jpg")
+                    .getAbsolutePath())
             .tileImageSizePx(1024)
             .build();
     return CityJSONRequest.builder().textures(List.of(texture)).build();
