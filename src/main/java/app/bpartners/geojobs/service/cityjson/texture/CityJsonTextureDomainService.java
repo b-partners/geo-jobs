@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
 import org.springframework.stereotype.Component;
 
-// TODO: refactor
 @Component
 @RequiredArgsConstructor
 public class CityJsonTextureDomainService {
