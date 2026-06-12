@@ -149,7 +149,7 @@ class TileDetectionTaskConsumerIT {
     var machineDetectedTileCaptor = ArgumentCaptor.forClass(MachineDetectedTile.class);
     verify(machineDetectedTileRepositoryMock, times(1)).save(machineDetectedTileCaptor.capture());
     var actual = machineDetectedTileCaptor.getValue();
-    assertEquals(21, actual.getDetectedObjects().size());
+    assertEquals(50, actual.getDetectedObjects().size());
 
     assertEquals(
         expectedDetectedObjectTypes(),
@@ -164,7 +164,19 @@ class TileDetectionTaskConsumerIT {
 
   private Set<DetectableType> expectedDetectedObjectTypes() {
     return Set.of(
-        ARBRE, MOISISSURE_NOIRCIE, OBSTACLE, MOISISSURE_CLAIR, ESPACE_VERT, VELUX, BATI_TUILES);
+        OBSTACLE,
+        LINE,
+        CHEMINEE,
+        USURE_IMPORTANTE,
+        MOISISSURE_NOIRCIE,
+        PISCINE,
+        BATI_TUILES,
+        VELUX,
+        BATI,
+        ARBRE,
+        MOISISSURE_CLAIR,
+        TROTTOIR,
+        ESPACE_VERT);
   }
 
   @SneakyThrows
