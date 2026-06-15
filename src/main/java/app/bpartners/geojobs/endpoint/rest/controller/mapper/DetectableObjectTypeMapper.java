@@ -254,8 +254,9 @@ public class DetectableObjectTypeMapper {
   }
 
   private List<DetectableObjectType> detectableObjectTypeForStationnementModel() {
-    // TODO: not implemented
-    return new ArrayList<>();
+    var objectTypes = new ArrayList<DetectableObjectType>();
+    objectTypes.add(PARKING);
+    return objectTypes;
   }
 
   public List<DetectableObjectConfiguration> mapDefaultConfigurationsFromModel(
