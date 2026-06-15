@@ -87,6 +87,7 @@ class ZoneDetectionControllerTest {
   ConfigureAddressValidator configureAddressValidatorMock = mock();
   CreateDetectionValidator createDetectionValidatorMock = mock(CreateDetectionValidator.class);
   DetectionService detectionServiceMock = mock();
+  DetectionFileObjectMapper detectionFileObjectMapperMock = mock();
   ZoneDetectionController subject =
       new ZoneDetectionController(
           parcelServiceMock,
@@ -111,7 +112,8 @@ class ZoneDetectionControllerTest {
           mediaTypeGuesserMock,
           configureAddressValidatorMock,
           createDetectionValidatorMock,
-          detectionServiceMock);
+          detectionServiceMock,
+          detectionFileObjectMapperMock);
 
   @BeforeEach
   void setup() {
@@ -119,6 +121,22 @@ class ZoneDetectionControllerTest {
         .thenReturn(new Principal("dummyApiKey", Set.of(new Authority(ROLE_ADMIN))));
     when(communityAuthRepositoryMock.findByApiKey(any())).thenReturn(Optional.empty());
     doNothing().when(createDetectionValidatorMock).accept(any());
+  }
+
+  @Test
+  void get_file_objects() {
+    var detectionE2Id = randomUUID().toString();
+    var detectionFileObjectMock =
+        mock(app.bpartners.geojobs.repository.model.detection.DetectionFileObject.class);
+    var restDetectionFileObject = mock(DetectionFileObject.class);
+    when(detectionServiceMock.getDetectionFileObjects(detectionE2Id))
+        .thenReturn(List.of(detectionFileObjectMock));
+    when(detectionFileObjectMapperMock.toRest(detectionFileObjectMock))
+        .thenReturn(restDetectionFileObject);
+
+    var actual = subject.getDetectionFileObjects(detectionE2Id);
+
+    assertEquals(List.of(restDetectionFileObject), actual);
   }
 
   @Test

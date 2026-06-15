@@ -7,12 +7,7 @@ import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.status.ZDJParcelsStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.status.ZDJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneDetectionJobSucceeded;
-import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectConfigurationMapper;
-import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionSurfaceUnitMapper;
-import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionTaskMapper;
-import app.bpartners.geojobs.endpoint.rest.controller.mapper.StatusMapper;
-import app.bpartners.geojobs.endpoint.rest.controller.mapper.TaskStatisticMapper;
-import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoneDetectionJobMapper;
+import app.bpartners.geojobs.endpoint.rest.controller.mapper.*;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.authorizer.DetectionAuthorizer;
@@ -75,6 +70,7 @@ public class ZoneDetectionController {
   private final ConfigureAddressValidator configureAddressValidator;
   private final CreateDetectionValidator createDetectionValidator;
   private final DetectionService detectionService;
+  private final DetectionFileObjectMapper detectionFileObjectMapper;
 
   @PostMapping("/detectionJobs/{id}/succeed")
   public app.bpartners.geojobs.endpoint.rest.model.ZoneDetectionJob succeedJob(
@@ -218,6 +214,14 @@ public class ZoneDetectionController {
       @RequestParam(value = "extensionType", defaultValue = "zip") String extensionType)
       throws IOException {
     return zoneService.configureFileResult(communityOwnerId, detectionId, file, extensionType);
+  }
+
+  @GetMapping("/detections/{id}/fileObjects")
+  public List<DetectionFileObject> getDetectionFileObjects(
+      @PathVariable(name = "id") String detectionId) {
+    return detectionService.getDetectionFileObjects(detectionId).stream()
+        .map(detectionFileObjectMapper::toRest)
+        .toList();
   }
 
   @PostMapping("/detections/{id}")
