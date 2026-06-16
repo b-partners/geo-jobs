@@ -8,7 +8,7 @@ import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.file.bucket.BucketComponent;
-import app.bpartners.geojobs.repository.DetectionObjectHistoryRepository;
+import app.bpartners.geojobs.repository.DetectionFileObjectRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
@@ -41,7 +41,7 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
   private final GeometryConverter geometryConverter;
   private final DetectionMaskFromTileRetriever maskRetriever;
   private final RoofCoveringDetector roofCoveringDetector;
-  private final DetectionObjectHistoryRepository detectionObjectHistoryRepository;
+  private final DetectionFileObjectRepository detectionObjectHistoryRepository;
   private final BucketComponent bucketComponent;
 
   @SneakyThrows
@@ -56,6 +56,8 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
     File mask = null;
     var tileCoordinates = tile.getCoordinates();
     var detection = detectionRepository.findByZdjId(zoneDetectionJobId).orElse(null);
+    var detectionIdentifier = detection == null ? null : detection.getId();
+    tileDetectionTask.setDetectionIdentifier(detectionIdentifier);
     if (detection != null) {
       if (detection.hasToitureModelName()) {
         var multiPolygonFromTile =
@@ -106,7 +108,6 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
         }
       }
       var tileImageBucketPath = tile.getBucketPath();
-      var detectionIdentifier = detection.getId();
       if (detection.isDebugMode()) {
         detectionObjectHistoryRepository.save(
             DetectionFileObject.builder()

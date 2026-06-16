@@ -11,7 +11,7 @@ import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
-import app.bpartners.geojobs.repository.DetectionObjectHistoryRepository;
+import app.bpartners.geojobs.repository.DetectionFileObjectRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
@@ -40,7 +40,7 @@ class TileDetectionTaskConsumerTest {
   DetectionMaskFromTileRetriever maskRetrieverMock = mock();
   RoofCoveringDetector roofCoveringDetectorMock = mock();
   BucketComponent bucketComponentMock = mock();
-  DetectionObjectHistoryRepository detectionObjectHistoryRepositoryMock = mock();
+  DetectionFileObjectRepository detectionObjectHistoryRepositoryMock = mock();
   TileDetectionTaskConsumer subject =
       new TileDetectionTaskConsumer(
           machineDetectedTileRepositoryMock,

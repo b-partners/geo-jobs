@@ -2498,6 +2498,8 @@ components:
       enum:
         - TILE_IMAGE
         - TILE_MASK
+        - TILE_DETECTION_RESULT_V1
+        - TILE_DETECTION_RESULT_V2
     Detection:
       allOf:
         - $ref: '#/components/schemas/CreateDetection'

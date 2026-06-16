@@ -11,10 +11,11 @@ import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
+import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.bucket.BucketConf;
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
-import app.bpartners.geojobs.repository.DetectionObjectHistoryRepository;
+import app.bpartners.geojobs.repository.DetectionFileObjectRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
@@ -63,6 +64,9 @@ class TileDetectionTaskConsumerIT {
       new TileCoordinatesPolygonIntersection(geometryPixelProjector, geometryConverter);
   DetectionMaskFromTileRetriever maskRetriever =
       new DetectionMaskFromTileRetriever(maskCreator, tilePolygonIntersection);
+  DetectionFileObjectRepository detectionFileObjectRepositoryMock = mock();
+  FileWriter fileWriterMock = mock();
+  ObjectMapper objectMapperMock = mock();
   DetectionMapper detectionMapper = new DetectionMapper(tileValidator);
   BucketComponent bucketComponentMock = mock();
   HttpApiTileObjectDetector objectsDetector =
@@ -73,11 +77,15 @@ class TileDetectionTaskConsumerIT {
           tileObjectDetectorConfMock,
           detectionResponseAggregator,
           detectionResponseAggregatorV1,
-          detectionResponseV1ToV2Mapper);
+          detectionResponseV1ToV2Mapper,
+          detectionFileObjectRepositoryMock,
+          bucketComponentMock,
+          fileWriterMock,
+          objectMapperMock);
   RoofCoveringDetector roofCoveringDetector =
       new RoofCoveringDetector(
           objectMapper, restTemplateMock, "dummyUrl", customBucketComponentMock);
-  DetectionObjectHistoryRepository detectionObjectHistoryRepositoryMock = mock();
+  DetectionFileObjectRepository detectionObjectHistoryRepositoryMock = mock();
 
   TileDetectionTaskConsumer subject =
       new TileDetectionTaskConsumer(
