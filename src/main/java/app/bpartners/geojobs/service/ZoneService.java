@@ -316,7 +316,10 @@ public class ZoneService {
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection processDetectionSynchronously(
-      String detectionId, CreateDetection createDetection, String communityOwnerId) {
+      String detectionId,
+      CreateDetection createDetection,
+      String communityOwnerId,
+      Boolean debugMode) {
     var validatedCreateDetection = synchronousDetectionValidator.apply(createDetection);
 
     var optionalDetection =
@@ -325,7 +328,8 @@ public class ZoneService {
     detectionToBeProcessed =
         optionalDetection.orElseGet(
             () ->
-                createDetectionJob(detectionId, validatedCreateDetection, communityOwnerId, true));
+                createDetectionJob(
+                    detectionId, validatedCreateDetection, communityOwnerId, true, debugMode));
     var features =
         validatedCreateDetection.getGeoJsonZone().stream()
             .peek(getOrSetFeatureIdentifier(Feature::getProperties, Feature::setProperties))
@@ -339,7 +343,10 @@ public class ZoneService {
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection processDetection(
-      String detectionId, CreateDetection createDetection, String communityOwnerId) {
+      String detectionId,
+      CreateDetection createDetection,
+      String communityOwnerId,
+      Boolean debugMode) {
     if (createDetection.getGeoJsonZone() == null) {
       createDetection.setGeoJsonZone(new ArrayList<>());
     }
@@ -362,7 +369,7 @@ public class ZoneService {
 
     if (optionalDetection.isEmpty()) {
       var savedDetection =
-          createDetectionJob(detectionId, createDetection, communityOwnerId, false);
+          createDetectionJob(detectionId, createDetection, communityOwnerId, false, debugMode);
       if (savedDetection.isStillOnConfiguringStep()) {
         return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
             savedDetection, PENDING, UNKNOWN, REQUEST_ACCEPTED);
@@ -423,10 +430,11 @@ public class ZoneService {
       String detectionE2Id,
       CreateDetection createDetection,
       @Nullable String communityOwnerId,
-      boolean isSynchronous) {
+      boolean isSynchronous,
+      Boolean debugMode) {
     var detectionToSave =
         detectionCreationMapper.apply(
-            createDetection, detectionE2Id, communityOwnerId, isSynchronous);
+            createDetection, detectionE2Id, communityOwnerId, isSynchronous, debugMode);
     List<Feature> geoJsonZone =
         createDetection.getGeoJsonZone() == null ? List.of() : createDetection.getGeoJsonZone();
     var detectionToSaveBuilder = detectionToSave.toBuilder();

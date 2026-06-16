@@ -158,6 +158,17 @@ public class Detection implements Serializable {
   @Column(name = "roof_properties_computation_creation_datetime")
   private Instant roofPropertiesComputationCreationDatetime;
 
+  @OneToMany(fetch = EAGER, cascade = ALL)
+  @JoinColumn(name = "id_detection")
+  private List<DetectionFileObject> fileObjects;
+
+  @Getter(AccessLevel.NONE)
+  private Boolean debugMode;
+
+  public boolean isDebugMode() {
+    return debugMode != null && debugMode;
+  }
+
   public List<FeatureWithDelimitation> getFeatureWithDelimitations() {
     if (featureDelimitationComputingList == null || featureDelimitationComputingList.isEmpty()) {
       return featureWithDelimitations;

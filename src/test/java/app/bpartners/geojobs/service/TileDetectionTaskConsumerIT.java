@@ -14,6 +14,7 @@ import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.bucket.BucketConf;
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
+import app.bpartners.geojobs.repository.DetectionObjectHistoryRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
@@ -77,6 +78,7 @@ class TileDetectionTaskConsumerIT {
   RoofCoveringDetector roofCoveringDetector =
       new RoofCoveringDetector(
           objectMapper, restTemplateMock, "dummyUrl", customBucketComponentMock);
+  DetectionObjectHistoryRepository detectionObjectHistoryRepositoryMock = mock();
 
   TileDetectionTaskConsumer subject =
       new TileDetectionTaskConsumer(
@@ -86,7 +88,9 @@ class TileDetectionTaskConsumerIT {
           detectionRepositoryMock,
           geometryConverter,
           maskRetriever,
-          roofCoveringDetector);
+          roofCoveringDetector,
+          detectionObjectHistoryRepositoryMock,
+          bucketComponentMock);
 
   @SneakyThrows
   @Test
