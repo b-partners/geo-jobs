@@ -86,6 +86,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
       File mask,
       List<DetectableObjectConfiguration> detectableObjectConfigurations) {
     Tile tile = tileDetectionTask.getTile();
+    var isDebugMode = tileDetectionTask.isDebugMode();
     if (tile == null) {
       return null;
     }
@@ -128,24 +129,26 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
           v1Responses.add(
               new DetectionResponseAggregatorV1.DetectionResponseUrl(body, apiUrl.getUrl()));
 
-          var detectionResponseBytes = objectMapper.writeValueAsBytes(body);
-          var tempFile = createTempFile(randomUUID().toString(), ".json");
-          var suffix = "_response_v1_" + currentTimeMillis();
-          var tileDetectionResultV1BucketKey = insertSuffix(tileImageBucketPath, suffix, ".json");
-          var fileName = replaceSeparator(tileDetectionResultV1BucketKey);
-          bucketComponent.upload(
-              fileWriter.write(detectionResponseBytes, tempFile, fileName),
-              tileDetectionResultV1BucketKey);
+          if (isDebugMode) {
+            var detectionResponseBytes = objectMapper.writeValueAsBytes(body);
+            var tempFile = createTempFile(randomUUID().toString(), ".json");
+            var suffix = "_response_v1_" + currentTimeMillis();
+            var tileDetectionResultV1BucketKey = insertSuffix(tileImageBucketPath, suffix, ".json");
+            var fileName = replaceSeparator(tileDetectionResultV1BucketKey);
+            bucketComponent.upload(
+                fileWriter.write(detectionResponseBytes, tempFile, fileName),
+                tileDetectionResultV1BucketKey);
 
-          detectionFileObjectRepository.save(
-              DetectionFileObject.builder()
-                  .id(randomUUID().toString())
-                  .fileName(fileName)
-                  .bucketKey(tileDetectionResultV1BucketKey)
-                  .detectionIdentifier(tileDetectionTask.getDetectionIdentifier())
-                  .fileType(TILE_DETECTION_RESULT_V1)
-                  .creationDatetime(now())
-                  .build());
+            detectionFileObjectRepository.save(
+                DetectionFileObject.builder()
+                    .id(randomUUID().toString())
+                    .fileName(fileName)
+                    .bucketKey(tileDetectionResultV1BucketKey)
+                    .detectionIdentifier(tileDetectionTask.getDetectionIdentifier())
+                    .fileType(TILE_DETECTION_RESULT_V1)
+                    .creationDatetime(now())
+                    .build());
+          }
         }
       } else {
         var body = callApi(restTemplate, requestV2, apiUrl.getUrl(), DetectionResponseV2.class);
@@ -153,25 +156,27 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
           v2Responses.add(
               new DetectionResponseAggregator.DetectionResponseUrl(body, apiUrl.getUrl()));
 
-          var detectionResponseBytes = objectMapper.writeValueAsBytes(body);
-          var tempFile = createTempFile(randomUUID().toString(), ".json");
-          var suffix = "_response_v2_" + currentTimeMillis();
-          var tileDetectionResultV2BucketKey = insertSuffix(tileImageBucketPath, suffix, ".json");
-          var fileName = replaceSeparator(tileDetectionResultV2BucketKey);
+          if (isDebugMode) {
+            var detectionResponseBytes = objectMapper.writeValueAsBytes(body);
+            var tempFile = createTempFile(randomUUID().toString(), ".json");
+            var suffix = "_response_v2_" + currentTimeMillis();
+            var tileDetectionResultV2BucketKey = insertSuffix(tileImageBucketPath, suffix, ".json");
+            var fileName = replaceSeparator(tileDetectionResultV2BucketKey);
 
-          bucketComponent.upload(
-              fileWriter.write(detectionResponseBytes, tempFile, fileName),
-              tileDetectionResultV2BucketKey);
+            bucketComponent.upload(
+                fileWriter.write(detectionResponseBytes, tempFile, fileName),
+                tileDetectionResultV2BucketKey);
 
-          detectionFileObjectRepository.save(
-              DetectionFileObject.builder()
-                  .id(randomUUID().toString())
-                  .fileName(fileName)
-                  .bucketKey(tileDetectionResultV2BucketKey)
-                  .detectionIdentifier(tileDetectionTask.getDetectionIdentifier())
-                  .fileType(TILE_DETECTION_RESULT_V2)
-                  .creationDatetime(now())
-                  .build());
+            detectionFileObjectRepository.save(
+                DetectionFileObject.builder()
+                    .id(randomUUID().toString())
+                    .fileName(fileName)
+                    .bucketKey(tileDetectionResultV2BucketKey)
+                    .detectionIdentifier(tileDetectionTask.getDetectionIdentifier())
+                    .fileType(TILE_DETECTION_RESULT_V2)
+                    .creationDatetime(now())
+                    .build());
+          }
         }
       }
     }

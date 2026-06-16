@@ -58,6 +58,7 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
     var detection = detectionRepository.findByZdjId(zoneDetectionJobId).orElse(null);
     var detectionIdentifier = detection == null ? null : detection.getId();
     tileDetectionTask.setDetectionIdentifier(detectionIdentifier);
+    tileDetectionTask.setDebugMode(detection != null && detection.isDebugMode());
     if (detection != null) {
       if (detection.hasToitureModelName()) {
         var multiPolygonFromTile =
