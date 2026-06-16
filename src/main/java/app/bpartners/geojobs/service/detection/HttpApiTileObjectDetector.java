@@ -1,10 +1,10 @@
 package app.bpartners.geojobs.service.detection;
 
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectableObjectTypeMapper.detectableObjectTypeForVegetationModel;
+import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
 import static app.bpartners.geojobs.repository.model.detection.DetectionFileType.TILE_DETECTION_RESULT_V1;
 import static app.bpartners.geojobs.repository.model.detection.DetectionFileType.TILE_DETECTION_RESULT_V2;
 import static app.bpartners.geojobs.service.detection.DetectionApiVersion.V2;
-import static java.io.File.createTempFile;
 import static java.lang.System.currentTimeMillis;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
@@ -131,12 +131,11 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
 
           if (isDebugMode) {
             var detectionResponseBytes = objectMapper.writeValueAsBytes(body);
-            var tempFile = createTempFile(randomUUID().toString(), ".json");
             var suffix = "_response_v1_" + currentTimeMillis();
             var tileDetectionResultV1BucketKey = insertSuffix(tileImageBucketPath, suffix, ".json");
             var fileName = replaceSeparator(tileDetectionResultV1BucketKey);
             bucketComponent.upload(
-                fileWriter.write(detectionResponseBytes, tempFile, fileName),
+                fileWriter.write(detectionResponseBytes, createTempDirectory(), fileName),
                 tileDetectionResultV1BucketKey);
 
             detectionFileObjectRepository.save(
@@ -158,13 +157,12 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
 
           if (isDebugMode) {
             var detectionResponseBytes = objectMapper.writeValueAsBytes(body);
-            var tempFile = createTempFile(randomUUID().toString(), ".json");
             var suffix = "_response_v2_" + currentTimeMillis();
             var tileDetectionResultV2BucketKey = insertSuffix(tileImageBucketPath, suffix, ".json");
             var fileName = replaceSeparator(tileDetectionResultV2BucketKey);
 
             bucketComponent.upload(
-                fileWriter.write(detectionResponseBytes, tempFile, fileName),
+                fileWriter.write(detectionResponseBytes, createTempDirectory(), fileName),
                 tileDetectionResultV2BucketKey);
 
             detectionFileObjectRepository.save(
