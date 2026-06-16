@@ -73,8 +73,7 @@ class TileDetectionTaskConsumerIT {
           tileObjectDetectorConfMock,
           detectionResponseAggregator,
           detectionResponseAggregatorV1,
-          detectionResponseV1ToV2Mapper,
-          bucketComponentMock);
+          detectionResponseV1ToV2Mapper);
   RoofCoveringDetector roofCoveringDetector =
       new RoofCoveringDetector(
           objectMapper, restTemplateMock, "dummyUrl", customBucketComponentMock);

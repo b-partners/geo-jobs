@@ -5,7 +5,6 @@ import static app.bpartners.geojobs.service.detection.DetectionApiVersion.V2;
 import static org.apache.commons.io.FileUtils.readFileToByteArray;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
-import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
@@ -15,7 +14,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.time.Duration;
 import java.util.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +38,6 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
   private final DetectionResponseAggregator detectionResponseAggregator;
   private final DetectionResponseAggregatorV1 detectionResponseAggregatorV1;
   private final DetectionResponseV1ToV2Mapper detectionResponseV1ToV2Mapper;
-  private final BucketComponent bucketComponent;
 
   @SneakyThrows
   public HttpApiTileObjectDetector(
@@ -50,8 +47,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
       TileObjectDetectorConf tileObjectDetectorConf,
       DetectionResponseAggregator detectionResponseAggregator,
       DetectionResponseAggregatorV1 detectionResponseAggregatorV1,
-      DetectionResponseV1ToV2Mapper detectionResponseV1ToV2Mapper,
-      BucketComponent bucketComponent1) {
+      DetectionResponseV1ToV2Mapper detectionResponseV1ToV2Mapper) {
     this.om = om;
     this.customBucketComponent = bucketComponent;
     this.defaultDetectionApiUrl = defaultApiUrl;
@@ -59,7 +55,6 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
     this.detectionResponseAggregator = detectionResponseAggregator;
     this.detectionResponseAggregatorV1 = detectionResponseAggregatorV1;
     this.detectionResponseV1ToV2Mapper = detectionResponseV1ToV2Mapper;
-    this.bucketComponent = bucketComponent1;
   }
 
   @SneakyThrows
@@ -77,32 +72,9 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
     headers.setContentType(APPLICATION_JSON);
 
     var tileImageBucketPath = tile.getBucketPath();
-    var maskBucketKey = "mask_" + tileImageBucketPath;
-    if (mask != null) {
-      bucketComponent.upload(mask, maskBucketKey);
-    }
     var tileImageFile =
         customBucketComponent.download(
             customBucketComponent.getBucketConf().getBucketName(), tileImageBucketPath);
-    var tileCoordinates = tile.getCoordinates();
-    var coordinatesDescription =
-        tileCoordinates.getZ() + "_" + tileCoordinates.getX() + "_" + tileCoordinates.getY();
-    log.info(
-        "{} coordinates original image : {} ",
-        coordinatesDescription,
-        customBucketComponent.presign(
-            tileImageBucketPath,
-            Duration.ofHours(1L),
-            Optional.of(coordinatesDescription + ".jpeg")));
-    if (mask != null) {
-      log.info(
-          "{} coordinates mask : {} ",
-          coordinatesDescription,
-          customBucketComponent.presign(
-              maskBucketKey,
-              Duration.ofHours(1L),
-              Optional.of("mask_" + coordinatesDescription + ".png")));
-    }
     String base64ImgData = Base64.getEncoder().encodeToString(readFileToByteArray(tileImageFile));
     String base64MaskData =
         mask == null ? null : Base64.getEncoder().encodeToString(readFileToByteArray(mask));
