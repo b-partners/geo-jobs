@@ -2041,6 +2041,7 @@ components:
         - ESPACE_VERT
         - VOIE_CARROSSABLE
         - PARKING
+        - PLACE_STANDARD
         - MOISISSURE_COULEUR
         - MOISISSURE_CLAIR
         - MOISISSURE_NOIRCIE
@@ -2404,7 +2405,7 @@ components:
           - **BP_VEGETATION** : Espace vert, Espace arboré, arbre individualisé, canopée
           - **BP_TAMPONS** : Tampons de voiries, avaloirs, tampons hydroliques
           - **BP_CIMETIERE** : Cimetière, espace arboré, espace vert, tombe simple, tombe double, tombe non géométrique
-          - **BP_STATIONNEMENT** : Parking
+          - **BP_STATIONNEMENT** : Parking, Place standard
       enum:
         - BP_TOITURE
         - BP_LOM
