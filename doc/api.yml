@@ -796,7 +796,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateDetection'
+              $ref: '#/components/schemas/CreateDetectionDebugMode'
             examples:
               detectionForRoof:
                 $ref: '#/components/examples/DetectionUsingToitureModel'
@@ -968,7 +968,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateDetection'
+              $ref: '#/components/schemas/CreateDetectionDebugMode'
       responses:
         200:
           description: Detection created or processing
@@ -2419,6 +2419,12 @@ components:
         - BP_TAMPONS
         - BP_CIMETIERE
         - BP_STATIONNEMENT
+    CreateDetectionDebugMode:
+      allOf:
+        - $ref: '#/components/schemas/CreateDetection'
+      properties:
+        debugMode:
+          type: boolean
     CreateDetection:
       type: object
       properties:

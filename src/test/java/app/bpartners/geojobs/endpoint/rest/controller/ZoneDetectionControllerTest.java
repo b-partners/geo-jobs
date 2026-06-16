@@ -88,6 +88,7 @@ class ZoneDetectionControllerTest {
   CreateDetectionValidator createDetectionValidatorMock = mock(CreateDetectionValidator.class);
   DetectionService detectionServiceMock = mock();
   DetectionFileObjectMapper detectionFileObjectMapperMock = mock();
+  CreateDetectionMapper createDetectionMapperMock = mock();
   ZoneDetectionController subject =
       new ZoneDetectionController(
           parcelServiceMock,
@@ -113,7 +114,8 @@ class ZoneDetectionControllerTest {
           configureAddressValidatorMock,
           createDetectionValidatorMock,
           detectionServiceMock,
-          detectionFileObjectMapperMock);
+          detectionFileObjectMapperMock,
+          createDetectionMapperMock);
 
   @BeforeEach
   void setup() {
@@ -278,6 +280,7 @@ class ZoneDetectionControllerTest {
   @Test
   void processDetectionSynchronously_ok() {
     var detectionId = randomUUID().toString();
+    var createDetectionDebugModeMock = mock(CreateDetectionDebugMode.class);
     var createDetection = mock(CreateDetection.class);
     var principal = mock(Principal.class);
     var communityAuth = mock(CommunityAuthorization.class);
@@ -288,14 +291,15 @@ class ZoneDetectionControllerTest {
         .thenReturn(Optional.of(communityAuth));
     when(communityAuth.getId()).thenReturn("community-id");
     doNothing().when(detectionAuthorizerMock).accept(detectionId, createDetection, principal);
-    when(zoneServiceMock.processDetectionSynchronously(anyString(), any(), anyString()))
+    when(zoneServiceMock.processDetectionSynchronously(anyString(), any(), anyString(), any()))
         .thenReturn(expectedDetection);
+    when(createDetectionMapperMock.fromDebugMode(any())).thenReturn(createDetection);
 
-    var actual = subject.processDetectionSynchronously(detectionId, createDetection);
+    var actual = subject.processDetectionSynchronously(detectionId, createDetectionDebugModeMock);
 
     assertEquals(expectedDetection, actual);
     verify(zoneServiceMock)
-        .processDetectionSynchronously(detectionId, createDetection, "community-id");
+        .processDetectionSynchronously(detectionId, createDetection, "community-id", false);
     verify(detectionAuthorizerMock).accept(detectionId, createDetection, principal);
     verify(authProviderMock, times(2)).getPrincipal();
     verify(principal).getPassword();

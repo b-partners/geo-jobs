@@ -71,6 +71,7 @@ public class ZoneDetectionController {
   private final CreateDetectionValidator createDetectionValidator;
   private final DetectionService detectionService;
   private final DetectionFileObjectMapper detectionFileObjectMapper;
+  private final CreateDetectionMapper createDetectionMapper;
 
   @PostMapping("/detectionJobs/{id}/succeed")
   public app.bpartners.geojobs.endpoint.rest.model.ZoneDetectionJob succeedJob(
@@ -226,13 +227,16 @@ public class ZoneDetectionController {
 
   @PostMapping("/detections/{id}")
   public Detection processDetection(
-      @PathVariable(name = "id") String detectionId, @RequestBody CreateDetection createDetection) {
+      @PathVariable(name = "id") String detectionId,
+      @RequestBody CreateDetectionDebugMode createDetectionDebugMode) {
+    var createDetection = createDetectionMapper.fromDebugMode(createDetectionDebugMode);
     createDetectionValidator.accept(createDetection);
     detectionAuthorizer.accept(detectionId, createDetection, authProvider.getPrincipal());
     var communityAuthorization =
         communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
     var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId).orElse(null);
-    return zoneService.processDetection(detectionId, createDetection, communityOwnerId);
+    return zoneService.processDetection(
+        detectionId, createDetection, communityOwnerId, createDetectionDebugMode.getDebugMode());
   }
 
   @PutMapping("/detections/{id}/step")
@@ -265,14 +269,16 @@ public class ZoneDetectionController {
 
   @PostMapping("/detections/{id}/sync")
   public Detection processDetectionSynchronously(
-      @PathVariable(name = "id") String detectionId, @RequestBody CreateDetection createDetection) {
+      @PathVariable(name = "id") String detectionId,
+      @RequestBody CreateDetectionDebugMode createDetectionDebugMode) {
+    var createDetection = createDetectionMapper.fromDebugMode(createDetectionDebugMode);
     createDetectionValidator.accept(createDetection);
     detectionAuthorizer.accept(detectionId, createDetection, authProvider.getPrincipal());
     var communityAuthorization =
         communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
     var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId).orElse(null);
     return zoneService.processDetectionSynchronously(
-        detectionId, createDetection, communityOwnerId);
+        detectionId, createDetection, communityOwnerId, createDetectionDebugMode.getDebugMode());
   }
 
   @PutMapping("/detections/{id}/roofs/properties")
