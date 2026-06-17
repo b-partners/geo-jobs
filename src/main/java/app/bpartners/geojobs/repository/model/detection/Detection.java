@@ -171,7 +171,7 @@ public class Detection implements Serializable {
 
   public List<FeatureWithDelimitation> getFeatureWithDelimitations() {
     if (featureDelimitationComputingList == null || featureDelimitationComputingList.isEmpty()) {
-      return featureWithDelimitations;
+      return featureWithDelimitations == null ? List.of() : featureWithDelimitations;
     }
     Map<String, FeatureDelimitationComputing> latestComputingByFeature =
         featureDelimitationComputingList.stream()
@@ -181,19 +181,21 @@ public class Detection implements Serializable {
                     Function.identity(),
                     BinaryOperator.maxBy(
                         Comparator.comparing(FeatureDelimitationComputing::getCreationDatetime))));
-    return featureWithDelimitations.stream()
-        .map(
-            original -> {
-              String featureId =
-                  original.getRestFeature().getProperties().get("feature_id").toString();
-              FeatureDelimitationComputing computing = latestComputingByFeature.get(featureId);
-              if (computing == null) {
-                return original;
-              }
-              return new FeatureWithDelimitation(
-                  original.feature(), computing.getFeatureWithDelimitation().delimitations());
-            })
-        .toList();
+    return featureWithDelimitations == null
+        ? List.of()
+        : featureWithDelimitations.stream()
+            .map(
+                original -> {
+                  String featureId =
+                      original.getRestFeature().getProperties().get("feature_id").toString();
+                  FeatureDelimitationComputing computing = latestComputingByFeature.get(featureId);
+                  if (computing == null) {
+                    return original;
+                  }
+                  return new FeatureWithDelimitation(
+                      original.feature(), computing.getFeatureWithDelimitation().delimitations());
+                })
+            .toList();
   }
 
   public boolean hasParcelDelimitationType() {
