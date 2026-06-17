@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service.geojson;
 
 import static app.bpartners.geojobs.endpoint.rest.postprocessing.BoundaryMerger.invert;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 import static app.bpartners.geojobs.service.geojson.GeoJson.fromFeatures;
 
 import app.bpartners.geojobs.endpoint.rest.postprocessing.DetectionBoundaryMerger;
@@ -8,12 +9,16 @@ import app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.model.ConversionFormatType;
 import app.bpartners.geojobs.model.DetectedTile;
+import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class GeoJsonConverter implements Converter<List<DetectedTile>, GeoJson> {
@@ -23,6 +28,11 @@ public class GeoJsonConverter implements Converter<List<DetectedTile>, GeoJson> 
 
   @Override
   public GeoJson convert(List<DetectedTile> detectedTiles) {
+    var detectableTypes =
+        detectedTiles.stream()
+            .flatMap(tile -> tile.getDetectedObjects().stream())
+            .map(DetectedObject::getDetectableObjectType)
+            .collect(Collectors.toSet());
     List<GeoJson.GeoFeature> geoFeatures =
         detectedTiles.stream()
             .map(
@@ -36,7 +46,11 @@ public class GeoJsonConverter implements Converter<List<DetectedTile>, GeoJson> 
                 })
             .flatMap(List::stream)
             .toList();
+    return fromFeatures(geoFeatures);
+  }
 
+  @NotNull
+  private List<GeoJson.GeoFeature> unifyGeoFeatures(List<GeoJson.GeoFeature> geoFeatures) {
     var toUnify =
         geoFeatures.stream()
             .map(f -> LatLonPolygon.latLon(f).tiledPolygon(TilingConf.getDefaultInstance()))
@@ -46,7 +60,6 @@ public class GeoJsonConverter implements Converter<List<DetectedTile>, GeoJson> 
     var invertedUnifiedLatLon = invert(unifiedLatLon);
     var unifiedGeoFeatures =
         invertedUnifiedLatLon.stream().map(LatLonPolygon::toGeoFeature).toList();
-
-    return fromFeatures(unifiedGeoFeatures);
+    return unifiedGeoFeatures;
   }
 }
