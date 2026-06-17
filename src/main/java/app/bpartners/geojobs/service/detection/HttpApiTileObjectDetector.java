@@ -259,10 +259,11 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
       String base64ImgData,
       String base64MaskData,
       boolean vegetation) {
+    var payloadFileName = !fileName.contains(".") ? fileName + ".jpg" : fileName;
     var builder =
         DetectionPayload.builder()
             .projectName(projectName)
-            .fileName(fileName)
+            .fileName(payloadFileName)
             .base64ImgData(base64ImgData)
             .base64MaskData(base64MaskData);
     if (vegetation) {
