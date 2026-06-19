@@ -538,13 +538,8 @@ public class ZoneService {
     var geoJsonConversionJobs =
         geoJsonConversionJobRepository.findByZoneDetectionJobId(zoneDetectionJobId);
     return geoJsonConversionJobs.stream()
-        .filter(Job::isSucceeded)
-        .findFirst()
-        .orElseGet(
-            () ->
-                geoJsonConversionJobs.stream()
-                    .max(Comparator.comparing(Job::getSubmissionInstant))
-                    .orElse(null));
+        .max(Comparator.comparing(Job::getSubmissionInstant))
+        .orElse(null);
   }
 
   public app.bpartners.geojobs.endpoint.rest.model.Detection sendMailAboutProspect(
