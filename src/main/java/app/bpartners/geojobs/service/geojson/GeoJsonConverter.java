@@ -2,6 +2,7 @@ package app.bpartners.geojobs.service.geojson;
 
 import static app.bpartners.geojobs.endpoint.rest.postprocessing.BoundaryMerger.invert;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 import static app.bpartners.geojobs.service.geojson.GeoJson.fromFeatures;
 
 import app.bpartners.geojobs.endpoint.rest.postprocessing.DetectionBoundaryMerger;
@@ -9,6 +10,7 @@ import app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.model.ConversionFormatType;
 import app.bpartners.geojobs.model.DetectedTile;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiFunction;
@@ -36,27 +38,41 @@ public class GeoJsonConverter implements BiFunction<List<DetectedTile>, MultiPol
   public GeoJson apply(
       List<DetectedTile> detectedTiles, MultiPolygon providedGeometryMultiPolygon) {
     List<GeoJson.GeoFeature> geoFeatures =
-        detectedTiles.stream()
-            .map(
-                detectedTile -> {
-                  var tile = detectedTile.getTile();
-                  var tileCoordinates = tile.getCoordinates();
-                  var xTile = tileCoordinates.getX();
-                  var yTile = tileCoordinates.getY();
-                  var zoom = tileCoordinates.getZ();
-                  return mapper.toGeoFeatures(
-                      xTile, yTile, zoom, DEFAULT_IMAGE_SIZE, detectedTile.getDetectedObjects());
-                })
-            .flatMap(List::stream)
-            .toList();
+        new ArrayList<>(
+            detectedTiles.stream()
+                .map(
+                    detectedTile -> {
+                      var tile = detectedTile.getTile();
+                      var tileCoordinates = tile.getCoordinates();
+                      var xTile = tileCoordinates.getX();
+                      var yTile = tileCoordinates.getY();
+                      var zoom = tileCoordinates.getZ();
+                      return mapper.toGeoFeatures(
+                          xTile,
+                          yTile,
+                          zoom,
+                          DEFAULT_IMAGE_SIZE,
+                          detectedTile.getDetectedObjects());
+                    })
+                .flatMap(List::stream)
+                .toList());
+
+    // Parking features are extracted (and removed) from geoFeatures before clipping, so they are
+    // not duplicated between convertedGeoFeatures and the unified parking features below.
+    var unifiedStationnementObjects = unifyStationnementModelObjects(geoFeatures);
 
     List<GeoJson.GeoFeature> convertedGeoFeatures =
-        providedGeometryMultiPolygon == null
-            ? geoFeatures
-            : geoFeatures.stream()
-                .map(geoFeature -> clipToProvidedGeometry(geoFeature, providedGeometryMultiPolygon))
-                .filter(Objects::nonNull)
-                .toList();
+        new ArrayList<>(
+            providedGeometryMultiPolygon == null
+                ? geoFeatures
+                : geoFeatures.stream()
+                    .map(
+                        geoFeature ->
+                            clipToProvidedGeometry(geoFeature, providedGeometryMultiPolygon))
+                    .filter(Objects::nonNull)
+                    .toList());
+
+    convertedGeoFeatures.addAll(unifiedStationnementObjects);
 
     return fromFeatures(convertedGeoFeatures);
   }
@@ -119,6 +135,30 @@ public class GeoJsonConverter implements BiFunction<List<DetectedTile>, MultiPol
           e.getMessage());
       return GeometryFixer.fix(a).intersection(GeometryFixer.fix(b));
     }
+  }
+
+  @NotNull
+  private List<GeoJson.GeoFeature> unifyStationnementModelObjects(
+      List<GeoJson.GeoFeature> geoFeatures) {
+    List<GeoJson.GeoFeature> stationnementModelObjectFeatures = new ArrayList<>();
+    geoFeatures.removeIf(
+        f -> {
+          if (f.getProperties() != null
+              && f.getProperties().containsKey("label")
+              && geoFeatureContainsStationnementModelObjects(f)) {
+            stationnementModelObjectFeatures.add(f);
+            return true;
+          }
+          return false;
+        });
+
+    return unifyGeoFeatures(stationnementModelObjectFeatures);
+  }
+
+  private boolean geoFeatureContainsStationnementModelObjects(GeoJson.GeoFeature f) {
+    var parkingLabel = PARKING.name().toLowerCase();
+    var geoFeatureLabel = f.getProperties().get("label").toString().toLowerCase();
+    return parkingLabel.equals(geoFeatureLabel);
   }
 
   @NotNull
