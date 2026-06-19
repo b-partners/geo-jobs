@@ -281,7 +281,7 @@ public class ZoneService {
     if (detection.isMachineDetectionStepProcessing(zoneDetectionJob)) {
       return detectionMachineDetectionStatisticsComputer.apply(detection, detection.getZdjId());
     }
-    if (detection.isHumanDetectionStepProcessing(zoneDetectionJob)) {
+    if (detection.isPostProcessingStep(zoneDetectionJob)) {
       var inDoubtDetectedTileToDelivery =
           zoneDetectionJobService.countInDoubtDetectedTileToDeliveryById(zoneDetectionJob.getId());
       if (inDoubtDetectedTileToDelivery > 0) {
@@ -289,6 +289,10 @@ public class ZoneService {
             detection, PROCESSING, UNKNOWN, POST_PROCESSING);
       }
       var geoJsonConversionJob = findActualGeoJsonConversionJob(zoneDetectionJob.getId());
+      if (geoJsonConversionJob == null && zoneDetectionJob.isSucceeded()) {
+        return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
+            detection, FINISHED, FAILED, POST_PROCESSING);
+      }
       if (geoJsonConversionJob != null) {
         if (geoJsonConversionJob.isFailed()) {
           return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(

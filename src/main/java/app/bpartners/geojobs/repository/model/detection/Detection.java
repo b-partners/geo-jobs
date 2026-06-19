@@ -379,7 +379,7 @@ public class Detection implements Serializable {
     return zoneDetectionJob.isFinished();
   }
 
-  public boolean isHumanDetectionStepProcessing(ZoneDetectionJob zoneDetectionJob) {
+  public boolean isPostProcessingStep(ZoneDetectionJob zoneDetectionJob) {
     return isMachineDetectionFinished(zoneDetectionJob) && geojsonS3FileKey == null;
   }
 
