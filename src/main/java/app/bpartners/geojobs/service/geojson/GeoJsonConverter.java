@@ -49,25 +49,29 @@ public class GeoJsonConverter implements BiFunction<List<DetectedTile>, MultiPol
     if (providedGeometryMultiPolygon != null) {
       geoFeatures.forEach(
           geoFeature -> {
-            var multiPolygon = geometryConverter.apply(geoFeature.getGeometry().getCoordinates());
-            var detectedGeoFeatureInsideProvidedGeometry =
-                providedGeometryMultiPolygon.intersection(multiPolygon);
-            if (detectedGeoFeatureInsideProvidedGeometry
-                instanceof MultiPolygon multiPolygonInsideProvidedGeometry) {
-              geoFeature.setGeometry(
-                  geometryConverter.restMultiPolygonFromJts(multiPolygonInsideProvidedGeometry));
-            } else if (detectedGeoFeatureInsideProvidedGeometry
-                instanceof Polygon polygonInsideProvidedGeometry) {
-              var multiPolygonFromPolygon =
-                  geometryFactory.createMultiPolygon(new Polygon[] {polygonInsideProvidedGeometry});
-              geoFeature.setGeometry(
-                  geometryConverter.restMultiPolygonFromJts(multiPolygonFromPolygon));
-            } else {
-              log.error(
-                  "Unable to handle geometry intersection type {} provided geometry with"
-                      + " geoFeature.geometry : {}",
-                  detectedGeoFeatureInsideProvidedGeometry.getClass().getSimpleName(),
-                  geoFeature.getGeometry());
+            if (geoFeature.getGeometry() != null
+                && geoFeature.getGeometry().getCoordinates() != null) {
+              var multiPolygon = geometryConverter.apply(geoFeature.getGeometry().getCoordinates());
+              var detectedGeoFeatureInsideProvidedGeometry =
+                  providedGeometryMultiPolygon.intersection(multiPolygon);
+              if (detectedGeoFeatureInsideProvidedGeometry
+                  instanceof MultiPolygon multiPolygonInsideProvidedGeometry) {
+                geoFeature.setGeometry(
+                    geometryConverter.restMultiPolygonFromJts(multiPolygonInsideProvidedGeometry));
+              } else if (detectedGeoFeatureInsideProvidedGeometry
+                  instanceof Polygon polygonInsideProvidedGeometry) {
+                var multiPolygonFromPolygon =
+                    geometryFactory.createMultiPolygon(
+                        new Polygon[] {polygonInsideProvidedGeometry});
+                geoFeature.setGeometry(
+                    geometryConverter.restMultiPolygonFromJts(multiPolygonFromPolygon));
+              } else {
+                log.error(
+                    "Unable to handle geometry intersection type {} provided geometry with"
+                        + " geoFeature.geometry : {}",
+                    detectedGeoFeatureInsideProvidedGeometry.getClass().getSimpleName(),
+                    geoFeature.getGeometry());
+              }
             }
           });
     }
