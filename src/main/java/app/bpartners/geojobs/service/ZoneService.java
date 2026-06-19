@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service;
 
+import static app.bpartners.geojobs.endpoint.rest.model.DelimitationType.PARCEL_FREE_DELIMITATION;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.*;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
@@ -432,6 +433,13 @@ public class ZoneService {
       @Nullable String communityOwnerId,
       boolean isSynchronous,
       Boolean debugMode) {
+    if (createDetection.getGeoJsonDelimitationType() == null) {
+      log.info(
+          "Setting default geoJsonDelimitationType to PARCEL_FREE_DELIMITATION for detection.e2Id"
+              + " {}",
+          detectionE2Id);
+      createDetection.setGeoJsonDelimitationType(PARCEL_FREE_DELIMITATION);
+    }
     var detectionToSave =
         detectionCreationMapper.apply(
             createDetection, detectionE2Id, communityOwnerId, isSynchronous, debugMode);
