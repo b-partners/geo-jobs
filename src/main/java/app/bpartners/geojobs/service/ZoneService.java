@@ -2,8 +2,7 @@ package app.bpartners.geojobs.service;
 
 import static app.bpartners.geojobs.endpoint.rest.model.DelimitationType.PARCEL_FREE_DELIMITATION;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.*;
-import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
-import static app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN;
+import static app.bpartners.geojobs.job.model.Status.HealthStatus.*;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PENDING;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.PROCESSING;
@@ -291,6 +290,10 @@ public class ZoneService {
       }
       var geoJsonConversionJob = findActualGeoJsonConversionJob(zoneDetectionJob.getId());
       if (geoJsonConversionJob != null) {
+        if (geoJsonConversionJob.isFailed()) {
+          return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
+              detection, FINISHED, FAILED, POST_PROCESSING);
+        }
         if (geoJsonConversionJob.isProcessing()
             || (geoJsonConversionJob.isSucceeded() && detection.getGeojsonS3FileKey() == null)) {
           return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
