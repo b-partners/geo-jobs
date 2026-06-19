@@ -15,8 +15,11 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.TopologyException;
+import org.locationtech.jts.geom.util.GeometryFixer;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -53,7 +56,7 @@ public class GeoJsonConverter implements BiFunction<List<DetectedTile>, MultiPol
                 && geoFeature.getGeometry().getCoordinates() != null) {
               var multiPolygon = geometryConverter.apply(geoFeature.getGeometry().getCoordinates());
               var detectedGeoFeatureInsideProvidedGeometry =
-                  providedGeometryMultiPolygon.intersection(multiPolygon);
+                  intersection(providedGeometryMultiPolygon, multiPolygon);
               if (!detectedGeoFeatureInsideProvidedGeometry.isEmpty()) {
                 if (detectedGeoFeatureInsideProvidedGeometry
                     instanceof MultiPolygon multiPolygonInsideProvidedGeometry) {
@@ -80,6 +83,17 @@ public class GeoJsonConverter implements BiFunction<List<DetectedTile>, MultiPol
     }
 
     return fromFeatures(geoFeatures);
+  }
+
+  private static Geometry intersection(Geometry a, Geometry b) {
+    try {
+      return a.intersection(b);
+    } catch (TopologyException e) {
+      log.warn(
+          "TopologyException during intersection, retrying with fixed geometries: {}",
+          e.getMessage());
+      return GeometryFixer.fix(a).intersection(GeometryFixer.fix(b));
+    }
   }
 
   @NotNull
