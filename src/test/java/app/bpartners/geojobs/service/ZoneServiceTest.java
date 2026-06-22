@@ -581,8 +581,8 @@ class ZoneServiceTest {
     var actual = subject.getProcessedDetection(detectionId);
 
     assertEquals(POST_PROCESSING, actual.getStep().getName());
-    assertEquals(Status.ProgressionEnum.PROCESSING, actual.getStep().getStatus().getProgression());
-    assertEquals(UNKNOWN, actual.getStep().getStatus().getHealth());
+    assertEquals(Status.ProgressionEnum.FINISHED, actual.getStep().getStatus().getProgression());
+    assertEquals(FAILED, actual.getStep().getStatus().getHealth());
   }
 
   @Test

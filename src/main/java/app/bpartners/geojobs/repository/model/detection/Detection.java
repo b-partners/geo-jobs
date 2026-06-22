@@ -165,6 +165,10 @@ public class Detection implements Serializable {
   @Getter(AccessLevel.NONE)
   private Boolean debugMode;
 
+  public boolean isAnnotationDeliveryEnable() {
+    return false;
+  }
+
   public boolean isDebugMode() {
     return debugMode != null && debugMode;
   }

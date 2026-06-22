@@ -284,7 +284,7 @@ public class ZoneService {
     if (detection.isPostProcessingStep(zoneDetectionJob)) {
       var inDoubtDetectedTileToDelivery =
           zoneDetectionJobService.countInDoubtDetectedTileToDeliveryById(zoneDetectionJob.getId());
-      if (inDoubtDetectedTileToDelivery > 0) {
+      if (inDoubtDetectedTileToDelivery > 0 && detection.isAnnotationDeliveryEnable()) {
         return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
             detection, PROCESSING, UNKNOWN, POST_PROCESSING);
       }
@@ -410,7 +410,8 @@ public class ZoneService {
       machineDetectionCreation.apply(detection, zoneTilingJob);
     }
     if (machineZoneDetectionJob.isFinished()) {
-      if (zoneDetectionJobService.countInDoubtDetectedTileToDeliveryById(detectionJobId) == 0L) {
+      if (zoneDetectionJobService.countInDoubtDetectedTileToDeliveryById(detectionJobId) == 0L
+          && !detection.isAnnotationDeliveryEnable()) {
         processVerificationOrGenerateGeoJson(detection, machineZoneDetectionJob);
       } else {
         var humanZoneDetectionJob = zoneDetectionJobService.getByTilingJobId(tilingJobId, HUMAN);

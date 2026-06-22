@@ -86,7 +86,9 @@ public class ZoneDetectionJobSucceededService implements Consumer<ZoneDetectionJ
       return;
     }
 
-    if (zoneDetectionJobService.countInDoubtDetectedTileToDeliveryById(succeededJobId) == 0L) {
+    if (zoneDetectionJobService.countInDoubtDetectedTileToDeliveryById(succeededJobId) == 0L
+        || (detection != null && !detection.isAnnotationDeliveryEnable())) {
+
       if (detection != null) {
         if (detection.hasToitureModelName()) {
           eventProducer.accept(List.of(new DetectionRoofPropertiesRequested(detection.getId())));
