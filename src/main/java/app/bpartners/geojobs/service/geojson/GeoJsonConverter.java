@@ -2,6 +2,7 @@ package app.bpartners.geojobs.service.geojson;
 
 import static app.bpartners.geojobs.endpoint.rest.postprocessing.BoundaryMerger.invert;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
+import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 import static app.bpartners.geojobs.service.geojson.GeoJson.fromFeatures;
 
 import app.bpartners.geojobs.endpoint.rest.postprocessing.DetectionBoundaryMerger;
@@ -9,7 +10,9 @@ import app.bpartners.geojobs.endpoint.rest.postprocessing.model.LatLonPolygon;
 import app.bpartners.geojobs.endpoint.rest.postprocessing.model.TilingConf;
 import app.bpartners.geojobs.model.ConversionFormatType;
 import app.bpartners.geojobs.model.DetectedTile;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
@@ -35,54 +38,92 @@ public class GeoJsonConverter implements BiFunction<List<DetectedTile>, MultiPol
   public GeoJson apply(
       List<DetectedTile> detectedTiles, MultiPolygon providedGeometryMultiPolygon) {
     List<GeoJson.GeoFeature> geoFeatures =
-        detectedTiles.stream()
-            .map(
-                detectedTile -> {
-                  var tile = detectedTile.getTile();
-                  var tileCoordinates = tile.getCoordinates();
-                  var xTile = tileCoordinates.getX();
-                  var yTile = tileCoordinates.getY();
-                  var zoom = tileCoordinates.getZ();
-                  return mapper.toGeoFeatures(
-                      xTile, yTile, zoom, DEFAULT_IMAGE_SIZE, detectedTile.getDetectedObjects());
-                })
-            .flatMap(List::stream)
-            .toList();
+        new ArrayList<>(
+            detectedTiles.stream()
+                .map(
+                    detectedTile -> {
+                      var tile = detectedTile.getTile();
+                      var tileCoordinates = tile.getCoordinates();
+                      var xTile = tileCoordinates.getX();
+                      var yTile = tileCoordinates.getY();
+                      var zoom = tileCoordinates.getZ();
+                      return mapper.toGeoFeatures(
+                          xTile,
+                          yTile,
+                          zoom,
+                          DEFAULT_IMAGE_SIZE,
+                          detectedTile.getDetectedObjects());
+                    })
+                .flatMap(List::stream)
+                .toList());
 
-    if (providedGeometryMultiPolygon != null) {
-      geoFeatures.forEach(
-          geoFeature -> {
-            if (geoFeature.getGeometry() != null
-                && geoFeature.getGeometry().getCoordinates() != null) {
-              var multiPolygon = geometryConverter.apply(geoFeature.getGeometry().getCoordinates());
-              var detectedGeoFeatureInsideProvidedGeometry =
-                  intersection(providedGeometryMultiPolygon, multiPolygon);
-              if (!detectedGeoFeatureInsideProvidedGeometry.isEmpty()) {
-                if (detectedGeoFeatureInsideProvidedGeometry
-                    instanceof MultiPolygon multiPolygonInsideProvidedGeometry) {
-                  geoFeature.setGeometry(
-                      geometryConverter.restMultiPolygonFromJts(
-                          multiPolygonInsideProvidedGeometry));
-                } else if (detectedGeoFeatureInsideProvidedGeometry
-                    instanceof Polygon polygonInsideProvidedGeometry) {
-                  var multiPolygonFromPolygon =
-                      geometryFactory.createMultiPolygon(
-                          new Polygon[] {polygonInsideProvidedGeometry});
-                  geoFeature.setGeometry(
-                      geometryConverter.restMultiPolygonFromJts(multiPolygonFromPolygon));
-                } else {
-                  log.error(
-                      "Unable to handle geometry intersection type {} provided geometry with"
-                          + " geoFeature.geometry : {}",
-                      detectedGeoFeatureInsideProvidedGeometry.getClass().getSimpleName(),
-                      geoFeature.getGeometry());
-                }
-              }
-            }
-          });
+    // Parking features are extracted (and removed) from geoFeatures before clipping, so they are
+    // not duplicated between convertedGeoFeatures and the unified parking features below.
+    var unifiedStationnementObjects = unifyStationnementModelObjects(geoFeatures);
+
+    List<GeoJson.GeoFeature> convertedGeoFeatures =
+        new ArrayList<>(
+            providedGeometryMultiPolygon == null
+                ? geoFeatures
+                : geoFeatures.stream()
+                    .map(
+                        geoFeature ->
+                            clipToProvidedGeometry(geoFeature, providedGeometryMultiPolygon))
+                    .filter(Objects::nonNull)
+                    .toList());
+
+    convertedGeoFeatures.addAll(unifiedStationnementObjects);
+
+    return fromFeatures(convertedGeoFeatures);
+  }
+
+  private GeoJson.GeoFeature clipToProvidedGeometry(
+      GeoJson.GeoFeature geoFeature, MultiPolygon providedGeometryMultiPolygon) {
+    if (geoFeature.getGeometry() == null || geoFeature.getGeometry().getCoordinates() == null) {
+      return null;
     }
+    var multiPolygon = geometryConverter.apply(geoFeature.getGeometry().getCoordinates());
+    var detectedGeoFeatureInsideProvidedGeometry =
+        intersection(providedGeometryMultiPolygon, multiPolygon);
+    if (detectedGeoFeatureInsideProvidedGeometry.isEmpty()) {
+      return null;
+    }
+    if (detectedGeoFeatureInsideProvidedGeometry
+        instanceof MultiPolygon multiPolygonInsideProvidedGeometry) {
+      geoFeature.setGeometry(
+          geometryConverter.restMultiPolygonFromJts(multiPolygonInsideProvidedGeometry));
+      return geoFeature;
+    }
+    if (detectedGeoFeatureInsideProvidedGeometry instanceof Polygon polygonInsideProvidedGeometry) {
+      var multiPolygonFromPolygon =
+          geometryFactory.createMultiPolygon(new Polygon[] {polygonInsideProvidedGeometry});
+      geoFeature.setGeometry(geometryConverter.restMultiPolygonFromJts(multiPolygonFromPolygon));
+      return geoFeature;
+    }
+    var polygonal = extractPolygonal(detectedGeoFeatureInsideProvidedGeometry);
+    if (polygonal != null) {
+      geoFeature.setGeometry(geometryConverter.restMultiPolygonFromJts(polygonal));
+      return geoFeature;
+    }
+    log.error(
+        "Unable to handle geometry intersection type {} provided geometry with"
+            + " geoFeature.geometry : {}",
+        detectedGeoFeatureInsideProvidedGeometry.getClass().getSimpleName(),
+        geoFeature.getGeometry());
+    return null;
+  }
 
-    return fromFeatures(geoFeatures);
+  private static MultiPolygon extractPolygonal(Geometry geometry) {
+    var polygons = new java.util.ArrayList<Polygon>();
+    for (int i = 0; i < geometry.getNumGeometries(); i++) {
+      if (geometry.getGeometryN(i) instanceof Polygon polygon && !polygon.isEmpty()) {
+        polygons.add(polygon);
+      }
+    }
+    if (polygons.isEmpty()) {
+      return null;
+    }
+    return geometryFactory.createMultiPolygon(polygons.toArray(new Polygon[0]));
   }
 
   private static Geometry intersection(Geometry a, Geometry b) {
@@ -97,6 +138,30 @@ public class GeoJsonConverter implements BiFunction<List<DetectedTile>, MultiPol
   }
 
   @NotNull
+  private List<GeoJson.GeoFeature> unifyStationnementModelObjects(
+      List<GeoJson.GeoFeature> geoFeatures) {
+    List<GeoJson.GeoFeature> stationnementModelObjectFeatures = new ArrayList<>();
+    geoFeatures.removeIf(
+        f -> {
+          if (f.getProperties() != null
+              && f.getProperties().containsKey("label")
+              && geoFeatureContainsStationnementModelObjects(f)) {
+            stationnementModelObjectFeatures.add(f);
+            return true;
+          }
+          return false;
+        });
+
+    return unifyGeoFeatures(stationnementModelObjectFeatures);
+  }
+
+  private boolean geoFeatureContainsStationnementModelObjects(GeoJson.GeoFeature f) {
+    var parkingLabel = PARKING.name().toLowerCase();
+    var geoFeatureLabel = f.getProperties().get("label").toString().toLowerCase();
+    return parkingLabel.equals(geoFeatureLabel);
+  }
+
+  @NotNull
   private List<GeoJson.GeoFeature> unifyGeoFeatures(List<GeoJson.GeoFeature> geoFeatures) {
     var toUnify =
         geoFeatures.stream()
@@ -105,8 +170,6 @@ public class GeoJsonConverter implements BiFunction<List<DetectedTile>, MultiPol
 
     var unifiedLatLon = merger.apply(toUnify, ConversionFormatType.GEO_JSON);
     var invertedUnifiedLatLon = invert(unifiedLatLon);
-    var unifiedGeoFeatures =
-        invertedUnifiedLatLon.stream().map(LatLonPolygon::toGeoFeature).toList();
-    return unifiedGeoFeatures;
+    return invertedUnifiedLatLon.stream().map(LatLonPolygon::toGeoFeature).toList();
   }
 }
