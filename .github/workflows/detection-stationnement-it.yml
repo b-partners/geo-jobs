@@ -1,8 +1,8 @@
-name: Detection toiture sync IT
+name: Detection stationnementIT
 
 on:
   schedule:
-    - cron: "0 0,2,4,6,8,10,12,14,16,18,20,22 * * *"
+    - cron: "10,25,40,55 * * * *"
   workflow_dispatch:
 
 env:
@@ -27,17 +27,29 @@ jobs:
         with:
           ref: prod
 
-      - name: Send POST /detections/*/sync request for BP_TOITURE model only
+      - name: Generate detection_stationnement_e2_id and store inside file
         run: |
           detection_sync_e2_id=$(uuidgen)
+          echo "$detection_sync_e2_id" > detection_stationnement_e2_id.txt
+          echo "detection_sync_e2_id=$detection_sync_e2_id" >> $GITHUB_ENV
           echo "Generated detection_sync_e2_id: '$detection_sync_e2_id'"
+
+      - name: Cache detection_stationnement_e2_id for completion run
+        uses: actions/cache@v4
+        with:
+          path: detection_stationnement_e2_id.txt
+          key: detection_stationnement_e2_id-cache-${{ runner.os }}-${{ github.sha }}
+
+      - name: Send POST /detections/*/sync request for BP_STATIONNEMENT model only
+        run: |
+          echo "Reusing detection_sync_e2_id: '$detection_sync_e2_id'"
           response_file="detection-response.json"
           
           http_code=$(curl -s -w "%{http_code}" -X POST "$API_URL/detections/$detection_sync_e2_id/sync" \
           -H "Content-Type: application/json" \
           -H "x-api-key: $API_KEY" \
           -H "x-test-request: true" \
-          --data "@.github/workflows/detection-request-sync.json" \
+          --data "@.github/workflows/detection-stationnement-request-sync.json" \
           -o "$response_file")
           
           echo "HTTP Response Code: $http_code"
