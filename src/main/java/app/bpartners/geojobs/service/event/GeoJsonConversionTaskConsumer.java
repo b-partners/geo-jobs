@@ -65,15 +65,27 @@ public class GeoJsonConversionTaskConsumer implements TaskConsumer<GeoJsonConver
     var providedGeometryMultiPolygon = getProvidedGeometryMultiPolygon(zoneDetectionJobId);
     var zoneName = zoneDetectionJob.getZoneName();
     var fileName = zoneName + "_" + detectableType + "-part" + "-" + pageNumber;
-    var fileKey = GEO_JSON_BUCKET_FOLDER + zoneDetectionJobId + "/" + fileName + GEO_JSON_EXTENSION;
+    var cleanedFileName = cleanFileName(fileName);
+    var fileKey =
+        GEO_JSON_BUCKET_FOLDER + zoneDetectionJobId + "/" + cleanedFileName + GEO_JSON_EXTENSION;
     var geoJson = geoJsonConverter.apply(paginatedDetectedTiles, providedGeometryMultiPolygon);
     var geoJsonAsByte = geoJson.getStringValue().getBytes();
     var geoJsonAsFile =
-        writer.write(geoJsonAsByte, createTempDirectory(), fileName + GEO_JSON_EXTENSION);
+        writer.write(geoJsonAsByte, createTempDirectory(), cleanedFileName + GEO_JSON_EXTENSION);
 
     bucketComponent.upload(geoJsonAsFile, fileKey);
 
     geoJsonConversionTask.setFileKey(fileKey);
+  }
+
+  private String cleanFileName(String fileName) {
+    return fileName
+        .trim()
+        .replaceAll(",", " ")
+        .replaceAll("\\.", " ")
+        .replaceAll("\"", " ")
+        .replaceAll("'", " ")
+        .replaceAll(" ", "_");
   }
 
   private MultiPolygon getProvidedGeometryMultiPolygon(String zoneDetectionJobId) {
