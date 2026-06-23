@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.util.GeometryFixer;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -32,8 +33,9 @@ public class TiledPixelPolygonComputer {
       List<MachineDetectedTile> detectedTileList,
       boolean isParcelDetection) {
     var providedLatLonPolygonGeometry =
-        geometryConverter.apply(
-            List.of(polygonGeoJsonZone.getGeometry().getPolygon().getCoordinates()));
+        GeometryFixer.fix(
+            geometryConverter.apply(
+                List.of(polygonGeoJsonZone.getGeometry().getPolygon().getCoordinates())));
 
     return delimitationFeatures.stream()
         .map(
@@ -64,22 +66,22 @@ public class TiledPixelPolygonComputer {
                                                 delimitationFeature,
                                                 isParcelDetection,
                                                 detectableType);
+                                        if (geometryProcessed == null) {
+                                          return Stream.empty();
+                                        }
                                         var providedZoneAndGeometryProcessedInsideTileGeometry =
                                             providedZoneInsideTileGeometry.intersection(
-                                                geometryProcessed);
+                                                GeometryFixer.fix(geometryProcessed));
                                         var
-                                            providedZoneAndGeometryProcessedInsideTilePolygonCoordinates =
-                                                tileCoordinatesPolygonIntersection.intersects(
-                                                    providedZoneAndGeometryProcessedInsideTileGeometry,
-                                                    tileCoordinates);
-                                        if (providedZoneAndGeometryProcessedInsideTilePolygonCoordinates
+                                            providedZoneAndGeometryProcessedInsideTilePixelGeometry =
+                                                tileCoordinatesPolygonIntersection
+                                                    .intersectsAsPixelGeometry(
+                                                        providedZoneAndGeometryProcessedInsideTileGeometry,
+                                                        tileCoordinates);
+                                        if (providedZoneAndGeometryProcessedInsideTilePixelGeometry
                                             .isEmpty()) {
                                           return Stream.<PolygonObjectType>empty();
                                         }
-                                        var
-                                            providedZoneAndGeometryProcessedInsideTilePixelGeometry =
-                                                geometryConverter.convertToPolygon(
-                                                    providedZoneAndGeometryProcessedInsideTilePolygonCoordinates);
                                         var polygonCoordinates =
                                             detectedObject
                                                 .getFeature()
