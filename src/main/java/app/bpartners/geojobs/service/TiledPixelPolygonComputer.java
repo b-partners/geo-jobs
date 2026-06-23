@@ -8,8 +8,10 @@ import app.bpartners.geojobs.model.geometry.TiledPixelPolygon;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Polygon;
@@ -48,14 +50,14 @@ public class TiledPixelPolygonComputer {
                           }
                           var detectedPolygonObjectTypes =
                               detectedTile.getDetectedObjects().stream()
-                                  .map(
+                                  .flatMap(
                                       detectedObject -> {
                                         var detectableType =
                                             detectedObject
                                                 .getDetectedObjectType()
                                                 .getDetectableType();
                                         if (!detectableTypes.contains(detectableType)) {
-                                          return null;
+                                          return Stream.<PolygonObjectType>empty();
                                         }
                                         var geometryProcessed =
                                             getMultiPolygonZoneProcessed(
@@ -72,7 +74,7 @@ public class TiledPixelPolygonComputer {
                                                     tileCoordinates);
                                         if (providedZoneAndGeometryProcessedInsideTilePolygonCoordinates
                                             .isEmpty()) {
-                                          return null;
+                                          return Stream.<PolygonObjectType>empty();
                                         }
                                         var
                                             providedZoneAndGeometryProcessedInsideTilePixelGeometry =
@@ -97,20 +99,30 @@ public class TiledPixelPolygonComputer {
                                                 .intersection(
                                                     providedZoneAndGeometryProcessedInsideTilePixelGeometry)
                                                 .buffer(0);
-                                        if (intersectionBetweenDetectedObjectAndConsideredZone
-                                            instanceof Polygon polygon) {
-                                          return new PolygonObjectType(
-                                              polygon, detectedObject.getDetectableObjectType());
-                                        } else {
+                                        var objectType = detectedObject.getDetectableObjectType();
+                                        var polygonObjectTypes = new ArrayList<PolygonObjectType>();
+                                        for (int g = 0;
+                                            g
+                                                < intersectionBetweenDetectedObjectAndConsideredZone
+                                                    .getNumGeometries();
+                                            g++) {
+                                          if (intersectionBetweenDetectedObjectAndConsideredZone
+                                                      .getGeometryN(g)
+                                                  instanceof Polygon polygon
+                                              && !polygon.isEmpty()) {
+                                            polygonObjectTypes.add(
+                                                new PolygonObjectType(polygon, objectType));
+                                          }
+                                        }
+                                        if (polygonObjectTypes.isEmpty()) {
                                           log.info(
                                               "Intersection between detected object and considered"
-                                                  + " zone not polygon, but was {}",
+                                                  + " zone has no polygonal part, but was {}",
                                               intersectionBetweenDetectedObjectAndConsideredZone
                                                   .getGeometryType());
                                         }
-                                        return null;
+                                        return polygonObjectTypes.stream();
                                       })
-                                  .filter(Objects::nonNull)
                                   .toList();
                           return new TiledPixelPolygon(
                               delimitationFeature,
