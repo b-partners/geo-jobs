@@ -16,16 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import app.bpartners.geojobs.endpoint.rest.api.DetectionApi;
 import app.bpartners.geojobs.endpoint.rest.client.ApiClient;
 import app.bpartners.geojobs.endpoint.rest.model.*;
-import app.bpartners.geojobs.repository.model.detection.DetectableType;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Graphics2D;
-import java.awt.Polygon;
-import java.awt.image.BufferedImage;
-import java.io.File;
+import app.bpartners.geojobs.service.VggImageAnnotator;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URI;
@@ -36,8 +27,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +34,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import javax.imageio.ImageIO;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -110,6 +98,7 @@ class CsvBatchDetectionIT {
   // shared, both are thread-safe (the generated ApiClient wraps a single java.net.http.HttpClient)
   private final HttpClient downloadClient = HttpClient.newHttpClient();
   private final DetectionApi detectionApi = newDetectionApi();
+  private final VggImageAnnotator annotator = new VggImageAnnotator();
 
   @Test
   void process_csv_detections_in_parallel() throws Exception {
@@ -167,7 +156,7 @@ class CsvBatchDetectionIT {
         download(detection.getImageUrl(), imageFile);
       }
       if (vggFile != null && imageFile != null) {
-        drawAnnotatedImage(
+        annotator.annotate(
             vggFile.toFile(),
             imageFile.toFile(),
             zoneDir.resolve(sanitize(zoneName) + "-annotated.png").toFile());
@@ -291,131 +280,6 @@ class CsvBatchDetectionIT {
         && step.getStatus() != null
         && step.getStatus().getProgression() == FINISHED
         && step.getStatus().getHealth() == SUCCEEDED;
-  }
-
-  // --------------------------------------------------------------------------
-  // VGG annotation (adapted from VggPolygonDrawer)
-  // --------------------------------------------------------------------------
-
-  /**
-   * Draws the VGG polygons on the downloaded image and writes the annotated PNG to {@code output}.
-   */
-  private void drawAnnotatedImage(File vggFile, File imageFile, File output) throws IOException {
-    BufferedImage image = ImageIO.read(imageFile);
-    Graphics2D g2d = image.createGraphics();
-    g2d.setStroke(new BasicStroke(4));
-    g2d.setFont(new Font("Arial", Font.PLAIN, 36));
-
-    JsonNode root = new ObjectMapper().readTree(vggFile);
-    if (!root.isArray()) {
-      throw new IllegalArgumentException("VGG file must contain a list of elements: " + vggFile);
-    }
-
-    int addressCount = 0; // to vertically space repeated addresses
-    for (JsonNode element : root) {
-      Iterator<Map.Entry<String, JsonNode>> uuidEntries = element.fields();
-      while (uuidEntries.hasNext()) {
-        JsonNode vggData = uuidEntries.next().getValue();
-        JsonNode properties = vggData.get("properties");
-        JsonNode regions = vggData.get("regions");
-
-        String firstAddress = null;
-        if (properties != null
-            && properties.has("addresses")
-            && properties.get("addresses").isArray()
-            && properties.get("addresses").size() > 0) {
-          firstAddress = properties.get("addresses").get(0).asText();
-        }
-
-        int firstPolygonX = -1;
-        int firstPolygonY = -1;
-        if (regions != null && regions.isObject()) {
-          Iterator<Map.Entry<String, JsonNode>> regionEntries = regions.fields();
-          while (regionEntries.hasNext()) {
-            JsonNode regionNode = regionEntries.next().getValue();
-            JsonNode shape = regionNode.get("shape_attributes");
-            JsonNode region = regionNode.get("region_attributes");
-            if (shape == null || !"Polygon".equalsIgnoreCase(shape.get("name").asText())) {
-              continue;
-            }
-
-            JsonNode xPointsNode = shape.get("all_points_x");
-            JsonNode yPointsNode = shape.get("all_points_y");
-            int numPoints = xPointsNode.size();
-            int[] xPoints = new int[numPoints];
-            int[] yPoints = new int[numPoints];
-            for (int i = 0; i < numPoints; i++) {
-              xPoints[i] = (int) Math.round(xPointsNode.get(i).asDouble());
-              yPoints[i] = (int) Math.round(yPointsNode.get(i).asDouble());
-            }
-
-            String label =
-                region != null && region.has("label") ? region.get("label").asText() : null;
-            var color = getColorFromDetectedType(parseDetectableType(label));
-            g2d.setColor(Color.decode(color));
-            g2d.drawPolygon(new Polygon(xPoints, yPoints, numPoints));
-
-            if (firstPolygonX == -1 && firstPolygonY == -1) {
-              firstPolygonX = Arrays.stream(xPoints).min().orElse(0);
-              firstPolygonY = Arrays.stream(yPoints).min().orElse(0) - 15;
-            }
-          }
-
-          if (firstAddress != null
-              && !firstAddress.isBlank()
-              && firstPolygonX >= 0
-              && firstPolygonY >= 0) {
-            g2d.setColor(Color.BLUE);
-            g2d.drawString(firstAddress, firstPolygonX, firstPolygonY + (addressCount * 40));
-            addressCount++;
-          }
-        }
-      }
-    }
-
-    g2d.dispose();
-    ImageIO.write(image, "png", output);
-    log.info("annotated image written -> {}", output);
-  }
-
-  private static DetectableType parseDetectableType(String label) {
-    if (label == null) {
-      return null;
-    }
-    try {
-      return DetectableType.valueOf(label.toUpperCase());
-    } catch (IllegalArgumentException e) {
-      return null; // unknown label -> default (grey) color
-    }
-  }
-
-  private static String getColorFromDetectedType(DetectableType detectableType) {
-    if (detectableType == null) {
-      return "#8C8B89"; // gris
-    }
-    return switch (detectableType) {
-
-      // 🌿 Espaces verts & arbres
-      case ARBRE, ESPACE_VERT, ESPACE_VERT_PARKING -> "#4CAF50"; // vert
-
-      // 🍄 Moisissures
-      case MOISISSURE, MOISISSURE_CLAIR, MOISISSURE_COULEUR, MOISISSURE_NOIRCIE ->
-          "#795548"; // Marron
-
-      // 💧 Humidité
-      case HUMIDITE, HUMIDITE_CLAIR, HUMIDITE_INTENSE -> "#2196F3"; // bleu
-
-      // ⚠️ Usure
-      case USURE, USURE_IMPORTANTE, USURE_LEGER -> "#F44336"; // rouge
-
-      // Obstacle
-      case OBSTACLE, VELUX, CHEMINEE -> "#000000"; // noir
-
-      case TOITURE_REVETEMENT -> "#db531d"; // marron
-
-      // ⬜ Tout le reste
-      default -> "#8C8B89"; // gris
-    };
   }
 
   // --------------------------------------------------------------------------
