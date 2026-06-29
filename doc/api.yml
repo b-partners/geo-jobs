@@ -2504,6 +2504,7 @@ components:
         - ASSEMBLE_VGG
         - ASSEMBLE_IMAGE
         - ANNOTATED_ASSEMBLE_IMAGE
+        - ANNOTATED_TILE_IMAGE
         - GEOJSON
     Detection:
       allOf:
