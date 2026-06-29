@@ -2,6 +2,7 @@ package app.bpartners.geojobs.service.event;
 
 import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
 import static app.bpartners.geojobs.model.page.BoundedPageSize.MAX_SIZE;
+import static app.bpartners.geojobs.service.geojson.GeometryConverter.retrieveMultiPolygonFromFeature;
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
 
 import app.bpartners.geojobs.file.FileWriter;
@@ -19,7 +20,6 @@ import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionTask;
 import app.bpartners.geojobs.service.TaskConsumer;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConverter;
-import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
@@ -95,7 +95,9 @@ public class GeoJsonConversionTaskConsumer implements TaskConsumer<GeoJsonConver
     }
     var detection = optionalDetection.get();
     return detection.getProvidedGeoJsonZone().stream()
-        .map(GeometryConverter::retrieveMultiPolygonFromFeature)
+        .map(
+            feature ->
+                retrieveMultiPolygonFromFeature(feature, detection.getDelimitationOf(feature)))
         .filter(Objects::nonNull)
         .reduce(unifyMultiPolygon())
         .orElseThrow(
