@@ -164,6 +164,4 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
       updateStatus(request, FAILED, GEOMETRY_CONSTRUCTION);
     }
   }
-
-  rivate void
 }

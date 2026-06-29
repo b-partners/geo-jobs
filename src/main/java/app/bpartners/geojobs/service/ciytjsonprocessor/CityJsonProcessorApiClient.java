@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.ciytjsonprocessor;
 
+import static app.bpartners.geojobs.service.ciytjsonprocessor.model.ProcessingStatus.SUCCEEDED;
 import static org.springframework.web.util.UriComponentsBuilder.fromUri;
 
 import app.bpartners.geojobs.service.ciytjsonprocessor.conf.CityJsonProcessorApiProperties;
@@ -14,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
@@ -48,8 +50,13 @@ public class CityJsonProcessorApiClient {
     var entity = new HttpEntity<>(request, headers);
 
     try {
-      var response = restTemplate.postForEntity(uri, entity, CityJsonProcessorResponse.class);
-      return response.getBody();
+      var response =
+          restTemplate.exchange(uri, HttpMethod.PUT, entity, CityJsonProcessorResponse.class);
+      var responseBody = response.getBody();
+      if (responseBody != null && SUCCEEDED.equals(responseBody.getStatus())) {
+        throw new RestClientException("CityJSONProcessorApi return FAILED status");
+      }
+      return responseBody;
     } catch (HttpStatusCodeException e) {
       throw mapHttpError(e);
     } catch (RestClientException e) {

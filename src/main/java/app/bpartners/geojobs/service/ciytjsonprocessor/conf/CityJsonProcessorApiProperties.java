@@ -14,7 +14,7 @@ public class CityJsonProcessorApiProperties {
   private final int readTimeoutMs;
   private final int connectTimeoutMs;
 
-  public CityJsonProcessorApiProperties(@Value("${cityjson.processor.base.url}") String baseUrl) {
+  public CityJsonProcessorApiProperties(@Value("${city-json-processor.api.url}") String baseUrl) {
     this.baseUrl = baseUrl;
     this.readTimeoutMs = READ_TIMEOUT_MS;
     this.connectTimeoutMs = CONNECT_TIMEOUT_MS;
