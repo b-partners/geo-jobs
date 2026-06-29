@@ -2695,6 +2695,7 @@ components:
       type: string
       enum:
         - DEFAULT
+        - SAFE_MODE
         - THREE_D_BAG_ROOFER
     ThreeDAddressesRequest:
       type: object
