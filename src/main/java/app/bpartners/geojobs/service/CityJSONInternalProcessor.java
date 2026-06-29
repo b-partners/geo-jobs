@@ -19,14 +19,12 @@ import app.bpartners.geojobs.repository.model.cityjson.CityJSON;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
 import app.bpartners.geojobs.service.cityjson.texture.CityJsonTextureComputer;
 import app.bpartners.geojobs.service.ciytjsonprocessor.CityJsonProcessorApiClient;
-import app.bpartners.geojobs.service.ciytjsonprocessor.model.CityJsonProcessorResponse;
 import app.bpartners.geojobs.service.ciytjsonprocessor.model.CreateCityJsonFromFeatureFileUrl;
 import app.bpartners.geojobs.service.ciytjsonprocessor.model.DelimitationType;
 import app.bpartners.geojobs.service.geojson.GeoJson;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -35,6 +33,7 @@ import java.util.*;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -48,6 +47,26 @@ public class CityJSONInternalProcessor implements Function<CityJSONRequest, List
   private final BucketComponent bucketComponent;
   private final CityJsonTextureComputer textureComputer;
   private final CityJsonProcessorApiClient cityJsonProcessorApiClient;
+  private final CityJSONDownloader cityJSONDownloader;
+
+  @Component
+  public static class CityJSONDownloader {
+    public File download(String url) {
+      try {
+        var cityjsonFileUrl = new URI(url).toURL();
+        var file = File.createTempFile(randomUUID().toString(), JSON_EXTENSION);
+
+        try (var in = cityjsonFileUrl.openStream()) {
+          Files.copy(in, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        }
+
+        return file;
+
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
 
   @Override
   public List<CityJSON> apply(CityJSONRequest request) {
@@ -71,7 +90,7 @@ public class CityJSONInternalProcessor implements Function<CityJSONRequest, List
         .map(
             reponse -> {
               var bucketFileKey = randomUUID() + JSON_EXTENSION;
-              var cityjsonFile = getCityJsonFile(reponse);
+              var cityjsonFile = cityJSONDownloader.download(reponse.getFileUrl());
               cityjsonFile.deleteOnExit();
 
               var textured = textureComputer.applyTexture(request, cityjsonFile);
@@ -86,19 +105,6 @@ public class CityJSONInternalProcessor implements Function<CityJSONRequest, List
                   .build();
             })
         .toList();
-  }
-
-  private static File getCityJsonFile(CityJsonProcessorResponse reponse) {
-    try {
-      URL cityjsonFileUrl = new URI(reponse.getFileUrl()).toURL();
-      File cityjsonFile = File.createTempFile(randomUUID().toString(), JSON_EXTENSION);
-      try (var in = cityjsonFileUrl.openStream()) {
-        Files.copy(in, cityjsonFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-      }
-      return cityjsonFile;
-    } catch (URISyntaxException | IOException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   private Set<String> retrieveGeometriesWithPresignedURL(CityJSONRequest request) {

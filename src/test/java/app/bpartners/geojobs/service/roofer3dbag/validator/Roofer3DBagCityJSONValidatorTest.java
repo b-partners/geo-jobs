@@ -1,10 +1,10 @@
 package app.bpartners.geojobs.service.roofer3dbag.validator;
 
+import static app.bpartners.geojobs.utils.ResourceFile.getResourceFile;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.File;
 import org.junit.jupiter.api.Test;
 
 class Roofer3DBagCityJSONValidatorTest {
@@ -21,13 +21,5 @@ class Roofer3DBagCityJSONValidatorTest {
   void should_throw_when_not_two_city_objects() {
     var file = getResourceFile("cityjson/invalid_roofer_cityjson.jsonl");
     assertThrows(IllegalStateException.class, () -> subject.accept(file));
-  }
-
-  private File getResourceFile(String path) {
-    var url = getClass().getClassLoader().getResource(path);
-    if (url == null) {
-      throw new IllegalArgumentException("Resource not found: " + path);
-    }
-    return new File(url.getFile());
   }
 }

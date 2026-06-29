@@ -93,10 +93,10 @@ class CityJSON3DBagRooferProcessorTest {
     var geoJsonUrl = "http://geojson/" + randomUUID();
     var cityJsonUrl = "http://cityJson/" + randomUUID();
 
-    when((rooferCityJsonURLMock.openStream()))
-        .thenReturn(new ClassPathResource("/cityjson/dummy.jsonl").getInputStream());
     when(cityJSONRequestMock.getRequestDelimitations())
         .thenReturn(List.of(toDomainFeature(delimitationFeature)));
+    when((rooferCityJsonURLMock.openStream()))
+        .thenReturn(new ClassPathResource("/cityjson/dummy.jsonl").getInputStream());
     when(cityJSONRequestMock.getComplexityFactor()).thenReturn(null);
     when(cityJSONRequestMock.getKnn()).thenReturn(null);
     when(geoJsonBuildingPresignedURLMock.toString()).thenReturn(geoJsonUrl);

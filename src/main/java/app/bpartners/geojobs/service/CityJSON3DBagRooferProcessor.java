@@ -98,8 +98,6 @@ public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, L
                       in, originalCityJSONFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                 }
 
-                cityJSONValidator.accept(originalCityJSONFile);
-
                 var cityJSONFileWithAdditionalProperties =
                     File.createTempFile(bucketFileKey, JSONL_EXTENSION);
 
@@ -116,6 +114,8 @@ public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, L
               } catch (URISyntaxException | IOException e) {
                 throw new RuntimeException(e);
               }
+
+              cityJSONValidator.accept(cityJSONConvertedInJsonExtension);
 
               var texturedCityJSON =
                   textureComputer.applyTexture(request, cityJSONConvertedInJsonExtension);
