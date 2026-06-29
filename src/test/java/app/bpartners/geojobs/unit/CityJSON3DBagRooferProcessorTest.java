@@ -28,6 +28,8 @@ import app.bpartners.geojobs.service.lidar.api.SwissBoundaryChecker;
 import app.bpartners.geojobs.service.roofer3dbag.Roofer3DBagApiClient;
 import app.bpartners.geojobs.service.roofer3dbag.model.CityJsonGenerationRequest;
 import app.bpartners.geojobs.service.roofer3dbag.model.CityJsonGenerationResponse;
+import app.bpartners.geojobs.service.roofer3dbag.validator.Roofer3DBagCityJSONValidator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URL;
@@ -63,7 +65,8 @@ class CityJSON3DBagRooferProcessorTest {
           coordinateTransformer,
           geometryConverter,
           textureComputerMock,
-          swissBoundaryCheckerMock);
+          swissBoundaryCheckerMock,
+          new Roofer3DBagCityJSONValidator(new ObjectMapper()));
 
   @SneakyThrows
   @Test

@@ -23,6 +23,7 @@ import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
 import app.bpartners.geojobs.service.lidar.api.SwissBoundaryChecker;
 import app.bpartners.geojobs.service.roofer3dbag.Roofer3DBagApiClient;
 import app.bpartners.geojobs.service.roofer3dbag.model.CityJsonGenerationRequest;
+import app.bpartners.geojobs.service.roofer3dbag.validator.Roofer3DBagCityJSONValidator;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -59,6 +60,7 @@ public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, L
   private final GeometryConverter geometryConverter;
   private final CityJsonTextureComputer textureComputer;
   private final SwissBoundaryChecker swissBoundaryChecker;
+  private final Roofer3DBagCityJSONValidator cityJSONValidator;
 
   @Override
   public List<CityJSON> apply(CityJSONRequest request) {
@@ -95,6 +97,8 @@ public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, L
                   Files.copy(
                       in, originalCityJSONFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                 }
+
+                cityJSONValidator.accept(originalCityJSONFile);
 
                 var cityJSONFileWithAdditionalProperties =
                     File.createTempFile(bucketFileKey, JSONL_EXTENSION);
