@@ -12,7 +12,7 @@ import org.springframework.web.client.RestTemplate;
 @Configuration
 @RequiredArgsConstructor
 @EnableConfigurationProperties
-public class ApiClientConfig {
+public class CityJsonProcessorApiClientConfig {
   private final CityJsonProcessorApiProperties properties;
 
   @Bean("cityJsonProcessorRestTemplate")

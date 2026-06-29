@@ -29,7 +29,6 @@ import app.bpartners.geojobs.service.roofer3dbag.Roofer3DBagApiClient;
 import app.bpartners.geojobs.service.roofer3dbag.model.CityJsonGenerationRequest;
 import app.bpartners.geojobs.service.roofer3dbag.model.CityJsonGenerationResponse;
 import app.bpartners.geojobs.service.roofer3dbag.validator.Roofer3DBagCityJSONValidator;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URL;
@@ -38,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import lombok.SneakyThrows;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Geometry;
 import org.mockito.MockedConstruction;
@@ -55,6 +55,8 @@ class CityJSON3DBagRooferProcessorTest {
   GeometryConverter geometryConverter = new GeometryConverter();
   CityJsonTextureComputer textureComputerMock = mock(CityJsonTextureComputer.class);
   SwissBoundaryChecker swissBoundaryCheckerMock = mock(SwissBoundaryChecker.class);
+  Roofer3DBagCityJSONValidator roofer3DBagCityJSONValidatorMock =
+      mock(Roofer3DBagCityJSONValidator.class);
   CityJSON3DBagRooferProcessor subject =
       new CityJSON3DBagRooferProcessor(
           bucketComponentMock,
@@ -66,7 +68,12 @@ class CityJSON3DBagRooferProcessorTest {
           geometryConverter,
           textureComputerMock,
           swissBoundaryCheckerMock,
-          new Roofer3DBagCityJSONValidator(new ObjectMapper()));
+          roofer3DBagCityJSONValidatorMock);
+
+  @BeforeEach
+  void setup() {
+    doNothing().when(roofer3DBagCityJSONValidatorMock).accept(any());
+  }
 
   @SneakyThrows
   @Test

@@ -23,9 +23,9 @@ public class Roofer3DBagCityJSONValidator implements Consumer<File> {
         throw new IllegalStateException("CityObjects missing or invalid");
       }
 
-      if (cityObjects.size() != 2) {
+      if (cityObjects.size() < 2) {
         throw new IllegalStateException(
-            "CityJSON must contain exactly 2 CityObjects, found: " + cityObjects.size());
+            "CityJSON must contain at least 2 CityObjects, found: " + cityObjects.size());
       }
 
     } catch (Exception e) {
