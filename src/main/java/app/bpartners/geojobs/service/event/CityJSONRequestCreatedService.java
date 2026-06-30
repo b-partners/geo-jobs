@@ -16,6 +16,7 @@ import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.cityjson.*;
 import app.bpartners.geojobs.service.CityJSON3DBagRooferProcessor;
+import app.bpartners.geojobs.service.CityJSONInternalProcessor;
 import app.bpartners.geojobs.service.CityJSONSafeModeProcessor;
 import app.bpartners.geojobs.service.cityjson.LidarDataToCityJsonProcessor;
 import app.bpartners.geojobs.service.cityjson.texture.CityJsonTextureComputer;
@@ -46,10 +47,10 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
   private final CityJSON3DBagRooferProcessor cityJson3DBagRooferProcessor;
   private final CityJSONSafeModeProcessor cityJSONSafeModeProcessor;
   private final CityJsonTextureComputer textureComputer;
+  private final CityJSONInternalProcessor cityJSONInternalProcessor;
 
-  @SneakyThrows
-  @Override
-  public void accept(CityJSONRequestCreated created) {
+  // TODO: refactor
+  public void accept(CityJSONRequestCreated created, boolean isSync) {
     var communityAuthorization =
         communityAuthorizationRepository.findById(created.getCommunityOwnerId()).orElseThrow();
     if (!communityAuthorization.isIntegrationTestUsage()) {
@@ -64,7 +65,13 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
             .findByIdAndCommunityOwnerId(created.getRequestId(), created.getCommunityOwnerId())
             .orElseThrow();
 
-    processCityJSONFacade(request);
+    processCityJSONFacade(request, isSync);
+  }
+
+  @SneakyThrows
+  @Override
+  public void accept(CityJSONRequestCreated created) {
+    accept(created, false);
   }
 
   private void succeedCityJsonRequest(CityJSONRequest request, List<CityJSON> cityJsonList) {
@@ -118,16 +125,21 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
     };
   }
 
-  private void processCityJSONFacade(CityJSONRequest request) {
+  private void processCityJSONFacade(CityJSONRequest request, boolean isSync) {
     var generationType = getType(request);
     if (ROOF_SEGMENT_FACE_DELIMITATION.equals(generationType)) {
-      processByInternalMethod(request);
+      processByInternalMethod(request, isSync);
       return;
     }
-    processFullAutomaticFacade(request);
+    processFullAutomaticFacade(request, isSync);
   }
 
-  private void processByInternalMethod(CityJSONRequest request) {
+  private void processByInternalMethod(CityJSONRequest request, boolean isSync) {
+    if (isSync) {
+      processInternalByApi(request);
+      return;
+    }
+
     try {
       var requestDelimitations = request.getRequestDelimitations();
       var pointsExtractionResult =
@@ -147,12 +159,25 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
     }
   }
 
-  private void processFullAutomaticFacade(CityJSONRequest request) {
+  private void processFullAutomaticFacade(CityJSONRequest request, boolean isSync) {
     var processorType = request.getLidarProcessorType();
     switch (processorType) {
-      case DEFAULT -> processByInternalMethod(request);
+      case DEFAULT -> processByInternalMethod(request, isSync);
       case SAFE_MODE -> processFullAutomaticBySafeMode(request);
       case null, default -> processFullAutomaticBy3DBag(request);
+    }
+  }
+
+  private void processInternalByApi(CityJSONRequest request) {
+    try {
+      var cityJsonFrom3dBag = cityJSONInternalProcessor.apply(request);
+      succeedCityJsonRequest(request, cityJsonFrom3dBag);
+    } catch (Exception e) {
+      log.error(
+          "Unable to process Lidar By Internal Api for request {}, error {}",
+          request.getId(),
+          e.getMessage());
+      updateStatus(request, FAILED, GEOMETRY_CONSTRUCTION);
     }
   }
 

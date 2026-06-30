@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
+import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.file.ExtensionGuesser;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
@@ -15,6 +17,7 @@ import app.bpartners.geojobs.service.cityjson.texture.CityJsonTextureComputer;
 import app.bpartners.geojobs.service.ciytjsonprocessor.CityJsonProcessorApiClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -23,13 +26,15 @@ class CityJSONInternalProcessorTest {
   private final CityJsonProcessorApiClient apiClientMock = mock();
   private final CityJsonTextureComputer textureComputerMock = mock();
   private final CityJSONInternalProcessor.CityJSONDownloader cityJSONDownloaderMock = mock();
+  private final AuthProvider authProviderMock = mock();
   private final CityJSONInternalProcessor subject =
       new CityJSONInternalProcessor(
           new FileWriter(new ObjectMapper(), new ExtensionGuesser()),
           bucketComponentMock,
           textureComputerMock,
           apiClientMock,
-          cityJSONDownloaderMock);
+          cityJSONDownloaderMock,
+          authProviderMock);
 
   @BeforeEach
   void setup() {
@@ -38,6 +43,9 @@ class CityJSONInternalProcessorTest {
     when(apiClientMock.generate(any(), any())).thenReturn(mock());
     when(textureComputerMock.applyTexture(any(), any())).then(mock());
     when(cityJSONDownloaderMock.download(any())).thenReturn(mock());
+
+    var principal = new Principal(randomUUID().toString(), Set.of());
+    when(authProviderMock.getPrincipal()).thenReturn(principal);
   }
 
   @Test

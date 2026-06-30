@@ -11,6 +11,7 @@ import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.endpoint.rest.model.Polygon;
+import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
@@ -48,6 +49,7 @@ public class CityJSONInternalProcessor implements Function<CityJSONRequest, List
   private final CityJsonTextureComputer textureComputer;
   private final CityJsonProcessorApiClient cityJsonProcessorApiClient;
   private final CityJSONDownloader cityJSONDownloader;
+  private final AuthProvider authProvider;
 
   @Component
   public static class CityJSONDownloader {
@@ -68,8 +70,13 @@ public class CityJSONInternalProcessor implements Function<CityJSONRequest, List
     }
   }
 
+  private String getApiKey() {
+    return authProvider.getPrincipal().getApiKey();
+  }
+
   @Override
   public List<CityJSON> apply(CityJSONRequest request) {
+    var apiKey = getApiKey();
     var id = request.getId();
     var delimitationType = getDelimitationType(request);
     var delimitationFeatureGeoJsonFileURL = retrieveGeometriesWithPresignedURL(request);
@@ -83,7 +90,8 @@ public class CityJSONInternalProcessor implements Function<CityJSONRequest, List
                         CreateCityJsonFromFeatureFileUrl.builder()
                             .featureFileUrl(buildingUrl)
                             .delimitationType(delimitationType)
-                            .build()))
+                            .build(),
+                        apiKey))
             .toList();
 
     return cityJsonGenerationResponses.stream()

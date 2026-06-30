@@ -41,7 +41,12 @@ public class CityJsonProcessorApiClient {
   }
 
   public CityJsonProcessorResponse generate(String id, CreateCityJsonFromFeatureFileUrl request) {
-    var uri = buildGenerateUri(id);
+    return generate(id, request, null);
+  }
+
+  public CityJsonProcessorResponse generate(
+      String id, CreateCityJsonFromFeatureFileUrl request, String apiKey) {
+    var uri = buildGenerateUri(id, apiKey);
 
     var headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
@@ -66,8 +71,12 @@ public class CityJsonProcessorApiClient {
   }
 
   @SneakyThrows
-  private URI buildGenerateUri(String id) {
+  private URI buildGenerateUri(String id, String apiKey) {
     var url = String.format("%s/%s/%s", PREFIX_PATH, id, SUFFIX_PATH);
+    if (apiKey != null) {
+      url = String.format("%s?generatorApiKey=%s", url, apiKey);
+    }
+
     var builder = fromUri(new URI(properties.getBaseUrl())).path(url);
     return builder.build().toUri();
   }
