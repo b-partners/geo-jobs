@@ -73,7 +73,8 @@ public class CityJSONRequestService {
             .requestId(requestIdentifier)
             .communityOwnerId(cityJSONRequest.getCommunityOwnerId())
             .lidarProcessorType(cityJSONRequest.getLidarProcessorType())
-            .build());
+            .build(),
+        true);
 
     return getByIdAndCommunityOwnerId(requestIdentifier, cityJSONRequest.getCommunityOwnerId());
   }
