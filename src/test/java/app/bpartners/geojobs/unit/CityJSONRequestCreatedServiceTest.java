@@ -19,6 +19,7 @@ import app.bpartners.geojobs.repository.model.cityjson.CityJSON;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.service.CityJSON3DBagRooferProcessor;
+import app.bpartners.geojobs.service.CityJSONSafeModeProcessor;
 import app.bpartners.geojobs.service.cityjson.LidarDataToCityJsonProcessor;
 import app.bpartners.geojobs.service.cityjson.texture.CityJsonTextureComputer;
 import app.bpartners.geojobs.service.event.CityJSONRequestCreatedService;
@@ -40,6 +41,7 @@ class CityJSONRequestCreatedServiceTest {
   EventProducer eventProducerMock = mock();
   CommunityAuthorizationRepository communityAuthorizationRepositoryMock = mock();
   CityJSON3DBagRooferProcessor cityJson3DBagRooferProcessorMock = mock();
+  CityJSONSafeModeProcessor cityJSONSafeModeProcessor = mock();
   CityJsonTextureComputer textureComputerMock = mock(CityJsonTextureComputer.class);
 
   CityJSONRequestCreatedService subject =
@@ -53,6 +55,7 @@ class CityJSONRequestCreatedServiceTest {
           eventProducerMock,
           communityAuthorizationRepositoryMock,
           cityJson3DBagRooferProcessorMock,
+          cityJSONSafeModeProcessor,
           textureComputerMock);
 
   @BeforeEach
