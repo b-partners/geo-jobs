@@ -196,6 +196,8 @@ public class SecurityConf {
                     .authenticated()
                     .requestMatchers(POST, "/3d/*")
                     .authenticated()
+                    .requestMatchers(POST, "/3d/*/sync")
+                    .authenticated()
                     .requestMatchers(POST, "/3d/*/addresses")
                     .authenticated()
                     .requestMatchers(GET, "/geocode")
