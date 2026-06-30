@@ -15,7 +15,8 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class CreateCityJSONRequestValidator implements Consumer<CreateCityJSONRequest> {
-  private static final int MAX_ROOFS_COUNT = 5;
+  private static final int MAX_ROOFS_COUNT_SYNC = 1;
+  private static final int MAX_ROOFS_COUNT_ASYNC = 5;
   private static final List<DelimitationObjectType> SUPPORTED_DELIMITATION_OBJECT_TYPE =
       List.of(BUILDING_ROOF, BUILDING_ROOF_SEGMENT_FACE);
 
@@ -26,21 +27,28 @@ public class CreateCityJSONRequestValidator implements Consumer<CreateCityJSONRe
           "CityJSONRequest.delimitations is mandatory and cannot be empty");
     }
 
-    if (request.getDelimitations().size() > MAX_ROOFS_COUNT) {
+    if (request.getDelimitations().size() > MAX_ROOFS_COUNT_ASYNC) {
       throw new BadRequestException(
-          "Requests with more than " + MAX_ROOFS_COUNT + " delimitations are not supported yet.");
+          "Requests with more than "
+              + MAX_ROOFS_COUNT_ASYNC
+              + " delimitations are not supported yet.");
     }
   }
 
   public void accept(ThreeDRequest request) {
+    accept(request, true);
+  }
+
+  public void accept(ThreeDRequest request, boolean isAsync) {
     if (request.getDelimitations() == null || request.getDelimitations().isEmpty()) {
       throw new BadRequestException(
           "CityJSONRequest.delimitations is mandatory and cannot be empty");
     }
 
-    if (request.getDelimitations().size() > MAX_ROOFS_COUNT) {
+    var maxRoofs = isAsync ? MAX_ROOFS_COUNT_ASYNC : MAX_ROOFS_COUNT_SYNC;
+    if (request.getDelimitations().size() > maxRoofs) {
       throw new BadRequestException(
-          "Requests with more than " + MAX_ROOFS_COUNT + " delimitations are not supported yet.");
+          "Requests with more than " + maxRoofs + " delimitations are not supported yet.");
     }
 
     if (request.getDelimitationType() != null

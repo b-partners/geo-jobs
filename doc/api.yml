@@ -1387,6 +1387,56 @@ paths:
               examples:
                 3DResponseWithStatusSucceeded:
                   $ref: '#/components/examples/ThreeDResponseWithSucceededStatusExample'
+  '/3d/{id}/sync':
+    post:
+      tags:
+        - ThreeD
+      operationId: request3DFileOnDelimitationsSync
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: 3D request identifier
+          schema:
+            type: string
+      summary: Request 3D models on provided feature
+      description: |
+        ## Overview
+        Request 3D models for the provided Features synchronously.
+        ## Point Geometry Usage
+        When `Point` geometry is provided, nearest `delimitationObjectType` such as BUILDING_ROOF is processed. Only PARCEL_FREE_DELIMITATION `delimitationType` is supported for now.
+        ## Polygon and MultiPolygon Geometry Usage
+        When `Polygon` or `MultiPolygon` geometry is provided, `delimitationObjectType` such as BUILDING_ROOF contained within the provided geometry is evaluated first. 
+        Then, its intersection is computed according to the selected `delimitationType`.
+        ### Case `delimitationType=USER_DEFINED_DELIMITATION`
+        Provided geometry is used *directly* as the delimitation for the specified `delimitationObjectType` (for example, a BUILDING_ROOF delimitation)
+        ### Case `delimitationType=PARCEL_CONSTRAINED_DELIMITATION`
+        Provided geometry is first constrained by the land parcel. Resulting area is then used to retrieve the corresponding `delimitationObjectType` (for example, BUILDING_ROOF).
+        ### Case `delimitationType=PARCEL_FREE_DELIMITATION`
+        Provided geometry is used as a delimitation without any parcel constraint. Corresponding `delimitationObjectType` (for example, BUILDING_ROOF) is then retrieved from this area.
+      security:
+        - ApiKeyAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ThreeDRequest'
+            examples:
+              3DRequestUsingPoint:
+                $ref: '#/components/examples/ThreeDRequestUsingPointAndRoofTypeAndParcelFreeExample'
+              3DRequestUsingPolygon:
+                $ref: '#/components/examples/ThreeDRequestUsingPolygonAndRoofObjectTypeAndParcelFreeExample'
+      responses:
+        200:
+          description: 3D response with actual request status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThreeDResponseStatus'
+              examples:
+                3DResponseWithStatusSucceeded:
+                  $ref: '#/components/examples/ThreeDResponseWithSucceededStatusExample'
   '/3d/{id}/addresses':
     post:
       tags:

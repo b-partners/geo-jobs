@@ -52,6 +52,21 @@ public class CityJSONController {
         cityJSONRequestService.process(toProcess));
   }
 
+  @PostMapping("/3d/{id}/sync")
+  public ThreeDResponseStatus request3DFileOnDelimitationsSync(
+      @RequestBody ThreeDRequest threeDRequest,
+      @PathVariable(name = "id") String requestIdentifier) {
+    var communityOwnerId = getCommunityAuthorizationId();
+    createCityJSONRequestValidator.accept(threeDRequest, false);
+    cityJSONRequestValidator.accept(requestIdentifier, communityOwnerId);
+
+    var toProcess =
+        cityJSONRequestMapper.createToDomain(requestIdentifier, threeDRequest, communityOwnerId);
+
+    return cityJSONRequestMapper.toRestThreeDResponseStatus(
+        cityJSONRequestService.processSync(toProcess));
+  }
+
   @PostMapping("/3d/{id}/addresses")
   public ThreeDResponseStatus request3DFileOnAddresses(
       @RequestBody ThreeDAddressesRequest threeDRequest,
