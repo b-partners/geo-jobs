@@ -135,28 +135,7 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
   }
 
   private void processByInternalMethod(CityJSONRequest request, boolean isSync) {
-    if (isSync) {
-      processInternalByApi(request);
-      return;
-    }
-
-    try {
-      var requestDelimitations = request.getRequestDelimitations();
-      var pointsExtractionResult =
-          lasRoofsPointsExtractor.apply(getType(request), toGeometries(requestDelimitations));
-
-      if (isUnavailable(pointsExtractionResult)) {
-        updateStatus(request, UNAVAILABLE, POINTS_CLOUD_PRE_PROCESSING);
-        return;
-      }
-
-      var cityJson = toCityJSON(request, pointsExtractionResult);
-      succeedCityJsonRequest(request, List.of(cityJson));
-    } catch (Exception e) {
-      log.error(e.getMessage());
-      updateStatus(request, FAILED, GEOMETRY_CONSTRUCTION);
-      throw e;
-    }
+    processInternalByApi(request);
   }
 
   private void processFullAutomaticFacade(CityJSONRequest request, boolean isSync) {
@@ -187,7 +166,7 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
       succeedCityJsonRequest(request, cityJsonFrom3dBag);
     } catch (Exception e) {
       log.error(
-          "Unable to process Lidar for request {}, error {}", request.getId(), e.getMessage());
+          "Unable to process Lidar for request {}, error {}", request.getId(), e.getMessage(), e);
       updateStatus(request, FAILED, GEOMETRY_CONSTRUCTION);
     }
   }

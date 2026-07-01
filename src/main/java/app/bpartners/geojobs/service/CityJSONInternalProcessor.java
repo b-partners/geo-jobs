@@ -134,8 +134,7 @@ public class CityJSONInternalProcessor implements Function<CityJSONRequest, List
   private URL getGeoJsonBuildingPresignedURL(Feature feature) throws IOException {
     var tmpGeoJsonBucketKey = randomUUID() + GEOJSON_EXTENSION;
     var multiPolygon = getMultiPolygon(feature);
-    var geoJson =
-        new GeoJson(List.of(new GeoJson.GeoFeature(feature.getProperties(), multiPolygon)));
+    var geoJson = new GeoJson(new GeoJson.GeoFeature(feature.getProperties(), multiPolygon));
 
     var tmpGeoJsonFile =
         fileWriter.write(

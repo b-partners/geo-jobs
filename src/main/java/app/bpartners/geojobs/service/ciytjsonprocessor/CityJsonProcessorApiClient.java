@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.service.ciytjsonprocessor;
 
-import static app.bpartners.geojobs.service.ciytjsonprocessor.model.ProcessingStatus.SUCCEEDED;
 import static org.springframework.web.util.UriComponentsBuilder.fromUri;
 
 import app.bpartners.geojobs.service.ciytjsonprocessor.conf.CityJsonProcessorApiProperties;
@@ -57,11 +56,7 @@ public class CityJsonProcessorApiClient {
     try {
       var response =
           restTemplate.exchange(uri, HttpMethod.PUT, entity, CityJsonProcessorResponse.class);
-      var responseBody = response.getBody();
-      if (responseBody != null && SUCCEEDED.equals(responseBody.getStatus())) {
-        throw new RestClientException("CityJSONProcessorApi return FAILED status");
-      }
-      return responseBody;
+      return response.getBody();
     } catch (HttpStatusCodeException e) {
       throw mapHttpError(e);
     } catch (RestClientException e) {
@@ -72,13 +67,16 @@ public class CityJsonProcessorApiClient {
 
   @SneakyThrows
   private URI buildGenerateUri(String id, String apiKey) {
-    var url = String.format("%s/%s/%s", PREFIX_PATH, id, SUFFIX_PATH);
+    var baseUri = new URI(properties.getBaseUrl());
+    var builder = fromUri(baseUri).pathSegment(PREFIX_PATH, id, SUFFIX_PATH);
+
     if (apiKey != null) {
-      url = String.format("%s?generatorApiKey=%s", url, apiKey);
+      builder = builder.queryParam("generatorApiKey", apiKey);
     }
 
-    var builder = fromUri(new URI(properties.getBaseUrl())).path(url);
-    return builder.build().toUri();
+    var uri = builder.build().toUri();
+    log.info("Uri={}", uri);
+    return uri;
   }
 
   private CityJsonProcessorApiException mapHttpError(HttpStatusCodeException e) {
