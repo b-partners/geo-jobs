@@ -7,17 +7,18 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
-import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.file.ExtensionGuesser;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
+import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
+import app.bpartners.geojobs.repository.model.community.CommunityAuthorizationApiKey;
 import app.bpartners.geojobs.service.cityjson.texture.CityJsonTextureComputer;
 import app.bpartners.geojobs.service.ciytjsonprocessor.CityJsonProcessorApiClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
-import java.util.Set;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -26,7 +27,8 @@ class CityJSONInternalProcessorTest {
   private final CityJsonProcessorApiClient apiClientMock = mock();
   private final CityJsonTextureComputer textureComputerMock = mock();
   private final CityJSONInternalProcessor.CityJSONDownloader cityJSONDownloaderMock = mock();
-  private final AuthProvider authProviderMock = mock();
+  private final CommunityAuthorizationRepository caRepositoryMock = mock();
+
   private final CityJSONInternalProcessor subject =
       new CityJSONInternalProcessor(
           new FileWriter(new ObjectMapper(), new ExtensionGuesser()),
@@ -34,7 +36,7 @@ class CityJSONInternalProcessorTest {
           textureComputerMock,
           apiClientMock,
           cityJSONDownloaderMock,
-          authProviderMock);
+          caRepositoryMock);
 
   @BeforeEach
   void setup() {
@@ -44,8 +46,10 @@ class CityJSONInternalProcessorTest {
     when(textureComputerMock.applyTexture(any(), any())).then(mock());
     when(cityJSONDownloaderMock.download(any())).thenReturn(mock());
 
-    var principal = new Principal(randomUUID().toString(), Set.of());
-    when(authProviderMock.getPrincipal()).thenReturn(principal);
+    var communityApiKey =
+        CommunityAuthorizationApiKey.builder().keyValue(randomUUID().toString()).build();
+    var community = CommunityAuthorization.builder().apiKeys(List.of(communityApiKey)).build();
+    when(caRepositoryMock.findById(any())).thenReturn(Optional.of(community));
   }
 
   @Test

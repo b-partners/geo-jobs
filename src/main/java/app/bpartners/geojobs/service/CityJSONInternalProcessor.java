@@ -11,10 +11,10 @@ import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.endpoint.rest.model.Polygon;
-import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
+import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSON;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
@@ -49,7 +49,7 @@ public class CityJSONInternalProcessor implements Function<CityJSONRequest, List
   private final CityJsonTextureComputer textureComputer;
   private final CityJsonProcessorApiClient cityJsonProcessorApiClient;
   private final CityJSONDownloader cityJSONDownloader;
-  private final AuthProvider authProvider;
+  private final CommunityAuthorizationRepository communityRepository;
 
   @Component
   public static class CityJSONDownloader {
@@ -70,13 +70,16 @@ public class CityJSONInternalProcessor implements Function<CityJSONRequest, List
     }
   }
 
-  private String getApiKey() {
-    return authProvider.getPrincipal().getApiKey();
+  private String getApiKey(String communityId) {
+    var community = communityRepository.findById(communityId);
+    if (community.isEmpty())
+      throw new IllegalArgumentException("No community was found for id = " + communityId);
+    return community.get().getMostRecentApiKey().getKeyValue();
   }
 
   @Override
   public List<CityJSON> apply(CityJSONRequest request) {
-    var apiKey = getApiKey();
+    var apiKey = getApiKey(request.getCommunityOwnerId());
     var id = request.getId();
     var delimitationType = getDelimitationType(request);
     var delimitationFeatureGeoJsonFileURL = retrieveGeometriesWithPresignedURL(request);
