@@ -201,8 +201,8 @@ public class CityJsonTextureDomainService {
     var result = new ArrayList<Coordinate>();
 
     for (var vertex : vertices) {
-      var mappedVertex = transform.apply(vertex);
-      var pixelVertex = getPixelCoordinate(info, mappedVertex, crs);
+      //var mappedVertex = transform.apply(vertex);
+      var pixelVertex = getPixelCoordinate(info, vertex, crs);
       double u = pixelVertex.getX() / info.width();
       double v = 1.0 - (pixelVertex.getY() / info.height());
       result.add(new Coordinate(u, v));

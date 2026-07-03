@@ -29,9 +29,7 @@ class CityJsonTextureComputerTest {
     var cityjson = getFile("cityjson/texture/inputs/test2/test2.json");
     var actual = subject.applyTexture(test2Request(), cityjson);
 
-    assertNotSame(actual, cityjson);
-    assertTrue(hasValidTextureCoordinates(actual));
-    log.info("CityJSON with texture = {}", actual.getAbsolutePath());
+    assertCityJson(actual, cityjson);
   }
 
   @Test
@@ -39,9 +37,7 @@ class CityJsonTextureComputerTest {
     var cityjson = getFile("cityjson/texture/inputs/roof7/roof7.json");
     var actual = subject.applyTexture(roof7Request(), cityjson);
 
-    assertNotSame(actual, cityjson);
-    assertTrue(hasValidTextureCoordinates(actual));
-    log.info("CityJSON with texture = {}", actual.getAbsolutePath());
+    assertCityJson(actual, cityjson);
   }
 
   @Test
@@ -49,9 +45,7 @@ class CityJsonTextureComputerTest {
     var cityjson = getFile("cityjson/texture/inputs/roof7/roof7_roofer.json");
     var actual = subject.applyTexture(roof7Request(), cityjson);
 
-    assertNotSame(actual, cityjson);
-    assertTrue(hasValidTextureCoordinates(actual));
-    log.info("CityJSON with texture = {}", actual.getAbsolutePath());
+    assertCityJson(actual, cityjson);
   }
 
   @Test
@@ -61,9 +55,7 @@ class CityJsonTextureComputerTest {
             "cityjson/texture/inputs/switzerland/Chem. de Conches 44, 1321 Conches, Suisse.json");
     var actual = subject.applyTexture(switzerlandRequest(), cityjson);
 
-    assertNotSame(actual, cityjson);
-    assertTrue(hasValidTextureCoordinates(actual));
-    log.info("CityJSON with texture = {}", actual.getAbsolutePath());
+    assertCityJson(actual, cityjson);
   }
 
   @Test
@@ -74,6 +66,10 @@ class CityJsonTextureComputerTest {
                 + " 7, 1110 Morges, Suisse.json");
     var actual = subject.applyTexture(switzerland2Request(), cityjson);
 
+    assertCityJson(actual, cityjson);
+  }
+
+  private static void assertCityJson(File actual, File cityjson) {
     assertNotSame(actual, cityjson);
     assertTrue(hasValidTextureCoordinates(actual));
     log.info("CityJSON with texture = {}", actual.getAbsolutePath());
