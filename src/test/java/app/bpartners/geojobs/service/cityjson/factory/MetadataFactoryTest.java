@@ -18,9 +18,6 @@ class MetadataFactoryTest {
 
     assertEquals(id, metadata.getIdentifier());
     assertEquals(title, metadata.getTitle());
-    // Metadata returns a ReferenceSystem object, let's check its epsg code or similar if possible,
-    // or just check that it is not null and has the right type if it's too complex.
-    // Based on citygml4j docs, it might not just be the string.
     assertNotNull(metadata.getReferenceSystem());
   }
 
