@@ -150,7 +150,7 @@ public class LidarDataToCityJsonProcessor
   private String getCrs(PointsExtractionResult result) {
     var firstRoof = result.data().values().stream().findFirst();
     if (firstRoof.isPresent()
-        && swissBoundaryChecker.isGeometryInSwiss(firstRoof.get().getOriginalInEPSG4336())) {
+        && swissBoundaryChecker.isGeometryInSwiss(firstRoof.get().getOriginalInEPSG4336())) { // TODO: EPSG4326 ?
       return "EPSG:2056";
     }
     return "EPSG:2154";

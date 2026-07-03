@@ -12,7 +12,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 @Slf4j
@@ -59,40 +58,10 @@ class CityJsonTextureComputerTest {
     assertCityJson(actual, cityjson);
   }
 
-  @Test
-  @Disabled("Wrong CRS")
-  void switzerland_2() {
-    var cityjson =
-        getFile(
-            "cityjson/texture/inputs/Chemin des Terrasses 7 1110 Morges,Suisse/Chemin des Terrasses"
-                + " 7, 1110 Morges, Suisse.json");
-    var actual = subject.applyTexture(switzerland2Request(), cityjson);
-
-    assertCityJson(actual, cityjson);
-  }
-
   private static void assertCityJson(File actual, File cityjson) {
     assertNotSame(actual, cityjson);
     assertTrue(hasValidTextureCoordinates(actual));
     log.info("CityJSON with texture = {}", actual.getAbsolutePath());
-  }
-
-  private static CityJSONRequest switzerland2Request() {
-    var texture =
-        CityJSONTexture.builder()
-            .zoom(19)
-            .tileX(271136) // false
-            .tileY(186147) // false
-            .imageWidth(3072)
-            .imageHeight(3072)
-            .imageUri(
-                getFile(
-                        "cityjson/texture/inputs/Chemin des Terrasses 7 1110 Morges,Suisse/Chemin"
-                            + " des Terrasses 7, 1110 Morges, Suisse.json")
-                    .getAbsolutePath())
-            .tileImageSizePx(1024)
-            .build();
-    return CityJSONRequest.builder().textures(List.of(texture)).build();
   }
 
   private static boolean hasValidTextureCoordinates(File cityJsonFile) {
