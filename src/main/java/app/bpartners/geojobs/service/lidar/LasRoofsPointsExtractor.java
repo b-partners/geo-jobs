@@ -112,7 +112,7 @@ public class LasRoofsPointsExtractor
 
     for (var roofDataFromOneFile : roofsDataFromFiles) {
       for (var delimitation : roofDataFromOneFile) {
-        var key = delimitation.getOriginalInEPSG4326().getEnvelopeInternal();
+        var key = delimitation.getOriginalInEPSG4336().getEnvelopeInternal();
         merged.merge(key, delimitation, DelimitedRoofPoints::merge);
       }
     }

@@ -19,7 +19,7 @@ public class DelimitedRoofPoints extends MultiPolygon {
   @EqualsAndHashCode.Include private final Envelope globalEnvelope;
   @EqualsAndHashCode.Include private final Envelope groundEnvelope;
   @EqualsAndHashCode.Include private final LasRoofDelimitationType type;
-  @EqualsAndHashCode.Exclude private final Geometry originalInEPSG4326;
+  @EqualsAndHashCode.Exclude private final Geometry originalInEPSG4336;
   @EqualsAndHashCode.Exclude private final DelimitedRoofPointsItem[] items;
   @EqualsAndHashCode.Exclude private final Set<LasPointGeometry> groundPoints;
 
@@ -29,14 +29,14 @@ public class DelimitedRoofPoints extends MultiPolygon {
       Envelope globalEnvelope,
       Envelope groundEnvelope,
       LasRoofDelimitationType type,
-      Geometry originalInEPSG4326,
+      Geometry originalInEPSG4336,
       DelimitedRoofPointsItem[] items,
       Set<LasPointGeometry> groundPoints) {
     super(toPolygons(items), geometryFactory);
 
     this.type = type;
     this.items = items;
-    this.originalInEPSG4326 = originalInEPSG4326;
+    this.originalInEPSG4336 = originalInEPSG4336;
     this.groundPoints = groundPoints;
     this.globalEnvelope = globalEnvelope;
     this.groundEnvelope = groundEnvelope;
@@ -44,22 +44,22 @@ public class DelimitedRoofPoints extends MultiPolygon {
 
   public DelimitedRoofPoints(
       LasRoofDelimitationType type,
-      Geometry originalInEPSG4326,
+      Geometry originalInEPSG4336,
       Geometry delimitation,
       RoofPointsDelimitationTransformer transformer) {
-    this(type, originalInEPSG4326, getPolygons(delimitation), transformer);
+    this(type, originalInEPSG4336, getPolygons(delimitation), transformer);
   }
 
   public DelimitedRoofPoints(
       LasRoofDelimitationType type,
-      Geometry originalInEPSG4326,
+      Geometry originalInEPSG4336,
       Polygon[] polygons,
       RoofPointsDelimitationTransformer transformer) {
     super(polygons, geometryFactory);
 
     this.type = type;
     this.groundPoints = new HashSet<>();
-    this.originalInEPSG4326 = originalInEPSG4326;
+    this.originalInEPSG4336 = originalInEPSG4336;
     this.items = toItems(type, polygons, transformer);
     this.globalEnvelope = super.getEnvelopeInternal();
     this.groundEnvelope = toBufferedEnvelope(globalEnvelope);
