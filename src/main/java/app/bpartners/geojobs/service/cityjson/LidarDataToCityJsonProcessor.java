@@ -15,9 +15,9 @@ import app.bpartners.geojobs.service.cityjson.factory.CityJsonFactory;
 import app.bpartners.geojobs.service.cityjson.model.BuildingData;
 import app.bpartners.geojobs.service.lidar.LidarRoofsAnalysisProcessor;
 import app.bpartners.geojobs.service.lidar.PointsExtractionResult;
+import app.bpartners.geojobs.service.lidar.api.SwissBoundaryChecker;
 import app.bpartners.geojobs.service.lidar.model.geometry.GeometryWithProperties;
 import app.bpartners.geojobs.service.lidar.model.geometry.roof.Building3DProperties;
-import app.bpartners.geojobs.service.lidar.api.SwissBoundaryChecker;
 import app.bpartners.geojobs.service.lidar.model.geometry.roof.RoofPlane3D;
 import java.io.File;
 import java.util.HashMap;
@@ -150,7 +150,8 @@ public class LidarDataToCityJsonProcessor
   private String getCrs(PointsExtractionResult result) {
     var firstRoof = result.data().values().stream().findFirst();
     if (firstRoof.isPresent()
-        && swissBoundaryChecker.isGeometryInSwiss(firstRoof.get().getOriginalInEPSG4336())) { // TODO: EPSG4326 ?
+        && swissBoundaryChecker.isGeometryInSwiss(
+            firstRoof.get().getOriginalInEPSG4336())) { // TODO: EPSG4326 ?
       return "EPSG:2056";
     }
     return "EPSG:2154";
