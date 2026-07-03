@@ -1,0 +1,452 @@
+{
+  "type": "CityJSON",
+  "version": "2.0",
+  "CityObjects": {
+    "029f27a2-2262-496d-935d-9b6b43c99681": {
+      "type": "Building",
+      "geometry": [
+        {
+          "type": "MultiSurface",
+          "lod": "2",
+          "boundaries": [
+            [
+              [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6
+              ]
+            ],
+            [
+              [
+                7,
+                8,
+                5,
+                4,
+                9
+              ]
+            ],
+            [
+              [
+                10,
+                11,
+                1,
+                0
+              ]
+            ],
+            [
+              [
+                11,
+                12,
+                2,
+                1
+              ]
+            ],
+            [
+              [
+                12,
+                13,
+                3,
+                2
+              ]
+            ],
+            [
+              [
+                13,
+                14,
+                4,
+                3
+              ]
+            ],
+            [
+              [
+                14,
+                15,
+                5,
+                4
+              ]
+            ],
+            [
+              [
+                15,
+                16,
+                6,
+                5
+              ]
+            ],
+            [
+              [
+                16,
+                10,
+                0,
+                6
+              ]
+            ],
+            [
+              [
+                17,
+                18,
+                8,
+                7
+              ]
+            ],
+            [
+              [
+                18,
+                15,
+                5,
+                8
+              ]
+            ],
+            [
+              [
+                15,
+                14,
+                4,
+                5
+              ]
+            ],
+            [
+              [
+                14,
+                19,
+                9,
+                4
+              ]
+            ],
+            [
+              [
+                19,
+                17,
+                7,
+                9
+              ]
+            ],
+            [
+              [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16
+              ]
+            ],
+            [
+              [
+                17,
+                18,
+                15,
+                14,
+                19
+              ]
+            ]
+          ],
+          "semantics": {
+            "surfaces": [
+              {
+                "type": "RoofSurface",
+                "slope_in_degrees": 25.81,
+                "distance_2d_scale": 1.0,
+                "area_in_square_meters": 90.11
+              },
+              {
+                "type": "RoofSurface",
+                "slope_in_degrees": 28.26,
+                "distance_2d_scale": 1.0,
+                "area_in_square_meters": 63.8
+              },
+              {
+                "type": "WallSurface",
+                "height_in_meters": 2.84,
+                "area_in_square_meters": 12.65
+              },
+              {
+                "type": "WallSurface",
+                "height_in_meters": 3.3,
+                "area_in_square_meters": 3.01
+              },
+              {
+                "type": "WallSurface",
+                "height_in_meters": 3.3,
+                "area_in_square_meters": 20.31
+              },
+              {
+                "type": "WallSurface",
+                "height_in_meters": 6.91,
+                "area_in_square_meters": 36.81
+              },
+              {
+                "type": "WallSurface",
+                "height_in_meters": 7.0,
+                "area_in_square_meters": 71.96
+              },
+              {
+                "type": "WallSurface",
+                "height_in_meters": 7.0,
+                "area_in_square_meters": 10.38
+              },
+              {
+                "type": "WallSurface",
+                "height_in_meters": 6.2,
+                "area_in_square_meters": 29.25
+              },
+              {
+                "type": "WallSurface",
+                "height_in_meters": 6.26,
+                "area_in_square_meters": 19.83
+              },
+              {
+                "type": "WallSurface",
+                "height_in_meters": 7.0,
+                "area_in_square_meters": 11.22
+              },
+              {
+                "type": "WallSurface",
+                "height_in_meters": 7.0,
+                "area_in_square_meters": 71.96
+              },
+              {
+                "type": "WallSurface",
+                "height_in_meters": 6.91,
+                "area_in_square_meters": 27.74
+              },
+              {
+                "type": "WallSurface",
+                "height_in_meters": 4.22,
+                "area_in_square_meters": 44.77
+              },
+              {
+                "type": "GroundSurface"
+              },
+              {
+                "type": "GroundSurface"
+              }
+            ],
+            "values": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15
+            ]
+          },
+          "appearance": {
+            "texture": {
+              "default": {
+                "values": [
+                  [
+                    [
+                      0,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6
+                    ]
+                  ],
+                  [
+                    [
+                      7,
+                      8,
+                      5,
+                      4,
+                      9
+                    ]
+                  ],
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null
+                ]
+              }
+            },
+            "material": {
+              "default": {
+                "values": [
+                  0,
+                  0,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "transform": {
+    "scale": [
+      0.001,
+      0.001,
+      0.001
+    ],
+    "translate": [
+      2527307.828,
+      1151653.354,
+      386.52
+    ]
+  },
+  "vertices": [
+    [
+      5825,
+      16721,
+      2842
+    ],
+    [
+      3105,
+      13163,
+      2808
+    ],
+    [
+      3714,
+      12386,
+      3302
+    ],
+    [
+      0,
+      7454,
+      3277
+    ],
+    [
+      5528,
+      2796,
+      6908
+    ],
+    [
+      11548,
+      11214,
+      6999
+    ],
+    [
+      10819,
+      12608,
+      6201
+    ],
+    [
+      16226,
+      8643,
+      4219
+    ],
+    [
+      13218,
+      10937,
+      6262
+    ],
+    [
+      9740,
+      0,
+      4068
+    ],
+    [
+      5825,
+      16721,
+      0
+    ],
+    [
+      3105,
+      13163,
+      0
+    ],
+    [
+      3714,
+      12386,
+      0
+    ],
+    [
+      0,
+      7454,
+      0
+    ],
+    [
+      5528,
+      2796,
+      0
+    ],
+    [
+      11548,
+      11214,
+      0
+    ],
+    [
+      10819,
+      12608,
+      0
+    ],
+    [
+      16226,
+      8643,
+      0
+    ],
+    [
+      13218,
+      10937,
+      0
+    ],
+    [
+      9740,
+      0,
+      0
+    ]
+  ],
+  "metadata": {
+    "identifier": "0ef9d8f1-af75-4f86-bf0f-81d4e87bb5a2.json",
+    "pointOfContact": {
+      "contactName": "Birdia",
+      "phone": "06 68 62 48 36",
+      "address": "14 Rue Soleillet, 75020 Paris.",
+      "emailAddress": "contact@birdia.fr",
+      "organization": "BIRDIA SAS",
+      "website": "https://www.birdia.fr"
+    },
+    "title": "0ef9d8f1-af75-4f86-bf0f-81d4e87bb5a2.json",
+    "geographicalExtent": [
+      2527307.828,
+      1151653.354,
+      386.52,
+      2527324.054,
+      1151670.075,
+      393.519
+    ],
+    "referenceSystem": "http://www.opengis.net/def/crs/EPSG/0/2154"
+  }
+}
