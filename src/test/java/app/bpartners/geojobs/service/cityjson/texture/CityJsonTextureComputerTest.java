@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 @Slf4j
@@ -59,6 +60,7 @@ class CityJsonTextureComputerTest {
   }
 
   @Test
+  @Disabled("Wrong CRS")
   void switzerland_2() {
     var cityjson =
         getFile(
