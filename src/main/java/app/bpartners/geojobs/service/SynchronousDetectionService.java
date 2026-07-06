@@ -14,6 +14,7 @@ import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.model.exception.ImageSourcesTimeoutException;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
+import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.service.detection.*;
 import app.bpartners.geojobs.service.event.DetectionRoofPropertiesRequestedService;
 import app.bpartners.geojobs.service.event.FeatureImageRequestedService;
@@ -70,7 +71,7 @@ public class SynchronousDetectionService
     var tilingJobStart = now();
     var detectionWithCreatedZTJ = detectionTilingCreation.processTiling(detection);
     var zoneTilingJobId = detectionWithCreatedZTJ.getZtjId();
-    var tilingTasks = zoneTilingJobService.consumeTasks(zoneTilingJobId);
+    var tilingTasks = computeTilingTasks(zoneTilingJobId);
     var finishedZoneTilingJob = zoneTilingJobService.findById(zoneTilingJobId);
     var tilingJobProcessingDuration = Duration.between(tilingJobStart, now()).toSeconds();
     log.info(
@@ -190,6 +191,29 @@ public class SynchronousDetectionService
             FINISHED,
             SUCCEEDED,
             MACHINE_DETECTION);
+  }
+
+  private List<ParcelTilingTask> computeTilingTasks(String zoneTilingJobId) {
+    List<ParcelTilingTask> tilingTasks;
+    try {
+      tilingTasks = zoneTilingJobService.consumeTasks(zoneTilingJobId);
+    } catch (RuntimeException e) {
+      var imageSourcesTimeout = findCause(e, ImageSourcesTimeoutException.class);
+      if (imageSourcesTimeout != null) {
+        throw imageSourcesTimeout;
+      }
+      throw e;
+    }
+    return tilingTasks;
+  }
+
+  private static <T extends Throwable> T findCause(Throwable throwable, Class<T> type) {
+    for (Throwable current = throwable; current != null; current = current.getCause()) {
+      if (type.isInstance(current)) {
+        return type.cast(current);
+      }
+    }
+    return null;
   }
 
   @SneakyThrows

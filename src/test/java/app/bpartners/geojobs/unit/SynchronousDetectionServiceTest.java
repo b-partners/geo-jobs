@@ -38,6 +38,7 @@ import jakarta.persistence.EntityManager;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import org.junit.jupiter.api.Test;
 
 class SynchronousDetectionServiceTest {
@@ -170,5 +171,51 @@ class SynchronousDetectionServiceTest {
         "Image sources are experiencing performance issues, which are preventing images from"
             + " loading.",
         actual.getMessage());
+  }
+
+  @Test
+  void rethrows_white_image_error_and_skips_machine_detection() {
+    var detectionMock = mock(Detection.class);
+    var detectionWithCreatedZTJMock = mock(Detection.class);
+    var zoneTilingJobId = randomUUID().toString();
+
+    doNothing().when(detectionDelimitationRetrieverMock).accept(detectionMock);
+    when(detectionTilingCreationMock.processTiling(detectionMock))
+        .thenReturn(detectionWithCreatedZTJMock);
+    when(detectionWithCreatedZTJMock.getZtjId()).thenReturn(zoneTilingJobId);
+    var whiteImage =
+        new ImageSourcesTimeoutException(
+            "Unable to retrieve usable imagery: image sources returned a blank/white image");
+    when(zoneTilingJobServiceMock.consumeTasks(zoneTilingJobId))
+        .thenThrow(new RuntimeException(new ExecutionException(whiteImage)));
+
+    ImageSourcesTimeoutException actual =
+        assertThrows(ImageSourcesTimeoutException.class, () -> subject.apply(detectionMock));
+
+    assertEquals(whiteImage.getMessage(), actual.getMessage());
+    verifyNoInteractions(machineDetectionCreationMock);
+    verify(zoneDetectionJobServiceMock, never()).saveZDJFromZTJ(any());
+    verify(geoJsonConversionJobServiceMock, never()).getOrComputeGeoJsonConversionJob(any());
+  }
+
+  @Test
+  void rethrows_unrelated_tiling_runtime_exception_as_is() {
+    var detectionMock = mock(Detection.class);
+    var detectionWithCreatedZTJMock = mock(Detection.class);
+    var zoneTilingJobId = randomUUID().toString();
+
+    doNothing().when(detectionDelimitationRetrieverMock).accept(detectionMock);
+    when(detectionTilingCreationMock.processTiling(detectionMock))
+        .thenReturn(detectionWithCreatedZTJMock);
+    when(detectionWithCreatedZTJMock.getZtjId()).thenReturn(zoneTilingJobId);
+    var unrelated = new RuntimeException("unexpected tiling failure");
+    when(zoneTilingJobServiceMock.consumeTasks(zoneTilingJobId)).thenThrow(unrelated);
+
+    RuntimeException actual =
+        assertThrows(RuntimeException.class, () -> subject.apply(detectionMock));
+
+    assertEquals(unrelated, actual);
+    verifyNoInteractions(machineDetectionCreationMock);
+    verify(zoneDetectionJobServiceMock, never()).saveZDJFromZTJ(any());
   }
 }
