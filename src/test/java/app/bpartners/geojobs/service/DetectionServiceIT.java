@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.conf.FacadeIT;
+import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.DetectionRestMapper;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionStep;
 import app.bpartners.geojobs.endpoint.rest.model.Status;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
@@ -38,6 +39,7 @@ class DetectionServiceIT extends FacadeIT {
   DetectionCreator detectionCreator;
 
   @Autowired DetectionService subject;
+  @Autowired DetectionRestMapper detectionRestMapper;
   @Autowired private ZoneTilingJobRepository zoneTilingJobRepository;
   @Autowired private ZoneDetectionJobRepository zoneDetectionJobRepository;
   @MockBean AuthProvider authProviderMock;
@@ -85,7 +87,8 @@ class DetectionServiceIT extends FacadeIT {
     when(imageAttributeRetriever.apply(any())).thenReturn(null);
     when(vggAttributeRetriever.apply(any())).thenReturn(null);
 
-    var actual = subject.updateDetectionStep(detectionId, null, restStep);
+    var actual =
+        detectionRestMapper.toRest(subject.updateDetectionStep(detectionId, null, restStep));
     var savedSteps = detectionStepRepository.findAll();
 
     assertFalse(savedSteps.isEmpty());
