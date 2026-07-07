@@ -11,6 +11,7 @@ import static org.mockito.Mockito.*;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.CreateDetectionMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionFileObjectMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.v1.DetectionController;
+import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.DetectionRestMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.DetectionSurfaceUnitMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
@@ -52,6 +53,7 @@ class DetectionControllerTest {
   DetectionService detectionServiceMock = mock();
   DetectionFileObjectMapper detectionFileObjectMapperMock = mock();
   CreateDetectionMapper createDetectionMapperMock = mock();
+  DetectionRestMapper detectionRestMapperMock = mock();
   DetectionController subject =
       new DetectionController(
           detectionExportServiceMock,
@@ -68,7 +70,8 @@ class DetectionControllerTest {
           createDetectionValidatorMock,
           detectionServiceMock,
           detectionFileObjectMapperMock,
-          createDetectionMapperMock);
+          createDetectionMapperMock,
+          detectionRestMapperMock);
 
   @BeforeEach
   void setup() {
@@ -129,13 +132,16 @@ class DetectionControllerTest {
   @Test
   void compute_roof_slope() {
     var detectionIdentifier = randomUUID().toString();
-    var detectionMock = mock(Detection.class);
+    var domainDetectionMock =
+        mock(app.bpartners.geojobs.repository.model.detection.Detection.class);
+    var restDetectionMock = mock(Detection.class);
     when(detectionServiceMock.computeRoofsProperties(detectionIdentifier))
-        .thenReturn(detectionMock);
+        .thenReturn(domainDetectionMock);
+    when(detectionRestMapperMock.toRest(domainDetectionMock)).thenReturn(restDetectionMock);
 
     var actual = subject.computeDetectionRoofsProperties(detectionIdentifier);
 
-    assertEquals(detectionMock, actual);
+    assertEquals(restDetectionMock, actual);
   }
 
   @Test
@@ -156,6 +162,8 @@ class DetectionControllerTest {
     var createDetection = mock(CreateDetection.class);
     var principal = mock(Principal.class);
     var communityAuth = mock(CommunityAuthorization.class);
+    var domainDetectionMock =
+        mock(app.bpartners.geojobs.repository.model.detection.Detection.class);
     var expectedDetection = mock(Detection.class);
     when(authProviderMock.getPrincipal()).thenReturn(principal);
     when(principal.getPassword()).thenReturn("api-key");
@@ -164,7 +172,8 @@ class DetectionControllerTest {
     when(communityAuth.getId()).thenReturn("community-id");
     doNothing().when(detectionAuthorizerMock).accept(detectionId, createDetection, principal);
     when(detectionServiceMock.processDetectionSynchronously(anyString(), any(), anyString(), any()))
-        .thenReturn(expectedDetection);
+        .thenReturn(domainDetectionMock);
+    when(detectionRestMapperMock.toRest(domainDetectionMock)).thenReturn(expectedDetection);
     when(createDetectionMapperMock.fromDebugMode(any())).thenReturn(createDetection);
 
     var actual = subject.processDetectionSynchronously(detectionId, createDetectionDebugModeMock);
@@ -192,10 +201,13 @@ class DetectionControllerTest {
 
   @Test
   void updateDetectionStep_ok() {
-    var detectionMock = mock(Detection.class);
+    var domainDetectionMock =
+        mock(app.bpartners.geojobs.repository.model.detection.Detection.class);
+    var restDetectionMock = mock(Detection.class);
     when(detectionServiceMock.updateDetectionStep(
             anyString(), anyString(), any(DetectionStep.class)))
-        .thenReturn(detectionMock);
+        .thenReturn(domainDetectionMock);
+    when(detectionRestMapperMock.toRest(domainDetectionMock)).thenReturn(restDetectionMock);
 
     Detection actual =
         subject.updateCommunityDetectionStep(
@@ -204,14 +216,18 @@ class DetectionControllerTest {
             new DetectionStep().name(REQUEST_ACCEPTED));
 
     assertNotNull(actual);
-    assertEquals(detectionMock, actual);
+    assertEquals(restDetectionMock, actual);
   }
 
   @Test
   void configureDetectionAddresses_ok() {
     var addresses = List.of(new Address().address("dummyAddress"));
     var addressesStrings = addresses.stream().map(Address::getAddress).toList();
+    var domainDetectionMock =
+        mock(app.bpartners.geojobs.repository.model.detection.Detection.class);
     when(detectionServiceMock.configureDetectionAddresses(anyString(), any()))
+        .thenReturn(domainDetectionMock);
+    when(detectionRestMapperMock.toRest(domainDetectionMock))
         .thenReturn(new Detection().addresses(addressesStrings));
 
     Detection actual = subject.configureDetectionAddresses("detectionId", addresses);

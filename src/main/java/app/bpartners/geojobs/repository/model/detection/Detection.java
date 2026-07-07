@@ -145,6 +145,8 @@ public class Detection implements Serializable {
   @JoinColumn(name = "detection_id")
   private List<DetectionStep> detectionSteps = new ArrayList<>();
 
+  @Transient private DetectionStep computedStep;
+
   @Column(nullable = true, updatable = false)
   private Instant creationDatetime;
 
@@ -243,6 +245,11 @@ public class Detection implements Serializable {
         : detectionSteps.stream()
             .max(Comparator.comparing(DetectionStep::getCreationDatetime))
             .orElse(null);
+  }
+
+  public DetectionStep getCurrentStep() {
+    var persistedStep = getStep();
+    return persistedStep != null ? persistedStep : computedStep;
   }
 
   public boolean isOnStepPostProcessingSucceeded() {
