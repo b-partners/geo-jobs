@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.endpoint.rest.controller.v1;
+package app.bpartners.geojobs.endpoint.rest.controller;
 
 import app.bpartners.geojobs.service.google.captcha.GoogleCaptchaVerificatorService;
 import lombok.AllArgsConstructor;
