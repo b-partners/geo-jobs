@@ -26,7 +26,6 @@ import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.service.CommunityUsedSurfaceService;
 import app.bpartners.geojobs.service.DetectionExportService;
 import app.bpartners.geojobs.service.DetectionService;
-import app.bpartners.geojobs.service.ZoneService;
 import app.bpartners.geojobs.validator.ConfigureAddressValidator;
 import app.bpartners.geojobs.validator.CreateDetectionValidator;
 import app.bpartners.geojobs.validator.GetUsageValidator;
@@ -40,7 +39,6 @@ import org.junit.jupiter.api.Test;
 class DetectionControllerTest {
   DetectionExportService detectionExportServiceMock = mock();
   CreateDetectionExportRequestValidator createDetectionExportRequestValidatorMock = mock();
-  ZoneService zoneServiceMock = mock();
   CommunityUsedSurfaceService communityUsedSurfaceServiceMock = mock();
   GetUsageValidator getUsageValidatorMock = mock();
   CommunityAuthorizationRepository communityAuthRepositoryMock = mock();
@@ -58,7 +56,6 @@ class DetectionControllerTest {
       new DetectionController(
           detectionExportServiceMock,
           createDetectionExportRequestValidatorMock,
-          zoneServiceMock,
           communityUsedSurfaceServiceMock,
           getUsageValidatorMock,
           communityAuthRepositoryMock,
@@ -166,14 +163,14 @@ class DetectionControllerTest {
         .thenReturn(Optional.of(communityAuth));
     when(communityAuth.getId()).thenReturn("community-id");
     doNothing().when(detectionAuthorizerMock).accept(detectionId, createDetection, principal);
-    when(zoneServiceMock.processDetectionSynchronously(anyString(), any(), anyString(), any()))
+    when(detectionServiceMock.processDetectionSynchronously(anyString(), any(), anyString(), any()))
         .thenReturn(expectedDetection);
     when(createDetectionMapperMock.fromDebugMode(any())).thenReturn(createDetection);
 
     var actual = subject.processDetectionSynchronously(detectionId, createDetectionDebugModeMock);
 
     assertEquals(expectedDetection, actual);
-    verify(zoneServiceMock)
+    verify(detectionServiceMock)
         .processDetectionSynchronously(detectionId, createDetection, "community-id", false);
     verify(detectionAuthorizerMock).accept(detectionId, createDetection, principal);
     verify(authProviderMock, times(2)).getPrincipal();
@@ -196,7 +193,8 @@ class DetectionControllerTest {
   @Test
   void updateDetectionStep_ok() {
     var detectionMock = mock(Detection.class);
-    when(zoneServiceMock.updateDetectionStep(anyString(), anyString(), any(DetectionStep.class)))
+    when(detectionServiceMock.updateDetectionStep(
+            anyString(), anyString(), any(DetectionStep.class)))
         .thenReturn(detectionMock);
 
     Detection actual =
@@ -213,7 +211,7 @@ class DetectionControllerTest {
   void configureDetectionAddresses_ok() {
     var addresses = List.of(new Address().address("dummyAddress"));
     var addressesStrings = addresses.stream().map(Address::getAddress).toList();
-    when(zoneServiceMock.configureDetectionAddresses(anyString(), any()))
+    when(detectionServiceMock.configureDetectionAddresses(anyString(), any()))
         .thenReturn(new Detection().addresses(addressesStrings));
 
     Detection actual = subject.configureDetectionAddresses("detectionId", addresses);
@@ -221,6 +219,6 @@ class DetectionControllerTest {
     assertNotNull(actual);
     assertEquals(addressesStrings, actual.getAddresses());
 
-    verify(zoneServiceMock).configureDetectionAddresses("detectionId", addressesStrings);
+    verify(detectionServiceMock).configureDetectionAddresses("detectionId", addressesStrings);
   }
 }

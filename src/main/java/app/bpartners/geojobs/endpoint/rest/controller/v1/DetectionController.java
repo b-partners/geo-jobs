@@ -21,7 +21,6 @@ import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.service.CommunityUsedSurfaceService;
 import app.bpartners.geojobs.service.DetectionExportService;
 import app.bpartners.geojobs.service.DetectionService;
-import app.bpartners.geojobs.service.ZoneService;
 import app.bpartners.geojobs.validator.ConfigureAddressValidator;
 import app.bpartners.geojobs.validator.CreateDetectionValidator;
 import app.bpartners.geojobs.validator.GetUsageValidator;
@@ -39,7 +38,6 @@ import org.springframework.web.multipart.MultipartFile;
 public class DetectionController {
   private final DetectionExportService detectionExportService;
   private final CreateDetectionExportRequestValidator createDetectionExportRequestValidator;
-  private final ZoneService zoneService;
   private final CommunityUsedSurfaceService communityUsedSurfaceService;
   private final GetUsageValidator getUsageValidator;
   private final CommunityAuthorizationRepository communityAuthRepository;
@@ -85,7 +83,7 @@ public class DetectionController {
       @RequestPart(value = "file") MultipartFile file,
       @RequestParam(value = "extensionType", defaultValue = "zip") String extensionType)
       throws IOException {
-    return zoneService.configureFileResult(communityOwnerId, detectionId, file, extensionType);
+    return detectionService.configureFileResult(communityOwnerId, detectionId, file, extensionType);
   }
 
   @PutMapping("/communities/{communityId}/detections/{id}/step")
@@ -93,7 +91,7 @@ public class DetectionController {
       @PathVariable(name = "communityId") String communityOwnerId,
       @PathVariable(name = "id") String detectionId,
       @RequestBody DetectionStep step) {
-    return zoneService.updateDetectionStep(detectionId, communityOwnerId, step);
+    return detectionService.updateDetectionStep(detectionId, communityOwnerId, step);
   }
 
   @GetMapping("/detections/{id}/fileObjects")
@@ -114,7 +112,7 @@ public class DetectionController {
     var communityAuthorization =
         communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
     var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId).orElse(null);
-    return zoneService.processDetection(
+    return detectionService.processDetection(
         detectionId, createDetection, communityOwnerId, createDetectionDebugMode.getDebugMode());
   }
 
@@ -122,14 +120,14 @@ public class DetectionController {
   public Detection finalizeShapeConfig(
       @PathVariable(name = "id") String detectionId, @RequestBody byte[] featuresFromShape) {
     File featuresFile = fileWriter.apply(featuresFromShape, null);
-    return zoneService.finalizeGeoJsonConfig(detectionId, featuresFile);
+    return detectionService.finalizeGeoJsonConfig(detectionId, featuresFile);
   }
 
   @PostMapping("/detections/{id}/shape")
   public Detection configureDetectionShapeFile(
       @PathVariable(name = "id") String detectionId, @RequestBody byte[] shapeFileAsBytes) {
     File shapeFile = fileWriter.apply(shapeFileAsBytes, null);
-    return zoneService.configureShapeFile(detectionId, shapeFile);
+    return detectionService.configureShapeFile(detectionId, shapeFile);
   }
 
   @PostMapping("/detections/{id}/image")
@@ -142,7 +140,7 @@ public class DetectionController {
   public Detection uploadRooferDetectionPdfResult(
       @PathVariable(name = "id") String detectionId, @RequestBody byte[] pdfAsByte) {
     File imageFile = fileWriter.apply(pdfAsByte, null);
-    return zoneService.uploadPdfFile(detectionId, imageFile);
+    return detectionService.uploadPdfFile(detectionId, imageFile);
   }
 
   @PostMapping("/detections/{id}/excel")
@@ -155,20 +153,20 @@ public class DetectionController {
           "Only open office file (docx, xlsx, xls) media type is accepted but provided was : "
               + guessedMediaType);
     }
-    return zoneService.configureExcelFile(detectionId, excelFile);
+    return detectionService.configureExcelFile(detectionId, excelFile);
   }
 
   @PutMapping("/detections/{id}/step")
   public Detection updateDetectionStep(
       @PathVariable(name = "id") String detectionId, @RequestBody DetectionStep step) {
-    return zoneService.updateDetectionStep(detectionId, null, step);
+    return detectionService.updateDetectionStep(detectionId, null, step);
   }
 
   @PostMapping("/detections/{id}/addresses")
   public Detection configureDetectionAddresses(
       @PathVariable(name = "id") String detectionId, @RequestBody List<Address> addresses) {
     configureAddressValidator.accept(addresses);
-    return zoneService.configureDetectionAddresses(
+    return detectionService.configureDetectionAddresses(
         detectionId, addresses.stream().map(Address::getAddress).toList());
   }
 
@@ -188,7 +186,7 @@ public class DetectionController {
     var communityAuthorization =
         communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
     var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId).orElse(null);
-    return zoneService.processDetectionSynchronously(
+    return detectionService.processDetectionSynchronously(
         detectionId, createDetection, communityOwnerId, createDetectionDebugMode.getDebugMode());
   }
 
@@ -208,13 +206,13 @@ public class DetectionController {
   public Detection sendMailAboutProspect(
       @PathVariable(name = "id") String detectionId, @RequestBody Prospect prospect) {
     detectionAuthorizer.accept(detectionId, authProvider.getPrincipal());
-    return zoneService.sendMailAboutProspect(detectionId, prospect);
+    return detectionService.sendMailAboutProspect(detectionId, prospect);
   }
 
   @GetMapping("/detections/{id}")
   public Detection getProcessedDetection(@PathVariable(name = "id") String detectionId) {
     detectionAuthorizer.accept(detectionId, authProvider.getPrincipal());
-    return zoneService.getProcessedDetection(detectionId);
+    return detectionService.getProcessedDetection(detectionId);
   }
 
   @GetMapping("/usage")
@@ -237,7 +235,7 @@ public class DetectionController {
         communityAuthRepository.findByApiKey(authProvider.getPrincipal().getPassword());
     var communityOwnerId = communityAuthorization.map(CommunityAuthorization::getId);
     Optional<String> optionalZoneName = zoneName == null ? Optional.empty() : Optional.of(zoneName);
-    return zoneService.getDetectionsByCriteria(
+    return detectionService.getDetectionsByCriteria(
         communityOwnerId, page, pageSize, from, to, optionalZoneName);
   }
 }
