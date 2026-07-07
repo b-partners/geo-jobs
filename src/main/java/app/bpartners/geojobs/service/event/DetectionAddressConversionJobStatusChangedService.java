@@ -14,8 +14,8 @@ import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.DetectionAddressConversionJob;
 import app.bpartners.geojobs.repository.model.DetectionAddressConversionTask;
 import app.bpartners.geojobs.repository.model.Feature;
+import app.bpartners.geojobs.service.DetectionService;
 import app.bpartners.geojobs.service.StatusChangedHandler;
-import app.bpartners.geojobs.service.ZoneService;
 import app.bpartners.geojobs.service.geoserver.GeoServerConfiguration;
 import java.util.List;
 import java.util.function.Consumer;
@@ -34,7 +34,7 @@ public class DetectionAddressConversionJobStatusChangedService
   private final DetectionAddressConversionTaskRepository detectionAddressConversionTaskRepository;
   private final EventProducer eventProducer;
   private final GeoServerConfiguration geoServerConfiguration;
-  private final ZoneService zoneService;
+  private final DetectionService detectionService;
 
   @Override
   public void accept(DetectionAddressConversionJobStatusChanged event) {
@@ -48,7 +48,7 @@ public class DetectionAddressConversionJobStatusChangedService
             detectionAddressConversionTaskRepository,
             eventProducer,
             geoServerConfiguration,
-            zoneService);
+            detectionService);
     var onFailedStatusChangedHandler =
         new OnFailedStatusChangedHandler(
             newJob,
@@ -56,7 +56,7 @@ public class DetectionAddressConversionJobStatusChangedService
             detectionAddressConversionTaskRepository,
             eventProducer,
             geoServerConfiguration,
-            zoneService);
+            detectionService);
 
     statusChangedHandler.handle(
         event,
@@ -72,7 +72,7 @@ public class DetectionAddressConversionJobStatusChangedService
       DetectionAddressConversionTaskRepository detectionAddressConversionTaskRepository,
       EventProducer eventProducer,
       GeoServerConfiguration geoServerConfiguration,
-      ZoneService zoneService)
+      DetectionService detectionService)
       implements Runnable {
 
     @Override
@@ -86,7 +86,7 @@ public class DetectionAddressConversionJobStatusChangedService
           detectionRepository,
           geoServerConfiguration,
           eventProducer,
-          zoneService);
+          detectionService);
     }
   }
 
@@ -96,7 +96,7 @@ public class DetectionAddressConversionJobStatusChangedService
       DetectionAddressConversionTaskRepository taskRepository,
       EventProducer eventProducer,
       GeoServerConfiguration geoServerConfiguration,
-      ZoneService zoneService)
+      DetectionService detectionService)
       implements Runnable {
 
     @Override
@@ -115,7 +115,7 @@ public class DetectionAddressConversionJobStatusChangedService
           detectionRepository,
           geoServerConfiguration,
           eventProducer,
-          zoneService);
+          detectionService);
     }
   }
 
@@ -125,7 +125,7 @@ public class DetectionAddressConversionJobStatusChangedService
       DetectionRepository detectionRepository,
       GeoServerConfiguration geoServerConfiguration,
       EventProducer eventProducer,
-      ZoneService zoneService) {
+      DetectionService detectionService) {
     var convertedFeatures = tasks.stream().map(DetectionAddressConversionTask::getFeature).toList();
     var detection = detectionRepository.findById(detectionId).orElseThrow();
 
@@ -145,6 +145,6 @@ public class DetectionAddressConversionJobStatusChangedService
     eventProducer.accept(
         List.of(DetectionSaved.builder().detectionIdentifier(savedDetection.getId()).build()));
 
-    zoneService.processDetectionSteps(savedDetection);
+    detectionService.processDetectionSteps(savedDetection);
   }
 }

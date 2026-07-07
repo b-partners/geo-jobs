@@ -27,7 +27,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-class ZoneServiceIT extends FacadeIT {
+class DetectionServiceIT extends FacadeIT {
   @MockBean BucketComponent bucketComponent;
   @MockBean DetectionFeaturesResultImageRetriever featuresImageRetriever;
   @MockBean DetectionImageAttributeRetriever imageAttributeRetriever;
@@ -37,7 +37,7 @@ class ZoneServiceIT extends FacadeIT {
   @Autowired DetectionStepRepository detectionStepRepository;
   DetectionCreator detectionCreator;
 
-  @Autowired ZoneService subject;
+  @Autowired DetectionService subject;
   @Autowired private ZoneTilingJobRepository zoneTilingJobRepository;
   @Autowired private ZoneDetectionJobRepository zoneDetectionJobRepository;
   @MockBean AuthProvider authProviderMock;
