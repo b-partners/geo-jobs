@@ -5,7 +5,7 @@ import static app.bpartners.geojobs.repository.model.geocoding.GeoCodingJobStatu
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.model.GeoCodingJobCreated;
-import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
+import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.repository.GeoCodingJobRepository;
