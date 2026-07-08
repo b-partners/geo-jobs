@@ -37,7 +37,7 @@ public class ParcelDetectionTaskCreatedService
           "ParcelDetectionTask [id={}] failed, marking it as FAILED without retry",
           task.getId(),
           e);
-      fail(task);
+      fail(task, e.getMessage());
     }
   }
 }

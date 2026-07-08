@@ -395,6 +395,7 @@ public class DetectionService {
               .name(failedStepName)
               .progression(FINISHED)
               .health(FAILED)
+              .message(e.getMessage())
               .creationDatetime(now())
               .build());
       detectionRepository.save(detection);

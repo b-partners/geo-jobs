@@ -39,7 +39,7 @@ public class TaskCreatedService<T extends Task, C extends TaskCreated<T>> implem
           task.getId(),
           attemptNb,
           MAX_ATTEMPT_NB);
-      fail(task);
+      fail(task, String.format("Reached max attempt %d/%d", attemptNb, MAX_ATTEMPT_NB));
       return;
     }
 
@@ -59,7 +59,7 @@ public class TaskCreatedService<T extends Task, C extends TaskCreated<T>> implem
       }
       log.error(
           "Task [{} - id={}] failed, marking it as FAILED without retry", task, task.getId(), e);
-      fail(task);
+      fail(task, e.getMessage());
       return;
     }
 
@@ -72,7 +72,11 @@ public class TaskCreatedService<T extends Task, C extends TaskCreated<T>> implem
   }
 
   protected void fail(T task) {
+    fail(task, null);
+  }
+
+  protected void fail(T task, String message) {
     taskRepository.save(task);
-    taskStatusService.fail(task);
+    taskStatusService.fail(task, message);
   }
 }

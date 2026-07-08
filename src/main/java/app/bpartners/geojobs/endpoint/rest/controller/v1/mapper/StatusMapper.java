@@ -31,6 +31,7 @@ public class StatusMapper<S extends app.bpartners.geojobs.job.model.Status> {
     return new Status()
         .progression(toProgressionEnum(status.getProgression()))
         .health(toHealthStatus(status.getHealth()))
+        .message(status.getMessage())
         .creationDatetime(status.getCreationDatetime());
   }
 }

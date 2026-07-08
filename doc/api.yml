@@ -2364,6 +2364,8 @@ components:
             - FAILED
             - UNKNOWN
             - RETRYING
+        message:
+          type: string
         creationDatetime:
           type: string
           format: date-time

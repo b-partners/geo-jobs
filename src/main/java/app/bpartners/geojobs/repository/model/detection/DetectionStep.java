@@ -40,6 +40,8 @@ public class DetectionStep {
   @Column(name = "detection_id")
   private String detectionId;
 
+  private String message;
+
   /**
    * Optional detailed task statistics backing this step when it is a request-time computed step
    * (tiling / machine detection). Never persisted.

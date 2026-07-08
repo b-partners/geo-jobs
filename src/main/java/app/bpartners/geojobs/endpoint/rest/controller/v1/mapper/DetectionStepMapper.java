@@ -21,6 +21,7 @@ public class DetectionStepMapper {
         .health(
             app.bpartners.geojobs.job.model.Status.HealthStatus.valueOf(
                 step.getStatus().getHealth().getValue()))
+        .message(step.getStatus() == null ? null : step.getStatus().getMessage())
         .creationDatetime(Instant.now())
         .build();
   }
@@ -31,6 +32,7 @@ public class DetectionStepMapper {
         .status(
             new app.bpartners.geojobs.endpoint.rest.model.Status()
                 .creationDatetime(step.getCreationDatetime())
+                .message(step.getMessage())
                 .progression(
                     Status.ProgressionEnum.valueOf(
                         step.getProgression().name())) // TODO: use existing restMapper
