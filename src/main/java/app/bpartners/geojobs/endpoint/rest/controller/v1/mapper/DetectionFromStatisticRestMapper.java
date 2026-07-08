@@ -40,6 +40,16 @@ public class DetectionFromStatisticRestMapper
       Status.ProgressionStatus progressionStatus,
       Status.HealthStatus healthStatus,
       DetectionStepName detectionStepName) {
+    return computeEmptyStatisticFromStep(
+        detection, progressionStatus, healthStatus, null, detectionStepName);
+  }
+
+  public app.bpartners.geojobs.endpoint.rest.model.Detection computeEmptyStatisticFromStep(
+      Detection detection,
+      Status.ProgressionStatus progressionStatus,
+      Status.HealthStatus healthStatus,
+      String message,
+      DetectionStepName detectionStepName) {
     var geoJobType = fromDetectionStep(detectionStepName);
     var emptyStatistic =
         TaskStatistic.builder()
@@ -50,6 +60,7 @@ public class DetectionFromStatisticRestMapper
                     .creationDatetime(now())
                     .progression(progressionStatus)
                     .health(healthStatus)
+                    .message(message)
                     .jobType(geoJobType)
                     .build())
             .updatedAt(now())

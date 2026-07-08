@@ -1,6 +1,7 @@
 package app.bpartners.geojobs.service.event;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -67,7 +68,7 @@ class ParcelDetectionTaskCreatedServiceTest {
 
     verify(taskConsumerMock).accept(taskMock);
     verify(taskRepositoryMock).save(taskMock);
-    verify(taskStatusServiceMock).fail(taskMock);
+    verify(taskStatusServiceMock).fail(eq(taskMock), eq("parcel without tiles"));
     verify(taskStatusServiceMock, never()).succeed(taskMock);
   }
 }

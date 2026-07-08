@@ -119,15 +119,36 @@ public abstract class JobService<T extends Task, J extends Job> {
 
   private JobStatus jobStatusFromTaskStatuses(
       String jobId, JobStatus oldStatus, List<TaskStatus> taskStatuses) {
+    var health = healthFromTaskStatuses(oldStatus, taskStatuses);
     return JobStatus.from(
         jobId,
         Status.builder()
             .progression(progressionFromTaskStatus(oldStatus, taskStatuses))
-            .health(healthFromTaskStatuses(oldStatus, taskStatuses))
+            .health(health)
+            .message(messageFromTaskStatuses(taskStatuses, health))
             .creationDatetime(
                 latestInstantFromTaskStatuses(taskStatuses, oldStatus.getCreationDatetime()))
             .build(),
         oldStatus.getJobType());
+  }
+
+  /**
+   * Message inherited from the tasks, which hold the failure/processing details. Aggregates all the
+   * distinct (non-identical) messages of the tasks sharing the job's resulting health, ordered by
+   * their creation datetime and joined with "; " (e.g. every distinct FAILED task message when the
+   * job is FAILED). Returns null when no such message exists.
+   */
+  private String messageFromTaskStatuses(
+      List<TaskStatus> taskStatuses, Status.HealthStatus health) {
+    var distinctMessages =
+        taskStatuses.stream()
+            .filter(taskStatus -> health.equals(taskStatus.getHealth()))
+            .filter(taskStatus -> taskStatus.getMessage() != null)
+            .sorted(comparing(Status::getCreationDatetime))
+            .map(Status::getMessage)
+            .distinct()
+            .toList();
+    return distinctMessages.isEmpty() ? null : String.join("; ", distinctMessages);
   }
 
   private Instant latestInstantFromTaskStatuses(

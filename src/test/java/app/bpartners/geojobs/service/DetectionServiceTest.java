@@ -581,6 +581,7 @@ class DetectionServiceTest {
                         .name(POST_PROCESSING)
                         .progression(PROCESSING)
                         .health(app.bpartners.geojobs.job.model.Status.HealthStatus.UNKNOWN)
+                        .message("persisted step message")
                         .creationDatetime(now())
                         .build()))
             .build();
@@ -591,6 +592,35 @@ class DetectionServiceTest {
     assertEquals(POST_PROCESSING, actual.getStep().getName());
     assertEquals(Status.ProgressionEnum.PROCESSING, actual.getStep().getStatus().getProgression());
     assertEquals(UNKNOWN, actual.getStep().getStatus().getHealth());
+    assertEquals("persisted step message", actual.getStep().getStatus().getMessage());
+  }
+
+  @Test
+  void rest_mapper_surfaces_job_message_on_computed_statistic_step() {
+    var detection =
+        detectionCreator.create(
+            randomUUID().toString(), randomUUID().toString(), randomUUID().toString());
+    var statistic = taskStatisticCreator.createProcessingTask(detection.getId(), DETECTION);
+    statistic.setActualJobStatus(
+        JobStatus.builder()
+            .progression(PROCESSING)
+            .health(app.bpartners.geojobs.job.model.Status.HealthStatus.FAILED)
+            .message("machine detection job failed: source timeout")
+            .build());
+    detection.setComputedStep(
+        app.bpartners.geojobs.repository.model.detection.DetectionStep.builder()
+            .name(MACHINE_DETECTION)
+            .progression(PROCESSING)
+            .health(app.bpartners.geojobs.job.model.Status.HealthStatus.FAILED)
+            .creationDatetime(now())
+            .statistic(statistic)
+            .build());
+
+    var actual = detectionRestMapper.toRest(detection);
+
+    assertEquals(MACHINE_DETECTION, actual.getStep().getName());
+    assertEquals(
+        "machine detection job failed: source timeout", actual.getStep().getStatus().getMessage());
   }
 
   @SneakyThrows

@@ -24,7 +24,11 @@ public class DetectionRestMapper {
       return detectionFromStatisticRestMapper.apply(detection, statistic, currentStep.getName());
     }
     return detectionFromStatisticRestMapper.computeEmptyStatisticFromStep(
-        detection, currentStep.getProgression(), currentStep.getHealth(), currentStep.getName());
+        detection,
+        currentStep.getProgression(),
+        currentStep.getHealth(),
+        currentStep.getMessage(),
+        currentStep.getName());
   }
 
   public List<app.bpartners.geojobs.endpoint.rest.model.Detection> toRest(
