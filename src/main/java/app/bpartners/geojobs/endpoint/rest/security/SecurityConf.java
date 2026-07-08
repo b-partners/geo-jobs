@@ -208,6 +208,42 @@ public class SecurityConf {
                     .authenticated() // TODO: change later
                     .requestMatchers(POST, "/geoCodingJobs/*/excel")
                     .authenticated() // TODO: change later
+                    .requestMatchers(GET, "/v1/image")
+                    .authenticated()
+                    .requestMatchers(POST, "/v1/detections/*")
+                    .hasAnyAuthority(
+                        ROLE_ADMIN.name(), ROLE_COMMUNITY.name(), ROLE_INSURANCE.name())
+                    .requestMatchers(POST, "/v1/detections/*/sync")
+                    .authenticated()
+                    .requestMatchers(POST, "/v1/detections/*/addresses")
+                    .authenticated()
+                    .requestMatchers(GET, "/v1/detections/*")
+                    .hasAnyAuthority(
+                        ROLE_ADMIN.name(), ROLE_COMMUNITY.name(), ROLE_INSURANCE.name())
+                    .requestMatchers(POST, "/v1/detections/*/shape")
+                    .hasAnyAuthority(
+                        ROLE_ADMIN.name(), ROLE_COMMUNITY.name(), ROLE_INSURANCE.name())
+                    .requestMatchers(POST, "/v1/detections/*/excel")
+                    .hasAnyAuthority(
+                        ROLE_ADMIN.name(), ROLE_COMMUNITY.name(), ROLE_INSURANCE.name())
+                    .requestMatchers(GET, "/v1/detections")
+                    .hasAnyAuthority(
+                        ROLE_ADMIN.name(), ROLE_COMMUNITY.name(), ROLE_INSURANCE.name())
+                    .requestMatchers(GET, "/v1/usage")
+                    .hasAnyAuthority(
+                        ROLE_ADMIN.name(), ROLE_COMMUNITY.name(), ROLE_INSURANCE.name())
+                    .requestMatchers(DELETE, "/v1/keys")
+                    .hasAnyAuthority(ROLE_COMMUNITY.name(), ROLE_INSURANCE.name())
+                    .requestMatchers(GET, "/v1/city-jsons/*")
+                    .authenticated()
+                    .requestMatchers(PUT, "/v1/city-jsons/*/process")
+                    .authenticated()
+                    .requestMatchers(GET, "/v1/3d/*")
+                    .authenticated()
+                    .requestMatchers(POST, "/v1/3d/*")
+                    .authenticated()
+                    .requestMatchers(POST, "/v1/3d/*/addresses")
+                    .authenticated()
                     .anyRequest()
                     .denyAll())
         .csrf(AbstractHttpConfigurer::disable)
