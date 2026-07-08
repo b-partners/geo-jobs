@@ -10,14 +10,15 @@ import app.bpartners.geojobs.service.dashboard.component.User;
 import app.bpartners.geojobs.service.dashboard.component.UserApiKey;
 import app.bpartners.geojobs.template.HTMLTemplateParser;
 import jakarta.mail.internet.InternetAddress;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientResponseException;
@@ -29,6 +30,7 @@ public class DashboardApiKeyCheckTriggeredService
     implements Consumer<DashboardApiKeyCheckTriggered> {
   private static final String DASHBOARD_API_KEY_VERIFICATION_TEMPLATE =
       "dashboard_api_key_verification_template";
+  public static final String EUROPE_PARIS = "Europe/Paris";
   private final UserAccountsApi userAccountsApi;
   private final String adminApiKey;
   private final Mailer mailer;
@@ -54,7 +56,7 @@ public class DashboardApiKeyCheckTriggeredService
     var retrievedUserEmails = retrievedUsers.stream().map(User::email).toList();
 
     if (retrievedUsers.isEmpty()) {
-      log.info("Users with email {} not found in user accounts api.", email);
+      log.error("Users with email {} not found in user accounts api.", email);
       return;
     }
 
@@ -72,9 +74,13 @@ public class DashboardApiKeyCheckTriggeredService
                   try {
                     return userAccountsApi.getUserApiKey(user.id(), adminApiKey);
                   } catch (RestClientResponseException e) {
-                    log.warn(
-                        "Unable to get api key for user with id : {} in user account api",
-                        user.id());
+                    var exceptionMessage =
+                        String.format(
+                            "Unable to get api key for user with id : %s (%s) in user account api."
+                                + " %s",
+                            user.id(), user.email(), e.getMessage());
+                    log.error(exceptionMessage, e);
+                    notifyByEmail(retrievedUserEmails, exceptionMessage);
                     return new ArrayList<UserApiKey>();
                   }
                 })
@@ -83,7 +89,7 @@ public class DashboardApiKeyCheckTriggeredService
 
     if (userApiKeys.isEmpty()) {
       var exceptionMessage = "No api found for users with email : " + retrievedUserEmails;
-      notifyByEmail(retrievedUserEmails, exceptionMessage);
+      report(exceptionMessage, retrievedUserEmails);
       return;
     }
 
@@ -98,7 +104,7 @@ public class DashboardApiKeyCheckTriggeredService
           "No dashboard api key found for users with email : "
               + retrievedUserEmails
               + "in the user account api.";
-      notifyByEmail(retrievedUserEmails, exceptionMessage);
+      report(exceptionMessage, retrievedUserEmails);
       return;
     }
 
@@ -108,10 +114,14 @@ public class DashboardApiKeyCheckTriggeredService
           "Actual dashboard api "
               + actualDashboardApiKey
               + " key doesn't match any of the api keys in the users account api for : "
-              + retrievedUserEmails;
-      notifyByEmail(retrievedUserEmails, exceptionMessage);
-      return;
+              + formatEmailList(retrievedUserEmails);
+      report(exceptionMessage, retrievedUserEmails);
     }
+  }
+
+  private void report(String exceptionMessage, List<String> retrievedUserEmails) {
+    log.error(exceptionMessage);
+    notifyByEmail(retrievedUserEmails, exceptionMessage);
   }
 
   @SneakyThrows
@@ -131,17 +141,22 @@ public class DashboardApiKeyCheckTriggeredService
 
   private String computeEmailBody(List<String> emailList, String message) {
     Context context = new Context();
-    context.setVariable("email", emailList);
+    context.setVariable("email", formatEmailList(emailList));
     context.setVariable("message", message);
     return htmlTemplateParser.apply(DASHBOARD_API_KEY_VERIFICATION_TEMPLATE, context);
   }
 
   private String computeSubject(List<String> emailList) {
-    var nowInParisHour = LocalDateTime.now(ZoneId.of("Europe/Paris"));
+    var nowInParisHour = ZonedDateTime.now(ZoneId.of(EUROPE_PARIS));
     var formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     return "[geo-jobs] Erreur lors de la vérification automatique de la clé API du client "
-        + emailList
+        + formatEmailList(emailList)
         + " le "
         + formatter.format(nowInParisHour);
+  }
+
+  @NotNull
+  private static String formatEmailList(List<String> emailList) {
+    return String.join("/", emailList);
   }
 }
