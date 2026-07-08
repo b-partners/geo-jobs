@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.service;
 
-import static app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper.toDomainFeature;
+import static app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.FeatureMapper.toDomainFeature;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONDelimitationObjectType.BUILDING_ROOF;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStatus.FAILED;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStatus.PROCESSING;

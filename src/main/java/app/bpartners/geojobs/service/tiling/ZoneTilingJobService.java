@@ -15,8 +15,8 @@ import app.bpartners.geojobs.endpoint.event.model.zone.ImportedZoneTilingJobSave
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobCreated;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobStatusChanged;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobWithoutTasksCreated;
-import app.bpartners.geojobs.endpoint.rest.controller.mapper.TilingTaskMapper;
-import app.bpartners.geojobs.endpoint.rest.controller.mapper.ZoomMapper;
+import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.TilingTaskMapper;
+import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.ZoomMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Task;

@@ -5,10 +5,10 @@ import static org.springframework.http.HttpMethod.*;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.rest.readme.monitor.ReadmeMonitorConf;
-import app.bpartners.geojobs.endpoint.rest.readme.monitor.ReadmeMonitorFilter;
-import app.bpartners.geojobs.endpoint.rest.readme.monitor.factory.ReadmeLogFactory;
 import app.bpartners.geojobs.model.exception.ForbiddenException;
+import app.bpartners.geojobs.readme.monitor.ReadmeMonitorConf;
+import app.bpartners.geojobs.readme.monitor.ReadmeMonitorFilter;
+import app.bpartners.geojobs.readme.monitor.factory.ReadmeLogFactory;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;

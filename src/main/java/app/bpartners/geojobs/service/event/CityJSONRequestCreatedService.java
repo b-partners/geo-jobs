@@ -8,7 +8,7 @@ import static java.util.stream.Collectors.toSet;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.CityJSONRequestCreated;
 import app.bpartners.geojobs.endpoint.event.model.ThreeDRequestMonitoringTriggered;
-import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
+import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.FeatureMapper;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.lidar.planes.model.LasRoofDelimitationType;
 import app.bpartners.geojobs.repository.CityJSONRequestRepository;

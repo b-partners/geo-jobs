@@ -9,7 +9,7 @@ import static java.util.UUID.randomUUID;
 import app.bpartners.geojobs.concurrency.Workers;
 import app.bpartners.geojobs.endpoint.event.model.FeatureImageRequested;
 import app.bpartners.geojobs.endpoint.event.model.FeatureVggRequested;
-import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
+import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.DetectionFromStatisticRestMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.model.exception.ImageSourcesTimeoutException;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
