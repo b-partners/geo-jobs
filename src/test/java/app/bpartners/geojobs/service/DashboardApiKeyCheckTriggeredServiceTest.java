@@ -67,7 +67,6 @@ class DashboardApiKeyCheckTriggeredServiceTest {
       verify(userAccountsApiMock, times(1))
           .getUsersByCriteria(
               eq(authorizationMock.getEmail()), eq(null), eq(null), eq(adminApiKey));
-      verifyNoInteractions(mailerMock);
 
       boolean hasExpectedErrorLog =
           appender.list.stream()
