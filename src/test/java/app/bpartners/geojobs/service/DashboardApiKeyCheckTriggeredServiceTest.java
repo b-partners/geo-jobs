@@ -72,7 +72,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
           appender.list.stream()
               .anyMatch(
                   e ->
-                      e.getLevel() == Level.ERROR
+                      e.getLevel() == Level.WARN
                           && e.getFormattedMessage()
                               .equals(
                                   "No users with same email as "
