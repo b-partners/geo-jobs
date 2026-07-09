@@ -167,7 +167,7 @@ class ZoneTilingJobStatusChangedServiceTest {
     when(detectionRepositoryMock.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
     when(objectConfigurationRepositoryMock.saveAll(any()))
         .thenAnswer(invocation -> invocation.getArgument(0));
-    doNothing().when(detectionDelimitationRetrieverMock).accept(detection);
+    when(detectionDelimitationRetrieverMock.apply(detection)).thenReturn(detection);
     doNothing().when(mailerMock).accept(any());
     when(tilingTaskRepositoryMock.findAllByJobId(any())).thenReturn(List.of());
 

@@ -48,7 +48,7 @@ class DetectionDelimitationRetrieverTest {
 
     when(detectionRepositoryMock.save(any())).thenReturn(detection);
 
-    subject.accept(detection);
+    subject.apply(detection);
 
     var featureWithDelimitationAsString = featureWithGeometryAsString(providedGeoJson);
     var expectedDetectionToBeSaved =
@@ -75,7 +75,7 @@ class DetectionDelimitationRetrieverTest {
     when(detectionRepositoryMock.save(any())).thenReturn(detection);
     when(buildingFinderMock.retrieveRoofPolygonsFrom(any())).thenReturn(List.of());
 
-    subject.accept(detection);
+    subject.apply(detection);
 
     verify(buildingFinderMock, times(1)).retrieveRoofPolygonsFrom(any());
   }
@@ -88,7 +88,7 @@ class DetectionDelimitationRetrieverTest {
     when(detectionRepositoryMock.save(any())).thenReturn(detection);
     when(buildingFinderMock.retrieveRoofPolygonsFrom(any())).thenReturn(List.of());
 
-    subject.accept(detection);
+    subject.apply(detection);
 
     verify(buildingFinderMock, times(1)).retrieveRoofPolygonsFrom(any());
   }
@@ -100,7 +100,7 @@ class DetectionDelimitationRetrieverTest {
 
     when(detectionRepositoryMock.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-    subject.accept(detection);
+    subject.apply(detection);
 
     verify(detectionRepositoryMock)
         .save(

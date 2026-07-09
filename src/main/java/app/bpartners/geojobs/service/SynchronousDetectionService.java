@@ -60,7 +60,7 @@ public class SynchronousDetectionService
   @Override
   public Detection apply(app.bpartners.geojobs.repository.model.detection.Detection detection) {
     var delimitationRetrievingStart = now();
-    detectionDelimitationRetriever.accept(detection);
+    detectionDelimitationRetriever.apply(detection);
     log.info(
         "Retrieving delimitation finished in {} seconds for detection(e2Id={}, feature={})",
         Duration.between(delimitationRetrievingStart, now()).toSeconds(),
