@@ -13,6 +13,7 @@ import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.service.GeoCodeService;
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,7 +27,28 @@ public class GeoCodeController {
   private final GeoCodingJobRestMapper geoCodingJobRestMapper;
 
   @GetMapping("/geocode")
-  public Feature getGeocode(@RequestParam("address") String address) {
+  public Feature getGeocode(
+      @RequestParam(value = "address", required = false) String address,
+      @RequestParam(required = false) Double latitude,
+      @RequestParam(required = false) Double longitude) {
+    var hasAddress = address != null && !address.isBlank();
+    var hasCoordinates = latitude != null || longitude != null;
+    if (hasAddress && hasCoordinates) {
+      throw new BadRequestException(
+          "Both address and point coordinates (longitude,latitude) can not be provided");
+    }
+    if (!hasAddress && !hasCoordinates) {
+      throw new BadRequestException(
+          "Either address or point coordinates (longitude,latitude) is required");
+    }
+    if (!hasAddress) {
+      if (longitude == null || latitude == null) {
+        throw new BadRequestException(
+            "Both longitude and latitude are required to geocode from point coordinates");
+      }
+      return toRestFeature(
+          service.geocode(null, BigDecimal.valueOf(longitude), BigDecimal.valueOf(latitude)));
+    }
     return toRestFeature(service.geocode(address));
   }
 

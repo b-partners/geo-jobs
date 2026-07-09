@@ -1541,18 +1541,28 @@ paths:
       operationId: geocodeAddress
       summary: Resolve an address into a GeoJSON Feature
       description: |
-        Converts a textual address into a geographic location and returns the result as a GeoJSON Feature.
+        Converts a textual address or point coordinates (longitude, latitude) into a geographic location and returns the result as a GeoJSON Feature.
         The service performs forward geocoding by querying external geocoding providers and transforms the response into a standardized GeoJSON Feature object.
       parameters:
         - in: query
           name: address
-          required: true
+          required: false
           description: Address to geocode
           schema:
             type: string
+        - in: query
+          name: longitude
+          required: false
+          schema:
+            type: number
+        - in: query
+          name: latitude
+          required: false
+          schema:
+            type: number
       responses:
         200:
-          description: GeoJSON Feature corresponding to address
+          description: GeoJSON Feature corresponding to address or point coordinates
           content:
             application/json:
               schema:

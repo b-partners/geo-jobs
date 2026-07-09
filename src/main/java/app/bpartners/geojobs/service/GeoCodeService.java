@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
+import javax.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -90,17 +91,23 @@ public class GeoCodeService {
         var geoPosition = geoCodeApi.searchGeoPositionFromAddress(address);
         var longitude = BigDecimal.valueOf(geoPosition.longitude());
         var latitude = BigDecimal.valueOf(geoPosition.latitude());
-        var nearestRoofMultiPolygon =
-            buildingFinder.getBuildingMultiPolygon(List.of(longitude, latitude));
-
-        var properties = new HashMap<String, Object>();
-        properties.put("address", address);
-
-        return geometryConverter.toFeature(
-            null, HOUSES_0.getZoomLevel(), properties, nearestRoofMultiPolygon);
+        return geocode(address, longitude, latitude);
       } catch (IOException | InterruptedException | ApiException exception) {
         throw new BadRequestException("Unable to geocode address : " + address);
       }
     }
+  }
+
+  public Feature geocode(@Nullable String address, BigDecimal longitude, BigDecimal latitude) {
+    var nearestRoofMultiPolygon =
+        buildingFinder.getBuildingMultiPolygon(List.of(longitude, latitude));
+
+    var properties = new HashMap<String, Object>();
+    if (address != null) {
+      properties.put("address", address);
+    }
+
+    return geometryConverter.toFeature(
+        null, HOUSES_0.getZoomLevel(), properties, nearestRoofMultiPolygon);
   }
 }
