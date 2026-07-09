@@ -32,13 +32,14 @@ class DashboardApiKeyCheckTriggeredServiceTest {
 
   UserAccountsApi userAccountsApiMock = mock(UserAccountsApi.class);
   Mailer mailerMock = mock(Mailer.class);
-  HTMLTemplateParser htmlTemplateParser = new HTMLTemplateParser();
+  HTMLTemplateParser htmlTemplateParser = mock(HTMLTemplateParser.class);
   DashboardApiKeyCheckTriggeredService subject;
 
   @Test
   void log_when_check_on_not_existing_user() {
     CommunityAuthorization authorizationMock = mock();
     String adminApiKey = randomUUID().toString();
+    String authId = randomUUID().toString();
 
     when(authorizationMock.getEmail()).thenReturn("non-existant-email");
     when(userAccountsApiMock.getUsersByCriteria(
@@ -46,7 +47,11 @@ class DashboardApiKeyCheckTriggeredServiceTest {
         .thenReturn(List.of());
 
     DashboardApiKeyCheckTriggered event =
-        DashboardApiKeyCheckTriggered.builder().email(authorizationMock.getEmail()).build();
+        DashboardApiKeyCheckTriggered.builder()
+            .email(authorizationMock.getEmail())
+            .communityAuthorizationId(authId)
+            .build();
+
     subject =
         new DashboardApiKeyCheckTriggeredService(
             userAccountsApiMock, adminApiKey, mailerMock, htmlTemplateParser);
@@ -62,19 +67,18 @@ class DashboardApiKeyCheckTriggeredServiceTest {
       verify(userAccountsApiMock, times(1))
           .getUsersByCriteria(
               eq(authorizationMock.getEmail()), eq(null), eq(null), eq(adminApiKey));
-      verifyNoInteractions(mailerMock);
 
-      boolean hasExpectedInfoLog =
+      boolean hasExpectedErrorLog =
           appender.list.stream()
               .anyMatch(
                   e ->
-                      e.getLevel() == Level.INFO
+                      e.getLevel() == Level.WARN
                           && e.getFormattedMessage()
                               .equals(
-                                  "Users with email "
-                                      + authorizationMock.getEmail()
-                                      + " not found in user accounts api."));
-      assertTrue(hasExpectedInfoLog);
+                                  "No users with same email as "
+                                      + authId
+                                      + " found in user account api."));
+      assertTrue(hasExpectedErrorLog);
     } finally {
       logger.detachAppender(appender);
       appender.stop();
@@ -91,15 +95,21 @@ class DashboardApiKeyCheckTriggeredServiceTest {
             randomUUID().toString(),
             "existant@mail.com");
     String adminApiKey = randomUUID().toString();
+    String authId = randomUUID().toString();
 
     when(authorization.getEmail()).thenReturn("existant-email");
     when(userAccountsApiMock.getUsersByCriteria(
             eq(authorization.getEmail()), eq(null), eq(null), anyString()))
         .thenReturn(List.of(user));
     when(userAccountsApiMock.getUserApiKey(eq(user.id()), eq(adminApiKey))).thenReturn(List.of());
+    when(htmlTemplateParser.apply(anyString(), any())).thenReturn("Mock HTML Body Content");
 
     DashboardApiKeyCheckTriggered event =
-        DashboardApiKeyCheckTriggered.builder().email(authorization.getEmail()).build();
+        DashboardApiKeyCheckTriggered.builder()
+            .email(authorization.getEmail())
+            .communityAuthorizationId(authId)
+            .build();
+
     subject =
         new DashboardApiKeyCheckTriggeredService(
             userAccountsApiMock, adminApiKey, mailerMock, htmlTemplateParser);
@@ -115,14 +125,14 @@ class DashboardApiKeyCheckTriggeredServiceTest {
 
     Email sent = emailCaptor.getValue();
     assertNotNull(sent);
-    assertTrue(sent.htmlBody().contains("No api found for users with email"));
-    assertTrue(sent.htmlBody().contains(user.email()));
+    assertEquals("Mock HTML Body Content", sent.htmlBody());
   }
 
   @Test
   void no_dashboard_keys_found_on_existing_user_notifies_by_email() {
     String adminApiKey = randomUUID().toString();
     String existingEmail = "exist@" + randomUUID();
+    String authId = randomUUID().toString();
 
     CommunityAuthorization authorization = mock();
     User user =
@@ -138,9 +148,14 @@ class DashboardApiKeyCheckTriggeredServiceTest {
         .thenReturn(List.of(user));
     when(userAccountsApiMock.getUserApiKey(eq(user.id()), eq(adminApiKey)))
         .thenReturn(List.of(new UserApiKey(randomUUID().toString(), ANALYSIS)));
+    when(htmlTemplateParser.apply(anyString(), any())).thenReturn("Mock HTML Body Content");
 
     DashboardApiKeyCheckTriggered event =
-        DashboardApiKeyCheckTriggered.builder().email(authorization.getEmail()).build();
+        DashboardApiKeyCheckTriggered.builder()
+            .email(authorization.getEmail())
+            .communityAuthorizationId(authId)
+            .build();
+
     subject =
         new DashboardApiKeyCheckTriggeredService(
             userAccountsApiMock, adminApiKey, mailerMock, htmlTemplateParser);
@@ -156,8 +171,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
 
     Email sent = emailCaptor.getValue();
     assertNotNull(sent);
-    assertTrue(sent.htmlBody().contains("No dashboard api key found for users with email"));
-    assertTrue(sent.htmlBody().contains(existingEmail));
+    assertEquals("Mock HTML Body Content", sent.htmlBody());
   }
 
   @Test
@@ -165,6 +179,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
     String adminApiKey = randomUUID().toString();
     String actualDashboardApiKey = randomUUID().toString();
     String existingEmail = "exist@" + randomUUID();
+    String authId = randomUUID().toString();
 
     CommunityAuthorization authorization = mock();
     User user =
@@ -181,12 +196,15 @@ class DashboardApiKeyCheckTriggeredServiceTest {
         .thenReturn(List.of(user));
     when(userAccountsApiMock.getUserApiKey(eq(user.id()), eq(adminApiKey)))
         .thenReturn(List.of(new UserApiKey(randomUUID().toString(), DASHBOARD)));
+    when(htmlTemplateParser.apply(anyString(), any())).thenReturn("Mock HTML Body Content");
 
     DashboardApiKeyCheckTriggered event =
         DashboardApiKeyCheckTriggered.builder()
             .email(authorization.getEmail())
             .dashboardApiKey(authorization.getDashboardApiKey())
+            .communityAuthorizationId(authId)
             .build();
+
     subject =
         new DashboardApiKeyCheckTriggeredService(
             userAccountsApiMock, adminApiKey, mailerMock, htmlTemplateParser);
@@ -202,14 +220,14 @@ class DashboardApiKeyCheckTriggeredServiceTest {
 
     Email sent = emailCaptor.getValue();
     assertNotNull(sent);
-    assertTrue(sent.htmlBody().contains(actualDashboardApiKey));
-    assertTrue(sent.htmlBody().contains(existingEmail));
+    assertEquals("Mock HTML Body Content", sent.htmlBody());
   }
 
   @Test
   void warn_when_multiple_users_found_for_same_email() {
     String adminApiKey = randomUUID().toString();
     String email = "exist@" + randomUUID();
+    String authId = randomUUID().toString();
 
     CommunityAuthorization authorization = mock();
     when(authorization.getEmail()).thenReturn(email);
@@ -224,7 +242,11 @@ class DashboardApiKeyCheckTriggeredServiceTest {
     when(userAccountsApiMock.getUserApiKey(anyString(), eq(adminApiKey))).thenReturn(List.of());
 
     DashboardApiKeyCheckTriggered event =
-        DashboardApiKeyCheckTriggered.builder().email(authorization.getEmail()).build();
+        DashboardApiKeyCheckTriggered.builder()
+            .email(authorization.getEmail())
+            .communityAuthorizationId(authId)
+            .build();
+
     subject =
         new DashboardApiKeyCheckTriggeredService(
             userAccountsApiMock, adminApiKey, mailerMock, htmlTemplateParser);
@@ -243,10 +265,13 @@ class DashboardApiKeyCheckTriggeredServiceTest {
                   e ->
                       e.getLevel() == Level.WARN
                           && e.getFormattedMessage()
-                              .equals(
-                                  "Multiple (2) account attached to the email : "
-                                      + email
-                                      + " in user account api"));
+                              .contains(
+                                  "Multiple (2) account ( "
+                                      + user1.id()
+                                      + " "
+                                      + user2.id()
+                                      + " ) attached to the email of the user "
+                                      + authId));
       assertTrue(hasExpectedWarnLog);
     } finally {
       logger.detachAppender(appender);
@@ -255,9 +280,10 @@ class DashboardApiKeyCheckTriggeredServiceTest {
   }
 
   @Test
-  void warn_when_unable_to_get_api_key_for_a_user() {
+  void error_when_unable_to_get_api_key_for_a_user() {
     String adminApiKey = randomUUID().toString();
     String email = "exist@" + randomUUID();
+    String authId = randomUUID().toString();
 
     CommunityAuthorization authorization = mock();
     when(authorization.getEmail()).thenReturn(email);
@@ -272,9 +298,14 @@ class DashboardApiKeyCheckTriggeredServiceTest {
         .thenThrow(
             new RestClientResponseException(
                 "Error", 500, "Internal Server Error", HttpHeaders.EMPTY, null, null));
+    when(htmlTemplateParser.apply(anyString(), any())).thenReturn("Mock HTML Body Content");
 
     DashboardApiKeyCheckTriggered event =
-        DashboardApiKeyCheckTriggered.builder().email(authorization.getEmail()).build();
+        DashboardApiKeyCheckTriggered.builder()
+            .email(authorization.getEmail())
+            .communityAuthorizationId(authId)
+            .build();
+
     subject =
         new DashboardApiKeyCheckTriggeredService(
             userAccountsApiMock, adminApiKey, mailerMock, htmlTemplateParser);
@@ -287,17 +318,17 @@ class DashboardApiKeyCheckTriggeredServiceTest {
     try {
       assertDoesNotThrow(() -> subject.accept(event));
 
-      boolean hasExpectedWarnLog =
+      boolean hasExpectedErrorLog =
           appender.list.stream()
               .anyMatch(
                   e ->
-                      e.getLevel() == Level.WARN
+                      e.getLevel() == Level.ERROR
                           && e.getFormattedMessage()
-                              .equals(
+                              .contains(
                                   "Unable to get api key for user with id : "
                                       + user.id()
-                                      + " in user account api"));
-      assertTrue(hasExpectedWarnLog);
+                                      + " in user account api."));
+      assertTrue(hasExpectedErrorLog);
     } finally {
       logger.detachAppender(appender);
       appender.stop();
