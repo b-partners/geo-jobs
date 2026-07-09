@@ -80,8 +80,8 @@ public class DashboardApiKeyCheckTriggeredService
                     var exceptionMessage =
                         String.format(
                             "Unable to get api key for user with id : %s in user account api."
-                                + " %s",
-                            user.id(), e.getMessage());
+                                + "%s %s",
+                            user.id(), e.getStatusCode(), e.getMessage());
                     log.error(exceptionMessage, e);
                     notifyByEmail(retrievedUserIds, exceptionMessage);
                     return new ArrayList<UserApiKey>();
