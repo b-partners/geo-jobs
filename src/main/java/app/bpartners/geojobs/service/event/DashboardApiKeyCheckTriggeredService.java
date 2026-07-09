@@ -31,6 +31,7 @@ public class DashboardApiKeyCheckTriggeredService
   private static final String DASHBOARD_API_KEY_VERIFICATION_TEMPLATE =
       "dashboard_api_key_verification_template";
   public static final String EUROPE_PARIS = "Europe/Paris";
+  public static final String EMAIL_NOTIFICATION_RECEIVER = "tech@birdia.fr";
   private final UserAccountsApi userAccountsApi;
   private final String adminApiKey;
   private final Mailer mailer;
@@ -50,21 +51,23 @@ public class DashboardApiKeyCheckTriggeredService
   @Override
   public void accept(DashboardApiKeyCheckTriggered event) {
     var email = event.getEmail();
+    var userId = event.getCommunityAuthorizationId();
 
     var retrievedUsers = userAccountsApi.getUsersByCriteria(email, null, null, adminApiKey);
 
-    var retrievedUserEmails = retrievedUsers.stream().map(User::email).toList();
+    var retrievedUserIds = retrievedUsers.stream().map(User::id).toList();
 
     if (retrievedUsers.isEmpty()) {
-      log.error("Users with email {} not found in user accounts api.", email);
+      log.error("No users with same email as {} found in user account api.", userId);
       return;
     }
 
     if (retrievedUsers.size() > 1) {
       log.warn(
-          "Multiple ({}) account attached to the email : {} in user account api",
+          "Multiple ({}) account ( {} ) attached to the email of the user {}",
           retrievedUsers.size(),
-          email);
+          String.join(" ", retrievedUserIds),
+          userId);
     }
 
     var userApiKeys =
@@ -76,11 +79,11 @@ public class DashboardApiKeyCheckTriggeredService
                   } catch (RestClientResponseException e) {
                     var exceptionMessage =
                         String.format(
-                            "Unable to get api key for user with id : %s (%s) in user account api."
+                            "Unable to get api key for user with id : %s in user account api."
                                 + " %s",
-                            user.id(), user.email(), e.getMessage());
+                            user.id(), e.getMessage());
                     log.error(exceptionMessage, e);
-                    notifyByEmail(retrievedUserEmails, exceptionMessage);
+                    notifyByEmail(retrievedUserIds, exceptionMessage);
                     return new ArrayList<UserApiKey>();
                   }
                 })
@@ -88,8 +91,8 @@ public class DashboardApiKeyCheckTriggeredService
             .toList();
 
     if (userApiKeys.isEmpty()) {
-      var exceptionMessage = "No api found for users with email : " + retrievedUserEmails;
-      report(exceptionMessage, retrievedUserEmails);
+      var exceptionMessage = "No api found for users : " + retrievedUserIds;
+      report(exceptionMessage, retrievedUserIds);
       return;
     }
 
@@ -101,10 +104,8 @@ public class DashboardApiKeyCheckTriggeredService
 
     if (dashboardApiKeys.isEmpty()) {
       var exceptionMessage =
-          "No dashboard api key found for users with email : "
-              + retrievedUserEmails
-              + "in the user account api.";
-      report(exceptionMessage, retrievedUserEmails);
+          "No dashboard api key found for users : " + retrievedUserIds + "in the user account api.";
+      report(exceptionMessage, retrievedUserIds);
       return;
     }
 
@@ -114,24 +115,24 @@ public class DashboardApiKeyCheckTriggeredService
           "Actual dashboard api "
               + actualDashboardApiKey
               + " key doesn't match any of the api keys in the users account api for : "
-              + formatEmailList(retrievedUserEmails);
-      report(exceptionMessage, retrievedUserEmails);
+              + formIdList(retrievedUserIds);
+      report(exceptionMessage, retrievedUserIds);
     }
   }
 
-  private void report(String exceptionMessage, List<String> retrievedUserEmails) {
+  private void report(String exceptionMessage, List<String> retrievedUserIds) {
     log.error(exceptionMessage);
-    notifyByEmail(retrievedUserEmails, exceptionMessage);
+    notifyByEmail(retrievedUserIds, exceptionMessage);
   }
 
   @SneakyThrows
-  private void notifyByEmail(List<String> emailList, String message) {
-    var subject = computeSubject(emailList);
-    String emailBody = computeEmailBody(emailList, message);
+  private void notifyByEmail(List<String> idList, String message) {
+    var subject = computeSubject(idList);
+    String emailBody = computeEmailBody(idList, message);
 
     mailer.accept(
         new Email(
-            new InternetAddress("tech@birdia.fr"),
+            new InternetAddress(EMAIL_NOTIFICATION_RECEIVER),
             List.of(),
             List.of(),
             subject,
@@ -139,24 +140,24 @@ public class DashboardApiKeyCheckTriggeredService
             List.of()));
   }
 
-  private String computeEmailBody(List<String> emailList, String message) {
+  private String computeEmailBody(List<String> idList, String message) {
     Context context = new Context();
-    context.setVariable("email", formatEmailList(emailList));
+    context.setVariable("email", formIdList(idList));
     context.setVariable("message", message);
     return htmlTemplateParser.apply(DASHBOARD_API_KEY_VERIFICATION_TEMPLATE, context);
   }
 
-  private String computeSubject(List<String> emailList) {
+  private String computeSubject(List<String> idList) {
     var nowInParisHour = ZonedDateTime.now(ZoneId.of(EUROPE_PARIS));
     var formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     return "[geo-jobs] Erreur lors de la vérification automatique de la clé API du client "
-        + formatEmailList(emailList)
+        + formIdList(idList)
         + " le "
         + formatter.format(nowInParisHour);
   }
 
   @NotNull
-  private static String formatEmailList(List<String> emailList) {
-    return String.join("/", emailList);
+  private static String formIdList(List<String> idList) {
+    return String.join("/", idList);
   }
 }
