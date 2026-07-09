@@ -96,6 +96,23 @@ public abstract class JobService<T extends Task, J extends Job> {
     return repository.findById(id).orElseThrow(() -> new NotFoundException("job.id=" + id));
   }
 
+  public J fail(String jobId, String message) {
+    return fail(findById(jobId), message);
+  }
+
+  public J fail(J job, String message) {
+    var oldJob = (J) job.semanticClone();
+    job.hasNewStatus(
+        Status.builder()
+            .progression(FINISHED)
+            .health(FAILED)
+            .message(message)
+            .creationDatetime(Instant.now())
+            .build());
+    onStatusChanged(oldJob, job);
+    return repository.save(job);
+  }
+
   public J recomputeStatus(J oldJob) {
     var jobId = oldJob.getId();
     var oldStatus = oldJob.getStatus();

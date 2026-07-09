@@ -206,8 +206,12 @@ public class ZoneTilingJobService extends JobService<ParcelTilingTask, ZoneTilin
   }
 
   @Transactional
-  public void fireTasks(ZoneTilingJob job) {
-    getTasks(job).forEach(task -> eventProducer.accept(List.of(new ParcelTilingTaskCreated(task))));
+  public List<ParcelTilingTask> fireTasks(ZoneTilingJob job) {
+    var tasks = getTasks(job);
+
+    tasks.forEach(task -> eventProducer.accept(List.of(new ParcelTilingTaskCreated(task))));
+
+    return tasks;
   }
 
   public List<ParcelTilingTask> consumeTasks(String jobId) {
