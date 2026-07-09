@@ -52,13 +52,15 @@ public class DashboardApiKeyCheckTriggeredService
   public void accept(DashboardApiKeyCheckTriggered event) {
     var email = event.getEmail();
     var userId = event.getCommunityAuthorizationId();
+    List<String> collectedErrors = new ArrayList<>();
 
     var retrievedUsers = userAccountsApi.getUsersByCriteria(email, null, null, adminApiKey);
-
     var retrievedUserIds = retrievedUsers.stream().map(User::id).toList();
 
     if (retrievedUsers.isEmpty()) {
-      log.error("No users with same email as {} found in user account api.", userId);
+      var logMessage = "No users with same email as " + userId + " found in user account api.";
+      log.warn(logMessage);
+      notifyByEmail(List.of(userId), List.of(logMessage));
       return;
     }
 
@@ -79,11 +81,11 @@ public class DashboardApiKeyCheckTriggeredService
                   } catch (RestClientResponseException e) {
                     var exceptionMessage =
                         String.format(
-                            "Unable to get api key for user with id : %s in user account api."
-                                + "%s %s",
+                            "Unable to get api key for user with id : %s in user account api. %s"
+                                + " %s",
                             user.id(), e.getStatusCode(), e.getMessage());
                     log.error(exceptionMessage, e);
-                    notifyByEmail(retrievedUserIds, exceptionMessage);
+                    collectedErrors.add(exceptionMessage);
                     return new ArrayList<UserApiKey>();
                   }
                 })
@@ -92,7 +94,9 @@ public class DashboardApiKeyCheckTriggeredService
 
     if (userApiKeys.isEmpty()) {
       var exceptionMessage = "No api found for users : " + retrievedUserIds;
-      report(exceptionMessage, retrievedUserIds);
+      log.error(exceptionMessage);
+      collectedErrors.add(exceptionMessage);
+      notifyByEmail(retrievedUserIds, collectedErrors);
       return;
     }
 
@@ -104,8 +108,12 @@ public class DashboardApiKeyCheckTriggeredService
 
     if (dashboardApiKeys.isEmpty()) {
       var exceptionMessage =
-          "No dashboard api key found for users : " + retrievedUserIds + "in the user account api.";
-      report(exceptionMessage, retrievedUserIds);
+          "No dashboard api key found for users : "
+              + retrievedUserIds
+              + " in the user account api.";
+      log.error(exceptionMessage);
+      collectedErrors.add(exceptionMessage);
+      notifyByEmail(retrievedUserIds, collectedErrors);
       return;
     }
 
@@ -116,19 +124,20 @@ public class DashboardApiKeyCheckTriggeredService
               + actualDashboardApiKey
               + " key doesn't match any of the api keys in the users account api for : "
               + formIdList(retrievedUserIds);
-      report(exceptionMessage, retrievedUserIds);
+      log.error(exceptionMessage);
+      collectedErrors.add(exceptionMessage);
+    }
+
+    if (!collectedErrors.isEmpty()) {
+      notifyByEmail(retrievedUserIds, collectedErrors);
     }
   }
 
-  private void report(String exceptionMessage, List<String> retrievedUserIds) {
-    log.error(exceptionMessage);
-    notifyByEmail(retrievedUserIds, exceptionMessage);
-  }
-
   @SneakyThrows
-  private void notifyByEmail(List<String> idList, String message) {
+  private void notifyByEmail(List<String> idList, List<String> errorMessages) {
     var subject = computeSubject(idList);
-    String emailBody = computeEmailBody(idList, message);
+    String combinedMessage = String.join("\n", errorMessages);
+    String emailBody = computeEmailBody(idList, combinedMessage);
 
     mailer.accept(
         new Email(
