@@ -66,6 +66,7 @@ public class ZoneTilingJobServiceTest {
   TilingTaskMapper tilingTaskMapper = mock();
   TilingTaskConsumer tilingTaskConsumerMock = mock();
   Workers workersMock = mock();
+  BuildingFinder buildingFinderMock = mock();
   ZoneTilingJobService subject =
       new ZoneTilingJobService(
           jobRepositoryMock,
@@ -79,7 +80,8 @@ public class ZoneTilingJobServiceTest {
           tilingTaskMapper,
           taskStatisticRepositoryMock,
           tilingTaskConsumerMock,
-          workersMock);
+          workersMock,
+          buildingFinderMock);
 
   @Test
   void duplicate_ok() {
