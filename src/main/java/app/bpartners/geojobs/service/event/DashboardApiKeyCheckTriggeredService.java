@@ -93,7 +93,7 @@ public class DashboardApiKeyCheckTriggeredService
             .toList();
 
     if (userApiKeys.isEmpty()) {
-      var exceptionMessage = "No api found for users : " + retrievedUserIds;
+      var exceptionMessage = "No api key found for users : " + retrievedUserIds;
       log.error(exceptionMessage);
       collectedErrors.add(exceptionMessage);
       notifyByEmail(retrievedUserIds, collectedErrors);
@@ -128,7 +128,9 @@ public class DashboardApiKeyCheckTriggeredService
       collectedErrors.add(exceptionMessage);
     }
 
-    if (!collectedErrors.isEmpty()) {
+    if (collectedErrors.isEmpty()) {
+      log.info("Dashboard api key verification for user {} succeeded.", userId);
+    } else {
       notifyByEmail(retrievedUserIds, collectedErrors);
     }
   }

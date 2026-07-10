@@ -36,6 +36,66 @@ class DashboardApiKeyCheckTriggeredServiceTest {
   DashboardApiKeyCheckTriggeredService subject;
 
   @Test
+  void success_when_dashboard_key_matches() {
+    String adminApiKey = randomUUID().toString();
+    String actualDashboardApiKey = randomUUID().toString();
+    String existingEmail = "exist@" + randomUUID();
+    String authId = randomUUID().toString();
+
+    User user =
+        new User(
+            randomUUID().toString(),
+            randomUUID().toString(),
+            randomUUID().toString(),
+            existingEmail);
+
+    when(userAccountsApiMock.getUsersByCriteria(eq(existingEmail), eq(null), eq(null), anyString()))
+        .thenReturn(List.of(user));
+    when(userAccountsApiMock.getUserApiKey(eq(user.id()), eq(adminApiKey)))
+        .thenReturn(List.of(new UserApiKey(actualDashboardApiKey, DASHBOARD)));
+
+    DashboardApiKeyCheckTriggered event =
+        DashboardApiKeyCheckTriggered.builder()
+            .email(existingEmail)
+            .dashboardApiKey(actualDashboardApiKey)
+            .communityAuthorizationId(authId)
+            .build();
+
+    subject =
+        new DashboardApiKeyCheckTriggeredService(
+            userAccountsApiMock, adminApiKey, mailerMock, htmlTemplateParser);
+
+    Logger logger = (Logger) LoggerFactory.getLogger(DashboardApiKeyCheckTriggeredService.class);
+    ListAppender<ILoggingEvent> appender = new ListAppender<>();
+    appender.start();
+    logger.addAppender(appender);
+
+    try {
+      assertDoesNotThrow(() -> subject.accept(event));
+
+      verify(userAccountsApiMock, times(1))
+          .getUsersByCriteria(eq(existingEmail), eq(null), eq(null), eq(adminApiKey));
+      verify(userAccountsApiMock, times(1)).getUserApiKey(eq(user.id()), eq(adminApiKey));
+      verifyNoInteractions(mailerMock);
+
+      boolean hasExpectedInfoLog =
+          appender.list.stream()
+              .anyMatch(
+                  e ->
+                      e.getLevel() == Level.INFO
+                          && e.getFormattedMessage()
+                              .equals(
+                                  "Dashboard api key verification for user "
+                                      + authId
+                                      + " succeeded."));
+      assertTrue(hasExpectedInfoLog);
+    } finally {
+      logger.detachAppender(appender);
+      appender.stop();
+    }
+  }
+
+  @Test
   void log_when_check_on_not_existing_user() {
     CommunityAuthorization authorizationMock = mock();
     String adminApiKey = randomUUID().toString();
