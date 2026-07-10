@@ -74,7 +74,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
       assertDoesNotThrow(() -> subject.accept(event));
 
       verify(userAccountsApiMock, times(1))
-          .getUsersByCriteria(eq(existingEmail), eq(null), eq(null), eq(adminApiKey));
+          .getUsersByCriteria(existingEmail, null, null, adminApiKey);
       verify(userAccountsApiMock, times(1)).getUserApiKey(user.id(), adminApiKey);
       verifyNoInteractions(mailerMock);
 
