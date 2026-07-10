@@ -27,6 +27,7 @@ import app.bpartners.geojobs.endpoint.event.model.DetectionExcelFileSaved;
 import app.bpartners.geojobs.endpoint.event.model.DetectionRoofSlopeAndHeightRequested;
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
 import app.bpartners.geojobs.endpoint.event.model.DetectionTilingRequested;
+import app.bpartners.geojobs.endpoint.event.model.FeatureVggRequested;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerificationSent;
 import app.bpartners.geojobs.endpoint.event.model.zone.DetectionQualityControlFinished;
 import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.*;
@@ -58,6 +59,7 @@ import app.bpartners.geojobs.service.dashboard.component.AreaPictureMapLayer;
 import app.bpartners.geojobs.service.dashboard.component.Zoom;
 import app.bpartners.geojobs.service.detection.*;
 import app.bpartners.geojobs.service.detection.DetectionCreationMapper;
+import app.bpartners.geojobs.service.event.FeatureVggRequestedService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.geoserver.GeoServerConfiguration;
@@ -188,6 +190,7 @@ class DetectionServiceTest {
   FileWriter fileWriterMock = mock();
   DetectionRoofSlopeValidator detectionRoofSlopeValidatorMock = mock();
   BuildingFinder buildingFinderMock = mock();
+  FeatureVggRequestedService featureVggRequestedServiceMock = mock();
 
   DetectionService subject =
       spy(
@@ -220,7 +223,8 @@ class DetectionServiceTest {
                   geometryConverterMock,
                   buildingFinderMock),
               fileWriterMock,
-              detectionRoofSlopeValidatorMock));
+              detectionRoofSlopeValidatorMock,
+              featureVggRequestedServiceMock));
 
   @BeforeEach
   void setUp() {
@@ -1586,5 +1590,116 @@ class DetectionServiceTest {
 
     var expectedExceptionMessage = "Detection.e2Id " + detectionE2Id + " not found.";
     assertEquals(expectedExceptionMessage, actual.getMessage());
+  }
+
+  @Test
+  void produces_vgg_computing_throws_not_found_when_detection_absent() {
+    var detectionId = randomUUID().toString();
+    when(detectionRepositoryMock.findById(detectionId)).thenReturn(Optional.empty());
+
+    var actual =
+        assertThrows(NotFoundException.class, () -> subject.producesVggComputing(detectionId));
+
+    assertEquals("Detection.id=" + detectionId + " not found", actual.getMessage());
+    verify(featureVggRequestedServiceMock, never()).apply(any(), any());
+    verify(eventProducerMock, never()).accept(any());
+  }
+
+  @Test
+  void produces_vgg_computing_throws_bad_request_when_vgg_already_computed() {
+    var detectionId = randomUUID().toString();
+    var detection =
+        app.bpartners.geojobs.repository.model.detection.Detection.builder()
+            .id(detectionId)
+            .vggFileKey("detections/vgg/" + detectionId + ".json")
+            .build();
+    when(detectionRepositoryMock.findById(detectionId)).thenReturn(Optional.of(detection));
+
+    var actual =
+        assertThrows(BadRequestException.class, () -> subject.producesVggComputing(detectionId));
+
+    assertEquals(
+        "Detection.id=" + detectionId + " already has computed its VGG", actual.getMessage());
+    verify(featureVggRequestedServiceMock, never()).apply(any(), any());
+    verify(eventProducerMock, never()).accept(any());
+  }
+
+  @Test
+  void produces_vgg_computing_throws_bad_request_when_no_image_output_needed() {
+    var detectionId = randomUUID().toString();
+    var detection =
+        app.bpartners.geojobs.repository.model.detection.Detection.builder()
+            .id(detectionId)
+            .vggFileKey(null)
+            .needsImageOutput(false)
+            .build();
+    when(detectionRepositoryMock.findById(detectionId)).thenReturn(Optional.of(detection));
+
+    var actual =
+        assertThrows(BadRequestException.class, () -> subject.producesVggComputing(detectionId));
+
+    assertEquals(
+        "Detection.id=" + detectionId + " does not need image output so can not produce VGG",
+        actual.getMessage());
+    verify(featureVggRequestedServiceMock, never()).apply(any(), any());
+    verify(eventProducerMock, never()).accept(any());
+  }
+
+  @Test
+  void produces_vgg_computing_applies_synchronously_when_single_provided_feature() {
+    var detectionId = randomUUID().toString();
+    var providedFeature = featureCreator.defaultFeatures().getFirst();
+    var detection =
+        app.bpartners.geojobs.repository.model.detection.Detection.builder()
+            .id(detectionId)
+            .endToEndId(detectionId)
+            .needsImageOutput(true)
+            .providedGeoJsonZone(List.of(FeatureMapper.toDomainFeature(providedFeature)))
+            .build();
+    var detectionWithVgg =
+        app.bpartners.geojobs.repository.model.detection.Detection.builder()
+            .id(detectionId)
+            .endToEndId(detectionId)
+            .build();
+    when(detectionRepositoryMock.findById(detectionId)).thenReturn(Optional.of(detection));
+    when(featureVggRequestedServiceMock.apply(eq(detection), any())).thenReturn(detectionWithVgg);
+
+    var actual = subject.producesVggComputing(detectionId);
+
+    verify(featureVggRequestedServiceMock).apply(eq(detection), any());
+    verify(eventProducerMock, never()).accept(any());
+    // no persisted step, no zdj nor ztj: falls back on a REQUEST_ACCEPTED computed statistic step
+    assertEquals(REQUEST_ACCEPTED, actual.getComputedStep().getName());
+  }
+
+  @Test
+  void produces_vgg_computing_produces_events_when_multiple_provided_features() {
+    var detectionId = randomUUID().toString();
+    var providedFeature = featureCreator.defaultFeatures().getFirst();
+    var detection =
+        app.bpartners.geojobs.repository.model.detection.Detection.builder()
+            .id(detectionId)
+            .endToEndId(detectionId)
+            .needsImageOutput(true)
+            .providedGeoJsonZone(
+                List.of(
+                    FeatureMapper.toDomainFeature(providedFeature),
+                    FeatureMapper.toDomainFeature(providedFeature)))
+            .build();
+    when(detectionRepositoryMock.findById(detectionId)).thenReturn(Optional.of(detection));
+
+    var actual = subject.producesVggComputing(detectionId);
+
+    verify(featureVggRequestedServiceMock, never()).apply(any(), any());
+    var eventCaptor = ArgumentCaptor.forClass(List.class);
+    verify(eventProducerMock, times(2)).accept(eventCaptor.capture());
+    eventCaptor.getAllValues().stream()
+        .flatMap(List::stream)
+        .forEach(
+            event -> {
+              assertInstanceOf(FeatureVggRequested.class, event);
+              assertEquals(detectionId, ((FeatureVggRequested) event).getDetectionIdentifier());
+            });
+    assertEquals(REQUEST_ACCEPTED, actual.getComputedStep().getName());
   }
 }

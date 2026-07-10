@@ -860,6 +860,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Detection'
+  '/detections/{id}/vgg':
+    post:
+      tags:
+        - Detection
+      operationId: computeDetectionVgg
+      summary: Compute detection VGG
+      description: >
+        Attempts to compute the VGG detection.
+        Once the VGG has been computed, it becomes immutable:
+        any further computation or modification attempt is rejected.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          description: Detection identifier
+          required: true
+      responses:
+        200:
+          description: Detection with VGG computation in progress.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detection'
+        400:
+          description: Malformed request or already computed VGG.
   '/detections/{id}/fileObjects':
     get:
       tags:

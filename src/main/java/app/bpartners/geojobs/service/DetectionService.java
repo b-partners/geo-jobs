@@ -18,11 +18,7 @@ import static java.time.Instant.parse;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.endpoint.event.model.DetectionExcelFileSaved;
-import app.bpartners.geojobs.endpoint.event.model.DetectionRoofSlopeAndHeightRequested;
-import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
-import app.bpartners.geojobs.endpoint.event.model.DetectionStepUpdated;
-import app.bpartners.geojobs.endpoint.event.model.DetectionTilingRequested;
+import app.bpartners.geojobs.endpoint.event.model.*;
 import app.bpartners.geojobs.endpoint.event.model.annotation.AnnotationJobVerificationSent;
 import app.bpartners.geojobs.endpoint.event.model.zone.DetectionQualityControlFinished;
 import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.DetectionStepMapper;
@@ -49,6 +45,7 @@ import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionJob;
 import app.bpartners.geojobs.service.detection.*;
 import app.bpartners.geojobs.service.detection.DetectionCreationMapper;
+import app.bpartners.geojobs.service.event.FeatureVggRequestedService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
 import app.bpartners.geojobs.service.tiling.ZoneTilingJobService;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -93,6 +90,7 @@ public class DetectionService {
   private final DetectionCreationMapper detectionCreationMapper;
   private final FileWriter fileWriter;
   private final DetectionRoofSlopeValidator detectionRoofSlopeValidator;
+  private final FeatureVggRequestedService featureVggRequestedService;
 
   public Detection getByZoneDetectionJob(ZoneDetectionJob zoneDetectionJob) {
     ZoneDetectionJob machineZDJ =
@@ -672,5 +670,33 @@ public class DetectionService {
             .statistic(statistic)
             .build());
     return detection;
+  }
+
+  public Detection producesVggComputing(String detectionIdentifier) {
+    var detection =
+        detectionRepository
+            .findById(detectionIdentifier)
+            .orElseThrow(
+                () -> new NotFoundException("Detection.id=" + detectionIdentifier + " not found"));
+    if (detection.getVggFileKey() != null) {
+      throw new BadRequestException(
+          "Detection.id=" + detectionIdentifier + " already has computed its VGG");
+    }
+    if (!detection.needsImageOutput()) {
+      throw new BadRequestException(
+          "Detection.id="
+              + detectionIdentifier
+              + " does not need image output so can not produce VGG");
+    }
+    var providedGeoJsonZone = detection.getProvidedGeoJsonZone();
+    if (providedGeoJsonZone.size() == 1) {
+      var detectionWithVgg =
+          featureVggRequestedService.apply(detection, providedGeoJsonZone.getFirst());
+      return withStepStatistics(detectionWithVgg);
+    }
+    providedGeoJsonZone.forEach(
+        feature ->
+            eventProducer.accept(List.of(new FeatureVggRequested(detectionIdentifier, feature))));
+    return withStepStatistics(detection);
   }
 }

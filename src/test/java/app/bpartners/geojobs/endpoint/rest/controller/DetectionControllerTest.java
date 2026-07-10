@@ -189,6 +189,22 @@ class DetectionControllerTest {
   }
 
   @Test
+  void computeDetectionVgg_ok() {
+    var detectionIdentifier = randomUUID().toString();
+    var domainDetectionMock =
+        mock(app.bpartners.geojobs.repository.model.detection.Detection.class);
+    var restDetectionMock = mock(Detection.class);
+    when(detectionServiceMock.producesVggComputing(detectionIdentifier))
+        .thenReturn(domainDetectionMock);
+    when(detectionRestMapperMock.toRest(domainDetectionMock)).thenReturn(restDetectionMock);
+
+    var actual = subject.computeDetectionVgg(detectionIdentifier);
+
+    assertEquals(restDetectionMock, actual);
+    verify(detectionServiceMock).producesVggComputing(detectionIdentifier);
+  }
+
+  @Test
   void configureRoofDelimiter_ok() {
     var actualException =
         assertThrows(

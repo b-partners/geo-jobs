@@ -54,6 +54,11 @@ public class DetectionController {
   private final CreateDetectionMapper createDetectionMapper;
   private final DetectionRestMapper detectionRestMapper;
 
+  @PostMapping("/detections/{id}/vgg")
+  public Detection computeDetectionVgg(@PathVariable(name = "id") String detectionIdentifier) {
+    return detectionRestMapper.toRest(detectionService.producesVggComputing(detectionIdentifier));
+  }
+
   @PutMapping("/communities/{id}/detectionsExport/{exportId}")
   public DetectionExportRequest exportDetections(
       @PathVariable(name = "id") String communityIdentifier,
