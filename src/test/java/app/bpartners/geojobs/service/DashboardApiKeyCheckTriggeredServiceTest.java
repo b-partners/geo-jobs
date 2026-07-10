@@ -51,7 +51,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
 
     when(userAccountsApiMock.getUsersByCriteria(eq(existingEmail), eq(null), eq(null), anyString()))
         .thenReturn(List.of(user));
-    when(userAccountsApiMock.getUserApiKey(eq(user.id()), eq(adminApiKey)))
+    when(userAccountsApiMock.getUserApiKey(user.id(), adminApiKey))
         .thenReturn(List.of(new UserApiKey(actualDashboardApiKey, DASHBOARD)));
 
     DashboardApiKeyCheckTriggered event =
