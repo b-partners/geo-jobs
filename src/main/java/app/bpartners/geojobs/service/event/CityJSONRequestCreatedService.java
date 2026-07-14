@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.service.event;
 
-import static app.bpartners.geojobs.model.lidar.LidarProcessorType.DEFAULT;
 import static app.bpartners.geojobs.model.lidar.planes.model.LasRoofDelimitationType.ROOF_SEGMENT_FACE_DELIMITATION;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStatus.*;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStep.*;
@@ -9,7 +8,7 @@ import static java.util.stream.Collectors.toSet;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.CityJSONRequestCreated;
 import app.bpartners.geojobs.endpoint.event.model.ThreeDRequestMonitoringTriggered;
-import app.bpartners.geojobs.endpoint.rest.controller.mapper.FeatureMapper;
+import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.FeatureMapper;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.lidar.planes.model.LasRoofDelimitationType;
 import app.bpartners.geojobs.repository.CityJSONRequestRepository;
@@ -17,6 +16,8 @@ import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.cityjson.*;
 import app.bpartners.geojobs.service.CityJSON3DBagRooferProcessor;
+import app.bpartners.geojobs.service.CityJSONInternalProcessor;
+import app.bpartners.geojobs.service.CityJSONSafeModeProcessor;
 import app.bpartners.geojobs.service.cityjson.LidarDataToCityJsonProcessor;
 import app.bpartners.geojobs.service.cityjson.texture.CityJsonTextureComputer;
 import app.bpartners.geojobs.service.lidar.LasRoofsPointsExtractor;
@@ -44,11 +45,12 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
   private final EventProducer eventProducer;
   private final CommunityAuthorizationRepository communityAuthorizationRepository;
   private final CityJSON3DBagRooferProcessor cityJson3DBagRooferProcessor;
+  private final CityJSONSafeModeProcessor cityJSONSafeModeProcessor;
   private final CityJsonTextureComputer textureComputer;
+  private final CityJSONInternalProcessor cityJSONInternalProcessor;
 
-  @SneakyThrows
-  @Override
-  public void accept(CityJSONRequestCreated created) {
+  // TODO: refactor
+  public void accept(CityJSONRequestCreated created, boolean isSync) {
     var communityAuthorization =
         communityAuthorizationRepository.findById(created.getCommunityOwnerId()).orElseThrow();
     if (!communityAuthorization.isIntegrationTestUsage()) {
@@ -63,7 +65,13 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
             .findByIdAndCommunityOwnerId(created.getRequestId(), created.getCommunityOwnerId())
             .orElseThrow();
 
-    processCityJSONFacade(request);
+    processCityJSONFacade(request, isSync);
+  }
+
+  @SneakyThrows
+  @Override
+  public void accept(CityJSONRequestCreated created) {
+    accept(created, false);
   }
 
   private void succeedCityJsonRequest(CityJSONRequest request, List<CityJSON> cityJsonList) {
@@ -117,41 +125,39 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
     };
   }
 
-  private void processCityJSONFacade(CityJSONRequest request) {
+  private void processCityJSONFacade(CityJSONRequest request, boolean isSync) {
     var generationType = getType(request);
     if (ROOF_SEGMENT_FACE_DELIMITATION.equals(generationType)) {
-      processByInternalMethod(request);
+      processByInternalMethod(request, isSync);
       return;
     }
-    processFullAutomaticFacade(request);
+    processFullAutomaticFacade(request, isSync);
   }
 
-  private void processByInternalMethod(CityJSONRequest request) {
+  private void processByInternalMethod(CityJSONRequest request, boolean isSync) {
+    processInternalByApi(request);
+  }
+
+  private void processFullAutomaticFacade(CityJSONRequest request, boolean isSync) {
+    var processorType = request.getLidarProcessorType();
+    switch (processorType) {
+      case DEFAULT -> processByInternalMethod(request, isSync);
+      case SAFE_MODE -> processFullAutomaticBySafeMode(request);
+      case null, default -> processFullAutomaticBy3DBag(request);
+    }
+  }
+
+  private void processInternalByApi(CityJSONRequest request) {
     try {
-      var requestDelimitations = request.getRequestDelimitations();
-      var pointsExtractionResult =
-          lasRoofsPointsExtractor.apply(getType(request), toGeometries(requestDelimitations));
-
-      if (isUnavailable(pointsExtractionResult)) {
-        updateStatus(request, UNAVAILABLE, POINTS_CLOUD_PRE_PROCESSING);
-        return;
-      }
-
-      var cityJson = toCityJSON(request, pointsExtractionResult);
-      succeedCityJsonRequest(request, List.of(cityJson));
+      var cityJsonFrom3dBag = cityJSONInternalProcessor.apply(request);
+      succeedCityJsonRequest(request, cityJsonFrom3dBag);
     } catch (Exception e) {
-      log.error(e.getMessage());
+      log.error(
+          "Unable to process Lidar By Internal Api for request {}, error {}",
+          request.getId(),
+          e.getMessage());
       updateStatus(request, FAILED, GEOMETRY_CONSTRUCTION);
-      throw e;
     }
-  }
-
-  private void processFullAutomaticFacade(CityJSONRequest request) {
-    if (request.getLidarProcessorType() != null
-        && request.getLidarProcessorType().equals(DEFAULT)) {
-      processByInternalMethod(request);
-    }
-    processFullAutomaticBy3DBag(request);
   }
 
   private void processFullAutomaticBy3DBag(CityJSONRequest request) {
@@ -160,7 +166,20 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
       succeedCityJsonRequest(request, cityJsonFrom3dBag);
     } catch (Exception e) {
       log.error(
-          "Unable to process Lidar for request {}, error {}", request.getId(), e.getMessage());
+          "Unable to process Lidar for request {}, error {}", request.getId(), e.getMessage(), e);
+      updateStatus(request, FAILED, GEOMETRY_CONSTRUCTION);
+    }
+  }
+
+  private void processFullAutomaticBySafeMode(CityJSONRequest request) {
+    try {
+      var cityjsonFile = cityJSONSafeModeProcessor.apply(request);
+      succeedCityJsonRequest(request, cityjsonFile);
+    } catch (Exception e) {
+      log.error(
+          "Unable to process Lidar by SafeMode for request {}, error {}",
+          request.getId(),
+          e.getMessage());
       updateStatus(request, FAILED, GEOMETRY_CONSTRUCTION);
     }
   }

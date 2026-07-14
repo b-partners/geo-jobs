@@ -11,7 +11,7 @@ import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.concurrency.Workers;
 import app.bpartners.geojobs.endpoint.event.model.FeatureVggRequested;
-import app.bpartners.geojobs.endpoint.rest.mapper.DetectionFromStatisticRestMapper;
+import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.DetectionFromStatisticRestMapper;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionStep;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.Status;
@@ -114,7 +114,8 @@ class SynchronousDetectionServiceTest {
     when(zoneDetectionJobServiceMock.saveZDJFromZTJ(finishedZoneTilingJobMock))
         .thenReturn(createdZoneDetectionJob);
     when(detectionRepositoryMock.save(any())).thenReturn(detectionWithCreatedZDJMock);
-    doNothing().when(detectionDelimitationRetrieverMock).accept(detectionWithCreatedZTJMock);
+    when(detectionDelimitationRetrieverMock.apply(detectionWithCreatedZTJMock))
+        .thenReturn(detectionWithCreatedZTJMock);
     doNothing()
         .when(machineDetectionCreationMock)
         .processMachineDetection(detectionWithCreatedZDJMock, createdZoneDetectionJob, tilingTasks);
@@ -154,7 +155,7 @@ class SynchronousDetectionServiceTest {
     var detectionMock = mock(Detection.class);
     var detectionWithCreatedZTJMock = mock(Detection.class);
     var parcelTilingTaskMock = mock(ParcelTilingTask.class);
-    doNothing().when(detectionDelimitationRetrieverMock).accept(detectionMock);
+    when(detectionDelimitationRetrieverMock.apply(detectionMock)).thenReturn(detectionMock);
     when(detectionTilingCreationMock.processTiling(detectionMock))
         .thenReturn(detectionWithCreatedZTJMock);
     when(zoneTilingJobServiceMock.consumeTasks(any()))
@@ -179,7 +180,7 @@ class SynchronousDetectionServiceTest {
     var detectionWithCreatedZTJMock = mock(Detection.class);
     var zoneTilingJobId = randomUUID().toString();
 
-    doNothing().when(detectionDelimitationRetrieverMock).accept(detectionMock);
+    when(detectionDelimitationRetrieverMock.apply(detectionMock)).thenReturn(detectionMock);
     when(detectionTilingCreationMock.processTiling(detectionMock))
         .thenReturn(detectionWithCreatedZTJMock);
     when(detectionWithCreatedZTJMock.getZtjId()).thenReturn(zoneTilingJobId);
@@ -204,7 +205,7 @@ class SynchronousDetectionServiceTest {
     var detectionWithCreatedZTJMock = mock(Detection.class);
     var zoneTilingJobId = randomUUID().toString();
 
-    doNothing().when(detectionDelimitationRetrieverMock).accept(detectionMock);
+    when(detectionDelimitationRetrieverMock.apply(detectionMock)).thenReturn(detectionMock);
     when(detectionTilingCreationMock.processTiling(detectionMock))
         .thenReturn(detectionWithCreatedZTJMock);
     when(detectionWithCreatedZTJMock.getZtjId()).thenReturn(zoneTilingJobId);
