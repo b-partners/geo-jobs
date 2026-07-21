@@ -85,7 +85,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
                       e.getLevel() == Level.INFO
                           && e.getFormattedMessage()
                               .equals(
-                                  "Dashboard api key verification for user "
+                                  "[DAKC S] Dashboard api key verification for user "
                                       + authId
                                       + " succeeded."));
       assertTrue(hasExpectedInfoLog);
@@ -135,7 +135,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
                       e.getLevel() == Level.WARN
                           && e.getFormattedMessage()
                               .equals(
-                                  "No users with same email as "
+                                  "[DAKC F] No users with same email as "
                                       + authId
                                       + " found in user account api."));
       assertTrue(hasExpectedErrorLog);
@@ -385,7 +385,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
                       e.getLevel() == Level.ERROR
                           && e.getFormattedMessage()
                               .contains(
-                                  "Unable to get api key for user with id : "
+                                  "[DAKC F] Unable to get api key for user with id : "
                                       + user.id()
                                       + " in user account api."));
       assertTrue(hasExpectedErrorLog);
