@@ -14,9 +14,11 @@ import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.File;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
@@ -30,6 +32,7 @@ import org.springframework.web.client.RestTemplate;
 @Slf4j
 class LidarApiFacadeTest {
   RestTemplate restTemplateMock = mock();
+  CacherApi cacherApiMock = mock();
   LidarApiFacade subject =
       new LidarApiFacade(
           new IgnLidarApi(new IgnLidarApiConf(IGN_LIDAR_API_URL), restTemplateMock),
@@ -39,7 +42,8 @@ class LidarApiFacadeTest {
           new SwissBoundaryChecker(),
           new SwissLidarApi(restTemplateMock),
           new GeometrySquareMeterArea(),
-          restTemplateMock);
+          restTemplateMock,
+          cacherApiMock);
 
   private static final String UPDATED_FILE_URL = "https://data.geopf.fr/dummy.laz";
   private static final String DEPRECATED_FILE_URL = "https://storage.sbg.cloud.ovh.net/dummy.laz";
@@ -121,6 +125,7 @@ class LidarApiFacadeTest {
   void download_should_return_correct_file() {
     when(restTemplateMock.getForObject(any(String.class), eq(byte[].class)))
         .thenReturn(new byte[] {1, 2, 3});
+    when(cacherApiMock.cache(any())).thenReturn(Optional.of(mock(File.class)));
 
     var actual = subject.download(UPDATED_FILE_URL);
 

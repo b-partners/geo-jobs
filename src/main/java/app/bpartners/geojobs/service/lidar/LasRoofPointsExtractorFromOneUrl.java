@@ -109,7 +109,7 @@ public class LasRoofPointsExtractorFromOneUrl
 
   private Optional<File> downloadLasAndIndexFiles(String fileUrl, File directory) {
     try {
-      var optionalFile = lidarApi.download(fileUrl, directory);
+      var optionalFile = lidarApi.download(fileUrl);
       optionalFile.ifPresent(lasFile -> this.lasIndexApi.download(lasFile, fileUrl));
       return optionalFile;
     } catch (Exception e) {
