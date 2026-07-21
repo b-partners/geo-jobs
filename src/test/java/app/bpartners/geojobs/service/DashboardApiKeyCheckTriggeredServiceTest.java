@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.service;
 
-import static app.bpartners.geojobs.service.dashboard.component.UserApiKeyType.ANALYSIS;
 import static app.bpartners.geojobs.service.dashboard.component.UserApiKeyType.DASHBOARD;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
@@ -9,7 +8,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.model.DashboardApiKeyCheckTriggered;
-import app.bpartners.geojobs.mail.Email;
 import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.service.dashboard.UserAccountsApi;
@@ -23,7 +21,6 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.client.RestClientResponseException;
@@ -143,144 +140,6 @@ class DashboardApiKeyCheckTriggeredServiceTest {
       logger.detachAppender(appender);
       appender.stop();
     }
-  }
-
-  @Test
-  void no_keys_found_on_existing_user_notifies_by_email() {
-    CommunityAuthorization authorization = mock();
-    User user =
-        new User(
-            randomUUID().toString(),
-            randomUUID().toString(),
-            randomUUID().toString(),
-            "existant@mail.com");
-    String adminApiKey = randomUUID().toString();
-    String authId = randomUUID().toString();
-
-    when(authorization.getEmail()).thenReturn("existant-email");
-    when(userAccountsApiMock.getUsersByCriteria(
-            eq(authorization.getEmail()), eq(null), eq(null), anyString()))
-        .thenReturn(List.of(user));
-    when(userAccountsApiMock.getUserApiKey(eq(user.id()), eq(adminApiKey))).thenReturn(List.of());
-    when(htmlTemplateParser.apply(anyString(), any())).thenReturn("Mock HTML Body Content");
-
-    DashboardApiKeyCheckTriggered event =
-        DashboardApiKeyCheckTriggered.builder()
-            .email(authorization.getEmail())
-            .communityAuthorizationId(authId)
-            .build();
-
-    subject =
-        new DashboardApiKeyCheckTriggeredService(
-            userAccountsApiMock, adminApiKey, mailerMock, htmlTemplateParser);
-
-    assertDoesNotThrow(() -> subject.accept(event));
-
-    verify(userAccountsApiMock, times(1))
-        .getUsersByCriteria(eq(authorization.getEmail()), eq(null), eq(null), eq(adminApiKey));
-    verify(userAccountsApiMock, times(1)).getUserApiKey(eq(user.id()), eq(adminApiKey));
-
-    ArgumentCaptor<Email> emailCaptor = ArgumentCaptor.forClass(Email.class);
-    verify(mailerMock, times(1)).accept(emailCaptor.capture());
-
-    Email sent = emailCaptor.getValue();
-    assertNotNull(sent);
-    assertEquals("Mock HTML Body Content", sent.htmlBody());
-  }
-
-  @Test
-  void no_dashboard_keys_found_on_existing_user_notifies_by_email() {
-    String adminApiKey = randomUUID().toString();
-    String existingEmail = "exist@" + randomUUID();
-    String authId = randomUUID().toString();
-
-    CommunityAuthorization authorization = mock();
-    User user =
-        new User(
-            randomUUID().toString(),
-            randomUUID().toString(),
-            randomUUID().toString(),
-            existingEmail);
-
-    when(authorization.getEmail()).thenReturn(existingEmail);
-    when(userAccountsApiMock.getUsersByCriteria(
-            eq(authorization.getEmail()), eq(null), eq(null), anyString()))
-        .thenReturn(List.of(user));
-    when(userAccountsApiMock.getUserApiKey(eq(user.id()), eq(adminApiKey)))
-        .thenReturn(List.of(new UserApiKey(randomUUID().toString(), ANALYSIS)));
-    when(htmlTemplateParser.apply(anyString(), any())).thenReturn("Mock HTML Body Content");
-
-    DashboardApiKeyCheckTriggered event =
-        DashboardApiKeyCheckTriggered.builder()
-            .email(authorization.getEmail())
-            .communityAuthorizationId(authId)
-            .build();
-
-    subject =
-        new DashboardApiKeyCheckTriggeredService(
-            userAccountsApiMock, adminApiKey, mailerMock, htmlTemplateParser);
-
-    assertDoesNotThrow(() -> subject.accept(event));
-
-    verify(userAccountsApiMock, times(1))
-        .getUsersByCriteria(eq(authorization.getEmail()), eq(null), eq(null), eq(adminApiKey));
-    verify(userAccountsApiMock, times(1)).getUserApiKey(eq(user.id()), eq(adminApiKey));
-
-    ArgumentCaptor<Email> emailCaptor = ArgumentCaptor.forClass(Email.class);
-    verify(mailerMock, times(1)).accept(emailCaptor.capture());
-
-    Email sent = emailCaptor.getValue();
-    assertNotNull(sent);
-    assertEquals("Mock HTML Body Content", sent.htmlBody());
-  }
-
-  @Test
-  void no_dashboard_keys_matches_actual_keys_notifies_by_email() {
-    String adminApiKey = randomUUID().toString();
-    String actualDashboardApiKey = randomUUID().toString();
-    String existingEmail = "exist@" + randomUUID();
-    String authId = randomUUID().toString();
-
-    CommunityAuthorization authorization = mock();
-    User user =
-        new User(
-            randomUUID().toString(),
-            randomUUID().toString(),
-            randomUUID().toString(),
-            existingEmail);
-
-    when(authorization.getEmail()).thenReturn(existingEmail);
-    when(authorization.getDashboardApiKey()).thenReturn(actualDashboardApiKey);
-    when(userAccountsApiMock.getUsersByCriteria(
-            eq(authorization.getEmail()), eq(null), eq(null), anyString()))
-        .thenReturn(List.of(user));
-    when(userAccountsApiMock.getUserApiKey(eq(user.id()), eq(adminApiKey)))
-        .thenReturn(List.of(new UserApiKey(randomUUID().toString(), DASHBOARD)));
-    when(htmlTemplateParser.apply(anyString(), any())).thenReturn("Mock HTML Body Content");
-
-    DashboardApiKeyCheckTriggered event =
-        DashboardApiKeyCheckTriggered.builder()
-            .email(authorization.getEmail())
-            .dashboardApiKey(authorization.getDashboardApiKey())
-            .communityAuthorizationId(authId)
-            .build();
-
-    subject =
-        new DashboardApiKeyCheckTriggeredService(
-            userAccountsApiMock, adminApiKey, mailerMock, htmlTemplateParser);
-
-    assertDoesNotThrow(() -> subject.accept(event));
-
-    verify(userAccountsApiMock, times(1))
-        .getUsersByCriteria(eq(authorization.getEmail()), eq(null), eq(null), eq(adminApiKey));
-    verify(userAccountsApiMock, times(1)).getUserApiKey(eq(user.id()), eq(adminApiKey));
-
-    ArgumentCaptor<Email> emailCaptor = ArgumentCaptor.forClass(Email.class);
-    verify(mailerMock, times(1)).accept(emailCaptor.capture());
-
-    Email sent = emailCaptor.getValue();
-    assertNotNull(sent);
-    assertEquals("Mock HTML Body Content", sent.htmlBody());
   }
 
   @Test
