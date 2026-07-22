@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.service.lidar.api;
 
-import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
 import static app.bpartners.geojobs.service.GeometrySquareMeterArea.EPSG_2056;
 import static app.bpartners.geojobs.service.GeometrySquareMeterArea.LAMBERT_93;
 import static app.bpartners.geojobs.service.GeometrySquareMeterArea.WGS84;
@@ -32,6 +31,7 @@ public class LidarApiFacade {
   private final SwissLidarApi swissLidarApi;
   private final GeometrySquareMeterArea projector;
   private final RestTemplate restTemplate;
+  private final CacherApi cacherApi;
 
   private static final String LAZ_FILE_SUFFIX = ".laz";
   private static final long UPDATED_VALID_DATA = 50_000_000;
@@ -83,7 +83,7 @@ public class LidarApiFacade {
   }
 
   public Optional<File> download(String fileUrl) {
-    return download(fileUrl, createTempDirectory());
+    return cacherApi.cache(fileUrl);
   }
 
   public Optional<File> download(String fileUrl, File directory) {
