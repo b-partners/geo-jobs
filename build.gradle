@@ -101,7 +101,7 @@ test {
     useJUnitPlatform()
     finalizedBy jacocoTestCoverageVerification
     minHeapSize = "8g"
-    maxHeapSize = project.hasProperty('testMaxHeapSize') ? project.property('testMaxHeapSize') : "10g"
+    maxHeapSize = "10g"
 }
 
 jacocoTestCoverageVerification {
