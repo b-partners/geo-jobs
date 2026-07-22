@@ -9,11 +9,14 @@ import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
+import app.bpartners.geojobs.service.cacher.CacherApiClient;
 import java.io.File;
+import java.net.URL;
 import java.nio.file.Paths;
 import java.util.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
@@ -32,6 +35,7 @@ public class LidarApiFacade {
   private final SwissLidarApi swissLidarApi;
   private final GeometrySquareMeterArea projector;
   private final RestTemplate restTemplate;
+  private final CacherApiClient cacherApiClient;
 
   private static final String LAZ_FILE_SUFFIX = ".laz";
   private static final long UPDATED_VALID_DATA = 50_000_000;
@@ -86,15 +90,24 @@ public class LidarApiFacade {
     return download(fileUrl, createTempDirectory());
   }
 
+  @SuppressWarnings("all")
+  @SneakyThrows
+  private URL getCachedUrl(String fileUrl) {
+    return cacherApiClient.getWithCache(new URL(fileUrl));
+  }
+
+  @SneakyThrows
   public Optional<File> download(String fileUrl, File directory) {
     if (!isSafeUrl(fileUrl)) {
       log.warn("Unsafe URL blocked: {}", fileUrl);
       return Optional.empty();
     }
 
+    var cachedUrl = getCachedUrl(fileUrl);
     log.info("Downloading {}", fileUrl);
+
     try {
-      var data = restTemplate.getForObject(fileUrl, byte[].class);
+      var data = restTemplate.getForObject(cachedUrl.toString(), byte[].class);
       if (data == null) {
         return Optional.empty();
       }
