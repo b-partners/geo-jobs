@@ -135,7 +135,31 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
   }
 
   private void processByInternalMethod(CityJSONRequest request, boolean isSync) {
-    processInternalByApi(request);
+    if (isSync) {
+      processInternalByApi(request);
+    } else {
+      processByInternalMethod(request);
+    }
+  }
+
+  private void processByInternalMethod(CityJSONRequest request) {
+    try {
+      var requestDelimitations = request.getRequestDelimitations();
+      var pointsExtractionResult =
+          lasRoofsPointsExtractor.apply(getType(request), toGeometries(requestDelimitations));
+
+      if (isUnavailable(pointsExtractionResult)) {
+        updateStatus(request, UNAVAILABLE, POINTS_CLOUD_PRE_PROCESSING);
+        return;
+      }
+
+      var cityJson = toCityJSON(request, pointsExtractionResult);
+      succeedCityJsonRequest(request, List.of(cityJson));
+    } catch (Exception e) {
+      log.error(e.getMessage());
+      updateStatus(request, FAILED, GEOMETRY_CONSTRUCTION);
+      throw e;
+    }
   }
 
   private void processFullAutomaticFacade(CityJSONRequest request, boolean isSync) {

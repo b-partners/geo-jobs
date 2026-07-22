@@ -28,6 +28,8 @@ import org.thymeleaf.context.Context;
 @Slf4j
 public class DashboardApiKeyCheckTriggeredService
     implements Consumer<DashboardApiKeyCheckTriggered> {
+  private static final String FAILURE_LOG_PREFIX = "[DAKC F] ";
+  private static final String SUCCESS_LOG_PREFIX = "[DAKC S] ";
   private static final String DASHBOARD_API_KEY_VERIFICATION_TEMPLATE =
       "dashboard_api_key_verification_template";
   public static final String EUROPE_PARIS = "Europe/Paris";
@@ -59,8 +61,7 @@ public class DashboardApiKeyCheckTriggeredService
 
     if (retrievedUsers.isEmpty()) {
       var logMessage = "No users with same email as " + userId + " found in user account api.";
-      log.warn(logMessage);
-      notifyByEmail(List.of(userId), List.of(logMessage));
+      log.warn(FAILURE_LOG_PREFIX + "{}", logMessage);
       return;
     }
 
@@ -84,7 +85,7 @@ public class DashboardApiKeyCheckTriggeredService
                             "Unable to get api key for user with id : %s in user account api. %s"
                                 + " %s",
                             user.id(), e.getStatusCode(), e.getMessage());
-                    log.error(exceptionMessage, e);
+                    log.error(FAILURE_LOG_PREFIX + "{}", exceptionMessage, e);
                     collectedErrors.add(exceptionMessage);
                     return new ArrayList<UserApiKey>();
                   }
@@ -94,9 +95,7 @@ public class DashboardApiKeyCheckTriggeredService
 
     if (userApiKeys.isEmpty()) {
       var exceptionMessage = "No api key found for users : " + retrievedUserIds;
-      log.error(exceptionMessage);
-      collectedErrors.add(exceptionMessage);
-      notifyByEmail(retrievedUserIds, collectedErrors);
+      log.error(FAILURE_LOG_PREFIX + "{}", exceptionMessage);
       return;
     }
 
@@ -111,9 +110,7 @@ public class DashboardApiKeyCheckTriggeredService
           "No dashboard api key found for users : "
               + retrievedUserIds
               + " in the user account api.";
-      log.error(exceptionMessage);
-      collectedErrors.add(exceptionMessage);
-      notifyByEmail(retrievedUserIds, collectedErrors);
+      log.error(FAILURE_LOG_PREFIX + "{}", exceptionMessage);
       return;
     }
 
@@ -124,14 +121,12 @@ public class DashboardApiKeyCheckTriggeredService
               + actualDashboardApiKey
               + " key doesn't match any of the api keys in the users account api for : "
               + formIdList(retrievedUserIds);
-      log.error(exceptionMessage);
-      collectedErrors.add(exceptionMessage);
+      log.error(FAILURE_LOG_PREFIX + "{}", exceptionMessage);
     }
 
     if (collectedErrors.isEmpty()) {
-      log.info("Dashboard api key verification for user {} succeeded.", userId);
-    } else {
-      notifyByEmail(retrievedUserIds, collectedErrors);
+      log.info(
+          SUCCESS_LOG_PREFIX + "Dashboard api key verification for user {} succeeded.", userId);
     }
   }
 
