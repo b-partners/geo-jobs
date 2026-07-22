@@ -100,8 +100,8 @@ test {
     maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
     useJUnitPlatform()
     finalizedBy jacocoTestCoverageVerification
-    minHeapSize = "8g"
-    maxHeapSize = "10g"
+    minHeapSize = project.hasProperty('testMinHeapSize') ? project.property('testMinHeapSize') : "8g"
+    maxHeapSize = project.hasProperty('testMaxHeapSize') ? project.property('testMaxHeapSize') : "10g"
 }
 
 jacocoTestCoverageVerification {
