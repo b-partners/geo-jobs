@@ -36,7 +36,7 @@ public class GeoCodeService {
   private final BuildingFinder buildingFinder;
 
   public GeoCodingJob submitGeoCodingJobThroughExcel(
-      String endToEndId, String communityOwnerId, File excelFile) {
+      String endToEndId, String communityOwnerId, File excelFile, Integer sheetIndex) {
     var optionalGeoCodingJob =
         repository.findByEndToEndIdAndCommunityOwnerId(endToEndId, communityOwnerId);
     if (optionalGeoCodingJob.isPresent()) {
@@ -55,6 +55,7 @@ public class GeoCodeService {
             .communityOwnerId(communityOwnerId)
             .fileKey(bucketKey)
             .geoJsonKey(null)
+            .sheetIndex(sheetIndex)
             .status(PROCESSING)
             .creationDatetime(now())
             .build();

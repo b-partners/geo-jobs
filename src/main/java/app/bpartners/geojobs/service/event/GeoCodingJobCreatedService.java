@@ -35,10 +35,11 @@ public class GeoCodingJobCreatedService implements Consumer<GeoCodingJobCreated>
   public void accept(GeoCodingJobCreated geoCodingJobCreated) {
     var geoCodingJobIdentifier = geoCodingJobCreated.getGeoCodingJobIdentifier();
     var geoCodingJob = repository.findById(geoCodingJobIdentifier).orElseThrow();
+    var sheetIndex = geoCodingJob.getSheetIndex();
     try {
       var fileKey = geoCodingJob.getFileKey();
       var downloadedExcelFile = bucketComponent.download(fileKey);
-      var fullTextAddresses = excelAddressConverter.apply(downloadedExcelFile);
+      var fullTextAddresses = excelAddressConverter.apply(downloadedExcelFile, sheetIndex);
 
       var convertedRestFeatures =
           fullTextAddresses.stream()

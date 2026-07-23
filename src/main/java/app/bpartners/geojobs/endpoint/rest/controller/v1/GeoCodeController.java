@@ -61,12 +61,15 @@ public class GeoCodeController {
 
   @PostMapping(value = "/geoCodingJobs/{id}/excel", consumes = MULTIPART_FORM_DATA_VALUE)
   public GeoCodingJob geocodeAddressesThroughExcelAddresses(
-      @PathVariable(name = "id") String id, @RequestPart(value = "file") MultipartFile file) {
+      @PathVariable(name = "id") String id,
+      @RequestPart(value = "file") MultipartFile file,
+      @RequestPart(value = "sheetIndex") Integer sheetIndex) {
     try {
       var tempFile = File.createTempFile("geocoding-addresses-", file.getOriginalFilename());
       file.transferTo(tempFile);
       return geoCodingJobRestMapper.toRest(
-          service.submitGeoCodingJobThroughExcel(id, getCommunityAuthorizationId(), tempFile));
+          service.submitGeoCodingJobThroughExcel(
+              id, getCommunityAuthorizationId(), tempFile, sheetIndex));
     } catch (IOException e) {
       throw new BadRequestException(
           "Unable to geocode uploaded file as file extraction exception occurred : "

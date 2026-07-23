@@ -30,6 +30,8 @@ public class GeoCodingJob {
 
   private String geoJsonKey;
 
+  private Integer sheetIndex;
+
   @Enumerated(STRING)
   @JdbcTypeCode(NAMED_ENUM)
   private GeoCodingJobStatus status;
