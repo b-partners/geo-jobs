@@ -57,11 +57,7 @@ public class GeoCodingJobCreatedService implements Consumer<GeoCodingJobCreated>
       repository.save(
           geoCodingJob.toBuilder().geoJsonKey(geoJsonFileKey).status(SUCCEEDED).build());
     } catch (Exception e) {
-      log.error(
-          "Exception on processing GeoCodingJob(id={}) : {} ",
-          geoCodingJobIdentifier,
-          e.getMessage());
-      repository.save(geoCodingJob.toBuilder().status(FAILED).build());
+      repository.save(geoCodingJob.toBuilder().message(e.getMessage()).status(FAILED).build());
     }
   }
 

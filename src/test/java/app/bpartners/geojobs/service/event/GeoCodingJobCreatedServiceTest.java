@@ -10,12 +10,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.endpoint.event.model.GeoCodingJobCreated;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.repository.GeoCodingJobRepository;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.geocoding.GeoCodingJob;
@@ -83,6 +85,7 @@ class GeoCodingJobCreatedServiceTest {
     var savedJob = savedJobCaptor.getValue();
     assertEquals(SUCCEEDED, savedJob.getStatus());
     assertEquals(sheetIndex, savedJob.getSheetIndex());
+    assertNull(savedJob.getMessage());
     assertTrue(savedJob.getGeoJsonKey().startsWith("geocoding/" + jobId + "/geoJson/"));
   }
 
@@ -113,10 +116,11 @@ class GeoCodingJobCreatedServiceTest {
     var sheetIndex = 4;
     var job = geoCodingJob(jobId, sheetIndex);
     var downloadedExcelFile = downloadedExcelFile();
+    var exceptionMessage = "Sheet index (3) is out of range (0..2)";
     when(repositoryMock.findById(jobId)).thenReturn(Optional.of(job));
     when(bucketComponentMock.download(job.getFileKey())).thenReturn(downloadedExcelFile);
     when(excelAddressConverterMock.apply(downloadedExcelFile, sheetIndex))
-        .thenThrow(new IllegalArgumentException("Sheet index (3) is out of range (0..2)"));
+        .thenThrow(new IllegalArgumentException(exceptionMessage));
 
     subject.accept(new GeoCodingJobCreated(jobId));
 
@@ -124,8 +128,66 @@ class GeoCodingJobCreatedServiceTest {
     verify(repositoryMock).save(savedJobCaptor.capture());
     var savedJob = savedJobCaptor.getValue();
     assertEquals(FAILED, savedJob.getStatus());
+    assertEquals(exceptionMessage, savedJob.getMessage());
     assertNull(savedJob.getGeoJsonKey());
     assertEquals(sheetIndex, savedJob.getSheetIndex());
+  }
+
+  @Test
+  void process_geo_coding_job_of_undownloadable_file_ko() {
+    var jobId = randomUUID().toString();
+    var job = geoCodingJob(jobId, 1);
+    var exceptionMessage = "Bucket key " + job.getFileKey() + " not found";
+    when(repositoryMock.findById(jobId)).thenReturn(Optional.of(job));
+    when(bucketComponentMock.download(job.getFileKey()))
+        .thenThrow(new RuntimeException(exceptionMessage));
+
+    subject.accept(new GeoCodingJobCreated(jobId));
+
+    var savedJobCaptor = ArgumentCaptor.forClass(GeoCodingJob.class);
+    verify(repositoryMock).save(savedJobCaptor.capture());
+    var savedJob = savedJobCaptor.getValue();
+    assertEquals(FAILED, savedJob.getStatus());
+    assertEquals(exceptionMessage, savedJob.getMessage());
+    verifyNoInteractions(excelAddressConverterMock);
+  }
+
+  @Test
+  void process_geo_coding_job_failing_without_exception_message_ko() {
+    var jobId = randomUUID().toString();
+    var job = geoCodingJob(jobId, 1);
+    when(repositoryMock.findById(jobId)).thenReturn(Optional.of(job));
+    when(bucketComponentMock.download(job.getFileKey())).thenThrow(new RuntimeException());
+
+    subject.accept(new GeoCodingJobCreated(jobId));
+
+    var savedJobCaptor = ArgumentCaptor.forClass(GeoCodingJob.class);
+    verify(repositoryMock).save(savedJobCaptor.capture());
+    var savedJob = savedJobCaptor.getValue();
+    assertEquals(FAILED, savedJob.getStatus());
+    assertNull(savedJob.getMessage());
+  }
+
+  @Test
+  void process_geo_coding_job_of_ungeocodable_address_ko() {
+    var jobId = randomUUID().toString();
+    var job = geoCodingJob(jobId, 1);
+    var address = "25 avenue Mozart, 75001, Paris, France";
+    var downloadedExcelFile = downloadedExcelFile();
+    var exceptionMessage = "Unable to geocode address : " + address;
+    when(repositoryMock.findById(jobId)).thenReturn(Optional.of(job));
+    when(bucketComponentMock.download(job.getFileKey())).thenReturn(downloadedExcelFile);
+    when(excelAddressConverterMock.apply(downloadedExcelFile, 1)).thenReturn(List.of(address));
+    when(geoCodeServiceMock.geocode(address)).thenThrow(new BadRequestException(exceptionMessage));
+
+    subject.accept(new GeoCodingJobCreated(jobId));
+
+    var savedJobCaptor = ArgumentCaptor.forClass(GeoCodingJob.class);
+    verify(repositoryMock).save(savedJobCaptor.capture());
+    var savedJob = savedJobCaptor.getValue();
+    assertEquals(FAILED, savedJob.getStatus());
+    assertEquals(exceptionMessage, savedJob.getMessage());
+    verify(bucketComponentMock, never()).upload(any(File.class), any(String.class));
   }
 
   @Test

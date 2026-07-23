@@ -28,6 +28,20 @@ class GeoCodingJobRestMapperTest {
   }
 
   @Test
+  void to_rest_null_status_ignores_message() {
+    var domain =
+        GeoCodingJob.builder()
+            .endToEndId("endToEndId")
+            .message("some message")
+            .status(null)
+            .build();
+
+    var actual = subject.toRest(domain);
+
+    assertNull(actual.getStatus());
+  }
+
+  @Test
   void to_rest_pending() {
     when(bucketComponentMock.presign("geoJsonKey")).thenReturn("presignedUrl");
     var domain =
@@ -81,5 +95,39 @@ class GeoCodingJobRestMapperTest {
 
     assertEquals(Status.ProgressionEnum.FINISHED, actual.getStatus().getProgression());
     assertEquals(Status.HealthEnum.FAILED, actual.getStatus().getHealth());
+    assertNull(actual.getStatus().getMessage());
+  }
+
+  @Test
+  void to_rest_failed_with_message() {
+    var message = "Sheet index (3) is out of range (0..2)";
+    var domain =
+        GeoCodingJob.builder()
+            .endToEndId("endToEndId")
+            .message(message)
+            .status(GeoCodingJobStatus.FAILED)
+            .build();
+
+    var actual = subject.toRest(domain);
+
+    assertEquals(Status.ProgressionEnum.FINISHED, actual.getStatus().getProgression());
+    assertEquals(Status.HealthEnum.FAILED, actual.getStatus().getHealth());
+    assertEquals(message, actual.getStatus().getMessage());
+  }
+
+  @Test
+  void to_rest_succeeded_with_message() {
+    var message = "some message";
+    var domain =
+        GeoCodingJob.builder()
+            .endToEndId("endToEndId")
+            .message(message)
+            .status(GeoCodingJobStatus.SUCCEEDED)
+            .build();
+
+    var actual = subject.toRest(domain);
+
+    assertEquals(Status.HealthEnum.SUCCEEDED, actual.getStatus().getHealth());
+    assertEquals(message, actual.getStatus().getMessage());
   }
 }

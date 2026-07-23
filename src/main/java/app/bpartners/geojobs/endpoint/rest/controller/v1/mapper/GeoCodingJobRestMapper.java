@@ -16,7 +16,7 @@ public class GeoCodingJobRestMapper {
 
   public GeoCodingJob toRest(app.bpartners.geojobs.repository.model.geocoding.GeoCodingJob domain) {
     var status = domain.getStatus();
-    var restStatus = mapToRest(status);
+    var restStatus = mapToRest(status, domain.getMessage());
     return new GeoCodingJob()
         .id(domain.getEndToEndId())
         .geoJsonUrl(
@@ -24,7 +24,7 @@ public class GeoCodingJobRestMapper {
         .status(restStatus);
   }
 
-  private Status mapToRest(GeoCodingJobStatus status) {
+  private Status mapToRest(GeoCodingJobStatus status, String message) {
     Status.ProgressionEnum progressionStatus;
     Status.HealthEnum healthStatus;
     if (status == null) {
@@ -53,6 +53,10 @@ public class GeoCodingJobRestMapper {
     }
     return status == null
         ? null
-        : new Status().progression(progressionStatus).health(healthStatus).creationDatetime(now());
+        : new Status()
+            .progression(progressionStatus)
+            .health(healthStatus)
+            .message(message)
+            .creationDatetime(now());
   }
 }
