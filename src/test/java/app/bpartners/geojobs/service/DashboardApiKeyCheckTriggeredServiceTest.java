@@ -9,6 +9,7 @@ import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.model.DashboardApiKeyCheckTriggered;
 import app.bpartners.geojobs.mail.Mailer;
+import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.service.dashboard.UserAccountsApi;
 import app.bpartners.geojobs.service.dashboard.component.User;
@@ -27,9 +28,10 @@ import org.springframework.web.client.RestClientResponseException;
 
 class DashboardApiKeyCheckTriggeredServiceTest {
 
-  UserAccountsApi userAccountsApiMock = mock(UserAccountsApi.class);
-  Mailer mailerMock = mock(Mailer.class);
-  HTMLTemplateParser htmlTemplateParser = mock(HTMLTemplateParser.class);
+  UserAccountsApi userAccountsApiMock = mock();
+  Mailer mailerMock = mock();
+  HTMLTemplateParser htmlTemplateParser = mock();
+  CommunityAuthorizationRepository communityAuthorizationRepository = mock();
   DashboardApiKeyCheckTriggeredService subject;
 
   @Test
@@ -60,7 +62,11 @@ class DashboardApiKeyCheckTriggeredServiceTest {
 
     subject =
         new DashboardApiKeyCheckTriggeredService(
-            userAccountsApiMock, adminApiKey, mailerMock, htmlTemplateParser);
+            userAccountsApiMock,
+            adminApiKey,
+            mailerMock,
+            htmlTemplateParser,
+            communityAuthorizationRepository);
 
     Logger logger = (Logger) LoggerFactory.getLogger(DashboardApiKeyCheckTriggeredService.class);
     ListAppender<ILoggingEvent> appender = new ListAppender<>();
@@ -111,7 +117,11 @@ class DashboardApiKeyCheckTriggeredServiceTest {
 
     subject =
         new DashboardApiKeyCheckTriggeredService(
-            userAccountsApiMock, adminApiKey, mailerMock, htmlTemplateParser);
+            userAccountsApiMock,
+            adminApiKey,
+            mailerMock,
+            htmlTemplateParser,
+            communityAuthorizationRepository);
 
     Logger logger = (Logger) LoggerFactory.getLogger(DashboardApiKeyCheckTriggeredService.class);
     ListAppender<ILoggingEvent> appender = new ListAppender<>();
@@ -168,7 +178,11 @@ class DashboardApiKeyCheckTriggeredServiceTest {
 
     subject =
         new DashboardApiKeyCheckTriggeredService(
-            userAccountsApiMock, adminApiKey, mailerMock, htmlTemplateParser);
+            userAccountsApiMock,
+            adminApiKey,
+            mailerMock,
+            htmlTemplateParser,
+            communityAuthorizationRepository);
 
     Logger logger = (Logger) LoggerFactory.getLogger(DashboardApiKeyCheckTriggeredService.class);
     ListAppender<ILoggingEvent> appender = new ListAppender<>();
@@ -227,7 +241,11 @@ class DashboardApiKeyCheckTriggeredServiceTest {
 
     subject =
         new DashboardApiKeyCheckTriggeredService(
-            userAccountsApiMock, adminApiKey, mailerMock, htmlTemplateParser);
+            userAccountsApiMock,
+            adminApiKey,
+            mailerMock,
+            htmlTemplateParser,
+            communityAuthorizationRepository);
 
     Logger logger = (Logger) LoggerFactory.getLogger(DashboardApiKeyCheckTriggeredService.class);
     ListAppender<ILoggingEvent> appender = new ListAppender<>();
