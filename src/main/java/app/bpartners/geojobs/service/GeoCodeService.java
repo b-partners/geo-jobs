@@ -37,6 +37,10 @@ public class GeoCodeService {
 
   public GeoCodingJob submitGeoCodingJobThroughExcel(
       String endToEndId, String communityOwnerId, File excelFile, Integer sheetIndex) {
+    if (sheetIndex != null && sheetIndex < 1) {
+      throw new BadRequestException(
+          "Sheet index must be greater than or equal to 1. Actual value: " + sheetIndex);
+    }
     var optionalGeoCodingJob =
         repository.findByEndToEndIdAndCommunityOwnerId(endToEndId, communityOwnerId);
     if (optionalGeoCodingJob.isPresent()) {

@@ -63,7 +63,7 @@ public class GeoCodeController {
   public GeoCodingJob geocodeAddressesThroughExcelAddresses(
       @PathVariable(name = "id") String id,
       @RequestPart(value = "file") MultipartFile file,
-      @RequestPart(value = "sheetIndex") Integer sheetIndex) {
+      @RequestParam(value = "sheetIndex", required = false) Integer sheetIndex) {
     try {
       var tempFile = File.createTempFile("geocoding-addresses-", file.getOriginalFilename());
       file.transferTo(tempFile);

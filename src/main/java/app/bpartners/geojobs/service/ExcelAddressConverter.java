@@ -22,7 +22,7 @@ public class ExcelAddressConverter implements BiFunction<File, Integer, List<Str
     var addresses = new HashSet<String>();
     try (FileInputStream fis = new FileInputStream(file);
         Workbook workbook = new XSSFWorkbook(fis)) {
-      Sheet sheet = workbook.getSheetAt(sheetIndex == null || sheetIndex == 1 ? 0 : sheetIndex - 1);
+      Sheet sheet = workbook.getSheetAt(sheetIndex == null ? 0 : sheetIndex - 1);
       for (Row row : sheet) {
         Cell cell = row.getCell(0);
         if (Objects.requireNonNull(cell.getCellType()) == CellType.STRING) {

@@ -15,6 +15,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 
 import app.bpartners.geojobs.endpoint.rest.controller.v1.GeoCodeController;
 import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.GeoCodingJobRestMapper;
@@ -37,6 +38,9 @@ import java.util.Set;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.mock.web.MockPart;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.multipart.MultipartFile;
 
 class GeoCodeControllerTest {
@@ -218,6 +222,56 @@ class GeoCodeControllerTest {
         .submitGeoCodingJobThroughExcel(
             eq(endToEndId), eq(communityId), any(File.class), sheetIndexCaptor.capture());
     assertNull(sheetIndexCaptor.getValue());
+  }
+
+  @SneakyThrows
+  @Test
+  void geocode_excel_addresses_binds_plain_text_sheet_index_part_ok() {
+    var mockMvc = MockMvcBuilders.standaloneSetup(subject).build();
+    var endToEndId = randomUUID().toString();
+    var communityId = randomUUID().toString();
+    authenticateCommunity(communityId);
+    when(serviceMock.submitGeoCodingJobThroughExcel(any(), any(), any(File.class), any()))
+        .thenReturn(GeoCodingJob.builder().id(randomUUID().toString()).build());
+    when(geoCodingJobRestMapperMock.toRest(any()))
+        .thenReturn(new app.bpartners.geojobs.endpoint.rest.model.GeoCodingJob().id(endToEndId));
+    var filePart = new MockMultipartFile("file", "addresses.xlsx", null, "dummy".getBytes());
+    var sheetIndexPart = new MockPart("sheetIndex", "2".getBytes());
+
+    var actual =
+        mockMvc
+            .perform(
+                multipart("/geoCodingJobs/{id}/excel", endToEndId)
+                    .file(filePart)
+                    .part(sheetIndexPart))
+            .andReturn();
+
+    assertEquals(200, actual.getResponse().getStatus());
+    verify(serviceMock)
+        .submitGeoCodingJobThroughExcel(eq(endToEndId), eq(communityId), any(File.class), eq(2));
+  }
+
+  @SneakyThrows
+  @Test
+  void geocode_excel_addresses_without_sheet_index_part_ok() {
+    var mockMvc = MockMvcBuilders.standaloneSetup(subject).build();
+    var endToEndId = randomUUID().toString();
+    var communityId = randomUUID().toString();
+    authenticateCommunity(communityId);
+    when(serviceMock.submitGeoCodingJobThroughExcel(any(), any(), any(File.class), any()))
+        .thenReturn(GeoCodingJob.builder().id(randomUUID().toString()).build());
+    when(geoCodingJobRestMapperMock.toRest(any()))
+        .thenReturn(new app.bpartners.geojobs.endpoint.rest.model.GeoCodingJob().id(endToEndId));
+    var filePart = new MockMultipartFile("file", "addresses.xlsx", null, "dummy".getBytes());
+
+    var actual =
+        mockMvc
+            .perform(multipart("/geoCodingJobs/{id}/excel", endToEndId).file(filePart))
+            .andReturn();
+
+    assertEquals(200, actual.getResponse().getStatus());
+    verify(serviceMock)
+        .submitGeoCodingJobThroughExcel(eq(endToEndId), eq(communityId), any(File.class), eq(null));
   }
 
   @SneakyThrows

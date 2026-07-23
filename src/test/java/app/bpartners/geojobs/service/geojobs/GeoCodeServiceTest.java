@@ -99,6 +99,54 @@ class GeoCodeServiceTest {
 
   @SneakyThrows
   @Test
+  void submit_geo_coding_job_through_excel_of_first_sheet_index_ok() {
+    var endToEndId = randomUUID().toString();
+    var communityOwnerId = randomUUID().toString();
+    var excelFile = File.createTempFile("addresses-", ".xlsx");
+    when(geoCodingJobRepositoryMock.findByEndToEndIdAndCommunityOwnerId(
+            endToEndId, communityOwnerId))
+        .thenReturn(Optional.empty());
+    when(geoCodingJobRepositoryMock.save(any(GeoCodingJob.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    var actual = subject.submitGeoCodingJobThroughExcel(endToEndId, communityOwnerId, excelFile, 1);
+
+    assertEquals(1, actual.getSheetIndex());
+    assertEquals(PROCESSING, actual.getStatus());
+  }
+
+  @SneakyThrows
+  @Test
+  void submit_geo_coding_job_through_excel_of_sheet_index_lower_than_one_ko() {
+    var endToEndId = randomUUID().toString();
+    var communityOwnerId = randomUUID().toString();
+    var excelFile = File.createTempFile("addresses-", ".xlsx");
+
+    var actualWithZero =
+        assertThrows(
+            BadRequestException.class,
+            () ->
+                subject.submitGeoCodingJobThroughExcel(endToEndId, communityOwnerId, excelFile, 0));
+    var actualWithNegative =
+        assertThrows(
+            BadRequestException.class,
+            () ->
+                subject.submitGeoCodingJobThroughExcel(
+                    endToEndId, communityOwnerId, excelFile, -3));
+
+    assertEquals(
+        "Sheet index must be greater than or equal to 1. Actual value: 0",
+        actualWithZero.getMessage());
+    assertEquals(
+        "Sheet index must be greater than or equal to 1. Actual value: -3",
+        actualWithNegative.getMessage());
+    verifyNoInteractions(geoCodingJobRepositoryMock);
+    verifyNoInteractions(bucketComponentMock);
+    verifyNoInteractions(eventProducerMock);
+  }
+
+  @SneakyThrows
+  @Test
   void submit_geo_coding_job_through_excel_of_already_processed_job_ko() {
     var endToEndId = randomUUID().toString();
     var communityOwnerId = randomUUID().toString();
