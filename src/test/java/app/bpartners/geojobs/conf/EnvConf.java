@@ -52,5 +52,6 @@ public class EnvConf {
     registry.add("city-json-processor.api.url", () -> "https://dummy.com");
     registry.add("cacher.api.url", () -> "https://dummy.com");
     registry.add("cacher.api.key", () -> "dummy_key");
+    registry.add("cityjsons.generator", () -> "GEOJOBS");
   }
 }
