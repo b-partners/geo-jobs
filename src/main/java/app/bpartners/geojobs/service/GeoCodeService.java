@@ -23,8 +23,10 @@ import java.util.HashMap;
 import java.util.List;
 import javax.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GeoCodeService {
@@ -85,6 +87,9 @@ public class GeoCodeService {
     }
     try {
       var nearestRoofMultiPolygon = buildingFinder.getBuildingMultiPolygon(address);
+      if (nearestRoofMultiPolygon == null) {
+        throw new BadRequestException("No building found for address : " + address);
+      }
 
       var properties = new HashMap<String, Object>();
       properties.put("address", address);
@@ -92,6 +97,10 @@ public class GeoCodeService {
       return geometryConverter.toFeature(
           null, HOUSES_0.getZoomLevel(), properties, nearestRoofMultiPolygon);
     } catch (RuntimeException e) {
+      log.info(
+          "Unable to geocode address={} from BuildingFinder, falling back on GeoCodeApi : {}",
+          address,
+          e.getMessage());
       try {
         var geoPosition = geoCodeApi.searchGeoPositionFromAddress(address);
         var longitude = BigDecimal.valueOf(geoPosition.longitude());
@@ -106,6 +115,19 @@ public class GeoCodeService {
   public Feature geocode(@Nullable String address, BigDecimal longitude, BigDecimal latitude) {
     var nearestRoofMultiPolygon =
         buildingFinder.getBuildingMultiPolygon(List.of(longitude, latitude));
+    if (nearestRoofMultiPolygon == null) {
+      var addressPrefix = address == null ? "" : "address : " + address + " at ";
+      var exceptionMessage =
+          "No building found for "
+              + addressPrefix
+              + "coordinates (longitude="
+              + longitude
+              + ", latitude="
+              + latitude
+              + ")";
+      log.warn(exceptionMessage);
+      throw new BadRequestException(exceptionMessage);
+    }
 
     var properties = new HashMap<String, Object>();
     if (address != null) {

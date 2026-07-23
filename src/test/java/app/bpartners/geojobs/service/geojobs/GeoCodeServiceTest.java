@@ -208,6 +208,80 @@ class GeoCodeServiceTest {
     assertEquals(mockFeature, actual);
   }
 
+  @SneakyThrows
+  @Test
+  void geocode_address_without_building_falls_back_on_geo_code_api_ok() {
+    var address = "random-address-" + randomUUID();
+    var latitude = Math.random();
+    var longitude = Math.random();
+
+    var mockFeature = mock(Feature.class);
+    var geoPositionMock = mock(GeoPosition.class);
+    var multiPolygonMock = mock(MultiPolygon.class);
+    when(geoPositionMock.latitude()).thenReturn(latitude);
+    when(geoPositionMock.longitude()).thenReturn(longitude);
+    when(geoCodeApiMock.searchGeoPositionFromAddress(address)).thenReturn(geoPositionMock);
+    when(buildingFinderMock.getBuildingMultiPolygon(address)).thenReturn(null);
+    when(buildingFinderMock.getBuildingMultiPolygon(
+            List.of(BigDecimal.valueOf(longitude), BigDecimal.valueOf(latitude))))
+        .thenReturn(multiPolygonMock);
+    when(geometryConverterMock.toFeature(eq(null), eq(20), any(), eq(multiPolygonMock)))
+        .thenReturn(mockFeature);
+
+    var actual = subject.geocode(address);
+
+    assertEquals(mockFeature, actual);
+  }
+
+  @SneakyThrows
+  @Test
+  void geocode_address_without_building_anywhere_ko() {
+    var address = "random-address-" + randomUUID();
+    var latitude = 48.85;
+    var longitude = 2.35;
+
+    var geoPositionMock = mock(GeoPosition.class);
+    when(geoPositionMock.latitude()).thenReturn(latitude);
+    when(geoPositionMock.longitude()).thenReturn(longitude);
+    when(geoCodeApiMock.searchGeoPositionFromAddress(address)).thenReturn(geoPositionMock);
+    when(buildingFinderMock.getBuildingMultiPolygon(address)).thenReturn(null);
+    when(buildingFinderMock.getBuildingMultiPolygon(
+            List.of(BigDecimal.valueOf(longitude), BigDecimal.valueOf(latitude))))
+        .thenReturn(null);
+
+    var actual = assertThrows(BadRequestException.class, () -> subject.geocode(address));
+
+    assertEquals(
+        "No building found for address : "
+            + address
+            + " at coordinates (longitude="
+            + BigDecimal.valueOf(longitude)
+            + ", latitude="
+            + BigDecimal.valueOf(latitude)
+            + ")",
+        actual.getMessage());
+    verifyNoInteractions(geometryConverterMock);
+  }
+
+  @Test
+  void geocode_point_without_building_ko() {
+    var latitude = BigDecimal.valueOf(48.85);
+    var longitude = BigDecimal.valueOf(2.35);
+    when(buildingFinderMock.getBuildingMultiPolygon(List.of(longitude, latitude))).thenReturn(null);
+
+    var actual =
+        assertThrows(BadRequestException.class, () -> subject.geocode(null, longitude, latitude));
+
+    assertEquals(
+        "No building found for coordinates (longitude="
+            + longitude
+            + ", latitude="
+            + latitude
+            + ")",
+        actual.getMessage());
+    verifyNoInteractions(geometryConverterMock);
+  }
+
   @Test
   void geocode_point_without_address_ok() {
     var latitude = BigDecimal.valueOf(48.85);

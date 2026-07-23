@@ -41,6 +41,12 @@ public class GeoCodingJobCreatedService implements Consumer<GeoCodingJobCreated>
       var fileKey = geoCodingJob.getFileKey();
       var downloadedExcelFile = bucketComponent.download(fileKey);
       var fullTextAddresses = excelAddressConverter.apply(downloadedExcelFile, sheetIndex);
+      log.info(
+          "Processing GeoCodingJob(id={}, fileKey={}, sheetIndex={}) holding {} address(es)",
+          geoCodingJobIdentifier,
+          fileKey,
+          sheetIndex,
+          fullTextAddresses.size());
       var unprocessedAddresses = new ArrayList<Map<String, String>>();
       var convertedRestFeatures =
           fullTextAddresses.stream()
@@ -49,6 +55,11 @@ public class GeoCodingJobCreatedService implements Consumer<GeoCodingJobCreated>
                     try {
                       return geoCodeService.geocode(address);
                     } catch (Exception e) {
+                      log.warn(
+                          "Skipping address={} of GeoCodingJob(id={}) as geocoding failed",
+                          address,
+                          geoCodingJobIdentifier,
+                          e);
                       var unprocessedAddress = new HashMap<String, String>();
                       unprocessedAddress.put(address, e.getMessage());
                       unprocessedAddresses.add(unprocessedAddress);
@@ -61,7 +72,7 @@ public class GeoCodingJobCreatedService implements Consumer<GeoCodingJobCreated>
                           .build();
                     }
                   })
-              .map(FeatureMapper::toRestFeature)
+              .map(this::toRestFeatureLoggingFailingAddress)
               .toList();
 
       var tempFile = writeRestFeaturesInsideTmpFile(convertedRestFeatures);
@@ -80,7 +91,23 @@ public class GeoCodingJobCreatedService implements Consumer<GeoCodingJobCreated>
 
       repository.save(geoCodingJobBuilder.build());
     } catch (Exception e) {
+      log.error("Exception on processing GeoCodingJob(id={})", geoCodingJobIdentifier, e);
       repository.save(geoCodingJob.toBuilder().message(e.getMessage()).status(FAILED).build());
+    }
+  }
+
+  private Feature toRestFeatureLoggingFailingAddress(
+      app.bpartners.geojobs.repository.model.Feature domainFeature) {
+    try {
+      return FeatureMapper.toRestFeature(domainFeature);
+    } catch (RuntimeException e) {
+      var properties = domainFeature.getProperties();
+      log.error(
+          "Unable to convert geocoded Feature of address={} to rest Feature, its geometry is {}",
+          properties == null ? null : properties.get("address"),
+          domainFeature.getGeometry(),
+          e);
+      throw e;
     }
   }
 
