@@ -45,6 +45,8 @@ class CityJSONRequestCreatedServiceTest {
   CityJSONSafeModeProcessor cityJSONSafeModeProcessor = mock();
   CityJsonTextureComputer textureComputerMock = mock(CityJsonTextureComputer.class);
   CityJSONInternalProcessor cityJSONInternalProcessorMock = mock();
+  CityJSONRequestCreatedService.CityJSONRequestCreatedServiceGenerator cityjsonGenerator =
+      new CityJSONRequestCreatedService.CityJSONRequestCreatedServiceGenerator("GEOJOBS");
 
   CityJSONRequestCreatedService subject =
       new CityJSONRequestCreatedService(
@@ -59,7 +61,8 @@ class CityJSONRequestCreatedServiceTest {
           cityJson3DBagRooferProcessorMock,
           cityJSONSafeModeProcessor,
           textureComputerMock,
-          cityJSONInternalProcessorMock);
+          cityJSONInternalProcessorMock,
+          cityjsonGenerator);
 
   @BeforeEach
   void setUp() {

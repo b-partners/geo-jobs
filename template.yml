@@ -64,6 +64,7 @@ Globals:
         CITY_JSON_PROCESSOR_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/city-json-processor/api/url}}'
         CACHER_API_KEY: !Sub '{{resolve:ssm:/geo-jobs/${Env}/cacher/api/key}}'
         CACHER_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/cacher/api/url}}'
+        CITYJSONS_GENERATOR: !Sub '{{resolve:ssm:/geo-jobs/${Env}/cityjsons/generator}}'
 Parameters:
   Env:
     Type: String

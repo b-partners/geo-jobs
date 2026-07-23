@@ -26,10 +26,13 @@ import jakarta.persistence.EntityManager;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Geometry;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -48,6 +51,20 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
   private final CityJSONSafeModeProcessor cityJSONSafeModeProcessor;
   private final CityJsonTextureComputer textureComputer;
   private final CityJSONInternalProcessor cityJSONInternalProcessor;
+  private final CityJSONRequestCreatedServiceGenerator cityjsonGenerator;
+  private static final String GEOJOBS = "GEOJOBS";
+
+  // TODO: to remove after threed is used for prod
+  @Getter
+  @Component
+  public static class CityJSONRequestCreatedServiceGenerator {
+    private final String generator;
+
+    public CityJSONRequestCreatedServiceGenerator(
+        @Value("${cityjsons.generator}") String generator) {
+      this.generator = generator;
+    }
+  }
 
   // TODO: refactor
   public void accept(CityJSONRequestCreated created, boolean isSync) {
@@ -134,11 +151,11 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
     processFullAutomaticFacade(request, isSync);
   }
 
-  private void processByInternalMethod(CityJSONRequest request, boolean isSync) {
-    if (isSync) {
-      processInternalByApi(request);
-    } else {
+  private void processByInternalMethod(CityJSONRequest request, boolean ignored) {
+    if (GEOJOBS.equals(cityjsonGenerator.getGenerator())) {
       processByInternalMethod(request);
+    } else {
+      processInternalByApi(request);
     }
   }
 
