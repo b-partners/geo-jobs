@@ -14,8 +14,9 @@ import app.bpartners.geojobs.service.GeoCodeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -40,10 +41,26 @@ public class GeoCodingJobCreatedService implements Consumer<GeoCodingJobCreated>
       var fileKey = geoCodingJob.getFileKey();
       var downloadedExcelFile = bucketComponent.download(fileKey);
       var fullTextAddresses = excelAddressConverter.apply(downloadedExcelFile, sheetIndex);
-
+      var unprocessedAddresses = new ArrayList<Map<String, String>>();
       var convertedRestFeatures =
           fullTextAddresses.stream()
-              .map(geoCodeService::geocode)
+              .map(
+                  address -> {
+                    try {
+                      return geoCodeService.geocode(address);
+                    } catch (Exception e) {
+                      var unprocessedAddress = new HashMap<String, String>();
+                      unprocessedAddress.put(address, e.getMessage());
+                      unprocessedAddresses.add(unprocessedAddress);
+                      var properties = new HashMap<String, Object>();
+                      properties.put("address", address);
+                      return app.bpartners.geojobs.repository.model.Feature.builder()
+                          .geometry(
+                              new app.bpartners.geojobs.repository.model.Feature.FeatureGeometry())
+                          .properties(properties)
+                          .build();
+                    }
+                  })
               .map(FeatureMapper::toRestFeature)
               .toList();
 
@@ -54,11 +71,34 @@ public class GeoCodingJobCreatedService implements Consumer<GeoCodingJobCreated>
 
       bucketComponent.upload(tempFile, geoJsonFileKey);
 
-      repository.save(
-          geoCodingJob.toBuilder().geoJsonKey(geoJsonFileKey).status(SUCCEEDED).build());
+      var geoCodingJobBuilder =
+          geoCodingJob.toBuilder().geoJsonKey(geoJsonFileKey).status(SUCCEEDED);
+      if (!unprocessedAddresses.isEmpty()) {
+        var errorMessage = buildErrorMessage(unprocessedAddresses);
+        geoCodingJobBuilder.message(errorMessage);
+      }
+
+      repository.save(geoCodingJobBuilder.build());
     } catch (Exception e) {
       repository.save(geoCodingJob.toBuilder().message(e.getMessage()).status(FAILED).build());
     }
+  }
+
+  private String buildErrorMessage(ArrayList<Map<String, String>> errors) {
+    if (errors == null || errors.isEmpty()) {
+      return "";
+    }
+
+    return errors.stream()
+        .filter(Objects::nonNull)
+        .flatMap(map -> map.entrySet().stream())
+        .map(
+            entry ->
+                String.format(
+                    "%s : %s",
+                    entry.getKey(),
+                    entry.getValue() == null ? "unknown exception" : entry.getValue()))
+        .collect(Collectors.joining(" | "));
   }
 
   @NotNull
