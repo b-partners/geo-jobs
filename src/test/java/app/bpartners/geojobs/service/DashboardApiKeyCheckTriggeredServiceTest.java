@@ -280,7 +280,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
                   e ->
                       e.getLevel() == Level.INFO
                           && e.getFormattedMessage()
-                              .equals("[DAKC H] Dashboard api key updated for user " + authId));
+                              .equals("[DAKC H] Dashboard api key updated for user " + email));
       assertTrue(hasExpectedHandlerLog);
     } finally {
       logger.detachAppender(appender);
@@ -295,7 +295,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
     String authId = randomUUID().toString();
 
     CommunityAuthorization authorization = new CommunityAuthorization();
-    when(communityAuthorizationRepository.findById(authId)).thenReturn(Optional.of(authorization));
+    when(communityAuthorizationRepository.findById(email)).thenReturn(Optional.of(authorization));
 
     User user =
         new User(randomUUID().toString(), randomUUID().toString(), randomUUID().toString(), email);
@@ -336,7 +336,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
                       e.getLevel() == Level.INFO
                           && e.getFormattedMessage()
                               .equals(
-                                  "[DAKC H] New Dashboard api key generated for user " + authId));
+                                  "[DAKC H] New Dashboard api key generated for user " + email));
       assertTrue(hasNewKeyGeneratedLog);
 
       boolean hasUpdatedLog =
@@ -345,7 +345,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
                   e ->
                       e.getLevel() == Level.INFO
                           && e.getFormattedMessage()
-                              .equals("[DAKC H] Dashboard api key updated for user " + authId));
+                              .equals("[DAKC H] Dashboard api key updated for user " + email));
       assertTrue(hasUpdatedLog);
     } finally {
       logger.detachAppender(appender);
@@ -369,7 +369,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
     when(userAccountsApiMock.getOrGenerateApiKey(eq(authId), anyString(), eq(adminApiKey)))
         .thenReturn(new UserApiKey("existingKey", DASHBOARD));
 
-    when(communityAuthorizationRepository.findById(authId)).thenReturn(Optional.empty());
+    when(communityAuthorizationRepository.findById(email)).thenReturn(Optional.empty());
 
     DashboardApiKeyCheckTriggered event =
         DashboardApiKeyCheckTriggered.builder()
@@ -401,7 +401,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
                           && e.getFormattedMessage()
                               .equals(
                                   "[DAKC H] Dashboard api key for user "
-                                      + authId
+                                      + email
                                       + " already exists in the user account api. No new key"
                                       + " generated."));
       assertTrue(hasExistingKeyLog);
@@ -414,7 +414,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
                           && e.getFormattedMessage()
                               .equals(
                                   "[DAKC H] Failed to update dashboard api key for user "
-                                      + authId
+                                      + email
                                       + ". User not found in database."));
       assertTrue(hasUserNotFoundLog);
     } finally {
