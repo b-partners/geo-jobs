@@ -211,7 +211,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
 
     when(userAccountsApiMock.getUsersByCriteria(eq(email), eq(null), eq(null), anyString()))
         .thenReturn(List.of(user));
-    when(userAccountsApiMock.getUserApiKey(eq(user.id()), eq(adminApiKey))).thenReturn(List.of());
+    when(userAccountsApiMock.getUserApiKey(user.id(), adminApiKey)).thenReturn(List.of());
 
     when(userAccountsApiMock.getOrGenerateApiKey(eq(authId), anyString(), eq(adminApiKey)))
         .thenAnswer(invocation -> new UserApiKey(invocation.getArgument(1), DASHBOARD));
@@ -269,7 +269,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
 
     when(userAccountsApiMock.getUsersByCriteria(eq(email), eq(null), eq(null), anyString()))
         .thenReturn(List.of(user));
-    when(userAccountsApiMock.getUserApiKey(eq(user.id()), eq(adminApiKey))).thenReturn(List.of());
+    when(userAccountsApiMock.getUserApiKey(user.id(), adminApiKey)).thenReturn(List.of());
 
     when(userAccountsApiMock.getOrGenerateApiKey(eq(authId), anyString(), eq(adminApiKey)))
         .thenReturn(new UserApiKey("existingKey", DASHBOARD));
