@@ -8,14 +8,12 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.model.DashboardApiKeyCheckTriggered;
-import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.service.dashboard.UserAccountsApi;
 import app.bpartners.geojobs.service.dashboard.component.User;
 import app.bpartners.geojobs.service.dashboard.component.UserApiKey;
 import app.bpartners.geojobs.service.event.DashboardApiKeyCheckTriggeredService;
-import app.bpartners.geojobs.template.HTMLTemplateParser;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -28,8 +26,6 @@ import org.slf4j.LoggerFactory;
 class DashboardApiKeyCheckTriggeredServiceTest {
 
   UserAccountsApi userAccountsApiMock = mock();
-  Mailer mailerMock = mock();
-  HTMLTemplateParser htmlTemplateParser = mock();
   CommunityAuthorizationRepository communityAuthorizationRepository = mock();
   DashboardApiKeyCheckTriggeredService subject;
 
@@ -61,11 +57,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
 
     subject =
         new DashboardApiKeyCheckTriggeredService(
-            userAccountsApiMock,
-            adminApiKey,
-            mailerMock,
-            htmlTemplateParser,
-            communityAuthorizationRepository);
+            userAccountsApiMock, adminApiKey, communityAuthorizationRepository);
 
     Logger logger = (Logger) LoggerFactory.getLogger(DashboardApiKeyCheckTriggeredService.class);
     ListAppender<ILoggingEvent> appender = new ListAppender<>();
@@ -78,7 +70,6 @@ class DashboardApiKeyCheckTriggeredServiceTest {
       verify(userAccountsApiMock, times(1))
           .getUsersByCriteria(existingEmail, null, null, adminApiKey);
       verify(userAccountsApiMock, times(1)).getUserApiKey(user.id(), adminApiKey);
-      verifyNoInteractions(mailerMock);
 
       boolean hasExpectedInfoLog =
           appender.list.stream()
@@ -116,11 +107,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
 
     subject =
         new DashboardApiKeyCheckTriggeredService(
-            userAccountsApiMock,
-            adminApiKey,
-            mailerMock,
-            htmlTemplateParser,
-            communityAuthorizationRepository);
+            userAccountsApiMock, adminApiKey, communityAuthorizationRepository);
 
     Logger logger = (Logger) LoggerFactory.getLogger(DashboardApiKeyCheckTriggeredService.class);
     ListAppender<ILoggingEvent> appender = new ListAppender<>();
@@ -180,11 +167,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
 
     subject =
         new DashboardApiKeyCheckTriggeredService(
-            userAccountsApiMock,
-            adminApiKey,
-            mailerMock,
-            htmlTemplateParser,
-            communityAuthorizationRepository);
+            userAccountsApiMock, adminApiKey, communityAuthorizationRepository);
 
     Logger logger = (Logger) LoggerFactory.getLogger(DashboardApiKeyCheckTriggeredService.class);
     ListAppender<ILoggingEvent> appender = new ListAppender<>();
@@ -241,11 +224,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
 
     subject =
         new DashboardApiKeyCheckTriggeredService(
-            userAccountsApiMock,
-            adminApiKey,
-            mailerMock,
-            htmlTemplateParser,
-            communityAuthorizationRepository);
+            userAccountsApiMock, adminApiKey, communityAuthorizationRepository);
 
     Logger logger = (Logger) LoggerFactory.getLogger(DashboardApiKeyCheckTriggeredService.class);
     ListAppender<ILoggingEvent> appender = new ListAppender<>();
@@ -305,11 +284,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
 
     subject =
         new DashboardApiKeyCheckTriggeredService(
-            userAccountsApiMock,
-            adminApiKey,
-            mailerMock,
-            htmlTemplateParser,
-            communityAuthorizationRepository);
+            userAccountsApiMock, adminApiKey, communityAuthorizationRepository);
 
     Logger logger = (Logger) LoggerFactory.getLogger(DashboardApiKeyCheckTriggeredService.class);
     ListAppender<ILoggingEvent> appender = new ListAppender<>();

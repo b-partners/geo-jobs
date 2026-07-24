@@ -3,12 +3,10 @@ package app.bpartners.geojobs.service.event;
 import static app.bpartners.geojobs.service.dashboard.component.UserApiKeyType.DASHBOARD;
 
 import app.bpartners.geojobs.endpoint.event.model.DashboardApiKeyCheckTriggered;
-import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.service.dashboard.UserAccountsApi;
 import app.bpartners.geojobs.service.dashboard.component.User;
 import app.bpartners.geojobs.service.dashboard.component.UserApiKey;
-import app.bpartners.geojobs.template.HTMLTemplateParser;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -26,26 +24,16 @@ public class DashboardApiKeyCheckTriggeredService
   private static final String FAILURE_LOG_PREFIX = "[DAKC F] ";
   private static final String SUCCESS_LOG_PREFIX = "[DAKC S] ";
   private static final String HANDLER_LOG_PREFIX = "[DAKC H] ";
-  private static final String DASHBOARD_API_KEY_VERIFICATION_TEMPLATE =
-      "dashboard_api_key_verification_template";
-  public static final String EUROPE_PARIS = "Europe/Paris";
-  public static final String EMAIL_NOTIFICATION_RECEIVER = "tech@birdia.fr";
   private final UserAccountsApi userAccountsApi;
   private final String adminApiKey;
-  private final Mailer mailer;
-  private final HTMLTemplateParser htmlTemplateParser;
   private final CommunityAuthorizationRepository communityAuthorizationRepository;
 
   public DashboardApiKeyCheckTriggeredService(
       UserAccountsApi userAccountsApi,
       @Value("${admin.api.key}") String adminApiKey,
-      Mailer mailer,
-      HTMLTemplateParser htmlTemplateParser,
       CommunityAuthorizationRepository communityAuthorizationRepository) {
     this.userAccountsApi = userAccountsApi;
     this.adminApiKey = adminApiKey;
-    this.mailer = mailer;
-    this.htmlTemplateParser = htmlTemplateParser;
     this.communityAuthorizationRepository = communityAuthorizationRepository;
   }
 
