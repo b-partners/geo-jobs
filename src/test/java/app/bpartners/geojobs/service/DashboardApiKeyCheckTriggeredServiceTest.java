@@ -237,7 +237,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
             new RestClientResponseException(
                 "Error", 500, "Internal Server Error", HttpHeaders.EMPTY, null, null));
 
-    when(userAccountsApiMock.getOrGenerateApiKey(eq(email), anyString(), eq(adminApiKey)))
+    when(userAccountsApiMock.getOrGenerateApiKey(eq(authId), anyString(), eq(adminApiKey)))
         .thenReturn(new UserApiKey(generatedApiKey, DASHBOARD));
 
     DashboardApiKeyCheckTriggered event =
@@ -293,7 +293,6 @@ class DashboardApiKeyCheckTriggeredServiceTest {
     String adminApiKey = randomUUID().toString();
     String email = "exist@" + randomUUID();
     String authId = randomUUID().toString();
-    String generatedApiKey = randomUUID().toString();
 
     CommunityAuthorization authorization = new CommunityAuthorization();
     when(communityAuthorizationRepository.findById(authId)).thenReturn(Optional.of(authorization));
@@ -305,7 +304,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
         .thenReturn(List.of(user));
     when(userAccountsApiMock.getUserApiKey(eq(user.id()), eq(adminApiKey))).thenReturn(List.of());
 
-    when(userAccountsApiMock.getOrGenerateApiKey(eq(email), anyString(), eq(adminApiKey)))
+    when(userAccountsApiMock.getOrGenerateApiKey(eq(authId), anyString(), eq(adminApiKey)))
         .thenAnswer(invocation -> new UserApiKey(invocation.getArgument(1), DASHBOARD));
 
     DashboardApiKeyCheckTriggered event =
@@ -367,7 +366,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
         .thenReturn(List.of(user));
     when(userAccountsApiMock.getUserApiKey(eq(user.id()), eq(adminApiKey))).thenReturn(List.of());
 
-    when(userAccountsApiMock.getOrGenerateApiKey(eq(email), anyString(), eq(adminApiKey)))
+    when(userAccountsApiMock.getOrGenerateApiKey(eq(authId), anyString(), eq(adminApiKey)))
         .thenReturn(new UserApiKey("existingKey", DASHBOARD));
 
     when(communityAuthorizationRepository.findById(authId)).thenReturn(Optional.empty());
