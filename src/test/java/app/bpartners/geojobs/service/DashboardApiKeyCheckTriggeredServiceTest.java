@@ -21,6 +21,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -220,9 +221,11 @@ class DashboardApiKeyCheckTriggeredServiceTest {
     String adminApiKey = randomUUID().toString();
     String email = "exist@" + randomUUID();
     String authId = randomUUID().toString();
+    String generatedApiKey = randomUUID().toString();
 
     CommunityAuthorization authorization = mock();
     when(authorization.getEmail()).thenReturn(email);
+    when(communityAuthorizationRepository.findById(authId)).thenReturn(Optional.of(authorization));
 
     User user =
         new User(randomUUID().toString(), randomUUID().toString(), randomUUID().toString(), email);
@@ -235,9 +238,13 @@ class DashboardApiKeyCheckTriggeredServiceTest {
             new RestClientResponseException(
                 "Error", 500, "Internal Server Error", HttpHeaders.EMPTY, null, null));
 
+    // Mock getOrGenerateApiKey because handleNoKey falls back to it on error
+    when(userAccountsApiMock.getOrGenerateApiKey(anyString(), anyString(), eq(adminApiKey)))
+        .thenReturn(new UserApiKey(generatedApiKey, DASHBOARD));
+
     DashboardApiKeyCheckTriggered event =
         DashboardApiKeyCheckTriggered.builder()
-            .email(authorization.getEmail())
+            .email(email)
             .communityAuthorizationId(authId)
             .build();
 
