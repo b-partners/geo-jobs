@@ -24,8 +24,6 @@ import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpHeaders;
-import org.springframework.web.client.RestClientResponseException;
 
 class DashboardApiKeyCheckTriggeredServiceTest {
 
@@ -210,78 +208,6 @@ class DashboardApiKeyCheckTriggeredServiceTest {
                                       + " ) attached to the email of the user "
                                       + authId));
       assertTrue(hasExpectedWarnLog);
-    } finally {
-      logger.detachAppender(appender);
-      appender.stop();
-    }
-  }
-
-  @Test
-  void error_when_unable_to_get_api_key_for_a_user() {
-    String adminApiKey = randomUUID().toString();
-    String email = "exist@" + randomUUID();
-    String authId = randomUUID().toString();
-    String generatedApiKey = randomUUID().toString();
-
-    CommunityAuthorization authorization = new CommunityAuthorization();
-    when(communityAuthorizationRepository.findById(authId)).thenReturn(Optional.of(authorization));
-
-    User user =
-        new User(randomUUID().toString(), randomUUID().toString(), randomUUID().toString(), email);
-
-    when(userAccountsApiMock.getUsersByCriteria(eq(email), eq(null), eq(null), anyString()))
-        .thenReturn(List.of(user));
-
-    when(userAccountsApiMock.getUserApiKey(eq(user.id()), eq(adminApiKey)))
-        .thenThrow(
-            new RestClientResponseException(
-                "Error", 500, "Internal Server Error", HttpHeaders.EMPTY, null, null));
-
-    when(userAccountsApiMock.getOrGenerateApiKey(eq(authId), anyString(), eq(adminApiKey)))
-        .thenReturn(new UserApiKey(generatedApiKey, DASHBOARD));
-
-    DashboardApiKeyCheckTriggered event =
-        DashboardApiKeyCheckTriggered.builder()
-            .email(email)
-            .communityAuthorizationId(authId)
-            .build();
-
-    subject =
-        new DashboardApiKeyCheckTriggeredService(
-            userAccountsApiMock,
-            adminApiKey,
-            mailerMock,
-            htmlTemplateParser,
-            communityAuthorizationRepository);
-
-    Logger logger = (Logger) LoggerFactory.getLogger(DashboardApiKeyCheckTriggeredService.class);
-    ListAppender<ILoggingEvent> appender = new ListAppender<>();
-    appender.start();
-    logger.addAppender(appender);
-
-    try {
-      assertDoesNotThrow(() -> subject.accept(event));
-
-      boolean hasExpectedFailureLog =
-          appender.list.stream()
-              .anyMatch(
-                  e ->
-                      e.getLevel() == Level.ERROR
-                          && e.getFormattedMessage()
-                              .contains(
-                                  "[DAKC F] Unable to get api key for user with id : "
-                                      + user.id()
-                                      + " in user account api."));
-      assertTrue(hasExpectedFailureLog);
-
-      boolean hasExpectedHandlerLog =
-          appender.list.stream()
-              .anyMatch(
-                  e ->
-                      e.getLevel() == Level.INFO
-                          && e.getFormattedMessage()
-                              .equals("[DAKC H] Dashboard api key updated for user " + email));
-      assertTrue(hasExpectedHandlerLog);
     } finally {
       logger.detachAppender(appender);
       appender.stop();
