@@ -50,5 +50,8 @@ public class EnvConf {
     registry.add("roofer.3d.bag.api.key", () -> "dummy");
     registry.add("lidar.index.api.url", () -> "https://dummy.com");
     registry.add("city-json-processor.api.url", () -> "https://dummy.com");
+    registry.add("cacher.api.url", () -> "https://dummy.com");
+    registry.add("cacher.api.key", () -> "dummy_key");
+    registry.add("cityjsons.generator", () -> "GEOJOBS");
   }
 }
