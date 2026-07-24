@@ -3,28 +3,21 @@ package app.bpartners.geojobs.service.event;
 import static app.bpartners.geojobs.service.dashboard.component.UserApiKeyType.DASHBOARD;
 
 import app.bpartners.geojobs.endpoint.event.model.DashboardApiKeyCheckTriggered;
-import app.bpartners.geojobs.mail.Email;
 import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.service.dashboard.UserAccountsApi;
 import app.bpartners.geojobs.service.dashboard.component.User;
 import app.bpartners.geojobs.service.dashboard.component.UserApiKey;
 import app.bpartners.geojobs.template.HTMLTemplateParser;
-import jakarta.mail.internet.InternetAddress;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientResponseException;
-import org.thymeleaf.context.Context;
 
 @Service
 @Slf4j
@@ -128,7 +121,7 @@ public class DashboardApiKeyCheckTriggeredService
           "Actual dashboard api "
               + actualDashboardApiKey
               + " key doesn't match any of the api keys in the users account api for : "
-              + formIdList(retrievedUserIds);
+              + formatIdList(retrievedUserIds);
       log.error(FAILURE_LOG_PREFIX + "{}", exceptionMessage);
       updateCommunityAuthorizationDashboardApiKey(userId, dashboardApiKeys.getFirst());
     }
@@ -181,40 +174,8 @@ public class DashboardApiKeyCheckTriggeredService
         HANDLER_LOG_PREFIX + "Dashboard api key updated for user {}", communityAuthorizationId);
   }
 
-  @SneakyThrows
-  private void notifyByEmail(List<String> idList, List<String> errorMessages) {
-    var subject = computeSubject(idList);
-    String combinedMessage = String.join("\n", errorMessages);
-    String emailBody = computeEmailBody(idList, combinedMessage);
-
-    mailer.accept(
-        new Email(
-            new InternetAddress(EMAIL_NOTIFICATION_RECEIVER),
-            List.of(),
-            List.of(),
-            subject,
-            emailBody,
-            List.of()));
-  }
-
-  private String computeEmailBody(List<String> idList, String message) {
-    Context context = new Context();
-    context.setVariable("email", formIdList(idList));
-    context.setVariable("message", message);
-    return htmlTemplateParser.apply(DASHBOARD_API_KEY_VERIFICATION_TEMPLATE, context);
-  }
-
-  private String computeSubject(List<String> idList) {
-    var nowInParisHour = ZonedDateTime.now(ZoneId.of(EUROPE_PARIS));
-    var formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-    return "[geo-jobs] Erreur lors de la vérification automatique de la clé API du client "
-        + formIdList(idList)
-        + " le "
-        + formatter.format(nowInParisHour);
-  }
-
   @NotNull
-  private static String formIdList(List<String> idList) {
+  private static String formatIdList(List<String> idList) {
     return String.join("/", idList);
   }
 }
