@@ -29,7 +29,8 @@ class AllDashboardApiKeyCheckTriggeredServiceTest {
         multipleCommunityAuthorization(mock(CommunityAuthorization.class));
     List<DashboardApiKeyCheckTriggered> childEvents = toChildEvents(communityAuthorizations);
 
-    when(communityAuthorizationRepositoryMock.findAll()).thenReturn(communityAuthorizations);
+    when(communityAuthorizationRepositoryMock.findAllByIntegrationTestUsageFalse())
+        .thenReturn(communityAuthorizations);
     doNothing().when(eventProducerMock).accept(eq(childEvents));
     subject =
         new AllDashboardApiKeyCheckTriggeredService(
@@ -37,15 +38,14 @@ class AllDashboardApiKeyCheckTriggeredServiceTest {
 
     subject.accept(new AllDashboardApiKeyCheckTriggered());
 
-    verify(communityAuthorizationRepositoryMock, times(1)).findAll();
+    verify(communityAuthorizationRepositoryMock, times(1)).findAllByIntegrationTestUsageFalse();
     verify(eventProducerMock, times(1)).accept(eq(childEvents));
   }
 
   @Test
   void all_dashboard_key_check_chunks_and_sends_gradually() {
-    // GIVEN we have 25 community authorizations
     List<CommunityAuthorization> communityAuthorizations = new ArrayList<>();
-    for (int i = 1; i <= 25; i++) {
+    for (int i = 1; i <= 60; i++) {
       CommunityAuthorization mockAuth = mock(CommunityAuthorization.class);
       when(mockAuth.getId()).thenReturn("id-" + i);
       when(mockAuth.getEmail()).thenReturn("user" + i + "@test.com");
@@ -53,19 +53,17 @@ class AllDashboardApiKeyCheckTriggeredServiceTest {
       communityAuthorizations.add(mockAuth);
     }
 
-    when(communityAuthorizationRepositoryMock.findAll()).thenReturn(communityAuthorizations);
+    when(communityAuthorizationRepositoryMock.findAllByIntegrationTestUsageFalse())
+        .thenReturn(communityAuthorizations);
 
     subject =
         new AllDashboardApiKeyCheckTriggeredService(
             communityAuthorizationRepositoryMock, eventProducerMock, listGrouper);
 
-    // WHEN the service accepts the event
     subject.accept(new AllDashboardApiKeyCheckTriggered());
 
-    // THEN we verify the findAll is called once
-    verify(communityAuthorizationRepositoryMock, times(1)).findAll();
+    verify(communityAuthorizationRepositoryMock, times(1)).findAllByIntegrationTestUsageFalse();
 
-    // AND we capture the arguments passed to eventProducer.accept
     ArgumentCaptor<List<DashboardApiKeyCheckTriggered>> captor =
         ArgumentCaptor.forClass(List.class);
     verify(eventProducerMock, times(3)).accept(captor.capture());
@@ -73,20 +71,20 @@ class AllDashboardApiKeyCheckTriggeredServiceTest {
     List<List<DashboardApiKeyCheckTriggered>> capturedBatches = captor.getAllValues();
     assertEquals(3, capturedBatches.size());
 
-    // Verify first batch (size 10)
-    assertEquals(10, capturedBatches.get(0).size());
+    // Verify first chunk (size 25)
+    assertEquals(25, capturedBatches.get(0).size());
     assertEquals("id-1", capturedBatches.get(0).get(0).getCommunityAuthorizationId());
-    assertEquals("id-10", capturedBatches.get(0).get(9).getCommunityAuthorizationId());
+    assertEquals("id-25", capturedBatches.get(0).get(24).getCommunityAuthorizationId());
 
-    // Verify second batch (size 10)
-    assertEquals(10, capturedBatches.get(1).size());
-    assertEquals("id-11", capturedBatches.get(1).get(0).getCommunityAuthorizationId());
-    assertEquals("id-20", capturedBatches.get(1).get(9).getCommunityAuthorizationId());
+    // Verify second chunk (size 25)
+    assertEquals(25, capturedBatches.get(1).size());
+    assertEquals("id-26", capturedBatches.get(1).get(0).getCommunityAuthorizationId());
+    assertEquals("id-50", capturedBatches.get(1).get(24).getCommunityAuthorizationId());
 
-    // Verify third batch (size 5)
-    assertEquals(5, capturedBatches.get(2).size());
-    assertEquals("id-21", capturedBatches.get(2).get(0).getCommunityAuthorizationId());
-    assertEquals("id-25", capturedBatches.get(2).get(4).getCommunityAuthorizationId());
+    // Verify third chunk (size 10)
+    assertEquals(10, capturedBatches.get(2).size());
+    assertEquals("id-51", capturedBatches.get(2).get(0).getCommunityAuthorizationId());
+    assertEquals("id-60", capturedBatches.get(2).get(9).getCommunityAuthorizationId());
   }
 
   private List<CommunityAuthorization> multipleCommunityAuthorization(

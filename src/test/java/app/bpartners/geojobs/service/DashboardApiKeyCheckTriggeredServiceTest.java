@@ -155,6 +155,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
   @Test
   void warn_when_multiple_users_found_for_same_email() {
     String adminApiKey = randomUUID().toString();
+    String actualDashboardApiKey = randomUUID().toString();
     String email = "exist@" + randomUUID();
     String authId = randomUUID().toString();
 
@@ -168,11 +169,13 @@ class DashboardApiKeyCheckTriggeredServiceTest {
 
     when(userAccountsApiMock.getUsersByCriteria(eq(email), eq(null), eq(null), anyString()))
         .thenReturn(List.of(user1, user2));
-    when(userAccountsApiMock.getUserApiKey(anyString(), eq(adminApiKey))).thenReturn(List.of());
+    when(userAccountsApiMock.getUserApiKey(anyString(), eq(adminApiKey)))
+        .thenReturn(List.of(new UserApiKey(actualDashboardApiKey, DASHBOARD)));
 
     DashboardApiKeyCheckTriggered event =
         DashboardApiKeyCheckTriggered.builder()
             .email(authorization.getEmail())
+            .dashboardApiKey(actualDashboardApiKey)
             .communityAuthorizationId(authId)
             .build();
 
@@ -231,7 +234,6 @@ class DashboardApiKeyCheckTriggeredServiceTest {
         .thenThrow(
             new RestClientResponseException(
                 "Error", 500, "Internal Server Error", HttpHeaders.EMPTY, null, null));
-    when(htmlTemplateParser.apply(anyString(), any())).thenReturn("Mock HTML Body Content");
 
     DashboardApiKeyCheckTriggered event =
         DashboardApiKeyCheckTriggered.builder()
