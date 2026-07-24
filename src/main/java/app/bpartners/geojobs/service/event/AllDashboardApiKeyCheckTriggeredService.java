@@ -21,13 +21,13 @@ public class AllDashboardApiKeyCheckTriggeredService
   private final EventProducer<DashboardApiKeyCheckTriggered> eventProducer;
   private final ListGrouper<DashboardApiKeyCheckTriggered> listGrouper;
 
-  private static final int CHUNK_SIZE = 10;
-  private static final long DELAY_BETWEEN_CHUNKS_MS = 2000L;
+  private static final int CHUNK_SIZE = 25;
+  private static final long DELAY_BETWEEN_CHUNKS_MS = 1000L;
 
   @Override
   public void accept(AllDashboardApiKeyCheckTriggered event) {
     List<CommunityAuthorization> allCommunityAuthorizations =
-        communityAuthorizationRepository.findAll();
+        communityAuthorizationRepository.findAllByIntegrationTestUsageFalse();
 
     List<DashboardApiKeyCheckTriggered> allEvents =
         allCommunityAuthorizations.stream().map(this::toTypedEvent).toList();
