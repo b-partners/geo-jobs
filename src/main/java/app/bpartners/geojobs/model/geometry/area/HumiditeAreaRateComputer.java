@@ -44,7 +44,6 @@ public class HumiditeAreaRateComputer extends AreaRateComputer {
   }
 
   @Override
-<<<<<<< HEAD
   public double compute(DetectableType detectableType) {
     if (roofArea <= 0) {
       throw new BadRequestException(
@@ -73,9 +72,6 @@ public class HumiditeAreaRateComputer extends AreaRateComputer {
   }
 
   private int getMalus(DetectableType detectableType) {
-=======
-  protected int getMalus(DetectableType detectableType) {
->>>>>>> 32cfa975 (chore: add risque vegetation to VGG properties)
     return switch (detectableType) {
       case HUMIDITE_CLAIR -> 1;
       case HUMIDITE_INTENSE -> 2;
