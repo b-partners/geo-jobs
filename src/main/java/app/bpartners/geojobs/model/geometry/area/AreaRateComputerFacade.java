@@ -9,11 +9,7 @@ public class AreaRateComputerFacade {
   private final HumiditeAreaRateComputer humiditeRateComputer;
   private final UsureAreaRateComputer usureRateComputer;
   private final MoisissureAreaRateComputer moisissureRateComputer;
-<<<<<<< HEAD
-  private final RoofScoreComputer roofScoreComputer = new RoofScoreComputer();
-=======
   private final RisqueVegetationAreaRateComputer risqueVegetationAreaRateComputer;
->>>>>>> 32cfa975 (chore: add risque vegetation to VGG properties)
 
   public AreaRateComputerFacade(Geometry roofGeometry, DetectedTile tile) {
     this.humiditeRateComputer = new HumiditeAreaRateComputer(roofGeometry.getArea(), tile);
