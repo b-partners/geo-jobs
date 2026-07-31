@@ -91,6 +91,8 @@ public class CityJSONRequestMapper {
                 ? null
                 : BigDecimal.valueOf(cityJSONRequest.getComplexityFactor()).setScale(2, HALF_UP))
         .knn(cityJSONRequest.getKnn())
+        .lidarProcessorType(
+            CityJSONRequestLidarProcessorMapper.toRest(cityJSONRequest.getLidarProcessorType()))
         .cityJsonFileUrls(restCityJsons);
   }
 
