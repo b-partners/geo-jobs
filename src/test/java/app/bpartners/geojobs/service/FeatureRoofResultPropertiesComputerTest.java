@@ -1,0 +1,212 @@
+package app.bpartners.geojobs.service;
+
+import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightRequestedService.ROOF_SLOPE_PROPERTY_NAME;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import app.bpartners.geojobs.model.geometry.MultiPolygonObjectType;
+import app.bpartners.geojobs.model.geometry.PolygonObjectType;
+import app.bpartners.geojobs.repository.model.detection.RoofCoveringType;
+import app.bpartners.geojobs.service.area.toiture.model.CoveringType;
+import app.bpartners.geojobs.service.area.toiture.model.FireRiskLevel;
+import app.bpartners.geojobs.service.area.toiture.model.MaintenancePriority;
+import app.bpartners.geojobs.service.area.toiture.model.RoofAssessmentResult;
+import app.bpartners.geojobs.service.area.toiture.model.VegetationIndex;
+import app.bpartners.geojobs.service.area.toiture.service.RoofAssessmentFacade;
+import app.bpartners.geojobs.service.area.toiture.service.RoofVegetationContextEvaluator;
+import app.bpartners.geojobs.service.event.DetectionRoofPropertiesRequestedService.DetectedRoofCovering;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.locationtech.jts.geom.Geometry;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+@ExtendWith(MockitoExtension.class)
+class FeatureRoofResultPropertiesComputerTest {
+
+  @Mock private GeometrySquareMeterArea geometrySquareMeterArea;
+  @Mock private PolygonObjectTypeConverter polygonObjectTypeConverter;
+  @Mock private RoofAssessmentFacade roofAssessmentFacade;
+  @Mock private ObjectMapper objectMapper;
+
+  @Mock private Geometry geometryUsedForAreaComputing;
+  @Mock private Geometry roofGeometryUsedForRateComputing;
+  @Mock private PolygonObjectType polygonObjectType;
+
+  @Captor private ArgumentCaptor<RoofVegetationContextEvaluator> evaluatorCaptor;
+
+  @InjectMocks private FeatureRoofResultPropertiesComputer computer;
+
+  private Feature feature;
+  private Collection<PolygonObjectType> detectedObjects;
+
+  @BeforeEach
+  void setUp() {
+    feature = new Feature();
+    detectedObjects = List.of(polygonObjectType);
+    List<MultiPolygonObjectType> convertedObjects = List.of();
+    RoofAssessmentResult stubAssessment =
+        new RoofAssessmentResult(
+            VegetationIndex.FAIBLE, FireRiskLevel.MODERE, MaintenancePriority.PRIORITAIRE);
+
+    lenient().when(geometrySquareMeterArea.apply(any())).thenReturn(150.0);
+    lenient().when(polygonObjectTypeConverter.convertFrom(any())).thenReturn(convertedObjects);
+    lenient().when(roofAssessmentFacade.computeAssessment(any())).thenReturn(stubAssessment);
+  }
+
+  @Test
+  @DisplayName(
+      "Should successfully compute properties with full valid data (slope, addresses, covering)")
+  void shouldComputePropertiesWithFullValidData() throws Exception {
+    Map<String, Object> inputProps = new HashMap<>();
+    inputProps.put("existing_key", "existing_value");
+    inputProps.put(ROOF_SLOPE_PROPERTY_NAME, 22.5);
+    inputProps.put("addresses", "[\"123 Main St\"]");
+    inputProps.put(
+        "covering", "{\"primary\":\"ROOF_ASPHALTE_BITUME\",\"secondary\":\"ROOF_TUILE\"}");
+    feature.setProperties(inputProps);
+
+    List<String> expectedAddresses = List.of("123 Main St");
+    DetectedRoofCovering expectedCovering =
+        new DetectedRoofCovering(
+            RoofCoveringType.ROOF_ASPHALTE_BITUME, RoofCoveringType.ROOF_TUILES);
+
+    when(objectMapper.readValue(eq("[\"123 Main St\"]"), any(TypeReference.class)))
+        .thenReturn(expectedAddresses);
+    when(objectMapper.readValue(
+            eq("{\"primary\":\"ROOF_ASPHALTE_BITUME\",\"secondary\":\"ROOF_TUILE\"}"),
+            eq(DetectedRoofCovering.class)))
+        .thenReturn(expectedCovering);
+
+    Map<String, Object> result =
+        computer.apply(
+            feature,
+            geometryUsedForAreaComputing,
+            roofGeometryUsedForRateComputing,
+            detectedObjects);
+
+    assertEquals("existing_value", result.get("existing_key"));
+    assertEquals(150.0, result.get("roof_area_in_m2"));
+    assertEquals(expectedAddresses, result.get("addresses"));
+    assertEquals(VegetationIndex.FAIBLE, result.get("vegetation_index"));
+    assertEquals(FireRiskLevel.MODERE, result.get("fire_risk"));
+    assertEquals(MaintenancePriority.PRIORITAIRE, result.get("maintenance_vegetation"));
+    assertEquals("ROOF_ASPHALTE_BITUME", result.get("revetement_1"));
+    assertEquals("ROOF_TUILE", result.get("revetement_2"));
+
+    verify(roofAssessmentFacade).computeAssessment(evaluatorCaptor.capture());
+    RoofVegetationContextEvaluator evaluator = evaluatorCaptor.getValue();
+    assertEquals(CoveringType.HIGH_COMBUSTIBILITY, evaluator.getRoofContext().coveringType());
+  }
+
+  @Test
+  @DisplayName("Should fall back gracefully when feature properties map is null")
+  void shouldHandleNullFeatureProperties() {
+    feature.setProperties(null);
+
+    Map<String, Object> result =
+        computer.apply(
+            feature,
+            geometryUsedForAreaComputing,
+            roofGeometryUsedForRateComputing,
+            detectedObjects);
+
+    assertEquals(150.0, result.get("roof_area_in_m2"));
+    assertNull(result.get("addresses"));
+    assertFalse(result.containsKey("revetement_1"));
+    assertFalse(result.containsKey("revetement_2"));
+
+    verify(roofAssessmentFacade).computeAssessment(evaluatorCaptor.capture());
+    RoofVegetationContextEvaluator evaluator = evaluatorCaptor.getValue();
+    assertNull(evaluator.getRoofContext().coveringType());
+  }
+
+  @Test
+  @DisplayName("Should classify non-bitumen primary covering as LOW_COMBUSTIBILITY")
+  void shouldClassifyNonBitumenCoveringAsLowCombustibility() throws Exception {
+    Map<String, Object> inputProps = new HashMap<>();
+    inputProps.put("covering", "{\"primary\":\"ROOF_TUILE\"}");
+    feature.setProperties(inputProps);
+
+    DetectedRoofCovering covering = new DetectedRoofCovering(RoofCoveringType.ROOF_TUILES, null);
+    when(objectMapper.readValue(anyString(), eq(DetectedRoofCovering.class))).thenReturn(covering);
+
+    Map<String, Object> result =
+        computer.apply(
+            feature,
+            geometryUsedForAreaComputing,
+            roofGeometryUsedForRateComputing,
+            detectedObjects);
+
+    assertEquals("ROOF_TUILE", result.get("revetement_1"));
+    assertNull(result.get("revetement_2"));
+
+    verify(roofAssessmentFacade).computeAssessment(evaluatorCaptor.capture());
+    assertEquals(
+        CoveringType.LOW_COMBUSTIBILITY,
+        evaluatorCaptor.getValue().getRoofContext().coveringType());
+  }
+
+  @Test
+  @DisplayName("Should handle JSON parsing errors gracefully for addresses and covering")
+  void shouldHandleJsonProcessingExceptions() throws Exception {
+    Map<String, Object> inputProps = new HashMap<>();
+    inputProps.put("addresses", "invalid-json");
+    inputProps.put("covering", "invalid-json");
+    feature.setProperties(inputProps);
+
+    when(objectMapper.readValue(eq("invalid-json"), any(TypeReference.class)))
+        .thenThrow(new JsonProcessingException("parse error") {});
+    when(objectMapper.readValue(eq("invalid-json"), eq(DetectedRoofCovering.class)))
+        .thenThrow(new JsonProcessingException("parse error") {});
+
+    Map<String, Object> result =
+        computer.apply(
+            feature,
+            geometryUsedForAreaComputing,
+            roofGeometryUsedForRateComputing,
+            detectedObjects);
+
+    assertNull(result.get("addresses"));
+    assertFalse(result.containsKey("revetement_1"));
+    assertFalse(result.containsKey("revetement_2"));
+  }
+
+  @Test
+  @DisplayName("Should handle covering payload with null primary element")
+  void shouldHandleNullPrimaryInCovering() throws Exception {
+    Map<String, Object> inputProps = new HashMap<>();
+    inputProps.put("covering", "{\"primary\":null}");
+    feature.setProperties(inputProps);
+
+    DetectedRoofCovering covering = new DetectedRoofCovering(null, null);
+    when(objectMapper.readValue(anyString(), eq(DetectedRoofCovering.class))).thenReturn(covering);
+
+    Map<String, Object> result =
+        computer.apply(
+            feature,
+            geometryUsedForAreaComputing,
+            roofGeometryUsedForRateComputing,
+            detectedObjects);
+
+    assertNull(result.get("revetement_1"));
+    assertNull(result.get("revetement_2"));
+
+    verify(roofAssessmentFacade).computeAssessment(evaluatorCaptor.capture());
+    assertNull(evaluatorCaptor.getValue().getRoofContext().coveringType());
+  }
+}
