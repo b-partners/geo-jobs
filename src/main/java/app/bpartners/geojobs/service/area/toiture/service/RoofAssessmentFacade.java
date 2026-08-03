@@ -15,6 +15,13 @@ public class RoofAssessmentFacade {
   private final FireRiskEvaluator fireRiskEvaluator;
   private final MaintenanceEvaluator maintenanceEvaluator;
 
+  public RoofAssessmentResult computeAssessment(
+      RoofVegetationContextEvaluator roofVegetationContextEvaluator) {
+    return computeAssessment(
+        roofVegetationContextEvaluator.getVegetationContext(),
+        roofVegetationContextEvaluator.getRoofContext());
+  }
+
   public RoofAssessmentResult computeAssessment(VegetationContext veg, RoofContext roof) {
     VegetationIndex vegIndex = vegetationProfiler.evaluate(veg);
 
