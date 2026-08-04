@@ -27,6 +27,7 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.mockito.ArgumentCaptor;
@@ -56,8 +57,8 @@ class FeatureRoofResultPropertiesComputerTest {
   @BeforeEach
   void setUp() {
     GeometryFactory gf = new GeometryFactory();
-    geometryUsedForAreaComputing = gf.createPolygon();
-    roofGeometryUsedForRateComputing = gf.createPolygon();
+    geometryUsedForAreaComputing = createSquare(gf, 100);
+    roofGeometryUsedForRateComputing = createSquare(gf, 100);
 
     feature = new Feature();
     detectedObjects = List.of();
@@ -67,7 +68,9 @@ class FeatureRoofResultPropertiesComputerTest {
             VegetationIndex.FAIBLE, FireRiskLevel.MODERE, MaintenancePriority.PRIORITAIRE);
 
     lenient().when(geometrySquareMeterArea.apply(any())).thenReturn(150.0);
-    lenient().when(polygonObjectTypeConverter.convertFrom(anyCollection())).thenReturn(convertedObjects);
+    lenient()
+        .when(polygonObjectTypeConverter.convertFrom(anyCollection()))
+        .thenReturn(convertedObjects);
     lenient().when(roofAssessmentFacade.computeAssessment(any())).thenReturn(stubAssessment);
   }
 
@@ -132,7 +135,8 @@ class FeatureRoofResultPropertiesComputerTest {
 
     verify(roofAssessmentFacade).computeAssessment(evaluatorCaptor.capture());
     RoofVegetationContextEvaluator evaluator = evaluatorCaptor.getValue();
-    assertNull(evaluator.getRoofContext().coveringType());
+    // Unknown covering is conservatively treated as highly combustible for fire risk
+    assertEquals(CoveringType.HIGH_COMBUSTIBILITY, evaluator.getRoofContext().coveringType());
   }
 
   @Test
@@ -204,6 +208,20 @@ class FeatureRoofResultPropertiesComputerTest {
     assertNull(result.get("revetement_2"));
 
     verify(roofAssessmentFacade).computeAssessment(evaluatorCaptor.capture());
-    assertNull(evaluatorCaptor.getValue().getRoofContext().coveringType());
+    // Unknown covering is conservatively treated as highly combustible for fire risk
+    assertEquals(
+        CoveringType.HIGH_COMBUSTIBILITY,
+        evaluatorCaptor.getValue().getRoofContext().coveringType());
+  }
+
+  private static Geometry createSquare(GeometryFactory gf, double size) {
+    return gf.createPolygon(
+        new Coordinate[] {
+          new Coordinate(0, 0),
+          new Coordinate(size, 0),
+          new Coordinate(size, size),
+          new Coordinate(0, size),
+          new Coordinate(0, 0)
+        });
   }
 }
