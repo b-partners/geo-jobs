@@ -49,7 +49,7 @@ class FeatureRoofResultPropertiesComputerTest {
 
   @Captor private ArgumentCaptor<RoofVegetationContextEvaluator> evaluatorCaptor;
 
-  @InjectMocks private FeatureRoofResultPropertiesComputer computer;
+  @InjectMocks private FeatureRoofResultPropertiesComputer subject;
 
   private Feature feature;
   private Collection<PolygonObjectType> detectedObjects;
@@ -92,12 +92,12 @@ class FeatureRoofResultPropertiesComputerTest {
     when(objectMapper.readValue(eq("[\"123 Main St\"]"), any(TypeReference.class)))
         .thenReturn(expectedAddresses);
     when(objectMapper.readValue(
-            eq("{\"primary\":\"ROOF_ASPHALTE_BITUME\",\"secondary\":\"ROOF_TUILES\"}"),
-            eq(DetectedRoofCovering.class)))
+            "{\"primary\":\"ROOF_ASPHALTE_BITUME\",\"secondary\":\"ROOF_TUILES\"}",
+            DetectedRoofCovering.class))
         .thenReturn(expectedCovering);
 
     Map<String, Object> result =
-        computer.apply(
+        subject.apply(
             feature,
             geometryUsedForAreaComputing,
             roofGeometryUsedForRateComputing,
@@ -122,7 +122,7 @@ class FeatureRoofResultPropertiesComputerTest {
     feature.setProperties(null);
 
     Map<String, Object> result =
-        computer.apply(
+        subject.apply(
             feature,
             geometryUsedForAreaComputing,
             roofGeometryUsedForRateComputing,
@@ -149,7 +149,7 @@ class FeatureRoofResultPropertiesComputerTest {
     when(objectMapper.readValue(anyString(), eq(DetectedRoofCovering.class))).thenReturn(covering);
 
     Map<String, Object> result =
-        computer.apply(
+        subject.apply(
             feature,
             geometryUsedForAreaComputing,
             roofGeometryUsedForRateComputing,
@@ -173,11 +173,11 @@ class FeatureRoofResultPropertiesComputerTest {
 
     when(objectMapper.readValue(eq("invalid-json"), any(TypeReference.class)))
         .thenThrow(new JsonProcessingException("parse error") {});
-    when(objectMapper.readValue(eq("invalid-json"), eq(DetectedRoofCovering.class)))
+    when(objectMapper.readValue("invalid-json", DetectedRoofCovering.class))
         .thenThrow(new JsonProcessingException("parse error") {});
 
     Map<String, Object> result =
-        computer.apply(
+        subject.apply(
             feature,
             geometryUsedForAreaComputing,
             roofGeometryUsedForRateComputing,
@@ -198,7 +198,7 @@ class FeatureRoofResultPropertiesComputerTest {
     when(objectMapper.readValue(anyString(), eq(DetectedRoofCovering.class))).thenReturn(covering);
 
     Map<String, Object> result =
-        computer.apply(
+        subject.apply(
             feature,
             geometryUsedForAreaComputing,
             roofGeometryUsedForRateComputing,
