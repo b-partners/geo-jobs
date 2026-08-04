@@ -25,7 +25,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.locationtech.jts.geom.Geometry;
@@ -73,9 +72,7 @@ class FeatureRoofResultPropertiesComputerTest {
   }
 
   @Test
-  @DisplayName(
-      "Should successfully compute properties with full valid data (slope, addresses, covering)")
-  void shouldComputePropertiesWithFullValidData() throws Exception {
+  void should_compute_properties_with_full_valid_data() throws Exception {
     Map<String, Object> inputProps = new HashMap<>();
     inputProps.put("existing_key", "existing_value");
     inputProps.put(ROOF_SLOPE_PROPERTY_NAME, 22.5);
@@ -118,8 +115,7 @@ class FeatureRoofResultPropertiesComputerTest {
   }
 
   @Test
-  @DisplayName("Should fall back gracefully when feature properties map is null")
-  void shouldHandleNullFeatureProperties() {
+  void should_handle_null_feature_properties() {
     feature.setProperties(null);
 
     Map<String, Object> result =
@@ -140,8 +136,7 @@ class FeatureRoofResultPropertiesComputerTest {
   }
 
   @Test
-  @DisplayName("Should classify non-bitumen primary covering as LOW_COMBUSTIBILITY")
-  void shouldClassifyNonBitumenCoveringAsLowCombustibility() throws Exception {
+  void should_classify_non_bitumen_covering_as_low_combustibility() throws Exception {
     Map<String, Object> inputProps = new HashMap<>();
     inputProps.put("covering", "{\"primary\":\"ROOF_TUILES\"}");
     feature.setProperties(inputProps);
@@ -166,8 +161,7 @@ class FeatureRoofResultPropertiesComputerTest {
   }
 
   @Test
-  @DisplayName("Should handle JSON parsing errors gracefully for addresses and covering")
-  void shouldHandleJsonProcessingExceptions() throws Exception {
+  void should_handle_json_processing_exceptions() throws Exception {
     Map<String, Object> inputProps = new HashMap<>();
     inputProps.put("addresses", "invalid-json");
     inputProps.put("covering", "invalid-json");
@@ -191,8 +185,7 @@ class FeatureRoofResultPropertiesComputerTest {
   }
 
   @Test
-  @DisplayName("Should handle covering payload with null primary element")
-  void shouldHandleNullPrimaryInCovering() throws Exception {
+  void should_handle_null_primary_in_covering() throws Exception {
     Map<String, Object> inputProps = new HashMap<>();
     inputProps.put("covering", "{\"primary\":null}");
     feature.setProperties(inputProps);
