@@ -3,41 +3,44 @@ compute:
   frontal_function_invocation_method: lambda-url
   frontal_function_timeout: 300
   frontal_memory: 2048
-  with_queues_nb: 3
-  worker_1_batch: 5
-  worker_1_memory: 1024
-  worker_2_batch: 5
-  worker_2_memory: 1024
-  worker_3_memory: 1024
-  worker_4_memory: 10240
-  worker_function_1_timeout: 900
-  worker_function_2_timeout: 900
-  worker_function_3_timeout: 900
-  worker_function_4_timeout: 900
+  workers:
+    - batch: 1
+      memory: 1024
+      reserved_concurrent_executions_nb: 100
+      timeout: 900
+    - batch: 1
+      memory: 2048
+      reserved_concurrent_executions_nb: 100
+      timeout: 900
+    - batch: 1
+      memory: 1024
+      reserved_concurrent_executions_nb: 10
+      timeout: 900
+    - batch: 1
+      memory: 2048
+      reserved_concurrent_executions_nb: 10
+      timeout: 900
 concurrency:
   frontal_reserved_concurrent_executions_nb: null
-  worker_1_reserved_concurrent_executions_nb: 2
-  worker_2_reserved_concurrent_executions_nb: 2
-  worker_3_reserved_concurrent_executions_nb: 2
-  worker_4_reserved_concurrent_executions_nb: 2
 database:
-  with_database: None
+  with_database: non-poja-managed-postgres
 emailing:
   ses_source: lou@bpartners.app
 gen_api_client:
   aws_account_id: 'null'
   codeartifact_domain_name: 'null'
   codeartifact_repository_name: 'null'
-  ts_client_api_url_env_var_name: ''
-  ts_client_default_openapi_server_url: ''
+  ts_client_api_url_env_var_name: 'null'
+  ts_client_default_openapi_server_url: 'null'
   with_gen_clients: 'true'
   with_publish_to_npm_registry: 'false'
 general:
   app_name: geo-jobs
-  cli_version: 20.0.6
+  cli_version: 21.6.0
   custom_java_deps: poja-custom-java-deps.txt
   custom_java_env_vars: poja-custom-java-env-vars.txt
   custom_java_repositories: poja-custom-java-repositories.txt
+  java_main_class: PojaApplication
   package_full_name: app.bpartners.geojobs
   poja_domain_owner: 088312068315
   poja_python_repository_domain: python-numer-tech
@@ -57,5 +60,10 @@ networking:
   with_own_vpc: 'true'
 scheduled_tasks: null
 testing:
-  jacoco_min_coverage: '0.8'
+  custom_java_gradle_test_args: poja-custom-java-gradle-test-args.txt
+  custom_java_test_env_vars: poja-custom-java-test-env-vars.txt
+  jacoco_min_coverage: '0.7'
   java_facade_it: FacadeIT
+  max_heap_size: 10g
+  min_heap_size: 8g
+  stack_size: null
