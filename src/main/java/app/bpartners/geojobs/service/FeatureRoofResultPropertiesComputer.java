@@ -5,6 +5,9 @@ import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightReq
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.model.geometry.PolygonObjectType;
 import app.bpartners.geojobs.model.geometry.area.AreaRateComputerFacade;
+import app.bpartners.geojobs.service.area.toiture.model.CoveringType;
+import app.bpartners.geojobs.service.area.toiture.service.RoofAssessmentFacade;
+import app.bpartners.geojobs.service.area.toiture.service.RoofVegetationContextEvaluator;
 import app.bpartners.geojobs.service.event.DetectionRoofPropertiesRequestedService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -20,6 +23,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class FeatureRoofResultPropertiesComputer {
   private final GeometrySquareMeterArea geometrySquareMeterArea;
+  private final PolygonObjectTypeConverter polygonObjectTypeConverter;
+  private final RoofAssessmentFacade roofAssessmentFacade;
   private final ObjectMapper objectMapper;
 
   public HashMap<String, Object> apply(
@@ -34,8 +39,8 @@ public class FeatureRoofResultPropertiesComputer {
       actualProperties.putAll(feature.getProperties());
     }
 
-    actualProperties.put(
-        "roof_area_in_m2", geometrySquareMeterArea.apply(geometryUsedForAreaComputing));
+    var roofAreaInSquareMeters = geometrySquareMeterArea.apply(geometryUsedForAreaComputing);
+    actualProperties.put("roof_area_in_m2", roofAreaInSquareMeters);
 
     var addresses = retrieveAddressesProperty(feature);
     actualProperties.put("addresses", addresses);
@@ -43,17 +48,30 @@ public class FeatureRoofResultPropertiesComputer {
     var rateComputer =
         new AreaRateComputerFacade(
             roofGeometryUsedForRateComputing, detectedObjectPolygonGeometriesUsedForRateComputing);
+    var vegetationEvaluator =
+        new RoofVegetationContextEvaluator(
+            roofGeometryUsedForRateComputing,
+            roofAreaInSquareMeters,
+            polygonObjectTypeConverter.convertFrom(
+                detectedObjectPolygonGeometriesUsedForRateComputing),
+            retrieveRoofSlopeInDegrees(feature),
+            retrieveCoveringType(feature),
+            false /* hasDrainageSystem not yet available from detection */);
     var usureRate = rateComputer.getUsureAreaRate();
     var humiditeRate = rateComputer.getHumidityAreaRate();
     var moisissureRate = rateComputer.getMoisissureAreaRate();
     var globalRateValue = rateComputer.getGlobalRate();
     var globalRateType = rateComputer.getRate();
+    var roofAssessment = roofAssessmentFacade.computeAssessment(vegetationEvaluator);
 
     actualProperties.put("usure_rate", usureRate);
     actualProperties.put("humidite_rate", humiditeRate);
     actualProperties.put("moisissure_rate", moisissureRate);
     actualProperties.put("global_rate_value", globalRateValue);
     actualProperties.put("global_rate_type", globalRateType);
+    actualProperties.put("vegetation_index", roofAssessment.vegetationIndex());
+    actualProperties.put("fire_risk", roofAssessment.fireRiskLevel());
+    actualProperties.put("maintenance_vegetation", roofAssessment.maintenancePriority());
 
     var detectedRoofCovering = retrieveCoveringProperties(feature);
     if (detectedRoofCovering != null) {
@@ -68,6 +86,25 @@ public class FeatureRoofResultPropertiesComputer {
     }
 
     return actualProperties;
+  }
+
+  private Double retrieveRoofSlopeInDegrees(Feature feature) {
+    if (feature.getProperties() == null
+        || feature.getProperties().get(ROOF_SLOPE_PROPERTY_NAME) == null) {
+      return null;
+    }
+    return ((Number) feature.getProperties().get(ROOF_SLOPE_PROPERTY_NAME)).doubleValue();
+  }
+
+  private CoveringType retrieveCoveringType(Feature feature) {
+    var detectedRoofCovering = retrieveCoveringProperties(feature);
+    if (detectedRoofCovering == null || detectedRoofCovering.primary() == null) {
+      return null;
+    }
+    return switch (detectedRoofCovering.primary()) {
+      case ROOF_ASPHALTE_BITUME -> CoveringType.HIGH_COMBUSTIBILITY;
+      default -> CoveringType.LOW_COMBUSTIBILITY;
+    };
   }
 
   private DetectionRoofPropertiesRequestedService.DetectedRoofCovering retrieveCoveringProperties(
