@@ -1,6 +1,5 @@
 package app.bpartners.geojobs.service;
 
-import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import java.util.function.Function;
@@ -10,8 +9,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class DetectionImageAttributeRetriever implements Function<Detection, String> {
-  private final BucketComponent bucketComponent;
-  private final CustomBucketComponent customBucketComponent;
+  private final CustomBucketComponent bucketComponent;
 
   @Override
   public String apply(Detection detection) {
@@ -19,7 +17,7 @@ public class DetectionImageAttributeRetriever implements Function<Detection, Str
     var polygonGeoJsonZone = detection.getPolygonGeoJsonZone();
     if (imageFileKey == null && polygonGeoJsonZone != null) {
       var bucketKey = "zone_images/" + detection.getId() + ".jpg";
-      if (customBucketComponent.listObjects(bucketComponent.getBucketName(), bucketKey).isEmpty()) {
+      if (bucketComponent.listObjects(bucketComponent.getBucketName(), bucketKey).isEmpty()) {
         return null;
       }
       return bucketComponent.presign(bucketKey);

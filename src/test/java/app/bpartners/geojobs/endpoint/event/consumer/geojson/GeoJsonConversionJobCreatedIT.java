@@ -20,7 +20,7 @@ import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionJobStatusReco
 import app.bpartners.geojobs.endpoint.rest.model.GeoJsonsUrl;
 import app.bpartners.geojobs.endpoint.rest.model.Status;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.file.hash.FileHash;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
@@ -58,7 +58,7 @@ class GeoJsonConversionJobCreatedIT extends DetectionIT {
   @Autowired GeoJsonConversionJobService geoJsonConversionJobService;
   @Autowired ZoneDetectionJobRepository zoneDetectionJobRepository;
   @MockBean EventProducer eventProducerMock;
-  @MockBean BucketComponent bucketComponentMock;
+  @MockBean CustomBucketComponent bucketComponentMock;
   @Autowired MachineDetectedTileRepository machineDetectedTileRepository;
   @Autowired GeoJsonConversionJobRepository geoJsonConversionJobRepository;
   @Autowired DetectableObjectConfigurationRepository objectConfigurationRepository;

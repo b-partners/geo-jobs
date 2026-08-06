@@ -6,7 +6,6 @@ import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.endpoint.rest.model.Point;
 import app.bpartners.geojobs.endpoint.rest.model.Polygon;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
@@ -24,8 +23,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class DetectionFeaturesResultImageRetriever implements Function<Detection, List<Feature>> {
-  private final BucketComponent bucketComponent;
-  private final CustomBucketComponent customBucketComponent;
+  private final CustomBucketComponent bucketComponent;
   private final GeometryConverter geometryConverter;
   private final DetectionImageAttributeRetriever imageAttributeRetriever;
   private final DetectionVggAttributeRetriever vggAttributeRetriever;
@@ -156,7 +154,7 @@ public class DetectionFeaturesResultImageRetriever implements Function<Detection
 
   private void addPropertyIfFileKeyExist(String fileKey, Feature feature, String fileProperty) {
     var fileExist =
-        customBucketComponent.listObjects(bucketComponent.getBucketName(), fileKey).stream()
+        bucketComponent.listObjects(bucketComponent.getBucketName(), fileKey).stream()
             .findAny()
             .isPresent();
     if (fileExist) {
@@ -171,8 +169,7 @@ public class DetectionFeaturesResultImageRetriever implements Function<Detection
                         + feature.getProperties().get("nb")
                         + (fileProperty.contains("image_url") ? ".jpg" : ".json"))
                 : Optional.empty();
-        var propertyUrl =
-            customBucketComponent.presign(fileKey, Duration.ofHours(1L), customFileName);
+        var propertyUrl = bucketComponent.presign(fileKey, Duration.ofHours(1L), customFileName);
         var properties =
             feature.getProperties() == null
                 ? new HashMap<String, Object>()

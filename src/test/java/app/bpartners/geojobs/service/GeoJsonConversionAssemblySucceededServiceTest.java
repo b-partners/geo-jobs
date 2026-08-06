@@ -8,7 +8,7 @@ import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionAssemblySucceeded;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
@@ -31,7 +31,7 @@ class GeoJsonConversionAssemblySucceededServiceTest {
   DetectionFinishedMailer detectionFinishedMailerMock = mock();
   HTMLTemplateParser htmlTemplateParser = new HTMLTemplateParser();
   DetectionRepository detectionRepositoryMock = mock(DetectionRepository.class);
-  BucketComponent bucketComponentMock = mock(BucketComponent.class);
+  CustomBucketComponent bucketComponentMock = mock(CustomBucketComponent.class);
   EventProducer eventProducerMock = mock(EventProducer.class);
 
   ZoneDetectionJobRepository zoneDetectionJobRepositoryMock =

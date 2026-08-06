@@ -10,7 +10,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.endpoint.event.model.DetectionSucceeded;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.ZoneDetectionJobRepository;
@@ -25,7 +25,7 @@ class DetectionSucceededServiceTest {
   DetectionFinishedMailer detectionFinishedMailerMock = mock();
   HTMLTemplateParser htmlTemplateParserMock = mock();
   DetectionRepository detectionRepositoryMock = mock();
-  BucketComponent bucketComponentMock = mock();
+  CustomBucketComponent bucketComponentMock = mock();
   ZoneDetectionJobRepository zoneDetectionJobRepositoryMock = mock();
   DetectionSucceededService subject =
       new DetectionSucceededService(

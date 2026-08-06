@@ -12,7 +12,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.data.domain.Pageable.unpaged;
 
 import app.bpartners.geojobs.endpoint.rest.model.DetectionExportAttribute;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
@@ -28,7 +28,7 @@ class DetectionExportServiceTest {
   CommunityAuthorizationRepository communityAuthorizationRepositoryMock = mock();
   DetectionRepository detectionRepositoryMock = mock();
   DetectionConverter detectionConverterMock = mock();
-  BucketComponent bucketComponentMock = mock();
+  CustomBucketComponent bucketComponentMock = mock();
 
   DetectionExportService subject =
       new DetectionExportService(

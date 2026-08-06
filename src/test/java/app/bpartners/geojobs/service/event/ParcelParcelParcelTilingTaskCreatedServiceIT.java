@@ -17,7 +17,7 @@ import app.bpartners.geojobs.endpoint.event.model.tile.ParcelTilingTaskCreated;
 import app.bpartners.geojobs.endpoint.rest.controller.v1.ZoneTilingController;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.endpoint.rest.model.TiledParcel;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.file.hash.FileHash;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.TaskStatus;
@@ -60,7 +60,7 @@ public class ParcelParcelParcelTilingTaskCreatedServiceIT extends FacadeIT {
           + "      [ 4.459648282829194, 45.904988912620688 ] ] ] ] }";
   @Autowired ParcelTilingTaskCreatedService subject;
   @Autowired ZoneTilingController zoneTilingController;
-  @MockBean BucketComponent bucketComponent;
+  @MockBean CustomBucketComponent bucketComponent;
   @MockBean TilesDownloader tilesDownloader;
   @Autowired TilingTaskRepository tilingTaskRepository;
   @Autowired ZoneTilingJobRepository zoneTilingJobRepository;

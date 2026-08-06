@@ -16,7 +16,7 @@ import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.Polygon;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.file.WhiteImageDetector;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.file.hash.FileHash;
 import app.bpartners.geojobs.repository.DetectionFileObjectRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
@@ -45,7 +45,7 @@ class FeatureImageRequestedServiceTest {
   public static final double ONE_KILOMETRE_AREA = 1_000_000.0;
   DetectionRepository detectionRepositoryMock = mock();
   GeometryConverter geometryConverterMock = mock();
-  BucketComponent bucketComponentMock = mock();
+  CustomBucketComponent bucketComponentMock = mock();
   TileImagesAssembler tileImageAssemblerMock = mock();
   TilingTaskRepository tilingTaskRepositoryMock = mock();
   GeometrySquareMeterArea geometrySquareMeterAreaMock = mock();

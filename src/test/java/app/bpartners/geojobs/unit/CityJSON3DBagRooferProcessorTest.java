@@ -15,7 +15,7 @@ import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.file.FileWriter;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSON;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
 import app.bpartners.geojobs.service.CityJSON3DBagRooferProcessor;
@@ -46,7 +46,7 @@ import org.mockito.Mockito;
 import org.springframework.core.io.ClassPathResource;
 
 class CityJSON3DBagRooferProcessorTest {
-  BucketComponent bucketComponentMock = mock(BucketComponent.class);
+  CustomBucketComponent bucketComponentMock = mock(CustomBucketComponent.class);
   FeatureMapper featureMapperMock = mock(FeatureMapper.class);
   LidarApiFacade lidarApiFacadeMock = mock(LidarApiFacade.class);
   Roofer3DBagApiClient roofer3DBagApiClientMock = mock(Roofer3DBagApiClient.class);

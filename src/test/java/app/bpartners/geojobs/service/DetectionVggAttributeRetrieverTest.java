@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,7 +15,7 @@ import software.amazon.awssdk.awscore.exception.AwsServiceException;
 
 class DetectionVggAttributeRetrieverTest {
 
-  BucketComponent bucketComponentMock = mock();
+  CustomBucketComponent bucketComponentMock = mock();
   DetectionVggAttributeRetriever subject = new DetectionVggAttributeRetriever(bucketComponentMock);
 
   @Test

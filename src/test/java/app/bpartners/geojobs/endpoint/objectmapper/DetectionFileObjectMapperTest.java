@@ -9,12 +9,12 @@ import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.DetectionFileObjectMapper;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionFileType;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.model.detection.DetectionFileObject;
 import org.junit.jupiter.api.Test;
 
 class DetectionFileObjectMapperTest {
-  BucketComponent bucketComponentMock = mock(BucketComponent.class);
+  CustomBucketComponent bucketComponentMock = mock(CustomBucketComponent.class);
   DetectionFileObjectMapper subject = new DetectionFileObjectMapper(bucketComponentMock);
 
   @Test

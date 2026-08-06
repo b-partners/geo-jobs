@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 
 class TileObjectDetectorConfTest {
-  BucketComponent bucketComponentMock = mock(BucketComponent.class);
+  CustomBucketComponent bucketComponentMock = mock(CustomBucketComponent.class);
   TileObjectDetectorConf subject = new TileObjectDetectorConf(bucketComponentMock);
 
   @SneakyThrows

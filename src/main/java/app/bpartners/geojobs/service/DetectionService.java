@@ -26,7 +26,7 @@ import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.file.FileWriter;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.job.model.Job;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
@@ -73,7 +73,7 @@ public class DetectionService {
   private final EventProducer eventProducer;
   private final DetectionRepository detectionRepository;
   private final CommunityUsedSurfaceService communityUsedSurfaceService;
-  private final BucketComponent bucketComponent;
+  private final CustomBucketComponent bucketComponent;
   private final GeoJsonConversionJobService conversionInitiationService;
   private final ObjectMapper objectMapper;
   private final AuthProvider authProvider;

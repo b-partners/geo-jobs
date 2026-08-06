@@ -7,7 +7,7 @@ import static java.util.UUID.randomUUID;
 import app.bpartners.geojobs.endpoint.event.model.GeoCodingJobCreated;
 import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.GeoCodingJobRepository;
 import app.bpartners.geojobs.service.ExcelAddressConverter;
 import app.bpartners.geojobs.service.GeoCodeService;
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Service;
 public class GeoCodingJobCreatedService implements Consumer<GeoCodingJobCreated> {
   private final GeoCodingJobRepository repository;
   private final ExcelAddressConverter excelAddressConverter;
-  private final BucketComponent bucketComponent;
+  private final CustomBucketComponent bucketComponent;
   private final GeoCodeService geoCodeService;
   private final ObjectMapper objectMapper;
 

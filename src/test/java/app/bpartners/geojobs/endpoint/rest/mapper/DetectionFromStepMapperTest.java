@@ -7,7 +7,7 @@ import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.DetectionFromSte
 import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.DetectionStepMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.RoofDelimiterMapper;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionStepName;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.DetectionStep;
 import app.bpartners.geojobs.service.DetectionFeaturesResultImageRetriever;
@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 
 class DetectionFromStepMapperTest {
 
-  BucketComponent bucketComponentMock = mock(BucketComponent.class);
+  CustomBucketComponent bucketComponentMock = mock(CustomBucketComponent.class);
   DetectionFeaturesResultImageRetriever detectionFeaturesResultImageRetrieverMock =
       mock(DetectionFeaturesResultImageRetriever.class);
   DetectionImageAttributeRetriever detectionImageAttributeRetrieverMock =

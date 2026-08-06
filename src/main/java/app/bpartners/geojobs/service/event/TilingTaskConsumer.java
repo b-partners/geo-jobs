@@ -6,7 +6,7 @@ import static java.util.UUID.randomUUID;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.endpoint.rest.model.TileInfoSize;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.file.zip.FileUnzipper;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.model.exception.ImageSourcesTimeoutException;
@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component;
 public class TilingTaskConsumer implements TaskConsumer<ParcelTilingTask> {
   private static final int DEFAULT_TILE_SIZE = 1024;
   private final TilesDownloader tilesDownloader;
-  private final BucketComponent bucketComponent;
+  private final CustomBucketComponent bucketComponent;
 
   @Override
   public void accept(ParcelTilingTask parcelTilingTask) {

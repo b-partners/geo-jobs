@@ -9,7 +9,7 @@ import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.file.ExtensionGuesser;
 import app.bpartners.geojobs.file.FileWriter;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
@@ -23,7 +23,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class CityJSONInternalProcessorTest {
-  private final BucketComponent bucketComponentMock = mock();
+  private final CustomBucketComponent bucketComponentMock = mock();
   private final CityJsonProcessorApiClient apiClientMock = mock();
   private final CityJsonTextureComputer textureComputerMock = mock();
   private final CityJSONInternalProcessor.CityJSONDownloader cityJSONDownloaderMock = mock();
