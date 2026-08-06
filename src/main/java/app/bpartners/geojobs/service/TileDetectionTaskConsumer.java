@@ -8,7 +8,7 @@ import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.model.DetectedTile;
 import app.bpartners.geojobs.model.geometry.IntXY;
 import app.bpartners.geojobs.repository.DetectionFileObjectRepository;
@@ -46,7 +46,7 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
   private final DetectionMaskFromTileRetriever maskRetriever;
   private final RoofCoveringDetector roofCoveringDetector;
   private final DetectionFileObjectRepository detectionObjectHistoryRepository;
-  private final BucketComponent bucketComponent;
+  private final CustomBucketComponent bucketComponent;
   private final TileCoordinatesPolygonIntersection tileCoordinatesPolygonIntersection;
   private final FilePolygonDrawer filePolygonDrawer;
   private final DetectedTileVggExtractor detectedTileVggExtractor;

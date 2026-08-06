@@ -5,7 +5,7 @@ import static java.util.Objects.requireNonNullElse;
 
 import app.bpartners.geojobs.endpoint.event.model.DetectionSaved;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerProperties;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.mail.Email;
 import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
@@ -32,7 +32,7 @@ import org.thymeleaf.context.Context;
 public class DetectionSavedService implements Consumer<DetectionSaved> {
   public static final String DETECTION_SAVED_TEMPLATE = "detection_saved";
   private final Mailer mailer;
-  private final BucketComponent bucketComponent;
+  private final CustomBucketComponent bucketComponent;
   private final DetectionGeoServerParameterModelMapper detectionGeoServerParameterModelMapper;
   private final CommunityAuthorizationRepository communityAuthorizationRepository;
   private final DetectionRepository detectionRepository;
@@ -67,7 +67,7 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
   @NonNull
   public static String computeStaticEmailBody(
       Detection detection,
-      BucketComponent bucketComponent,
+      CustomBucketComponent bucketComponent,
       DetectionGeoServerParameterModelMapper detectionGeoServerParameterModelMapper,
       CommunityAuthorizationRepository communityAuthorizationRepository) {
     var shapeFilePresignURL = getShapeFilePresignURL(detection, bucketComponent);
@@ -111,14 +111,14 @@ public class DetectionSavedService implements Consumer<DetectionSaved> {
   }
 
   private static String getExcelFilePresignURL(
-      Detection detection, BucketComponent bucketComponent) {
+      Detection detection, CustomBucketComponent bucketComponent) {
     return detection.getExcelFileKey() == null
         ? null
         : bucketComponent.presign(detection.getExcelFileKey(), Duration.ofHours(24L)).toString();
   }
 
   private static String getShapeFilePresignURL(
-      Detection detection, BucketComponent bucketComponent) {
+      Detection detection, CustomBucketComponent bucketComponent) {
     return detection.getShapeFileKey() == null
         ? null
         : bucketComponent.presign(detection.getShapeFileKey(), Duration.ofHours(24L)).toString();

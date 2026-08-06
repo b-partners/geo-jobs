@@ -13,7 +13,7 @@ import app.bpartners.geojobs.endpoint.rest.model.DetectionStep;
 import app.bpartners.geojobs.endpoint.rest.model.Status;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.*;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.detection.ZoneDetectionJob;
@@ -29,7 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 class DetectionServiceIT extends FacadeIT {
-  @MockBean BucketComponent bucketComponent;
+  @MockBean CustomBucketComponent bucketComponent;
   @MockBean DetectionFeaturesResultImageRetriever featuresImageRetriever;
   @MockBean DetectionImageAttributeRetriever imageAttributeRetriever;
   @MockBean DetectionVggAttributeRetriever vggAttributeRetriever;

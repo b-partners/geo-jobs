@@ -11,7 +11,7 @@ import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionAssemblySucceeded;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.endpoint.rest.model.Polygon;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.GeoJsonConversionJobRepository;
 import app.bpartners.geojobs.repository.GeoJsonConversionTaskRepository;
@@ -45,7 +45,7 @@ import org.springframework.stereotype.Component;
 public class ZipGeoJsonAssembler implements Consumer<GeoJsonConversionJob> {
   private final GeoJsonConversionTaskRepository geoJsonConversionTaskRepository;
   private final GeoJsonConversionJobRepository geoJsonConversionJobRepository;
-  private final BucketComponent bucketComponent;
+  private final CustomBucketComponent bucketComponent;
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final DetectionRepository detectionRepository;
   private final DetectionService detectionService;

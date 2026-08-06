@@ -3,7 +3,7 @@ package app.bpartners.geojobs.service.detection.inference;
 import static java.nio.file.Files.deleteIfExists;
 import static java.nio.file.Files.readString;
 
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
@@ -16,12 +16,12 @@ public class InferenceModelCardConf {
   private static final String BUCKET_KEY_INFERENCE_MODEL_CARDS_JSON =
       "conf/%s/inferenceModelCards.json";
 
-  private final BucketComponent bucketComponent;
+  private final CustomBucketComponent bucketComponent;
   private final ObjectMapper objectMapper;
   private final String env = System.getenv("ENV");
   private volatile List<ModelCardMapping> mappings;
 
-  public InferenceModelCardConf(BucketComponent bucketComponent, ObjectMapper objectMapper) {
+  public InferenceModelCardConf(CustomBucketComponent bucketComponent, ObjectMapper objectMapper) {
     this.bucketComponent = bucketComponent;
     this.objectMapper = objectMapper;
   }

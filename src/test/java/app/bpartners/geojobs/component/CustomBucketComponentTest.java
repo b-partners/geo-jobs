@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.bucket.BucketConf;
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import java.util.Arrays;
@@ -21,7 +22,8 @@ import software.amazon.awssdk.transfer.s3.model.FileDownload;
 
 public class CustomBucketComponentTest {
   BucketConf bucketConfMock = mock();
-  CustomBucketComponent subject = new CustomBucketComponent(bucketConfMock);
+  BucketComponent bucketComponentMock = mock();
+  CustomBucketComponent subject = new CustomBucketComponent(bucketConfMock, bucketComponentMock);
 
   @Test
   void list_objects_ok() {

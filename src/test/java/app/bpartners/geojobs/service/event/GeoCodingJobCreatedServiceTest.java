@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.endpoint.event.model.GeoCodingJobCreated;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.repository.GeoCodingJobRepository;
 import app.bpartners.geojobs.repository.model.Feature;
@@ -40,7 +40,7 @@ import org.mockito.ArgumentCaptor;
 class GeoCodingJobCreatedServiceTest {
   GeoCodingJobRepository repositoryMock = mock();
   ExcelAddressConverter excelAddressConverterMock = mock();
-  BucketComponent bucketComponentMock = mock();
+  CustomBucketComponent bucketComponentMock = mock();
   GeoCodeService geoCodeServiceMock = mock();
   ObjectMapper objectMapper = new ObjectMapper();
 

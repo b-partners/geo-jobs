@@ -3,7 +3,7 @@ package app.bpartners.geojobs.service.detection;
 import static java.nio.file.Files.deleteIfExists;
 import static java.nio.file.Files.readString;
 
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -13,11 +13,11 @@ import org.springframework.stereotype.Component;
 public class TileObjectDetectorConf {
   private static final String BUCKET_KEY_TILE_DETECTION_API_URLS_JSON =
       "conf/%s/tileDetectionApiUrls.json";
-  private final BucketComponent bucketComponent;
+  private final CustomBucketComponent bucketComponent;
   private final String env = System.getenv("ENV");
   private String tileDetectionApiUrls;
 
-  public TileObjectDetectorConf(BucketComponent bucketComponent) {
+  public TileObjectDetectorConf(CustomBucketComponent bucketComponent) {
     this.bucketComponent = bucketComponent;
   }
 

@@ -10,7 +10,7 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.cityjson.CityJSONDe
 import app.bpartners.geojobs.endpoint.rest.controller.mapper.cityjson.CityJSONTextureMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.model.lidar.LidarProcessorType;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSON;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONTexture;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class CityJSONRequestMapper {
-  private final BucketComponent bucketComponent;
+  private final CustomBucketComponent bucketComponent;
   private final CityJSONTextureMapper textureMapper;
 
   public CityJSONRequest toRest(

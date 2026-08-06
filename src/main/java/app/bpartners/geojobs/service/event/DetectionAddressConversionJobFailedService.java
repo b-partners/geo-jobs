@@ -5,7 +5,7 @@ import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.FINISHED;
 import static java.time.Instant.now;
 
 import app.bpartners.geojobs.endpoint.event.model.DetectionAddressConversionJobFailed;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.mail.Email;
 import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.repository.DetectionAddressConversionTaskRepository;
@@ -33,7 +33,7 @@ public class DetectionAddressConversionJobFailedService
   private final DetectionAddressConversionTaskRepository detectionAddressConversionTaskRepository;
   private final Mailer mailer;
   private final HTMLTemplateParser htmlTemplateParser;
-  private final BucketComponent bucketComponent;
+  private final CustomBucketComponent bucketComponent;
   private final DetectionRepository detectionRepository;
   private final String adminEmail;
   private final DetectionAddressConversionTaskToCsvConverter csvConverter;
@@ -43,7 +43,7 @@ public class DetectionAddressConversionJobFailedService
       DetectionAddressConversionTaskRepository detectionAddressConversionTaskRepository,
       Mailer mailer,
       HTMLTemplateParser htmlTemplateParser,
-      BucketComponent bucketComponent,
+      CustomBucketComponent bucketComponent,
       DetectionRepository detectionRepository,
       @Value("${admin.email}") String adminEmail,
       DetectionAddressConversionTaskToCsvConverter csvConverter,

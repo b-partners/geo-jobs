@@ -26,8 +26,6 @@ import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.file.FileWriter;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
-import app.bpartners.geojobs.file.bucket.BucketConf;
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.DetectionFileObjectRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
@@ -61,7 +59,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 class HttpApiTileObjectDetectorTest {
-  private static final String BUCKET_NAME = "dummyBucketName";
   private static final String TILE_BUCKET_PATH = "dummyTileBucketPath";
   private static final String V1_API_URL = "https://v1.detection.test";
   private static final String FIRST_V2_API_URL = "https://first-v2.detection.test";
@@ -77,10 +74,9 @@ class HttpApiTileObjectDetectorTest {
   private static final ResolvedModelCard RESOLVED_TOMBS =
       new ResolvedModelCard(TOMBS_CARD, 20, 10.0);
 
-  private final CustomBucketComponent customBucketComponentMock = mock();
   private final TileObjectDetectorConf tileObjectDetectorConfMock = mock();
   private final DetectionFileObjectRepository detectionFileObjectRepositoryMock = mock();
-  private final BucketComponent bucketComponentMock = mock();
+  private final CustomBucketComponent bucketComponentMock = mock();
   private final FileWriter fileWriterMock = mock();
   private final RestTemplate restTemplateMock = mock();
   private final InferenceApiClient inferenceApiClientMock = mock();
@@ -91,14 +87,13 @@ class HttpApiTileObjectDetectorTest {
   private final HttpApiTileObjectDetector subject =
       new HttpApiTileObjectDetector(
           objectMapper,
-          customBucketComponentMock,
+          bucketComponentMock,
           "https://default.detection.test",
           tileObjectDetectorConfMock,
           new DetectionResponseAggregator(),
           new DetectionResponseAggregatorV1(),
           new DetectionResponseV1ToV2Mapper(),
           detectionFileObjectRepositoryMock,
-          bucketComponentMock,
           fileWriterMock,
           objectMapper,
           restTemplateMock,
@@ -429,15 +424,11 @@ class HttpApiTileObjectDetectorTest {
   @SneakyThrows
   private void setUpTile(byte[] content) {
     tileBytes = content;
-    var bucketConfMock = mock(BucketConf.class);
     var tileImageFile = File.createTempFile("tile", ".jpg");
     Files.write(tileImageFile.toPath(), content);
     tileImageFile.deleteOnExit();
 
-    when(bucketConfMock.getBucketName()).thenReturn(BUCKET_NAME);
-    when(customBucketComponentMock.getBucketConf()).thenReturn(bucketConfMock);
-    when(customBucketComponentMock.download(BUCKET_NAME, TILE_BUCKET_PATH))
-        .thenReturn(tileImageFile);
+    when(bucketComponentMock.download(TILE_BUCKET_PATH)).thenReturn(tileImageFile);
     when(tileObjectDetectorConfMock.getTileDetectionApiUrls()).thenReturn(tileDetectionApiUrls());
   }
 

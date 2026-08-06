@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import java.util.List;
@@ -14,10 +13,9 @@ import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.services.s3.model.S3Object;
 
 class DetectionImageAttributeRetrieverTest {
-  BucketComponent bucketComponentMock = mock();
-  CustomBucketComponent customBucketComponentMock = mock();
+  CustomBucketComponent bucketComponentMock = mock();
   DetectionImageAttributeRetriever subject =
-      new DetectionImageAttributeRetriever(bucketComponentMock, customBucketComponentMock);
+      new DetectionImageAttributeRetriever(bucketComponentMock);
 
   @Test
   void retrieve_image_from_image_file_key() {
@@ -44,7 +42,7 @@ class DetectionImageAttributeRetrieverTest {
     when(detectionMock.getPolygonGeoJsonZone()).thenReturn(mock(Feature.class));
     when(detectionMock.getImageFileKey()).thenReturn(null);
     when(bucketComponentMock.getBucketName()).thenReturn(bucketName);
-    when(customBucketComponentMock.listObjects(bucketName, bucketKey))
+    when(bucketComponentMock.listObjects(bucketName, bucketKey))
         .thenReturn(List.of(mock(S3Object.class)));
     when(bucketComponentMock.presign(bucketKey)).thenReturn(presignUrl);
 
@@ -64,7 +62,7 @@ class DetectionImageAttributeRetrieverTest {
     when(detectionMock.getPolygonGeoJsonZone()).thenReturn(mock(Feature.class));
     when(detectionMock.getImageFileKey()).thenReturn(null);
     when(bucketComponentMock.getBucketName()).thenReturn(bucketName);
-    when(customBucketComponentMock.listObjects(bucketName, bucketKey)).thenReturn(List.of());
+    when(bucketComponentMock.listObjects(bucketName, bucketKey)).thenReturn(List.of());
 
     var actual = subject.apply(detectionMock);
 

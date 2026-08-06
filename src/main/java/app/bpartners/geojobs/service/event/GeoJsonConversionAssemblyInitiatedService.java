@@ -13,7 +13,7 @@ import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionAssemblySucce
 import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.file.FileWriter;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.model.geometry.polygon.PolygonAddress;
@@ -48,7 +48,7 @@ public class GeoJsonConversionAssemblyInitiatedService
   private static final double HALF_OF_AREA = 0.5;
   private final GeoJsonConversionTaskRepository geoJsonConversionTaskRepository;
   private final GeoJsonConversionJobRepository geoJsonConversionJobRepository;
-  private final BucketComponent bucketComponent;
+  private final CustomBucketComponent bucketComponent;
   private final FileWriter fileWriter;
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final DetectionRepository detectionRepository;

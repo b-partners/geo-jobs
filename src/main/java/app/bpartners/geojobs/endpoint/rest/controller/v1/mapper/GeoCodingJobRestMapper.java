@@ -4,7 +4,7 @@ import static java.time.Instant.now;
 
 import app.bpartners.geojobs.endpoint.rest.model.GeoCodingJob;
 import app.bpartners.geojobs.endpoint.rest.model.Status;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.model.geocoding.GeoCodingJobStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class GeoCodingJobRestMapper {
-  private final BucketComponent bucketComponent;
+  private final CustomBucketComponent bucketComponent;
 
   public GeoCodingJob toRest(app.bpartners.geojobs.repository.model.geocoding.GeoCodingJob domain) {
     var status = domain.getStatus();

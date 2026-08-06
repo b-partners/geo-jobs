@@ -13,7 +13,7 @@ import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionJobCreated;
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionJobStatusChanged;
 import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.StatusMapper;
 import app.bpartners.geojobs.endpoint.rest.model.GeoJsonsUrl;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
 import app.bpartners.geojobs.job.repository.TaskRepository;
@@ -37,7 +37,7 @@ public class GeoJsonConversionJobService
   private static final Duration PRE_SIGNED_URL_DURATION = Duration.ofHours(1L);
   private final StatusMapper<JobStatus> jobStatusMapper;
   private final ZoneDetectionJobService zoneDetectionJobService;
-  private final BucketComponent bucketComponent;
+  private final CustomBucketComponent bucketComponent;
   private final GeoJsonConversionJobRepository geoJsonConversionJobRepository;
 
   public GeoJsonConversionJobService(
@@ -48,7 +48,7 @@ public class GeoJsonConversionJobService
       EventProducer eventProducer,
       StatusMapper<JobStatus> jobStatusMapper,
       ZoneDetectionJobService zoneDetectionJobService,
-      BucketComponent bucketComponent,
+      CustomBucketComponent bucketComponent,
       GeoJsonConversionJobRepository geoJsonConversionJobRepository1) {
     super(
         geoJsonConversionJobRepository,

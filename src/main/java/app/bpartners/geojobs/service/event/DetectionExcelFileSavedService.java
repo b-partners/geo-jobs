@@ -3,7 +3,7 @@ package app.bpartners.geojobs.service.event;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionExcelFileAddressConverted;
 import app.bpartners.geojobs.endpoint.event.model.DetectionExcelFileSaved;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.service.ExcelAddressConverter;
 import java.util.List;
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class DetectionExcelFileSavedService implements Consumer<DetectionExcelFileSaved> {
-  private final BucketComponent bucketComponent;
+  private final CustomBucketComponent bucketComponent;
   private final ExcelAddressConverter excelAddressConverter;
   private final DetectionRepository detectionRepository;
   private final EventProducer eventProducer;

@@ -15,7 +15,7 @@ import static org.mockito.Mockito.*;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionJobCreated;
 import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.StatusMapper;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.Status;
 import app.bpartners.geojobs.job.repository.JobStatusRepository;
@@ -42,7 +42,7 @@ class GeoJsonConversionJobServiceTest {
   EventProducer eventProducerMock = mock();
   StatusMapper<JobStatus> jobStatusMapper = new StatusMapper<>();
   ZoneDetectionJobService zoneDetectionJobServiceMock = mock();
-  BucketComponent bucketComponentMock = mock();
+  CustomBucketComponent bucketComponentMock = mock();
   GeoJsonConversionJobRepository geoJsonConversionJobRepository = mock();
   GeoJsonConversionJobService subject =
       new GeoJsonConversionJobService(

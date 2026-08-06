@@ -14,7 +14,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.endpoint.event.model.FeatureAnnotatedImageRequested;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.DetectionFileObjectRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.detection.Detection;
@@ -29,7 +29,7 @@ import org.mockito.ArgumentCaptor;
 
 class FeatureAnnotatedImageRequestedServiceTest {
   DetectionRepository detectionRepository = mock();
-  BucketComponent bucketComponent = mock();
+  CustomBucketComponent bucketComponent = mock();
   VggImageAnnotator vggImageAnnotator = mock();
   DetectionFileObjectRepository detectionFileObjectRepository = mock();
 

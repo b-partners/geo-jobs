@@ -14,7 +14,7 @@ import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.DetectionFromSte
 import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.DetectionStepMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.DetectionStepStatisticMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.RoofDelimiterMapper;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
@@ -27,7 +27,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class DetectionFromStatisticRestMapperTest {
-  BucketComponent bucketComponentMock = mock();
+  CustomBucketComponent bucketComponentMock = mock();
   DetectionStepStatisticMapper detectionStepStatisticMapperMock = mock();
   DetectionFeaturesResultImageRetriever detectionFeaturesResultImageRetrieverMock = mock();
   RoofDelimiterMapper roofDelimiterMapperMock = mock();

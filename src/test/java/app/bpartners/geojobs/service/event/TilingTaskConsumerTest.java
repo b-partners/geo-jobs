@@ -9,7 +9,7 @@ import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
 import app.bpartners.geojobs.file.ExtensionGuesser;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.ImageValidator;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.file.zip.FileUnzipper;
 import app.bpartners.geojobs.repository.model.Parcel;
 import app.bpartners.geojobs.repository.model.ParcelContent;
@@ -45,7 +45,7 @@ class TilingTaskConsumerTest {
               downloadedDirectories.add(directory);
               return directory;
             },
-            mock(BucketComponent.class));
+            mock(CustomBucketComponent.class));
     var firstTask = taskWithTile("20/540884/376690");
     var secondTask = taskWithTile("20/540915/376636");
 

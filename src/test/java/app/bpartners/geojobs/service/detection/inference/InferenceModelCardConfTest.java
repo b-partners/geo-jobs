@@ -11,7 +11,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.nio.file.Files;
@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 
 class InferenceModelCardConfTest {
-  BucketComponent bucketComponent = mock();
+  CustomBucketComponent bucketComponent = mock();
   InferenceModelCardConf subject = new InferenceModelCardConf(bucketComponent, new ObjectMapper());
 
   @Test
