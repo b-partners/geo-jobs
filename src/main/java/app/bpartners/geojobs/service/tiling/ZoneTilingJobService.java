@@ -234,7 +234,7 @@ public class ZoneTilingJobService extends JobService<ParcelTilingTask, ZoneTilin
                         })
             .toList();
 
-    workers.invokeAll(callables);
+    workers.apply(callables);
 
     return tasks;
   }
