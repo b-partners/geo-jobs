@@ -216,7 +216,7 @@ public class ZoneDetectionJobService extends JobService<ParcelDetectionTask, Zon
                         })
             .toList();
 
-    workers.invokeAll(callables);
+    workers.apply(callables);
   }
 
   public ZoneDetectionJob saveWithTasks(
