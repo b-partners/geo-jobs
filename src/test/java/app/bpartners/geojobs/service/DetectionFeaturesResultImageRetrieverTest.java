@@ -10,7 +10,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.rest.model.*;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
@@ -32,22 +31,20 @@ class DetectionFeaturesResultImageRetrieverTest {
   private static final String PRE_SIGNED_S3_URL = "http://presigned-s3-url.com";
   private static final String IMAGE_URL_FROM_RETRIEVER = "http://primary-image-url.com";
   private static final String VGG_URL_FROM_RETRIEVER = "http://primary-vgg-url.com";
-  BucketComponent bucketComponentMock = mock();
-  CustomBucketComponent customBucketComponentMock = mock();
+  CustomBucketComponent bucketComponentMock = mock();
   GeometryConverter geometryConverter = new GeometryConverter();
   DetectionImageAttributeRetriever imageAttributeRetrieverMock = mock();
   DetectionVggAttributeRetriever vggAttributeRetrieverMock = mock();
   DetectionFeaturesResultImageRetriever subject =
       new DetectionFeaturesResultImageRetriever(
           bucketComponentMock,
-          customBucketComponentMock,
           geometryConverter,
           imageAttributeRetrieverMock,
           vggAttributeRetrieverMock);
 
   @BeforeEach
   void setUp() {
-    when(customBucketComponentMock.listObjects(any(), any()))
+    when(bucketComponentMock.listObjects(any(), any()))
         .thenReturn(List.of(mock(S3Object.class))) // Get only original image
         .thenReturn(List.of()); // Do not retrieve drawn image
     when(imageAttributeRetrieverMock.apply(any())).thenReturn(null);
@@ -72,7 +69,7 @@ class DetectionFeaturesResultImageRetrieverTest {
     when(detectionMock.getGeoServerProperties())
         .thenReturn(
             new GeoServerProperties().geoServerParameter(new GeoServerParameter().layers(layer)));
-    when(customBucketComponentMock.presign(
+    when(bucketComponentMock.presign(
             layer + "/extended_original_" + longitude + "_" + latitude + ".jpg",
             Duration.ofHours(1L),
             Optional.of(randomZoneName + "_0.jpg")))
@@ -208,7 +205,7 @@ class DetectionFeaturesResultImageRetrieverTest {
   @SneakyThrows
   @Test
   void skip_pre_sign_key_when_bucket_exists() {
-    reset(customBucketComponentMock);
+    reset(bucketComponentMock);
     var detectionMock = mock(Detection.class);
     var latitude = BigDecimal.valueOf(46.651930);
     var longitude = BigDecimal.valueOf(-0.249317);
@@ -220,7 +217,7 @@ class DetectionFeaturesResultImageRetrieverTest {
     when(detectionMock.getGeoServerProperties())
         .thenReturn(
             new GeoServerProperties().geoServerParameter(new GeoServerParameter().layers(layer)));
-    when(customBucketComponentMock.listObjects(any(), any())).thenReturn(List.of());
+    when(bucketComponentMock.listObjects(any(), any())).thenReturn(List.of());
 
     var actual = subject.apply(detectionMock);
 

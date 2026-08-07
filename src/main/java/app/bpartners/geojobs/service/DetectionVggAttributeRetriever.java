@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.service;
 
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class DetectionVggAttributeRetriever implements Function<Detection, String> {
-  private final BucketComponent bucketComponent;
+  private final CustomBucketComponent bucketComponent;
 
   @Override
   public String apply(Detection detection) {

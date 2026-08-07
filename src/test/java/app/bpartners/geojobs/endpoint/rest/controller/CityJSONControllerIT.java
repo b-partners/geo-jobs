@@ -17,7 +17,7 @@ import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import java.math.BigDecimal;
 import java.util.List;
@@ -35,7 +35,7 @@ class CityJSONControllerIT extends FacadeIT {
   @Autowired FeatureMapper featureMapper;
 
   @MockBean AuthProvider authProviderMock;
-  @MockBean BucketComponent bucketComponentMock;
+  @MockBean CustomBucketComponent bucketComponentMock;
   @MockBean EventProducer<CityJSONRequestCreated> eventProducerMock;
   @MockBean EventBridgeClient eventBridgeClient;
   private static final String ADMIN_KEY = randomUUID().toString();

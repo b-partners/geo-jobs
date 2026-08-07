@@ -10,7 +10,7 @@ import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.endpoint.rest.model.Polygon;
 import app.bpartners.geojobs.file.FileWriter;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSON;
@@ -51,7 +51,7 @@ public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, L
   private static final String JSONL_EXTENSION = ".jsonl";
   private static final String GEOJSON_EXTENSION = ".geojson";
   private static final String JSON_EXTENSION = ".json";
-  private final BucketComponent bucketComponent;
+  private final CustomBucketComponent bucketComponent;
   private final FeatureMapper featureMapper;
   private final LidarApiFacade lidarApiFacade;
   private final Roofer3DBagApiClient roofer3DBagApiClient;

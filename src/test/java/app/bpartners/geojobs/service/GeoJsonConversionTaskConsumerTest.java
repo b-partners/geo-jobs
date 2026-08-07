@@ -11,7 +11,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.file.FileWriter;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.file.hash.FileHash;
 import app.bpartners.geojobs.model.DetectedTile;
 import app.bpartners.geojobs.model.exception.NotFoundException;
@@ -42,7 +42,7 @@ class GeoJsonConversionTaskConsumerTest {
   HumanDetectedTileRepository humanDetectedTileRepositoryMock = mock();
   GeoJsonConversionJobRepository geoJsonConversionJobRepositoryMock = mock();
   GeoJsonConverter geoJsonConverterMock = mock();
-  BucketComponent bucketComponentMock = mock();
+  CustomBucketComponent bucketComponentMock = mock();
   FileWriter fileWriterMock = mock();
   ZoneDetectionJobService zoneDetectionJobServiceMock = mock();
   DetectionRepository detectionRepositoryMock = mock();

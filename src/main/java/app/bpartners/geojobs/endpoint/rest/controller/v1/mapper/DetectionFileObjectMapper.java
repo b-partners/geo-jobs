@@ -2,14 +2,14 @@ package app.bpartners.geojobs.endpoint.rest.controller.mapper;
 
 import app.bpartners.geojobs.endpoint.rest.model.DetectionFileObject;
 import app.bpartners.geojobs.endpoint.rest.model.DetectionFileType;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 public class DetectionFileObjectMapper {
-  private final BucketComponent bucketComponent;
+  private final CustomBucketComponent bucketComponent;
 
   public DetectionFileObject toRest(
       app.bpartners.geojobs.repository.model.detection.DetectionFileObject detectionFileObject) {

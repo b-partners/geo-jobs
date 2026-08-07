@@ -14,7 +14,7 @@ import app.bpartners.gen.annotator.endpoint.rest.model.Job;
 import app.bpartners.gen.annotator.endpoint.rest.model.Label;
 import app.bpartners.geojobs.endpoint.rest.model.Geometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.model.annotation.AnnotationDeliveryJob;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
@@ -48,7 +48,7 @@ class AnnotationServiceTest {
   AnnotatorApiConf annotatorApiConfMock = mock();
   DetectableObjectConfigurationRepository objectConfigurationRepositoryMock = mock();
   AnnotationDeliveryJobService deliverJobServiceMock = mock();
-  BucketComponent bucketComponentMock = mock();
+  CustomBucketComponent bucketComponentMock = mock();
   LabelExtractor labelExtractor =
       new LabelExtractor(new KeyPredicateFunction(), labelConverterMock);
   CreateAnnotationBatchExtractor batchExtractor =

@@ -8,7 +8,7 @@ import static javax.imageio.ImageIO.read;
 
 import app.bpartners.geojobs.endpoint.event.model.FeatureImageRequested;
 import app.bpartners.geojobs.file.WhiteImageDetector;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.DetectionFileObjectRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
@@ -33,7 +33,7 @@ public class FeatureImageRequestedService implements Consumer<FeatureImageReques
   private static final int ONE_KILOMETRE_SQUARE_AREA = 1_000_000;
   private final DetectionRepository detectionRepository;
   private final GeometryConverter geometryConverter;
-  private final BucketComponent bucketComponent;
+  private final CustomBucketComponent bucketComponent;
   private final TileImagesAssembler tileImagesAssembler;
   private final TilingTaskRepository tilingTaskRepository;
   private final GeometrySquareMeterArea geometrySquareMeterArea;

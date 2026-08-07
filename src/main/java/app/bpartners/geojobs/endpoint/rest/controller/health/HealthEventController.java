@@ -8,6 +8,8 @@ import app.bpartners.geojobs.PojaGenerated;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DurablyFallibleUuidCreated1;
 import app.bpartners.geojobs.endpoint.event.model.DurablyFallibleUuidCreated2;
+import app.bpartners.geojobs.endpoint.event.model.DurablyFallibleUuidCreated3;
+import app.bpartners.geojobs.endpoint.event.model.DurablyFallibleUuidCreated4;
 import app.bpartners.geojobs.endpoint.event.model.UuidCreated;
 import app.bpartners.geojobs.repository.DummyUuidRepository;
 import app.bpartners.geojobs.repository.model.DummyUuid;
@@ -42,6 +44,20 @@ public class HealthEventController {
       @RequestParam(defaultValue = "1") int nbEvent,
       @RequestParam(defaultValue = "2") int waitInSeconds) {
     return handleEvent(nbEvent, waitInSeconds, DurablyFallibleUuidCreated2.class);
+  }
+
+  @GetMapping(value = "/health/event3")
+  public List<String> handleEvent3(
+      @RequestParam(defaultValue = "1") int nbEvent,
+      @RequestParam(defaultValue = "2") int waitInSeconds) {
+    return handleEvent(nbEvent, waitInSeconds, DurablyFallibleUuidCreated3.class);
+  }
+
+  @GetMapping(value = "/health/event4")
+  public List<String> handleEvent4(
+      @RequestParam(defaultValue = "1") int nbEvent,
+      @RequestParam(defaultValue = "2") int waitInSeconds) {
+    return handleEvent(nbEvent, waitInSeconds, DurablyFallibleUuidCreated4.class);
   }
 
   @PostMapping(value = "/health/event/uuids")
@@ -91,6 +107,20 @@ public class HealthEventController {
     } else if (eventType.equals(DurablyFallibleUuidCreated2.class)) {
       return eventType.cast(
           DurablyFallibleUuidCreated2.builder()
+              .uuidCreated(uuidCreated)
+              .failureRate(failureRate)
+              .waitDurationBeforeConsumingInSeconds(waitInSeconds)
+              .build());
+    } else if (eventType.equals(DurablyFallibleUuidCreated3.class)) {
+      return eventType.cast(
+          DurablyFallibleUuidCreated3.builder()
+              .uuidCreated(uuidCreated)
+              .failureRate(failureRate)
+              .waitDurationBeforeConsumingInSeconds(waitInSeconds)
+              .build());
+    } else if (eventType.equals(DurablyFallibleUuidCreated4.class)) {
+      return eventType.cast(
+          DurablyFallibleUuidCreated4.builder()
               .uuidCreated(uuidCreated)
               .failureRate(failureRate)
               .waitDurationBeforeConsumingInSeconds(waitInSeconds)

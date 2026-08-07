@@ -2,6 +2,7 @@ package app.bpartners.geojobs.file.bucket;
 
 import static java.io.File.createTempFile;
 
+import app.bpartners.geojobs.file.hash.FileHash;
 import java.io.File;
 import java.net.URL;
 import java.time.Duration;
@@ -22,7 +23,14 @@ import software.amazon.awssdk.transfer.s3.model.FileDownload;
 @Component
 @AllArgsConstructor
 public class CustomBucketComponent {
+  private static final Duration DEFAULT_PRE_SIGNED_URL_DURATION = Duration.ofHours(1L);
+
   private final BucketConf bucketConf;
+  private final BucketComponent bucketComponent;
+
+  public FileHash upload(File file, String bucketKey) {
+    return bucketComponent.upload(file, bucketKey);
+  }
 
   public URL presign(String bucketKey, Duration expiration, Optional<String> fileName) {
     var requestBuilder =
@@ -39,6 +47,17 @@ public class CustomBucketComponent {
                     .getObjectRequest(getObjectRequest)
                     .build());
     return presignedRequest.url();
+  }
+
+  public URL presign(String bucketKey, Duration expiration) {
+    return presign(bucketKey, expiration, Optional.empty());
+  }
+
+  public String presign(String bucketKey) {
+    if (bucketKey == null) {
+      return null;
+    }
+    return presign(bucketKey, DEFAULT_PRE_SIGNED_URL_DURATION).toString();
   }
 
   public List<S3Object> listObjects(String bucketName) {
@@ -66,6 +85,32 @@ public class CustomBucketComponent {
   }
 
   @SneakyThrows
+  public File download(String bucketKey) {
+    var keyPath =
+        bucketKey
+            .replaceAll(",", " ")
+            .replaceAll("\\.", " ")
+            .replaceAll("\"", " ")
+            .replaceAll("'", " ")
+            .replaceAll(" ", "_");
+    var destination = createTempFile(prefixFromBucketKey(keyPath), suffixFromBucketKey(keyPath));
+    FileDownload download =
+        bucketConf
+            .getS3TransferManager()
+            .downloadFile(
+                DownloadFileRequest.builder()
+                    .getObjectRequest(
+                        GetObjectRequest.builder()
+                            .bucket(bucketConf.getBucketName())
+                            .key(bucketKey)
+                            .build())
+                    .destination(destination)
+                    .build());
+    download.completionFuture().join();
+    return destination;
+  }
+
+  @SneakyThrows
   public File download(String bucketName, String bucketKey) {
     var destination =
         createTempFile(prefixFromBucketKey(bucketKey), suffixFromBucketKey(bucketKey));
@@ -80,6 +125,10 @@ public class CustomBucketComponent {
                     .build());
     download.completionFuture().join();
     return destination;
+  }
+
+  public String getBucketName() {
+    return bucketConf.getBucketName();
   }
 
   private String prefixFromBucketKey(String bucketKey) {

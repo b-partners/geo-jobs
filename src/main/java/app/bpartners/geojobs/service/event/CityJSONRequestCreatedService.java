@@ -9,7 +9,7 @@ import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.CityJSONRequestCreated;
 import app.bpartners.geojobs.endpoint.event.model.ThreeDRequestMonitoringTriggered;
 import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.FeatureMapper;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.model.lidar.planes.model.LasRoofDelimitationType;
 import app.bpartners.geojobs.repository.CityJSONRequestRepository;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
@@ -44,7 +44,7 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
   private final LidarDataToCityJsonProcessor cityJsonProcessor;
   private final FeatureMapper featureMapper;
   private final EntityManager entityManager;
-  private final BucketComponent bucketComponent;
+  private final CustomBucketComponent bucketComponent;
   private final EventProducer eventProducer;
   private final CommunityAuthorizationRepository communityAuthorizationRepository;
   private final CityJSON3DBagRooferProcessor cityJson3DBagRooferProcessor;

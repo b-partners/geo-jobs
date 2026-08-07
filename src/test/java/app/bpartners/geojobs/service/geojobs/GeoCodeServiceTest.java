@@ -9,7 +9,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.repository.GeoCodingJobRepository;
 import app.bpartners.geojobs.repository.model.Feature;
@@ -31,7 +31,7 @@ class GeoCodeServiceTest {
   GeoCodeApi geoCodeApiMock = mock();
   GeometryConverter geometryConverterMock = mock();
   GeoCodingJobRepository geoCodingJobRepositoryMock = mock();
-  BucketComponent bucketComponentMock = mock();
+  CustomBucketComponent bucketComponentMock = mock();
   EventProducer eventProducerMock = mock();
   BuildingFinder buildingFinderMock = mock();
 

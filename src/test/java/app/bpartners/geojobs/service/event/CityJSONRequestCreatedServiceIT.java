@@ -21,7 +21,7 @@ import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.CityJSONRequestCreated;
 import app.bpartners.geojobs.endpoint.event.model.ThreeDRequestMonitoringTriggered;
 import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.FeatureMapper;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.planes.model.DelimitedRoofPoints;
 import app.bpartners.geojobs.repository.CityJSONRequestRepository;
@@ -48,7 +48,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 
 @Disabled("TODO: internal Lidar not processed anymore")
 class CityJSONRequestCreatedServiceIT extends FacadeIT {
-  @MockBean BucketComponent bucketComponentMock;
+  @MockBean CustomBucketComponent bucketComponentMock;
   @Autowired CityJSONRequestCreatedService subject;
   @MockBean LasRoofsPointsExtractor pointsExtractor;
   @MockBean LidarDataToCityJsonProcessor cityJsonProcessorMock;

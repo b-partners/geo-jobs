@@ -7,7 +7,7 @@ import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.endpoint.rest.model.Geometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.service.tiling.downloader.TilesDownloader;
@@ -27,7 +27,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 
 @Disabled("TODO: flaky")
 class TilesDownloaderIT extends FacadeIT {
-  @MockBean BucketComponent bucketComponent;
+  @MockBean CustomBucketComponent bucketComponent;
   @Autowired TilesDownloader httpApiTilesDownloader;
   @Autowired ObjectMapper om;
 

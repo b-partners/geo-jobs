@@ -6,13 +6,13 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.endpoint.rest.model.Status;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.model.geocoding.GeoCodingJob;
 import app.bpartners.geojobs.repository.model.geocoding.GeoCodingJobStatus;
 import org.junit.jupiter.api.Test;
 
 class GeoCodingJobRestMapperTest {
-  BucketComponent bucketComponentMock = mock(BucketComponent.class);
+  CustomBucketComponent bucketComponentMock = mock(CustomBucketComponent.class);
   GeoCodingJobRestMapper subject = new GeoCodingJobRestMapper(bucketComponentMock);
 
   @Test

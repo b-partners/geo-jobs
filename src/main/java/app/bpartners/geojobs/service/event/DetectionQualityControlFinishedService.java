@@ -4,7 +4,7 @@ import static app.bpartners.geojobs.service.DetectionFinishedMailer.ADMIN_EMAIL;
 import static java.time.Instant.now;
 
 import app.bpartners.geojobs.endpoint.event.model.zone.DetectionQualityControlFinished;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.mail.Email;
 import app.bpartners.geojobs.mail.Mailer;
 import app.bpartners.geojobs.repository.model.detection.Detection;
@@ -26,7 +26,7 @@ import org.thymeleaf.context.Context;
 public class DetectionQualityControlFinishedService
     implements Consumer<DetectionQualityControlFinished> {
   private Mailer mailer;
-  private BucketComponent bucketComponent;
+  private CustomBucketComponent bucketComponent;
   private HTMLTemplateParser htmlTemplateParser;
   private static final String FILE_RESULT_SUBMISSION_FINISHED = "detection_cq_finished_template";
 

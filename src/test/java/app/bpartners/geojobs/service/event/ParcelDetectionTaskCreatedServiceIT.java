@@ -12,7 +12,7 @@ import app.bpartners.geojobs.conf.FacadeIT;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.parcel.ParcelDetectionTaskCreated;
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.job.model.TaskStatus;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.ParcelDetectionTaskRepository;
@@ -54,7 +54,7 @@ class ParcelDetectionTaskCreatedServiceIT extends FacadeIT {
   @Autowired ParcelRepository parcelRepository;
   @Autowired ParcelDetectionTaskCreatedService subject;
   @MockBean TileObjectDetector objectsDetector;
-  @MockBean BucketComponent bucketComponent;
+  @MockBean CustomBucketComponent bucketComponent;
   @MockBean MachineDetectedTileRepository machineDetectedTileRepository;
   @MockBean ParcelDetectionTaskRepository parcelDetectionTaskRepository;
   @MockBean ZoneDetectionJobService zoneDetectionJobService;

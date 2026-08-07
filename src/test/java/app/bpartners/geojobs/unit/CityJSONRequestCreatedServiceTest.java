@@ -12,7 +12,7 @@ import static org.mockito.Mockito.*;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.CityJSONRequestCreated;
 import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.FeatureMapper;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.CityJSONRequestRepository;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSON;
@@ -38,7 +38,7 @@ class CityJSONRequestCreatedServiceTest {
   LidarDataToCityJsonProcessor lidarDataToCityJsonProcessorMock = mock();
   FeatureMapper featureMapperMock = mock();
   EntityManager entityManagerMock = mock();
-  BucketComponent bucketComponentMock = mock();
+  CustomBucketComponent bucketComponentMock = mock();
   EventProducer eventProducerMock = mock();
   CommunityAuthorizationRepository communityAuthorizationRepositoryMock = mock();
   CityJSON3DBagRooferProcessor cityJson3DBagRooferProcessorMock = mock();

@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.service.event;
 
 import app.bpartners.geojobs.endpoint.event.model.DetectionSucceeded;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.DetectionRepository;
@@ -28,7 +28,7 @@ public class DetectionSucceededService implements Consumer<DetectionSucceeded> {
   private final DetectionFinishedMailer mailer;
   private final HTMLTemplateParser htmlTemplateParser;
   private final DetectionRepository detectionRepository;
-  private final BucketComponent bucketComponent;
+  private final CustomBucketComponent bucketComponent;
   private final ZoneDetectionJobRepository zoneDetectionJobRepository;
 
   @Override

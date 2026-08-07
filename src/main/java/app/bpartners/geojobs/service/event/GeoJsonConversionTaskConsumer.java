@@ -6,7 +6,7 @@ import static app.bpartners.geojobs.service.geojson.GeometryConverter.retrieveMu
 import static app.bpartners.geojobs.service.geojson.GeometryConverter.unifyMultiPolygon;
 
 import app.bpartners.geojobs.file.FileWriter;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.model.DetectedTile;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.DetectionRepository;
@@ -40,7 +40,7 @@ public class GeoJsonConversionTaskConsumer implements TaskConsumer<GeoJsonConver
   private final HumanDetectedTileRepository humanDetectedTileRepository;
   private final GeoJsonConversionJobRepository geoJsonConversionJobRepository;
   private final GeoJsonConverter geoJsonConverter;
-  private final BucketComponent bucketComponent;
+  private final CustomBucketComponent bucketComponent;
   private final FileWriter writer;
   private final ZoneDetectionJobService zoneDetectionJobService;
   private final DetectionRepository detectionRepository;

@@ -39,7 +39,7 @@ import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.model.Authority;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.file.FileWriter;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.file.hash.FileHash;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.job.model.statistic.TaskStatistic;
@@ -120,7 +120,7 @@ class DetectionServiceTest {
       new DetectionStepStatisticMapper(new StatusMapper<>());
   DetectionRepository detectionRepositoryMock = mock();
   CommunityUsedSurfaceService communityUsedSurfaceServiceMock = mock();
-  BucketComponent bucketComponentMock = mock();
+  CustomBucketComponent bucketComponentMock = mock();
   GeoJsonConversionJobService conversionInitiationServiceMock = mock();
   DetectableObjectTypeMapper detectableObjectTypeMapper = new DetectableObjectTypeMapper();
   ZoneDetectionJobService zoneDetectionJobServiceMock = mock();

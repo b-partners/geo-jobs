@@ -23,7 +23,7 @@ import app.bpartners.geojobs.endpoint.event.model.status.ParcelDetectionStatusRe
 import app.bpartners.geojobs.endpoint.event.model.status.ZDJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.status.ZTJStatusRecomputingSubmitted;
 import app.bpartners.geojobs.endpoint.event.model.zone.ZoneTilingJobCreated;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.file.hash.FileHash;
 import app.bpartners.geojobs.repository.AnnotationDeliveryConfigurationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
@@ -68,7 +68,7 @@ class ZoneTilingJobCreatedIT extends DetectionIT {
   @Autowired LocalEventQueue localEventQueue;
   @MockBean EventProducer eventProducerMock;
   @MockBean TilesDownloader tilesDownloaderMock;
-  @MockBean BucketComponent bucketComponentMock;
+  @MockBean CustomBucketComponent bucketComponentMock;
   @MockBean JobFinishedMailer<ZoneTilingJob> tilingJobMailerMock;
   @MockBean AnnotationService annotationServiceMock;
   @MockBean GeoJsonConversionJobService geoJsonConversionJobServiceMock;

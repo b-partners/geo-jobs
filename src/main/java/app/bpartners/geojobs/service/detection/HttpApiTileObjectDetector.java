@@ -12,7 +12,6 @@ import static org.apache.commons.io.FileUtils.readFileToByteArray;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 import app.bpartners.geojobs.file.FileWriter;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.DetectionFileObjectRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
@@ -42,7 +41,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 @Slf4j
 public class HttpApiTileObjectDetector implements TileObjectDetector {
   private final ObjectMapper om;
-  private final CustomBucketComponent customBucketComponent;
+  private final CustomBucketComponent bucketComponent;
   private final String defaultDetectionApiUrl;
   private final TileObjectDetectorConf tileObjectDetectorConf;
   private final DetectionResponseAggregator detectionResponseAggregator;
@@ -51,30 +50,27 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
   private final DetectionFileObjectRepository detectionFileObjectRepository;
   private final FileWriter fileWriter;
   private final ObjectMapper objectMapper;
-  private final BucketComponent bucketComponent;
 
   @SneakyThrows
   public HttpApiTileObjectDetector(
       ObjectMapper om,
-      CustomBucketComponent customBucketComponent,
+      CustomBucketComponent bucketComponent,
       @Value("${tile.detection.api.url}") String defaultApiUrl,
       TileObjectDetectorConf tileObjectDetectorConf,
       DetectionResponseAggregator detectionResponseAggregator,
       DetectionResponseAggregatorV1 detectionResponseAggregatorV1,
       DetectionResponseV1ToV2Mapper detectionResponseV1ToV2Mapper,
       DetectionFileObjectRepository detectionFileObjectRepository,
-      BucketComponent bucketComponent,
       FileWriter fileWriter,
       ObjectMapper objectMapper) {
     this.om = om;
-    this.customBucketComponent = customBucketComponent;
+    this.bucketComponent = bucketComponent;
     this.defaultDetectionApiUrl = defaultApiUrl;
     this.tileObjectDetectorConf = tileObjectDetectorConf;
     this.detectionResponseAggregator = detectionResponseAggregator;
     this.detectionResponseAggregatorV1 = detectionResponseAggregatorV1;
     this.detectionResponseV1ToV2Mapper = detectionResponseV1ToV2Mapper;
     this.detectionFileObjectRepository = detectionFileObjectRepository;
-    this.bucketComponent = bucketComponent;
     this.fileWriter = fileWriter;
     this.objectMapper = objectMapper;
   }
@@ -95,9 +91,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
     headers.setContentType(APPLICATION_JSON);
 
     var tileImageBucketPath = tile.getBucketPath();
-    var tileImageFile =
-        customBucketComponent.download(
-            customBucketComponent.getBucketConf().getBucketName(), tileImageBucketPath);
+    var tileImageFile = bucketComponent.download(tileImageBucketPath);
     String base64ImgData = Base64.getEncoder().encodeToString(readFileToByteArray(tileImageFile));
     String base64MaskData =
         mask == null ? null : Base64.getEncoder().encodeToString(readFileToByteArray(mask));

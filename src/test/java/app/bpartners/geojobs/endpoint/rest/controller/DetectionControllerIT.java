@@ -36,7 +36,6 @@ import app.bpartners.geojobs.endpoint.rest.security.AuthProvider;
 import app.bpartners.geojobs.endpoint.rest.security.authorizer.DetectionAuthorizer;
 import app.bpartners.geojobs.endpoint.rest.security.model.Principal;
 import app.bpartners.geojobs.file.FileWriter;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.job.model.JobStatus;
 import app.bpartners.geojobs.model.exception.BadRequestException;
@@ -89,7 +88,6 @@ class DetectionControllerIT extends FacadeIT {
   @MockBean EventProducer eventProducer;
   @MockBean AnnotationService annotationServiceMock;
   @MockBean HumanDetectionJobRepository humanDetectionJobRepositoryMock;
-  @MockBean BucketComponent bucketComponentMock;
   @MockBean ZoneDetectionJobService zoneDetectionJobService;
   @MockBean StatusMapper statusMapper;
   @MockBean DetectableObjectConfigurationRepository detectableObjectConfigurationRepository;
@@ -97,7 +95,7 @@ class DetectionControllerIT extends FacadeIT {
   @MockBean AuthProvider authProviderMock;
   @Autowired CommunityAuthorizationRepository communityAuthRepository;
   @Autowired FileWriter fileWriter;
-  @MockBean CustomBucketComponent customBucketComponent;
+  @MockBean CustomBucketComponent bucketComponentMock;
   FeatureCreator featureCreator = new FeatureCreator();
   DetectionCreator detectionCreator = new DetectionCreator(featureCreator);
   TaskStatisticCreator taskStatisticCreator = new TaskStatisticCreator();
@@ -430,7 +428,7 @@ class DetectionControllerIT extends FacadeIT {
                 .endToEndId(e2Id)
                 .communityOwnerId(communityOwnerId)
                 .build());
-    when(customBucketComponent.listObjects(any(), any())).thenReturn(List.of(mock(S3Object.class)));
+    when(bucketComponentMock.listObjects(any(), any())).thenReturn(List.of(mock(S3Object.class)));
     when(bucketComponentMock.presign(any())).thenReturn(presignedUrl);
 
     var actual = subject.configureDetectionShapeFile(e2Id, fileWriter.writeAsByte(dummyShapeFile));

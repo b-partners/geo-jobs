@@ -8,7 +8,6 @@ import app.bpartners.geojobs.file.hash.FileHashAlgorithm;
 import java.io.File;
 import java.net.URL;
 import java.time.Duration;
-import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Component;
@@ -26,7 +25,6 @@ import software.amazon.awssdk.transfer.s3.progress.LoggingTransferListener;
 @Component
 @AllArgsConstructor
 public class BucketComponent {
-  private static final Duration DEFAULT_PRE_SIGNED_URL_DURATION = Duration.ofHours(1L);
 
   private final BucketConf bucketConf;
 
@@ -63,16 +61,8 @@ public class BucketComponent {
 
   @SneakyThrows
   public File download(String bucketKey) {
-    var keyPath =
-        bucketKey
-            .replaceAll(",", " ")
-            .replaceAll("\\.", " ")
-            .replaceAll("\"", " ")
-            .replaceAll("'", " ")
-            .replaceAll(" ", "_");
-    var prefixFromBucketKey = prefixFromBucketKey(keyPath);
-    var suffix = suffixFromBucketKey(keyPath);
-    var destination = createTempFile(prefixFromBucketKey, suffix);
+    var destination =
+        createTempFile(prefixFromBucketKey(bucketKey), suffixFromBucketKey(bucketKey));
     FileDownload download =
         bucketConf
             .getS3TransferManager()
@@ -105,18 +95,8 @@ public class BucketComponent {
   }
 
   public URL presign(String bucketKey, Duration expiration) {
-    return presign(bucketKey, expiration, Optional.empty());
-  }
-
-  // TODO: move to customComponent
-  public URL presign(String bucketKey, Duration expiration, Optional<String> fileName) {
-    var requestBuilder =
-        GetObjectRequest.builder().bucket(bucketConf.getBucketName()).key(bucketKey);
-    if (fileName.isPresent()) {
-      requestBuilder.responseContentDisposition(
-          "attachment; filename=" + "\"" + fileName.get() + "\"");
-    }
-    GetObjectRequest getObjectRequest = requestBuilder.build();
+    GetObjectRequest getObjectRequest =
+        GetObjectRequest.builder().bucket(bucketConf.getBucketName()).key(bucketKey).build();
     PresignedGetObjectRequest presignedRequest =
         bucketConf
             .getS3Presigner()
@@ -126,13 +106,6 @@ public class BucketComponent {
                     .getObjectRequest(getObjectRequest)
                     .build());
     return presignedRequest.url();
-  }
-
-  public String presign(String bucketKey) {
-    if (bucketKey == null) {
-      return null;
-    }
-    return presign(bucketKey, DEFAULT_PRE_SIGNED_URL_DURATION).toString();
   }
 
   public String getBucketName() {

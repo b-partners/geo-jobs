@@ -8,7 +8,7 @@ import static org.mockito.Mockito.*;
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.DetectionExcelFileAddressConverted;
 import app.bpartners.geojobs.endpoint.event.model.DetectionExcelFileSaved;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.service.ExcelAddressConverter;
@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 class DetectionExcelFileSavedServiceTest {
-  BucketComponent bucketComponentMock = mock();
+  CustomBucketComponent bucketComponentMock = mock();
   ExcelAddressConverter excelAddressConverterMock = mock();
   DetectionRepository detectionRepositoryMock = mock();
   EventProducer eventProducerMock = mock();

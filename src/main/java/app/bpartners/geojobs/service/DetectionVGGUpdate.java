@@ -7,7 +7,7 @@ import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.file.FileWriter;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.model.geometry.VGG;
 import app.bpartners.geojobs.model.geometry.VGGFactory;
 import app.bpartners.geojobs.repository.DetectionFileObjectRepository;
@@ -24,13 +24,13 @@ import org.springframework.stereotype.Component;
 public class DetectionVGGUpdate {
   private static final String VGG_BUCKET_FOLDER = "vgg/";
   private final FileWriter fileWriter;
-  private final BucketComponent bucketComponent;
+  private final CustomBucketComponent bucketComponent;
   private final VGGFactory vggFactory;
   private final DetectionFileObjectRepository detectionFileObjectRepository;
 
   public DetectionVGGUpdate(
       FileWriter fileWriter,
-      BucketComponent bucketComponent,
+      CustomBucketComponent bucketComponent,
       VGGFactory vggFactory,
       DetectionFileObjectRepository detectionFileObjectRepository) {
     this.fileWriter = fileWriter;

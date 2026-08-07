@@ -12,7 +12,7 @@ import app.bpartners.gen.annotator.endpoint.rest.api.AdminApi;
 import app.bpartners.gen.annotator.endpoint.rest.api.JobsApi;
 import app.bpartners.gen.annotator.endpoint.rest.client.ApiException;
 import app.bpartners.gen.annotator.endpoint.rest.model.*;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.DetectableObjectConfigurationRepository;
 import app.bpartners.geojobs.repository.model.annotation.AnnotationDeliveryJob;
 import app.bpartners.geojobs.repository.model.annotation.AnnotationDeliveryTask;
@@ -44,7 +44,7 @@ public class AnnotationService {
   private static final int DEFAULT_IMAGES_HEIGHT = 1024;
   private static final int DEFAULT_IMAGES_WIDTH = 1024;
   private final DetectableObjectConfigurationRepository objectConfigurationRepository;
-  private final BucketComponent bucketComponent;
+  private final CustomBucketComponent bucketComponent;
 
   public AnnotationService(
       AnnotatorApiConf annotatorApiConf,
@@ -54,7 +54,7 @@ public class AnnotationService {
       AnnotatorUserInfoGetter annotatorUserInfoGetter,
       AnnotationDeliveryJobService annotationDeliveryJobService,
       DetectableObjectConfigurationRepository objectConfigurationRepository,
-      BucketComponent bucketComponent) {
+      CustomBucketComponent bucketComponent) {
     this.adminApi = new AdminApi(annotatorApiConf.newApiClientWithApiKey());
     this.jobsApi = new JobsApi(annotatorApiConf.newApiClientWithApiKey());
     this.taskExtractor = taskExtractor;

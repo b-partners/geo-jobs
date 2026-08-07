@@ -12,7 +12,7 @@ import static java.util.stream.Collectors.toSet;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.endpoint.rest.model.Polygon;
 import app.bpartners.geojobs.file.FileWriter;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.Feature;
@@ -45,7 +45,7 @@ public class CityJSONInternalProcessor implements Function<CityJSONRequest, List
   private static final String GEOJSON_EXTENSION = ".geojson";
 
   private final FileWriter fileWriter;
-  private final BucketComponent bucketComponent;
+  private final CustomBucketComponent bucketComponent;
   private final CityJsonTextureComputer textureComputer;
   private final CityJsonProcessorApiClient cityJsonProcessorApiClient;
   private final CityJSONDownloader cityJSONDownloader;

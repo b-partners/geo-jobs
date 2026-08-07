@@ -7,7 +7,7 @@ import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.GeoCodingJobCreated;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.GeoCodingJobRepository;
@@ -31,7 +31,7 @@ public class GeoCodeService {
   private final GeoCodeApi geoCodeApi;
   private final GeometryConverter geometryConverter;
   private final GeoCodingJobRepository repository;
-  private final BucketComponent bucketComponent;
+  private final CustomBucketComponent bucketComponent;
   private final EventProducer eventProducer;
   private final BuildingFinder buildingFinder;
 

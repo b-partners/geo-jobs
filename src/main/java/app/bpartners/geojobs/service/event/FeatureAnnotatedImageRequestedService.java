@@ -6,7 +6,7 @@ import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 
 import app.bpartners.geojobs.endpoint.event.model.FeatureAnnotatedImageRequested;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.DetectionFileObjectRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.detection.DetectionFileObject;
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Service;
 public class FeatureAnnotatedImageRequestedService
     implements Consumer<FeatureAnnotatedImageRequested> {
   private final DetectionRepository detectionRepository;
-  private final BucketComponent bucketComponent;
+  private final CustomBucketComponent bucketComponent;
   private final VggImageAnnotator vggImageAnnotator;
   private final DetectionFileObjectRepository detectionFileObjectRepository;
 
