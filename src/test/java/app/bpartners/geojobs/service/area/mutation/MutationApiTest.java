@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.service.area.mutation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -69,7 +69,7 @@ class MutationApiTest {
 
   @SneakyThrows
   @Test
-  void detect_mutation_returns_null_when_status_not_ok() {
+  void detect_mutation_throws_when_status_not_ok() {
     var beforeFile = writeFile("before.png", new byte[] {1, 2, 3});
     var afterFile = writeFile("after.png", new byte[] {4, 5, 6});
     var maskFile = writeFile("mask.png", new byte[] {7, 8, 9});
@@ -79,14 +79,14 @@ class MutationApiTest {
     when(restTemplateMock.postForEntity(any(String.class), any(), eq(MutationResponse.class)))
         .thenReturn(new ResponseEntity<>(response, HttpStatus.CREATED));
 
-    var actual = subject.detectMutation(beforeFile, afterFile, maskFile, "parcel-42.png");
-
-    assertNull(actual);
+    assertThrows(
+        IllegalStateException.class,
+        () -> subject.detectMutation(beforeFile, afterFile, maskFile, "parcel-42.png"));
   }
 
   @SneakyThrows
   @Test
-  void detect_mutation_returns_null_when_http_error() {
+  void detect_mutation_throws_when_http_error() {
     var beforeFile = writeFile("before.png", new byte[] {1, 2, 3});
     var afterFile = writeFile("after.png", new byte[] {4, 5, 6});
     var maskFile = writeFile("mask.png", new byte[] {7, 8, 9});
@@ -94,9 +94,9 @@ class MutationApiTest {
     when(restTemplateMock.postForEntity(any(String.class), any(), eq(MutationResponse.class)))
         .thenThrow(mock(HttpClientErrorException.BadRequest.class));
 
-    var actual = subject.detectMutation(beforeFile, afterFile, maskFile, "parcel-42.png");
-
-    assertNull(actual);
+    assertThrows(
+        IllegalStateException.class,
+        () -> subject.detectMutation(beforeFile, afterFile, maskFile, "parcel-42.png"));
   }
 
   private String encodeBase64(File file) throws IOException {

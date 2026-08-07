@@ -104,12 +104,16 @@ public class FeatureWithDetectionPropertiesRequestedService
                   var detectedObjectPolygonGeometriesUsedForRateComputing =
                       getDetectedObjectPolygonGeometriesUsedForRateComputing(
                           detection.getZdjId(), latLonRoofGeometry);
+                  // TODO: build the MutationContext (parcel delimitations by image date,
+                  // reference mask and GeoServer configuration) to compute the roof mutation,
+                  // once the instant-parcel grouping in MutationComputer is implemented.
                   var computedProperties =
                       featureRoofResultPropertiesComputer.apply(
                           delimitationFeature,
                           latLonRoofGeometry,
                           latLonRoofGeometry,
-                          detectedObjectPolygonGeometriesUsedForRateComputing);
+                          detectedObjectPolygonGeometriesUsedForRateComputing,
+                          null);
 
                   HashMap<String, Object> actualProperties = new HashMap<>();
                   var featureProperties = delimitationFeature.getProperties();

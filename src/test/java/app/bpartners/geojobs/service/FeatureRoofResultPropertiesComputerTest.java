@@ -9,6 +9,7 @@ import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.model.geometry.MultiPolygonObjectType;
 import app.bpartners.geojobs.model.geometry.PolygonObjectType;
 import app.bpartners.geojobs.repository.model.detection.RoofCoveringType;
+import app.bpartners.geojobs.service.area.mutation.MutationComputer;
 import app.bpartners.geojobs.service.area.toiture.model.CoveringType;
 import app.bpartners.geojobs.service.area.toiture.model.FireRiskLevel;
 import app.bpartners.geojobs.service.area.toiture.model.MaintenancePriority;
@@ -43,6 +44,7 @@ class FeatureRoofResultPropertiesComputerTest {
   @Mock private PolygonObjectTypeConverter polygonObjectTypeConverter;
   @Mock private RoofAssessmentFacade roofAssessmentFacade;
   @Mock private ObjectMapper objectMapper;
+  @Mock private MutationComputer mutationComputer;
 
   private Geometry geometryUsedForAreaComputing;
   private Geometry roofGeometryUsedForRateComputing;
@@ -101,7 +103,8 @@ class FeatureRoofResultPropertiesComputerTest {
             feature,
             geometryUsedForAreaComputing,
             roofGeometryUsedForRateComputing,
-            detectedObjects);
+            detectedObjects,
+            null);
 
     assertEquals("existing_value", result.get("existing_key"));
     assertEquals(150.0, result.get("roof_area_in_m2"));
@@ -126,7 +129,8 @@ class FeatureRoofResultPropertiesComputerTest {
             feature,
             geometryUsedForAreaComputing,
             roofGeometryUsedForRateComputing,
-            detectedObjects);
+            detectedObjects,
+            null);
 
     assertEquals(150.0, result.get("roof_area_in_m2"));
     assertNull(result.get("addresses"));
@@ -153,7 +157,8 @@ class FeatureRoofResultPropertiesComputerTest {
             feature,
             geometryUsedForAreaComputing,
             roofGeometryUsedForRateComputing,
-            detectedObjects);
+            detectedObjects,
+            null);
 
     assertEquals("ROOF_TUILES", result.get("revetement_1"));
     assertNull(result.get("revetement_2"));
@@ -181,7 +186,8 @@ class FeatureRoofResultPropertiesComputerTest {
             feature,
             geometryUsedForAreaComputing,
             roofGeometryUsedForRateComputing,
-            detectedObjects);
+            detectedObjects,
+            null);
 
     assertNull(result.get("addresses"));
     assertFalse(result.containsKey("revetement_1"));
@@ -202,7 +208,8 @@ class FeatureRoofResultPropertiesComputerTest {
             feature,
             geometryUsedForAreaComputing,
             roofGeometryUsedForRateComputing,
-            detectedObjects);
+            detectedObjects,
+            null);
 
     assertNull(result.get("revetement_1"));
     assertNull(result.get("revetement_2"));

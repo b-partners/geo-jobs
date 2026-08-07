@@ -55,20 +55,24 @@ public class MutationApi {
     var request = new HttpEntity<>(requestBody, headers);
 
     try {
-      var uriBuilder =
-          UriComponentsBuilder.fromUri(new URI(mutationApiUrl + "/mutation"));
+      var uriBuilder = UriComponentsBuilder.fromUri(new URI(mutationApiUrl + "/mutation"));
       var response =
-          restTemplate.postForEntity(
-              uriBuilder.toUriString(), request, MutationResponse.class);
+          restTemplate.postForEntity(uriBuilder.toUriString(), request, MutationResponse.class);
       if (response.getStatusCode().value() == 200) {
         return response.getBody();
       }
+      throw new IllegalStateException(
+          "Error while calling API for mutation detection at "
+              + mutationApiUrl
+              + " with HTTP code "
+              + response.getStatusCode());
     } catch (URISyntaxException | HttpStatusCodeException e) {
-      log.error(
-          "Error while calling API for mutation detection {} with exception {}",
-          mutationApiUrl,
-          e.getMessage());
+      throw new IllegalStateException(
+          "Error while calling API for mutation detection at "
+              + mutationApiUrl
+              + " with exception "
+              + e.getMessage(),
+          e);
     }
-    return null;
   }
 }
