@@ -4,22 +4,22 @@ compute:
   frontal_function_timeout: 300
   frontal_memory: 2048
   workers:
-    - batch: 1
-      memory: 1024
-      reserved_concurrent_executions_nb: 100
-      timeout: 900
-    - batch: 1
-      memory: 2048
-      reserved_concurrent_executions_nb: 100
-      timeout: 900
-    - batch: 1
-      memory: 1024
-      reserved_concurrent_executions_nb: 10
-      timeout: 900
-    - batch: 1
-      memory: 2048
-      reserved_concurrent_executions_nb: 10
-      timeout: 900
+  - batch: 1
+    memory: 1024
+    reserved_concurrent_executions_nb: 100
+    timeout: 900
+  - batch: 1
+    memory: 2048
+    reserved_concurrent_executions_nb: 100
+    timeout: 900
+  - batch: 1
+    memory: 1024
+    reserved_concurrent_executions_nb: 10
+    timeout: 900
+  - batch: 1
+    memory: 2048
+    reserved_concurrent_executions_nb: 10
+    timeout: 900
 concurrency:
   frontal_reserved_concurrent_executions_nb: null
 database:

@@ -1,6 +1,8 @@
 package app.bpartners.geojobs.endpoint.event.model;
 
 import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_1;
+import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_2;
+import static app.bpartners.geojobs.endpoint.event.EventStack.EVENT_STACK_3;
 import static java.lang.Math.random;
 
 import app.bpartners.geojobs.PojaGenerated;
@@ -40,21 +42,9 @@ public abstract class PojaEvent implements Serializable {
   }
 
   public String getEventSource() {
-    var eventStack = getEventStack();
-    switch (eventStack) {
-      case EVENT_STACK_1 -> {
-        return "app.bpartners.geojobs.event1";
-      }
-      case EVENT_STACK_2 -> {
-        return "app.bpartners.geojobs.event2";
-      }
-      case EVENT_STACK_3 -> {
-        return "app.bpartners.geojobs.event3";
-      }
-      case EVENT_STACK_4 -> {
-        return "app.bpartners.geojobs.event4";
-      }
-    }
-    throw new IllegalStateException("Unknown event stack " + eventStack);
+    if (getEventStack().equals(EVENT_STACK_1)) return "app.bpartners.geojobs.event1";
+    if (getEventStack().equals(EVENT_STACK_2)) return "app.bpartners.geojobs.event2";
+    if (getEventStack().equals(EVENT_STACK_3)) return "app.bpartners.geojobs.event3";
+    return "app.bpartners.geojobs.event4";
   }
 }
