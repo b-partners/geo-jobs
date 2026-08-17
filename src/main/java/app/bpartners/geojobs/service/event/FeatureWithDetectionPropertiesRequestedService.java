@@ -15,6 +15,7 @@ import app.bpartners.geojobs.model.geometry.PolygonObjectType;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.service.FeatureRoofResultPropertiesComputer;
+import app.bpartners.geojobs.service.area.mutation.MutationContextFactory;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.geojson.GeometryCorrector;
 import jakarta.persistence.EntityManager;
@@ -38,6 +39,7 @@ public class FeatureWithDetectionPropertiesRequestedService
   private final MachineDetectedTileRepository machineDetectedTileRepository;
   private final EventProducer eventProducer;
   private final GeometryCorrector geometryCorrector;
+  private final MutationContextFactory mutationContextFactory;
 
   @Override
   public void accept(FeatureWithDetectionPropertiesRequested event) {
@@ -104,16 +106,13 @@ public class FeatureWithDetectionPropertiesRequestedService
                   var detectedObjectPolygonGeometriesUsedForRateComputing =
                       getDetectedObjectPolygonGeometriesUsedForRateComputing(
                           detection.getZdjId(), latLonRoofGeometry);
-                  // TODO: build the MutationContext (parcel delimitations by image date,
-                  // reference mask and GeoServer configuration) to compute the roof mutation,
-                  // once the instant-parcel grouping in MutationComputer is implemented.
                   var computedProperties =
                       featureRoofResultPropertiesComputer.apply(
                           delimitationFeature,
                           latLonRoofGeometry,
                           latLonRoofGeometry,
                           detectedObjectPolygonGeometriesUsedForRateComputing,
-                          null);
+                          mutationContextFactory.create(detection, latLonRoofGeometry));
 
                   HashMap<String, Object> actualProperties = new HashMap<>();
                   var featureProperties = delimitationFeature.getProperties();

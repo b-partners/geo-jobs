@@ -34,13 +34,12 @@ public class MutationComputer {
     return mutationResponse.mutation();
   }
 
-  // TODO: group the parcel delimitations by image date (millésime) and return the most recent one
+  // TODO: implement once the parcel delimitations are grouped by image date (millésime)
   private InstantParcel getMostRecentInstantParcel(
       List<FeatureWithDelimitation> parcelDelimitations) {
     throw new NotImplementedException("Not implemented yet");
   }
 
-  // TODO: return the instant parcel preceding the given one (previous millésime)
   private InstantParcel getPrecedentInstantParcel(InstantParcel parcel) {
     throw new NotImplementedException("Not implemented yet");
   }

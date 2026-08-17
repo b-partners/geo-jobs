@@ -18,6 +18,7 @@ import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.repository.model.detection.*;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.FeatureRoofResultPropertiesComputer;
+import app.bpartners.geojobs.service.area.mutation.MutationContextFactory;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.geojson.GeometryCorrector;
 import jakarta.persistence.EntityManager;
@@ -33,6 +34,7 @@ class FeatureWithDetectionPropertiesRequestedServiceTest {
   MachineDetectedTileRepository machineDetectedTileRepositoryMock = mock();
   EventProducer eventProducerMock = mock();
   GeometryCorrector geometryCorrectorMock = mock();
+  MutationContextFactory mutationContextFactoryMock = mock();
   FeatureWithDetectionPropertiesRequestedService subject =
       new FeatureWithDetectionPropertiesRequestedService(
           entityManagerMock,
@@ -41,7 +43,8 @@ class FeatureWithDetectionPropertiesRequestedServiceTest {
           geometryConverterMock,
           machineDetectedTileRepositoryMock,
           eventProducerMock,
-          geometryCorrectorMock);
+          geometryCorrectorMock,
+          mutationContextFactoryMock);
 
   @Test
   void compute_feature_with_detection_properties_requested_and_produces_vgg() {
@@ -91,12 +94,14 @@ class FeatureWithDetectionPropertiesRequestedServiceTest {
     when(machineDetectedTileRepositoryMock.findAllByZdjJobId(zoneDetectionJobIdentifier))
         .thenReturn(List.of(machineDetectedTileMock));
     when(featureRoofResultPropertiesComputerMock.apply(
-            featureMock,
-            latLonRoofGeometryMock,
-            latLonRoofGeometryMock,
-            List.of(
-                new PolygonObjectType(
-                    detectedObjectIntersectionWithProvidedFeature, MOISISSURE_CLAIR))))
+            eq(featureMock),
+            eq(latLonRoofGeometryMock),
+            eq(latLonRoofGeometryMock),
+            eq(
+                List.of(
+                    new PolygonObjectType(
+                        detectedObjectIntersectionWithProvidedFeature, MOISISSURE_CLAIR))),
+            isNull()))
         .thenReturn(newPropertiesMock);
 
     assertDoesNotThrow(
@@ -143,7 +148,8 @@ class FeatureWithDetectionPropertiesRequestedServiceTest {
             subject.accept(
                 new FeatureWithDetectionPropertiesRequested(detectionIdentifier, featureMock)));
 
-    verify(featureRoofResultPropertiesComputerMock, never()).apply(any(), any(), any(), any());
+    verify(featureRoofResultPropertiesComputerMock, never())
+        .apply(any(), any(), any(), any(), any());
     verify(detectionRepositoryMock, never()).save(any());
     verify(machineDetectedTileRepositoryMock, never()).save(any());
     verify(eventProducerMock, only()).accept(any());
