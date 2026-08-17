@@ -100,7 +100,7 @@ class MutationComputerTest {
   }
 
   @Test
-  void singleTileImage_returns_file_when_not_a_directory() throws Exception {
+  void singleTileImage_returns_file_when_not_a_directory() {
     var fileMock = mock(File.class);
     when(fileMock.isDirectory()).thenReturn(false);
 
@@ -110,7 +110,7 @@ class MutationComputerTest {
   }
 
   @Test
-  void singleTileImage_recurses_into_first_child_of_a_directory() throws Exception {
+  void singleTileImage_recurses_into_first_child_of_a_directory() {
     var childFileMock = mock(File.class);
     when(childFileMock.isDirectory()).thenReturn(false);
     var directoryMock = mock(File.class);

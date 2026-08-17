@@ -54,8 +54,7 @@ class MutationContextFactoryTest {
   }
 
   @Test
-  void findTileIntersecting_returns_first_tile_whose_multi_polygon_intersects_the_roof()
-      throws Exception {
+  void findTileIntersecting_returns_first_tile_whose_multi_polygon_intersects_the_roof() {
     var detection = Detection.builder().id("detection-1").zdjId("zdj-1").build();
     var tile1 =
         Tile.builder().id("tile-1").coordinates(new TileCoordinates().x(1).y(2).z(3)).build();
@@ -113,7 +112,7 @@ class MutationContextFactoryTest {
   }
 
   @Test
-  void tileMultiPolygon_delegates_to_geometry_converter() throws Exception {
+  void tileMultiPolygon_delegates_to_geometry_converter() {
     var tile = Tile.builder().coordinates(new TileCoordinates().x(7).y(8).z(9)).build();
     var expected = mock(MultiPolygon.class);
     when(geometryConverterMock.getMultiPolygonFromTile(7, 8, 9)).thenReturn(expected);
@@ -124,7 +123,7 @@ class MutationContextFactoryTest {
   }
 
   @Test
-  void asMultiPolygon_returns_same_instance_when_already_a_multi_polygon() throws Exception {
+  void asMultiPolygon_returns_same_instance_when_already_a_multi_polygon() {
     var multiPolygon = mock(MultiPolygon.class);
 
     var actual =
@@ -134,7 +133,7 @@ class MutationContextFactoryTest {
   }
 
   @Test
-  void asMultiPolygon_wraps_a_polygon_into_a_multi_polygon() throws Exception {
+  void asMultiPolygon_wraps_a_polygon_into_a_multi_polygon() {
     var geometryFactory = new GeometryFactory();
     var polygon =
         geometryFactory.createPolygon(

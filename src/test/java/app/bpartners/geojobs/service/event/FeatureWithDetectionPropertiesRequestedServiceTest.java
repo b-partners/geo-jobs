@@ -168,14 +168,13 @@ class FeatureWithDetectionPropertiesRequestedServiceTest {
     when(mutationContextFactoryMock.create(detectionMock, latLonRoofGeometryMock))
         .thenReturn(mutationContext);
     when(featureRoofResultPropertiesComputerMock.apply(
-            eq(featureMock),
-            eq(latLonRoofGeometryMock),
-            eq(latLonRoofGeometryMock),
-            eq(
-                List.of(
-                    new PolygonObjectType(
-                        detectedObjectIntersectionWithProvidedFeature, MOISISSURE_CLAIR))),
-            eq(mutationContext)))
+            featureMock,
+            latLonRoofGeometryMock,
+            latLonRoofGeometryMock,
+            List.of(
+                new PolygonObjectType(
+                    detectedObjectIntersectionWithProvidedFeature, MOISISSURE_CLAIR)),
+            mutationContext))
         .thenReturn(newPropertiesMock);
 
     assertDoesNotThrow(
