@@ -6,10 +6,13 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.model.geometry.MultiPolygonObjectType;
 import app.bpartners.geojobs.model.geometry.PolygonObjectType;
 import app.bpartners.geojobs.repository.model.detection.RoofCoveringType;
 import app.bpartners.geojobs.service.area.mutation.MutationComputer;
+import app.bpartners.geojobs.service.area.mutation.model.MutationContext;
+import app.bpartners.geojobs.service.area.mutation.model.MutationType;
 import app.bpartners.geojobs.service.area.toiture.model.CoveringType;
 import app.bpartners.geojobs.service.area.toiture.model.FireRiskLevel;
 import app.bpartners.geojobs.service.area.toiture.model.MaintenancePriority;
@@ -21,6 +24,8 @@ import app.bpartners.geojobs.service.event.DetectionRoofPropertiesRequestedServi
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.File;
+import java.net.URL;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -219,6 +224,41 @@ class FeatureRoofResultPropertiesComputerTest {
     assertEquals(
         CoveringType.HIGH_COMBUSTIBILITY,
         evaluatorCaptor.getValue().getRoofContext().coveringType());
+  }
+
+  @Test
+  void should_put_mutation_property_when_mutation_context_is_provided() throws Exception {
+    var mutationContext =
+        new MutationContext(
+            List.of(),
+            new File("mask.png"),
+            new URL("https://geoserver.example.com"),
+            new GeoServerParameter());
+    when(mutationComputer.apply(mutationContext)).thenReturn(MutationType.DETERIORATION);
+
+    Map<String, Object> result =
+        subject.apply(
+            feature,
+            geometryUsedForAreaComputing,
+            roofGeometryUsedForRateComputing,
+            detectedObjects,
+            mutationContext);
+
+    assertEquals(MutationType.DETERIORATION, result.get("mutation"));
+  }
+
+  @Test
+  void should_not_put_mutation_property_when_mutation_context_is_null() {
+    Map<String, Object> result =
+        subject.apply(
+            feature,
+            geometryUsedForAreaComputing,
+            roofGeometryUsedForRateComputing,
+            detectedObjects,
+            null);
+
+    assertFalse(result.containsKey("mutation"));
+    verifyNoInteractions(mutationComputer);
   }
 
   private static Geometry createSquare(GeometryFactory gf, double size) {

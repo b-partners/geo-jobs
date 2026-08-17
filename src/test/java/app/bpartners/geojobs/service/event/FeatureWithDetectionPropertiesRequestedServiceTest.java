@@ -19,6 +19,7 @@ import app.bpartners.geojobs.repository.model.detection.*;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.FeatureRoofResultPropertiesComputer;
 import app.bpartners.geojobs.service.area.mutation.MutationContextFactory;
+import app.bpartners.geojobs.service.area.mutation.model.MutationContext;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.geojson.GeometryCorrector;
 import jakarta.persistence.EntityManager;
@@ -116,6 +117,74 @@ class FeatureWithDetectionPropertiesRequestedServiceTest {
 
   private Tile someTile() {
     return Tile.builder().coordinates(new TileCoordinates().x(0).y(1).z(20)).build();
+  }
+
+  @Test
+  void mutation_context_built_by_factory_is_forwarded_to_properties_computer() {
+    var detectionIdentifier = randomUUID().toString();
+    var zoneDetectionJobIdentifier = randomUUID().toString();
+    var featureId = randomUUID().toString();
+    var featureMock = mock(Feature.class);
+    var detectionMock = mock(Detection.class);
+    var tile = someTile();
+    var providedGeometryMultiPolygon = new MultiPolygon();
+    var providedFeatureGeometry = new FeatureGeometry(providedGeometryMultiPolygon);
+    var detectedObjectGeometryMultiPolygon = new MultiPolygon();
+    var detectedObjectFeatureGeometry = new FeatureGeometry(detectedObjectGeometryMultiPolygon);
+    var detectedObjectIntersectionWithProvidedFeature = mock(Polygon.class);
+    var latLonRoofGeometryMock = mock(org.locationtech.jts.geom.MultiPolygon.class);
+    var machineDetectedTileMock = mock(MachineDetectedTile.class);
+    var detectedObjectMock = mock(DetectedObject.class);
+    var detectedObjectFeatureMock = mock(Feature.class);
+    var featureProperties = new HashMap<String, Object>(Map.of("id", featureId));
+    var newPropertiesMock = new HashMap<String, Object>(Map.of("roof_area_in_m2", 100.0));
+    var mutationContext = new MutationContext(List.of(), null, null, null);
+
+    when(latLonRoofGeometryMock.intersection(any()))
+        .thenReturn(detectedObjectIntersectionWithProvidedFeature);
+
+    when(detectionMock.hasToitureModelName()).thenReturn(true);
+    when(detectionMock.getZdjId()).thenReturn(zoneDetectionJobIdentifier);
+    when(detectionMock.getGeoJsonDelimitationType()).thenReturn(ROOF);
+    when(detectionMock.getDelimitationOf(featureMock)).thenReturn(List.of(featureMock));
+
+    when(featureMock.getProperties()).thenReturn(featureProperties);
+    when(featureMock.getGeometry()).thenReturn(providedFeatureGeometry);
+
+    when(detectedObjectFeatureMock.getGeometry()).thenReturn(detectedObjectFeatureGeometry);
+
+    when(detectedObjectMock.getDetectableObjectType()).thenReturn(MOISISSURE_CLAIR);
+    when(detectedObjectMock.getFeature()).thenReturn(detectedObjectFeatureMock);
+
+    when(machineDetectedTileMock.getTile()).thenReturn(tile);
+    when(machineDetectedTileMock.getDetectedObjects()).thenReturn(List.of(detectedObjectMock));
+
+    when(detectionRepositoryMock.findById(detectionIdentifier))
+        .thenReturn(Optional.of(detectionMock));
+    when(geometryConverterMock.apply(any())).thenReturn(latLonRoofGeometryMock);
+    when(geometryCorrectorMock.apply(any())).thenReturn(latLonRoofGeometryMock);
+    when(machineDetectedTileRepositoryMock.findAllByZdjJobId(zoneDetectionJobIdentifier))
+        .thenReturn(List.of(machineDetectedTileMock));
+    when(mutationContextFactoryMock.create(detectionMock, latLonRoofGeometryMock))
+        .thenReturn(mutationContext);
+    when(featureRoofResultPropertiesComputerMock.apply(
+            eq(featureMock),
+            eq(latLonRoofGeometryMock),
+            eq(latLonRoofGeometryMock),
+            eq(
+                List.of(
+                    new PolygonObjectType(
+                        detectedObjectIntersectionWithProvidedFeature, MOISISSURE_CLAIR))),
+            eq(mutationContext)))
+        .thenReturn(newPropertiesMock);
+
+    assertDoesNotThrow(
+        () ->
+            subject.accept(
+                new FeatureWithDetectionPropertiesRequested(detectionIdentifier, featureMock)));
+
+    verify(featureRoofResultPropertiesComputerMock)
+        .apply(any(), any(), any(), any(), eq(mutationContext));
   }
 
   @Test
