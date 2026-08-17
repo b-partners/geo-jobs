@@ -27,17 +27,9 @@ public class MutationContextFactory {
   private final GeometryConverter geometryConverter;
 
   public MutationContext create(Detection detection, Geometry roofGeometry) {
-    var parcelDelimitations = detection.getParcelDelimitations();
-    if (parcelDelimitations == null || parcelDelimitations.isEmpty()) {
-      return null;
-    }
-    var roofMultiPolygon = asMultiPolygon(roofGeometry);
-    var tile = findTileIntersecting(detection, roofMultiPolygon);
-    return new MutationContext(
-        parcelDelimitations,
-        maskFromTileRetriever.apply(tile, roofMultiPolygon),
-        toUrl(detection.getGeoServerProperties().getGeoServerUrl()),
-        detection.getGeoServerProperties().getGeoServerParameter());
+    // TODO: re-enable once parcel delimitations are grouped by image date (millésime), see
+    // MutationComputer.getMostRecentInstantParcel/getPrecedentInstantParcel
+    return null;
   }
 
   private Tile findTileIntersecting(Detection detection, MultiPolygon roofMultiPolygon) {
