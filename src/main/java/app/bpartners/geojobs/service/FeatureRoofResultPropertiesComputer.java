@@ -5,6 +5,8 @@ import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightReq
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.model.geometry.PolygonObjectType;
 import app.bpartners.geojobs.model.geometry.area.AreaRateComputerFacade;
+import app.bpartners.geojobs.service.area.mutation.MutationComputer;
+import app.bpartners.geojobs.service.area.mutation.model.MutationContext;
 import app.bpartners.geojobs.service.area.toiture.model.CoveringType;
 import app.bpartners.geojobs.service.area.toiture.service.RoofAssessmentFacade;
 import app.bpartners.geojobs.service.area.toiture.service.RoofVegetationContextEvaluator;
@@ -16,6 +18,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.Nullable;
 import org.locationtech.jts.geom.Geometry;
 import org.springframework.stereotype.Service;
 
@@ -26,12 +29,14 @@ public class FeatureRoofResultPropertiesComputer {
   private final PolygonObjectTypeConverter polygonObjectTypeConverter;
   private final RoofAssessmentFacade roofAssessmentFacade;
   private final ObjectMapper objectMapper;
+  private final MutationComputer mutationComputer;
 
   public HashMap<String, Object> apply(
       Feature feature,
       Geometry geometryUsedForAreaComputing,
       Geometry roofGeometryUsedForRateComputing,
-      Collection<PolygonObjectType> detectedObjectPolygonGeometriesUsedForRateComputing) {
+      Collection<PolygonObjectType> detectedObjectPolygonGeometriesUsedForRateComputing,
+      @Nullable MutationContext mutationContext) {
 
     var actualProperties = new HashMap<String, Object>();
 
@@ -83,6 +88,10 @@ public class FeatureRoofResultPropertiesComputer {
           detectedRoofCovering.secondary() == null
               ? null
               : detectedRoofCovering.secondary().name());
+    }
+
+    if (mutationContext != null) {
+      actualProperties.put("mutation", mutationComputer.apply(mutationContext));
     }
 
     return actualProperties;
