@@ -2,10 +2,12 @@ package app.bpartners.geojobs.unit;
 
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.STATIONNEMENT;
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
+import static app.bpartners.geojobs.postprocessing.StationnementPostProcessor.AREA_IN_SQUARE_METER_PROPERTY;
 import static app.bpartners.geojobs.postprocessing.StationnementPostProcessor.MIN_PLACE_STANDARD_AREA_IN_SQUARE_METER;
 import static app.bpartners.geojobs.service.geojson.GeoJson.fromFeatures;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel;
@@ -25,6 +27,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 
 class StationnementPostProcessorTest {
@@ -33,6 +37,7 @@ class StationnementPostProcessorTest {
   private static final String GROUND_TRUTH_GEOJSON =
       "/stationnement_toiture/Ground_truth_BP_TOITURE_+BP_STATIONNEMENT.geojson";
   private static final String PLACE_STANDARD_LABEL = "PLACE_STANDARD";
+  private static final String PARKING_LABEL = "PARKING";
 
   private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
   private final GeometryConverter geometryConverter = new GeometryConverter();
@@ -68,6 +73,125 @@ class StationnementPostProcessorTest {
   }
 
   @Test
+  void delivers_the_area_of_kept_place_standard_objects() throws IOException, URISyntaxException {
+    var detectedPlaceStandard = labeledGeoFeatures(RESULT_GEOJSON, PLACE_STANDARD_LABEL);
+
+    var actual = subject.apply(fromFeatures(detectedPlaceStandard), detection(STATIONNEMENT));
+
+    assertFalse(actual.getGeoFeatures().isEmpty(), "kept objects are expected in the fixture");
+    actual
+        .getGeoFeatures()
+        .forEach(
+            geoFeature ->
+                assertEquals(
+                    areaInSquareMeter(geoFeature),
+                    geoFeature.getProperties().get(AREA_IN_SQUARE_METER_PROPERTY),
+                    "kept PLACE_STANDARD is expected to carry its own area"));
+  }
+
+  @Test
+  void delivers_the_area_in_the_serialized_geo_json() throws IOException, URISyntaxException {
+    var detectedPlaceStandard = labeledGeoFeatures(RESULT_GEOJSON, PLACE_STANDARD_LABEL);
+
+    var actual = subject.apply(fromFeatures(detectedPlaceStandard), detection(STATIONNEMENT));
+
+    var serializedProperties = serializedPropertiesOf(actual);
+    assertFalse(serializedProperties.isEmpty(), "kept objects are expected in the fixture");
+    assertEquals(actual.getGeoFeatures().size(), serializedProperties.size());
+    for (int i = 0; i < serializedProperties.size(); i++) {
+      var properties = serializedProperties.get(i);
+      assertTrue(
+          properties.hasNonNull(AREA_IN_SQUARE_METER_PROPERTY),
+          "area is expected in the delivered geojson, not only in memory");
+      assertEquals(
+          areaInSquareMeter(actual.getGeoFeatures().get(i)),
+          properties.get(AREA_IN_SQUARE_METER_PROPERTY).asDouble());
+    }
+  }
+
+  @Test
+  void delivers_the_area_even_when_no_object_is_filtered_out()
+      throws IOException, URISyntaxException {
+    var wideEnoughOnly =
+        labeledGeoFeatures(RESULT_GEOJSON, PLACE_STANDARD_LABEL).stream()
+            .filter(
+                geoFeature ->
+                    areaInSquareMeter(geoFeature) >= MIN_PLACE_STANDARD_AREA_IN_SQUARE_METER)
+            .toList();
+
+    var actual = subject.apply(fromFeatures(wideEnoughOnly), detection(STATIONNEMENT));
+
+    assertEquals(wideEnoughOnly.size(), actual.getGeoFeatures().size(), "nothing to filter out");
+    serializedPropertiesOf(actual)
+        .forEach(
+            properties ->
+                assertTrue(
+                    properties.hasNonNull(AREA_IN_SQUARE_METER_PROPERTY),
+                    "area is expected even when no noisy object was filtered out"));
+  }
+
+  @Test
+  void delivers_the_area_of_parking_objects_without_filtering_them_out()
+      throws IOException, URISyntaxException {
+    var detectedParking = labeledGeoFeatures(RESULT_GEOJSON, PARKING_LABEL);
+
+    var actual = subject.apply(fromFeatures(detectedParking), detection(STATIONNEMENT));
+
+    assertFalse(detectedParking.isEmpty(), "PARKING objects are expected in the fixture");
+    assertEquals(detectedParking.size(), actual.getGeoFeatures().size(), "PARKING is never noise");
+    actual
+        .getGeoFeatures()
+        .forEach(
+            geoFeature ->
+                assertEquals(
+                    areaInSquareMeter(geoFeature),
+                    geoFeature.getProperties().get(AREA_IN_SQUARE_METER_PROPERTY),
+                    "PARKING is expected to carry its own area"));
+    serializedPropertiesOf(actual)
+        .forEach(
+            properties ->
+                assertTrue(
+                    properties.hasNonNull(AREA_IN_SQUARE_METER_PROPERTY),
+                    "area is expected in the delivered geojson, not only in memory"));
+  }
+
+  @Test
+  void delivers_the_area_of_place_standard_and_parking_objects_only()
+      throws IOException, URISyntaxException {
+    var mixedDetected =
+        Stream.of(PLACE_STANDARD_LABEL, PARKING_LABEL, "OBSTACLE", "CHEMINEE")
+            .map(this::labeledGeoFeaturesOfResult)
+            .flatMap(List::stream)
+            .toList();
+
+    var actual = subject.apply(fromFeatures(mixedDetected), detection(STATIONNEMENT));
+
+    var labelsWithArea =
+        actual.getGeoFeatures().stream()
+            .filter(
+                geoFeature -> geoFeature.getProperties().get(AREA_IN_SQUARE_METER_PROPERTY) != null)
+            .map(geoFeature -> geoFeature.getProperties().get("label"))
+            .collect(HashSet::new, Set::add, Set::addAll);
+
+    assertEquals(Set.of(PLACE_STANDARD_LABEL, PARKING_LABEL), labelsWithArea);
+  }
+
+  @Test
+  void does_not_deliver_any_area_for_objects_other_than_place_standard_and_parking()
+      throws IOException, URISyntaxException {
+    var detectedObstacle = labeledGeoFeatures(RESULT_GEOJSON, "OBSTACLE");
+
+    var actual = subject.apply(fromFeatures(detectedObstacle), detection(STATIONNEMENT));
+
+    assertFalse(detectedObstacle.isEmpty(), "OBSTACLE objects are expected in the fixture");
+    actual
+        .getGeoFeatures()
+        .forEach(
+            geoFeature ->
+                assertNull(geoFeature.getProperties().get(AREA_IN_SQUARE_METER_PROPERTY)));
+  }
+
+  @Test
   void does_not_filter_out_anything_when_model_is_not_stationnement()
       throws IOException, URISyntaxException {
     var detectedPlaceStandard = labeledGeoFeatures(RESULT_GEOJSON, PLACE_STANDARD_LABEL);
@@ -80,7 +204,7 @@ class StationnementPostProcessorTest {
   @Test
   void does_not_filter_out_objects_other_than_place_standard()
       throws IOException, URISyntaxException {
-    var detectedParking = labeledGeoFeatures(RESULT_GEOJSON, "PARKING");
+    var detectedParking = labeledGeoFeatures(RESULT_GEOJSON, PARKING_LABEL);
     var geoJson = fromFeatures(detectedParking);
 
     var actual = subject.apply(geoJson, detection(STATIONNEMENT));
@@ -100,12 +224,28 @@ class StationnementPostProcessorTest {
         geometryConverter.apply(geoFeature.getGeometry().getCoordinates()));
   }
 
+  private List<JsonNode> serializedPropertiesOf(GeoJson geoJson) throws IOException {
+    var root = objectMapper.readTree(geoJson.getStringValue());
+    // fromFeatures serializes a bare feature array, other GeoJson constructors a FeatureCollection
+    var features = root.isArray() ? root : root.get("features");
+    List<JsonNode> properties = new ArrayList<>();
+    for (JsonNode feature : features) {
+      properties.add(feature.get("properties"));
+    }
+    return properties;
+  }
+
   private Set<String> geometriesOf(List<GeoJson.GeoFeature> geoFeatures) {
     return geoFeatures.stream().map(this::geometryOf).collect(HashSet::new, Set::add, Set::addAll);
   }
 
   private String geometryOf(GeoJson.GeoFeature geoFeature) {
     return geometryConverter.apply(geoFeature.getGeometry().getCoordinates()).toText();
+  }
+
+  @SneakyThrows
+  private List<GeoJson.GeoFeature> labeledGeoFeaturesOfResult(String label) {
+    return labeledGeoFeatures(RESULT_GEOJSON, label);
   }
 
   private List<GeoJson.GeoFeature> labeledGeoFeatures(String resourcePath, String label)
