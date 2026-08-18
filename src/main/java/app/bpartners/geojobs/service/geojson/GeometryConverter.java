@@ -214,7 +214,7 @@ public class GeometryConverter {
     return polygonsWithSurface;
   }
 
-  private Polygon widestPolygonWithSurfaceOf(MultiPolygon multiPolygon) {
+  public Polygon widestPolygonWithSurfaceOf(MultiPolygon multiPolygon) {
     var polygonsWithSurface = polygonsWithSurfaceOf(multiPolygon);
     if (polygonsWithSurface.isEmpty()) {
       log.warn("Repaired geometry {} left without any surface", multiPolygon);

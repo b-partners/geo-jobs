@@ -4,6 +4,7 @@ import static app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.FeatureMa
 import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.MULTI_POLYGON;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
@@ -165,6 +166,65 @@ class FeatureMapperTest {
     assertEquals(1, actual.size(), "a hole is not a polygon of its own");
     assertEquals(1, actual.getFirst().getNumInteriorRing());
     assertEquals(64.0, actual.getFirst().getArea(), AREA_TOLERANCE, "the hole is subtracted");
+  }
+
+  @Test
+  void polygon_feature_to_domain_geometry_subtracts_the_holes() {
+    var feature = new Feature();
+    feature.setGeometry(
+        new FeatureGeometry(
+            new app.bpartners.geojobs.endpoint.rest.model.Polygon()
+                .coordinates(List.of(square(0, 0, 10), square(2, 2, 6)))));
+
+    var actual = subject.toDomainGeometry(feature);
+
+    assertInstanceOf(Polygon.class, actual);
+    assertEquals(1, ((Polygon) actual).getNumInteriorRing());
+    assertEquals(64.0, actual.getArea(), AREA_TOLERANCE, "the hole is not detected surface");
+  }
+
+  @Test
+  void multi_polygon_feature_to_domain_geometry_subtracts_the_holes() {
+    var multiPolygon =
+        new MultiPolygon().coordinates(List.of(List.of(square(0, 0, 10), square(2, 2, 6))));
+    multiPolygon.setType(MULTI_POLYGON);
+    var feature = new Feature();
+    feature.setGeometry(new FeatureGeometry(multiPolygon));
+
+    var actual = subject.toDomainGeometry(feature);
+
+    assertEquals(64.0, actual.getArea(), AREA_TOLERANCE, "the hole is not detected surface");
+  }
+
+  @Test
+  void polygon_feature_to_domain_geometry_repairs_the_self_intersection() {
+    var feature = new Feature();
+    feature.setGeometry(
+        new FeatureGeometry(
+            new app.bpartners.geojobs.endpoint.rest.model.Polygon()
+                .coordinates(List.of(selfIntersectingRing()))));
+
+    var actual = subject.toDomainGeometry(feature);
+
+    assertTrue(actual.isValid(), "the domain geometry is expected to be valid");
+    assertEquals(4, actual.getNumGeometries(), "every repaired part is expected");
+    assertEquals(SELF_INTERSECTING_REPAIRED_AREA, actual.getArea(), AREA_TOLERANCE);
+  }
+
+  @Test
+  void multi_polygon_feature_to_domain_geometry_repairs_the_self_intersection() {
+    var actual = subject.toDomainGeometry(selfIntersectingFeature());
+
+    assertTrue(actual.isValid(), "the domain geometry is expected to be valid");
+    assertEquals(SELF_INTERSECTING_REPAIRED_AREA, actual.getArea(), AREA_TOLERANCE);
+  }
+
+  @Test
+  void feature_to_domain_polygon_keeps_the_widest_repaired_part() {
+    var actual = subject.toDomainPolygon(selfIntersectingFeature());
+
+    assertTrue(actual.isValid(), "the domain polygon is expected to be valid");
+    assertEquals(33.136, actual.getArea(), AREA_TOLERANCE, "the widest part is expected");
   }
 
   private List<List<BigDecimal>> square(double x, double y, double side) {
