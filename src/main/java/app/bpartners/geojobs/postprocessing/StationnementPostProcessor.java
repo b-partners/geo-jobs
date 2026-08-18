@@ -4,6 +4,7 @@ import static app.bpartners.geojobs.repository.model.detection.DetectableType.PA
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.PLACE_STANDARD;
 import static app.bpartners.geojobs.service.geojson.GeoJson.fromFeatures;
 
+import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
@@ -15,14 +16,15 @@ import java.util.function.BiFunction;
 import javax.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.Polygonal;
+import org.locationtech.jts.geom.util.GeometryFixer;
 import org.springframework.stereotype.Component;
 
 /**
  * Post-processes the objects detected by the STATIONNEMENT model only: the model returns noisy
  * PLACE_STANDARD objects that are far too small to be an actual parking place, and those objects
- * must not be delivered. The area of the delivered PLACE_STANDARD and PARKING objects is added to
- * their properties, so that the consumer is able to filter them out on its side too. Objects
- * detected by any other model are left untouched.
+ * must not be delivered. Objects detected by any other model are left untouched.
  */
 @Slf4j
 @Component
@@ -46,13 +48,18 @@ public class StationnementPostProcessor implements BiFunction<GeoJson, Detection
     var geoFeatures = geoJson.getGeoFeatures();
     var withoutNoise = new ArrayList<GeoJson.GeoFeature>();
     var withDeliveredArea = 0;
+    var repairedCount = 0;
     for (var geoFeature : geoFeatures) {
       if (!hasAreaDelivered(geoFeature)) {
         withoutNoise.add(geoFeature);
         continue;
       }
       withDeliveredArea++;
-      var areaInSquareMeter = areaInSquareMeter(geoFeature);
+      var processedGeometry = repairGeometryAndComputeArea(geoFeature);
+      if (processedGeometry.repaired()) {
+        repairedCount++;
+      }
+      var areaInSquareMeter = processedGeometry.areaInSquareMeter();
       geoFeature.getProperties().put(AREA_IN_SQUARE_METER_PROPERTY, areaInSquareMeter);
       if (!isPlaceStandard(geoFeature) || !isNoise(areaInSquareMeter)) {
         withoutNoise.add(geoFeature);
@@ -60,6 +67,12 @@ public class StationnementPostProcessor implements BiFunction<GeoJson, Detection
     }
     if (withDeliveredArea == 0) {
       return geoJson;
+    }
+    if (repairedCount > 0) {
+      log.info(
+          "{} invalid geometry(ies) repaired for detection(id={})",
+          repairedCount,
+          detection.getId());
     }
     if (withoutNoise.size() < geoFeatures.size()) {
       log.info(
@@ -92,20 +105,42 @@ public class StationnementPostProcessor implements BiFunction<GeoJson, Detection
     return label != null && detectableType.name().equalsIgnoreCase(label.toString());
   }
 
-  private Double areaInSquareMeter(GeoJson.GeoFeature geoFeature) {
+  private ProcessedGeometry repairGeometryAndComputeArea(GeoJson.GeoFeature geoFeature) {
     var geometry = geoFeature.getGeometry();
     if (geometry == null || geometry.getCoordinates() == null) {
-      return null;
+      return ProcessedGeometry.NOT_COMPUTED;
     }
     try {
-      return geometrySquareMeterArea.apply(geometryConverter.apply(geometry.getCoordinates()));
+      var jtsGeometry = geometryConverter.apply(geometry.getCoordinates());
+      var repaired = jtsGeometry.isValid() ? null : repair(jtsGeometry, geometry, geoFeature);
+      return new ProcessedGeometry(
+          geometrySquareMeterArea.apply(repaired == null ? jtsGeometry : repaired),
+          repaired != null);
     } catch (RuntimeException e) {
       log.warn(
           "Unable to compute area of detected {} object, it is delivered without area and not"
               + " filtered out: {}",
           geoFeature.getProperties().get("label"),
           e.getMessage());
+      return ProcessedGeometry.NOT_COMPUTED;
+    }
+  }
+
+  @Nullable
+  private Geometry repair(
+      Geometry invalidGeometry, MultiPolygon deliveredGeometry, GeoJson.GeoFeature geoFeature) {
+    var repaired = GeometryFixer.fix(invalidGeometry);
+    if (repaired.isEmpty() || !(repaired instanceof Polygonal)) {
+      log.warn(
+          "Unable to repair invalid geometry of detected {} object, it is delivered as detected",
+          geoFeature.getProperties().get("label"));
       return null;
     }
+    deliveredGeometry.setCoordinates(geometryConverter.geometryToMultiPolygonCoordinates(repaired));
+    return repaired;
+  }
+
+  private record ProcessedGeometry(@Nullable Double areaInSquareMeter, boolean repaired) {
+    private static final ProcessedGeometry NOT_COMPUTED = new ProcessedGeometry(null, false);
   }
 }

@@ -2,6 +2,7 @@ package app.bpartners.geojobs.unit;
 
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.STATIONNEMENT;
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
+import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.MULTI_POLYGON;
 import static app.bpartners.geojobs.postprocessing.StationnementPostProcessor.AREA_IN_SQUARE_METER_PROPERTY;
 import static app.bpartners.geojobs.postprocessing.StationnementPostProcessor.MIN_PLACE_STANDARD_AREA_IN_SQUARE_METER;
 import static app.bpartners.geojobs.service.geojson.GeoJson.fromFeatures;
@@ -20,16 +21,20 @@ import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.Geometry;
 
 class StationnementPostProcessorTest {
   private static final String RESULT_GEOJSON =
@@ -38,6 +43,8 @@ class StationnementPostProcessorTest {
       "/stationnement_toiture/Ground_truth_BP_TOITURE_+BP_STATIONNEMENT.geojson";
   private static final String PLACE_STANDARD_LABEL = "PLACE_STANDARD";
   private static final String PARKING_LABEL = "PARKING";
+  private static final double SELF_INTERSECTING_REPAIRED_AREA = 13.05;
+  private static final double AREA_TOLERANCE = 0.01;
 
   private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
   private final GeometryConverter geometryConverter = new GeometryConverter();
@@ -192,6 +199,74 @@ class StationnementPostProcessorTest {
   }
 
   @Test
+  void repairs_the_self_intersecting_geometry_of_a_parking() {
+    var selfIntersectingParking = selfIntersectingGeoFeature(PARKING_LABEL);
+    assertFalse(jtsGeometryOf(selfIntersectingParking).isValid(), "fixture is self-intersecting");
+
+    var actual =
+        subject.apply(fromFeatures(List.of(selfIntersectingParking)), detection(STATIONNEMENT));
+
+    var repaired = actual.getGeoFeatures().getFirst();
+    assertTrue(jtsGeometryOf(repaired).isValid(), "the delivered geometry is expected to be valid");
+    assertEquals(
+        SELF_INTERSECTING_REPAIRED_AREA,
+        (Double) repaired.getProperties().get(AREA_IN_SQUARE_METER_PROPERTY),
+        AREA_TOLERANCE,
+        "the area is expected to be the sum of the self-intersecting parts");
+  }
+
+  @Test
+  void keeps_a_place_standard_whose_self_intersecting_geometry_is_wide_enough_once_repaired() {
+    var selfIntersectingPlaceStandard = selfIntersectingGeoFeature(PLACE_STANDARD_LABEL);
+    assertTrue(
+        rawAreaInSquareMeter(selfIntersectingPlaceStandard)
+            < MIN_PLACE_STANDARD_AREA_IN_SQUARE_METER,
+        "raw area is expected to look like noise");
+    assertTrue(
+        SELF_INTERSECTING_REPAIRED_AREA > MIN_PLACE_STANDARD_AREA_IN_SQUARE_METER,
+        "repaired area is expected to be wide enough");
+
+    var actual =
+        subject.apply(
+            fromFeatures(List.of(selfIntersectingPlaceStandard)), detection(STATIONNEMENT));
+
+    assertEquals(1, actual.getGeoFeatures().size(), "it is an actual place, not noise");
+    var repaired = actual.getGeoFeatures().getFirst();
+    assertTrue(jtsGeometryOf(repaired).isValid(), "the delivered geometry is expected to be valid");
+    assertEquals(
+        SELF_INTERSECTING_REPAIRED_AREA,
+        (Double) repaired.getProperties().get(AREA_IN_SQUARE_METER_PROPERTY),
+        AREA_TOLERANCE);
+  }
+
+  @Test
+  void repairs_the_geometry_in_the_serialized_geo_json() {
+    var selfIntersectingParking = selfIntersectingGeoFeature(PARKING_LABEL);
+
+    var actual =
+        subject.apply(fromFeatures(List.of(selfIntersectingParking)), detection(STATIONNEMENT));
+
+    var deliveredGeoFeatures = deserializedGeoFeaturesOf(actual);
+    assertEquals(1, deliveredGeoFeatures.size());
+    assertTrue(
+        jtsGeometryOf(deliveredGeoFeatures.getFirst()).isValid(),
+        "the repaired geometry is expected in the delivered geojson, not only in memory");
+  }
+
+  @Test
+  void delivers_an_unusable_geometry_untouched_and_without_area() {
+    var unusable =
+        geoFeature(PARKING_LABEL, List.of(List.of(List.of(point(2.0, 48.0), point(2.0, 48.0)))));
+
+    var actual = subject.apply(fromFeatures(List.of(unusable)), detection(STATIONNEMENT));
+
+    assertEquals(1, actual.getGeoFeatures().size(), "it is not filtered out on an unknown area");
+    var delivered = actual.getGeoFeatures().getFirst();
+    assertNull(delivered.getProperties().get(AREA_IN_SQUARE_METER_PROPERTY));
+    assertEquals(unusable.getGeometry().getCoordinates(), delivered.getGeometry().getCoordinates());
+  }
+
+  @Test
   void does_not_filter_out_anything_when_model_is_not_stationnement()
       throws IOException, URISyntaxException {
     var detectedPlaceStandard = labeledGeoFeatures(RESULT_GEOJSON, PLACE_STANDARD_LABEL);
@@ -212,6 +287,53 @@ class StationnementPostProcessorTest {
     assertEquals(detectedParking.size(), actual.getGeoFeatures().size());
   }
 
+  private GeoJson.GeoFeature selfIntersectingGeoFeature(String label) {
+    return geoFeature(
+        label,
+        List.of(
+            List.of(
+                List.of(
+                    point(2.0, 48.0),
+                    point(2.00007, 48.000045),
+                    point(2.0, 48.000045),
+                    point(2.00007, 48.0),
+                    point(2.0, 48.0)))));
+  }
+
+  private GeoJson.GeoFeature geoFeature(
+      String label, List<List<List<List<BigDecimal>>>> coordinates) {
+    Map<String, Object> properties = new HashMap<>();
+    properties.put("label", label);
+    return new GeoJson.GeoFeature(
+        properties,
+        new app.bpartners.geojobs.endpoint.rest.model.MultiPolygon()
+            .type(MULTI_POLYGON)
+            .coordinates(coordinates));
+  }
+
+  private List<BigDecimal> point(double x, double y) {
+    return List.of(BigDecimal.valueOf(x), BigDecimal.valueOf(y));
+  }
+
+  private Geometry jtsGeometryOf(GeoJson.GeoFeature geoFeature) {
+    return geometryConverter.apply(geoFeature.getGeometry().getCoordinates());
+  }
+
+  private double rawAreaInSquareMeter(GeoJson.GeoFeature geoFeature) {
+    return geometrySquareMeterArea.apply(jtsGeometryOf(geoFeature));
+  }
+
+  @SneakyThrows
+  private List<GeoJson.GeoFeature> deserializedGeoFeaturesOf(GeoJson geoJson) {
+    var root = objectMapper.readTree(geoJson.getStringValue());
+    var features = root.isArray() ? root : root.get("features");
+    List<GeoJson.GeoFeature> geoFeatures = new ArrayList<>();
+    for (JsonNode feature : features) {
+      geoFeatures.add(objectMapper.treeToValue(feature, GeoJson.GeoFeature.class));
+    }
+    return geoFeatures;
+  }
+
   private Detection detection(ModelName modelName) {
     return Detection.builder()
         .id("detection_id")
@@ -226,7 +348,6 @@ class StationnementPostProcessorTest {
 
   private List<JsonNode> serializedPropertiesOf(GeoJson geoJson) throws IOException {
     var root = objectMapper.readTree(geoJson.getStringValue());
-    // fromFeatures serializes a bare feature array, other GeoJson constructors a FeatureCollection
     var features = root.isArray() ? root : root.get("features");
     List<JsonNode> properties = new ArrayList<>();
     for (JsonNode feature : features) {
