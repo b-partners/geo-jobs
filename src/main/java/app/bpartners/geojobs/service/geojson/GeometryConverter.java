@@ -168,14 +168,46 @@ public class GeometryConverter {
 
     if (!polygon.isValid()) {
       var fixGeometry = GeometryFixer.fix(polygon);
-      if (fixGeometry instanceof Polygon) {
-        polygon = (Polygon) fixGeometry; // ou polygon.buffer(0)
-      } else if (fixGeometry instanceof MultiPolygon) {
-        polygon = (Polygon) fixGeometry.getGeometryN(0);
+      if (fixGeometry instanceof Polygon fixedPolygon) {
+        polygon = fixedPolygon; // ou polygon.buffer(0)
+      } else if (fixGeometry instanceof MultiPolygon fixedMultiPolygon) {
+        polygon = widestPolygonWithSurfaceOf(fixedMultiPolygon);
       }
     }
 
     return polygon;
+  }
+
+  private Polygon widestPolygonWithSurfaceOf(MultiPolygon multiPolygon) {
+    var polygonsWithSurface = polygonsWithSurfaceOf(multiPolygon);
+    if (polygonsWithSurface.isEmpty()) {
+      log.warn("Repaired geometry {} left without any surface", multiPolygon);
+      return (Polygon) multiPolygon.getGeometryN(0);
+    }
+    var widest =
+        polygonsWithSurface.stream()
+            .max(Comparator.comparingDouble(Polygon::getArea))
+            .orElseThrow();
+    if (polygonsWithSurface.size() > 1) {
+      log.warn(
+          "Repaired self-intersecting geometry split into {} parts, only the widest one is kept:"
+              + " {} of {} square unit(s) dropped",
+          multiPolygon.getNumGeometries(),
+          multiPolygon.getArea() - widest.getArea(),
+          multiPolygon.getArea());
+    }
+    return widest;
+  }
+
+  private List<Polygon> polygonsWithSurfaceOf(MultiPolygon multiPolygon) {
+    var polygonsWithSurface = new ArrayList<Polygon>();
+    for (int i = 0; i < multiPolygon.getNumGeometries(); i++) {
+      var part = (Polygon) multiPolygon.getGeometryN(i);
+      if (part.getArea() > 0) {
+        polygonsWithSurface.add(part);
+      }
+    }
+    return polygonsWithSurface;
   }
 
   private static Coordinate[] ensureClosed(Coordinate[] coords) {
