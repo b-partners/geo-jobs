@@ -231,17 +231,13 @@ public class FeatureMapper {
       case Point ignored ->
           throw new NotImplementedException(
               "Point geometry type not supported to convert to List<Polygon>");
-      case Polygon polygon -> {
-        var polygons =
-            polygon.getCoordinates().stream().map(geometryConverter::convertToPolygon).toList();
-        acc.addAll(polygons);
-      }
+      case Polygon polygon ->
+          acc.addAll(geometryConverter.convertRingsToPolygons(polygon.getCoordinates()));
       case MultiPolygon multiPolygon -> {
         var multiPolygonCoordinates = multiPolygon.getCoordinates();
         var polygonsRetrievedFromMultiPolygon =
             multiPolygonCoordinates.stream()
-                .map(
-                    polygons -> polygons.stream().map(geometryConverter::convertToPolygon).toList())
+                .map(geometryConverter::convertRingsToPolygons)
                 .flatMap(Collection::stream)
                 .toList();
         acc.addAll(polygonsRetrievedFromMultiPolygon);
