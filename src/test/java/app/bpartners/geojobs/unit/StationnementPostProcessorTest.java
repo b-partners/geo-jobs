@@ -8,6 +8,7 @@ import static app.bpartners.geojobs.postprocessing.StationnementPostProcessor.MI
 import static app.bpartners.geojobs.service.geojson.GeoJson.fromFeatures;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -22,9 +23,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -46,15 +44,14 @@ class StationnementPostProcessorTest {
   private static final double SELF_INTERSECTING_REPAIRED_AREA = 13.05;
   private static final double AREA_TOLERANCE = 0.01;
 
-  private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+  private final ObjectMapper objectMapper = new ObjectMapper();
   private final GeometryConverter geometryConverter = new GeometryConverter();
   private final GeometrySquareMeterArea geometrySquareMeterArea = new GeometrySquareMeterArea();
   private final StationnementPostProcessor subject =
       new StationnementPostProcessor(geometryConverter, geometrySquareMeterArea);
 
   @Test
-  void filters_out_noisy_place_standard_objects_of_stationnement_model()
-      throws IOException, URISyntaxException {
+  void filters_out_noisy_place_standard_objects_of_stationnement_model() throws IOException {
     var detectedPlaceStandard = labeledGeoFeatures(RESULT_GEOJSON, PLACE_STANDARD_LABEL);
     var manuallyRemovedGeometries = new HashSet<>(geometriesOf(detectedPlaceStandard));
     manuallyRemovedGeometries.removeAll(
@@ -80,7 +77,7 @@ class StationnementPostProcessorTest {
   }
 
   @Test
-  void delivers_the_area_of_kept_place_standard_objects() throws IOException, URISyntaxException {
+  void delivers_the_area_of_kept_place_standard_objects() throws IOException {
     var detectedPlaceStandard = labeledGeoFeatures(RESULT_GEOJSON, PLACE_STANDARD_LABEL);
 
     var actual = subject.apply(fromFeatures(detectedPlaceStandard), detection(STATIONNEMENT));
@@ -97,7 +94,7 @@ class StationnementPostProcessorTest {
   }
 
   @Test
-  void delivers_the_area_in_the_serialized_geo_json() throws IOException, URISyntaxException {
+  void delivers_the_area_in_the_serialized_geo_json() throws IOException {
     var detectedPlaceStandard = labeledGeoFeatures(RESULT_GEOJSON, PLACE_STANDARD_LABEL);
 
     var actual = subject.apply(fromFeatures(detectedPlaceStandard), detection(STATIONNEMENT));
@@ -117,8 +114,7 @@ class StationnementPostProcessorTest {
   }
 
   @Test
-  void delivers_the_area_even_when_no_object_is_filtered_out()
-      throws IOException, URISyntaxException {
+  void delivers_the_area_even_when_no_object_is_filtered_out() throws IOException {
     var wideEnoughOnly =
         labeledGeoFeatures(RESULT_GEOJSON, PLACE_STANDARD_LABEL).stream()
             .filter(
@@ -138,8 +134,7 @@ class StationnementPostProcessorTest {
   }
 
   @Test
-  void delivers_the_area_of_parking_objects_without_filtering_them_out()
-      throws IOException, URISyntaxException {
+  void delivers_the_area_of_parking_objects_without_filtering_them_out() throws IOException {
     var detectedParking = labeledGeoFeatures(RESULT_GEOJSON, PARKING_LABEL);
 
     var actual = subject.apply(fromFeatures(detectedParking), detection(STATIONNEMENT));
@@ -163,8 +158,7 @@ class StationnementPostProcessorTest {
   }
 
   @Test
-  void delivers_the_area_of_place_standard_and_parking_objects_only()
-      throws IOException, URISyntaxException {
+  void delivers_the_area_of_place_standard_and_parking_objects_only() throws IOException {
     var mixedDetected =
         Stream.of(PLACE_STANDARD_LABEL, PARKING_LABEL, "OBSTACLE", "CHEMINEE")
             .map(this::labeledGeoFeaturesOfResult)
@@ -185,7 +179,7 @@ class StationnementPostProcessorTest {
 
   @Test
   void does_not_deliver_any_area_for_objects_other_than_place_standard_and_parking()
-      throws IOException, URISyntaxException {
+      throws IOException {
     var detectedObstacle = labeledGeoFeatures(RESULT_GEOJSON, "OBSTACLE");
 
     var actual = subject.apply(fromFeatures(detectedObstacle), detection(STATIONNEMENT));
@@ -267,8 +261,7 @@ class StationnementPostProcessorTest {
   }
 
   @Test
-  void does_not_filter_out_anything_when_model_is_not_stationnement()
-      throws IOException, URISyntaxException {
+  void does_not_filter_out_anything_when_model_is_not_stationnement() throws IOException {
     var detectedPlaceStandard = labeledGeoFeatures(RESULT_GEOJSON, PLACE_STANDARD_LABEL);
     var geoJson = fromFeatures(detectedPlaceStandard);
 
@@ -277,8 +270,7 @@ class StationnementPostProcessorTest {
   }
 
   @Test
-  void does_not_filter_out_objects_other_than_place_standard()
-      throws IOException, URISyntaxException {
+  void does_not_filter_out_objects_other_than_place_standard() throws IOException {
     var detectedParking = labeledGeoFeatures(RESULT_GEOJSON, PARKING_LABEL);
     var geoJson = fromFeatures(detectedParking);
 
@@ -370,19 +362,21 @@ class StationnementPostProcessorTest {
   }
 
   private List<GeoJson.GeoFeature> labeledGeoFeatures(String resourcePath, String label)
-      throws IOException, URISyntaxException {
-    var geoJsonPath = Paths.get(getClass().getResource(resourcePath).toURI());
-    JsonNode featureCollection = objectMapper.readTree(Files.readString(geoJsonPath));
-    List<GeoJson.GeoFeature> geoFeatures = new ArrayList<>();
-    for (JsonNode feature : featureCollection.get("features")) {
-      var properties = feature.get("properties");
-      if (properties == null
-          || properties.get("label") == null
-          || !label.equals(properties.get("label").asText())) {
-        continue;
+      throws IOException {
+    try (var geoJsonStream = getClass().getResourceAsStream(resourcePath)) {
+      assertNotNull(geoJsonStream, "test resource not found on classpath: " + resourcePath);
+      JsonNode featureCollection = objectMapper.readTree(geoJsonStream);
+      List<GeoJson.GeoFeature> geoFeatures = new ArrayList<>();
+      for (JsonNode feature : featureCollection.get("features")) {
+        var properties = feature.get("properties");
+        if (properties == null
+            || properties.get("label") == null
+            || !label.equals(properties.get("label").asText())) {
+          continue;
+        }
+        geoFeatures.add(objectMapper.treeToValue(feature, GeoJson.GeoFeature.class));
       }
-      geoFeatures.add(objectMapper.treeToValue(feature, GeoJson.GeoFeature.class));
+      return geoFeatures;
     }
-    return geoFeatures;
   }
 }
