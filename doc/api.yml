@@ -1635,6 +1635,9 @@ paths:
                 file:
                   type: string
                   format: binary
+                sheetIndex:
+                  type: integer
+                  description: Minimum value and default value is 1.
       responses:
         200:
           description: Created GeoCodingJob
