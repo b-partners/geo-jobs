@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionProcessSucceeded;
+import app.bpartners.geojobs.endpoint.event.model.DetectionTrackingRegistrationRequested;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
@@ -22,15 +22,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
-class GeoJsonConversionProcessSucceededServiceTest {
+class DetectionTrackingRegistrationRequestedServiceTest {
   DetectionTrackingApi detectionTrackingApiMock = mock();
   CommunityAuthorizationRepository communityAuthorizationRepositoryMock = mock();
   DetectionRepository detectionRepositoryMock = mock();
   DetectionTrackingRegister detectionTrackingRegister =
       new DetectionTrackingRegister(
           detectionTrackingApiMock, communityAuthorizationRepositoryMock, detectionRepositoryMock);
-  GeoJsonConversionProcessSucceededService subject =
-      new GeoJsonConversionProcessSucceededService(
+  DetectionTrackingRegistrationRequestedService subject =
+      new DetectionTrackingRegistrationRequestedService(
           detectionTrackingRegister, detectionRepositoryMock);
 
   final String apiKey = "apiKey";
@@ -68,7 +68,7 @@ class GeoJsonConversionProcessSucceededServiceTest {
         .thenReturn(Optional.of(CommunityAuthorization.builder().dashboardApiKey(apiKey).build()));
 
     assertDoesNotThrow(
-        () -> subject.accept(new GeoJsonConversionProcessSucceeded(detectionIdentifier)));
+        () -> subject.accept(new DetectionTrackingRegistrationRequested(detectionIdentifier)));
 
     var listCaptor = ArgumentCaptor.forClass(List.class);
     verify(detectionTrackingApiMock, only()).registerDetection(eq(apiKey), listCaptor.capture());
@@ -106,7 +106,7 @@ class GeoJsonConversionProcessSucceededServiceTest {
 
     assertThrows(
         RuntimeException.class,
-        () -> subject.accept(new GeoJsonConversionProcessSucceeded(detectionIdentifier)));
+        () -> subject.accept(new DetectionTrackingRegistrationRequested(detectionIdentifier)));
   }
 
   @Test
@@ -121,6 +121,6 @@ class GeoJsonConversionProcessSucceededServiceTest {
 
     assertThrows(
         RuntimeException.class,
-        () -> subject.accept(new GeoJsonConversionProcessSucceeded(detectionIdentifier)));
+        () -> subject.accept(new DetectionTrackingRegistrationRequested(detectionIdentifier)));
   }
 }
