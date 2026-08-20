@@ -10,6 +10,7 @@ import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.detection.Detection;
+import app.bpartners.geojobs.service.DetectionTrackingRegister;
 import app.bpartners.geojobs.service.dashboard.DetectionTrackingApi;
 import app.bpartners.geojobs.service.dashboard.component.CreateDetectionTracking;
 import app.bpartners.geojobs.service.dashboard.component.DetectionInitiator;
@@ -25,9 +26,12 @@ class GeoJsonConversionProcessSucceededServiceTest {
   DetectionTrackingApi detectionTrackingApiMock = mock();
   CommunityAuthorizationRepository communityAuthorizationRepositoryMock = mock();
   DetectionRepository detectionRepositoryMock = mock();
+  DetectionTrackingRegister detectionTrackingRegister =
+      new DetectionTrackingRegister(
+          detectionTrackingApiMock, communityAuthorizationRepositoryMock, detectionRepositoryMock);
   GeoJsonConversionProcessSucceededService subject =
       new GeoJsonConversionProcessSucceededService(
-          detectionTrackingApiMock, communityAuthorizationRepositoryMock, detectionRepositoryMock);
+          detectionTrackingRegister, detectionRepositoryMock);
 
   final String apiKey = "apiKey";
 
@@ -43,15 +47,23 @@ class GeoJsonConversionProcessSucceededServiceTest {
     var communityOwnerId = randomUUID().toString();
     var zoneName = "detection zone name";
     var emailReceiver = "detection email receiver";
+    var detectionBuilderMock = mock(Detection.DetectionBuilder.class);
 
     var detectionMock = mock(Detection.class);
+    var detectionMockWithRegistrationDatetime = mock(Detection.class);
     when(detectionMock.getId()).thenReturn(detectionIdentifier);
     when(detectionMock.getZoneName()).thenReturn(zoneName);
     when(detectionMock.getEmailReceiver()).thenReturn(emailReceiver);
     when(detectionMock.getCommunityOwnerId()).thenReturn(communityOwnerId);
+    when(detectionBuilderMock.dashboardRegistrationDatetime(any()))
+        .thenReturn(detectionBuilderMock);
+    when(detectionMock.toBuilder()).thenReturn(detectionBuilderMock);
+    when(detectionBuilderMock.build()).thenReturn(detectionMockWithRegistrationDatetime);
 
     when(detectionRepositoryMock.findById(detectionIdentifier))
         .thenReturn(Optional.of(detectionMock));
+    when(detectionRepositoryMock.save(any()))
+        .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
     when(communityAuthorizationRepositoryMock.findById(communityOwnerId))
         .thenReturn(Optional.of(CommunityAuthorization.builder().dashboardApiKey(apiKey).build()));
 
@@ -63,6 +75,7 @@ class GeoJsonConversionProcessSucceededServiceTest {
     var actualCreateDetection = (List<CreateDetectionTracking>) listCaptor.getValue();
     var expectedCreateDetection =
         getExpectedCreateDetection(zoneName, emailReceiver, actualCreateDetection);
+    verify(detectionRepositoryMock).save(detectionMockWithRegistrationDatetime);
 
     assertEquals(expectedCreateDetection, actualCreateDetection);
   }
