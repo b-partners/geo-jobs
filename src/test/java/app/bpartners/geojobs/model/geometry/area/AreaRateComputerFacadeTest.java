@@ -144,7 +144,8 @@ class AreaRateComputerFacadeTest extends AreaRateComputerTest {
     // Humidite 25% -> hEff = 25 + 0.5 * (25 - 20) = 27.5 -> global = 0.65 * 27.5 = 17.875
     assertEquals(
         Rate.C,
-        new AreaRateComputerFacade(roof, List.of(new PolygonObjectType(createSquare(5), HUMIDITE_CLAIR)))
+        new AreaRateComputerFacade(
+                roof, List.of(new PolygonObjectType(createSquare(5), HUMIDITE_CLAIR)))
             .getRate());
 
     // Rate D: 39 <= global < 69

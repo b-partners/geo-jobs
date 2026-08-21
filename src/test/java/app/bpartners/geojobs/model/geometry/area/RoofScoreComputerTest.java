@@ -75,7 +75,8 @@ class RoofScoreComputerTest {
 
   @Test
   void steep_slope_below_5_degrees_aggravates_humidite_most() {
-    // hEff = 15 ; kPenteHumidite = 1.25 (humidite >= 10 et pente < 5) ; Score = 0.65*15*1.25 = 12.1875
+    // hEff = 15 ; kPenteHumidite = 1.25 (humidite >= 10 et pente < 5) ; Score = 0.65*15*1.25 =
+    // 12.1875
     var rates = new RoofDamageRates(15.0, 0.0, 0.0, null, null, 3.0, null);
 
     assertEquals(12.1875, subject.getGlobalRate(rates), DELTA);

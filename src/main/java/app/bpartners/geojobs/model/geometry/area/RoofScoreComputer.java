@@ -9,9 +9,9 @@ import org.springframework.stereotype.Component;
 /**
  * Score de degradation visible d'une toiture - methodologie V2.2.
  *
- * <p>Le socle usure/moisissure/humidite est toujours pris en compte. Revetement, monitoring,
- * pente et vegetation sont optionnels : une donnee absente vaut un coefficient neutre (1.00) ou
- * un malus nul, jamais une penalite.
+ * <p>Le socle usure/moisissure/humidite est toujours pris en compte. Revetement, monitoring, pente
+ * et vegetation sont optionnels : une donnee absente vaut un coefficient neutre (1.00) ou un malus
+ * nul, jamais une penalite.
  */
 @Component
 @RequiredArgsConstructor
@@ -68,7 +68,9 @@ public class RoofScoreComputer {
     return E;
   }
 
-  /** Pente absente => facteur neutre. Une pente faible n'aggrave que si de l'humidite est presente. */
+  /**
+   * Pente absente => facteur neutre. Une pente faible n'aggrave que si de l'humidite est presente.
+   */
   private static double slopeHumidityFactor(Double penteDegres, double humidite) {
     if (penteDegres == null) {
       return 1.00;
