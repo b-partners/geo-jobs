@@ -31,7 +31,6 @@ class HumiditeAreaRateComputerTest extends AreaRateComputerTest {
     // Total = (1 + 8) / 100 * 100 = 9.0
 
     assertEquals(9.0, computer.getHumidityAreaRate());
-    assertEquals(9.0, computer.getGlobalRate()); // weight is 1.0
   }
 
   @Test

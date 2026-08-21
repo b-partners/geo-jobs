@@ -30,7 +30,6 @@ class UsureAreaRateComputerTest extends AreaRateComputerTest {
     // Total = (1 + 8) / 100 * 100 = 9.0
 
     assertEquals(9.0, computer.getUsureAreaRate());
-    assertEquals(3.6, computer.getGlobalRate()); // weight is 0.4. 9.0 * 0.4 = 3.6
   }
 
   @Test

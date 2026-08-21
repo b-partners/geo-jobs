@@ -40,9 +40,11 @@ public class AreaRateComputerFacade {
 
   public double getGlobalRate() {
     return format(
-        humiditeRateComputer.getGlobalRate()
-            + usureRateComputer.getGlobalRate()
-            + moisissureRateComputer.getGlobalRate());
+        roofScoreComputer.getGlobalRate(
+            new RoofDamageRates(
+                humiditeRateComputer.getHumidityAreaRate(),
+                usureRateComputer.getUsureAreaRate(),
+                moisissureRateComputer.getMoisissureAreaRate())));
   }
 
   public Rate getRate() {
