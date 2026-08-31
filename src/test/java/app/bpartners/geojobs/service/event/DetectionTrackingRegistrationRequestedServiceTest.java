@@ -47,6 +47,7 @@ class DetectionTrackingRegistrationRequestedServiceTest {
     var communityOwnerId = randomUUID().toString();
     var zoneName = "detection zone name";
     var emailReceiver = "detection email receiver";
+    var endToEndId = "detection end to end id";
     var detectionBuilderMock = mock(Detection.DetectionBuilder.class);
 
     var detectionMock = mock(Detection.class);
@@ -54,6 +55,7 @@ class DetectionTrackingRegistrationRequestedServiceTest {
     when(detectionMock.getId()).thenReturn(detectionIdentifier);
     when(detectionMock.getZoneName()).thenReturn(zoneName);
     when(detectionMock.getEmailReceiver()).thenReturn(emailReceiver);
+    when(detectionMock.getEndToEndId()).thenReturn(endToEndId);
     when(detectionMock.getCommunityOwnerId()).thenReturn(communityOwnerId);
     when(detectionBuilderMock.dashboardRegistrationDatetime(any()))
         .thenReturn(detectionBuilderMock);
@@ -74,20 +76,24 @@ class DetectionTrackingRegistrationRequestedServiceTest {
     verify(detectionTrackingApiMock, only()).registerDetection(eq(apiKey), listCaptor.capture());
     var actualCreateDetection = (List<CreateDetectionTracking>) listCaptor.getValue();
     var expectedCreateDetection =
-        getExpectedCreateDetection(zoneName, emailReceiver, actualCreateDetection);
+        getExpectedCreateDetection(zoneName, emailReceiver, endToEndId, actualCreateDetection);
     verify(detectionRepositoryMock).save(detectionMockWithRegistrationDatetime);
 
     assertEquals(expectedCreateDetection, actualCreateDetection);
   }
 
   private @NotNull List<CreateDetectionTracking> getExpectedCreateDetection(
-      String zoneName, String emailReceiver, List<CreateDetectionTracking> actualCreateDetection) {
+      String zoneName,
+      String emailReceiver,
+      String endToEndId,
+      List<CreateDetectionTracking> actualCreateDetection) {
     return List.of(
         new CreateDetectionTracking(
             zoneName,
             "non supportée",
             actualCreateDetection.getFirst().creationDatetime(),
-            new DetectionInitiator("non supporté", emailReceiver, "non supporté")));
+            new DetectionInitiator("non supporté", emailReceiver, "non supporté"),
+            endToEndId));
   }
 
   @Test

@@ -40,7 +40,8 @@ public class DetectionTrackingRegister implements Consumer<Detection> {
                 "non supportée",
                 now(),
                 new DetectionInitiator(
-                    "non supporté", detection.getEmailReceiver(), "non supporté"))));
+                    "non supporté", detection.getEmailReceiver(), "non supporté"),
+                detection.getEndToEndId())));
 
     var actualDetection = detectionRepository.findById(detection.getId()).orElseThrow();
 
