@@ -6,6 +6,8 @@ import static app.bpartners.geojobs.service.area.mutation.model.MutationType.DET
 import static app.bpartners.geojobs.service.area.mutation.model.MutationType.RAS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import app.bpartners.geojobs.model.geometry.area.rate.RoofDamageRates;
+import app.bpartners.geojobs.model.geometry.area.score.RoofScoreComputer;
 import org.junit.jupiter.api.Test;
 
 class RoofScoreComputerTest {

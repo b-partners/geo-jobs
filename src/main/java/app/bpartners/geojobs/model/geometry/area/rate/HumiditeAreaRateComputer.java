@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.model.geometry.area;
+package app.bpartners.geojobs.model.geometry.area.rate;
 
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.HUMIDITE_CLAIR;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.HUMIDITE_INTENSE;

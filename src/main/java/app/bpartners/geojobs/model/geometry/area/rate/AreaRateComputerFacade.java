@@ -1,7 +1,9 @@
-package app.bpartners.geojobs.model.geometry.area;
+package app.bpartners.geojobs.model.geometry.area.rate;
 
 import app.bpartners.geojobs.model.DetectedTile;
 import app.bpartners.geojobs.model.geometry.PolygonObjectType;
+import app.bpartners.geojobs.model.geometry.area.Rate;
+import app.bpartners.geojobs.model.geometry.area.score.RoofScoreComputer;
 import java.util.Collection;
 import org.locationtech.jts.geom.Geometry;
 

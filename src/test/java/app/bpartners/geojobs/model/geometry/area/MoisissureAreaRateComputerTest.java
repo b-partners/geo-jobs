@@ -6,6 +6,7 @@ import static app.bpartners.geojobs.repository.model.detection.DetectableType.MO
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import app.bpartners.geojobs.model.DetectedTile;
+import app.bpartners.geojobs.model.geometry.area.rate.MoisissureAreaRateComputer;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import java.util.List;
 import org.junit.jupiter.api.Test;

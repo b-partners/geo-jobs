@@ -4,7 +4,7 @@ import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightReq
 
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.model.geometry.PolygonObjectType;
-import app.bpartners.geojobs.model.geometry.area.AreaRateComputerFacade;
+import app.bpartners.geojobs.model.geometry.area.rate.AreaRateComputerFacade;
 import app.bpartners.geojobs.service.area.mutation.MutationComputer;
 import app.bpartners.geojobs.service.area.mutation.model.MutationContext;
 import app.bpartners.geojobs.service.area.toiture.model.CoveringType;

@@ -7,7 +7,7 @@ import app.bpartners.geojobs.endpoint.rest.controller.v1.RoofController;
 import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.RoofScoreMapper;
 import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.cityjson.RoofScoreCategoryMapper;
 import app.bpartners.geojobs.model.exception.BadRequestException;
-import app.bpartners.geojobs.model.geometry.area.RoofScoreComputer;
+import app.bpartners.geojobs.model.geometry.area.score.RoofScoreComputer;
 import app.bpartners.geojobs.validator.RoofDamageRateValidator;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;

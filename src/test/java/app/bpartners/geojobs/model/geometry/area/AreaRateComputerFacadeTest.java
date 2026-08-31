@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import app.bpartners.geojobs.model.DetectedTile;
 import app.bpartners.geojobs.model.geometry.PolygonObjectType;
+import app.bpartners.geojobs.model.geometry.area.rate.AreaRateComputerFacade;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 

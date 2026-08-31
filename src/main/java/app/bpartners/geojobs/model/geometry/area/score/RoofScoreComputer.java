@@ -1,7 +1,9 @@
-package app.bpartners.geojobs.model.geometry.area;
+package app.bpartners.geojobs.model.geometry.area.score;
 
 import static app.bpartners.geojobs.model.geometry.area.Rate.*;
 
+import app.bpartners.geojobs.model.geometry.area.Rate;
+import app.bpartners.geojobs.model.geometry.area.rate.RoofDamageRates;
 import app.bpartners.geojobs.service.area.mutation.model.MutationType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
