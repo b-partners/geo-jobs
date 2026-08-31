@@ -68,9 +68,6 @@ public class RoofScoreComputer {
     return E;
   }
 
-  /**
-   * Pente absente => facteur neutre. Une pente faible n'aggrave que si de l'humidite est presente.
-   */
   private static double slopeHumidityFactor(Double penteDegres, double humidite) {
     if (penteDegres == null) {
       return 1.00;
@@ -89,19 +86,10 @@ public class RoofScoreComputer {
     return 1.00;
   }
 
-  /**
-   * Monitoring absent => 0. DETERIORATION => +5 (degradation). Les autres statuts (RAS, NONE,
-   * BACKGROUND, IMPROVEMENT, UNKNOWN) => 0. Le palier "vieillissement" (+3) prevu par la
-   * methodologie n'a pas encore d'equivalent dans MutationType.
-   */
   private static double mutationMalus(MutationType monitoring) {
     return monitoring == MutationType.DETERIORATION ? 5.0 : 0.0;
   }
 
-  /**
-   * Vegetation/feu absente ou explicitement fausse => 0. Presente et humidite >= 20% => +3.
-   * Presente et, a defaut, moisissure >= 25% => +2. Sinon => 0.
-   */
   private static double vegetationMalus(Boolean vegetationFeu, double moisissure, double humidite) {
     if (vegetationFeu == null || !vegetationFeu) {
       return 0.0;
