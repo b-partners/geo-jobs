@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.model.geometry.area;
+package app.bpartners.geojobs.model.geometry.area.rate;
 
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.HUMIDITE_CLAIR;
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.HUMIDITE_INTENSE;
@@ -18,7 +18,6 @@ import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
 
 public class HumiditeAreaRateComputer extends AreaRateComputer {
-  static final double WEIGHT = 1.0;
   private final FeatureMapper featureMapper = new FeatureMapper(new GeometryConverter(), null);
   private final double roofArea;
   private final DetectedTile tile;
@@ -78,10 +77,5 @@ public class HumiditeAreaRateComputer extends AreaRateComputer {
   public double getHumidityAreaRate() {
     var computedAreaRate = (compute(HUMIDITE_CLAIR) + compute(HUMIDITE_INTENSE)) * 100;
     return Math.min(computedAreaRate, 100.0);
-  }
-
-  @Override
-  public double getGlobalRate() {
-    return WEIGHT * getHumidityAreaRate();
   }
 }

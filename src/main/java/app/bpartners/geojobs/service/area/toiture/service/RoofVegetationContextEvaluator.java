@@ -63,6 +63,16 @@ public class RoofVegetationContextEvaluator {
         .sum();
   }
 
+  /**
+   * True only when vegetation-type detections were actually found near the roof. Vegetation
+   * detection is not requested for every job today (e.g. the TOITURE model alone does not request
+   * it), so an empty result here can mean "no vegetation nearby" or just as easily "not looked for"
+   * - callers must not treat the absence of vegetation data as a confirmed negative.
+   */
+  public boolean hasVegetationData() {
+    return !vegetationPolygonsInMeters().isEmpty();
+  }
+
   public VegetationContext getVegetationContext() {
     var vegetationInMeters = vegetationPolygonsInMeters();
     if (vegetationInMeters.isEmpty()) {

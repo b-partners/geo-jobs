@@ -4,10 +4,12 @@ import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightReq
 
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.model.geometry.PolygonObjectType;
-import app.bpartners.geojobs.model.geometry.area.AreaRateComputerFacade;
+import app.bpartners.geojobs.model.geometry.area.rate.AreaRateComputerFacade;
 import app.bpartners.geojobs.service.area.mutation.MutationComputer;
 import app.bpartners.geojobs.service.area.mutation.model.MutationContext;
 import app.bpartners.geojobs.service.area.toiture.model.CoveringType;
+import app.bpartners.geojobs.service.area.toiture.model.FireRiskLevel;
+import app.bpartners.geojobs.service.area.toiture.model.RoofAssessmentResult;
 import app.bpartners.geojobs.service.area.toiture.service.RoofAssessmentFacade;
 import app.bpartners.geojobs.service.area.toiture.service.RoofVegetationContextEvaluator;
 import app.bpartners.geojobs.service.event.DetectionRoofPropertiesRequestedService;
@@ -65,18 +67,21 @@ public class FeatureRoofResultPropertiesComputer {
     var usureRate = rateComputer.getUsureAreaRate();
     var humiditeRate = rateComputer.getHumidityAreaRate();
     var moisissureRate = rateComputer.getMoisissureAreaRate();
-    var globalRateValue = rateComputer.getGlobalRate();
-    var globalRateType = rateComputer.getRate();
-    var roofAssessment = roofAssessmentFacade.computeAssessment(vegetationEvaluator);
+    var roofAssessment = computeRoofAssessment(vegetationEvaluator);
+    var vegetationFeu = toVegetationFeu(roofAssessment, vegetationEvaluator.hasVegetationData());
+    var globalRateValue = rateComputer.getGlobalRate(vegetationFeu);
+    var globalRateType = rateComputer.getRate(vegetationFeu);
 
     actualProperties.put("usure_rate", usureRate);
     actualProperties.put("humidite_rate", humiditeRate);
     actualProperties.put("moisissure_rate", moisissureRate);
     actualProperties.put("global_rate_value", globalRateValue);
     actualProperties.put("global_rate_type", globalRateType);
-    actualProperties.put("vegetation_index", roofAssessment.vegetationIndex());
-    actualProperties.put("fire_risk", roofAssessment.fireRiskLevel());
-    actualProperties.put("maintenance_vegetation", roofAssessment.maintenancePriority());
+    if (roofAssessment != null) {
+      actualProperties.put("vegetation_index", roofAssessment.vegetationIndex());
+      actualProperties.put("fire_risk", roofAssessment.fireRiskLevel());
+      actualProperties.put("maintenance_vegetation", roofAssessment.maintenancePriority());
+    }
 
     var detectedRoofCovering = retrieveCoveringProperties(feature);
     if (detectedRoofCovering != null) {
@@ -95,6 +100,30 @@ public class FeatureRoofResultPropertiesComputer {
     }
 
     return actualProperties;
+  }
+
+  @Nullable
+  private RoofAssessmentResult computeRoofAssessment(
+      RoofVegetationContextEvaluator vegetationEvaluator) {
+    try {
+      return roofAssessmentFacade.computeAssessment(vegetationEvaluator);
+    } catch (RuntimeException e) {
+      // Vegetation/fire-risk module not yet reliable or unavailable: fall back to no derived
+      // value instead of failing the whole rate computation.
+      return null;
+    }
+  }
+
+  @Nullable
+  private static Boolean toVegetationFeu(
+      @Nullable RoofAssessmentResult roofAssessment, boolean hasVegetationData) {
+    // Vegetation detection isn't requested for every job (e.g. the TOITURE model alone doesn't
+    // request it), so absence of vegetation data is not proof of "no risk" - only assert a value
+    // when real vegetation was actually detected near the roof, otherwise stay null.
+    if (roofAssessment == null || roofAssessment.fireRiskLevel() == null || !hasVegetationData) {
+      return null;
+    }
+    return roofAssessment.fireRiskLevel() != FireRiskLevel.NULL;
   }
 
   private Double retrieveRoofSlopeInDegrees(Feature feature) {
