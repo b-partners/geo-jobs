@@ -41,16 +41,28 @@ public class AreaRateComputerFacade {
   }
 
   public double getGlobalRate() {
+    return getGlobalRate(null);
+  }
+
+  public double getGlobalRate(Boolean vegetationFeu) {
     return format(
         roofScoreComputer.getGlobalRate(
             new RoofDamageRates(
                 humiditeRateComputer.getHumidityAreaRate(),
                 usureRateComputer.getUsureAreaRate(),
-                moisissureRateComputer.getMoisissureAreaRate())));
+                moisissureRateComputer.getMoisissureAreaRate(),
+                null,
+                null,
+                null,
+                vegetationFeu)));
   }
 
   public Rate getRate() {
-    return roofScoreComputer.getRate(getGlobalRate());
+    return getRate(null);
+  }
+
+  public Rate getRate(Boolean vegetationFeu) {
+    return roofScoreComputer.getRate(getGlobalRate(vegetationFeu));
   }
 
   public static double format(double value) {
