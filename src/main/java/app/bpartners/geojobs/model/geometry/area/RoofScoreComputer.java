@@ -116,6 +116,6 @@ public class RoofScoreComputer {
   }
 
   private static double clamp(double value) {
-    return Math.max(0.0, Math.min(100.0, value));
+    return Math.clamp(value, 0.0, 100.0);
   }
 }
