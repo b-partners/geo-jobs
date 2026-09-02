@@ -1,32 +1,33 @@
-package app.bpartners.geojobs.model.geometry.area;
+package app.bpartners.geojobs.model.geometry.area.rate;
 
 import static app.bpartners.geojobs.repository.model.detection.DetectableType.*;
 
 import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.FeatureMapper;
 import app.bpartners.geojobs.model.DetectedTile;
 import app.bpartners.geojobs.model.exception.BadRequestException;
-import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.model.geometry.PolygonObjectType;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import java.util.Collection;
+import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Polygon;
 
-public class UsureAreaRateComputer extends AreaRateComputer {
-  static final double WEIGHT = 0.4;
+@Slf4j
+public class MoisissureAreaRateComputer extends AreaRateComputer {
   private final FeatureMapper featureMapper = new FeatureMapper(new GeometryConverter(), null);
   private final double roofArea;
   private final DetectedTile tile;
   private final Collection<PolygonObjectType> polygonObjectTypes;
 
-  public UsureAreaRateComputer(double roofArea, DetectedTile tile) {
+  public MoisissureAreaRateComputer(double roofArea, DetectedTile tile) {
     this.roofArea = roofArea;
     this.tile = tile;
     this.polygonObjectTypes = null;
   }
 
-  public UsureAreaRateComputer(double roofArea, Collection<PolygonObjectType> polygonObjectTypes) {
+  public MoisissureAreaRateComputer(
+      double roofArea, Collection<PolygonObjectType> polygonObjectTypes) {
     this.roofArea = roofArea;
     this.polygonObjectTypes = polygonObjectTypes;
     this.tile = null;
@@ -45,7 +46,7 @@ public class UsureAreaRateComputer extends AreaRateComputer {
               .map(PolygonObjectType::polygon)
               .mapToDouble(Polygon::getArea)
               .sum();
-      return (getMalus(detectableType) * computedArea) / roofArea;
+      return computedArea / roofArea;
     } else if (tile != null) {
       double computedArea =
           tile.getDetectedObjects().stream()
@@ -54,28 +55,16 @@ public class UsureAreaRateComputer extends AreaRateComputer {
               .map(featureMapper::toDomainPolygon)
               .mapToDouble(Polygon::getArea)
               .sum();
-      return (getMalus(detectableType) * computedArea) / roofArea;
+      return computedArea / roofArea;
     }
     throw new IllegalStateException(
-        "Both tile and polygonObjectTypes can not be null to compute UsureAreaRate");
+        "Both tile and polygonObjectTypes can not be null to compute MoisissureAreaRate");
   }
 
-  private int getMalus(DetectableType detectableType) {
-    return switch (detectableType) {
-      case USURE_LEGER -> 1;
-      case USURE_IMPORTANTE -> 2;
-      default ->
-          throw new NotImplementedException(
-              "Detectable type " + detectableType + " malus not implemented");
-    };
-  }
-
-  public double getUsureAreaRate() {
-    var computedAreaRate = (compute(USURE_LEGER) + compute(USURE_IMPORTANTE)) * 100;
+  public double getMoisissureAreaRate() {
+    var computedAreaRate =
+        (compute(MOISISSURE_NOIRCIE) + compute(MOISISSURE_CLAIR) + compute(MOISISSURE_COULEUR))
+            * 100;
     return Math.min(computedAreaRate, 100.0);
-  }
-
-  public double getGlobalRate() {
-    return WEIGHT * getUsureAreaRate();
   }
 }

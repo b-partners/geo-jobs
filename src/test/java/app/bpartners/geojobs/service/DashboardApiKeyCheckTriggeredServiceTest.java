@@ -8,28 +8,25 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.event.model.DashboardApiKeyCheckTriggered;
-import app.bpartners.geojobs.mail.Mailer;
+import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.service.dashboard.UserAccountsApi;
 import app.bpartners.geojobs.service.dashboard.component.User;
 import app.bpartners.geojobs.service.dashboard.component.UserApiKey;
 import app.bpartners.geojobs.service.event.DashboardApiKeyCheckTriggeredService;
-import app.bpartners.geojobs.template.HTMLTemplateParser;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpHeaders;
-import org.springframework.web.client.RestClientResponseException;
 
 class DashboardApiKeyCheckTriggeredServiceTest {
 
-  UserAccountsApi userAccountsApiMock = mock(UserAccountsApi.class);
-  Mailer mailerMock = mock(Mailer.class);
-  HTMLTemplateParser htmlTemplateParser = mock(HTMLTemplateParser.class);
+  UserAccountsApi userAccountsApiMock = mock();
+  CommunityAuthorizationRepository communityAuthorizationRepository = mock();
   DashboardApiKeyCheckTriggeredService subject;
 
   @Test
@@ -60,7 +57,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
 
     subject =
         new DashboardApiKeyCheckTriggeredService(
-            userAccountsApiMock, adminApiKey, mailerMock, htmlTemplateParser);
+            userAccountsApiMock, adminApiKey, communityAuthorizationRepository);
 
     Logger logger = (Logger) LoggerFactory.getLogger(DashboardApiKeyCheckTriggeredService.class);
     ListAppender<ILoggingEvent> appender = new ListAppender<>();
@@ -73,7 +70,6 @@ class DashboardApiKeyCheckTriggeredServiceTest {
       verify(userAccountsApiMock, times(1))
           .getUsersByCriteria(existingEmail, null, null, adminApiKey);
       verify(userAccountsApiMock, times(1)).getUserApiKey(user.id(), adminApiKey);
-      verifyNoInteractions(mailerMock);
 
       boolean hasExpectedInfoLog =
           appender.list.stream()
@@ -111,7 +107,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
 
     subject =
         new DashboardApiKeyCheckTriggeredService(
-            userAccountsApiMock, adminApiKey, mailerMock, htmlTemplateParser);
+            userAccountsApiMock, adminApiKey, communityAuthorizationRepository);
 
     Logger logger = (Logger) LoggerFactory.getLogger(DashboardApiKeyCheckTriggeredService.class);
     ListAppender<ILoggingEvent> appender = new ListAppender<>();
@@ -145,6 +141,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
   @Test
   void warn_when_multiple_users_found_for_same_email() {
     String adminApiKey = randomUUID().toString();
+    String actualDashboardApiKey = randomUUID().toString();
     String email = "exist@" + randomUUID();
     String authId = randomUUID().toString();
 
@@ -158,17 +155,19 @@ class DashboardApiKeyCheckTriggeredServiceTest {
 
     when(userAccountsApiMock.getUsersByCriteria(eq(email), eq(null), eq(null), anyString()))
         .thenReturn(List.of(user1, user2));
-    when(userAccountsApiMock.getUserApiKey(anyString(), eq(adminApiKey))).thenReturn(List.of());
+    when(userAccountsApiMock.getUserApiKey(anyString(), eq(adminApiKey)))
+        .thenReturn(List.of(new UserApiKey(actualDashboardApiKey, DASHBOARD)));
 
     DashboardApiKeyCheckTriggered event =
         DashboardApiKeyCheckTriggered.builder()
             .email(authorization.getEmail())
+            .dashboardApiKey(actualDashboardApiKey)
             .communityAuthorizationId(authId)
             .build();
 
     subject =
         new DashboardApiKeyCheckTriggeredService(
-            userAccountsApiMock, adminApiKey, mailerMock, htmlTemplateParser);
+            userAccountsApiMock, adminApiKey, communityAuthorizationRepository);
 
     Logger logger = (Logger) LoggerFactory.getLogger(DashboardApiKeyCheckTriggeredService.class);
     ListAppender<ILoggingEvent> appender = new ListAppender<>();
@@ -199,35 +198,33 @@ class DashboardApiKeyCheckTriggeredServiceTest {
   }
 
   @Test
-  void error_when_unable_to_get_api_key_for_a_user() {
+  void log_handler_when_no_key_found_and_updated_successfully() {
     String adminApiKey = randomUUID().toString();
     String email = "exist@" + randomUUID();
     String authId = randomUUID().toString();
 
-    CommunityAuthorization authorization = mock();
-    when(authorization.getEmail()).thenReturn(email);
+    CommunityAuthorization authorization = new CommunityAuthorization();
+    when(communityAuthorizationRepository.findById(email)).thenReturn(Optional.of(authorization));
 
     User user =
         new User(randomUUID().toString(), randomUUID().toString(), randomUUID().toString(), email);
 
     when(userAccountsApiMock.getUsersByCriteria(eq(email), eq(null), eq(null), anyString()))
         .thenReturn(List.of(user));
+    when(userAccountsApiMock.getUserApiKey(user.id(), adminApiKey)).thenReturn(List.of());
 
-    when(userAccountsApiMock.getUserApiKey(eq(user.id()), eq(adminApiKey)))
-        .thenThrow(
-            new RestClientResponseException(
-                "Error", 500, "Internal Server Error", HttpHeaders.EMPTY, null, null));
-    when(htmlTemplateParser.apply(anyString(), any())).thenReturn("Mock HTML Body Content");
+    when(userAccountsApiMock.getOrGenerateApiKey(eq(authId), anyString(), eq(adminApiKey)))
+        .thenAnswer(invocation -> new UserApiKey(invocation.getArgument(1), DASHBOARD));
 
     DashboardApiKeyCheckTriggered event =
         DashboardApiKeyCheckTriggered.builder()
-            .email(authorization.getEmail())
+            .email(email)
             .communityAuthorizationId(authId)
             .build();
 
     subject =
         new DashboardApiKeyCheckTriggeredService(
-            userAccountsApiMock, adminApiKey, mailerMock, htmlTemplateParser);
+            userAccountsApiMock, adminApiKey, communityAuthorizationRepository);
 
     Logger logger = (Logger) LoggerFactory.getLogger(DashboardApiKeyCheckTriggeredService.class);
     ListAppender<ILoggingEvent> appender = new ListAppender<>();
@@ -237,17 +234,90 @@ class DashboardApiKeyCheckTriggeredServiceTest {
     try {
       assertDoesNotThrow(() -> subject.accept(event));
 
-      boolean hasExpectedErrorLog =
+      boolean hasNewKeyGeneratedLog =
+          appender.list.stream()
+              .anyMatch(
+                  e ->
+                      e.getLevel() == Level.INFO
+                          && e.getFormattedMessage()
+                              .equals(
+                                  "[DAKC H] New Dashboard api key generated for user " + email));
+      assertTrue(hasNewKeyGeneratedLog);
+
+      boolean hasUpdatedLog =
+          appender.list.stream()
+              .anyMatch(
+                  e ->
+                      e.getLevel() == Level.INFO
+                          && e.getFormattedMessage()
+                              .equals("[DAKC H] Dashboard api key updated for user " + email));
+      assertTrue(hasUpdatedLog);
+    } finally {
+      logger.detachAppender(appender);
+      appender.stop();
+    }
+  }
+
+  @Test
+  void log_handler_error_when_community_authorization_not_found() {
+    String adminApiKey = randomUUID().toString();
+    String email = "exist@" + randomUUID();
+    String authId = randomUUID().toString();
+
+    User user =
+        new User(randomUUID().toString(), randomUUID().toString(), randomUUID().toString(), email);
+
+    when(userAccountsApiMock.getUsersByCriteria(eq(email), eq(null), eq(null), anyString()))
+        .thenReturn(List.of(user));
+    when(userAccountsApiMock.getUserApiKey(user.id(), adminApiKey)).thenReturn(List.of());
+
+    when(userAccountsApiMock.getOrGenerateApiKey(eq(authId), anyString(), eq(adminApiKey)))
+        .thenReturn(new UserApiKey("existingKey", DASHBOARD));
+
+    when(communityAuthorizationRepository.findById(email)).thenReturn(Optional.empty());
+
+    DashboardApiKeyCheckTriggered event =
+        DashboardApiKeyCheckTriggered.builder()
+            .email(email)
+            .communityAuthorizationId(authId)
+            .build();
+
+    subject =
+        new DashboardApiKeyCheckTriggeredService(
+            userAccountsApiMock, adminApiKey, communityAuthorizationRepository);
+
+    Logger logger = (Logger) LoggerFactory.getLogger(DashboardApiKeyCheckTriggeredService.class);
+    ListAppender<ILoggingEvent> appender = new ListAppender<>();
+    appender.start();
+    logger.addAppender(appender);
+
+    try {
+      assertDoesNotThrow(() -> subject.accept(event));
+
+      boolean hasExistingKeyLog =
+          appender.list.stream()
+              .anyMatch(
+                  e ->
+                      e.getLevel() == Level.INFO
+                          && e.getFormattedMessage()
+                              .equals(
+                                  "[DAKC H] Dashboard api key for user "
+                                      + email
+                                      + " already exists in the user account api. No new key"
+                                      + " generated."));
+      assertTrue(hasExistingKeyLog);
+
+      boolean hasUserNotFoundLog =
           appender.list.stream()
               .anyMatch(
                   e ->
                       e.getLevel() == Level.ERROR
                           && e.getFormattedMessage()
-                              .contains(
-                                  "[DAKC F] Unable to get api key for user with id : "
-                                      + user.id()
-                                      + " in user account api."));
-      assertTrue(hasExpectedErrorLog);
+                              .equals(
+                                  "[DAKC H] Failed to update dashboard api key for user "
+                                      + email
+                                      + ". User not found in database."));
+      assertTrue(hasUserNotFoundLog);
     } finally {
       logger.detachAppender(appender);
       appender.stop();

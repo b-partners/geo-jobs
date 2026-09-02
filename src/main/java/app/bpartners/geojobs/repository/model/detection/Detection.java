@@ -168,6 +168,13 @@ public class Detection implements Serializable {
   @Getter(AccessLevel.NONE)
   private Boolean debugMode;
 
+  @Column(name = "dashboard_registration_datetime")
+  private Instant dashboardRegistrationDatetime;
+
+  public boolean isDashboardRegistrationCompleted() {
+    return dashboardRegistrationDatetime != null;
+  }
+
   public boolean isAnnotationDeliveryEnable() {
     return false;
   }

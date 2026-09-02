@@ -1,9 +1,7 @@
-package app.bpartners.geojobs.service.event;
+package app.bpartners.geojobs.service;
 
 import static java.time.Instant.now;
 
-import app.bpartners.geojobs.endpoint.event.model.GeoJsonConversionProcessSucceeded;
-import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
@@ -14,25 +12,26 @@ import app.bpartners.geojobs.service.dashboard.component.DetectionInitiator;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
-@Service
+@Slf4j
+@Component
 @RequiredArgsConstructor
-public class GeoJsonConversionProcessSucceededService
-    implements Consumer<GeoJsonConversionProcessSucceeded> {
+public class DetectionTrackingRegister implements Consumer<Detection> {
   private final DetectionTrackingApi detectionTrackingApi;
   private final CommunityAuthorizationRepository communityAuthorizationRepository;
   private final DetectionRepository detectionRepository;
 
   @Override
-  public void accept(GeoJsonConversionProcessSucceeded event) {
-    var detectionIdentifier = event.getDetectionIdentifier();
-    var detection =
-        detectionRepository
-            .findById(detectionIdentifier)
-            .orElseThrow(
-                () -> new NotFoundException("Detection not found for id=" + detectionIdentifier));
-
+  public void accept(Detection detection) {
+    if (detection.isDashboardRegistrationCompleted()) {
+      log.info(
+          "Detection {} already registered in dashboard {}",
+          detection.getId(),
+          detection.getDashboardRegistrationDatetime());
+      return;
+    }
     detectionTrackingApi.registerDetection(
         getApiKey(detection),
         List.of(
@@ -41,7 +40,13 @@ public class GeoJsonConversionProcessSucceededService
                 "non supportée",
                 now(),
                 new DetectionInitiator(
-                    "non supporté", detection.getEmailReceiver(), "non supporté"))));
+                    "non supporté", detection.getEmailReceiver(), "non supporté"),
+                detection.getEndToEndId())));
+
+    var actualDetection = detectionRepository.findById(detection.getId()).orElseThrow();
+
+    detectionRepository.save(
+        actualDetection.toBuilder().dashboardRegistrationDatetime(now()).build());
   }
 
   private String getApiKey(Detection detection) {

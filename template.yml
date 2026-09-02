@@ -65,6 +65,7 @@ Globals:
         CACHER_API_KEY: !Sub '{{resolve:ssm:/geo-jobs/${Env}/cacher/api/key}}'
         CACHER_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/cacher/api/url}}'
         CITYJSONS_GENERATOR: !Sub '{{resolve:ssm:/geo-jobs/${Env}/cityjsons/generator}}'
+        MUTATION_DETECTION_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/mutation-detector/api/url}}'
 Parameters:
   Env:
     Type: String

@@ -9,7 +9,7 @@ import lombok.*;
 @Getter
 @EqualsAndHashCode(callSuper = false)
 @ToString
-public class GeoJsonConversionProcessSucceeded extends PojaEvent {
+public class DetectionTrackingRegistrationRequested extends PojaEvent {
   private String detectionIdentifier;
 
   @Override

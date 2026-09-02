@@ -12,6 +12,7 @@ import app.bpartners.geojobs.model.geometry.PolygonObjectType;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.service.FeatureRoofResultPropertiesComputer;
+import app.bpartners.geojobs.service.area.mutation.MutationContextFactory;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.geojson.GeometryCorrector;
 import java.util.*;
@@ -30,6 +31,7 @@ public class DetectionPropertiesService {
   private final GeometryConverter geometryConverter;
   private final MachineDetectedTileRepository machineDetectedTileRepository;
   private final GeometryCorrector geometryCorrector;
+  private final MutationContextFactory mutationContextFactory;
 
   public app.bpartners.geojobs.repository.model.detection.Detection apply(
       app.bpartners.geojobs.repository.model.detection.Detection detection,
@@ -55,7 +57,8 @@ public class DetectionPropertiesService {
                           delimitationFeature,
                           latLonRoofGeometry,
                           latLonRoofGeometry,
-                          detectedObjectPolygonGeometriesUsedForRateComputing);
+                          detectedObjectPolygonGeometriesUsedForRateComputing,
+                          mutationContextFactory.create(detection, latLonRoofGeometry));
 
                   HashMap<String, Object> actualProperties = new HashMap<>();
                   var featureProperties = delimitationFeature.getProperties();
