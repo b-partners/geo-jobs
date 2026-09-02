@@ -204,6 +204,8 @@ public class SecurityConf {
                     .authenticated()
                     .requestMatchers(POST, "/3d/*/addresses")
                     .authenticated()
+                    .requestMatchers(GET, "/roof/overallScore")
+                    .authenticated()
                     .requestMatchers(GET, "/geocode")
                     .authenticated() // TODO: change later
                     .requestMatchers(GET, "/geoCodingJobs/*")
@@ -236,6 +238,8 @@ public class SecurityConf {
                         ROLE_ADMIN.name(), ROLE_COMMUNITY.name(), ROLE_INSURANCE.name())
                     .requestMatchers(DELETE, "/v1/keys")
                     .hasAnyAuthority(ROLE_COMMUNITY.name(), ROLE_INSURANCE.name())
+                    .requestMatchers(GET, "/v1/roof/overallScore")
+                    .authenticated()
                     .requestMatchers(GET, "/v1/city-jsons/*")
                     .authenticated()
                     .requestMatchers(PUT, "/v1/city-jsons/*/process")
