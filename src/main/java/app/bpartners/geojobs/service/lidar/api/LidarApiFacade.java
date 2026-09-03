@@ -23,6 +23,7 @@ import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 @Component
@@ -75,8 +76,13 @@ public class LidarApiFacade {
   }
 
   private Set<String> resolveOpenSourceUrls(ProjectedGeometry geometry) {
-    Set<String> urls =
-        getLidarFilesUrls(geometry.wgs84().getEnvelopeInternal(), openSourceLidarApi);
+    Set<String> urls;
+    try {
+      urls = getLidarFilesUrls(geometry.wgs84().getEnvelopeInternal(), openSourceLidarApi);
+    } catch (RestClientException e) {
+      log.warn("OpenSourceLidarAPI call failed, using IGN as fallback", e);
+      urls = Set.of();
+    }
 
     if (urls.isEmpty()) {
       log.info("No LidarFiles found from the OpenSourceLidarAPI, using IGN as fallback");
