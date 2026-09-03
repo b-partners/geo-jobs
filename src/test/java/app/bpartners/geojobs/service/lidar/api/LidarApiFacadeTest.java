@@ -29,6 +29,7 @@ import org.locationtech.jts.geom.Geometry;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 @Slf4j
@@ -93,6 +94,18 @@ class LidarApiFacadeTest {
     assertTrue(actual.containsKey(UPDATED_FILE_URL));
     assertEquals(1, actual.size());
     assertEquals(2, actual.get(UPDATED_FILE_URL).size());
+  }
+
+  @Test
+  void get_lidar_laz_file_urls_form_ign_api_ok_when_open_source_api_times_out() {
+    when(restTemplateMock.getForEntity(any(String.class), eq(FeatureCollection.class)))
+        .thenThrow(new ResourceAccessException("I/O error on GET request: Connection timed out"))
+        .thenReturn(ignApiResponse(UPDATED_FILE_URL));
+
+    var actual = subject.getUniqueLidarFilesUrls(Set.of(geometry1()));
+
+    assertTrue(actual.containsKey(UPDATED_FILE_URL));
+    assertEquals(1, actual.size());
   }
 
   @Test
