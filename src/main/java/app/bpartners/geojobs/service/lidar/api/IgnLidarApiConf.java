@@ -23,12 +23,13 @@ public class IgnLidarApiConf implements LidarApiConf {
   public Map<String, String> getDefaultParams(Envelope bbox) {
     var bboxAsString =
         String.format(
-            "%s,%s,%s,%s", bbox.getMinX(), bbox.getMinY(), bbox.getMaxX(), bbox.getMaxY());
+            "%s,%s,%s,%s,EPSG:2154",
+            bbox.getMinX(), bbox.getMinY(), bbox.getMaxX(), bbox.getMaxY());
     var params = new HashMap<String, String>();
     params.put("service", "WFS");
     params.put("version", "2.0.0");
     params.put("request", "GetFeature");
-    params.put("typeNames", "IGNF_NUAGES-DE-POINTS-LIDAR-HD:bloc");
+    params.put("typeNames", "IGNF_NUAGES-DE-POINTS-LIDAR-HD:dalle");
     params.put("srsName", "EPSG:2154");
     params.put("outputFormat", "application/json");
     params.put("bbox", bboxAsString);
