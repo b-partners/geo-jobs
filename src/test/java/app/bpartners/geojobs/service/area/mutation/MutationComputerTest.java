@@ -4,17 +4,19 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
-import app.bpartners.geojobs.model.exception.NotImplementedException;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.ParcelContent;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
-import app.bpartners.geojobs.service.area.mutation.model.InstantParcel;
+import app.bpartners.geojobs.service.area.mutation.model.InstantTile;
 import app.bpartners.geojobs.service.area.mutation.model.MutationContext;
+import app.bpartners.geojobs.service.area.mutation.model.MutationResponse;
+import app.bpartners.geojobs.service.area.mutation.model.MutationResponseStatus;
+import app.bpartners.geojobs.service.area.mutation.model.MutationType;
 import app.bpartners.geojobs.service.tiling.downloader.TilesDownloader;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
@@ -31,72 +33,58 @@ class MutationComputerTest {
   private final MutationComputer subject = new MutationComputer(apiMock, tilesDownloaderMock);
 
   @Test
-  void apply_throws_not_implemented_because_millesime_grouping_is_missing() {
-    var context = mock(MutationContext.class);
-    when(context.parcelDelimitations()).thenReturn(List.of());
-
-    assertThrows(NotImplementedException.class, () -> subject.apply(context));
-  }
-
-  @Test
-  void getMostRecentInstantParcel_throws_not_implemented() {
-    var cause =
-        assertThrows(
-            InvocationTargetException.class,
-            () ->
-                invokePrivate(
-                    "getMostRecentInstantParcel", new Class<?>[] {List.class}, List.of()));
-
-    assertInstanceOf(NotImplementedException.class, cause.getCause());
-  }
-
-  @Test
-  void getPrecedentInstantParcel_throws_not_implemented() {
-    var someParcel = new InstantParcel(Instant.now(), List.of());
-
-    var cause =
-        assertThrows(
-            InvocationTargetException.class,
-            () ->
-                invokePrivate(
-                    "getPrecedentInstantParcel", new Class<?>[] {InstantParcel.class}, someParcel));
-
-    assertInstanceOf(NotImplementedException.class, cause.getCause());
-  }
-
-  @Test
-  void parcelImageFile_downloads_single_tile_image_from_parcel_content() throws Exception {
-    var feature = Feature.builder().id("feature-1").build();
-    var featureWithDelimitation = new FeatureWithDelimitation(feature, List.of());
-    var date = Instant.parse("2024-06-01T00:00:00Z");
-    var parcel = new InstantParcel(date, List.of(featureWithDelimitation));
-    var geoServerUrl = new URL("http://geoserver.test/wms");
-    var geoServerParameter = new GeoServerParameter();
+  @SneakyThrows
+  void apply_downloads_both_tile_images_and_delegates_to_the_mutation_api() {
+    var oldFeature = Feature.builder().id("feature-old").build();
+    var recentFeature = Feature.builder().id("feature-recent").build();
+    var oldDate = Instant.parse("2023-06-01T00:00:00Z");
+    var recentDate = Instant.parse("2024-06-01T00:00:00Z");
+    var oldApiUrl = new URL("http://geoserver.test/old-wms");
+    var recentApiUrl = new URL("http://geoserver.test/recent-wms");
+    var oldGeoServerParameter = new GeoServerParameter();
+    var recentGeoServerParameter = new GeoServerParameter();
+    var older =
+        new InstantTile(
+            oldDate,
+            List.of(new FeatureWithDelimitation(oldFeature, List.of())),
+            new InstantTile.ImageSource(oldApiUrl, oldGeoServerParameter));
+    var mostRecent =
+        new InstantTile(
+            recentDate,
+            List.of(new FeatureWithDelimitation(recentFeature, List.of())),
+            new InstantTile.ImageSource(recentApiUrl, recentGeoServerParameter));
     var maskImageFile = new File("mask.png");
-    var context =
-        new MutationContext(
-            List.of(featureWithDelimitation), maskImageFile, geoServerUrl, geoServerParameter);
-    var downloadedTile = new File("tile.png");
-    when(tilesDownloaderMock.apply(any(ParcelContent.class))).thenReturn(downloadedTile);
-
-    var actual =
-        (File)
-            invokePrivate(
-                "parcelImageFile",
-                new Class<?>[] {MutationContext.class, InstantParcel.class},
-                context,
-                parcel);
-
-    assertEquals(downloadedTile, actual);
-    var expectedParcelContent =
+    var context = new MutationContext(older, mostRecent, maskImageFile);
+    var oldTileImageFile = new File("old-tile.png");
+    var recentTileImageFile = new File("recent-tile.png");
+    var expectedOldParcelContent =
         ParcelContent.builder()
-            .id(feature.getId())
-            .feature(feature)
-            .geoServerUrl(geoServerUrl)
-            .geoServerParameter(geoServerParameter)
-            .creationDatetime(date)
+            .id(oldFeature.getId())
+            .feature(oldFeature)
+            .geoServerUrl(oldApiUrl)
+            .geoServerParameter(oldGeoServerParameter)
+            .creationDatetime(oldDate)
             .build();
-    verify(tilesDownloaderMock).apply(expectedParcelContent);
+    var expectedRecentParcelContent =
+        ParcelContent.builder()
+            .id(recentFeature.getId())
+            .feature(recentFeature)
+            .geoServerUrl(recentApiUrl)
+            .geoServerParameter(recentGeoServerParameter)
+            .creationDatetime(recentDate)
+            .build();
+    when(tilesDownloaderMock.apply(expectedOldParcelContent)).thenReturn(oldTileImageFile);
+    when(tilesDownloaderMock.apply(expectedRecentParcelContent)).thenReturn(recentTileImageFile);
+    var mutationResponse =
+        new MutationResponse(
+            MutationResponseStatus.SUCCESS, MutationType.DETERIORATION, "some-filename");
+    when(apiMock.detectMutation(
+            eq(oldTileImageFile), eq(recentTileImageFile), eq(maskImageFile), any()))
+        .thenReturn(mutationResponse);
+
+    var actual = subject.apply(context);
+
+    assertEquals(MutationType.DETERIORATION, actual);
   }
 
   @Test

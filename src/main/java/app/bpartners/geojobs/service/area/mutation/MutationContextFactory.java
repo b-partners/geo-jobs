@@ -27,8 +27,9 @@ public class MutationContextFactory {
   private final GeometryConverter geometryConverter;
 
   public MutationContext create(Detection detection, Geometry roofGeometry) {
-    // TODO: re-enable once parcel delimitations are grouped by image date (millésime), see
-    // MutationComputer.getMostRecentInstantParcel/getPrecedentInstantParcel
+    // TODO: implement once parcel delimitations can be grouped by image date (millésime) and
+    // resolved to an older/mostRecent InstantTile, each with its own ImageSource (apiUrl +
+    // GeoServerParameter).
     return null;
   }
 
