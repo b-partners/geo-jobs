@@ -226,7 +226,7 @@ class FeatureRoofResultPropertiesComputerTest {
   }
 
   @Test
-  void should_put_mutation_property_when_mutation_context_is_provided() throws Exception {
+  void should_put_mutation_property_when_mutation_context_is_provided() {
     var older =
         new AreaPictureHistoryResponse.DatedImage(
             2022, new AreaPictureHistoryResponse.PresignedUrl("https://geodata.test/old.jpg"));

@@ -15,7 +15,6 @@ import org.springframework.stereotype.Component;
 public class ImageResizer {
 
   /** Smooth interpolation, suited for photographic old/new area pictures. */
-  @SneakyThrows
   public File resizePhoto(File imageFile, int size) {
     return resize(imageFile, size, Image.SCALE_SMOOTH);
   }
@@ -24,7 +23,6 @@ public class ImageResizer {
    * Nearest-neighbor interpolation: keeps mask pixels pure black/white instead of blurring edges
    * into intermediate gray values, which would break the mutation model's binary mask handling.
    */
-  @SneakyThrows
   public File resizeMask(File imageFile, int size) {
     return resize(imageFile, size, Image.SCALE_REPLICATE);
   }

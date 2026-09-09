@@ -12,7 +12,6 @@ import app.bpartners.geojobs.service.area.mutation.model.MutationResponse;
 import app.bpartners.geojobs.service.area.mutation.model.MutationResponseStatus;
 import app.bpartners.geojobs.service.area.mutation.model.MutationType;
 import java.io.File;
-import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 
 class MutationComputerTest {
@@ -25,7 +24,6 @@ class MutationComputerTest {
       new MutationComputer(apiMock, imageDownloaderMock, imageResizerMock);
 
   @Test
-  @SneakyThrows
   void apply_downloads_resizes_and_delegates_to_the_mutation_api() {
     var older =
         new AreaPictureHistoryResponse.DatedImage(
