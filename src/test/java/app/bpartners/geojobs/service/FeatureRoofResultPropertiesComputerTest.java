@@ -245,6 +245,10 @@ class FeatureRoofResultPropertiesComputerTest {
             mutationContext);
 
     assertEquals(MutationType.DETERIORATION, result.get("mutation"));
+    assertEquals("https://geodata.test/new.jpg", result.get("mutation_recent_image_url"));
+    assertEquals(2024, result.get("mutation_recent_image_date"));
+    assertEquals("https://geodata.test/old.jpg", result.get("mutation_older_image_url"));
+    assertEquals(2022, result.get("mutation_older_image_date"));
   }
 
   @Test
@@ -282,6 +286,8 @@ class FeatureRoofResultPropertiesComputerTest {
             null);
 
     assertEquals(MutationType.UNKNOWN, result.get("mutation"));
+    assertFalse(result.containsKey("mutation_recent_image_url"));
+    assertFalse(result.containsKey("mutation_older_image_url"));
     verifyNoInteractions(mutationComputer);
   }
 

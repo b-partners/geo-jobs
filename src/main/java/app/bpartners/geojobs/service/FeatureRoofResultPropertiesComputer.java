@@ -101,6 +101,14 @@ public class FeatureRoofResultPropertiesComputer {
     actualProperties.put(
         "mutation",
         mutationContext == null ? MutationType.UNKNOWN : computeMutation(mutationContext));
+    if (mutationContext != null) {
+      var recentImage = mutationContext.mostRecent();
+      var olderImage = mutationContext.older();
+      actualProperties.put("mutation_recent_image_url", recentImage.imagePresignedUrl().value());
+      actualProperties.put("mutation_recent_image_date", recentImage.year());
+      actualProperties.put("mutation_older_image_url", olderImage.imagePresignedUrl().value());
+      actualProperties.put("mutation_older_image_date", olderImage.year());
+    }
 
     return actualProperties;
   }
