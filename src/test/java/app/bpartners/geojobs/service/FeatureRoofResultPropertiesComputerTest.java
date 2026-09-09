@@ -248,7 +248,7 @@ class FeatureRoofResultPropertiesComputerTest {
   }
 
   @Test
-  void should_put_null_mutation_property_instead_of_failing_when_mutation_computation_throws() {
+  void should_put_unknown_mutation_property_instead_of_failing_when_mutation_computation_throws() {
     var older =
         new AreaPictureHistoryResponse.DatedImage(
             2022, new AreaPictureHistoryResponse.PresignedUrl("https://geodata.test/old.jpg"));
@@ -267,12 +267,12 @@ class FeatureRoofResultPropertiesComputerTest {
             detectedObjects,
             mutationContext);
 
-    assertNull(result.get("mutation"));
+    assertEquals(MutationType.UNKNOWN, result.get("mutation"));
     assertEquals(150.0, result.get("roof_area_in_m2"));
   }
 
   @Test
-  void should_not_put_mutation_property_when_mutation_context_is_null() {
+  void should_put_unknown_mutation_property_when_mutation_context_is_null() {
     Map<String, Object> result =
         subject.apply(
             feature,
@@ -281,7 +281,7 @@ class FeatureRoofResultPropertiesComputerTest {
             detectedObjects,
             null);
 
-    assertFalse(result.containsKey("mutation"));
+    assertEquals(MutationType.UNKNOWN, result.get("mutation"));
     verifyNoInteractions(mutationComputer);
   }
 

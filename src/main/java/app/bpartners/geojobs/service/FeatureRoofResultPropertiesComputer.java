@@ -98,22 +98,23 @@ public class FeatureRoofResultPropertiesComputer {
               : detectedRoofCovering.secondary().name());
     }
 
-    if (mutationContext != null) {
-      actualProperties.put("mutation", computeMutation(mutationContext));
-    }
+    actualProperties.put(
+        "mutation",
+        mutationContext == null ? MutationType.UNKNOWN : computeMutation(mutationContext));
 
     return actualProperties;
   }
 
-  @Nullable
   private MutationType computeMutation(MutationContext mutationContext) {
     try {
       return mutationComputer.apply(mutationContext);
     } catch (RuntimeException e) {
       // Downloading/resizing images or calling the mutation API can fail independently of the
-      // rest of the roof properties already computed above; don't lose those over it.
+      // rest of the roof properties already computed above; don't lose those over it. UNKNOWN is
+      // a real domain state here, distinct from MutationType.NONE ("no mutation detected") - we
+      // just couldn't determine one.
       log.warn("Could not compute mutation: {}", e.getMessage());
-      return null;
+      return MutationType.UNKNOWN;
     }
   }
 
