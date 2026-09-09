@@ -56,6 +56,8 @@ Globals:
         GOOGLE_CAPTCHA_SECRET: !Sub '{{resolve:ssm:/geo-jobs/${Env}/google/captcha/secret}}'
         GOOGLE_CAPTCHA_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/google/captcha/url}}'
         OPEN_SOURCE_LIDAR_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/open-source/lidar/api/url}}'
+        WALLONIA_LIDAR_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/wallonia/lidar/api/url}}'
+        IGN_LIDAR_BROWSER_SCRAPER_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/lidar/browser-scraper/api/url}}'
         GOOGLE_GEOCODE_API_KEY: !Sub '{{resolve:ssm:/geo-jobs/${Env}/google/geocode/api-key}}'
         ROOFER_3D_BAG_BASE_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/roofer/3d-bag/base-url}}'
         ROOFER_3D_BAG_API_KEY: !Sub '{{resolve:ssm:/geo-jobs/${Env}/roofer/3d-bag/api-key}}'

@@ -10,6 +10,10 @@ public class EnvConf {
   public static final String IGN_LIDAR_API_URL = "https://data.geopf.fr/wfs/ows";
   public static final String OPEN_SOURCE_LIDAR_API_URL =
       "https://api.stac.teledetection.fr/collections/lidarhd/items";
+  public static final String WALLONIA_LIDAR_API_URL =
+      "https://geoservices.wallonie.be/arcgis/rest/services/RELIEF/LIDAR_MAILLES/MapServer/0/query";
+  public static final String IGN_BROWSER_SCRAPER_API_URL =
+      "https://dummy-ign-browser-scraper.com/scrape-bbox";
 
   void configureProperties(DynamicPropertyRegistry registry) {
     registry.add("annotator.api.url", () -> "http://dummy.com");
@@ -42,6 +46,8 @@ public class EnvConf {
         () -> "https://dyp5ye459j.execute-api.eu-west-3.amazonaws.com/Prod");
     registry.add("ign.lidar.api.url", () -> IGN_LIDAR_API_URL);
     registry.add("open-source.lidar.api.url", () -> OPEN_SOURCE_LIDAR_API_URL);
+    registry.add("wallonia.lidar.api.url", () -> WALLONIA_LIDAR_API_URL);
+    registry.add("ign-lidar.browser.scraper.api.url", () -> IGN_BROWSER_SCRAPER_API_URL);
     registry.add("google.captcha.secret", () -> "dummy");
     registry.add("google.captcha.url", () -> "https://google.com");
     registry.add("google.geocode.api.key", () -> "https://google.com");
