@@ -6,12 +6,11 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
-import app.bpartners.geojobs.endpoint.rest.model.GeoServerParameter;
 import app.bpartners.geojobs.model.geometry.MultiPolygonObjectType;
 import app.bpartners.geojobs.model.geometry.PolygonObjectType;
 import app.bpartners.geojobs.repository.model.detection.RoofCoveringType;
 import app.bpartners.geojobs.service.area.mutation.MutationComputer;
-import app.bpartners.geojobs.service.area.mutation.model.InstantTile;
+import app.bpartners.geojobs.service.area.mutation.model.AreaPictureHistoryResponse;
 import app.bpartners.geojobs.service.area.mutation.model.MutationContext;
 import app.bpartners.geojobs.service.area.mutation.model.MutationType;
 import app.bpartners.geojobs.service.area.toiture.model.CoveringType;
@@ -26,8 +25,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
-import java.net.URL;
-import java.time.Instant;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -230,14 +227,13 @@ class FeatureRoofResultPropertiesComputerTest {
 
   @Test
   void should_put_mutation_property_when_mutation_context_is_provided() throws Exception {
-    var imageSource =
-        new InstantTile.ImageSource(
-            new URL("https://geoserver.example.com"), new GeoServerParameter());
-    var mutationContext =
-        new MutationContext(
-            new InstantTile(Instant.now(), List.of(), imageSource),
-            new InstantTile(Instant.now(), List.of(), imageSource),
-            new File("mask.png"));
+    var older =
+        new AreaPictureHistoryResponse.DatedImage(
+            2022, new AreaPictureHistoryResponse.PresignedUrl("https://geodata.test/old.jpg"));
+    var mostRecent =
+        new AreaPictureHistoryResponse.DatedImage(
+            2024, new AreaPictureHistoryResponse.PresignedUrl("https://geodata.test/new.jpg"));
+    var mutationContext = new MutationContext(older, mostRecent, new File("mask.png"));
     when(mutationComputer.apply(mutationContext)).thenReturn(MutationType.DETERIORATION);
 
     Map<String, Object> result =

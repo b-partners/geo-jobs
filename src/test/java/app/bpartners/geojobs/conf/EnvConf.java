@@ -51,6 +51,7 @@ public class EnvConf {
     registry.add("lidar.index.api.url", () -> "https://dummy.com");
     registry.add("city-json-processor.api.url", () -> "https://dummy.com");
     registry.add("mutation.detection.api.url", () -> "https://dummy.com");
+    registry.add("geodata.api.url", () -> "https://dummy.com");
     registry.add("cacher.api.url", () -> "https://dummy.com");
     registry.add("cacher.api.key", () -> "dummy_key");
     registry.add("cityjsons.generator", () -> "GEOJOBS");

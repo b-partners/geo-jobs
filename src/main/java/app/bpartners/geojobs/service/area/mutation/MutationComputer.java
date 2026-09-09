@@ -1,11 +1,7 @@
 package app.bpartners.geojobs.service.area.mutation;
 
-import app.bpartners.geojobs.repository.model.ParcelContent;
-import app.bpartners.geojobs.service.area.mutation.model.InstantTile;
 import app.bpartners.geojobs.service.area.mutation.model.MutationContext;
 import app.bpartners.geojobs.service.area.mutation.model.MutationType;
-import app.bpartners.geojobs.service.tiling.downloader.TilesDownloader;
-import java.io.File;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -13,43 +9,25 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class MutationComputer {
+  // The mutation-degat-api's ONNX model requires fixed 256x256 inputs.
+  private static final int MUTATION_MODEL_INPUT_SIZE = 256;
+
   private final MutationApi api;
-  private final TilesDownloader tilesDownloader;
+  private final ImageDownloader imageDownloader;
+  private final ImageResizer imageResizer;
 
   public MutationType apply(MutationContext context) {
-    var recentTileImageFile = tileImageFile(context.mostRecent());
-    var oldTileImageFile = tileImageFile(context.older());
+    var oldImageFile = imageDownloader.download(context.older().imagePresignedUrl().value());
+    var recentImageFile =
+        imageDownloader.download(context.mostRecent().imagePresignedUrl().value());
+
+    var resizedOld = imageResizer.resizePhoto(oldImageFile, MUTATION_MODEL_INPUT_SIZE);
+    var resizedRecent = imageResizer.resizePhoto(recentImageFile, MUTATION_MODEL_INPUT_SIZE);
+    var resizedMask = imageResizer.resizeMask(context.maskImageFile(), MUTATION_MODEL_INPUT_SIZE);
 
     var filename = "mutation_" + UUID.randomUUID();
-    var mutationResponse =
-        api.detectMutation(
-            oldTileImageFile, recentTileImageFile, context.maskImageFile(), filename);
+    var mutationResponse = api.detectMutation(resizedOld, resizedRecent, resizedMask, filename);
 
     return mutationResponse.mutation();
-  }
-
-  private File tileImageFile(InstantTile tile) {
-    var parcelFeature = tile.parcelDelimitations().getFirst().feature();
-    var imageSource = tile.imageSource();
-    var parcelContent =
-        ParcelContent.builder()
-            .id(parcelFeature.getId())
-            .feature(parcelFeature)
-            .geoServerUrl(imageSource.apiUrl())
-            .geoServerParameter(imageSource.geoServerParameter())
-            .creationDatetime(tile.date())
-            .build();
-    return singleTileImage(tilesDownloader.apply(parcelContent));
-  }
-
-  private File singleTileImage(File downloadedTiles) {
-    if (!downloadedTiles.isDirectory()) {
-      return downloadedTiles;
-    }
-    var children = downloadedTiles.listFiles();
-    if (children == null || children.length == 0) {
-      throw new IllegalStateException("No tile image downloaded for parcel");
-    }
-    return singleTileImage(children[0]);
   }
 }
