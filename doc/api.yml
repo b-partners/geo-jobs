@@ -1872,6 +1872,11 @@ components:
           type: string
         consumerEmail:
           type: string
+        dashboardApiKey:
+          type: string
+          description: |
+            Dashboard API key to store as is for the created consumer.
+            When not provided, the key is retrieved from, or generated in, the BirdIA dashboard.
         consumerType:
           type: string
           enum:
