@@ -7,12 +7,11 @@ import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.DetectionMaskFromTileRetriever;
+import app.bpartners.geojobs.service.area.mutation.model.AreaPictureHistoryResponse;
 import app.bpartners.geojobs.service.area.mutation.model.MutationContext;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
-import java.net.URI;
-import java.net.URL;
+import java.util.Comparator;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
@@ -25,11 +24,31 @@ public class MutationContextFactory {
   private final DetectionMaskFromTileRetriever maskFromTileRetriever;
   private final MachineDetectedTileRepository machineDetectedTileRepository;
   private final GeometryConverter geometryConverter;
+  private final GeodataApi geodataApi;
 
   public MutationContext create(Detection detection, Geometry roofGeometry) {
-    // TODO: re-enable once parcel delimitations are grouped by image date (millésime), see
-    // MutationComputer.getMostRecentInstantParcel/getPrecedentInstantParcel
-    return null;
+    var roofMultiPolygon = asMultiPolygon(roofGeometry);
+    var tile = findTileIntersecting(detection, roofMultiPolygon);
+    var maskImageFile = maskFromTileRetriever.apply(tile, roofMultiPolygon);
+
+    // The mask above is rasterized against `tile`'s x/y/z (z=20, the same zoom as
+    // bpartners-geodata's HOUSES_0), so a point inside that same tile keeps the area picture
+    // history images pixel-aligned with the mask.
+    var centroid = roofGeometry.getCentroid();
+    var history = geodataApi.getAreaPictureHistory(centroid.getX(), centroid.getY());
+    var images = history.images();
+    if (images == null || images.size() < 2) {
+      throw new IllegalStateException(
+          "Expected 2 dated area pictures from the geodata API for detection " + detection.getId());
+    }
+    var sortedByYear =
+        images.stream()
+            .sorted(Comparator.comparingInt(AreaPictureHistoryResponse.DatedImage::year))
+            .toList();
+    var older = sortedByYear.getFirst();
+    var mostRecent = sortedByYear.getLast();
+
+    return new MutationContext(older, mostRecent, maskImageFile);
   }
 
   private Tile findTileIntersecting(Detection detection, MultiPolygon roofMultiPolygon) {
@@ -59,10 +78,5 @@ public class MutationContextFactory {
     }
     throw new IllegalArgumentException(
         "Unsupported geometry type to build the mutation mask: " + geometry.getClass());
-  }
-
-  @SneakyThrows
-  private static URL toUrl(String geoServerUrl) {
-    return new URI(geoServerUrl).toURL();
   }
 }

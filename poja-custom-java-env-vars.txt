@@ -25,3 +25,4 @@ ROOFER_3D_BAG_API_KEY: !Sub '{{resolve:ssm:/geo-jobs/${Env}/roofer/3d-bag/api-ke
 ROOFER_3D_BAG_COMPLEXITY_FACTOR: !Sub '{{resolve:ssm:/geo-jobs/${Env}/roofer/3d-bag/complexity-factor}}'
 CITY_JSON_PROCESSOR_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/city-json-processor/api/url}}'
 MUTATION_DETECTION_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/mutation-detector/api/url}}'
+GEODATA_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/geodata/api/url}}'

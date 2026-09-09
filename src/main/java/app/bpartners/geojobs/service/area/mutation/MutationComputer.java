@@ -1,14 +1,7 @@
 package app.bpartners.geojobs.service.area.mutation;
 
-import app.bpartners.geojobs.model.exception.NotImplementedException;
-import app.bpartners.geojobs.repository.model.ParcelContent;
-import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
-import app.bpartners.geojobs.service.area.mutation.model.InstantParcel;
 import app.bpartners.geojobs.service.area.mutation.model.MutationContext;
 import app.bpartners.geojobs.service.area.mutation.model.MutationType;
-import app.bpartners.geojobs.service.tiling.downloader.TilesDownloader;
-import java.io.File;
-import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -16,55 +9,25 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class MutationComputer {
+  // The mutation-degat-api's ONNX model requires fixed 256x256 inputs.
+  private static final int MUTATION_MODEL_INPUT_SIZE = 256;
+
   private final MutationApi api;
-  private final TilesDownloader tilesDownloader;
+  private final ImageDownloader imageDownloader;
+  private final ImageResizer imageResizer;
 
   public MutationType apply(MutationContext context) {
-    var mostRecentParcel = getMostRecentInstantParcel(context.parcelDelimitations());
-    var oldParcel = getPrecedentInstantParcel(mostRecentParcel);
+    var oldImageFile = imageDownloader.download(context.older().imagePresignedUrl().value());
+    var recentImageFile =
+        imageDownloader.download(context.mostRecent().imagePresignedUrl().value());
 
-    var recentParcelImageFile = parcelImageFile(context, mostRecentParcel);
-    var oldParcelImageFile = parcelImageFile(context, oldParcel);
+    var resizedOld = imageResizer.resizePhoto(oldImageFile, MUTATION_MODEL_INPUT_SIZE);
+    var resizedRecent = imageResizer.resizePhoto(recentImageFile, MUTATION_MODEL_INPUT_SIZE);
+    var resizedMask = imageResizer.resizeMask(context.maskImageFile(), MUTATION_MODEL_INPUT_SIZE);
 
     var filename = "mutation_" + UUID.randomUUID();
-    var mutationResponse =
-        api.detectMutation(
-            oldParcelImageFile, recentParcelImageFile, context.maskImageFile(), filename);
+    var mutationResponse = api.detectMutation(resizedOld, resizedRecent, resizedMask, filename);
 
     return mutationResponse.mutation();
-  }
-
-  // TODO: implement once the parcel delimitations are grouped by image date (millésime)
-  private InstantParcel getMostRecentInstantParcel(
-      List<FeatureWithDelimitation> parcelDelimitations) {
-    throw new NotImplementedException("Not implemented yet");
-  }
-
-  private InstantParcel getPrecedentInstantParcel(InstantParcel parcel) {
-    throw new NotImplementedException("Not implemented yet");
-  }
-
-  private File parcelImageFile(MutationContext context, InstantParcel parcel) {
-    var parcelFeature = parcel.parcelDelimitations().getFirst().feature();
-    var parcelContent =
-        ParcelContent.builder()
-            .id(parcelFeature.getId())
-            .feature(parcelFeature)
-            .geoServerUrl(context.geoServerUrl())
-            .geoServerParameter(context.geoServerParameter())
-            .creationDatetime(parcel.date())
-            .build();
-    return singleTileImage(tilesDownloader.apply(parcelContent));
-  }
-
-  private File singleTileImage(File downloadedTiles) {
-    if (!downloadedTiles.isDirectory()) {
-      return downloadedTiles;
-    }
-    var children = downloadedTiles.listFiles();
-    if (children == null || children.length == 0) {
-      throw new IllegalStateException("No tile image downloaded for parcel");
-    }
-    return singleTileImage(children[0]);
   }
 }
