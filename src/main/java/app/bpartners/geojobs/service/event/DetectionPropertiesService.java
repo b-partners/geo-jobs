@@ -13,11 +13,13 @@ import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.MachineDetectedTileRepository;
 import app.bpartners.geojobs.service.FeatureRoofResultPropertiesComputer;
 import app.bpartners.geojobs.service.area.mutation.MutationContextFactory;
+import app.bpartners.geojobs.service.area.mutation.model.MutationContext;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.geojson.GeometryCorrector;
 import java.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.Nullable;
 import org.locationtech.jts.geom.Geometry;
 import org.springframework.stereotype.Service;
 
@@ -58,7 +60,7 @@ public class DetectionPropertiesService {
                           latLonRoofGeometry,
                           latLonRoofGeometry,
                           detectedObjectPolygonGeometriesUsedForRateComputing,
-                          mutationContextFactory.create(detection, latLonRoofGeometry));
+                          tryCreateMutationContext(detection, latLonRoofGeometry));
 
                   HashMap<String, Object> actualProperties = new HashMap<>();
                   var featureProperties = delimitationFeature.getProperties();
@@ -79,6 +81,24 @@ public class DetectionPropertiesService {
         toDomainFeature(currentFeature), delimitationFeatureWithResultProperties);
 
     return detectionRepository.save(detection);
+  }
+
+  @Nullable
+  private MutationContext tryCreateMutationContext(
+      app.bpartners.geojobs.repository.model.detection.Detection detection,
+      Geometry latLonRoofGeometry) {
+    try {
+      return mutationContextFactory.create(detection, latLonRoofGeometry);
+    } catch (RuntimeException e) {
+      // Mutation detection needs 2 distinct-date images and reachable geodata/mutation APIs -
+      // any of that can legitimately be unavailable for a given roof. Skip it rather than
+      // aborting the rest of this detection's properties over an optional enrichment.
+      log.warn(
+          "Could not build mutation context for detection {}: {}",
+          detection.getId(),
+          e.getMessage());
+      return null;
+    }
   }
 
   private List<PolygonObjectType> getDetectedObjectPolygonGeometriesUsedForRateComputing(

@@ -248,6 +248,30 @@ class FeatureRoofResultPropertiesComputerTest {
   }
 
   @Test
+  void should_put_null_mutation_property_instead_of_failing_when_mutation_computation_throws() {
+    var older =
+        new AreaPictureHistoryResponse.DatedImage(
+            2022, new AreaPictureHistoryResponse.PresignedUrl("https://geodata.test/old.jpg"));
+    var mostRecent =
+        new AreaPictureHistoryResponse.DatedImage(
+            2024, new AreaPictureHistoryResponse.PresignedUrl("https://geodata.test/new.jpg"));
+    var mutationContext = new MutationContext(older, mostRecent, new File("mask.png"));
+    when(mutationComputer.apply(mutationContext))
+        .thenThrow(new IllegalStateException("mutation API unreachable"));
+
+    Map<String, Object> result =
+        subject.apply(
+            feature,
+            geometryUsedForAreaComputing,
+            roofGeometryUsedForRateComputing,
+            detectedObjects,
+            mutationContext);
+
+    assertNull(result.get("mutation"));
+    assertEquals(150.0, result.get("roof_area_in_m2"));
+  }
+
+  @Test
   void should_not_put_mutation_property_when_mutation_context_is_null() {
     Map<String, Object> result =
         subject.apply(

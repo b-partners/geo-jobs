@@ -7,6 +7,7 @@ import app.bpartners.geojobs.model.geometry.PolygonObjectType;
 import app.bpartners.geojobs.model.geometry.area.rate.AreaRateComputerFacade;
 import app.bpartners.geojobs.service.area.mutation.MutationComputer;
 import app.bpartners.geojobs.service.area.mutation.model.MutationContext;
+import app.bpartners.geojobs.service.area.mutation.model.MutationType;
 import app.bpartners.geojobs.service.area.toiture.model.CoveringType;
 import app.bpartners.geojobs.service.area.toiture.model.FireRiskLevel;
 import app.bpartners.geojobs.service.area.toiture.model.RoofAssessmentResult;
@@ -20,10 +21,12 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Nullable;
 import org.locationtech.jts.geom.Geometry;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class FeatureRoofResultPropertiesComputer {
@@ -96,10 +99,22 @@ public class FeatureRoofResultPropertiesComputer {
     }
 
     if (mutationContext != null) {
-      actualProperties.put("mutation", mutationComputer.apply(mutationContext));
+      actualProperties.put("mutation", computeMutation(mutationContext));
     }
 
     return actualProperties;
+  }
+
+  @Nullable
+  private MutationType computeMutation(MutationContext mutationContext) {
+    try {
+      return mutationComputer.apply(mutationContext);
+    } catch (RuntimeException e) {
+      // Downloading/resizing images or calling the mutation API can fail independently of the
+      // rest of the roof properties already computed above; don't lose those over it.
+      log.warn("Could not compute mutation: {}", e.getMessage());
+      return null;
+    }
   }
 
   @Nullable
