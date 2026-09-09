@@ -43,13 +43,15 @@ public class ApiKeyService {
 
     var communityAuthorizations = handleExistingCommunities(authorizations);
 
-    communityAuthorizations.forEach(
-        authorization -> {
-          var dashboardUserApiKeyList =
-              userAccountsApi.getOrGenerateApiKey(
-                  authorization.getEmail(), authorization.getApiKey(), adminApiKey);
-          authorization.setDashboardApiKey(dashboardUserApiKeyList.key());
-        });
+    communityAuthorizations.stream()
+        .filter(authorization -> authorization.getDashboardApiKey() == null)
+        .forEach(
+            authorization -> {
+              var dashboardUserApiKeyList =
+                  userAccountsApi.getOrGenerateApiKey(
+                      authorization.getEmail(), authorization.getApiKey(), adminApiKey);
+              authorization.setDashboardApiKey(dashboardUserApiKeyList.key());
+            });
 
     return communityAuthorizationRepository.saveAll(authorizations).stream()
         .map(
