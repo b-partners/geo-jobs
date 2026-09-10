@@ -6,6 +6,7 @@ import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.model.geometry.PolygonObjectType;
 import app.bpartners.geojobs.model.geometry.area.rate.AreaRateComputerFacade;
 import app.bpartners.geojobs.service.area.mutation.MutationComputer;
+import app.bpartners.geojobs.service.area.mutation.model.AreaPictureHistoryResponse;
 import app.bpartners.geojobs.service.area.mutation.model.MutationContext;
 import app.bpartners.geojobs.service.area.mutation.model.MutationType;
 import app.bpartners.geojobs.service.area.toiture.model.CoveringType;
@@ -104,13 +105,19 @@ public class FeatureRoofResultPropertiesComputer {
     if (mutationContext != null) {
       var recentImage = mutationContext.mostRecent();
       var olderImage = mutationContext.older();
-      actualProperties.put("mutation_recent_image_url", recentImage.imagePresignedUrl().value());
+      actualProperties.put("mutation_recent_image_url", presignedUrlValue(recentImage));
       actualProperties.put("mutation_recent_image_date", recentImage.year());
-      actualProperties.put("mutation_older_image_url", olderImage.imagePresignedUrl().value());
+      actualProperties.put("mutation_older_image_url", presignedUrlValue(olderImage));
       actualProperties.put("mutation_older_image_date", olderImage.year());
     }
 
     return actualProperties;
+  }
+
+  @Nullable
+  private static String presignedUrlValue(AreaPictureHistoryResponse.DatedImage image) {
+    var presignedUrl = image.imagePresignedUrl();
+    return presignedUrl == null ? null : presignedUrl.value();
   }
 
   private MutationType computeMutation(MutationContext mutationContext) {

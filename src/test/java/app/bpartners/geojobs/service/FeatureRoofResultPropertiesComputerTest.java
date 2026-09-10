@@ -276,6 +276,27 @@ class FeatureRoofResultPropertiesComputerTest {
   }
 
   @Test
+  void should_put_null_image_url_when_presigned_url_is_missing_from_geodata_response() {
+    var older = new AreaPictureHistoryResponse.DatedImage(2022, null);
+    var mostRecent = new AreaPictureHistoryResponse.DatedImage(2024, null);
+    var mutationContext = new MutationContext(older, mostRecent, new File("mask.png"));
+    when(mutationComputer.apply(mutationContext)).thenReturn(MutationType.NONE);
+
+    Map<String, Object> result =
+        subject.apply(
+            feature,
+            geometryUsedForAreaComputing,
+            roofGeometryUsedForRateComputing,
+            detectedObjects,
+            mutationContext);
+
+    assertNull(result.get("mutation_recent_image_url"));
+    assertNull(result.get("mutation_older_image_url"));
+    assertEquals(2024, result.get("mutation_recent_image_date"));
+    assertEquals(2022, result.get("mutation_older_image_date"));
+  }
+
+  @Test
   void should_put_unknown_mutation_property_when_mutation_context_is_null() {
     Map<String, Object> result =
         subject.apply(
