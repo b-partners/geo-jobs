@@ -2,6 +2,7 @@ package app.bpartners.geojobs.unit;
 
 import static app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.FeatureMapper.toDomainFeature;
 import static app.bpartners.geojobs.endpoint.rest.model.Feature.TypeEnum.FEATURE;
+import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static app.bpartners.geojobs.service.cityjson.model.object.CityJsonIO.computeAdditionalProperties;
 import static app.bpartners.geojobs.service.cityjson.model.object.CityJsonIO.write;
 import static java.util.UUID.randomUUID;
@@ -16,6 +17,7 @@ import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.model.lidar.api.LidarApiUrlResolver;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSON;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
 import app.bpartners.geojobs.service.CityJSON3DBagRooferProcessor;
@@ -23,8 +25,6 @@ import app.bpartners.geojobs.service.CoordinateTransformer;
 import app.bpartners.geojobs.service.cityjson.model.object.CityJsonIO;
 import app.bpartners.geojobs.service.cityjson.texture.CityJsonTextureComputer;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
-import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
-import app.bpartners.geojobs.service.lidar.api.SwissBoundaryChecker;
 import app.bpartners.geojobs.service.roofer3dbag.Roofer3DBagApiClient;
 import app.bpartners.geojobs.service.roofer3dbag.model.CityJsonGenerationRequest;
 import app.bpartners.geojobs.service.roofer3dbag.model.CityJsonGenerationResponse;
@@ -32,14 +32,13 @@ import app.bpartners.geojobs.service.roofer3dbag.validator.Roofer3DBagCityJSONVa
 import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URL;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.Coordinate;
 import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -48,26 +47,24 @@ import org.springframework.core.io.ClassPathResource;
 class CityJSON3DBagRooferProcessorTest {
   BucketComponent bucketComponentMock = mock(BucketComponent.class);
   FeatureMapper featureMapperMock = mock(FeatureMapper.class);
-  LidarApiFacade lidarApiFacadeMock = mock(LidarApiFacade.class);
+  LidarApiUrlResolver lidarApiUrlResolverMock = mock(LidarApiUrlResolver.class);
   Roofer3DBagApiClient roofer3DBagApiClientMock = mock(Roofer3DBagApiClient.class);
   FileWriter fileWriterMock = mock(FileWriter.class);
   CoordinateTransformer coordinateTransformer = new CoordinateTransformer();
   GeometryConverter geometryConverter = new GeometryConverter();
   CityJsonTextureComputer textureComputerMock = mock(CityJsonTextureComputer.class);
-  SwissBoundaryChecker swissBoundaryCheckerMock = mock(SwissBoundaryChecker.class);
   Roofer3DBagCityJSONValidator roofer3DBagCityJSONValidatorMock =
       mock(Roofer3DBagCityJSONValidator.class);
   CityJSON3DBagRooferProcessor subject =
       new CityJSON3DBagRooferProcessor(
           bucketComponentMock,
           featureMapperMock,
-          lidarApiFacadeMock,
+          lidarApiUrlResolverMock,
           roofer3DBagApiClientMock,
           fileWriterMock,
           coordinateTransformer,
           geometryConverter,
           textureComputerMock,
-          swissBoundaryCheckerMock,
           roofer3DBagCityJSONValidatorMock);
 
   @BeforeEach
@@ -80,7 +77,7 @@ class CityJSON3DBagRooferProcessorTest {
   void convert_request_to_city_json_from_3d_bag_roofer() {
     var cityJSONRequestMock = mock(CityJSONRequest.class);
     var geoJsonBuildingPresignedURLMock = mock(URL.class);
-    var geometryMock = mock(Geometry.class);
+    var geometry = parisGeometry();
     var delimitationFeature =
         new Feature()
             .type(FEATURE)
@@ -102,9 +99,8 @@ class CityJSON3DBagRooferProcessorTest {
     when(geoJsonBuildingPresignedURLMock.toString()).thenReturn(geoJsonUrl);
     when(bucketComponentMock.upload(any(), any())).thenReturn(mock());
     when(bucketComponentMock.presign(any(), any())).thenReturn(geoJsonBuildingPresignedURLMock);
-    when(featureMapperMock.domainToGeometryWithMultipolygonHandler(any())).thenReturn(geometryMock);
-    when(lidarApiFacadeMock.getUniqueLidarFilesUrls(Collections.singleton(geometryMock)))
-        .thenReturn(Map.of(lidarUrl, Set.of(geometryMock)));
+    when(featureMapperMock.domainToGeometryWithMultipolygonHandler(any())).thenReturn(geometry);
+    when(lidarApiUrlResolverMock.resolveUrls(geometry)).thenReturn(Set.of(lidarUrl));
     when(cityJsonGenerationResponseMock.getCityJsonUrl()).thenReturn(cityJsonUrl);
     when(roofer3DBagApiClientMock.generateCityJson(
             CityJsonGenerationRequest.builder()
@@ -147,6 +143,18 @@ class CityJSON3DBagRooferProcessorTest {
                 .build()));
     mockedUri.close();
     cityJsonIOMockedStatic.close();
+  }
+
+  private static org.locationtech.jts.geom.Geometry parisGeometry() {
+    var coordinates =
+        new Coordinate[] {
+          new Coordinate(2.3522, 48.8566),
+          new Coordinate(2.3622, 48.8566),
+          new Coordinate(2.3622, 48.8666),
+          new Coordinate(2.3522, 48.8666),
+          new Coordinate(2.3522, 48.8566)
+        };
+    return geometryFactory.createPolygon(coordinates);
   }
 
   private List<List<List<List<BigDecimal>>>> multiPolygonCoordinates() {

@@ -12,6 +12,8 @@ import app.bpartners.geojobs.endpoint.rest.model.Polygon;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.model.exception.NotImplementedException;
+import app.bpartners.geojobs.model.lidar.CrsProjector;
+import app.bpartners.geojobs.model.lidar.api.LidarApiUrlResolver;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSON;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
@@ -19,8 +21,6 @@ import app.bpartners.geojobs.service.cityjson.model.object.CityJsonIO;
 import app.bpartners.geojobs.service.cityjson.texture.CityJsonTextureComputer;
 import app.bpartners.geojobs.service.geojson.GeoJson;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
-import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
-import app.bpartners.geojobs.service.lidar.api.SwissBoundaryChecker;
 import app.bpartners.geojobs.service.roofer3dbag.Roofer3DBagApiClient;
 import app.bpartners.geojobs.service.roofer3dbag.model.CityJsonGenerationRequest;
 import app.bpartners.geojobs.service.roofer3dbag.validator.Roofer3DBagCityJSONValidator;
@@ -33,7 +33,6 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -53,13 +52,12 @@ public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, L
   private static final String JSON_EXTENSION = ".json";
   private final BucketComponent bucketComponent;
   private final FeatureMapper featureMapper;
-  private final LidarApiFacade lidarApiFacade;
+  private final LidarApiUrlResolver lidarApiUrlResolver;
   private final Roofer3DBagApiClient roofer3DBagApiClient;
   private final FileWriter fileWriter;
   private final CoordinateTransformer coordinateTransformer;
   private final GeometryConverter geometryConverter;
   private final CityJsonTextureComputer textureComputer;
-  private final SwissBoundaryChecker swissBoundaryChecker;
   private final Roofer3DBagCityJSONValidator cityJSONValidator;
 
   @Override
@@ -153,8 +151,7 @@ public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, L
 
   private Set<String> getUniqueLidarFilesUrls(Feature feature) {
     var geometry = featureMapper.domainToGeometryWithMultipolygonHandler(feature);
-    var geometries = Collections.singleton(geometry);
-    return lidarApiFacade.getUniqueLidarFilesUrls(geometries).keySet();
+    return lidarApiUrlResolver.resolveUrls(geometry);
   }
 
   private URL getGeoJsonBuildingPresignedURL(Feature feature) throws IOException {
@@ -162,7 +159,7 @@ public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, L
     var multiPolygon = getMultiPolygon(feature);
     var geometry = featureMapper.domainToGeometryWithMultipolygonHandler(feature);
     var coordinates =
-        swissBoundaryChecker.isGeometryInSwiss(geometry)
+        CrsProjector.INSTANCE.isInSwiss(geometry)
             ? convertWgs84ToSwissCoordinates(multiPolygon)
             : convertWgs84ToLambert93Coordinates(multiPolygon);
     var geoJson =
