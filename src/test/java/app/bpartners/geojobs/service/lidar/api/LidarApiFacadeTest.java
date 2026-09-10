@@ -12,7 +12,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpStatus.OK;
 
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.WalloniaBucketComponent;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.cacher.CacherApiClient;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -39,7 +39,7 @@ import org.springframework.web.client.RestTemplate;
 class LidarApiFacadeTest {
   RestTemplate restTemplateMock = mock();
   CacherApiClient cacherApiClientMock = mock();
-  BucketComponent bucketComponentMock = mock();
+  WalloniaBucketComponent walloniaBucketComponentMock = mock();
   LidarApiFacade subject =
       new LidarApiFacade(
           new IgnLidarApi(new IgnLidarApiConf(IGN_LIDAR_API_URL), restTemplateMock),
@@ -54,25 +54,25 @@ class LidarApiFacadeTest {
           new WalloniaLidarApi(
               new WalloniaLidarApiConf(WALLONIA_LIDAR_API_URL),
               restTemplateMock,
-              bucketComponentMock),
+              walloniaBucketComponentMock),
           new GeometrySquareMeterArea(),
           restTemplateMock,
           cacherApiClientMock,
-          bucketComponentMock);
+          walloniaBucketComponentMock);
 
   private static final String UPDATED_FILE_URL = "https://data.geopf.fr/dummy.laz";
   private static final String DEPRECATED_FILE_URL = "https://storage.sbg.cloud.ovh.net/dummy.laz";
-  private static final String BUCKET_NAME = "geo-jobs-test-bucket";
+  private static final String WALLONIA_BUCKET_NAME = "geo-jobs-test-wallonia-lidar-bucket";
   private static final String WALLONIA_PRESIGNED_FILE_URL =
       "https://"
-          + BUCKET_NAME
+          + WALLONIA_BUCKET_NAME
           + ".s3.eu-west-3.amazonaws.com/lidar/wallonia/liege/dummy.laz?X-Amz-Signature=dummy";
 
   @SneakyThrows
   @BeforeEach
   void setUp() {
     when(cacherApiClientMock.getWithCache(any())).thenReturn(new URL(UPDATED_FILE_URL));
-    when(bucketComponentMock.getBucketName()).thenReturn(BUCKET_NAME);
+    when(walloniaBucketComponentMock.getBucketName()).thenReturn(WALLONIA_BUCKET_NAME);
   }
 
   @Test
@@ -302,7 +302,8 @@ class LidarApiFacadeTest {
   void download_from_wallonia_api_if_it_is_in_wallonia_area() {
     when(restTemplateMock.getForObject(any(URI.class), eq(JsonNode.class)))
         .thenReturn(walloniaMaillesResponse("LIDAR_2021_2022_500mN6465E7375"));
-    when(bucketComponentMock.presign("lidar/wallonia/liege/LIDAR_2021_2022_500mN6465E7375.laz"))
+    when(walloniaBucketComponentMock.presign(
+            "lidar/wallonia/liege/LIDAR_2021_2022_500mN6465E7375.laz"))
         .thenReturn(WALLONIA_PRESIGNED_FILE_URL);
 
     var actual = subject.getUniqueLidarFilesUrls(Set.of(liege_with_lidar_data_coords()));

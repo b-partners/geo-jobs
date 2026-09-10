@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -34,8 +35,7 @@ class IgnBrowserScraperLidarApiTest {
 
     subject.apply(BBOX);
 
-    org.mockito.Mockito.verify(restTemplateMock)
-        .getForObject(urlCaptor.capture(), eq(JsonNode.class));
+    verify(restTemplateMock).getForObject(urlCaptor.capture(), eq(JsonNode.class));
     assertTrue(urlCaptor.getValue().contains("bbox=2.391307,48.865264,2.392127,48.865804"));
   }
 

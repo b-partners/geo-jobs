@@ -2,7 +2,7 @@ package app.bpartners.geojobs.service.lidar.api;
 
 import static java.util.stream.Collectors.toSet;
 
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.WalloniaBucketComponent;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import java.util.Objects;
@@ -30,7 +30,7 @@ public class WalloniaLidarApi implements LidarApi {
 
   private final WalloniaLidarApiConf conf;
   private final RestTemplate restTemplate;
-  private final BucketComponent bucketComponent;
+  private final WalloniaBucketComponent bucketComponent;
 
   @Override
   @SuppressWarnings("all")

@@ -9,7 +9,7 @@ import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.geojobs.file.FileWriter;
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.WalloniaBucketComponent;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.cacher.CacherApiClient;
 import java.io.File;
@@ -43,7 +43,7 @@ public class LidarApiFacade {
   private final GeometrySquareMeterArea projector;
   private final RestTemplate restTemplate;
   private final CacherApiClient cacherApiClient;
-  private final BucketComponent bucketComponent;
+  private final WalloniaBucketComponent walloniaBucketComponent;
 
   private static final String LAZ_FILE_SUFFIX = ".laz";
   private static final long UPDATED_VALID_DATA = 50_000_000;
@@ -206,7 +206,7 @@ public class LidarApiFacade {
   private boolean isSafeUrl(String url) {
     if (url == null) return false;
     if (ALLOWED_URL_PREFIXES.stream().anyMatch(url::startsWith)) return true;
-    return url.startsWith("https://" + bucketComponent.getBucketName() + ".s3.");
+    return url.startsWith("https://" + walloniaBucketComponent.getBucketName() + ".s3.");
   }
 
   @Builder

@@ -14,6 +14,7 @@ public class EnvConf {
       "https://geoservices.wallonie.be/arcgis/rest/services/RELIEF/LIDAR_MAILLES/MapServer/0/query";
   public static final String IGN_BROWSER_SCRAPER_API_URL =
       "https://dummy-ign-browser-scraper.com/scrape-bbox";
+  public static final String WALLONIA_LIDAR_BUCKET_NAME = "dummy-wallonia-lidar-bucket";
 
   void configureProperties(DynamicPropertyRegistry registry) {
     registry.add("annotator.api.url", () -> "http://dummy.com");
@@ -48,6 +49,7 @@ public class EnvConf {
     registry.add("open-source.lidar.api.url", () -> OPEN_SOURCE_LIDAR_API_URL);
     registry.add("wallonia.lidar.api.url", () -> WALLONIA_LIDAR_API_URL);
     registry.add("ign-lidar.browser.scraper.api.url", () -> IGN_BROWSER_SCRAPER_API_URL);
+    registry.add("wallonia.lidar.bucket.name", () -> WALLONIA_LIDAR_BUCKET_NAME);
     registry.add("google.captcha.secret", () -> "dummy");
     registry.add("google.captcha.url", () -> "https://google.com");
     registry.add("google.geocode.api.key", () -> "https://google.com");

@@ -6,7 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.file.bucket.WalloniaBucketComponent;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.client.RestTemplate;
 
@@ -14,7 +14,7 @@ class WalloniaLidarApiTest {
   private static final String WALLONIA_LIDAR_API_URL =
       "https://geoservices.wallonie.be/arcgis/rest/services/RELIEF/LIDAR_MAILLES/MapServer/0/query";
   RestTemplate restTemplate = new RestTemplate();
-  BucketComponent bucketComponentMock = mock();
+  WalloniaBucketComponent bucketComponentMock = mock();
   WalloniaLidarApi subject =
       new WalloniaLidarApi(
           new WalloniaLidarApiConf(WALLONIA_LIDAR_API_URL), restTemplate, bucketComponentMock);
