@@ -3,7 +3,12 @@ package app.bpartners.geojobs.model.lidar.api;
 import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.geojobs.model.lidar.CrsProjector;
+import app.bpartners.geojobs.model.lidar.zone.DefaultZone;
+import app.bpartners.geojobs.model.lidar.zone.LidarZone;
+import app.bpartners.geojobs.model.lidar.zone.SwissZone;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Envelope;
@@ -25,12 +30,18 @@ public class LidarApiUrlResolver {
   private final SwissLidarApi swissLidarApi;
 
   public Set<String> resolveUrls(Geometry wgs84Geometry) {
+    var zone = CrsProjector.INSTANCE.resolveZone(wgs84Geometry);
     var envelope = wgs84Geometry.getEnvelopeInternal();
+    return urlResolversByZone().getOrDefault(zone, this::resolveDefaultZoneUrls).apply(envelope);
+  }
 
-    if (CrsProjector.INSTANCE.isInSwiss(wgs84Geometry)) {
-      return getSafeUrls(envelope, swissLidarApi);
-    }
+  private Map<LidarZone, Function<Envelope, Set<String>>> urlResolversByZone() {
+    return Map.of(
+        SwissZone.INSTANCE, envelope -> getSafeUrls(envelope, swissLidarApi),
+        DefaultZone.INSTANCE, this::resolveDefaultZoneUrls);
+  }
 
+  private Set<String> resolveDefaultZoneUrls(Envelope envelope) {
     Set<String> urls;
     try {
       urls = getSafeUrls(envelope, openSourceLidarApi);
