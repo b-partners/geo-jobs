@@ -7,9 +7,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpStatus.OK;
 
+import app.bpartners.geojobs.file.bucket.WalloniaBucketComponent;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.cacher.CacherApiClient;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -36,6 +39,7 @@ import org.springframework.web.client.RestTemplate;
 class LidarApiFacadeTest {
   RestTemplate restTemplateMock = mock();
   CacherApiClient cacherApiClientMock = mock();
+  WalloniaBucketComponent walloniaBucketComponentMock = mock();
   LidarApiFacade subject =
       new LidarApiFacade(
           new IgnLidarApi(new IgnLidarApiConf(IGN_LIDAR_API_URL), restTemplateMock),
@@ -44,29 +48,31 @@ class LidarApiFacadeTest {
           new FallbackLidarApi(),
           new SwissBoundaryChecker(),
           new SwissLidarApi(restTemplateMock),
+          new IgnBrowserScraperLidarApi(
+              new IgnBrowserScraperLidarApiConf(IGN_BROWSER_SCRAPER_API_URL), restTemplateMock),
+          new WalloniaBoundaryChecker(),
+          new WalloniaLidarApi(
+              new WalloniaLidarApiConf(WALLONIA_LIDAR_API_URL),
+              restTemplateMock,
+              walloniaBucketComponentMock),
           new GeometrySquareMeterArea(),
           restTemplateMock,
-          cacherApiClientMock);
+          cacherApiClientMock,
+          walloniaBucketComponentMock);
 
   private static final String UPDATED_FILE_URL = "https://data.geopf.fr/dummy.laz";
   private static final String DEPRECATED_FILE_URL = "https://storage.sbg.cloud.ovh.net/dummy.laz";
-
-  public Geometry switzerland_with_two_lidar_data_coords() {
-    Coordinate[] swissCoordinates =
-        new Coordinate[] {
-          new Coordinate(6.220857751344101, 46.218330151666642),
-          new Coordinate(6.220048781018293, 46.218321418896565),
-          new Coordinate(6.219912346396907, 46.217758267190007),
-          new Coordinate(6.221001698608311, 46.217607435687704),
-          new Coordinate(6.220857751344101, 46.218330151666642)
-        };
-    return geometryFactory.createPolygon(swissCoordinates);
-  }
+  private static final String WALLONIA_BUCKET_NAME = "geo-jobs-test-wallonia-lidar-bucket";
+  private static final String WALLONIA_PRESIGNED_FILE_URL =
+      "https://"
+          + WALLONIA_BUCKET_NAME
+          + ".s3.eu-west-3.amazonaws.com/lidar/wallonia/liege/dummy.laz?X-Amz-Signature=dummy";
 
   @SneakyThrows
   @BeforeEach
   void setUp() {
     when(cacherApiClientMock.getWithCache(any())).thenReturn(new URL(UPDATED_FILE_URL));
+    when(walloniaBucketComponentMock.getBucketName()).thenReturn(WALLONIA_BUCKET_NAME);
   }
 
   @Test
@@ -82,12 +88,28 @@ class LidarApiFacadeTest {
   }
 
   @Test
-  void get_lidar_laz_file_urls_form_ign_api_ok() {
+  void get_lidar_laz_file_urls_form_ign_browser_scraper_ok_when_open_source_empty() {
+    when(restTemplateMock.getForEntity(any(String.class), eq(FeatureCollection.class)))
+        .thenReturn(emptyResponse());
+    when(restTemplateMock.getForObject(any(String.class), eq(JsonNode.class)))
+        .thenReturn(ignBrowserScraperResponse(UPDATED_FILE_URL));
+
+    var actual = subject.getUniqueLidarFilesUrls(Set.of(geometry1()));
+
+    assertTrue(actual.containsKey(UPDATED_FILE_URL));
+    assertEquals(1, actual.size());
+    verify(restTemplateMock, times(1)).getForEntity(any(String.class), eq(FeatureCollection.class));
+  }
+
+  @Test
+  void get_lidar_laz_file_urls_form_ign_api_ok_when_open_source_and_browser_scraper_empty() {
     when(restTemplateMock.getForEntity(any(String.class), eq(FeatureCollection.class)))
         .thenReturn(emptyResponse())
         .thenReturn(ignApiResponse(UPDATED_FILE_URL))
         .thenReturn(emptyResponse())
         .thenReturn(ignApiResponse(UPDATED_FILE_URL));
+    when(restTemplateMock.getForObject(any(String.class), eq(JsonNode.class)))
+        .thenReturn(emptyIgnBrowserScraperResponse());
 
     var actual = subject.getUniqueLidarFilesUrls(Set.of(geometry1(), geometry2()));
 
@@ -164,6 +186,33 @@ class LidarApiFacadeTest {
 
   private static ResponseEntity<FeatureCollection> emptyResponse() {
     return new ResponseEntity<>(FeatureCollection.builder().features(List.of()).build(), OK);
+  }
+
+  @SneakyThrows
+  private static JsonNode ignBrowserScraperResponse(String url) {
+    return new ObjectMapper()
+        .readTree(
+            """
+            {
+              "bbox": [2.391307, 48.865264, 2.392127, 48.865804],
+              "count": 1,
+              "tiles": [{"name": "LHD_FXX_0655_6864_PTS_O_LAMB93_IGN69", "url": "%s"}]
+            }
+            """
+                .formatted(url));
+  }
+
+  @SneakyThrows
+  private static JsonNode emptyIgnBrowserScraperResponse() {
+    return new ObjectMapper()
+        .readTree(
+            """
+            {
+              "bbox": [2.391307, 48.865264, 2.392127, 48.865804],
+              "count": 0,
+              "tiles": []
+            }
+            """);
   }
 
   private static ResponseEntity<FeatureCollection> ignApiResponse(String url) {
@@ -249,6 +298,32 @@ class LidarApiFacadeTest {
             "https://data.geo.admin.ch/ch.swisstopo.swisssurface3d/swisssurface3d_2025_2506-1119/swisssurface3d_2025_2506-1119_2056_5728.copc.laz"));
   }
 
+  @Test
+  void download_from_wallonia_api_if_it_is_in_wallonia_area() {
+    when(restTemplateMock.getForObject(any(URI.class), eq(JsonNode.class)))
+        .thenReturn(walloniaMaillesResponse("LIDAR_2021_2022_500mN6465E7375"));
+    when(walloniaBucketComponentMock.presign(
+            "lidar/wallonia/liege/LIDAR_2021_2022_500mN6465E7375.laz"))
+        .thenReturn(WALLONIA_PRESIGNED_FILE_URL);
+
+    var actual = subject.getUniqueLidarFilesUrls(Set.of(liege_with_lidar_data_coords()));
+
+    assertTrue(actual.containsKey(WALLONIA_PRESIGNED_FILE_URL));
+    assertEquals(1, actual.size());
+  }
+
+  @SneakyThrows
+  private static JsonNode walloniaMaillesResponse(String lasName) {
+    return new ObjectMapper()
+        .readTree(
+            """
+            {
+              "features": [{"attributes": {"LAS_NAME": "%s"}}]
+            }
+            """
+                .formatted(lasName));
+  }
+
   private static ResponseEntity<FeatureCollection> openSourceApiResponse(String url) {
     return new ResponseEntity<>(
         FeatureCollection.builder()
@@ -286,5 +361,29 @@ class LidarApiFacadeTest {
           new Coordinate(2.243891733457616, 48.82448842864014)
         };
     return geometryFactory.createPolygon(coordinates);
+  }
+
+  public Geometry liege_with_lidar_data_coords() {
+    Coordinate[] liegeCoordinates =
+        new Coordinate[] {
+          new Coordinate(5.578864, 50.629200),
+          new Coordinate(5.579732, 50.629187),
+          new Coordinate(5.579719, 50.628698),
+          new Coordinate(5.578851, 50.628711),
+          new Coordinate(5.578864, 50.629200)
+        };
+    return geometryFactory.createPolygon(liegeCoordinates);
+  }
+
+  public Geometry switzerland_with_two_lidar_data_coords() {
+    Coordinate[] swissCoordinates =
+        new Coordinate[] {
+          new Coordinate(6.220857751344101, 46.218330151666642),
+          new Coordinate(6.220048781018293, 46.218321418896565),
+          new Coordinate(6.219912346396907, 46.217758267190007),
+          new Coordinate(6.221001698608311, 46.217607435687704),
+          new Coordinate(6.220857751344101, 46.218330151666642)
+        };
+    return geometryFactory.createPolygon(swissCoordinates);
   }
 }

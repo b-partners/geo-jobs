@@ -11,6 +11,7 @@ import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.lidar.api.LasIndexApi;
 import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
 import app.bpartners.geojobs.service.lidar.api.SwissBoundaryChecker;
+import app.bpartners.geojobs.service.lidar.api.WalloniaBoundaryChecker;
 import app.bpartners.geojobs.utils.lidar.LasRoofsPointsExtractorCreator;
 import java.util.Map;
 import java.util.Optional;
@@ -53,6 +54,7 @@ class LasRoofPointsExtractorTest {
                 apiMock,
                 new GeometrySquareMeterArea(),
                 swissBoundaryCheckerMock(),
+                walloniaBoundaryCheckerMock(),
                 fromOneUrl(apiMock)));
 
     var roofGeometry1 = roofOutsideLidar();
@@ -127,6 +129,12 @@ class LasRoofPointsExtractorTest {
     var swissBoundaryChecker = mock(SwissBoundaryChecker.class);
     when(swissBoundaryChecker.isGeometryInSwiss(any())).thenReturn(false);
     return swissBoundaryChecker;
+  }
+
+  private static WalloniaBoundaryChecker walloniaBoundaryCheckerMock() {
+    var walloniaBoundaryChecker = mock(WalloniaBoundaryChecker.class);
+    when(walloniaBoundaryChecker.isGeometryInWallonia(any())).thenReturn(false);
+    return walloniaBoundaryChecker;
   }
 
   private static Geometry roofOutsideLidar() {

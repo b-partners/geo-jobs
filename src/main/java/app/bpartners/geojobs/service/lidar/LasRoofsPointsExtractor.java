@@ -9,6 +9,7 @@ import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.lidar.api.LasIndexApi;
 import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
 import app.bpartners.geojobs.service.lidar.api.SwissBoundaryChecker;
+import app.bpartners.geojobs.service.lidar.api.WalloniaBoundaryChecker;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
@@ -33,6 +34,7 @@ public class LasRoofsPointsExtractor
   private final LidarApiFacade lidarApi;
   private final GeometrySquareMeterArea projector;
   private final SwissBoundaryChecker swissBoundaryChecker;
+  private final WalloniaBoundaryChecker walloniaBoundaryChecker;
   private final LasRoofPointsExtractorFromOneUrl pointsExtractorFromOneUrl;
 
   @Autowired
@@ -40,10 +42,12 @@ public class LasRoofsPointsExtractor
       LasIndexApi lasIndexApi,
       LidarApiFacade lidarApi,
       GeometrySquareMeterArea projector,
-      SwissBoundaryChecker swissBoundaryChecker) {
+      SwissBoundaryChecker swissBoundaryChecker,
+      WalloniaBoundaryChecker walloniaBoundaryChecker) {
     this.lidarApi = lidarApi;
     this.projector = projector;
     this.swissBoundaryChecker = swissBoundaryChecker;
+    this.walloniaBoundaryChecker = walloniaBoundaryChecker;
     this.pointsExtractorFromOneUrl = new LasRoofPointsExtractorFromOneUrl(lidarApi, lasIndexApi);
   }
 
@@ -170,6 +174,9 @@ public class LasRoofsPointsExtractor
   private Geometry projectToLocalCRS(Geometry roofEPSG4326) {
     if (swissBoundaryChecker.isGeometryInSwiss(roofEPSG4326)) {
       return projector.project(roofEPSG4326, WGS84, EPSG_2056);
+    }
+    if (walloniaBoundaryChecker.isGeometryInWallonia(roofEPSG4326)) {
+      return projector.project(roofEPSG4326, WGS84, EPSG_3812);
     }
     return projector.project(roofEPSG4326, WGS84, LAMBERT_93);
   }
