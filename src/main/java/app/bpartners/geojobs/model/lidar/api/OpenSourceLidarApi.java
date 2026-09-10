@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.service.lidar.api;
+package app.bpartners.geojobs.model.lidar.api;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toSet;

@@ -3,6 +3,7 @@ package app.bpartners.geojobs.service.lidar.api;
 import static app.bpartners.geojobs.service.model.SwissBoundaryCheckerTest.switzerland_coords;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import app.bpartners.geojobs.model.lidar.api.SwissLidarApi;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.client.RestTemplate;
 
