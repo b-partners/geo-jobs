@@ -32,7 +32,8 @@ class CrsProjectorTest {
     assertTrue(subject.isInSwiss(wgs84Geometry));
     assertEquals(EPSG_2056, subject.getLocalCrs(wgs84Geometry));
     assertEquals(
-        projector.project(wgs84Geometry, WGS84, EPSG_2056), subject.projectToLocalCrs(wgs84Geometry));
+        projector.project(wgs84Geometry, WGS84, EPSG_2056),
+        subject.projectToLocalCrs(wgs84Geometry));
   }
 
   @Test
@@ -43,6 +44,7 @@ class CrsProjectorTest {
     assertFalse(subject.isInSwiss(wgs84Geometry));
     assertEquals(LAMBERT_93, subject.getLocalCrs(wgs84Geometry));
     assertEquals(
-        projector.project(wgs84Geometry, WGS84, LAMBERT_93), subject.projectToLocalCrs(wgs84Geometry));
+        projector.project(wgs84Geometry, WGS84, LAMBERT_93),
+        subject.projectToLocalCrs(wgs84Geometry));
   }
 }

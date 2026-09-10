@@ -37,8 +37,10 @@ public class LidarApiUrlResolver {
 
   private Map<LidarZone, Function<Envelope, Set<String>>> urlResolversByZone() {
     return Map.of(
-        SwissZone.INSTANCE, envelope -> getSafeUrls(envelope, swissLidarApi),
-        DefaultZone.INSTANCE, this::resolveDefaultZoneUrls);
+        SwissZone.INSTANCE,
+        envelope -> getSafeUrls(envelope, swissLidarApi),
+        DefaultZone.INSTANCE,
+        this::resolveDefaultZoneUrls);
   }
 
   private Set<String> resolveDefaultZoneUrls(Envelope envelope) {
