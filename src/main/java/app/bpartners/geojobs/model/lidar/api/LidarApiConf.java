@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.service.lidar.api;
+package app.bpartners.geojobs.model.lidar.api;
 
 import java.util.Map;
 import org.locationtech.jts.geom.Envelope;

@@ -8,6 +8,10 @@ import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.geojobs.file.FileWriter;
+import app.bpartners.geojobs.model.lidar.api.IgnLidarApi;
+import app.bpartners.geojobs.model.lidar.api.LidarApi;
+import app.bpartners.geojobs.model.lidar.api.OpenSourceLidarApi;
+import app.bpartners.geojobs.model.lidar.api.SwissLidarApi;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.cacher.CacherApiClient;
 import java.io.File;

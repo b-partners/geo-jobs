@@ -10,6 +10,12 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpStatus.OK;
 
+import app.bpartners.geojobs.model.lidar.api.FeatureCollection;
+import app.bpartners.geojobs.model.lidar.api.IgnLidarApi;
+import app.bpartners.geojobs.model.lidar.api.IgnLidarApiConf;
+import app.bpartners.geojobs.model.lidar.api.OpenSourceLidarApi;
+import app.bpartners.geojobs.model.lidar.api.OpenSourceLidarApiConf;
+import app.bpartners.geojobs.model.lidar.api.SwissLidarApi;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.cacher.CacherApiClient;
 import com.fasterxml.jackson.core.JsonProcessingException;
