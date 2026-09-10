@@ -2,6 +2,7 @@ package app.bpartners.geojobs.service.lidar.api;
 
 import static java.util.stream.Collectors.toSet;
 
+import app.bpartners.geojobs.model.lidar.api.LidarApi;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import java.util.Set;
