@@ -302,8 +302,7 @@ class LidarApiFacadeTest {
   void download_from_wallonia_api_if_it_is_in_wallonia_area() {
     when(restTemplateMock.getForObject(any(URI.class), eq(JsonNode.class)))
         .thenReturn(walloniaMaillesResponse("LIDAR_2021_2022_500mN6465E7375"));
-    when(walloniaBucketComponentMock.presign(
-            "lidar/wallonia/liege/LIDAR_2021_2022_500mN6465E7375.laz"))
+    when(walloniaBucketComponentMock.presign("wallonia/liege/LIDAR_2021_2022_500mN6465E7375.laz"))
         .thenReturn(WALLONIA_PRESIGNED_FILE_URL);
 
     var actual = subject.getUniqueLidarFilesUrls(Set.of(liege_with_lidar_data_coords()));

@@ -25,7 +25,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 @RequiredArgsConstructor
 @Slf4j
 public class WalloniaLidarApi implements LidarApi {
-  private static final String BUCKET_KEY_PREFIX = "lidar/wallonia/liege/";
+  private static final String BUCKET_KEY_PREFIX = "wallonia/liege/";
   private static final String LAZ_FILE_SUFFIX = ".laz";
 
   private final WalloniaLidarApiConf conf;

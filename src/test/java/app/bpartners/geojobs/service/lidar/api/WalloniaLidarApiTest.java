@@ -33,7 +33,7 @@ class WalloniaLidarApiTest {
             .anyMatch(
                 url ->
                     url.startsWith(
-                        "https://dummy-bucket.s3.eu-west-3.amazonaws.com/lidar/wallonia/liege/")));
+                        "https://dummy-bucket.s3.eu-west-3.amazonaws.com/wallonia/liege/")));
     assertTrue(res.stream().allMatch(url -> url.endsWith(".laz")));
   }
 }
