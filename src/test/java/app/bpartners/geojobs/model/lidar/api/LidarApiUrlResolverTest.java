@@ -84,19 +84,19 @@ class LidarApiUrlResolverTest {
       return new ObjectMapper()
           .readTree(
               """
-              {
-                "type": "FeatureCollection",
-                "features": [
-                  {
-                    "assets": {
-                      "swisssurface3d_2025_2505-1119_2056_5728.copc.laz": {
-                        "href": "https://data.geo.admin.ch/ch.swisstopo.swisssurface3d/swisssurface3d_2025_2505-1119/swisssurface3d_2025_2505-1119_2056_5728.copc.laz"
-                      }
-                    }
-                  }
-                ]
-              }
-              """);
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "assets": {
+        "swisssurface3d_2025_2505-1119_2056_5728.copc.laz": {
+          "href": "https://data.geo.admin.ch/ch.swisstopo.swisssurface3d/swisssurface3d_2025_2505-1119/swisssurface3d_2025_2505-1119_2056_5728.copc.laz"
+        }
+      }
+    }
+  ]
+}
+""");
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
