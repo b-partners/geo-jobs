@@ -1,5 +1,7 @@
 package app.bpartners.geojobs.service;
 
+import app.bpartners.geojobs.service.lidar.api.SwissBoundaryChecker;
+import app.bpartners.geojobs.service.lidar.api.WalloniaBoundaryChecker;
 import java.util.function.Function;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.geometry.jts.JTS;
@@ -14,6 +16,9 @@ public class GeometrySquareMeterArea implements Function<Geometry, Double> {
   public static final CoordinateReferenceSystem LAMBERT_93;
   public static final CoordinateReferenceSystem EPSG_2056;
   public static final CoordinateReferenceSystem EPSG_3812;
+  private static final SwissBoundaryChecker SWISS_BOUNDARY_CHECKER = new SwissBoundaryChecker();
+  private static final WalloniaBoundaryChecker WALLONIA_BOUNDARY_CHECKER =
+      new WalloniaBoundaryChecker();
 
   static {
     try {
@@ -27,8 +32,18 @@ public class GeometrySquareMeterArea implements Function<Geometry, Double> {
   }
 
   @Override
-  public Double apply(Geometry geometry) {
-    return project(geometry, WGS84, LAMBERT_93).getArea();
+  public Double apply(Geometry geometryWGS84) {
+    return project(geometryWGS84, WGS84, resolveProjectedCRS(geometryWGS84)).getArea();
+  }
+
+  private static CoordinateReferenceSystem resolveProjectedCRS(Geometry geometryWGS84) {
+    if (SWISS_BOUNDARY_CHECKER.isGeometryInSwiss(geometryWGS84)) {
+      return EPSG_2056;
+    }
+    if (WALLONIA_BOUNDARY_CHECKER.isGeometryInWallonia(geometryWGS84)) {
+      return EPSG_3812;
+    }
+    return LAMBERT_93;
   }
 
   public Geometry project(
