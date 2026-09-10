@@ -245,10 +245,14 @@ class FeatureRoofResultPropertiesComputerTest {
             mutationContext);
 
     assertEquals(MutationType.DETERIORATION, result.get("mutation"));
+    assertEquals("https://geodata.test/new.jpg", result.get("mutation_recent_image_url"));
+    assertEquals(2024, result.get("mutation_recent_image_date"));
+    assertEquals("https://geodata.test/old.jpg", result.get("mutation_older_image_url"));
+    assertEquals(2022, result.get("mutation_older_image_date"));
   }
 
   @Test
-  void should_put_null_mutation_property_instead_of_failing_when_mutation_computation_throws() {
+  void should_put_unknown_mutation_property_instead_of_failing_when_mutation_computation_throws() {
     var older =
         new AreaPictureHistoryResponse.DatedImage(
             2022, new AreaPictureHistoryResponse.PresignedUrl("https://geodata.test/old.jpg"));
@@ -267,12 +271,33 @@ class FeatureRoofResultPropertiesComputerTest {
             detectedObjects,
             mutationContext);
 
-    assertNull(result.get("mutation"));
+    assertEquals(MutationType.UNKNOWN, result.get("mutation"));
     assertEquals(150.0, result.get("roof_area_in_m2"));
   }
 
   @Test
-  void should_not_put_mutation_property_when_mutation_context_is_null() {
+  void should_put_null_image_url_when_presigned_url_is_missing_from_geodata_response() {
+    var older = new AreaPictureHistoryResponse.DatedImage(2022, null);
+    var mostRecent = new AreaPictureHistoryResponse.DatedImage(2024, null);
+    var mutationContext = new MutationContext(older, mostRecent, new File("mask.png"));
+    when(mutationComputer.apply(mutationContext)).thenReturn(MutationType.NONE);
+
+    Map<String, Object> result =
+        subject.apply(
+            feature,
+            geometryUsedForAreaComputing,
+            roofGeometryUsedForRateComputing,
+            detectedObjects,
+            mutationContext);
+
+    assertNull(result.get("mutation_recent_image_url"));
+    assertNull(result.get("mutation_older_image_url"));
+    assertEquals(2024, result.get("mutation_recent_image_date"));
+    assertEquals(2022, result.get("mutation_older_image_date"));
+  }
+
+  @Test
+  void should_put_unknown_mutation_property_when_mutation_context_is_null() {
     Map<String, Object> result =
         subject.apply(
             feature,
@@ -281,7 +306,9 @@ class FeatureRoofResultPropertiesComputerTest {
             detectedObjects,
             null);
 
-    assertFalse(result.containsKey("mutation"));
+    assertEquals(MutationType.UNKNOWN, result.get("mutation"));
+    assertFalse(result.containsKey("mutation_recent_image_url"));
+    assertFalse(result.containsKey("mutation_older_image_url"));
     verifyNoInteractions(mutationComputer);
   }
 
