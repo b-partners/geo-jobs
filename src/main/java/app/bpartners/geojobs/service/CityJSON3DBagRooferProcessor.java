@@ -21,6 +21,7 @@ import app.bpartners.geojobs.service.geojson.GeoJson;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
 import app.bpartners.geojobs.service.lidar.api.SwissBoundaryChecker;
+import app.bpartners.geojobs.service.lidar.api.WalloniaBoundaryChecker;
 import app.bpartners.geojobs.service.roofer3dbag.Roofer3DBagApiClient;
 import app.bpartners.geojobs.service.roofer3dbag.model.CityJsonGenerationRequest;
 import app.bpartners.geojobs.service.roofer3dbag.validator.Roofer3DBagCityJSONValidator;
@@ -60,6 +61,7 @@ public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, L
   private final GeometryConverter geometryConverter;
   private final CityJsonTextureComputer textureComputer;
   private final SwissBoundaryChecker swissBoundaryChecker;
+  private final WalloniaBoundaryChecker walloniaBoundaryChecker;
   private final Roofer3DBagCityJSONValidator cityJSONValidator;
 
   @Override
@@ -161,10 +163,15 @@ public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, L
     var tmpGeoJsonBucketKey = randomUUID() + GEOJSON_EXTENSION;
     var multiPolygon = getMultiPolygon(feature);
     var geometry = featureMapper.domainToGeometryWithMultipolygonHandler(feature);
-    var coordinates =
-        swissBoundaryChecker.isGeometryInSwiss(geometry)
-            ? convertWgs84ToSwissCoordinates(multiPolygon)
-            : convertWgs84ToLambert93Coordinates(multiPolygon);
+    MultiPolygon coordinates;
+    if (swissBoundaryChecker.isGeometryInSwiss(geometry)) {
+      coordinates = convertWgs84ToSwissCoordinates(multiPolygon);
+    } else if (walloniaBoundaryChecker.isGeometryInWallonia(geometry)) {
+      coordinates = convertWgs84ToBelgiqueCoordinates(multiPolygon);
+    } else {
+      coordinates = convertWgs84ToLambert93Coordinates(multiPolygon);
+    }
+
     var geoJson =
         new GeoJson(List.of(new GeoJson.GeoFeature(feature.getProperties(), coordinates)));
 
@@ -207,5 +214,9 @@ public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, L
 
   private MultiPolygon convertWgs84ToLambert93Coordinates(MultiPolygon multiPolygon) {
     return convertCoordinates(multiPolygon, coordinateTransformer::apply);
+  }
+
+  private MultiPolygon convertWgs84ToBelgiqueCoordinates(MultiPolygon multiPolygon) {
+    return convertCoordinates(multiPolygon, coordinateTransformer::convertToBelgiqueCRS);
   }
 }
