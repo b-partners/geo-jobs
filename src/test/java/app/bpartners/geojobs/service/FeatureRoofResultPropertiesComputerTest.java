@@ -8,6 +8,7 @@ import static org.mockito.Mockito.*;
 import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.model.geometry.MultiPolygonObjectType;
 import app.bpartners.geojobs.model.geometry.PolygonObjectType;
+import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.RoofCoveringType;
 import app.bpartners.geojobs.service.area.mutation.MutationComputer;
 import app.bpartners.geojobs.service.area.mutation.model.AreaPictureHistoryResponse;
@@ -35,6 +36,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.MultiPolygon;
+import org.locationtech.jts.geom.Polygon;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
@@ -101,6 +104,13 @@ class FeatureRoofResultPropertiesComputerTest {
             "{\"primary\":\"ROOF_ASPHALTE_BITUME\",\"secondary\":\"ROOF_TUILES\"}",
             DetectedRoofCovering.class))
         .thenReturn(expectedCovering);
+    // "Full valid data" includes real vegetation detections nearby - without this,
+    // hasVegetationData() is false and vegetation_index/fire_risk/maintenance_vegetation are
+    // correctly omitted (see should_omit_vegetation_properties_when_no_vegetation_data_detected).
+    when(polygonObjectTypeConverter.convertFrom(anyCollection()))
+        .thenReturn(
+            List.of(
+                new MultiPolygonObjectType(nearbyVegetationMultiPolygon(), DetectableType.ARBRE)));
 
     Map<String, Object> result =
         subject.apply(
@@ -122,6 +132,24 @@ class FeatureRoofResultPropertiesComputerTest {
     verify(roofAssessmentFacade).computeAssessment(evaluatorCaptor.capture());
     RoofVegetationContextEvaluator evaluator = evaluatorCaptor.getValue();
     assertEquals(CoveringType.HIGH_COMBUSTIBILITY, evaluator.getRoofContext().coveringType());
+  }
+
+  @Test
+  void should_omit_vegetation_properties_when_no_vegetation_data_detected() {
+    // setUp() stubs polygonObjectTypeConverter to return no polygons at all, so
+    // hasVegetationData() is false even though roofAssessmentFacade still returns a non-null
+    // assessment (e.g. computed from slope/covering alone) - the properties must not leak out.
+    Map<String, Object> result =
+        subject.apply(
+            feature,
+            geometryUsedForAreaComputing,
+            roofGeometryUsedForRateComputing,
+            detectedObjects,
+            null);
+
+    assertFalse(result.containsKey("vegetation_index"));
+    assertFalse(result.containsKey("fire_risk"));
+    assertFalse(result.containsKey("maintenance_vegetation"));
   }
 
   @Test
@@ -321,5 +349,20 @@ class FeatureRoofResultPropertiesComputerTest {
           new Coordinate(0, size),
           new Coordinate(0, 0)
         });
+  }
+
+  private static MultiPolygon nearbyVegetationMultiPolygon() {
+    GeometryFactory gf = new GeometryFactory();
+    Polygon vegetationPolygon =
+        (Polygon)
+            gf.createPolygon(
+                new Coordinate[] {
+                  new Coordinate(100, 100),
+                  new Coordinate(110, 100),
+                  new Coordinate(110, 110),
+                  new Coordinate(100, 110),
+                  new Coordinate(100, 100)
+                });
+    return gf.createMultiPolygon(new Polygon[] {vegetationPolygon});
   }
 }
