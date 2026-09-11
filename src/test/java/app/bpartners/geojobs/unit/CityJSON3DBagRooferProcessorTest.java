@@ -30,12 +30,9 @@ import app.bpartners.geojobs.service.roofer3dbag.Roofer3DBagApiClient;
 import app.bpartners.geojobs.service.roofer3dbag.model.CityJsonGenerationRequest;
 import app.bpartners.geojobs.service.roofer3dbag.model.CityJsonGenerationResponse;
 import app.bpartners.geojobs.service.roofer3dbag.validator.Roofer3DBagCityJSONValidator;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -62,7 +59,6 @@ class CityJSON3DBagRooferProcessorTest {
   WalloniaBoundaryChecker walloniaBoundaryCheckerMock = mock(WalloniaBoundaryChecker.class);
   Roofer3DBagCityJSONValidator roofer3DBagCityJSONValidatorMock =
       mock(Roofer3DBagCityJSONValidator.class);
-  ObjectMapper objectMapper = new ObjectMapper();
   CityJSON3DBagRooferProcessor subject =
       new CityJSON3DBagRooferProcessor(
           bucketComponentMock,
@@ -75,8 +71,7 @@ class CityJSON3DBagRooferProcessorTest {
           textureComputerMock,
           swissBoundaryCheckerMock,
           walloniaBoundaryCheckerMock,
-          roofer3DBagCityJSONValidatorMock,
-          objectMapper);
+          roofer3DBagCityJSONValidatorMock);
 
   @BeforeEach
   void setup() {
@@ -139,15 +134,6 @@ class CityJSON3DBagRooferProcessorTest {
     cityJsonIOMockedStatic
         .when(() -> write(eq(cityJsonDocMock), any()))
         .thenAnswer(invocation -> null);
-    cityJsonIOMockedStatic
-        .when(() -> CityJsonIO.convertCityJsonSeqToCityJson(any(), any()))
-        .thenAnswer(
-            invocation -> {
-              Path outputPath = invocation.getArgument(1);
-              Files.writeString(
-                  outputPath, "{\"type\":\"CityJSON\",\"version\":\"2.0\",\"CityObjects\":{},\"vertices\":[]}");
-              return outputPath.toFile();
-            });
 
     var actual = subject.apply(cityJSONRequestMock);
 
