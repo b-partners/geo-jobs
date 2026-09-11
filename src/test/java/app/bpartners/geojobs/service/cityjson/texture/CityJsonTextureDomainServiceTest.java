@@ -5,11 +5,16 @@ import static app.bpartners.geojobs.service.GeometrySquareMeterArea.EPSG_3812;
 import static app.bpartners.geojobs.service.GeometrySquareMeterArea.LAMBERT_93;
 import static app.bpartners.geojobs.service.GeometrySquareMeterArea.WGS84;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.junit.jupiter.api.Test;
+import java.util.stream.Stream;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 class CityJsonTextureDomainServiceTest {
   private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -17,58 +22,25 @@ class CityJsonTextureDomainServiceTest {
   private static final CityJsonTextureDomainService subject =
       new CityJsonTextureDomainService(objectMapper, projector);
 
-  @Test
-  void resolvesLambert93ByDefault() {
-    var cityJson = cityJsonWithReferenceSystem(null);
+  @ParameterizedTest(name = "referenceSystem \"{0}\" resolves to {1}")
+  @MethodSource("referenceSystems")
+  void resolvesCrsFromReferenceSystem(
+      String referenceSystem, CoordinateReferenceSystem expectedCrs) {
+    var cityJson = cityJsonWithReferenceSystem(referenceSystem);
 
     var actual = subject.toCityJsonWithVertices(cityJson);
 
-    assertEquals(LAMBERT_93, actual.crs());
+    assertEquals(expectedCrs, actual.crs());
   }
 
-  @Test
-  void resolvesWgs84() {
-    var cityJson = cityJsonWithReferenceSystem("https://www.opengis.net/def/crs/EPSG/0/4326");
-
-    var actual = subject.toCityJsonWithVertices(cityJson);
-
-    assertEquals(WGS84, actual.crs());
-  }
-
-  @Test
-  void resolvesLambert93() {
-    var cityJson = cityJsonWithReferenceSystem("http://www.opengis.net/def/crs/EPSG/0/2154");
-
-    var actual = subject.toCityJsonWithVertices(cityJson);
-
-    assertEquals(LAMBERT_93, actual.crs());
-  }
-
-  @Test
-  void resolvesSwissCrs() {
-    var cityJson = cityJsonWithReferenceSystem("https://www.opengis.net/def/crs/EPSG/0/2056");
-
-    var actual = subject.toCityJsonWithVertices(cityJson);
-
-    assertEquals(EPSG_2056, actual.crs());
-  }
-
-  @Test
-  void resolvesBelgianLambert2008Crs() {
-    var cityJson = cityJsonWithReferenceSystem("https://www.opengis.net/def/crs/EPSG/0/3812");
-
-    var actual = subject.toCityJsonWithVertices(cityJson);
-
-    assertEquals(EPSG_3812, actual.crs());
-  }
-
-  @Test
-  void fallsBackToLambert93ForUnsupportedReferenceSystem() {
-    var cityJson = cityJsonWithReferenceSystem("https://www.opengis.net/def/crs/EPSG/0/9999");
-
-    var actual = subject.toCityJsonWithVertices(cityJson);
-
-    assertEquals(LAMBERT_93, actual.crs());
+  private static Stream<Arguments> referenceSystems() {
+    return Stream.of(
+        arguments(null, LAMBERT_93),
+        arguments("https://www.opengis.net/def/crs/EPSG/0/4326", WGS84),
+        arguments("http://www.opengis.net/def/crs/EPSG/0/2154", LAMBERT_93),
+        arguments("https://www.opengis.net/def/crs/EPSG/0/2056", EPSG_2056),
+        arguments("https://www.opengis.net/def/crs/EPSG/0/3812", EPSG_3812),
+        arguments("https://www.opengis.net/def/crs/EPSG/0/9999", LAMBERT_93));
   }
 
   private static ObjectNode cityJsonWithReferenceSystem(String referenceSystem) {
