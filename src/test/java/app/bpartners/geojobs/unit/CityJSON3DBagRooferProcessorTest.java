@@ -145,7 +145,8 @@ class CityJSON3DBagRooferProcessorTest {
             invocation -> {
               Path outputPath = invocation.getArgument(1);
               Files.writeString(
-                  outputPath, "{\"type\":\"CityJSON\",\"version\":\"2.0\",\"CityObjects\":{},\"vertices\":[]}");
+                  outputPath,
+                  "{\"type\":\"CityJSON\",\"version\":\"2.0\",\"CityObjects\":{},\"vertices\":[]}");
               return outputPath.toFile();
             });
 

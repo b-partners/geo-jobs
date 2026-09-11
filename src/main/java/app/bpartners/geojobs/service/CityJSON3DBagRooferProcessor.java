@@ -125,7 +125,8 @@ public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, L
               // the roofer 3D-BAG service does not reliably tag metadata.referenceSystem for
               // every CRS it's fed (observed wrong for Belgian Lambert 2008) - override it with
               // the CRS we actually sent, since that's the one source of truth we control.
-              overrideReferenceSystem(cityJSONConvertedInJsonExtension, generationResult.epsgCode());
+              overrideReferenceSystem(
+                  cityJSONConvertedInJsonExtension, generationResult.epsgCode());
 
               cityJSONValidator.accept(cityJSONConvertedInJsonExtension);
 
@@ -148,7 +149,9 @@ public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, L
     try {
       var json = (ObjectNode) objectMapper.readTree(cityJsonFile);
       var metadata =
-          json.has("metadata") ? (ObjectNode) json.get("metadata") : objectMapper.createObjectNode();
+          json.has("metadata")
+              ? (ObjectNode) json.get("metadata")
+              : objectMapper.createObjectNode();
       metadata.put("referenceSystem", OGC_CRS_URL_PREFIX + epsgCode.substring("EPSG:".length()));
       json.set("metadata", metadata);
       objectMapper.writeValue(cityJsonFile, json);
@@ -251,7 +254,8 @@ public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, L
 
   private record PresignedGeoJson(URL url, String epsgCode) {}
 
-  private record BuildingGeoJsonUpload(String presignedUrl, Set<String> lidarUrls, String epsgCode) {}
+  private record BuildingGeoJsonUpload(
+      String presignedUrl, Set<String> lidarUrls, String epsgCode) {}
 
   private record RooferGenerationResult(CityJsonGenerationResponse response, String epsgCode) {}
 }
