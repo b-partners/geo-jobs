@@ -28,7 +28,7 @@ class CityJsonTextureDomainServiceTest {
 
   @Test
   void resolvesWgs84() {
-    var cityJson = cityJsonWithReferenceSystem("urn:ogc:def:crs:EPSG::4326");
+    var cityJson = cityJsonWithReferenceSystem("https://www.opengis.net/def/crs/EPSG/0/4326");
 
     var actual = subject.toCityJsonWithVertices(cityJson);
 
@@ -37,7 +37,7 @@ class CityJsonTextureDomainServiceTest {
 
   @Test
   void resolvesLambert93() {
-    var cityJson = cityJsonWithReferenceSystem("urn:ogc:def:crs:EPSG::2154");
+    var cityJson = cityJsonWithReferenceSystem("http://www.opengis.net/def/crs/EPSG/0/2154");
 
     var actual = subject.toCityJsonWithVertices(cityJson);
 
@@ -46,7 +46,7 @@ class CityJsonTextureDomainServiceTest {
 
   @Test
   void resolvesSwissCrs() {
-    var cityJson = cityJsonWithReferenceSystem("urn:ogc:def:crs:EPSG::2056");
+    var cityJson = cityJsonWithReferenceSystem("https://www.opengis.net/def/crs/EPSG/0/2056");
 
     var actual = subject.toCityJsonWithVertices(cityJson);
 
@@ -55,11 +55,20 @@ class CityJsonTextureDomainServiceTest {
 
   @Test
   void resolvesBelgianLambert2008Crs() {
-    var cityJson = cityJsonWithReferenceSystem("urn:ogc:def:crs:EPSG::3812");
+    var cityJson = cityJsonWithReferenceSystem("https://www.opengis.net/def/crs/EPSG/0/3812");
 
     var actual = subject.toCityJsonWithVertices(cityJson);
 
     assertEquals(EPSG_3812, actual.crs());
+  }
+
+  @Test
+  void fallsBackToLambert93ForUnsupportedReferenceSystem() {
+    var cityJson = cityJsonWithReferenceSystem("https://www.opengis.net/def/crs/EPSG/0/9999");
+
+    var actual = subject.toCityJsonWithVertices(cityJson);
+
+    assertEquals(LAMBERT_93, actual.crs());
   }
 
   private static ObjectNode cityJsonWithReferenceSystem(String referenceSystem) {
