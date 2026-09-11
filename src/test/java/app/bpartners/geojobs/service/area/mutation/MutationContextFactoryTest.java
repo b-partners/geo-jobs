@@ -2,11 +2,9 @@ package app.bpartners.geojobs.service.area.mutation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.endpoint.rest.model.TileCoordinates;
@@ -15,11 +13,11 @@ import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.MachineDetectedTile;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.DetectionMaskFromTileRetriever;
+import app.bpartners.geojobs.service.area.mutation.model.AreaPictureHistoryResponse;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
+import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.List;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
@@ -33,24 +31,75 @@ class MutationContextFactoryTest {
   private final DetectionMaskFromTileRetriever maskFromTileRetrieverMock = mock();
   private final MachineDetectedTileRepository machineDetectedTileRepositoryMock = mock();
   private final GeometryConverter geometryConverterMock = mock();
+  private final GeodataApi geodataApiMock = mock();
   private final MutationContextFactory subject =
       new MutationContextFactory(
-          maskFromTileRetrieverMock, machineDetectedTileRepositoryMock, geometryConverterMock);
+          maskFromTileRetrieverMock,
+          machineDetectedTileRepositoryMock,
+          geometryConverterMock,
+          geodataApiMock);
 
   @Test
-  void create_returns_null_until_parcel_grouping_by_date_is_implemented() {
-    var detectionMock = mock(Detection.class);
-    var roofGeometryMock = mock(Geometry.class);
+  void create_builds_mask_from_intersecting_tile_and_context_from_geodata_history() {
+    var detection = Detection.builder().id("detection-1").zdjId("zdj-1").build();
+    var tile =
+        Tile.builder().id("tile-1").coordinates(new TileCoordinates().x(1).y(2).z(20)).build();
+    when(machineDetectedTileRepositoryMock.findAllByZdjJobId("zdj-1"))
+        .thenReturn(List.of(MachineDetectedTile.builder().id("m1").tile(tile).build()));
 
-    var actual = subject.create(detectionMock, roofGeometryMock);
+    var roofMultiPolygon = mock(MultiPolygon.class);
+    var centroid = mock(Point.class);
+    when(centroid.getX()).thenReturn(2.33);
+    when(centroid.getY()).thenReturn(48.87);
+    when(roofMultiPolygon.getCentroid()).thenReturn(centroid);
+    var tileMultiPolygon = mock(MultiPolygon.class);
+    when(tileMultiPolygon.intersects(roofMultiPolygon)).thenReturn(true);
+    when(geometryConverterMock.getMultiPolygonFromTile(1, 2, 20)).thenReturn(tileMultiPolygon);
 
-    assertNull(actual);
-    verifyNoInteractions(
-        detectionMock,
-        roofGeometryMock,
-        maskFromTileRetrieverMock,
-        machineDetectedTileRepositoryMock,
-        geometryConverterMock);
+    var maskImageFile = new File("mask.png");
+    when(maskFromTileRetrieverMock.apply(tile, roofMultiPolygon)).thenReturn(maskImageFile);
+
+    var older =
+        new AreaPictureHistoryResponse.DatedImage(
+            2022, new AreaPictureHistoryResponse.PresignedUrl("https://geodata.test/old.jpg"));
+    var mostRecent =
+        new AreaPictureHistoryResponse.DatedImage(
+            2024, new AreaPictureHistoryResponse.PresignedUrl("https://geodata.test/new.jpg"));
+    when(geodataApiMock.getAreaPictureHistory(2.33, 48.87))
+        .thenReturn(new AreaPictureHistoryResponse(List.of(mostRecent, older)));
+
+    var actual = subject.create(detection, roofMultiPolygon);
+
+    assertEquals(older, actual.older());
+    assertEquals(mostRecent, actual.mostRecent());
+    assertEquals(maskImageFile, actual.maskImageFile());
+  }
+
+  @Test
+  void create_throws_when_geodata_returns_fewer_than_two_images() {
+    var detection = Detection.builder().id("detection-1").zdjId("zdj-1").build();
+    var tile =
+        Tile.builder().id("tile-1").coordinates(new TileCoordinates().x(1).y(2).z(20)).build();
+    when(machineDetectedTileRepositoryMock.findAllByZdjJobId("zdj-1"))
+        .thenReturn(List.of(MachineDetectedTile.builder().id("m1").tile(tile).build()));
+
+    var roofMultiPolygon = mock(MultiPolygon.class);
+    var centroid = mock(Point.class);
+    when(centroid.getX()).thenReturn(2.33);
+    when(centroid.getY()).thenReturn(48.87);
+    when(roofMultiPolygon.getCentroid()).thenReturn(centroid);
+    var tileMultiPolygon = mock(MultiPolygon.class);
+    when(tileMultiPolygon.intersects(roofMultiPolygon)).thenReturn(true);
+    when(geometryConverterMock.getMultiPolygonFromTile(1, 2, 20)).thenReturn(tileMultiPolygon);
+    when(maskFromTileRetrieverMock.apply(tile, roofMultiPolygon)).thenReturn(new File("mask.png"));
+
+    var onlyImage =
+        new AreaPictureHistoryResponse.DatedImage(
+            2024, new AreaPictureHistoryResponse.PresignedUrl("https://geodata.test/new.jpg"));
+    when(geodataApiMock.getAreaPictureHistory(2.33, 48.87))
+        .thenReturn(new AreaPictureHistoryResponse(List.of(onlyImage)));
+
+    assertThrows(IllegalStateException.class, () -> subject.create(detection, roofMultiPolygon));
   }
 
   @Test
@@ -159,24 +208,6 @@ class MutationContextFactoryTest {
             () -> invokeStaticPrivate("asMultiPolygon", new Class<?>[] {Geometry.class}, point));
 
     assertInstanceOf(IllegalArgumentException.class, cause.getCause());
-  }
-
-  @Test
-  void toUrl_parses_a_geo_server_url_string() throws Exception {
-    var actual =
-        invokeStaticPrivate("toUrl", new Class<?>[] {String.class}, "http://geoserver.test/wms");
-
-    assertEquals(new URL("http://geoserver.test/wms"), actual);
-  }
-
-  @Test
-  void toUrl_throws_when_geo_server_url_is_not_a_valid_uri() {
-    var cause =
-        assertThrows(
-            InvocationTargetException.class,
-            () -> invokeStaticPrivate("toUrl", new Class<?>[] {String.class}, "http:// invalid"));
-
-    assertInstanceOf(URISyntaxException.class, cause.getCause());
   }
 
   @SneakyThrows

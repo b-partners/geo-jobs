@@ -16,6 +16,7 @@ import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.lidar.LidarRoofsAnalysisProcessor;
 import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
 import app.bpartners.geojobs.service.lidar.api.SwissBoundaryChecker;
+import app.bpartners.geojobs.service.lidar.api.WalloniaBoundaryChecker;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.util.*;
@@ -35,7 +36,8 @@ public class LidarRoofsAnalysisProcessorCreator {
         geometries.stream().map(g -> projector.project(g, WGS84, LAMBERT_93)).collect(toSet());
     var lidarApiMock = lidarApiMock(projected, createTempFileFromResources(LARGE_LIDAR_FILE_PATH));
 
-    return new LidarRoofsAnalysisProcessor(lidarApiMock, projector, swissBoundaryCheckerMock());
+    return new LidarRoofsAnalysisProcessor(
+        lidarApiMock, projector, swissBoundaryCheckerMock(), walloniaBoundaryCheckerMock());
   }
 
   private static SwissBoundaryChecker swissBoundaryCheckerMock() {
@@ -45,8 +47,16 @@ public class LidarRoofsAnalysisProcessorCreator {
     return checker;
   }
 
+  private static WalloniaBoundaryChecker walloniaBoundaryCheckerMock() {
+    var checker = mock(WalloniaBoundaryChecker.class);
+    when(checker.isGeometryInWallonia(any())).thenReturn(false);
+
+    return checker;
+  }
+
   public LidarRoofsAnalysisProcessor create(LidarApiFacade lidarApi) {
-    return new LidarRoofsAnalysisProcessor(lidarApi, projector, swissBoundaryCheckerMock());
+    return new LidarRoofsAnalysisProcessor(
+        lidarApi, projector, swissBoundaryCheckerMock(), walloniaBoundaryCheckerMock());
   }
 
   public LidarRoofsAnalysisProcessor create(Geometry delimitation, List<String> files) {
@@ -65,7 +75,8 @@ public class LidarRoofsAnalysisProcessorCreator {
               return Optional.of(filesData.get(files.indexOf(filename)));
             });
 
-    return new LidarRoofsAnalysisProcessor(lidarApiMock, projector, swissBoundaryCheckerMock());
+    return new LidarRoofsAnalysisProcessor(
+        lidarApiMock, projector, swissBoundaryCheckerMock(), walloniaBoundaryCheckerMock());
   }
 
   @SneakyThrows

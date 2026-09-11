@@ -6,7 +6,9 @@ import app.bpartners.geojobs.endpoint.rest.model.Feature;
 import app.bpartners.geojobs.model.geometry.PolygonObjectType;
 import app.bpartners.geojobs.model.geometry.area.rate.AreaRateComputerFacade;
 import app.bpartners.geojobs.service.area.mutation.MutationComputer;
+import app.bpartners.geojobs.service.area.mutation.model.AreaPictureHistoryResponse;
 import app.bpartners.geojobs.service.area.mutation.model.MutationContext;
+import app.bpartners.geojobs.service.area.mutation.model.MutationType;
 import app.bpartners.geojobs.service.area.toiture.model.CoveringType;
 import app.bpartners.geojobs.service.area.toiture.model.FireRiskLevel;
 import app.bpartners.geojobs.service.area.toiture.model.RoofAssessmentResult;
@@ -20,10 +22,12 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Nullable;
 import org.locationtech.jts.geom.Geometry;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class FeatureRoofResultPropertiesComputer {
@@ -95,11 +99,38 @@ public class FeatureRoofResultPropertiesComputer {
               : detectedRoofCovering.secondary().name());
     }
 
+    actualProperties.put(
+        "mutation",
+        mutationContext == null ? MutationType.UNKNOWN : computeMutation(mutationContext));
     if (mutationContext != null) {
-      actualProperties.put("mutation", mutationComputer.apply(mutationContext));
+      var recentImage = mutationContext.mostRecent();
+      var olderImage = mutationContext.older();
+      actualProperties.put("mutation_recent_image_url", presignedUrlValue(recentImage));
+      actualProperties.put("mutation_recent_image_date", recentImage.year());
+      actualProperties.put("mutation_older_image_url", presignedUrlValue(olderImage));
+      actualProperties.put("mutation_older_image_date", olderImage.year());
     }
 
     return actualProperties;
+  }
+
+  @Nullable
+  private static String presignedUrlValue(AreaPictureHistoryResponse.DatedImage image) {
+    var presignedUrl = image.imagePresignedUrl();
+    return presignedUrl == null ? null : presignedUrl.value();
+  }
+
+  private MutationType computeMutation(MutationContext mutationContext) {
+    try {
+      return mutationComputer.apply(mutationContext);
+    } catch (RuntimeException e) {
+      // Downloading/resizing images or calling the mutation API can fail independently of the
+      // rest of the roof properties already computed above; don't lose those over it. UNKNOWN is
+      // a real domain state here, distinct from MutationType.NONE ("no mutation detected") - we
+      // just couldn't determine one.
+      log.warn("Could not compute mutation: {}", e.getMessage());
+      return MutationType.UNKNOWN;
+    }
   }
 
   @Nullable

@@ -12,6 +12,7 @@ import app.bpartners.geojobs.model.lidar.planes.model.RoofPointsDelimitationTran
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
 import app.bpartners.geojobs.service.lidar.api.SwissBoundaryChecker;
+import app.bpartners.geojobs.service.lidar.api.WalloniaBoundaryChecker;
 import app.bpartners.geojobs.service.lidar.model.*;
 import app.bpartners.geojobs.service.lidar.model.geometry.GeometryWithProperties;
 import app.bpartners.geojobs.service.lidar.model.geometry.roof.Building3DProperties;
@@ -34,6 +35,7 @@ public class LidarRoofsAnalysisProcessor {
   private final LidarApiFacade lidarApi;
   private final GeometrySquareMeterArea projector;
   private final SwissBoundaryChecker swissBoundaryChecker;
+  private final WalloniaBoundaryChecker walloniaBoundaryChecker;
 
   private static final int ROOF_GROUND_BUFFER_METERS = 3;
   private static final short ROOF_LIDAR_CLASS_VALUE = 6;
@@ -250,6 +252,9 @@ public class LidarRoofsAnalysisProcessor {
   private Geometry project(Geometry roofEPSG4326) {
     if (swissBoundaryChecker.isGeometryInSwiss(roofEPSG4326)) {
       return projector.project(roofEPSG4326, WGS84, EPSG_2056);
+    }
+    if (walloniaBoundaryChecker.isGeometryInWallonia(roofEPSG4326)) {
+      return projector.project(roofEPSG4326, WGS84, EPSG_3812);
     }
     return projector.project(roofEPSG4326, WGS84, LAMBERT_93);
   }

@@ -11,6 +11,7 @@ import static org.mockito.Mockito.*;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
 import app.bpartners.geojobs.service.lidar.api.SwissBoundaryChecker;
+import app.bpartners.geojobs.service.lidar.api.WalloniaBoundaryChecker;
 import app.bpartners.geojobs.service.lidar.model.geometry.roof.LidarRoofData;
 import app.bpartners.geojobs.utils.lidar.LidarRoofsAnalysisProcessorCreator;
 import java.util.Map;
@@ -32,6 +33,12 @@ class LidarRoofsAnalysisProcessorTest {
     return swissBoundaryChecker;
   }
 
+  private static WalloniaBoundaryChecker walloniaBoundaryCheckerMock() {
+    var walloniaBoundaryChecker = mock(WalloniaBoundaryChecker.class);
+    when(walloniaBoundaryChecker.isGeometryInWallonia(any())).thenReturn(false);
+    return walloniaBoundaryChecker;
+  }
+
   @Disabled()
   @Test
   void should_failed_if_batiment_points_count_is_less_than_twenty() {
@@ -39,7 +46,10 @@ class LidarRoofsAnalysisProcessorTest {
     var processor =
         spy(
             new LidarRoofsAnalysisProcessor(
-                apiMock, new GeometrySquareMeterArea(), swissBoundaryCheckerMock()));
+                apiMock,
+                new GeometrySquareMeterArea(),
+                swissBoundaryCheckerMock(),
+                walloniaBoundaryCheckerMock()));
 
     var roofGeometry1 = roofGeometry1();
     when(apiMock.getUniqueLidarFilesUrls(any()))

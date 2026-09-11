@@ -15,6 +15,7 @@ import app.bpartners.geojobs.service.lidar.LasRoofsPointsExtractor;
 import app.bpartners.geojobs.service.lidar.api.LasIndexApi;
 import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
 import app.bpartners.geojobs.service.lidar.api.SwissBoundaryChecker;
+import app.bpartners.geojobs.service.lidar.api.WalloniaBoundaryChecker;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -27,7 +28,11 @@ public class LasRoofsPointsExtractorCreator {
 
   public static LasRoofsPointsExtractor create(LidarApiFacade lidarApi) {
     return new LasRoofsPointsExtractor(
-        lasIndexApiMock(), lidarApi, projector, swissBoundaryCheckerMock());
+        lasIndexApiMock(),
+        lidarApi,
+        projector,
+        swissBoundaryCheckerMock(),
+        walloniaBoundaryCheckerMock());
   }
 
   public static LasRoofsPointsExtractor create(String url, Set<Geometry> geometries) {
@@ -68,7 +73,11 @@ public class LasRoofsPointsExtractorCreator {
             });
 
     return new LasRoofsPointsExtractor(
-        lidarApiMock, projector, swissBoundaryCheckerMock(), fromOneUrl(lidarApiMock));
+        lidarApiMock,
+        projector,
+        swissBoundaryCheckerMock(),
+        walloniaBoundaryCheckerMock(),
+        fromOneUrl(lidarApiMock));
   }
 
   private static LasRoofPointsExtractorFromOneUrl fromOneUrl(LidarApiFacade lidarApi) {
@@ -92,6 +101,12 @@ public class LasRoofsPointsExtractorCreator {
   private static SwissBoundaryChecker swissBoundaryCheckerMock() {
     var checker = mock(SwissBoundaryChecker.class);
     when(checker.isGeometryInSwiss(any())).thenReturn(false);
+    return checker;
+  }
+
+  private static WalloniaBoundaryChecker walloniaBoundaryCheckerMock() {
+    var checker = mock(WalloniaBoundaryChecker.class);
+    when(checker.isGeometryInWallonia(any())).thenReturn(false);
     return checker;
   }
 
