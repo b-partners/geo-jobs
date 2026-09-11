@@ -164,18 +164,14 @@ public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, L
     return request.getRequestDelimitations().stream()
         .map(
             feature -> {
-              try {
-                var presignedGeoJson = getGeoJsonBuildingPresignedURL(feature);
-                var uniqueLidarFilesUrls = getUniqueLidarFilesUrls(feature);
-                log.info("Presigned URL for building: " + presignedGeoJson.url());
-                log.info("Lidar files URLs: " + uniqueLidarFilesUrls);
-                return new BuildingGeoJsonUpload(
-                    presignedGeoJson.url().toString(),
-                    uniqueLidarFilesUrls,
-                    presignedGeoJson.epsgCode());
-              } catch (IOException e) {
-                throw new RuntimeException(e);
-              }
+              var presignedGeoJson = getGeoJsonBuildingPresignedURL(feature);
+              var uniqueLidarFilesUrls = getUniqueLidarFilesUrls(feature);
+              log.info("Presigned URL for building: " + presignedGeoJson.url());
+              log.info("Lidar files URLs: " + uniqueLidarFilesUrls);
+              return new BuildingGeoJsonUpload(
+                  presignedGeoJson.url().toString(),
+                  uniqueLidarFilesUrls,
+                  presignedGeoJson.epsgCode());
             })
         .toList();
   }
@@ -186,7 +182,7 @@ public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, L
     return lidarApiFacade.getUniqueLidarFilesUrls(geometries).keySet();
   }
 
-  private PresignedGeoJson getGeoJsonBuildingPresignedURL(Feature feature) throws IOException {
+  private PresignedGeoJson getGeoJsonBuildingPresignedURL(Feature feature) {
     var tmpGeoJsonBucketKey = randomUUID() + GEOJSON_EXTENSION;
     var multiPolygon = getMultiPolygon(feature);
     var geometry = featureMapper.domainToGeometryWithMultipolygonHandler(feature);
