@@ -10,8 +10,6 @@ import static org.mockito.Mockito.*;
 
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
-import app.bpartners.geojobs.service.lidar.api.SwissBoundaryChecker;
-import app.bpartners.geojobs.service.lidar.api.WalloniaBoundaryChecker;
 import app.bpartners.geojobs.service.lidar.model.geometry.roof.LidarRoofData;
 import app.bpartners.geojobs.utils.lidar.LidarRoofsAnalysisProcessorCreator;
 import java.util.Map;
@@ -27,33 +25,17 @@ class LidarRoofsAnalysisProcessorTest {
   private static final LidarRoofsAnalysisProcessorCreator processorCreator =
       new LidarRoofsAnalysisProcessorCreator();
 
-  private static SwissBoundaryChecker swissBoundaryCheckerMock() {
-    var swissBoundaryChecker = mock(SwissBoundaryChecker.class);
-    when(swissBoundaryChecker.isGeometryInSwiss(any())).thenReturn(false);
-    return swissBoundaryChecker;
-  }
-
-  private static WalloniaBoundaryChecker walloniaBoundaryCheckerMock() {
-    var walloniaBoundaryChecker = mock(WalloniaBoundaryChecker.class);
-    when(walloniaBoundaryChecker.isGeometryInWallonia(any())).thenReturn(false);
-    return walloniaBoundaryChecker;
-  }
-
   @Disabled()
   @Test
   void should_failed_if_batiment_points_count_is_less_than_twenty() {
     var apiMock = mock(LidarApiFacade.class);
-    var processor =
-        spy(
-            new LidarRoofsAnalysisProcessor(
-                apiMock,
-                new GeometrySquareMeterArea(),
-                swissBoundaryCheckerMock(),
-                walloniaBoundaryCheckerMock()));
+    var processor = spy(new LidarRoofsAnalysisProcessor(apiMock, new GeometrySquareMeterArea()));
 
     var roofGeometry1 = roofGeometry1();
     when(apiMock.getUniqueLidarFilesUrls(any()))
-        .thenReturn(Map.of("file.laz", Set.of(roofGeometry1())));
+        .thenReturn(
+            new LidarApiFacade.LidarFilesResult(
+                Map.of("file.laz", Set.of(roofGeometry1())), GeometrySquareMeterArea.LAMBERT_93));
     doAnswer(
             invocation -> {
               var data =
@@ -121,7 +103,9 @@ class LidarRoofsAnalysisProcessorTest {
     var geometry1 = roofGeometry1();
     var lidarApiMock = mock(LidarApiFacade.class);
 
-    when(lidarApiMock.getUniqueLidarFilesUrls(any())).thenReturn(Map.of());
+    when(lidarApiMock.getUniqueLidarFilesUrls(any()))
+        .thenReturn(
+            new LidarApiFacade.LidarFilesResult(Map.of(), GeometrySquareMeterArea.LAMBERT_93));
 
     var subject = processorCreator.create(lidarApiMock);
 
