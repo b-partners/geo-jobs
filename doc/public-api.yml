@@ -604,9 +604,6 @@ components:
       value:
         emailReceiver: "<your-email-address>"
         zoneName: "<your-zone-name>"
-        geoServerProperties: null
-        detectableObjectModel:
-          modelName: "BP_TOITURE"
         detectableObjectModelList:
           - modelName: "BP_TOITURE"
         geoJsonZone:
@@ -620,8 +617,6 @@ components:
       value:
         emailReceiver: "<your-email-address>"
         zoneName: "<your-zone-name>"
-        geoServerProperties: null
-        detectableObjectModel: null
         detectableObjectModelList:
           - modelName: "BP_TOITURE"
           - modelName: "BP_VEGETATION"
