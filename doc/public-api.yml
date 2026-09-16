@@ -50,27 +50,25 @@ info:
     
     # Detection examples
     
-    ### Detection on roof objects providing geojson multiPolygon
+    ### Detection on roof objects providing geojson multi-polygon geometry
     1. Submit detection request through `POST /detections/{id}` where `{id}` is yours to be created
-    using the example request body accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/geojson/detection_toiture_payload_example.json).
-    Note that `detectableObjectModel` property must be set to `BP_TOITURE` and `geoServerProperties` property to `null`.
-    To handle models through one detection, use `detectableObjectModelList` instead of detectableObjectModel.
+    using the example request body accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/geojson/detection_toiture_multi_polygon_payload_example.json).
+    Note that `detectableObjectModelList` property must contain the `BP_TOITURE` model.
     2. Track the progress of your detection through `GET /detections/{id}`. 
     Detection is finished when `geoJsonUrl` property containing your detection result is not null.
-    Expected geojson example result is accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/toiture_analysis_result_example.geojson)
+    Expected API result example is accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/geojson/detection-toiture-multi-polygon-api-response-example.json)
+    Expected geojson example result is accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/geojson/detection-toiture-multi-polygon-geojson-response-example.geojson)
     
     ### Detection on roof objects providing excel file containing textual addresses 
     1. Submit detection request through `POST /detections/{id}` where `{id}` is yours to be created
-    using the example request body accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/detection_creation_using_toiture_model_example.json). 
-    Note that `detectableObjectModel` property must be set to `BP_TOITURE` and `geoServerProperties` property to `null`.
-    To handle models through one detection, use `detectableObjectModelList` instead of detectableObjectModel.
+    using the example request body accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/excel/detection_toiture_for_excel_process_payload_example.json).
+    Note that `detectableObjectModelList` property must contain the `BP_TOITURE` model.
     2. Submit list of addresses contained inside an **Excel file** in a second call `POST /detections/{id}/excel`. 
     Example can be found [here](https://github.com/b-partners/geo-jobs/raw/refs/heads/preprod/examples/detection/excel/excel_addresses_example.xlsx)
-    3. Track the progress of your detection through `GET /detections/{id}`. 
+    3. Track the progress of your detection through `GET /detections/{id}`.
     Detection is finished when `geoJsonUrl` property containing your detection result is not null.
-    4. Processing time is variable due to address conversion, 
-    expected geojson example result is accessible [here](https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/toiture_analysis_result_example.geojson). 
-    
+    4. Processing time is variable due to address conversion.
+
     ### Detection on parcels including roof objects and trees providing excel file containing textual addresses
     1. Submit detection request through `POST /detections/{id}` where `{id}` is yours to be created
     using the example request body accessible [here](https://github.com/b-partners/geo-jobs/raw/refs/heads/preprod/examples/detection/detection_parcel_payload_example.json). 
