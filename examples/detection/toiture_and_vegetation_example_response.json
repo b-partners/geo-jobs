@@ -47,9 +47,6 @@
       "srs": "EPSG:3857"
     }
   },
-  "detectableObjectModel": {
-    "modelName": "BP_TOITURE"
-  },
   "detectableObjectModelList": [
     {
       "modelName": "BP_TOITURE"
