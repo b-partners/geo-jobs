@@ -33,7 +33,7 @@
   "emailReceiver": "tech@birdia.fr",
   "zoneName": "205 Bd des Roses, 06210 Mandelieu-la-Napoule, France",
   "geoServerProperties": {
-    "geoServerUrl": "http://35.181.83.111/geoserver/cite/wms",
+    "geoServerUrl": "https://<geoserver-host>/geoserver/cite/wms",
     "geoServerParameter": {
       "service": "WMS",
       "request": "GetMap",
