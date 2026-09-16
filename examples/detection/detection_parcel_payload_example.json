@@ -10,5 +10,6 @@
     {
       "modelName": "BP_VEGETATION"
     }
-  ]
+  ],
+  "geoJsonOutput": "GEO_JSON"
 }
