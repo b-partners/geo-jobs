@@ -913,17 +913,24 @@ components:
           description: |
             Name that consumers provide to identify the zone
         geoServerProperties:
-          $ref: '#/components/schemas/GeoServerProperties'
-          description: Optional Configuration properties for the GeoServer.
+          allOf:
+            - $ref: '#/components/schemas/GeoServerProperties'
+          description: |
+            Optional configuration properties for the geoserver.
+            By default, API attributes automatically a default geoserver.
         detectableObjectModel:
-          $ref: '#/components/schemas/DetectableObjectModel'
+          allOf:
+            - $ref: '#/components/schemas/DetectableObjectModel'
+          deprecated: true
+          description: |
+            DEPRECATED. Detection process could be done with multiple detectable object models now.
+            To process detection with unique detectable object model, pass it through `detectableObjectModelList`.
         detectableObjectModelList:
           type: array
           items:
             $ref: '#/components/schemas/DetectableObjectModel'
           description: |
-            List of model to be processed use for the detection. 
-            If empty or null, detection model will be retrieved from detectableObjectModel attribute.
+            List of detectable object model to be processed, use for the detection.
         geoJsonZone:
           type: array
           items:
