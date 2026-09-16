@@ -796,6 +796,9 @@ components:
             - FAILED
             - UNKNOWN
             - RETRYING
+        message:
+          type: string
+          description: Optional detail about the current status, mainly provided on failure.
         creationDatetime:
           type: string
           format: date-time
@@ -813,6 +816,9 @@ components:
           type: string
         layers:
           type: string
+        precisionLevelInCm:
+          type: integer
+          description: Ground precision of the served imagery, in centimeters.
         styles:
           type: string
         format:
@@ -941,6 +947,10 @@ components:
           $ref: '#/components/schemas/GeoJsonOutput'
         geoJsonDelimitationType:
           $ref: '#/components/schemas/DelimitationType'
+        needsImageOutput:
+          type: boolean
+          description: |
+            When true, each detected address feature exposes its image and detection result through `original_image_url` and `vgg_url`.
     DelimitationType:
       type: string
       description: |
@@ -979,12 +989,16 @@ components:
           type: string
         pdfUrl:
           type: string
+        vggUrl:
+          type: string
         addresses:
           type: array
           items:
             type: string
         imageProperties:
           $ref: '#/components/schemas/ImageProperties'
+        imageTileInfoOrigin:
+          $ref: '#/components/schemas/ImageTileInfo'
         roofDelimiter:
           $ref: '#/components/schemas/RoofDelimiter'
         creationDatetime:
@@ -1076,6 +1090,14 @@ components:
           type: integer
         height:
           type: integer
+    ImageTileInfo:
+      type: object
+      description: Tile information of the origin image the detection was processed on.
+      properties:
+        size:
+          $ref: '#/components/schemas/ImageProperties'
+        coordinates:
+          $ref: '#/components/schemas/TileCoordinates'
     RoofDelimiter:
       type: object
       description: |
