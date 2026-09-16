@@ -937,7 +937,7 @@ components:
             $ref: '#/components/schemas/Feature'
           description: |
             Optional. If so, must provide zone by shape or excel file through its specific endpoint.
-        GeoJsonOutput:
+        geoJsonOutput:
           $ref: '#/components/schemas/GeoJsonOutput'
         geoJsonDelimitationType:
           $ref: '#/components/schemas/DelimitationType'
