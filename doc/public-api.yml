@@ -274,10 +274,12 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateDetection'
             examples:
-              detectionForRoof:
-                $ref: '#/components/examples/DetectionUsingToitureModel'
-              detectionForRoofAndVegetation:
-                $ref: '#/components/examples/DetectionUsingToitureAndVegetationModel'
+              roofGeoJsonMultiPolygon:
+                $ref: '#/components/examples/DetectionRoofGeoJsonMultiPolygon'
+              roofFromExcelAddresses:
+                $ref: '#/components/examples/DetectionRoofFromExcelAddresses'
+              parcelFromExcelAddresses:
+                $ref: '#/components/examples/DetectionParcelFromExcelAddresses'
       responses:
         200:
           description: Detection created or launched
@@ -597,33 +599,44 @@ components:
       in: header
       name: x-api-key
   examples:
-    DetectionUsingToitureModel:
-      summary: Detection using BP_TOITURE model
+    DetectionRoofGeoJsonMultiPolygon:
+      summary: Roof detection over a GeoJSON multi-polygon zone
       value:
-        emailReceiver: "<your-email-address>"
-        zoneName: "<your-zone-name>"
+        emailReceiver: "your.email@mail.com"
+        zoneName: "your.zone.name"
         detectableObjectModelList:
           - modelName: "BP_TOITURE"
         geoJsonZone:
           - type: "Feature"
+            properties: { }
             geometry:
               type: "MultiPolygon"
               coordinates:
-                - [ [ [ [ -0.24908199906349182, 46.651815670805505 ], [ -0.24908166378736496, 46.65181521051821 ], [ -0.24908166378736496, 46.65181452008728 ], [ -0.24908099323511124, 46.651813829656334 ], [ -0.24908099323511124, 46.65180807606479 ], [ -0.249084010720253, 46.65180807606479 ], [ -0.24908434599637985, 46.65180853635213 ], [ -0.2490846812725067, 46.651808996639474 ], [ -0.24908501654863358, 46.651809687070475 ], [ -0.24908535182476044, 46.65181037750147 ], [ -0.24908535182476044, 46.65181152821978 ], [ -0.2490856871008873, 46.651811988507106 ], [ -0.2490873634815216, 46.65181313922538 ], [ -0.2490873634815216, 46.65181521051821 ], [ -0.24908669292926788, 46.65181544066185 ], [ -0.2490856871008873, 46.651815670805505 ], [ -0.24908535182476044, 46.65181590094914 ], [ -0.24908199906349182, 46.651815670805505 ] ] ] ]
-    DetectionUsingToitureAndVegetationModel:
-      summary: Detection using BP_TOITURE and BP_VEGETATION model
+                - [ [ [ 7.000240685066785, 43.549830291126 ], [ 7.0005827691924765, 43.549830291126 ], [ 7.0005827691924765, 43.5495320142542 ], [ 7.000240685066785, 43.5495320142542 ], [ 7.000240685066785, 43.549830291126 ] ] ]
+                - [ [ [ 7.001070281966349, 43.55023083628538 ], [ 7.001654545570688, 43.55023083628538 ], [ 7.001654545570688, 43.54951011361388 ], [ 7.001070281966349, 43.54951011361388 ], [ 7.001070281966349, 43.55023083628538 ] ] ]
+        geoJsonDelimitationType: "PARCEL_FREE_DELIMITATION"
+        geoJsonOutput: "GEO_JSON"
+    DetectionRoofFromExcelAddresses:
+      summary: Roof detection from an Excel file of addresses (zone uploaded through POST /detections/{id}/excel)
       value:
-        emailReceiver: "<your-email-address>"
+        emailReceiver: "your.email@mail.com"
+        zoneName: "your.zone.name"
+        needsImageOutput: true
+        detectableObjectModelList:
+          - modelName: "BP_TOITURE"
+        geoJsonDelimitationType: "PARCEL_FREE_DELIMITATION"
+        geoJsonOutput: "ZIP"
+    DetectionParcelFromExcelAddresses:
+      summary: Parcel detection with roof and vegetation from an Excel file of addresses
+      value:
+        emailReceiver: "<your-email-to-be-notified>"
         zoneName: "<your-zone-name>"
+        geoJsonDelimitationType: "PARCEL_CONSTRAINED_DELIMITATION"
+        needsImageOutput: true
         detectableObjectModelList:
           - modelName: "BP_TOITURE"
           - modelName: "BP_VEGETATION"
-        geoJsonZone:
-          - type: "Feature"
-            geometry:
-              type: "MultiPolygon"
-              coordinates:
-                - [ [ [ [ -0.24908199906349182, 46.651815670805505 ], [ -0.24908166378736496, 46.65181521051821 ], [ -0.24908166378736496, 46.65181452008728 ], [ -0.24908099323511124, 46.651813829656334 ], [ -0.24908099323511124, 46.65180807606479 ], [ -0.249084010720253, 46.65180807606479 ], [ -0.24908434599637985, 46.65180853635213 ], [ -0.2490846812725067, 46.651808996639474 ], [ -0.24908501654863358, 46.651809687070475 ], [ -0.24908535182476044, 46.65181037750147 ], [ -0.24908535182476044, 46.65181152821978 ], [ -0.2490856871008873, 46.651811988507106 ], [ -0.2490873634815216, 46.65181313922538 ], [ -0.2490873634815216, 46.65181521051821 ], [ -0.24908669292926788, 46.65181544066185 ], [ -0.2490856871008873, 46.651815670805505 ], [ -0.24908535182476044, 46.65181590094914 ], [ -0.24908199906349182, 46.651815670805505 ] ] ] ]
+        geoJsonOutput: "GEO_JSON"
     ThreeDRequestUsingPointAndRoofTypeAndParcelFreeExample:
       summary: 3D request payload template using Point geometry
       value:
