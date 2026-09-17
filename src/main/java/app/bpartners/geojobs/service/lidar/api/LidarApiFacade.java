@@ -69,7 +69,7 @@ public class LidarApiFacade {
     return new LidarFilesResult(filesUrls, targetCrs);
   }
 
-  private static CoordinateReferenceSystem resolveCrs(String region) {
+  static CoordinateReferenceSystem resolveCrs(String region) {
     return switch (region) {
       case "SWITZERLAND" -> EPSG_2056;
       case "WALLONIA" -> EPSG_3812;
