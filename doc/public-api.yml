@@ -305,6 +305,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateDetection'
+            examples:
+              roofGeoJsonPolygonSync:
+                $ref: '#/components/examples/DetectionSyncRoofGeoJsonPolygon'
       responses:
         200:
           description: Detection created or processing
@@ -637,6 +640,23 @@ components:
           - modelName: "BP_TOITURE"
           - modelName: "BP_VEGETATION"
         geoJsonOutput: "GEO_JSON"
+    DetectionSyncRoofGeoJsonPolygon:
+      summary: Synchronous roof detection over a GeoJSON polygon zone
+      value:
+        emailReceiver: "your.email@mail.com"
+        zoneName: "your.zone.name"
+        detectableObjectModelList:
+          - modelName: "BP_TOITURE"
+        geoJsonZone:
+          - type: "Feature"
+            properties: { }
+            geometry:
+              type: "Polygon"
+              coordinates:
+                - [ [ -0.2494458, 46.65203 ], [ -0.2494733, 46.6519681 ], [ -0.2494903, 46.6519052 ], [ -0.2494236, 46.6518819 ], [ -0.2493072, 46.6518756 ], [ -0.2493046, 46.6519124 ], [ -0.2492693, 46.6519465 ], [ -0.2492627, 46.6519923 ], [ -0.2493046, 46.6520013 ], [ -0.2493451, 46.6520094 ], [ -0.2494458, 46.65203 ] ]
+        geoJsonDelimitationType: "USER_DEFINED_DELIMITATION"
+        geoJsonOutput: "ZIP"
+        needsImageOutput: true
     ThreeDRequestUsingPointAndRoofTypeAndParcelFreeExample:
       summary: 3D request payload template using Point geometry
       value:
