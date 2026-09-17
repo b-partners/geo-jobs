@@ -11,7 +11,7 @@
     "statistics": [],
     "updatedAt": "2026-01-01T00:00:00.00Z"
   },
-  "geoJsonUrl": "https://geo-json-pre-signed-url",
+  "geoJsonUrl": "https://raw.githubusercontent.com/b-partners/geo-jobs/refs/heads/preprod/examples/detection/geojson/detection-toiture-multi-polygon-geojson-response-example.geojson",
   "shapeUrl": null,
   "excelUrl": null,
   "imageUrl": null,
