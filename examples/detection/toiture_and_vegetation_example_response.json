@@ -73,8 +73,8 @@
       }
     }
   ],
-  "geoJsonDelimitationType": "PARCEL",
-  "geoJsonOutput": "ZIP",
+  "geoJsonDelimitationType": "PARCEL_CONSTRAINED_DELIMITATION",
+  "geoJsonOutput": "GEO_JSON",
   "needsImageOutput": true,
   "toNotify": false
 }
