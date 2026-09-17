@@ -1,6 +1,7 @@
 {
   "emailReceiver": "your.email@mail.com",
   "zoneName": "your.zone.name",
+  "needsImageOutput": true,
   "detectableObjectModelList": [
     {
       "modelName": "BP_TOITURE"
