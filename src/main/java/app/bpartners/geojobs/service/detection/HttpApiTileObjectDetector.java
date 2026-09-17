@@ -11,6 +11,7 @@ import static java.util.UUID.randomUUID;
 import static org.apache.commons.io.FileUtils.readFileToByteArray;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
+import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
@@ -19,7 +20,6 @@ import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.DetectionFileObject;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.net.URI;
@@ -44,7 +44,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
   private final ObjectMapper om;
   private final CustomBucketComponent customBucketComponent;
   private final String defaultDetectionApiUrl;
-  private final TileObjectDetectorConf tileObjectDetectorConf;
+  private final ModelVersionConf modelVersionConf;
   private final DetectionResponseAggregator detectionResponseAggregator;
   private final DetectionResponseAggregatorV1 detectionResponseAggregatorV1;
   private final DetectionResponseV1ToV2Mapper detectionResponseV1ToV2Mapper;
@@ -58,7 +58,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
       ObjectMapper om,
       CustomBucketComponent customBucketComponent,
       @Value("${tile.detection.api.url}") String defaultApiUrl,
-      TileObjectDetectorConf tileObjectDetectorConf,
+      ModelVersionConf modelVersionConf,
       DetectionResponseAggregator detectionResponseAggregator,
       DetectionResponseAggregatorV1 detectionResponseAggregatorV1,
       DetectionResponseV1ToV2Mapper detectionResponseV1ToV2Mapper,
@@ -69,7 +69,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
     this.om = om;
     this.customBucketComponent = customBucketComponent;
     this.defaultDetectionApiUrl = defaultApiUrl;
-    this.tileObjectDetectorConf = tileObjectDetectorConf;
+    this.modelVersionConf = modelVersionConf;
     this.detectionResponseAggregator = detectionResponseAggregator;
     this.detectionResponseAggregatorV1 = detectionResponseAggregatorV1;
     this.detectionResponseV1ToV2Mapper = detectionResponseV1ToV2Mapper;
@@ -84,7 +84,8 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
   public DetectionResponseV2 apply(
       TileDetectionTask tileDetectionTask,
       File mask,
-      List<DetectableObjectConfiguration> detectableObjectConfigurations) {
+      List<DetectableObjectConfiguration> detectableObjectConfigurations,
+      List<DetectableObjectModel> detectableObjectModels) {
     Tile tile = tileDetectionTask.getTile();
     var isDebugMode = tileDetectionTask.isDebugMode();
     if (tile == null) {
@@ -119,7 +120,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
                     vegetation)),
             headers);
 
-    var detectionApiUrls = getApiUrls(detectableObjectConfigurations);
+    var detectionApiUrls = getApiUrls(detectableObjectConfigurations, detectableObjectModels);
     var v2Responses = new ArrayList<DetectionResponseAggregator.DetectionResponseUrl>();
     var v1Responses = new ArrayList<DetectionResponseAggregatorV1.DetectionResponseUrl>();
     for (var apiUrl : detectionApiUrls) {
@@ -272,11 +273,18 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
     return builder.build();
   }
 
-  @SneakyThrows
   private List<TileDetectorUrl> getApiUrls(
-      List<DetectableObjectConfiguration> objectConfigurations) {
+      List<DetectableObjectConfiguration> objectConfigurations,
+      List<DetectableObjectModel> detectableObjectModels) {
     List<TileDetectorUrl> tileDetectionApiUrls =
-        om.readValue(tileObjectDetectorConf.getTileDetectionApiUrls(), new TypeReference<>() {});
+        detectableObjectModels.stream()
+            .filter(model -> model.getModelName() != null)
+            .flatMap(
+                model ->
+                    modelVersionConf
+                        .getTileDetectorUrls(model.getModelName(), model.getModelVersion())
+                        .stream())
+            .toList();
     Map<String, TileDetectorUrl> urlsByUrl = new LinkedHashMap<>();
     for (var conf : objectConfigurations) {
       for (var url : tileDetectionApiUrls) {
