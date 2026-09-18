@@ -232,6 +232,13 @@ public class Detection implements Serializable {
     return null;
   }
 
+  public List<DetectableObjectModel> getDetectableObjectModels() {
+    if (detectableObjectModelList != null && !detectableObjectModelList.isEmpty()) {
+      return detectableObjectModelList;
+    }
+    return detectableObjectModel != null ? List.of(detectableObjectModel) : List.of();
+  }
+
   @PrePersist
   protected void onCreate() {
     this.creationDatetime = now().truncatedTo(ChronoUnit.MICROS);
