@@ -55,6 +55,7 @@ public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, L
   private final BucketComponent bucketComponent;
   private final FeatureMapper featureMapper;
   private final LidarApiUrlResolver lidarApiUrlResolver;
+  private final CrsProjector crsProjector;
   private final Roofer3DBagApiClient roofer3DBagApiClient;
   private final FileWriter fileWriter;
   private final CoordinateTransformer coordinateTransformer;
@@ -187,10 +188,10 @@ public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, L
     var geometry = featureMapper.domainToGeometryWithMultipolygonHandler(feature);
     MultiPolygon coordinates;
     String epsgCode;
-    if (CrsProjector.INSTANCE.isInSwiss(geometry)) {
+    if (crsProjector.isInSwiss(geometry)) {
       coordinates = convertWgs84ToSwissCoordinates(multiPolygon);
       epsgCode = "EPSG:2056";
-    } else if (CrsProjector.INSTANCE.isInWallonia(geometry)) {
+    } else if (crsProjector.isInWallonia(geometry)) {
       coordinates = convertWgs84ToBelgiqueCoordinates(multiPolygon);
       epsgCode = "EPSG:3812";
     } else {

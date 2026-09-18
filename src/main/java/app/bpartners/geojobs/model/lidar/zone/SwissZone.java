@@ -2,26 +2,32 @@ package app.bpartners.geojobs.model.lidar.zone;
 
 import static app.bpartners.geojobs.service.GeometrySquareMeterArea.EPSG_2056;
 
+import app.bpartners.geojobs.model.lidar.api.LidarUrlSafety;
+import app.bpartners.geojobs.model.lidar.api.SwissLidarApi;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
+import java.util.Set;
+import lombok.RequiredArgsConstructor;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.geom.PrecisionModel;
 import org.locationtech.jts.geom.util.GeometryFixer;
+import org.springframework.core.annotation.Order;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.stereotype.Component;
 
-public final class SwissZone implements LidarZone {
-  public static final SwissZone INSTANCE = new SwissZone();
-
-  private final Geometry boundary;
-
-  private SwissZone() {
-    this.boundary = loadBoundary();
-  }
+@Component
+@Order(1)
+@RequiredArgsConstructor
+public class SwissZone implements LidarZone {
+  private final SwissLidarApi swissLidarApi;
+  private final LidarUrlSafety urlSafety;
+  private final Geometry boundary = loadBoundary();
 
   @Override
   public boolean contains(Geometry wgs84Geometry) {
@@ -33,6 +39,11 @@ public final class SwissZone implements LidarZone {
   @Override
   public CoordinateReferenceSystem getLocalCrs() {
     return EPSG_2056;
+  }
+
+  @Override
+  public Set<String> resolveUrls(Envelope envelope) {
+    return urlSafety.resolveSafe(envelope, swissLidarApi);
   }
 
   private static Geometry loadBoundary() {

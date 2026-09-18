@@ -17,6 +17,7 @@ import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
 import app.bpartners.geojobs.endpoint.rest.model.MultiPolygon;
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
+import app.bpartners.geojobs.model.lidar.CrsProjector;
 import app.bpartners.geojobs.model.lidar.api.LidarApiUrlResolver;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSON;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
@@ -51,6 +52,7 @@ class CityJSON3DBagRooferProcessorTest {
   BucketComponent bucketComponentMock = mock(BucketComponent.class);
   FeatureMapper featureMapperMock = mock(FeatureMapper.class);
   LidarApiUrlResolver lidarApiUrlResolverMock = mock(LidarApiUrlResolver.class);
+  CrsProjector crsProjectorMock = mock(CrsProjector.class);
   Roofer3DBagApiClient roofer3DBagApiClientMock = mock(Roofer3DBagApiClient.class);
   FileWriter fileWriterMock = mock(FileWriter.class);
   CoordinateTransformer coordinateTransformer = new CoordinateTransformer();
@@ -64,6 +66,7 @@ class CityJSON3DBagRooferProcessorTest {
           bucketComponentMock,
           featureMapperMock,
           lidarApiUrlResolverMock,
+          crsProjectorMock,
           roofer3DBagApiClientMock,
           fileWriterMock,
           coordinateTransformer,

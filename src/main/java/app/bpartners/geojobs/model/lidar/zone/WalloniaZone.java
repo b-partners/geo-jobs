@@ -2,26 +2,32 @@ package app.bpartners.geojobs.model.lidar.zone;
 
 import static app.bpartners.geojobs.service.GeometrySquareMeterArea.EPSG_3812;
 
+import app.bpartners.geojobs.model.lidar.api.LidarUrlSafety;
+import app.bpartners.geojobs.service.lidar.api.WalloniaLidarApi;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
+import java.util.Set;
+import lombok.RequiredArgsConstructor;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.geom.PrecisionModel;
 import org.locationtech.jts.geom.util.GeometryFixer;
+import org.springframework.core.annotation.Order;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.stereotype.Component;
 
-public final class WalloniaZone implements LidarZone {
-  public static final WalloniaZone INSTANCE = new WalloniaZone();
-
-  private final Geometry boundary;
-
-  private WalloniaZone() {
-    this.boundary = loadBoundary();
-  }
+@Component
+@Order(2)
+@RequiredArgsConstructor
+public class WalloniaZone implements LidarZone {
+  private final WalloniaLidarApi walloniaLidarApi;
+  private final LidarUrlSafety urlSafety;
+  private final Geometry boundary = loadBoundary();
 
   @Override
   public boolean contains(Geometry wgs84Geometry) {
@@ -33,6 +39,11 @@ public final class WalloniaZone implements LidarZone {
   @Override
   public CoordinateReferenceSystem getLocalCrs() {
     return EPSG_3812;
+  }
+
+  @Override
+  public Set<String> resolveUrls(Envelope envelope) {
+    return urlSafety.resolveSafe(envelope, walloniaLidarApi);
   }
 
   private static Geometry loadBoundary() {
