@@ -32,7 +32,7 @@ public class ModelVersionConf {
   private final String env = System.getenv("ENV");
   private final Map<String, Map<ModelName, List<TileDetectorUrl>>> confByVersion =
       new ConcurrentHashMap<>();
-  private volatile Set<String> supportedVersions;
+  private final Map<String, Set<String>> supportedVersionsByPrefix = new ConcurrentHashMap<>();
 
   public ModelVersionConf(CustomBucketComponent bucketComponent, ObjectMapper om) {
     this.bucketComponent = bucketComponent;
@@ -88,14 +88,11 @@ public class ModelVersionConf {
   }
 
   private Set<String> supportedVersions() {
-    if (supportedVersions == null) {
-      supportedVersions = listSupportedVersions();
-    }
-    return supportedVersions;
+    return supportedVersionsByPrefix.computeIfAbsent(
+        String.format(MODEL_VERSION_CONF_PREFIX, env), this::listSupportedVersions);
   }
 
-  private Set<String> listSupportedVersions() {
-    var prefix = String.format(MODEL_VERSION_CONF_PREFIX, env);
+  private Set<String> listSupportedVersions(String prefix) {
     return bucketComponent
         .listObjects(bucketComponent.getBucketConf().getBucketName(), prefix)
         .stream()
