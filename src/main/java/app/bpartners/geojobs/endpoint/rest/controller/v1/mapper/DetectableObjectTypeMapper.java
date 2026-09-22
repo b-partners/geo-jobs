@@ -67,6 +67,7 @@ public class DetectableObjectTypeMapper {
       case TOMBE_SIMPLE -> DetectableType.TOMBE_SIMPLE;
       case TOMBE_DOUBLE -> DetectableType.TOMBE_DOUBLE;
       case TOMBE_NON_GEOMETRIQUE -> DetectableType.TOMBE_NON_GEOMETRIQUE;
+      case FLECHE_DIRECTIONNELLE -> DetectableType.FLECHE_DIRECTIONNELLE;
     };
   }
 
@@ -119,7 +120,7 @@ public class DetectableObjectTypeMapper {
       case TOMBE_DOUBLE -> TOMBE_DOUBLE;
       case TOMBE_NON_GEOMETRIQUE -> TOMBE_NON_GEOMETRIQUE;
       case POINTILLE -> null;
-      case FLECHE_DIRECTIONNELLE -> null;
+      case FLECHE_DIRECTIONNELLE -> FLECHE_DIRECTIONNELLE;
       case PLACE_STANDARD -> PLACE_STANDARD;
     };
   }

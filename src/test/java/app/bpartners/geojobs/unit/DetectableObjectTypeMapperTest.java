@@ -50,6 +50,12 @@ class DetectableObjectTypeMapperTest {
   }
 
   @Test
+  void fleche_directionnelle_is_exposed_in_both_directions() {
+    assertEquals(FLECHE_DIRECTIONNELLE, subject.toRest(DetectableType.FLECHE_DIRECTIONNELLE));
+    assertEquals(DetectableType.FLECHE_DIRECTIONNELLE, subject.toDomain(FLECHE_DIRECTIONNELLE));
+  }
+
+  @Test
   void map_from_model_BP_Toiture_Model() {
     var object = new DetectableObjectModel().modelName(TOITURE);
 

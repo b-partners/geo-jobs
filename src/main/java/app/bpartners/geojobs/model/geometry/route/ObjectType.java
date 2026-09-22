@@ -105,6 +105,7 @@ public enum ObjectType {
               TOMBE_SIMPLE,
               TOMBE_DOUBLE,
               TOMBE_NON_GEOMETRIQUE,
+              FLECHE_DIRECTIONNELLE,
               ROAD ->
           throw new IllegalArgumentException("Unsupported continuation on " + detectableType);
     };
