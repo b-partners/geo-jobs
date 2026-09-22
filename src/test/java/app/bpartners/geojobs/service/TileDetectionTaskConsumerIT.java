@@ -27,9 +27,8 @@ import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.detection.*;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.tiling.TileValidator;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -47,7 +46,7 @@ class TileDetectionTaskConsumerIT {
   private static final String TILE_BUCKET_PATCH = "tileBucketPatch";
 
   MachineDetectedTileRepository machineDetectedTileRepositoryMock = mock();
-  TileObjectDetectorConf tileObjectDetectorConfMock = mock();
+  ModelVersionConf modelVersionConfMock = mock();
   DetectionRepository detectionRepositoryMock = mock();
   CustomBucketComponent customBucketComponentMock = mock();
   RestTemplate restTemplateMock = mock();
@@ -74,7 +73,7 @@ class TileDetectionTaskConsumerIT {
           objectMapper,
           customBucketComponentMock,
           "dummyApiUrl",
-          tileObjectDetectorConfMock,
+          modelVersionConfMock,
           detectionResponseAggregator,
           detectionResponseAggregatorV1,
           detectionResponseV1ToV2Mapper,
@@ -130,6 +129,8 @@ class TileDetectionTaskConsumerIT {
 
     when(detectionMock.getId()).thenReturn(detectionIdentifier);
     when(detectionMock.hasToitureModelName()).thenReturn(true);
+    when(detectionMock.getDetectableObjectModels())
+        .thenReturn(List.of(new DetectableObjectModel().modelName(TOITURE)));
     when(detectionMock.getDetectableObjectConfigurations())
         .thenReturn(createDetectableObjectConfigurations(detectionIdentifier, detectionJobId));
     when(detectionMock.getFeatureWithDelimitations())
@@ -144,7 +145,7 @@ class TileDetectionTaskConsumerIT {
     when(customBucketComponentMock.getBucketConf()).thenReturn(bucketConfMock);
     when(customBucketComponentMock.download(DUMMY_BUCKET_NAME, TILE_BUCKET_PATCH))
         .thenReturn(tileImageOriginalFile);
-    when(tileObjectDetectorConfMock.getTileDetectionApiUrls()).thenReturn(tileDetectionApiUrls());
+    when(modelVersionConfMock.getTileDetectorUrls(any(), any())).thenReturn(tileDetectorUrls());
     when(machineDetectedTileRepositoryMock.save(any()))
         .thenAnswer(invocation -> invocation.getArgument(0));
     when(restTemplateMock.postForEntity(
@@ -200,9 +201,10 @@ class TileDetectionTaskConsumerIT {
   }
 
   @SneakyThrows
-  private String tileDetectionApiUrls() {
-    return Files.readString(
-        Path.of(new ClassPathResource("conf/tileObjectDetectorConf.json").getFile().getPath()));
+  private List<TileDetectorUrl> tileDetectorUrls() {
+    return objectMapper.readValue(
+        new ClassPathResource("conf/tileObjectDetectorConf.json").getFile(),
+        new TypeReference<>() {});
   }
 
   private app.bpartners.geojobs.repository.model.Feature featureForDelimitation() {
