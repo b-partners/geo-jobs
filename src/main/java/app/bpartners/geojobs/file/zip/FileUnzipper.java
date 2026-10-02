@@ -60,7 +60,8 @@ public class FileUnzipper implements BiFunction<ZipFile, String, Path> {
    * concurrent and previous jobs on the same layer.
    */
   private static Path createIsolatedTmpDirectory(String mainDir) throws IOException {
-    Path extractDirectoryPath = Files.createTempDirectory("unzipped").resolve(mainDir);
+    // Path.of joins mainDir even when it starts with "/" (resolve would make it absolute)
+    Path extractDirectoryPath = Path.of(Files.createTempDirectory("unzipped").toString(), mainDir);
     Files.createDirectories(extractDirectoryPath);
     return extractDirectoryPath;
   }
