@@ -55,13 +55,13 @@ public class FileUnzipper implements BiFunction<ZipFile, String, Path> {
   }
 
   /**
-   * Returns tmpdir/unzipped<random>/<mainDir>: the directory keeps the mainDir name (used as bucket
-   * key by the tiling) but each call gets its own one. A shared tmpdir/<mainDir> mixed the tiles of
+   * Returns tmpdir/<random>/<mainDir>: the directory keeps the mainDir name (used as bucket key by
+   * the tiling) but each call gets its own one. A shared tmpdir/<mainDir> mixed the tiles of
    * concurrent and previous jobs on the same layer.
    */
   private static Path createIsolatedTmpDirectory(String mainDir) throws IOException {
-    // Path.of joins mainDir even when it starts with "/" (resolve would make it absolute)
-    Path extractDirectoryPath = Path.of(Files.createTempDirectory("unzipped").toString(), mainDir);
+    // owner-only (rwx------) random directory; Path.of joins mainDir even when it starts with "/"
+    Path extractDirectoryPath = Path.of(FileWriter.createTempDirectory().getPath(), mainDir);
     Files.createDirectories(extractDirectoryPath);
     return extractDirectoryPath;
   }

@@ -82,7 +82,7 @@ public class ParcelParcelParcelTilingTaskCreatedServiceIT extends FacadeIT {
         .accept(any());
     when(tilesDownloader.apply(any()))
         .thenAnswer(
-            (i) -> {
+            i -> {
               // the consumer deletes the downloaded tiles: give it a copy, not the test resources
               var resources =
                   Paths.get(this.getClass().getClassLoader().getResource("mockData/lyon").toURI())
