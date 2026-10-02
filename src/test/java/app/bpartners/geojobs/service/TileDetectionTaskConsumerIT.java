@@ -81,7 +81,8 @@ class TileDetectionTaskConsumerIT {
           detectionFileObjectRepositoryMock,
           bucketComponentMock,
           fileWriterMock,
-          objectMapperMock);
+          objectMapperMock,
+          new RestTemplate());
   RoofCoveringDetector roofCoveringDetector =
       new RoofCoveringDetector(
           objectMapper, restTemplateMock, "dummyUrl", customBucketComponentMock);

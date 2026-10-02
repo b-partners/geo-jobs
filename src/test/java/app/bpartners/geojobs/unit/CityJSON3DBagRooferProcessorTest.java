@@ -112,7 +112,10 @@ class CityJSON3DBagRooferProcessorTest {
     when(bucketComponentMock.presign(any(), any())).thenReturn(geoJsonBuildingPresignedURLMock);
     when(featureMapperMock.domainToGeometryWithMultipolygonHandler(any())).thenReturn(geometryMock);
     when(lidarApiFacadeMock.getUniqueLidarFilesUrls(Collections.singleton(geometryMock)))
-        .thenReturn(Map.of(lidarUrl, Set.of(geometryMock)));
+        .thenReturn(
+            new LidarApiFacade.LidarFilesResult(
+                Map.of(lidarUrl, Set.of(geometryMock)),
+                app.bpartners.geojobs.service.GeometrySquareMeterArea.LAMBERT_93));
     when(cityJsonGenerationResponseMock.getCityJsonUrl()).thenReturn(cityJsonUrl);
     when(roofer3DBagApiClientMock.generateCityJson(
             CityJsonGenerationRequest.builder()

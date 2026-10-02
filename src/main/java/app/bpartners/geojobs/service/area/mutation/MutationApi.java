@@ -49,6 +49,15 @@ public class MutationApi {
 
   @SneakyThrows
   private MutationResponse detectMutation(MutationRequest payload) {
+    log.info(
+        "Calling mutation detection API: url={}, filename={}, base64OldLen={}, base64NewLen={},"
+            + " base64MaskLen={}",
+        mutationApiUrl,
+        payload.filename(),
+        payload.base64Old().length(),
+        payload.base64New().length(),
+        payload.base64Mask().length());
+
     var headers = new HttpHeaders();
     headers.add("Content-Type", "application/json");
     var requestBody = om.writeValueAsString(payload);
@@ -59,7 +68,13 @@ public class MutationApi {
       var response =
           restTemplate.postForEntity(uriBuilder.toUriString(), request, MutationResponse.class);
       if (response.getStatusCode().value() == 200) {
-        return response.getBody();
+        var body = response.getBody();
+        log.info(
+            "Mutation detection API responded: filename={}, status={}, mutation={}",
+            payload.filename(),
+            body == null ? null : body.status(),
+            body == null ? null : body.mutation());
+        return body;
       }
       throw new IllegalStateException(
           "Error while calling API for mutation detection at "

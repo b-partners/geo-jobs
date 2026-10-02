@@ -183,7 +183,7 @@ public class CityJSON3DBagRooferProcessor implements Function<CityJSONRequest, L
   private Set<String> getUniqueLidarFilesUrls(Feature feature) {
     var geometry = featureMapper.domainToGeometryWithMultipolygonHandler(feature);
     var geometries = Collections.singleton(geometry);
-    return lidarApiFacade.getUniqueLidarFilesUrls(geometries).keySet();
+    return lidarApiFacade.getUniqueLidarFilesUrls(geometries).filesUrls().keySet();
   }
 
   private PresignedGeoJson getGeoJsonBuildingPresignedURL(Feature feature) throws IOException {

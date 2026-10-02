@@ -11,8 +11,6 @@ import app.bpartners.geojobs.model.lidar.planes.model.DelimitedRoofPoints;
 import app.bpartners.geojobs.model.lidar.planes.model.RoofPointsDelimitationTransformer;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
-import app.bpartners.geojobs.service.lidar.api.SwissBoundaryChecker;
-import app.bpartners.geojobs.service.lidar.api.WalloniaBoundaryChecker;
 import app.bpartners.geojobs.service.lidar.model.*;
 import app.bpartners.geojobs.service.lidar.model.geometry.GeometryWithProperties;
 import app.bpartners.geojobs.service.lidar.model.geometry.roof.Building3DProperties;
@@ -24,6 +22,7 @@ import java.nio.file.Files;
 import java.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.springframework.stereotype.Component;
@@ -34,8 +33,6 @@ import org.springframework.stereotype.Component;
 public class LidarRoofsAnalysisProcessor {
   private final LidarApiFacade lidarApi;
   private final GeometrySquareMeterArea projector;
-  private final SwissBoundaryChecker swissBoundaryChecker;
-  private final WalloniaBoundaryChecker walloniaBoundaryChecker;
 
   private static final int ROOF_GROUND_BUFFER_METERS = 3;
   private static final short ROOF_LIDAR_CLASS_VALUE = 6;
@@ -53,12 +50,12 @@ public class LidarRoofsAnalysisProcessor {
   }
 
   public RoofsAnalysisResult apply(Set<GeometryWithProperties> roofsEPSG4326) {
-    Set<LidarRoofData> allRoofsData = emptyFromEPSG4326(roofsEPSG4326);
-
     try {
-      Map<String, Set<Geometry>> lidarFilesUrl =
+      var result =
           lidarApi.getUniqueLidarFilesUrls(
-              allRoofsData.stream().map(data -> data.roof().boundaryEPSG4326()).collect(toSet()));
+              roofsEPSG4326.stream().map(GeometryWithProperties::geometry).collect(toSet()));
+      Set<LidarRoofData> allRoofsData = emptyFromEPSG4326(roofsEPSG4326, result.targetCrs());
+      Map<String, Set<Geometry>> lidarFilesUrl = result.filesUrls();
 
       if (lidarFilesUrl.isEmpty()) {
         return new RoofsAnalysisResult(
@@ -194,11 +191,13 @@ public class LidarRoofsAnalysisProcessor {
     }
   }
 
-  private Set<LidarRoofData> emptyFromEPSG4326(Set<GeometryWithProperties> roofsEPSG4326) {
+  private Set<LidarRoofData> emptyFromEPSG4326(
+      Set<GeometryWithProperties> roofsEPSG4326, CoordinateReferenceSystem targetCrs) {
     Set<LidarRoofData> lidarData = new HashSet<>();
     for (var roofEPSG4326WithProperties : roofsEPSG4326) {
       // TODO: rename roofLambert93 can it can be an EPSG_2056
-      var roofLambert93 = project(roofEPSG4326WithProperties.geometry());
+      var roofLambert93 =
+          projector.project(roofEPSG4326WithProperties.geometry(), WGS84, targetCrs);
       var groundLambert93 = roofLambert93.buffer(ROOF_GROUND_BUFFER_METERS);
       Map<String, Object> properties =
           roofEPSG4326WithProperties.properties() == null
@@ -247,16 +246,6 @@ public class LidarRoofsAnalysisProcessor {
         || x > envelope.getMaxX()
         || y < envelope.getMinY()
         || y > envelope.getMaxY();
-  }
-
-  private Geometry project(Geometry roofEPSG4326) {
-    if (swissBoundaryChecker.isGeometryInSwiss(roofEPSG4326)) {
-      return projector.project(roofEPSG4326, WGS84, EPSG_2056);
-    }
-    if (walloniaBoundaryChecker.isGeometryInWallonia(roofEPSG4326)) {
-      return projector.project(roofEPSG4326, WGS84, EPSG_3812);
-    }
-    return projector.project(roofEPSG4326, WGS84, LAMBERT_93);
   }
 
   @Deprecated
