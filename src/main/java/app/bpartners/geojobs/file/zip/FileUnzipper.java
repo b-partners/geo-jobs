@@ -28,7 +28,7 @@ public class FileUnzipper implements BiFunction<ZipFile, String, Path> {
   @Override
   public Path apply(ZipFile zipFile, String mainDir) {
     try {
-      Path extractDirectoryPath = createTmpDirectoryWithoutRandomSuffix(mainDir);
+      Path extractDirectoryPath = createIsolatedTmpDirectory(mainDir);
       Enumeration<? extends ZipEntry> entries = zipFile.entries();
 
       while (entries.hasMoreElements()) {
@@ -54,8 +54,13 @@ public class FileUnzipper implements BiFunction<ZipFile, String, Path> {
     }
   }
 
-  private static Path createTmpDirectoryWithoutRandomSuffix(String mainDir) throws IOException {
-    Path extractDirectoryPath = Path.of(System.getProperty("java.io.tmpdir"), mainDir);
+  /**
+   * Returns tmpdir/unzipped<random>/<mainDir>: the directory keeps the mainDir name (used as bucket
+   * key by the tiling) but each call gets its own one. A shared tmpdir/<mainDir> mixed the tiles of
+   * concurrent and previous jobs on the same layer.
+   */
+  private static Path createIsolatedTmpDirectory(String mainDir) throws IOException {
+    Path extractDirectoryPath = Files.createTempDirectory("unzipped").resolve(mainDir);
     Files.createDirectories(extractDirectoryPath);
     return extractDirectoryPath;
   }
