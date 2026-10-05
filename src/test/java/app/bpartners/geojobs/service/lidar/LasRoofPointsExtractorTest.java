@@ -44,7 +44,7 @@ class LasRoofPointsExtractorTest {
   }
 
   @Test
-  void should_not_fail_if_batiment_points_count_is_less_than_three() {
+  void should_failed_if_batiment_points_count_is_less_than_twenty() {
     var apiMock = mock(LidarApiFacade.class);
     var processor =
         spy(
@@ -59,7 +59,12 @@ class LasRoofPointsExtractorTest {
                 GeometrySquareMeterArea.LAMBERT_93));
 
     var roofGeometries = Set.of(roofGeometry1);
-    assertDoesNotThrow(() -> processor.apply(ENTIRE_ROOF_DELIMITATION, roofGeometries));
+    var error =
+        assertThrows(
+            IllegalStateException.class,
+            () -> processor.apply(ENTIRE_ROOF_DELIMITATION, roofGeometries));
+
+    assertTrue(error.getMessage().contains("Roof found but no BATIMENT points"));
   }
 
   @Test
