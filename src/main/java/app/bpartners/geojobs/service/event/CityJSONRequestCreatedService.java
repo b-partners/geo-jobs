@@ -16,7 +16,6 @@ import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.cityjson.*;
 import app.bpartners.geojobs.service.CityJSON3DBagRooferProcessor;
-import app.bpartners.geojobs.service.CityJSONInternalProcessor;
 import app.bpartners.geojobs.service.CityJSONSafeModeProcessor;
 import app.bpartners.geojobs.service.cityjson.LidarDataToCityJsonProcessor;
 import app.bpartners.geojobs.service.cityjson.texture.CityJsonTextureComputer;
@@ -26,13 +25,10 @@ import jakarta.persistence.EntityManager;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Geometry;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -50,21 +46,6 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
   private final CityJSON3DBagRooferProcessor cityJson3DBagRooferProcessor;
   private final CityJSONSafeModeProcessor cityJSONSafeModeProcessor;
   private final CityJsonTextureComputer textureComputer;
-  private final CityJSONInternalProcessor cityJSONInternalProcessor;
-  private final CityJSONRequestCreatedServiceGenerator cityjsonGenerator;
-  private static final String GEOJOBS = "GEOJOBS";
-
-  // TODO: to remove after threed is used for prod
-  @Getter
-  @Component
-  public static class CityJSONRequestCreatedServiceGenerator {
-    private final String generator;
-
-    public CityJSONRequestCreatedServiceGenerator(
-        @Value("${cityjsons.generator}") String generator) {
-      this.generator = generator;
-    }
-  }
 
   // TODO: refactor
   public void accept(CityJSONRequestCreated created, boolean isSync) {
@@ -145,18 +126,10 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
   private void processCityJSONFacade(CityJSONRequest request, boolean isSync) {
     var generationType = getType(request);
     if (ROOF_SEGMENT_FACE_DELIMITATION.equals(generationType)) {
-      processByInternalMethod(request, isSync);
+      processByInternalMethod(request);
       return;
     }
     processFullAutomaticFacade(request, isSync);
-  }
-
-  private void processByInternalMethod(CityJSONRequest request, boolean ignored) {
-    if (GEOJOBS.equals(cityjsonGenerator.getGenerator())) {
-      processByInternalMethod(request);
-    } else {
-      processInternalByApi(request);
-    }
   }
 
   private void processByInternalMethod(CityJSONRequest request) {
@@ -182,22 +155,9 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
   private void processFullAutomaticFacade(CityJSONRequest request, boolean isSync) {
     var processorType = request.getLidarProcessorType();
     switch (processorType) {
-      case DEFAULT -> processByInternalMethod(request, isSync);
+      case DEFAULT -> processByInternalMethod(request);
       case SAFE_MODE -> processFullAutomaticBySafeMode(request);
       case null, default -> processFullAutomaticBy3DBag(request);
-    }
-  }
-
-  private void processInternalByApi(CityJSONRequest request) {
-    try {
-      var cityJsonFrom3dBag = cityJSONInternalProcessor.apply(request);
-      succeedCityJsonRequest(request, cityJsonFrom3dBag);
-    } catch (Exception e) {
-      log.error(
-          "Unable to process Lidar By Internal Api for request {}, error {}",
-          request.getId(),
-          e.getMessage());
-      updateStatus(request, FAILED, GEOMETRY_CONSTRUCTION);
     }
   }
 
