@@ -11,7 +11,7 @@ import app.bpartners.geojobs.endpoint.rest.model.CreateDetection;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel;
 import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
 import app.bpartners.geojobs.service.BuildingFinder;
-import app.bpartners.geojobs.service.dashboard.AreaPictureApi;
+import app.bpartners.geojobs.service.dashboard.AreaPictureMapLayerResolver;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.geoserver.GeoServerConfiguration;
 import app.bpartners.geojobs.validator.FeatureTypeChecker;
@@ -30,7 +30,7 @@ class DetectionCreationMapperTest {
           detectableObjectTypeMapper,
           featureTypeChecker,
           mock(CommunityAuthorizationRepository.class),
-          mock(AreaPictureApi.class),
+          mock(AreaPictureMapLayerResolver.class),
           mock(GeoServerConfiguration.class),
           geometryConverterMock,
           buildingFinderMock);

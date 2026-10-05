@@ -47,6 +47,7 @@ import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.exception.NotFoundException;
 import app.bpartners.geojobs.repository.*;
+import app.bpartners.geojobs.repository.CachedAreaPictureMapLayerRepository;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.GeoJobType;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
@@ -55,6 +56,7 @@ import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.dashboard.AreaPictureApi;
+import app.bpartners.geojobs.service.dashboard.AreaPictureMapLayerResolver;
 import app.bpartners.geojobs.service.dashboard.component.AreaPictureMapLayer;
 import app.bpartners.geojobs.service.dashboard.component.Zoom;
 import app.bpartners.geojobs.service.detection.*;
@@ -218,7 +220,8 @@ class DetectionServiceTest {
                   detectableObjectTypeMapper,
                   featureTypeChecker,
                   communityAuthRepositoryMock,
-                  areaPictureApiMock,
+                  new AreaPictureMapLayerResolver(
+                      areaPictureApiMock, mock(CachedAreaPictureMapLayerRepository.class)),
                   geoServerConfiguration,
                   geometryConverterMock,
                   buildingFinderMock),

@@ -18,7 +18,7 @@ import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.service.BuildingFinder;
-import app.bpartners.geojobs.service.dashboard.AreaPictureApi;
+import app.bpartners.geojobs.service.dashboard.AreaPictureMapLayerResolver;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.geoserver.GeoServerConfiguration;
 import app.bpartners.geojobs.validator.FeatureTypeChecker;
@@ -39,7 +39,7 @@ public class DetectionCreationMapper {
   private final DetectableObjectTypeMapper detectableObjectTypeMapper;
   private final FeatureTypeChecker featureTypeChecker;
   private final CommunityAuthorizationRepository communityAuthRepository;
-  private final AreaPictureApi areaPictureApi;
+  private final AreaPictureMapLayerResolver areaPictureMapLayerResolver;
   private final GeoServerConfiguration geoServerConfiguration;
   private final GeometryConverter geometryConverter;
   private final BuildingFinder buildingFinder;
@@ -166,9 +166,13 @@ public class DetectionCreationMapper {
             || geoServerProperties.getGeoServerParameter() == null
             || geoServerProperties.getGeoServerParameter().getLayers() == null)) {
       var firstPoint = retrieveFirstPoint(geoJsonZone);
-      List<HashMap<String, String>> layers = retrieveLayers(firstPoint, communityOwnerId);
-      String layer = layers.getFirst().get("name");
-      int precisionLevelInCm = Integer.parseInt(layers.getFirst().get("precisionLevelInCm"));
+      var mapLayer =
+          areaPictureMapLayerResolver.apply(
+              firstPoint.get(0).doubleValue(),
+              firstPoint.get(1).doubleValue(),
+              () -> dashboardApiKeyOf(communityOwnerId));
+      String layer = mapLayer.name();
+      int precisionLevelInCm = mapLayer.precisionLevelInCm();
 
       if (precisionLevelInCm != 5) {
         throw new ApiException(
@@ -278,27 +282,10 @@ public class DetectionCreationMapper {
     throw new IllegalArgumentException("Unknown feature type: " + firstFeature);
   }
 
-  private List<HashMap<String, String>> retrieveLayers(
-      List<BigDecimal> firstPoint, String communityOwnerId) {
-    var longitude = firstPoint.get(0).doubleValue();
-    var latitude = firstPoint.get(1).doubleValue();
-
-    var e2ApiKey =
-        communityAuthRepository
-            .findById(communityOwnerId)
-            .map(CommunityAuthorization::getDashboardApiKey)
-            .orElseThrow();
-
-    var areaMapLayers = areaPictureApi.getAreaPictureMapLayers(longitude, latitude, e2ApiKey);
-
-    return areaMapLayers.stream()
-        .map(
-            layer -> {
-              HashMap<String, String> map = new HashMap<>();
-              map.put("name", layer.name());
-              map.put("precisionLevelInCm", String.valueOf(layer.precisionLevelInCm()));
-              return map;
-            })
-        .toList();
+  private String dashboardApiKeyOf(String communityOwnerId) {
+    return communityAuthRepository
+        .findById(communityOwnerId)
+        .map(CommunityAuthorization::getDashboardApiKey)
+        .orElseThrow();
   }
 }
