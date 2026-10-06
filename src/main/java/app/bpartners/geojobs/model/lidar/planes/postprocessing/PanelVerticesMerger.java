@@ -61,8 +61,8 @@ class PanelVerticesMerger {
   }
 
   /**
-   * @return the panel with the given exterior ring vertices and its original holes, or the
-   *     original panel when that would not be a valid polygon or would have a collapsed edge
+   * @return the panel with the given exterior ring vertices and its original holes, or the original
+   *     panel when that would not be a valid polygon or would have a collapsed edge
    */
   static Polygon withExteriorRing(Polygon original, Coordinate[] vertices) {
     if (vertices.length < 3
@@ -74,7 +74,8 @@ class PanelVerticesMerger {
     for (int i = 0; i < holes.length; i++) {
       holes[i] = (LinearRing) original.getInteriorRingN(i).copy();
     }
-    var polygon = geometryFactory.createPolygon(geometryFactory.createLinearRing(closed(vertices)), holes);
+    var polygon =
+        geometryFactory.createPolygon(geometryFactory.createLinearRing(closed(vertices)), holes);
     return polygon.isValid() ? polygon : original;
   }
 

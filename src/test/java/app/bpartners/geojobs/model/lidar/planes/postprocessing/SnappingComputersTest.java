@@ -179,7 +179,11 @@ class SnappingComputersTest {
       xy[target + 1] = ring.get(i + 1);
     }
     var plane =
-        plane(random.nextDouble() * 2 - 1, random.nextDouble() * 2 - 1, 2 + random.nextDouble() * 8, xy);
+        plane(
+            random.nextDouble() * 2 - 1,
+            random.nextDouble() * 2 - 1,
+            2 + random.nextDouble() * 8,
+            xy);
     if (plane.getDelimitation().isValid()) {
       planes.add(plane);
     }

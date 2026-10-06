@@ -31,8 +31,7 @@ public class Snapping2DComputer implements UnaryOperator<List<Plane3D>> {
         result.add(plane);
         continue;
       }
-      var delimitation =
-          withExteriorRing(plane.getDelimitation(), project(plane, merged.get(i)));
+      var delimitation = withExteriorRing(plane.getDelimitation(), project(plane, merged.get(i)));
       result.add(plane.toBuilder().delimitation(delimitation).build());
     }
     return result;
