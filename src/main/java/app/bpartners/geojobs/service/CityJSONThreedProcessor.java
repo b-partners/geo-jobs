@@ -21,7 +21,7 @@ import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
 import app.bpartners.geojobs.service.cityjson.texture.CityJsonTextureComputer;
 import app.bpartners.geojobs.service.geojson.GeoJson;
 import app.bpartners.geojobs.service.threed.ThreedApiClient;
-import app.bpartners.geojobs.service.threed.model.CreateCityJsonFromFeatureFileUrl;
+import app.bpartners.geojobs.service.threed.model.CreateLrgFromFeatureFileUrl;
 import app.bpartners.geojobs.service.threed.model.DelimitationType;
 import java.io.File;
 import java.io.IOException;
@@ -90,7 +90,7 @@ public class CityJSONThreedProcessor implements Function<CityJSONRequest, List<C
                 buildingUrl ->
                     threedApiClient.generate(
                         id,
-                        CreateCityJsonFromFeatureFileUrl.builder()
+                        CreateLrgFromFeatureFileUrl.builder()
                             .featureFileUrl(buildingUrl)
                             .delimitationType(delimitationType)
                             .build(),

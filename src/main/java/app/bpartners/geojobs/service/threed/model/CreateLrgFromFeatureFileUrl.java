@@ -10,15 +10,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ThreedCityJsonResponse {
-  @JsonProperty("id")
-  private String id;
-
-  @JsonProperty("fileUrl")
-  private String fileUrl;
-
-  @JsonProperty("status")
-  private ProcessingStatus status;
+public class CreateLrgFromFeatureFileUrl {
+  @JsonProperty("featureFileUrl")
+  private String featureFileUrl;
 
   @JsonProperty("delimitationType")
   private DelimitationType delimitationType;

@@ -4,7 +4,6 @@ import static app.bpartners.geojobs.model.lidar.planes.algorithm.GeometryUtiliti
 
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.planes.Plane3D;
-import app.bpartners.geojobs.model.lidar.planes.Plane3DGeneratorWithoutSegmentations;
 import app.bpartners.geojobs.model.lidar.planes.Planes3DExtractor;
 import app.bpartners.geojobs.model.lidar.planes.conf.Plane3DExtractorConf;
 import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepExporter;
@@ -28,10 +27,6 @@ public class Building3DProperties {
   @Deprecated
   public Building3DProperties(LidarRoofData data) {
     this(Plane3DExtractorConf.getDefault(), data, data.toDelimitedRoofPoints(), null);
-  }
-
-  public Building3DProperties(DelimitedRoofPoints delimitedPoints) {
-    this(Plane3DExtractorConf.getDefault(), null, delimitedPoints, null);
   }
 
   // properties
@@ -84,15 +79,7 @@ public class Building3DProperties {
   }
 
   private List<Plane3D> getRawPlanes() {
-    return switch (delimitedPoints.getType()) {
-      case ENTIRE_ROOF_DELIMITATION -> {
-        var extractor = new Planes3DExtractor(getRoofDelimitation(), conf, exporter);
-        yield extractor.apply(delimitedPoints.getPoints());
-      }
-      case ROOF_SEGMENT_FACE_DELIMITATION -> {
-        var extractor = new Plane3DGeneratorWithoutSegmentations(conf);
-        yield extractor.apply(delimitedPoints);
-      }
-    };
+    var extractor = new Planes3DExtractor(getRoofDelimitation(), conf, exporter);
+    return extractor.apply(delimitedPoints.getPoints());
   }
 }
