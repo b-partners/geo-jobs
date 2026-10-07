@@ -8,6 +8,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
+import app.bpartners.geojobs.service.geodata.GeodataApiConf;
+import app.bpartners.geojobs.service.geodata.GeodataHttpClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,7 +35,9 @@ class GeodataLidarApiClientIT {
   private final String GEODATA_API_KEY = System.getenv("GEODATA_API_KEY");
   GeodataLidarApiClient subject =
       new GeodataLidarApiClient(
-          new ObjectMapper(), new RestTemplate(), GEODATA_API_URL, GEODATA_API_KEY);
+          new ObjectMapper(),
+          new GeodataHttpClient(
+              new RestTemplate(), new GeodataApiConf(GEODATA_API_URL, GEODATA_API_KEY)));
   private final GeometrySquareMeterArea projector = new GeometrySquareMeterArea();
 
   private static Geometry an_area_covered_by_ign_lidar_hd() {
