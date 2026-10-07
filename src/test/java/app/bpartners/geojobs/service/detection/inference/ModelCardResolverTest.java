@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -30,6 +31,8 @@ class ModelCardResolverTest {
       new DeployedModelCard("vegetation", SEMANTIC_SEGMENTATION, 1, true, 1024, 1024, true);
   private static final DeployedModelCard TOMBS =
       new DeployedModelCard("tombs", OBJECT_DETECTION, 1, false, null, null, null);
+
+  private static final Predicate<DeployedModelCard> ANY = modelCard -> true;
 
   InferenceModelCardConf conf = mock();
   ModelCardRegistry registry = mock();
@@ -54,7 +57,7 @@ class ModelCardResolverTest {
 
   @Test
   void types_sharing_a_model_card_resolve_to_it_once() {
-    var resolution = subject.resolve(configs(HUMIDITE, USURE));
+    var resolution = subject.resolve(configs(HUMIDITE, USURE), ANY);
 
     assertEquals(List.of(DAMAGES), resolution.modelCards());
     assertTrue(resolution.unmappedTypes().isEmpty());
@@ -62,14 +65,14 @@ class ModelCardResolverTest {
 
   @Test
   void resolves_distinct_model_cards_in_request_order() {
-    var resolution = subject.resolve(configs(TOMBE, HUMIDITE, USURE));
+    var resolution = subject.resolve(configs(TOMBE, HUMIDITE, USURE), ANY);
 
     assertEquals(List.of(TOMBS, DAMAGES), resolution.modelCards());
   }
 
   @Test
   void vegetation_types_resolve_to_their_model_card_without_any_flag() {
-    var resolution = subject.resolve(configs(HUMIDITE, ESPACE_VERT, ARBRE));
+    var resolution = subject.resolve(configs(HUMIDITE, ESPACE_VERT, ARBRE), ANY);
 
     assertEquals(List.of(DAMAGES, VEGETATION), resolution.modelCards());
     assertTrue(resolution.unmappedTypes().isEmpty());
@@ -77,15 +80,27 @@ class ModelCardResolverTest {
 
   @Test
   void reports_unmapped_types() {
-    var resolution = subject.resolve(configs(HUMIDITE, DetectableType.CHEMINEE));
+    var resolution = subject.resolve(configs(HUMIDITE, DetectableType.CHEMINEE), ANY);
 
     assertEquals(List.of(DAMAGES), resolution.modelCards());
     assertEquals(Set.of(DetectableType.CHEMINEE), resolution.unmappedTypes());
   }
 
   @Test
+  void incompatible_model_cards_are_reported_as_unsupported_types() {
+    var resolution =
+        subject.resolve(
+            configs(HUMIDITE, USURE, TOMBE),
+            modelCard -> !modelCard.modelCardId().equals("damages"));
+
+    assertEquals(List.of(TOMBS), resolution.modelCards());
+    assertEquals(Set.of(HUMIDITE, USURE), resolution.unsupportedTypes());
+    assertTrue(resolution.unmappedTypes().isEmpty());
+  }
+
+  @Test
   void throws_when_mapped_model_card_is_not_deployed() {
-    assertThrows(IllegalStateException.class, () -> subject.resolve(configs(PISCINE)));
+    assertThrows(IllegalStateException.class, () -> subject.resolve(configs(PISCINE), ANY));
   }
 
   private static List<DetectableObjectConfiguration> configs(DetectableType... types) {
