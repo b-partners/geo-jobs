@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import app.bpartners.geojobs.service.threed.conf.ThreedApiProperties;
-import app.bpartners.geojobs.service.threed.model.CreateCityJsonFromFeatureFileUrl;
+import app.bpartners.geojobs.service.threed.model.CreateLrgFromFeatureFileUrl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Disabled;
@@ -27,7 +27,7 @@ class ThreedApiClientIT {
     var actual =
         subject.generate(
             randomUUID().toString(),
-            CreateCityJsonFromFeatureFileUrl.builder()
+            CreateLrgFromFeatureFileUrl.builder()
                 .featureFileUrl(buildingUrl)
                 .delimitationType(ENTIRE_ROOF_DELIMITATION)
                 .build());

@@ -4,9 +4,9 @@ import static org.springframework.web.util.UriComponentsBuilder.fromUri;
 
 import app.bpartners.geojobs.service.threed.conf.ThreedApiProperties;
 import app.bpartners.geojobs.service.threed.exception.ThreedApiException;
-import app.bpartners.geojobs.service.threed.model.CreateCityJsonFromFeatureFileUrl;
+import app.bpartners.geojobs.service.threed.model.CreateLrgFromFeatureFileUrl;
+import app.bpartners.geojobs.service.threed.model.Lrg;
 import app.bpartners.geojobs.service.threed.model.Problem;
-import app.bpartners.geojobs.service.threed.model.ThreedCityJsonResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
 import lombok.SneakyThrows;
@@ -27,7 +27,7 @@ public class ThreedApiClient {
   private final ObjectMapper objectMapper;
   private final RestTemplate restTemplate;
   private final ThreedApiProperties properties;
-  private static final String PREFIX_PATH = "/cityjsons";
+  private static final String PREFIX_PATH = "/lrg";
   private static final String SUFFIX_PATH = "/feature-file";
   private static final String API_KEY_QUERY_PARAM = "geojobs-apikey";
 
@@ -40,12 +40,11 @@ public class ThreedApiClient {
     this.objectMapper = objectMapper;
   }
 
-  public ThreedCityJsonResponse generate(String id, CreateCityJsonFromFeatureFileUrl request) {
+  public Lrg generate(String id, CreateLrgFromFeatureFileUrl request) {
     return generate(id, request, null);
   }
 
-  public ThreedCityJsonResponse generate(
-      String id, CreateCityJsonFromFeatureFileUrl request, String apiKey) {
+  public Lrg generate(String id, CreateLrgFromFeatureFileUrl request, String apiKey) {
     var uri = buildGenerateUri(id, apiKey);
 
     var headers = new HttpHeaders();
@@ -55,8 +54,7 @@ public class ThreedApiClient {
     var entity = new HttpEntity<>(request, headers);
 
     try {
-      var response =
-          restTemplate.exchange(uri, HttpMethod.PUT, entity, ThreedCityJsonResponse.class);
+      var response = restTemplate.exchange(uri, HttpMethod.PUT, entity, Lrg.class);
       return response.getBody();
     } catch (HttpStatusCodeException e) {
       throw mapHttpError(e);

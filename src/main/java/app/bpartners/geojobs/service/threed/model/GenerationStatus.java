@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.service.threed.model;
 
-public enum ProcessingStatus {
+public enum GenerationStatus {
   SUCCEEDED,
   FAILED
 }

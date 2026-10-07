@@ -10,9 +10,15 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreateCityJsonFromFeatureFileUrl {
-  @JsonProperty("featureFileUrl")
-  private String featureFileUrl;
+public class Lrg {
+  @JsonProperty("id")
+  private String id;
+
+  @JsonProperty("fileUrl")
+  private String fileUrl;
+
+  @JsonProperty("status")
+  private GenerationStatus status;
 
   @JsonProperty("delimitationType")
   private DelimitationType delimitationType;
