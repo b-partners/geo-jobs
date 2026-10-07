@@ -3,7 +3,7 @@ package app.bpartners.geojobs.service;
 import static app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.FeatureMapper.toRestFeature;
 import static app.bpartners.geojobs.endpoint.rest.model.MultiPolygon.TypeEnum.MULTI_POLYGON;
 import static app.bpartners.geojobs.file.FileWriter.createTempDirectory;
-import static app.bpartners.geojobs.service.ciytjsonprocessor.model.DelimitationType.ROOF_SEGMENT_FACE_DELIMITATION;
+import static app.bpartners.geojobs.service.threed.model.DelimitationType.PANEL_BY_PANEL_DELIMITATION;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
 import static java.util.UUID.randomUUID;
@@ -19,10 +19,10 @@ import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSON;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
 import app.bpartners.geojobs.service.cityjson.texture.CityJsonTextureComputer;
-import app.bpartners.geojobs.service.ciytjsonprocessor.CityJsonProcessorApiClient;
-import app.bpartners.geojobs.service.ciytjsonprocessor.model.CreateCityJsonFromFeatureFileUrl;
-import app.bpartners.geojobs.service.ciytjsonprocessor.model.DelimitationType;
 import app.bpartners.geojobs.service.geojson.GeoJson;
+import app.bpartners.geojobs.service.threed.ThreedApiClient;
+import app.bpartners.geojobs.service.threed.model.CreateCityJsonFromFeatureFileUrl;
+import app.bpartners.geojobs.service.threed.model.DelimitationType;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -40,14 +40,14 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class CityJSONInternalProcessor implements Function<CityJSONRequest, List<CityJSON>> {
+public class CityJSONThreedProcessor implements Function<CityJSONRequest, List<CityJSON>> {
   private static final String JSON_EXTENSION = ".json";
   private static final String GEOJSON_EXTENSION = ".geojson";
 
   private final FileWriter fileWriter;
   private final BucketComponent bucketComponent;
   private final CityJsonTextureComputer textureComputer;
-  private final CityJsonProcessorApiClient cityJsonProcessorApiClient;
+  private final ThreedApiClient threedApiClient;
   private final CityJSONDownloader cityJSONDownloader;
   private final CommunityAuthorizationRepository communityRepository;
 
@@ -88,7 +88,7 @@ public class CityJSONInternalProcessor implements Function<CityJSONRequest, List
         delimitationFeatureGeoJsonFileURL.stream()
             .map(
                 buildingUrl ->
-                    cityJsonProcessorApiClient.generate(
+                    threedApiClient.generate(
                         id,
                         CreateCityJsonFromFeatureFileUrl.builder()
                             .featureFileUrl(buildingUrl)
@@ -165,7 +165,7 @@ public class CityJSONInternalProcessor implements Function<CityJSONRequest, List
   private DelimitationType getDelimitationType(CityJSONRequest request) {
     var delimitationObjectType = request.getDelimitationObjectType();
     return switch (delimitationObjectType) {
-      case BUILDING_ROOF_SEGMENT_FACE -> ROOF_SEGMENT_FACE_DELIMITATION;
+      case BUILDING_ROOF_SEGMENT_FACE -> PANEL_BY_PANEL_DELIMITATION;
       case null, default -> DelimitationType.ENTIRE_ROOF_DELIMITATION;
     };
   }

@@ -1,14 +1,11 @@
 package app.bpartners.geojobs.service.lidar;
 
-import static app.bpartners.geojobs.model.lidar.planes.model.LasRoofDelimitationType.ENTIRE_ROOF_DELIMITATION;
 import static app.bpartners.geojobs.service.GeometrySquareMeterArea.*;
 import static app.bpartners.geojobs.service.lidar.model.LidarClass.BATIMENT;
 import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.*;
 import static java.util.stream.Collectors.toSet;
 
 import app.bpartners.geojobs.model.lidar.LasPointGeometry;
-import app.bpartners.geojobs.model.lidar.planes.model.DelimitedRoofPoints;
-import app.bpartners.geojobs.model.lidar.planes.model.RoofPointsDelimitationTransformer;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
 import app.bpartners.geojobs.service.lidar.api.LidarApiFacade;
 import app.bpartners.geojobs.service.lidar.model.*;
@@ -276,24 +273,6 @@ public class LidarRoofsAnalysisProcessor {
           + envelope.getMinY()
           + "_"
           + envelope.getMaxY();
-    }
-
-    public PointsExtractionResult toPointsExtractionResult() {
-      Map<Envelope, DelimitedRoofPoints> map = new HashMap<>();
-      for (var entry : this.roofsData.entrySet()) {
-        var geometryInEPSG4326 = entry.getValue().roof().boundaryEPSG4326();
-        var geometryInLocalCRS = entry.getValue().roof().boundaryLambert93();
-        var delimitedRoofPoints =
-            new DelimitedRoofPoints(
-                ENTIRE_ROOF_DELIMITATION,
-                geometryInEPSG4326,
-                geometryInLocalCRS,
-                RoofPointsDelimitationTransformer.none());
-        var key = geometryInEPSG4326.getEnvelopeInternal();
-
-        map.put(key, delimitedRoofPoints);
-      }
-      return new PointsExtractionResult(map);
     }
   }
 }

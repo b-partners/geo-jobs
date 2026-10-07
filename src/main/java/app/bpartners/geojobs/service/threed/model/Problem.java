@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.service.ciytjsonprocessor.model;
+package app.bpartners.geojobs.service.threed.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
