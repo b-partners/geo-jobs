@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -18,6 +19,7 @@ import app.bpartners.geojobs.service.lidar.api.GeodataLidarApiClient;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
@@ -26,8 +28,15 @@ import org.mockito.ArgumentCaptor;
 class AreaCoverageServiceTest {
   GeodataMapLayerClient mapLayerClientMock = mock();
   GeodataLidarApiClient lidarApiClientMock = mock();
+  LidarFileChecker lidarFileCheckerMock = mock();
   AreaCoverageService subject =
-      new AreaCoverageService(mapLayerClientMock, lidarApiClientMock, new CoverageConf(5));
+      new AreaCoverageService(
+          mapLayerClientMock, lidarApiClientMock, lidarFileCheckerMock, new CoverageConf(5));
+
+  @BeforeEach
+  void setUp() {
+    when(lidarFileCheckerMock.check(any())).thenReturn(LidarFileStatus.VALID);
+  }
 
   private static MapLayerActual actualWithPrecision(Integer precisionInCm) {
     return new MapLayerActual(
@@ -167,6 +176,56 @@ class AreaCoverageServiceTest {
   @Test
   void check_3d_propagates_gateway_timeout_instead_of_reporting_not_covered() {
     when(lidarApiClientMock.getLidarFileUrls(any())).thenThrow(new GatewayTimeoutException("down"));
+
+    assertThrows(GatewayTimeoutException.class, () -> subject.check3D(2.3, 48.5));
+  }
+
+  @Test
+  void check_3d_is_not_covered_when_geodata_files_are_absent_or_invalid() {
+    when(lidarApiClientMock.getLidarFileUrls(any()))
+        .thenReturn(
+            new GeodataLidarApiClient.LidarUrlsResult(
+                "FRANCE", "EPSG:2154", List.of(Set.of("gone.laz"), Set.of("bad.laz"))));
+    when(lidarFileCheckerMock.check("gone.laz")).thenReturn(LidarFileStatus.ABSENT);
+    when(lidarFileCheckerMock.check("bad.laz")).thenReturn(LidarFileStatus.INVALID);
+
+    var actual = subject.check3D(List.of(square(2, 48), square(3, 48)));
+
+    assertEquals(new Coverage3D(false, "FRANCE", "EPSG:2154", 2, 0, 2), actual);
+  }
+
+  @Test
+  void check_3d_is_covered_when_at_least_one_file_of_the_geometry_is_valid() {
+    when(lidarApiClientMock.getLidarFileUrls(any()))
+        .thenReturn(
+            new GeodataLidarApiClient.LidarUrlsResult(
+                "FRANCE", "EPSG:2154", List.of(Set.of("gone.laz", "ok.laz"))));
+    when(lidarFileCheckerMock.check("gone.laz")).thenReturn(LidarFileStatus.ABSENT);
+
+    var actual = subject.check3D(2.3, 48.5);
+
+    assertEquals(new Coverage3D(true, "FRANCE", "EPSG:2154", 2, 1, 1), actual);
+  }
+
+  @Test
+  void check_3d_checks_each_distinct_file_only_once() {
+    when(lidarApiClientMock.getLidarFileUrls(any()))
+        .thenReturn(
+            new GeodataLidarApiClient.LidarUrlsResult(
+                "FRANCE", "EPSG:2154", List.of(Set.of("shared.laz"), Set.of("shared.laz"))));
+
+    subject.check3D(List.of(square(2, 48), square(3, 48)));
+
+    verify(lidarFileCheckerMock, times(1)).check("shared.laz");
+  }
+
+  @Test
+  void check_3d_does_not_report_not_covered_when_a_file_cannot_be_verified() {
+    when(lidarApiClientMock.getLidarFileUrls(any()))
+        .thenReturn(
+            new GeodataLidarApiClient.LidarUrlsResult(
+                "FRANCE", "EPSG:2154", List.of(Set.of("flaky.laz"))));
+    when(lidarFileCheckerMock.check("flaky.laz")).thenReturn(LidarFileStatus.UNKNOWN);
 
     assertThrows(GatewayTimeoutException.class, () -> subject.check3D(2.3, 48.5));
   }
