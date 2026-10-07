@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.model.exception.GatewayTimeoutException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -27,7 +28,8 @@ import org.springframework.web.client.RestTemplate;
 class GeodataHttpClientTest {
   RestTemplate restTemplateMock = mock();
   GeodataHttpClient subject =
-      new GeodataHttpClient(restTemplateMock, new GeodataApiConf("https://geodata.api", "key"));
+      new GeodataHttpClient(
+          new ObjectMapper(), restTemplateMock, new GeodataApiConf("https://geodata.api", "key"));
 
   @Test
   void get_sends_api_key_and_query_params() {
@@ -63,9 +65,9 @@ class GeodataHttpClientTest {
   }
 
   @Test
-  void get_or_empty_returns_empty_on_not_found() {
+  void get_or_empty_returns_empty_on_resource_not_found_exception() {
     when(restTemplateMock.exchange(any(URI.class), eq(HttpMethod.GET), any(), eq(String.class)))
-        .thenThrow(mock(HttpClientErrorException.NotFound.class));
+        .thenThrow(notFoundWithBody("{\"type\":\"ResourceNotFoundException\",\"message\":\"m\"}"));
 
     assertTrue(
         subject.getOrEmptyWhenNotFound("/map/layers/actual", Map.of(), String.class).isEmpty());
@@ -115,5 +117,41 @@ class GeodataHttpClientTest {
 
     assertThrows(
         GatewayTimeoutException.class, () -> subject.post("/lidar/urls", "{}", String.class));
+  }
+
+  private static HttpClientErrorException.NotFound notFoundWithBody(String body) {
+    return (HttpClientErrorException.NotFound)
+        HttpClientErrorException.create(
+            HttpStatus.NOT_FOUND, "Not Found", new HttpHeaders(), body.getBytes(), null);
+  }
+
+  @Test
+  void get_or_empty_throws_gateway_timeout_on_not_found_without_geodata_error_body() {
+    when(restTemplateMock.exchange(any(URI.class), eq(HttpMethod.GET), any(), eq(String.class)))
+        .thenThrow(notFoundWithBody("<html>Not Found</html>"));
+
+    assertThrows(
+        GatewayTimeoutException.class,
+        () -> subject.getOrEmptyWhenNotFound("/map/layers/actual", Map.of(), String.class));
+  }
+
+  @Test
+  void get_or_empty_throws_gateway_timeout_on_not_found_with_other_error_type() {
+    when(restTemplateMock.exchange(any(URI.class), eq(HttpMethod.GET), any(), eq(String.class)))
+        .thenThrow(notFoundWithBody("{\"type\":\"NotAuthorizedException\"}"));
+
+    assertThrows(
+        GatewayTimeoutException.class,
+        () -> subject.getOrEmptyWhenNotFound("/map/layers/actual", Map.of(), String.class));
+  }
+
+  @Test
+  void get_or_empty_throws_gateway_timeout_on_not_found_with_empty_body() {
+    when(restTemplateMock.exchange(any(URI.class), eq(HttpMethod.GET), any(), eq(String.class)))
+        .thenThrow(notFoundWithBody(""));
+
+    assertThrows(
+        GatewayTimeoutException.class,
+        () -> subject.getOrEmptyWhenNotFound("/map/layers/actual", Map.of(), String.class));
   }
 }

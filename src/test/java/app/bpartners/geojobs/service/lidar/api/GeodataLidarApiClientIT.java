@@ -37,7 +37,9 @@ class GeodataLidarApiClientIT {
       new GeodataLidarApiClient(
           new ObjectMapper(),
           new GeodataHttpClient(
-              new RestTemplate(), new GeodataApiConf(GEODATA_API_URL, GEODATA_API_KEY)));
+              new ObjectMapper(),
+              new RestTemplate(),
+              new GeodataApiConf(GEODATA_API_URL, GEODATA_API_KEY)));
   private final GeometrySquareMeterArea projector = new GeometrySquareMeterArea();
 
   private static Geometry an_area_covered_by_ign_lidar_hd() {

@@ -4,6 +4,8 @@ import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpMethod.POST;
 
 import app.bpartners.geojobs.model.exception.GatewayTimeoutException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
 import java.util.Map;
 import java.util.Optional;
@@ -24,7 +26,9 @@ import org.springframework.web.util.UriComponentsBuilder;
 @RequiredArgsConstructor
 public class GeodataHttpClient {
   private static final String API_KEY_HEADER = "x-api-key";
+  private static final String RESOURCE_NOT_FOUND_TYPE = "ResourceNotFoundException";
 
+  private final ObjectMapper om;
   private final RestTemplate restTemplate;
   private final GeodataApiConf conf;
 
@@ -58,13 +62,22 @@ public class GeodataHttpClient {
       }
       return Optional.ofNullable(response.getBody());
     } catch (HttpClientErrorException.NotFound e) {
-      if (notFoundIsEmpty) {
+      if (notFoundIsEmpty && isResourceNotFound(e)) {
         return Optional.empty();
       }
       throw unavailable(uri.getPath(), e.getMessage());
     } catch (RestClientException e) {
       log.warn("Geodata API call {} {} failed", method, uri.getPath(), e);
       throw unavailable(uri.getPath(), e.getMessage());
+    }
+  }
+
+  private boolean isResourceNotFound(HttpClientErrorException.NotFound e) {
+    try {
+      var type = om.readTree(e.getResponseBodyAsString()).path("type").asText();
+      return RESOURCE_NOT_FOUND_TYPE.equals(type);
+    } catch (JsonProcessingException | RuntimeException parsingFailure) {
+      return false;
     }
   }
 
