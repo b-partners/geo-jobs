@@ -23,8 +23,8 @@ public class Plane3DGeneratorWithoutSegmentations
 
   public Plane3DGeneratorWithoutSegmentations(Plane3DExtractorConf conf) {
     this.alignmentFixer = new RoofFaceToLidarAlignmentFixer(conf);
-    this.snapping2DComputer = new Snapping2DComputer(1);
-    this.snapping3DComputer = new Snapping3DComputer(1.5);
+    this.snapping2DComputer = new Snapping2DComputer(0.5);
+    this.snapping3DComputer = new Snapping3DComputer(1);
   }
 
   public Plane3D apply(DelimitedRoofPointsItem item) {

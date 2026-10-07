@@ -8,6 +8,7 @@ import app.bpartners.geojobs.model.lidar.LasPointGeometry;
 import app.bpartners.geojobs.model.lidar.planes.conf.Plane3DExtractorConf;
 import app.bpartners.geojobs.model.lidar.planes.exporter.Plane3DExtractionStepExporter;
 import app.bpartners.geojobs.model.lidar.planes.model.DelimitedRoofPoints;
+import app.bpartners.geojobs.model.lidar.planes.model.DelimitedRoofPointsItem;
 import app.bpartners.geojobs.service.cityjson.exception.CityJsonException;
 import app.bpartners.geojobs.service.cityjson.factory.BuildingGroundPolygonFactory;
 import app.bpartners.geojobs.service.cityjson.factory.BuildingWallPolygonFactory;
@@ -20,7 +21,10 @@ import app.bpartners.geojobs.service.lidar.api.WalloniaBoundaryChecker;
 import app.bpartners.geojobs.service.lidar.model.geometry.GeometryWithProperties;
 import app.bpartners.geojobs.service.lidar.model.geometry.roof.Building3DProperties;
 import app.bpartners.geojobs.service.lidar.model.geometry.roof.RoofPlane3D;
+import app.bpartners.geojobs.service.lidar.preprocessing.ground.GroundPointsCleaner;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +47,7 @@ public class LidarDataToCityJsonProcessor
   private static final String AREA_KEY = "area_in_square_meters";
   private static final String PLANE_SLOPE_KEY = "slope_in_degrees";
   private static final String DISTANCE_2D_SCALE = "distance_2d_scale";
+  private static final int MIN_ROOF_POINTS_COUNT = 3;
 
   @Autowired
   public LidarDataToCityJsonProcessor(
@@ -83,16 +88,32 @@ public class LidarDataToCityJsonProcessor
   }
 
   private BuildingData toBuildingData(DelimitedRoofPoints roof, Plane3DExtractorConf conf) {
-    var roofProperty = new Building3DProperties(conf, null, roof, exporter);
-    var planes = roofProperty.getRoofPlanes();
-    var area2DScale = getArea2DScale(roof, planes);
-    var distance2DScale = Math.sqrt(area2DScale);
+    var groundZ = getGroundZ(roof);
+    if (roof.getPoints().size() < MIN_ROOF_POINTS_COUNT) {
+      log.warn(
+          "No lidar roof points for building {}, rendering it as ground only",
+          roof.getOriginalInEPSG4336());
+      var grounds =
+          Arrays.stream(roof.getItems()).map(item -> toGroundOnly(item, groundZ)).toList();
+      return toBuildingData(List.of(), List.of(), grounds);
+    }
 
-    var groundZ =
-        roofProperty.getCleanedGroundPoints().stream()
-            .mapToDouble(LasPointGeometry::getZ)
-            .average()
-            .orElse(0);
+    var roofWithPoints = isSegmentFace(roof) ? withoutFacesLackingPoints(roof) : roof;
+    var groundOnlyFaces =
+        Arrays.stream(roof.getItems())
+            .filter(item -> !hasEnoughPoints(item))
+            .map(item -> toGroundOnly(item, groundZ))
+            .toList();
+    if (isSegmentFace(roof) && !groundOnlyFaces.isEmpty()) {
+      log.warn(
+          "{} roof face(s) without lidar points, rendering them as ground only",
+          groundOnlyFaces.size());
+    }
+
+    var roofProperty = new Building3DProperties(conf, null, roofWithPoints, exporter);
+    var planes = roofProperty.getRoofPlanes();
+    var area2DScale = getArea2DScale(roofWithPoints, planes);
+    var distance2DScale = Math.sqrt(area2DScale);
 
     var roofs =
         planes.stream()
@@ -104,8 +125,19 @@ public class LidarDataToCityJsonProcessor
             .flatMap(List::stream)
             .toList();
 
-    var grounds = planes.stream().map(plane -> createGround(plane, groundZ)).toList();
+    var grounds = new ArrayList<GeometryWithProperties>();
+    planes.stream().map(plane -> createGround(plane, groundZ)).forEach(grounds::add);
+    if (isSegmentFace(roof)) {
+      grounds.addAll(groundOnlyFaces);
+    }
 
+    return toBuildingData(roofs, walls, grounds);
+  }
+
+  private static BuildingData toBuildingData(
+      List<GeometryWithProperties> roofs,
+      List<GeometryWithProperties> walls,
+      List<GeometryWithProperties> grounds) {
     return BuildingData.builder()
         .id(randomUUID().toString())
         .walls(walls)
@@ -113,6 +145,35 @@ public class LidarDataToCityJsonProcessor
         .grounds(grounds)
         .properties(new HashMap<>())
         .build();
+  }
+
+  private static double getGroundZ(DelimitedRoofPoints roof) {
+    return new GroundPointsCleaner()
+        .apply(roof.getGroundPoints()).stream()
+            .mapToDouble(LasPointGeometry::getZ)
+            .average()
+            .orElse(0);
+  }
+
+  private static DelimitedRoofPoints withoutFacesLackingPoints(DelimitedRoofPoints roof) {
+    var items =
+        Arrays.stream(roof.getItems())
+            .filter(LidarDataToCityJsonProcessor::hasEnoughPoints)
+            .toArray(DelimitedRoofPointsItem[]::new);
+    return roof.toBuilder().items(items).build();
+  }
+
+  private static boolean hasEnoughPoints(DelimitedRoofPointsItem item) {
+    return item.getPoints().size() >= MIN_ROOF_POINTS_COUNT;
+  }
+
+  private static boolean isSegmentFace(DelimitedRoofPoints roof) {
+    return ROOF_SEGMENT_FACE_DELIMITATION.equals(roof.getType());
+  }
+
+  private static GeometryWithProperties toGroundOnly(DelimitedRoofPointsItem item, double groundZ) {
+    var groundPolygon = BuildingGroundPolygonFactory.make(item.getPolygon(), groundZ);
+    return new GeometryWithProperties(groundPolygon, Map.of());
   }
 
   private static GeometryWithProperties toPolygonWithProperties(
