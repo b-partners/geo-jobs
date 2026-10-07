@@ -128,33 +128,36 @@ public class LidarRoofsAnalysisProcessor {
       throw e;
     }
 
-    var roofsDataFromFile = emptyFrom(roofsData, AVAILABLE);
+    try {
+      var roofsDataFromFile = emptyFrom(roofsData, AVAILABLE);
 
-    var lasReader = new LASReader(file);
-    var lasHeader = lasReader.getHeader();
-    log.info("Reading lasPoints from file url: {}", file.getPath());
-    for (var point : lasReader.getPoints()) {
-      var pointClassification = point.getClassification();
+      var lasReader = new LASReader(file);
+      var lasHeader = lasReader.getHeader();
+      log.info("Reading lasPoints from file url: {}", file.getPath());
+      for (var point : lasReader.getPoints()) {
+        var pointClassification = point.getClassification();
 
-      switch (pointClassification) {
-        case GROUND_LIDAR_CLASS_VALUE:
-          var groundPoint = new LasPointGeometry(point, lasHeader);
-          handleGroundPoint(groundPoint, roofsDataFromFile);
-          break;
-        case ROOF_LIDAR_CLASS_VALUE,
-            DIVERS_BATI_LIDAR_CLASS_VALUE,
-            NOT_CLASSIFIED_LIDAR_CLASS_VALUE:
-          var roofPoint = new LasPointGeometry(point, lasHeader);
-          handleRoofPoint(roofPoint, roofsDataFromFile);
-          break;
-        default:
-          break;
+        switch (pointClassification) {
+          case GROUND_LIDAR_CLASS_VALUE:
+            var groundPoint = new LasPointGeometry(point, lasHeader);
+            handleGroundPoint(groundPoint, roofsDataFromFile);
+            break;
+          case ROOF_LIDAR_CLASS_VALUE,
+              DIVERS_BATI_LIDAR_CLASS_VALUE,
+              NOT_CLASSIFIED_LIDAR_CLASS_VALUE:
+            var roofPoint = new LasPointGeometry(point, lasHeader);
+            handleRoofPoint(roofPoint, roofsDataFromFile);
+            break;
+          default:
+            break;
+        }
       }
-    }
 
-    log.info("Finished reading lasPoints from: {}", file.getPath());
-    remove(file);
-    return roofsDataFromFile;
+      log.info("Finished reading lasPoints from: {}", file.getPath());
+      return roofsDataFromFile;
+    } finally {
+      remove(file);
+    }
   }
 
   private static void handleGroundPoint(
@@ -233,6 +236,10 @@ public class LidarRoofsAnalysisProcessor {
   private static void remove(File file) {
     try {
       Files.deleteIfExists(file.toPath());
+      var directory = file.getParentFile();
+      if (directory != null) {
+        Files.deleteIfExists(directory.toPath());
+      }
     } catch (IOException e) {
       log.warn("Failed to delete file {}", file.getPath(), e);
     }

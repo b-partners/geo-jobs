@@ -6,6 +6,7 @@ import static app.bpartners.geojobs.service.GeometrySquareMeterArea.EPSG_3812;
 import static app.bpartners.geojobs.service.GeometrySquareMeterArea.LAMBERT_93;
 import static app.bpartners.geojobs.service.GeometrySquareMeterArea.WGS84;
 import static java.util.UUID.randomUUID;
+import static org.apache.commons.io.FileUtils.deleteQuietly;
 
 import app.bpartners.geojobs.file.FileWriter;
 import app.bpartners.geojobs.service.GeometrySquareMeterArea;
@@ -78,7 +79,16 @@ public class LidarApiFacade {
   }
 
   public Optional<File> download(String fileUrl) {
-    return download(fileUrl, createTempDirectory());
+    var directory = createTempDirectory();
+    Optional<File> file = Optional.empty();
+    try {
+      file = download(fileUrl, directory);
+      return file;
+    } finally {
+      if (file.isEmpty()) {
+        deleteQuietly(directory);
+      }
+    }
   }
 
   @SuppressWarnings("all")
@@ -102,12 +112,15 @@ public class LidarApiFacade {
 
       var filename = randomUUID().toString();
       var outputPath = Paths.get(directory.getPath(), filename + LAZ_FILE_SUFFIX);
-      FileWriter.write(outputPath, data);
+      try {
+        FileWriter.write(outputPath, data);
+      } catch (Exception e) {
+        deleteQuietly(outputPath.toFile());
+        throw e;
+      }
 
       log.info("Finished downloading {}", cachedUrl);
-      var file = outputPath.toFile();
-      file.deleteOnExit();
-      return Optional.of(file);
+      return Optional.of(outputPath.toFile());
     } catch (HttpClientErrorException.NotFound e) {
       log.warn("File not found (404): {}", fileUrl);
       return Optional.empty();
