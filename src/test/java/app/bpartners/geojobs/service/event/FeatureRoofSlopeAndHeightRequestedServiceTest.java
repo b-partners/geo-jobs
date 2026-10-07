@@ -6,50 +6,41 @@ import static app.bpartners.geojobs.model.CustomObjectMapper.objectMapper;
 import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightRequestedService.*;
 import static app.bpartners.geojobs.service.event.DetectionRoofSlopeAndHeightRequestedService.LIDAR_DATA_STATUS_PROPERTY_NAME;
 import static app.bpartners.geojobs.service.lidar.model.LidarDataStatus.AVAILABLE;
+import static app.bpartners.geojobs.service.threed.model.DelimitationType.ENTIRE_ROOF_DELIMITATION;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.never;
 
 import app.bpartners.geojobs.endpoint.event.EventProducer;
 import app.bpartners.geojobs.endpoint.event.model.FeatureRoofSlopeAndHeightRequested;
 import app.bpartners.geojobs.endpoint.event.model.FeatureVggRequested;
-import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.FeatureMapper;
-import app.bpartners.geojobs.model.lidar.planes.Plane3DSlopeInDegrees;
 import app.bpartners.geojobs.repository.DetectionRepository;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
-import app.bpartners.geojobs.service.lidar.LidarRoofsAnalysisProcessor;
-import app.bpartners.geojobs.service.lidar.model.geometry.roof.Building3DProperties;
-import app.bpartners.geojobs.service.lidar.model.geometry.roof.BuildingHeightInMeters;
-import app.bpartners.geojobs.service.lidar.model.geometry.roof.LidarRoofData;
-import app.bpartners.geojobs.service.lidar.model.geometry.roof.RoofPlane3D;
+import app.bpartners.geojobs.service.CityJSONThreedProcessor;
 import jakarta.persistence.EntityManager;
+import java.io.File;
 import java.math.BigDecimal;
+import java.nio.file.Files;
 import java.util.*;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.locationtech.jts.geom.Polygon;
 import org.mockito.ArgumentCaptor;
 
 class FeatureRoofSlopeAndHeightRequestedServiceTest {
 
   DetectionRepository detectionRepositoryMock = mock();
-  LidarRoofsAnalysisProcessor lidarRoofsAnalysisProcessorMock = mock();
-  FeatureMapper featureMapperMock = mock();
+  CityJSONThreedProcessor threedProcessorMock = mock();
   EntityManager entityManagerMock = mock();
   EventProducer eventProducerMock = mock();
   FeatureRoofSlopeAndHeightRequestedService subject =
       new FeatureRoofSlopeAndHeightRequestedService(
-          detectionRepositoryMock,
-          lidarRoofsAnalysisProcessorMock,
-          featureMapperMock,
-          eventProducerMock,
-          entityManagerMock);
+          detectionRepositoryMock, threedProcessorMock, eventProducerMock, entityManagerMock);
 
   @BeforeEach
   void setUp() {
@@ -87,26 +78,9 @@ class FeatureRoofSlopeAndHeightRequestedServiceTest {
             .featureWithDelimitations(featureWithDelimitations)
             .build();
     when(detectionRepositoryMock.findById(detection.getId())).thenReturn(Optional.of(detection));
-    when(featureMapperMock.domainToGeometry(any())).thenReturn(mock(Polygon.class));
 
-    var data = mock(LidarRoofData.class);
-    var result = mock(LidarRoofsAnalysisProcessor.RoofsAnalysisResult.class);
-    var properties = mock(Building3DProperties.class);
-
-    when(data.status()).thenReturn(AVAILABLE);
-    when(properties.getData()).thenReturn(data);
-    when(result.getProperties(any())).thenReturn(properties);
-
-    var plane = mock(RoofPlane3D.class);
-    var slope = mock(Plane3DSlopeInDegrees.class);
-    when(plane.getSlopeInDegrees()).thenReturn(slope);
-    when(slope.getValue()).thenReturn(expectedRoofSlope);
-    when(properties.getRoofPlanes()).thenReturn(List.of(plane));
-
-    var height = mock(BuildingHeightInMeters.class);
-    when(height.getValue()).thenReturn(expectedRoofHeight);
-    when(properties.getHeightInMeters()).thenReturn(height);
-    when(lidarRoofsAnalysisProcessorMock.from(anySet())).thenReturn(result);
+    when(threedProcessorMock.generate(any(), any(), eq(ENTIRE_ROOF_DELIMITATION), any()))
+        .thenReturn(cityJson(expectedRoofSlope));
 
     subject.accept(
         FeatureRoofSlopeAndHeightRequested.builder()
@@ -174,9 +148,44 @@ class FeatureRoofSlopeAndHeightRequestedServiceTest {
             subject.accept(
                 new FeatureRoofSlopeAndHeightRequested(detectionIdentifier, restFeature)));
 
-    verify(lidarRoofsAnalysisProcessorMock, never()).from(anySet());
+    verify(threedProcessorMock, never()).generate(any(), any(), any(), any());
     verify(detectionRepositoryMock, never()).save(any());
     verify(eventProducerMock, never()).accept(any());
+  }
+
+  /** One roof surface whose highest vertex is at z=10 and one ground surface at z=6.5. */
+  @SneakyThrows
+  private static File cityJson(double roofSlope) {
+    var file = File.createTempFile("cityjson", ".json");
+    Files.writeString(
+        file.toPath(),
+        """
+        {
+          "type": "CityJSON",
+          "transform": {"scale": [0.001, 0.001, 0.001], "translate": [0, 0, 0]},
+          "vertices": [[0, 0, 8000], [1000, 0, 8000], [0, 1000, 10000],
+                       [0, 0, 6500], [1000, 0, 6500], [0, 1000, 6500]],
+          "CityObjects": {
+            "0": {
+              "type": "Building",
+              "geometry": [{
+                "type": "MultiSurface",
+                "lod": "2",
+                "boundaries": [[[0, 1, 2]], [[3, 4, 5]]],
+                "semantics": {
+                  "surfaces": [
+                    {"type": "RoofSurface", "slope_in_degrees": %s, "area_in_square_meters": 10},
+                    {"type": "GroundSurface"}
+                  ],
+                  "values": [0, 1]
+                }
+              }]
+            }
+          }
+        }
+        """
+            .formatted(roofSlope));
+    return file;
   }
 
   @SneakyThrows

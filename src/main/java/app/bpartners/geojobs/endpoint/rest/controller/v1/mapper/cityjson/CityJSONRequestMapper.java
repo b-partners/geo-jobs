@@ -2,7 +2,7 @@ package app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.cityjson;
 
 import static app.bpartners.geojobs.endpoint.rest.controller.mapper.cityjson.CityJSONDelimitationObjectTypeMapper.toRestDelimitationObjectType;
 import static app.bpartners.geojobs.endpoint.rest.model.DelimitationType.USER_DEFINED_DELIMITATION;
-import static app.bpartners.geojobs.model.lidar.LidarProcessorType.THREE_D_BAG_ROOFER;
+import static app.bpartners.geojobs.model.LidarProcessorType.THREE_D_BAG_ROOFER;
 import static java.math.RoundingMode.HALF_UP;
 import static java.time.Instant.now;
 
@@ -11,7 +11,7 @@ import app.bpartners.geojobs.endpoint.rest.controller.mapper.cityjson.CityJSONTe
 import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.*;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
-import app.bpartners.geojobs.model.lidar.LidarProcessorType;
+import app.bpartners.geojobs.model.LidarProcessorType;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSON;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONTexture;
 import java.math.BigDecimal;

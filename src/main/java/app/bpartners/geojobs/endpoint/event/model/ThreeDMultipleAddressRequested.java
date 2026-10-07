@@ -1,7 +1,7 @@
 package app.bpartners.geojobs.endpoint.event.model;
 
 import app.bpartners.geojobs.endpoint.rest.model.Point;
-import app.bpartners.geojobs.model.lidar.LidarProcessorType;
+import app.bpartners.geojobs.model.LidarProcessorType;
 import java.time.Duration;
 import java.util.List;
 import lombok.*;

@@ -9,7 +9,7 @@ import static org.hibernate.type.SqlTypes.NAMED_ENUM;
 
 import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.FeatureMapper;
 import app.bpartners.geojobs.endpoint.rest.model.DelimitationType;
-import app.bpartners.geojobs.model.lidar.LidarProcessorType;
+import app.bpartners.geojobs.model.LidarProcessorType;
 import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
 import jakarta.persistence.*;

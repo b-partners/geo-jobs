@@ -1,9 +1,9 @@
 package app.bpartners.geojobs.service;
 
-import static app.bpartners.geojobs.model.lidar.LidarProcessorType.DEFAULT;
-import static app.bpartners.geojobs.model.lidar.LidarProcessorType.THREE_D_BAG_ROOFER;
+import static app.bpartners.geojobs.model.LidarProcessorType.DEFAULT;
+import static app.bpartners.geojobs.model.LidarProcessorType.THREE_D_BAG_ROOFER;
 
-import app.bpartners.geojobs.model.lidar.LidarProcessorType;
+import app.bpartners.geojobs.model.LidarProcessorType;
 import app.bpartners.geojobs.repository.CityJSONRequestRepository;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSON;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class CityJSONSafeModeProcessor implements Function<CityJSONRequest, List<CityJSON>> {
   private final CityJSON3DBagRooferProcessor rooferProcessor;
-  private final CityJSONInternalProcessor internalProcessor;
+  private final CityJSONThreedProcessor internalProcessor;
   private final CityJSONRequestRepository cityJSONRequestRepository;
 
   @Override

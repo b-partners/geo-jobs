@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import app.bpartners.geojobs.model.lidar.LidarProcessorType;
+import app.bpartners.geojobs.model.LidarProcessorType;
 import app.bpartners.geojobs.repository.CityJSONRequestRepository;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,13 +14,13 @@ import org.mockito.ArgumentCaptor;
 
 class CityJSONSafeModeProcessorTest {
   private CityJSONSafeModeProcessor subject;
-  private CityJSONInternalProcessor internalProcessorMock;
+  private CityJSONThreedProcessor internalProcessorMock;
   private CityJSON3DBagRooferProcessor rooferProcessorMock;
   private CityJSONRequestRepository cityJSONRequestRepositoryMock;
 
   @BeforeEach
   void setup() {
-    internalProcessorMock = mock(CityJSONInternalProcessor.class);
+    internalProcessorMock = mock(CityJSONThreedProcessor.class);
     rooferProcessorMock = mock(CityJSON3DBagRooferProcessor.class);
     cityJSONRequestRepositoryMock = mock(CityJSONRequestRepository.class);
 
