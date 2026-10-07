@@ -25,6 +25,7 @@ import app.bpartners.geojobs.repository.model.detection.DetectedObject;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.detection.*;
+import app.bpartners.geojobs.service.detection.inference.ModelCardResolver;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.tiling.TileValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -82,7 +83,9 @@ class TileDetectionTaskConsumerIT {
           bucketComponentMock,
           fileWriterMock,
           objectMapperMock,
-          new RestTemplate());
+          new RestTemplate(),
+          mock(),
+          new ModelCardResolver(mock(), mock()));
   RoofCoveringDetector roofCoveringDetector =
       new RoofCoveringDetector(
           objectMapper, restTemplateMock, "dummyUrl", customBucketComponentMock);
