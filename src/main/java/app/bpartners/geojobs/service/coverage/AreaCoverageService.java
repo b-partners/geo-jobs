@@ -3,12 +3,15 @@ package app.bpartners.geojobs.service.coverage;
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 
 import app.bpartners.geojobs.model.exception.BadRequestException;
+import app.bpartners.geojobs.model.exception.GatewayTimeoutException;
 import app.bpartners.geojobs.service.geodata.GeodataMapLayerClient;
 import app.bpartners.geojobs.service.geodata.model.GeodataMapLayer;
 import app.bpartners.geojobs.service.lidar.api.GeodataLidarApiClient;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
@@ -22,6 +25,7 @@ public class AreaCoverageService {
 
   private final GeodataMapLayerClient mapLayerClient;
   private final GeodataLidarApiClient lidarApiClient;
+  private final LidarFileChecker lidarFileChecker;
   private final CoverageConf conf;
 
   public Coverage2D check2D(double longitude, double latitude) {
@@ -43,14 +47,15 @@ public class AreaCoverageService {
     var result = lidarApiClient.getLidarFileUrls(geometries);
 
     Set<String> distinctUrls = new HashSet<>();
+    Map<String, LidarFileStatus> statusPerUrl = new HashMap<>();
     var coveredGeometryCount = 0;
     for (int i = 0; i < geometries.size(); i++) {
       var urls =
           i < result.urlsPerGeometry().size() ? result.urlsPerGeometry().get(i) : Set.<String>of();
-      if (!urls.isEmpty()) {
+      distinctUrls.addAll(urls);
+      if (hasValidFile(urls, statusPerUrl)) {
         coveredGeometryCount++;
       }
-      distinctUrls.addAll(urls);
     }
     return new Coverage3D(
         coveredGeometryCount == geometries.size(),
@@ -59,6 +64,24 @@ public class AreaCoverageService {
         distinctUrls.size(),
         coveredGeometryCount,
         geometries.size());
+  }
+
+  private boolean hasValidFile(Set<String> urls, Map<String, LidarFileStatus> statusPerUrl) {
+    String unverifiedUrl = null;
+    for (var url : urls) {
+      var status = statusPerUrl.computeIfAbsent(url, lidarFileChecker::check);
+      if (status == LidarFileStatus.VALID) {
+        return true;
+      }
+      if (status == LidarFileStatus.UNKNOWN) {
+        unverifiedUrl = url;
+      }
+    }
+    if (unverifiedUrl != null) {
+      throw new GatewayTimeoutException(
+          "Lidar file " + unverifiedUrl + " could not be verified, 3D coverage is undetermined");
+    }
+    return false;
   }
 
   private static Geometry pointFootprint(double longitude, double latitude) {
