@@ -28,12 +28,15 @@ import app.bpartners.geojobs.service.detection.inference.InferenceRequest;
 import app.bpartners.geojobs.service.detection.inference.ModelCardResolver;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.awt.Dimension;
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import javax.imageio.ImageIO;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -51,6 +54,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 @Slf4j
 public class HttpApiTileObjectDetector implements TileObjectDetector {
   private static final String INFERENCE_SOURCE_PREFIX = "inference:";
+  private static final int DEFAULT_SUPPORTED_TILE_SIZE = 512;
   private final ObjectMapper om;
   private final CustomBucketComponent customBucketComponent;
   private final String defaultDetectionApiUrl;
@@ -117,7 +121,10 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
     String base64MaskData =
         mask == null ? null : Base64.getEncoder().encodeToString(readFileToByteArray(mask));
 
-    var resolution = modelCardResolver.resolve(detectableObjectConfigurations);
+    var tileSize = readImageSize(tileImageFile);
+    var resolution =
+        modelCardResolver.resolve(
+            detectableObjectConfigurations, modelCard -> supportsTileSize(modelCard, tileSize));
     var v2Responses = new ArrayList<DetectionResponseAggregator.DetectionResponseUrl>();
     var v1Responses = new ArrayList<DetectionResponseAggregatorV1.DetectionResponseUrl>();
 
@@ -135,12 +142,22 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
       }
     }
 
-    var lambdaConfigurations =
-        lambdaConfigurations(detectableObjectConfigurations, resolution.unmappedTypes());
+    var lambdaTypes = new HashSet<>(resolution.unmappedTypes());
+    lambdaTypes.addAll(resolution.unsupportedTypes());
+    var lambdaConfigurations = lambdaConfigurations(detectableObjectConfigurations, lambdaTypes);
     if (!lambdaConfigurations.isEmpty()) {
-      log.warn(
-          "No inference model card mapped for {}, falling back to detection lambdas",
-          resolution.unmappedTypes());
+      if (!resolution.unmappedTypes().isEmpty()) {
+        log.warn(
+            "No inference model card mapped for {}, falling back to detection lambdas",
+            resolution.unmappedTypes());
+      }
+      if (!resolution.unsupportedTypes().isEmpty()) {
+        log.warn(
+            "Tile size {} not supported by the inference model cards of {}, falling back to"
+                + " detection lambdas",
+            tileSize,
+            resolution.unsupportedTypes());
+      }
       callLambdaApis(
           tileDetectionTask,
           tileImageFile.getName(),
@@ -155,6 +172,37 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
     return mergeToV2(
         detectionResponseAggregatorV1.apply(v1Responses),
         detectionResponseAggregator.apply(v2Responses));
+  }
+
+  private static boolean supportsTileSize(DeployedModelCard modelCard, Dimension tileSize) {
+    if (tileSize == null) {
+      return false;
+    }
+    var expectedWidth =
+        modelCard.imageWidth() == null ? DEFAULT_SUPPORTED_TILE_SIZE : modelCard.imageWidth();
+    var expectedHeight =
+        modelCard.imageHeight() == null ? DEFAULT_SUPPORTED_TILE_SIZE : modelCard.imageHeight();
+    return tileSize.width == expectedWidth && tileSize.height == expectedHeight;
+  }
+
+  private static Dimension readImageSize(File imageFile) {
+    try (var input = ImageIO.createImageInputStream(imageFile)) {
+      var readers = ImageIO.getImageReaders(input);
+      if (!readers.hasNext()) {
+        log.warn("Unable to read the size of tile image {}", imageFile.getName());
+        return null;
+      }
+      var reader = readers.next();
+      try {
+        reader.setInput(input);
+        return new Dimension(reader.getWidth(0), reader.getHeight(0));
+      } finally {
+        reader.dispose();
+      }
+    } catch (IOException e) {
+      log.warn("Unable to read the size of tile image {}: {}", imageFile.getName(), e.getMessage());
+      return null;
+    }
   }
 
   private List<DetectableObjectConfiguration> lambdaConfigurations(
