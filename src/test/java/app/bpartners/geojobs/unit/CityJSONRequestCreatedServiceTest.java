@@ -1,6 +1,6 @@
 package app.bpartners.geojobs.unit;
 
-import static app.bpartners.geojobs.model.lidar.LidarProcessorType.THREE_D_BAG_ROOFER;
+import static app.bpartners.geojobs.model.LidarProcessorType.THREE_D_BAG_ROOFER;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStatus.FAILED;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStatus.FINISHED;
 import static app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStep.GEOMETRY_CONSTRUCTION;

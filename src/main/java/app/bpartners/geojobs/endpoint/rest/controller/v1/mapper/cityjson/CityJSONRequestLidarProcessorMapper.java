@@ -6,7 +6,7 @@ public class CityJSONRequestLidarProcessorMapper {
   private CityJSONRequestLidarProcessorMapper() {}
 
   public static LidarProcessorType toRest(
-      app.bpartners.geojobs.model.lidar.LidarProcessorType processorType) {
+      app.bpartners.geojobs.model.LidarProcessorType processorType) {
     return switch (processorType) {
       case null -> null;
       case DEFAULT -> LidarProcessorType.DEFAULT;

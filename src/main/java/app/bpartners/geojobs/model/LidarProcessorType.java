@@ -1,4 +1,4 @@
-package app.bpartners.geojobs.model.lidar;
+package app.bpartners.geojobs.model;
 
 public enum LidarProcessorType {
   DEFAULT,
