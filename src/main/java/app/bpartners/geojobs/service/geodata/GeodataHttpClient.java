@@ -9,8 +9,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
 import java.util.Map;
 import java.util.Optional;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -23,7 +23,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
 @Slf4j
-@RequiredArgsConstructor
 public class GeodataHttpClient {
   private static final String API_KEY_HEADER = "x-api-key";
   private static final String RESOURCE_NOT_FOUND_TYPE = "ResourceNotFoundException";
@@ -31,6 +30,15 @@ public class GeodataHttpClient {
   private final ObjectMapper om;
   private final RestTemplate restTemplate;
   private final GeodataApiConf conf;
+
+  public GeodataHttpClient(
+      ObjectMapper om,
+      @Qualifier(GeodataRestTemplateConf.GEODATA_REST_TEMPLATE) RestTemplate restTemplate,
+      GeodataApiConf conf) {
+    this.om = om;
+    this.restTemplate = restTemplate;
+    this.conf = conf;
+  }
 
   public <T> T post(String path, Object body, Class<T> responseType) {
     var headers = headers();
