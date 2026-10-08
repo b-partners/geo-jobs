@@ -87,8 +87,7 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
     if (result.data().isEmpty()) {
       return true;
     }
-    return result.data().values().stream()
-        .allMatch(data -> data.getPoints().isEmpty() && data.getGroundPoints().isEmpty());
+    return result.data().values().stream().anyMatch(data -> data.getPoints().isEmpty());
   }
 
   private CityJSON toCityJSON(CityJSONRequest request, PointsExtractionResult result) {
