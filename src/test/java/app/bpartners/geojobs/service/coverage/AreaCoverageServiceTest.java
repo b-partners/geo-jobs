@@ -2,12 +2,15 @@ package app.bpartners.geojobs.service.coverage;
 
 import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFactory;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.model.exception.BadRequestException;
@@ -241,5 +244,47 @@ class AreaCoverageServiceTest {
         .thenReturn(Optional.of(new MapLayerActual("https://wms", null)));
 
     assertEquals(Coverage2D.notCovered(), subject.check2D(2.3, 48.5));
+  }
+
+  @Test
+  void check_runs_every_check_when_no_type_is_given() {
+    var location = new CoverageLocation(2.3, 48.5);
+    when(mapLayerClientMock.getActualMapLayer(48.5, 2.3))
+        .thenReturn(Optional.of(actualWithPrecision(5)));
+    when(lidarApiClientMock.getLidarFileUrls(any()))
+        .thenReturn(
+            new GeodataLidarApiClient.LidarUrlsResult(
+                "FRANCE", "EPSG:2154", List.of(Set.of("a.laz"))));
+
+    var withEmptyTypes = subject.check(location, Set.of());
+    var withNullTypes = subject.check(location, null);
+
+    assertEquals(withEmptyTypes, withNullTypes);
+    assertEquals(location, withEmptyTypes.location());
+    assertTrue(withEmptyTypes.imagery().covered());
+    assertTrue(withEmptyTypes.lidar().covered());
+  }
+
+  @Test
+  void check_runs_only_the_requested_types() {
+    var location = new CoverageLocation(2.3, 48.5);
+    when(mapLayerClientMock.getActualMapLayer(48.5, 2.3))
+        .thenReturn(Optional.of(actualWithPrecision(5)));
+
+    var imageryOnly = subject.check(location, Set.of(CoverageType.IMAGERY));
+
+    assertTrue(imageryOnly.imagery().covered());
+    assertNull(imageryOnly.lidar());
+    verifyNoInteractions(lidarApiClientMock);
+
+    when(lidarApiClientMock.getLidarFileUrls(any()))
+        .thenReturn(
+            new GeodataLidarApiClient.LidarUrlsResult(
+                "FRANCE", "EPSG:2154", List.of(Set.of("a.laz"))));
+
+    var lidarOnly = subject.check(location, Set.of(CoverageType.LIDAR));
+
+    assertNull(lidarOnly.imagery());
+    assertNotNull(lidarOnly.lidar());
   }
 }

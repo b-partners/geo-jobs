@@ -28,6 +28,19 @@ public class AreaCoverageService {
   private final LidarFileChecker lidarFileChecker;
   private final CoverageConf conf;
 
+  public LocationCoverage check(CoverageLocation location, Set<CoverageType> types) {
+    var all = types == null || types.isEmpty();
+    var imagery =
+        all || types.contains(CoverageType.IMAGERY)
+            ? check2D(location.longitude(), location.latitude())
+            : null;
+    var lidar =
+        all || types.contains(CoverageType.LIDAR)
+            ? check3D(location.longitude(), location.latitude())
+            : null;
+    return new LocationCoverage(location, imagery, lidar);
+  }
+
   public Coverage2D check2D(double longitude, double latitude) {
     return mapLayerClient
         .getActualMapLayer(latitude, longitude)
