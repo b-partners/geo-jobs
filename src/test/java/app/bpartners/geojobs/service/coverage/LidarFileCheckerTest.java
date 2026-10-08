@@ -129,4 +129,25 @@ class LidarFileCheckerTest {
   void check_is_unknown_on_malformed_url() {
     assertEquals(UNKNOWN, subject.check("not a url"));
   }
+
+  @Test
+  void check_is_invalid_when_response_has_no_body() {
+    when(restTemplateMock.execute(any(URI.class), any(), any(), any(ResponseExtractor.class)))
+        .thenAnswer(
+            invocation -> {
+              var response = mock(ClientHttpResponse.class);
+              when(response.getBody()).thenReturn(null);
+              return invocation.<ResponseExtractor<?>>getArgument(3).extractData(response);
+            });
+
+    assertEquals(INVALID, subject.check(URL));
+  }
+
+  @Test
+  void check_is_invalid_when_extractor_yields_nothing() {
+    when(restTemplateMock.execute(any(URI.class), any(), any(), any(ResponseExtractor.class)))
+        .thenReturn(null);
+
+    assertEquals(INVALID, subject.check(URL));
+  }
 }

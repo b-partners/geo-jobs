@@ -229,4 +229,17 @@ class AreaCoverageServiceTest {
 
     assertThrows(GatewayTimeoutException.class, () -> subject.check3D(2.3, 48.5));
   }
+
+  @Test
+  void check_3d_rejects_null_geometries() {
+    assertThrows(BadRequestException.class, () -> subject.check3D((List<Geometry>) null));
+  }
+
+  @Test
+  void check_2d_is_not_covered_when_geodata_answers_without_layer() {
+    when(mapLayerClientMock.getActualMapLayer(48.5, 2.3))
+        .thenReturn(Optional.of(new MapLayerActual("https://wms", null)));
+
+    assertEquals(Coverage2D.notCovered(), subject.check2D(2.3, 48.5));
+  }
 }

@@ -53,4 +53,14 @@ class GeodataLidarApiClientTest {
         GatewayTimeoutException.class,
         () -> subject.getLidarFileUrls(List.of(geometryFactory.createPolygon(ring))));
   }
+
+  @Test
+  void get_lidar_file_urls_without_results_has_no_urls() {
+    when(httpClientMock.post(eq("/lidar/urls"), any(String.class), any()))
+        .thenReturn(new GeodataLidarApiClient.LidarUrlsResponse("FRANCE", "EPSG:2154", null));
+
+    var actual = subject.getLidarFileUrls(List.of(geometryFactory.createPolygon(ring)));
+
+    assertEquals(List.of(), actual.urlsPerGeometry());
+  }
 }
