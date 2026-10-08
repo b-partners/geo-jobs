@@ -14,13 +14,13 @@ import org.mockito.ArgumentCaptor;
 
 class CityJSONSafeModeProcessorTest {
   private CityJSONSafeModeProcessor subject;
-  private CityJSONInternalProcessor internalProcessorMock;
+  private CityJSONThreedProcessor internalProcessorMock;
   private CityJSON3DBagRooferProcessor rooferProcessorMock;
   private CityJSONRequestRepository cityJSONRequestRepositoryMock;
 
   @BeforeEach
   void setup() {
-    internalProcessorMock = mock(CityJSONInternalProcessor.class);
+    internalProcessorMock = mock(CityJSONThreedProcessor.class);
     rooferProcessorMock = mock(CityJSON3DBagRooferProcessor.class);
     cityJSONRequestRepositoryMock = mock(CityJSONRequestRepository.class);
 

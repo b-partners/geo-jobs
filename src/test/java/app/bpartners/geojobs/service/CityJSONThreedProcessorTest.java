@@ -15,22 +15,22 @@ import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequest;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorizationApiKey;
 import app.bpartners.geojobs.service.cityjson.texture.CityJsonTextureComputer;
-import app.bpartners.geojobs.service.ciytjsonprocessor.CityJsonProcessorApiClient;
+import app.bpartners.geojobs.service.threed.ThreedApiClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class CityJSONInternalProcessorTest {
+class CityJSONThreedProcessorTest {
   private final BucketComponent bucketComponentMock = mock();
-  private final CityJsonProcessorApiClient apiClientMock = mock();
+  private final ThreedApiClient apiClientMock = mock();
   private final CityJsonTextureComputer textureComputerMock = mock();
-  private final CityJSONInternalProcessor.CityJSONDownloader cityJSONDownloaderMock = mock();
+  private final CityJSONThreedProcessor.CityJSONDownloader cityJSONDownloaderMock = mock();
   private final CommunityAuthorizationRepository caRepositoryMock = mock();
 
-  private final CityJSONInternalProcessor subject =
-      new CityJSONInternalProcessor(
+  private final CityJSONThreedProcessor subject =
+      new CityJSONThreedProcessor(
           new FileWriter(new ObjectMapper(), new ExtensionGuesser()),
           bucketComponentMock,
           textureComputerMock,
