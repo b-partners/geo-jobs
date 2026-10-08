@@ -1612,6 +1612,65 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Feature'
+  '/coverage':
+    get:
+      tags:
+        - Coverage
+      operationId: getAreaCoverage
+      summary: Check whether an address or a point is covered by HD imagery and by lidar data
+      description: |
+        Tells whether the location can be processed, either from 2D imagery or from lidar data (3D).
+        Provide either a textual address, or point coordinates (longitude and latitude), but not both.
+
+        - **Imagery**: the location is covered when at least one imagery layer is reachable, and `hd` when the
+          best reachable layer has a 5 cm precision, the only precision supported by detection models.
+        - **Lidar**: the location is covered when lidar files are available for it and their header can be read.
+
+        When geodata providers cannot be reached, the response is a `504` and never a "not covered" result.
+      parameters:
+        - in: query
+          name: address
+          required: false
+          description: Address to check, resolved into a point
+          schema:
+            type: string
+        - in: query
+          name: longitude
+          required: false
+          schema:
+            type: number
+        - in: query
+          name: latitude
+          required: false
+          schema:
+            type: number
+        - in: query
+          name: types
+          required: false
+          description: Coverage types to check, both when none provided
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/CoverageType'
+      responses:
+        200:
+          description: Coverage of the location, only for the requested types
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AreaCoverage'
+        400:
+          $ref: '#/components/responses/400'
+        403:
+          $ref: '#/components/responses/403'
+        504:
+          description: Geodata providers are unreachable, coverage cannot be determined
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestException'
   '/geoCodingJobs/{id}':
     get:
       tags:
@@ -3581,6 +3640,55 @@ components:
           $ref: '#/components/schemas/GeoPosition'
         zoomLevel:
           $ref: '#/components/schemas/ImageZoomLevel'
+    CoverageType:
+      type: string
+      enum:
+        - IMAGERY
+        - LIDAR
+    CoverageImageryLayer:
+      type: object
+      properties:
+        name:
+          type: string
+        year:
+          type: integer
+        source:
+          type: string
+        precisionInCm:
+          type: integer
+    ImageryCoverage:
+      type: object
+      properties:
+        covered:
+          type: boolean
+        hd:
+          type: boolean
+          description: True when the layer precision is 5 cm
+        layer:
+          $ref: '#/components/schemas/CoverageImageryLayer'
+    LidarCoverage:
+      type: object
+      properties:
+        covered:
+          type: boolean
+        region:
+          type: string
+          description: Region the lidar data comes from, e.g. FRANCE, SWITZERLAND or WALLONIA
+        crs:
+          type: string
+          description: EPSG code of the coordinate reference system local to the region
+        fileCount:
+          type: integer
+          description: Number of lidar files found for the location
+    AreaCoverage:
+      type: object
+      properties:
+        position:
+          $ref: '#/components/schemas/GeoPosition'
+        imagery:
+          $ref: '#/components/schemas/ImageryCoverage'
+        lidar:
+          $ref: '#/components/schemas/LidarCoverage'
     GeoPosition:
       type: object
       properties:
