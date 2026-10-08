@@ -14,7 +14,7 @@ public class ThreedApiProperties {
   private final int readTimeoutMs;
   private final int connectTimeoutMs;
 
-  public ThreedApiProperties(@Value("${threed.api.url}") String baseUrl) {
+  public ThreedApiProperties(@Value("${city-json-processor.api.url}") String baseUrl) {
     this.baseUrl = baseUrl;
     this.readTimeoutMs = READ_TIMEOUT_MS;
     this.connectTimeoutMs = CONNECT_TIMEOUT_MS;
