@@ -154,4 +154,22 @@ class GeodataHttpClientTest {
         GatewayTimeoutException.class,
         () -> subject.getOrEmptyWhenNotFound("/map/layers/actual", Map.of(), String.class));
   }
+
+  @Test
+  void get_throws_gateway_timeout_on_resource_not_found_exception() {
+    when(restTemplateMock.exchange(any(URI.class), eq(HttpMethod.GET), any(), eq(String.class)))
+        .thenThrow(notFoundWithBody("{\"type\":\"ResourceNotFoundException\"}"));
+
+    assertThrows(
+        GatewayTimeoutException.class, () -> subject.get("/map/layers", Map.of(), String.class));
+  }
+
+  @Test
+  void post_throws_gateway_timeout_on_resource_not_found_exception() {
+    when(restTemplateMock.exchange(any(URI.class), eq(HttpMethod.POST), any(), eq(String.class)))
+        .thenThrow(notFoundWithBody("{\"type\":\"ResourceNotFoundException\"}"));
+
+    assertThrows(
+        GatewayTimeoutException.class, () -> subject.post("/lidar/urls", "{}", String.class));
+  }
 }
