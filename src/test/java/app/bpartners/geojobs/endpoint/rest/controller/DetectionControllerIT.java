@@ -57,6 +57,8 @@ import app.bpartners.geojobs.service.annotator.AnnotationService;
 import app.bpartners.geojobs.service.detection.ZoneDetectionJobService;
 import app.bpartners.geojobs.utils.FeatureCreator;
 import app.bpartners.geojobs.utils.TaskStatisticCreator;
+import app.bpartners.geojobs.service.detection.inference.InferenceModelCardConf;
+import app.bpartners.geojobs.service.detection.inference.ModelCardMapping;
 import app.bpartners.geojobs.utils.detection.DetectionCreator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
@@ -98,6 +100,7 @@ class DetectionControllerIT extends FacadeIT {
   @Autowired CommunityAuthorizationRepository communityAuthRepository;
   @Autowired FileWriter fileWriter;
   @MockBean CustomBucketComponent customBucketComponent;
+  @MockBean InferenceModelCardConf inferenceModelCardConf;
   FeatureCreator featureCreator = new FeatureCreator();
   DetectionCreator detectionCreator = new DetectionCreator(featureCreator);
   TaskStatisticCreator taskStatisticCreator = new TaskStatisticCreator();
@@ -110,6 +113,9 @@ class DetectionControllerIT extends FacadeIT {
     when(principalMock.isAdmin()).thenReturn(false);
     when(authProviderMock.getPrincipal()).thenReturn(principalMock);
     doNothing().when(detectionAuthorizer).accept(any(), any(), any());
+    when(inferenceModelCardConf.getMappings())
+        .thenReturn(
+            List.of(new ModelCardMapping(DetectableType.TOITURE_REVETEMENT, "toiture", 21, 5.0)));
   }
 
   private Detection detectionWithoutZdj(String tilingJobId) {
@@ -244,7 +250,12 @@ class DetectionControllerIT extends FacadeIT {
 
   @Test
   void create_detection_from_scratch() {
-    subject.processDetection(randomUUID().toString(), createDetection());
+    var actual = subject.processDetection(randomUUID().toString(), createDetection());
+
+    assertFalse(actual.getGeoJsonZone().isEmpty());
+    actual
+        .getGeoJsonZone()
+        .forEach(feature -> assertEquals(21, feature.getProperties().get("zoom")));
 
     var listCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducer, times(2)).accept(listCaptor.capture());
