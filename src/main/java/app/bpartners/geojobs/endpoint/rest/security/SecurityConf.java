@@ -208,10 +208,14 @@ public class SecurityConf {
                     .authenticated()
                     .requestMatchers(GET, "/geocode")
                     .authenticated() // TODO: change later
+                    .requestMatchers(GET, "/coverage")
+                    .authenticated()
                     .requestMatchers(GET, "/geoCodingJobs/*")
                     .authenticated() // TODO: change later
                     .requestMatchers(POST, "/geoCodingJobs/*/excel")
                     .authenticated() // TODO: change later
+                    .requestMatchers(GET, "/v1/coverage")
+                    .authenticated()
                     .requestMatchers(GET, "/v1/image")
                     .authenticated()
                     .requestMatchers(POST, "/v1/detections/*")
