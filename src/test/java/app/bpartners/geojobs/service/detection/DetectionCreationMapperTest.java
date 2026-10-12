@@ -4,18 +4,29 @@ import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.VEGETATION;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.DetectableObjectTypeMapper;
 import app.bpartners.geojobs.endpoint.rest.model.CreateDetection;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel;
-import app.bpartners.geojobs.repository.CommunityAuthorizationRepository;
+import app.bpartners.geojobs.endpoint.rest.model.Feature;
+import app.bpartners.geojobs.endpoint.rest.model.FeatureGeometry;
+import app.bpartners.geojobs.endpoint.rest.model.Point;
+import app.bpartners.geojobs.model.exception.ApiException;
+import app.bpartners.geojobs.model.exception.BadRequestException;
+import app.bpartners.geojobs.service.geodata.model.GeodataMapLayer;
 import app.bpartners.geojobs.service.BuildingFinder;
-import app.bpartners.geojobs.service.dashboard.AreaPictureMapLayerResolver;
+import app.bpartners.geojobs.service.geodata.MapLayerResolver;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.geoserver.GeoServerConfiguration;
 import app.bpartners.geojobs.validator.FeatureTypeChecker;
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 class DetectionCreationMapperTest {
@@ -24,14 +35,15 @@ class DetectionCreationMapperTest {
   FeatureTypeChecker featureTypeChecker = new FeatureTypeChecker();
   GeometryConverter geometryConverterMock = mock();
   BuildingFinder buildingFinderMock = mock();
+  MapLayerResolver mapLayerResolverMock = mock();
+  GeoServerConfiguration geoServerConfigurationMock = mock();
 
   DetectionCreationMapper subject =
       new DetectionCreationMapper(
           detectableObjectTypeMapper,
           featureTypeChecker,
-          mock(CommunityAuthorizationRepository.class),
-          mock(AreaPictureMapLayerResolver.class),
-          mock(GeoServerConfiguration.class),
+          mapLayerResolverMock,
+          geoServerConfigurationMock,
           geometryConverterMock,
           buildingFinderMock);
 
@@ -57,6 +69,54 @@ class DetectionCreationMapperTest {
 
     assertNotNull(actual.getDetectableObjectModel());
     assertFalse(actual.getDetectableObjectConfigurations().isEmpty());
+  }
+
+  @Test
+  void refuses_a_layer_whose_precision_is_not_5_cm() {
+    givenLayerWithPrecision(10);
+
+    var exception =
+        assertThrows(
+            ApiException.class,
+            () -> subject.apply(pointDetection(), randomUUID().toString(), null, false, null));
+
+    assertTrue(exception.getMessage().contains("image resolution must be 5 cm"));
+    assertTrue(exception.getMessage().contains("precisionLevelInCm = 10"));
+  }
+
+  @Test
+  void accepts_a_layer_of_5_cm() {
+    givenLayerWithPrecision(5);
+
+    assertDoesNotThrow(
+        () -> subject.apply(pointDetection(), randomUUID().toString(), null, false, null));
+
+    verify(geoServerConfigurationMock).defaultGeoServerProperties("layer", 5);
+  }
+
+  @Test
+  void refuses_a_position_without_any_imagery_layer() {
+    when(mapLayerResolverMock.apply(anyDouble(), anyDouble())).thenReturn(Optional.empty());
+
+    assertThrows(
+        BadRequestException.class,
+        () -> subject.apply(pointDetection(), randomUUID().toString(), null, false, null));
+  }
+
+  private void givenLayerWithPrecision(Integer precisionInCm) {
+    when(mapLayerResolverMock.apply(anyDouble(), anyDouble()))
+        .thenReturn(
+            Optional.of(
+                new GeodataMapLayer("id", "layer", 2024, "GEOSERVER", null, null, precisionInCm)));
+  }
+
+  private CreateDetection pointDetection() {
+    var point = new Point().coordinates(List.of(BigDecimal.valueOf(2.3), BigDecimal.valueOf(48.8)));
+    point.setType(Point.TypeEnum.POINT);
+    return new CreateDetection()
+        .detectableObjectModel(new DetectableObjectModel().modelName(VEGETATION))
+        .emailReceiver("<EMAIL>")
+        .geoJsonZone(List.of(new Feature().geometry(new FeatureGeometry(point))));
   }
 
   private CreateDetection createDetection() {
