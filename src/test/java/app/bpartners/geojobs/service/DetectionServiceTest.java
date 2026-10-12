@@ -60,6 +60,7 @@ import app.bpartners.geojobs.service.dashboard.AreaPictureMapLayerResolver;
 import app.bpartners.geojobs.service.dashboard.component.AreaPictureMapLayer;
 import app.bpartners.geojobs.service.dashboard.component.Zoom;
 import app.bpartners.geojobs.service.detection.*;
+import app.bpartners.geojobs.service.detection.inference.ModelCardResolver;
 import app.bpartners.geojobs.service.detection.DetectionCreationMapper;
 import app.bpartners.geojobs.service.event.FeatureVggRequestedService;
 import app.bpartners.geojobs.service.geojson.GeoJsonConversionJobService;
@@ -166,7 +167,8 @@ class DetectionServiceTest {
           tilingJobMapperMock,
           tilingJobServiceMock,
           detectionRepositoryMock,
-          detectionTilingStatisticsComputerMock);
+          detectionTilingStatisticsComputerMock,
+          new ModelCardResolver(mock(), mock()));
   DetectionMachineDetectionStatisticsComputer detectionMachineDetectionStatisticsComputerMock =
       new DetectionMachineDetectionStatisticsComputer(
           detectionFromStatisticRestMapper, zoneDetectionJobServiceMock);
