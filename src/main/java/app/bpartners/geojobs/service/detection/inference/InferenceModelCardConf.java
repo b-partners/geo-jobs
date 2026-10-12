@@ -6,6 +6,7 @@ import static java.nio.file.Files.readString;
 import app.bpartners.geojobs.file.bucket.BucketComponent;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.HashMap;
 import java.util.List;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Component;
@@ -39,12 +40,38 @@ public class InferenceModelCardConf {
     return local;
   }
 
+  private static void validate(List<ModelCardMapping> mappings) {
+    var firstMappingByModelCardId = new HashMap<String, ModelCardMapping>();
+    for (var mapping : mappings) {
+      if (mapping.zoomLevel() == null || mapping.zoomLevel() <= 0) {
+        throw new IllegalStateException("Invalid zoomLevel in inference conf: " + mapping);
+      }
+      if (mapping.spatialResolution() == null || mapping.spatialResolution() <= 0) {
+        throw new IllegalStateException("Invalid spatialResolution in inference conf: " + mapping);
+      }
+      var first = firstMappingByModelCardId.putIfAbsent(mapping.modelCardId(), mapping);
+      if (first != null
+          && (!first.zoomLevel().equals(mapping.zoomLevel())
+              || !first.spatialResolution().equals(mapping.spatialResolution()))) {
+        throw new IllegalStateException(
+            "Model card "
+                + mapping.modelCardId()
+                + " is mapped with different zoomLevel or spatialResolution: "
+                + first
+                + " and "
+                + mapping);
+      }
+    }
+  }
+
   @SneakyThrows
   private List<ModelCardMapping> loadFromS3() {
     var file = bucketComponent.download(String.format(BUCKET_KEY_INFERENCE_MODEL_CARDS_JSON, env));
     try {
-      return List.copyOf(
-          objectMapper.readValue(readString(file.toPath()), new TypeReference<>() {}));
+      List<ModelCardMapping> parsed =
+          objectMapper.readValue(readString(file.toPath()), new TypeReference<>() {});
+      validate(parsed);
+      return List.copyOf(parsed);
     } finally {
       deleteIfExists(file.toPath());
     }

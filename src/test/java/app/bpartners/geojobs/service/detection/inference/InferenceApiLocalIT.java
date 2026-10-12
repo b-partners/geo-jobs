@@ -77,6 +77,9 @@ class InferenceApiLocalIT {
                 .image1(toBase64(tile, "jpg"))
                 .mask1(modelCard.maskRequired() ? toBase64(whiteMask(width, height), "png") : null)
                 .filename("local-it-tile.jpg")
+                .zoomLevel(Integer.parseInt(envOrDefault("INFERENCE_ZOOM_LEVEL", "21")))
+                .spatialResolution(
+                    Double.parseDouble(envOrDefault("INFERENCE_SPATIAL_RESOLUTION", "5")))
                 .build());
 
     assertNotNull(response);

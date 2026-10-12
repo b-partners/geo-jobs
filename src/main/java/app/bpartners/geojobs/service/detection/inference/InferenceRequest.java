@@ -11,4 +11,6 @@ public record InferenceRequest(
     String mask1,
     String image2,
     String mask2,
-    String filename) {}
+    String filename,
+    Integer zoomLevel,
+    Double spatialResolution) {}

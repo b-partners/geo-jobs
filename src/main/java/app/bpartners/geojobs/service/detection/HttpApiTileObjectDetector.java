@@ -26,6 +26,7 @@ import app.bpartners.geojobs.service.detection.inference.DeployedModelCard;
 import app.bpartners.geojobs.service.detection.inference.InferenceApiClient;
 import app.bpartners.geojobs.service.detection.inference.InferenceRequest;
 import app.bpartners.geojobs.service.detection.inference.ModelCardResolver;
+import app.bpartners.geojobs.service.detection.inference.ResolvedModelCard;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.awt.Dimension;
@@ -124,7 +125,9 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
     var tileSize = readImageSize(tileImageFile);
     var resolution =
         modelCardResolver.resolve(
-            detectableObjectConfigurations, modelCard -> supportsTileSize(modelCard, tileSize));
+            detectableObjectConfigurations,
+            tileZoom(tile),
+            modelCard -> supportsTileSize(modelCard, tileSize));
     var v2Responses = new ArrayList<DetectionResponseAggregator.DetectionResponseUrl>();
     var v1Responses = new ArrayList<DetectionResponseAggregatorV1.DetectionResponseUrl>();
 
@@ -172,6 +175,13 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
     return mergeToV2(
         detectionResponseAggregatorV1.apply(v1Responses),
         detectionResponseAggregator.apply(v2Responses));
+  }
+
+  private static int tileZoom(Tile tile) {
+    var coordinates = tile.getCoordinates();
+    return coordinates == null || coordinates.getZ() == null
+        ? ModelCardResolver.DEFAULT_TILING_ZOOM
+        : coordinates.getZ();
   }
 
   private static boolean supportsTileSize(DeployedModelCard modelCard, Dimension tileSize) {
@@ -275,7 +285,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
   }
 
   private List<DetectionResponseAggregator.DetectionResponseUrl> callInferenceApi(
-      List<DeployedModelCard> modelCards,
+      List<ResolvedModelCard> modelCards,
       String fileName,
       String base64ImgData,
       String base64MaskData) {
@@ -296,7 +306,11 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
   }
 
   private DetectionResponseAggregator.DetectionResponseUrl callInferenceApi(
-      DeployedModelCard modelCard, String fileName, String base64ImgData, String base64MaskData) {
+      ResolvedModelCard resolvedModelCard,
+      String fileName,
+      String base64ImgData,
+      String base64MaskData) {
+    var modelCard = resolvedModelCard.modelCard();
     if (modelCard.imagesRequired() != 1) {
       throw new IllegalStateException(
           "Model card "
@@ -313,6 +327,8 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
             .image1(base64ImgData)
             .mask1(modelCard.maskRequired() ? base64MaskData : null)
             .filename(fileName)
+            .zoomLevel(resolvedModelCard.zoomLevel())
+            .spatialResolution(resolvedModelCard.spatialResolution())
             .build();
     log.info("Attempting to call inference API with model card {}", modelCard.modelCardId());
     try {

@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -38,6 +39,7 @@ import app.bpartners.geojobs.service.detection.inference.InferenceApiClient;
 import app.bpartners.geojobs.service.detection.inference.InferenceRequest;
 import app.bpartners.geojobs.service.detection.inference.ModelCardResolver;
 import app.bpartners.geojobs.service.detection.inference.ModelCardResolver.Resolution;
+import app.bpartners.geojobs.service.detection.inference.ResolvedModelCard;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
@@ -70,6 +72,8 @@ class HttpApiTileObjectDetectorTest {
       new DeployedModelCard("tombs", OBJECT_DETECTION, 1, false, null, null, true);
   private static final DeployedModelCard TOMBS_CARD =
       new DeployedModelCard("tombs", OBJECT_DETECTION, 1, false, null, null, true);
+  private static final ResolvedModelCard RESOLVED_DAMAGES = new ResolvedModelCard(DAMAGES_CARD, 21, 5.0);
+  private static final ResolvedModelCard RESOLVED_TOMBS = new ResolvedModelCard(TOMBS_CARD, 20, 10.0);
 
   private final CustomBucketComponent customBucketComponentMock = mock();
   private final TileObjectDetectorConf tileObjectDetectorConfMock = mock();
@@ -136,8 +140,8 @@ class HttpApiTileObjectDetectorTest {
   @Test
   void calls_inference_api_only_for_mapped_types_and_never_the_lambdas() {
     setUpTile();
-    when(modelCardResolverMock.resolve(any(), any()))
-        .thenReturn(new Resolution(List.of(DAMAGES_CARD, TOMBS_CARD), Set.of(), Set.of()));
+    when(modelCardResolverMock.resolve(any(), anyInt(), any()))
+        .thenReturn(new Resolution(List.of(RESOLVED_DAMAGES, RESOLVED_TOMBS), Set.of(), Set.of()));
     when(inferenceApiClientMock.infer(any()))
         .thenAnswer(
             invocation -> v2Response(((InferenceRequest) invocation.getArgument(0)).modelCardId()));
@@ -154,6 +158,10 @@ class HttpApiTileObjectDetectorTest {
     var tombsRequest = requestsByModelCard.get("tombs");
     assertEquals(Base64.getEncoder().encodeToString(tileBytes), damagesRequest.image1());
     assertEquals(Base64.getEncoder().encodeToString(new byte[] {4, 5, 6}), damagesRequest.mask1());
+    assertEquals(21, damagesRequest.zoomLevel());
+    assertEquals(5.0, damagesRequest.spatialResolution());
+    assertEquals(20, tombsRequest.zoomLevel());
+    assertEquals(10.0, tombsRequest.spatialResolution());
     assertNull(tombsRequest.mask1());
     assertNull(tombsRequest.image2());
     verify(restTemplateMock, never()).postForEntity(anyString(), any(), any());
@@ -169,8 +177,8 @@ class HttpApiTileObjectDetectorTest {
   @Test
   void falls_back_to_lambdas_only_for_unmapped_types() {
     setUpTile();
-    when(modelCardResolverMock.resolve(any(), any()))
-        .thenReturn(new Resolution(List.of(DAMAGES_CARD), Set.of(PISCINE), Set.of()));
+    when(modelCardResolverMock.resolve(any(), anyInt(), any()))
+        .thenReturn(new Resolution(List.of(RESOLVED_DAMAGES), Set.of(PISCINE), Set.of()));
     when(inferenceApiClientMock.infer(any())).thenReturn(v2Response("damages"));
     when(restTemplateMock.postForEntity(anyString(), any(), eq(DetectionResponse.class)))
         .thenReturn(new ResponseEntity<>(v1Response(V1_API_URL), HttpStatus.OK));
@@ -191,8 +199,8 @@ class HttpApiTileObjectDetectorTest {
   @Test
   void keeps_other_results_when_one_inference_call_fails() {
     setUpTile();
-    when(modelCardResolverMock.resolve(any(), any()))
-        .thenReturn(new Resolution(List.of(DAMAGES_CARD, TOMBS_CARD), Set.of(), Set.of()));
+    when(modelCardResolverMock.resolve(any(), anyInt(), any()))
+        .thenReturn(new Resolution(List.of(RESOLVED_DAMAGES, RESOLVED_TOMBS), Set.of(), Set.of()));
     when(inferenceApiClientMock.infer(any()))
         .thenAnswer(
             invocation -> {
@@ -212,8 +220,8 @@ class HttpApiTileObjectDetectorTest {
   @Test
   void fails_when_mask_required_but_missing() {
     setUpTile();
-    when(modelCardResolverMock.resolve(any(), any()))
-        .thenReturn(new Resolution(List.of(DAMAGES_CARD), Set.of(), Set.of()));
+    when(modelCardResolverMock.resolve(any(), anyInt(), any()))
+        .thenReturn(new Resolution(List.of(RESOLVED_DAMAGES), Set.of(), Set.of()));
 
     assertThrows(
         IllegalStateException.class,
@@ -251,7 +259,7 @@ class HttpApiTileObjectDetectorTest {
   @Test
   void falls_back_to_lambdas_for_types_whose_model_card_does_not_support_the_tile_size() {
     setUpTile(png(1024, 1024));
-    when(modelCardResolverMock.resolve(any(), any()))
+    when(modelCardResolverMock.resolve(any(), anyInt(), any()))
         .thenReturn(
             new Resolution(List.of(), Set.of(), Set.of(PISCINE, VELUX, MOISISSURE_NOIRCIE)));
     answerOnceEveryApiIsCalled(new CountDownLatch(3), ConcurrentHashMap.newKeySet());
@@ -265,11 +273,11 @@ class HttpApiTileObjectDetectorTest {
   @SuppressWarnings("unchecked")
   private Predicate<DeployedModelCard> capturedCompatibilityPredicate(byte[] tile) {
     setUpTile(tile);
-    when(modelCardResolverMock.resolve(any(), any()))
+    when(modelCardResolverMock.resolve(any(), anyInt(), any()))
         .thenReturn(new Resolution(List.of(), Set.of(), Set.of()));
     subject.apply(tileDetectionTask(), null, detectableObjectConfs());
     var captor = ArgumentCaptor.forClass(Predicate.class);
-    verify(modelCardResolverMock).resolve(any(), captor.capture());
+    verify(modelCardResolverMock).resolve(any(), anyInt(), captor.capture());
     return captor.getValue();
   }
 
@@ -277,8 +285,21 @@ class HttpApiTileObjectDetectorTest {
     return new DeployedModelCard(id, SEMANTIC_SEGMENTATION, 1, false, width, height, true);
   }
 
+  @Test
+  void resolves_model_cards_for_the_zoom_of_the_tile() {
+    setUpTile();
+    when(modelCardResolverMock.resolve(any(), anyInt(), any()))
+        .thenReturn(new Resolution(List.of(), Set.of(), Set.of()));
+    var task = tileDetectionTask();
+    task.getTile().setCoordinates(new TileCoordinates().x(1).y(1).z(21));
+
+    subject.apply(task, null, detectableObjectConfs());
+
+    verify(modelCardResolverMock).resolve(any(), eq(21), any());
+  }
+
   private void resolveNothing() {
-    when(modelCardResolverMock.resolve(any(), any()))
+    when(modelCardResolverMock.resolve(any(), anyInt(), any()))
         .thenReturn(
             new Resolution(List.of(), Set.of(PISCINE, VELUX, MOISISSURE_NOIRCIE), Set.of()));
   }

@@ -91,6 +91,8 @@ class InferenceApiClientTest {
         .andExpect(jsonPath("$.image1").value("aW1n"))
         .andExpect(jsonPath("$.mask1").value("bWFzaw=="))
         .andExpect(jsonPath("$.filename").value("tile.jpg"))
+        .andExpect(jsonPath("$.zoomLevel").value(21))
+        .andExpect(jsonPath("$.spatialResolution").value(5.0))
         .andExpect(jsonPath("$.image2").doesNotExist())
         .andExpect(jsonPath("$.mask2").doesNotExist())
         .andRespond(withSuccess(INFERENCE_JSON, APPLICATION_JSON));
@@ -102,6 +104,8 @@ class InferenceApiClientTest {
                 .image1("aW1n")
                 .mask1("bWFzaw==")
                 .filename("tile.jpg")
+                .zoomLevel(21)
+                .spatialResolution(5.0)
                 .build());
 
     var image = response.getImages().get("testfn");

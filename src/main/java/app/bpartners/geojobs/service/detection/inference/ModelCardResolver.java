@@ -1,5 +1,6 @@
 package app.bpartners.geojobs.service.detection.inference;
 
+import app.bpartners.geojobs.repository.model.ArcgisImageZoom;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import java.util.LinkedHashMap;
@@ -11,6 +12,8 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class ModelCardResolver {
+  public static final int DEFAULT_TILING_ZOOM = ArcgisImageZoom.HOUSES_0.getZoomLevel();
+
   private final InferenceModelCardConf conf;
   private final ModelCardRegistry registry;
 
@@ -19,29 +22,54 @@ public class ModelCardResolver {
     this.registry = registry;
   }
 
+  public int tilingZoomOf(DetectableType objectType) {
+    var mapping = mappingsByType().get(objectType);
+    return mapping == null ? DEFAULT_TILING_ZOOM : mapping.zoomLevel();
+  }
+
+  public List<Integer> tilingZoomLevels(List<DetectableObjectConfiguration> objectConfigurations) {
+    var mappingsByType = mappingsByType();
+    var zoomLevels =
+        objectConfigurations.stream()
+            .map(
+                configuration -> {
+                  var mapping = mappingsByType.get(configuration.getObjectType());
+                  return mapping == null ? DEFAULT_TILING_ZOOM : mapping.zoomLevel();
+                })
+            .distinct()
+            .sorted()
+            .toList();
+    return zoomLevels.isEmpty() ? List.of(DEFAULT_TILING_ZOOM) : zoomLevels;
+  }
+
   public Resolution resolve(
       List<DetectableObjectConfiguration> objectConfigurations,
+      int tileZoom,
       Predicate<DeployedModelCard> compatible) {
-    var modelCardIdByType = new LinkedHashMap<DetectableType, String>();
-    conf.getMappings()
-        .forEach(
-            mapping -> modelCardIdByType.putIfAbsent(mapping.objectType(), mapping.modelCardId()));
-
+    var mappingsByType = mappingsByType();
     var modelCardsById = new LinkedHashMap<String, DeployedModelCard>();
-    var usableModelCardsById = new LinkedHashMap<String, DeployedModelCard>();
+    var usableModelCardsById = new LinkedHashMap<String, ResolvedModelCard>();
     var unmappedTypes = new LinkedHashSet<DetectableType>();
     var unsupportedTypes = new LinkedHashSet<DetectableType>();
     for (var objectConfiguration : objectConfigurations) {
       var objectType = objectConfiguration.getObjectType();
-      var modelCardId = modelCardIdByType.get(objectType);
-      if (modelCardId == null) {
-        unmappedTypes.add(objectType);
+      var mapping = mappingsByType.get(objectType);
+      if (mapping == null) {
+        if (tileZoom == DEFAULT_TILING_ZOOM) {
+          unmappedTypes.add(objectType);
+        }
+        continue;
+      }
+      if (mapping.zoomLevel() != tileZoom) {
         continue;
       }
       var modelCard =
-          modelCardsById.computeIfAbsent(modelCardId, id -> findRunnable(objectType, id));
+          modelCardsById.computeIfAbsent(
+              mapping.modelCardId(), id -> findRunnable(objectType, id));
       if (compatible.test(modelCard)) {
-        usableModelCardsById.putIfAbsent(modelCardId, modelCard);
+        usableModelCardsById.putIfAbsent(
+            mapping.modelCardId(),
+            new ResolvedModelCard(modelCard, mapping.zoomLevel(), mapping.spatialResolution()));
       } else {
         unsupportedTypes.add(objectType);
       }
@@ -50,6 +78,12 @@ public class ModelCardResolver {
         List.copyOf(usableModelCardsById.values()),
         Set.copyOf(unmappedTypes),
         Set.copyOf(unsupportedTypes));
+  }
+
+  private LinkedHashMap<DetectableType, ModelCardMapping> mappingsByType() {
+    var mappingsByType = new LinkedHashMap<DetectableType, ModelCardMapping>();
+    conf.getMappings().forEach(mapping -> mappingsByType.putIfAbsent(mapping.objectType(), mapping));
+    return mappingsByType;
   }
 
   private DeployedModelCard findRunnable(DetectableType objectType, String modelCardId) {
@@ -66,7 +100,7 @@ public class ModelCardResolver {
   }
 
   public record Resolution(
-      List<DeployedModelCard> modelCards,
+      List<ResolvedModelCard> modelCards,
       Set<DetectableType> unmappedTypes,
       Set<DetectableType> unsupportedTypes) {}
 }

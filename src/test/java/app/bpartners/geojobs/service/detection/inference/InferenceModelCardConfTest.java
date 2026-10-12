@@ -31,8 +31,10 @@ class InferenceModelCardConfTest {
         confFile(
             """
             [
-              {"objectType": "HUMIDITE", "modelCardId": "damages-ignore-index-c4"},
-              {"objectType": "TOMBE", "modelCardId": "cimetiere-tombe-v1.0", "unknown": 1}
+              {"objectType": "HUMIDITE", "modelCardId": "damages-ignore-index-c4",
+               "zoomLevel": 21, "spatialResolution": 5},
+              {"objectType": "TOMBE", "modelCardId": "cimetiere-tombe-v1.0",
+               "zoomLevel": 20, "spatialResolution": 7.5, "unknown": 1}
             ]""");
     when(bucketComponent.download("conf/" + System.getenv("ENV") + "/inferenceModelCards.json"))
         .thenReturn(file);
@@ -42,8 +44,8 @@ class InferenceModelCardConfTest {
 
     assertEquals(
         List.of(
-            new ModelCardMapping(HUMIDITE, "damages-ignore-index-c4"),
-            new ModelCardMapping(TOMBE, "cimetiere-tombe-v1.0")),
+            new ModelCardMapping(HUMIDITE, "damages-ignore-index-c4", 21, 5.0),
+            new ModelCardMapping(TOMBE, "cimetiere-tombe-v1.0", 20, 7.5)),
         first);
     assertEquals(first, second);
     assertFalse(file.exists());
@@ -55,6 +57,50 @@ class InferenceModelCardConfTest {
     when(bucketComponent.download(any(String.class))).thenThrow(AwsServiceException.class);
 
     assertThrows(AwsServiceException.class, () -> subject.getMappings());
+  }
+
+  @Test
+  void rejects_mapping_without_zoom_level() {
+    givenConf("""
+        [{"objectType": "HUMIDITE", "modelCardId": "damages", "spatialResolution": 5}]""");
+
+    assertThrows(IllegalStateException.class, () -> subject.getMappings());
+  }
+
+  @Test
+  void rejects_mapping_without_spatial_resolution() {
+    givenConf("""
+        [{"objectType": "HUMIDITE", "modelCardId": "damages", "zoomLevel": 21}]""");
+
+    assertThrows(IllegalStateException.class, () -> subject.getMappings());
+  }
+
+  @Test
+  void rejects_same_model_card_mapped_with_different_zoom_levels() {
+    givenConf(
+        """
+        [
+          {"objectType": "HUMIDITE", "modelCardId": "damages", "zoomLevel": 21, "spatialResolution": 5},
+          {"objectType": "USURE", "modelCardId": "damages", "zoomLevel": 20, "spatialResolution": 5}
+        ]""");
+
+    assertThrows(IllegalStateException.class, () -> subject.getMappings());
+  }
+
+  @Test
+  void accepts_same_model_card_mapped_consistently_for_several_types() {
+    givenConf(
+        """
+        [
+          {"objectType": "HUMIDITE", "modelCardId": "damages", "zoomLevel": 21, "spatialResolution": 5},
+          {"objectType": "USURE", "modelCardId": "damages", "zoomLevel": 21, "spatialResolution": 5}
+        ]""");
+
+    assertEquals(2, subject.getMappings().size());
+  }
+
+  private void givenConf(String content) {
+    when(bucketComponent.download(any(String.class))).thenReturn(confFile(content));
   }
 
   @SneakyThrows
