@@ -11,6 +11,8 @@ import static org.mockito.Mockito.when;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.Detection;
+import app.bpartners.geojobs.service.detection.inference.InferenceModelCardConf;
+import app.bpartners.geojobs.service.detection.inference.ModelCardMapping;
 import app.bpartners.geojobs.service.detection.inference.ModelCardResolver;
 import java.util.Arrays;
 import java.util.List;
@@ -54,6 +56,22 @@ class DetectionImageZoomResolverTest {
   @Test
   void toiture_zoom_is_the_highest_zoom_of_every_toiture_type() {
     assertEquals(21, subject.toitureZoom());
+  }
+
+  @Test
+  void stays_on_zoom_20_for_every_detection_when_inference_api_is_disabled() {
+    var conf = mock(InferenceModelCardConf.class);
+    when(conf.getMappings())
+        .thenReturn(
+            List.of(
+                new ModelCardMapping(TOITURE_REVETEMENT, "toiture", 21, 5.0),
+                new ModelCardMapping(USURE, "toiture", 21, 5.0)));
+    var disabledSubject =
+        new DetectionImageZoomResolver(new ModelCardResolver(conf, mock(), false));
+
+    assertEquals(20, disabledSubject.toitureZoom());
+    assertEquals(20, disabledSubject.apply(detection(true, TOITURE_REVETEMENT, USURE)));
+    assertEquals(20, disabledSubject.apply(detection(false, TOITURE_REVETEMENT)));
   }
 
   private Detection detection(boolean toiture, DetectableType... types) {

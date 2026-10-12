@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -19,9 +21,24 @@ public class ModelCardResolver {
   private final InferenceModelCardConf conf;
   private final ModelCardRegistry registry;
 
-  public ModelCardResolver(InferenceModelCardConf conf, ModelCardRegistry registry) {
+  private final boolean inferenceApiEnabled;
+
+  @Autowired
+  public ModelCardResolver(
+      InferenceModelCardConf conf,
+      ModelCardRegistry registry,
+      @Value("${detection.inference.api.enabled:false}") boolean inferenceApiEnabled) {
     this.conf = conf;
     this.registry = registry;
+    this.inferenceApiEnabled = inferenceApiEnabled;
+  }
+
+  public ModelCardResolver(InferenceModelCardConf conf, ModelCardRegistry registry) {
+    this(conf, registry, true);
+  }
+
+  public boolean isInferenceApiEnabled() {
+    return inferenceApiEnabled;
   }
 
   public int tilingZoomOf(DetectableType objectType) {
@@ -96,6 +113,9 @@ public class ModelCardResolver {
 
   private LinkedHashMap<DetectableType, ModelCardMapping> mappingsByType() {
     var mappingsByType = new LinkedHashMap<DetectableType, ModelCardMapping>();
+    if (!inferenceApiEnabled) {
+      return mappingsByType;
+    }
     conf.getMappings().forEach(mapping -> mappingsByType.putIfAbsent(mapping.objectType(), mapping));
     return mappingsByType;
   }

@@ -63,7 +63,7 @@ public class CreateDetectionValidator implements Consumer<CreateDetection> {
     }
     var resolvedZoom = detectionImageZoomResolver.toitureZoom();
     log.warn(
-        "Deprecated: Feature.properties.zoom={} provided with BP_TOITURE, converted to zoom {}."
+        "Deprecated: Feature.properties.zoom={} provided with BP_TOITURE, zoom resolved to {}."
             + " Providing the zoom will be rejected in a future version.",
         LEGACY_TOITURE_ZOOM,
         resolvedZoom);

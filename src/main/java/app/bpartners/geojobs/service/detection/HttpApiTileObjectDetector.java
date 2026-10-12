@@ -149,17 +149,19 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
     lambdaTypes.addAll(resolution.unsupportedTypes());
     var lambdaConfigurations = lambdaConfigurations(detectableObjectConfigurations, lambdaTypes);
     if (!lambdaConfigurations.isEmpty()) {
-      if (!resolution.unmappedTypes().isEmpty()) {
-        log.warn(
-            "No inference model card mapped for {}, falling back to detection lambdas",
-            resolution.unmappedTypes());
-      }
-      if (!resolution.unsupportedTypes().isEmpty()) {
-        log.warn(
-            "Tile size {} not supported by the inference model cards of {}, falling back to"
-                + " detection lambdas",
-            tileSize,
-            resolution.unsupportedTypes());
+      if (modelCardResolver.isInferenceApiEnabled()) {
+        if (!resolution.unmappedTypes().isEmpty()) {
+          log.warn(
+              "No inference model card mapped for {}, falling back to detection lambdas",
+              resolution.unmappedTypes());
+        }
+        if (!resolution.unsupportedTypes().isEmpty()) {
+          log.warn(
+              "Tile size {} not supported by the inference model cards of {}, falling back to"
+                  + " detection lambdas",
+              tileSize,
+              resolution.unsupportedTypes());
+        }
       }
       callLambdaApis(
           tileDetectionTask,

@@ -255,7 +255,7 @@ class DetectionControllerIT extends FacadeIT {
     assertFalse(actual.getGeoJsonZone().isEmpty());
     actual
         .getGeoJsonZone()
-        .forEach(feature -> assertEquals(21, feature.getProperties().get("zoom")));
+        .forEach(feature -> assertEquals(20, feature.getProperties().get("zoom")));
 
     var listCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProducer, times(2)).accept(listCaptor.capture());

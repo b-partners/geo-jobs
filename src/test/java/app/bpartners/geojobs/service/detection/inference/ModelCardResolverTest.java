@@ -10,9 +10,11 @@ import static app.bpartners.geojobs.repository.model.detection.DetectableType.US
 import static app.bpartners.geojobs.service.detection.inference.DeployedModelCard.ProblemType.OBJECT_DETECTION;
 import static app.bpartners.geojobs.service.detection.inference.DeployedModelCard.ProblemType.SEMANTIC_SEGMENTATION;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
@@ -132,6 +134,34 @@ class ModelCardResolverTest {
     assertEquals(Set.of(5.0, 10.0), subject.requiredSpatialResolutionsInCm(configs(HUMIDITE, TOMBE)));
     assertEquals(Set.of(5.0), subject.requiredSpatialResolutionsInCm(configs(CHEMINEE)));
     assertEquals(Set.of(5.0, 10.0), subject.requiredSpatialResolutionsInCm(configs(TOMBE, CHEMINEE)));
+  }
+
+  @Test
+  void ignores_every_mapping_and_stays_on_zoom_20_and_5_cm_when_inference_api_is_disabled() {
+    var disabled = new ModelCardResolver(conf, registry, false);
+    var configs = configs(HUMIDITE, USURE, TOMBE, CHEMINEE);
+
+    assertEquals(DEFAULT_ZOOM, disabled.tilingZoomOf(HUMIDITE));
+    assertEquals(List.of(DEFAULT_ZOOM), disabled.tilingZoomLevels(configs));
+    assertEquals(Set.of(5.0), disabled.requiredSpatialResolutionsInCm(configs));
+    var resolution = disabled.resolve(configs, DEFAULT_ZOOM, ANY);
+    assertTrue(resolution.modelCards().isEmpty());
+    assertTrue(resolution.unsupportedTypes().isEmpty());
+    assertEquals(Set.of(HUMIDITE, USURE, TOMBE, CHEMINEE), resolution.unmappedTypes());
+    assertTrue(disabled.resolve(configs, DAMAGES_ZOOM, ANY).unmappedTypes().isEmpty());
+    verifyNoInteractions(registry);
+  }
+
+  @Test
+  void does_not_even_read_the_conf_when_inference_api_is_disabled() {
+    var untouchedConf = mock(InferenceModelCardConf.class);
+    var disabled = new ModelCardResolver(untouchedConf, registry, false);
+
+    disabled.tilingZoomLevels(configs(HUMIDITE));
+    disabled.resolve(configs(HUMIDITE), DEFAULT_ZOOM, ANY);
+
+    verifyNoInteractions(untouchedConf);
+    assertFalse(disabled.isInferenceApiEnabled());
   }
 
   @Test
