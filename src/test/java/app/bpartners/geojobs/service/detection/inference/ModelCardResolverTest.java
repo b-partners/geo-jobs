@@ -127,6 +127,14 @@ class ModelCardResolverTest {
   }
 
   @Test
+  void required_spatial_resolutions_are_distinct_and_default_to_5_cm_for_unmapped_types() {
+    assertEquals(Set.of(5.0), subject.requiredSpatialResolutionsInCm(configs(HUMIDITE, USURE)));
+    assertEquals(Set.of(5.0, 10.0), subject.requiredSpatialResolutionsInCm(configs(HUMIDITE, TOMBE)));
+    assertEquals(Set.of(5.0), subject.requiredSpatialResolutionsInCm(configs(CHEMINEE)));
+    assertEquals(Set.of(5.0, 10.0), subject.requiredSpatialResolutionsInCm(configs(TOMBE, CHEMINEE)));
+  }
+
+  @Test
   void tiling_zoom_of_a_type() {
     assertEquals(DAMAGES_ZOOM, subject.tilingZoomOf(HUMIDITE));
     assertEquals(DEFAULT_ZOOM, subject.tilingZoomOf(CHEMINEE));

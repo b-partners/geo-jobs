@@ -8,11 +8,13 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ModelCardResolver {
   public static final int DEFAULT_TILING_ZOOM = ArcgisImageZoom.HOUSES_0.getZoomLevel();
+  public static final double DEFAULT_SPATIAL_RESOLUTION_IN_CM = 5.0;
 
   private final InferenceModelCardConf conf;
   private final ModelCardRegistry registry;
@@ -25,6 +27,18 @@ public class ModelCardResolver {
   public int tilingZoomOf(DetectableType objectType) {
     var mapping = mappingsByType().get(objectType);
     return mapping == null ? DEFAULT_TILING_ZOOM : mapping.zoomLevel();
+  }
+
+  public Set<Double> requiredSpatialResolutionsInCm(
+      List<DetectableObjectConfiguration> objectConfigurations) {
+    var mappingsByType = mappingsByType();
+    return objectConfigurations.stream()
+        .map(
+            configuration -> {
+              var mapping = mappingsByType.get(configuration.getObjectType());
+              return mapping == null ? DEFAULT_SPATIAL_RESOLUTION_IN_CM : mapping.spatialResolution();
+            })
+        .collect(Collectors.toCollection(LinkedHashSet::new));
   }
 
   public List<Integer> tilingZoomLevels(List<DetectableObjectConfiguration> objectConfigurations) {

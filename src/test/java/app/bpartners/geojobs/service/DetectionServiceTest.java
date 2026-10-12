@@ -56,6 +56,7 @@ import app.bpartners.geojobs.repository.model.detection.FeatureWithDelimitation;
 import app.bpartners.geojobs.repository.model.geojson.GeoJsonConversionJob;
 import app.bpartners.geojobs.repository.model.tiling.ZoneTilingJob;
 import app.bpartners.geojobs.service.dashboard.AreaPictureApi;
+import app.bpartners.geojobs.service.detection.inference.ModelCardResolver;
 import app.bpartners.geojobs.service.geodata.GeodataMapLayerClient;
 import app.bpartners.geojobs.service.geodata.MapLayerResolver;
 import app.bpartners.geojobs.service.geodata.model.GeodataMapLayer;
@@ -226,6 +227,7 @@ class DetectionServiceTest {
                   featureTypeChecker,
                   new MapLayerResolver(
                       mapLayerClientMock, mock(CachedAreaPictureMapLayerRepository.class)),
+                  new ModelCardResolver(mock(), mock()),
                   geoServerConfiguration,
                   geometryConverterMock,
                   buildingFinderMock),

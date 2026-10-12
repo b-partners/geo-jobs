@@ -20,13 +20,16 @@ import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.service.geodata.model.GeodataMapLayer;
 import app.bpartners.geojobs.service.BuildingFinder;
+import app.bpartners.geojobs.service.detection.inference.ModelCardResolver;
 import app.bpartners.geojobs.service.geodata.MapLayerResolver;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.geoserver.GeoServerConfiguration;
 import app.bpartners.geojobs.validator.FeatureTypeChecker;
 import java.math.BigDecimal;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 class DetectionCreationMapperTest {
@@ -37,12 +40,14 @@ class DetectionCreationMapperTest {
   BuildingFinder buildingFinderMock = mock();
   MapLayerResolver mapLayerResolverMock = mock();
   GeoServerConfiguration geoServerConfigurationMock = mock();
+  ModelCardResolver modelCardResolverMock = mock();
 
   DetectionCreationMapper subject =
       new DetectionCreationMapper(
           detectableObjectTypeMapper,
           featureTypeChecker,
           mapLayerResolverMock,
+          modelCardResolverMock,
           geoServerConfigurationMock,
           geometryConverterMock,
           buildingFinderMock);
@@ -72,8 +77,9 @@ class DetectionCreationMapperTest {
   }
 
   @Test
-  void refuses_a_layer_whose_precision_is_not_5_cm() {
+  void refuses_a_layer_whose_precision_differs_from_the_required_resolution() {
     givenLayerWithPrecision(10);
+    when(modelCardResolverMock.requiredSpatialResolutionsInCm(any())).thenReturn(Set.of(5.0));
 
     var exception =
         assertThrows(
@@ -85,13 +91,28 @@ class DetectionCreationMapperTest {
   }
 
   @Test
-  void accepts_a_layer_of_5_cm() {
-    givenLayerWithPrecision(5);
+  void accepts_a_layer_matching_the_resolution_required_by_the_mapping() {
+    givenLayerWithPrecision(10);
+    when(modelCardResolverMock.requiredSpatialResolutionsInCm(any())).thenReturn(Set.of(10.0));
 
     assertDoesNotThrow(
         () -> subject.apply(pointDetection(), randomUUID().toString(), null, false, null));
 
-    verify(geoServerConfigurationMock).defaultGeoServerProperties("layer", 5);
+    verify(geoServerConfigurationMock).defaultGeoServerProperties("layer", 10);
+  }
+
+  @Test
+  void refuses_when_objects_require_different_resolutions() {
+    givenLayerWithPrecision(5);
+    when(modelCardResolverMock.requiredSpatialResolutionsInCm(any()))
+        .thenReturn(new LinkedHashSet<>(List.of(5.0, 10.0)));
+
+    var exception =
+        assertThrows(
+            ApiException.class,
+            () -> subject.apply(pointDetection(), randomUUID().toString(), null, false, null));
+
+    assertTrue(exception.getMessage().contains("image resolution must be 5 or 10 cm"));
   }
 
   @Test

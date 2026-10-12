@@ -17,6 +17,7 @@ import app.bpartners.geojobs.repository.model.Feature;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
 import app.bpartners.geojobs.repository.model.detection.Detection;
 import app.bpartners.geojobs.service.BuildingFinder;
+import app.bpartners.geojobs.service.detection.inference.ModelCardResolver;
 import app.bpartners.geojobs.service.geodata.MapLayerResolver;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.geoserver.GeoServerConfiguration;
@@ -25,9 +26,11 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -38,6 +41,7 @@ public class DetectionCreationMapper {
   private final DetectableObjectTypeMapper detectableObjectTypeMapper;
   private final FeatureTypeChecker featureTypeChecker;
   private final MapLayerResolver mapLayerResolver;
+  private final ModelCardResolver modelCardResolver;
   private final GeoServerConfiguration geoServerConfiguration;
   private final GeometryConverter geometryConverter;
   private final BuildingFinder buildingFinder;
@@ -69,7 +73,8 @@ public class DetectionCreationMapper {
         extractGeoServerProperties(
             createDetection.getGeoServerProperties(),
             providedGeoJson,
-            domainProvidedGeoJsonZone);
+            domainProvidedGeoJsonZone,
+            detectableObjectConfigurations);
     var detection =
         Detection.builder()
             .id(detectionId)
@@ -154,7 +159,8 @@ public class DetectionCreationMapper {
   private GeoServerProperties extractGeoServerProperties(
       GeoServerProperties geoServerProperties,
       List<app.bpartners.geojobs.endpoint.rest.model.Feature> geoJsonZone,
-      List<app.bpartners.geojobs.repository.model.Feature> multiPolygonGeoJsonZone) {
+      List<app.bpartners.geojobs.repository.model.Feature> multiPolygonGeoJsonZone,
+      List<DetectableObjectConfiguration> detectableObjectConfigurations) {
     var finalGeoServerProperties = geoServerProperties;
     if (geoJsonZone != null
         && !multiPolygonGeoJsonZone.isEmpty()
@@ -176,13 +182,18 @@ public class DetectionCreationMapper {
                               + latitude));
       String layer = mapLayer.name();
       var precisionLevelInCm = mapLayer.precisionLevelInCm();
-      if (precisionLevelInCm == null || precisionLevelInCm != 5) {
+      var requiredResolutions =
+          modelCardResolver.requiredSpatialResolutionsInCm(detectableObjectConfigurations);
+
+      if (precisionLevelInCm == null
+          || requiredResolutions.size() != 1
+          || !requiredResolutions.contains(precisionLevelInCm.doubleValue())) {
         throw new ApiException(
             SERVER_EXCEPTION,
             String.format(
-                "Cannot process detection : image resolution must be 5 cm. Current layer = %s"
+                "Cannot process detection : image resolution must be %s cm. Current layer = %s"
                     + " (precisionLevelInCm = %s)",
-                layer, precisionLevelInCm));
+                formatResolutions(requiredResolutions), layer, precisionLevelInCm));
       }
 
       // TODO: save other layers to be used in failure case
@@ -282,5 +293,11 @@ public class DetectionCreationMapper {
       return point.getCoordinates();
     }
     throw new IllegalArgumentException("Unknown feature type: " + firstFeature);
+  }
+
+  private static String formatResolutions(Set<Double> resolutions) {
+    return resolutions.stream()
+        .map(resolution -> BigDecimal.valueOf(resolution).stripTrailingZeros().toPlainString())
+        .collect(Collectors.joining(" or "));
   }
 }
