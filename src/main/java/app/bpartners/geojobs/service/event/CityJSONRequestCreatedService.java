@@ -96,6 +96,7 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
         request.toBuilder()
             .status(FINISHED)
             .step(GEOMETRY_CONSTRUCTION)
+            .message(null)
             .cityJsons(cityJsonList)
             .build();
     entityManager.clear();
@@ -128,9 +129,23 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
         .collect(toSet());
   }
 
+  private static String failureMessage(Exception e) {
+    var root = e;
+    while (root.getCause() instanceof Exception cause) root = cause;
+    return root == e ? e.getMessage() : e.getMessage() + ": " + root.getMessage();
+  }
+
   private void updateStatus(
       CityJSONRequest request, CityJSONRequestStatus status, CityJSONRequestStep step) {
-    var updatedStatus = request.toBuilder().status(status).step(step).build();
+    updateStatus(request, status, step, null);
+  }
+
+  private void updateStatus(
+      CityJSONRequest request,
+      CityJSONRequestStatus status,
+      CityJSONRequestStep step,
+      String message) {
+    var updatedStatus = request.toBuilder().status(status).step(step).message(message).build();
     entityManager.clear();
     cityJSONRequestRepository.save(updatedStatus);
   }
@@ -174,7 +189,7 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
       succeedCityJsonRequest(request, List.of(cityJson));
     } catch (Exception e) {
       log.error(e.getMessage());
-      updateStatus(request, FAILED, GEOMETRY_CONSTRUCTION);
+      updateStatus(request, FAILED, GEOMETRY_CONSTRUCTION, failureMessage(e));
       throw e;
     }
   }
@@ -197,7 +212,7 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
           "Unable to process Lidar By Internal Api for request {}, error {}",
           request.getId(),
           e.getMessage());
-      updateStatus(request, FAILED, GEOMETRY_CONSTRUCTION);
+      updateStatus(request, FAILED, GEOMETRY_CONSTRUCTION, failureMessage(e));
     }
   }
 
@@ -208,7 +223,7 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
     } catch (Exception e) {
       log.error(
           "Unable to process Lidar for request {}, error {}", request.getId(), e.getMessage(), e);
-      updateStatus(request, FAILED, GEOMETRY_CONSTRUCTION);
+      updateStatus(request, FAILED, GEOMETRY_CONSTRUCTION, failureMessage(e));
     }
   }
 
@@ -221,7 +236,7 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
           "Unable to process Lidar by SafeMode for request {}, error {}",
           request.getId(),
           e.getMessage());
-      updateStatus(request, FAILED, GEOMETRY_CONSTRUCTION);
+      updateStatus(request, FAILED, GEOMETRY_CONSTRUCTION, failureMessage(e));
     }
   }
 }
