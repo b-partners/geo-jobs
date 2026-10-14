@@ -81,6 +81,7 @@ class CityJSONRequestCreatedServiceTest {
     when(cityJSONRequestBuilderMock.status(FINISHED)).thenReturn(cityJSONRequestBuilderMock);
     when(cityJSONRequestBuilderMock.step(GEOMETRY_CONSTRUCTION))
         .thenReturn(cityJSONRequestBuilderMock);
+    when(cityJSONRequestBuilderMock.message(any())).thenReturn(cityJSONRequestBuilderMock);
     when(cityJSONRequestBuilderMock.cityJsons(List.of(cityJSONMock)))
         .thenReturn(cityJSONRequestBuilderMock);
     when(cityJSONRequestBuilderMock.build()).thenReturn(cityJSONRequestMock);
@@ -127,6 +128,7 @@ class CityJSONRequestCreatedServiceTest {
         .thenThrow(new RuntimeException());
     when(cityJSONRequestMock.toBuilder()).thenReturn(cityJSONRequestBuilderMock);
     when(cityJSONRequestBuilderMock.status(FAILED)).thenReturn(cityJSONRequestBuilderMock);
+    when(cityJSONRequestBuilderMock.message(any())).thenReturn(cityJSONRequestBuilderMock);
     when(cityJSONRequestBuilderMock.step(GEOMETRY_CONSTRUCTION))
         .thenReturn(cityJSONRequestBuilderMock);
     when(cityJSONRequestBuilderMock.build()).thenReturn(cityJSONRequestMock);
