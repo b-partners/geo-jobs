@@ -204,7 +204,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
     String authId = randomUUID().toString();
 
     CommunityAuthorization authorization = new CommunityAuthorization();
-    when(communityAuthorizationRepository.findById(email)).thenReturn(Optional.of(authorization));
+    when(communityAuthorizationRepository.findById(authId)).thenReturn(Optional.of(authorization));
 
     User user =
         new User(randomUUID().toString(), randomUUID().toString(), randomUUID().toString(), email);
@@ -213,7 +213,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
         .thenReturn(List.of(user));
     when(userAccountsApiMock.getUserApiKey(user.id(), adminApiKey)).thenReturn(List.of());
 
-    when(userAccountsApiMock.getOrGenerateApiKey(eq(authId), anyString(), eq(adminApiKey)))
+    when(userAccountsApiMock.getOrGenerateApiKey(eq(email), anyString(), eq(adminApiKey)))
         .thenAnswer(invocation -> new UserApiKey(invocation.getArgument(1), DASHBOARD));
 
     DashboardApiKeyCheckTriggered event =
@@ -271,10 +271,10 @@ class DashboardApiKeyCheckTriggeredServiceTest {
         .thenReturn(List.of(user));
     when(userAccountsApiMock.getUserApiKey(user.id(), adminApiKey)).thenReturn(List.of());
 
-    when(userAccountsApiMock.getOrGenerateApiKey(eq(authId), anyString(), eq(adminApiKey)))
+    when(userAccountsApiMock.getOrGenerateApiKey(eq(email), anyString(), eq(adminApiKey)))
         .thenReturn(new UserApiKey("existingKey", DASHBOARD));
 
-    when(communityAuthorizationRepository.findById(email)).thenReturn(Optional.empty());
+    when(communityAuthorizationRepository.findById(authId)).thenReturn(Optional.empty());
 
     DashboardApiKeyCheckTriggered event =
         DashboardApiKeyCheckTriggered.builder()
