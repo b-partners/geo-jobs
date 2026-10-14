@@ -125,7 +125,8 @@ class CityJSONRequestCreatedServiceTest {
     when(cityJSONRequestRepositoryMock.findByIdAndCommunityOwnerId(requestId, communityOwnerId))
         .thenReturn(Optional.of(cityJSONRequestMock));
     when(cityJson3DBagRooferProcessorMock.apply(cityJSONRequestMock))
-        .thenThrow(new RuntimeException());
+        .thenThrow(
+            new IllegalStateException("Invalid CityJSON file", new RuntimeException("root")));
     when(cityJSONRequestMock.toBuilder()).thenReturn(cityJSONRequestBuilderMock);
     when(cityJSONRequestBuilderMock.status(FAILED)).thenReturn(cityJSONRequestBuilderMock);
     when(cityJSONRequestBuilderMock.message(any())).thenReturn(cityJSONRequestBuilderMock);
@@ -145,5 +146,6 @@ class CityJSONRequestCreatedServiceTest {
     var cityJsonRequestCaptor = ArgumentCaptor.forClass(CityJSONRequest.class);
     verify(cityJSONRequestRepositoryMock).save(cityJsonRequestCaptor.capture());
     assertEquals(cityJSONRequestMock, cityJsonRequestCaptor.getValue());
+    verify(cityJSONRequestBuilderMock).message("Invalid CityJSON file: root");
   }
 }
