@@ -241,7 +241,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
                       e.getLevel() == Level.INFO
                           && e.getFormattedMessage()
                               .equals(
-                                  "[DAKC H] New Dashboard api key generated for user " + email));
+                                  "[DAKC H] New Dashboard api key generated for user " + authId));
       assertTrue(hasNewKeyGeneratedLog);
 
       boolean hasUpdatedLog =
@@ -250,7 +250,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
                   e ->
                       e.getLevel() == Level.INFO
                           && e.getFormattedMessage()
-                              .equals("[DAKC H] Dashboard api key updated for user " + email));
+                              .equals("[DAKC H] Dashboard api key updated for user " + authId));
       assertTrue(hasUpdatedLog);
     } finally {
       logger.detachAppender(appender);
@@ -302,7 +302,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
                           && e.getFormattedMessage()
                               .equals(
                                   "[DAKC H] Dashboard api key for user "
-                                      + email
+                                      + authId
                                       + " already exists in the user account api. No new key"
                                       + " generated."));
       assertTrue(hasExistingKeyLog);
@@ -315,7 +315,7 @@ class DashboardApiKeyCheckTriggeredServiceTest {
                           && e.getFormattedMessage()
                               .equals(
                                   "[DAKC H] Failed to update dashboard api key for user "
-                                      + email
+                                      + authId
                                       + ". User not found in database."));
       assertTrue(hasUserNotFoundLog);
     } finally {
