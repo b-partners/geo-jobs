@@ -52,6 +52,8 @@ public class CityJSONRequest implements Serializable {
   @JdbcTypeCode(NAMED_ENUM)
   private CityJSONRequestStep step;
 
+  private String message;
+
   @OneToMany(mappedBy = "request", cascade = CascadeType.ALL, fetch = EAGER)
   private List<CityJSON> cityJsons = new ArrayList<>();
 
