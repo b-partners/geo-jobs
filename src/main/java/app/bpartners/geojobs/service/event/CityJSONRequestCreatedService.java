@@ -129,7 +129,6 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
         .collect(toSet());
   }
 
-  // best effort: must never throw, it runs in catch blocks before the FAILED status is saved
   private static String failureMessage(Exception e) {
     try {
       Throwable root = e;
