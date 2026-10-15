@@ -129,10 +129,16 @@ public class CityJSONRequestCreatedService implements Consumer<CityJSONRequestCr
         .collect(toSet());
   }
 
+  // best effort: must never throw, it runs in catch blocks before the FAILED status is saved
   private static String failureMessage(Exception e) {
-    var root = e;
-    while (root.getCause() instanceof Exception cause) root = cause;
-    return root == e ? e.getMessage() : e.getMessage() + ": " + root.getMessage();
+    try {
+      Throwable root = e;
+      for (int depth = 0; root.getCause() != null && depth < 10; depth++) root = root.getCause();
+      var message = root == e ? e.getMessage() : e.getMessage() + ": " + root.getMessage();
+      return message == null || message.length() <= 1000 ? message : message.substring(0, 1000);
+    } catch (RuntimeException ignored) {
+      return null;
+    }
   }
 
   private void updateStatus(

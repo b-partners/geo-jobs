@@ -148,4 +148,37 @@ class CityJSONRequestCreatedServiceTest {
     assertEquals(cityJSONRequestMock, cityJsonRequestCaptor.getValue());
     verify(cityJSONRequestBuilderMock).message("Invalid CityJSON file: root");
   }
+
+  @Test
+  void fail_process_still_saves_failed_status_when_cause_chain_is_cyclic() {
+    var communityOwnerId = randomUUID().toString();
+    var requestId = randomUUID().toString();
+    var cityJSONRequestMock = mock(CityJSONRequest.class);
+    var cityJSONRequestBuilderMock = mock(CityJSONRequest.CityJSONRequestBuilder.class);
+    var first = new RuntimeException("first");
+    var second = new RuntimeException("second", first);
+    first.initCause(second);
+    when(communityAuthorizationRepositoryMock.findById(communityOwnerId))
+        .thenReturn(Optional.of(mock(CommunityAuthorization.class)));
+    when(cityJSONRequestRepositoryMock.findByIdAndCommunityOwnerId(requestId, communityOwnerId))
+        .thenReturn(Optional.of(cityJSONRequestMock));
+    when(cityJson3DBagRooferProcessorMock.apply(cityJSONRequestMock)).thenThrow(first);
+    when(cityJSONRequestMock.toBuilder()).thenReturn(cityJSONRequestBuilderMock);
+    when(cityJSONRequestBuilderMock.status(FAILED)).thenReturn(cityJSONRequestBuilderMock);
+    when(cityJSONRequestBuilderMock.step(GEOMETRY_CONSTRUCTION))
+        .thenReturn(cityJSONRequestBuilderMock);
+    when(cityJSONRequestBuilderMock.message(any())).thenReturn(cityJSONRequestBuilderMock);
+    when(cityJSONRequestBuilderMock.build()).thenReturn(cityJSONRequestMock);
+
+    assertDoesNotThrow(
+        () ->
+            subject.accept(
+                CityJSONRequestCreated.builder()
+                    .requestId(requestId)
+                    .communityOwnerId(communityOwnerId)
+                    .lidarProcessorType(THREE_D_BAG_ROOFER)
+                    .build()));
+
+    verify(cityJSONRequestRepositoryMock).save(cityJSONRequestMock);
+  }
 }
