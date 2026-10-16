@@ -56,7 +56,8 @@ public class CreateDetectionValidator implements Consumer<CreateDetection> {
     if (featuresWithZoom.isEmpty()) {
       return;
     }
-    if (!isToitureOnly(createDetection) || !featuresWithZoom.stream().allMatch(this::isLegacyZoom)) {
+    if (!isToitureOnly(createDetection)
+        || !featuresWithZoom.stream().allMatch(this::isLegacyZoom)) {
       throw new NotImplementedException(
           "Feature.properties.zoom cannot be provided, the zoom level is resolved from the"
               + " detectable objects.");

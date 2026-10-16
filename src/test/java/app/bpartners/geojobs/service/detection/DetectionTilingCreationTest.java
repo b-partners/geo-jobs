@@ -72,8 +72,7 @@ class DetectionTilingCreationTest {
     return Detection.builder()
         .id(randomUUID().toString())
         .detectableObjectConfigurations(
-            List.of(
-                DetectableObjectConfiguration.builder().objectType(TOITURE_REVETEMENT).build()))
+            List.of(DetectableObjectConfiguration.builder().objectType(TOITURE_REVETEMENT).build()))
         .build();
   }
 }

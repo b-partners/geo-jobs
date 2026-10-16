@@ -317,7 +317,7 @@ public class ZoneTilingJobService extends JobService<ParcelTilingTask, ZoneTilin
         .flatMap(
             imageZoom ->
                 splitFeaturesByTiles(
-                    featuresToBeTiled, geometryConverter, tilePolygonRetriever, imageZoom)
+                        featuresToBeTiled, geometryConverter, tilePolygonRetriever, imageZoom)
                     .stream()
                     .map(
                         feature -> {

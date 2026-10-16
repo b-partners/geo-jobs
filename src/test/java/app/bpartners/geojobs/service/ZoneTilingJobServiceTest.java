@@ -3,15 +3,15 @@ package app.bpartners.geojobs.service;
 import static app.bpartners.geojobs.endpoint.rest.model.BucketSeparatorType.SLASH;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.*;
 import static app.bpartners.geojobs.job.model.Status.ProgressionStatus.*;
-import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
-import static app.bpartners.geojobs.repository.model.GeoJobType.TILING;
 import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.CITY;
 import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.HOUSES_0;
 import static app.bpartners.geojobs.repository.model.ArcgisImageZoom.HOUSES_1;
+import static app.bpartners.geojobs.repository.model.GeoJobType.DETECTION;
+import static app.bpartners.geojobs.repository.model.GeoJobType.TILING;
 import static java.time.Instant.now;
+import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
-import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 

@@ -77,8 +77,7 @@ class ModelCardResolverTest {
   void resolves_only_the_model_cards_of_the_tile_zoom() {
     var configs = configs(TOMBE, HUMIDITE, USURE);
 
-    assertEquals(
-        List.of(RESOLVED_TOMBS), subject.resolve(configs, DEFAULT_ZOOM, ANY).modelCards());
+    assertEquals(List.of(RESOLVED_TOMBS), subject.resolve(configs, DEFAULT_ZOOM, ANY).modelCards());
     assertEquals(
         List.of(RESOLVED_DAMAGES), subject.resolve(configs, DAMAGES_ZOOM, ANY).modelCards());
   }
@@ -95,8 +94,7 @@ class ModelCardResolverTest {
   void reports_unmapped_types_only_on_the_default_zoom() {
     var configs = configs(HUMIDITE, CHEMINEE);
 
-    assertEquals(
-        Set.of(CHEMINEE), subject.resolve(configs, DEFAULT_ZOOM, ANY).unmappedTypes());
+    assertEquals(Set.of(CHEMINEE), subject.resolve(configs, DEFAULT_ZOOM, ANY).unmappedTypes());
     assertTrue(subject.resolve(configs, DAMAGES_ZOOM, ANY).unmappedTypes().isEmpty());
   }
 
@@ -116,8 +114,7 @@ class ModelCardResolverTest {
   @Test
   void throws_when_mapped_model_card_is_not_deployed() {
     assertThrows(
-        IllegalStateException.class,
-        () -> subject.resolve(configs(PISCINE), DAMAGES_ZOOM, ANY));
+        IllegalStateException.class, () -> subject.resolve(configs(PISCINE), DAMAGES_ZOOM, ANY));
   }
 
   @Test
@@ -131,9 +128,11 @@ class ModelCardResolverTest {
   @Test
   void required_spatial_resolutions_are_distinct_and_default_to_5_cm_for_unmapped_types() {
     assertEquals(Set.of(5.0), subject.requiredSpatialResolutionsInCm(configs(HUMIDITE, USURE)));
-    assertEquals(Set.of(5.0, 10.0), subject.requiredSpatialResolutionsInCm(configs(HUMIDITE, TOMBE)));
+    assertEquals(
+        Set.of(5.0, 10.0), subject.requiredSpatialResolutionsInCm(configs(HUMIDITE, TOMBE)));
     assertEquals(Set.of(5.0), subject.requiredSpatialResolutionsInCm(configs(CHEMINEE)));
-    assertEquals(Set.of(5.0, 10.0), subject.requiredSpatialResolutionsInCm(configs(TOMBE, CHEMINEE)));
+    assertEquals(
+        Set.of(5.0, 10.0), subject.requiredSpatialResolutionsInCm(configs(TOMBE, CHEMINEE)));
   }
 
   @Test

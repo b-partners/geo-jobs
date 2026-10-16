@@ -72,8 +72,10 @@ class HttpApiTileObjectDetectorTest {
       new DeployedModelCard("tombs", OBJECT_DETECTION, 1, false, null, null, true);
   private static final DeployedModelCard TOMBS_CARD =
       new DeployedModelCard("tombs", OBJECT_DETECTION, 1, false, null, null, true);
-  private static final ResolvedModelCard RESOLVED_DAMAGES = new ResolvedModelCard(DAMAGES_CARD, 21, 5.0);
-  private static final ResolvedModelCard RESOLVED_TOMBS = new ResolvedModelCard(TOMBS_CARD, 20, 10.0);
+  private static final ResolvedModelCard RESOLVED_DAMAGES =
+      new ResolvedModelCard(DAMAGES_CARD, 21, 5.0);
+  private static final ResolvedModelCard RESOLVED_TOMBS =
+      new ResolvedModelCard(TOMBS_CARD, 20, 10.0);
 
   private final CustomBucketComponent customBucketComponentMock = mock();
   private final TileObjectDetectorConf tileObjectDetectorConfMock = mock();

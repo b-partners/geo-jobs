@@ -61,7 +61,8 @@ class InferenceModelCardConfTest {
 
   @Test
   void rejects_mapping_without_zoom_level() {
-    givenConf("""
+    givenConf(
+        """
         [{"objectType": "HUMIDITE", "modelCardId": "damages", "spatialResolution": 5}]""");
 
     assertThrows(IllegalStateException.class, () -> subject.getMappings());
@@ -69,7 +70,8 @@ class InferenceModelCardConfTest {
 
   @Test
   void rejects_mapping_without_spatial_resolution() {
-    givenConf("""
+    givenConf(
+        """
         [{"objectType": "HUMIDITE", "modelCardId": "damages", "zoomLevel": 21}]""");
 
     assertThrows(IllegalStateException.class, () -> subject.getMappings());
@@ -79,10 +81,10 @@ class InferenceModelCardConfTest {
   void rejects_same_model_card_mapped_with_different_zoom_levels() {
     givenConf(
         """
-        [
-          {"objectType": "HUMIDITE", "modelCardId": "damages", "zoomLevel": 21, "spatialResolution": 5},
-          {"objectType": "USURE", "modelCardId": "damages", "zoomLevel": 20, "spatialResolution": 5}
-        ]""");
+[
+  {"objectType": "HUMIDITE", "modelCardId": "damages", "zoomLevel": 21, "spatialResolution": 5},
+  {"objectType": "USURE", "modelCardId": "damages", "zoomLevel": 20, "spatialResolution": 5}
+]""");
 
     assertThrows(IllegalStateException.class, () -> subject.getMappings());
   }
@@ -91,10 +93,10 @@ class InferenceModelCardConfTest {
   void accepts_same_model_card_mapped_consistently_for_several_types() {
     givenConf(
         """
-        [
-          {"objectType": "HUMIDITE", "modelCardId": "damages", "zoomLevel": 21, "spatialResolution": 5},
-          {"objectType": "USURE", "modelCardId": "damages", "zoomLevel": 21, "spatialResolution": 5}
-        ]""");
+[
+  {"objectType": "HUMIDITE", "modelCardId": "damages", "zoomLevel": 21, "spatialResolution": 5},
+  {"objectType": "USURE", "modelCardId": "damages", "zoomLevel": 21, "spatialResolution": 5}
+]""");
 
     assertEquals(2, subject.getMappings().size());
   }

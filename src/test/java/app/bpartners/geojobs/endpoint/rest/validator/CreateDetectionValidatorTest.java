@@ -2,9 +2,9 @@ package app.bpartners.geojobs.endpoint.rest.validator;
 
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.VEGETATION;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.junit.jupiter.api.Assertions.*;
 
 import app.bpartners.geojobs.endpoint.rest.model.CreateDetection;
 import app.bpartners.geojobs.endpoint.rest.model.DetectableObjectModel;

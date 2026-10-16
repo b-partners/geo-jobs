@@ -1,10 +1,8 @@
 package app.bpartners.geojobs.service.dashboard;
 
-import static app.bpartners.geojobs.model.exception.ApiException.ExceptionType.SERVER_EXCEPTION;
 import static app.bpartners.geojobs.service.dashboard.ApiConfiguration.API_KEY_HEADER;
 import static org.springframework.http.HttpMethod.PUT;
 
-import app.bpartners.geojobs.model.exception.ApiException;
 import app.bpartners.geojobs.service.dashboard.component.AreaPictureDetails;
 import app.bpartners.geojobs.service.dashboard.component.CrupdateAreaPictureDetails;
 import lombok.RequiredArgsConstructor;

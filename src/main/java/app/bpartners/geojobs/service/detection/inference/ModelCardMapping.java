@@ -5,7 +5,4 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record ModelCardMapping(
-    DetectableType objectType,
-    String modelCardId,
-    Integer zoomLevel,
-    Double spatialResolution) {}
+    DetectableType objectType, String modelCardId, Integer zoomLevel, Double spatialResolution) {}
