@@ -27,7 +27,7 @@ public class ModelCardResolver {
   public ModelCardResolver(
       InferenceModelCardConf conf,
       ModelCardRegistry registry,
-      @Value("${detection.inference.api.enabled:false}") boolean inferenceApiEnabled) {
+      @Value("${detection.inference.api.enabled:true}") boolean inferenceApiEnabled) {
     this.conf = conf;
     this.registry = registry;
     this.inferenceApiEnabled = inferenceApiEnabled;
@@ -53,7 +53,9 @@ public class ModelCardResolver {
         .map(
             configuration -> {
               var mapping = mappingsByType.get(configuration.getObjectType());
-              return mapping == null ? DEFAULT_SPATIAL_RESOLUTION_IN_CM : mapping.spatialResolution();
+              return mapping == null
+                  ? DEFAULT_SPATIAL_RESOLUTION_IN_CM
+                  : mapping.spatialResolution();
             })
         .collect(Collectors.toCollection(LinkedHashSet::new));
   }
@@ -95,8 +97,7 @@ public class ModelCardResolver {
         continue;
       }
       var modelCard =
-          modelCardsById.computeIfAbsent(
-              mapping.modelCardId(), id -> findRunnable(objectType, id));
+          modelCardsById.computeIfAbsent(mapping.modelCardId(), id -> findRunnable(objectType, id));
       if (compatible.test(modelCard)) {
         usableModelCardsById.putIfAbsent(
             mapping.modelCardId(),
@@ -116,7 +117,8 @@ public class ModelCardResolver {
     if (!inferenceApiEnabled) {
       return mappingsByType;
     }
-    conf.getMappings().forEach(mapping -> mappingsByType.putIfAbsent(mapping.objectType(), mapping));
+    conf.getMappings()
+        .forEach(mapping -> mappingsByType.putIfAbsent(mapping.objectType(), mapping));
     return mappingsByType;
   }
 
