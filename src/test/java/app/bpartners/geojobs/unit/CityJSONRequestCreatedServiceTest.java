@@ -26,7 +26,6 @@ import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStatus;
 import app.bpartners.geojobs.repository.model.cityjson.CityJSONRequestStep;
 import app.bpartners.geojobs.repository.model.community.CommunityAuthorization;
 import app.bpartners.geojobs.service.CityJSON3DBagRooferProcessor;
-import app.bpartners.geojobs.service.CityJSONInternalProcessor;
 import app.bpartners.geojobs.service.CityJSONSafeModeProcessor;
 import app.bpartners.geojobs.service.cityjson.LidarDataToCityJsonProcessor;
 import app.bpartners.geojobs.service.cityjson.texture.CityJsonTextureComputer;
@@ -53,9 +52,6 @@ class CityJSONRequestCreatedServiceTest {
   CityJSON3DBagRooferProcessor cityJson3DBagRooferProcessorMock = mock();
   CityJSONSafeModeProcessor cityJSONSafeModeProcessor = mock();
   CityJsonTextureComputer textureComputerMock = mock(CityJsonTextureComputer.class);
-  CityJSONInternalProcessor cityJSONInternalProcessorMock = mock();
-  CityJSONRequestCreatedService.CityJSONRequestCreatedServiceGenerator cityjsonGenerator =
-      new CityJSONRequestCreatedService.CityJSONRequestCreatedServiceGenerator("GEOJOBS");
 
   CityJSONRequestCreatedService subject =
       new CityJSONRequestCreatedService(
@@ -69,9 +65,7 @@ class CityJSONRequestCreatedServiceTest {
           communityAuthorizationRepositoryMock,
           cityJson3DBagRooferProcessorMock,
           cityJSONSafeModeProcessor,
-          textureComputerMock,
-          cityJSONInternalProcessorMock,
-          cityjsonGenerator);
+          textureComputerMock);
 
   @BeforeEach
   void setUp() {
@@ -204,19 +198,6 @@ class CityJSONRequestCreatedServiceTest {
   }
 
   @Test
-  void fail_process_by_internal_api_stores_message() {
-    var request = mock(CityJSONRequest.class);
-    when(request.getDelimitationObjectType())
-        .thenReturn(CityJSONDelimitationObjectType.BUILDING_ROOF_SEGMENT_FACE);
-    when(cityJSONInternalProcessorMock.apply(request)).thenThrow(new RuntimeException("api down"));
-    var apiSubject = serviceWithGenerator("API");
-
-    var builder = runWithRequest(apiSubject, request, FAILED, GEOMETRY_CONSTRUCTION, false);
-
-    verify(builder).message("api down");
-  }
-
-  @Test
   void fail_process_by_internal_method_stores_message() {
     var request = mock(CityJSONRequest.class);
     when(request.getDelimitationObjectType())
@@ -240,22 +221,5 @@ class CityJSONRequestCreatedServiceTest {
     var builder = runWithRequest(subject, request, UNAVAILABLE, POINTS_CLOUD_PRE_PROCESSING, false);
 
     verify(builder).message(null);
-  }
-
-  private CityJSONRequestCreatedService serviceWithGenerator(String generator) {
-    return new CityJSONRequestCreatedService(
-        cityJSONRequestRepositoryMock,
-        lasRoofsPointsExtractorMock,
-        lidarDataToCityJsonProcessorMock,
-        featureMapperMock,
-        entityManagerMock,
-        bucketComponentMock,
-        eventProducerMock,
-        communityAuthorizationRepositoryMock,
-        cityJson3DBagRooferProcessorMock,
-        cityJSONSafeModeProcessor,
-        textureComputerMock,
-        cityJSONInternalProcessorMock,
-        new CityJSONRequestCreatedService.CityJSONRequestCreatedServiceGenerator(generator));
   }
 }

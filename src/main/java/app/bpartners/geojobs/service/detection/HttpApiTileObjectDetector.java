@@ -18,17 +18,26 @@ import app.bpartners.geojobs.file.bucket.CustomBucketComponent;
 import app.bpartners.geojobs.repository.DetectionFileObjectRepository;
 import app.bpartners.geojobs.repository.model.TileDetectionTask;
 import app.bpartners.geojobs.repository.model.detection.DetectableObjectConfiguration;
+import app.bpartners.geojobs.repository.model.detection.DetectableType;
 import app.bpartners.geojobs.repository.model.detection.DetectionFileObject;
 import app.bpartners.geojobs.repository.model.detection.DetectionFileType;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
+import app.bpartners.geojobs.service.detection.inference.DeployedModelCard;
+import app.bpartners.geojobs.service.detection.inference.InferenceApiClient;
+import app.bpartners.geojobs.service.detection.inference.InferenceRequest;
+import app.bpartners.geojobs.service.detection.inference.ModelCardResolver;
+import app.bpartners.geojobs.service.detection.inference.ResolvedModelCard;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.awt.Dimension;
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import javax.imageio.ImageIO;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,6 +54,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 @ConditionalOnProperty(value = "objects.detector.mock.activated", havingValue = "false")
 @Slf4j
 public class HttpApiTileObjectDetector implements TileObjectDetector {
+  private static final String INFERENCE_SOURCE_PREFIX = "inference:";
+  private static final int DEFAULT_SUPPORTED_TILE_SIZE = 512;
   private final ObjectMapper om;
   private final CustomBucketComponent customBucketComponent;
   private final String defaultDetectionApiUrl;
@@ -57,6 +68,8 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
   private final ObjectMapper objectMapper;
   private final BucketComponent bucketComponent;
   private final RestTemplate restTemplate;
+  private final InferenceApiClient inferenceApiClient;
+  private final ModelCardResolver modelCardResolver;
 
   @SneakyThrows
   public HttpApiTileObjectDetector(
@@ -71,7 +84,9 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
       BucketComponent bucketComponent,
       FileWriter fileWriter,
       ObjectMapper objectMapper,
-      RestTemplate restTemplate) {
+      RestTemplate restTemplate,
+      InferenceApiClient inferenceApiClient,
+      ModelCardResolver modelCardResolver) {
     this.om = om;
     this.customBucketComponent = customBucketComponent;
     this.defaultDetectionApiUrl = defaultApiUrl;
@@ -84,6 +99,8 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
     this.fileWriter = fileWriter;
     this.objectMapper = objectMapper;
     this.restTemplate = restTemplate;
+    this.inferenceApiClient = inferenceApiClient;
+    this.modelCardResolver = modelCardResolver;
   }
 
   @SneakyThrows
@@ -97,9 +114,6 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
     if (tile == null) {
       return null;
     }
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(APPLICATION_JSON);
-
     var tileImageBucketPath = tile.getBucketPath();
     var tileImageFile =
         customBucketComponent.download(
@@ -107,28 +121,141 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
     String base64ImgData = Base64.getEncoder().encodeToString(readFileToByteArray(tileImageFile));
     String base64MaskData =
         mask == null ? null : Base64.getEncoder().encodeToString(readFileToByteArray(mask));
-    boolean vegetation = hasVegetationModel(detectableObjectConfigurations);
 
+    var tileSize = readImageSize(tileImageFile);
+    var resolution =
+        modelCardResolver.resolve(
+            detectableObjectConfigurations,
+            tileZoom(tile),
+            modelCard -> supportsTileSize(modelCard, tileSize));
+    var v2Responses = new ArrayList<DetectionResponseAggregator.DetectionResponseUrl>();
+    var v1Responses = new ArrayList<DetectionResponseAggregatorV1.DetectionResponseUrl>();
+
+    for (var inferenceCall :
+        callInferenceApi(
+            resolution.modelCards(), tileImageFile.getName(), base64ImgData, base64MaskData)) {
+      v2Responses.add(inferenceCall);
+      if (isDebugMode) {
+        persistDetectionResponse(
+            tileDetectionTask,
+            tileImageBucketPath,
+            inferenceCall.detectionResponse(),
+            "_response_v2_",
+            TILE_DETECTION_RESULT_V2);
+      }
+    }
+
+    var lambdaTypes = new HashSet<>(resolution.unmappedTypes());
+    lambdaTypes.addAll(resolution.unsupportedTypes());
+    var lambdaConfigurations = lambdaConfigurations(detectableObjectConfigurations, lambdaTypes);
+    if (!lambdaConfigurations.isEmpty()) {
+      if (modelCardResolver.isInferenceApiEnabled()) {
+        if (!resolution.unmappedTypes().isEmpty()) {
+          log.warn(
+              "No inference model card mapped for {}, falling back to detection lambdas",
+              resolution.unmappedTypes());
+        }
+        if (!resolution.unsupportedTypes().isEmpty()) {
+          log.warn(
+              "Tile size {} not supported by the inference model cards of {}, falling back to"
+                  + " detection lambdas",
+              tileSize,
+              resolution.unsupportedTypes());
+        }
+      }
+      callLambdaApis(
+          tileDetectionTask,
+          tileImageFile.getName(),
+          tileImageBucketPath,
+          base64ImgData,
+          base64MaskData,
+          lambdaConfigurations,
+          v1Responses,
+          v2Responses);
+    }
+
+    return mergeToV2(
+        detectionResponseAggregatorV1.apply(v1Responses),
+        detectionResponseAggregator.apply(v2Responses));
+  }
+
+  private static int tileZoom(Tile tile) {
+    var coordinates = tile.getCoordinates();
+    return coordinates == null || coordinates.getZ() == null
+        ? ModelCardResolver.DEFAULT_TILING_ZOOM
+        : coordinates.getZ();
+  }
+
+  private static boolean supportsTileSize(DeployedModelCard modelCard, Dimension tileSize) {
+    if (tileSize == null) {
+      return false;
+    }
+    var expectedWidth =
+        modelCard.imageWidth() == null ? DEFAULT_SUPPORTED_TILE_SIZE : modelCard.imageWidth();
+    var expectedHeight =
+        modelCard.imageHeight() == null ? DEFAULT_SUPPORTED_TILE_SIZE : modelCard.imageHeight();
+    return tileSize.width == expectedWidth && tileSize.height == expectedHeight;
+  }
+
+  private static Dimension readImageSize(File imageFile) {
+    try (var input = ImageIO.createImageInputStream(imageFile)) {
+      var readers = ImageIO.getImageReaders(input);
+      if (!readers.hasNext()) {
+        log.warn("Unable to read the size of tile image {}", imageFile.getName());
+        return null;
+      }
+      var reader = readers.next();
+      try {
+        reader.setInput(input);
+        return new Dimension(reader.getWidth(0), reader.getHeight(0));
+      } finally {
+        reader.dispose();
+      }
+    } catch (IOException e) {
+      log.warn("Unable to read the size of tile image {}: {}", imageFile.getName(), e.getMessage());
+      return null;
+    }
+  }
+
+  private List<DetectableObjectConfiguration> lambdaConfigurations(
+      List<DetectableObjectConfiguration> objectConfigurations, Set<DetectableType> unmappedTypes) {
+    return objectConfigurations.stream()
+        .filter(configuration -> unmappedTypes.contains(configuration.getObjectType()))
+        .toList();
+  }
+
+  @SneakyThrows
+  private void callLambdaApis(
+      TileDetectionTask tileDetectionTask,
+      String tileImageName,
+      String tileImageBucketPath,
+      String base64ImgData,
+      String base64MaskData,
+      List<DetectableObjectConfiguration> lambdaConfigurations,
+      List<DetectionResponseAggregatorV1.DetectionResponseUrl> v1Responses,
+      List<DetectionResponseAggregator.DetectionResponseUrl> v2Responses) {
+    var isDebugMode = tileDetectionTask.isDebugMode();
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(APPLICATION_JSON);
+    boolean vegetation = hasVegetationModel(lambdaConfigurations);
     var requestV2 =
         new HttpEntity<>(
             om.writeValueAsString(
-                buildPayloadV2(tileImageFile.getName(), base64ImgData, base64MaskData, vegetation)),
+                buildPayloadV2(tileImageName, base64ImgData, base64MaskData, vegetation)),
             headers);
     var requestV1 =
         new HttpEntity<>(
             om.writeValueAsString(
                 buildPayloadV1(
                     tileDetectionTask.getJobId(),
-                    tileImageFile.getName(),
+                    tileImageName,
                     base64ImgData,
                     base64MaskData,
                     vegetation)),
             headers);
 
-    var detectionApiUrls = getApiUrls(detectableObjectConfigurations);
+    var detectionApiUrls = getApiUrls(lambdaConfigurations);
     var detectionApiCalls = callApisInParallel(detectionApiUrls, requestV1, requestV2);
-    var v2Responses = new ArrayList<DetectionResponseAggregator.DetectionResponseUrl>();
-    var v1Responses = new ArrayList<DetectionResponseAggregatorV1.DetectionResponseUrl>();
     for (var detectionApiCall : detectionApiCalls) {
       var apiUrl = detectionApiCall.apiUrl().getUrl();
       if (detectionApiCall.v1Response() != null) {
@@ -157,10 +284,68 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
         }
       }
     }
+  }
 
-    return mergeToV2(
-        detectionResponseAggregatorV1.apply(v1Responses),
-        detectionResponseAggregator.apply(v2Responses));
+  private List<DetectionResponseAggregator.DetectionResponseUrl> callInferenceApi(
+      List<ResolvedModelCard> modelCards,
+      String fileName,
+      String base64ImgData,
+      String base64MaskData) {
+    try (var executor = newVirtualThreadPerTaskExecutor()) {
+      var futures =
+          modelCards.stream()
+              .map(
+                  modelCard ->
+                      executor.submit(
+                          () ->
+                              callInferenceApi(modelCard, fileName, base64ImgData, base64MaskData)))
+              .toList();
+      return futures.stream()
+          .map(HttpApiTileObjectDetector::awaitFuture)
+          .filter(Objects::nonNull)
+          .toList();
+    }
+  }
+
+  private DetectionResponseAggregator.DetectionResponseUrl callInferenceApi(
+      ResolvedModelCard resolvedModelCard,
+      String fileName,
+      String base64ImgData,
+      String base64MaskData) {
+    var modelCard = resolvedModelCard.modelCard();
+    if (modelCard.imagesRequired() != 1) {
+      throw new IllegalStateException(
+          "Model card "
+              + modelCard.modelCardId()
+              + " requires several images, which is unsupported");
+    }
+    if (modelCard.maskRequired() && base64MaskData == null) {
+      throw new IllegalStateException(
+          "Model card " + modelCard.modelCardId() + " requires a mask but none was provided");
+    }
+    var request =
+        InferenceRequest.builder()
+            .modelCardId(modelCard.modelCardId())
+            .image1(base64ImgData)
+            .mask1(modelCard.maskRequired() ? base64MaskData : null)
+            .filename(fileName)
+            .zoomLevel(resolvedModelCard.zoomLevel())
+            .spatialResolution(resolvedModelCard.spatialResolution())
+            .build();
+    log.info("Attempting to call inference API with model card {}", modelCard.modelCardId());
+    try {
+      var response = inferenceApiClient.infer(request);
+      return response == null
+          ? null
+          : new DetectionResponseAggregator.DetectionResponseUrl(
+              response, INFERENCE_SOURCE_PREFIX + modelCard.modelCardId());
+    } catch (IllegalStateException e) {
+      log.error(
+          "Error while calling inference API with model card {}: {}",
+          modelCard.modelCardId(),
+          e.getMessage());
+      return null;
+    }
   }
 
   private List<DetectionApiCall> callApisInParallel(
@@ -172,7 +357,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
           detectionApiUrls.stream()
               .map(apiUrl -> executor.submit(() -> callApi(apiUrl, requestV1, requestV2)))
               .toList();
-      return futures.stream().map(HttpApiTileObjectDetector::awaitDetectionApiCall).toList();
+      return futures.stream().map(HttpApiTileObjectDetector::awaitFuture).toList();
     }
   }
 
@@ -187,7 +372,7 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
   }
 
   @SneakyThrows
-  private static DetectionApiCall awaitDetectionApiCall(Future<DetectionApiCall> future) {
+  private static <T> T awaitFuture(Future<T> future) {
     try {
       return future.get();
     } catch (ExecutionException e) {

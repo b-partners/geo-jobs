@@ -4,7 +4,7 @@ import static app.bpartners.geojobs.model.geometry.GeometryFactory.geometryFacto
 
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.exception.GatewayTimeoutException;
-import app.bpartners.geojobs.service.geodata.GeodataMapLayerClient;
+import app.bpartners.geojobs.service.geodata.MapLayerResolver;
 import app.bpartners.geojobs.service.geodata.model.GeodataMapLayer;
 import app.bpartners.geojobs.service.lidar.api.GeodataLidarApiClient;
 import java.util.Collection;
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Service;
 public class AreaCoverageService {
   static final double POINT_HALF_SIDE_IN_DEGREES = 0.00005;
 
-  private final GeodataMapLayerClient mapLayerClient;
+  private final MapLayerResolver mapLayerResolver;
   private final GeodataLidarApiClient lidarApiClient;
   private final LidarFileChecker lidarFileChecker;
   private final CoverageConf conf;
@@ -42,9 +42,9 @@ public class AreaCoverageService {
   }
 
   public Coverage2D check2D(double longitude, double latitude) {
-    return mapLayerClient
-        .getActualMapLayer(latitude, longitude)
-        .map(actual -> toCoverage2D(actual.layer()))
+    return mapLayerResolver
+        .apply(longitude, latitude)
+        .map(this::toCoverage2D)
         .orElseGet(Coverage2D::notCovered);
   }
 

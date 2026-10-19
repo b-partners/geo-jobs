@@ -22,5 +22,9 @@ public class CachedAreaPictureMapLayer implements Serializable {
 
   @Column private Integer precisionLevelInCm;
 
+  @Column private Integer layerYear;
+
+  @Column private String layerSource;
+
   @Column private Instant cachedAt;
 }

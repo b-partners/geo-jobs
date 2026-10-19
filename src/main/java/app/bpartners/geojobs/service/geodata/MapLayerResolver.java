@@ -1,48 +1,52 @@
-package app.bpartners.geojobs.service.dashboard;
+package app.bpartners.geojobs.service.geodata;
 
 import static java.math.RoundingMode.HALF_UP;
 import static java.time.Instant.now;
 
 import app.bpartners.geojobs.repository.CachedAreaPictureMapLayerRepository;
 import app.bpartners.geojobs.repository.model.CachedAreaPictureMapLayer;
-import app.bpartners.geojobs.service.dashboard.component.AreaPictureMapLayer;
+import app.bpartners.geojobs.service.geodata.model.GeodataMapLayer;
+import app.bpartners.geojobs.service.geodata.model.MapLayerActual;
 import java.math.BigDecimal;
 import java.time.Duration;
-import java.util.function.Supplier;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
-public class AreaPictureMapLayerResolver {
+public class MapLayerResolver {
   static final int CACHE_KEY_COORDINATES_SCALE = 3;
   static final Duration CACHE_ENTRY_LIFETIME = Duration.ofDays(30);
 
-  private final AreaPictureApi areaPictureApi;
+  private final GeodataMapLayerClient mapLayerClient;
   private final CachedAreaPictureMapLayerRepository cachedMapLayerRepository;
 
-  public AreaPictureMapLayer apply(
-      double longitude, double latitude, Supplier<String> dashboardApiKey) {
+  public Optional<GeodataMapLayer> apply(double longitude, double latitude) {
     var cacheKey = cacheKeyOf(longitude, latitude);
     var cached = cachedMapLayerRepository.findById(cacheKey).filter(this::isStillFresh);
     if (cached.isPresent()) {
-      return toMapLayer(cached.get());
+      return cached.map(MapLayerResolver::toMapLayer);
     }
 
     var retrieved =
-        areaPictureApi
-            .getAreaPictureMapLayers(longitude, latitude, dashboardApiKey.get())
-            .getFirst();
+        mapLayerClient.getActualMapLayer(latitude, longitude).map(MapLayerActual::layer);
+    retrieved
+        .filter(layer -> layer.name() != null && layer.precisionLevelInCm() != null)
+        .ifPresent(layer -> cache(cacheKey, layer));
+    return retrieved;
+  }
+
+  private void cache(String cacheKey, GeodataMapLayer layer) {
     cachedMapLayerRepository.save(
         CachedAreaPictureMapLayer.builder()
             .id(cacheKey)
-            .layerName(retrieved.name())
-            .precisionLevelInCm(retrieved.precisionLevelInCm())
+            .layerName(layer.name())
+            .precisionLevelInCm(layer.precisionLevelInCm())
+            .layerYear(layer.year())
+            .layerSource(layer.source())
             .cachedAt(now())
             .build());
-    return retrieved;
   }
 
   private boolean isStillFresh(CachedAreaPictureMapLayer cached) {
@@ -50,9 +54,15 @@ public class AreaPictureMapLayerResolver {
         && Duration.between(cached.getCachedAt(), now()).compareTo(CACHE_ENTRY_LIFETIME) < 0;
   }
 
-  private AreaPictureMapLayer toMapLayer(CachedAreaPictureMapLayer cached) {
-    return new AreaPictureMapLayer(
-        null, cached.getLayerName(), null, cached.getPrecisionLevelInCm());
+  private static GeodataMapLayer toMapLayer(CachedAreaPictureMapLayer cached) {
+    return new GeodataMapLayer(
+        null,
+        cached.getLayerName(),
+        cached.getLayerYear(),
+        cached.getLayerSource(),
+        null,
+        null,
+        cached.getPrecisionLevelInCm());
   }
 
   static String cacheKeyOf(double longitude, double latitude) {

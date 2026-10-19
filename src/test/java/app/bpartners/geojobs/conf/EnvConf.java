@@ -48,8 +48,9 @@ public class EnvConf {
     registry.add("mutation.detection.api.url", () -> "https://dummy.com");
     registry.add("geodata.api.url", () -> "https://dummy.com");
     registry.add("geodata.api.key", () -> "dummy_key");
+    registry.add("inference.api.url", () -> "https://dummy.com");
+    registry.add("inference.api.key", () -> "dummy_key");
     registry.add("cacher.api.url", () -> "https://dummy.com");
     registry.add("cacher.api.key", () -> "dummy_key");
-    registry.add("cityjsons.generator", () -> "GEOJOBS");
   }
 }

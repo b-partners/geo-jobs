@@ -16,6 +16,7 @@ import static org.mockito.Mockito.when;
 import app.bpartners.geojobs.model.exception.BadRequestException;
 import app.bpartners.geojobs.model.exception.GatewayTimeoutException;
 import app.bpartners.geojobs.service.geodata.GeodataMapLayerClient;
+import app.bpartners.geojobs.service.geodata.MapLayerResolver;
 import app.bpartners.geojobs.service.geodata.model.GeodataMapLayer;
 import app.bpartners.geojobs.service.geodata.model.MapLayerActual;
 import app.bpartners.geojobs.service.lidar.api.GeodataLidarApiClient;
@@ -34,7 +35,10 @@ class AreaCoverageServiceTest {
   LidarFileChecker lidarFileCheckerMock = mock();
   AreaCoverageService subject =
       new AreaCoverageService(
-          mapLayerClientMock, lidarApiClientMock, lidarFileCheckerMock, new CoverageConf(5));
+          new MapLayerResolver(mapLayerClientMock, mock()),
+          lidarApiClientMock,
+          lidarFileCheckerMock,
+          new CoverageConf(5));
 
   @BeforeEach
   void setUp() {

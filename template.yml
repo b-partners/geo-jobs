@@ -66,6 +66,8 @@ Globals:
         MUTATION_DETECTION_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/mutation-detector/api/url}}'
         GEODATA_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/geodata/api/url}}'
         GEODATA_API_KEY: !Sub '{{resolve:ssm:/geo-jobs/${Env}/geodata/api/key}}'
+        INFERENCE_API_URL: !Sub '{{resolve:ssm:/geo-jobs/${Env}/inference/api/url}}'
+        INFERENCE_API_KEY: !Sub '{{resolve:ssm:/geo-jobs/${Env}/inference/api/key}}'
 Parameters:
   Env:
     Type: String

@@ -30,6 +30,7 @@ import app.bpartners.geojobs.repository.model.detection.*;
 import app.bpartners.geojobs.repository.model.tiling.ParcelTilingTask;
 import app.bpartners.geojobs.repository.model.tiling.Tile;
 import app.bpartners.geojobs.service.*;
+import app.bpartners.geojobs.service.detection.inference.ModelCardResolver;
 import app.bpartners.geojobs.service.geojson.GeometryConverter;
 import app.bpartners.geojobs.service.ign.IgnCadastreFeatureFetcher;
 import app.bpartners.geojobs.service.tiling.TileFinder;
@@ -81,7 +82,8 @@ class FeatureVggRequestedServiceTest {
           tileCoordinatesServiceMock,
           tiledPixelPolygonComputerMock,
           featurePolygonRetrieverMock,
-          eventProducerMock);
+          eventProducerMock,
+          new DetectionImageZoomResolver(new ModelCardResolver(mock(), mock())));
 
   @Test
   void compute_vgg_for_zone_and_update_detection_vgg() {
