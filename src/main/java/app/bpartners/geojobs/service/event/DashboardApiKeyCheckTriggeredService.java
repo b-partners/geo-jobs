@@ -83,7 +83,7 @@ public class DashboardApiKeyCheckTriggeredService
     if (userApiKeys.isEmpty()) {
       var exceptionMessage = "No api key found for users : " + retrievedUserIds;
       log.error(FAILURE_LOG_PREFIX + "{}", exceptionMessage);
-      handleNoKey(userId, userEmail);
+      handleNoKey(userEmail, userId);
       return;
     }
 
@@ -99,7 +99,7 @@ public class DashboardApiKeyCheckTriggeredService
               + retrievedUserIds
               + " in the user account api.";
       log.error(FAILURE_LOG_PREFIX + "{}", exceptionMessage);
-      handleNoKey(userId, userEmail);
+      handleNoKey(userEmail, userId);
       return;
     }
 
