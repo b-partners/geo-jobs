@@ -24,7 +24,6 @@ import app.bpartners.geojobs.service.threed.ThreedApiClient;
 import app.bpartners.geojobs.service.threed.model.CreateLrgFromFeatureFileUrl;
 import app.bpartners.geojobs.service.threed.model.DelimitationType;
 import java.io.File;
-import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
@@ -74,7 +73,10 @@ public class CityJSONThreedProcessor implements Function<CityJSONRequest, List<C
     var community = communityRepository.findById(communityId);
     if (community.isEmpty())
       throw new IllegalArgumentException("No community was found for id = " + communityId);
-    return community.get().getMostRecentApiKey().getKeyValue();
+    var apiKey = community.get().getMostRecentApiKey();
+    if (apiKey == null)
+      throw new IllegalArgumentException("No API key was found for community id = " + communityId);
+    return apiKey.getKeyValue();
   }
 
   @Override
@@ -122,19 +124,15 @@ public class CityJSONThreedProcessor implements Function<CityJSONRequest, List<C
     return request.getRequestDelimitations().stream()
         .map(
             feature -> {
-              try {
-                var presignURL = getGeoJsonBuildingPresignedURL(feature);
-                var presignURLString = presignURL.toString();
-                log.info("Presigned URL for building: {}", presignURLString);
-                return presignURLString;
-              } catch (IOException e) {
-                throw new RuntimeException(e);
-              }
+              var presignURL = getGeoJsonBuildingPresignedURL(feature);
+              var presignURLString = presignURL.toString();
+              log.info("Presigned URL for building: {}", presignURLString);
+              return presignURLString;
             })
         .collect(toSet());
   }
 
-  private URL getGeoJsonBuildingPresignedURL(Feature feature) throws IOException {
+  private URL getGeoJsonBuildingPresignedURL(Feature feature) {
     var tmpGeoJsonBucketKey = randomUUID() + GEOJSON_EXTENSION;
     var multiPolygon = getMultiPolygon(feature);
     var geoJson = new GeoJson(new GeoJson.GeoFeature(feature.getProperties(), multiPolygon));
@@ -149,7 +147,7 @@ public class CityJSONThreedProcessor implements Function<CityJSONRequest, List<C
   }
 
   private MultiPolygon getMultiPolygon(Feature feature) {
-    var restFeature = toRestFeature(feature);
+    var restFeature = requireNonNull(toRestFeature(feature));
     var actualInstance = requireNonNull(restFeature.getGeometry()).getActualInstance();
     if (actualInstance instanceof MultiPolygon m) {
       return m;
