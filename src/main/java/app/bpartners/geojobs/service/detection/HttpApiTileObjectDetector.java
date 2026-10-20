@@ -150,6 +150,20 @@ public class HttpApiTileObjectDetector implements TileObjectDetector {
     lambdaTypes.addAll(resolution.unsupportedTypes());
     var lambdaConfigurations = lambdaConfigurations(detectableObjectConfigurations, lambdaTypes);
     if (!lambdaConfigurations.isEmpty()) {
+      var spatialResolutionInCm = tileDetectionTask.getSpatialResolutionInCm();
+      if (spatialResolutionInCm != null
+          && spatialResolutionInCm != ModelCardResolver.DEFAULT_SPATIAL_RESOLUTION_IN_CM) {
+        throw new IllegalStateException(
+            "Detection lambdas only support a spatial resolution of "
+                + ModelCardResolver.DEFAULT_SPATIAL_RESOLUTION_IN_CM
+                + " cm, but "
+                + lambdaTypes
+                + " cannot be detected by inference model cards at "
+                + spatialResolutionInCm
+                + " cm (tile size "
+                + tileSize
+                + ")");
+      }
       if (modelCardResolver.isInferenceApiEnabled()) {
         if (!resolution.unmappedTypes().isEmpty()) {
           log.warn(

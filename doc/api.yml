@@ -3084,6 +3084,7 @@ components:
         - HUMIDITE
         - RISQUE_FEU
         - VELUX
+        - LUMINEUX
         - BATI_TUILES
         - BATI_BETON
         - BATI_ARDOISE
@@ -3436,6 +3437,7 @@ components:
           - **BP_TAMPONS** : Tampons de voiries, avaloirs, tampons hydroliques
           - **BP_CIMETIERE** : Cimetière, espace arboré, espace vert, tombe simple, tombe double, tombe non géométrique
           - **BP_STATIONNEMENT** : Parking, Place standard
+          - **BP_REVETEMENT_OBSTACLE** : Obstacle, cheminee, velux, panneau photovoltaique, lumineux. Supports imagery layers of 5 cm and 20 cm
       enum:
         - BP_TOITURE
         - BP_LOM
@@ -3450,6 +3452,7 @@ components:
         - BP_TAMPONS
         - BP_CIMETIERE
         - BP_STATIONNEMENT
+        - BP_REVETEMENT_OBSTACLE
     CreateDetectionDebugMode:
       allOf:
         - $ref: '#/components/schemas/CreateDetection'

@@ -301,6 +301,17 @@ class HttpApiTileObjectDetectorTest {
   }
 
   @Test
+  void never_falls_back_to_detection_lambdas_when_the_spatial_resolution_is_not_5_cm() {
+    setUpTile();
+    resolveNothing();
+    var task = tileDetectionTask();
+    task.setSpatialResolutionInCm(20.0);
+
+    assertThrows(
+        IllegalStateException.class, () -> subject.apply(task, null, detectableObjectConfs()));
+  }
+
+  @Test
   void resolves_model_cards_for_the_spatial_resolution_of_the_detection() {
     setUpTile();
     when(modelCardResolverMock.resolve(any(), any(), anyInt(), any()))

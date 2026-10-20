@@ -4,6 +4,7 @@ import static app.bpartners.geojobs.endpoint.rest.controller.v1.mapper.FeatureMa
 import static app.bpartners.geojobs.endpoint.rest.model.DelimitationType.PARCEL;
 import static app.bpartners.geojobs.endpoint.rest.model.DelimitationType.PARCEL_CONSTRAINED_DELIMITATION;
 import static app.bpartners.geojobs.endpoint.rest.model.DetectionStepName.POST_PROCESSING;
+import static app.bpartners.geojobs.endpoint.rest.model.ModelName.REVETEMENT_OBSTACLE;
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.STATIONNEMENT;
 import static app.bpartners.geojobs.endpoint.rest.model.ModelName.TOITURE;
 import static app.bpartners.geojobs.job.model.Status.HealthStatus.SUCCEEDED;
@@ -370,6 +371,18 @@ public class Detection implements Serializable {
         || (detectableObjectModel != null
             && detectableObjectModel.getModelName() != null
             && TOITURE.equals(detectableObjectModel.getModelName()));
+  }
+
+  public boolean hasRevetementObstacleModelName() {
+    return (detectableObjectModelList != null
+            && detectableObjectModelList.stream()
+                .anyMatch(model -> REVETEMENT_OBSTACLE.equals(model.getModelName())))
+        || (detectableObjectModel != null
+            && REVETEMENT_OBSTACLE.equals(detectableObjectModel.getModelName()));
+  }
+
+  public boolean hasRoofBasedModelName() {
+    return hasToitureModelName() || hasRevetementObstacleModelName();
   }
 
   public boolean hasStationnementModelName() {

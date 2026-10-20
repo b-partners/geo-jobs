@@ -111,7 +111,7 @@ class FeatureVggRequestedServiceTest {
 
     when(vggMapMock.values()).thenReturn(vggCollectionMock);
     when(detectionMock.getId()).thenReturn(detectionIdentifier);
-    when(detectionMock.hasToitureModelName()).thenReturn(true);
+    when(detectionMock.hasRoofBasedModelName()).thenReturn(true);
     when(detectionMock.getZdjId()).thenReturn(zoneDetectionJobIdentifier);
     when(detectionMock.getZtjId()).thenReturn(zoneTilingJobIdentifier);
     when(detectionMock.getFeatureWithDelimitations()).thenReturn(List.of(featureWithDelimitation));

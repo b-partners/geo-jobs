@@ -56,7 +56,7 @@ public class DetectionPropertiesService {
       app.bpartners.geojobs.repository.model.detection.Detection detection,
       Feature currentFeature,
       List<Feature> delimitationsFeature) {
-    if (!detection.hasToitureModelName()) {
+    if (!detection.hasRoofBasedModelName()) {
       log.error("Only BP_TOITURE model is supported to generated VGG from now");
       return detection;
     }

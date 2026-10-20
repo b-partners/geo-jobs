@@ -53,24 +53,16 @@ public class ModelCardResolver {
   public Set<Double> supportedSpatialResolutionsInCm(
       List<DetectableObjectConfiguration> objectConfigurations) {
     var mappingsByType = mappingsByType();
-    var supported =
-        objectConfigurations.stream()
-            .flatMap(
-                configuration ->
-                    resolutionsOf(mappingsByType, configuration.getObjectType()).stream())
-            .collect(Collectors.toCollection(LinkedHashSet::new));
-    return supported.isEmpty() ? Set.of(DEFAULT_SPATIAL_RESOLUTION_IN_CM) : supported;
-  }
-
-  public List<DetectableObjectConfiguration> configurationsAvailableAt(
-      List<DetectableObjectConfiguration> objectConfigurations, double spatialResolutionInCm) {
-    var mappingsByType = mappingsByType();
-    return objectConfigurations.stream()
-        .filter(
-            configuration ->
-                resolutionsOf(mappingsByType, configuration.getObjectType())
-                    .contains(spatialResolutionInCm))
-        .toList();
+    Set<Double> supported = null;
+    for (var configuration : objectConfigurations) {
+      var typeResolutions = resolutionsOf(mappingsByType, configuration.getObjectType());
+      if (supported == null) {
+        supported = new LinkedHashSet<>(typeResolutions);
+      } else {
+        supported.retainAll(typeResolutions);
+      }
+    }
+    return supported == null ? Set.of(DEFAULT_SPATIAL_RESOLUTION_IN_CM) : supported;
   }
 
   public List<Integer> tilingZoomLevels(
@@ -150,10 +142,10 @@ public class ModelCardResolver {
     if (mappings.isEmpty()) {
       return Optional.empty();
     }
-    var requested =
-        spatialResolutionInCm == null ? DEFAULT_SPATIAL_RESOLUTION_IN_CM : spatialResolutionInCm;
-    return withResolution(mappings, requested)
-        .or(() -> withResolution(mappings, DEFAULT_SPATIAL_RESOLUTION_IN_CM))
+    if (spatialResolutionInCm != null) {
+      return withResolution(mappings, spatialResolutionInCm);
+    }
+    return withResolution(mappings, DEFAULT_SPATIAL_RESOLUTION_IN_CM)
         .or(() -> Optional.of(mappings.getFirst()));
   }
 

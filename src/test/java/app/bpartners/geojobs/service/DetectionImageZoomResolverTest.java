@@ -86,7 +86,7 @@ class DetectionImageZoomResolverTest {
 
   private Detection detection(boolean toiture, DetectableType... types) {
     var detection = mock(Detection.class);
-    when(detection.hasToitureModelName()).thenReturn(toiture);
+    when(detection.hasRoofBasedModelName()).thenReturn(toiture);
     when(detection.spatialResolutionInCm()).thenReturn(null);
     when(detection.getDetectableObjectConfigurations())
         .thenReturn(

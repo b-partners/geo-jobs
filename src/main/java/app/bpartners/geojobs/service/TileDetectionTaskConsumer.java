@@ -73,7 +73,7 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
     File originalTileImageFile = null;
     if (detection != null) {
       originalTileImageFile = bucketComponent.download(tileImageBucketPath);
-      if (detection.hasToitureModelName()) {
+      if (detection.hasRoofBasedModelName()) {
         var multiPolygonFromTile =
             geometryConverter.getMultiPolygonFromTile(
                 tileCoordinates.getX(), tileCoordinates.getY(), tileCoordinates.getZ());
@@ -140,7 +140,7 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
                 .creationDatetime(now())
                 .build());
       }
-      if (mask == null && detection.hasToitureModelName()) {
+      if (mask == null && detection.hasRoofBasedModelName()) {
         log.info(
             "Actual tile detection could not compute mask, skipping detection for TileDetectionTask"
                 + " : {}",
@@ -165,11 +165,15 @@ public class TileDetectionTaskConsumer implements TaskConsumer<TileDetectionTask
         objectsDetector.apply(tileDetectionTask, mask, detectableObjectConfigurations);
 
     var roofCoveringResponse =
-        roofCoveringDetector.apply(
-            tile.toBuilder()
-                .detectionE2Id(detection != null ? detection.getEndToEndId() : null)
-                .build(),
-            mask);
+        detection != null
+                && detection.hasRevetementObstacleModelName()
+                && !detection.hasToitureModelName()
+            ? null
+            : roofCoveringDetector.apply(
+                tile.toBuilder()
+                    .detectionE2Id(detection != null ? detection.getEndToEndId() : null)
+                    .build(),
+                mask);
     var machineDetectedTile =
         detectionMapper.toDetectedTile(
             detectionResponse,

@@ -59,6 +59,7 @@ public class DetectionMapper {
   public static final String OBSTACLE_STRING_VALUE = "OBSTACLE";
   public static final String CHEMINEE_STRING_VALUE = "CHEMINEE";
   public static final String VELUX_STRING_VALUE = "VELUX";
+  public static final String LUMINEUX_STRING_VALUE = "LUMINEUX";
 
   public static final String USURE_IMPORTANTE_ARDOISE_STRING_VALUE = "USURE_IMPORTANTE_ARDOISE";
   public static final String USURE_IMPORTANTE_TUILES_STRING_VALUE = "USURE_IMPORTANTE_TUILES";
@@ -173,6 +174,7 @@ public class DetectionMapper {
       case OBSTACLE_STRING_VALUE -> DetectableType.OBSTACLE;
       case CHEMINEE_STRING_VALUE -> DetectableType.CHEMINEE;
       case VELUX_STRING_VALUE -> DetectableType.VELUX;
+      case LUMINEUX_STRING_VALUE -> DetectableType.LUMINEUX;
       case USURE_IMPORTANTE_ARDOISE_STRING_VALUE, USURE_IMPORTANTE_TUILES_STRING_VALUE ->
           DetectableType.USURE_IMPORTANTE;
       case USURE_LEGERE_ARDOISE_STRING_VALUE, USURE_LEGERE_AUTRES_STRING_VALUE ->

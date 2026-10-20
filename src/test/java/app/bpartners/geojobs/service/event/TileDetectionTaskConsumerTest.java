@@ -105,7 +105,7 @@ class TileDetectionTaskConsumerTest {
     when(featureGeometryMock.getActualInstance()).thenReturn(featureMultiPolygonMock);
     when(featureMock.getGeometry()).thenReturn(featureGeometryMock);
     when(detectionMock.isDebugMode()).thenReturn(true);
-    when(detectionMock.hasToitureModelName()).thenReturn(true);
+    when(detectionMock.hasRoofBasedModelName()).thenReturn(true);
     when(detectionMock.getProvidedGeoJsonZone()).thenReturn(List.of(featureMock));
     when(roofFeatureGeometryMock.getActualInstanceStringValue())
         .thenReturn("roofGeometryActualInstanceStringValue");
@@ -204,7 +204,7 @@ class TileDetectionTaskConsumerTest {
         geometryFactory.createMultiPolygon(new org.locationtech.jts.geom.Polygon[] {});
     var multiPolygonFromTileMock = mock(org.locationtech.jts.geom.MultiPolygon.class);
     when(tileMock.getCoordinates()).thenReturn(new TileCoordinates().x(0).y(0).z(20));
-    when(detectionMock.hasToitureModelName()).thenReturn(true);
+    when(detectionMock.hasRoofBasedModelName()).thenReturn(true);
     when(multiPolygonFromTileMock.intersection(geometryMock)).thenReturn(geometryMock);
     when(geometryConverterMock.readGeometryFromString(geometryActualInstanceStringValue))
         .thenReturn(geometryMock);
@@ -270,7 +270,7 @@ class TileDetectionTaskConsumerTest {
     when(featureGeometryMock.getMultiPolygon()).thenReturn(featureMultiPolygonMock);
     when(featureGeometryMock.getActualInstance()).thenReturn(featureMultiPolygonMock);
     when(featureMock.getGeometry()).thenReturn(featureGeometryMock);
-    when(detectionMock.hasToitureModelName()).thenReturn(true);
+    when(detectionMock.hasRoofBasedModelName()).thenReturn(true);
     when(detectionMock.getProvidedGeoJsonZone()).thenReturn(List.of(featureMock));
     when(roofFeatureGeometryMock.getActualInstanceStringValue())
         .thenReturn("roofGeometryActualInstanceStringValue");
@@ -348,7 +348,7 @@ class TileDetectionTaskConsumerTest {
     when(featureGeometryMock.getMultiPolygon()).thenReturn(featureMultiPolygonMock);
     when(featureGeometryMock.getActualInstance()).thenReturn(featureMultiPolygonMock);
     when(featureMock.getGeometry()).thenReturn(featureGeometryMock);
-    when(detectionMock.hasToitureModelName()).thenReturn(true);
+    when(detectionMock.hasRoofBasedModelName()).thenReturn(true);
     when(detectionMock.getProvidedGeoJsonZone()).thenReturn(List.of(featureMock));
     when(roofFeatureGeometryMock.getActualInstanceStringValue())
         .thenReturn("roofGeometryActualInstanceStringValue");
@@ -427,7 +427,7 @@ class TileDetectionTaskConsumerTest {
     when(featureGeometryMock.getMultiPolygon()).thenReturn(featureMultiPolygonMock);
     when(featureGeometryMock.getActualInstance()).thenReturn(featureMultiPolygonMock);
     when(featureMock.getGeometry()).thenReturn(featureGeometryMock);
-    when(detectionMock.hasToitureModelName()).thenReturn(false);
+    when(detectionMock.hasRoofBasedModelName()).thenReturn(false);
     when(detectionMock.getProvidedGeoJsonZone()).thenReturn(List.of(featureMock));
     when(detectionMock.getFeatureWithDelimitations())
         .thenReturn(

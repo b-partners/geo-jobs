@@ -133,7 +133,8 @@ class TileDetectionTaskConsumerIT {
     var detectionMock = mock(Detection.class);
 
     when(detectionMock.getId()).thenReturn(detectionIdentifier);
-    when(detectionMock.hasToitureModelName()).thenReturn(true);
+    when(detectionMock.hasRoofBasedModelName()).thenReturn(true);
+    when(detectionMock.spatialResolutionInCm()).thenReturn(null);
     when(detectionMock.getDetectableObjectConfigurations())
         .thenReturn(createDetectableObjectConfigurations(detectionIdentifier, detectionJobId));
     when(detectionMock.getFeatureWithDelimitations())

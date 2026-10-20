@@ -136,11 +136,11 @@ class ModelCardResolverTest {
   }
 
   @Test
-  void supported_spatial_resolutions_gather_the_ones_of_every_type_and_default_to_5_cm() {
+  void supported_spatial_resolutions_are_shared_by_every_type_and_default_to_5_cm_when_unmapped() {
     assertEquals(Set.of(5.0), subject.supportedSpatialResolutionsInCm(configs(HUMIDITE, USURE)));
-    assertEquals(
-        Set.of(5.0, 10.0), subject.supportedSpatialResolutionsInCm(configs(HUMIDITE, TOMBE)));
+    assertEquals(Set.of(), subject.supportedSpatialResolutionsInCm(configs(HUMIDITE, TOMBE)));
     assertEquals(Set.of(5.0), subject.supportedSpatialResolutionsInCm(configs(CHEMINEE)));
+    assertEquals(Set.of(), subject.supportedSpatialResolutionsInCm(configs(TOMBE, CHEMINEE)));
     assertEquals(Set.of(5.0), subject.supportedSpatialResolutionsInCm(List.of()));
   }
 
@@ -215,28 +215,62 @@ class ModelCardResolverTest {
   }
 
   @Test
-  void falls_back_to_the_5_cm_mapping_without_spatial_resolution_or_without_exact_match() {
+  void without_spatial_resolution_prefers_the_5_cm_mapping_then_the_first_one() {
     when(conf.getMappings())
         .thenReturn(
             List.of(
                 new ModelCardMapping(OBSTACLE, "obstacles20", 19, 20.0),
-                new ModelCardMapping(OBSTACLE, "obstacles5", 20, 5.0)));
+                new ModelCardMapping(OBSTACLE, "obstacles5", 20, 5.0),
+                new ModelCardMapping(TOMBE, "tombs20", 19, 20.0),
+                new ModelCardMapping(TOMBE, "tombs10", 18, 10.0)));
 
     assertEquals(20, subject.tilingZoomOf(OBSTACLE, null));
-    assertEquals(20, subject.tilingZoomOf(OBSTACLE, 10.0));
-    assertEquals(List.of(20), subject.tilingZoomLevels(configs(OBSTACLE), null));
+    assertEquals(19, subject.tilingZoomOf(TOMBE, null));
   }
 
   @Test
-  void falls_back_to_the_first_mapping_when_none_is_at_5_cm() {
+  void never_falls_back_to_another_mapping_when_the_spatial_resolution_is_explicit() {
     when(conf.getMappings())
         .thenReturn(
             List.of(
-                new ModelCardMapping(OBSTACLE, "obstacles20", 19, 20.0),
-                new ModelCardMapping(OBSTACLE, "obstacles10", 18, 10.0)));
+                new ModelCardMapping(OBSTACLE, "obstacles5", 20, 5.0),
+                new ModelCardMapping(OBSTACLE, "obstacles20", 19, 20.0)));
+    var configs = configs(OBSTACLE);
 
-    assertEquals(19, subject.tilingZoomOf(OBSTACLE, null));
-    assertEquals(19, subject.tilingZoomOf(OBSTACLE, 5.0));
+    assertEquals(DEFAULT_ZOOM, subject.tilingZoomOf(OBSTACLE, 10.0));
+    assertTrue(subject.resolve(configs, 10.0, 19, ANY).modelCards().isEmpty());
+    assertTrue(subject.resolve(configs, 10.0, 20, ANY).modelCards().isEmpty());
+  }
+
+  @Test
+  void at_5_cm_only_the_5_cm_model_card_is_called_and_at_20_cm_only_the_20_cm_one() {
+    var obstacles5cm =
+        new DeployedModelCard("obstacles5", OBJECT_DETECTION, 1, false, null, null, null);
+    var obstacles20cm =
+        new DeployedModelCard("obstacles20", OBJECT_DETECTION, 1, false, null, null, null);
+    when(conf.getMappings())
+        .thenReturn(
+            List.of(
+                new ModelCardMapping(OBSTACLE, "obstacles5", 21, 5.0),
+                new ModelCardMapping(OBSTACLE, "obstacles20", 19, 20.0)));
+    when(registry.findById("obstacles5")).thenReturn(Optional.of(obstacles5cm));
+    when(registry.findById("obstacles20")).thenReturn(Optional.of(obstacles20cm));
+    var configs = configs(OBSTACLE);
+
+    assertEquals(List.of(21), subject.tilingZoomLevels(configs, 5.0));
+    assertEquals(List.of(19), subject.tilingZoomLevels(configs, 20.0));
+    assertEquals(
+        List.of("obstacles5"),
+        subject.resolve(configs, 5.0, 21, ANY).modelCards().stream()
+            .map(ResolvedModelCard::modelCardId)
+            .toList());
+    assertTrue(subject.resolve(configs, 5.0, 19, ANY).modelCards().isEmpty());
+    assertEquals(
+        List.of("obstacles20"),
+        subject.resolve(configs, 20.0, 19, ANY).modelCards().stream()
+            .map(ResolvedModelCard::modelCardId)
+            .toList());
+    assertTrue(subject.resolve(configs, 20.0, 21, ANY).modelCards().isEmpty());
   }
 
   @Test
@@ -254,29 +288,6 @@ class ModelCardResolverTest {
     assertEquals(List.of(19), subject.tilingZoomLevels(configs, 20.0));
     assertEquals(List.of(21), subject.tilingZoomLevels(configs, 5.0));
     assertEquals(Set.of(5.0, 20.0), subject.supportedSpatialResolutionsInCm(configs));
-  }
-
-  @Test
-  void keeps_only_the_configurations_available_at_the_spatial_resolution() {
-    when(conf.getMappings())
-        .thenReturn(
-            List.of(
-                new ModelCardMapping(OBSTACLE, "obstacles5", 20, 5.0),
-                new ModelCardMapping(OBSTACLE, "obstacles20", 19, 20.0),
-                new ModelCardMapping(TOMBE, "tombs", 20, 5.0)));
-    var configs = configs(OBSTACLE, TOMBE, CHEMINEE);
-
-    assertEquals(
-        List.of(OBSTACLE),
-        subject.configurationsAvailableAt(configs, 20.0).stream()
-            .map(DetectableObjectConfiguration::getObjectType)
-            .toList());
-    assertEquals(
-        List.of(OBSTACLE, TOMBE, CHEMINEE),
-        subject.configurationsAvailableAt(configs, 5.0).stream()
-            .map(DetectableObjectConfiguration::getObjectType)
-            .toList());
-    assertTrue(subject.configurationsAvailableAt(configs, 10.0).isEmpty());
   }
 
   private static List<DetectableObjectConfiguration> configs(DetectableType... types) {

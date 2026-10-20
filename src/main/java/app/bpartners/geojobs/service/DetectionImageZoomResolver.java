@@ -30,7 +30,8 @@ public class DetectionImageZoomResolver {
     }
     var objectTypes =
         configurations.stream().map(DetectableObjectConfiguration::getObjectType).toList();
-    var referenceTypes = detection.hasToitureModelName() ? toitureTypes(objectTypes) : objectTypes;
+    var referenceTypes =
+        detection.hasRoofBasedModelName() ? toitureTypes(objectTypes) : objectTypes;
     var spatialResolutionInCm = detection.spatialResolutionInCm();
     return (referenceTypes.isEmpty() ? objectTypes : referenceTypes)
         .stream()

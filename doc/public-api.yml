@@ -1862,6 +1862,7 @@ components:
           - **BP_TAMPONS** : Tampons de voiries, avaloirs, tampons hydroliques
           - **BP_CIMETIERE** : Cimetière, espace arboré, espace vert, tombe simple, tombe double, tombe non géométrique
           - **BP_STATIONNEMENT** : Parking
+          - **BP_REVETEMENT_OBSTACLE** : Obstacle, cheminee, velux, panneau photovoltaique, lumineux
       enum:
         - BP_TOITURE
         - BP_LOM
@@ -1876,6 +1877,7 @@ components:
         - BP_TAMPONS
         - BP_CIMETIERE
         - BP_STATIONNEMENT
+        - BP_REVETEMENT_OBSTACLE
     DetectionStep:
       properties:
         name:

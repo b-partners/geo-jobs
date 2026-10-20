@@ -50,7 +50,7 @@ public class FeatureVggRequestedService implements Consumer<FeatureVggRequested>
 
   public Detection apply(Detection detection, Feature currentFeature) {
     var featureVggComputationStart = now();
-    if (!detection.hasToitureModelName()) {
+    if (!detection.hasRoofBasedModelName()) {
       log.error("Only BP_TOITURE model is supported to generated VGG from now");
       return null;
     }
