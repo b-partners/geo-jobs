@@ -33,10 +33,12 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 @Component
 @AllArgsConstructor
+@Slf4j
 public class DetectionCreationMapper {
   private final DetectableObjectTypeMapper detectableObjectTypeMapper;
   private final FeatureTypeChecker featureTypeChecker;
@@ -69,12 +71,13 @@ public class DetectionCreationMapper {
                 : List.of());
     var polygonGeoJsonZoneToBeProcessed =
         extractDetectionPolygonGeoJson(providedGeoJson, modelNames);
-    var finalGeoServerProperties =
+    var geoServerSelection =
         extractGeoServerProperties(
             createDetection.getGeoServerProperties(),
             providedGeoJson,
             domainProvidedGeoJsonZone,
             detectableObjectConfigurations);
+    var finalGeoServerProperties = geoServerSelection.geoServerProperties();
     var detection =
         Detection.builder()
             .id(detectionId)
@@ -83,7 +86,7 @@ public class DetectionCreationMapper {
             .zoneName(createDetection.getZoneName())
             .isSynchronous(isSynchronous)
             .communityOwnerId(communityOwnerId)
-            .detectableObjectConfigurations(detectableObjectConfigurations)
+            .detectableObjectConfigurations(geoServerSelection.detectableObjectConfigurations())
             .geoServerProperties(finalGeoServerProperties)
             .providedGeoJsonZone(domainProvidedGeoJsonZone)
             .multiPolygonGeoJsonZone(domainProvidedGeoJsonZone)
@@ -156,12 +159,13 @@ public class DetectionCreationMapper {
     };
   }
 
-  private GeoServerProperties extractGeoServerProperties(
+  private GeoServerSelection extractGeoServerProperties(
       GeoServerProperties geoServerProperties,
       List<app.bpartners.geojobs.endpoint.rest.model.Feature> geoJsonZone,
       List<app.bpartners.geojobs.repository.model.Feature> multiPolygonGeoJsonZone,
       List<DetectableObjectConfiguration> detectableObjectConfigurations) {
     var finalGeoServerProperties = geoServerProperties;
+    var finalConfigurations = detectableObjectConfigurations;
     if (geoJsonZone != null
         && !multiPolygonGeoJsonZone.isEmpty()
         && (geoServerProperties == null
@@ -182,26 +186,47 @@ public class DetectionCreationMapper {
                               + latitude));
       String layer = mapLayer.name();
       var precisionLevelInCm = mapLayer.precisionLevelInCm();
-      var requiredResolutions =
-          modelCardResolver.requiredSpatialResolutionsInCm(detectableObjectConfigurations);
+      var availableConfigurations =
+          precisionLevelInCm == null
+              ? List.<DetectableObjectConfiguration>of()
+              : modelCardResolver.configurationsAvailableAt(
+                  detectableObjectConfigurations, precisionLevelInCm.doubleValue());
 
-      if (precisionLevelInCm == null
-          || requiredResolutions.size() != 1
-          || !requiredResolutions.contains(precisionLevelInCm.doubleValue())) {
+      if (availableConfigurations.isEmpty()) {
         throw new ApiException(
             SERVER_EXCEPTION,
             String.format(
                 "Cannot process detection : image resolution must be %s cm. Current layer = %s"
                     + " (precisionLevelInCm = %s)",
-                formatResolutions(requiredResolutions), layer, precisionLevelInCm));
+                formatResolutions(
+                    modelCardResolver.supportedSpatialResolutionsInCm(
+                        detectableObjectConfigurations)),
+                layer,
+                precisionLevelInCm));
       }
+      if (availableConfigurations.size() < detectableObjectConfigurations.size()) {
+        log.warn(
+            "Layer {} has a precision of {} cm, skipping object types without any model at this"
+                + " precision: {}",
+            layer,
+            precisionLevelInCm,
+            detectableObjectConfigurations.stream()
+                .filter(configuration -> !availableConfigurations.contains(configuration))
+                .map(DetectableObjectConfiguration::getObjectType)
+                .toList());
+      }
+      finalConfigurations = availableConfigurations;
 
       // TODO: save other layers to be used in failure case
       finalGeoServerProperties =
           geoServerConfiguration.defaultGeoServerProperties(layer, precisionLevelInCm);
     }
-    return finalGeoServerProperties;
+    return new GeoServerSelection(finalGeoServerProperties, finalConfigurations);
   }
+
+  private record GeoServerSelection(
+      GeoServerProperties geoServerProperties,
+      List<DetectableObjectConfiguration> detectableObjectConfigurations) {}
 
   private app.bpartners.geojobs.repository.model.Feature extractDetectionPolygonGeoJson(
       List<app.bpartners.geojobs.endpoint.rest.model.Feature> providedGeoJsonZone,

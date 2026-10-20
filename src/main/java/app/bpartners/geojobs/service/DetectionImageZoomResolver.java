@@ -31,14 +31,18 @@ public class DetectionImageZoomResolver {
     var objectTypes =
         configurations.stream().map(DetectableObjectConfiguration::getObjectType).toList();
     var referenceTypes = detection.hasToitureModelName() ? toitureTypes(objectTypes) : objectTypes;
+    var spatialResolutionInCm = detection.spatialResolutionInCm();
     return (referenceTypes.isEmpty() ? objectTypes : referenceTypes)
-        .stream().mapToInt(modelCardResolver::tilingZoomOf).max().orElseThrow();
+        .stream()
+            .mapToInt(type -> modelCardResolver.tilingZoomOf(type, spatialResolutionInCm))
+            .max()
+            .orElseThrow();
   }
 
   public int toitureZoom() {
     return TOITURE_TYPE_NAMES.stream()
         .map(DetectableType::valueOf)
-        .mapToInt(modelCardResolver::tilingZoomOf)
+        .mapToInt(type -> modelCardResolver.tilingZoomOf(type, null))
         .max()
         .orElse(ModelCardResolver.DEFAULT_TILING_ZOOM);
   }

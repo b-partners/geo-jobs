@@ -390,6 +390,15 @@ public class Detection implements Serializable {
         || getGeoServerProperties() == null;
   }
 
+  public Double spatialResolutionInCm() {
+    if (geoServerProperties == null
+        || geoServerProperties.getGeoServerParameter() == null
+        || geoServerProperties.getGeoServerParameter().getPrecisionLevelInCm() == null) {
+      return null;
+    }
+    return geoServerProperties.getGeoServerParameter().getPrecisionLevelInCm().doubleValue();
+  }
+
   public boolean isStillOnTilingStep() {
     return getZdjId() == null;
   }
